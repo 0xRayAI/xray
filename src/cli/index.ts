@@ -482,15 +482,10 @@ program
         await import("../analytics/simple-pattern-analyzer.js");
 
       // Get default limit from features.json
-      const fs = await import("fs");
-      const path = await import("path");
       let defaultLimit = 500;
       try {
-        const featuresPath = path.join(process.cwd(), ".opencode", "plugins", "features.json"); // plain xray primary (min compat .xray/ handled in getConfigDir per Scope Rule)
-        if (fs.existsSync(featuresPath)) {
-          const features = JSON.parse(fs.readFileSync(featuresPath, "utf-8"));
-          defaultLimit = features.analytics?.default_limit || 500;
-        }
+        const { featuresConfigLoader } = await import("../core/features-config.js");
+        defaultLimit = featuresConfigLoader.loadConfig().analytics?.default_limit ?? 500;
       } catch { /* use default */ }
 
       const analyzer = new SimplePatternAnalyzer();

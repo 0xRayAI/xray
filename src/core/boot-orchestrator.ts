@@ -6,9 +6,7 @@ import { XrayContextLoader } from "./context-loader.js";
 import { XrayStateManager } from "../state/state-manager.js";
 import { ProcessorManager } from "../processors/processor-manager.js";
 import { pathResolver } from "../utils/path-resolver.js";
-import * as fs from "fs";
 import * as path from "path";
-const { existsSync, readFileSync } = fs;
 // Path configuration - can be overridden by environment or use path resolver
 const AGENTS_BASE_PATH = process.env.XRAY_AGENTS_PATH || process.env.XRAY_AGENTS_PATH || "../agents";
 import {
@@ -186,17 +184,9 @@ export class BootOrchestrator {
 
   private loadProcessorsConfig(): { pre_processors?: { priority_order?: string[] }; post_processors?: { priority_order?: string[] } } | null {
     try {
-      const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-      ];
-      for (const configPath of configPaths) {
-        if (existsSync(configPath)) {
-          const config = JSON.parse(readFileSync(configPath, "utf-8"));
-          return config.processors || null;
-        }
-      }
+      return featuresConfigLoader.loadConfig().processors ?? null;
     } catch {
-      // ignore - use defaults
+      // use defaults
     }
     return null;
   }

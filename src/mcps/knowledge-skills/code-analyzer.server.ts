@@ -10,12 +10,7 @@
  * Use project-analysis for project-level (structure, health).
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
@@ -64,277 +59,260 @@ interface FileTreeNode {
   size?: number;
 }
 
-class CodeAnalyzerServer {
-  private server: Server;
-  private tools: Tool[] = [
-    // ===== CODE ANALYSIS =====
-    {
-      name: "analyze_code",
-      description:
-        "Perform comprehensive static analysis on source code files",
-      inputSchema: {
-        type: "object",
-        properties: {
-          files: {
-            type: "array",
-            items: { type: "string" },
-            description: "Files or directories to analyze",
-          },
-          language: {
-            type: "string",
-            description: "Programming language (typescript, javascript, python, etc.)",
-          },
-        },
-        required: ["files"],
-      },
-    },
-    {
-      name: "calculate_complexity",
-      description:
-        "Calculate cyclomatic complexity and other code metrics",
-      inputSchema: {
-        type: "object",
-        properties: {
-          code: {
-            type: "string",
-            description: "Source code to analyze",
-          },
-          language: {
-            type: "string",
-            description: "Programming language",
-          },
-        },
-        required: ["code"],
-      },
-    },
-    {
-      name: "detect_code_smells",
-      description:
-        "Detect code smells, anti-patterns, and potential issues",
-      inputSchema: {
-        type: "object",
-        properties: {
-          files: {
-            type: "array",
-            items: { type: "string" },
-            description: "Files to analyze",
-          },
-          thresholds: {
-            type: "object",
-            description: "Detection thresholds",
-            properties: {
-              maxFunctionLength: { type: "number" },
-              maxNestingDepth: { type: "number" },
-              maxParameters: { type: "number" },
-            },
-          },
-        },
-        required: ["files"],
-      },
-    },
-    {
-      name: "extract_metrics",
-      description:
-        "Extract detailed code metrics (lines, functions, classes, etc.)",
-      inputSchema: {
-        type: "object",
-        properties: {
-          filePath: {
-            type: "string",
-            description: "File or directory to analyze",
-          },
-          includeHistory: {
-            type: "boolean",
-            default: false,
-            description: "Include historical metrics if available",
-          },
-        },
-        required: ["filePath"],
-      },
-    },
-    // ===== EXPLORE FEATURES =====
-    {
-      name: "explore_codebase",
-      description:
-        "Explore codebase structure and find files matching patterns. Fast file search.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          scope: {
-            type: "string",
-            enum: ["full", "directory", "file"],
-            description: "Scope of exploration",
-          },
-          patterns: {
-            type: "array",
-            items: { type: "string" },
-            description: "Glob patterns to match (e.g., '**/*.ts', 'src/**/*.js')",
-          },
-          basePath: {
-            type: "string",
-            description: "Base directory to search from (defaults to current directory)",
-          },
-          maxResults: {
-            type: "number",
-            default: 50,
-            description: "Maximum number of files to return",
-          },
-        },
-        required: ["scope", "patterns"],
-      },
-    },
-    {
-      name: "find_patterns",
-      description:
-        "Find code patterns, functions, classes, or specific text across the codebase",
-      inputSchema: {
-        type: "object",
-        properties: {
-          pattern: {
-            type: "string",
-            description: "Regex or text pattern to search for",
-          },
-          fileTypes: {
-            type: "array",
-            items: { type: "string" },
-            description: "File extensions to search (e.g., ['.ts', '.js'])",
-          },
-          basePath: {
-            type: "string",
-            description: "Base directory to search from",
-          },
-          maxMatches: {
-            type: "number",
-            default: 100,
-            description: "Maximum number of matches to return",
-          },
-        },
-        required: ["pattern"],
-      },
-    },
-    {
-      name: "find_function",
-      description:
-        "Locate specific function definitions across the codebase",
-      inputSchema: {
-        type: "object",
-        properties: {
-          functionName: {
-            type: "string",
-            description: "Name of the function to find",
-          },
-          fileTypes: {
-            type: "array",
-            items: { type: "string" },
-            description: "File types to search",
-          },
-        },
-        required: ["functionName"],
-      },
-    },
-    {
-      name: "get_file_structure",
-      description:
-        "Get directory structure and file tree for a given path",
-      inputSchema: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Directory path to explore",
-          },
-          maxDepth: {
-            type: "number",
-            default: 3,
-            description: "Maximum depth to traverse",
-          },
-          includeFiles: {
-            type: "boolean",
-            default: true,
-            description: "Include files in the output",
-          },
-        },
-        required: ["path"],
-      },
-    },
-    // ===== DEPENDENCY ANALYSIS =====
-    {
-      name: "analyze_dependencies",
-      description:
-        "Analyze import/export dependencies and generate dependency graph",
-      inputSchema: {
-        type: "object",
-        properties: {
-          rootDir: {
-            type: "string",
-            description: "Root directory to analyze",
-          },
-          maxDepth: {
-            type: "number",
-            default: 3,
-            description: "Maximum depth for dependency traversal",
-          },
-        },
-        required: ["rootDir"],
-      },
-    },
-    // ===== DUPLICATE DETECTION =====
-    {
-      name: "find_duplicates",
-      description:
-        "Find duplicate or similar code patterns in the codebase",
-      inputSchema: {
-        type: "object",
-        properties: {
-          directory: {
-            type: "string",
-            description: "Directory to search",
-          },
-          minLength: {
-            type: "number",
-            default: 10,
-            description: "Minimum line count for duplicate detection",
-          },
-        },
-        required: ["directory"],
-      },
-    },
-  ];
+class CodeAnalyzerServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
-      { name: "code-analyzer", version: "3.1.0" },
-      { capabilities: { tools: {} } },
-    );
+    super("code-analyzer", "3.1.0");
 
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: this.tools,
-    }));
+    this.tools = [
+      // ===== CODE ANALYSIS =====
+      {
+        name: "analyze_code",
+        description:
+          "Perform comprehensive static analysis on source code files",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files or directories to analyze",
+            },
+            language: {
+              type: "string",
+              description: "Programming language (typescript, javascript, python, etc.)",
+            },
+          },
+          required: ["files"],
+        },
+      },
+      {
+        name: "calculate_complexity",
+        description:
+          "Calculate cyclomatic complexity and other code metrics",
+        inputSchema: {
+          type: "object",
+          properties: {
+            code: {
+              type: "string",
+              description: "Source code to analyze",
+            },
+            language: {
+              type: "string",
+              description: "Programming language",
+            },
+          },
+          required: ["code"],
+        },
+      },
+      {
+        name: "detect_code_smells",
+        description:
+          "Detect code smells, anti-patterns, and potential issues",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files to analyze",
+            },
+            thresholds: {
+              type: "object",
+              description: "Detection thresholds",
+              properties: {
+                maxFunctionLength: { type: "number" },
+                maxNestingDepth: { type: "number" },
+                maxParameters: { type: "number" },
+              },
+            },
+          },
+          required: ["files"],
+        },
+      },
+      {
+        name: "extract_metrics",
+        description:
+          "Extract detailed code metrics (lines, functions, classes, etc.)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            filePath: {
+              type: "string",
+              description: "File or directory to analyze",
+            },
+            includeHistory: {
+              type: "boolean",
+              default: false,
+              description: "Include historical metrics if available",
+            },
+          },
+          required: ["filePath"],
+        },
+      },
+      // ===== EXPLORE FEATURES =====
+      {
+        name: "explore_codebase",
+        description:
+          "Explore codebase structure and find files matching patterns. Fast file search.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            scope: {
+              type: "string",
+              enum: ["full", "directory", "file"],
+              description: "Scope of exploration",
+            },
+            patterns: {
+              type: "array",
+              items: { type: "string" },
+              description: "Glob patterns to match (e.g., '**/*.ts', 'src/**/*.js')",
+            },
+            basePath: {
+              type: "string",
+              description: "Base directory to search from (defaults to current directory)",
+            },
+            maxResults: {
+              type: "number",
+              default: 50,
+              description: "Maximum number of files to return",
+            },
+          },
+          required: ["scope", "patterns"],
+        },
+      },
+      {
+        name: "find_patterns",
+        description:
+          "Find code patterns, functions, classes, or specific text across the codebase",
+        inputSchema: {
+          type: "object",
+          properties: {
+            pattern: {
+              type: "string",
+              description: "Regex or text pattern to search for",
+            },
+            fileTypes: {
+              type: "array",
+              items: { type: "string" },
+              description: "File extensions to search (e.g., ['.ts', '.js'])",
+            },
+            basePath: {
+              type: "string",
+              description: "Base directory to search from",
+            },
+            maxMatches: {
+              type: "number",
+              default: 100,
+              description: "Maximum number of matches to return",
+            },
+          },
+          required: ["pattern"],
+        },
+      },
+      {
+        name: "find_function",
+        description:
+          "Locate specific function definitions across the codebase",
+        inputSchema: {
+          type: "object",
+          properties: {
+            functionName: {
+              type: "string",
+              description: "Name of the function to find",
+            },
+            fileTypes: {
+              type: "array",
+              items: { type: "string" },
+              description: "File types to search",
+            },
+          },
+          required: ["functionName"],
+        },
+      },
+      {
+        name: "get_file_structure",
+        description:
+          "Get directory structure and file tree for a given path",
+        inputSchema: {
+          type: "object",
+          properties: {
+            path: {
+              type: "string",
+              description: "Directory path to explore",
+            },
+            maxDepth: {
+              type: "number",
+              default: 3,
+              description: "Maximum depth to traverse",
+            },
+            includeFiles: {
+              type: "boolean",
+              default: true,
+              description: "Include files in the output",
+            },
+          },
+          required: ["path"],
+        },
+      },
+      // ===== DEPENDENCY ANALYSIS =====
+      {
+        name: "analyze_dependencies",
+        description:
+          "Analyze import/export dependencies and generate dependency graph",
+        inputSchema: {
+          type: "object",
+          properties: {
+            rootDir: {
+              type: "string",
+              description: "Root directory to analyze",
+            },
+            maxDepth: {
+              type: "number",
+              default: 3,
+              description: "Maximum depth for dependency traversal",
+            },
+          },
+          required: ["rootDir"],
+        },
+      },
+      // ===== DUPLICATE DETECTION =====
+      {
+        name: "find_duplicates",
+        description:
+          "Find duplicate or similar code patterns in the codebase",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "Directory to search",
+            },
+            minLength: {
+              type: "number",
+              default: 10,
+              description: "Minimum line count for duplicate detection",
+            },
+          },
+          required: ["directory"],
+        },
+      },
+    ];
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args = {} } = request.params;
+    this.handlers = {
+      "analyze_code": async (args) => this.handleAnalyzeCode(args),
+      "calculate_complexity": async (args) => this.handleCalculateComplexity(args),
+      "detect_code_smells": async (args) => this.handleDetectCodeSmells(args),
+      "extract_metrics": async (args) => this.handleExtractMetrics(args),
+      "explore_codebase": async (args) => this.handleExploreCodebase(args),
+      "find_patterns": async (args) => this.handleFindPatterns(args),
+      "find_function": async (args) => this.handleFindFunction(args),
+      "get_file_structure": async (args) => this.handleGetFileStructure(args),
+      "analyze_dependencies": async (args) => this.handleAnalyzeDependencies(args),
+      "find_duplicates": async (args) => this.handleFindDuplicates(args),
+    };
 
-      try {
-        switch (name) {
-          case "analyze_code": return this.handleAnalyzeCode(args);
-          case "calculate_complexity": return this.handleCalculateComplexity(args);
-          case "detect_code_smells": return this.handleDetectCodeSmells(args);
-          case "extract_metrics": return this.handleExtractMetrics(args);
-          case "explore_codebase": return this.handleExploreCodebase(args);
-          case "find_patterns": return this.handleFindPatterns(args);
-          case "find_function": return this.handleFindFunction(args);
-          case "get_file_structure": return this.handleGetFileStructure(args);
-          case "analyze_dependencies": return this.handleAnalyzeDependencies(args);
-          case "find_duplicates": return this.handleFindDuplicates(args);
-          default: throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
-          isError: true,
-        };
-      }
-    });
+    this.setupToolHandlers();
   }
 
   private handleAnalyzeCode(args: unknown) {
@@ -575,16 +553,6 @@ class CodeAnalyzerServer {
     return { content: [{ type: "text", text: JSON.stringify({ totalDuplicates: duplicates.length, duplicates }, null, 2) }] };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "code-analyzer.server",
-      server: this.server,
-    });
-  }
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) { new CodeAnalyzerServer().run().catch(() => {}); }

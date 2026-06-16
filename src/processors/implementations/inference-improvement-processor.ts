@@ -13,6 +13,7 @@ import * as path from "path";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { getConfigDir } from "../../core/config-paths.js";
+import { featuresConfigLoader } from "../../core/features-config.js";
 
 interface InferenceWorkflowContext {
   timestamp: string;
@@ -65,15 +66,7 @@ export class InferenceImprovementProcessor extends PostProcessor {
 
   private loadInferenceConfig(): { enabled?: boolean; workflow_dir?: string; reports_dir?: string; pattern_matching?: { enabled?: boolean; confidence_threshold?: number } } | null {
     try {
-      const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-      ];
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-          return config.inference || config;
-        }
-      }
+      return featuresConfigLoader.loadConfig().inference ?? null;
     } catch (e) {
       // ignore - use defaults
     }

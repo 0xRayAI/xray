@@ -8,15 +8,10 @@
  * Production-ready implementation with real analysis logic.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 /* ============================================================================
  * Type Definitions
@@ -162,24 +157,10 @@ interface VisualComparison {
  * Analysis Engine
  * ============================================================================ */
 
-class MultimodalLookerServer {
-  private server: Server;
-
+class MultimodalLookerServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      { name: "multimodal-looker", version: "3.1.0" },
-      { capabilities: { tools: {} } },
-    );
-    this.setupToolHandlers();
-  }
-
-  /* --------------------------------------------------------------------------
-   * Tool Registration
-   * -------------------------------------------------------------------------- */
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
+    super("multimodal-looker", "3.1.0");
+    this.tools = [
         {
           name: "analyze-screenshot",
           description:
@@ -309,35 +290,15 @@ class MultimodalLookerServer {
             required: ["imageA", "imageB"],
           },
         },
-      ],
-    }));
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args = {} } = request.params;
-      const params = args as Record<string, unknown>;
-
-      try {
-        switch (name) {
-          case "analyze-screenshot":
-            return this.handleAnalyzeScreenshot(params);
-          case "describe-diagram":
-            return this.handleDescribeDiagram(params);
-          case "review-ui-mockup":
-            return this.handleReviewUIMockup(params);
-          case "extract-visual-specs":
-            return this.handleExtractVisualSpecs(params);
-          case "compare-designs":
-            return this.handleCompareDesigns(params);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: `Error: ${error}` }],
-          isError: true,
-        };
-      }
-    });
+    ];
+    this.handlers = {
+      "analyze-screenshot": async (args) => this.handleAnalyzeScreenshot(args as Record<string, unknown>),
+      "describe-diagram": async (args) => this.handleDescribeDiagram(args as Record<string, unknown>),
+      "review-ui-mockup": async (args) => this.handleReviewUIMockup(args as Record<string, unknown>),
+      "extract-visual-specs": async (args) => this.handleExtractVisualSpecs(args as Record<string, unknown>),
+      "compare-designs": async (args) => this.handleCompareDesigns(args as Record<string, unknown>),
+    };
+    this.setupToolHandlers();
   }
 
   /* --------------------------------------------------------------------------
@@ -1482,14 +1443,7 @@ class MultimodalLookerServer {
     return recommendations;
   }
 
-  /* --------------------------------------------------------------------------
-   * Server Lifecycle
-   * -------------------------------------------------------------------------- */
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-  }
 }
 
 const entryPoint = fs.realpathSync(process.argv[1] ?? "");

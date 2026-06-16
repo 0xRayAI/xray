@@ -5,12 +5,7 @@
  * design pattern recommendations, and system architecture guidance
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
@@ -27,72 +22,48 @@ interface RecommendPatternsArgs {
   scale?: string;
 }
 
-class XrayArchitecturePatternsServer {
-  private server: Server;
+class XrayArchitecturePatternsServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("architecture-patterns", "3.1.0");
+
+    this.tools = [
       {
-        name: "architecture-patterns", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze-architecture",
+        description:
+          "Analyze current system architecture and identify patterns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            focusPatterns: { type: "array", items: { type: "string" } },
+          },
+          required: ["projectRoot"],
         },
       },
-    );
+      {
+        name: "recommend-patterns",
+        description:
+          "Recommend architectural patterns for specific use cases",
+        inputSchema: {
+          type: "object",
+          properties: {
+            useCase: { type: "string" },
+            constraints: { type: "array", items: { type: "string" } },
+            scale: { type: "string", enum: ["small", "medium", "large"] },
+          },
+          required: ["useCase"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "analyze-architecture": async (args) => this.analyzeArchitecture(args as unknown as AnalyzeArchitectureArgs),
+      "recommend-patterns": async (args) => this.recommendPatterns(args as unknown as RecommendPatternsArgs),
+    };
 
     this.setupToolHandlers();
     // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze-architecture",
-            description:
-              "Analyze current system architecture and identify patterns",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                focusPatterns: { type: "array", items: { type: "string" } },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "recommend-patterns",
-            description:
-              "Recommend architectural patterns for specific use cases",
-            inputSchema: {
-              type: "object",
-              properties: {
-                useCase: { type: "string" },
-                constraints: { type: "array", items: { type: "string" } },
-                scale: { type: "string", enum: ["small", "medium", "large"] },
-              },
-              required: ["useCase"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze-architecture":
-          return await this.analyzeArchitecture(args as unknown as AnalyzeArchitectureArgs);
-        case "recommend-patterns":
-          return await this.recommendPatterns(args as unknown as RecommendPatternsArgs);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeArchitecture(args: AnalyzeArchitectureArgs) {
@@ -132,16 +103,6 @@ class XrayArchitecturePatternsServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "architecture-patterns.server",
-      server: this.server,
-    });
-  }
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

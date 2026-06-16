@@ -5,15 +5,8 @@
  * and collaborative development workflows
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
-import { frameworkLogger } from "../../core/framework-logger.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface AnalyzeGitHistoryArgs {
   projectRoot: string;
@@ -27,72 +20,43 @@ interface RecommendBranchingStrategyArgs {
   releaseFrequency?: string;
 }
 
-class XrayGitWorkflowServer {
-  private server: Server;
-
+class XrayGitWorkflowServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("git-workflow", "3.1.0");
+    this.tools = [
       {
-        name: "git-workflow", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze-git-history",
+        description: "Analyze git commit history and patterns",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: { type: "string" },
+            since: { type: "string" },
+            author: { type: "string" },
+          },
+          required: ["projectRoot"],
         },
       },
-    );
-
+      {
+        name: "recommend-branching-strategy",
+        description:
+          "Recommend branching strategy based on team size and project type",
+        inputSchema: {
+          type: "object",
+          properties: {
+            teamSize: { type: "number" },
+            projectType: { type: "string" },
+            releaseFrequency: { type: "string" },
+          },
+          required: ["teamSize", "projectType"],
+        },
+      },
+    ];
+    this.handlers = {
+      "analyze-git-history": async (args) => this.analyzeGitHistory(args as unknown as AnalyzeGitHistoryArgs),
+      "recommend-branching-strategy": async (args) => this.recommendBranchingStrategy(args as unknown as RecommendBranchingStrategyArgs),
+    };
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze-git-history",
-            description: "Analyze git commit history and patterns",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: { type: "string" },
-                since: { type: "string" },
-                author: { type: "string" },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "recommend-branching-strategy",
-            description:
-              "Recommend branching strategy based on team size and project type",
-            inputSchema: {
-              type: "object",
-              properties: {
-                teamSize: { type: "number" },
-                projectType: { type: "string" },
-                releaseFrequency: { type: "string" },
-              },
-              required: ["teamSize", "projectType"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze-git-history":
-          return await this.analyzeGitHistory(args as unknown as AnalyzeGitHistoryArgs);
-        case "recommend-branching-strategy":
-          return await this.recommendBranchingStrategy(args as unknown as RecommendBranchingStrategyArgs);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeGitHistory(args: AnalyzeGitHistoryArgs) {
@@ -133,16 +97,7 @@ class XrayGitWorkflowServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "git-workflow.server",
-      server: this.server,
-    });
-  }
+
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

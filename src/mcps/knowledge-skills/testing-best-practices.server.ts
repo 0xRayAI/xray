@@ -5,16 +5,9 @@
  * test coverage optimization, and automated testing workflows
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface TestStrategy {
   type:
@@ -204,198 +197,31 @@ interface McpToolResponse {
   data?: Record<string, unknown>;
 }
 
-class XrayTestingBestPracticesServer {
-  private server: Server;
+class XrayTestingBestPracticesServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
-      {
-        name: "testing-best-practices", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
+    super("testing-best-practices", "3.1.0");
+
+    this.tools = [
+      { name: "analyze_test_coverage", description: "Analyze current test coverage and identify gaps", inputSchema: { type: "object", properties: { codePath: { type: "string", description: "Path to codebase to analyze" }, testFramework: { type: "string", description: "Testing framework used (jest, vitest, mocha, etc.)", default: "auto-detect" }, coverageThreshold: { type: "number", description: "Minimum coverage threshold (0-100)", default: 80 } }, required: ["codePath"] } },
+      { name: "design_test_strategy", description: "Design comprehensive testing strategy for a project", inputSchema: { type: "object", properties: { projectType: { type: "string", enum: ["web-app", "api", "library", "mobile", "desktop"], description: "Type of project" }, techStack: { type: "array", items: { type: "string" }, description: "Technologies used (react, node, typescript, etc.)" }, teamSize: { type: "string", enum: ["solo", "small", "medium", "large"], description: "Development team size" }, timeline: { type: "string", enum: ["rapid", "balanced", "thorough"], description: "Development timeline priority" } }, required: ["projectType"] } },
+      { name: "implement_tdd_workflow", description: "Implement Test-Driven Development workflow and practices", inputSchema: { type: "object", properties: { language: { type: "string", description: "Programming language", default: "typescript" }, framework: { type: "string", description: "Preferred testing framework", default: "jest" }, existingTests: { type: "boolean", description: "Whether tests already exist", default: false } }, required: [] } },
+      { name: "optimize_test_performance", description: "Analyze and optimize test execution performance", inputSchema: { type: "object", properties: { testResults: { type: "string", description: "Path to test results or current execution time" }, targetRuntime: { type: "number", description: "Target test execution time in seconds", default: 300 }, parallelExecution: { type: "boolean", description: "Whether parallel execution is supported", default: true } }, required: ["testResults"] } },
+      { name: "setup_ci_cd_testing", description: "Set up comprehensive CI/CD testing pipeline", inputSchema: { type: "object", properties: { ciPlatform: { type: "string", enum: ["github-actions", "gitlab-ci", "jenkins", "circle-ci", "travis-ci"], description: "CI/CD platform" }, testTypes: { type: "array", items: { type: "string", enum: ["unit", "integration", "e2e", "performance", "security"] }, description: "Types of tests to include" }, coverageReporting: { type: "boolean", description: "Enable coverage reporting", default: true } }, required: ["ciPlatform", "testTypes"] } },
+    ];
+
+    this.handlers = {
+      analyze_test_coverage: async (args) => this.analyzeTestCoverage(args as AnalyzeTestCoverageArgs),
+      design_test_strategy: async (args) => this.designTestStrategy(args as DesignTestStrategyArgs),
+      implement_tdd_workflow: async (args) => this.implementTDDWorkflow(args as ImplementTDDWorkflowArgs),
+      optimize_test_performance: async (args) => this.optimizeTestPerformance(args as OptimizeTestPerformanceArgs),
+      setup_ci_cd_testing: async (args) => this.setupCICDTesting(args as SetupCICDTestingArgs),
+    };
 
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_test_coverage",
-            description: "Analyze current test coverage and identify gaps",
-            inputSchema: {
-              type: "object",
-              properties: {
-                codePath: {
-                  type: "string",
-                  description: "Path to codebase to analyze",
-                },
-                testFramework: {
-                  type: "string",
-                  description:
-                    "Testing framework used (jest, vitest, mocha, etc.)",
-                  default: "auto-detect",
-                },
-                coverageThreshold: {
-                  type: "number",
-                  description: "Minimum coverage threshold (0-100)",
-                  default: 80,
-                },
-              },
-              required: ["codePath"],
-            },
-          },
-          {
-            name: "design_test_strategy",
-            description: "Design comprehensive testing strategy for a project",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectType: {
-                  type: "string",
-                  enum: ["web-app", "api", "library", "mobile", "desktop"],
-                  description: "Type of project",
-                },
-                techStack: {
-                  type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Technologies used (react, node, typescript, etc.)",
-                },
-                teamSize: {
-                  type: "string",
-                  enum: ["solo", "small", "medium", "large"],
-                  description: "Development team size",
-                },
-                timeline: {
-                  type: "string",
-                  enum: ["rapid", "balanced", "thorough"],
-                  description: "Development timeline priority",
-                },
-              },
-              required: ["projectType"],
-            },
-          },
-          {
-            name: "implement_tdd_workflow",
-            description:
-              "Implement Test-Driven Development workflow and practices",
-            inputSchema: {
-              type: "object",
-              properties: {
-                language: {
-                  type: "string",
-                  description: "Programming language",
-                  default: "typescript",
-                },
-                framework: {
-                  type: "string",
-                  description: "Preferred testing framework",
-                  default: "jest",
-                },
-                existingTests: {
-                  type: "boolean",
-                  description: "Whether tests already exist",
-                  default: false,
-                },
-              },
-              required: [],
-            },
-          },
-          {
-            name: "optimize_test_performance",
-            description: "Analyze and optimize test execution performance",
-            inputSchema: {
-              type: "object",
-              properties: {
-                testResults: {
-                  type: "string",
-                  description: "Path to test results or current execution time",
-                },
-                targetRuntime: {
-                  type: "number",
-                  description: "Target test execution time in seconds",
-                  default: 300,
-                },
-                parallelExecution: {
-                  type: "boolean",
-                  description: "Whether parallel execution is supported",
-                  default: true,
-                },
-              },
-              required: ["testResults"],
-            },
-          },
-          {
-            name: "setup_ci_cd_testing",
-            description: "Set up comprehensive CI/CD testing pipeline",
-            inputSchema: {
-              type: "object",
-              properties: {
-                ciPlatform: {
-                  type: "string",
-                  enum: [
-                    "github-actions",
-                    "gitlab-ci",
-                    "jenkins",
-                    "circle-ci",
-                    "travis-ci",
-                  ],
-                  description: "CI/CD platform",
-                },
-                testTypes: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "unit",
-                      "integration",
-                      "e2e",
-                      "performance",
-                      "security",
-                    ],
-                  },
-                  description: "Types of tests to include",
-                },
-                coverageReporting: {
-                  type: "boolean",
-                  description: "Enable coverage reporting",
-                  default: true,
-                },
-              },
-              required: ["ciPlatform", "testTypes"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_test_coverage":
-          return await this.analyzeTestCoverage(args as unknown as AnalyzeTestCoverageArgs) as CallToolResult;
-        case "design_test_strategy":
-          return await this.designTestStrategy(args as unknown as DesignTestStrategyArgs) as CallToolResult;
-        case "implement_tdd_workflow":
-          return await this.implementTDDWorkflow(args as unknown as ImplementTDDWorkflowArgs) as CallToolResult;
-        case "optimize_test_performance":
-          return await this.optimizeTestPerformance(args as unknown as OptimizeTestPerformanceArgs) as CallToolResult;
-        case "setup_ci_cd_testing":
-          return await this.setupCICDTesting(args as unknown as SetupCICDTestingArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
-  }
+  // setupToolHandlers removed — handled by XrayKnowledgeSkillBase via this.tools + this.handlers
 
   private async analyzeTestCoverage(args: AnalyzeTestCoverageArgs): Promise<McpToolResponse> {
     const {
@@ -1212,16 +1038,7 @@ class XrayTestingBestPracticesServer {
     return icons[type as keyof typeof icons] || "🧪";
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "testing-best-practices.server",
-      server: this.server,
-    });
-  }
+  // run() removed — handled by XrayKnowledgeSkillBase
 }
 
 // Run the server if this file is executed directly

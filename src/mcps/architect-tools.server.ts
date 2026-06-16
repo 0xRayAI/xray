@@ -5,13 +5,8 @@
  * Provides contextual analysis capabilities via MCP protocol
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolRequest,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
@@ -35,168 +30,149 @@ interface FileNode {
   extension: string;
 }
 
-class XrayArchitectToolsServer {
-  private server: Server;
+class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("architect-tools", "3.1.0");
+
+    this.tools = [
       {
-        name: "architect-tools", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "context-analysis",
+        description:
+          "Perform comprehensive codebase intelligence gathering including structure analysis, dependency mapping, and architectural pattern recognition",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: {
+              type: "string",
+              description: "Root directory of the project to analyze",
+            },
+            depth: {
+              type: "string",
+              enum: ["overview", "detailed", "comprehensive"],
+              default: "detailed",
+              description: "Analysis depth level",
+            },
+            includeFiles: {
+              type: "array",
+              items: { type: "string" },
+              description: "Specific files to include in analysis",
+            },
+          },
+          required: ["projectRoot"],
         },
       },
-    );
+      {
+        name: "codebase-structure",
+        description:
+          "Analyze file organization, module distribution, and directory hierarchy with optional metrics",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: {
+              type: "string",
+              description: "Root directory of the project",
+            },
+            includeMetrics: {
+              type: "boolean",
+              default: true,
+              description: "Include detailed metrics",
+            },
+            maxDepth: {
+              type: "number",
+              default: 10,
+              description: "Maximum directory depth to analyze",
+            },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "dependency-analysis",
+        description:
+          "Map component dependencies, identify coupling patterns, and assess architectural relationships",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: {
+              type: "string",
+              description: "Root directory of the project",
+            },
+            focusAreas: {
+              type: "array",
+              items: { type: "string" },
+              description: "Specific areas to focus dependency analysis on",
+            },
+            includeGraphs: {
+              type: "boolean",
+              default: true,
+              description: "Include dependency graphs in output",
+            },
+          },
+          required: ["projectRoot"],
+        },
+      },
+      {
+        name: "architecture-assessment",
+        description:
+          "Evaluate overall architectural health with scores, issues, and improvement recommendations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            projectRoot: {
+              type: "string",
+              description: "Root directory of the project",
+            },
+            assessmentType: {
+              type: "string",
+              enum: ["quick", "comprehensive"],
+              default: "comprehensive",
+              description: "Type of assessment to perform",
+            },
+            focusMetrics: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [
+                  "complexity",
+                  "coupling",
+                  "cohesion",
+                  "testability",
+                  "scalability",
+                ],
+              },
+              description: "Specific metrics to focus assessment on",
+            },
+          },
+          required: ["projectRoot"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "context-analysis": async (args) => this.contextAnalysis(args as Record<string, unknown> | undefined),
+      "codebase-structure": async (args) => this.codebaseStructure(args as Record<string, unknown> | undefined),
+      "dependency-analysis": async (args) => this.dependencyAnalysis(args as Record<string, unknown> | undefined),
+      "architecture-assessment": async (args) => this.architectureAssessment(args as Record<string, unknown> | undefined),
+    };
 
     this.setupToolHandlers();
     frameworkLogger.log("mcps/architect-tools", "init", "info", { message: "0xRay Architect Tools MCP Server initialized" });
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "context-analysis",
-            description:
-              "Perform comprehensive codebase intelligence gathering including structure analysis, dependency mapping, and architectural pattern recognition",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project to analyze",
-                },
-                depth: {
-                  type: "string",
-                  enum: ["overview", "detailed", "comprehensive"],
-                  default: "detailed",
-                  description: "Analysis depth level",
-                },
-                includeFiles: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific files to include in analysis",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "codebase-structure",
-            description:
-              "Analyze file organization, module distribution, and directory hierarchy with optional metrics",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                includeMetrics: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include detailed metrics",
-                },
-                maxDepth: {
-                  type: "number",
-                  default: 10,
-                  description: "Maximum directory depth to analyze",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "dependency-analysis",
-            description:
-              "Map component dependencies, identify coupling patterns, and assess architectural relationships",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                focusAreas: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific areas to focus dependency analysis on",
-                },
-                includeGraphs: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include dependency graphs in output",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-          {
-            name: "architecture-assessment",
-            description:
-              "Evaluate overall architectural health with scores, issues, and improvement recommendations",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectRoot: {
-                  type: "string",
-                  description: "Root directory of the project",
-                },
-                assessmentType: {
-                  type: "string",
-                  enum: ["quick", "comprehensive"],
-                  default: "comprehensive",
-                  description: "Type of assessment to perform",
-                },
-                focusMetrics: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "complexity",
-                      "coupling",
-                      "cohesion",
-                      "testability",
-                      "scalability",
-                    ],
-                  },
-                  description: "Specific metrics to focus assessment on",
-                },
-              },
-              required: ["projectRoot"],
-            },
-          },
-        ],
-      };
+  override setupToolHandlers(): void {
+    this.setupListToolsHandler();
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+      const handler = this.handlers[name];
+      if (!handler) throw new Error(`Unknown tool: ${name}`);
+      try {
+        return await handler(args);
+      } catch (error) {
+        frameworkLogger.log("mcps/architect-tools", "tool", "error", { tool: name, error: String(error) });
+        throw error;
+      }
     });
-
-    this.server.setRequestHandler(
-      CallToolRequestSchema,
-      async (request: CallToolRequest) => {
-        const { name, arguments: args } = request.params;
-
-        try {
-          switch (name) {
-            case "context-analysis":
-              return await this.contextAnalysis(args);
-            case "codebase-structure":
-              return await this.codebaseStructure(args);
-            case "dependency-analysis":
-              return await this.dependencyAnalysis(args);
-            case "architecture-assessment":
-              return await this.architectureAssessment(args);
-            default:
-              throw new Error(`Unknown tool: ${name}`);
-          }
-        } catch (error) {
-          frameworkLogger.log("mcps/architect-tools", "tool", "error", { tool: name, error: String(error) });
-          throw error;
-        }
-      },
-    );
   }
 
   // Tool implementations — delegates to real architect-tools library
@@ -274,65 +250,7 @@ class XrayArchitectToolsServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    frameworkLogger.log("mcps/architect-tools", "start", "info");
 
-    const cleanup = async (signal: string) => {
-      frameworkLogger.log("mcps/architect-tools", "shutdown", "info", { signal });
-
-      // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/architect-tools", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000); // 5 second timeout
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/architect-tools", "shutdown", "success");
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/architect-tools", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    // Handle multiple shutdown signals
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0); // Check if parent is alive
-        setTimeout(checkParent, 1000); // Check again in 1 second
-      } catch (error) {
-        // Parent process died, shut down gracefully
-        frameworkLogger.log("mcps/architect-tools", "parent-death", "info");
-        cleanup("parent-process-death");
-      }
-    };
-
-    // Start monitoring parent process
-    setTimeout(checkParent, 2000); // Start checking after 2 seconds
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/architect-tools", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/architect-tools", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-  }
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

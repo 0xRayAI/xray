@@ -5,18 +5,12 @@
  * profiling, benchmarking, memory analysis, and Core Web Vitals measurement
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import { frameworkLogger, generateJobId } from "../../core/framework-logger.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import fs from "fs";
 import path from "path";
 import os from "os";
 import { execSync } from "child_process";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface ProfileApplicationArgs {
   projectRoot: string;
@@ -217,30 +211,10 @@ interface McpToolResponse {
   data?: Record<string, unknown>;
 }
 
-class XrayPerformanceOptimizationServer {
-  private server: Server;
-  private startTime: number;
-
+class XrayPerformanceOptimizationServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      {
-        name: "performance-optimization", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
-
-    this.startTime = Date.now();
-    this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
+    super("performance-optimization", "3.1.0");
+    this.tools = [
           {
             name: "profile-application",
             description: "Run comprehensive performance profiling on the codebase to identify bottlenecks and hot paths",
@@ -323,38 +297,15 @@ class XrayPerformanceOptimizationServer {
               required: ["projectRoot"]
             }
           }
-        ]
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "profile-application":
-            return await this.handleProfileApplication(args as unknown as ProfileApplicationArgs) as never;
-          case "analyze-memory":
-            return await this.handleAnalyzeMemory(args as unknown as AnalyzeMemoryArgs) as never;
-          case "benchmark-code":
-            return await this.handleBenchmarkCode(args as unknown as BenchmarkCodeArgs) as never;
-          case "suggest-optimizations":
-            return await this.handleSuggestOptimizations(args as unknown as SuggestOptimizationsArgs) as never;
-          case "measure-core-web-vitals":
-            return await this.handleMeasureCoreWebVitals(args as unknown as MeasureCoreWebVitalsArgs) as never;
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        frameworkLogger.log("mcp/performance-optimization", "tool-handler", "error", { tool: name, error: String(error) });
-        return {
-          content: [{
-            type: "text",
-            text: `Error executing tool "${name}": ${error instanceof Error ? error.message : String(error)}`
-          }]
-        };
-      }
-    });
+    ];
+    this.handlers = {
+      "profile-application": async (args) => this.handleProfileApplication(args as unknown as ProfileApplicationArgs),
+      "analyze-memory": async (args) => this.handleAnalyzeMemory(args as unknown as AnalyzeMemoryArgs),
+      "benchmark-code": async (args) => this.handleBenchmarkCode(args as unknown as BenchmarkCodeArgs),
+      "suggest-optimizations": async (args) => this.handleSuggestOptimizations(args as unknown as SuggestOptimizationsArgs),
+      "measure-core-web-vitals": async (args) => this.handleMeasureCoreWebVitals(args as unknown as MeasureCoreWebVitalsArgs),
+    };
+    this.setupToolHandlers();
   }
 
   private async handleProfileApplication(args: ProfileApplicationArgs): Promise<McpToolResponse> {
@@ -2040,19 +1991,7 @@ ${result.recommendations.slice(0, 5).map((r, i) => `${i + 1}. ${r}`).join("\n") 
     return files.slice(0, 100);
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
 
-    createGracefulShutdown({
-      serverName: "performance-optimization.server",
-      server: this.server,
-    });
-
-    frameworkLogger.log("mcp/performance-optimization", "server-started", "info", {
-      uptime: Date.now() - this.startTime
-    });
-  }
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

@@ -1,5 +1,5 @@
+import { featuresConfigLoader } from "../../core/features-config.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { resolveConfigPath } from "../../core/config-paths.js";
 
 export class ProcessorConfigLoader {
   async loadProcessorConfig(): Promise<{
@@ -17,15 +17,9 @@ export class ProcessorConfigLoader {
     regressionTesting?: { enabled?: boolean };
     inferenceImprovement?: { enabled?: boolean };
   }> {
-    const fs = await import("fs");
-    const path = await import("path");
-
     try {
-      const configPath = resolveConfigPath("features.json") ?? path.join(process.cwd(), "xray", "features.json");
-      if (fs.existsSync(configPath)) {
-        const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        return config.processors || {};
-      }
+      const config = featuresConfigLoader.loadConfig();
+      return config.processors ?? {};
     } catch (error) {
       frameworkLogger.log("postprocessor", "processor-config-load-failed", "info", {
         error: error instanceof Error ? error.message : String(error),

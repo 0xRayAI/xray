@@ -5,16 +5,10 @@
  * and pattern recognition - provides deep project intelligence
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface ProjectMetrics {
   totalFiles: number;
@@ -136,30 +130,10 @@ interface McpToolResponse {
   content: Array<{ type: "text"; text: string }>;
 }
 
-class ProjectAnalysisServer {
-  private server: Server;
-
+class ProjectAnalysisServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      {
-        name: "project-analysis", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
-
-    this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
+    super("project-analysis", "3.1.0");
+    this.tools = [
           {
             name: "analyze-project-structure",
             description:
@@ -295,34 +269,15 @@ class ProjectAnalysisServer {
               required: ["proposalTitle", "proposalDescription"],
             },
           },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "analyze-project-structure":
-            return await this.analyzeProjectStructure(args as unknown as AnalyzeProjectStructureArgs) as CallToolResult;
-          case "assess-project-complexity":
-            return await this.assessProjectComplexity(args as unknown as AssessProjectComplexityArgs) as CallToolResult;
-          case "identify-project-patterns":
-            return await this.identifyProjectPatterns(args as unknown as IdentifyProjectPatternsArgs) as CallToolResult;
-          case "analyze-project-health":
-            return await this.analyzeProjectHealth(args as unknown as AnalyzeProjectHealthArgs) as CallToolResult;
-          case "analyze_proposal":
-            return await this.analyzeProposal(args as any) as CallToolResult;
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        frameworkLogger.log("mcps/project-analysis", "tool", "error", { tool: name, error: String(error) });
-        throw error;
-      }
-    });
+    ];
+    this.handlers = {
+      "analyze-project-structure": async (args) => this.analyzeProjectStructure(args as unknown as AnalyzeProjectStructureArgs),
+      "assess-project-complexity": async (args) => this.assessProjectComplexity(args as unknown as AssessProjectComplexityArgs),
+      "identify-project-patterns": async (args) => this.identifyProjectPatterns(args as unknown as IdentifyProjectPatternsArgs),
+      "analyze-project-health": async (args) => this.analyzeProjectHealth(args as unknown as AnalyzeProjectHealthArgs),
+      "analyze_proposal": async (args) => this.analyzeProposal(args as any),
+    };
+    this.setupToolHandlers();
   }
 
   private async analyzeProjectStructure(args: AnalyzeProjectStructureArgs): Promise<McpToolResponse> {
@@ -1037,69 +992,7 @@ class ProjectAnalysisServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    await frameworkLogger.log(
-      "mcp-project-analysis",
-      "server-started",
-      "success",
-    );
 
-    const cleanup = async (signal: string) => {
-      frameworkLogger.log("mcps/project-analysis", "shutdown", "info", { signal });
-
-      // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000); // 5 second timeout
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "success");
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/project-analysis", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    // Handle multiple shutdown signals
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0); // Check if parent is alive
-        setTimeout(checkParent, 1000); // Check again in 1 second
-      } catch (error) {
-        // Parent process died, shut down gracefully
-        frameworkLogger.log("mcps/project-analysis", "parent-death", "info");
-        cleanup("parent-process-death");
-      }
-    };
-
-    // Start monitoring parent process
-    setTimeout(checkParent, 2000); // Start checking after 2 seconds
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/project-analysis", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/project-analysis", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-  }
 }
 
 // Start the server if run directly

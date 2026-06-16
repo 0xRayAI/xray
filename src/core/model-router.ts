@@ -2,14 +2,12 @@
  * Model Router
  *
  * Intelligent model routing based on task complexity and type.
- * Integrates with features-config for task-based model selection.
+ * Uses featuresConfigLoader as the single source of truth for all model config.
  *
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2026-01-25
  */
 
-import * as fs from "fs";
-import * as path from "path";
 import {
   featuresConfigLoader,
   detectTaskType,
@@ -19,14 +17,6 @@ import {
 // ============================================================================
 // Types
 // ============================================================================
-
-interface ModelConfig {
-  model_routing?: Record<string, string>;
-  model_default?: string;
-  model_fallback?: string;
-  available_models?: string[];
-  deprecated_models?: string[];
-}
 
 interface TaskContext {
   toolName?: string;
@@ -40,38 +30,17 @@ interface TaskContext {
 // ============================================================================
 
 class ModelRouter {
-  private configPath: string;
-  private config: ModelConfig;
   private availableModels: string[];
 
-  constructor(configPath?: string) {
-    this.configPath =
-      configPath || path.resolve(process.cwd(), "opencode.json");
-    this.config = this.loadConfig();
+  constructor() {
     this.availableModels = this.discoverModels();
-  }
-
-  private loadConfig(): ModelConfig {
-    try {
-      const configData = fs.readFileSync(this.configPath, "utf8");
-      return JSON.parse(configData);
-    } catch (error) {
-      // Provide defaults if config not found
-      return {
-        model_routing: {},
-        model_default: "claude-sonnet-4",
-        model_fallback: "claude-haiku-4",
-      };
-    }
   }
 
   private discoverModels(): string[] {
     const defaultModels = [
-      // Anthropic Claude models (preferred for 0xRay)
       "claude-opus-4",
       "claude-sonnet-4",
       "claude-haiku-4",
-      // Other supported models
       "openai/gpt-4o",
       "openai/gpt-4o-mini",
       "google/gemini-pro-1.5",
@@ -80,7 +49,15 @@ class ModelRouter {
       "mistral/mistral-7b-instruct",
     ];
 
-    const configModels = this.config.available_models || [];
+    const featuresConfig = featuresConfigLoader.loadConfig();
+    const configModels: string[] = [];
+    if (featuresConfig.model_routing?.task_routing) {
+      for (const route of Object.values(featuresConfig.model_routing.task_routing)) {
+        if (route?.model && !configModels.includes(route.model)) {
+          configModels.push(route.model);
+        }
+      }
+    }
     const uniqueModels = new Set([...defaultModels, ...configModels]);
     return Array.from(uniqueModels);
   }
@@ -118,51 +95,34 @@ class ModelRouter {
   }
 
   /**
-   * Get validated model for agent type (legacy method)
+   * Get validated model for agent type
    */
   getValidatedModel(agentType?: string): string {
-    // 1. User preference (future enhancement)
-    const userModel = this.getUserPreference();
-    if (userModel && this.isModelAvailable(userModel)) {
-      return userModel;
-    }
+    const featuresConfig = featuresConfigLoader.loadConfig();
 
-    // 2. Check features config for agent-specific model
+    // 1. Check features config for agent-specific model
     if (agentType) {
-      const featuresConfig = featuresConfigLoader.loadConfig();
       const agentModel =
-        featuresConfig.agent_management.agent_models[agentType];
+        featuresConfig.agent_management?.agent_models?.[agentType];
       if (agentModel && this.isModelAvailable(agentModel)) {
         return agentModel;
       }
-
-      // Fall back to opencode.json model routing
-      if (this.config.model_routing?.[agentType]) {
-        const configModel = this.config.model_routing[agentType];
-        if (this.isModelAvailable(configModel)) {
-          return configModel;
-        }
-      }
     }
 
-    // 3. Framework default from features config
-    const featuresConfig = featuresConfigLoader.loadConfig();
+    // 2. Framework default from features config
     const defaultModel = featuresConfig.model_routing?.default_model;
     if (defaultModel && this.isModelAvailable(defaultModel)) {
       return defaultModel;
     }
 
-    // 4. Legacy default
-    const legacyDefault = this.config.model_default || "claude-sonnet-4";
-    if (this.isModelAvailable(legacyDefault)) {
-      return legacyDefault;
+    // 3. Hardcoded default
+    if (this.isModelAvailable("claude-sonnet-4")) {
+      return "claude-sonnet-4";
     }
 
-    // 5. Ultimate fallback
+    // 4. Ultimate fallback
     const fallbackModel =
-      featuresConfig.model_routing?.fallback_model ||
-      this.config.model_fallback ||
-      "claude-haiku-4";
+      featuresConfig.model_routing?.fallback_model || "claude-haiku-4";
     return fallbackModel;
   }
 
@@ -180,16 +140,7 @@ class ModelRouter {
     return featuresConfigLoader.getMaxTokensForTask(taskType);
   }
 
-  private getUserPreference(): string | null {
-    // Check for user-specific config (future enhancement)
-    return null;
-  }
-
-  private isModelAvailable(model: string): boolean {
-    if (this.config.deprecated_models?.includes(model)) {
-      return false;
-    }
-    // For now, accept all models - the API will validate
+  private isModelAvailable(_model: string): boolean {
     return true;
   }
 
@@ -197,9 +148,8 @@ class ModelRouter {
    * Reload configuration from disk
    */
   reloadConfig(): void {
-    this.config = this.loadConfig();
-    this.availableModels = this.discoverModels();
     featuresConfigLoader.clearCache();
+    this.availableModels = this.discoverModels();
   }
 
   /**

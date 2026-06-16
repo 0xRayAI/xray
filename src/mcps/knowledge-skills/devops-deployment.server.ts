@@ -5,15 +5,10 @@
  * CI/CD pipeline design, and infrastructure automation
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 
 interface DeploymentStrategy {
   name: string;
@@ -207,177 +202,151 @@ interface OptimizationRoadmap {
   finalMetrics: DeploymentMetricsInput;
 }
 
-class XrayDevOpsDeploymentServer {
-  private server: Server;
+class XrayDevOpsDeploymentServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("devops-deployment", "3.1.0");
+
+    this.tools = [
       {
-        name: "devops-deployment", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze_ci_cd_pipeline",
+        description:
+          "Analyze CI/CD pipeline configuration and suggest optimizations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            pipelineConfig: {
+              type: "string",
+              description: "CI/CD pipeline configuration (YAML/JSON)",
+            },
+            platform: {
+              type: "string",
+              enum: [
+                "github-actions",
+                "gitlab-ci",
+                "jenkins",
+                "circle-ci",
+                "azure-devops",
+              ],
+              description: "CI/CD platform being used",
+            },
+            includeSecurity: {
+              type: "boolean",
+              description: "Include security gate analysis",
+              default: true,
+            },
+          },
+          required: ["pipelineConfig", "platform"],
         },
       },
-    );
+      {
+        name: "design_deployment_strategy",
+        description:
+          "Design optimal deployment strategy for application requirements",
+        inputSchema: {
+          type: "object",
+          properties: {
+            applicationType: {
+              type: "string",
+              enum: [
+                "web-app",
+                "api",
+                "mobile",
+                "microservices",
+                "monolith",
+              ],
+              description: "Type of application",
+            },
+            scale: {
+              type: "string",
+              enum: ["small", "medium", "large", "enterprise"],
+              description: "Expected scale/traffic",
+            },
+            availability: {
+              type: "string",
+              enum: ["basic", "high", "critical"],
+              description: "Required availability level",
+            },
+            budget: {
+              type: "string",
+              enum: ["cost-optimized", "balanced", "performance-optimized"],
+              description: "Budget considerations",
+            },
+          },
+          required: ["applicationType", "scale"],
+        },
+      },
+      {
+        name: "generate_infrastructure_code",
+        description: "Generate infrastructure as code for deployment",
+        inputSchema: {
+          type: "object",
+          properties: {
+            platform: {
+              type: "string",
+              enum: ["aws", "azure", "gcp", "kubernetes"],
+              description: "Target cloud platform",
+            },
+            services: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Required services (database, cache, storage, etc.)",
+            },
+            environment: {
+              type: "string",
+              enum: ["development", "staging", "production"],
+              description: "Deployment environment",
+            },
+            scaling: {
+              type: "boolean",
+              description: "Include auto-scaling configuration",
+              default: true,
+            },
+          },
+          required: ["platform", "services"],
+        },
+      },
+      {
+        name: "optimize_deployment_performance",
+        description:
+          "Analyze and optimize deployment performance and reliability",
+        inputSchema: {
+          type: "object",
+          properties: {
+            currentMetrics: {
+              type: "object",
+              properties: {
+                deployTime: { type: "number" },
+                failureRate: { type: "number" },
+                rollbackTime: { type: "number" },
+              },
+              description: "Current deployment metrics",
+            },
+            constraints: {
+              type: "object",
+              properties: {
+                maxDowntime: { type: "number" },
+                budget: { type: "number" },
+                teamSize: { type: "number" },
+              },
+              description: "Business and technical constraints",
+            },
+          },
+          required: ["currentMetrics"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "analyze_ci_cd_pipeline": async (args) => this.analyzeCICDPipeline(args as CICDPipelineArgs),
+      "design_deployment_strategy": async (args) => this.designDeploymentStrategy(args as DeploymentStrategyArgs),
+      "generate_infrastructure_code": async (args) => this.generateInfrastructureCode(args as InfrastructureCodeArgs),
+      "optimize_deployment_performance": async (args) => this.optimizeDeploymentPerformance(args as DeploymentPerformanceArgs),
+    };
 
     this.setupToolHandlers();
     // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_ci_cd_pipeline",
-            description:
-              "Analyze CI/CD pipeline configuration and suggest optimizations",
-            inputSchema: {
-              type: "object",
-              properties: {
-                pipelineConfig: {
-                  type: "string",
-                  description: "CI/CD pipeline configuration (YAML/JSON)",
-                },
-                platform: {
-                  type: "string",
-                  enum: [
-                    "github-actions",
-                    "gitlab-ci",
-                    "jenkins",
-                    "circle-ci",
-                    "azure-devops",
-                  ],
-                  description: "CI/CD platform being used",
-                },
-                includeSecurity: {
-                  type: "boolean",
-                  description: "Include security gate analysis",
-                  default: true,
-                },
-              },
-              required: ["pipelineConfig", "platform"],
-            },
-          },
-          {
-            name: "design_deployment_strategy",
-            description:
-              "Design optimal deployment strategy for application requirements",
-            inputSchema: {
-              type: "object",
-              properties: {
-                applicationType: {
-                  type: "string",
-                  enum: [
-                    "web-app",
-                    "api",
-                    "mobile",
-                    "microservices",
-                    "monolith",
-                  ],
-                  description: "Type of application",
-                },
-                scale: {
-                  type: "string",
-                  enum: ["small", "medium", "large", "enterprise"],
-                  description: "Expected scale/traffic",
-                },
-                availability: {
-                  type: "string",
-                  enum: ["basic", "high", "critical"],
-                  description: "Required availability level",
-                },
-                budget: {
-                  type: "string",
-                  enum: ["cost-optimized", "balanced", "performance-optimized"],
-                  description: "Budget considerations",
-                },
-              },
-              required: ["applicationType", "scale"],
-            },
-          },
-          {
-            name: "generate_infrastructure_code",
-            description: "Generate infrastructure as code for deployment",
-            inputSchema: {
-              type: "object",
-              properties: {
-                platform: {
-                  type: "string",
-                  enum: ["aws", "azure", "gcp", "kubernetes"],
-                  description: "Target cloud platform",
-                },
-                services: {
-                  type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Required services (database, cache, storage, etc.)",
-                },
-                environment: {
-                  type: "string",
-                  enum: ["development", "staging", "production"],
-                  description: "Deployment environment",
-                },
-                scaling: {
-                  type: "boolean",
-                  description: "Include auto-scaling configuration",
-                  default: true,
-                },
-              },
-              required: ["platform", "services"],
-            },
-          },
-          {
-            name: "optimize_deployment_performance",
-            description:
-              "Analyze and optimize deployment performance and reliability",
-            inputSchema: {
-              type: "object",
-              properties: {
-                currentMetrics: {
-                  type: "object",
-                  properties: {
-                    deployTime: { type: "number" },
-                    failureRate: { type: "number" },
-                    rollbackTime: { type: "number" },
-                  },
-                  description: "Current deployment metrics",
-                },
-                constraints: {
-                  type: "object",
-                  properties: {
-                    maxDowntime: { type: "number" },
-                    budget: { type: "number" },
-                    teamSize: { type: "number" },
-                  },
-                  description: "Business and technical constraints",
-                },
-              },
-              required: ["currentMetrics"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_ci_cd_pipeline":
-          return await this.analyzeCICDPipeline(args as unknown as CICDPipelineArgs);
-        case "design_deployment_strategy":
-          return await this.designDeploymentStrategy(args as unknown as DeploymentStrategyArgs);
-        case "generate_infrastructure_code":
-          return await this.generateInfrastructureCode(args as unknown as InfrastructureCodeArgs);
-        case "optimize_deployment_performance":
-          return await this.optimizeDeploymentPerformance(args as unknown as DeploymentPerformanceArgs);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeCICDPipeline(args: CICDPipelineArgs) {
@@ -1602,16 +1571,6 @@ spec:
     }
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "devops-deployment.server",
-      server: this.server,
-    });
-  }
 }
 
 // Run the server if this file is executed directly

@@ -4,12 +4,7 @@
  * Automated security vulnerability scanning with dependency and code analysis
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -19,6 +14,7 @@ import {
   type LanguageConfig,
 } from "../utils/language-detector.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface SecurityScanArgs {
   scope?: string;
@@ -39,83 +35,73 @@ interface SecuritySummaryResults {
   summary: string;
 }
 
-class XraySecurityScanServer {
-  private server: Server;
-
+class XraySecurityScanServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("security-scan", "3.1.0");
+
+    this.tools = [
       {
-        name: "security-scan", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "security-scan",
+        description:
+          "Comprehensive security vulnerability scanning with dependency and code analysis",
+        inputSchema: {
+          type: "object",
+          properties: {
+            scope: {
+              type: "string",
+              enum: ["dependencies", "code", "full"],
+              default: "full",
+              description: "Scope of security scan",
+            },
+            auditLevel: {
+              type: "string",
+              enum: ["info", "low", "moderate", "high", "critical"],
+              default: "moderate",
+              description: "Audit level for vulnerability detection",
+            },
+            includeOutdated: {
+              type: "boolean",
+              default: true,
+              description: "Include outdated package analysis",
+            },
+          },
         },
       },
-    );
+      {
+        name: "dependency-audit",
+        description:
+          "Audit third-party dependencies for security vulnerabilities",
+        inputSchema: {
+          type: "object",
+          properties: {
+            packageManager: {
+              type: "string",
+              enum: ["npm", "yarn", "pnpm", "auto"],
+              default: "auto",
+              description: "Package manager to use",
+            },
+            auditLevel: {
+              type: "string",
+              enum: ["info", "low", "moderate", "high", "critical"],
+              default: "moderate",
+            },
+          },
+        },
+      },
+    ];
+
+    this.handlers = {
+      "security-scan": async (args) => this.handleSecurityScan(args),
+      "dependency-audit": async (args) => this.handleDependencyAudit(args),
+    };
 
     this.setupToolHandlers();
     frameworkLogger.log("mcps/security-scan", "initialize", "info");
   }
 
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "security-scan",
-            description:
-              "Comprehensive security vulnerability scanning with dependency and code analysis",
-            inputSchema: {
-              type: "object",
-              properties: {
-                scope: {
-                  type: "string",
-                  enum: ["dependencies", "code", "full"],
-                  default: "full",
-                  description: "Scope of security scan",
-                },
-                auditLevel: {
-                  type: "string",
-                  enum: ["info", "low", "moderate", "high", "critical"],
-                  default: "moderate",
-                  description: "Audit level for vulnerability detection",
-                },
-                includeOutdated: {
-                  type: "boolean",
-                  default: true,
-                  description: "Include outdated package analysis",
-                },
-              },
-            },
-          },
-          {
-            name: "dependency-audit",
-            description:
-              "Audit third-party dependencies for security vulnerabilities",
-            inputSchema: {
-              type: "object",
-              properties: {
-                packageManager: {
-                  type: "string",
-                  enum: ["npm", "yarn", "pnpm", "auto"],
-                  default: "auto",
-                  description: "Package manager to use",
-                },
-                auditLevel: {
-                  type: "string",
-                  enum: ["info", "low", "moderate", "high", "critical"],
-                  default: "moderate",
-                },
-              },
-            },
-          },
-        ],
-      };
-    });
+  protected override setupToolHandlers(): void {
+    this.setupListToolsHandler();
 
-    // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
@@ -635,11 +621,6 @@ ${results.recommendations.map((r) => `• ${r}`).join("\n") || "No recommendatio
 - Recommendations: ${recCount}`;
   }
 
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    frameworkLogger.log("mcps/security-scan", "start", "info");
-  }
 }
 
 // Start the server if run directly

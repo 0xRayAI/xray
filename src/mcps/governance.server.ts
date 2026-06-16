@@ -12,16 +12,15 @@
  * and the Dynamo Solar SSOT filter (required by default).
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import { mcpClientManager } from "./mcp-client.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
@@ -62,21 +61,104 @@ interface GovernReflectionArgs {
   context?: Record<string, unknown>;
 }
 
-class GovernanceServer {
-  private server: Server;
-
+class GovernanceServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("governance", "3.1.0");
+    this.tools = [
       {
-        name: "governance", version: "3.1.0",
+        name: "govern_proposals",
+        description:
+          "Run one or more proposals through the full 0xRay governance system. " +
+          "Internal deliberation via 3 skill MCPs + required Dynamo Solar SSOT filter. " +
+          "Returns merged structured decisions. " +
+          "Supports regulatory compliance proposals: AML/KYC, PSD2, GDPR content moderation, " +
+          "and other compliance-related governance scenarios.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            proposals: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  type: {
+                    type: "string",
+                    enum: ["fix", "refactor", "guard", "automate", "codify", "strategic", "compliance"],
+                  },
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  evidence: { type: "array", items: { type: "string" } },
+                  source: { type: "string" },
+                  confidence: { type: "number" },
+                },
+                required: ["type", "title", "description"],
+              },
+              description: "List of proposals to govern",
+            },
+            context: {
+              type: "object",
+              description: "Optional context about the proposals (project, phase, etc.)",
+            },
+            options: {
+              type: "object",
+              properties: {
+                require_external: {
+                  type: "boolean",
+                  default: true,
+                  description: "Whether external Dynamo/Solar governance is required (default: true)",
+                },
+              },
+            },
+          },
+          required: ["proposals"],
+        },
       },
       {
-        capabilities: {
-          tools: {},
+        name: "govern_reflection",
+        description:
+          "Parse a reflection (or reflection file) and run its extracted proposals through the full governance system. " +
+          "This is the primary way to govern outcomes from reflection-based workflows.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            reflectionPath: {
+              type: "string",
+              description: "Path to a reflection .md file (alternative to reflectionContent)",
+            },
+            reflectionContent: {
+              type: "string",
+              description: "Raw reflection content (alternative to reflectionPath)",
+            },
+            context: { type: "object" },
+          },
+          required: [],
         },
-      }
-    );
-
+      },
+      {
+        name: "get_active_codex",
+        description:
+          "Get the currently active Codex (SSOT) — returns metadata about the loaded codex terms, " +
+          "including version, term count, source path, and governance status. " +
+          "Optionally include the full raw codex data with includeRaw=true.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            includeRaw: {
+              type: "boolean",
+              description: "Whether to include the full raw codex data in the response",
+              default: false,
+            },
+          },
+          required: [],
+        },
+      },
+    ];
+    this.handlers = {
+      "govern_proposals": async (args) => this.handleGovernProposals(this.validateGovernProposalsArgs(args)),
+      "govern_reflection": async (args) => this.handleGovernReflection(this.validateGovernReflectionArgs(args)),
+      "get_active_codex": async (args) => this.handleGetActiveCodex(args as { includeRaw?: boolean }),
+    };
     this.setupToolHandlers();
   }
 
@@ -113,101 +195,8 @@ class GovernanceServer {
     return value as GovernReflectionArgs;
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "govern_proposals",
-            description:
-              "Run one or more proposals through the full 0xRay governance system. " +
-              "Internal deliberation via 3 skill MCPs + required Dynamo Solar SSOT filter. " +
-              "Returns merged structured decisions. " +
-              "Supports regulatory compliance proposals: AML/KYC, PSD2, GDPR content moderation, " +
-              "and other compliance-related governance scenarios.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                proposals: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      id: { type: "string" },
-                      type: {
-                        type: "string",
-                        enum: ["fix", "refactor", "guard", "automate", "codify", "strategic", "compliance"],
-                      },
-                      title: { type: "string" },
-                      description: { type: "string" },
-                      evidence: { type: "array", items: { type: "string" } },
-                      source: { type: "string" },
-                      confidence: { type: "number" },
-                    },
-                    required: ["type", "title", "description"],
-                  },
-                  description: "List of proposals to govern",
-                },
-                context: {
-                  type: "object",
-                  description: "Optional context about the proposals (project, phase, etc.)",
-                },
-                options: {
-                  type: "object",
-                  properties: {
-                    require_external: {
-                      type: "boolean",
-                      default: true,
-                      description: "Whether external Dynamo/Solar governance is required (default: true)",
-                    },
-                  },
-                },
-              },
-              required: ["proposals"],
-            },
-          },
-          {
-            name: "govern_reflection",
-            description:
-              "Parse a reflection (or reflection file) and run its extracted proposals through the full governance system. " +
-              "This is the primary way to govern outcomes from reflection-based workflows.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                reflectionPath: {
-                  type: "string",
-                  description: "Path to a reflection .md file (alternative to reflectionContent)",
-                },
-                reflectionContent: {
-                  type: "string",
-                  description: "Raw reflection content (alternative to reflectionPath)",
-                },
-                context: { type: "object" },
-              },
-              required: [],
-            },
-          },
-          {
-            name: "get_active_codex",
-            description:
-              "Get the currently active Codex (SSOT) — returns metadata about the loaded codex terms, " +
-              "including version, term count, source path, and governance status. " +
-              "Optionally include the full raw codex data with includeRaw=true.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                includeRaw: {
-                  type: "boolean",
-                  description: "Whether to include the full raw codex data in the response",
-                  default: false,
-                },
-              },
-              required: [],
-            },
-          },
-        ],
-      };
-    });
+  protected setupToolHandlers(): void {
+    this.setupListToolsHandler();
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
@@ -408,61 +397,7 @@ class GovernanceServer {
 
   async run(): Promise<void> {
     await this.initializeGovernance();
-
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-
-    let parentCheckTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = async (signal: string) => {
-      if (parentCheckTimer !== null) {
-        clearTimeout(parentCheckTimer);
-        parentCheckTimer = null;
-      }
-
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/governance", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000);
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/governance", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0);
-        parentCheckTimer = setTimeout(checkParent, 1000);
-      } catch (error) {
-        parentCheckTimer = null;
-        cleanup("parent-process-death");
-      }
-    };
-
-    parentCheckTimer = setTimeout(checkParent, 2000);
-
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/governance", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason) => {
-      frameworkLogger.log("mcps/governance", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
-      cleanup("unhandledRejection");
-    });
+    await super.run();
   }
 
   async connect(transport: Transport): Promise<void> {

@@ -9,6 +9,7 @@
  */
 
 import { EnhancedMultiAgentOrchestrator, enhancedMultiAgentOrchestrator } from "./enhanced-multi-agent-orchestrator.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import {
   universalLibrarianConsultation,
@@ -20,7 +21,6 @@ import type { ProcessorManager } from "../processors/processor-manager.js";
 import { VotingCoordinator } from "../delegation/voting-coordinator.js";
 import { getAgentExpertiseLevel } from "../delegation/agent-expertise.js";
 import { XrayStateManager } from "../state/state-manager.js";
-import fs from "fs";
 
 export interface OrchestratorConfig {
   maxConcurrentTasks: number;
@@ -106,24 +106,13 @@ export class XrayOrchestrator {
    */
   private loadOrchestratorConfig(): Partial<OrchestratorConfig> | null {
     try {
-const configPaths = [
-        ".xray/features.json",
-        ".xray/features.json",
-      ];
-      
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          const content = fs.readFileSync(configPath, "utf-8");
-          const features = JSON.parse(content);
-          
-          if (features.multi_agent_orchestration) {
-            const ma = features.multi_agent_orchestration;
-            return {
-              maxConcurrentTasks: ma.max_concurrent_agents,
-              conflictResolutionStrategy: this.mapConflictResolution(ma.conflict_resolution),
-            };
-          }
-        }
+      const features = featuresConfigLoader.loadConfig();
+      if (features.multi_agent_orchestration) {
+        const ma = features.multi_agent_orchestration;
+        return {
+          maxConcurrentTasks: ma.max_concurrent_agents,
+          conflictResolutionStrategy: this.mapConflictResolution(ma.conflict_resolution),
+        };
       }
     } catch (e) {
       // Silently continue with defaults

@@ -5,14 +5,9 @@
  * Provides session lifecycle management, state persistence, and cleanup utilities.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { XrayKnowledgeSkillBase, type ToolDefinition } from "../shared/knowledge-skill-base.js";
 
 interface Tool {
   name: string;
@@ -29,10 +24,9 @@ interface SessionData {
   expiresAt: number | undefined;
 }
 
-class SessionManagementServer {
-  private server: Server;
+class SessionManagementServer extends XrayKnowledgeSkillBase {
   private sessions: Map<string, SessionData> = new Map();
-  private tools: Tool[] = [
+  protected tools: ToolDefinition[] = [
     {
       name: "create_session",
       description:
@@ -161,49 +155,19 @@ class SessionManagementServer {
   ];
 
   constructor() {
-    this.server = new Server(
-      { name: "session-management", version: "3.1.0" },
-      { capabilities: { tools: {} } },
-    );
+    super("session-management", "3.1.0");
 
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: this.tools,
-    }));
+    this.handlers = {
+      create_session: async (args) => this.handleCreateSession(args as Record<string, unknown>),
+      get_session: async (args) => this.handleGetSession(args as Record<string, unknown>),
+      update_session: async (args) => this.handleUpdateSession(args as Record<string, unknown>),
+      delete_session: async (args) => this.handleDeleteSession(args as Record<string, unknown>),
+      list_sessions: async (args) => this.handleListSessions(args as Record<string, unknown>),
+      session_exists: async (args) => this.handleSessionExists(args as Record<string, unknown>),
+      cleanup_expired_sessions: async (args) => this.handleCleanupExpiredSessions(args as Record<string, unknown>),
+    };
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args = {} } = request.params;
-
-      try {
-        switch (name) {
-          case "create_session":
-            return this.handleCreateSession(args);
-          case "get_session":
-            return this.handleGetSession(args);
-          case "update_session":
-            return this.handleUpdateSession(args);
-          case "delete_session":
-            return this.handleDeleteSession(args);
-          case "list_sessions":
-            return this.handleListSessions(args);
-          case "session_exists":
-            return this.handleSessionExists(args);
-          case "cleanup_expired_sessions":
-            return this.handleCleanupExpiredSessions(args);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    });
+    this.setupToolHandlers();
   }
 
   private generateSessionId(): string {
@@ -513,60 +477,7 @@ class SessionManagementServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-
-    await frameworkLogger.log("mcp-session-management", "server-started", "success");
-
-    const cleanup = async (signal: string) => {
-      frameworkLogger.log("mcps/session-management", "shutdown", "info", { signal });
-
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/session-management", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000);
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/session-management", "shutdown", "success");
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/session-management", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0);
-        setTimeout(checkParent, 1000);
-      } catch {
-        frameworkLogger.log("mcps/session-management", "parent-death", "info");
-        cleanup("parent-process-death");
-      }
-    };
-
-    setTimeout(checkParent, 2000);
-
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/session-management", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/session-management", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-  }
+  // run() removed — handled by XrayKnowledgeSkillBase
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

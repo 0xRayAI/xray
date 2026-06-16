@@ -14,6 +14,7 @@
 import { readdirSync, existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { getConfigDir } from "../../core/config-paths.js";
+import { featuresConfigLoader } from "../../core/features-config.js";
 
 interface StatusReport {
   opencode: {
@@ -96,20 +97,17 @@ function getAgentsList(cwd: string): { count: number; names: string[] } {
     } catch { /* ignore */ }
   }
 
-  const featuresPath = join(configDir, "xray", "features.json");
-  if (existsSync(featuresPath)) {
-    try {
-      const features = JSON.parse(readFileSync(featuresPath, "utf-8"));
-      if (features.agent_management?.disabled_agents) {
-        const disabled = features.agent_management.disabled_agents;
-        agentsFromSkills.forEach((agent) => {
-          if (!disabled.includes(agent) && !configuredAgents.includes(agent)) {
-            configuredAgents.push(agent);
-          }
-        });
-      }
-    } catch { /* ignore */ }
-  }
+  try {
+    const features = featuresConfigLoader.loadConfig();
+    if (features.agent_management?.disabled_agents) {
+      const disabled = features.agent_management.disabled_agents;
+      agentsFromSkills.forEach((agent) => {
+        if (!disabled.includes(agent) && !configuredAgents.includes(agent)) {
+          configuredAgents.push(agent);
+        }
+      });
+    }
+  } catch { /* ignore */ }
 
   if (configuredAgents.length === 0) {
     configuredAgents.push(...agentsFromSkills);

@@ -4,15 +4,10 @@
  * Comprehensive ESLint validation and automated code quality checking
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import { execFileSync } from "child_process";
 import fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface LintArgs {
   files?: string[];
@@ -33,20 +28,63 @@ interface LintResults {
   details: string[];
 }
 
-class XrayLintServer {
-  private server: Server;
-
+class XrayLintServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("lint", "3.1.0");
+
+    this.tools = [
       {
-        name: "lint", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "lint",
+        description:
+          "Comprehensive ESLint validation and automated code quality checking",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Specific files to lint (optional - lints all if empty)",
+            },
+            fix: {
+              type: "boolean",
+              default: false,
+              description:
+                "Automatically fix linting issues where possible",
+            },
+            strict: {
+              type: "boolean",
+              default: false,
+              description: "Use strict linting rules",
+            },
+          },
         },
       },
-    );
+      {
+        name: "lint-check",
+        description: "Check code quality without making changes",
+        inputSchema: {
+          type: "object",
+          properties: {
+            files: {
+              type: "array",
+              items: { type: "string" },
+              description: "Files to check",
+            },
+            rules: {
+              type: "array",
+              items: { type: "string" },
+              description: "Specific ESLint rules to check",
+            },
+          },
+        },
+      },
+    ];
+
+    this.handlers = {
+      "lint": async (args) => this.handleLint(args as LintArgs),
+      "lint-check": async (args) => this.handleLintCheck(args as LintCheckArgs),
+    };
 
     this.setupToolHandlers();
     void frameworkLogger.log(
@@ -55,87 +93,6 @@ class XrayLintServer {
       "info",
       { message: "0xRay Lint MCP Server initialized" },
     );
-  }
-
-  private setupToolHandlers() {
-    // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "lint",
-            description:
-              "Comprehensive ESLint validation and automated code quality checking",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description:
-                    "Specific files to lint (optional - lints all if empty)",
-                },
-                fix: {
-                  type: "boolean",
-                  default: false,
-                  description:
-                    "Automatically fix linting issues where possible",
-                },
-                strict: {
-                  type: "boolean",
-                  default: false,
-                  description: "Use strict linting rules",
-                },
-              },
-            },
-          },
-          {
-            name: "lint-check",
-            description: "Check code quality without making changes",
-            inputSchema: {
-              type: "object",
-              properties: {
-                files: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Files to check",
-                },
-                rules: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific ESLint rules to check",
-                },
-              },
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "lint":
-            return await this.handleLint(args as unknown as LintArgs);
-          case "lint-check":
-            return await this.handleLintCheck(args as unknown as LintCheckArgs);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `❌ Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-        };
-      }
-    });
   }
 
   private async handleLint(args: LintArgs) {
@@ -462,16 +419,6 @@ ${checkResults.details.map((d) => `• ${d}`).join("\n")}
 - Fixed: ${results.issues.fixed}`;
   }
 
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    await frameworkLogger.log(
-      "lint.server",
-      "-xray-lint-mcp-server-started-",
-      "info",
-      { message: "0xRay Lint MCP Server started" },
-    );
-  }
 }
 
 // Start the server if run directly

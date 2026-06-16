@@ -10,19 +10,11 @@
 import { frameworkLogger } from '../core/framework-logger.js';
 import { pluginRegistry } from './plugin-registry.js';
 import type { ToolDefinition } from './plugin-registry.js';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-const origSetRequestHandler = Server.prototype.setRequestHandler;
-Server.prototype.setRequestHandler = function (this: any, schema: any, handler: any) {
-  if (schema === ListToolsRequestSchema) {
-    this.__xrayListToolsHandler = handler;
-  }
-  if (schema === CallToolRequestSchema) {
-    this.__xrayCallToolHandler = handler;
-  }
-  return origSetRequestHandler.call(this, schema, handler);
-};
+// Note: handlers are extracted directly from the SDK's Server internal
+// _requestHandlers Map (keyed by method literal) instead of patching
+// Server.prototype.setRequestHandler. This avoids global prototype mutation
+// while preserving access to the same tool/handler metadata.
 
 // ── Named exports (17 servers) ──────────────────────────────────────────────
 import { XrayCodeReviewServer } from '../mcps/knowledge-skills/code-review.server.js';
@@ -81,22 +73,20 @@ async function toServerDescriptor(
   const srv = instance as {
     tools?: ToolDefinition[];
     handlers?: Record<string, (args: unknown) => Promise<unknown>>;
-    server?: {
-      __xrayListToolsHandler?: () => Promise<{ tools: ToolDefinition[] }>;
-      __xrayCallToolHandler?: (req: { params: { name: string; arguments: Record<string, unknown> } }) => Promise<unknown>;
-    };
+    server?: Record<string, unknown>;
   };
   const tools = srv.tools ?? [];
   const handlers = srv.handlers ?? {};
 
-  // Try captured handlers from the inner MCP Server instance
+  // Read handlers from SDK's internal _requestHandlers Map (keyed by method literal)
   const mcp = srv.server;
-  const listHandler = mcp?.__xrayListToolsHandler ?? (srv as any).__xrayListToolsHandler;
-  const callHandler = mcp?.__xrayCallToolHandler ?? (srv as any).__xrayCallToolHandler;
+  const requestHandlers = (mcp as any)?._requestHandlers as Map<string, (request: any, extra?: any) => Promise<any>> | undefined;
+  const listHandler = requestHandlers?.get('tools/list');
+  const callHandler = requestHandlers?.get('tools/call');
 
   if (tools.length === 0 && listHandler) {
     try {
-      const listResult = await listHandler();
+      const listResult = await listHandler({ method: 'tools/list', params: {} }, {});
       if (listResult?.tools?.length) {
         return {
           name: serverName,
@@ -105,7 +95,8 @@ async function toServerDescriptor(
             if (!callHandler) {
               throw new Error(`Unknown tool '${toolName}' on server '${serverName}'`);
             }
-            return callHandler({ params: { name: toolName, arguments: args } });
+            const result = await callHandler({ method: 'tools/call', params: { name: toolName, arguments: args } }, {});
+            return result;
           },
         };
       }
@@ -205,7 +196,7 @@ export async function registerDefaultPlugins(): Promise<DefaultPluginsResult> {
     { label: 'git-workflow',          create: () => new XrayGitWorkflowServer(),          serverName: 'git-workflow' },
     { label: 'log-monitor',           create: () => new LogMonitorServer(),               serverName: 'log-monitor' },
     { label: 'session-management',    create: () => new SessionManagementServer(),        serverName: 'session-management' },
-    { label: 'strategist',            create: () => new StrategistServer(),               serverName: 'xray/strategist' },
+    { label: 'strategist',            create: () => new StrategistServer(),               serverName: 'strategist' },
   ]);
 
   // ── Batch 5: Content & Growth ──
@@ -220,7 +211,7 @@ export async function registerDefaultPlugins(): Promise<DefaultPluginsResult> {
   // ── Batch 6: Specialized ──
   const batch6Count = await registerBatch('specialized', [
     { label: 'bug-triage-specialist',    create: () => new BugTriageSpecialistServer() as any,        serverName: 'bug-triage-specialist' },
-    { label: 'skill-invocation',         create: () => new SkillInvocationServer() as any,           serverName: 'xray/skill-invocation' },
+    { label: 'skill-invocation',         create: () => new SkillInvocationServer() as any,           serverName: 'skill-invocation' },
     { label: 'testing-best-practices',   create: () => new XrayTestingBestPracticesServer(),    serverName: 'testing-best-practices' },
   ]);
 

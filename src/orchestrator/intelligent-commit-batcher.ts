@@ -5,9 +5,8 @@
  * Configuration is read from .xray/features.json -> commit_cycle
  */
 
-import * as fs from "fs";
-import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import { runCommandSafe } from "../utils/command-runner.js";
 
 export interface PendingChange {
@@ -92,15 +91,7 @@ export class IntelligentCommitBatcher {
 
   private loadFeaturesConfig(): { commit_cycle?: { auto_commit?: { min_changes_to_commit?: number; force_commit_after_minutes?: number; enabled?: boolean }; require_reflection?: { max_commits_since_reflection?: number; enabled?: boolean } } } | null {
     try {
-      const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-      ];
-
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          return JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        }
-      }
+      return featuresConfigLoader.loadConfig() as any;
     } catch (e) {
       frameworkLogger.log(
         "intelligent-commit-batcher",

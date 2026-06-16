@@ -5,16 +5,9 @@
  * modernization, and code improvement patterns
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface RefactoringOpportunity {
   type:
@@ -155,29 +148,10 @@ interface RollbackPlan {
   emergencyProcedures: string[];
 }
 
-class XrayRefactoringStrategiesServer {
-  private server: Server;
-
+class XrayRefactoringStrategiesServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      {
-        name: "refactoring-strategies", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
-
-    this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
+    super("refactoring-strategies", "3.1.0");
+    this.tools = [
           {
             name: "analyze_technical_debt",
             description:
@@ -296,26 +270,14 @@ class XrayRefactoringStrategiesServer {
               required: ["codePath"],
             },
           },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_technical_debt":
-          return await this.analyzeTechnicalDebt(args as unknown as AnalyzeTechnicalDebtArgs) as CallToolResult;
-        case "suggest_refactoring":
-          return await this.suggestRefactoring(args as unknown as SuggestRefactoringArgs) as CallToolResult;
-        case "generate_refactoring_plan":
-          return await this.generateRefactoringPlan(args as unknown as GenerateRefactoringPlanArgs) as CallToolResult;
-        case "modernize_codebase":
-          return await this.modernizeCodebase(args as unknown as ModernizeCodebaseArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
+    ];
+    this.handlers = {
+      "analyze_technical_debt": async (args) => this.analyzeTechnicalDebt(args as unknown as AnalyzeTechnicalDebtArgs),
+      "suggest_refactoring": async (args) => this.suggestRefactoring(args as unknown as SuggestRefactoringArgs),
+      "generate_refactoring_plan": async (args) => this.generateRefactoringPlan(args as unknown as GenerateRefactoringPlanArgs),
+      "modernize_codebase": async (args) => this.modernizeCodebase(args as unknown as ModernizeCodebaseArgs),
+    };
+    this.setupToolHandlers();
   }
 
   private async analyzeTechnicalDebt(args: AnalyzeTechnicalDebtArgs) {
@@ -1072,16 +1034,7 @@ class XrayRefactoringStrategiesServer {
     return icons[effort as keyof typeof icons] || "❓";
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "refactoring-strategies.server",
-      server: this.server,
-    });
-  }
+
 }
 
 // Run the server if this file is executed directly

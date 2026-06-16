@@ -738,6 +738,24 @@ function logTestAutoCreationResult(results: ProcessorResult[], logger: PluginLog
 // Main plugin function
 // ---------------------------------------------------------------------------
 
+export {
+  classifyTaskType,
+  validateModulePath,
+  extractCodexMetadata,
+  isWriteEditOperation,
+  isPublishOperation,
+  runEnforcerQualityGate,
+  getFrameworkVersion,
+  getFrameworkIdentity,
+  TOOL_AGENT_MAP,
+  registerAllProcessors,
+  registerAfterPostProcessors,
+  createCodexContextEntry,
+  formatCodexContext,
+  resolveAgentName,
+  PluginLogger,
+};
+
 export default async function xrayCodexPlugin(input: {
   client?: string;
   directory?: string;
@@ -1043,7 +1061,7 @@ export default async function xrayCodexPlugin(input: {
         return;
       }
 
-      const agentMentionRegex = /@(\w+)(?:\s+(.+?))?(?=$|\n\n|\r\r)/g;
+      const agentMentionRegex = /@([\w-]+)(?:\s+(.+?))?(?=$|\n\n|\r\r)/g;
       let match;
       let hasAgentMention = false;
       let transformedText = textContent;
@@ -1051,26 +1069,26 @@ export default async function xrayCodexPlugin(input: {
       const knownAgents: Record<string, string> = {
         "architect": "architect",
         "strategist": "strategist",
-        "testing-lead": "testing-lead",
-        "bug-triage-specialist": "bug-triage-specialist",
-        "code-reviewer": "code-reviewer",
-        "security-auditor": "security-auditor",
+        "testinglead": "testing-lead",
+        "bugtriagespecialist": "bug-triage-specialist",
+        "codereviewer": "code-reviewer",
+        "securityauditor": "security-auditor",
         "refactorer": "refactorer",
         "researcher": "researcher",
-        "code-analyzer": "code-analyzer",
-        "frontend-engineer": "frontend-engineer",
-        "frontend-ui-ux-engineer": "frontend-ui-ux-engineer",
-        "backend-engineer": "backend-engineer",
-        "database-engineer": "database-engineer",
-        "devops-engineer": "devops-engineer",
-        "performance-engineer": "performance-engineer",
-        "mobile-developer": "mobile-developer",
-        "content-creator": "content-creator",
-        "growth-strategist": "growth-strategist",
-        "seo-consultant": "seo-consultant",
-        "tech-writer": "tech-writer",
-        "multimodal-looker": "multimodal-looker",
-        "log-monitor": "log-monitor",
+        "codeanalyzer": "code-analyzer",
+        "frontendengineer": "frontend-engineer",
+        "frontenduiuxengineer": "frontend-ui-ux-engineer",
+        "backendengineer": "backend-engineer",
+        "databaseengineer": "database-engineer",
+        "devopsengineer": "devops-engineer",
+        "performanceengineer": "performance-engineer",
+        "mobiledeveloper": "mobile-developer",
+        "contentcreator": "content-creator",
+        "growthstrategist": "growth-strategist",
+        "seoconsultant": "seo-consultant",
+        "techwriter": "tech-writer",
+        "multimodallooker": "multimodal-looker",
+        "logmonitor": "log-monitor",
       };
 
       while ((match = agentMentionRegex.exec(textContent)) !== null) {

@@ -5,15 +5,9 @@
  * component patterns, accessibility compliance, and design system guidance
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface UIDesignAnalysis {
   component: string;
@@ -187,262 +181,35 @@ interface ToolResponse {
   isError?: boolean;
 }
 
-class XrayUIUXDesignServer {
-  private server: Server;
+class XrayUIUXDesignServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
-      {
-        name: "ui-ux-design", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
+    super("ui-ux-design", "3.1.0");
+
+    this.tools = [
+      { name: "analyze_ui_component", description: "Analyze UI component for accessibility, usability, and design best practices", inputSchema: { type: "object", properties: { componentCode: { type: "string", description: "React/Vue/Angular component code to analyze" }, framework: { type: "string", enum: ["react", "vue", "angular", "svelte"], description: "UI framework being used" }, checkAccessibility: { type: "boolean", description: "Include WCAG accessibility analysis", default: true }, checkResponsive: { type: "boolean", description: "Include responsive design analysis", default: true } }, required: ["componentCode", "framework"] } },
+      { name: "design_component", description: "Design a UI component with proper accessibility and UX patterns", inputSchema: { type: "object", properties: { componentType: { type: "string", enum: ["button", "input", "modal", "navigation", "card", "form"], description: "Type of component to design" }, requirements: { type: "string", description: "Functional requirements and use cases" }, framework: { type: "string", enum: ["react", "vue", "angular", "svelte"], description: "Target UI framework" }, accessibility: { type: "boolean", description: "Include accessibility features", default: true } }, required: ["componentType", "requirements", "framework"] } },
+      { name: "audit_accessibility", description: "Perform comprehensive accessibility audit using WCAG guidelines", inputSchema: { type: "object", properties: { htmlContent: { type: "string", description: "HTML content to audit for accessibility" }, cssContent: { type: "string", description: "CSS styles to check for accessibility" }, wcagLevel: { type: "string", enum: ["A", "AA", "AAA"], description: "WCAG conformance level to check", default: "AA" } }, required: ["htmlContent"] } },
+      { name: "generate_design_system", description: "Generate a comprehensive design system with colors, typography, and components", inputSchema: { type: "object", properties: { brandGuidelines: { type: "string", description: "Brand colors, fonts, and style guidelines" }, targetAudience: { type: "string", description: "Target user demographics and preferences" }, platform: { type: "string", enum: ["web", "mobile", "desktop"], description: "Target platform" }, includeAccessibility: { type: "boolean", description: "Include accessibility-compliant design tokens", default: true } }, required: ["brandGuidelines", "platform"] } },
+      { name: "validate_mobile_design", description: "Validate mobile-first design principles including touch targets, responsive typography, and thumb zone optimization", inputSchema: { type: "object", properties: { componentCode: { type: "string", description: "Component code to validate for mobile" }, viewportWidth: { type: "number", description: "Minimum viewport width to validate (default: 320)", default: 320 }, framework: { type: "string", enum: ["react", "vue", "angular", "svelte", "css"], description: "UI framework or CSS" } }, required: ["componentCode"] } },
+      { name: "analyze_visual_hierarchy", description: "Analyze visual hierarchy and cognitive load following 'Don't Make Me Think' principles", inputSchema: { type: "object", properties: { designCode: { type: "string", description: "HTML/CSS/React code of the design to analyze" }, pageType: { type: "string", enum: ["landing", "dashboard", "form", "content", "ecommerce"], description: "Type of page being analyzed" } }, required: ["designCode"] } },
+      { name: "recommend_images", description: "Recommend appropriate image libraries, styles, and optimization strategies for the design context", inputSchema: { type: "object", properties: { context: { type: "string", description: "Design context (e.g., 'hero section', 'product gallery', 'team portraits')" }, style: { type: "string", enum: ["photography", "illustration", "3d", "abstract", "minimal"], description: "Preferred visual style" }, budget: { type: "string", enum: ["free", "low", "premium"], description: "Budget constraint", default: "free" } }, required: ["context"] } },
+    ];
+
+    this.handlers = {
+      analyze_ui_component: async (args) => this.analyzeUIComponent(args as AnalyzeUIComponentArgs),
+      design_component: async (args) => this.designComponent(args as DesignComponentArgs),
+      audit_accessibility: async (args) => this.auditAccessibility(args as AuditAccessibilityArgs),
+      generate_design_system: async (args) => this.generateDesignSystem(args as GenerateDesignSystemArgs),
+      validate_mobile_design: async (args) => this.validateMobileDesign(args as ValidateMobileDesignArgs),
+      analyze_visual_hierarchy: async (args) => this.analyzeVisualHierarchy(args as AnalyzeVisualHierarchyArgs),
+      recommend_images: async (args) => this.recommendImages(args as RecommendImagesArgs),
+    };
 
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_ui_component",
-            description:
-              "Analyze UI component for accessibility, usability, and design best practices",
-            inputSchema: {
-              type: "object",
-              properties: {
-                componentCode: {
-                  type: "string",
-                  description: "React/Vue/Angular component code to analyze",
-                },
-                framework: {
-                  type: "string",
-                  enum: ["react", "vue", "angular", "svelte"],
-                  description: "UI framework being used",
-                },
-                checkAccessibility: {
-                  type: "boolean",
-                  description: "Include WCAG accessibility analysis",
-                  default: true,
-                },
-                checkResponsive: {
-                  type: "boolean",
-                  description: "Include responsive design analysis",
-                  default: true,
-                },
-              },
-              required: ["componentCode", "framework"],
-            },
-          },
-          {
-            name: "design_component",
-            description:
-              "Design a UI component with proper accessibility and UX patterns",
-            inputSchema: {
-              type: "object",
-              properties: {
-                componentType: {
-                  type: "string",
-                  enum: [
-                    "button",
-                    "input",
-                    "modal",
-                    "navigation",
-                    "card",
-                    "form",
-                  ],
-                  description: "Type of component to design",
-                },
-                requirements: {
-                  type: "string",
-                  description: "Functional requirements and use cases",
-                },
-                framework: {
-                  type: "string",
-                  enum: ["react", "vue", "angular", "svelte"],
-                  description: "Target UI framework",
-                },
-                accessibility: {
-                  type: "boolean",
-                  description: "Include accessibility features",
-                  default: true,
-                },
-              },
-              required: ["componentType", "requirements", "framework"],
-            },
-          },
-          {
-            name: "audit_accessibility",
-            description:
-              "Perform comprehensive accessibility audit using WCAG guidelines",
-            inputSchema: {
-              type: "object",
-              properties: {
-                htmlContent: {
-                  type: "string",
-                  description: "HTML content to audit for accessibility",
-                },
-                cssContent: {
-                  type: "string",
-                  description: "CSS styles to check for accessibility",
-                },
-                wcagLevel: {
-                  type: "string",
-                  enum: ["A", "AA", "AAA"],
-                  description: "WCAG conformance level to check",
-                  default: "AA",
-                },
-              },
-              required: ["htmlContent"],
-            },
-          },
-          {
-            name: "generate_design_system",
-            description:
-              "Generate a comprehensive design system with colors, typography, and components",
-            inputSchema: {
-              type: "object",
-              properties: {
-                brandGuidelines: {
-                  type: "string",
-                  description: "Brand colors, fonts, and style guidelines",
-                },
-                targetAudience: {
-                  type: "string",
-                  description: "Target user demographics and preferences",
-                },
-                platform: {
-                  type: "string",
-                  enum: ["web", "mobile", "desktop"],
-                  description: "Target platform",
-                },
-                includeAccessibility: {
-                  type: "boolean",
-                  description: "Include accessibility-compliant design tokens",
-                  default: true,
-                },
-              },
-              required: ["brandGuidelines", "platform"],
-            },
-          },
-          {
-            name: "validate_mobile_design",
-            description:
-              "Validate mobile-first design principles including touch targets, responsive typography, and thumb zone optimization",
-            inputSchema: {
-              type: "object",
-              properties: {
-                componentCode: {
-                  type: "string",
-                  description: "Component code to validate for mobile",
-                },
-                viewportWidth: {
-                  type: "number",
-                  description:
-                    "Minimum viewport width to validate (default: 320)",
-                  default: 320,
-                },
-                framework: {
-                  type: "string",
-                  enum: ["react", "vue", "angular", "svelte", "css"],
-                  description: "UI framework or CSS",
-                },
-              },
-              required: ["componentCode"],
-            },
-          },
-          {
-            name: "analyze_visual_hierarchy",
-            description:
-              "Analyze visual hierarchy and cognitive load following 'Don't Make Me Think' principles",
-            inputSchema: {
-              type: "object",
-              properties: {
-                designCode: {
-                  type: "string",
-                  description: "HTML/CSS/React code of the design to analyze",
-                },
-                pageType: {
-                  type: "string",
-                  enum: [
-                    "landing",
-                    "dashboard",
-                    "form",
-                    "content",
-                    "ecommerce",
-                  ],
-                  description: "Type of page being analyzed",
-                },
-              },
-              required: ["designCode"],
-            },
-          },
-          {
-            name: "recommend_images",
-            description:
-              "Recommend appropriate image libraries, styles, and optimization strategies for the design context",
-            inputSchema: {
-              type: "object",
-              properties: {
-                context: {
-                  type: "string",
-                  description:
-                    "Design context (e.g., 'hero section', 'product gallery', 'team portraits')",
-                },
-                style: {
-                  type: "string",
-                  enum: [
-                    "photography",
-                    "illustration",
-                    "3d",
-                    "abstract",
-                    "minimal",
-                  ],
-                  description: "Preferred visual style",
-                },
-                budget: {
-                  type: "string",
-                  enum: ["free", "low", "premium"],
-                  description: "Budget constraint",
-                  default: "free",
-                },
-              },
-              required: ["context"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_ui_component":
-          return await this.analyzeUIComponent(args as unknown as AnalyzeUIComponentArgs) as CallToolResult;
-        case "design_component":
-          return await this.designComponent(args as unknown as DesignComponentArgs) as CallToolResult;
-        case "audit_accessibility":
-          return await this.auditAccessibility(args as unknown as AuditAccessibilityArgs) as CallToolResult;
-        case "generate_design_system":
-          return await this.generateDesignSystem(args as unknown as GenerateDesignSystemArgs) as CallToolResult;
-        case "validate_mobile_design":
-          return await this.validateMobileDesign(args as unknown as ValidateMobileDesignArgs) as CallToolResult;
-        case "analyze_visual_hierarchy":
-          return await this.analyzeVisualHierarchy(args as unknown as AnalyzeVisualHierarchyArgs) as CallToolResult;
-        case "recommend_images":
-          return await this.recommendImages(args as unknown as RecommendImagesArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
-  }
+  // setupToolHandlers removed — handled by XrayKnowledgeSkillBase via this.tools + this.handlers
 
   private async analyzeUIComponent(args: AnalyzeUIComponentArgs): Promise<ToolResponse> {
     const {
@@ -1981,91 +1748,7 @@ Available: ${Object.keys(system.components).length} component types
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    await frameworkLogger.log(
-      "ui-ux-design.server",
-      "-xray-ui-ux-design-mcp-server-running-",
-      "info",
-      { message: "xray UI/UX Design MCP Server running..." },
-    );
-
-    const cleanup = async (signal: string) => {
-      await frameworkLogger.log(
-        "ui-ux-design.server",
-        "-received-signal-shutting-down-gracefully-",
-        "info",
-        { message: `Received ${signal}, shutting down gracefully...` },
-      );
-
-      // Set a timeout to force exit if graceful shutdown fails
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/ui-ux-design", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000); // 5 second timeout
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        await frameworkLogger.log(
-          "ui-ux-design.server",
-          "-xray-mcp-server-shut-down-gracefully-",
-          "info",
-          { message: "xray MCP Server shut down gracefully" },
-        );
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/ui-ux-design", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    // Handle multiple shutdown signals
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    // Monitor parent process (opencode) and shutdown if it dies
-    const checkParent = async () => {
-      try {
-        process.kill(process.ppid, 0); // Check if parent is alive
-        setTimeout(checkParent, 1000); // Check again in 1 second
-      } catch (error) {
-        // Parent process died, shut down gracefully
-        await frameworkLogger.log(
-          "ui-ux-design.server",
-          "-parent-process-opencode-died-shutting-down-mcp-se",
-          "info",
-          {
-            message:
-              "Parent process (opencode) died, shutting down MCP server...",
-          },
-        );
-        cleanup("parent-process-death");
-      }
-    };
-
-    // Start monitoring parent process
-    setTimeout(checkParent, 2000); // Start checking after 2 seconds
-
-    // Handle uncaught exceptions and unhandled rejections
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/ui-ux-design", "uncaughtException", "error", { error: String(error) });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/ui-ux-design", "unhandledRejection", "error", { error: String(reason) });
-      cleanup("unhandledRejection");
-    });
-
-    process.on("SIGINT", cleanup);
-    process.on("SIGTERM", cleanup);
-  }
+  // run() removed — handled by XrayKnowledgeSkillBase
 }
 
 // Run the server if this file is executed directly

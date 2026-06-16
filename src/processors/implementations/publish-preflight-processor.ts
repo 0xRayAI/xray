@@ -20,7 +20,7 @@ import * as path from "path";
 import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { ProcessorContext, ProcessorResult } from "../processor-types.js";
-import { FeaturesConfig } from "../../core/features-config.js";
+import { FeaturesConfig, featuresConfigLoader } from "../../core/features-config.js";
 
 export interface PreflightResult {
   compliant: boolean;
@@ -64,18 +64,9 @@ export class PublishPreflightProcessor extends PostProcessor {
 
   private loadConfig(): void {
     try {
-      const configPaths = [
-        path.join(process.cwd(), ".xray", "features.json"),
-      ];
-
-      for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-          const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-          if (configData.publish) {
-            this.config = { ...this.config, ...configData.publish };
-          }
-          break;
-        }
+      const publishConfig = featuresConfigLoader.loadConfig().publish;
+      if (publishConfig) {
+        this.config = { ...this.config, ...publishConfig };
       }
     } catch (e) {
       frameworkLogger.log(

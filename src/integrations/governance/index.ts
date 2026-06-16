@@ -20,8 +20,7 @@ import { DEFAULT_GOVERNANCE_CONFIG } from './types.js';
 import { GovernanceClient } from './governance-client.js';
 import type { InferenceProposal } from '../../inference/inference-cycle.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
-import * as fs from 'fs';
-import * as path from 'path';
+import { featuresConfigLoader } from '../../core/features-config.js';
 
 /**
  * Main Governance Integration class
@@ -378,27 +377,20 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    */
   private async loadConfig(): Promise<void> {
     try {
-      const configPath = path.join(process.cwd(), '.xray', 'features.json');
-      
-      if (!fs.existsSync(configPath)) {
-        await this.log('warning', 'features.json not found, using defaults');
-        return;
-      }
+      const features = featuresConfigLoader.loadConfig() as any;
+      const inferenceGovernance = features.inference_governance;
 
-      const content = fs.readFileSync(configPath, 'utf-8');
-      const features = JSON.parse(content);
-
-      if (features.inference_governance) {
+      if (inferenceGovernance) {
         this.configData = {
           ...DEFAULT_GOVERNANCE_CONFIG,
-          enabled: features.inference_governance.enabled ?? false,
-          endpointUrl: features.inference_governance.endpoint_url ?? DEFAULT_GOVERNANCE_CONFIG.endpointUrl,
-          requestTimeoutMs: features.inference_governance.request_timeout_ms ?? DEFAULT_GOVERNANCE_CONFIG.requestTimeoutMs,
-          minConfidenceThreshold: features.inference_governance.min_confidence_threshold ?? DEFAULT_GOVERNANCE_CONFIG.minConfidenceThreshold,
+          enabled: inferenceGovernance.enabled ?? false,
+          endpointUrl: inferenceGovernance.endpoint_url ?? DEFAULT_GOVERNANCE_CONFIG.endpointUrl,
+          requestTimeoutMs: inferenceGovernance.request_timeout_ms ?? DEFAULT_GOVERNANCE_CONFIG.requestTimeoutMs,
+          minConfidenceThreshold: inferenceGovernance.min_confidence_threshold ?? DEFAULT_GOVERNANCE_CONFIG.minConfidenceThreshold,
           decisionLogic: {
-            passConfidenceMin: features.inference_governance.decision_logic?.pass_confidence_min ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.passConfidenceMin,
-            revisionConfidenceMax: features.inference_governance.decision_logic?.revision_confidence_max ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.revisionConfidenceMax,
-            voteWeightMultiplier: features.inference_governance.decision_logic?.vote_weight_multiplier ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.voteWeightMultiplier,
+            passConfidenceMin: inferenceGovernance.decision_logic?.pass_confidence_min ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.passConfidenceMin,
+            revisionConfidenceMax: inferenceGovernance.decision_logic?.revision_confidence_max ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.revisionConfidenceMax,
+            voteWeightMultiplier: inferenceGovernance.decision_logic?.vote_weight_multiplier ?? DEFAULT_GOVERNANCE_CONFIG.decisionLogic.voteWeightMultiplier,
           },
         };
       }
@@ -411,7 +403,6 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       await this.log('error', 'Failed to load configuration', {
         error: error instanceof Error ? error.message : String(error),
       });
-      // Use defaults on error
       this.configData = DEFAULT_GOVERNANCE_CONFIG;
     }
   }

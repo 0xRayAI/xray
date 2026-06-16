@@ -1,11 +1,9 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
   ErrorCode,
-  ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { AGENT_REGISTRY, getActiveAgents } from "../agents/registry.js";
@@ -17,107 +15,92 @@ interface CapabilitiesMap {
   reporting: { [key: string]: string };
 }
 
-class FrameworkHelpServer {
-  private server: Server;
+class FrameworkHelpServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("xray/framework-help", "3.1.0");
+
+    this.tools = [
       {
-        name: "xray/framework-help", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "xray_get_capabilities",
+        description:
+          "Get comprehensive list of all 0xRay framework capabilities, commands, and available tools",
+        inputSchema: {
+          type: "object",
+          properties: {
+            category: {
+              type: "string",
+              enum: ["all", "agents", "skills", "commands", "reporting"],
+              description: "Filter capabilities by category",
+              default: "all",
+            },
+            format: {
+              type: "string",
+              enum: ["summary", "detailed", "commands"],
+              description: "Output format",
+              default: "summary",
+            },
+          },
+          required: [],
         },
       },
-    );
+      {
+        name: "xray_get_commands",
+        description:
+          "Get list of available 0xRay commands and their usage",
+        inputSchema: {
+          type: "object",
+          properties: {
+            type: {
+              type: "string",
+              enum: [
+                "agent-commands",
+                "system-commands",
+                "reporting-commands",
+              ],
+              description: "Type of commands to list",
+              default: "agent-commands",
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: "xray_explain_capability",
+        description:
+          "Get detailed explanation of a specific 0xRay capability",
+        inputSchema: {
+          type: "object",
+          properties: {
+            capability: {
+              type: "string",
+              description: "Name of the capability to explain",
+            },
+          },
+          required: ["capability"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "xray_get_capabilities": async (args) => this.handleGetCapabilities(args as Record<string, unknown> | undefined),
+      "xray_get_commands": async (args) => this.handleGetCommands(args as Record<string, unknown> | undefined),
+      "xray_explain_capability": async (args) => this.handleExplainCapability(args as Record<string, unknown> | undefined),
+    };
 
     this.setupToolHandlers();
   }
 
-  private setupToolHandlers() {
-    // List available tools - required MCP protocol handler for tool discovery
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "xray_get_capabilities",
-            description:
-              "Get comprehensive list of all 0xRay framework capabilities, commands, and available tools",
-            inputSchema: {
-              type: "object",
-              properties: {
-                category: {
-                  type: "string",
-                  enum: ["all", "agents", "skills", "commands", "reporting"],
-                  description: "Filter capabilities by category",
-                  default: "all",
-                },
-                format: {
-                  type: "string",
-                  enum: ["summary", "detailed", "commands"],
-                  description: "Output format",
-                  default: "summary",
-                },
-              },
-              required: [],
-            },
-          },
-          {
-            name: "xray_get_commands",
-            description:
-              "Get list of available 0xRay commands and their usage",
-            inputSchema: {
-              type: "object",
-              properties: {
-                type: {
-                  type: "string",
-                  enum: [
-                    "agent-commands",
-                    "system-commands",
-                    "reporting-commands",
-                  ],
-                  description: "Type of commands to list",
-                  default: "agent-commands",
-                },
-              },
-              required: [],
-            },
-          },
-          {
-            name: "xray_explain_capability",
-            description:
-              "Get detailed explanation of a specific 0xRay capability",
-            inputSchema: {
-              type: "object",
-              properties: {
-                capability: {
-                  type: "string",
-                  description: "Name of the capability to explain",
-                },
-              },
-              required: ["capability"],
-            },
-          },
-        ],
-      };
-    });
-
-    // Handle tool calls - required MCP protocol handler for tool execution
+  override setupToolHandlers(): void {
+    this.setupListToolsHandler();
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-
+      const handler = this.handlers[name];
+      if (!handler) {
+        throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+      }
       try {
-        switch (name) {
-          case "xray_get_capabilities":
-            return this.handleGetCapabilities(args);
-          case "xray_get_commands":
-            return this.handleGetCommands(args);
-          case "xray_explain_capability":
-            return this.handleExplainCapability(args);
-          default:
-            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
-        }
+        return await handler(args);
       } catch (error) {
         if (error instanceof McpError) {
           throw error;
@@ -452,17 +435,12 @@ ${items.map(([name, desc]) => `- **${name}**: ${desc}`).join("\n")}
     `.trim();
   }
 
-  async start() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    frameworkLogger.log("mcps/framework-help", "start", "info", { message: "0xRay Framework Help Server started" });
-  }
 }
 
 // Auto-start if this file is run directly - conditional server initialization for development/testing
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {
   const server = new FrameworkHelpServer();
-  server.start().catch((error) => frameworkLogger.log("mcps/framework-help", "run", "error", { error: String(error) }));
+  server.run().catch((error) => frameworkLogger.log("mcps/framework-help", "run", "error", { error: String(error) }));
 }
 
 export { FrameworkHelpServer };

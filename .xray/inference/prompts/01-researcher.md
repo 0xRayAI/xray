@@ -15,6 +15,7 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/xray/docs/reflections/v3-nucleus-saga-reflection.md
 - /Users/blaze/dev/xray/docs/reflections/v3-pipeline-review-and-next-plan.md
 - /Users/blaze/dev/xray/docs/reflections/v3-wholeness-reflection.md
+- /Users/blaze/dev/xray/docs/reflections/v3.1-plugin-stabilization-reflection.md
 - /Users/blaze/dev/xray/docs/reflections/v3.4-governance-closure-architect-review.md
 - /Users/blaze/dev/xray/docs/reflections/v3.4-reboot-readiness.md
 - /Users/blaze/dev/xray/docs/reflections/what-is-v3.md

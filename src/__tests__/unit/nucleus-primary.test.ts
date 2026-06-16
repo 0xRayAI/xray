@@ -39,12 +39,6 @@ describe("nucleus barrel exports", () => {
     expect(typeof mod.governSingle).toBe("function");
   });
 
-  test("exports NucleusOrchestrator", async () => {
-    const mod = await import("../../nucleus/index.js");
-    expect(mod.NucleusOrchestrator).toBeDefined();
-    expect(typeof mod.NucleusOrchestrator).toBe("function");
-  });
-
   test("exports scoreComplexity", async () => {
     const mod = await import("../../nucleus/index.js");
     expect(mod.scoreComplexity).toBeDefined();
@@ -109,8 +103,9 @@ describe("inference-cycle — MCP governance paths present", () => {
     expect(source).toMatch(/\bparseGovernanceMcpResponse\b/);
   });
 
-  test("exports invokeAgentInternal", () => {
-    expect(source).toMatch(/\binvokeAgentInternal\b/);
+  test("exports invokeAgentInternal (via inference-agent-invoker)", () => {
+    const agentSource = readSource("src/inference/inference-agent-invoker.ts");
+    expect(agentSource).toMatch(/\binvokeAgent\b/);
   });
 
   test("references XRAY_FORCE_MCP_GOVERNANCE", () => {
@@ -121,8 +116,10 @@ describe("inference-cycle — MCP governance paths present", () => {
     expect(source).toMatch(/\bisGovernanceMcpPreferred\b/);
   });
 
-  test("uses getGovernanceIntegration from integrations/governance", () => {
-    expect(source).toMatch(/import.*getGovernanceIntegration.*integrations\/governance/);
+  test("governs exclusively via Governance MCP (no fallback paths)", () => {
+    expect(source).not.toMatch(/governProposalsInternal/);
+    expect(source).not.toMatch(/governProposalsExternal/);
+    expect(source).not.toMatch(/VotingCoordinator/);
   });
 });
 
@@ -183,7 +180,7 @@ describe("nucleus files — frameworkLogger only, no console.*", () => {
   }
 });
 
-describe("NucleusOrchestrator runtime behavior", () => {
+describe("thin-dispatch runtime behavior", () => {
   test("scoreComplexity returns expected shape", async () => {
     const { scoreComplexity } = await import("../../nucleus/index.js");
     const result = scoreComplexity("refactor authentication module", {

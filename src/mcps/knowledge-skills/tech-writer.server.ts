@@ -5,16 +5,9 @@
  * code documentation maintenance, and technical writing assistance
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
-import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface DocumentationAnalysis {
   completeness: number; // 0-100
@@ -160,198 +153,29 @@ interface ProjectStructureAnalysis {
   structure: Record<string, unknown>;
 }
 
-class XrayDocumentationGenerationServer {
-  private server: Server;
+class XrayDocumentationGenerationServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
-      {
-        name: "documentation-generation", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
+    super("documentation-generation", "3.1.0");
+
+    this.tools = [
+      { name: "analyze_documentation", description: "Analyze existing documentation for completeness, quality, and gaps", inputSchema: { type: "object", properties: { docsPath: { type: "string", description: "Path to documentation directory or files" }, codePath: { type: "string", description: "Path to corresponding code for comparison" }, docTypes: { type: "array", items: { type: "string", enum: ["readme", "api", "code", "architecture", "deployment", "user-guide"] }, description: "Types of documentation to analyze" } }, required: ["docsPath"] } },
+      { name: "generate_api_docs", description: "Generate comprehensive API documentation from code analysis", inputSchema: { type: "object", properties: { codePath: { type: "string", description: "Path to API code files" }, framework: { type: "string", enum: ["express", "fastify", "koa", "nestjs", "spring", "django", "flask", "fastapi"], description: "API framework being used" }, format: { type: "string", enum: ["openapi", "markdown", "html", "postman"], description: "Output documentation format", default: "openapi" }, includeExamples: { type: "boolean", description: "Include request/response examples", default: true } }, required: ["codePath", "framework"] } },
+      { name: "generate_code_documentation", description: "Generate inline code documentation and improve existing docs", inputSchema: { type: "object", properties: { codePath: { type: "string", description: "Path to code files to document" }, language: { type: "string", enum: ["typescript", "javascript", "python", "java", "csharp", "go", "rust"], description: "Programming language" }, style: { type: "string", enum: ["jsdoc", "docstring", "xml", "markdown"], description: "Documentation comment style", default: "jsdoc" }, includePrivate: { type: "boolean", description: "Include documentation for private members", default: false } }, required: ["codePath", "language"] } },
+      { name: "generate_readme", description: "Generate or improve project README documentation", inputSchema: { type: "object", properties: { projectPath: { type: "string", description: "Path to project root directory" }, projectType: { type: "string", enum: ["library", "application", "api", "cli", "framework"], description: "Type of project" }, includeSections: { type: "array", items: { type: "string" }, description: "Specific sections to include", default: ["installation", "usage", "api", "contributing", "license"] }, existingReadme: { type: "string", description: "Path to existing README to improve" } }, required: ["projectPath", "projectType"] } },
+    ];
+
+    this.handlers = {
+      analyze_documentation: async (args) => this.analyzeDocumentation(args as AnalyzeDocumentationArgs),
+      generate_api_docs: async (args) => this.generateAPIDocs(args as GenerateAPIDocsArgs),
+      generate_code_documentation: async (args) => this.generateCodeDocumentation(args as GenerateCodeDocumentationArgs),
+      generate_readme: async (args) => this.generateReadme(args as GenerateReadmeArgs),
+    };
 
     this.setupToolHandlers();
-    // Server initialization - removed unnecessary startup logging
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_documentation",
-            description:
-              "Analyze existing documentation for completeness, quality, and gaps",
-            inputSchema: {
-              type: "object",
-              properties: {
-                docsPath: {
-                  type: "string",
-                  description: "Path to documentation directory or files",
-                },
-                codePath: {
-                  type: "string",
-                  description: "Path to corresponding code for comparison",
-                },
-                docTypes: {
-                  type: "array",
-                  items: {
-                    type: "string",
-                    enum: [
-                      "readme",
-                      "api",
-                      "code",
-                      "architecture",
-                      "deployment",
-                      "user-guide",
-                    ],
-                  },
-                  description: "Types of documentation to analyze",
-                },
-              },
-              required: ["docsPath"],
-            },
-          },
-          {
-            name: "generate_api_docs",
-            description:
-              "Generate comprehensive API documentation from code analysis",
-            inputSchema: {
-              type: "object",
-              properties: {
-                codePath: {
-                  type: "string",
-                  description: "Path to API code files",
-                },
-                framework: {
-                  type: "string",
-                  enum: [
-                    "express",
-                    "fastify",
-                    "koa",
-                    "nestjs",
-                    "spring",
-                    "django",
-                    "flask",
-                    "fastapi",
-                  ],
-                  description: "API framework being used",
-                },
-                format: {
-                  type: "string",
-                  enum: ["openapi", "markdown", "html", "postman"],
-                  description: "Output documentation format",
-                  default: "openapi",
-                },
-                includeExamples: {
-                  type: "boolean",
-                  description: "Include request/response examples",
-                  default: true,
-                },
-              },
-              required: ["codePath", "framework"],
-            },
-          },
-          {
-            name: "generate_code_documentation",
-            description:
-              "Generate inline code documentation and improve existing docs",
-            inputSchema: {
-              type: "object",
-              properties: {
-                codePath: {
-                  type: "string",
-                  description: "Path to code files to document",
-                },
-                language: {
-                  type: "string",
-                  enum: [
-                    "typescript",
-                    "javascript",
-                    "python",
-                    "java",
-                    "csharp",
-                    "go",
-                    "rust",
-                  ],
-                  description: "Programming language",
-                },
-                style: {
-                  type: "string",
-                  enum: ["jsdoc", "docstring", "xml", "markdown"],
-                  description: "Documentation comment style",
-                  default: "jsdoc",
-                },
-                includePrivate: {
-                  type: "boolean",
-                  description: "Include documentation for private members",
-                  default: false,
-                },
-              },
-              required: ["codePath", "language"],
-            },
-          },
-          {
-            name: "generate_readme",
-            description: "Generate or improve project README documentation",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectPath: {
-                  type: "string",
-                  description: "Path to project root directory",
-                },
-                projectType: {
-                  type: "string",
-                  enum: ["library", "application", "api", "cli", "framework"],
-                  description: "Type of project",
-                },
-                includeSections: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Specific sections to include",
-                  default: [
-                    "installation",
-                    "usage",
-                    "api",
-                    "contributing",
-                    "license",
-                  ],
-                },
-                existingReadme: {
-                  type: "string",
-                  description: "Path to existing README to improve",
-                },
-              },
-              required: ["projectPath", "projectType"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_documentation":
-          return await this.analyzeDocumentation(args as unknown as AnalyzeDocumentationArgs) as CallToolResult;
-        case "generate_api_docs":
-          return await this.generateAPIDocs(args as unknown as GenerateAPIDocsArgs) as CallToolResult;
-        case "generate_code_documentation":
-          return await this.generateCodeDocumentation(args as unknown as GenerateCodeDocumentationArgs) as CallToolResult;
-        case "generate_readme":
-          return await this.generateReadme(args as unknown as GenerateReadmeArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
-  }
+  // setupToolHandlers removed — handled by XrayKnowledgeSkillBase via this.tools + this.handlers
 
   private async analyzeDocumentation(args: AnalyzeDocumentationArgs) {
     const { docsPath, codePath, docTypes = ["readme", "api", "code"] } = args;
@@ -1617,16 +1441,7 @@ class XrayDocumentationGenerationServer {
     return icons[severity as keyof typeof icons] || "❓";
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "tech-writer.server",
-      server: this.server,
-    });
-  }
+  // run() removed — handled by XrayKnowledgeSkillBase
 }
 
 // Run the server if this file is executed directly

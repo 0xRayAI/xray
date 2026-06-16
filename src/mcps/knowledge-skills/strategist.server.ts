@@ -5,15 +5,10 @@
  * Provides strategic planning, risk assessment, and technical strategy tools.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { XrayKnowledgeSkillBase, type ToolDefinition } from "../shared/knowledge-skill-base.js";
 
 interface Tool {
   name: string;
@@ -37,9 +32,8 @@ interface ArchitectureReviewArgs {
   requirements?: string[];
 }
 
-class StrategistServer {
-  private server: Server;
-  private tools: Tool[] = [
+class StrategistServer extends XrayKnowledgeSkillBase {
+  protected tools: ToolDefinition[] = [
     {
       name: "strategic_guidance",
       description:
@@ -108,58 +102,18 @@ class StrategistServer {
   ];
 
   constructor() {
-    this.server = new Server(
-      {
-        name: "xray/strategist", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
+    super("strategist", "3.1.0");
+
+    this.handlers = {
+      strategic_guidance: async (args) => this.handleStrategicGuidance(args as StrategicGuidanceArgs),
+      risk_assessment: async (args) => this.handleRiskAssessment(args as RiskAssessmentArgs),
+      architecture_review: async (args) => this.handleArchitectureReview(args as ArchitectureReviewArgs),
+    };
 
     this.setupToolHandlers();
   }
 
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: this.tools.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema,
-        })),
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        switch (name) {
-          case "strategic_guidance":
-            return await this.handleStrategicGuidance(args as unknown as StrategicGuidanceArgs);
-          case "risk_assessment":
-            return await this.handleRiskAssessment(args as unknown as RiskAssessmentArgs);
-          case "architecture_review":
-            return await this.handleArchitectureReview(args as unknown as ArchitectureReviewArgs);
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    });
-  }
+  // setupToolHandlers removed — handled by XrayKnowledgeSkillBase via this.tools + this.handlers
 
   private async handleStrategicGuidance(args: StrategicGuidanceArgs) {
     const { context, options = [], criteria = [] } = args;
@@ -251,17 +205,13 @@ class StrategistServer {
     };
   }
 
-  async start() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    await frameworkLogger.log("mcp-strategist", "server-started", "success");
-  }
+  // run() removed — handled by XrayKnowledgeSkillBase
 }
 
 const entryPoint = fs.realpathSync(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new StrategistServer();
-  server.start().catch((error) => frameworkLogger.log("mcps/strategist", "run", "error", { error: String(error) }));
+  server.run().catch((error) => frameworkLogger.log("mcps/strategist", "run", "error", { error: String(error) }));
 }
 
 export { StrategistServer };

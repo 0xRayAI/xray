@@ -15,12 +15,13 @@ export interface ToolDefinition {
 
 export class XrayKnowledgeSkillBase {
   protected tools: ToolDefinition[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected handlers: Record<string, (args: unknown) => Promise<any>> = {};
 
   protected server: Server;
+  protected serverName: string;
 
   constructor(serverName: string, version = "2.0.1") {
+    this.serverName = serverName;
     this.server = new Server(
       { name: serverName, version },
       { capabilities: { tools: {} } },
@@ -28,6 +29,11 @@ export class XrayKnowledgeSkillBase {
   }
 
   protected setupToolHandlers(): void {
+    this.setupListToolsHandler();
+    this.setupCallToolHandler();
+  }
+
+  protected setupListToolsHandler(): void {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: this.tools.map((t) => ({
         name: t.name,
@@ -35,7 +41,9 @@ export class XrayKnowledgeSkillBase {
         inputSchema: t.inputSchema,
       })),
     }));
+  }
 
+  protected setupCallToolHandler(): void {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       const handler = this.handlers[name];
@@ -53,10 +61,10 @@ export class XrayKnowledgeSkillBase {
     });
   }
 
-  async run(serverName: string): Promise<void> {
+  async run(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    createGracefulShutdown({ serverName, server: this.server });
-    await frameworkLogger.log(serverName, "server-started", "success");
+    createGracefulShutdown({ serverName: this.serverName, server: this.server });
+    await frameworkLogger.log(this.serverName, "server-started", "success");
   }
 }

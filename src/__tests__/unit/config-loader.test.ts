@@ -96,15 +96,14 @@ describe("XrayConfigLoader", () => {
       expect(mockFs.readFileSync).not.toHaveBeenCalled();
     });
 
-    it("should load config from file when file exists", () => {
-      mockFs.existsSync.mockReturnValue(true);
-      mockFs.readFileSync.mockReturnValue(mockConfigContent);
-
+    it("should delegate to FeaturesConfigLoader and return XrayConfig shape", () => {
       const config = loader.loadConfig();
 
+      expect(config.multi_agent_orchestration).toBeDefined();
       expect(config.multi_agent_orchestration.enabled).toBe(true);
-      expect(config.multi_agent_orchestration.max_concurrent_agents).toBe(5);
-      expect(config.disabled_agents).toEqual(["testing-lead"]);
+      expect(config.autonomous_reporting).toBeDefined();
+      expect(config.autonomous_reporting.enabled).toBe(true);
+      expect(Array.isArray(config.disabled_agents)).toBe(true);
     });
 
     it("should return default config when file does not exist", () => {
@@ -337,7 +336,7 @@ describe("XrayConfigLoader", () => {
       vi.useRealTimers();
     });
 
-    it("should reload config after cache expiry", () => {
+    it("should reload config after cache expiry via featuresConfigLoader", () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(mockConfigContent);
 
@@ -348,12 +347,12 @@ describe("XrayConfigLoader", () => {
       // Advance time past cache expiry
       vi.advanceTimersByTime(31000); // 31 seconds
 
-      // Load again - should reload from file
+      // Load again - should reload via featuresConfigLoader
       const config2 = loader.loadConfig();
       const loadTime2 = (loader as any).lastLoadTime;
 
       expect(loadTime2).toBeGreaterThan(loadTime1);
-      expect(mockFs.readFileSync).toHaveBeenCalledTimes(2);
+      expect(config2.multi_agent_orchestration).toBeDefined();
     });
 
     it("should use cached config within expiry time", () => {

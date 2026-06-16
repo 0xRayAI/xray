@@ -731,7 +731,7 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
   /**
    * Get default configuration
    */
-  private getDefaultConfig(): FeaturesConfig {
+  public getDefaultConfig(): FeaturesConfig {
     return {
       version: "3.1.0",
       description: "0xRay Framework - Unified Feature Configuration",
@@ -913,6 +913,52 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         [feature]: featureConfig,
       } as unknown as Partial<FeaturesConfig>);
     }
+  }
+
+  /**
+   * Get XrayConfig-shaped slice for backward compatibility
+   * @deprecated Use individual getters or loadConfig() directly instead.
+   */
+  public getXrayConfig(): import("./config-loader.js").XrayConfig {
+    const config = this.loadConfig();
+    return {
+      multi_agent_orchestration: config.multi_agent_orchestration,
+      autonomous_reporting: config.autonomous_reporting,
+      disabled_agents: config.agent_management?.disabled_agents ?? [],
+    };
+  }
+
+  public getTokenManagement(): FeaturesConfig["token_optimization"] | undefined {
+    return this.loadConfig().token_optimization;
+  }
+
+  public getProcessors(): ProcessorsConfig | undefined {
+    return this.loadConfig().processors;
+  }
+
+  public getCommitCycle(): CommitCycleConfig | undefined {
+    return this.loadConfig().commit_cycle;
+  }
+
+  public getStorytelling(): StorytellingConfig | undefined {
+    return this.loadConfig().storytelling;
+  }
+
+  public getInference(): InferenceConfig | undefined {
+    return this.loadConfig().inference;
+  }
+
+  public getPublish(): PublishConfig | undefined {
+    return this.loadConfig().publish;
+  }
+
+  public getAutoReporting(): AutonomousReportingConfig | undefined {
+    return this.loadConfig().autonomous_reporting;
+  }
+
+  public getGovernance(): InferenceConfig | FeaturesConfig["enforcement"] | undefined {
+    const config = this.loadConfig();
+    return config.inference;
   }
 }
 

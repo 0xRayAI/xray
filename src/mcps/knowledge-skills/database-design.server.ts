@@ -5,12 +5,7 @@
  * query performance analysis, and data modeling best practices
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../../core/framework-logger.js";
@@ -111,167 +106,141 @@ interface SchemaComparison {
   hasDataLoss: boolean;
 }
 
-class XrayDatabaseDesignServer {
-  private server: Server;
+class XrayDatabaseDesignServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("database-design", "3.1.0");
+
+    this.tools = [
       {
-        name: "database-design", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "analyze_schema",
+        description:
+          "Analyze database schema for optimization opportunities and best practices",
+        inputSchema: {
+          type: "object",
+          properties: {
+            schemaFile: {
+              type: "string",
+              description:
+                "Path to schema definition file (SQL, migration, or ORM model)",
+            },
+            databaseType: {
+              type: "string",
+              enum: ["postgresql", "mysql", "sqlite", "mongodb", "redis"],
+              description: "Database type for specific optimizations",
+            },
+            includeIndexes: {
+              type: "boolean",
+              description: "Include index recommendations in analysis",
+              default: true,
+            },
+          },
+          required: ["schemaFile"],
         },
       },
-    );
+      {
+        name: "optimize_query",
+        description:
+          "Analyze and optimize SQL queries for better performance",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "SQL query to analyze and optimize",
+            },
+            schemaContext: {
+              type: "string",
+              description:
+                "Schema context or file path for better analysis",
+            },
+            databaseType: {
+              type: "string",
+              enum: ["postgresql", "mysql", "sqlite"],
+              description: "Database type for query optimization",
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "design_data_model",
+        description: "Design optimal data model for given requirements",
+        inputSchema: {
+          type: "object",
+          properties: {
+            requirements: {
+              type: "string",
+              description: "Business requirements and data access patterns",
+            },
+            entities: {
+              type: "array",
+              items: { type: "string" },
+              description: "List of main entities/business objects",
+            },
+            relationships: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  from: { type: "string" },
+                  to: { type: "string" },
+                  type: {
+                    type: "string",
+                    enum: ["one-to-one", "one-to-many", "many-to-many"],
+                  },
+                },
+              },
+              description: "Entity relationships",
+            },
+            databaseType: {
+              type: "string",
+              enum: ["postgresql", "mysql", "mongodb", "redis"],
+              description: "Target database type",
+            },
+          },
+          required: ["requirements", "entities"],
+        },
+      },
+      {
+        name: "migrate_schema",
+        description: "Generate migration scripts for schema changes",
+        inputSchema: {
+          type: "object",
+          properties: {
+            currentSchema: {
+              type: "string",
+              description: "Current schema definition",
+            },
+            targetSchema: {
+              type: "string",
+              description: "Target schema definition",
+            },
+            databaseType: {
+              type: "string",
+              enum: ["postgresql", "mysql", "sqlite"],
+              description: "Database type for migration",
+            },
+            safeMode: {
+              type: "boolean",
+              description: "Generate rollback scripts and safety checks",
+              default: true,
+            },
+          },
+          required: ["currentSchema", "targetSchema"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "analyze_schema": async (args) => this.analyzeSchema(args as Record<string, unknown> | undefined),
+      "optimize_query": async (args) => this.optimizeQuery(args as Record<string, unknown> | undefined),
+      "design_data_model": async (args) => this.designDataModel(args as Record<string, unknown> | undefined),
+      "migrate_schema": async (args) => this.migrateSchema(args as Record<string, unknown> | undefined),
+    };
 
     this.setupToolHandlers();
     // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "analyze_schema",
-            description:
-              "Analyze database schema for optimization opportunities and best practices",
-            inputSchema: {
-              type: "object",
-              properties: {
-                schemaFile: {
-                  type: "string",
-                  description:
-                    "Path to schema definition file (SQL, migration, or ORM model)",
-                },
-                databaseType: {
-                  type: "string",
-                  enum: ["postgresql", "mysql", "sqlite", "mongodb", "redis"],
-                  description: "Database type for specific optimizations",
-                },
-                includeIndexes: {
-                  type: "boolean",
-                  description: "Include index recommendations in analysis",
-                  default: true,
-                },
-              },
-              required: ["schemaFile"],
-            },
-          },
-          {
-            name: "optimize_query",
-            description:
-              "Analyze and optimize SQL queries for better performance",
-            inputSchema: {
-              type: "object",
-              properties: {
-                query: {
-                  type: "string",
-                  description: "SQL query to analyze and optimize",
-                },
-                schemaContext: {
-                  type: "string",
-                  description:
-                    "Schema context or file path for better analysis",
-                },
-                databaseType: {
-                  type: "string",
-                  enum: ["postgresql", "mysql", "sqlite"],
-                  description: "Database type for query optimization",
-                },
-              },
-              required: ["query"],
-            },
-          },
-          {
-            name: "design_data_model",
-            description: "Design optimal data model for given requirements",
-            inputSchema: {
-              type: "object",
-              properties: {
-                requirements: {
-                  type: "string",
-                  description: "Business requirements and data access patterns",
-                },
-                entities: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "List of main entities/business objects",
-                },
-                relationships: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      from: { type: "string" },
-                      to: { type: "string" },
-                      type: {
-                        type: "string",
-                        enum: ["one-to-one", "one-to-many", "many-to-many"],
-                      },
-                    },
-                  },
-                  description: "Entity relationships",
-                },
-                databaseType: {
-                  type: "string",
-                  enum: ["postgresql", "mysql", "mongodb", "redis"],
-                  description: "Target database type",
-                },
-              },
-              required: ["requirements", "entities"],
-            },
-          },
-          {
-            name: "migrate_schema",
-            description: "Generate migration scripts for schema changes",
-            inputSchema: {
-              type: "object",
-              properties: {
-                currentSchema: {
-                  type: "string",
-                  description: "Current schema definition",
-                },
-                targetSchema: {
-                  type: "string",
-                  description: "Target schema definition",
-                },
-                databaseType: {
-                  type: "string",
-                  enum: ["postgresql", "mysql", "sqlite"],
-                  description: "Database type for migration",
-                },
-                safeMode: {
-                  type: "boolean",
-                  description: "Generate rollback scripts and safety checks",
-                  default: true,
-                },
-              },
-              required: ["currentSchema", "targetSchema"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "analyze_schema":
-          return await this.analyzeSchema(args);
-        case "optimize_query":
-          return await this.optimizeQuery(args);
-        case "design_data_model":
-          return await this.designDataModel(args);
-        case "migrate_schema":
-          return await this.migrateSchema(args);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async analyzeSchema(args: Record<string, unknown> | undefined) {
@@ -1179,16 +1148,6 @@ class XrayDatabaseDesignServer {
     return icons[severity as keyof typeof icons] || "❓";
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "database-design.server",
-      server: this.server,
-    });
-  }
 }
 
 // Run the server if this file is executed directly

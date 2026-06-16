@@ -1,95 +1,79 @@
 /**
- * Configuration Loader
+ * Configuration Loader (backward-compat shim)
  *
- * Loads and validates 0xRay-specific configuration from opencode.json
+ * Delegates to FeaturesConfigLoader as the single source of truth.
+ * Retained for backward compatibility -- all consumers of xrayConfigLoader
+ * continue to work without changes.
  *
- * @version 1.0.0
- * @since 2026-01-09
+ * @deprecated Use featuresConfigLoader from "./features-config.js" instead.
+ * Will be removed in v4.0.0.
  */
 
+import { featuresConfigLoader, FeaturesConfigLoader } from "./features-config.js";
+import { frameworkLogger } from "./framework-logger.js";
+import { resolveConfigPath } from "./config-paths.js";
 import * as fs from "fs";
 import * as path from "path";
-import { frameworkLogger } from "./framework-logger.js";
-import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 
-export interface MultiAgentOrchestrationConfig {
-  enabled: boolean;
-  coordination_model: "async-multi-agent" | "sync-multi-agent";
-  max_concurrent_agents: number;
-  task_distribution_strategy:
-    | "capability-based"
-    | "load-balanced"
-    | "round-robin";
-  conflict_resolution: "expert-priority" | "majority-vote" | "consensus";
-  progress_tracking: boolean;
-  session_persistence: boolean;
-}
-
-export interface AutonomousReportingConfig {
-  enabled: boolean;
-  interval_minutes: number;
-  auto_schedule: boolean;
-  include_health_assessment: boolean;
-  include_agent_activities: boolean;
-  include_pipeline_operations: boolean;
-  include_critical_issues: boolean;
-  include_recommendations: boolean;
-  report_retention_days: number;
-  notification_channels: string[]; // ["console", "file", "webhook"]
-}
+export type { MultiAgentOrchestrationConfig, AutonomousReportingConfig } from "./features-config.js";
 
 export interface XrayConfig {
-  multi_agent_orchestration: MultiAgentOrchestrationConfig;
-  autonomous_reporting: AutonomousReportingConfig;
+  multi_agent_orchestration: import("./features-config.js").MultiAgentOrchestrationConfig;
+  autonomous_reporting: import("./features-config.js").AutonomousReportingConfig;
   disabled_agents: string[];
 }
 
 export class XrayConfigLoader {
   private configPath: string;
   private cachedConfig: XrayConfig | null = null;
-  private cacheExpiry: number = 30000; // 30 seconds
+  private cacheExpiry: number = 30000;
   private lastLoadTime: number = 0;
 
   constructor(configPath?: string) {
-    this.configPath = configPath || resolveConfigPath("config.json") || path.join(getConfigDir(), "config.json");
+    this.configPath = configPath || resolveConfigPath("config.json") || path.join(process.cwd(), ".xray", "config.json");
   }
 
   /**
-   * Load 0xRay configuration from the resolved config directory
+   * Load configuration -- delegates to FeaturesConfigLoader
+   * @deprecated Use featuresConfigLoader.getXrayConfig() instead.
    */
   public loadConfig(): XrayConfig {
     const now = Date.now();
 
-    // Return cached config if still valid
     if (this.cachedConfig && now - this.lastLoadTime < this.cacheExpiry) {
       return this.cachedConfig;
     }
 
+    const primary = featuresConfigLoader.getXrayConfig();
+
     try {
       const configPath = path.resolve(process.cwd(), this.configPath);
+      if (fs.existsSync(configPath)) {
+        const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
 
-      if (!fs.existsSync(configPath)) {
-        return this.getDefaultConfig();
+        if (configData.multi_agent_orchestration || configData.autonomous_reporting || configData.disabled_agents) {
+          frameworkLogger.log(
+            "config-loader",
+            "deprecated-config-json",
+            "warning",
+            { message: "config.json contains overlapping keys. Migrate to features.json. See: https://0xray.ai/docs/config-migration" },
+          );
+        }
       }
-
-      const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-      const config = this.parseConfig(configData);
-
-      this.cachedConfig = config;
-      this.lastLoadTime = now;
-
-      return config;
-    } catch (error) {
-      frameworkLogger.log("config-loader", "load-failed", "error", { error, message: "Failed to load 0xRay config" });
-      return this.getDefaultConfig();
+    } catch {
+      // config.json may not exist -- that's fine, features.json is SSOT
     }
+
+    this.cachedConfig = primary;
+    this.lastLoadTime = now;
+    return primary;
   }
 
   /**
    * Parse configuration data with validation
+   * @deprecated Use featuresConfigLoader.loadConfig() instead.
    */
   private parseConfig(configData: unknown): XrayConfig {
-    // Handle null/undefined config data
     if (!configData || typeof configData !== 'object') {
       return this.getDefaultConfig();
     }
@@ -111,8 +95,9 @@ export class XrayConfigLoader {
 
   /**
    * Parse multi-agent orchestration configuration
+   * @deprecated Use featuresConfigLoader.loadConfig().multi_agent_orchestration instead.
    */
-  private parseMultiAgentConfig(config: unknown): MultiAgentOrchestrationConfig {
+  private parseMultiAgentConfig(config: unknown): import("./features-config.js").MultiAgentOrchestrationConfig {
     if (!config || typeof config !== 'object') {
       return this.getDefaultConfig().multi_agent_orchestration;
     }
@@ -145,21 +130,22 @@ export class XrayConfigLoader {
 
   /**
    * Parse autonomous reporting configuration
+   * @deprecated Use featuresConfigLoader.loadConfig().autonomous_reporting instead.
    */
   private parseAutonomousReportingConfig(
     config: unknown,
-  ): AutonomousReportingConfig {
+  ): import("./features-config.js").AutonomousReportingConfig {
     if (!config || typeof config !== 'object') {
       return this.getDefaultConfig().autonomous_reporting;
     }
     const cfg = config as Record<string, unknown>;
     return {
-      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : false,
+      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : true,
       interval_minutes: Math.max(
         5,
         Math.min(1440, typeof cfg.interval_minutes === 'number' ? cfg.interval_minutes : 60),
-      ), // 5min to 24hrs
-      auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : false,
+      ),
+      auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : true,
       include_health_assessment: typeof cfg.include_health_assessment === 'boolean' ? cfg.include_health_assessment : true,
       include_agent_activities: typeof cfg.include_agent_activities === 'boolean' ? cfg.include_agent_activities : true,
       include_pipeline_operations: typeof cfg.include_pipeline_operations === 'boolean' ? cfg.include_pipeline_operations : true,
@@ -179,6 +165,7 @@ export class XrayConfigLoader {
 
   /**
    * Get default configuration
+   * @deprecated Use featuresConfigLoader.getDefaultConfig() instead.
    */
   private getDefaultConfig(): XrayConfig {
     return {
@@ -192,9 +179,9 @@ export class XrayConfigLoader {
         session_persistence: true,
       },
       autonomous_reporting: {
-        enabled: false, // Disabled by default for performance
+        enabled: true,
         interval_minutes: 60,
-        auto_schedule: false,
+        auto_schedule: true,
         include_health_assessment: true,
         include_agent_activities: true,
         include_pipeline_operations: true,
@@ -209,6 +196,7 @@ export class XrayConfigLoader {
 
   /**
    * Validate enum values
+   * @deprecated Internal implementation detail.
    */
   private validateEnum<T>(value: unknown, allowedValues: T[], defaultValue: T): T {
     return allowedValues.includes(value as T) ? value as T : defaultValue;
@@ -216,16 +204,13 @@ export class XrayConfigLoader {
 
   /**
    * Clear configuration cache
+   * @deprecated Use featuresConfigLoader.clearCache() instead.
    */
   public clearCache(): void {
     this.cachedConfig = null;
     this.lastLoadTime = 0;
+    featuresConfigLoader.clearCache();
   }
 }
 
-// Export singleton instance
 export const xrayConfigLoader = new XrayConfigLoader();
-
-// Backward compat aliases
-
-

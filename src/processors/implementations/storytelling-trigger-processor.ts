@@ -4,6 +4,7 @@ import { execSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { featuresConfigLoader } from "../../core/features-config.js";
 import {
   analyzeStructuralPatterns,
   StructuralPattern,
@@ -77,34 +78,8 @@ export class StorytellingTriggerProcessor extends PostProcessor {
 
   constructor() {
     super();
-    this.loadConfig();
-  }
-
-  private loadConfig(): void {
-    try {
-      const configPath = this.resolveConfigPath("features.json");
-      if (configPath && fs.existsSync(configPath)) {
-        const content = fs.readFileSync(configPath, "utf-8");
-        const parsed = JSON.parse(content);
-        if (parsed.storytelling) {
-          this.config = parsed.storytelling as StorytellingConfig;
-        }
-      }
-    } catch (error) {
-      frameworkLogger.log("storytelling-trigger", "config-load-failed", "warning", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  private resolveConfigPath(filename: string): string | null {
-    const candidates = [
-      path.join(process.cwd(), ".xray", filename),
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate;
-    }
-    return null;
+    const features = featuresConfigLoader.loadConfig();
+    this.config = (features.storytelling as any) ?? null;
   }
 
   protected async run(context: ProcessorContext): Promise<unknown> {

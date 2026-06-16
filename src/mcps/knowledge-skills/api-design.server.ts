@@ -5,12 +5,7 @@
  * GraphQL schema design, and API documentation standards
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
@@ -26,72 +21,48 @@ interface ValidateApiDesignArgs {
   standards?: string[];
 }
 
-class XrayApiDesignServer {
-  private server: Server;
+class XrayApiDesignServer extends XrayKnowledgeSkillBase {
 
   constructor() {
-    this.server = new Server(
+    super("api-design", "3.1.0");
+
+    this.tools = [
       {
-        name: "api-design", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "design-api-endpoints",
+        description:
+          "Design RESTful API endpoints with proper resource modeling",
+        inputSchema: {
+          type: "object",
+          properties: {
+            resource: { type: "string" },
+            operations: { type: "array", items: { type: "string" } },
+            relationships: { type: "array", items: { type: "string" } },
+          },
+          required: ["resource"],
         },
       },
-    );
+      {
+        name: "validate-api-design",
+        description:
+          "Validate API design against RESTful principles and best practices",
+        inputSchema: {
+          type: "object",
+          properties: {
+            endpoints: { type: "array", items: { type: "string" } },
+            standards: { type: "array", items: { type: "string" } },
+          },
+          required: ["endpoints"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "design-api-endpoints": async (args) => this.designApiEndpoints(args as DesignApiEndpointsArgs),
+      "validate-api-design": async (args) => this.validateApiDesign(args as ValidateApiDesignArgs),
+    };
 
     this.setupToolHandlers();
     // Server initialization - removed unnecessary startup logging
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "design-api-endpoints",
-            description:
-              "Design RESTful API endpoints with proper resource modeling",
-            inputSchema: {
-              type: "object",
-              properties: {
-                resource: { type: "string" },
-                operations: { type: "array", items: { type: "string" } },
-                relationships: { type: "array", items: { type: "string" } },
-              },
-              required: ["resource"],
-            },
-          },
-          {
-            name: "validate-api-design",
-            description:
-              "Validate API design against RESTful principles and best practices",
-            inputSchema: {
-              type: "object",
-              properties: {
-                endpoints: { type: "array", items: { type: "string" } },
-                standards: { type: "array", items: { type: "string" } },
-              },
-              required: ["endpoints"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "design-api-endpoints":
-          return await this.designApiEndpoints(args as unknown as DesignApiEndpointsArgs);
-        case "validate-api-design":
-          return await this.validateApiDesign(args as unknown as ValidateApiDesignArgs);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async designApiEndpoints(args: DesignApiEndpointsArgs) {
@@ -141,16 +112,6 @@ class XrayApiDesignServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    // Use centralized shutdown handler
-    createGracefulShutdown({
-      serverName: "api-design.server",
-      server: this.server,
-    });
-  }
 }
 
 if (import.meta.url === `file://${fs.realpathSync(process.argv[1]!)}`) {

@@ -8,17 +8,12 @@
  * "researcher" for backwards compatibility with existing tool references.
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  type CallToolResult,
-} from "@modelcontextprotocol/sdk/types.js";
+import { type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface SearchResult {
   file: string;
@@ -49,128 +44,101 @@ interface AnalyzeProposalArgs {
   proposalType?: string;
 }
 
-class XrayLibrarianServer {
-  private server: Server;
-
+class XrayLibrarianServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
+    super("researcher", "3.1.0");
+
+    this.tools = [
       {
-        name: "researcher", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
+        name: "search_codebase",
+        description:
+          "Search the codebase for specific patterns, functions, or implementations",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Search query (function name, pattern, keyword)",
+            },
+            fileExtension: {
+              type: "string",
+              description: "File extension to search (e.g., '.ts', '.js')",
+              default: ".ts",
+            },
+            maxResults: {
+              type: "number",
+              description: "Maximum number of results to return",
+              default: 10,
+            },
+          },
+          required: ["query"],
         },
       },
-    );
+      {
+        name: "find_implementation",
+        description:
+          "Find implementation examples for a specific pattern or feature",
+        inputSchema: {
+          type: "object",
+          properties: {
+            feature: {
+              type: "string",
+              description: "Feature name to find implementations for",
+            },
+            context: {
+              type: "string",
+              description:
+                "Additional context (e.g., 'MCP', 'testing', 'agent')",
+            },
+          },
+          required: ["feature"],
+        },
+      },
+      {
+        name: "get_documentation",
+        description:
+          "Get documentation for a specific module, class, or function",
+        inputSchema: {
+          type: "object",
+          properties: {
+            target: {
+              type: "string",
+              description: "Module, class, or function name",
+            },
+            includeExamples: {
+              type: "boolean",
+              description: "Include usage examples",
+              default: true,
+            },
+          },
+          required: ["target"],
+        },
+      },
+      {
+        name: "analyze_proposal",
+        description:
+          "Analyze an inference proposal from a researcher / project-librarian perspective using corpus patterns, historical evidence, and architecture knowledge",
+        inputSchema: {
+          type: "object",
+          properties: {
+            proposalTitle: { type: "string" },
+            proposalDescription: { type: "string" },
+            evidence: { type: "array", items: { type: "string" } },
+            proposalType: { type: "string" },
+          },
+          required: ["proposalTitle", "proposalDescription"],
+        },
+      },
+    ];
+
+    this.handlers = {
+      "search_codebase": async (args) => this.searchCodebase(args as SearchCodebaseArgs),
+      "find_implementation": async (args) => this.findImplementation(args as FindImplementationArgs),
+      "get_documentation": async (args) => this.getDocumentation(args as GetDocumentationArgs),
+      "analyze_proposal": async (args) => this.analyzeProposal(args as AnalyzeProposalArgs),
+    };
 
     this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: "search_codebase",
-            description:
-              "Search the codebase for specific patterns, functions, or implementations",
-            inputSchema: {
-              type: "object",
-              properties: {
-                query: {
-                  type: "string",
-                  description: "Search query (function name, pattern, keyword)",
-                },
-                fileExtension: {
-                  type: "string",
-                  description: "File extension to search (e.g., '.ts', '.js')",
-                  default: ".ts",
-                },
-                maxResults: {
-                  type: "number",
-                  description: "Maximum number of results to return",
-                  default: 10,
-                },
-              },
-              required: ["query"],
-            },
-          },
-          {
-            name: "find_implementation",
-            description:
-              "Find implementation examples for a specific pattern or feature",
-            inputSchema: {
-              type: "object",
-              properties: {
-                feature: {
-                  type: "string",
-                  description: "Feature name to find implementations for",
-                },
-                context: {
-                  type: "string",
-                  description:
-                    "Additional context (e.g., 'MCP', 'testing', 'agent')",
-                },
-              },
-              required: ["feature"],
-            },
-          },
-          {
-            name: "get_documentation",
-            description:
-              "Get documentation for a specific module, class, or function",
-            inputSchema: {
-              type: "object",
-              properties: {
-                target: {
-                  type: "string",
-                  description: "Module, class, or function name",
-                },
-                includeExamples: {
-                  type: "boolean",
-                  description: "Include usage examples",
-                  default: true,
-                },
-              },
-              required: ["target"],
-            },
-          },
-          {
-            name: "analyze_proposal",
-            description:
-              "Analyze an inference proposal from a researcher / project-librarian perspective using corpus patterns, historical evidence, and architecture knowledge",
-            inputSchema: {
-              type: "object",
-              properties: {
-                proposalTitle: { type: "string" },
-                proposalDescription: { type: "string" },
-                evidence: { type: "array", items: { type: "string" } },
-                proposalType: { type: "string" },
-              },
-              required: ["proposalTitle", "proposalDescription"],
-            },
-          },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "search_codebase":
-          return await this.searchCodebase(args as unknown as SearchCodebaseArgs);
-        case "find_implementation":
-          return await this.findImplementation(args as unknown as FindImplementationArgs);
-        case "get_documentation":
-          return await this.getDocumentation(args as unknown as GetDocumentationArgs);
-        case "analyze_proposal":
-          return await this.analyzeProposal(args as AnalyzeProposalArgs) as CallToolResult;
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
   }
 
   private async searchCodebase(args: SearchCodebaseArgs) {
@@ -513,62 +481,6 @@ class XrayLibrarianServer {
     };
   }
 
-  async run(): Promise<void> {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-
-    let parentCheckTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = async (signal: string) => {
-      if (parentCheckTimer !== null) {
-        clearTimeout(parentCheckTimer);
-        parentCheckTimer = null;
-      }
-
-      const timeout = setTimeout(() => {
-        frameworkLogger.log("mcps/researcher", "shutdown", "error", { message: "Graceful shutdown timeout, forcing exit..." });
-        process.exit(1);
-      }, 5000);
-
-      try {
-        if (this.server && typeof this.server.close === "function") {
-          await this.server.close();
-        }
-        clearTimeout(timeout);
-        process.exit(0);
-      } catch (error) {
-        clearTimeout(timeout);
-        frameworkLogger.log("mcps/researcher", "shutdown", "error", { message: `Error during server shutdown: ${String(error)}` });
-        process.exit(1);
-      }
-    };
-
-    process.on("SIGINT", () => cleanup("SIGINT"));
-    process.on("SIGTERM", () => cleanup("SIGTERM"));
-    process.on("SIGHUP", () => cleanup("SIGHUP"));
-
-    const checkParent = () => {
-      try {
-        process.kill(process.ppid, 0);
-        parentCheckTimer = setTimeout(checkParent, 1000);
-      } catch (error) {
-        parentCheckTimer = null;
-        cleanup("parent-process-death");
-      }
-    };
-
-    parentCheckTimer = setTimeout(checkParent, 2000);
-
-    process.on("uncaughtException", (error) => {
-      frameworkLogger.log("mcps/researcher", "uncaughtException", "error", { message: `Uncaught Exception: ${String(error)}` });
-      cleanup("uncaughtException");
-    });
-
-    process.on("unhandledRejection", (reason, promise) => {
-      frameworkLogger.log("mcps/researcher", "unhandledRejection", "error", { message: `Unhandled Rejection: ${String(reason)}` });
-      cleanup("unhandledRejection");
-    });
-  }
 }
 
 // Run the server if this file is executed directly

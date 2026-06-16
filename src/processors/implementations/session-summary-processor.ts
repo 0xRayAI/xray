@@ -10,8 +10,7 @@
 
 import { PostProcessor, ProcessorContext } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import * as path from "path";
-import * as fs from "fs";
+import { featuresConfigLoader } from "../../core/features-config.js";
 
 interface SessionSummaryConfig {
   enabled: boolean;
@@ -43,22 +42,14 @@ export class SessionSummaryProcessor extends PostProcessor {
 
   private loadConfig(): void {
     try {
-      const featuresPath = path.join(process.cwd(), ".xray", "features.json");
-      const altPath = path.join(process.cwd(), ".opencode", "xray", "features.json");
+      const configData = featuresConfigLoader.loadConfig() as any;
+      const autoReporting = configData.auto_reporting;
       
-      const configPath = fs.existsSync(featuresPath) ? featuresPath : 
-                         fs.existsSync(altPath) ? altPath : null;
-      
-      if (configPath) {
-        const configData = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-        const autoReporting = configData.auto_reporting;
-        
-        if (autoReporting) {
-          this.config.enabled = autoReporting.mode !== "off";
-          this.config.include_emojis = autoReporting.display?.indicators?.emojis !== false;
-          this.config.include_recommendations = autoReporting.report_types?.session_summary?.include_recommendations !== false;
-          this.config.include_agent_activities = autoReporting.report_types?.session_summary?.include_agent_activities !== false;
-        }
+      if (autoReporting) {
+        this.config.enabled = autoReporting.mode !== "off";
+        this.config.include_emojis = autoReporting.display?.indicators?.emojis !== false;
+        this.config.include_recommendations = autoReporting.report_types?.session_summary?.include_recommendations !== false;
+        this.config.include_agent_activities = autoReporting.report_types?.session_summary?.include_agent_activities !== false;
       }
     } catch (error) {
       // Silent fail - use defaults

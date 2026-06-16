@@ -5,14 +5,9 @@
  * React Native, Flutter, and mobile performance optimization
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import { fileURLToPath } from "url";
+import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 
 interface IOSBlueprint {
   projectName: string;
@@ -107,28 +102,10 @@ interface AppStoreMetadataArgs {
   features?: string[];
 }
 
-class XrayMobileDevelopmentServer {
-  private server: Server;
-
+class XrayMobileDevelopmentServer extends XrayKnowledgeSkillBase {
   constructor() {
-    this.server = new Server(
-      {
-        name: "mobile-development", version: "3.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      },
-    );
-
-    this.setupToolHandlers();
-  }
-
-  private setupToolHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
+    super("mobile-development", "3.1.0");
+    this.tools = [
           {
             name: "ios_blueprint",
             description:
@@ -305,30 +282,16 @@ class XrayMobileDevelopmentServer {
               required: ["appName", "platform"],
             },
           },
-        ],
-      };
-    });
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      switch (name) {
-        case "ios_blueprint":
-          return await this.generateIOSBlueprint(args ?? {});
-        case "android_blueprint":
-          return await this.generateAndroidBlueprint(args ?? {});
-        case "react_native_boilerplate":
-          return await this.generateReactNativeBlueprint(args ?? {});
-        case "flutter_boilerplate":
-          return await this.generateFlutterBlueprint(args ?? {});
-        case "mobile_performance_profile":
-          return await this.analyzeMobilePerformance(args ?? {});
-        case "app_store_metadata":
-          return await this.generateAppStoreMetadata(args ?? {});
-        default:
-          throw new Error(`Unknown tool: ${name}`);
-      }
-    });
+    ];
+    this.handlers = {
+      "ios_blueprint": async (args) => this.generateIOSBlueprint((args ?? {}) as Record<string, unknown>),
+      "android_blueprint": async (args) => this.generateAndroidBlueprint((args ?? {}) as Record<string, unknown>),
+      "react_native_boilerplate": async (args) => this.generateReactNativeBlueprint((args ?? {}) as Record<string, unknown>),
+      "flutter_boilerplate": async (args) => this.generateFlutterBlueprint((args ?? {}) as Record<string, unknown>),
+      "mobile_performance_profile": async (args) => this.analyzeMobilePerformance((args ?? {}) as Record<string, unknown>),
+      "app_store_metadata": async (args) => this.generateAppStoreMetadata((args ?? {}) as Record<string, unknown>),
+    };
+    this.setupToolHandlers();
   }
 
   private async generateIOSBlueprint(args: Record<string, unknown>) {
@@ -657,16 +620,13 @@ class HomePage extends StatelessWidget {
     };
   }
 
-  async start() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-  }
+
 }
 
 const entryPoint = fs.realpathSync(process.argv[1] ?? "");
 if (entryPoint && fileURLToPath(import.meta.url) === entryPoint) {
   const server = new XrayMobileDevelopmentServer();
-  server.start().catch(() => {});
+  server.run().catch(() => {});
 }
 
 export { XrayMobileDevelopmentServer };

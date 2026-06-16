@@ -91,7 +91,7 @@ Pure v1 MCPs. Clean. Complete.
 - Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.14`.
 - **All 182 test files pass**: 2500 tests, 0 failures, 36 skipped.
 - **Build fix**: removed stale `.opencode/plugin/` copy; `package.json` → `dist/plugin/xray-codex-injection.js`.
-- **default-plugins.ts**: monkey-patch `Server.prototype.setRequestHandler` to capture tool definitions from MCP Server instances; all registration functions async.
+- **default-plugins.ts**: reads tool/handler metadata from SDK's internal `_requestHandlers` Map instead of patching `Server.prototype.setRequestHandler`; all registration functions async.
 - **8 failing test files fixed**: class name references (`0xRaySecurityAuditServer` → `XraySecurityAuditServer`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
 - **CHANGELOG.md**: added v3.0.13 entry.
 - **Stale READMEs**: updated `0xRay` → `0xRay` in 4 subdirectory READMEs.
