@@ -154,7 +154,7 @@ async function main() {
   
   // Step 5: Push
   console.log('\n📦 Step 5: Pushing to origin...');
-  runCommand('git push origin master', 'Failed to push to origin');
+  runCommand('git push origin main', 'Failed to push to origin');
   runCommand(`git push origin v${newVersion}`, 'Failed to push tag');
 
   // Step 6: Publish to npm
