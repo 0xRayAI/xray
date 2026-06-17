@@ -7,11 +7,13 @@
 import { frameworkLogger } from '../../../core/framework-logger.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { mcpClientManager } from '../../../mcps/mcp-client.js';
-import type { OrchestrationResult, OrchestrationTask, TaskExecutionResult } from '../types.js';
+import { addObservations, extractOrchestrationObservations } from '../aside-context.js';
+import type { OrchestrationResult, OrchestrationTask } from '../types.js';
 
 export interface TaskHandlerDeps {
   taskHistory: OrchestrationHistoryItem[];
   activeTasks: Map<string, unknown>;
+  asideId?: string;
 }
 
 interface OrchestrationHistoryItem {
@@ -86,6 +88,11 @@ export class TaskHandler {
       orchestrationResult.recommendations = results.recommendations;
       if (results.agentOutputs) {
         orchestrationResult.agentOutputs = results.agentOutputs;
+      }
+
+      // Push observations into aside context if active
+      if (deps.asideId) {
+        addObservations(deps.asideId, extractOrchestrationObservations(orchestrationResult));
       }
 
       // Store in history

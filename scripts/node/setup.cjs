@@ -13,6 +13,9 @@ if (__dirname.includes("node_modules/xray")) {
   targetDir = process.env.PWD || process.cwd();
 }
 
+const resolvedPackage = path.resolve(packageRoot);
+const resolvedTarget = path.resolve(targetDir);
+
 console.log("🔧 xray Setup: Full configuration...\n");
 
 const hasHermes = fs.existsSync(path.join(targetDir, ".hermes")) &&
@@ -209,6 +212,31 @@ if (fs.existsSync(hermesSkillSource)) {
       }
     }
   } catch (e) { console.warn(`⚠️ Hermes skill: ${e.message}`); }
+}
+
+// 8. Deploy .xray/ config files (codex.json, features.json, config.json) for consumer installs
+const xraySourceDir = path.join(packageRoot, ".xray");
+const xrayTargetDir = path.join(targetDir, ".xray");
+const CONFIG_FILES = ["codex.json", "features.json", "config.json"];
+
+if (fs.existsSync(xraySourceDir) && resolvedPackage !== resolvedTarget) {
+  try {
+    if (!fs.existsSync(xrayTargetDir)) fs.mkdirSync(xrayTargetDir, { recursive: true });
+    let copied = 0;
+    for (const file of CONFIG_FILES) {
+      const src = path.join(xraySourceDir, file);
+      const dst = path.join(xrayTargetDir, file);
+      if (!fs.existsSync(src)) continue;
+      const shouldCopy = !fs.existsSync(dst) ||
+        fs.statSync(src).mtime > fs.statSync(dst).mtime;
+      if (shouldCopy) {
+        fs.copyFileSync(src, dst);
+        copied++;
+      }
+    }
+    if (copied > 0) console.log(`✅ .xray/: ${copied} config files deployed`);
+    else console.log("ℹ️  .xray/: up to date");
+  } catch (e) { console.warn(`⚠️ .xray/ deploy: ${e.message}`); }
 }
 
 console.log("\n✅ xray setup complete.\n");

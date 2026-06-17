@@ -6,6 +6,7 @@
 
 import { frameworkLogger } from '../../../core/framework-logger.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
+import { addObservations, extractComplexityObservations } from '../aside-context.js';
 import type { OrchestrationTask, ComplexityAnalysis } from '../types.js';
 
 /**
@@ -18,9 +19,10 @@ export class ComplexityHandler {
   /**
    * Handle analyze-complexity request
    */
-  async handleAnalyzeComplexity(args: {
-    tasks: OrchestrationTask[];
-  }): Promise<{ content: Array<{ type: string; text: string }> }> {
+  async handleAnalyzeComplexity(
+    args: { tasks: OrchestrationTask[] },
+    asideId?: string,
+  ): Promise<{ content: Array<{ type: string; text: string }> }> {
     const { tasks = [] } = args;
 
     await frameworkLogger.log(
@@ -33,6 +35,10 @@ export class ComplexityHandler {
     try {
       const analysis = await this.planner.analyzeTaskComplexity(tasks);
       const recommendations = this.generateRecommendations(analysis);
+
+      if (asideId) {
+        addObservations(asideId, extractComplexityObservations(analysis));
+      }
 
       return {
         content: [

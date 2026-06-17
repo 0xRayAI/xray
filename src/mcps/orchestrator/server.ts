@@ -20,6 +20,16 @@ import { TaskHandler } from './handlers/task-handler.js';
 import { ComplexityHandler } from './handlers/complexity-handler.js';
 import { StatusHandler } from './handlers/status-handler.js';
 import type { OrchestrationTask, OrchestrationResult } from './types.js';
+import {
+  spawnAside,
+  closeAside,
+  closeAllAsides,
+  addObservations,
+  getActiveAsideCount,
+  getActiveAsideIds,
+  getAsideState,
+  extractGovernanceObservations,
+} from './aside-context.js';
 
 /**
  * Orchestrator MCP Server
@@ -234,33 +244,65 @@ export class OrchestratorServer {
         const { name, arguments: args } = request.params;
 
         switch (name) {
-          case 'orchestrate-task':
-            return await this.taskHandler.handleOrchestrateTask(args as {
+          case 'orchestrate-task': {
+            const orchArgs = args as {
               description: string;
               tasks?: OrchestrationTask[];
               sessionId?: string;
               executionMode?: string;
               timeout?: number;
-            }, { taskHistory: this.taskHistory, activeTasks: this.activeTasks });
-            
-          case 'analyze-complexity':
-            return await this.complexityHandler.handleAnalyzeComplexity(args as {
-              tasks: OrchestrationTask[];
+            };
+            const aside = await spawnAside({
+              description: `Orchestration: ${orchArgs.description}`,
+              ...(orchArgs.sessionId ? { sessionId: orchArgs.sessionId } : {}),
+              inheritedContext: { taskCount: orchArgs.tasks?.length ?? 0, executionMode: orchArgs.executionMode ?? 'optimized' },
             });
-            
+            try {
+              const result = await this.taskHandler.handleOrchestrateTask(
+                orchArgs,
+                { taskHistory: this.taskHistory, activeTasks: this.activeTasks, asideId: aside.asideId },
+              );
+              return result;
+            } finally {
+              closeAside(aside.asideId);
+            }
+          }
+          case 'analyze-complexity': {
+            const complexityArgs = args as { tasks: OrchestrationTask[] };
+            const aside = await spawnAside({
+              description: `Complexity analysis: ${complexityArgs.tasks.length} tasks`,
+            });
+            try {
+              return await this.complexityHandler.handleAnalyzeComplexity(complexityArgs, aside.asideId);
+            } finally {
+              closeAside(aside.asideId);
+            }
+          }
           case 'get-orchestration-status':
             return await this.statusHandler.handleGetOrchestrationStatus(args as {
               sessionId?: string;
               detailed?: boolean;
-            }, { taskHistory: this.taskHistory, activeTasks: this.activeTasks });
-            
-          case 'cancel-orchestration':
-            return await this.statusHandler.handleCancelOrchestration(args as {
-              sessionId?: string;
-              taskId?: string;
-              force?: boolean;
-            }, { taskHistory: this.taskHistory, activeTasks: this.activeTasks });
-            
+            }, {
+              taskHistory: this.taskHistory,
+              activeTasks: this.activeTasks,
+              asideCount: getActiveAsideCount(),
+              asideIds: getActiveAsideIds(),
+            });
+          case 'cancel-orchestration': {
+            const cancelArgs = args as { sessionId?: string; taskId?: string; force?: boolean };
+            if (cancelArgs.force || (!cancelArgs.sessionId && !cancelArgs.taskId)) {
+              closeAllAsides();
+            } else if (cancelArgs.sessionId) {
+              const asideIds = getActiveAsideIds().filter(
+                (id) => getAsideState(id)?.sessionId === cancelArgs.sessionId,
+              );
+              for (const id of asideIds) closeAside(id);
+            }
+            return await this.statusHandler.handleCancelOrchestration(cancelArgs, {
+              taskHistory: this.taskHistory,
+              activeTasks: this.activeTasks,
+            });
+          }
           case 'optimize-orchestration':
             return await this.statusHandler.handleOptimizeOrchestration(args as {
               history?: boolean;
@@ -311,26 +353,38 @@ export class OrchestratorServer {
         skipApply: args.skipApply ?? false,
       });
 
-      const result = await cycle.governExternalProposals(args.proposals as any);
+      const aside = await spawnAside({
+        description: `Governance cycle: ${args.proposals.length} proposals`,
+        priorVerdictContext: { proposalCount: args.proposals.length },
+      });
 
-      const approved = result.votes.filter((v) => v.decision === 'approve').length;
-      const rejected = result.votes.length - approved;
+      let result: import('../../inference/inference-cycle.js').InferenceCycleResult;
+      try {
+        result = await cycle.governExternalProposals(args.proposals as any);
+        addObservations(aside.asideId, extractGovernanceObservations(result));
+      } finally {
+        closeAside(aside.asideId);
+      }
+
+      const approved = result!.votes.filter((v) => v.decision === 'approve').length;
+      const rejected = result!.votes.length - approved;
 
       return {
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
-            cycleId: result.cycleId,
+            cycleId: result!.cycleId,
+            asideId: aside.asideId,
             approved,
             rejected,
-            votes: result.votes,
-            proposals: result.proposals.map((p) => ({
+            votes: result!.votes,
+            proposals: result!.proposals.map((p) => ({
               id: p.id,
               title: p.title,
               type: p.type,
               status: p.status,
             })),
-            duration: result.duration,
+            duration: result!.duration,
           }, null, 2),
         }],
       };
@@ -360,6 +414,7 @@ export class OrchestratorServer {
    * Stop the server
    */
   async stop(): Promise<void> {
+    closeAllAsides();
     await frameworkLogger.log('orchestrator.server', 'shutdown', 'info', {
       message: '0xRay Orchestrator MCP Server shutting down',
     });

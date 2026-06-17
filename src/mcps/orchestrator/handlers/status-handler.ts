@@ -18,6 +18,8 @@ interface HistoryItem {
 interface StatusHandlerDeps {
   activeTasks: Map<string, unknown>;
   taskHistory: HistoryItem[];
+  asideCount?: number;
+  asideIds?: string[];
 }
 
 /**
@@ -68,7 +70,15 @@ export class StatusHandler {
         status = this.getOverallStatus(deps);
       }
 
-      const response = this.formatStatusResponse(status, detailed);
+      let response = this.formatStatusResponse(status, detailed);
+
+      if (detailed && deps.asideCount !== undefined) {
+        response += `\n\n**Active Aside Contexts:**`;
+        response += `\n• Count: ${deps.asideCount}`;
+        if (deps.asideIds && deps.asideIds.length > 0) {
+          response += `\n• IDs: ${deps.asideIds.join(', ')}`;
+        }
+      }
 
       return { content: [{ type: 'text', text: response }] };
     } catch (error) {

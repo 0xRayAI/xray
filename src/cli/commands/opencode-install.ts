@@ -111,6 +111,18 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
     copyDir(opencodeSource, opencodeDest);
     frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
 
+    // Copy plugin from dist/ to .opencode/plugin/
+    const pluginSource = path.join(__dirname, '..', '..', '..', 'dist', 'plugin', 'xray-codex-injection.js');
+    const pluginDest = path.join(opencodeDest, 'plugin', 'xray-codex-injection.js');
+    if (fs.existsSync(pluginSource)) {
+      const pluginDestDir = path.dirname(pluginDest);
+      if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
+      fs.copyFileSync(pluginSource, pluginDest);
+      console.log(`\x1b[32m✓ Copied plugin to .opencode/plugin/\x1b[0m`);
+    } else {
+      console.log('ℹ️  Plugin source not found (build may be needed)');
+    }
+
     // Sync builtin skills to .opencode/skills/
     const opencodeSkillsDir = path.join(opencodeDest, 'skills');
     const skillsCopied = syncBuiltinSkills(opencodeSkillsDir);

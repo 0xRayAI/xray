@@ -98,6 +98,30 @@ function logToActivity(logDir, message) {
   }
 }
 
+function logRoutingOutcome(logDir, outcome) {
+  try {
+    const routingPath = join(logDir, "routing-outcomes.json");
+    let entries = [];
+    if (existsSync(routingPath)) {
+      try { entries = JSON.parse(readFileSync(routingPath, "utf-8")); } catch { entries = []; }
+    }
+    if (!Array.isArray(entries)) entries = [];
+    entries.push({
+      taskId: outcome.taskId || `bridge-${Date.now()}`,
+      taskDescription: outcome.taskDescription || outcome.tool || "unknown",
+      routedAgent: outcome.routedAgent || "direct",
+      routedSkill: outcome.routedSkill || outcome.tool || "unknown",
+      confidence: outcome.confidence || 0.8,
+      success: outcome.success !== false,
+      routingMethod: outcome.routingMethod || "bridge",
+      timestamp: new Date().toISOString(),
+    });
+    writeFileSync(routingPath, JSON.stringify(entries, null, 2), "utf-8");
+  } catch {
+    // Silent fail
+  }
+}
+
 function logToolEvent(logDir, eventType, tool, args = {}, result = null) {
   try {
     const eventsPath = join(logDir, "plugin-tool-events.log");
@@ -429,6 +453,15 @@ async function handlePostProcess(input, projectRoot, logDir) {
   });
 
   logToActivity(logDir, `post-process: complete duration=${duration}ms processors=${processorResult.success}`);
+
+  // Log routing outcome for test verification
+  logRoutingOutcome(logDir, {
+    tool,
+    taskDescription: `[post-process] ${tool}`,
+    routedAgent: "bridge",
+    routedSkill: tool,
+    success: processorResult.success !== false,
+  });
 
   return {
     duration,
@@ -828,6 +861,10 @@ async function main() {
 
   const projectRoot = findProjectRoot();
   const logDir = ensureLogDir(projectRoot);
+
+  // Log session start for test verification
+  const sessionId = `bridge-${Date.now()}`;
+  logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
 
   // Lazy-load framework on first call
   if (!frameworkReady && !frameworkLoadAttempted) {

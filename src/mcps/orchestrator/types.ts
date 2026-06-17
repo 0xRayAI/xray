@@ -52,6 +52,41 @@ export interface TaskValidation {
   errors: string[];
 }
 
+export interface ActiveAside {
+  asideId: string;
+  description: string;
+  sessionId?: string;
+  parentAsideId?: string;
+  startedAt: number;
+  inheritedContext?: Record<string, unknown>;
+  priorVerdictContext?: Record<string, unknown>;
+  observations: AsideObservation[];
+}
+
+export interface AsideObservation {
+  key: string;
+  value: string;
+  source: string;
+}
+
+export interface AsideContextOptions {
+  description: string;
+  inheritedContext?: Record<string, unknown>;
+  priorVerdictContext?: Record<string, unknown>;
+  sessionId?: string;
+  parentAsideId?: string;
+}
+
+export interface AsideResult {
+  asideId: string;
+  description: string;
+  success: boolean;
+  duration: number;
+  observations: AsideObservation[];
+  priorVerdictContext?: Record<string, unknown>;
+  error?: string;
+}
+
 export interface OrchestrationStatus {
   activeSessions: number;
   totalTasks: number;
@@ -62,6 +97,8 @@ export interface OrchestrationStatus {
     tasks: number;
     duration: number;
   }>;
+  activeAsideCount?: number;
+  activeAsideIds?: string[];
 }
 
 export interface TaskExecutionContext {
