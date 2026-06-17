@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.2.0] - 2026-06-17
+
+### 🔄 Changes
+
+### ✨ Features
+- Orphan file resolution: 5 dead files deleted, ~39 files integrated under typecheck
+- feat: 58 type errors fixed across 6 source files
+- feat: pre-existing e2e failures fixed (OpenClaw 9/9, Grok CLI 62/0)
+- feat: vitest config testTimeout added for processor-logger stability
+- feat: pre-tool-use hook rewritten from skeleton to full hook with resonance/decision-matrix/JSON
+- feat: SelfProposalEngine integrated under typecheck with metamorphosis type support
+
+### 🐛 Bug Fixes
+- fix: postinstall e2e version assertions (3.1.1 → 0.5.2)
+- fix: AGENTS.md session entry and test assertions cleaned
+- fix: enforcement-gate fallback dynamic imports `as string` cast
+
+### ♻️ Refactoring
+- chore: removed ~180 stale @version JSDoc tags from source files
+- chore: cleaned stale version badges from README, AGENTS.md, docs-site docs
+- chore: removed "xray 2.0" from command docs (26 files)
+- chore: release.mjs checks npm view 0xray version (was xray)
+- chore: release.mjs push target master → main
+
+---
+
 ## [3.1.1] - 2026-06-17
 
 ### 🔄 Changes
