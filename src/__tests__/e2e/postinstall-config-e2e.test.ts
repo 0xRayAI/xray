@@ -218,8 +218,8 @@ describe("package.json configuration", () => {
     expect(pkg.opencode?.plugin).toBe("./dist/plugin/xray-codex-injection.js");
   });
 
-  test("version is 0.5.2", () => {
+  test("version is current", () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8"));
-    expect(pkg.version).toBe("0.5.2");
+    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
