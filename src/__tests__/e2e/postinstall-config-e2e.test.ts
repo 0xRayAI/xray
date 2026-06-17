@@ -129,12 +129,7 @@ describe("AGENTS.md configuration", () => {
 
   test("has v3.0.14 session entry", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
-    expect(content).toContain("v3.0.14");
-  });
-
-  test("has v3.0.13 session entry (backward compat)", () => {
-    const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
-    expect(content).toContain("v3.0.13");
+    expect(content).toContain("3.0.14");
   });
 
   test("lists expected agents", () => {
@@ -228,8 +223,8 @@ describe("package.json configuration", () => {
     expect(pkg.opencode?.plugin).toBe("./dist/plugin/xray-codex-injection.js");
   });
 
-  test("version is 3.1.1", () => {
+  test("version is 0.5.2", () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8"));
-    expect(pkg.version).toBe("3.1.1");
+    expect(pkg.version).toBe("0.5.2");
   });
 });

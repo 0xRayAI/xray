@@ -62,7 +62,7 @@ async function loadRegistry(): Promise<IValidatorRegistry | null> {
 
   const candidatePaths = [
     () => import("../enforcement/validators/validator-registry.js"),
-    () => import("../../node_modules/0xray/dist/enforcement/validators/validator-registry.js"),
+    () => import(/* skip-ts */ "../../node_modules/0xray/dist/enforcement/validators/validator-registry.js" as string),
   ];
 
   for (const load of candidatePaths) {
@@ -376,7 +376,7 @@ async function loadStateManager(): Promise<any> {
 
   const candidatePaths = [
     () => import("../state/state-manager.js"),
-    () => import("../../node_modules/0xray/dist/state/state-manager.js"),
+    () => import(/* skip-ts */ "../../node_modules/0xray/dist/state/state-manager.js" as string),
   ];
   for (const load of candidatePaths) {
     try {
@@ -391,7 +391,7 @@ async function loadStateManager(): Promise<any> {
 async function loadProcessorManager(): Promise<any> {
   const candidatePaths = [
     () => import("../processors/processor-manager.js"),
-    () => import("../../node_modules/0xray/dist/processors/processor-manager.js"),
+    () => import(/* skip-ts */ "../../node_modules/0xray/dist/processors/processor-manager.js" as string),
   ];
   for (const load of candidatePaths) {
     try {

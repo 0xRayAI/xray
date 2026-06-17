@@ -160,10 +160,10 @@ async function runTests() {
 
   if (fs.existsSync(srcApiServer)) {
     const content = fs.readFileSync(srcApiServer, 'utf-8');
-    if (content.includes('0xRayAPIServer') || content.includes('class APIServer')) {
-      pass('API server module (source) defines 0xRayAPIServer');
+    if (content.includes('XrayAPIServer') || content.includes('0xRayAPIServer') || content.includes('class APIServer')) {
+      pass('API server module (source) defines XrayAPIServer');
     } else {
-      fail('API server module defines 0xRayAPIServer', 'Class not found in api-server.ts');
+      fail('API server module defines XrayAPIServer', 'Class not found in api-server.ts');
     }
   } else if (fs.existsSync(distApiServer)) {
     const result = await checkSyntax(distApiServer);
