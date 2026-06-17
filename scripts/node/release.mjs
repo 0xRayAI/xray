@@ -98,7 +98,7 @@ async function main() {
   // This removes the brittle "must be exactly one ahead" problem.
   let publishedVersion;
   try {
-    publishedVersion = execSync('npm view xray version', { encoding: 'utf-8' }).trim();
+    publishedVersion = execSync('npm view 0xray version', { encoding: 'utf-8' }).trim();
     console.log(`📌 Latest published on npm: ${publishedVersion}`);
   } catch {
     publishedVersion = '0.0.0';
