@@ -4,7 +4,6 @@
  * Analyzes routing success rates, keyword effectiveness, and confidence thresholds.
  * Integrates with RoutingOutcomeTracker to provide comprehensive routing metrics.
  *
- * @version 1.0.0
  * @since 2026-03-05
  */
 

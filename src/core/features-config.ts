@@ -4,7 +4,6 @@
  * Loads and validates the unified features configuration from features.json
  * Supports token optimization, model routing, batch operations, and more.
  *
- * @version 1.0.0
  * @since 2026-01-25
  */
 

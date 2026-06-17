@@ -5,7 +5,6 @@
  * services (GitHub, GitLab, Bitbucket, Stripe) and routes them
  * to the PostProcessor for execution.
  *
- * @version 2.0.0
  * @since 2026-03-08
  */
 

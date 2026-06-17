@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# xray 2.0 - Performance Analysis
+# xray - Performance Analysis
 
 # Comprehensive metrics analysis for framework integration
 
-echo "📊 xray 2.0 - Performance Analysis"
+echo "📊 xray - Performance Analysis"
 echo "============================================================"
 
 # Initialize performance metrics

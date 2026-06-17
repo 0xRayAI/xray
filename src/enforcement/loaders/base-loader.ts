@@ -8,7 +8,6 @@
  * from rule execution.
  * 
  * @module loaders/base-loader
- * @version 1.0.0
  */
 
 import * as fs from "fs";

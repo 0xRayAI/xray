@@ -5,7 +5,6 @@
  * Each validator encapsulates the validation logic for a specific architectural rule.
  *
  * @module validators/architecture-validators
- * @version 1.0.0
  */
 
 import {

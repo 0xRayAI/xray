@@ -4,7 +4,6 @@
  * HTTP API server that OpenClaw skills call to invoke 0xRay capabilities.
  * This is the bridge between OpenClaw skills and 0xRay.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

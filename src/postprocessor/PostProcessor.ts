@@ -4,7 +4,6 @@
  * Automated CI/CD loop orchestration: commit → push → monitor → fix → redeploy → monitor
  * Provides systematic error prevention and deployment automation.
  *
- * @version 1.0.0
  * @since 2026-01-13
  */
 

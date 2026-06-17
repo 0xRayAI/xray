@@ -3,7 +3,6 @@
  *
  * Tests for src/cli/commands/credible-init.ts
  *
- * @version 1.0.0
  * @since 1.15.0
  */
 

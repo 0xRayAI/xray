@@ -4,7 +4,6 @@
  * Extends ServerConfigRegistry with plugin support for Phase 2.
  * Enables automatic MCP server registration from plugins.
  * 
- * @version 1.2.0
  */
 
 import { 

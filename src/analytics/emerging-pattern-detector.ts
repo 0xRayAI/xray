@@ -4,7 +4,6 @@
  * Discovers new routing patterns from recent task requests,
  * identifies emergent behaviors, and suggests new pattern candidates.
  *
- * @version 1.0.0
  * @since 2026-03-05
  */
 

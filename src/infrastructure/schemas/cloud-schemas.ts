@@ -4,7 +4,6 @@
  * Schema definitions for cloud provider configurations, ensuring
  * enterprise-grade validation and compliance with Universal Development Codex v1.2.0.
  *
- * @version 1.0.0
  * @since 2026-01-08
  */
 

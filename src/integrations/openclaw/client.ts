@@ -4,7 +4,6 @@
  * Implements OpenClaw Gateway Protocol v3 with proper request/response handling,
  * reconnection logic, and event management.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

@@ -4,7 +4,6 @@
  * Basic infrastructure tests for core system components
  * ensuring essential services and configurations are operational.
  *
- * @version 1.0.0
  * @since 2026-01-23
  */
 

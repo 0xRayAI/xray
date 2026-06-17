@@ -4,7 +4,6 @@
  * Comprehensive IaC validation with schema enforcement, pre-commit hooks,
  * and automated CI/CD integration for enterprise-grade cloud deployments.
  *
- * @version 1.0.0
  * @since 2026-01-08
  */
 

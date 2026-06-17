@@ -4,7 +4,6 @@
  * Client for calling the chrono-warp-drive Dynamo governance endpoint.
  * Handles HTTP requests, retries, and response validation.
  *
- * @version 1.0.0
  * @since 2026-05-11
  */
 

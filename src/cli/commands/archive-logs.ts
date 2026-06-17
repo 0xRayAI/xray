@@ -5,7 +5,6 @@
  * Archives log files without requiring framework boot.
  * Used by git hooks to prevent log truncation.
  * 
- * @version 1.0.0
  */
 
 import * as fs from "fs";

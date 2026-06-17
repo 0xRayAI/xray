@@ -4,7 +4,6 @@
  * Common TypeScript interfaces for 0xRay integrations.
  * Provides a standardized foundation for all integration types.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

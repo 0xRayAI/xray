@@ -4,7 +4,6 @@
  * Tests that new agents are properly registered and accessible
  * through the agent index and built-in registry.
  *
- * @version 1.0.0
  * @since 2026-02-02
  */
 

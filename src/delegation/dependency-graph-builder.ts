@@ -4,7 +4,6 @@
  * Builds comprehensive dependency graphs for codebase analysis.
  * Tracks file relationships, import/export chains, and architectural dependencies.
  *
- * @version 1.0.0
  * @since 2026-01-11
  */
 

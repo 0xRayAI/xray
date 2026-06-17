@@ -2,7 +2,6 @@
  * Tests for Activity Logger
  * 
  * @module tests/activity-logger
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";

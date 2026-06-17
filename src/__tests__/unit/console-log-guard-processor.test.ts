@@ -1,7 +1,6 @@
 /**
  * Unit tests for ConsoleLogGuardProcessor
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

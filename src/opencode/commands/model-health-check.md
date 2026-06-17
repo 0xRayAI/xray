@@ -5,11 +5,11 @@ description: Verify dynamic model loading system health and compatibility
 
 #!/bin/bash
 
-# xray 2.0 - Dynamic Model Health Check
+# xray - Dynamic Model Health Check
 
 # Validates the dynamic model loading system functionality
 
-echo "🏥 xray 2.0 - Dynamic Model Health Check"
+echo "🏥 xray - Dynamic Model Health Check"
 echo "================================================"
 
 # Check if dynamic loader exists

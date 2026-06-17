@@ -11,7 +11,6 @@
  * - Integration analysis tools
  * - Multi-domain analysis coordination
  *
- * @version 1.0.0
  * @since 2026-02-02
  */
 

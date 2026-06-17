@@ -4,7 +4,6 @@
  * Intelligent model routing based on task complexity and type.
  * Uses featuresConfigLoader as the single source of truth for all model config.
  *
- * @version 3.0.0
  * @since 2026-01-25
  */
 

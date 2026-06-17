@@ -6,7 +6,6 @@
  * - History-weighted voting that considers past successful votes
  * - Multiple aggregation strategies for different decision scenarios
  *
- * @version 1.0.0
  * @since 2026-04-17
  */
 

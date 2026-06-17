@@ -14,7 +14,6 @@
  * - Graceful shutdown with retry logic
  * - Plugin isolation with process spawning
  * 
- * @version 1.1.0
  */
 
 import * as fs from "fs";

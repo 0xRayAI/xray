@@ -4,7 +4,6 @@
  * Provides real-time monitoring of sessions with health checks,
  * performance tracking, and alerting capabilities.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

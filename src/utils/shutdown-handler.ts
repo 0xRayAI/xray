@@ -4,7 +4,6 @@
  * Centralized shutdown handling for MCP servers.
  * Extracts common shutdown patterns to reduce code duplication.
  * 
- * @version 1.0.0
  * @since 2026-03-22
  */
 

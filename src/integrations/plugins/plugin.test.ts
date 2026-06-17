@@ -3,7 +3,6 @@
  *
  * Tests for the plugin system - PluginIntegration, PluginRegistry, and PluginServerConfigRegistry.
  *
- * @version 1.0.0
  */
 
 import { describe, test, expect, beforeEach, vi, afterEach } from "vitest";

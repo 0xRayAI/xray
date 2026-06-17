@@ -3,7 +3,6 @@
  *
  * Handles loading, validation, and management of OpenClaw integration configuration.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

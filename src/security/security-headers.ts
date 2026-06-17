@@ -4,7 +4,6 @@
  * Comprehensive security headers implementation for HTTP responses.
  * Integrates with boot orchestrator and API endpoints.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

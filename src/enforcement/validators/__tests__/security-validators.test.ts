@@ -5,7 +5,6 @@
  * Tests cover input validation patterns, security vulnerabilities, and edge cases.
  *
  * @module validators/__tests__/security-validators
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach } from "vitest";

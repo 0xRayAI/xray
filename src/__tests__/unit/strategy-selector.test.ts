@@ -3,7 +3,6 @@
  *
  * Tests for adaptive strategy selection based on complexity, risk, and context
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

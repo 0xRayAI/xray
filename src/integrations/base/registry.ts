@@ -4,7 +4,6 @@
  * Central registry for managing 0xRay integrations.
  * Provides registration, loading, unloading, health checking, and stats retrieval.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

@@ -4,7 +4,6 @@
  * Type definitions for the chrono-warp-drive Dynamo governance endpoint integration.
  * Provides external governance checking for inference-driven proposals.
  *
- * @version 1.0.0
  * @since 2026-05-11
  */
 

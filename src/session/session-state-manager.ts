@@ -4,7 +4,6 @@
  * Manages cross-session state sharing, dependency tracking,
  * and coordination for complex workflows.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

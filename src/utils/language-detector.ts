@@ -4,7 +4,6 @@
  * Detects project language and test framework from project files.
  * Supports: TypeScript, JavaScript, Python, Go, Rust, Java, C++, Ruby, PHP
  *
- * @version 1.0.0
  * @since 2026-02-25
  */
 

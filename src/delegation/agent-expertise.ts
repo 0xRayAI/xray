@@ -4,7 +4,6 @@
  * Defines expertise levels for weighted voting across all 0xRay agents.
  * Higher expertise = higher weight in voting decisions.
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

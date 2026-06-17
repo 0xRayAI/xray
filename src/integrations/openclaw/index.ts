@@ -3,7 +3,6 @@
  *
  * Combines all OpenClaw integration components into a single interface.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

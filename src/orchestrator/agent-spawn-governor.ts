@@ -4,7 +4,6 @@
  * Critical governance component that prevents infinite agent spawning
  * and enforces spawn limits across the multi-agent orchestration system.
  *
- * @version 1.0.0
  * @since 2026-01-23
  */
 

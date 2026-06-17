@@ -4,7 +4,6 @@
  * Composes with existing Kernel to add self-modifying pattern learning capabilities.
  * Enables continuous pattern improvement based on performance data.
  *
- * @version 1.0.0
  * @since 2026-03-05
  */
 

@@ -33,7 +33,6 @@
  *   node bridge.mjs --http --port 18431 --cwd /path
  *   curl -X POST http://localhost:18431 -d '{"command":"get-codex-prompt"}'
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

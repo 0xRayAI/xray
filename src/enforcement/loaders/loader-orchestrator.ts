@@ -7,7 +7,6 @@
  * Phase 4 refactoring: Extracted loader orchestration from RuleEnforcer
  * 
  * @module loaders/loader-orchestrator
- * @version 1.0.0
  */
 
 import { frameworkLogger } from "../../core/framework-logger.js";

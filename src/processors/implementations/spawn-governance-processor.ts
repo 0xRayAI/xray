@@ -9,7 +9,6 @@
  *  - #56 Infinite Spawn Pattern Detection
  *  - #57 Spawn Rate Limiting
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

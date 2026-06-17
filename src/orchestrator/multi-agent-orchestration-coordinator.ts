@@ -4,7 +4,6 @@
  * Central coordinator for multi-agent orchestration that integrates all orchestration components
  * for comprehensive E2E workflow management and coordination.
  *
- * @version 1.1.0
  * @since 2026-01-23
  */
 

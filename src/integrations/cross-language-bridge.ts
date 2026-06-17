@@ -4,7 +4,6 @@
  * JSON-RPC/WebSocket bridge for TypeScript-Python communication.
  * Enables TypeScript agents to access Python BaseAgent capabilities.
  *
- * @version 1.0.0
  * @since 2026-01-09
  */
 

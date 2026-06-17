@@ -4,7 +4,6 @@
  * Tests for CommonJS (.cjs) and ES Module (.mjs) script execution
  * including timeout handling, stdout/stderr capture, and exit code detection.
  *
- * @version 1.7.5
  */
 
 import { describe, test, expect, beforeEach, afterEach } from "vitest";

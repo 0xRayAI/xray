@@ -6,7 +6,6 @@
  * This file is the central source of truth for shared processor types
  * to avoid circular dependencies.
  *
- * @version 1.2.0
  * @since 2026-01-07
  */
 

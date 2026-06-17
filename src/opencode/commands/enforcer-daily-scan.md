@@ -5,9 +5,9 @@ description: Automated daily framework compliance monitoring with threshold vali
 
 #!/bin/bash
 
-# Daily compliance scan for xray 2.0
+# Daily compliance scan for xray
 
-echo "🔍 xray 2.0 - Daily Compliance Scan"
+echo "🔍 xray - Daily Compliance Scan"
 echo "========================================================="
 
 # Initialize compliance status
@@ -133,5 +133,5 @@ exit 1
 fi
 
 echo ""
-echo "🎯 xray 2.0 Status: OPERATIONAL"
+echo "🎯 xray Status: OPERATIONAL"
 echo "Next scheduled scan: Tomorrow at 09:00"

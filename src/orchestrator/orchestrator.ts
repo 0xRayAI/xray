@@ -4,7 +4,6 @@
  * Coordinates multi-step tasks and delegates to specialized subagents.
  * Implements Sisyphus integration for relentless execution.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

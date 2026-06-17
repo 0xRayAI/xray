@@ -5,7 +5,6 @@
  * Scans code for forbidden console.log/warn/error/info/debug usage,
  * ensuring all logging goes through frameworkLogger instead.
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

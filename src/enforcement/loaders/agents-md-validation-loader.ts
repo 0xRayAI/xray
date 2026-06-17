@@ -7,7 +7,6 @@
  * Phase 4 refactoring: Extracted from RuleEnforcer.loadAgentsMdValidationRule()
  * 
  * @module loaders/agents-md-validation-loader
- * @version 1.0.0
  */
 
 import { frameworkLogger } from "../../core/framework-logger.js";

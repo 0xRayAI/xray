@@ -5,7 +5,6 @@
  * Main CLI bridge for external systems (like Jelly commercial modules) to call into 0xRay.
  * Allows spawning OpenCode CLI with 0xRay agents to execute real tasks.
  *
- * @version 1.1.0
  * @since 2026-02-14
  *
  * Usage:

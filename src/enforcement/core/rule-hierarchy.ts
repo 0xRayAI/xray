@@ -7,7 +7,6 @@
  * Phase 5 refactoring: Extracted from RuleEnforcer.
  *
  * @module enforcement/core
- * @version 1.0.0
  *
  * @example
  * ```typescript

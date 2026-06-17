@@ -13,7 +13,6 @@
  *
  * Mocks: callTool (internal path), fetch (for HTTP layer full branch coverage), frameworkLogger ONLY (no console anywhere)
  *
- * @version 1.1.0
  * V2-HEAVY-02 ownership
  */
 

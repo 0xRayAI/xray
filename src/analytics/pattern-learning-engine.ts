@@ -4,7 +4,6 @@
  * Learns from performance data, generates adaptive modifications,
  * and creates self-improving pattern definitions.
  *
- * @version 1.0.0
  * @since 2026-03-05
  */
 

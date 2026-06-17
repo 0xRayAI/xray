@@ -10,7 +10,6 @@
  * - complex: 50+ - multi-agent orchestration with voting
  * - enterprise: 75+ - maximum orchestration
  *
- * @version 1.2.0
  * @since 2026-01-07
  */
 

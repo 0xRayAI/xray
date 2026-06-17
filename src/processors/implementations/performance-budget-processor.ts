@@ -5,7 +5,6 @@
  * Checks code content against configurable size, function-length, nesting-depth,
  * and parameter-count budgets. Returns structured violation lists.
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

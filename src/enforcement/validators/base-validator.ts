@@ -5,7 +5,6 @@
  * and enforces the IValidator interface contract.
  *
  * @module validators/base-validator
- * @version 1.0.0
  */
 
 import {

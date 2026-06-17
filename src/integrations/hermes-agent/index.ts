@@ -4,7 +4,6 @@
  * Exports the TypeScript integration class that bridges 0xRay
  * framework components to the Hermes CLI agent via bridge.mjs.
  *
- * @version 2.0.0
  * @since 2026-03-27
  */
 

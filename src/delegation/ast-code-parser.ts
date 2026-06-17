@@ -4,7 +4,6 @@
  * AST-based code parsing and structural analysis using ast-grep.
  * Provides advanced code understanding, pattern detection, and refactoring insights.
  *
- * @version 1.0.0
  * @since 2026-01-11
  */
 

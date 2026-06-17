@@ -5,7 +5,6 @@
  * when stuck patterns are detected.
  *
  * @module processors/implementations
- * @version 1.0.0
  */
 
 import { PostProcessor } from "../processor-interfaces.js";

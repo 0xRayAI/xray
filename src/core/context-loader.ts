@@ -4,7 +4,6 @@
  * Loads Universal Development Codex v1.2.0 context for agent initialization.
  * Provides structured access to 30+ codex terms, interweaves, lenses, and anti-patterns.
  *
- * @version 1.0.0
  * @since 2026-01-06
  */
 

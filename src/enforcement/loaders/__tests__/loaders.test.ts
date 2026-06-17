@@ -6,7 +6,6 @@
  * Phase 4 refactoring: Tests for extracted loader classes.
  * 
  * @module loaders/__tests__/loaders
- * @version 1.0.0
  */
 
 import * as fs from "fs";

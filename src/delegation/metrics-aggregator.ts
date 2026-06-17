@@ -4,7 +4,6 @@
  * Provides aggregation, reporting, and export functionality for delegation
  * and orchestration metrics stored in stateManager.
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

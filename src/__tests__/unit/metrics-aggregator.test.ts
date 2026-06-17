@@ -3,7 +3,6 @@
  *
  * Tests for delegation and orchestration metrics aggregation functions.
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

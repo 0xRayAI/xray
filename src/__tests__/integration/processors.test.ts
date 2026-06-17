@@ -6,7 +6,6 @@
  * execute correctly with actual data.
  *
  * @testIntegration
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";

@@ -26,7 +26,6 @@
  *   - Make CodexLoader delegate its raw data load here, then re-export from governance.
  *
  * @module governance/codex-policy.service
- * @version 2.0.0-s02-real
  */
 
 import { frameworkLogger } from '../core/framework-logger.js';

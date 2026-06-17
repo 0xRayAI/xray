@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# xray 2.0 - Sisyphus Orchestrator Validation
+# xray - Sisyphus Orchestrator Validation
 
 # Tests async multi-agent coordination capabilities
 
-echo "🎭 xray 2.0 - Sisyphus Orchestrator Validation"
+echo "🎭 xray - Sisyphus Orchestrator Validation"
 echo "==================================================================="
 
 # Initialize orchestration test
@@ -124,5 +124,5 @@ echo " - MCP skills integrated: ${#MCP_SKILLS[@]}"
 echo " - Total coordination points: $((${#AGENTS[@]} + ${#WORKFLOW_PATTERNS[@]} + ${#MCP_SKILLS[@]}))"
 
 echo ""
-echo "🎭 xray 2.0: SISYPHUS OPERATIONAL"
+echo "🎭 xray: SISYPHUS OPERATIONAL"
 echo "Async multi-agent orchestration validated"

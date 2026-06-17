@@ -7,7 +7,6 @@
  * - Historical learning and pattern detection
  * - Integration with session coordinator
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

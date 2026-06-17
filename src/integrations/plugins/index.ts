@@ -4,7 +4,6 @@
  * Industrial-grade plugin system for 0xRay.
  * Provides lifecycle management, security, metrics, and extensibility.
  * 
- * @version 1.1.0
  */
 
 export { 

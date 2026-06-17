@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# xray 2.0 - AI Summary Auto-Logger
+# xray - AI Summary Auto-Logger
 
 # Automatically captures and logs whatever AI outputs as final summary
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 xray 2.0 - AI Summary Auto-Logger"
+echo "📝 xray - AI Summary Auto-Logger"
 echo "==============================="
 
 # This script captures whatever content is piped to it and logs it automatically

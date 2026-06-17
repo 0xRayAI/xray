@@ -4,7 +4,6 @@
  * Tests for all architecture validators extracted from rule-enforcer.ts.
  *
  * @module validators/__tests__/architecture-validators
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach } from "vitest";

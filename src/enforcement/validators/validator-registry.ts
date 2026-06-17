@@ -5,7 +5,6 @@
  * and category filtering capabilities.
  *
  * @module validators/validator-registry
- * @version 1.0.0
  */
 
 import {

@@ -9,7 +9,6 @@
  * - Visual content understanding
  * - Tool usage and permissions
  *
- * @version 1.0.0
  * @since 2026-02-02
  */
 

@@ -14,7 +14,6 @@
  * - Metrics aggregation
  * - Event-driven architecture
  * 
- * @version 1.1.0
  */
 
 import { EventEmitter } from "events";

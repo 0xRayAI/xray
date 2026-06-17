@@ -5,7 +5,6 @@
  * Supports multiple languages: TypeScript, JavaScript, Python, Go, Rust, Java, C#
  * Uses direct skill calls (no MCP overhead) for instant test generation.
  *
- * @version 1.1.0
  * @since 2026-02-15
  */
 

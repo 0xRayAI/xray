@@ -4,7 +4,6 @@
  * Unit tests for all testing validators extracted during Phase 3 refactoring.
  *
  * @module validators/__tests__/testing-validators
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach } from "vitest";

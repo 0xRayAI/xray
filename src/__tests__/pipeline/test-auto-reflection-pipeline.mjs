@@ -6,7 +6,6 @@
  * - Post-commit hook integration
  * - features.json configuration loading
  * 
- * @version 1.0.0
  * @since 2026-04-04
  */
 

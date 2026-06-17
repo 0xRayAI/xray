@@ -3,7 +3,6 @@
  *
  * Tests for src/scripts/integration.ts - CLI bridge for external systems
  *
- * @version 1.0.0
  * @since 2026-02-14
  */
 

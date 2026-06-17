@@ -3,7 +3,6 @@
  *
  * Tests the real-time monitoring, anomaly detection, and alerting functionality.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

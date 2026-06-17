@@ -4,7 +4,6 @@
  * Implements additional security measures and hardening for the framework.
  * Addresses vulnerabilities identified during security audit.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

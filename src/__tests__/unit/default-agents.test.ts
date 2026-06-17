@@ -3,7 +3,6 @@
  *
  * Tests for the centralized agent configuration.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

@@ -5,11 +5,11 @@ description: Automated security vulnerability scanning with dependency and code 
 
 #!/bin/bash
 
-# xray 2.0 - Security Scan Hook
+# xray - Security Scan Hook
 
 # Comprehensive security analysis for vulnerabilities and threats
 
-echo "🔒 xray 2.0 - Security Scan"
+echo "🔒 xray - Security Scan"
 echo "================================================="
 
 # Initialize security status
@@ -153,5 +153,5 @@ exit 1
 fi
 
 echo ""
-echo "🛡️ xray 2.0 Status: SECURE"
+echo "🛡️ xray Status: SECURE"
 echo "Next security scan: Pre-commit and daily"

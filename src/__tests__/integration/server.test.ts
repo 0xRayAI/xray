@@ -3,7 +3,6 @@
  *
  * Tests server setup, middleware configuration, and basic functionality.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

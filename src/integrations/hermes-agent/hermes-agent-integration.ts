@@ -8,7 +8,6 @@
  * Extends BaseIntegration for consistent lifecycle management with
  * the integration registry.
  *
- * @version 2.0.0
  * @since 2026-03-27
  */
 

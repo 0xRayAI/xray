@@ -3,7 +3,6 @@
  *
  * Comprehensive unit tests for the AgentDelegator class to achieve 85%+ coverage.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

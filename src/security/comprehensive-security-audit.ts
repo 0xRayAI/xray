@@ -5,7 +5,6 @@
  * automated remediation, compliance checking, and weighted voting
  * for architectural decisions.
  *
- * @version 1.22.13
  */
 
 import { readFileSync, readdirSync, statSync, writeFileSync } from "fs";

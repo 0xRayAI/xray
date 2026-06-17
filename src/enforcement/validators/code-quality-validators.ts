@@ -5,7 +5,6 @@
  * Each validator encapsulates the validation logic for a specific rule.
  *
  * @module validators/code-quality-validators
- * @version 1.0.0
  */
 
 import {

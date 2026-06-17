@@ -4,7 +4,6 @@
  * Generates optimized, token-efficient system prompts by implementing
  * selective injection and smart compression strategies.
  *
- * @version 1.0.0
  * @since 2026-03-03
  */
 

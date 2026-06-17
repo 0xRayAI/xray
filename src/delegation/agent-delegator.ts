@@ -6,7 +6,6 @@
  *
  * Integrates with TaskSkillRouter for keyword-based preprocessing.
  *
- * @version 1.1.0
  * @since 2026-01-07
  */
 

@@ -1,7 +1,6 @@
 /**
  * Nudge Watchdog Unit Tests
  *
- * @version 1.0.0
  */
 
 import { describe, test, expect } from "vitest";

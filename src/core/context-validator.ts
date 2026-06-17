@@ -4,7 +4,6 @@
  * Prevents system prompt bloat by validating and rejecting context-injection attempts
  * that would exceed token budgets.
  *
- * @version 1.0.0
  * @since 2026-03-03
  */
 

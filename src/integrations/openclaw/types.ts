@@ -4,7 +4,6 @@
  * TypeScript interfaces for OpenClaw Gateway Protocol v3
  * and 0xRay integration components.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

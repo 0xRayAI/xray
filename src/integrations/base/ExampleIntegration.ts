@@ -4,7 +4,6 @@
  * This is a simple example showing how to create a custom integration
  * that extends the BaseIntegration class.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

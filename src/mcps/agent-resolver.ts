@@ -4,7 +4,6 @@
  * Resolves agent configurations from the 0xRay registry.
  * Used by the integration layer to programmatically access agent configs.
  *
- * @version 1.1.0
  * @since 2026-02-14
  */
 

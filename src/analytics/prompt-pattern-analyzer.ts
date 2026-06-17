@@ -4,7 +4,6 @@
  * Analyzes actual vs. template prompts to detect gaps and emerging patterns.
  * Integrates with RoutingOutcomeTracker to provide insights for template optimization.
  *
- * @version 1.0.0
  * @since 2026-03-05
  */
 

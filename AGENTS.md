@@ -85,13 +85,3 @@ The Autonomous Engine routes via complexity:
 xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.xray/codex.json`.
 
 Pure v16 MCPs. Clean. Complete.
-
-## Session: v0.5.2 Rename Polish
-
-- Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.14`.
-- **All 182 test files pass**: 2500 tests, 0 failures, 36 skipped.
-- **Build fix**: removed stale `.opencode/plugin/` copy; `package.json` → `dist/plugin/xray-codex-injection.js`.
-- **default-plugins.ts**: reads tool/handler metadata from SDK's internal `_requestHandlers` Map instead of patching `Server.prototype.setRequestHandler`; all registration functions async.
-- **8 failing test files fixed**: class name references (`0xRaySecurityAuditServer` → `XraySecurityAuditServer`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
-- **CHANGELOG.md**: added v0.5.2 entry.
-- **Stale READMEs**: updated `0xRay` → `0xRay` in 4 subdirectory READMEs.

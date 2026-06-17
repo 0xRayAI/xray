@@ -4,7 +4,6 @@
  * Tests for the core voting coordinator with weighted voting, strategy resolution,
  * and history tracking
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

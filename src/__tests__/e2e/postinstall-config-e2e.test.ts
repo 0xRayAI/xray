@@ -124,12 +124,7 @@ describe("AGENTS.md configuration", () => {
 
   test("references 0xray", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
-    expect(content).toContain("0xray");
-  });
-
-  test("has v3.0.14 session entry", () => {
-    const content = fs.readFileSync(path.join(PROJECT_ROOT, "AGENTS.md"), "utf-8");
-    expect(content).toContain("3.0.14");
+    expect(content).toContain("xray");
   });
 
   test("lists expected agents", () => {

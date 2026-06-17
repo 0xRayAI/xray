@@ -7,7 +7,6 @@
  * Phase 4 refactoring: Extracted async rule loading from RuleEnforcer
  * 
  * @module loaders
- * @version 1.0.0
  * 
  * @example
  * ```typescript

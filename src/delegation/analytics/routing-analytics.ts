@@ -4,7 +4,6 @@
  * Provides analytics aggregation and insights generation for routing data.
  * Extracted from task-skill-router.ts as part of Phase 2 refactoring.
  *
- * @version 1.0.0
  * @since 2026-03-12
  */
 

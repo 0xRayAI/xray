@@ -3,7 +3,6 @@
  *
  * Tests for tool event hooks, buffering, and filtering.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

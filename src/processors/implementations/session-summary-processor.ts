@@ -4,7 +4,6 @@
  * Generates emoji-formatted session summaries after tool execution.
  * Uses features.json -> auto_reporting config for control.
  *
- * @version 1.0.0
  * @since 2026-04-04
  */
 

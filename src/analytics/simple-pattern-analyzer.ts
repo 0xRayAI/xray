@@ -5,7 +5,6 @@
  *
  * This is the "learning" system - simple pattern matching, not ML.
  *
- * @version 1.0.0
  */
 
 import * as fs from "fs";

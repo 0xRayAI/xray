@@ -8,7 +8,6 @@
  * 4. Updates configuration automatically
  *
  * @module services
- * @version 1.0.0
  */
 
 

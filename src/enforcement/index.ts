@@ -5,7 +5,6 @@
  * It validates code against development rules and codex compliance requirements.
  *
  * @module enforcement
- * @version 1.0.0
  *
  * @example
  * ```typescript

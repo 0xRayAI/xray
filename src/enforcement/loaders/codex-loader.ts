@@ -7,7 +7,6 @@
  * Phase 4 refactoring: Extracted from RuleEnforcer.loadCodexRules()
  * 
  * @module loaders/codex-loader
- * @version 1.0.0
  */
 
 import { frameworkLogger } from "../../core/framework-logger.js";

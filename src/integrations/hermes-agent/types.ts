@@ -4,7 +4,6 @@
  * TypeScript interfaces for the Hermes Agent integration,
  * which bridges 0xRay framework components to the Hermes CLI agent.
  *
- * @version 2.2.0
  * @since 2026-03-27
  */
 

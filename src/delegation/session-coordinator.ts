@@ -4,7 +4,6 @@
  * Manages cross-agent communication and coordination within sessions.
  * Tracks delegation state, agent interactions, and conflict resolution.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

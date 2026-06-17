@@ -7,7 +7,6 @@
  * - Resource allocation validation
  * - Health monitoring
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

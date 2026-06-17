@@ -3,7 +3,6 @@
  *
  * Tests the integration of AgentMetricsSystem with AgentDelegator.
  *
- * @version 1.0.0
  * @since 2026-04-17
  */
 

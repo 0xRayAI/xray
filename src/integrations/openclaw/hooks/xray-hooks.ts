@@ -4,7 +4,6 @@
  * Integrates OpenClaw with 0xRay's tool.before and tool.after hooks
  * to send tool execution events to OpenClaw Gateway.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

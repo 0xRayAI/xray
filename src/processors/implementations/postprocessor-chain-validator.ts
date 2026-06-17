@@ -5,7 +5,6 @@
  * Checks that all registered postprocessors executed without errors,
  * validates priority ordering, and detects skipped or crashed processors.
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

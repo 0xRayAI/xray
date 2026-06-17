@@ -4,7 +4,6 @@
  * Analyzes test coverage for modified files and reports coverage gaps.
  *
  * @module processors/implementations
- * @version 1.0.0
  */
 
 import { PostProcessor } from "../processor-interfaces.js";

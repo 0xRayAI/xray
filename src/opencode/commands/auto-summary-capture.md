@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# xray 2.0 - Auto Summary Capture
+# xray - Auto Summary Capture
 
 # Monitors for 'job done print summary' signal and automatically logs summaries
 
@@ -40,7 +40,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 xray 2.0 - Auto Summary Capture"
+echo "📝 xray - Auto Summary Capture"
 echo "======================================"
 echo "Monitoring for 'job done print summary' signals..."
 echo "All AI-generated summaries will be automatically logged to REFACTORING_LOG.md"

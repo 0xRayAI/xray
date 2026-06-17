@@ -4,7 +4,6 @@
  * Abstract base class providing common lifecycle management, event emission,
  * configuration handling, and logging for all 0xRay integrations.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

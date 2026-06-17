@@ -5,7 +5,6 @@
  * automated remediation, and compliance validation using weighted voting
  * for architectural decisions.
  *
- * @version 1.22.13
  */
 
 import { EventEmitter } from "events";

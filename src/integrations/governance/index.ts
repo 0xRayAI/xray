@@ -4,7 +4,6 @@
  * Integrates chrono-warp-drive Dynamo governance endpoint for external
  * inference checking in governance decision-making.
  *
- * @version 1.0.0
  * @since 2026-05-11
  */
 

@@ -5,11 +5,11 @@ description: Automated code formatting hook with Prettier and framework-specific
 
 #!/bin/bash
 
-# xray 2.0 - Auto Format Hook
+# xray - Auto Format Hook
 
 # Ensures consistent code formatting across all files
 
-echo "🎨 xray 2.0 - Auto Format"
+echo "🎨 xray - Auto Format"
 echo "================================================"
 
 # Initialize status
@@ -91,7 +91,7 @@ fi
 if [ "$FORMATTED" = true ]; then
 echo ""
 echo "✅ Code formatting completed successfully"
-echo "🎯 xray 2.0: FORMATTING OPERATIONAL"
+echo "🎯 xray: FORMATTING OPERATIONAL"
 else
 echo ""
 echo "⚠️ Some formatting operations failed"

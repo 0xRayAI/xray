@@ -3,7 +3,6 @@
  *
  * Tests for the IntegrationRegistry class registration, loading, and lifecycle management.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

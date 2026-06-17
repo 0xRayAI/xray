@@ -7,7 +7,6 @@
  * - Audit reporting functionality
  * - File scanning and analysis
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 

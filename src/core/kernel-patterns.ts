@@ -4,7 +4,6 @@
  * Pattern definitions from v1.1.0 → v2.0 kernel update
  * Includes 35+ patterns from 80+ reflections
  * 
- * @version 2.0.0-SECURITY-ENHANCED
  */
 
 export interface KernelPattern {

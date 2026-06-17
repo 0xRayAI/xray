@@ -5,7 +5,6 @@
  * These validators enforce security best practices and input validation requirements.
  *
  * @module validators/security-validators
- * @version 1.0.0
  */
 
 import { BaseValidator } from "./base-validator.js";

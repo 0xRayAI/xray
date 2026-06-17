@@ -4,7 +4,6 @@
  * Predicts the best agent to route a task to based on historical
  * success rates using simple keyword overlap scoring.
  *
- * @version 1.0.0
  */
 
 import { routingOutcomeTracker } from '../delegation/analytics/outcome-tracker.js';

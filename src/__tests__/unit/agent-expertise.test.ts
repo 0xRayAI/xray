@@ -3,7 +3,6 @@
  *
  * Tests for agent expertise level configuration and voting weights
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

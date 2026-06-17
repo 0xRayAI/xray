@@ -9,7 +9,6 @@
  * - plugin status
  * - plugin uninstall
  * 
- * @version 1.1.0
  */
 
 import * as fs from "fs";

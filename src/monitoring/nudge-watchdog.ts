@@ -9,7 +9,6 @@
  * - repair-failure: Processor indicates fix but error persists
  *
  * @module monitoring/nudge-watchdog
- * @version 1.0.0
  */
 
 import { EventEmitter } from "events";

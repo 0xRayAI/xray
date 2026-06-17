@@ -4,7 +4,6 @@
  * Manages user consent for analytics data submission with granular
  * control over what categories can be shared.
  *
- * @version 1.0.0
  * @since 2026-03-06
  */
 

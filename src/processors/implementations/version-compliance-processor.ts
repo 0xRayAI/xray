@@ -14,7 +14,6 @@
  * @priority 25 (high - runs early, after preValidate, before errorBoundary)
  * @blocking true (blocks on violations)
  *
- * @version 1.0.0
  * @framework 0xRay 1.3.5
  */
 

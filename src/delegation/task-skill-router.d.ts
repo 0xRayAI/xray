@@ -4,7 +4,6 @@
  * Pre-processor utility for intelligent task-to-agent/skill routing.
  * Complements the AgentDelegator by providing keyword-based preprocessing.
  *
- * @version 1.1.0
  * @since 2026-02-22
  */
 

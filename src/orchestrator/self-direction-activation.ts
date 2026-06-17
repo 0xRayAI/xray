@@ -5,7 +5,6 @@
  * Activates the framework's dormant self-evolution systems for continuous improvement.
  * This version works without advanced-features dependencies for initial deployment.
  *
- * @version 2.0.0
  * @since 2026-01-24
  */
 

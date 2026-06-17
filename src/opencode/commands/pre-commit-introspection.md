@@ -5,11 +5,11 @@ description: Batched code quality and architecture introspection before commits
 
 #!/bin/bash
 
-# xray 2.0 - Pre-commit Introspection
+# xray - Pre-commit Introspection
 
 # Comprehensive code quality and architecture validation
 
-echo "🔬 xray 2.0 - Pre-commit Introspection"
+echo "🔬 xray - Pre-commit Introspection"
 echo "============================================================"
 
 # Initialize analysis status
@@ -181,5 +181,5 @@ done
 fi
 
 echo ""
-echo "🎯 xray 2.0: INTROSPECTION COMPLETE"
+echo "🎯 xray: INTROSPECTION COMPLETE"
 echo "Commit ready for integration"

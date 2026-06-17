@@ -3,7 +3,6 @@
  *
  * OpenClaw skill that provides xray orchestration commands.
  *
- * @version 1.0.0
  * @since 2026-03-14
  */
 

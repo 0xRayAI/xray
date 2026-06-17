@@ -4,7 +4,6 @@
  * Comprehensive security hardening implementation with OWASP compliance.
  * Implements defense-in-depth security architecture for enterprise applications.
  *
- * @version 1.0.0
  * @since 2026-01-08
  */
 

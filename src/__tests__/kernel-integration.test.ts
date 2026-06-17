@@ -4,7 +4,6 @@
  * Comprehensive test suite for kernel v2.0.0 integration
  * Tests pattern detection, agent delegation, routing, and orchestration
  * 
- * @version 2.0.0-SECURITY-ENHANCED
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';

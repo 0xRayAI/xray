@@ -11,7 +11,6 @@
  * @priority 10 (runs early after post-processing starts)
  * @blocking true (blocks publish on violations)
  *
- * @version 1.0.0
  * @framework 0xRay 1.15.41
  */
 

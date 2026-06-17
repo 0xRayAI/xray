@@ -4,7 +4,6 @@
  * Unified parsing utility for codex content in both JSON and Markdown formats.
  * Provides consistent parsing across all components with format detection and validation.
  *
- * @version 1.0.1
  * @since 2026-01-07
  */
 

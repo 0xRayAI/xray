@@ -5,7 +5,6 @@
  * operations. Useful for CI/CD pipelines, manual test triggers,
  * and retry mechanisms.
  *
- * @version 2.0.0
  * @since 2026-03-08
  */
 

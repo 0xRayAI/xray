@@ -4,7 +4,6 @@
  * Integrates the security orchestration layer with the framework's agent system.
  * Provides coordination between security agents using weighted voting.
  *
- * @version 1.22.13
  */
 
 import { EventEmitter } from "events";

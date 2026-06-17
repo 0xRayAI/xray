@@ -8,7 +8,6 @@
  * @priority 90 (high - runs early)
  * @blocking true (blocks commit if AGENTS.md is invalid)
  *
- * @version 1.0.0
  * @framework 0xRay 1.3.5
  */
 

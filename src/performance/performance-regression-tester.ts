@@ -4,7 +4,6 @@
  * Automated testing system that detects performance regressions and
  * enforces performance budget compliance in CI/CD pipelines.
  *
- * @version 1.0.0
  * @since 2026-01-08
  */
 

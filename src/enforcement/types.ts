@@ -5,7 +5,6 @@
  * Extracted from rule-enforcer.ts as part of Phase 1 refactoring.
  * 
  * @module types
- * @version 1.0.0
  */
 
 /**

@@ -14,7 +14,6 @@
  * - Copy operations to create new archive files
  *
  * @module processors/implementations
- * @version 1.1.0
  */
 
 import { PreProcessor } from "../processor-interfaces.js";

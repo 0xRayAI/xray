@@ -5,7 +5,6 @@
  * AI code removal attempts, and other critical issues.
  * Triggers multi-agent conferences when analysis is required.
  *
- * @version 1.0.0
  * @since 2026-03-08
  */
 

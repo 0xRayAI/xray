@@ -5,7 +5,6 @@
  * Parses TypeScript error lines from stderr and returns structured results.
  * Gracefully skips when no tsconfig.json exists.
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

@@ -3,7 +3,6 @@
  *
  * Tests for the BaseIntegration abstract class lifecycle, events, and utilities.
  *
- * @version 1.0.0
  * @since 2026-03-15
  */
 

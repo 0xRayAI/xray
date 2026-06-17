@@ -1,4 +1,4 @@
-# xray 2.0 - Summary Logger
+# xray - Summary Logger
 
 # Automatically logs AI-generated summaries and analysis to REFACTORING_LOG.md
 
@@ -38,7 +38,7 @@
 
 # 🚨 VIOLATION OF THIS RULE WILL BREAK THE PROJECT'S HISTORICAL RECORD 🚨
 
-echo "📝 xray 2.0 - Summary Logger" >&2
+echo "📝 xray - Summary Logger" >&2
 echo "====================================" >&2
 
 # Get script directory and project root

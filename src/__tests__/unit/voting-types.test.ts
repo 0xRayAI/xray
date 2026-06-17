@@ -3,7 +3,6 @@
  *
  * Tests for all voting system type definitions
  *
- * @version 1.0.0
  * @since 2026-04-16
  */
 

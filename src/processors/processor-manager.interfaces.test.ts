@@ -1,7 +1,6 @@
 /**
  * Tests for Processor Manager type interfaces
  *
- * @version 1.0.0
  * @since 2026-03-23
  */
 

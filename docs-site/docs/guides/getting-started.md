@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms
+41 agents · 44 skills · 15 MCP servers · 68 codex terms
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 

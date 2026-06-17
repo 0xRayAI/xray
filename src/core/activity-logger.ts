@@ -13,7 +13,6 @@
  *   XRAY_ACTIVITY_LOGGING=false (disable, default)
  * 
  * @module core/activity-logger
- * @version 1.0.0
  */
 
 import * as fs from "fs";

@@ -13,7 +13,6 @@
  *   const prompt = formatCodexPrompt({ projectRoot: '/path' });
  *   // Append to system prompt
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

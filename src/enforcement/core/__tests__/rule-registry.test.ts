@@ -5,7 +5,6 @@
  * Tests all public methods and edge cases.
  *
  * @module enforcement/core/__tests__
- * @version 1.0.0
  */
 
 import { describe, it, expect, beforeEach } from "vitest";

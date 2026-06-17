@@ -6,7 +6,6 @@
  *
  * This is framework-agnostic - works with Express, Fastify, Koa, etc.
  *
- * @version 1.0.0
  * @since 2026-03-08
  */
 

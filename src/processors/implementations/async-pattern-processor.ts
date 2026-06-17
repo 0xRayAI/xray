@@ -5,7 +5,6 @@
  * Detects anti-patterns in async code: callback patterns, long promise chains,
  * missing await inside async functions, and mixed callback/promise styles.
  *
- * @version 1.0.0
  * @since 2026-03-28
  */
 

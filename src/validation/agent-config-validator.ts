@@ -4,7 +4,6 @@
  * Validates agent configuration files for correctness and completeness
  * ensuring all required fields are present and properly formatted.
  *
- * @version 1.0.0
  * @since 2026-01-23
  */
 

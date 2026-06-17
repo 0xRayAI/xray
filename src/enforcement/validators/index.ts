@@ -5,7 +5,6 @@
  * Part of Phase 3 refactoring to extract validators from rule-enforcer.ts.
  *
  * @module validators
- * @version 1.0.0
  */
 
 // Base validator class

@@ -6,7 +6,6 @@
  * polymorphic processor classes.
  *
  * @module processors/interfaces
- * @version 1.0.0
  */
 
 import {

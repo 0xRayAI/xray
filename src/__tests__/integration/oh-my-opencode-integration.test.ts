@@ -4,7 +4,6 @@
  * Tests 0xRay enforcement working within the OpenCode plugin ecosystem.
  * Simulates MCP tool execution and plugin hook triggering.
  *
- * @version 1.0.0
  * @since 2026-01-07
  */
 
