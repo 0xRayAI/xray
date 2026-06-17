@@ -4,6 +4,7 @@
 Analyze the following data sources to gather insights for inference improvement:
 
 ### Data Locations
+- /Users/blaze/dev/xray/docs/reflections/aside-context-integration-analysis.md
 - /Users/blaze/dev/xray/docs/reflections/enforcement-gate-pipeline-resolution.md
 - /Users/blaze/dev/xray/docs/reflections/hermes-bridge-remediation-plan.md
 - /Users/blaze/dev/xray/docs/reflections/journey-to-v3.md

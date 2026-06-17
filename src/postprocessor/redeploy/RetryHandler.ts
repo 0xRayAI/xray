@@ -32,13 +32,14 @@ export class RetryHandler {
     operation: () => Promise<T>,
     shouldRetry?: (error: RetryableError, attempt: number) => boolean,
   ): Promise<T> {
-    let lastError: RetryableError;
+    let lastError: RetryableError = {};
 
     for (let attempt = 0; attempt <= this.config.maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
-        lastError = error;
+        const retryable = error as RetryableError;
+        lastError = retryable;
 
         // Don't retry on the last attempt
         if (attempt === this.config.maxRetries) {
@@ -46,7 +47,7 @@ export class RetryHandler {
         }
 
         // Check if we should retry this error
-        if (shouldRetry && !shouldRetry(error, attempt)) {
+        if (shouldRetry && !shouldRetry(retryable, attempt)) {
           break;
         }
 
@@ -123,7 +124,7 @@ export class RetryHandler {
     }
 
     // Retry 5xx HTTP errors
-    if (error.statusCode >= 500 && error.statusCode < 600) {
+    if (error.statusCode! >= 500 && error.statusCode! < 600) {
       return true;
     }
 
@@ -152,7 +153,7 @@ export class RetryHandler {
       return (
         error.code === "ECONNRESET" ||
         error.code === "ETIMEDOUT" ||
-        (error.statusCode >= 500 && error.statusCode < 600)
+        (error.statusCode! >= 500 && error.statusCode! < 600)
       );
     });
   }

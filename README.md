@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v2.0.0** — 9 agents · 44 skills · 1 MCPs governance servers · 60 codex terms · 2,2500 tests
+**v2.0.0** — 9 agents · 44 skills · 16 MCPs governance servers · 60 codex terms · 2,2500 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
 
@@ -32,7 +32,7 @@ The installation seeds YML surfaces and MCP servers. Place agent definitions in 
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Resonance/Isotopic · SSOT  │
-│  1 MCPs skill servers deliberate proposals       │
+│  16 MCPs skill servers deliberate proposals       │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
 │  7-flow MCP · Delegation · Governance gate      │
@@ -94,7 +94,7 @@ Codex enforcement is integrated at every level:
 - **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
 - CodexPolicyService — canonical Governance-owned SSOT for Codex loading
 - Pre-governance gate blocks non-compliant proposals before execution
-- 1 MCPs skill servers deliberate each proposal
+- 16 MCPs skill servers deliberate each proposal
 - frameworkLogger structured logging throughout (never console.*)
 - Active codex snapshot available via `get_active_codex` MCP tool
 

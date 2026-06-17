@@ -11,7 +11,8 @@ export type ProposalType =
   | 'automate'
   | 'codify'
   | 'strategic'
-  | 'compliance';
+  | 'compliance'
+  | 'metamorphosis';
 
 export interface GovernanceProposal {
   id: string;
@@ -19,9 +20,10 @@ export interface GovernanceProposal {
   title: string;
   description: string;
   evidence?: string[];
-  source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning';
+  source?: 'inference' | 'reflection' | 'manual' | 'ci' | 'phase-planning' | 'metamorphosis';
   confidence?: number; // 0-1
   metadata?: Record<string, unknown>;
+  tags?: string[];
 }
 
 export interface GovernanceVote {
@@ -46,6 +48,7 @@ export interface GovernanceResult {
   recommendedActions?: string[];
   externalContext?: Record<string, unknown>; // Solar activity, etc.
   moralOverride?: 'rejected_critical' | 'downgraded_significant' | 'none';
+  metamorphosisScore?: number;
 }
 
 export interface GovernanceContext {
@@ -54,6 +57,7 @@ export interface GovernanceContext {
   source?: string;
   reflectionId?: string;
   inferenceCycleId?: string;
+  tags?: string[];
 }
 
 export interface GovernOptions {
@@ -62,6 +66,7 @@ export interface GovernOptions {
   enableSolarAdjustment?: boolean;
   timeoutMs?: number; // end-to-end timeout for govern() in ms (default: 90000)
   maxAbstentionThreshold?: number; // fail if abstention ratio exceeds this (default: 1.0 = disabled)
+  metamorphosisThreshold?: number;
 }
 
 export interface GovernanceRequest {

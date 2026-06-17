@@ -1,12 +1,12 @@
 # xray Agents
 
-Quick reference for xray AI orchestration framework (v1 MCPs-centric three-subsystem).
+Quick reference for xray AI orchestration framework (v16 MCPs-centric three-subsystem).
 
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via `.opencode/agents/*.yml` YML surfaces and 3 dedicated MCP skill servers — no manual setup needed.
 
-## v1 MCPs-Centric Architecture
+## v16 MCPs-Centric Architecture
 
 The v2 release centers on **MCP (Model Context Protocol)** as the primary surface for agent skills. Three agent MCP servers handle governance deliberation:
 
@@ -84,14 +84,14 @@ The Autonomous Engine routes via complexity:
 
 xray enforces the Universal Development Codex (60 terms) via Dynamo governance. The codex lives in `.xray/codex.json`.
 
-Pure v1 MCPs. Clean. Complete.
+Pure v16 MCPs. Clean. Complete.
 
-## Session: v3.0.14 Rename Polish
+## Session: v0.5.2 Rename Polish
 
 - Package: `0xray` (npm), `github.com/0xRayAI/xray`. Version `3.0.14`.
 - **All 182 test files pass**: 2500 tests, 0 failures, 36 skipped.
 - **Build fix**: removed stale `.opencode/plugin/` copy; `package.json` → `dist/plugin/xray-codex-injection.js`.
 - **default-plugins.ts**: reads tool/handler metadata from SDK's internal `_requestHandlers` Map instead of patching `Server.prototype.setRequestHandler`; all registration functions async.
 - **8 failing test files fixed**: class name references (`0xRaySecurityAuditServer` → `XraySecurityAuditServer`); added `calculateMetamorphosisScore`; delegation re-exports; source-inspection tests updated; infrastructure path fix; antigravity registry removed.
-- **CHANGELOG.md**: added v3.0.13 entry.
+- **CHANGELOG.md**: added v0.5.2 entry.
 - **Stale READMEs**: updated `0xRay` → `0xRay` in 4 subdirectory READMEs.

@@ -5,7 +5,7 @@
 
 import { XrayOrchestrator } from "../orchestrator/orchestrator.js";
 import { enhancedMultiAgentOrchestrator } from "../orchestrator/enhanced-multi-agent-orchestrator.js";
-import { createAgentDelegator } from "../delegation/agent-delegator.js";
+
 import { XrayStateManager } from "../state/state-manager.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { xrayConfigLoader } from "../core/config-loader.js";

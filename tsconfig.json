@@ -35,15 +35,10 @@
     "src/**/*.spec.ts",
     "src/__tests__/**/*",
 
-    "src/cross-language-bridge.ts",
-    "src/dashboards/**/*",
-    "src/distributed/**/*",
-    "src/streaming/**/*",
-    "src/postprocessor/**/*",
-    "src/integrations/**/*",
-    "src/circuit-breaker/**/*",
-    "src/enterprise-monitoring.ts",
-    "src/infrastructure/**/*",
-    "src/validation/**/*"
+    "src/postprocessor/validation/**/*",
+    "src/integrations/cross-language-bridge.ts",
+    "src/integrations/base/ExampleIntegration.ts",
+    "src/integrations/hermes-agent/**/*",
+    "src/integrations/grok/**/*"
   ]
 }

@@ -174,8 +174,8 @@ export class XrayIntegration {
       trigger: 'manual',
       tool: options.tool,
       operation: options.operation,
-      filePath: options.filePath,
-      directory: options.directory,
+      ...(options.filePath !== undefined ? { filePath: options.filePath } : {}),
+      ...(options.directory !== undefined ? { directory: options.directory } : {}),
     };
     
     await this.postProcessor.executePostProcessorLoop(context);

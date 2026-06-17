@@ -67,7 +67,7 @@ export interface ValidationResult {
 }
 
 export class AgentConfigValidator {
-  private readonly requiredFields = [
+  private readonly requiredFields: (keyof AgentConfig)[] = [
     "name",
     "description",
     "version",
@@ -106,9 +106,9 @@ export class AgentConfigValidator {
       let config: AgentConfig;
 
       if (filePath.endsWith(".yml") || filePath.endsWith(".yaml")) {
-        config = yaml.parse(content);
+        config = yaml.parse(content) as AgentConfig;
       } else if (filePath.endsWith(".json")) {
-        config = JSON.parse(content);
+        config = JSON.parse(content) as AgentConfig;
       } else {
         return {
           valid: false,
@@ -220,7 +220,7 @@ export class AgentConfigValidator {
    * Validate logging configuration
    */
   private validateLoggingConfig(
-    logging: AgentConfig["logging"],
+    logging: NonNullable<AgentConfig["logging"]>,
     errors: string[],
     warnings: string[],
   ): void {
@@ -307,7 +307,7 @@ export class AgentConfigValidator {
    * Validate performance configuration
    */
   private validatePerformanceConfig(
-    performance: AgentConfig["performance"],
+    performance: NonNullable<AgentConfig["performance"]>,
     errors: string[],
     warnings: string[],
   ): void {
@@ -348,7 +348,7 @@ export class AgentConfigValidator {
    * Validate security configuration
    */
   private validateSecurityConfig(
-    security: AgentConfig["security"],
+    security: NonNullable<AgentConfig["security"]>,
     errors: string[],
     warnings: string[],
   ): void {
@@ -371,7 +371,7 @@ export class AgentConfigValidator {
    * Validate error handling configuration
    */
   private validateErrorHandlingConfig(
-    errorHandling: AgentConfig["error_handling"],
+    errorHandling: NonNullable<AgentConfig["error_handling"]>,
     errors: string[],
     warnings: string[],
   ): void {
