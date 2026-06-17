@@ -9,6 +9,7 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/xray/docs/reflections/hermes-bridge-remediation-plan.md
 - /Users/blaze/dev/xray/docs/reflections/journey-to-v3.md
 - /Users/blaze/dev/xray/docs/reflections/mcp-skill-server-inference-gap.md
+- /Users/blaze/dev/xray/docs/reflections/reflection-pattern-suggestions.md
 - /Users/blaze/dev/xray/docs/reflections/subtract-simplify-phase-reflection.md
 - /Users/blaze/dev/xray/docs/reflections/v3-architecture-plan.md
 - /Users/blaze/dev/xray/docs/reflections/v3-completion-reflection.md

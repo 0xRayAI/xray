@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-17T16:36:28.725Z",
+  "timestamp": "2026-06-17T17:50:43.923Z",
   "dataLocations": {
     "reflections": [
       "/Users/blaze/dev/xray/docs/reflections/aside-context-integration-analysis.md",
@@ -7,6 +7,7 @@
       "/Users/blaze/dev/xray/docs/reflections/hermes-bridge-remediation-plan.md",
       "/Users/blaze/dev/xray/docs/reflections/journey-to-v3.md",
       "/Users/blaze/dev/xray/docs/reflections/mcp-skill-server-inference-gap.md",
+      "/Users/blaze/dev/xray/docs/reflections/reflection-pattern-suggestions.md",
       "/Users/blaze/dev/xray/docs/reflections/subtract-simplify-phase-reflection.md",
       "/Users/blaze/dev/xray/docs/reflections/v3-architecture-plan.md",
       "/Users/blaze/dev/xray/docs/reflections/v3-completion-reflection.md",

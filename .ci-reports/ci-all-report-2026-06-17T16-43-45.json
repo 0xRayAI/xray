@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-06-17T16:43:45.167Z",
+  "logFile": "/Users/blaze/dev/xray/logs/framework/activity.log",
+  "totalLogLines": 27,
+  "agent": {
+    "totalSpawns": 0,
+    "byType": {},
+    "completed": 0,
+    "failures": 0,
+    "successes": 0,
+    "failureRate": "N/A",
+    "breakdown": {
+      "withResult": {
+        "completed": 0,
+        "failures": 0,
+        "successes": 0
+      },
+      "governance": {
+        "completed": 0
+      }
+    }
+  },
+  "processor": {
+    "preProcessors": {
+      "count": 0,
+      "byName": {},
+      "avgDuration": {}
+    },
+    "postProcessors": {
+      "count": 0,
+      "byName": {}
+    },
+    "failures": 0,
+    "successRate": "N/A"
+  },
+  "error": {
+    "totalErrors": 2,
+    "bySource": {},
+    "recentErrors": [
+      {
+        "timestamp": "2026-06-17T16:37:15.090Z",
+        "message": "Dynamo Solar SSOT is required but InferenceGovernanceIntegration is not available. Call initializeGovernanceIntegration() early in application startup."
+      }
+    ]
+  },
+  "tool": {
+    "totalToolCalls": 2,
+    "byTool": {
+      "govern_proposals": 2
+    }
+  }
+}
