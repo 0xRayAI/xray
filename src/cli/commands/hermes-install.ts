@@ -1,12 +1,17 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { homedir } from 'os';
+import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const require = createRequire(import.meta.url);
+const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
+  wireHermesBridge: (targetDir: string) => { count: number };
+  writeHermesPluginArtifacts: (targetDir: string) => boolean;
+};
 
 export function registerHermesCommands(hermesCmd: Command) {
   hermesCmd
@@ -46,43 +51,47 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
     return;
   }
 
+  const targetDir = process.cwd();
+
   try {
-    if (fs.existsSync(targetPluginDir) && !options.force) {
+    const pluginExists = fs.existsSync(targetPluginDir);
+    if (pluginExists && !options.force) {
       console.log('[Hermes] xray-hermes plugin is already installed.');
       console.log('Use --force to reinstall.');
-      return;
-    }
-
-    fs.mkdirSync(targetPluginDir, { recursive: true });
-    for (const entry of fs.readdirSync(sourceDir)) {
-      const src = path.join(sourceDir, entry);
-      const dst = path.join(targetPluginDir, entry);
-      if (fs.statSync(src).isDirectory()) {
-        fs.cpSync(src, dst, { recursive: true, force: true });
-      } else {
-        fs.copyFileSync(src, dst);
+    } else {
+      fs.mkdirSync(targetPluginDir, { recursive: true });
+      for (const entry of fs.readdirSync(sourceDir)) {
+        const src = path.join(sourceDir, entry);
+        const dst = path.join(targetPluginDir, entry);
+        if (fs.statSync(src).isDirectory()) {
+          fs.cpSync(src, dst, { recursive: true, force: true });
+        } else {
+          fs.copyFileSync(src, dst);
+        }
       }
-    }
-    frameworkLogger.log('hermes-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
-    console.log(`\x1b[32m✓ Copied Hermes plugin to ${targetPluginDir}\x1b[0m`);
+      frameworkLogger.log('hermes-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
+      console.log(`\x1b[32m✓ Copied Hermes plugin to ${targetPluginDir}\x1b[0m`);
 
-    // Sync builtin skills to Hermes plugin skills dir
-    const hermesSkillsDir = path.join(targetPluginDir, 'skills');
-    const skillsCopied = syncBuiltinSkills(hermesSkillsDir);
-    if (skillsCopied > 0) {
-      console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Hermes plugin\x1b[0m`);
+      const hermesSkillsDir = path.join(targetPluginDir, 'skills');
+      const skillsCopied = syncBuiltinSkills(hermesSkillsDir);
+      if (skillsCopied > 0) {
+        console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Hermes plugin\x1b[0m`);
+      }
+      frameworkLogger.log('hermes-integration', 'skills-synced', 'info', { count: skillsCopied });
     }
-    frameworkLogger.log('hermes-integration', 'skills-synced', 'info', { count: skillsCopied });
 
-    // Write after-install instructions
+    const wired = wiring.wireHermesBridge(targetDir);
+    console.log(`\x1b[32m✓ Wired Hermes mcp_servers (${wired.count} servers)\x1b[0m`);
+    console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);
+
     const afterInstallPath = path.join(targetPluginDir, 'after-install.md');
     if (fs.existsSync(afterInstallPath)) {
       console.log(`\nSee ${afterInstallPath} for post-install steps.`);
     }
 
     console.log('\n✅ 0xRay is now installed as a Hermes Agent plugin!');
-    console.log('Restart Hermes to load the plugin and its tools.');
-    console.log('  Run: /xray status  (to verify)');
+    console.log('Restart Hermes to load the plugin, MCP servers, and tools.');
+    console.log('  Run: hermes mcp list  (to verify)');
 
   } catch (err: any) {
     frameworkLogger.log('hermes-integration', 'install-error', 'error', { error: err.message });

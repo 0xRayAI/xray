@@ -8,6 +8,12 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
+const {
+  wireHermesBridge,
+  wireOpencodeBridge,
+  wireOpenClawBridge,
+  deployPortableProjectMcpJson,
+} = require("./bridge-mcp-wiring.cjs");
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const MERGE_FILES = new Set(["enforcer-config.json"]);
@@ -126,42 +132,17 @@ function copyPluginDir(src, dest) {
   return true;
 }
 
-function buildConsumerMcpConfig(targetDir) {
-  const mcpServers = {};
-  for (const s of XRAY_MCP_SERVERS) {
-    mcpServers[s.name] = {
-      command: "npx",
-      args: ["-y", "0xray", "mcp", s.mcpCmd],
-      env: { ...s.env, XRAY_ROOT: targetDir },
-    };
-  }
-  return { mcpServers };
+function writePluginMcpJson(pluginDir, targetDir, log, label) {
+  if (!fs.existsSync(pluginDir)) return;
+  const { buildPluginMcpJson } = require("./bridge-mcp-wiring.cjs");
+  const dest = path.join(pluginDir, ".mcp.json");
+  fs.writeFileSync(dest, JSON.stringify(buildPluginMcpJson(targetDir), null, 2) + "\n");
+  log(label, "plugin .mcp.json patched for consumer", "info");
 }
 
 function deployProjectMcpJson(targetDir, log) {
-  const destPath = path.join(targetDir, ".mcp.json");
-  const consumerConfig = buildConsumerMcpConfig(targetDir);
-  let existing = { mcpServers: {} };
-  if (fs.existsSync(destPath)) {
-    try {
-      existing = JSON.parse(fs.readFileSync(destPath, "utf8"));
-    } catch {
-      existing = { mcpServers: {} };
-    }
-  }
-  const merged = {
-    ...existing,
-    mcpServers: { ...(existing.mcpServers || {}), ...consumerConfig.mcpServers },
-  };
-  fs.writeFileSync(destPath, JSON.stringify(merged, null, 2) + "\n");
-  log("mcp-config", "project .mcp.json deployed (7 xray servers)", "info");
-}
-
-function writePluginMcpJson(pluginDir, targetDir, log, label) {
-  if (!fs.existsSync(pluginDir)) return;
-  const dest = path.join(pluginDir, ".mcp.json");
-  fs.writeFileSync(dest, JSON.stringify(buildConsumerMcpConfig(targetDir), null, 2) + "\n");
-  log(label, "plugin .mcp.json patched for consumer", "info");
+  deployPortableProjectMcpJson(targetDir);
+  log("mcp-config", "project .mcp.json deployed (7 xray servers, portable)", "info");
 }
 
 function mergeOpencodeJson(targetDir, packageRoot, log) {
@@ -242,6 +223,13 @@ function installOpencodeBridge(targetDir, packageRoot, log) {
 
   const copied = syncBuiltinSkills(path.join(opencodeDest, "skills"), packageRoot);
   if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
+
+  try {
+    const count = wireOpencodeBridge(targetDir);
+    log("opencode-bridge", `opencode.json mcp wired (${count} servers)`, "info");
+  } catch (e) {
+    log("opencode-bridge", "opencode.json mcp wire failed", "warn", { error: e.message });
+  }
 }
 
 function findGrokPluginSource(packageRoot) {
@@ -358,6 +346,13 @@ function installHermesBridge(targetDir, packageRoot, log) {
   const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
   fs.writeFileSync(rootMarker, targetDir + "\n");
   log("hermes-bridge", "consumer root marker written", "info");
+
+  try {
+    const result = wireHermesBridge(targetDir);
+    log("hermes-bridge", `mcp_servers wired (${result.count} servers)`, "info");
+  } catch (e) {
+    log("hermes-bridge", "mcp_servers wire failed", "warn", { error: e.message });
+  }
 }
 
 function installOpenclawBridge(targetDir, packageRoot, log) {
@@ -395,6 +390,15 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
 
   const copied = syncBuiltinSkills(path.join(os.homedir(), ".openclaw", "skills"), packageRoot);
   if (copied > 0) log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
+
+  try {
+    const result = wireOpenClawBridge(targetDir);
+    log("openclaw-bridge", `openclaw.json mcp wired (${result.count} servers)`, "info", {
+      method: result.method,
+    });
+  } catch (e) {
+    log("openclaw-bridge", "openclaw.json mcp wire failed", "warn", { error: e.message });
+  }
 }
 
 const XRAY_CONFIG_FILES = ["codex.json", "features.json", "features.schema.json", "config.json"];
