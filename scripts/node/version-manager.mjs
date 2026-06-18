@@ -310,6 +310,54 @@ function updateReadme(counts, newVersion) {
   console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
 }
 
+const DOCS_SITE_HEADER_FILES = [
+  'docs-site/docs/README.md',
+  'docs-site/docs/index.md',
+  'docs-site/docs/introduction.md',
+  'docs-site/docs/guides/getting-started.md',
+  'docs-site/docs/full-reference.md',
+];
+
+function buildDocsHeader(counts, newVersion) {
+  return `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · 68 codex terms · 3,226 tests`;
+}
+
+function syncDocsSiteHeaders(counts, newVersion) {
+  const header = buildDocsHeader(counts, newVersion);
+  const headerRe = /^\*{0,2}v?[\d.]*\*{0,2}\s*—?\s*\d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m;
+  for (const rel of DOCS_SITE_HEADER_FILES) {
+    const filePath = path.join(rootDir, rel);
+    if (!fs.existsSync(filePath)) continue;
+    let content = fs.readFileSync(filePath, 'utf-8');
+    if (headerRe.test(content)) {
+      content = content.replace(headerRe, header);
+      fs.writeFileSync(filePath, content);
+      console.log(`✅ Updated ${rel} header`);
+    }
+  }
+}
+
+function updatePluginJsonVersion(newVersion) {
+  const pluginPath = path.join(rootDir, '.grok-plugin/plugin.json');
+  if (!fs.existsSync(pluginPath)) return;
+  const plugin = JSON.parse(fs.readFileSync(pluginPath, 'utf-8'));
+  plugin.version = newVersion;
+  fs.writeFileSync(pluginPath, JSON.stringify(plugin, null, 2) + '\n');
+  console.log(`✅ Updated .grok-plugin/plugin.json (version: ${newVersion})`);
+}
+
+function updateConsumerAgentsHeader(newVersion, counts) {
+  const consumerPath = path.join(rootDir, 'AGENTS-consumer.md');
+  if (!fs.existsSync(consumerPath)) return;
+  let content = fs.readFileSync(consumerPath, 'utf-8');
+  content = content.replace(
+    /^\*\*v[\d.]+\*\* — \d+ MCP servers · \d+ skills · \d+ codex terms/m,
+    `**v${newVersion}** — ${counts.mcps} MCP servers · ${counts.skills} skills · 68 codex terms`
+  );
+  fs.writeFileSync(consumerPath, content);
+  console.log(`✅ Updated AGENTS-consumer.md version header`);
+}
+
 function applyAgentCountUpdates(content, counts) {
   let agentsMd = content;
 
@@ -441,6 +489,9 @@ function updateVersion(newVersion, changeDescription = '') {
   console.log(`\n📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
   
   updateReadme(counts, newVersion);
+  syncDocsSiteHeaders(counts, newVersion);
+  updatePluginJsonVersion(newVersion);
+  updateConsumerAgentsHeader(newVersion, counts);
   updateAgentsMd(counts);
   updateAgentsConsumerMd(counts);
   
@@ -475,7 +526,20 @@ export function getReleaseArtifactPaths() {
     'README.md',
     'AGENTS.md',
     'AGENTS-consumer.md',
+    'SKILLS.md',
+    '.grok-plugin/plugin.json',
     'docs/README.md',
+    'docs-site/docs/README.md',
+    'docs-site/docs/index.md',
+    'docs-site/docs/introduction.md',
+    'docs-site/docs/guides/getting-started.md',
+    'docs-site/docs/full-reference.md',
+    'docs-site/docs/guides/integrations.md',
+    'docs-site/docs/guides/memory-routing.md',
+    'docs-site/docs/guides/consumer-migration.md',
+    'docs-site/docs/mcp/README.md',
+    'docs-site/docs/agents/README.md',
+    'docs-site/sidebars.ts',
   ];
   return candidates.filter((rel) => fs.existsSync(path.join(rootDir, rel)));
 }
@@ -488,6 +552,9 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
   updateChangelog(current, changeDescription);
   updateReadme(counts, current);
+  syncDocsSiteHeaders(counts, current);
+  updatePluginJsonVersion(current);
+  updateConsumerAgentsHeader(current, counts);
   updateDocsReadme(current);
   updateAgentsMd(counts);
   updateAgentsConsumerMd(counts);
@@ -535,6 +602,9 @@ function main() {
     console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
     updateChangelog(current, '');
     updateReadme(counts, current);
+    syncDocsSiteHeaders(counts, current);
+    updatePluginJsonVersion(current);
+    updateConsumerAgentsHeader(current, counts);
     updateDocsReadme(current);
     updateAgentsMd(counts);
     updateAgentsConsumerMd(counts);

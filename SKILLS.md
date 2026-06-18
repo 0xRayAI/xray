@@ -1,6 +1,6 @@
 # 0xray Skills
 
-xray ships **46 skills** that provide domain expertise across the full software lifecycle. Skills are loaded on demand and invoked via MCP servers, agents, or direct API.
+xray ships **45 skills** that provide domain expertise across the full software lifecycle. Skills are loaded on demand and invoked via MCP servers, agents, or direct API.
 
 ---
 

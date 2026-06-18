@@ -395,7 +395,7 @@ Custom Plugins
 ### Containerized Deployment
 
 ```dockerfile
-FROM 0xray/base:v3.0.0
+FROM 0xray/base:v3.4.1
 
 COPY . /app
 RUN 0xray build

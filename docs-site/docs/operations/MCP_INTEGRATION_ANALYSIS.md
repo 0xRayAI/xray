@@ -1,5 +1,9 @@
 # 0xRay MCP Integration Analysis
 
+:::info Historical analysis (pre-v3.4.1)
+This document describes the v3 architecture evolution. **Current consumer surface (v3.4.1):** 7 MCP servers via `npx -y 0xray mcp <cmd>`, 45 skills, 42 YML agents. See [MCP README](../mcp/README.md) and [Integrations](../guides/integrations.md).
+:::
+
 ## Overview
 
 This document analyzes the MCP (Model Context Protocol) integration architecture in 0xRay, providing cleaner interfaces and better separation of concerns.

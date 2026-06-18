@@ -440,7 +440,7 @@ spec:
     spec:
       containers:
         - name: 0xray
-          image: 0xray/0xray:v3.0.0
+          image: 0xray/0xray:v3.4.1
           ports:
             - containerPort: 3000
           env:

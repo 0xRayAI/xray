@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       items: [
         'guides/getting-started',
+        'guides/integrations',
         'guides/memory-routing',
         'guides/consumer-migration',
         'guides/self-hosting-dynamo',

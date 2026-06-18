@@ -14,29 +14,35 @@
 - **Handle concurrency chaos** with safe patterns
 - **Deliver production-ready code** every time
 
-## 🛠️ Quick Start for Grok Users
+## 🛠️ Quick Start for Grok Users (v3.4.1)
 
 ### Prerequisites
 
-- **Node.js 18+** (for framework runtime)
-- **npm or bun** (package manager)
-- **Grok API access** (via xAI or compatible provider)
+- **Node.js 18+**
+- **npm 9+**
+- Grok CLI, Grok Build, or Cursor with Grok agent skills
 
 ### 1. Install 0xRay
 
 ```bash
-# Install OpenCode (required dependency)
-npm install -g OpenCode
-# or
-bun install -g OpenCode
+# In your project — postinstall auto-wires Grok + 7 MCP servers
+npm install 0xray
 
-# Install 0xRay dependencies
-npm install
-# or
-bun install
+# Or explicit Grok bridge (idempotent)
+npx 0xray grok install
+```
 
-# Initialize 0xRay for Grok
-npm run init
+This installs:
+
+- Plugin at `~/.grok/plugins/0xray` (and project `.grok/plugins/0xray`)
+- **7 MCP servers** via `npx -y 0xray mcp <cmd>` (governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools)
+- **45 skills** synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor `agent_skills` path)
+
+### 2. Verify
+
+```bash
+npx 0xray status
+npx 0xray grok install --force   # re-sync if needed
 ```
 
 ### 2. Configure for Grok
@@ -60,7 +66,7 @@ Update your `.opencode/OpenCode.json`:
   },
   "framework": {
     "name": "0xray",
-    "version": "3.0.0"
+    "version": "3.4.1"
   }
 }
 ```

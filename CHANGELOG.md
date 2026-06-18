@@ -4,25 +4,65 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [3.4.1] - 2026-06-17
+## [3.4.1] - 2026-06-18
 
 ### ✨ Features
 - Unified 4-platform bridge installer (`install-bridges.cjs`) runs on consumer `npm i 0xray` postinstall — OpenCode, Grok, Hermes, OpenClaw
 - All 7 MCP servers registered via `npx -y 0xray mcp <cmd>` (no brittle `dist/` paths)
 - `npx 0xray grok install` aligned with postinstall: 7 servers via npx, idempotent skill/MCP sync on re-run
 - Grok skills synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor)
+- Canonical `release.mjs` pipeline: reconcile-version → release-gate → artifacts → tag → publish
+- Consumer smoke gate (`release-gate.mjs`) — pack, clean install, verify 7 MCP + 4 bridges
 
 ### 🐛 Bug Fixes
 - `setup.cjs` consumer detection uses `isConsumerInstall()` — works for both `node_modules/0xray` and `node_modules/xray`
 - Hermes bridge honors `XRAY_ROOT` env and `xray-consumer-root.txt` marker for correct project root resolution
 
+### 📚 Documentation
+- README, AGENTS, AGENTS-consumer, and Docusaurus synced for v3.4.1 (42 agents, 45 skills, 7 MCP servers, 68 codex terms)
+- New guides: memory routing, platform integrations, expanded consumer migration
+- `.grok-plugin/plugin.json` version and MCP description corrected
+
+---
+
+## [3.4.0] - 2026-06-17
+
+> Tagged locally; not published to npm. Superseded by 3.4.1 for consumer install.
+
+### ✨ Features
+- Governance default-on with Railway endpoint
+- 10-step E2E pipeline smoketest
+- Source-change governance detector with external Dynamo
+- Nucleus exports (`0xray/nucleus`, `0xray/nucleus/*`) for consumer plugin-registry access
+- Consumer path hygiene audit (postinstall/setup/prepare-consumer)
+- Compat shim scanner (term 78), orphan pre-PR check (term 73)
+
+### 🐛 Bug Fixes
+- Codex closure: processorRoadmap 7/74/75 done, validationCriteria 6/8 true
+- 2,880 tests pass, typecheck clean, 0 `console.*` in non-CLI source
+
+---
+
+## [3.3.1] - 2026-06-18
+
+### ✨ Features
+- Initial `install-bridges.cjs` scaffold and repertoire researcher wiring tests
+- Orchestrator **confidence gate** wired into execution planning (d7910b610)
+
+### 🐛 Bug Fixes
+- Postinstall consumer detection and bridge install hooks refined
+
+---
+
 ## [3.3.0] - 2026-06-18
 
-### 🔄 Changes
-
-### 🔎 Other Changes
-- Wire orchestrator confidence gate into execution planning (d7910b610)
-- tweet: v3.3.0 release tweet — Pluggable Memory Routing (7fb6c9f70)
+### ✨ Features
+- **Pluggable Memory Routing** — `MemoryRoutingProvider` interface + `features.json` `memory_routing` block
+- `features.schema.json` runtime validation at load time
+- Repertoire as first plug-in provider (framework repo default)
+- Per-task `ingestFeedback` (not aggregate-only) for provider learning loop
+- Memory routing enriches orchestrator selection, thinDispatch scoring, researcher votes
+- 24 memory-routing integration tests; 3,221 tests passing (0 failures)
 
 ---
 
@@ -52,57 +92,24 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
-## [3.1.1] - 2026-06-17
-
-### 🔄 Changes
-
-### ✨ Features
-- feat: AsideContext restoration + plugin module split + Hermes e2e 44/0/0 (3a917b7c3)
-- feat: config consolidation, MCP base class, test coverage, Hermes e2e fix (8b3f0500f)
-- feat: add root .mcp.json and .grok-plugin/plugin.json for marketplace discovery (f8d084cc0)
-- feat: ship .gitignore.default template + SKILLS.md to consumers via postinstall (44bba8c4c)
-
-### 🐛 Bug Fixes
-- fix: publish guard fixes - 4 test files, plugin build, ConfigLoader.clearConfigPaths() (5a5edfa42)
-- fix: restore .mcp.json (deleted by test writing to same path) (e22202cfc)
-- fix: support mcpServers format in ConfigLoader, fix tests for real .mcp.json (a930aa034)
-- fix: add missing fs imports, process.argv[1]! assertions, and vitest v4 config (0dffc5683)
-- fix: remove .opencode/xray/ fallback from auto-reflection-generator.mjs (de7633152)
-- fix: Railway deployment - MCP host, in-process skills, Hermes OAuth decode, OAuth daemon mode (a519338c3)
-- fix: pre-publish-guard handles missing features.json (855e3cfdb)
-
-### ♻️ Refactoring
-- refactor: complete StringRay→0xRay rename, archive cleanup, skill syncing, MCP tools (d78bc3763)
-
-### 🔎 Other Changes
-- v3.1.1 (825105795)
-- Revert "Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog" (05feb6fba)
-- Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog (5824d5776)
-
----
-
 ## [3.1.1] - 2026-06-16
 
-### 🔄 Changes
-
 ### ✨ Features
-- feat: add root .mcp.json and .grok-plugin/plugin.json for marketplace discovery (f8d084cc0)
-- feat: ship .gitignore.default template + SKILLS.md to consumers via postinstall (44bba8c4c)
+- Complete **StringRay → 0xRay** rename; archive cleanup, skill syncing, MCP tools
+- Root `.mcp.json` and `.grok-plugin/plugin.json` for xAI marketplace discovery
+- Postinstall ships `AGENTS-consumer.md` → `AGENTS.md`, `.gitignore.default`, `SKILLS.md`
+- AsideContext restoration + plugin module split; Hermes E2E 44/0/0
+- Config consolidation, MCP base class, expanded test coverage
 
 ### 🐛 Bug Fixes
-- fix: restore .mcp.json (deleted by test writing to same path) (e22202cfc)
-- fix: support mcpServers format in ConfigLoader, fix tests for real .mcp.json (a930aa034)
-- fix: add missing fs imports, process.argv[1]! assertions, and vitest v4 config (0dffc5683)
-- fix: remove .opencode/xray/ fallback from auto-reflection-generator.mjs (de7633152)
-- fix: Railway deployment - MCP host, in-process skills, Hermes OAuth decode, OAuth daemon mode (a519338c3)
-- fix: pre-publish-guard handles missing features.json (855e3cfdb)
+- ConfigLoader supports `mcpServers` format in `.mcp.json`
+- Railway deployment: MCP host, in-process skills, Hermes OAuth decode, OAuth daemon mode
+- Publish guard fixes — 4 test files, plugin build, `ConfigLoader.clearConfigPaths()`
+- Remove `.opencode/xray/` fallback from auto-reflection-generator
+- Pre-publish-guard handles missing `features.json`
 
-### ♻️ Refactoring
-- refactor: complete StringRay→0xRay rename, archive cleanup, skill syncing, MCP tools (d78bc3763)
-
-### 🔎 Other Changes
-- Revert "Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog" (05feb6fba)
-- Add marketplace files: .grok-plugin/plugin.json and .mcp.json for xAI plugin catalog (5824d5776)
+### 🗑️ Removals
+- `hermes bridge` CLI — use `npx 0xray hermes install`
 
 ---
 

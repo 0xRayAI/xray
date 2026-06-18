@@ -280,9 +280,9 @@ Plus 15 internal framework MCP servers (`dist/mcps/*.server.js`) loaded at runti
 
 See [MCP Servers docs](./mcp/) for details.
 
-## Skills (44)
+## Skills (45)
 
-Knowledge skills (SKILL.md files) loaded at runtime by the skill-invocation server:
+Knowledge skills (SKILL.md files) loaded at runtime by the xray-skills MCP server:
 
 api-design, architect-tools, architecture-patterns, auto-format, backend-engineer, boot-orchestrator, bug-triage, code-analyzer, code-review, content-creator, database-engineer, devops-engineer, enforcer, framework-compliance-audit, frontend-engineer, frontend-ui-ux-engineer, git-workflow, growth-strategist, hermes-agent, inference-improve, lint, log-monitor, mobile-developer, model-health-check, multimodal-looker, orchestrator, performance-analysis, performance-engineer, performance-optimization, processor-pipeline, project-analysis, refactoring-strategies, researcher, security-audit, security-scan, seo-consultant, session-management, state-manager, storyteller, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
 
@@ -292,18 +292,17 @@ Install more skills: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-0xRay is battle-tested with **2,196 tests** across every subsystem:
+0xRay is battle-tested with **3,226 tests** (185 files, v3.4.1):
 
-| Suite | Tests | Status |
-|-------|-------|--------|
-| Unit & Integration | 158 files | All pass |
-| Performance | 14 tests | All pass |
-| Infrastructure | 19 tests | All pass |
-| Consumer E2E | 4 platforms | All pass |
-| OpenCode E2E | 42 solo + 34 orchestrator | All pass |
-| OpenClaw E2E | 96 tests | All pass |
-| Hermes E2E | 48 tests | All pass |
-| Grok CLI E2E | 60 solo + 59 orchestrator | All pass |
+| Suite | Status |
+|-------|--------|
+| Unit & Integration | 3,226 passed, 36 skipped |
+| OpenCode E2E | 42/42 solo, 34/34 orchestrator |
+| Grok CLI E2E | 62/0 failures (v3.2.0 verified) |
+| OpenClaw E2E | 9/9 (v3.2.0 verified) |
+| Hermes E2E | 44/0/0 (v3.2.0 verified) |
+| Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 bridges |
+| Memory routing | 24 integration tests (v3.3.0) |
 
 ---
 

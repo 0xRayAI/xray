@@ -208,6 +208,18 @@ describe("CHANGELOG.md", () => {
     const content = fs.readFileSync(path.join(PROJECT_ROOT, "CHANGELOG.md"), "utf-8");
     expect(content).toContain("3.0.14");
   });
+
+  test("has 3.4.1 entry with install-bridges", () => {
+    const content = fs.readFileSync(path.join(PROJECT_ROOT, "CHANGELOG.md"), "utf-8");
+    expect(content).toContain("## [3.4.1]");
+    expect(content).toContain("install-bridges.cjs");
+  });
+
+  test("has no duplicate 3.1.1 sections", () => {
+    const content = fs.readFileSync(path.join(PROJECT_ROOT, "CHANGELOG.md"), "utf-8");
+    const matches = content.match(/^## \[3\.1\.1\]/gm);
+    expect(matches?.length).toBe(1);
+  });
 });
 
 // ── package.json config tests ────────────────────────────────────────────

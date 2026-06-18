@@ -1,6 +1,8 @@
-# How to Add an Agent to 0xRay AI v3.0.0
+# How to Add an Agent to 0xRay AI v3.4.1
 
-This guide documents how to add agents to 0xRay v3.0.0 and lists **every single file** that needs to be updated.
+This guide documents how to add agents to 0xRay v3.4.1 and lists **every single file** that needs to be updated.
+
+**SSOT**: `src/opencode/agents/{agent}.yml` — 42 YML surfaces ship to consumers via postinstall/OpenCode bridge.
 
 When adding agents, you'll primarily interact with clean APIs rather than monolithic files.
 
