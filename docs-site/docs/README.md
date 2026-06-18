@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.4.3** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges, seven MCP servers, **AGENTS.md**, and **SKILLS.md**.
 

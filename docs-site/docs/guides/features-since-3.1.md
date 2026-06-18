@@ -1,6 +1,12 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.3**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.4**.
+
+## 3.4.4 — Researcher MCP trap routing (P0.5)
+
+| Feature | Description |
+|---------|-------------|
+| **Async provider load** | `analyze_proposal` awaits `getMemoryRoutingProvider()` — no silent MEMORY_ROUTING no-op in MCP subprocess mode |
 
 ## 3.4.3 — Shipped template truth (P0.2)
 

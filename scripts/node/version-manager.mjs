@@ -289,12 +289,6 @@ function updateReadme(counts, newVersion) {
     `[View all ${counts.agents} agents →](AGENTS.md)`
   );
   
-  // Update MCP count: "15 MCP servers" or similar patterns
-  readme = readme.replace(
-    /(\d+)\s+MCPs?/g,
-    (match, num) => `${counts.mcps} MCPs`
-  );
-  
   // Update skills count
   readme = readme.replace(
     /(\d+)\s+Skills?/g,
@@ -383,7 +377,7 @@ function applyAgentCountUpdates(content, counts) {
     `xray v2 - ${counts.agents} Agents`
   );
 
-  agentsMd = agentsMd.replace(/\d+\s+MCPs?/g, `${counts.mcps} MCPs`);
+  agentsMd = agentsMd.replace(/\d+\s+MCP servers/g, `${counts.mcps} MCP servers`);
   agentsMd = agentsMd.replace(/\d+\s+Skills?/g, `${counts.skills} Skills`);
 
   return agentsMd;
