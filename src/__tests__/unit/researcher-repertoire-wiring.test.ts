@@ -46,11 +46,14 @@ const mockProvider: MemoryRoutingProvider = {
   }),
 };
 
+const mockInitializeMemoryRouting = vi.fn();
+
 vi.mock('../../memory-routing/index.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../memory-routing/index.js')>();
   return {
     ...actual,
     getMemoryRoutingProviderSync: () => mockProvider,
+    initializeMemoryRouting: mockInitializeMemoryRouting,
   };
 });
 
@@ -66,6 +69,13 @@ describe('researcher Repertoire wiring', () => {
   beforeEach(() => {
     resetMemoryRoutingProvider();
     vi.clearAllMocks();
+  });
+
+  it('calls initializeMemoryRouting on server construction', async () => {
+    const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
+    new XrayLibrarianServer();
+
+    expect(mockInitializeMemoryRouting).toHaveBeenCalledTimes(1);
   });
 
   it('injects MEMORY_ROUTING block when high-confidence trap is detected', async () => {

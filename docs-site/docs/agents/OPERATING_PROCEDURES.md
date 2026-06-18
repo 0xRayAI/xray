@@ -1,5 +1,11 @@
 # 0xRay Framework - Agent Operating Procedures
 
+## Default mode: autonomy-command
+
+**All procedures below run under the [Autonomy Command](../guides/autonomy-command.md) operating model** when the suit is worn. Lead dev (codex 67–68): phased todos, subagent dispatch, per-suite test triage, no buck-passing. Skill: `autonomy-command` · Slash: `/autonomy-command`.
+
+---
+
 ## Overview
 
 This document provides comprehensive operating procedures for all 0xRay Framework agents, including workflow execution, inter-agent communication, error handling, and integration patterns. These procedures ensure effective utilization of the multi-agent system for development workflow enhancement with proper documentation and cross-reference validation.

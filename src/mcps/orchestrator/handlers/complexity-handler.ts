@@ -5,6 +5,11 @@
  */
 
 import { frameworkLogger } from '../../../core/framework-logger.js';
+import {
+  buildLeadDevPlan,
+  isLeadDevModeActive,
+  persistLeadDevPlan,
+} from '../../../nucleus/autonomy-kernel.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { addObservations, extractComplexityObservations } from '../aside-context.js';
 import type { OrchestrationTask, ComplexityAnalysis } from '../types.js';
@@ -40,11 +45,36 @@ export class ComplexityHandler {
         addObservations(asideId, extractComplexityObservations(analysis));
       }
 
+      const primaryDescription = tasks.map((t) => t.description).filter(Boolean).join(' ');
+      const taskTypes = tasks.map((t) => t.type).filter(Boolean) as string[];
+      const leadDevPlan =
+        isLeadDevModeActive() && primaryDescription
+          ? buildLeadDevPlan(primaryDescription, taskTypes.length ? taskTypes : ['implement'])
+          : null;
+
+      if (leadDevPlan) {
+        try {
+          persistLeadDevPlan(leadDevPlan);
+        } catch (err) {
+          await frameworkLogger.log(
+            'orchestrator.server',
+            'lead-dev-plan-persist-failed',
+            'warning',
+            { error: err instanceof Error ? err.message : String(err) },
+          );
+        }
+      }
+
       return {
         content: [
           {
             type: 'text',
-            text: this.formatComplexityResponse(analysis, recommendations, tasks.length),
+            text: this.formatComplexityResponse(
+              analysis,
+              recommendations,
+              tasks.length,
+              leadDevPlan,
+            ),
           },
         ],
       };
@@ -98,8 +128,29 @@ export class ComplexityHandler {
   private formatComplexityResponse(
     analysis: ComplexityAnalysis,
     recommendations: string[],
-    taskCount: number
+    taskCount: number,
+    leadDevPlan: ReturnType<typeof buildLeadDevPlan> = null,
   ): string {
+    const leadDevSection = leadDevPlan
+      ? `
+
+**Lead-dev plan (codex ${leadDevPlan.codexTerms.join(', ')}):**
+${leadDevPlan.phases
+  .map(
+    (p) =>
+      `### ${p.id} — ${p.name}\n${p.todos
+        .map((t) => `- [ ] ${t.id} (${t.subagent}): ${t.task}`)
+        .join('\n')}`,
+  )
+  .join('\n\n')}
+
+**Test protocol:** ${leadDevPlan.testProtocol.hint}
+
+\`\`\`json
+${JSON.stringify(leadDevPlan, null, 2)}
+\`\`\``
+      : '';
+
     return `🔍 Complexity Analysis Results
 
 **Tasks Analyzed:** ${taskCount}
@@ -126,6 +177,6 @@ ${analysis.agentAssignments
 ${recommendations.map((r) => `• 💡 ${r}`).join('\n')}
 
 **Execution Estimate:** ${analysis.estimatedDuration}ms
-**Parallel Potential:** ${Math.round(analysis.parallelPotential * 100)}%`;
+**Parallel Potential:** ${Math.round(analysis.parallelPotential * 100)}%${leadDevSection}`;
   }
 }

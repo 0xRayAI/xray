@@ -55,6 +55,10 @@
     "plugin": "./dist/plugin/xray-codex-injection.js",
     "mcps": "./dist/mcps/"
   },
+  "xray": {
+    "dist": "dist",
+    "mcpServersPath": "dist/mcps"
+  },
   "scripts": {
     "prepublishOnly": "node scripts/node/reconcile-version.mjs --check && npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
     "version:bump": "node scripts/node/version-manager.mjs",

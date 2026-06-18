@@ -73,6 +73,13 @@ export interface MultiAgentOrchestrationConfig {
   conflict_resolution: "expert-priority" | "majority-vote" | "consensus";
   progress_tracking: boolean;
   session_persistence: boolean;
+  /** Lead-dev operating model (codex 67–68) — ON when suit is worn */
+  lead_dev_mode?: boolean;
+  per_suite_test_triage?: boolean;
+  phased_plan_threshold?: number;
+  auto_consult_major_work?: boolean;
+  /** Codex 69 — block new MCP/skill/handler files via PreToolUse (default true) */
+  no_new_surface?: boolean;
 }
 
 export interface AutonomousReportingConfig {
@@ -772,6 +779,11 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         conflict_resolution: "expert-priority",
         progress_tracking: true,
         session_persistence: true,
+        lead_dev_mode: true,
+        per_suite_test_triage: true,
+        phased_plan_threshold: 25,
+        auto_consult_major_work: true,
+        no_new_surface: true,
       },
 
       autonomous_reporting: {

@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import { initializeMemoryRouting } from "../memory-routing/index.js";
 import {
   buildMemoryRoutingEvidence,
   formatMemoryRoutingBlock,
@@ -52,6 +53,9 @@ interface AnalyzeProposalArgs {
 class XrayLibrarianServer extends XrayKnowledgeSkillBase {
   constructor() {
     super("researcher", "3.1.0");
+
+    // Kick off MemoryRoutingProvider load so trap routing is ready in MCP subprocess mode.
+    initializeMemoryRouting();
 
     this.tools = [
       {

@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.1** — 42 agents · 46 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 
@@ -17,7 +17,7 @@ Postinstall **automatically** (via `install-bridges.cjs`):
 - Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
 - Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw
-- Syncs **45 framework skills** to platform skill directories
+- Syncs **46 framework skills** to platform skill directories (includes **`autonomy-command`**)
 
 ```bash
 npx 0xray status           # verify install
@@ -40,6 +40,10 @@ npx 0xray skill:install         # starter skills
 `npx 0xray hermes bridge` was removed in 3.1+. Use `hermes install`.
 :::
 
+## Autonomy command (default operating model)
+
+After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy-command.md)** by default — lead dev, phased todos, subagent dispatch, per-suite test triage. No keywords required. Slash: `/autonomy-command`
+
 ## What is 0xRay?
 
 0xRay provides intelligent multi-agent orchestration with automatic governance:
@@ -47,7 +51,7 @@ npx 0xray skill:install         # starter skills
 - **42 YML agent surfaces** for development tasks
 - **68 Codex terms** for systematic error prevention
 - **7 MCP servers** on the consumer surface (all via `npx`)
-- **45 framework skills** for common operations
+- **46 framework skills** for common operations ( **`autonomy-command`** = default suit mode)
 - **4 platform bridges** installed on postinstall
 
 Every code change can be reviewed by 3 specialized AI servers before it executes. Bad proposals are blocked automatically.

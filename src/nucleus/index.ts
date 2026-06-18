@@ -49,6 +49,14 @@ export type {
 
 export { NUCLEUS_THIN_DISPATCH_VERSION } from './thin-dispatch.js';
 
+export {
+  LEAD_DEV_RULES,
+  isLeadDevModeActive,
+  buildLeadDevPlan,
+  buildSessionBootContext,
+  shouldFlagFullTestSuite,
+} from './autonomy-kernel.js';
+
 export { registerDefaultPlugins } from './default-plugins.js';
 
 export type { DefaultPluginsResult } from './default-plugins.js';

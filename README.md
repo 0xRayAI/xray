@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.1** — 42 agents · 46 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers with zero manual config.
 
@@ -21,6 +21,12 @@ npx 0xray hermes install
 npx 0xray openclaw install
 npx 0xray skill:install    # starter skills
 ```
+
+## Autonomy command (default operating model)
+
+When the suit is worn, **`autonomy-command`** is ON by default: lead dev takes helm, phased todos, best subagent per task, per-suite test triage, loop until green. No keywords required. Slash: `/autonomy-command`
+
+Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Skill: `src/skills/autonomy-command/SKILL.md`
 
 ## What's New Since 3.1
 

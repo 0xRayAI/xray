@@ -44,10 +44,12 @@ function resolveFrameworkPaths(): { frameworkRoot: string; mcpServersPath: strin
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === '0xray' && pkg.xray) {
-          const xrayCfg = pkg.xray as Record<string, string>;
+        if (pkg.name === '0xray') {
+          const xrayCfg = (pkg.xray ?? {}) as Record<string, string>;
           const frameworkRoot = currentDir;
-          const declaredMcp = xrayCfg.mcpServersPath || (xrayCfg.dist ? join(xrayCfg.dist, 'mcps') : 'dist/mcps');
+          const declaredMcp =
+            xrayCfg.mcpServersPath ||
+            (xrayCfg.dist ? join(xrayCfg.dist, 'mcps') : 'dist/mcps');
           return {
             frameworkRoot,
             mcpServersPath: join(frameworkRoot, declaredMcp),

@@ -69,6 +69,15 @@ describe('ServerConfigRegistry', () => {
     });
   });
 
+  describe('framework path resolution', () => {
+    it('should resolve MCP paths from 0xray package without fallback warning', () => {
+      const config = registry.get('code-review');
+      expect(config?.args?.[0]).toBeDefined();
+      expect(String(config?.args?.[0])).toMatch(/mcps\/knowledge-skills\/code-review\.server\.js$/);
+      expect(String(config?.args?.[0])).not.toContain('node_modules/0xray/dist/dist');
+    });
+  });
+
   describe('default servers', () => {
     it('should have code-review server registered by default', () => {
       expect(registry.has('code-review')).toBe(true);

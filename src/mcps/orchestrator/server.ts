@@ -140,7 +140,7 @@ export class OrchestratorServer {
           {
             name: 'analyze-complexity',
             description:
-              'Analyze task complexity and recommend optimal orchestration strategy',
+              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes.',
             inputSchema: {
               type: 'object',
               properties: {

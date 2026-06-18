@@ -2,7 +2,7 @@
 
 **v3.4.1** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
 
-xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
+xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
 
 Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw skill dirs. Framework repo also ships this file to consumers (3.1.1+).
 
@@ -76,7 +76,7 @@ Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw s
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `orchestrator` | @orchestrator | Multi-agent coordination, thinDispatch routing |
+| `orchestrator` | @orchestrator | Multi-agent coordination + **lead-dev mode** (codex 67–68) |
 | `xray-orchestrator` | — | xray orchestration skill (MCP orchestrator surface) |
 | `processor-pipeline` | — | Data processing pipeline management |
 | `boot-orchestrator` | — | Framework boot orchestration |

@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+/**
+ * Grok SessionStart / UserPromptSubmit — writes session-boot.json + activity.log.
+ * Stdout is ignored by Grok for these events; side effects are the suit contract.
+ */
+
+import {
+  buildSessionBootPayload,
+  ensureSessionBoot,
+  readStdinJson,
+  workspaceRoot,
+  writeSessionBoot,
+} from './grok-hook-utils.js';
+import { appendHookActivity } from './grok-hook-activity.js';
+
+const HOOK_EVENT = process.env.GROK_HOOK_EVENT || 'session_start';
+
+async function main() {
+  const root = workspaceRoot();
+  try {
+    const event = await readStdinJson();
+    const eventRoot = event.workspaceRoot || event.cwd || root;
+    const source =
+      HOOK_EVENT === 'user_prompt_submit'
+        ? '0xray/grok-user-prompt-submit'
+        : '0xray/grok-session-start';
+
+    const payload = buildSessionBootPayload(eventRoot, source, {
+      hookEvent: HOOK_EVENT,
+      sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
+    });
+
+    const bootPath = writeSessionBoot(eventRoot, payload) || ensureSessionBoot(eventRoot, source);
+
+    appendHookActivity(eventRoot, 'grok-session-start', 'session-boot-written', 'success', {
+      bootPath,
+      hookEvent: HOOK_EVENT,
+      lead_dev_mode: payload.lead_dev_mode,
+    });
+
+    console.log(JSON.stringify(payload));
+    process.exit(0);
+  } catch (err) {
+    appendHookActivity(root, 'grok-session-start', 'session-boot-error', 'error', {
+      error: err.message,
+      hookEvent: HOOK_EVENT,
+    });
+    process.exit(0);
+  }
+}
+
+main();

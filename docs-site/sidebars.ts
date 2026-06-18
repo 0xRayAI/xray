@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       items: [
         'guides/getting-started',
+        'guides/autonomy-command',
         'guides/integrations',
         'guides/features-since-3.1',
         'guides/features-json',

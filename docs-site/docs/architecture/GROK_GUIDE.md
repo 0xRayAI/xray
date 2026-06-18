@@ -36,7 +36,8 @@ This installs:
 
 - Plugin at `~/.grok/plugins/0xray` (and project `.grok/plugins/0xray`)
 - **7 MCP servers** via `npx -y 0xray mcp <cmd>` (governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools)
-- **45 skills** synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor `agent_skills` path)
+- **46 skills** synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor `agent_skills` path)
+- **`autonomy-command`** — default operating model (lead dev, phased todos, subagent dispatch)
 
 ### 2. Verify
 
@@ -45,7 +46,20 @@ npx 0xray status
 npx 0xray grok install --force   # re-sync if needed
 ```
 
-### 2. Configure for Grok
+Tier 1 consumers (repertoire): `npm run confirm:suit` after reboot.
+
+### 3. Autonomy command (default mode)
+
+When the suit is worn, agents operate under **`autonomy-command`** — no keywords required:
+
+1. Phased plan + detailed todos; assign best subagent; monitor output
+2. Lead dev loops test → fix until green
+3. Per-suite test triage; full suite last
+4. Researcher + architect + code-review on major work — automatic
+
+Slash: `/autonomy-command` · Docs: [Autonomy Command](../guides/autonomy-command.md)
+
+### 4. Configure for Grok
 
 Update your `.opencode/OpenCode.json`:
 

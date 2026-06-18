@@ -2,7 +2,7 @@
 
 Quick reference for the xray AI orchestration framework (**v3.4.1**).
 
-**42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
+**42 agents** · **46 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
 
 ## What is xray?
 
@@ -35,7 +35,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 `postinstall.cjs` → `installAllBridges()`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md`
-2. `SKILLS.md` + 45 skills → platform skill directories
+2. `SKILLS.md` + 46 skills → platform skill directories
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`)
 5. `.mcp.json` (7 servers)
@@ -97,6 +97,12 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 | **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
 
 **Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/` on consumer boot.
+
+## Default operating mode: autonomy-command
+
+When the suit is worn, **autonomy-command** is ON by default (codex 67–68). Lead dev: phased todos, subagent dispatch, per-suite test triage, loop until green. Ships to consumers via `AGENTS-consumer.md`.
+
+Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Skill: `src/skills/autonomy-command/SKILL.md`
 
 ## Core tenets
 

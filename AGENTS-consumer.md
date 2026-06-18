@@ -94,9 +94,50 @@ Without Repertoire: `{ "enabled": false, "provider": "null" }`.
 
 Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signals`, `repertoire__search_primitives`, `repertoire__ingest_feedback`.
 
+## Codex OS (always on — not optional)
+
+The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
+
+| Term | Rule | Enforcement |
+|------|------|-------------|
+| 11 | No `any`, `@ts-ignore`, `@ts-expect-error` | PreToolUse deny on edits |
+| 29 | Security by design — no `eval()` | PreToolUse deny |
+| 59 | Complex work → orchestrator intake | PreToolUse deny `spawn_subagent` without plan |
+| 67–68 | Best subagents + lead dev ownership | `analyze-complexity` + orchestrator skill |
+| **69** | **No new MCP/skill/handler surface** | PreToolUse deny new `*.server.ts`, `SKILL.md` |
+
+`features.json` → `multi_agent_orchestration.no_new_surface` (default **true**). Rewire existing hooks/MCPs/skills — do not add parallel APIs.
+
+## Default operating mode: lead dev (rewired — no new MCP)
+
+When the suit is worn, **lead dev mode** is ON via existing config + hooks:
+
+| Layer | Existing piece | Rewire |
+|-------|----------------|--------|
+| Config | `features.json` → `multi_agent_orchestration.lead_dev_mode` | Extended, not new block |
+| SessionStart + UserPromptSubmit | Grok hooks → `session-start.js` | Writes `.xray/state/session-boot.json` + `logs/framework/activity.log` |
+| **OS gate** | **PreToolUse hook** | Codex patterns, surface area, spawn gate — `{"decision":"deny"}` + activity.log |
+| Intake + plan | `xray-orchestrator` → **`analyze-complexity`** | Persists `.xray/state/lead-dev-plan.json` |
+| Test triage | PreToolUse hook | Per-suite hint on full `npm test` |
+| Playbook | **`orchestrator`** skill | Codex 59, 67–69 rules |
+
+**First substantive task:** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. You are the **lead developer**. Users speak in goals, not keywords.
+
+| # | Rule |
+|---|------|
+| 1 | Phased plan + detailed todos; assign best subagent; monitor output |
+| 2 | Take the helm — loop test fix until complete; no permission pings |
+| 3 | Per-suite test triage after major changes; full suite last |
+| 4 | Lead stays main thread; subagents execute; update todos continuously |
+| 5 | Read all console and test output; triage fix rerun |
+| 6 | Never defer errors as "pre-existing" — add todo and resolve |
+| 7 | Resolve all errors before phase completion |
+
+**Major work:** invoke `researcher` + `architect-tools` + `code-review` before planning/refactors — automatically.
+
 ## Skills
 
-Full catalog in root **`SKILLS.md`** (shipped on postinstall). Invoke via `@agent-name` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+Full catalog in root **`SKILLS.md`** (shipped on postinstall). **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
 
 ## File Organization
 
@@ -119,3 +160,4 @@ Full catalog in root **`SKILLS.md`** (shipped on postinstall). Invoke via `@agen
 | AsideContext | https://0xrayai.github.io/xray/docs/guides/aside-context |
 | Memory routing | https://0xrayai.github.io/xray/docs/guides/memory-routing |
 | Repertoire | https://0xrayai.github.io/xray/docs/guides/repertoire |
+| Autonomy command | https://0xrayai.github.io/xray/docs/guides/autonomy-command |

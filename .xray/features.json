@@ -29,7 +29,12 @@
     "task_distribution_strategy": "capability-based",
     "conflict_resolution": "expert-priority",
     "progress_tracking": true,
-    "session_persistence": true
+    "session_persistence": true,
+    "lead_dev_mode": true,
+    "per_suite_test_triage": true,
+    "phased_plan_threshold": 25,
+    "auto_consult_major_work": true,
+    "no_new_surface": true
   },
   "autonomous_reporting": {
     "enabled": true,
@@ -127,22 +132,6 @@
     "learning_interval_ms": 300000,
     "auto_apply_threshold": 0.9,
     "min_success_rate": 0.7
-  },
-  "inference_governance": {
-    "enabled": true,
-    "endpoint_url": "https://mcp-production-80e2.up.railway.app/governance",
-    "request_timeout_ms": 30000,
-    "min_confidence_threshold": 0.5,
-    "decision_logic": {
-      "pass_confidence_min": 0.7,
-      "revision_confidence_max": 0.4,
-      "vote_weight_multiplier": 1.0
-    },
-    "proposal_defaults": {
-      "source": "agent",
-      "on_chain": false,
-      "tags": []
-    }
   },
   "memory_routing": {
     "enabled": true,

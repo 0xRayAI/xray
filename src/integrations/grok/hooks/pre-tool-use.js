@@ -1,134 +1,104 @@
 #!/usr/bin/env node
 /**
- * Grok CLI PreToolUse Hook Handler for 0xRay — First Class Citizen
- *
- * Real governance enforcement hook.
- * When Grok is about to execute a tool (write_file, edit, terminal cmd, etc.),
- * this script is spawned and runs the Dynamo Solar SSOT decision matrix.
+ * Grok CLI PreToolUse — ironclad OS gate
+ * Contract: stdin JSON → stdout {"decision":"allow"} | {"decision":"deny","reason":"..."}
  */
 
-import fs from 'fs';
-import path from 'path';
+import {
+  checkCodexPatterns,
+  checkFullTestSuite,
+  checkSubagentGate,
+  checkSurfaceArea,
+  ensureSessionBoot,
+  isShellTool,
+  isWriteTool,
+  loadFeatures,
+  readStdinJson,
+  workspaceRoot,
+} from './grok-hook-utils.js';
+import { appendHookActivity } from './grok-hook-activity.js';
 
-const log = (msg) => { try { console.error(`[0xRay:GrokHook] ${msg}`); } catch { /* noop */ } };
-
-function findGovernanceCore() {
-  const here = path.dirname(new URL(import.meta.url).pathname);
-
-  // Priority: explicit dev root
-  const devRoot = process.env.XRAY_ROOT;
-  if (devRoot) {
-    const devCandidate = path.resolve(devRoot, 'dist/governance/governance-core.js');
-    if (fs.existsSync(devCandidate)) return devCandidate;
-  }
-
-  const candidates = [
-    // Published package layout
-    path.resolve(here, '../../../governance/governance-core.js'),
-    path.resolve(here, '../../../../governance/governance-core.js'),
-    // node_modules installed layout
-    path.resolve(process.cwd(), 'node_modules/0xray/dist/governance/governance-core.js'),
-    // Dev layout fallbacks (no extra dist/)
-    path.resolve(here, '../../../../../governance/governance-core.js'),
-    path.resolve(process.cwd(), 'dist/governance/governance-core.js'),
-    // Strong dev fallback: walk up looking for package.json
-    ...walkUpForCore(here),
-  ];
-
-  for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
-  }
-  return null;
-}
-
-function walkUpForCore(startDir, maxLevels = 8) {
-  const results = [];
-  let current = startDir;
-  for (let i = 0; i < maxLevels; i++) {
-    const pkgPath = path.resolve(current, 'package.json');
-    if (fs.existsSync(pkgPath)) {
-      try {
-        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg.name === '0xray') {
-          results.push(path.resolve(current, 'dist/governance/governance-core.js'));
-          results.push(path.resolve(current, 'governance/governance-core.js'));
-        }
-      } catch {}
-    }
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  return results;
-}
-
-function deriveResonance(toolName, extra = '') {
-  const text = (toolName + ' ' + extra).toLowerCase();
-  let score = 0.85; // baseline good
-  const penalties = [
-    ['any', -0.25],
-    ['eval(', -0.35],
-    ['console.log', -0.15],
-    ['// @ts-ignore', -0.2],
-    ['require(', -0.1],
-  ];
-  for (const [pat, pen] of penalties) {
-    if (text.includes(pat)) score += pen;
-  }
-  return Math.max(0.1, Math.min(0.99, score));
+function finish(root, decision, reason, hint, toolName) {
+  const out = { decision };
+  if (reason) out.reason = reason;
+  if (hint) out.hint = hint;
+  console.log(JSON.stringify(out));
+  appendHookActivity(root, 'grok-pre-tool-use', decision, decision === 'deny' ? 'error' : 'info', {
+    tool: toolName,
+    reason: reason || hint || null,
+    livePath: true,
+  });
+  process.exit(0);
 }
 
 async function main() {
+  const root = workspaceRoot();
+  let toolName = 'unknown';
+
   try {
-    const toolName = process.env.TOOL_NAME || process.env.HOOK_TOOL || 'unknown_tool';
-    const cwd = process.env.PWD || process.cwd();
-    const extraContext = process.env.HOOK_ARGS || process.env.TOOL_ARGS || '';
+    const event = await readStdinJson();
+    const eventRoot = event.workspaceRoot || event.cwd || root;
+    ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
-    log(`PreToolUse: ${toolName}`);
+    const features = loadFeatures();
+    const ctx = extractFromEvent(event);
+    toolName = ctx.toolName;
+    const { paths, content, cmd } = ctx;
 
-    const corePath = findGovernanceCore();
-    let recommendation = 'ALLOW';
-    let resonance = deriveResonance(toolName, extraContext);
-    let govDetails = null;
+    const subagentBlock = checkSubagentGate(toolName, features);
+    if (subagentBlock) finish(eventRoot, 'deny', subagentBlock, null, toolName);
 
-    if (corePath) {
-      try {
-        const core = await import(`file://${corePath}`);
-        if (typeof core.applyDecisionMatrix === 'function') {
-          const result = core.applyDecisionMatrix({
-            resonance,
-            isotopicRatio: resonance > 0.8 ? 0.96 : 0.7,
-            vortexVolume: 1_000_000,
-            historicalCoherence: 0.82,
-            solarActivity: 'active',
-          });
-          govDetails = result;
-          recommendation = result.recommendation || 'NEEDS_REVISION';
-          log(`Solar decision: ${recommendation} (resonance=${resonance.toFixed(2)})`);
-        }
-      } catch (e) {
-        log(`Governance core error: ${e.message}`);
-      }
-    } else {
-      log('Governance core not located — using safe default');
+    if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
+      const surfaceBlock = checkSurfaceArea(paths, eventRoot);
+      if (surfaceBlock) finish(eventRoot, 'deny', surfaceBlock, null, toolName);
     }
 
-    const decision = {
-      tool: toolName,
-      decision: recommendation === 'PASS' ? 'allow' : 'allow_with_governance_note',
-      resonance: Number(resonance.toFixed(3)),
-      solar_recommendation: recommendation,
-      gov: govDetails,
-      timestamp: new Date().toISOString(),
-      source: '0xray/grok-pre-tool-use',
-    };
+    if (isWriteTool(toolName) && content) {
+      const codexBlock = checkCodexPatterns(content);
+      if (codexBlock) finish(eventRoot, 'deny', codexBlock, null, toolName);
+    }
 
-    console.log(JSON.stringify(decision));
-    process.exit(0); // non-blocking rollout; future versions can exit(1) on strong reject
+    if (isShellTool(toolName) && cmd) {
+      const destructive =
+        /\brm\s+-rf\s+\/\b|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i.test(cmd);
+      if (destructive) finish(eventRoot, 'deny', 'Blocked destructive shell command', null, toolName);
+
+      const testHint = checkFullTestSuite(cmd, features);
+      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+    }
+
+    finish(eventRoot, 'allow', null, null, toolName);
   } catch (err) {
-    log(`Hook failure (non-fatal): ${err.message}`);
-    process.exit(0);
+    appendHookActivity(root, 'grok-pre-tool-use', 'hook-error', 'error', {
+      tool: toolName,
+      error: err.message,
+    });
+    finish(root, 'allow', null, null, toolName);
   }
+}
+
+function extractFromEvent(event) {
+  const toolName = event.toolName || process.env.TOOL_NAME || 'unknown';
+  const toolInput = event.toolInput ?? {};
+  const paths = [];
+  let content = '';
+
+  if (toolInput.path) paths.push(String(toolInput.path));
+  if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
+  if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
+
+  if (toolInput.new_string) content += String(toolInput.new_string);
+  if (toolInput.contents) content += String(toolInput.contents);
+  if (toolInput.command) content += String(toolInput.command);
+  if (toolInput.prompt) content += String(toolInput.prompt);
+
+  return {
+    toolName,
+    paths,
+    content,
+    cmd: String(toolInput.command || ''),
+  };
 }
 
 main();
