@@ -222,6 +222,24 @@ describe("CHANGELOG.md", () => {
   });
 });
 
+// ── Release docs freshness (blocking release gate) ─────────────────────
+
+describe("release docs validation", () => {
+  test("validate-release-docs passes for current package version", async () => {
+    const { validateReleaseDocs } = await import(
+      "../../../scripts/node/validate-release-docs.mjs"
+    );
+    const result = validateReleaseDocs(PROJECT_ROOT);
+    if (!result.ok) {
+      console.error("Doc validation errors:", result.errors);
+    }
+    expect(result.ok).toBe(true);
+    expect(result.version).toBe(
+      JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf-8")).version,
+    );
+  });
+});
+
 // ── package.json config tests ────────────────────────────────────────────
 
 describe("package.json configuration", () => {

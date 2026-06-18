@@ -160,8 +160,9 @@ function generateChangelogFromCommits(commits) {
 
 /**
  * Count actual framework components
+ * @param {string} [baseDir]
  */
-function getFrameworkCounts() {
+export function getFrameworkCounts(baseDir = rootDir) {
   const counts = {
     agents: 0,
     mcps: 0,
@@ -169,7 +170,7 @@ function getFrameworkCounts() {
   };
   
   // Count agents (.yml files in src/opencode/agents/ — source of truth)
-  const agentsDir = path.join(rootDir, 'src/opencode/agents');
+  const agentsDir = path.join(baseDir, 'src/opencode/agents');
   if (fs.existsSync(agentsDir)) {
     counts.agents = fs.readdirSync(agentsDir)
       .filter(f => f.endsWith('.yml'))
@@ -177,7 +178,7 @@ function getFrameworkCounts() {
   }
   
   // Consumer MCP count from .mcp.json SSOT (7 servers), not internal dist/mcps inventory
-  const mcpJsonPath = path.join(rootDir, '.mcp.json');
+  const mcpJsonPath = path.join(baseDir, '.mcp.json');
   if (fs.existsSync(mcpJsonPath)) {
     try {
       const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf-8'));
@@ -191,7 +192,7 @@ function getFrameworkCounts() {
   }
   
   // Count skills (directories in src/skills/ with SKILL.md)
-  const skillsDir = path.join(rootDir, 'src/skills');
+  const skillsDir = path.join(baseDir, 'src/skills');
   if (fs.existsSync(skillsDir)) {
     counts.skills = fs.readdirSync(skillsDir)
       .filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory())
@@ -310,7 +311,7 @@ function updateReadme(counts, newVersion) {
   console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
 }
 
-const DOCS_SITE_HEADER_FILES = [
+export const DOCS_SITE_HEADER_FILES = [
   'docs-site/docs/README.md',
   'docs-site/docs/index.md',
   'docs-site/docs/introduction.md',
@@ -318,7 +319,7 @@ const DOCS_SITE_HEADER_FILES = [
   'docs-site/docs/full-reference.md',
 ];
 
-function buildDocsHeader(counts, newVersion) {
+export function buildDocsHeader(counts, newVersion) {
   return `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · 68 codex terms · 3,226 tests`;
 }
 
@@ -579,7 +580,20 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   updateAgentsMd(counts);
   updateAgentsConsumerMd(counts);
   updateSkillsMd(counts, current);
+  runReleaseDocsValidation();
   console.log(`\n✅ Release artifacts updated for v${current}\n`);
+}
+
+function runReleaseDocsValidation() {
+  try {
+    execSync('node scripts/node/validate-release-docs.mjs', {
+      cwd: rootDir,
+      stdio: 'inherit',
+    });
+  } catch {
+    console.error('\n❌ Release artifact docs failed validation — fix before tagging\n');
+    process.exit(1);
+  }
 }
 
 function main() {

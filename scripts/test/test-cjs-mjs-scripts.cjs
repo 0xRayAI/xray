@@ -151,6 +151,12 @@ const mjsScripts = [
     selfInvoking: true,
   },
   {
+    path: path.join(ROOT, 'scripts', 'node', 'validate-release-docs.mjs'),
+    name: 'scripts/node/validate-release-docs.mjs',
+    description: 'Release docs freshness guard',
+    selfInvoking: true,
+  },
+  {
     path: path.join(ROOT, 'scripts', 'node', 'auto-reflection-generator.mjs'),
     name: 'scripts/node/auto-reflection-generator.mjs',
     description: 'Auto-reflection generator',

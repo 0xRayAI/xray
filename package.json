@@ -116,6 +116,7 @@
     "version:reconcile": "node scripts/node/reconcile-version.mjs",
     "consumer:smoke": "node scripts/node/consumer-install-smoke.mjs",
     "release:gate": "node scripts/node/release-gate.mjs",
+    "release:docs-check": "node scripts/node/validate-release-docs.mjs",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",

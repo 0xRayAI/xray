@@ -7,7 +7,7 @@
  * 2. Release gate once (build + test + consumer smoke)
  * 3. Update CHANGELOG / README / AGENTS / docs (version-manager --artifacts-only)
  * 4. Commit release artifacts → push
- * 5. Verify gate (reconcile + git + smoke)
+ * 5. Verify gate (reconcile + git + release docs + smoke)
  * 6. Tag → push tag → npm publish
  *
  * Usage:
