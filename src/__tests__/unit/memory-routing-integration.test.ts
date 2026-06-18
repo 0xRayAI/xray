@@ -48,6 +48,14 @@ const mockProvider: MemoryRoutingProvider = {
       synthesisAvailable: false,
     },
   }),
+  getTaskConfidence: (task) => ({
+    signals: [{ name: 'test-signal', confidence: 0.9 }],
+    avgConfidence: 0.9,
+    maxConfidence: 0.9,
+    highConfidenceTrapPresent: task.description.includes('trap'),
+    ontologicalTrapDetected: task.description.includes('trap'),
+    complexityBoost: task.description.includes('trap') ? 20 : 0,
+  }),
   ingestFeedback: vi.fn(),
 };
 
@@ -99,6 +107,28 @@ describe('Memory routing integration', () => {
     expect(plan.tasks[0].metadata?.memorySignals).toContain('test-signal');
     expect(plan.memoryContext).toBeDefined();
     expect((plan.memoryContext as { providerId?: string }).providerId).toBe('test-provider');
+  });
+
+  it('ExecutionPlanner applies confidence complexity boost for trap tasks', async () => {
+    const { ExecutionPlanner } = await import(
+      '../../mcps/orchestrator/execution/execution-planner.js'
+    );
+    const planner = new ExecutionPlanner();
+
+    const trapComplexity = planner.calculateTaskComplexity({
+      id: 'trap-task',
+      description: 'ontological-trap attestation boundary review',
+      type: 'design',
+      estimatedComplexity: 40,
+    });
+    const plainComplexity = planner.calculateTaskComplexity({
+      id: 'plain-task',
+      description: 'routine code review',
+      type: 'design',
+      estimatedComplexity: 40,
+    });
+
+    expect(trapComplexity).toBeGreaterThan(plainComplexity);
   });
 
   it('thinDispatch.scoreAndRoute uses provider resolveThinDispatch', async () => {

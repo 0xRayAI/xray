@@ -213,15 +213,18 @@ export class ExecutionPlanner {
     agentAssignments: Map<string, OrchestrationTask[]>
   ): void {
     for (const task of tasks) {
-      const complexity = task.estimatedComplexity || 30;
+      const complexity = this.calculateTaskComplexity(task);
       const requiredCaps = [
         task.type,
         ...(task.metadata?.memorySignals ?? []),
       ];
+      const operationDescription = task.metadata?.memoryHighConfidenceTrap
+        ? `${task.description} TYPE: ontological-trap`
+        : task.description;
       const agent = this.capabilitiesManager.selectAgentForTask(
         requiredCaps,
         complexity,
-        task.description,
+        operationDescription,
       ) || 'orchestrator';
 
       if (!agentAssignments.has(agent)) {
@@ -344,6 +347,15 @@ export class ExecutionPlanner {
     // Adjust based on dependencies
     if (task.dependencies) {
       complexity += task.dependencies.length * 5;
+    }
+
+    if (task.metadata?.memoryComplexityBoost !== undefined) {
+      complexity += task.metadata.memoryComplexityBoost;
+    } else {
+      const provider = getProvider();
+      if (provider.id !== 'null' && provider.getTaskConfidence) {
+        complexity += provider.getTaskConfidence(toMemoryTask(task)).complexityBoost;
+      }
     }
 
     return Math.min(Math.max(Math.round(complexity), 1), 100);

@@ -23,12 +23,23 @@ export interface MemoryOrchestrationTask {
   metadata?: Record<string, unknown>;
 }
 
+export interface MemoryTaskConfidence {
+  signals: Array<{ name: string; confidence: number }>;
+  avgConfidence: number;
+  maxConfidence: number;
+  highConfidenceTrapPresent: boolean;
+  ontologicalTrapDetected: boolean;
+  complexityBoost: number;
+}
+
 export interface MemoryRoutingContext {
   providerId: string;
   matchedSignals: string[];
   matchedTags: string[];
   flags: Record<string, boolean>;
   synthesisAvailable: boolean;
+  signalConfidences?: Record<string, number>;
+  avgMatchConfidence?: number;
 }
 
 export interface MemoryInheritedContext {
@@ -93,6 +104,7 @@ export interface MemoryRoutingProvider {
     operation: string,
     complexityScore: number,
   ): MemoryThinDispatchResult;
+  getTaskConfidence?(task: MemoryOrchestrationTask): MemoryTaskConfidence;
   ingestFeedback?(entry: OrchestratorFeedbackEntry): void;
 }
 

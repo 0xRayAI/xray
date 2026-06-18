@@ -4,6 +4,7 @@ import type {
   MemoryOrchestrationTask,
   MemoryRoutingContext,
   MemoryRoutingProvider,
+  MemoryTaskConfidence,
   MemoryThinDispatchResult,
 } from './types.js';
 
@@ -72,6 +73,17 @@ export class NullMemoryRoutingProvider implements MemoryRoutingProvider {
       agent: baseAgent,
       adjustedScore: complexityScore,
       context: { ...EMPTY_CONTEXT },
+    };
+  }
+
+  getTaskConfidence(): MemoryTaskConfidence {
+    return {
+      signals: [],
+      avgConfidence: 0,
+      maxConfidence: 0,
+      highConfidenceTrapPresent: false,
+      ontologicalTrapDetected: false,
+      complexityBoost: 0,
     };
   }
 }

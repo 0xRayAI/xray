@@ -19,6 +19,10 @@ export interface OrchestrationTaskMetadata {
   synthesisContext?: string;
   ontologicalTrapDetected?: boolean;
   memoryProviderId?: string;
+  memorySignalConfidences?: Record<string, number>;
+  memoryAvgConfidence?: number;
+  memoryHighConfidenceTrap?: boolean;
+  memoryComplexityBoost?: number;
 }
 
 export interface OrchestrationTask {
