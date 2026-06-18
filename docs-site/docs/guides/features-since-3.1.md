@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.6**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.7**.
+
+## 3.4.7 — Consumer-safe release pipeline
+
+| Feature | Description |
+|---------|-------------|
+| **Upgrade smoke in gate** | Tarball smoke preserves consumer `memory_routing` opt-ins on simulated upgrade |
+| **Publish idempotency** | `release.mjs` skips publish when version already on npm; tags after publish |
+| **AGENTS.md guard** | Postinstall only overwrites `AGENTS.md` when `<!-- 0xray-managed -->` marker present |
 
 ## 3.4.6 — Postinstall config merge
 

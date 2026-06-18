@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.7] - 2026-06-18
+
+### 🐛 Bug Fixes
+- **Release gate upgrade smoke** — `consumer-install-smoke` simulates consumer opt-in merge on every publish
+- **Release pipeline** — artifacts sync before gate; idempotent `npm publish`; tag after publish
+- **Postinstall** — skip customized `AGENTS.md`; hard-fail on bridge wiring errors
+- **pre-publish-guard** — allow `.xray/config.json` and `.xray/state/` runtime dirt between gate steps
+
+---
+
 ## [3.4.6] - 2026-06-18
 
 ### 🐛 Bug Fixes
