@@ -18,6 +18,7 @@ import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   CallToolRequestSchema,
+  isInitializeRequest,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
@@ -419,6 +420,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
 
   /**
    * Run as HTTP server using Streamable HTTP transport (for Grok CLI compatibility).
+   * Uses per-session transports so concurrent clients can each initialize independently.
    */
   async runHttp(port: number = parseInt(process.env.MCP_PORT ?? "3100", 10)): Promise<void> {
     await this.initializeGovernance();
@@ -429,11 +431,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       host: mcpHost,
       ...(allowedHosts ? { allowedHosts } : {}),
     });
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
-    });
-
-    await this.server.connect(transport as any);
+    const transports: Record<string, StreamableHTTPServerTransport> = {};
 
     const apiKey = process.env.GOVERNANCE_API_KEY;
     if (apiKey) {
@@ -455,13 +453,84 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       next();
     });
 
-    app.post("/mcp", async (req: any, res: any) => {
+    const mcpPostHandler = async (req: any, res: any) => {
       try {
+        const sessionId = req.headers["mcp-session-id"] as string | undefined;
+        let transport: StreamableHTTPServerTransport | undefined;
+
+        if (sessionId && transports[sessionId]) {
+          transport = transports[sessionId];
+        } else if (!sessionId && isInitializeRequest(req.body)) {
+          transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => randomUUID(),
+            onsessioninitialized: (sid) => {
+              if (transport) {
+                transports[sid] = transport;
+                frameworkLogger.log("governance-mcp", "session-initialized", "info", {
+                  sessionId: sid,
+                });
+              }
+            },
+          });
+          transport.onclose = () => {
+            const sid = transport?.sessionId;
+            if (sid && transports[sid]) {
+              delete transports[sid];
+              frameworkLogger.log("governance-mcp", "session-closed", "info", { sessionId: sid });
+            }
+          };
+          const sessionServer = new GovernanceServer();
+          await sessionServer.connect(transport as Transport);
+          await transport.handleRequest(req, res, req.body);
+          return;
+        } else {
+          res.status(400).json({
+            jsonrpc: "2.0",
+            error: { code: -32000, message: "Bad Request: No valid session ID provided" },
+            id: null,
+          });
+          return;
+        }
+
         await transport.handleRequest(req, res, req.body);
       } catch (error) {
         frameworkLogger.log("governance-mcp", "http-handler-error", "error", { error: String(error) });
         if (!res.headersSent) {
           res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+        }
+      }
+    };
+
+    app.post("/mcp", mcpPostHandler);
+
+    app.get("/mcp", async (req: any, res: any) => {
+      const sessionId = req.headers["mcp-session-id"] as string | undefined;
+      if (!sessionId || !transports[sessionId]) {
+        res.status(400).send("Invalid or missing session ID");
+        return;
+      }
+      try {
+        await transports[sessionId].handleRequest(req, res);
+      } catch (error) {
+        frameworkLogger.log("governance-mcp", "http-sse-error", "error", { error: String(error) });
+        if (!res.headersSent) {
+          res.status(500).send("Error processing SSE stream");
+        }
+      }
+    });
+
+    app.delete("/mcp", async (req: any, res: any) => {
+      const sessionId = req.headers["mcp-session-id"] as string | undefined;
+      if (!sessionId || !transports[sessionId]) {
+        res.status(400).send("Invalid or missing session ID");
+        return;
+      }
+      try {
+        await transports[sessionId].handleRequest(req, res);
+      } catch (error) {
+        frameworkLogger.log("governance-mcp", "http-delete-error", "error", { error: String(error) });
+        if (!res.headersSent) {
+          res.status(500).send("Error processing session termination");
         }
       }
     });
@@ -470,12 +539,16 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       res.json({ status: "ok", server: "governance" });
     });
 
+    const closeAllTransports = async () => {
+      await Promise.all(Object.values(transports).map((t) => t.close()));
+    };
+
     app.listen(port, () => {
       frameworkLogger.log("governance-mcp", "http-listening", "info", { port });
     });
 
-    process.on("SIGINT", () => { transport.close(); process.exit(0); });
-    process.on("SIGTERM", () => { transport.close(); process.exit(0); });
+    process.on("SIGINT", () => { void closeAllTransports().then(() => process.exit(0)); });
+    process.on("SIGTERM", () => { void closeAllTransports().then(() => process.exit(0)); });
   }
 }
 
