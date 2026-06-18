@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.5] - 2026-06-18
+
+### ✨ Features
+- **Native bridge MCP wiring** — `bridge-mcp-wiring.cjs` SSOT wires 7 xray MCP servers (+ repertoire auto-detect) into Hermes `mcp_servers`, OpenCode `opencode.json`, and OpenClaw `mcp.servers` via `npx 0xray {hermes,opencode,openclaw} install` and postinstall
+
+---
+
 ## [3.4.4] - 2026-06-18
 
 ### 🐛 Bug Fixes

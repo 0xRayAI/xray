@@ -1,7 +1,7 @@
 {
   "id": "0xray",
   "name": "0xRay",
-  "version": "3.4.4",
+  "version": "3.4.5",
   "description": "Multi-agent orchestration, Codex governance, and AI-powered development tools. 7 MCP servers (governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools) plus 45 knowledge skills. Auto-installs 4 platform bridges on npm install.",
   "author": "0xRay AI",
   "homepage": "https://github.com/0xRayAI/xray",

@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.4**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.5**.
+
+## 3.4.5 — Native bridge MCP wiring
+
+| Feature | Description |
+|---------|-------------|
+| **bridge-mcp-wiring.cjs** | SSOT for 7-server MCP surface + repertoire auto-detect on consumer install |
+| **Hermes / OpenCode / OpenClaw install** | `npx 0xray * install` wires platform registries, consumer root markers, and plugin artifacts |
+| **Postinstall** | `install-bridges.cjs` calls shared wiring on `npm install 0xray` |
 
 ## 3.4.4 — Researcher MCP trap routing (P0.5)
 

@@ -1,6 +1,6 @@
 # 0xray Skills
 
-**v3.4.4** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
+**v3.4.5** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
 
 xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
 
