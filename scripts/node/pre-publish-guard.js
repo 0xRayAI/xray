@@ -92,6 +92,7 @@ function checkGitStatus() {
       'logs/',
       'backups/',
       'Users/',
+      '.xray/inference/',
     ];
     
     const realChanges = lines.filter(l => {
