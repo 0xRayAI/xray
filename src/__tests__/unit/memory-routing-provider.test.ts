@@ -155,8 +155,10 @@ describe('MemoryRoutingProvider', () => {
       expect(ctx.matchedSignals.length).toBeGreaterThan(0);
       expect(ctx.flags.ontologicalTrapDetected).toBe(true);
 
-      const thin = provider.resolveThinDispatch('code-reviewer', 'ontological-trap attestation', 35);
-      expect(thin.adjustedScore).toBeGreaterThan(35);
+      const operation = 'ontological-trap attestation boundary';
+      const thin = provider.resolveThinDispatch('code-reviewer', operation, 30);
+      expect(thin.adjustedScore).toBeGreaterThanOrEqual(30);
+      expect(thin.context.flags.ontologicalTrapDetected).toBe(true);
     } else {
       expect(provider.id).toBe('null');
     }

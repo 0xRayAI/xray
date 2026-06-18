@@ -128,32 +128,35 @@ function checkGitStatus() {
 
 function checkVersionSync() {
   log('Checking version synchronization...', 'step');
-  
-  // Load version manager
-  const vmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
-  const vmContent = fs.readFileSync(vmPath, 'utf-8');
-  const versionMatch = vmContent.match(/version:\s*"([^"]+)"/);
-  
-  if (!versionMatch) {
-    errors.push('Cannot find version in version manager');
-    return false;
-  }
-  
-  const vmVersion = versionMatch[1];
-  
-  // Load package.json
+
   const pkgPath = path.join(rootDir, 'package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
   const pkgVersion = pkg.version;
-  
+
+  const vmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
+  const vmContent = fs.readFileSync(vmPath, 'utf-8');
+  const usesPackageSsot =
+    vmContent.includes('readPackageVersion()') &&
+    /version:\s*PACKAGE_VERSION/.test(vmContent);
+
+  if (usesPackageSsot) {
+    log(`Version SSOT: package.json (${pkgVersion})`, 'success');
+    return true;
+  }
+
+  const versionMatch = vmContent.match(/framework:\s*\{[\s\S]*?version:\s*"([^"]+)"/);
+  if (!versionMatch) {
+    errors.push('Cannot find framework version in version manager');
+    return false;
+  }
+
+  const vmVersion = versionMatch[1];
   if (pkgVersion !== vmVersion) {
-    // package.json is often 1 ahead of UVM after npm version patch — non-blocking
     warnings.push(`Version mismatch: package.json (${pkgVersion}) != version manager (${vmVersion})`);
     log(`Version mismatch: package.json=${pkgVersion}, version-manager=${vmVersion}`, 'warn');
-    return true; // non-blocking — matches pre-commit hook behavior
+  } else {
+    log(`Versions aligned: ${pkgVersion}`, 'success');
   }
-  
-  log(`Versions aligned: ${pkgVersion}`, 'success');
   return true;
 }
 
