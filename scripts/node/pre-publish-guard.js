@@ -96,7 +96,8 @@ function checkGitStatus() {
     ];
     
     const realChanges = lines.filter(l => {
-      const filePath = l.slice(3); // skip status prefix (e.g., " M " or "M  ")
+      // Porcelain: XY + whitespace + path (slice(3) breaks when Y is space before dotted paths)
+      const filePath = l.slice(2).trim();
       return !artifactPrefixes.some(prefix => filePath.startsWith(prefix));
     });
     
