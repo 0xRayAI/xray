@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.6] - 2026-06-18
+
+### 🐛 Bug Fixes
+- **Postinstall config merge** — `deployXrayConfig` deep-merges existing consumer `features.json`, `codex.json`, and `config.json` instead of overwriting on mtime; consumer opt-ins (e.g. `memory_routing`) are preserved and `features.version` bumps to the installed package
+
+---
+
 ## [3.4.5] - 2026-06-18
 
 ### ✨ Features

@@ -1,6 +1,12 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.5**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.6**.
+
+## 3.4.6 — Postinstall config merge
+
+| Feature | Description |
+|---------|-------------|
+| **Consumer config merge** | Upgrade installs merge shipped `.xray` JSON into existing consumer files — opt-ins preserved, new framework keys added, `features.version` synced to package |
 
 ## 3.4.5 — Native bridge MCP wiring
 
