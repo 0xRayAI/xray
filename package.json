@@ -60,7 +60,7 @@
     "mcpServersPath": "dist/mcps"
   },
   "scripts": {
-    "prepublishOnly": "node scripts/node/reconcile-version.mjs --check && npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
+    "prepublishOnly": "node scripts/node/reconcile-version.mjs --check && npm run prepare-consumer && npm run build:all && find dist -name '*.js.map' -o -name '*.d.ts.map' | xargs rm -f 2>/dev/null || true",
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",

@@ -96,7 +96,7 @@ All registered via `npx -y 0xray mcp <cmd>` — no brittle `dist/` paths:
 |--------|---------|------|
 | `xray-governance` | `mcp governance` | Proposal governance, codex snapshot, quality gates |
 | `xray-skills` | `mcp skills` | 45 knowledge skills + skill invocation |
-| `xray-orchestrator` | `mcp orchestrator` | thinDispatch 7-flow, task delegation |
+| `xray-orchestrator` | `mcp orchestrator` | Complexity analysis, lead-dev plan, task delegation |
 | `xray-enforcer` | `mcp enforcer` | Codex compliance, rule validation |
 | `xray-researcher` | `mcp researcher` | Codebase exploration, implementation lookup |
 | `xray-code-review` | `mcp code-review` | Proposal quality, best practices |
@@ -144,7 +144,7 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 | Integration | What it does |
 |-------------|--------------|
 | **ExecutionPlanner** (v3.3.1) | `getTaskConfidence()` → complexity boost, trap hints, signal-aware `selectAgent()` |
-| **thinDispatch** | `resolveThinDispatch()` adjusts score; architect override on high-confidence traps |
+| **thinDispatch** | Nucleus `scoreAndRoute()` (`0xray/nucleus`); memory provider `resolveThinDispatch()` when routing enabled |
 | **Researcher** | `researcher-confidence.ts` appends `MEMORY_ROUTING:` block to governance output |
 | **AsideContext** (v3.2) | `buildInheritedContext` → `inheritedContext.memoryRouting` on orchestrator `spawnAside` |
 | **Feedback** | Per-task `ingestFeedback()` closes the learning loop |

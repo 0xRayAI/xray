@@ -2,9 +2,9 @@ name: 0xRay CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
-    branches: [master]
+    branches: [main, master]
   workflow_dispatch:
   schedule:
     - cron: "0 8 * * *"  # Daily at 8 AM UTC
@@ -241,15 +241,10 @@ jobs:
       - name: Run Codex Enforcement Check
         run: |
           echo "Running codex-check against codebase..."
-          node dist/core/bridge.mjs codex-check --operation write --focus "full" || true
+          node dist/core/bridge.mjs codex-check --operation write --focus "full"
 
-      - name: Check enforcement violations
-        run: |
-          VIOLATIONS=$(grep -c "violation\|blocked\|failed" .opencode/logs/activity.log 2>/dev/null || echo "0")
-          echo "Enforcement violations found: $VIOLATIONS"
-          if [ "$VIOLATIONS" -gt "0" ]; then
-            echo "⚠️ Codex violations detected - review .opencode/logs/activity.log"
-          fi
+      - name: Consumer install smoke
+        run: node scripts/node/consumer-install-smoke.mjs
 
   # ═══════════════════════════════════════════════════════
   # CI/CD Health Monitor (runs after all jobs)

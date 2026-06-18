@@ -1,5 +1,6 @@
 {
   "$schema": "./features.schema.json",
+  "version": "3.4.2",
   "description": "0xRay Framework - Unified Feature Configuration",
   "token_optimization": {
     "enabled": true,
@@ -134,13 +135,18 @@
     "min_success_rate": 0.7
   },
   "memory_routing": {
-    "enabled": true,
-    "provider": "repertoire",
-    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
-    "config": {
-      "dataDir": "../repertoire/data",
-      "signalsPath": "../repertoire/data/curated_signals.json",
-      "logDir": "../repertoire/logs/groover-inference"
+    "enabled": false,
+    "provider": "null",
+    "module_path": "",
+    "config": {}
+  },
+  "inference_governance": {
+    "enabled": false,
+    "request_timeout_ms": 10000,
+    "min_confidence_threshold": 0.5,
+    "proposal_defaults": {
+      "source": "agent",
+      "onChain": false
     }
   }
 }

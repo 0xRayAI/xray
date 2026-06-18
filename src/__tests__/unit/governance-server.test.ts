@@ -302,6 +302,9 @@ describe("GovernanceServer", () => {
         results: [{ id: "prop-1", decision: "approve" }],
       });
       (getGovernanceService as any).mockReturnValue({ govern: mockGovern });
+      (featuresConfigLoader.loadConfig as any).mockReturnValue({
+        inference_governance: { enabled: true },
+      });
 
       const result = await (server as any).handleGovernProposals({
         proposals: [{ type: "fix", title: "Fix bug", description: "Fix the bug" }],
@@ -329,9 +332,26 @@ describe("GovernanceServer", () => {
       expect(request.proposals[0].id).toMatch(/^prop-\d+-0$/);
     });
 
-    it("defaults requireExternalDynamo to true", async () => {
+    it("defaults requireExternalDynamo to false when inference_governance disabled", async () => {
       const mockGovern = vi.fn().mockResolvedValue({ summary: "ok", results: [] });
       (getGovernanceService as any).mockReturnValue({ govern: mockGovern });
+      (featuresConfigLoader.loadConfig as any).mockReturnValue({
+        inference_governance: { enabled: false },
+      });
+
+      await (server as any).handleGovernProposals({
+        proposals: [{ type: "fix", title: "Test", description: "Desc" }],
+      });
+
+      expect(mockGovern.mock.calls[0][0].options.requireExternalDynamo).toBe(false);
+    });
+
+    it("defaults requireExternalDynamo to true when inference_governance enabled", async () => {
+      const mockGovern = vi.fn().mockResolvedValue({ summary: "ok", results: [] });
+      (getGovernanceService as any).mockReturnValue({ govern: mockGovern });
+      (featuresConfigLoader.loadConfig as any).mockReturnValue({
+        inference_governance: { enabled: true },
+      });
 
       await (server as any).handleGovernProposals({
         proposals: [{ type: "fix", title: "Test", description: "Desc" }],

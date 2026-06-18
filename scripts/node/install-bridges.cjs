@@ -400,10 +400,11 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
 const XRAY_CONFIG_FILES = ["codex.json", "features.json", "features.schema.json", "config.json"];
 
 function resolveXrayConfigSource(packageRoot, file) {
-  const dotXray = path.join(packageRoot, ".xray", file);
-  if (fs.existsSync(dotXray)) return dotXray;
+  // Shipped SSOT: xray/ template wins over dev .xray/ runtime copy (P0.2)
   const xrayDir = path.join(packageRoot, "xray", file);
   if (fs.existsSync(xrayDir)) return xrayDir;
+  const dotXray = path.join(packageRoot, ".xray", file);
+  if (fs.existsSync(dotXray)) return dotXray;
   return null;
 }
 

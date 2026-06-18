@@ -132,7 +132,18 @@ function main() {
     if (!features.memory_routing) {
       throw new Error("Deployed features.json missing memory_routing block");
     }
-    console.log("  ✅ .xray/features.json deployed with memory_routing");
+    if (features.memory_routing.enabled !== false) {
+      throw new Error(
+        `Shipped template must default memory_routing.enabled=false (got ${features.memory_routing.enabled})`,
+      );
+    }
+    if (!features.inference_governance) {
+      throw new Error("Deployed features.json missing inference_governance block");
+    }
+    if (features.inference_governance.enabled !== false) {
+      throw new Error("Shipped template must default inference_governance.enabled=false");
+    }
+    console.log("  ✅ .xray/features.json deployed (memory_routing + inference_governance opt-in defaults)");
 
     const schemaInPackage = path.join(nmRoot, "xray", "features.schema.json");
     if (!fs.existsSync(schemaInPackage)) {

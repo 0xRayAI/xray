@@ -23,6 +23,7 @@ import {
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import { mcpClientManager } from "./mcp-client.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { featuresConfigLoader } from "../core/features-config.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -30,7 +31,6 @@ import { randomUUID } from "crypto";
 import { getGovernanceService } from "../governance/governance-service.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
-import { featuresConfigLoader } from "../core/features-config.js";
 import type { GovernanceRequest } from "../governance/governance-types.js";
 
 interface GovernanceProposalInput {
@@ -231,6 +231,19 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
     });
   }
 
+  /** Align tool default with features.json inference_governance.enabled (P0.2). */
+  private resolveRequireExternal(explicit?: boolean): boolean {
+    if (explicit !== undefined) return explicit;
+    try {
+      const config = featuresConfigLoader.loadConfig() as {
+        inference_governance?: { enabled?: boolean };
+      };
+      return config?.inference_governance?.enabled === true;
+    } catch {
+      return false;
+    }
+  }
+
   private async handleGovernProposals(args: GovernProposalsArgs): Promise<CallToolResult> {
     const service = getGovernanceService();
 
@@ -246,7 +259,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       })),
       context: args.context || {},
       options: {
-        requireExternalDynamo: args.options?.require_external ?? true,
+        requireExternalDynamo: this.resolveRequireExternal(args.options?.require_external),
       },
     };
 
