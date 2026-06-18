@@ -94,6 +94,7 @@
     "test:dependency-scan": "npm run security-audit",
     "test:integration": "node scripts/mjs/test-consumer-readiness.mjs && node scripts/mjs/test-mcp-functionality.mjs",
     "test:e2e": "node scripts/node/validate-mcp-connectivity.js && node scripts/node/validate-external-processes.js",
+    "live-feedback-session": "npx --yes tsx scripts/live-taskhandler-feedback-session.ts",
     "validate": "echo \"[xray] Use 'npm test' or 'npm run test:comprehensive'.\"",
     "validate:quick": "npm run validate",
     "debug:inference:force": "XRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
