@@ -403,6 +403,64 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
 
 const XRAY_CONFIG_FILES = ["codex.json", "features.json", "features.schema.json", "config.json"];
 
+/** Consumer JSON configs merge on upgrade — consumer values win; shipped fills new keys. */
+const MERGE_CONFIG_FILES = new Set(["features.json", "config.json", "codex.json"]);
+
+function readPackageVersion(packageRoot) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"));
+    return pkg.version || null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonFile(filePath, data) {
+  fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`);
+}
+
+function deployXrayConfigFile(file, src, dst, packageRoot) {
+  if (!fs.existsSync(dst)) {
+    fs.copyFileSync(src, dst);
+    return true;
+  }
+
+  if (file === "features.schema.json") {
+    if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
+      fs.copyFileSync(src, dst);
+      return true;
+    }
+    return false;
+  }
+
+  if (MERGE_CONFIG_FILES.has(file)) {
+    try {
+      const shipped = JSON.parse(fs.readFileSync(src, "utf8"));
+      const consumer = JSON.parse(fs.readFileSync(dst, "utf8"));
+      const merged = deepMerge(shipped, consumer);
+      if (file === "features.json") {
+        const pkgVersion = readPackageVersion(packageRoot);
+        if (pkgVersion) merged.version = pkgVersion;
+        else if (shipped.version) merged.version = shipped.version;
+      }
+      writeJsonFile(dst, merged);
+      return true;
+    } catch {
+      if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
+        fs.copyFileSync(src, dst);
+        return true;
+      }
+      return false;
+    }
+  }
+
+  if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
+    fs.copyFileSync(src, dst);
+    return true;
+  }
+  return false;
+}
+
 function resolveXrayConfigSource(packageRoot, file) {
   // Shipped SSOT: xray/ template wins over dev .xray/ runtime copy (P0.2)
   const xrayDir = path.join(packageRoot, "xray", file);
@@ -423,9 +481,7 @@ function deployXrayConfig(targetDir, packageRoot, log) {
     const src = resolveXrayConfigSource(packageRoot, file);
     const dst = path.join(xrayTargetDir, file);
     if (!src) continue;
-    const shouldCopy = !fs.existsSync(dst) || fs.statSync(src).mtime > fs.statSync(dst).mtime;
-    if (shouldCopy) {
-      fs.copyFileSync(src, dst);
+    if (deployXrayConfigFile(file, src, dst, packageRoot)) {
       copied++;
     }
   }
@@ -479,6 +535,8 @@ module.exports = {
   syncBuiltinSkills,
   isConsumerInstall,
   deployXrayConfig,
+  deployXrayConfigFile,
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
+  MERGE_CONFIG_FILES,
 };

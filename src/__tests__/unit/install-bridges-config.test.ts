@@ -40,6 +40,75 @@ describe("install-bridges xray config deploy", () => {
     expect(resolved).toBe(path.join(xrayDir, "features.json"));
   });
 
+  it("merges features.json on upgrade — preserves consumer opt-ins, bumps version", () => {
+    const xrayDir = path.join(packageRoot, "xray");
+    fs.mkdirSync(xrayDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "0xray", version: "3.4.5" }),
+    );
+    fs.writeFileSync(
+      path.join(xrayDir, "features.json"),
+      JSON.stringify({
+        version: "3.4.3",
+        memory_routing: { enabled: false, provider: "null" },
+        inference_governance: { enabled: false },
+        new_framework_block: { enabled: true },
+      }),
+    );
+
+    const consumerXray = path.join(consumerRoot, ".xray");
+    fs.mkdirSync(consumerXray, { recursive: true });
+    fs.writeFileSync(
+      path.join(consumerXray, "features.json"),
+      JSON.stringify({
+        version: "3.4.1",
+        memory_routing: {
+          enabled: true,
+          provider: "repertoire",
+          module_path: "dist/provider/memory-routing-provider.js",
+        },
+        inference_governance: { enabled: true },
+      }),
+    );
+
+    deployXrayConfig(consumerRoot, packageRoot, () => {});
+
+    const deployed = JSON.parse(
+      fs.readFileSync(path.join(consumerXray, "features.json"), "utf-8"),
+    );
+    expect(deployed.version).toBe("3.4.5");
+    expect(deployed.memory_routing?.enabled).toBe(true);
+    expect(deployed.memory_routing?.provider).toBe("repertoire");
+    expect(deployed.inference_governance?.enabled).toBe(true);
+    expect(deployed.new_framework_block?.enabled).toBe(true);
+  });
+
+  it("merges codex.json — adds new shipped terms without dropping consumer file", () => {
+    const xrayDir = path.join(packageRoot, "xray");
+    fs.mkdirSync(xrayDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(xrayDir, "codex.json"),
+      JSON.stringify({ terms: { "69": { rule: "no new surface" }, "70": { rule: "future" } } }),
+    );
+
+    const consumerXray = path.join(consumerRoot, ".xray");
+    fs.mkdirSync(consumerXray, { recursive: true });
+    fs.writeFileSync(
+      path.join(consumerXray, "codex.json"),
+      JSON.stringify({ terms: { "11": { rule: "no any" } } }),
+    );
+
+    deployXrayConfig(consumerRoot, packageRoot, () => {});
+
+    const deployed = JSON.parse(
+      fs.readFileSync(path.join(consumerXray, "codex.json"), "utf-8"),
+    );
+    expect(deployed.terms?.["11"]?.rule).toBe("no any");
+    expect(deployed.terms?.["69"]?.rule).toBe("no new surface");
+    expect(deployed.terms?.["70"]?.rule).toBe("future");
+  });
+
   it("deploys features.json and schema from xray/ to consumer .xray/", () => {
     const xrayDir = path.join(packageRoot, "xray");
     fs.mkdirSync(xrayDir, { recursive: true });
