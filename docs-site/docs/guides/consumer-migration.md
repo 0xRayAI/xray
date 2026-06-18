@@ -62,11 +62,13 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 - `0xray/nucleus` and `0xray/nucleus/*` are the supported way to reach core surfaces.
 - Internal `dist/nucleus/...` paths are not part of the public contract.
 
-### v3.3 — Memory routing
+### v3.3 — Memory routing + Repertoire
 
-- Pluggable `memory_routing` block in `features.json`.
-- Repertoire is the default provider in the framework repo; consumers set `"enabled": false` without a provider.
-- See [Memory Routing](./memory-routing.md).
+- Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`).
+- Repertoire (`@0xray/repertoire`) is the default provider in the framework repo.
+- `MemoryRoutingProvider` contract: `enrichTasks`, `getTaskConfidence`, `resolveThinDispatch`, `ingestFeedback`.
+- External hosts: add `repertoire-mcp` to `.mcp.json` (`repertoire__get_task_confidence`, etc.).
+- See [Memory Routing](./memory-routing.md) and [Repertoire Integration](./repertoire.md).
 
 ### v3.3.1 — Confidence gate
 

@@ -15,7 +15,10 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/getting-started',
         'guides/integrations',
+        'guides/features-since-3.1',
+        'guides/features-json',
         'guides/memory-routing',
+        'guides/repertoire',
         'guides/consumer-migration',
         'guides/self-hosting-dynamo',
       ],

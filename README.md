@@ -118,20 +118,35 @@ Core governance agents:
 
 See [AGENTS.md](AGENTS.md) and [SKILLS.md](SKILLS.md) for the full agent and skill catalog.
 
-## Memory Routing (v3.3)
+## Memory Routing + Repertoire (v3.3+)
 
-Configure a pluggable memory-routing provider in `features.json`:
+Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`):
 
 ```json
 "memory_routing": {
   "enabled": true,
   "provider": "repertoire",
   "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
-  "config": { "dataDir": "../repertoire/data" }
+  "config": {
+    "dataDir": "../repertoire/data",
+    "signalsPath": "../repertoire/data/curated_signals.json",
+    "logDir": "../repertoire/logs/groover-inference"
+  }
 }
 ```
 
-Enriches orchestrator agent selection, thinDispatch scoring, and researcher votes. Consumers without a provider can set `"enabled": false`.
+| Integration | What it does |
+|-------------|--------------|
+| **ExecutionPlanner** (v3.3.1) | `getTaskConfidence()` → complexity boost, trap hints, signal-aware `selectAgent()` |
+| **thinDispatch** | `resolveThinDispatch()` adjusts score; architect override on high-confidence traps |
+| **Researcher** | `researcher-confidence.ts` appends `MEMORY_ROUTING:` block to governance output |
+| **Feedback** | Per-task `ingestFeedback()` closes the learning loop |
+
+**External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.
+
+Consumers without Repertoire: `"memory_routing": { "enabled": false, "provider": "null" }`.
+
+Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](docs-site/docs/guides/repertoire.md) · [features.json](docs-site/docs/guides/features-json.md) · [all features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 
 ## Integrations
 

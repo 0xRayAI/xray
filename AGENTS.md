@@ -37,13 +37,36 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 5. Four bridges: OpenCode, Grok (dual skill paths), Hermes, OpenClaw
 6. Skill sync + optional git hooks
 
-### Memory routing (v3.3)
+### Memory routing + Repertoire (v3.3+)
 
-`features.json` → `memory_routing` block. Framework repo defaults to Repertoire provider. Enriches orchestrator selection, thinDispatch scoring, researcher votes. Set `"enabled": false` when no provider is available.
+`xray/features.json` → `memory_routing` block (schema: `features.schema.json`):
+
+```json
+"memory_routing": {
+  "enabled": true,
+  "provider": "repertoire",
+  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "config": {
+    "dataDir": "../repertoire/data",
+    "signalsPath": "../repertoire/data/curated_signals.json",
+    "logDir": "../repertoire/logs/groover-inference"
+  }
+}
+```
+
+**Provider contract** (`src/memory-routing/types.ts`): `buildRoutingContext`, `enrichTasks`, `selectAgent`, `resolveThinDispatch`, `getTaskConfidence`, `ingestFeedback`.
+
+**Repertoire MCP** (external hosts): `repertoire__get_task_confidence`, `repertoire__search_primitives`, etc. via `npx @0xray/repertoire mcp`.
+
+Docs: `docs-site/docs/guides/repertoire.md`, `features-json.md`, `features-since-3.1.md`.
 
 ### Confidence gate (v3.3.1)
 
-Orchestrator execution planning applies a confidence gate before dispatching multi-agent work.
+`ExecutionPlanner.calculateTaskComplexity()` uses `getTaskConfidence()` for complexity boost and ontological-trap routing hints before agent assignment.
+
+### Nucleus exports (v3.4.0)
+
+`0xray/nucleus` and `0xray/nucleus/*` — public contract for `handleGovernRequest`, plugin-registry, thinDispatch.
 
 ## Changes Since 3.1
 

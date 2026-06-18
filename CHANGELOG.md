@@ -20,7 +20,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 📚 Documentation
 - README, AGENTS, AGENTS-consumer, and Docusaurus synced for v3.4.1 (42 agents, 45 skills, 7 MCP servers, 68 codex terms)
-- New guides: memory routing, platform integrations, expanded consumer migration
+- New guides: Repertoire integration, features.json reference, features since 3.1, memory routing, platform integrations
+- Repertoire: `features.json` `memory_routing` config, MCP tools, confidence gate, ExecutionPlanner/thinDispatch/researcher wiring
 - `.grok-plugin/plugin.json` version and MCP description corrected
 
 ---

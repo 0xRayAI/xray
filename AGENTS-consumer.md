@@ -62,9 +62,33 @@ xray operates under the three-subsystem model: **Inference** + **External Govern
 - Complex (≤50): Multi-agent coordination
 - Enterprise (>50): Orchestrator-led team
 
-## Memory Routing (optional, v3.3+)
+## Memory Routing + Repertoire (optional, v3.3+)
 
-If you use a memory-routing provider (e.g. Repertoire), configure `memory_routing` in `.xray/features.json`. Disabled by default for consumers without a provider module.
+Configure in `.xray/features.json`:
+
+```json
+"memory_routing": {
+  "enabled": true,
+  "provider": "repertoire",
+  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "config": {
+    "signalsPath": "../repertoire/data/curated_signals.json"
+  }
+}
+```
+
+Without Repertoire: `{ "enabled": false, "provider": "null" }`.
+
+**External MCP** (Hermes/Grok): add Repertoire alongside 0xRay servers:
+
+```json
+"repertoire": {
+  "command": "npx",
+  "args": ["-y", "@0xray/repertoire", "mcp"]
+}
+```
+
+Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signals`, `repertoire__search_primitives`, `repertoire__ingest_feedback`.
 
 ## File Organization
 
