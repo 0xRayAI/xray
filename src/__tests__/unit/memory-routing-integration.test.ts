@@ -50,11 +50,13 @@ const mockProvider: MemoryRoutingProvider = {
   }),
   getTaskConfidence: (task) => ({
     signals: [{ name: 'test-signal', confidence: 0.9 }],
+    matchedSignals: task.description.includes('trap') ? ['test-signal'] : [],
     avgConfidence: 0.9,
     maxConfidence: 0.9,
     highConfidenceTrapPresent: task.description.includes('trap'),
     ontologicalTrapDetected: task.description.includes('trap'),
     complexityBoost: task.description.includes('trap') ? 20 : 0,
+    recommendedAgent: task.description.includes('trap') ? 'architect' : null,
   }),
   ingestFeedback: vi.fn(),
 };

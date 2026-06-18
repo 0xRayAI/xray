@@ -73,6 +73,13 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     }
     frameworkLogger.log('grok-integration', 'skills-synced', 'info', { count: skillsCopied });
 
+    // Grok Build / Cursor also reads ~/.grok/skills/ for agent_skills
+    const globalSkillsDir = path.join(home, '.grok', 'skills');
+    const globalCopied = syncBuiltinSkills(globalSkillsDir);
+    if (globalCopied > 0) {
+      console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to ~/.grok/skills/\x1b[0m`);
+    }
+
     // Attempt auto-trust (best effort)
     try {
       execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });

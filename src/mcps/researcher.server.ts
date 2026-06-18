@@ -13,6 +13,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import {
+  buildMemoryRoutingEvidence,
+  formatMemoryRoutingBlock,
+  resolveResearcherMemoryContext,
+} from "./researcher-confidence.js";
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface SearchResult {
@@ -452,20 +457,40 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
   async analyzeProposal(args: AnalyzeProposalArgs): Promise<CallToolResult> {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args || {};
 
+    const memoryContext = resolveResearcherMemoryContext({
+      proposalTitle,
+      proposalDescription,
+      proposalType,
+    });
+
+    const enrichedEvidence = [...(evidence || [])];
+    if (memoryContext?.confidence.highConfidenceTrapPresent) {
+      enrichedEvidence.push(...buildMemoryRoutingEvidence(memoryContext));
+    }
+
     const vote = await tryLLMGovernance(
       "researcher",
       proposalTitle || "",
       proposalDescription || "",
-      evidence || [],
+      enrichedEvidence,
       proposalType || "",
     );
 
+    const memoryRoutingBlock =
+      memoryContext?.confidence.highConfidenceTrapPresent
+        ? `\n${formatMemoryRoutingBlock(memoryContext)}`
+        : "";
+
     if (!vote) {
+      const abstainReason = memoryContext?.confidence.highConfidenceTrapPresent
+        ? "No LLM governance provider configured. Repertoire detected a high-confidence ontological trap — route to the recommended agent before proceeding."
+        : "No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser";
+
       return {
         content: [
           {
             type: "text",
-            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser",
+            text: `DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: ${abstainReason}${memoryRoutingBlock}`,
           },
         ],
       };
@@ -475,7 +500,7 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
       content: [
         {
           type: "text",
-          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}`,
+          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}${memoryRoutingBlock}`,
         },
       ],
     };

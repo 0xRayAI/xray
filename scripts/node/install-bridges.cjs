@@ -1,0 +1,364 @@
+#!/usr/bin/env node
+/**
+ * install-bridges.cjs — Unified 4-platform bridge installer for consumer postinstall.
+ * Mirrors npx 0xray {opencode,grok,hermes,openclaw} install in one synchronous pass.
+ */
+
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const { execSync } = require("child_process");
+
+const SKIP_DIRS = new Set(["node_modules", "logs"]);
+const MERGE_FILES = new Set(["xray/features.json", "enforcer-config.json"]);
+const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
+
+function resolveConsumerTargetDir(packageRoot, fallbackDir) {
+  const resolvedPackage = path.resolve(packageRoot);
+  if (resolvedPackage.includes(`${path.sep}node_modules${path.sep}`)) {
+    let current = resolvedPackage;
+    while (current.includes(`${path.sep}node_modules${path.sep}`)) {
+      current = path.dirname(current);
+    }
+    return current;
+  }
+  return fallbackDir || process.env.PWD || process.cwd();
+}
+
+function isConsumerInstall(packageRoot, targetDir) {
+  return path.resolve(packageRoot) !== path.resolve(targetDir);
+}
+
+function deepMerge(src, dest) {
+  if (typeof src !== "object" || src === null) return dest !== undefined ? dest : src;
+  if (Array.isArray(src)) return Array.isArray(dest) ? dest : src;
+  const result = {};
+  for (const key of Object.keys(src)) {
+    result[key] = dest && typeof dest[key] !== "undefined" ? deepMerge(src[key], dest[key]) : src[key];
+  }
+  if (dest && typeof dest === "object") {
+    for (const key of Object.keys(dest)) {
+      if (!(key in src)) result[key] = dest[key];
+    }
+  }
+  return result;
+}
+
+function syncBuiltinSkills(targetSkillsDir, packageRoot) {
+  const candidateDirs = [
+    path.join(packageRoot, "dist", "skills"),
+    path.join(packageRoot, "src", "skills"),
+  ];
+  const sourceDir = candidateDirs.find((p) => fs.existsSync(p));
+  if (!sourceDir) return 0;
+
+  let copied = 0;
+  try {
+    if (!fs.existsSync(targetSkillsDir)) fs.mkdirSync(targetSkillsDir, { recursive: true });
+    for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(sourceDir, entry.name, "SKILL.md");
+      if (!fs.existsSync(skillMd)) continue;
+      const destMd = path.join(targetSkillsDir, entry.name, "SKILL.md");
+      const destDir = path.dirname(destMd);
+      if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+      if (fs.existsSync(destMd) && fs.statSync(skillMd).mtime <= fs.statSync(destMd).mtime) continue;
+      fs.copyFileSync(skillMd, destMd);
+      copied++;
+    }
+  } catch {
+    // best-effort
+  }
+  return copied;
+}
+
+function copyTree(src, dest, relPath = "") {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (SKIP_DIRS.has(entry.name)) continue;
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    const rel = path.join(relPath, entry.name);
+    if (entry.isDirectory()) {
+      copyTree(srcPath, destPath, rel);
+    } else if (MERGE_FILES.has(rel)) {
+      try {
+        const srcData = JSON.parse(fs.readFileSync(srcPath, "utf8"));
+        if (fs.existsSync(destPath)) {
+          const destData = JSON.parse(fs.readFileSync(destPath, "utf8"));
+          fs.writeFileSync(destPath, JSON.stringify(deepMerge(srcData, destData), null, 2));
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+      } catch {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    } else if (KEEP_IF_EXISTS.has(path.extname(srcPath)) && fs.existsSync(destPath)) {
+      continue;
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+function copyPluginDir(src, dest) {
+  if (!fs.existsSync(src)) return false;
+  fs.cpSync(src, dest, { recursive: true, force: true });
+  return true;
+}
+
+function installOpencodeBridge(targetDir, packageRoot, log) {
+  const opencodeSource = path.join(packageRoot, ".opencode");
+  const opencodeDest = path.join(targetDir, ".opencode");
+  if (!fs.existsSync(opencodeSource)) {
+    log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
+    return;
+  }
+
+  if (!fs.existsSync(opencodeDest)) {
+    copyTree(opencodeSource, opencodeDest);
+    log("opencode-bridge", "copied .opencode tree", "info");
+  } else {
+    log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
+  }
+
+  const pluginSource = path.join(packageRoot, "dist", "plugin", "xray-codex-injection.js");
+  const pluginDest = path.join(opencodeDest, "plugin", "xray-codex-injection.js");
+  if (fs.existsSync(pluginSource)) {
+    const pluginDestDir = path.dirname(pluginDest);
+    if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
+    const shouldCopy =
+      !fs.existsSync(pluginDest) ||
+      fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
+    if (shouldCopy) {
+      fs.copyFileSync(pluginSource, pluginDest);
+      log("opencode-bridge", "plugin updated", "info");
+    }
+  }
+
+  const copied = syncBuiltinSkills(path.join(opencodeDest, "skills"), packageRoot);
+  if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
+}
+
+function findGrokPluginSource(packageRoot) {
+  const candidates = [
+    path.join(packageRoot, "src", "integrations", "grok", "plugin", "0xray"),
+    path.join(packageRoot, ".grok", "plugins", "0xray"),
+  ];
+  return candidates.find((p) => fs.existsSync(p));
+}
+
+function registerGrokMcpServers(packageRoot, targetDir, log) {
+  try {
+    execSync("which grok", { stdio: "ignore" });
+  } catch {
+    log("grok-bridge", "grok CLI not on PATH — skipped MCP registration", "info");
+    return;
+  }
+
+  const govServer = path.join(packageRoot, "dist/mcps/governance.server.js");
+  const skillsServer = path.join(packageRoot, "dist/mcps/knowledge-skills/skill-invocation.server.js");
+  const orchServer = path.join(packageRoot, "dist/mcps/orchestrator.server.js");
+  const enforcerServer = path.join(packageRoot, "dist/mcps/enforcer-tools.server.js");
+
+  const servers = [
+    ["xray-governance", govServer, `XRAY_FORCE_MCP_GOVERNANCE=true`],
+    ["xray-skills", skillsServer, null],
+    ["xray-orchestrator", orchServer, null],
+    ["xray-enforcer", enforcerServer, null],
+  ];
+
+  for (const [name, serverPath, extraEnv] of servers) {
+    if (!fs.existsSync(serverPath)) continue;
+    try {
+      const envFlags = extraEnv
+        ? `--env "${extraEnv}" --env "XRAY_ROOT=${targetDir}"`
+        : `--env "XRAY_ROOT=${targetDir}"`;
+      execSync(
+        `grok mcp add ${name} --command node --args "${serverPath}" ${envFlags}`,
+        { stdio: "pipe" }
+      );
+      log("grok-bridge", `registered ${name}`, "info");
+    } catch {
+      // already registered or grok config conflict — non-blocking
+    }
+  }
+
+  for (const pluginDir of [
+    path.join(targetDir, ".grok", "plugins", "0xray"),
+    path.join(os.homedir(), ".grok", "plugins", "0xray"),
+  ]) {
+    if (!fs.existsSync(pluginDir)) continue;
+    try {
+      execSync(`grok plugins trust "${pluginDir}"`, { stdio: "ignore" });
+      log("grok-bridge", "plugin trusted", "info", { path: pluginDir });
+      break;
+    } catch {
+      // best-effort
+    }
+  }
+}
+
+function installGrokBridge(targetDir, packageRoot, log) {
+  const sourceDir = findGrokPluginSource(packageRoot);
+  if (!sourceDir) {
+    log("grok-bridge", "skipped", "warn", { reason: "grok plugin source missing" });
+    return;
+  }
+
+  const home = os.homedir();
+  const targets = [
+    path.join(targetDir, ".grok", "plugins", "0xray"),
+    path.join(home, ".grok", "plugins", "0xray"),
+  ];
+
+  for (const dest of targets) {
+    if (copyPluginDir(sourceDir, dest)) {
+      const rel = dest.startsWith(home) ? dest.replace(home, "~") : path.relative(targetDir, dest);
+      log("grok-bridge", "plugin copied", "info", { path: rel || dest });
+      const copied = syncBuiltinSkills(path.join(dest, "skills"), packageRoot);
+      if (copied > 0) log("grok-bridge", `plugin skills synced (${copied})`, "info", { path: rel });
+    }
+  }
+
+  // Grok Build / Cursor also reads ~/.grok/skills/ for agent_skills
+  const grokGlobalSkills = path.join(home, ".grok", "skills");
+  const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
+  if (globalCopied > 0) {
+    log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+  }
+
+  registerGrokMcpServers(packageRoot, targetDir, log);
+}
+
+function installHermesBridge(packageRoot, log) {
+  const sources = [
+    path.join(packageRoot, "dist", "integrations", "hermes-agent"),
+    path.join(packageRoot, "src", "integrations", "hermes-agent"),
+  ];
+  const sourceDir = sources.find((p) => fs.existsSync(p));
+  if (!sourceDir) {
+    log("hermes-bridge", "skipped", "warn", { reason: "hermes plugin source missing" });
+    return;
+  }
+
+  const targetPluginDir = path.join(os.homedir(), ".hermes", "plugins", "xray-hermes");
+  fs.mkdirSync(targetPluginDir, { recursive: true });
+  for (const entry of fs.readdirSync(sourceDir)) {
+    const src = path.join(sourceDir, entry);
+    const dst = path.join(targetPluginDir, entry);
+    if (fs.statSync(src).isDirectory()) {
+      fs.cpSync(src, dst, { recursive: true, force: true });
+    } else {
+      fs.copyFileSync(src, dst);
+    }
+  }
+  log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
+
+  const copied = syncBuiltinSkills(path.join(targetPluginDir, "skills"), packageRoot);
+  if (copied > 0) log("hermes-bridge", `skills synced (${copied})`, "info");
+}
+
+function installOpenclawBridge(targetDir, packageRoot, log) {
+  const configPath = path.join(targetDir, ".xray", "config", "openclaw.json");
+  if (!fs.existsSync(configPath)) {
+    const configDir = path.dirname(configPath);
+    fs.mkdirSync(configDir, { recursive: true });
+    const sampleConfig = {
+      gatewayUrl: "ws://127.0.0.1:18789",
+      authToken: process.env.OPENCLAW_AUTH_TOKEN || "",
+      deviceId: process.env.OPENCLAW_DEVICE_ID || "your-device-id",
+      autoReconnect: true,
+      maxReconnectAttempts: 5,
+      reconnectDelay: 1000,
+      apiServer: {
+        enabled: true,
+        port: 18431,
+        host: "127.0.0.1",
+        ...(process.env.OPENCLAW_API_KEY ? { apiKey: process.env.OPENCLAW_API_KEY } : {}),
+      },
+      hooks: {
+        enabled: true,
+        toolBefore: true,
+        toolAfter: true,
+        includeArgs: true,
+        includeResult: true,
+      },
+      enabled: true,
+      debug: false,
+      logLevel: "info",
+    };
+    fs.writeFileSync(configPath, JSON.stringify(sampleConfig, null, 2) + "\n");
+    log("openclaw-bridge", "config created", "info", { path: ".xray/config/openclaw.json" });
+  }
+
+  const copied = syncBuiltinSkills(path.join(os.homedir(), ".openclaw", "skills"), packageRoot);
+  if (copied > 0) log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
+}
+
+function deployXrayConfig(targetDir, packageRoot, log) {
+  const xraySourceDir = path.join(packageRoot, ".xray");
+  const xrayTargetDir = path.join(targetDir, ".xray");
+  const configFiles = ["codex.json", "features.json", "config.json"];
+  if (!fs.existsSync(xraySourceDir)) return;
+
+  if (!fs.existsSync(xrayTargetDir)) fs.mkdirSync(xrayTargetDir, { recursive: true });
+  let copied = 0;
+  for (const file of configFiles) {
+    const src = path.join(xraySourceDir, file);
+    const dst = path.join(xrayTargetDir, file);
+    if (!fs.existsSync(src)) continue;
+    const shouldCopy = !fs.existsSync(dst) || fs.statSync(src).mtime > fs.statSync(dst).mtime;
+    if (shouldCopy) {
+      fs.copyFileSync(src, dst);
+      copied++;
+    }
+  }
+  if (copied > 0) log("xray-config", `${copied} files deployed`, "info", { path: ".xray/" });
+}
+
+function installGitHooks(packageRoot, log) {
+  const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
+  if (!fs.existsSync(installHooks)) return;
+  try {
+    execSync(`node "${installHooks}"`, { stdio: "pipe" });
+    log("hooks", "pre-commit hook installed", "info");
+  } catch {
+    // non-git or hook failure — not blocking
+  }
+}
+
+/**
+ * Install all 4 platform bridges for a consumer project.
+ * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
+ */
+function installAllBridges(opts) {
+  const packageRoot = path.resolve(opts.packageRoot);
+  const targetDir = path.resolve(opts.targetDir);
+  const log =
+    opts.log ||
+    ((_component, _action, _status, _details) => {
+      /* noop */
+    });
+
+  if (!isConsumerInstall(packageRoot, targetDir)) return;
+
+  log("install-bridges", "starting 4-platform install", "info");
+
+  deployXrayConfig(targetDir, packageRoot, log);
+  installOpencodeBridge(targetDir, packageRoot, log);
+  installGrokBridge(targetDir, packageRoot, log);
+  installHermesBridge(packageRoot, log);
+  installOpenclawBridge(targetDir, packageRoot, log);
+  installGitHooks(packageRoot, log);
+
+  log("install-bridges", "4-platform install complete", "success");
+}
+
+module.exports = {
+  installAllBridges,
+  resolveConsumerTargetDir,
+  syncBuiltinSkills,
+  isConsumerInstall,
+};

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.3.0] - 2026-06-18
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Wire orchestrator confidence gate into execution planning (d7910b610)
+- tweet: v3.3.0 release tweet — Pluggable Memory Routing (7fb6c9f70)
+
+---
+
 ## [3.2.0] - 2026-06-17
 
 ### 🔄 Changes

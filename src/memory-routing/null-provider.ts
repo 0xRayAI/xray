@@ -79,11 +79,13 @@ export class NullMemoryRoutingProvider implements MemoryRoutingProvider {
   getTaskConfidence(): MemoryTaskConfidence {
     return {
       signals: [],
+      matchedSignals: [],
       avgConfidence: 0,
       maxConfidence: 0,
       highConfidenceTrapPresent: false,
       ontologicalTrapDetected: false,
       complexityBoost: 0,
+      recommendedAgent: null,
     };
   }
 }

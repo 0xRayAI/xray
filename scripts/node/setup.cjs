@@ -6,12 +6,8 @@ const path = require("path");
 const packageRoot = path.join(__dirname, "..", "..");
 const homeDir = require("os").homedir();
 
-let targetDir;
-if (__dirname.includes("node_modules/xray")) {
-  targetDir = path.join(__dirname, "..", "..", "..", "..");
-} else {
-  targetDir = process.env.PWD || process.cwd();
-}
+const { resolveConsumerTargetDir } = require("./install-bridges.cjs");
+let targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
 
 const resolvedPackage = path.resolve(packageRoot);
 const resolvedTarget = path.resolve(targetDir);

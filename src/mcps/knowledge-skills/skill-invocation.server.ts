@@ -186,7 +186,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "strategist", "skill-invocation",
     ];
     const knowledgeSkills = [
-      "architecture-patterns", "strategist", "tech-writer",
+      "architecture-patterns", "strategist", "tech-writer", "storyteller",
       "seo-consultant", "content-creator", "growth-strategist",
       "bug-triage-specialist", "log-monitor",
       "mobile-development", "git-workflow", "session-management",
@@ -236,6 +236,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "tech-writer": "documentation-generation",
       "frontend-ui-ux-engineer": "ui-ux-design",
       "frontend-engineer": "project-analysis",
+      "storyteller": "storyteller",
     };
 
     const resolvedSkill = skillAliases[skillName] || skillName;
@@ -253,7 +254,7 @@ class SkillInvocationServer extends XrayKnowledgeSkillBase {
       "git-workflow", "content-creator", "ui-ux-design",
       "multimodal-looker", "refactoring-strategies",
       "project-analysis", "testing-best-practices",
-      "architecture-patterns",
+      "architecture-patterns", "storyteller",
     ];
 
     if (!availableServers.includes(resolvedSkill)) {

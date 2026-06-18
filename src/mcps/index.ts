@@ -50,6 +50,7 @@ export const MCP_SERVERS: McpServerEntry[] = [
   { serverName: "refactoring-strategies", sourceFile: "mcps/knowledge-skills/refactoring-strategies.server.ts", type: "knowledge-skill", registered: true, description: "Refactoring strategies" },
   { serverName: "security-audit", sourceFile: "mcps/knowledge-skills/security-audit.server.ts", type: "knowledge-skill", registered: true, description: "Security auditing" },
   { serverName: "seo-consultant", sourceFile: "mcps/knowledge-skills/seo-consultant.server.ts", type: "knowledge-skill", registered: false, description: "SEO consulting" },
+  { serverName: "storyteller", sourceFile: "mcps/knowledge-skills/storyteller.server.ts", type: "knowledge-skill", registered: false, description: "Reflections, sagas, and technical narratives" },
   { serverName: "session-management", sourceFile: "mcps/knowledge-skills/session-management.server.ts", type: "knowledge-skill", registered: true, description: "Session management" },
   { serverName: "skill-invocation", sourceFile: "mcps/knowledge-skills/skill-invocation.server.ts", type: "knowledge-skill", registered: true, description: "Skill invocation" },
   { serverName: "strategist", sourceFile: "mcps/knowledge-skills/strategist.server.ts", type: "knowledge-skill", registered: false, description: "Strategic planning" },

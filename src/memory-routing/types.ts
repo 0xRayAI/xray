@@ -25,11 +25,13 @@ export interface MemoryOrchestrationTask {
 
 export interface MemoryTaskConfidence {
   signals: Array<{ name: string; confidence: number }>;
+  matchedSignals: string[];
   avgConfidence: number;
   maxConfidence: number;
   highConfidenceTrapPresent: boolean;
   ontologicalTrapDetected: boolean;
   complexityBoost: number;
+  recommendedAgent: string | null;
 }
 
 export interface MemoryRoutingContext {
