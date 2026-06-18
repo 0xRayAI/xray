@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.3] - 2026-06-18
+
+### ✨ Features
+- Shipped `xray/features.json` template: `inference_governance` + `memory_routing` **disabled by default** (opt-in via `@0xray/repertoire`)
+- `govern_proposals` `require_external` defaults align with `inference_governance.enabled`
+- Postinstall prefers `xray/` template over dev `.xray/` runtime copy
+
+### 🐛 Bug Fixes
+- `prepublishOnly` keeps `.d.ts` in dist (strips source maps only)
+- CI: `main` branch, blocking codex-check, consumer smoke on PR
+
+### 📚 Documentation
+- README: thinDispatch documented in nucleus (`0xray/nucleus`), not orchestrator MCP tools
+
+---
+
 ## [3.4.2] - 2026-06-18
 
 ### ✨ Features
