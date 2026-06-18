@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.2] - 2026-06-18
+
+### ✨ Features
+- **Ironclad Grok hooks** — PreToolUse stdin contract, codex pattern blocks, spawn_subagent gate, `activity.log` via `grok-hook-activity.js`
+- **SessionStart + UserPromptSubmit** — `session-start.js` writes `.xray/state/session-boot.json`
+- **Lead-dev plan persist** — `analyze-complexity` persists `.xray/state/lead-dev-plan.json` via `autonomy-kernel`
+- **Codex term 69** — No New Surface Without Consolidation (blocking)
+- **package.json `xray` field** — `dist` + `mcpServersPath` for consumer server-config-registry
+- Memory routing provider enabled with live feedback session
+- Blocking release docs freshness guard (`validate-release-docs.mjs`)
+
+### 🐛 Bug Fixes
+- `server-config-registry` resolves `name === "0xray"` without requiring `xray` field
+- Ship `features.json` in npm package for `memory_routing`
+- Pre-publish guard: correct git porcelain parsing, ignore `.xray/inference` runtime state
+
+---
+
 ## [3.4.1] - 2026-06-18
 
 ### ✨ Features

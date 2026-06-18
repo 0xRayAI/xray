@@ -2,7 +2,7 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v3.4.1** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+**v3.4.2** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
 
 ## Postinstall (automatic)
 
@@ -12,7 +12,7 @@ Quick reference for the 0xRay AI orchestration framework (shipped to your projec
 - Ships root **`SKILLS.md`** and syncs **45 skills** to platform skill directories
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`)
-- Writes **`.mcp.json`** with 7 MCP servers (`npx -y 0xray mcp …`)
+- Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
 - Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
 
 Optional extras: `npx 0xray setup`
@@ -40,7 +40,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray setup` | Symlinks, hook extras, Hermes skill sync |
 | `npx 0xray status` | Verify installation |
 | `npx 0xray opencode install` | OpenCode bridge (also runs on postinstall) |
-| `npx 0xray grok install` | Grok plugin + 7 MCP servers + skill sync |
+| `npx 0xray grok install` | Grok plugin + 7 MCPs servers + skill sync |
 | `npx 0xray hermes install` | Hermes plugin bridge |
 | `npx 0xray openclaw install` | OpenClaw config + skills |
 | `npx 0xray skill:install` | Install starter skills |

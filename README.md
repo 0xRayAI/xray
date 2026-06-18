@@ -1,13 +1,13 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.4.1** — 42 agents · 46 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.2** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers with zero manual config.
 
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCP + AGENTS.md + SKILLS.md + .mcp.json
+npm install 0xray          # postinstall: 4 bridges + 7 MCPs + AGENTS.md + SKILLS.md + .mcp.json
 npx 0xray status          # verify install
 npx 0xray setup            # optional: symlinks, hook extras
 ```
@@ -16,7 +16,7 @@ Manual per-platform install (idempotent, same result as postinstall):
 
 ```bash
 npx 0xray opencode install
-npx 0xray grok install     # 7 MCP servers + dual skill sync (~/.grok/plugins + ~/.grok/skills)
+npx 0xray grok install     # 7 MCPs servers + dual skill sync (~/.grok/plugins + ~/.grok/skills)
 npx 0xray hermes install
 npx 0xray openclaw install
 npx 0xray skill:install    # starter skills
@@ -32,7 +32,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCP servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
+| **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
 | **3.3.1** | Orchestrator confidence gate wired into execution planning. |
 | **3.3.0** | Pluggable **Memory Routing** (`features.json` → `memory_routing`). Repertoire is the default provider in the framework repo. |
 | **3.2.0** | Typecheck hardening (58 errors fixed), orphan cleanup (5 deleted / ~39 integrated), full pre-tool-use hook, SelfProposalEngine + AsideContext restored, Hermes E2E 44/0/0, Grok CLI E2E green. |
@@ -83,7 +83,7 @@ On `npm install 0xray` in a consumer project, postinstall automatically:
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`** and ships root **`SKILLS.md`**
 2. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 3. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
-4. Writes project **`.mcp.json`** with 7 MCP servers (`npx -y 0xray mcp …`)
+4. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
 5. Installs **4 bridges**: OpenCode (agents + `opencode.json`), Grok (plugin + global skills), Hermes (`~/.hermes/plugins/xray-hermes`), OpenClaw (config + skills)
 6. Syncs **45 framework skills** to platform skill dirs
 7. Installs git pre-commit hook (non-blocking if not a git repo)
@@ -160,7 +160,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | Platform | Install | Postinstall behavior |
 |----------|---------|----------------------|
 | **OpenCode** | `npx 0xray opencode install` | Merges `opencode.json`, copies agent YML surfaces |
-| **Grok CLI / Build** | `npx 0xray grok install` | Plugin + `~/.grok/skills/` sync, 7 MCP servers |
+| **Grok CLI / Build** | `npx 0xray grok install` | Plugin + `~/.grok/skills/` sync, 7 MCPs servers |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
 
@@ -181,7 +181,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | Grok CLI E2E | 62/0 failures (v3.2.0 verified) |
 | OpenClaw E2E | 9/9 (v3.2.0 verified) |
 | Hermes E2E | 44/0/0 (v3.2.0 verified) |
-| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCP + 4 bridges |
+| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 bridges |
 
 ```bash
 npm test

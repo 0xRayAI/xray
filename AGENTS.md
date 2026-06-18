@@ -1,8 +1,8 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.4.1**).
+Quick reference for the xray AI orchestration framework (**v3.4.2**).
 
-**42 agents** · **46 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
+**42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
 
 ## What is xray?
 
@@ -89,7 +89,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 | Version | Change |
 |---------|--------|
-| **3.4.1** | `install-bridges.cjs`, 7 MCP `npx`, release pipeline + docs sync |
+| **3.4.1** | `install-bridges.cjs`, 7 MCPs `npx`, release pipeline + docs sync |
 | **3.4.0** | Nucleus exports, governance closure, verify gate |
 | **3.3.1** | Confidence gate, repertoire researcher wiring |
 | **3.3.0** | Memory routing + Repertoire provider |

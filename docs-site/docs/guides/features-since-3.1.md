@@ -1,6 +1,17 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.1**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.2**.
+
+## 3.4.2 — Ironclad suit enforcement
+
+| Feature | Description |
+|---------|-------------|
+| **PreToolUse hook** | stdin contract, codex blocks, spawn_subagent gate, `activity.log` |
+| **SessionStart + UserPromptSubmit** | `session-start.js` → `.xray/state/session-boot.json` |
+| **Lead-dev plan persist** | `analyze-complexity` → `.xray/state/lead-dev-plan.json` |
+| **autonomy-kernel** | Codex terms 59, 67–69; `persistLeadDevPlan()` |
+| **server-config-registry** | Resolves `0xray` without requiring `xray` field in package.json |
+| **package.json `xray` field** | `dist` + `mcpServersPath` for consumer registry |
 
 ## 3.4.1 — Zero-config consumer install
 
