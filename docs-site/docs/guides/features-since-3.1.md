@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.2**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.3**.
+
+## 3.4.3 — Shipped template truth (P0.2)
+
+| Feature | Description |
+|---------|-------------|
+| **Opt-in defaults** | `memory_routing` + `inference_governance` disabled in shipped `xray/features.json` |
+| **govern_proposals** | `require_external` follows `inference_governance.enabled` |
+| **install-bridges** | Prefers `xray/` template over dev `.xray/` runtime copy |
 
 ## 3.4.2 — Ironclad suit enforcement
 

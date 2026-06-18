@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.4.2** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.3** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
