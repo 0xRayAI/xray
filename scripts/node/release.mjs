@@ -5,7 +5,7 @@
  *
  * 1. Bump version from npm registry baseline (reconcile-version)
  * 2. Release gate once (build + test + consumer smoke)
- * 3. Update CHANGELOG / README / AGENTS (version-manager --artifacts-only)
+ * 3. Update CHANGELOG / README / AGENTS / docs (version-manager --artifacts-only)
  * 4. Commit release artifacts → push
  * 5. Verify gate (reconcile + git + smoke)
  * 6. Tag → push tag → npm publish
@@ -20,6 +20,7 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { getReleaseArtifactPaths } from "./version-manager.mjs";
 
 const rootDir = process.cwd();
 const args = process.argv.slice(2);
@@ -74,12 +75,12 @@ async function main() {
   run("node scripts/node/release-gate.mjs", "release gate");
 
   // 3. Changelog + doc artifacts
-  console.log("\n📦 Step 3: Release artifacts (CHANGELOG, README, AGENTS)");
+  console.log("\n📦 Step 3: Release artifacts (CHANGELOG, README, AGENTS, docs)");
   run("node scripts/node/version-manager.mjs --artifacts-only", "release artifacts");
 
   // 4. Commit + push
   console.log("\n📦 Step 4: Commit & push");
-  const releaseFiles = ["package.json", "CHANGELOG.md", "README.md", "AGENTS.md"];
+  const releaseFiles = getReleaseArtifactPaths();
   if (!dryRun) {
     run(`git add ${releaseFiles.join(" ")}`, "git add");
     try {

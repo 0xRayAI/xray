@@ -230,9 +230,21 @@ ${content}
 `;
 }
 
+function changelogHasVersion(newVersion) {
+  const changelogPath = path.join(rootDir, 'CHANGELOG.md');
+  if (!fs.existsSync(changelogPath)) return false;
+  const changelog = fs.readFileSync(changelogPath, 'utf-8');
+  return new RegExp(`^## \\[${newVersion.replace(/\./g, '\\.')}\\]`, 'm').test(changelog);
+}
+
 function updateChangelog(newVersion, changeDescription) {
   const changelogPath = path.join(rootDir, 'CHANGELOG.md');
   let changelog = fs.readFileSync(changelogPath, 'utf-8');
+
+  if (changelogHasVersion(newVersion)) {
+    console.log(`ℹ️  CHANGELOG.md already has [${newVersion}] — skipping duplicate entry`);
+    return;
+  }
   
   // Find the position after the header and insert new entry
   const headerEnd = changelog.indexOf('## [');
@@ -294,6 +306,21 @@ function updateReadme(counts, newVersion) {
   console.log(`✅ Updated README.md (version: ${newVersion}, agents: ${counts.agents}, mcps: ${counts.mcps}, skills: ${counts.skills})`);
 }
 
+function applyAgentCountUpdates(content, counts) {
+  let agentsMd = content;
+
+  // Legacy header count update (min compat for old consumer AGENTS.md files only; xray v2 YML SSOT primary)
+  agentsMd = agentsMd.replace(
+    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|0xRay\s*-\s*\d+\s+Agents/,
+    `xray v2 - ${counts.agents} Agents`
+  );
+
+  agentsMd = agentsMd.replace(/\d+\s+MCPs?/g, `${counts.mcps} MCPs`);
+  agentsMd = agentsMd.replace(/\d+\s+Skills?/g, `${counts.skills} Skills`);
+
+  return agentsMd;
+}
+
 /**
  * Update AGENTS.md with actual framework counts
  */
@@ -303,27 +330,36 @@ function updateAgentsMd(counts) {
     console.log(`⚠️  AGENTS.md not found, skipping`);
     return;
   }
-  
-  let agentsMd = fs.readFileSync(agentsPath, 'utf-8');
-  
-  // Legacy header count update (min compat for old consumer AGENTS.md files only; xray v2 YML SSOT primary)
-  agentsMd = agentsMd.replace(
-    /0xRay\s*2\.0\s*-\s*\d+\s+Agents|0xRay\s*-\s*\d+\s+Agents/,
-    `xray v2 - ${counts.agents} Agents`
-  );
-  
-  agentsMd = agentsMd.replace(
-    /\d+\s+MCPs?/g,
-    `${counts.mcps} MCPs`
-  );
-  
-  agentsMd = agentsMd.replace(
-    /\d+\s+Skills?/g,
-    `${counts.skills} Skills`
-  );
-  
-  fs.writeFileSync(agentsPath, agentsMd);
+
+  fs.writeFileSync(agentsPath, applyAgentCountUpdates(fs.readFileSync(agentsPath, 'utf-8'), counts));
   console.log(`✅ Updated AGENTS.md`);
+}
+
+function updateAgentsConsumerMd(counts) {
+  const agentsPath = path.join(rootDir, 'AGENTS-consumer.md');
+  if (!fs.existsSync(agentsPath)) {
+    console.log(`⚠️  AGENTS-consumer.md not found, skipping`);
+    return;
+  }
+
+  fs.writeFileSync(agentsPath, applyAgentCountUpdates(fs.readFileSync(agentsPath, 'utf-8'), counts));
+  console.log(`✅ Updated AGENTS-consumer.md`);
+}
+
+function updateDocsReadme(newVersion) {
+  const docsReadmePath = path.join(rootDir, 'docs/README.md');
+  if (!fs.existsSync(docsReadmePath)) {
+    console.log(`⚠️  docs/README.md not found, skipping`);
+    return;
+  }
+
+  let readme = fs.readFileSync(docsReadmePath, 'utf-8');
+  readme = readme.replace(
+    /img.shields.io\/badge\/version-[\d.]+/,
+    `img.shields.io/badge/version-${newVersion}`
+  );
+  fs.writeFileSync(docsReadmePath, readme);
+  console.log(`✅ Updated docs/README.md (version: ${newVersion})`);
 }
 
 function getCurrentVersion() {
@@ -375,18 +411,7 @@ function updateVersion(newVersion, changeDescription = '') {
   console.log(`✅ Updated package.json`);
   
   // init.sh legacy version key no longer updated (final xray cutover - no historical scaffolding)
-  
-  // Update docs/README.md version badge
-  const docsReadmePath = path.join(rootDir, 'docs/README.md');
-  if (fs.existsSync(docsReadmePath)) {
-    let readme = fs.readFileSync(docsReadmePath, 'utf-8');
-    readme = readme.replace(
-      /img.shields.io\/badge\/version-[\d.]+/,
-      `img.shields.io/badge/version-${newVersion}`
-    );
-    fs.writeFileSync(docsReadmePath, readme);
-    console.log(`✅ Updated docs/README.md (version: ${newVersion})`);
-  }
+  updateDocsReadme(newVersion);
 
   // Update UVM's own version string
   const uvmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
@@ -413,6 +438,7 @@ function updateVersion(newVersion, changeDescription = '') {
   
   updateReadme(counts, newVersion);
   updateAgentsMd(counts);
+  updateAgentsConsumerMd(counts);
   
   console.log(`\n🎉 Version updated to ${newVersion}\n`);
 }
@@ -437,7 +463,20 @@ function createGitTag(version, message) {
   }
 }
 
-/** Update CHANGELOG + README + AGENTS for current package.json version (no bump). */
+/** Paths written by release artifact updates (existing files only). */
+export function getReleaseArtifactPaths() {
+  const candidates = [
+    'package.json',
+    'CHANGELOG.md',
+    'README.md',
+    'AGENTS.md',
+    'AGENTS-consumer.md',
+    'docs/README.md',
+  ];
+  return candidates.filter((rel) => fs.existsSync(path.join(rootDir, rel)));
+}
+
+/** Update CHANGELOG + README + AGENTS (+ consumer/docs) for current package.json version (no bump). */
 function updateReleaseArtifactsOnly(changeDescription = '') {
   const current = getCurrentVersion();
   console.log(`\n📌 Release artifacts for v${current}\n`);
@@ -445,7 +484,9 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
   updateChangelog(current, changeDescription);
   updateReadme(counts, current);
+  updateDocsReadme(current);
   updateAgentsMd(counts);
+  updateAgentsConsumerMd(counts);
   console.log(`\n✅ Release artifacts updated for v${current}\n`);
 }
 
@@ -465,7 +506,7 @@ function main() {
     console.log(`  node scripts/node/version-manager.mjs [major|minor|patch] [description]`);
     console.log(`  node scripts/node/version-manager.mjs 1.6.9 "Description of changes"`);
     console.log(`  node scripts/node/version-manager.mjs patch --tag  # auto-changelog + git tag`);
-    console.log(`  node scripts/node/version-manager.mjs --artifacts-only  # CHANGELOG/README/AGENTS only`);
+    console.log(`  node scripts/node/version-manager.mjs --artifacts-only  # CHANGELOG/README/AGENTS/docs`);
     console.log(`\nExamples:`);
     console.log(`  node scripts/node/version-manager.mjs patch  # 1.6.8 -> 1.6.9 (auto-generates changelog from git)`);
     console.log(`  node scripts/node/version-manager.mjs minor  # 1.6.8 -> 1.7.0`);
@@ -490,7 +531,9 @@ function main() {
     console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
     updateChangelog(current, '');
     updateReadme(counts, current);
+    updateDocsReadme(current);
     updateAgentsMd(counts);
+    updateAgentsConsumerMd(counts);
 
     // Update UVM's own version string to match package.json
     const uvmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
@@ -539,4 +582,9 @@ function main() {
   }
 }
 
-main();
+const isMainModule =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  main();
+}
