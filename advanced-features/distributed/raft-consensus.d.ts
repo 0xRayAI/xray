@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Raft Consensus Algorithm Implementation
- *
- * Enterprise-grade Raft consensus algorithm for leader election and coordination
- * in distributed systems with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 import { EventEmitter } from "events";
 import { DistributedStateManager } from "./state-manager";
@@ -47,7 +40,6 @@ export interface RaftPeer {
     matchIndex: number;
 }
 /**
- * Raft Consensus Algorithm Implementation
  */
 export declare class RaftConsensus extends EventEmitter {
     private instanceId;
@@ -66,7 +58,6 @@ export declare class RaftConsensus extends EventEmitter {
     constructor(instanceId: string, stateManager: DistributedStateManager, config?: Partial<RaftConfig>);
     private initializeRaft;
     /**
-     * Start leader election
      */
     startElection(): Promise<void>;
     private requestVotes;
@@ -74,7 +65,6 @@ export declare class RaftConsensus extends EventEmitter {
     private becomeLeader;
     private becomeFollower;
     /**
-     * Handle incoming Raft messages
      */
     handleMessage(message: RaftMessage): Promise<RaftMessage | null>;
     private handleRequestVote;
@@ -82,7 +72,6 @@ export declare class RaftConsensus extends EventEmitter {
     private handleAppendEntries;
     private handleAppendEntriesResponse;
     /**
-     * Append new log entry (leader only)
      */
     appendEntry(command: any): Promise<boolean>;
     private replicateToFollowers;
@@ -97,7 +86,6 @@ export declare class RaftConsensus extends EventEmitter {
     private persistState;
     private restoreState;
     /**
-     * Get current Raft state
      */
     getState(): {
         state: RaftState;
@@ -106,15 +94,12 @@ export declare class RaftConsensus extends EventEmitter {
         isLeader: boolean;
     };
     /**
-     * Get current leader
      */
     getLeader(): string | null;
     /**
-     * Check if this instance is the leader
      */
     isLeader(): boolean;
     /**
-     * Shutdown Raft consensus
      */
     shutdown(): Promise<void>;
 }

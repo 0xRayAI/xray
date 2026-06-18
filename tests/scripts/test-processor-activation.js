@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 
 /**
- * 0xRay AI v1.3.4 - Processor Activation Test Script
- *
- * Manual test script to verify processor activation functionality.
- *
- * @version 1.0.0
- * @since 2026-01-07
  */
 
 import { BootOrchestrator } from "../dist/boot-orchestrator.js";

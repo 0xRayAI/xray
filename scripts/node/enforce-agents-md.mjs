@@ -1,12 +1,5 @@
 #!/usr/bin/env node
 /**
- * AGENTS.md Enforcement Script
- * 
- * Validates that AGENTS.md exists, is up-to-date, and follows the required format.
- * This script should be run in CI/CD, pre-commit hooks, and local validation.
- * 
- * @version 1.0.0
- * @framework xray v2
  */
 
 import fs from 'fs';
@@ -62,7 +55,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Run all validation checks
    */
   async validate() {
     console.log('🔍 AGENTS.md Enforcement Check');
@@ -148,14 +140,12 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Check if AGENTS.md file exists
    */
   checkFileExists() {
     return fs.existsSync(this.agentsPath);
   }
 
   /**
-   * Check for required sections
    */
   checkRequiredSections(content) {
     const missing = [];
@@ -188,7 +178,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Check for required agent definitions
    */
   checkRequiredAgents(content) {
     // Be flexible - check for agent names with or without @ prefix
@@ -199,7 +188,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Extract version from header
    */
   extractVersion(content) {
     const match = content.match(/\*\*Version\*\*:\s*(\d+\.\d+\.\d+)/);
@@ -207,7 +195,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Extract date from header
    */
   extractDate(content) {
     const match = content.match(/\*\*Updated\*\*:\s*(\d{4}-\d{2}-\d{2})/);
@@ -215,7 +202,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Calculate how many days old the file is
    */
   calculateDaysOld(dateString) {
     const date = new Date(dateString);
@@ -225,18 +211,12 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Calculate content hash
    */
   calculateHash(content) {
     return crypto.createHash('sha256').update(content).digest('hex');
   }
 
   /**
-   * Count codex terms (numbered rules or sections with multiple items)
-   * Looks for patterns like:
-   * - #### 1. Something
-   * - 1. **Something**
-   * - ## CRITICAL RULES (count as one term block)
    */
   countCodexTerms(content) {
     // Count #### numbered items
@@ -257,7 +237,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Log individual check result
    */
   logResult(check, status, message) {
     const icon = status === 'PASS' ? '✅' : status === 'FAIL' ? '❌' : status === 'WARN' ? '⚠️' : 'ℹ️';
@@ -266,7 +245,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Generate and display report
    */
   report(exitCode) {
     console.log('\n================================');
@@ -309,7 +287,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Auto-generate AGENTS.md from current agent configuration
    */
   async generate() {
     console.log('📝 Generating AGENTS.md...\n');
@@ -325,7 +302,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Load template file
    */
   async loadTemplate() {
     const templatePath = path.join(__dirname, '..', '..', '..', 'docs', 'AGENTS_TEMPLATE.md');
@@ -342,7 +318,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Discover agents from configuration
    */
   async discoverAgents() {
     const agents = [];
@@ -366,7 +341,6 @@ class AgentsMdEnforcer {
   }
 
   /**
-   * Populate template with agent data
    */
   populateTemplate(template, agents) {
     const now = new Date().toISOString().split('T')[0];

@@ -1,10 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Predictive Scaling Engine
- *
- * ML-based predictive scaling for distributed systems with auto-scaling capabilities.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 export interface ScalingMetrics {
@@ -37,7 +31,6 @@ export interface PredictiveScalingConfig {
 }
 
 /**
- * Predictive scaling engine with ML-based predictions
  */
 export class PredictiveScalingEngine {
   private config: PredictiveScalingConfig;
@@ -61,7 +54,6 @@ export class PredictiveScalingEngine {
   }
 
   /**
-   * Record current system metrics
    */
   recordMetrics(metrics: ScalingMetrics): void {
     this.metricsHistory.push(metrics);
@@ -74,7 +66,6 @@ export class PredictiveScalingEngine {
   }
 
   /**
-   * Generate scaling prediction based on current metrics and history
    */
   async generatePrediction(
     targetInstances: number,
@@ -162,7 +153,6 @@ export class PredictiveScalingEngine {
   }
 
   /**
-   * Execute scaling action
    */
   async executeScaling(
     prediction: ScalingPrediction,
@@ -189,7 +179,6 @@ export class PredictiveScalingEngine {
   }
 
   /**
-   * Shutdown the scaling engine
    */
   async shutdown(): Promise<void> {
     this.metricsHistory.length = 0;
@@ -197,7 +186,6 @@ export class PredictiveScalingEngine {
   }
 
   /**
-   * Get current scaling metrics
    */
   getMetrics(): {
     currentInstances: number;

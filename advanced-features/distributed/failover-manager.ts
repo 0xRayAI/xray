@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Distributed Failover Manager
- *
- * Enterprise-grade failover mechanisms with automatic instance recovery,
- * state synchronization, and zero-downtime failovers for multi-instance deployments.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -45,7 +38,6 @@ export interface CircuitBreakerState {
 }
 
 /**
- * Distributed Failover Manager - Handles instance failures and recovery
  */
 export class DistributedFailoverManager extends EventEmitter {
   private config: FailoverConfig;
@@ -90,7 +82,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Handle instance failure
    */
   async handleInstanceFailure(
     instanceId: string,
@@ -120,7 +111,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Initiate failover for failed instance
    */
   private async initiateFailover(failedInstanceId: string): Promise<void> {
     const event: FailoverEvent = {
@@ -190,7 +180,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Attempt failover to specific backup instance
    */
   private async attemptFailover(
     failedInstanceId: string,
@@ -237,7 +226,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Handle instance recovery
    */
   async handleInstanceRecovery(instanceId: string): Promise<void> {
     console.log(
@@ -302,7 +290,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Find suitable backup instances
    */
   private async findBackupInstances(
     failedInstanceId: string,
@@ -335,7 +322,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Synchronize state between instances
    */
   private async synchronizeInstanceState(
     fromInstanceId: string,
@@ -376,7 +362,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Transfer active sessions to backup instance
    */
   private async transferActiveSessions(
     fromInstanceId: string,
@@ -395,7 +380,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Update routing tables after failover
    */
   private async updateRoutingTables(
     oldInstanceId: string,
@@ -413,7 +397,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Circuit breaker management
    */
   private updateCircuitBreaker(instanceId: string, hadFailure: boolean): void {
     let breaker = this.circuitBreakers.get(instanceId);
@@ -478,7 +461,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Watch for instance health changes
    */
   private watchInstanceHealth(): void {
     // Watch for health status changes
@@ -504,7 +486,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Check if instance is healthy
    */
   private async isInstanceHealthy(instanceId: string): Promise<boolean> {
     try {
@@ -518,7 +499,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Verify instance stability after recovery
    */
   private async verifyInstanceStability(instanceId: string): Promise<boolean> {
     // Perform multiple health checks over time
@@ -547,7 +527,6 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Get failover statistics
    */
   getFailoverStats(): {
     totalFailovers: number;
@@ -588,14 +567,12 @@ export class DistributedFailoverManager extends EventEmitter {
   }
 
   /**
-   * Get failover history
    */
   getFailoverHistory(limit = 50): FailoverEvent[] {
     return this.failoverHistory.slice(-limit);
   }
 
   /**
-   * Shutdown failover manager
    */
   async shutdown(): Promise<void> {
     // Clear all timers

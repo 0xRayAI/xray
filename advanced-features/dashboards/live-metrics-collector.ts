@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Live Metrics Collector
- *
- * Real-time metrics collection engine for performance dashboards.
- * Collects, aggregates, and streams metrics from multiple sources.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -55,7 +48,6 @@ export interface CollectionStats {
 }
 
 /**
- * Live metrics collector for real-time dashboard data
  */
 export class LiveMetricsCollector extends EventEmitter {
   private config: MetricsCollectionConfig;
@@ -96,7 +88,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Get default metric sources
    */
   private getDefaultSources(): MetricSource[] {
     return [
@@ -160,7 +151,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Initialize metric sources
    */
   private initializeSources(): void {
     for (const source of this.config.sources) {
@@ -169,7 +159,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Setup event handlers for external metric sources
    */
   private setupEventHandlers(): void {
     // Performance dashboard events
@@ -189,7 +178,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Start metrics collection
    */
   async start(): Promise<void> {
     if (this.isCollecting) {
@@ -220,7 +208,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Stop metrics collection
    */
   stop(): void {
     if (!this.isCollecting) {
@@ -240,7 +227,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Start collection for a specific source
    */
   private startSourceCollection(sourceId: string): void {
     const source = this.sources.get(sourceId);
@@ -272,7 +258,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Stop collection for a specific source
    */
   private stopSourceCollection(sourceId: string): void {
     const timer = this.collectionTimers.get(sourceId);
@@ -284,7 +269,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Collect metrics from a specific source
    */
   private async collectFromSource(sourceId: string): Promise<void> {
     const source = this.sources.get(sourceId);
@@ -319,7 +303,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Collect system-level metrics
    */
   private async collectSystemMetrics(
     sourceId: string,
@@ -431,7 +414,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Collect performance metrics
    */
   private async collectPerformanceMetrics(
     sourceId: string,
@@ -507,7 +489,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Collect application metrics
    */
   private async collectApplicationMetrics(
     sourceId: string,
@@ -583,7 +564,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Collect custom metrics (extension point)
    */
   private async collectCustomMetrics(
     sourceId: string,
@@ -603,7 +583,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Handle performance metrics from dashboard
    */
   private handlePerformanceMetrics(metrics: any): void {
     const timestamp = Date.now();
@@ -639,7 +618,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Handle system metrics from enterprise monitoring
    */
   private handleSystemMetrics(metrics: any): void {
     const timestamp = Date.now();
@@ -667,7 +645,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Handle streaming messages
    */
   private handleStreamingMessage(data: any): void {
     // Process incoming streaming messages for metrics
@@ -687,7 +664,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Add metric to buffer
    */
   private addMetricToBuffer(metric: CollectedMetric): void {
     this.metricsBuffer.push(metric);
@@ -710,7 +686,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Emit batch of metrics
    */
   private emitBatchMetrics(): void {
     const batch = this.metricsBuffer.splice(0, this.config.batchSize);
@@ -719,7 +694,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Start buffer management (cleanup old metrics)
    */
   private startBufferManagement(): void {
     setInterval(() => {
@@ -749,7 +723,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Start stats calculation
    */
   private startStatsCalculation(): void {
     setInterval(() => {
@@ -763,7 +736,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Get current metrics buffer
    */
   getMetrics(limit?: number): CollectedMetric[] {
     const metrics = [...this.metricsBuffer];
@@ -774,7 +746,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Get metrics by source
    */
   getMetricsBySource(sourceId: string, limit?: number): CollectedMetric[] {
     const metrics = this.metricsBuffer.filter((m) => m.sourceId === sourceId);
@@ -785,7 +756,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Get metrics by name
    */
   getMetricsByName(name: string, limit?: number): CollectedMetric[] {
     const metrics = this.metricsBuffer.filter((m) => m.name === name);
@@ -796,21 +766,18 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Get collection statistics
    */
   getStats(): CollectionStats {
     return { ...this.stats };
   }
 
   /**
-   * Get all configured sources
    */
   getSources(): MetricSource[] {
     return Array.from(this.sources.values()).map((source) => ({ ...source }));
   }
 
   /**
-   * Enable or disable a source
    */
   setSourceEnabled(sourceId: string, enabled: boolean): boolean {
     const source = this.sources.get(sourceId);
@@ -832,7 +799,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Update source configuration
    */
   updateSource(sourceId: string, updates: Partial<MetricSource>): boolean {
     const source = this.sources.get(sourceId);
@@ -857,7 +823,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Add custom metric source
    */
   addSource(source: MetricSource): boolean {
     if (this.sources.has(source.id)) {
@@ -874,7 +839,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Remove metric source
    */
   removeSource(sourceId: string): boolean {
     const source = this.sources.get(sourceId);
@@ -890,7 +854,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Clear metrics buffer
    */
   clearBuffer(): void {
     this.metricsBuffer.length = 0;
@@ -899,7 +862,6 @@ export class LiveMetricsCollector extends EventEmitter {
   }
 
   /**
-   * Update configuration
    */
   updateConfig(newConfig: Partial<MetricsCollectionConfig>): void {
     this.config = { ...this.config, ...newConfig };

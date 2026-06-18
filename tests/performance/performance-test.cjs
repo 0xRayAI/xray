@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 
 /**
- * Xray Framework v1.0.0 - Performance Test Script
- *
- * Measures startup time, memory usage, and bundle size performance.
- *
- * @version 1.0.0
- * @since 2026-01-07
  */
 
 const fs = require("fs");

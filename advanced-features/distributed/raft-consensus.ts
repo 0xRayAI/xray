@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Raft Consensus Algorithm Implementation
- *
- * Enterprise-grade Raft consensus algorithm for leader election and coordination
- * in distributed systems with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -55,7 +48,6 @@ export interface RaftPeer {
 }
 
 /**
- * Raft Consensus Algorithm Implementation
  */
 export class RaftConsensus extends EventEmitter {
   private state: RaftState = RaftState.FOLLOWER;
@@ -106,7 +98,6 @@ export class RaftConsensus extends EventEmitter {
   }
 
   /**
-   * Start leader election
    */
   async startElection(): Promise<void> {
     if (this.state === RaftState.LEADER) return;
@@ -212,7 +203,6 @@ export class RaftConsensus extends EventEmitter {
   }
 
   /**
-   * Handle incoming Raft messages
    */
   async handleMessage(message: RaftMessage): Promise<RaftMessage | null> {
     // Update term if necessary
@@ -359,7 +349,6 @@ export class RaftConsensus extends EventEmitter {
   }
 
   /**
-   * Append new log entry (leader only)
    */
   async appendEntry(command: any): Promise<boolean> {
     if (this.state !== RaftState.LEADER) return false;
@@ -565,7 +554,6 @@ export class RaftConsensus extends EventEmitter {
   }
 
   /**
-   * Get current Raft state
    */
   getState(): {
     state: RaftState;
@@ -582,21 +570,18 @@ export class RaftConsensus extends EventEmitter {
   }
 
   /**
-   * Get current leader
    */
   getLeader(): string | null {
     return this.leaderId;
   }
 
   /**
-   * Check if this instance is the leader
    */
   isLeader(): boolean {
     return this.state === RaftState.LEADER;
   }
 
   /**
-   * Shutdown Raft consensus
    */
   async shutdown(): Promise<void> {
     if (this.electionTimer) {

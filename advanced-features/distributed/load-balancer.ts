@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Distributed Load Balancer
- *
- * Enterprise-grade load balancer with session affinity, health checks,
- * and auto-scaling capabilities for multi-instance deployments.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { IncomingMessage, ServerResponse } from "http";
@@ -55,7 +48,6 @@ export interface LoadBalancerStats {
 }
 
 /**
- * Distributed Load Balancer - Routes traffic across 0xRay instances
  */
 export class DistributedLoadBalancer extends EventEmitter {
   private config: LoadBalancerConfig;
@@ -140,7 +132,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Handle incoming HTTP requests
    */
   async handleRequest(
     req: IncomingMessage,
@@ -176,7 +167,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Select backend instance based on algorithm
    */
   private async selectInstance(
     req: IncomingMessage,
@@ -266,7 +256,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Proxy request to backend instance with circuit breaker protection
    */
   private async proxyRequest(
     req: IncomingMessage,
@@ -333,7 +322,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Health check all instances
    */
   private async performHealthChecks(): Promise<void> {
     const promises = Array.from(this.instances.values()).map((instance) =>
@@ -404,7 +392,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Discover instances via distributed state
    */
   private async discoverInstances(): Promise<void> {
     try {
@@ -436,7 +423,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Watch for instance changes
    */
   private watchInstanceChanges(): void {
     // Watch for new instances joining
@@ -469,7 +455,6 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Auto-scaling logic with ML-based predictions
    */
   private async checkAutoScaling(): Promise<void> {
     if (!this.config.enableAutoScaling) return;
@@ -623,21 +608,18 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Get load balancer statistics
    */
   getStats(): LoadBalancerStats {
     return { ...this.stats };
   }
 
   /**
-   * Get all backend instances
    */
   getInstances(): BackendInstance[] {
     return Array.from(this.instances.values());
   }
 
   /**
-   * Manually add backend instance
    */
   addInstance(
     instance: Omit<
@@ -657,14 +639,12 @@ export class DistributedLoadBalancer extends EventEmitter {
   }
 
   /**
-   * Manually remove backend instance
    */
   removeInstance(instanceId: string): void {
     this.instances.delete(instanceId);
   }
 
   /**
-   * Shutdown load balancer
    */
   async shutdown(): Promise<void> {
     if (this.healthCheckTimer) {

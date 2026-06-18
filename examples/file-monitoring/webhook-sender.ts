@@ -1,19 +1,10 @@
 /**
- * Generic Webhook Sender for File Monitoring
- *
- * A production-ready webhook sender that can be configured
- * for any webhook endpoint. Supports batching,
- * rate limiting, exponential backoff retry, and circuit breaker.
- *
- * @version 1.0.0
- * @since 2026-03-13
  */
 
 import * as crypto from 'crypto';
 import pLimit from 'p-limit';
 
 /**
- * File operation event schema
  */
 export interface FileEvent {
   eventId: string;
@@ -34,7 +25,6 @@ export interface FileEvent {
 }
 
 /**
- * Webhook sender configuration
  */
 export interface WebhookSenderConfig {
   url: string;
@@ -50,12 +40,10 @@ export interface WebhookSenderConfig {
 }
 
 /**
- * Circuit breaker state
  */
 type CircuitState = 'closed' | 'open' | 'half-open';
 
 /**
- * Generic webhook sender class
  */
 export class WebhookSender {
   private config: WebhookSenderConfig;
@@ -84,7 +72,6 @@ export class WebhookSender {
   }
 
   /**
-   * Track a file operation event
    */
   async trackEvent(event: FileEvent): Promise<void> {
     this.eventQueue.push(event);
@@ -101,7 +88,6 @@ export class WebhookSender {
   }
 
   /**
-   * Track multiple file operation events
    */
   async trackEvents(events: FileEvent[]): Promise<void> {
     this.eventQueue.push(...events);
@@ -109,7 +95,6 @@ export class WebhookSender {
   }
 
   /**
-   * Flush queued events to webhook
    */
   async flush(): Promise<void> {
     if (this.eventQueue.length === 0) {
@@ -144,7 +129,6 @@ export class WebhookSender {
   }
 
   /**
-   * Send batch of events to webhook
    */
   private async sendBatch(batch: { events: FileEvent[]; batchId: string; timestamp: number }): Promise<void> {
     if (!this.canAttempt()) {
@@ -206,7 +190,6 @@ export class WebhookSender {
   }
 
   /**
-   * Send with exponential backoff retry
    */
   async sendWithRetry(event: FileEvent): Promise<void> {
     for (let attempt = 1; attempt <= this.config.retryAttempts!; attempt++) {
@@ -229,7 +212,6 @@ export class WebhookSender {
   }
 
   /**
-   * Check if request is retryable based on status code
    */
   private isRetryableStatus(status: number): boolean {
     // 5xx errors are retryable
@@ -241,7 +223,6 @@ export class WebhookSender {
   }
 
   /**
-   * Check if error is retryable
    */
   private isRetryableError(error: unknown): boolean {
     if (error instanceof Error) {
@@ -263,7 +244,6 @@ export class WebhookSender {
   }
 
   /**
-   * Generate HMAC signature
    */
   private generateSignature(payload: string): string {
     const hmac = crypto.createHmac('sha256', this.config.secret!);
@@ -273,7 +253,6 @@ export class WebhookSender {
   }
 
   /**
-   * Calculate retry delay with exponential backoff
    */
   private calculateRetryDelay(attempt: number): number {
     const baseDelay = this.config.initialRetryDelay!;
@@ -284,7 +263,6 @@ export class WebhookSender {
   }
 
   /**
-   * Check if circuit breaker allows attempts
    */
   private canAttempt(): boolean {
     if (this.circuitState === 'open') {
@@ -299,7 +277,6 @@ export class WebhookSender {
   }
 
   /**
-   * Record successful request
    */
   private recordSuccess(): void {
     this.failures = 0;
@@ -307,7 +284,6 @@ export class WebhookSender {
   }
 
   /**
-   * Record failed request
    */
   private recordFailure(): void {
     this.failures++;
@@ -320,21 +296,18 @@ export class WebhookSender {
   }
 
   /**
-   * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
-   * Get current queue size
    */
   getQueueSize(): number {
     return this.eventQueue.length;
   }
 
   /**
-   * Get current statistics
    */
   getStats(): {
     queueSize: number;
@@ -349,7 +322,6 @@ export class WebhookSender {
   }
 
   /**
-   * Shutdown the sender
    */
   shutdown(): void {
     if (this.flushTimeout) {
@@ -365,14 +337,12 @@ export class WebhookSender {
 }
 
 /**
- * Create webhook sender instance
  */
 export function createWebhookSender(config: WebhookSenderConfig): WebhookSender {
   return new WebhookSender(config);
 }
 
 /**
- * Convenience function to create from environment variables
  */
 export function createWebhookSenderFromEnv(): WebhookSender | null {
   const url = process.env.WEBHOOK_URL;

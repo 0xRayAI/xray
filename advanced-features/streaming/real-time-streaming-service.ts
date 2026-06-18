@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Real-Time Data Streaming Service
- *
- * Enterprise-grade real-time data streaming with WebSocket support,
- * buffering, compression, and connection management for performance dashboards.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { WebSocketServer, WebSocket } from "ws";
@@ -60,7 +53,6 @@ export interface StreamingStats {
 }
 
 /**
- * Real-time data streaming service
  */
 export class RealTimeStreamingService extends EventEmitter {
   private wss?: WebSocketServer;
@@ -109,7 +101,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Setup event handlers for monitoring systems
    */
   private setupEventHandlers(): void {
     // Performance monitoring events
@@ -161,7 +152,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Start the WebSocket server
    */
   async start(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -203,7 +193,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Stop the WebSocket server
    */
   stop(): void {
     if (this.heartbeatTimer) {
@@ -224,7 +213,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle new WebSocket connection
    */
   private handleConnection(ws: WebSocket, request: IncomingMessage): void {
     const connectionId = this.generateConnectionId();
@@ -277,7 +265,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle incoming message from client
    */
   private handleMessage(connectionId: string, data: WebSocket.Data): void {
     try {
@@ -329,7 +316,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle client disconnection
    */
   private handleDisconnection(connectionId: string): void {
     const connection = this.connections.get(connectionId);
@@ -344,7 +330,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle connection error
    */
   private handleConnectionError(connectionId: string, error: Error): void {
     console.error(`Connection error for ${connectionId}:`, error);
@@ -352,7 +337,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle subscription request
    */
   private handleSubscription(connectionId: string, channels: string[]): void {
     const connection = this.connections.get(connectionId);
@@ -365,7 +349,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Handle unsubscription request
    */
   private handleUnsubscription(connectionId: string, channels: string[]): void {
     const connection = this.connections.get(connectionId);
@@ -380,7 +363,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Broadcast message to all connected clients
    */
   private broadcastMessage(message: StreamMessage): void {
     // Add to buffer
@@ -400,7 +382,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Send message to specific connection
    */
   private sendToConnection(connectionId: string, message: StreamMessage): void {
     const connection = this.connections.get(connectionId);
@@ -431,7 +412,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Send buffered messages to new connection
    */
   private sendBufferedMessages(connectionId: string): void {
     const connection = this.connections.get(connectionId);
@@ -456,7 +436,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Check if message should be sent to connection based on subscriptions
    */
   private shouldSendToConnection(
     info: ConnectionInfo,
@@ -470,7 +449,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Start heartbeat monitoring
    */
   private startHeartbeatMonitoring(): void {
     this.heartbeatTimer = setInterval(() => {
@@ -490,7 +468,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Start buffer cleanup
    */
   private startBufferCleanup(): void {
     setInterval(() => {
@@ -509,14 +486,12 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Generate unique connection ID
    */
   private generateConnectionId(): string {
     return `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
-   * Get client IP address
    */
   private getClientIP(request: IncomingMessage): string {
     const forwarded = request.headers["x-forwarded-for"] as string;
@@ -533,7 +508,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Get streaming service statistics
    */
   getStats(): StreamingStats {
     this.stats.uptime = Date.now() - this.startTime;
@@ -548,7 +522,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Get active connections
    */
   getConnections(): ConnectionInfo[] {
     return Array.from(this.connections.values()).map(({ info }) => ({
@@ -557,7 +530,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Force disconnect a connection
    */
   disconnect(connectionId: string, code?: number, reason?: string): boolean {
     const connection = this.connections.get(connectionId);
@@ -569,7 +541,6 @@ export class RealTimeStreamingService extends EventEmitter {
   }
 
   /**
-   * Update configuration (hot-reload capable)
    */
   updateConfig(newConfig: Partial<StreamingConfig>): void {
     this.config = { ...this.config, ...newConfig };

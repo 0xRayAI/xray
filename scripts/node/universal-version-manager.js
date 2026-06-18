@@ -17,7 +17,6 @@
  * - Historical docs (docs/reflections, docs/archive)
  * - Test files with assertions
  *
- * @version 2.0.0
  * @since 2026-01-15
  * @updated 2026-03-09 - Enhanced with documentation management, validation, and backup
  */
@@ -28,6 +27,19 @@ const require = createRequire(import.meta.url);
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const rootDir = path.resolve(__dirname, "../..");
+
+function readPackageVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, "package.json"), "utf-8"));
+    return pkg.version;
+  } catch {
+    return "0.0.0";
+  }
+}
 
 /**
  * Auto-calculate framework counts from filesystem
@@ -133,12 +145,14 @@ const CALCULATED_COUNTS = calculateCounts();
  * Framework version information - SINGLE SOURCE OF TRUTH
  * Version manager updates this, then propagates to all files
  */
+const PACKAGE_VERSION = readPackageVersion();
+
 const OFFICIAL_VERSIONS = {
-  // Framework version
+  // Framework version — SSOT: package.json
   framework: {
-    version: "3.3.0",
+    version: PACKAGE_VERSION,
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-06-18",
+      lastUpdated: "2026-06-17",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },

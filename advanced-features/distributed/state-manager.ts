@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Distributed State Management Layer
- *
- * Enterprise-grade distributed state management with Redis/ETCD integration
- * for multi-instance deployments with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 let Redis: any;
@@ -60,7 +53,6 @@ export interface InstanceHealth {
 }
 
 /**
- * Distributed State Manager - Core of multi-instance architecture
  */
 export class DistributedStateManager extends EventEmitter {
   private redis!: Redis;
@@ -188,7 +180,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Set distributed state with conflict resolution and circuit breaker protection
    */
   async set<T>(
     key: string,
@@ -254,7 +245,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Get distributed state with caching and circuit breaker protection
    */
   async get<T>(key: string): Promise<T | undefined> {
     // Check local cache first
@@ -297,7 +287,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Watch for state changes
    */
   watch<T>(
     key: string,
@@ -322,7 +311,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Delete distributed state
    */
   async delete(key: string): Promise<boolean> {
     const fullKey = `${this.config.keyPrefix}${key}`;
@@ -352,7 +340,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Get all active instances with circuit breaker protection
    */
   async getActiveInstances(): Promise<InstanceHealth[]> {
     const result = await this.circuitBreakerRegistry.execute(
@@ -389,7 +376,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Elect leader instance for coordination using Raft consensus
    */
   async electLeader(): Promise<string> {
     await this.raftConsensus.startElection();
@@ -397,7 +383,6 @@ export class DistributedStateManager extends EventEmitter {
   }
 
   /**
-   * Check if this instance is the leader
    */
   async isLeader(): Promise<boolean> {
     return this.raftConsensus.isLeader();
@@ -560,7 +545,6 @@ export class DistributedStateManager extends EventEmitter {
 }
 
 /**
- * Conflict Resolution Strategies
  */
 export class ConflictResolver {
   constructor(private stateManager: DistributedStateManager) {}
@@ -582,7 +566,6 @@ export class ConflictResolver {
 }
 
 /**
- * Distributed Lock Manager for critical sections
  */
 export class DistributedLockManager {
   private redis: Redis;

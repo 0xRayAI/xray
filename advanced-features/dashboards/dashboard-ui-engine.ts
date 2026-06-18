@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Dashboard UI Engine
- *
- * Real-time dashboard UI engine for performance monitoring.
- * Handles UI rendering, updates, and user interactions with live data.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -73,7 +66,6 @@ export interface RenderContext {
 }
 
 /**
- * Dashboard UI engine for real-time performance monitoring
  */
 export class DashboardUIEngine extends EventEmitter {
   private config: DashboardConfig;
@@ -122,7 +114,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Initialize default dashboard layout
    */
   private initializeDefaultLayout(): void {
     const defaultLayout: DashboardLayout = {
@@ -225,7 +216,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Setup event handlers for data sources
    */
   private setupEventHandlers(): void {
     // Metrics collector events
@@ -265,7 +255,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Start the dashboard UI engine
    */
   async start(): Promise<void> {
     if (!this.config.enabled) {
@@ -290,7 +279,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Stop the dashboard UI engine
    */
   stop(): void {
     if (this.animationFrame) {
@@ -304,7 +292,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Connect to WebSocket gateway
    */
   private async connectToGateway(): Promise<void> {
     try {
@@ -322,7 +309,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Disconnect from WebSocket gateway
    */
   private disconnectFromGateway(): void {
     webSocketGateway.stop();
@@ -330,7 +316,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Subscribe to metrics data
    */
   private subscribeToMetrics(): void {
     const layout = this.getActiveLayout();
@@ -367,7 +352,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Subscribe to alerts data
    */
   private subscribeToAlerts(): void {
     webSocketGateway.broadcast({
@@ -382,7 +366,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Start render loop
    */
   private startRenderLoop(): void {
     const render = (timestamp: number) => {
@@ -398,7 +381,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Load initial data for all widgets
    */
   private async loadInitialData(): Promise<void> {
     const layout = this.getActiveLayout();
@@ -419,7 +401,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Handle metric update
    */
   private handleMetricUpdate(metric: CollectedMetric): void {
     // Add to state
@@ -435,7 +416,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Handle alert update
    */
   private handleAlertUpdate(alert: Alert): void {
     // Update alerts in state
@@ -456,7 +436,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Queue widget update
    */
   private queueWidgetUpdate(
     metricName: string,
@@ -501,7 +480,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Process update queue
    */
   private processUpdateQueue(): void {
     if (this.updateQueue.length === 0 || this.isRendering) {
@@ -535,7 +513,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update widget with new data
    */
   private updateWidget(widgetId: string, data: any): void {
     const layout = this.getActiveLayout();
@@ -569,7 +546,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update gauge widget
    */
   private updateGaugeWidget(
     widget: DashboardWidget,
@@ -586,7 +562,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update chart widget
    */
   private updateChartWidget(
     widget: DashboardWidget,
@@ -622,7 +597,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update table widget
    */
   private updateTableWidget(
     widget: DashboardWidget,
@@ -641,7 +615,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update alerts widget
    */
   private updateAlertsWidget(widget: DashboardWidget, data: Alert): void {
     widget.data = this.state.alerts
@@ -659,7 +632,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update custom widget
    */
   private updateCustomWidget(widget: DashboardWidget, data: any): void {
     // Custom widget update logic
@@ -667,7 +639,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update widget data (for initial load)
    */
   private async updateWidgetData(widgetId: string): Promise<void> {
     const layout = this.getActiveLayout();
@@ -699,7 +670,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Calculate trend for a metric
    */
   private calculateTrend(metricName: string): "up" | "down" | "stable" {
     const metrics = liveMetricsCollector.getMetricsByName(metricName, 10);
@@ -719,7 +689,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render dashboard
    */
   private renderDashboard(): void {
     const layout = this.getActiveLayout();
@@ -744,7 +713,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render individual widget
    */
   private renderWidget(widget: DashboardWidget): void {
     const context = this.renderContexts.get(widget.id);
@@ -772,7 +740,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render gauge widget
    */
   private renderGauge(widget: DashboardWidget, context: RenderContext): void {
     if (!widget.data) return;
@@ -789,7 +756,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render chart widget
    */
   private renderChart(widget: DashboardWidget, context: RenderContext): void {
     if (!widget.data?.series) return;
@@ -809,7 +775,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render table widget
    */
   private renderTable(widget: DashboardWidget, context: RenderContext): void {
     if (!widget.data) return;
@@ -831,7 +796,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render alerts widget
    */
   private renderAlerts(widget: DashboardWidget, context: RenderContext): void {
     // Alerts rendering
@@ -843,7 +807,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Render custom widget
    */
   private renderCustom(widget: DashboardWidget, context: RenderContext): void {
     // Custom widget rendering
@@ -851,14 +814,12 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Get active layout
    */
   getActiveLayout(): DashboardLayout | undefined {
     return this.state.layouts.get(this.state.activeLayout);
   }
 
   /**
-   * Set active layout
    */
   setActiveLayout(layoutId: string): boolean {
     if (!this.state.layouts.has(layoutId)) {
@@ -871,7 +832,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Add new layout
    */
   addLayout(layout: DashboardLayout): void {
     this.state.layouts.set(layout.id, layout);
@@ -879,7 +839,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Remove layout
    */
   removeLayout(layoutId: string): boolean {
     if (layoutId === this.config.defaultLayout) {
@@ -899,7 +858,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Add widget to layout
    */
   addWidget(layoutId: string, widget: DashboardWidget): boolean {
     const layout = this.state.layouts.get(layoutId);
@@ -920,7 +878,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Remove widget from layout
    */
   removeWidget(layoutId: string, widgetId: string): boolean {
     const layout = this.state.layouts.get(layoutId);
@@ -937,7 +894,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Update widget configuration
    */
   updateWidgetConfig(
     layoutId: string,
@@ -959,7 +915,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Get dashboard state
    */
   getState(): DashboardState {
     return {
@@ -969,7 +924,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Export dashboard configuration
    */
   exportConfig(): any {
     return {
@@ -980,7 +934,6 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Import dashboard configuration
    */
   importConfig(configData: any): void {
     if (configData.config) {
@@ -1002,21 +955,18 @@ export class DashboardUIEngine extends EventEmitter {
   }
 
   /**
-   * Register render context for widget
    */
   registerRenderContext(widgetId: string, context: RenderContext): void {
     this.renderContexts.set(widgetId, context);
   }
 
   /**
-   * Unregister render context
    */
   unregisterRenderContext(widgetId: string): void {
     this.renderContexts.delete(widgetId);
   }
 
   /**
-   * Update configuration
    */
   updateConfig(newConfig: Partial<DashboardConfig>): void {
     this.config = { ...this.config, ...newConfig };

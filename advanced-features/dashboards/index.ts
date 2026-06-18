@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Real-Time Performance Dashboards
- *
- * Comprehensive real-time performance monitoring dashboard system
- * with live metrics collection, alert management, and WebSocket streaming.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 // Core components

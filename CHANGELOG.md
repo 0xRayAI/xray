@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [3.3.2] - 2026-06-17
+## [3.4.1] - 2026-06-17
 
 ### ✨ Features
 - Unified 4-platform bridge installer (`install-bridges.cjs`) runs on consumer `npm i 0xray` postinstall — OpenCode, Grok, Hermes, OpenClaw

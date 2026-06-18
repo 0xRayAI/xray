@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Raft Consensus Algorithm Implementation
- *
- * Enterprise-grade Raft consensus algorithm for leader election and coordination
- * in distributed systems with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 import { EventEmitter } from "events";
 export var RaftState;
@@ -22,7 +15,6 @@ export var RaftMessageType;
     RaftMessageType["APPEND_ENTRIES_RESPONSE"] = "append_entries_response";
 })(RaftMessageType || (RaftMessageType = {}));
 /**
- * Raft Consensus Algorithm Implementation
  */
 export class RaftConsensus extends EventEmitter {
     instanceId;
@@ -62,7 +54,6 @@ export class RaftConsensus extends EventEmitter {
         console.log(`🗳️ Raft: Initialized ${this.instanceId} as ${this.state} in term ${this.currentTerm}`);
     }
     /**
-     * Start leader election
      */
     async startElection() {
         if (this.state === RaftState.LEADER)
@@ -146,7 +137,6 @@ export class RaftConsensus extends EventEmitter {
         console.log(`👥 Raft: ${this.instanceId} became follower in term ${this.currentTerm}`);
     }
     /**
-     * Handle incoming Raft messages
      */
     async handleMessage(message) {
         // Update term if necessary
@@ -259,7 +249,6 @@ export class RaftConsensus extends EventEmitter {
         return null;
     }
     /**
-     * Append new log entry (leader only)
      */
     async appendEntry(command) {
         if (this.state !== RaftState.LEADER)
@@ -422,7 +411,6 @@ export class RaftConsensus extends EventEmitter {
         }
     }
     /**
-     * Get current Raft state
      */
     getState() {
         return {
@@ -433,19 +421,16 @@ export class RaftConsensus extends EventEmitter {
         };
     }
     /**
-     * Get current leader
      */
     getLeader() {
         return this.leaderId;
     }
     /**
-     * Check if this instance is the leader
      */
     isLeader() {
         return this.state === RaftState.LEADER;
     }
     /**
-     * Shutdown Raft consensus
      */
     async shutdown() {
         if (this.electionTimer) {

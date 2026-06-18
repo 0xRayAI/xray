@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Predictive Analytics System
- *
- * Analyzes agent performance patterns and predicts optimal delegation strategies.
- * Uses historical data to optimize task assignment and improve framework efficiency.
- *
- * @version 1.0.0
- * @since 2026-01-07
  */
 
 export interface AgentPerformanceMetrics {
@@ -71,7 +64,6 @@ export class 0xRayPredictiveAnalytics {
   private readonly recentTasksWindow = 20;
 
   /**
-   * Record task execution result for analytics
    */
   recordTaskExecution(
     taskId: string,
@@ -103,7 +95,6 @@ export class 0xRayPredictiveAnalytics {
   }
 
   /**
-   * Predict optimal agent for a task
    */
   predictOptimalAgent(
     taskId: string,
@@ -158,7 +149,6 @@ export class 0xRayPredictiveAnalytics {
   }
 
   /**
-   * Generate comprehensive analytics report
    */
   generateAnalyticsReport(): AnalyticsReport {
     const agentMetrics = Array.from(this.agentMetrics.values());
@@ -180,21 +170,18 @@ export class 0xRayPredictiveAnalytics {
   }
 
   /**
-   * Get agent performance metrics
    */
   getAgentMetrics(agentId: string): AgentPerformanceMetrics | null {
     return this.agentMetrics.get(agentId) || null;
   }
 
   /**
-   * Get all agent performance metrics
    */
   getAllAgentMetrics(): AgentPerformanceMetrics[] {
     return Array.from(this.agentMetrics.values());
   }
 
   /**
-   * Clear all analytics data
    */
   clearAnalytics(): void {
     this.agentMetrics.clear();

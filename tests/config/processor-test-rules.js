@@ -1,11 +1,4 @@
 /**
- * Processor Test ESLint Rules
- * 
- * Rules specifically for processor test files to ensure proper mocking
- * and prevent external dependency issues from reaching CI.
- * 
- * @version 1.0.0
- * @module tests/config/processor-test-rules
  */
 
 module.exports = {

@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Integration Testing Configuration
- *
- * Comprehensive integration testing setup with parallel execution,
- * thread pooling, and multi-component testing capabilities.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { defineConfig } from "vitest/config";

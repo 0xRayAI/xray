@@ -52,7 +52,6 @@ export interface MappingOptimization {
 }
 
 export interface ConfigurationUpdate {
-  version: string;
   generatedAt: Date;
   summary: {
     newMappings: number;
@@ -119,7 +118,6 @@ class RoutingRefiner {
     const warnings = this.generateWarnings(newMappings, optimizations);
 
     return {
-      version: "3.1.0",
       generatedAt: new Date(),
       summary: {
         newMappings: newMappings.length,
@@ -395,7 +393,6 @@ class RoutingRefiner {
     lines.push("╚════════════════════════════════════════════════════════════╝");
     lines.push("");
     lines.push(`Generated: ${report.configurationUpdate.generatedAt.toISOString()}`);
-    lines.push(`Version: ${report.configurationUpdate.version}`);
     lines.push("");
 
     lines.push("=== Summary ===");

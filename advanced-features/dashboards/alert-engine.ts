@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Alert Engine
- *
- * Advanced alert management system for performance dashboards.
- * Handles alert generation, escalation, notification, and lifecycle management.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -113,7 +106,6 @@ export interface AlertStats {
 }
 
 /**
- * Alert engine for managing performance and system alerts
  */
 export class AlertEngine extends EventEmitter {
   private config: AlertEngineConfig;
@@ -161,7 +153,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Initialize default alert rules
    */
   private initializeDefaultRules(): void {
     const defaultRules: AlertRule[] = [
@@ -251,7 +242,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Setup event handlers for metric collection
    */
   private setupEventHandlers(): void {
     liveMetricsCollector.on("metric-collected", (metric: CollectedMetric) => {
@@ -266,7 +256,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Start the alert engine
    */
   async start(): Promise<void> {
     if (this.isRunning) {
@@ -286,7 +275,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Stop the alert engine
    */
   stop(): void {
     if (!this.isRunning) {
@@ -306,7 +294,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Evaluate a metric against all alert rules
    */
   private evaluateMetricAgainstRules(metric: CollectedMetric): void {
     for (const rule of this.rules.values()) {
@@ -325,7 +312,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Check if metric matches rule pattern
    */
   private matchesMetricPattern(
     metric: CollectedMetric,
@@ -342,7 +328,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Check if rule is in cooldown period
    */
   private isRuleInCooldown(ruleId: string): boolean {
     const lastTriggered = this.alertCooldowns.get(ruleId);
@@ -355,7 +340,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Evaluate alert condition
    */
   private evaluateCondition(metric: CollectedMetric, rule: AlertRule): boolean {
     if (rule.condition === "anomaly") {
@@ -383,7 +367,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Detect anomalies in metric data
    */
   private detectAnomaly(metric: CollectedMetric, rule: AlertRule): boolean {
     if (!this.config.anomalyDetection.enabled) return false;
@@ -418,7 +401,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Trigger a new alert
    */
   private triggerAlert(rule: AlertRule, metric: CollectedMetric): void {
     const alertId = `alert_${rule.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -485,7 +467,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Check for auto-resolution of alerts
    */
   private checkAutoResolve(rule: AlertRule, metric: CollectedMetric): void {
     if (!rule.autoResolve || !rule.resolveThreshold) return;
@@ -514,7 +495,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send notifications for an alert
    */
   private sendAlertNotifications(alert: Alert): void {
     const rule = this.rules.get(alert.ruleId);
@@ -533,7 +513,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send notification via a specific channel
    */
   private sendNotification(channel: NotificationChannel, alert: Alert): void {
     try {
@@ -560,7 +539,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send email notification
    */
   private sendEmailNotification(
     channel: NotificationChannel,
@@ -574,7 +552,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send Slack notification
    */
   private sendSlackNotification(
     channel: NotificationChannel,
@@ -588,7 +565,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send webhook notification
    */
   private sendWebhookNotification(
     channel: NotificationChannel,
@@ -601,7 +577,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send SMS notification
    */
   private sendSmsNotification(
     channel: NotificationChannel,
@@ -615,7 +590,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Send PagerDuty notification
    */
   private sendPagerDutyNotification(
     channel: NotificationChannel,
@@ -628,7 +602,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Start escalation for an alert
    */
   private startEscalation(alert: Alert): void {
     const rule = this.rules.get(alert.ruleId);
@@ -688,7 +661,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Acknowledge an alert
    */
   acknowledgeAlert(alertId: string, acknowledgedBy?: string): boolean {
     const alert = this.alerts.get(alertId);
@@ -718,7 +690,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Resolve an alert
    */
   resolveAlert(alertId: string, resolvedBy?: string): boolean {
     const alert = this.alerts.get(alertId);
@@ -759,7 +730,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Prune oldest alerts when exceeding max active alerts
    */
   private pruneOldestAlerts(): void {
     const activeAlertList = Array.from(this.activeAlerts)
@@ -778,7 +748,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Start alert cleanup (remove old resolved alerts)
    */
   private startAlertCleanup(): void {
     setInterval(
@@ -801,7 +770,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Get all alerts
    */
   getAlerts(
     status?: "active" | "acknowledged" | "resolved",
@@ -823,14 +791,12 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Get alert by ID
    */
   getAlert(alertId: string): Alert | undefined {
     return this.alerts.get(alertId);
   }
 
   /**
-   * Get alerts by rule
    */
   getAlertsByRule(ruleId: string): Alert[] {
     return Array.from(this.alerts.values())
@@ -839,21 +805,18 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Get all alert rules
    */
   getRules(): AlertRule[] {
     return Array.from(this.rules.values());
   }
 
   /**
-   * Get alert rule by ID
    */
   getRule(ruleId: string): AlertRule | undefined {
     return this.rules.get(ruleId);
   }
 
   /**
-   * Add or update alert rule
    */
   setRule(rule: AlertRule): void {
     this.rules.set(rule.id, { ...rule });
@@ -861,7 +824,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Remove alert rule
    */
   removeRule(ruleId: string): boolean {
     const rule = this.rules.get(ruleId);
@@ -883,7 +845,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Enable or disable alert rule
    */
   setRuleEnabled(ruleId: string, enabled: boolean): boolean {
     const rule = this.rules.get(ruleId);
@@ -897,14 +858,12 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Get alert statistics
    */
   getStats(): AlertStats {
     return { ...this.stats };
   }
 
   /**
-   * Add notification channel
    */
   addNotificationChannel(channel: NotificationChannel): void {
     const existingIndex = this.config.notifications.channels.findIndex(
@@ -919,7 +878,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Remove notification channel
    */
   removeNotificationChannel(channelId: string): boolean {
     const index = this.config.notifications.channels.findIndex(
@@ -935,7 +893,6 @@ export class AlertEngine extends EventEmitter {
   }
 
   /**
-   * Update configuration
    */
   updateConfig(newConfig: Partial<AlertEngineConfig>): void {
     this.config = { ...this.config, ...newConfig };

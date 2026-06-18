@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Security Testing Configuration
- *
- * Specialized testing configuration for security validation,
- * vulnerability testing, and OWASP compliance verification.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { defineConfig } from "vitest/config";

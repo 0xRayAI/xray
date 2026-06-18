@@ -1,12 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - WebSocket Gateway
- *
- * Enhanced WebSocket gateway for real-time performance dashboards.
- * Provides dashboard-specific WebSocket functionality with authentication,
- * subscription management, and real-time data streaming.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 
 import { EventEmitter } from "events";
@@ -91,7 +83,6 @@ export interface GatewayStats {
 }
 
 /**
- * WebSocket gateway for real-time dashboard communication
  */
 export class WebSocketGateway extends EventEmitter {
   private config: WebSocketGatewayConfig;
@@ -143,7 +134,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Setup event handlers for data sources
    */
   private setupEventHandlers(): void {
     // Metrics collector events
@@ -177,7 +167,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Start the WebSocket gateway
    */
   async start(): Promise<void> {
     if (this.isRunning) {
@@ -202,7 +191,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Stop the WebSocket gateway
    */
   stop(): void {
     if (!this.isRunning) {
@@ -218,7 +206,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle new dashboard connection
    */
   private handleConnection(ws: WebSocket, request: IncomingMessage): void {
     const connectionId = `dash_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -273,7 +260,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle incoming message from dashboard client
    */
   private handleMessage(connectionId: string, data: WebSocket.Data): void {
     try {
@@ -341,7 +327,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle client disconnection
    */
   private handleDisconnection(connectionId: string): void {
     const connection = this.connections.get(connectionId);
@@ -360,7 +345,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle connection error
    */
   private handleConnectionError(connectionId: string, error: Error): void {
     console.error(`Dashboard connection error for ${connectionId}:`, error);
@@ -368,7 +352,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle subscription request
    */
   private handleSubscription(
     connectionId: string,
@@ -410,7 +393,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle unsubscription request
    */
   private handleUnsubscription(
     connectionId: string,
@@ -435,7 +417,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle authentication
    */
   private handleAuthentication(
     connectionId: string,
@@ -472,7 +453,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Validate authentication token (placeholder implementation)
    */
   private validateAuthToken(token: string): boolean {
     // Implement proper token validation logic
@@ -480,7 +460,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Check rate limit for connection
    */
   private checkRateLimit(connectionId: string): boolean {
     const now = Date.now();
@@ -506,7 +485,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Broadcast metric to subscribed dashboard connections
    */
   private broadcastMetric(metric: CollectedMetric): void {
     for (const [connectionId, connection] of this.connections) {
@@ -521,7 +499,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Broadcast alert to subscribed dashboard connections
    */
   private broadcastAlert(alert: Alert): void {
     for (const [connectionId, connection] of this.connections) {
@@ -536,7 +513,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Broadcast alert update to subscribed dashboard connections
    */
   private broadcastAlertUpdate(alert: Alert): void {
     for (const [connectionId, connection] of this.connections) {
@@ -551,7 +527,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Check if metric should be sent to connection
    */
   private shouldSendMetricToConnection(
     connection: DashboardConnection,
@@ -586,7 +561,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Check if alert should be sent to connection
    */
   private shouldSendAlertToConnection(
     connection: DashboardConnection,
@@ -610,7 +584,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Check if metric matches subscription filters
    */
   private matchesSubscriptionFilters(
     subscription: DashboardSubscription,
@@ -639,7 +612,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Check if alert matches subscription filters
    */
   private matchesAlertSubscriptionFilters(
     subscription: DashboardSubscription,
@@ -664,7 +636,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Send message to specific connection
    */
   private sendToConnection(
     connectionId: string,
@@ -701,7 +672,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Handle streaming message (fallback)
    */
   private handleStreamingMessage(data: any): void {
     // Process messages from the general streaming service
@@ -712,7 +682,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Start heartbeat monitoring
    */
   private startHeartbeatMonitoring(): void {
     setInterval(() => {
@@ -731,7 +700,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Start rate limit cleanup
    */
   private startRateLimitCleanup(): void {
     setInterval(() => {
@@ -745,7 +713,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Get gateway statistics
    */
   getStats(): GatewayStats {
     this.stats.uptime = Date.now() - this.startTime;
@@ -760,14 +727,12 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Get active dashboard connections
    */
   getConnections(): DashboardConnection[] {
     return Array.from(this.connections.values()).map((conn) => ({ ...conn }));
   }
 
   /**
-   * Force disconnect a dashboard connection
    */
   disconnect(connectionId: string, code?: number, reason?: string): boolean {
     const connection = this.connections.get(connectionId);
@@ -779,7 +744,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Send message to all dashboard connections
    */
   broadcast(message: DashboardMessage): void {
     for (const connectionId of this.connections.keys()) {
@@ -788,7 +752,6 @@ export class WebSocketGateway extends EventEmitter {
   }
 
   /**
-   * Update configuration
    */
   updateConfig(newConfig: Partial<WebSocketGatewayConfig>): void {
     this.config = { ...this.config, ...newConfig };

@@ -1,18 +1,10 @@
 /**
- * xray Orchestrator Skill
- *
- * OpenClaw skill that provides xray orchestration commands.
- *
- * @version 1.0.0
- * @since 2026-03-14
  */
 
 const API_BASE = process.env.XRAY_API_URL || process.env.STRINGRAY_API_URL || 'http://localhost:18431';
 const API_KEY = process.env.XRAY_API_KEY || process.env.STRINGRAY_API_KEY;
 
 /**
- * TEMP (min compat only): STRINGRAY_* env fallbacks supported for transition.
- * XRAY_* preferred. Remove after 2026-06.
  */
 
 function parseArgs(input: string): { command: string; args: Record<string, unknown> } {

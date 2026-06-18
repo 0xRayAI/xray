@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Distributed State Management Layer
- *
- * Enterprise-grade distributed state management with Redis/ETCD integration
- * for multi-instance deployments with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 import { EventEmitter } from "events";
 export interface DistributedStateConfig {
@@ -45,7 +38,6 @@ export interface InstanceHealth {
     memoryUsage: number;
 }
 /**
- * Distributed State Manager - Core of multi-instance architecture
  */
 export declare class DistributedStateManager extends EventEmitter {
     private redis;
@@ -63,34 +55,27 @@ export declare class DistributedStateManager extends EventEmitter {
     private startHeartbeat;
     private setupEventHandlers;
     /**
-     * Set distributed state with conflict resolution and circuit breaker protection
      */
     set<T>(key: string, value: T, options?: {
         ttl?: number;
         force?: boolean;
     }): Promise<boolean>;
     /**
-     * Get distributed state with caching and circuit breaker protection
      */
     get<T>(key: string): Promise<T | undefined>;
     /**
-     * Watch for state changes
      */
     watch<T>(key: string, callback: (value: T, version: number) => void): () => void;
     /**
-     * Delete distributed state
      */
     delete(key: string): Promise<boolean>;
     /**
-     * Get all active instances with circuit breaker protection
      */
     getActiveInstances(): Promise<InstanceHealth[]>;
     /**
-     * Elect leader instance for coordination using Raft consensus
      */
     electLeader(): Promise<string>;
     /**
-     * Check if this instance is the leader
      */
     isLeader(): Promise<boolean>;
     private checkForConflicts;
@@ -104,7 +89,6 @@ export declare class DistributedStateManager extends EventEmitter {
     shutdown(): Promise<void>;
 }
 /**
- * Conflict Resolution Strategies
  */
 export declare class ConflictResolver {
     private stateManager;
@@ -112,7 +96,6 @@ export declare class ConflictResolver {
     resolve(conflict: StateConflict): Promise<boolean>;
 }
 /**
- * Distributed Lock Manager for critical sections
  */
 export declare class DistributedLockManager {
     private redis;

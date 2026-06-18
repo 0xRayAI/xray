@@ -1,15 +1,5 @@
 #!/usr/bin/env node
 /**
- * Version Compliance Enforcement Script
- *
- * Thin CLI wrapper around VersionComplianceProcessor.
- * Called by CI/CD, pre-commit hooks, and manual runs.
- *
- * This script should NOT contain enforcement logic - 
- * all logic lives in src/processors/version-compliance-processor.ts
- *
- * @version 1.0.0
- * @deprecated Use VersionComplianceProcessor directly in new code
  */
 
 import path from 'path';

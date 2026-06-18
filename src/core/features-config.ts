@@ -342,7 +342,7 @@ export interface StorytellingConfig {
 }
 
 export interface FeaturesConfig {
-  version: string;
+  version?: string;
   description: string;
   token_optimization: TokenOptimizationConfig;
   model_routing: ModelRoutingConfig;
@@ -736,7 +736,6 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
    */
   public getDefaultConfig(): FeaturesConfig {
     return {
-      version: "3.1.0",
       description: "0xRay Framework - Unified Feature Configuration",
 
       token_optimization: {

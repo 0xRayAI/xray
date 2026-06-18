@@ -2,6 +2,7 @@
  * Boot Orchestrator (min documented consumer runtime compat shim from prior 0xRay releases; primary Xray paths + .xray fallbacks only; 1-line per Scope Rule).
  */
 
+import { readFileSync } from "fs";
 import { XrayContextLoader } from "./context-loader.js";
 import { XrayStateManager } from "../state/state-manager.js";
 import { ProcessorManager } from "../processors/processor-manager.js";
@@ -1083,7 +1084,13 @@ export class BootOrchestrator {
     try {
       // Consumer runtime compat shim from prior 0xRay releases (1-line min per Scope Rule; primary xray paths + .xray fallbacks)
       const xrayConfig = {
-        version: "3.1.0",
+        version: (() => {
+          try {
+            return JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf-8")).version;
+          } catch {
+            return "unknown";
+          }
+        })(),
         codex_enabled: true,
         codex_version: "v1.7.5",
         codex_terms: [

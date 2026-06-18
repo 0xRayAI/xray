@@ -7,7 +7,6 @@
 #
 # Usage: ./scripts/node/enforce-version-compliance.sh
 #
-# @version 1.0.0
 # @since 2026-01-15
 
 set -e

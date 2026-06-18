@@ -1,11 +1,4 @@
 /**
- * 0xRay AI v1.3.4 - Distributed State Management Layer
- *
- * Enterprise-grade distributed state management with Redis/ETCD integration
- * for multi-instance deployments with strong consistency guarantees.
- *
- * @version 1.0.0
- * @since 2026-01-08
  */
 import Redis from "ioredis";
 import { EventEmitter } from "events";
@@ -13,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 import { RaftConsensus } from "./raft-consensus";
 import { CircuitBreakerRegistry } from "../circuit-breaker/circuit-breaker";
 /**
- * Distributed State Manager - Core of multi-instance architecture
  */
 export class DistributedStateManager extends EventEmitter {
     redis;
@@ -111,7 +103,6 @@ export class DistributedStateManager extends EventEmitter {
         });
     }
     /**
-     * Set distributed state with conflict resolution and circuit breaker protection
      */
     async set(key, value, options = {}) {
         return this.circuitBreakerRegistry
@@ -161,7 +152,6 @@ export class DistributedStateManager extends EventEmitter {
             .catch(() => false);
     }
     /**
-     * Get distributed state with caching and circuit breaker protection
      */
     async get(key) {
         // Check local cache first
@@ -191,7 +181,6 @@ export class DistributedStateManager extends EventEmitter {
         return result.data;
     }
     /**
-     * Watch for state changes
      */
     watch(key, callback) {
         if (!this.watchers.has(key)) {
@@ -210,7 +199,6 @@ export class DistributedStateManager extends EventEmitter {
         };
     }
     /**
-     * Delete distributed state
      */
     async delete(key) {
         const fullKey = `${this.config.keyPrefix}${key}`;
@@ -236,7 +224,6 @@ export class DistributedStateManager extends EventEmitter {
         }
     }
     /**
-     * Get all active instances with circuit breaker protection
      */
     async getActiveInstances() {
         const result = await this.circuitBreakerRegistry.execute("redis-keys", async () => {
@@ -257,14 +244,12 @@ export class DistributedStateManager extends EventEmitter {
         return result.data || [];
     }
     /**
-     * Elect leader instance for coordination using Raft consensus
      */
     async electLeader() {
         await this.raftConsensus.startElection();
         return this.raftConsensus.getLeader() || this.instanceId;
     }
     /**
-     * Check if this instance is the leader
      */
     async isLeader() {
         return this.raftConsensus.isLeader();
@@ -383,7 +368,6 @@ export class DistributedStateManager extends EventEmitter {
     }
 }
 /**
- * Conflict Resolution Strategies
  */
 export class ConflictResolver {
     stateManager;
@@ -402,7 +386,6 @@ export class ConflictResolver {
     }
 }
 /**
- * Distributed Lock Manager for critical sections
  */
 export class DistributedLockManager {
     redis;
