@@ -358,6 +358,21 @@ function updateConsumerAgentsHeader(newVersion, counts) {
   console.log(`✅ Updated AGENTS-consumer.md version header`);
 }
 
+function updateSkillsMd(counts, newVersion) {
+  const skillsPath = path.join(rootDir, 'SKILLS.md');
+  if (!fs.existsSync(skillsPath)) {
+    console.log(`⚠️  SKILLS.md not found, skipping`);
+    return;
+  }
+  let content = fs.readFileSync(skillsPath, 'utf-8');
+  content = content.replace(
+    /^\*\*v[\d.]+\*\* — \*\*\d+ skills\*\*/m,
+    `**v${newVersion}** — **${counts.skills} skills**`
+  );
+  fs.writeFileSync(skillsPath, content);
+  console.log(`✅ Updated SKILLS.md version header`);
+}
+
 function applyAgentCountUpdates(content, counts) {
   let agentsMd = content;
 
@@ -494,6 +509,7 @@ function updateVersion(newVersion, changeDescription = '') {
   updateConsumerAgentsHeader(newVersion, counts);
   updateAgentsMd(counts);
   updateAgentsConsumerMd(counts);
+  updateSkillsMd(counts, newVersion);
   
   console.log(`\n🎉 Version updated to ${newVersion}\n`);
 }
@@ -562,6 +578,7 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   updateDocsReadme(current);
   updateAgentsMd(counts);
   updateAgentsConsumerMd(counts);
+  updateSkillsMd(counts, current);
   console.log(`\n✅ Release artifacts updated for v${current}\n`);
 }
 
@@ -612,6 +629,7 @@ function main() {
     updateDocsReadme(current);
     updateAgentsMd(counts);
     updateAgentsConsumerMd(counts);
+    updateSkillsMd(counts, current);
 
     // Update UVM's own version string to match package.json
     const uvmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');

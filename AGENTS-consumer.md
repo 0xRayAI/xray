@@ -9,11 +9,11 @@ Quick reference for the 0xRay AI orchestration framework (shipped to your projec
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
+- Ships root **`SKILLS.md`** and syncs **45 skills** to platform skill directories
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`)
 - Writes **`.mcp.json`** with 7 MCP servers (`npx -y 0xray mcp …`)
 - Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
-- Syncs framework skills to platform skill directories
 
 Optional extras: `npx 0xray setup`
 
@@ -25,9 +25,9 @@ All seven servers use `npx -y 0xray mcp <cmd>` — configured in your project `.
 |--------|------|
 | `xray-governance` | Proposal governance, codex snapshot, quality gates |
 | `xray-skills` | Skill invocation, 45 knowledge skills |
-| `xray-orchestrator` | Multi-agent workflow coordination, thinDispatch routing |
+| `xray-orchestrator` | thinDispatch routing, AsideContext, confidence gate |
 | `xray-enforcer` | Codex compliance enforcement, rule validation |
-| `xray-researcher` | Codebase exploration, implementation lookup |
+| `xray-researcher` | Codebase exploration, memory-routing enrichment |
 | `xray-code-review` | Proposal quality, code review deliberation |
 | `xray-architect-tools` | System design, architecture decisions |
 
@@ -62,6 +62,10 @@ xray operates under the three-subsystem model: **Inference** + **External Govern
 - Complex (≤50): Multi-agent coordination
 - Enterprise (>50): Orchestrator-led team
 
+## AsideContext (v3.2+)
+
+Bounded orchestrator subcontexts via `xray-orchestrator` MCP — `spawnAside` / `closeAside` on multi-step tasks. Repertoire memory routing (when enabled) flows through `inheritedContext.memoryRouting`.
+
 ## Memory Routing + Repertoire (optional, v3.3+)
 
 Configure in `.xray/features.json`:
@@ -90,6 +94,10 @@ Without Repertoire: `{ "enabled": false, "provider": "null" }`.
 
 Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signals`, `repertoire__search_primitives`, `repertoire__ingest_feedback`.
 
+## Skills
+
+Full catalog in root **`SKILLS.md`** (shipped on postinstall). Invoke via `@agent-name` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+
 ## File Organization
 
 | File Type | Save To |
@@ -100,3 +108,14 @@ Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signa
 | Test Files | `src/__tests__/` |
 | Source Code | `src/` |
 | Config | `config/` or `.xray/` |
+
+## Documentation
+
+| Topic | URL |
+|-------|-----|
+| Getting started | https://0xrayai.github.io/xray/docs/guides/getting-started |
+| Platform integrations | https://0xrayai.github.io/xray/docs/guides/integrations |
+| Features since 3.1 | https://0xrayai.github.io/xray/docs/guides/features-since-3.1 |
+| AsideContext | https://0xrayai.github.io/xray/docs/guides/aside-context |
+| Memory routing | https://0xrayai.github.io/xray/docs/guides/memory-routing |
+| Repertoire | https://0xrayai.github.io/xray/docs/guides/repertoire |

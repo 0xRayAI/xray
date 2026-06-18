@@ -7,7 +7,7 @@ xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npm install 0xray          # postinstall: 4 bridges + 7 MCP + AGENTS.md + SKILLS.md + .mcp.json
 npx 0xray status          # verify install
 npx 0xray setup            # optional: symlinks, hook extras
 ```
@@ -62,7 +62,7 @@ npx 0xray skill:install    # starter skills
 │  researcher (within 7-server consumer surface)  │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
-│  7-flow MCP · Delegation · Confidence gate      │
+│  7-flow · AsideContext · Confidence gate        │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -74,7 +74,7 @@ npx 0xray skill:install    # starter skills
 
 On `npm install 0xray` in a consumer project, postinstall automatically:
 
-1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**
+1. Copies **`AGENTS-consumer.md` → `AGENTS.md`** and ships root **`SKILLS.md`**
 2. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 3. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
 4. Writes project **`.mcp.json`** with 7 MCP servers (`npx -y 0xray mcp …`)

@@ -1,6 +1,10 @@
 # 0xray Skills
 
-xray ships **45 skills** that provide domain expertise across the full software lifecycle. Skills are loaded on demand and invoked via MCP servers, agents, or direct API.
+**v3.4.1** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
+
+xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
+
+Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw skill dirs. Framework repo also ships this file to consumers (3.1.1+).
 
 ---
 
@@ -10,7 +14,7 @@ xray ships **45 skills** that provide domain expertise across the full software 
 |-------|-------|-------------|
 | `code-review` | @code-reviewer | Proposal quality, code analysis, best practices |
 | `security-audit` | @security-auditor | Vulnerability detection, threat modeling |
-| `security-scan` | — | Security vulnerability scanning and assessment |
+| `security-scan` | @security-auditor | Security vulnerability scanning and assessment |
 | `enforcer` | @enforcer | Codex compliance validation and error prevention |
 | `framework-compliance-audit` | — | Framework compliance auditing and validation |
 
@@ -18,123 +22,145 @@ xray ships **45 skills** that provide domain expertise across the full software 
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `architect-tools` | — | System design and technical architecture tools |
+| `architect-tools` | @architect | System design and technical architecture tools |
 | `architecture-patterns` | — | Software architecture patterns and best practices |
 | `api-design` | — | RESTful API design and validation |
-| `database-engineer` | — | SQL/NoSQL schema design, query optimization, migrations |
+| `database-engineer` | @database-engineer | SQL/NoSQL schema design, query optimization, migrations |
 | `state-manager` | — | Application state management and persistence |
-| `session-management` | — | Manage user sessions and persistent state |
+| `session-management` | — | User sessions and persistent state |
 
 ## Engineering
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `backend-engineer` | — | REST/GraphQL APIs, microservices, auth, server architecture |
-| `frontend-engineer` | — | React/Vue/Angular/Svelte, responsive design, accessibility |
-| `frontend-ui-ux-engineer` | — | Visual design, CSS systems, accessibility, UX |
-| `mobile-developer` | — | iOS (Swift/SwiftUI), Android (Kotlin/Compose), RN, Flutter |
-| `devops-engineer` | — | CI/CD, IaaC, containers, cloud deployment, reliability |
+| `backend-engineer` | @backend-engineer | REST/GraphQL APIs, microservices, auth, server architecture |
+| `frontend-engineer` | @frontend-engineer | React/Vue/Angular/Svelte, responsive design, accessibility |
+| `frontend-ui-ux-engineer` | @frontend-ui-ux-engineer | Visual design, CSS systems, accessibility, UX |
+| `mobile-developer` | @mobile-developer | iOS, Android, React Native, Flutter |
+| `devops-engineer` | @devops-engineer | CI/CD, IaC, containers, cloud deployment |
 
 ## Code Quality & Analysis
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `code-analyzer` | — | Deep code analysis, metrics extraction, pattern detection |
-| `project-analysis` | — | Analyze project structure, complexity, and health metrics |
+| `code-analyzer` | @code-analyzer | Deep code analysis, metrics, pattern detection |
+| `project-analysis` | — | Project structure, complexity, health metrics |
 | `lint` | — | Code linting and static analysis |
-| `auto-format` | — | Automated code formatting and style consistency |
-| `refactoring-strategies` | @refactorer | Code refactoring techniques and strategies |
+| `auto-format` | — | Automated formatting and style consistency |
+| `refactoring-strategies` | @refactorer | Refactoring techniques and strategies |
 
 ## Testing
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
 | `testing-strategy` | @testing-lead | Comprehensive testing strategies and coverage |
-| `testing-best-practices` | — | Testing best practices and patterns |
+| `testing-best-practices` | — | Testing best practices and QA patterns |
 
 ## Performance
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `performance-analysis` | — | System performance analysis and optimization |
-| `performance-engineer` | — | Profiling, benchmarking, load testing, optimization |
-| `performance-optimization` | — | Application performance optimization and tuning |
+| `performance-analysis` | — | System performance analysis |
+| `performance-engineer` | @performance-engineer | Profiling, benchmarking, load testing |
+| `performance-optimization` | — | Application performance tuning |
 
 ## Debugging & Monitoring
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `bug-triage` | @bug-triage-specialist | Bug triage, debugging analysis, issue prioritization |
-| `log-monitor` | — | Log analysis, pattern detection, alerting |
+| `bug-triage` | @bug-triage-specialist | Bug triage, debugging, issue prioritization |
+| `log-monitor` | @log-monitor | Log analysis, pattern detection, alerting |
 | `model-health-check` | — | AI model health monitoring and diagnostics |
 
 ## Orchestration & Workflow
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `orchestrator` | @orchestrator | Multi-agent workflow coordination and task delegation |
-| `xray-orchestrator` | — | Main orchestration skill for xray agents |
+| `orchestrator` | @orchestrator | Multi-agent coordination, thinDispatch routing |
+| `xray-orchestrator` | — | xray orchestration skill (MCP orchestrator surface) |
 | `processor-pipeline` | — | Data processing pipeline management |
-| `boot-orchestrator` | — | Framework initialization and boot orchestration |
+| `boot-orchestrator` | — | Framework boot orchestration |
 
 ## Research & Content
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
 | `researcher` | @researcher | Codebase exploration, implementation lookup |
-| `content-creator` | — | Marketing copy, technical docs, blog posts, social media |
-| `tech-writer` | — | API docs, READMEs, ADRs, changelogs, DX |
-| `storyteller` | — | Deep narrative reflections, sagas, technical stories |
-| `seo-consultant` | — | Technical SEO, schema markup, Core Web Vitals |
-| `growth-strategist` | — | Campaign strategy, market analysis, brand positioning |
+| `content-creator` | @content-creator | Marketing copy, technical docs, SEO content |
+| `tech-writer` | @tech-writer | API docs, READMEs, ADRs, changelogs |
+| `storyteller` | @storyteller | Narrative reflections, sagas, technical stories |
+| `seo-consultant` | @seo-consultant | Technical SEO, schema markup, Core Web Vitals |
+| `growth-strategist` | @growth-strategist | Campaign strategy, market analysis, conversion |
 
 ## UX & Design
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `ui-ux-design` | — | Mobile-first, cognitive simplicity, accessibility-first |
-| `multimodal-looker` | — | Visual content analysis for diagrams, screenshots, UI mockups |
+| `ui-ux-design` | — | Mobile-first, cognitive simplicity, accessibility |
+| `multimodal-looker` | @multimodal-looker | Diagrams, screenshots, UI mockup analysis |
 
-## Strategy
-
-| Skill | Agent | Description |
-|-------|-------|-------------|
-| `strategist` | @strategist | Strategic guidance, architectural decisions, risk analysis |
-| `inference-improve` | — | Autonomous inference improvement through collaborative analysis |
-
-## Git & Workflow
+## Strategy & Inference
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `git-workflow` | — | Git workflow management and collaboration tools |
+| `strategist` | @strategist | Architecture decisions, risk analysis |
+| `inference-improve` | — | Autonomous inference improvement |
 
-## Integration
+## Git, Workflow & Integration
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `hermes-agent` | — | Manage xray from Hermes Agent via native plugin |
+| `git-workflow` | — | Git workflow and collaboration |
+| `hermes-agent` | @hermes-agent | Hermes Agent bridge operations |
 
 ---
 
 ## Invoking Skills
 
-Skills are invoked automatically by agents or via MCP:
+### Via agent (OpenCode / chat)
 
-```bash
-# Via agent mention (in any chat)
+```
 @code-reviewer review this PR
-
-# Via MCP tool call
-npx xray mcp call code-review analyze_code_quality --args '{"path": "src/"}' 
-
-# Via direct agent
-npx xray agent run @refactorer "optimize src/core/"
+@researcher find where auth is implemented
 ```
 
-## Skill Locations
+### Via xray-skills MCP (13 tools)
 
-Each skill has a `SKILL.md` with full reference:
+Configured in project `.mcp.json` on postinstall:
 
-- **Source**: `src/skills/<name>/SKILL.md`
-- **Consumer**: `node_modules/0xray/dist/skills/<name>/SKILL.md`
-- **Opend**: `.opencode/skills/<name>/SKILL.md` (copied on `npx xray setup`)
+```bash
+npx -y 0xray mcp skills    # stdio server
+```
+
+MCP tools include: `invoke-skill`, `list-skills`, `skill-code-review`, `skill-security-audit`, `skill-api-design`, `skill-testing-strategy`, and more.
+
+### Install additional skill packs
+
+```bash
+npx 0xray skill:install
+npx 0xray skill:install <source>
+```
+
+## Skill locations
+
+| Context | Path |
+|---------|------|
+| Source (framework) | `src/skills/<name>/SKILL.md` |
+| Published package | `node_modules/0xray/dist/skills/<name>/SKILL.md` |
+| OpenCode (after setup) | `.opencode/skills/<name>/SKILL.md` |
+| Grok | `~/.grok/skills/<name>/SKILL.md` + plugin dir |
+| Hermes / OpenClaw | Platform skill dirs (postinstall sync) |
+
+## Related features (since 3.1)
+
+| Feature | Skill connection |
+|---------|------------------|
+| **Memory routing** (v3.3) | Researcher uses Repertoire signals; optional `@0xray/repertoire` MCP |
+| **AsideContext** (v3.2) | Orchestrator subcontexts during skill dispatch |
+| **7 MCP servers** (v3.4.1) | `xray-skills` is the primary skill invocation surface |
+
+Docs: [AGENTS.md](AGENTS.md) · [README.md](README.md) · [Docusaurus guides](docs-site/docs/guides/)
+
+## Complete catalog (45)
+
+`api-design` · `architect-tools` · `architecture-patterns` · `auto-format` · `backend-engineer` · `boot-orchestrator` · `bug-triage` · `code-analyzer` · `code-review` · `content-creator` · `database-engineer` · `devops-engineer` · `enforcer` · `framework-compliance-audit` · `frontend-engineer` · `frontend-ui-ux-engineer` · `git-workflow` · `growth-strategist` · `hermes-agent` · `inference-improve` · `lint` · `log-monitor` · `mobile-developer` · `model-health-check` · `multimodal-looker` · `orchestrator` · `performance-analysis` · `performance-engineer` · `performance-optimization` · `processor-pipeline` · `project-analysis` · `refactoring-strategies` · `researcher` · `security-audit` · `security-scan` · `seo-consultant` · `session-management` · `state-manager` · `storyteller` · `strategist` · `tech-writer` · `testing-best-practices` · `testing-strategy` · `ui-ux-design` · `xray-orchestrator`

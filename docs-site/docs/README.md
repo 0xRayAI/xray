@@ -2,12 +2,12 @@
 
 **v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
-xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers.
+xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges, seven MCP servers, **AGENTS.md**, and **SKILLS.md**.
 
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npm install 0xray          # postinstall: 4 bridges + 7 MCP + AGENTS.md + SKILLS.md + .mcp.json
 npx 0xray status
 npx 0xray setup            # optional extras
 ```
@@ -16,9 +16,10 @@ Per-platform (idempotent):
 
 ```bash
 npx 0xray opencode install
-npx 0xray grok install
+npx 0xray grok install     # 7 MCP + dual skill sync
 npx 0xray hermes install
 npx 0xray openclaw install
+npx 0xray skill:install
 ```
 
 ## Three-Subsystem Architecture
@@ -29,38 +30,52 @@ npx 0xray openclaw install
 │  Proposals · Reflection · Memory routing        │
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
-│  Codex enforcement · Resonance/Isotopic · SSOT  │
+│  Codex enforcement · 68 terms · SSOT            │
 │  3 deliberation MCPs within 7-server surface    │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
-│  7-flow MCP · Delegation · Confidence gate      │
+│  7-flow · AsideContext · Confidence gate        │
 └─────────────────────────────────────────────────┘
 ```
 
 ## Seven MCP Servers
 
-| Server | Role |
-|--------|------|
-| `xray-governance` | Proposal governance, codex snapshot |
-| `xray-skills` | 45 knowledge skills |
-| `xray-orchestrator` | thinDispatch, task delegation |
-| `xray-enforcer` | Codex compliance |
-| `xray-researcher` | Codebase exploration |
-| `xray-code-review` | Code review deliberation |
-| `xray-architect-tools` | Architecture decisions |
+| Server | Command | Role |
+|--------|---------|------|
+| `xray-governance` | `mcp governance` | Proposal governance, codex snapshot |
+| `xray-skills` | `mcp skills` | **45 skills** + `invoke-skill` |
+| `xray-orchestrator` | `mcp orchestrator` | thinDispatch, AsideContext, confidence gate |
+| `xray-enforcer` | `mcp enforcer` | Codex compliance |
+| `xray-researcher` | `mcp researcher` | Codebase exploration + memory routing |
+| `xray-code-review` | `mcp code-review` | Code review deliberation |
+| `xray-architect-tools` | `mcp architect-tools` | Architecture decisions |
 
-All via `npx -y 0xray mcp <cmd>`. See [MCP Servers](./mcp/README.md).
+Optional: **`@0xray/repertoire` MCP** for external hosts — see [Repertoire](./guides/repertoire.md).
 
-## Agents
+## Agents & Skills
 
-**42 YML surfaces** in `src/opencode/agents/*.yml`. See [Agents](./agents/README.md).
+- **42 YML agents** — `src/opencode/agents/*.yml` — [Agents](./agents/README.md)
+- **45 skills** — `src/skills/*/SKILL.md` — shipped as root [SKILLS.md](https://github.com/0xRayAI/xray/blob/main/SKILLS.md) on postinstall
 
-## Since 3.1
+## Features Since 3.1
 
-- **3.4.1** — Unified 4-platform postinstall (`install-bridges.cjs`), 7-server `npx` MCP parity
-- **3.3.0** — Pluggable memory routing (`features.json`)
-- **3.2.0** — Typecheck hardening, orphan cleanup, full pre-tool-use hook
-- **3.1.1** — 0xRay rename, marketplace files, consumer AGENTS/SKILLS seeding
+| Version | Highlights |
+|---------|------------|
+| **3.4.1** | `install-bridges.cjs` postinstall, 7 MCP via `npx`, canonical `release.mjs` |
+| **3.3.1** | Orchestrator confidence gate (`getTaskConfidence`) |
+| **3.3.0** | Memory routing + Repertoire provider (`features.json`) |
+| **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook, typecheck hardening |
+| **3.1.1** | 0xRay rename, marketplace, consumer AGENTS/SKILLS seeding |
+
+## Key integrations
+
+| Feature | Guide |
+|---------|-------|
+| Platform bridges (4) | [Integrations](./guides/integrations.md) |
+| `features.json` / `memory_routing` | [features.json](./guides/features-json.md) |
+| Repertoire deep memory | [Repertoire](./guides/repertoire.md) |
+| AsideContext subcontexts | [AsideContext](./guides/aside-context.md) |
+| Full changelog | [Features Since 3.1](./guides/features-since-3.1.md) |
 
 ## Guides
 
@@ -73,6 +88,7 @@ All via `npx -y 0xray mcp <cmd>`. See [MCP Servers](./mcp/README.md).
 - [Repertoire Integration](./guides/repertoire.md)
 - [Consumer Migration (v3.4+)](./guides/consumer-migration.md)
 - [Full Reference](./full-reference.md)
+- [MCP Servers](./mcp/README.md)
 
 ## License
 

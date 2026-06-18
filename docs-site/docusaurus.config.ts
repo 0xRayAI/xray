@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'xray',
-  tagline: '42 agents · 7 MCP servers · 68 codex terms — MCP-centric AI Governance OS',
+  tagline: '42 agents · 45 skills · 7 MCP servers · 68 codex terms — MCP-centric AI Governance OS',
   favicon: 'img/favicon.ico',
   url: 'https://0xray.github.io',
   baseUrl: '/xray/',
