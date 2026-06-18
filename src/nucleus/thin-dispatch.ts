@@ -19,6 +19,12 @@ import {
   levelToTier,
 } from "../delegation/complexity-core.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
+import {
+  getMemoryRoutingProviderSync,
+  initializeMemoryRouting,
+} from "../memory-routing/index.js";
+
+initializeMemoryRouting();
 
 export type { ComplexityMetrics, ComplexityScore, ComplexityLevel, ComplexityThresholds };
 
@@ -78,8 +84,39 @@ export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string } {
+): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[] } } {
   const score = scoreComplexity(operation, context, thresholds);
-  const agent = routeToAgent(score);
+  let agent = routeToAgent(score);
+
+  const provider = getMemoryRoutingProviderSync();
+  let memoryRouting: { providerId: string; adjustedScore: number; signals: string[] } | undefined;
+
+  if (provider.id !== "null") {
+    const resolved = provider.resolveThinDispatch(agent, operation, score.score);
+    agent = resolved.agent;
+    memoryRouting = {
+      providerId: resolved.context.providerId,
+      adjustedScore: resolved.adjustedScore,
+      signals: resolved.context.matchedSignals,
+    };
+
+    const adjustedLevel = getLevelFromScore(resolved.adjustedScore, thresholds);
+    frameworkLogger.log("nucleus-thin-dispatch", "memory-routing", "info", {
+      providerId: resolved.context.providerId,
+      baseAgent: routeToAgent(score),
+      resolvedAgent: agent,
+      baseScore: score.score,
+      adjustedScore: resolved.adjustedScore,
+      level: adjustedLevel,
+      signals: resolved.context.matchedSignals,
+    });
+
+    return {
+      score: { ...score, score: resolved.adjustedScore, level: adjustedLevel },
+      agent,
+      memoryRouting,
+    };
+  }
+
   return { score, agent };
 }

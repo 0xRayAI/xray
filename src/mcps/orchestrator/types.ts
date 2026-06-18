@@ -8,6 +8,17 @@ export interface AgentCapability {
   capabilities: string[];
   complexityThreshold: number;
   concurrentTasks: number;
+  /** Populated by active MemoryRoutingProvider (e.g. Repertoire) */
+  memorySignals?: string[];
+  memoryTags?: string[];
+}
+
+export interface OrchestrationTaskMetadata {
+  memorySignals?: string[];
+  matchedPrimitives?: string[];
+  synthesisContext?: string;
+  ontologicalTrapDetected?: boolean;
+  memoryProviderId?: string;
 }
 
 export interface OrchestrationTask {
@@ -17,6 +28,7 @@ export interface OrchestrationTask {
   priority?: 'critical' | 'high' | 'medium' | 'low';
   dependencies?: string[];
   estimatedComplexity?: number;
+  metadata?: OrchestrationTaskMetadata;
 }
 
 export interface ExecutionPlan {
@@ -24,6 +36,7 @@ export interface ExecutionPlan {
   strategy: 'parallel' | 'sequential' | 'optimized';
   agentAssignments: Map<string, OrchestrationTask[]>;
   estimatedDuration: number;
+  memoryContext?: Record<string, unknown>;
 }
 
 export interface OrchestrationResult {

@@ -7,7 +7,8 @@
 import { frameworkLogger } from '../../../core/framework-logger.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { mcpClientManager } from '../../../mcps/mcp-client.js';
-import { addObservations, extractOrchestrationObservations } from '../aside-context.js';
+import { addObservations, extractOrchestrationObservations, spawnAside } from '../aside-context.js';
+import { getProvider } from '../config/memory-routing-bridge.js';
 import type { OrchestrationResult, OrchestrationTask } from '../types.js';
 
 export interface TaskHandlerDeps {
@@ -76,8 +77,42 @@ export class TaskHandler {
       // Analyze complexity and create execution plan
       const executionPlan = await this.planner.createExecutionPlan(tasks, executionMode);
 
+      const memoryProvider = getProvider();
+      if (memoryProvider.id !== 'null' && executionPlan.memoryContext) {
+        await spawnAside({
+          description: `Orchestrate: ${description}`,
+          sessionId,
+          inheritedContext: {
+            memoryRouting: executionPlan.memoryContext,
+          },
+        });
+      }
+
       // Execute orchestration (simulated for MCP server)
       const results = await this.executePlan(executionPlan, sessionId, timeout);
+
+      // Feed per-task outcomes back to memory provider (not aggregate session stats)
+      if (memoryProvider.ingestFeedback) {
+        const outcomeByKey = new Map(
+          results.taskOutcomes.map((o) => [`${o.agent}:${o.taskId}`, o]),
+        );
+
+        for (const [agent, assignedTasks] of executionPlan.agentAssignments) {
+          for (const task of assignedTasks) {
+            const outcome = outcomeByKey.get(`${agent}:${task.id}`);
+            memoryProvider.ingestFeedback({
+              timestamp: new Date().toISOString(),
+              sessionId,
+              taskId: task.id,
+              assignedAgent: agent,
+              memorySignals: task.metadata?.memorySignals ?? [],
+              complexity: task.estimatedComplexity ?? 30,
+              success: outcome?.success ?? false,
+              durationMs: outcome?.durationMs ?? 0,
+            });
+          }
+        }
+      }
 
       // Update result
       orchestrationResult.success = results.success;
@@ -136,11 +171,23 @@ export class TaskHandler {
     bottlenecks: string[];
     recommendations: string[];
     agentOutputs?: Record<string, string>;
+    taskOutcomes: Array<{
+      taskId: string;
+      agent: string;
+      success: boolean;
+      durationMs: number;
+    }>;
   }> {
     const agentUtilization: Record<string, number> = {};
     let completedTasks = 0;
     let failedTasks = 0;
     const agentOutputs: Record<string, string> = {};
+    const taskOutcomes: Array<{
+      taskId: string;
+      agent: string;
+      success: boolean;
+      durationMs: number;
+    }> = [];
 
     const skillServers = new Set([
       'code-review', 'code-reviewer',
@@ -158,6 +205,7 @@ export class TaskHandler {
 
       if (skillServers.has(agent)) {
         for (const task of tasks) {
+          const taskStart = Date.now();
           try {
             const toolName = this.mapAgentToTool(agent);
             const result = await mcpClientManager.callServerTool(agent, toolName, {
@@ -169,9 +217,21 @@ export class TaskHandler {
             const outputText = this.extractTextFromMcpResult(result);
             agentOutputs[`${agent}:${task.id}`] = outputText;
             completedTasks++;
+            taskOutcomes.push({
+              taskId: task.id,
+              agent,
+              success: true,
+              durationMs: Date.now() - taskStart,
+            });
           } catch (err) {
             failedTasks++;
             agentOutputs[`${agent}:${task.id}`] = `Error: ${err instanceof Error ? err.message : String(err)}`;
+            taskOutcomes.push({
+              taskId: task.id,
+              agent,
+              success: false,
+              durationMs: Date.now() - taskStart,
+            });
             frameworkLogger.log('orchestrator.task-handler', 'task-execution-failed', 'warning', {
               agent,
               taskId: task.id,
@@ -181,7 +241,15 @@ export class TaskHandler {
         }
       } else {
         // For non-MCP agents we still count them as "assigned" (they will be handled by the caller or legacy path)
-        completedTasks += tasks.length;
+        for (const task of tasks) {
+          completedTasks++;
+          taskOutcomes.push({
+            taskId: task.id,
+            agent,
+            success: true,
+            durationMs: 0,
+          });
+        }
       }
     }
 
@@ -205,6 +273,7 @@ export class TaskHandler {
       bottlenecks,
       recommendations,
       agentOutputs,
+      taskOutcomes,
     };
   }
 

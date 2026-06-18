@@ -11,6 +11,11 @@ import type {
   TaskValidation 
 } from '../types.js';
 import { getAgentCapabilitiesManager } from '../config/agent-capabilities.js';
+import {
+  getProvider,
+  toMemoryTask,
+  fromMemoryTask,
+} from '../config/memory-routing-bridge.js';
 
 /**
  * Execution Planner
@@ -67,29 +72,41 @@ export class ExecutionPlanner {
     tasks: OrchestrationTask[],
     executionMode: string
   ): Promise<ExecutionPlan> {
+    const provider = getProvider();
+    const memoryTasks = provider.enrichTasks(tasks.map(toMemoryTask));
+    const enrichedTasks = memoryTasks.map(fromMemoryTask);
+
     const agentAssignments = new Map<string, OrchestrationTask[]>();
 
     switch (executionMode) {
       case 'parallel':
-        this.createParallelPlan(tasks, agentAssignments);
+        this.createParallelPlan(enrichedTasks, agentAssignments);
         break;
       case 'sequential':
-        this.createSequentialPlan(tasks, agentAssignments);
+        this.createSequentialPlan(enrichedTasks, agentAssignments);
         break;
       case 'optimized':
       default:
-        await this.createOptimizedPlan(tasks, agentAssignments);
+        await this.createOptimizedPlan(enrichedTasks, agentAssignments);
         break;
     }
 
     const estimatedDuration = this.estimateExecutionDuration(agentAssignments);
 
-    return {
-      tasks,
+    const plan: ExecutionPlan = {
+      tasks: enrichedTasks,
       strategy: executionMode as 'parallel' | 'sequential' | 'optimized',
       agentAssignments,
       estimatedDuration,
     };
+
+    if (provider.id !== 'null') {
+      plan.memoryContext = {
+        ...provider.buildInheritedContext(memoryTasks),
+      } as Record<string, unknown>;
+    }
+
+    return plan;
   }
 
   /**
@@ -197,9 +214,14 @@ export class ExecutionPlanner {
   ): void {
     for (const task of tasks) {
       const complexity = task.estimatedComplexity || 30;
+      const requiredCaps = [
+        task.type,
+        ...(task.metadata?.memorySignals ?? []),
+      ];
       const agent = this.capabilitiesManager.selectAgentForTask(
-        [task.type],
-        complexity
+        requiredCaps,
+        complexity,
+        task.description,
       ) || 'orchestrator';
 
       if (!agentAssignments.has(agent)) {
@@ -247,9 +269,14 @@ export class ExecutionPlanner {
       });
 
       // Assign to agent
+      const requiredCaps = [
+        task.type,
+        ...(task.metadata?.memorySignals ?? []),
+      ];
       const agent = this.capabilitiesManager.selectAgentForTask(
-        [task.type],
-        complexity
+        requiredCaps,
+        complexity,
+        task.description,
       ) || 'orchestrator';
 
       if (!assignments.has(agent)) {

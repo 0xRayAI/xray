@@ -10,6 +10,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import { getConfigDir, resolveConfigPath } from "./config-paths.js";
+import type { MemoryRoutingConfig } from "../memory-routing/types.js";
+
+export type { MemoryRoutingConfig };
 
 // ============================================================================
 // Type Definitions
@@ -363,6 +366,7 @@ export interface FeaturesConfig {
   storytelling?: StorytellingConfig;
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
+  memory_routing?: MemoryRoutingConfig;
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;
   enforcement?: EnforcementConfig;
@@ -945,6 +949,10 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
 
   public getInference(): InferenceConfig | undefined {
     return this.loadConfig().inference;
+  }
+
+  public getMemoryRouting(): MemoryRoutingConfig | undefined {
+    return this.loadConfig().memory_routing;
   }
 
   public getPublish(): PublishConfig | undefined {
