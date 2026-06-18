@@ -10,19 +10,37 @@ const os = require("os");
 const { execSync } = require("child_process");
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
-const MERGE_FILES = new Set(["xray/features.json", "enforcer-config.json"]);
+const MERGE_FILES = new Set(["enforcer-config.json"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
 
+/** Canonical 7-server MCP surface — matches package .mcp.json and Grok plugin */
+const XRAY_MCP_SERVERS = [
+  { name: "xray-governance", mcpCmd: "governance", env: { XRAY_FORCE_MCP_GOVERNANCE: "true" } },
+  { name: "xray-skills", mcpCmd: "skills", env: {} },
+  { name: "xray-orchestrator", mcpCmd: "orchestrator", env: {} },
+  { name: "xray-enforcer", mcpCmd: "enforcer", env: {} },
+  { name: "xray-researcher", mcpCmd: "researcher", env: {} },
+  { name: "xray-code-review", mcpCmd: "code-review", env: {} },
+  { name: "xray-architect-tools", mcpCmd: "architect-tools", env: {} },
+];
+
 function resolveConsumerTargetDir(packageRoot, fallbackDir) {
-  const resolvedPackage = path.resolve(packageRoot);
-  if (resolvedPackage.includes(`${path.sep}node_modules${path.sep}`)) {
-    let current = resolvedPackage;
-    while (current.includes(`${path.sep}node_modules${path.sep}`)) {
-      current = path.dirname(current);
-    }
-    return current;
+  const resolved = path.resolve(packageRoot);
+  const inNodeModules =
+    resolved.includes(`${path.sep}node_modules${path.sep}`) ||
+    resolved.endsWith(`${path.sep}node_modules`);
+
+  if (!inNodeModules) {
+    return fallbackDir || process.env.PWD || process.cwd();
   }
-  return fallbackDir || process.env.PWD || process.cwd();
+
+  let current = resolved;
+  while (path.basename(current) !== "node_modules") {
+    const parent = path.dirname(current);
+    if (parent === current) return fallbackDir || process.cwd();
+    current = parent;
+  }
+  return path.dirname(current);
 }
 
 function isConsumerInstall(packageRoot, targetDir) {
@@ -108,6 +126,91 @@ function copyPluginDir(src, dest) {
   return true;
 }
 
+function buildConsumerMcpConfig(targetDir) {
+  const mcpServers = {};
+  for (const s of XRAY_MCP_SERVERS) {
+    mcpServers[s.name] = {
+      command: "npx",
+      args: ["-y", "0xray", "mcp", s.mcpCmd],
+      env: { ...s.env, XRAY_ROOT: targetDir },
+    };
+  }
+  return { mcpServers };
+}
+
+function deployProjectMcpJson(targetDir, log) {
+  const destPath = path.join(targetDir, ".mcp.json");
+  const consumerConfig = buildConsumerMcpConfig(targetDir);
+  let existing = { mcpServers: {} };
+  if (fs.existsSync(destPath)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(destPath, "utf8"));
+    } catch {
+      existing = { mcpServers: {} };
+    }
+  }
+  const merged = {
+    ...existing,
+    mcpServers: { ...(existing.mcpServers || {}), ...consumerConfig.mcpServers },
+  };
+  fs.writeFileSync(destPath, JSON.stringify(merged, null, 2) + "\n");
+  log("mcp-config", "project .mcp.json deployed (7 xray servers)", "info");
+}
+
+function writePluginMcpJson(pluginDir, targetDir, log, label) {
+  if (!fs.existsSync(pluginDir)) return;
+  const dest = path.join(pluginDir, ".mcp.json");
+  fs.writeFileSync(dest, JSON.stringify(buildConsumerMcpConfig(targetDir), null, 2) + "\n");
+  log(label, "plugin .mcp.json patched for consumer", "info");
+}
+
+function mergeOpencodeJson(targetDir, packageRoot, log) {
+  const rootOpencode = path.join(packageRoot, "opencode.json");
+  const userOpencode = path.join(targetDir, "opencode.json");
+  if (!fs.existsSync(rootOpencode)) return;
+
+  try {
+    const srcData = JSON.parse(fs.readFileSync(rootOpencode, "utf8"));
+    if (fs.existsSync(userOpencode)) {
+      const destData = JSON.parse(fs.readFileSync(userOpencode, "utf8"));
+      const merged = { ...destData };
+      if (srcData.agent) merged.agent = srcData.agent;
+      if (srcData.mcp) merged.mcp = { ...destData.mcp, ...srcData.mcp };
+      if (srcData.compaction) merged.compaction = srcData.compaction;
+      fs.writeFileSync(userOpencode, JSON.stringify(merged, null, 2) + "\n");
+    } else {
+      fs.copyFileSync(rootOpencode, userOpencode);
+    }
+    log("opencode-bridge", "opencode.json merged", "info");
+  } catch (e) {
+    log("opencode-bridge", "opencode.json merge failed", "warn", { error: e.message });
+  }
+}
+
+function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
+  const hooksPath = path.join(pluginDir, "hooks", "hooks.json");
+  const hookScript = path.join(packageRoot, "dist", "integrations", "grok", "hooks", "pre-tool-use.js");
+  if (!fs.existsSync(hooksPath)) return;
+
+  try {
+    const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
+    const preTool = hooks.hooks?.PreToolUse?.[0]?.hooks?.[0];
+    if (preTool && fs.existsSync(hookScript)) {
+      preTool.command = "node";
+      preTool.args = [hookScript];
+      preTool.env = {
+        ...(preTool.env || {}),
+        XRAY_ROOT: targetDir,
+        XRAY_AI_PATH: packageRoot,
+      };
+      fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
+      log(label, "hooks.json patched → enforcement gate", "info");
+    }
+  } catch (e) {
+    log(label, "hooks.json patch failed", "warn", { error: e.message });
+  }
+}
+
 function installOpencodeBridge(targetDir, packageRoot, log) {
   const opencodeSource = path.join(packageRoot, ".opencode");
   const opencodeDest = path.join(targetDir, ".opencode");
@@ -149,37 +252,25 @@ function findGrokPluginSource(packageRoot) {
   return candidates.find((p) => fs.existsSync(p));
 }
 
-function registerGrokMcpServers(packageRoot, targetDir, log) {
+function registerGrokMcpServers(targetDir, log) {
   try {
     execSync("which grok", { stdio: "ignore" });
   } catch {
-    log("grok-bridge", "grok CLI not on PATH — skipped MCP registration", "info");
+    log("grok-bridge", "grok CLI not on PATH — plugin .mcp.json still configured", "info");
     return;
   }
 
-  const govServer = path.join(packageRoot, "dist/mcps/governance.server.js");
-  const skillsServer = path.join(packageRoot, "dist/mcps/knowledge-skills/skill-invocation.server.js");
-  const orchServer = path.join(packageRoot, "dist/mcps/orchestrator.server.js");
-  const enforcerServer = path.join(packageRoot, "dist/mcps/enforcer-tools.server.js");
-
-  const servers = [
-    ["xray-governance", govServer, `XRAY_FORCE_MCP_GOVERNANCE=true`],
-    ["xray-skills", skillsServer, null],
-    ["xray-orchestrator", orchServer, null],
-    ["xray-enforcer", enforcerServer, null],
-  ];
-
-  for (const [name, serverPath, extraEnv] of servers) {
-    if (!fs.existsSync(serverPath)) continue;
+  for (const s of XRAY_MCP_SERVERS) {
     try {
-      const envFlags = extraEnv
-        ? `--env "${extraEnv}" --env "XRAY_ROOT=${targetDir}"`
-        : `--env "XRAY_ROOT=${targetDir}"`;
+      const envEntries = { ...s.env, XRAY_ROOT: targetDir };
+      const envFlags = Object.entries(envEntries)
+        .map(([k, v]) => `--env "${k}=${v}"`)
+        .join(" ");
       execSync(
-        `grok mcp add ${name} --command node --args "${serverPath}" ${envFlags}`,
+        `grok mcp add ${s.name} --command npx --args "-y" "0xray" "mcp" "${s.mcpCmd}" ${envFlags}`,
         { stdio: "pipe" }
       );
-      log("grok-bridge", `registered ${name}`, "info");
+      log("grok-bridge", `registered ${s.name} (npx)`, "info");
     } catch {
       // already registered or grok config conflict — non-blocking
     }
@@ -217,6 +308,8 @@ function installGrokBridge(targetDir, packageRoot, log) {
     if (copyPluginDir(sourceDir, dest)) {
       const rel = dest.startsWith(home) ? dest.replace(home, "~") : path.relative(targetDir, dest);
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
+      writePluginMcpJson(dest, targetDir, log, "grok-bridge");
+      patchGrokHooks(dest, packageRoot, targetDir, log, "grok-bridge");
       const copied = syncBuiltinSkills(path.join(dest, "skills"), packageRoot);
       if (copied > 0) log("grok-bridge", `plugin skills synced (${copied})`, "info", { path: rel });
     }
@@ -229,10 +322,10 @@ function installGrokBridge(targetDir, packageRoot, log) {
     log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
   }
 
-  registerGrokMcpServers(packageRoot, targetDir, log);
+  registerGrokMcpServers(targetDir, log);
 }
 
-function installHermesBridge(packageRoot, log) {
+function installHermesBridge(targetDir, packageRoot, log) {
   const sources = [
     path.join(packageRoot, "dist", "integrations", "hermes-agent"),
     path.join(packageRoot, "src", "integrations", "hermes-agent"),
@@ -256,8 +349,15 @@ function installHermesBridge(packageRoot, log) {
   }
   log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
 
+  writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
+
   const copied = syncBuiltinSkills(path.join(targetPluginDir, "skills"), packageRoot);
   if (copied > 0) log("hermes-bridge", `skills synced (${copied})`, "info");
+
+  // Marker so bridge.mjs resolves the consumer project on hook invocation
+  const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
+  fs.writeFileSync(rootMarker, targetDir + "\n");
+  log("hermes-bridge", "consumer root marker written", "info");
 }
 
 function installOpenclawBridge(targetDir, packageRoot, log) {
@@ -347,9 +447,11 @@ function installAllBridges(opts) {
   log("install-bridges", "starting 4-platform install", "info");
 
   deployXrayConfig(targetDir, packageRoot, log);
+  deployProjectMcpJson(targetDir, log);
+  mergeOpencodeJson(targetDir, packageRoot, log);
   installOpencodeBridge(targetDir, packageRoot, log);
   installGrokBridge(targetDir, packageRoot, log);
-  installHermesBridge(packageRoot, log);
+  installHermesBridge(targetDir, packageRoot, log);
   installOpenclawBridge(targetDir, packageRoot, log);
   installGitHooks(packageRoot, log);
 

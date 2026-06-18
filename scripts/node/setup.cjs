@@ -6,7 +6,7 @@ const path = require("path");
 const packageRoot = path.join(__dirname, "..", "..");
 const homeDir = require("os").homedir();
 
-const { resolveConsumerTargetDir } = require("./install-bridges.cjs");
+const { resolveConsumerTargetDir, isConsumerInstall } = require("./install-bridges.cjs");
 let targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
 
 const resolvedPackage = path.resolve(packageRoot);
@@ -155,8 +155,13 @@ if (fs.existsSync(distSource)) {
 }
 
 // 6. Convert MCP paths in consumer opencode.json
-const isConsumer = fs.existsSync(path.join(targetDir, "node_modules", "xray", "package.json"));
-if (!hasHermes && isConsumer) {
+const isConsumer = isConsumerInstall(packageRoot, targetDir);
+const consumerPkgName = isConsumer
+  ? ["0xray", "xray"].find((name) =>
+      fs.existsSync(path.join(targetDir, "node_modules", name, "package.json"))
+    )
+  : null;
+if (!hasHermes && isConsumer && consumerPkgName) {
   const mainOpencodePath = path.join(targetDir, "opencode.json");
   if (fs.existsSync(mainOpencodePath)) {
     try {
@@ -167,13 +172,13 @@ if (!hasHermes && isConsumer) {
           if (server.command && typeof server.command === "string") {
             const normalized = server.command.replace(
               /^[.]{0,2}\/dist\/mcps\//,
-              "node_modules/xray/dist/mcps/"
+              `node_modules/${consumerPkgName}/dist/mcps/`
             );
             if (normalized !== server.command) { server.command = normalized; modified = true; }
           }
           if (Array.isArray(server.command)) {
             server.command = server.command.map(a =>
-              a.replace(/^[.]{0,2}\/dist\/mcps\//, "node_modules/xray/dist/mcps/")
+              a.replace(/^[.]{0,2}\/dist\/mcps\//, `node_modules/${consumerPkgName}/dist/mcps/`)
             );
             modified = true;
           }

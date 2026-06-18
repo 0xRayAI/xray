@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.3.2] - 2026-06-17
+
+### ✨ Features
+- Unified 4-platform bridge installer (`install-bridges.cjs`) runs on consumer `npm i 0xray` postinstall — OpenCode, Grok, Hermes, OpenClaw
+- All 7 MCP servers registered via `npx -y 0xray mcp <cmd>` (no brittle `dist/` paths)
+- `npx 0xray grok install` aligned with postinstall: 7 servers via npx, idempotent skill/MCP sync on re-run
+- Grok skills synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor)
+
+### 🐛 Bug Fixes
+- `setup.cjs` consumer detection uses `isConsumerInstall()` — works for both `node_modules/0xray` and `node_modules/xray`
+- Hermes bridge honors `XRAY_ROOT` env and `xray-consumer-root.txt` marker for correct project root resolution
+
 ## [3.3.0] - 2026-06-18
 
 ### 🔄 Changes

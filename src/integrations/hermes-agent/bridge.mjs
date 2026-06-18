@@ -53,8 +53,18 @@ let frameworkLoadAttempted = false;
 
 // ── Project root detection ───────────────────────────────────
 function findProjectRoot() {
-  const envHome = process.env.XRAY_HOME;
+  const envHome = process.env.XRAY_HOME || process.env.XRAY_ROOT;
   if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
+
+  const consumerMarker = join(__dirname, "xray-consumer-root.txt");
+  if (existsSync(consumerMarker)) {
+    try {
+      const marked = readFileSync(consumerMarker, "utf-8").trim();
+      if (marked && existsSync(join(marked, "package.json"))) return marked;
+    } catch {
+      // fall through
+    }
+  }
 
   const candidates = [
     process.cwd(),

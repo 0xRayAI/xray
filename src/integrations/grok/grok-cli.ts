@@ -19,10 +19,51 @@ import { frameworkLogger } from '../../core/framework-logger.js';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { createRequire } from 'module';
 import { syncBuiltinSkills } from '../../cli/commands/skill-install.js';
 
 // ESM-compatible __dirname (this file is compiled to ESM)
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const packageRoot = path.resolve(__dirname, '..', '..', '..');
+const requireCjs = createRequire(import.meta.url);
+const { resolveConsumerTargetDir } = requireCjs(
+  path.join(packageRoot, 'scripts/node/install-bridges.cjs')
+);
+
+/** Canonical 7-server MCP surface — matches install-bridges.cjs and package .mcp.json */
+const XRAY_MCP_SERVERS = [
+  { name: 'xray-governance', mcpCmd: 'governance', env: { XRAY_FORCE_MCP_GOVERNANCE: 'true' } },
+  { name: 'xray-skills', mcpCmd: 'skills', env: {} },
+  { name: 'xray-orchestrator', mcpCmd: 'orchestrator', env: {} },
+  { name: 'xray-enforcer', mcpCmd: 'enforcer', env: {} },
+  { name: 'xray-researcher', mcpCmd: 'researcher', env: {} },
+  { name: 'xray-code-review', mcpCmd: 'code-review', env: {} },
+  { name: 'xray-architect-tools', mcpCmd: 'architect-tools', env: {} },
+] as const;
+
+function registerGrokMcpServers(targetDir: string): void {
+  try {
+    execSync('which grok', { stdio: 'ignore' });
+  } catch {
+    console.log('[Grok] grok CLI not on PATH — plugin .mcp.json still configured');
+    return;
+  }
+
+  for (const s of XRAY_MCP_SERVERS) {
+    try {
+      const envEntries = { ...s.env, XRAY_ROOT: targetDir };
+      const envFlags = Object.entries(envEntries)
+        .map(([k, v]) => `--env "${k}=${v}"`)
+        .join(' ');
+      execSync(
+        `grok mcp add ${s.name} --command npx --args "-y" "0xray" "mcp" "${s.mcpCmd}" ${envFlags}`,
+        { stdio: 'pipe' }
+      );
+    } catch {
+      // already registered or grok config conflict — non-blocking
+    }
+  }
+}
 
 export interface GrokInstallOptions {
   force?: boolean;
@@ -53,17 +94,18 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     return;
   }
 
+  const targetDir = resolveConsumerTargetDir(packageRoot, process.cwd());
+
   try {
-    if (fs.existsSync(targetPluginDir) && !options.force) {
+    const pluginExists = fs.existsSync(targetPluginDir);
+    if (pluginExists && !options.force) {
       console.log('[Grok] 0xray Grok plugin is already installed.');
-      console.log('Use --force to reinstall.');
-      return;
+      console.log('Use --force to reinstall plugin files.');
+    } else {
+      fs.cpSync(sourceDir, targetPluginDir, { recursive: true, force: true });
+      frameworkLogger.log('grok-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
+      console.log(`\x1b[32m✓ Copied Grok plugin to ${targetPluginDir}\x1b[0m`);
     }
-
-    fs.cpSync(sourceDir, targetPluginDir, { recursive: true, force: true });
-    frameworkLogger.log('grok-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
-
-    console.log(`\x1b[32m✓ Copied Grok plugin to ${targetPluginDir}\x1b[0m`);
 
     // Sync builtin skills to Grok plugin skills dir
     const grokSkillsDir = path.join(targetPluginDir, 'skills');
@@ -89,36 +131,9 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       console.log(`  grok plugins trust "${targetPluginDir}"`);
     }
 
-    // Register MCP servers via grok mcp add (most reliable mechanism)
-    const govMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/governance.server.js');
-    const skillsMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/knowledge-skills/skill-invocation.server.js');
-    const orchMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/orchestrator.server.js');
-    const enforcerMcpPath = path.resolve(__dirname, '..', '..', '..', 'dist/mcps/enforcer-tools.server.js');
-    try {
-      execSync(
-        `grok mcp add xray-governance --command node --args "${govMcpPath}" --env "XRAY_FORCE_MCP_GOVERNANCE=true" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
-      execSync(
-        `grok mcp add xray-skills --command node --args "${skillsMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
-      execSync(
-        `grok mcp add xray-orchestrator --command node --args "${orchMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
-      execSync(
-        `grok mcp add xray-enforcer --command node --args "${enforcerMcpPath}" --env "XRAY_ROOT=${process.cwd()}"`,
-        { stdio: 'pipe' }
-      );
-      console.log('\x1b[32m✓ Registered xray MCP servers with Grok CLI\x1b[0m');
-    } catch {
-      console.log('\nCould not auto-register MCP servers. Run manually:');
-      console.log(`  grok mcp add xray-governance --command node --args "${govMcpPath}"`);
-      console.log(`  grok mcp add xray-skills --command node --args "${skillsMcpPath}"`);
-      console.log(`  grok mcp add xray-orchestrator --command node --args "${orchMcpPath}"`);
-      console.log(`  grok mcp add xray-enforcer --command node --args "${enforcerMcpPath}"`);
-    }
+    // Register MCP servers via grok mcp add (npx -y 0xray mcp — matches install-bridges)
+    registerGrokMcpServers(targetDir);
+    console.log('\x1b[32m✓ Registered 7 xray MCP servers with Grok CLI (npx)\x1b[0m');
 
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
     console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
