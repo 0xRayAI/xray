@@ -1,6 +1,8 @@
 # MCP Server Reference
 
-0xRay includes 15 internal MCP server files (`dist/mcps/*.server.js`) that provide framework-level capabilities. These are loaded automatically at runtime by the orchestrator.
+0xRay includes internal MCP server implementations (`dist/mcps/*.server.js`) beyond the **7 consumer servers** in `.mcp.json`. Consumer projects use the 7-server `npx` surface — see [MCP README](./README.md).
+
+The table below lists framework-level servers loaded at runtime by the orchestrator (subset of full inventory):
 
 | # | Server | Purpose |
 |---|--------|---------|
@@ -20,6 +22,6 @@
 | 14 | `security-scan` | Security vulnerability detection |
 | 15 | `state-manager` | State management and persistence |
 
-## User-Facing MCP Servers
+## Consumer MCP Servers (7)
 
-For the two MCP servers you interact with directly (xray-skills and xray-governance), see the [MCP Servers overview](./).
+All consumer projects receive `.mcp.json` with 7 servers on postinstall: governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools. See [MCP Servers overview](./README.md).

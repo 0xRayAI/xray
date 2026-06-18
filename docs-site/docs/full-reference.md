@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.0.0** — 41 agents · 44 skills · 15 MCP servers · 68 codex terms · 2,196 tests
+**v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
@@ -15,20 +15,18 @@ Think of it as an **AI supervisor for your AI coders**: catch hallucinations, pr
 ## Quick Start
 
 ```bash
-npm install 0xray
+npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
 
-# Verify installation
-npx 0xray status
+npx 0xray status           # verify
+npx 0xray setup            # optional extras
 
-# Install for your AI coding platform
-npx 0xray opencode install      # OpenCode (most common)
-npx 0xray grok install          # Grok CLI
-npx 0xray hermes install        # Hermes Agent
-
-# Install starter skills (recommended)
+# Per-platform (idempotent — same as postinstall)
+npx 0xray opencode install
+npx 0xray grok install     # 7 MCP servers + dual skill sync
+npx 0xray hermes install
+npx 0xray openclaw install
 npx 0xray skill:install
 
-# See all available commands
 npx 0xray --help
 ```
 
@@ -82,16 +80,24 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 ## Platform Installation
 
-0xRay integrates with all major AI coding platforms:
+`npm install 0xray` runs **`install-bridges.cjs`** on postinstall (consumer projects only):
+
+1. `AGENTS-consumer.md` → `AGENTS.md`
+2. `.gitignore.default` → `.gitignore` (if absent)
+3. `.xray/` config deploy (`codex.json`, `features.json`, `config.json`)
+4. Project `.mcp.json` with **7 MCP servers** (`npx -y 0xray mcp …`)
+5. Four bridges below + skill sync + optional git hooks
 
 | Platform | Install Command | What It Does |
 |----------|----------------|--------------|
-| **OpenCode** | `npx 0xray opencode install` | Installs as native plugin, seeds YML agent surfaces, merges configuration |
-| **Grok CLI** | `npx 0xray grok install` | Registers plugin + xray-skills MCP server (13 tools, 44 skills) |
-| **Hermes Agent** | `npx 0xray hermes install` | Copies bridge plugin to `~/.hermes/plugins/` |
-| **OpenClaw** | `npx 0xray openclaw install` | Creates integration config at `.xray/config/openclaw.json` |
+| **OpenCode** | `npx 0xray opencode install` | Merges `opencode.json`, copies 42 YML agent surfaces |
+| **Grok CLI / Build** | `npx 0xray grok install` | Plugin + `~/.grok/skills/` sync, 7 MCP servers |
+| **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
+| **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
 
-Postinstall automatically registers MCP servers with Grok CLI when `grok` is available on your PATH.
+:::note
+`npx 0xray hermes bridge` was removed in 3.1+. Use `hermes install`.
+:::
 
 ---
 
@@ -122,12 +128,17 @@ Postinstall automatically registers MCP servers with Grok CLI when `grok` is ava
 | `skill:registry add --name X --url Y` | Add a custom skill source |
 | `skill:registry remove --name X` | Remove a skill source |
 
-### MCP Servers
+### MCP Servers (7 consumer servers)
 
 | Command | Description |
 |---------|-------------|
-| `mcp skills` | Run the xray-skills MCP server (stdio, 13 tools) |
-| `mcp governance` | Run the xray-governance MCP server (stdio, advanced) |
+| `mcp governance` | Proposal governance, codex snapshot |
+| `mcp skills` | 45 knowledge skills + skill invocation (13 tools) |
+| `mcp orchestrator` | thinDispatch 7-flow, task delegation |
+| `mcp enforcer` | Codex compliance enforcement |
+| `mcp researcher` | Codebase exploration |
+| `mcp code-review` | Code review deliberation |
+| `mcp architect-tools` | Architecture decisions |
 | `mcp:list` | Browse available community MCP servers |
 | `mcp:status` | Show installed MCP servers |
 | `mcp:install <name>` | Install an MCP server from the registry |
@@ -180,7 +191,9 @@ Every subsystem is configurable via `features.json` (located at `xray/features.j
 
 ```json
 {
-  "version": "3.0.0",
+  "memory_routing": {
+    "enabled": false
+  },
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
@@ -225,9 +238,9 @@ The governance pipeline works in three stages:
 
 ---
 
-## Included Agents (41)
+## Included Agents (42)
 
-0xRay ships with specialized agents for every engineering domain:
+0xRay ships with **42 YML agent surfaces** in `src/opencode/agents/`. Core governance agents:
 
 | Agent | Role |
 |-------|------|

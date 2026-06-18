@@ -176,20 +176,18 @@ function getFrameworkCounts() {
       .length;
   }
   
-  // Count MCP servers (.server.js files in dist/mcps/)
-  const mcpsDir = path.join(rootDir, 'dist/mcps');
-  if (fs.existsSync(mcpsDir)) {
-    counts.mcps = fs.readdirSync(mcpsDir)
-      .filter(f => f.endsWith('.server.js'))
-      .length;
-  } else {
-    // Try node_modules path for published package
-    const nodeModulesMcps = path.join(rootDir, 'node_modules/xray/dist/mcps');
-    if (fs.existsSync(nodeModulesMcps)) {
-      counts.mcps = fs.readdirSync(nodeModulesMcps)
-        .filter(f => f.endsWith('.server.js'))
-        .length;
+  // Consumer MCP count from .mcp.json SSOT (7 servers), not internal dist/mcps inventory
+  const mcpJsonPath = path.join(rootDir, '.mcp.json');
+  if (fs.existsSync(mcpJsonPath)) {
+    try {
+      const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf-8'));
+      const servers = mcpJson.mcpServers || mcpJson.servers || {};
+      counts.mcps = Object.keys(servers).length;
+    } catch {
+      counts.mcps = 7;
     }
+  } else {
+    counts.mcps = 7;
   }
   
   // Count skills (directories in src/skills/ with SKILL.md)
@@ -271,6 +269,12 @@ function updateReadme(counts, newVersion) {
   }
   
   let readme = fs.readFileSync(readmePath, 'utf-8');
+
+  // Update header line: **v3.4.1** — 42 agents · 45 skills · 7 MCP servers · ...
+  readme = readme.replace(
+    /^\*\*v[\d.]+\*\* — \d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m,
+    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · 68 codex terms · 3,226 tests`
+  );
   
   // Update version badge: [![Version](https://img.shields.io/badge/version-1.6.x-blue...)]
   readme = readme.replace(

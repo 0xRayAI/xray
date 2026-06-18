@@ -7,6 +7,47 @@ const sidebars: SidebarsConfig = {
       id: 'README',
       label: 'xray — MCP-Centric AI Governance OS',
     },
+    'index',
+    'introduction',
+    {
+      type: 'category',
+      label: 'Guides',
+      items: [
+        'guides/getting-started',
+        'guides/memory-routing',
+        'guides/consumer-migration',
+        'guides/self-hosting-dynamo',
+      ],
+    },
+    'full-reference',
+    {
+      type: 'category',
+      label: 'Agents',
+      link: { type: 'doc', id: 'agents/README' },
+      items: [
+        'agents/ADDING_AGENTS',
+        'agents/AGENT_CLASSIFICATION',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'MCP Servers',
+      link: { type: 'doc', id: 'mcp/README' },
+      items: [
+        'mcp/infrastructure',
+        'mcp/knowledge-skills',
+        'mcp/deploy-custom',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Architecture',
+      items: [
+        'architecture/ARCHITECTURE',
+        'architecture/CONCEPTUAL_ARCHITECTURE',
+        'architecture/GROK_GUIDE',
+      ],
+    },
   ],
 };
 

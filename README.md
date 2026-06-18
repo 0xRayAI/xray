@@ -1,126 +1,181 @@
 # xray — MCP-Centric AI Governance OS
 
-9 agents · 44 skills · 16 MCPs governance servers · 60 codex terms
+**v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
-xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
-
-- **Inference** — reasoning, execution, and agent intelligence
-- **External Governance** — Dynamo Solar SSOT for proposal evaluation, resonance/isotopic signals, coherence, and Codex enforcement before any action
-- **Autonomous Engine** — thinDispatch 7-flow in the MCP orchestrator for automatic delegation, routing, and end-to-end coordination
-
-3 dedicated MCP servers (`code-review`, `security-audit`, `researcher`) deliberate governance proposals. Agents are declared in `.opencode/agents/*.yml` — the YML SSOT. Zero manual setup. Automatic discovery and activation.
+xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers with zero manual config.
 
 ## Quick Start
 
 ```bash
-npm install 0xray
-
-# CLI
-npx 0xray --help
-npx 0xray grok install          # Install Grok CLI plugin
-npx 0xray hermes bridge         # Hermes Agent bridge
+npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npx 0xray status          # verify install
+npx 0xray setup            # optional: symlinks, hook extras
 ```
 
-The installation seeds YML surfaces and MCP servers. Place agent definitions in `.opencode/agents/` — they are live immediately.
+Manual per-platform install (idempotent, same result as postinstall):
+
+```bash
+npx 0xray opencode install
+npx 0xray grok install     # 7 MCP servers + dual skill sync (~/.grok/plugins + ~/.grok/skills)
+npx 0xray hermes install
+npx 0xray openclaw install
+npx 0xray skill:install    # starter skills
+```
+
+## What's New Since 3.1
+
+| Version | Highlights |
+|---------|------------|
+| **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCP servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
+| **3.3.1** | Orchestrator confidence gate wired into execution planning. |
+| **3.3.0** | Pluggable **Memory Routing** (`features.json` → `memory_routing`). Repertoire is the default provider in the framework repo. |
+| **3.2.0** | Typecheck hardening (58 errors fixed), orphan cleanup (5 deleted / ~39 integrated), full pre-tool-use hook, SelfProposalEngine + AsideContext restored, Hermes E2E 44/0/0, Grok CLI E2E green. |
+| **3.1.1** | StringRay → **0xRay** rename. Marketplace files (`.mcp.json`, `.grok-plugin/plugin.json`). Postinstall ships `AGENTS.md`, `SKILLS.md`, `.gitignore.default`. ConfigLoader `mcpServers` format. |
+| **3.1.0** | Pre-publish guard tolerates missing `features.json`. |
+
+### Consolidations
+
+- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup.
+- **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
+- **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
+- **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
+
+### Removals / Deprecations
+
+- **StringRay / strray-ai** branding retired (3.1.1).
+- **`hermes bridge`** CLI removed — use `npx 0xray hermes install`.
+- **`.opencode/xray/` fallback** removed from auto-reflection-generator (3.1.1).
+- **~180 stale `@version` JSDoc tags** and **"xray 2.0" command doc strings** cleaned (3.2.0).
+- **`advanced-features/`** decoupled from core boot — not on the consumer install path.
+- **PostProcessor** soft-deprecated since 3.0 (`enablePostProcessor: false` default).
 
 ## Three-Subsystem Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │                  Inference                       │
-│  Proposals · Reflection · Execution             │
+│  Proposals · Reflection · Memory routing        │
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
-│  Codex enforcement · Resonance/Isotopic · SSOT  │
-│  16 MCPs skill servers deliberate proposals       │
+│  Codex enforcement · Resonance/Isotopic · SSOT    │
+│  3 deliberation MCPs: code-review, security,     │
+│  researcher (within 7-server consumer surface)  │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
-│  7-flow MCP · Delegation · Governance gate      │
+│  7-flow MCP · Delegation · Confidence gate      │
 └─────────────────────────────────────────────────┘
 ```
 
-### Inference
-Proposal generation, reflection cycles, and execution planning. Produces structured proposals that enter the governance gate.
+- **Inference** — proposals, reflection, execution planning. Optional memory-routing enrichment (v3.3).
+- **External Governance** — Dynamo Solar SSOT; CodexPolicyService; weighted PHI/TAU deliberation.
+- **Autonomous Engine** — thinDispatch 7-flow routing; orchestrator confidence gate (v3.3.1).
 
-### External Governance (Dynamo Solar SSOT)
-Mandatory governance filter powered by Dynamo — a neural net based on solar physics and temporal first principles. Evaluates proposals for Codex compliance, resonance alignment, and isotopic coherence before any action is taken.
+## Consumer Install (postinstall)
 
-- 3 real MCP skill servers deliberate: `code-review`, `security-audit`, `researcher`
-- Weighted voting via PHI (1.666) / TAU (0.865) matrix
-- External Dynamo integration required (not optional)
-- CodexPolicyService — single source of truth for Codex loading
-- Active codex snapshot available via `get_active_codex` MCP tool
+On `npm install 0xray` in a consumer project, postinstall automatically:
 
-### Autonomous Engine (thinDispatch 7-flow)
-MCP orchestrator with 7-flow dispatch for automatic delegation, routing, and coordination. Handles complex multi-step tasks with automatic complexity-based routing.
+1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**
+2. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
+3. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
+4. Writes project **`.mcp.json`** with 7 MCP servers (`npx -y 0xray mcp …`)
+5. Installs **4 bridges**: OpenCode (agents + `opencode.json`), Grok (plugin + global skills), Hermes (`~/.hermes/plugins/xray-hermes`), OpenClaw (config + skills)
+6. Syncs **45 framework skills** to platform skill dirs
+7. Installs git pre-commit hook (non-blocking if not a git repo)
 
-## CLI
+## Seven MCP Servers (consumer)
 
-```bash
-0xray <command>
+All registered via `npx -y 0xray mcp <cmd>` — no brittle `dist/` paths:
 
-Commands:
-  install         Install xray framework
-  grok            Grok CLI plugin management
-  hermes          Hermes Agent bridge
-  integration     Integration management
-  validate        Validate installation
-  version         Show version
+| Server | Command | Role |
+|--------|---------|------|
+| `xray-governance` | `mcp governance` | Proposal governance, codex snapshot, quality gates |
+| `xray-skills` | `mcp skills` | 45 knowledge skills + skill invocation |
+| `xray-orchestrator` | `mcp orchestrator` | thinDispatch 7-flow, task delegation |
+| `xray-enforcer` | `mcp enforcer` | Codex compliance, rule validation |
+| `xray-researcher` | `mcp researcher` | Codebase exploration, implementation lookup |
+| `xray-code-review` | `mcp code-review` | Proposal quality, best practices |
+| `xray-architect-tools` | `mcp architect-tools` | System design, architecture decisions |
+
+The framework repo also ships additional internal `.server.ts` implementations for orchestration pipelines — these are not part of the 7-server consumer `.mcp.json` surface.
+
+## Agents
+
+**42 YML agent surfaces** in `src/opencode/agents/*.yml` — zero manual registration. Invoke via `@agent-name` in OpenCode.
+
+Core governance agents:
+
+| Agent | Purpose |
+|-------|---------|
+| `@enforcer` | Codex compliance & error prevention |
+| `@orchestrator` | Multi-step task coordination |
+| `@architect` | System design & technical decisions |
+| `@security-auditor` | Vulnerability detection |
+| `@code-reviewer` | Quality assessment |
+| `@refactorer` | Technical debt elimination |
+| `@testing-lead` | Testing strategy |
+| `@bug-triage-specialist` | Error investigation |
+| `@researcher` | Codebase exploration |
+
+See [AGENTS.md](AGENTS.md) and [SKILLS.md](SKILLS.md) for the full agent and skill catalog.
+
+## Memory Routing (v3.3)
+
+Configure a pluggable memory-routing provider in `features.json`:
+
+```json
+"memory_routing": {
+  "enabled": true,
+  "provider": "repertoire",
+  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "config": { "dataDir": "../repertoire/data" }
+}
 ```
+
+Enriches orchestrator agent selection, thinDispatch scoring, and researcher votes. Consumers without a provider can set `"enabled": false`.
 
 ## Integrations
 
-| Platform | Status | Description |
-|----------|--------|-------------|
-| **OpenClaw** | ✅ | API server, client, config, hooks — full integration |
-| **Hermes Agent** | ✅ | Python bridge, plugin YAML, tools, schemas |
-| **Grok CLI** | ✅ | Plugin install via `0xray grok install --force`, user-level plugin hooks |
-| **OpenCode** | ✅ | Native YML agent surfaces, E2E 42/42 solo, 34/34 orchestrator |
-
-## MCP Server Ecosystem
-
-xray ships MCP servers for all governance deliberation and framework capabilities:
-
-**Governance Deliberation:** code-review, security-audit, researcher, enforcer-tools, governance
-
-**Core Framework:** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
-
-**Knowledge Skills:** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+| Platform | Install | Postinstall behavior |
+|----------|---------|----------------------|
+| **OpenCode** | `npx 0xray opencode install` | Merges `opencode.json`, copies agent YML surfaces |
+| **Grok CLI / Build** | `npx 0xray grok install` | Plugin + `~/.grok/skills/` sync, 7 MCP servers |
+| **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
+| **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
 
 ## Governance & Codex
 
-Codex enforcement is integrated at every level:
+- **68 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance
+- CodexPolicyService — Governance-owned SSOT for codex loading
+- Pre-governance gate blocks non-compliant proposals
+- Active codex snapshot via `get_active_codex` MCP tool
+- frameworkLogger structured logging (never `console.*`)
 
-- **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
-- CodexPolicyService — canonical Governance-owned SSOT for Codex loading
-- Pre-governance gate blocks non-compliant proposals before execution
-- 16 MCPs skill servers deliberate each proposal
-- frameworkLogger structured logging throughout (never console.*)
-- Active codex snapshot available via `get_active_codex` MCP tool
+## Testing
 
-## Testing (2,2500 tests)
+| Suite | Status (v3.4.1) |
+|-------|-----------------|
+| Unit / Integration | 185 files, **3,226 passed** |
+| OpenCode E2E | 42/42 solo, 34/34 orchestrator |
+| Grok CLI E2E | 62/0 failures (v3.2.0 verified) |
+| OpenClaw E2E | 9/9 (v3.2.0 verified) |
+| Hermes E2E | 44/0/0 (v3.2.0 verified) |
+| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCP + 4 bridges |
 
-| Suite | Status |
-|-------|--------|
-| Unit / Integration | 158 files, all pass |
-| Performance | 2500 tests, all pass |
-| Infrastructure | 2500 tests, all pass |
-| Consumer E2E | 4 platforms, all pass |
-| OpenCode E2E | 42/42 solo, 34/34 orchestrator, all pass |
-| OpenClaw E2E | 2500 tests, all pass |
-| Hermes E2E | 2500 tests, all pass |
-| Grok CLI E2E | 60/60 solo, 59/59 orchestrator, all pass |
+```bash
+npm test
+npm run release:gate    # full release gate
+```
 
 ## Release
 
 ```bash
-npm run release              # patch bump
-npm run release minor        # minor bump
-npm run release major        # major bump
-npm run release -- --dry-run # preview
+npm run release:patch   # canonical pipeline
+npm run release:minor
+npm run release:major
+npm run release:patch -- --dry-run
 ```
 
-The release pipeline: test → version:sync → build → commit → publish → push.
+Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.
 
 ## License
 

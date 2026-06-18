@@ -1,24 +1,24 @@
 # xray — MCP-Centric AI Governance OS
 
-9 agents · 44 skills · 3 MCP governance servers · 60 codex terms
+**v3.4.1** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
-xray is the pure v2 three-subsystem AI orchestration framework, now **MCP-centric** with dedicated skill servers for governance deliberation:
-
-- **Inference** — reasoning, execution, and agent intelligence
-- **External Governance** — Dynamo Solar SSOT for proposal evaluation, resonance/isotopic signals, coherence, and Codex enforcement before any action
-- **Autonomous Engine** — thinDispatch 7-flow in the MCP orchestrator for automatic delegation, routing, and end-to-end coordination
-
-3 dedicated MCP servers (`code-review`, `security-audit`, `researcher`) deliberate governance proposals. Agents are declared in `.opencode/agents/*.yml` — the YML SSOT. Zero manual setup.
+xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers.
 
 ## Quick Start
 
 ```bash
-npm install 0xray
+npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npx 0xray status
+npx 0xray setup            # optional extras
+```
 
-# CLI
-npx 0xray --help
-npx 0xray grok install          # Install Grok CLI plugin
-npx 0xray hermes bridge         # Hermes Agent bridge
+Per-platform (idempotent):
+
+```bash
+npx 0xray opencode install
+npx 0xray grok install
+npx 0xray hermes install
+npx 0xray openclaw install
 ```
 
 ## Three-Subsystem Architecture
@@ -26,80 +26,49 @@ npx 0xray hermes bridge         # Hermes Agent bridge
 ```
 ┌─────────────────────────────────────────────────┐
 │                  Inference                       │
-│  Proposals · Reflection · Execution             │
+│  Proposals · Reflection · Memory routing        │
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
 │  Codex enforcement · Resonance/Isotopic · SSOT  │
-│  3 MCP skill servers deliberate proposals       │
+│  3 deliberation MCPs within 7-server surface    │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │
-│  7-flow MCP · Delegation · Governance gate      │
+│  7-flow MCP · Delegation · Confidence gate      │
 └─────────────────────────────────────────────────┘
 ```
 
-### Inference
-Proposal generation, reflection cycles, and execution planning. Produces structured proposals that enter the governance gate.
+## Seven MCP Servers
 
-### External Governance (Dynamo Solar SSOT)
-Mandatory governance filter powered by Dynamo — a neural net based on solar physics and temporal first principles. Evaluates proposals for Codex compliance, resonance alignment, and isotopic coherence.
+| Server | Role |
+|--------|------|
+| `xray-governance` | Proposal governance, codex snapshot |
+| `xray-skills` | 45 knowledge skills |
+| `xray-orchestrator` | thinDispatch, task delegation |
+| `xray-enforcer` | Codex compliance |
+| `xray-researcher` | Codebase exploration |
+| `xray-code-review` | Code review deliberation |
+| `xray-architect-tools` | Architecture decisions |
 
-- 3 real MCP skill servers deliberate: `code-review`, `security-audit`, `researcher`
-- Weighted voting via PHI (1.666) / TAU (0.865) matrix
-- External Dynamo integration required (not optional)
-- CodexPolicyService — single source of truth for Codex loading
-
-### Autonomous Engine (thinDispatch 7-flow)
-MCP orchestrator with 7-flow dispatch for automatic delegation, routing, and coordination.
-
-## MCP Server Ecosystem
-
-**Governance Deliberation:** code-review, security-audit, researcher, enforcer-tools, governance
-
-**Core Framework:** architect-tools, boot-orchestrator, estimation, framework-compliance-audit, framework-help, lint, model-health-check, orchestrator, performance-analysis, processor-pipeline, state-manager, auto-format
-
-**Knowledge Skills:** api-design, architecture-patterns, bug-triage-specialist, code-analyzer, content-creator, database-design, devops-deployment, git-workflow, growth-strategist, log-monitor, mobile-development, multimodal-looker, performance-optimization, project-analysis, refactoring-strategies, seo-consultant, session-management, skill-invocation, strategist, tech-writer, testing-best-practices, testing-strategy, ui-ux-design
+All via `npx -y 0xray mcp <cmd>`. See [MCP Servers](./mcp/README.md).
 
 ## Agents
 
-Agents are declared in `.opencode/agents/*.yml` YML surfaces. Zero manual setup required.
+**42 YML surfaces** in `src/opencode/agents/*.yml`. See [Agents](./agents/README.md).
 
-| Agent | Purpose |
-|-------|---------|
-| `@enforcer` | Codex compliance & error prevention |
-| `@orchestrator` | Complex multi-step task coordination |
-| `@architect` | System design & technical decisions |
-| `@security-auditor` | Vulnerability detection |
-| `@code-reviewer` | Quality assessment |
-| `@refactorer` | Technical debt elimination |
-| `@testing-lead` | Testing strategy |
-| `@bug-triage-specialist` | Error investigation |
-| `@researcher` | Codebase exploration |
+## Since 3.1
 
-## Governance & Codex
+- **3.4.1** — Unified 4-platform postinstall (`install-bridges.cjs`), 7-server `npx` MCP parity
+- **3.3.0** — Pluggable memory routing (`features.json`)
+- **3.2.0** — Typecheck hardening, orphan cleanup, full pre-tool-use hook
+- **3.1.1** — 0xRay rename, marketplace files, consumer AGENTS/SKILLS seeding
 
-- **60 terms** across categories: core, architecture, testing, performance, security, operations, governance
-- CodexPolicyService — canonical Governance-owned SSOT for Codex loading
-- Pre-governance gate blocks non-compliant proposals before execution
-- Active codex snapshot available via `get_active_codex` MCP tool
+## Guides
 
-## CLI
-
-```bash
-0xray <command>
-
-Commands:
-  install         Install xray framework
-  grok            Grok CLI plugin management
-  hermes          Hermes Agent bridge
-  integration     Integration management
-  validate        Validate installation
-  version         Show version
-```
+- [Getting Started](./guides/getting-started.md)
+- [Consumer Migration (v3.4+)](./guides/consumer-migration.md)
+- [Memory Routing](./guides/memory-routing.md)
+- [Full Reference](./full-reference.md)
 
 ## License
 
 MIT
-
----
-
-*xray — MCP-centric, governed, autonomous. Pure v2 three-subsystem.*
