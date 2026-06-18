@@ -162,31 +162,20 @@ function checkVersionSync() {
   return true;
 }
 
-function checkVersionManagerRan() {
-  log('Checking version manager was run...', 'step');
-  
-  // Check that version manager script has current date as lastUpdated
-  const vmPath = path.join(rootDir, 'scripts/node/universal-version-manager.js');
-  const vmContent = fs.readFileSync(vmPath, 'utf-8');
-  
-  // Check that files have been updated (look for recent timestamps or version)
-  const { resolveConfigPath } = require('../helpers/resolve-config-path.cjs');
-  let features;
+function checkVersionReconcile() {
+  log('Checking version reconcile (npm / local / tag)...', 'step');
   try {
-    const featuresPath = resolveConfigPath('features.json', rootDir);
-    features = JSON.parse(fs.readFileSync(featuresPath, 'utf-8'));
-    // Version manager should have updated version fields
-    if (!features.version && !features.xray_version) {
-      warnings.push('features.json may not have been synced by version manager');
-      log('features.json may need version sync', 'warn');
-    } else {
-      log('Version manager appears to have run', 'success');
-    }
+    execSync('node scripts/node/reconcile-version.mjs --check', {
+      cwd: rootDir,
+      stdio: 'inherit',
+    });
+    log('Version reconcile OK', 'success');
+    return true;
   } catch {
-    log('features.json not found — skipping version sync check', 'warn');
+    errors.push('Version reconcile failed — run: node scripts/node/reconcile-version.mjs');
+    log('Version reconcile failed', 'error');
+    return false;
   }
-  
-  return true;
 }
 
 function runTests() {
@@ -217,6 +206,23 @@ function runBuild() {
   }
 }
 
+function runConsumerSmoke() {
+  if (process.argv.includes('--skip-smoke') || process.env.SKIP_CONSUMER_SMOKE === '1') {
+    log('Consumer smoke skipped', 'warn');
+    return true;
+  }
+  log('Running consumer install smoke...', 'step');
+  try {
+    execSync('node scripts/node/consumer-install-smoke.mjs', { cwd: rootDir, stdio: 'inherit' });
+    log('Consumer smoke passed', 'success');
+    return true;
+  } catch {
+    errors.push('Consumer install smoke failed');
+    log('Consumer smoke failed', 'error');
+    return false;
+  }
+}
+
 function main() {
   console.log('\n' + '='.repeat(60));
   log('PRE-PUBLISH VALIDATION', 'step');
@@ -224,10 +230,11 @@ function main() {
   
   const checks = [
     { name: 'Git Status', fn: checkGitStatus },
+    { name: 'Version Reconcile', fn: checkVersionReconcile },
     { name: 'Version Sync', fn: checkVersionSync },
-    { name: 'Version Manager', fn: checkVersionManagerRan },
     { name: 'Build', fn: runBuild },
     { name: 'Tests', fn: runTests },
+    { name: 'Consumer Smoke', fn: runConsumerSmoke },
   ];
   
   let allPassed = true;

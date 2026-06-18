@@ -56,7 +56,7 @@
     "mcps": "./dist/mcps/"
   },
   "scripts": {
-    "prepublishOnly": "npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
+    "prepublishOnly": "node scripts/node/reconcile-version.mjs --check && npm run prepare-consumer && npm run build:all && find dist -name '*.d.ts' -o -name '*.d.ts.map' -o -name '*.js.map' | xargs rm -f",
     "version:bump": "node scripts/node/version-manager.mjs",
     "version": "node scripts/node/version-manager.mjs",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
@@ -114,9 +114,12 @@
     "release:minor": "node scripts/node/release.mjs minor",
     "release:major": "node scripts/node/release.mjs major",
     "release:dry": "node scripts/node/release.js --dry-run",
+    "version:reconcile": "node scripts/node/reconcile-version.mjs",
+    "consumer:smoke": "node scripts/node/consumer-install-smoke.mjs",
+    "release:gate": "node scripts/node/release-gate.mjs",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
-    "publish": "npm run pre-publish-guard && npm run safe-publish",
+    "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",
     "release:patch": "node scripts/node/release.mjs patch"
   },
   "files": [

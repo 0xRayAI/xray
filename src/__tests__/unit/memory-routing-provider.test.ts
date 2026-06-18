@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resolve, join } from 'node:path';
-import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import {
   NullMemoryRoutingProvider,
   resetMemoryRoutingProvider,
@@ -132,7 +132,10 @@ describe('MemoryRoutingProvider', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('loads repertoire provider when module exists', async () => {
+  it.skipIf(
+    !existsSync(resolve(process.cwd(), '../repertoire/dist/provider/memory-routing-provider.js')),
+    'repertoire sibling not built — set up ../repertoire or skip',
+  )('loads repertoire provider when module exists', async () => {
     const repertoireProviderPath = resolve(
       process.cwd(),
       '../repertoire/dist/provider/memory-routing-provider.js',
