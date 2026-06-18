@@ -76,6 +76,8 @@ function main() {
       "scripts/node/install-bridges.cjs",
       "scripts/node/postinstall.cjs",
       "package.json",
+      "xray/features.json",
+      "xray/features.schema.json",
     ];
 
     for (const rel of requiredFiles) {
@@ -121,6 +123,22 @@ function main() {
       }
     }
     console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} npx MCP servers`);
+
+    const consumerFeaturesPath = path.join(tmpRoot, ".xray", "features.json");
+    if (!fs.existsSync(consumerFeaturesPath)) {
+      throw new Error(".xray/features.json not deployed to consumer project by postinstall");
+    }
+    const features = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
+    if (!features.memory_routing) {
+      throw new Error("Deployed features.json missing memory_routing block");
+    }
+    console.log("  ✅ .xray/features.json deployed with memory_routing");
+
+    const schemaInPackage = path.join(nmRoot, "xray", "features.schema.json");
+    if (!fs.existsSync(schemaInPackage)) {
+      throw new Error("xray/features.schema.json missing from installed package");
+    }
+    console.log("  ✅ xray/features.schema.json in package");
 
     console.log("\n✅ Consumer install smoke passed\n");
   } catch (err) {

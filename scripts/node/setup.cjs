@@ -6,7 +6,11 @@ const path = require("path");
 const packageRoot = path.join(__dirname, "..", "..");
 const homeDir = require("os").homedir();
 
-const { resolveConsumerTargetDir, isConsumerInstall } = require("./install-bridges.cjs");
+const {
+  resolveConsumerTargetDir,
+  isConsumerInstall,
+  deployXrayConfig,
+} = require("./install-bridges.cjs");
 let targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
 
 const resolvedPackage = path.resolve(packageRoot);
@@ -215,29 +219,15 @@ if (fs.existsSync(hermesSkillSource)) {
   } catch (e) { console.warn(`⚠️ Hermes skill: ${e.message}`); }
 }
 
-// 8. Deploy .xray/ config files (codex.json, features.json, config.json) for consumer installs
-const xraySourceDir = path.join(packageRoot, ".xray");
-const xrayTargetDir = path.join(targetDir, ".xray");
-const CONFIG_FILES = ["codex.json", "features.json", "config.json"];
-
-if (fs.existsSync(xraySourceDir) && resolvedPackage !== resolvedTarget) {
+// 8. Deploy .xray/ config files (codex.json, features.json, features.schema.json, config.json)
+if (resolvedPackage !== resolvedTarget) {
   try {
-    if (!fs.existsSync(xrayTargetDir)) fs.mkdirSync(xrayTargetDir, { recursive: true });
-    let copied = 0;
-    for (const file of CONFIG_FILES) {
-      const src = path.join(xraySourceDir, file);
-      const dst = path.join(xrayTargetDir, file);
-      if (!fs.existsSync(src)) continue;
-      const shouldCopy = !fs.existsSync(dst) ||
-        fs.statSync(src).mtime > fs.statSync(dst).mtime;
-      if (shouldCopy) {
-        fs.copyFileSync(src, dst);
-        copied++;
-      }
-    }
-    if (copied > 0) console.log(`✅ .xray/: ${copied} config files deployed`);
+    const deployed = deployXrayConfig(targetDir, packageRoot, () => {});
+    if (deployed > 0) console.log(`✅ .xray/: ${deployed} config files deployed`);
     else console.log("ℹ️  .xray/: up to date");
-  } catch (e) { console.warn(`⚠️ .xray/ deploy: ${e.message}`); }
+  } catch (e) {
+    console.warn(`⚠️ .xray/ deploy: ${e.message}`);
+  }
 }
 
 console.log("\n✅ xray setup complete.\n");

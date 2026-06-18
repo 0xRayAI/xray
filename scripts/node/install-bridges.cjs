@@ -397,18 +397,27 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
   if (copied > 0) log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
 }
 
+const XRAY_CONFIG_FILES = ["codex.json", "features.json", "features.schema.json", "config.json"];
+
+function resolveXrayConfigSource(packageRoot, file) {
+  const dotXray = path.join(packageRoot, ".xray", file);
+  if (fs.existsSync(dotXray)) return dotXray;
+  const xrayDir = path.join(packageRoot, "xray", file);
+  if (fs.existsSync(xrayDir)) return xrayDir;
+  return null;
+}
+
 function deployXrayConfig(targetDir, packageRoot, log) {
-  const xraySourceDir = path.join(packageRoot, ".xray");
   const xrayTargetDir = path.join(targetDir, ".xray");
-  const configFiles = ["codex.json", "features.json", "config.json"];
-  if (!fs.existsSync(xraySourceDir)) return;
+  const hasAnySource = XRAY_CONFIG_FILES.some((file) => resolveXrayConfigSource(packageRoot, file));
+  if (!hasAnySource) return;
 
   if (!fs.existsSync(xrayTargetDir)) fs.mkdirSync(xrayTargetDir, { recursive: true });
   let copied = 0;
-  for (const file of configFiles) {
-    const src = path.join(xraySourceDir, file);
+  for (const file of XRAY_CONFIG_FILES) {
+    const src = resolveXrayConfigSource(packageRoot, file);
     const dst = path.join(xrayTargetDir, file);
-    if (!fs.existsSync(src)) continue;
+    if (!src) continue;
     const shouldCopy = !fs.existsSync(dst) || fs.statSync(src).mtime > fs.statSync(dst).mtime;
     if (shouldCopy) {
       fs.copyFileSync(src, dst);
@@ -416,6 +425,7 @@ function deployXrayConfig(targetDir, packageRoot, log) {
     }
   }
   if (copied > 0) log("xray-config", `${copied} files deployed`, "info", { path: ".xray/" });
+  return copied;
 }
 
 function installGitHooks(packageRoot, log) {
@@ -463,4 +473,7 @@ module.exports = {
   resolveConsumerTargetDir,
   syncBuiltinSkills,
   isConsumerInstall,
+  deployXrayConfig,
+  resolveXrayConfigSource,
+  XRAY_CONFIG_FILES,
 };
