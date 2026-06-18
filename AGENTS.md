@@ -60,6 +60,16 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 
 Docs: `docs-site/docs/guides/repertoire.md`, `features-json.md`, `features-since-3.1.md`.
 
+### AsideContext (v3.2+)
+
+Bounded sub-investigation layer in MCP orchestrator (`src/mcps/orchestrator/aside-context.ts`):
+
+- `spawnAside` / `closeAside` around `orchestrate-task`, `analyze-complexity`, `govern-and-apply`
+- Structured `AsideObservation` extractors from governance, orchestration, complexity flows
+- **Repertoire link (v3.3+)**: `buildInheritedContext` → `ExecutionPlan.memoryContext` → `inheritedContext.memoryRouting`
+
+Docs: `docs-site/docs/guides/aside-context.md`
+
 ### Confidence gate (v3.3.1)
 
 `ExecutionPlanner.calculateTaskComplexity()` uses `getTaskConfidence()` for complexity boost and ontological-trap routing hints before agent assignment.

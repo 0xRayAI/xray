@@ -538,6 +538,7 @@ export function getReleaseArtifactPaths() {
     'docs-site/docs/guides/features-since-3.1.md',
     'docs-site/docs/guides/features-json.md',
     'docs-site/docs/guides/memory-routing.md',
+    'docs-site/docs/guides/aside-context.md',
     'docs-site/docs/guides/repertoire.md',
     'docs-site/docs/guides/consumer-migration.md',
     'docs-site/docs/mcp/README.md',

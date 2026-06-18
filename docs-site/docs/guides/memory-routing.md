@@ -60,7 +60,7 @@ Full field reference: [features.json](./features-json.md).
 | **ExecutionPlanner** | `enrichTasks`, `getTaskConfidence`, `selectAgent` | Complexity boost, trap hints, signal-aware agent pick |
 | **thinDispatch** | `resolveThinDispatch` | Score adjustment; architect override on high-confidence traps |
 | **Researcher** | `getTaskConfidence` via provider sync | `MEMORY_ROUTING:` block in governance output |
-| **AsideContext** | `buildInheritedContext` | Plan metadata from matched signals |
+| **[AsideContext](./aside-context.md)** | `buildInheritedContext` → `inheritedContext.memoryRouting` on `spawnAside` |
 | **Feedback** | `ingestFeedback` | Per-task outcome loop (not aggregate-only) |
 
 ## Confidence gate (v3.3.1)

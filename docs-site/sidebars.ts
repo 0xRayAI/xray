@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
         'guides/features-since-3.1',
         'guides/features-json',
         'guides/memory-routing',
+        'guides/aside-context',
         'guides/repertoire',
         'guides/consumer-migration',
         'guides/self-hosting-dynamo',

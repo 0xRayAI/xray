@@ -69,6 +69,7 @@ All via `npx -y 0xray mcp <cmd>`. See [MCP Servers](./mcp/README.md).
 - [Features Since 3.1](./guides/features-since-3.1.md)
 - [features.json Reference](./guides/features-json.md)
 - [Memory Routing](./guides/memory-routing.md)
+- [AsideContext](./guides/aside-context.md)
 - [Repertoire Integration](./guides/repertoire.md)
 - [Consumer Migration (v3.4+)](./guides/consumer-migration.md)
 - [Full Reference](./full-reference.md)

@@ -49,11 +49,12 @@ Complete reference of capabilities shipped from **3.1.0** through **3.4.1**.
 
 | Feature | Description |
 |---------|-------------|
+| **AsideContext restored + wired** | Bounded subcontexts in MCP orchestrator (`spawnAside`, observation extractors, lifecycle) — see [AsideContext guide](./aside-context.md) |
+| **AsideContext ↔ memory routing** | `ExecutionPlan.memoryContext` → `inheritedContext.memoryRouting` on aside spawn (v3.3+) |
 | **Orphan cleanup** | 5 dead files deleted, ~39 integrated under typecheck |
 | **58 type errors fixed** | Across 6 source files |
 | **Pre-tool-use hook** | Full hook: resonance, decision-matrix, JSON output |
 | **SelfProposalEngine** | Integrated under typecheck + metamorphosis types |
-| **AsideContext restored** | Core abstraction + plugin module split |
 | **MCP base class** | Consolidated 0→40 extenders |
 | **E2E green** | OpenClaw 9/9, Grok CLI 62/0, Hermes 44/0/0 |
 | **release.mjs** | npm `0xray` SSOT, push to `main` |
@@ -68,7 +69,8 @@ Complete reference of capabilities shipped from **3.1.0** through **3.4.1**.
 | **Marketplace files** | `.mcp.json`, `.grok-plugin/plugin.json` for xAI catalog |
 | **Consumer postinstall seed** | `AGENTS-consumer.md`, `SKILLS.md`, `.gitignore.default` |
 | **ConfigLoader mcpServers** | Supports both legacy and `mcpServers` `.mcp.json` format |
-| **AsideContext + plugin split** | Hermes E2E 44/0/0 |
+| **AsideContext module** | `aside-context.ts` restored (foundation for v3.2 wiring) |
+| **Plugin module split** | Codex injection split; Hermes E2E 44/0/0 |
 | **Railway deployment** | MCP host, in-process skills, Hermes OAuth fixes |
 
 ### Removals (3.1.1)

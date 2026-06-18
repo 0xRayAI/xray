@@ -140,6 +140,7 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 | **ExecutionPlanner** (v3.3.1) | `getTaskConfidence()` → complexity boost, trap hints, signal-aware `selectAgent()` |
 | **thinDispatch** | `resolveThinDispatch()` adjusts score; architect override on high-confidence traps |
 | **Researcher** | `researcher-confidence.ts` appends `MEMORY_ROUTING:` block to governance output |
+| **AsideContext** (v3.2) | `buildInheritedContext` → `inheritedContext.memoryRouting` on orchestrator `spawnAside` |
 | **Feedback** | Per-task `ingestFeedback()` closes the learning loop |
 
 **External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.

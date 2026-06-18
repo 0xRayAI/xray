@@ -22,6 +22,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - README, AGENTS, AGENTS-consumer, and Docusaurus synced for v3.4.1 (42 agents, 45 skills, 7 MCP servers, 68 codex terms)
 - New guides: Repertoire integration, features.json reference, features since 3.1, memory routing, platform integrations
 - Repertoire: `features.json` `memory_routing` config, MCP tools, confidence gate, ExecutionPlanner/thinDispatch/researcher wiring
+- AsideContext guide: `spawnAside` lifecycle, observation extractors, Repertoire `inheritedContext.memoryRouting` link
 - `.grok-plugin/plugin.json` version and MCP description corrected
 
 ---

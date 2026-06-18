@@ -15,6 +15,7 @@ Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with t
 - [Platform Integrations](./guides/integrations) — OpenCode, Grok, Hermes, OpenClaw
 - [Features Since 3.1](./guides/features-since-3.1) — Full capability changelog
 - [features.json](./guides/features-json) — Config reference including `memory_routing`
+- [AsideContext](./guides/aside-context) — Orchestrator subcontexts + Repertoire inheritance (v3.2+)
 - [Repertoire](./guides/repertoire) — Deep memory provider + MCP tools
 - [Memory Routing](./guides/memory-routing) — Provider plug-in model (v3.3)
 - [Consumer Migration](./guides/consumer-migration) — v3.4+ integration guide

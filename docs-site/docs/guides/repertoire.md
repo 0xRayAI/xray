@@ -98,7 +98,7 @@ Custom providers export `createMemoryRoutingProvider(config)` implementing:
 | `buildRoutingContext(operation)` | Signal/tag matching |
 | `enhanceAgentCapabilities(map)` | Agent capability enrichment |
 | `enrichTasks(tasks)` | Pre-planning metadata |
-| `buildInheritedContext(tasks)` | AsideContext / plan metadata |
+| `buildInheritedContext(tasks)` | → `ExecutionPlan.memoryContext` → [AsideContext](./aside-context.md) `inheritedContext.memoryRouting` |
 | `selectAgent(...)` | ExecutionPlanner assignment |
 | `resolveThinDispatch(...)` | thinDispatch score + override |
 | `getTaskConfidence?(task)` | Confidence gate (v3.3.1) |
