@@ -4,16 +4,15 @@
  * Canonical 0xRay release script.
  *
  * 1. Bump version from npm registry baseline (reconcile-version)
- * 2. Release gate once (build + test + consumer smoke)
- * 3. Update CHANGELOG / README / AGENTS / docs (version-manager --artifacts-only)
+ * 2. Release artifacts (CHANGELOG / README / AGENTS / docs) — before gate so docs tests pass
+ * 3. Release gate (build + test + consumer smoke)
  * 4. Commit release artifacts → push
  * 5. Verify gate (reconcile + git + release docs + smoke)
- * 6. Tag → push tag → npm publish
+ * 6. npm publish (idempotent — skip if version already on registry)
+ * 7. Tag → push tag (only after successful publish)
  *
  * Usage:
  *   npm run release:patch
- *   npm run release:minor
- *   npm run release:major
  *   node scripts/node/release.mjs patch --dry-run
  */
 
@@ -44,6 +43,32 @@ function currentBranch() {
   return execSync("git rev-parse --abbrev-ref HEAD", { cwd: rootDir, encoding: "utf-8" }).trim();
 }
 
+function npmVersionPublished(version) {
+  try {
+    const out = execSync(`npm view 0xray@${version} version`, {
+      cwd: rootDir,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+    return out === version;
+  } catch {
+    return false;
+  }
+}
+
+function publishIdempotent(version) {
+  if (dryRun) {
+    console.log(`  would: npm publish --access public (check 0xray@${version} first)`);
+    return;
+  }
+  if (npmVersionPublished(version)) {
+    console.log(`ℹ️  0xray@${version} already on npm — skipping publish`);
+    return;
+  }
+  execSync("npm publish --access public", { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
+  console.log(`✅ Published 0xray@${version}`);
+}
+
 async function main() {
   if (!["major", "minor", "patch"].includes(releaseType)) {
     console.error("Usage: node scripts/node/release.mjs [patch|minor|major] [--dry-run]");
@@ -70,13 +95,13 @@ async function main() {
     : readVersion();
   console.log(`📌 Release version: ${newVersion}`);
 
-  // 2. Single gate before commit
-  console.log("\n📦 Step 2: Release gate (build + test + smoke)");
-  run("node scripts/node/release-gate.mjs", "release gate");
-
-  // 3. Changelog + doc artifacts
-  console.log("\n📦 Step 3: Release artifacts (CHANGELOG, README, AGENTS, docs)");
+  // 2. Artifacts BEFORE gate (docs vitest matches package.json version)
+  console.log("\n📦 Step 2: Release artifacts (CHANGELOG, README, AGENTS, docs)");
   run("node scripts/node/version-manager.mjs --artifacts-only", "release artifacts");
+
+  // 3. Gate
+  console.log("\n📦 Step 3: Release gate (build + test + smoke)");
+  run("node scripts/node/release-gate.mjs", "release gate");
 
   // 4. Commit + push
   console.log("\n📦 Step 4: Commit & push");
@@ -97,23 +122,32 @@ async function main() {
   const branch = currentBranch();
   run(`git push origin ${branch}`, "git push");
 
-  // 5. Post-push verify before tag
-  console.log("\n📦 Step 5: Verify gate (reconcile + git + smoke)");
+  // 5. Post-push verify before publish
+  console.log("\n📦 Step 5: Verify gate (reconcile + git + docs + smoke)");
   run("node scripts/node/release-gate.mjs --verify-only", "verify gate");
 
-  // 6. Tag
-  console.log("\n📦 Step 6: Tag");
+  // 6. Publish (idempotent)
+  console.log("\n📦 Step 6: npm publish");
+  publishIdempotent(newVersion);
+
+  // 7. Tag after publish
+  console.log("\n📦 Step 7: Tag");
   if (!dryRun) {
-    execSync(`git tag -a v${newVersion} -m "Release v${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
-    console.log(`✅ Created tag v${newVersion}`);
+    try {
+      execSync(`git tag -a v${newVersion} -m "Release v${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
+      console.log(`✅ Created tag v${newVersion}`);
+    } catch (e) {
+      const msg = String(e.stderr || e.message || "");
+      if (msg.includes("already exists")) {
+        console.log(`ℹ️  Tag v${newVersion} already exists`);
+      } else {
+        throw e;
+      }
+    }
   } else {
     console.log(`  would: git tag -a v${newVersion}`);
   }
   run(`git push origin v${newVersion}`, "push tag");
-
-  // 7. Publish
-  console.log("\n📦 Step 7: npm publish");
-  run("npm publish --access public", "npm publish");
 
   console.log("\n╔════════════════════════════════════════════════════════╗");
   console.log("║        ✅ Release Complete!                            ║");
@@ -125,7 +159,7 @@ async function main() {
       fs.mkdirSync(path.join(rootDir, "tweets"), { recursive: true });
       fs.writeFileSync(
         tweetPath,
-        `🎉 0xRay v${newVersion} is LIVE - {THEME}!\n...\n\`\`\`\nnpm install 0xray@latest\n\`\`\`\n`,
+        `🎉 0xRay v${newVersion} is LIVE - consumer-safe upgrades!\n...\n\`\`\`\nnpm install 0xray@latest\n\`\`\`\n`,
       );
       console.log(`📝 Tweet template: tweets/v${newVersion}.md`);
     }

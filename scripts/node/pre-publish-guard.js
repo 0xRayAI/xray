@@ -67,6 +67,8 @@ const ARTIFACT_PREFIXES = [
   '.opencode/activity-report.json',
   '.opencode/init.sh',
   '.xray/inference/',
+  '.xray/config.json',
+  '.xray/state/',
   'logs/',
   'backups/',
   '.ci-reports/',

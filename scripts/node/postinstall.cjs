@@ -19,11 +19,24 @@ const targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || proce
 const resolvedPackage = path.resolve(packageRoot);
 const resolvedTarget = path.resolve(targetDir);
 
-// Copy AGENTS-consumer.md → AGENTS.md
+const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
+
+// Copy AGENTS-consumer.md → AGENTS.md (only if absent or still 0xray-managed)
 const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
 const agentsDest = path.join(targetDir, "AGENTS.md");
 if (fs.existsSync(agentsConsumer) && isConsumerInstall(resolvedPackage, resolvedTarget)) {
-  fs.copyFileSync(agentsConsumer, agentsDest);
+  const shouldDeployAgents =
+    !fs.existsSync(agentsDest) ||
+    fs.readFileSync(agentsDest, "utf8").includes(XRAY_MANAGED_AGENTS_MARKER);
+  if (shouldDeployAgents) {
+    let content = fs.readFileSync(agentsConsumer, "utf8");
+    if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
+      content = `${content.trimEnd()}\n\n${XRAY_MANAGED_AGENTS_MARKER}\n`;
+    }
+    fs.writeFileSync(agentsDest, content);
+  } else {
+    structuredLog("postinstall", "Skipped AGENTS.md (consumer-customized)", "info");
+  }
 }
 
 // Copy .gitignore.default → .gitignore (never overwrite existing)
@@ -43,7 +56,9 @@ if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
       log: structuredLog,
     });
   } catch (e) {
-    structuredLog("postinstall", "Bridge install failed", "warn", { error: e.message });
+    structuredLog("postinstall", "Bridge install failed", "error", { error: e.message });
+    console.error("\n❌ 0xRay postinstall failed — bridge wiring did not complete.\n");
+    process.exit(1);
   }
 
   structuredLog(

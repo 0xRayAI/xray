@@ -3,8 +3,8 @@
  * release-gate.mjs — Single release checkpoint.
  *
  * Modes:
- *   (default)     build + test + consumer smoke — run once before commit
- *   --verify-only git + reconcile + release docs + consumer smoke — after push, before tag
+ *   (default)     build + test + consumer smoke (fresh + upgrade merge)
+ *   --verify-only git + reconcile + release docs + consumer smoke — after push, before publish
  *   --skip-smoke  skip consumer install smoke
  *   --skip-docs   skip release docs validation (not recommended for publish)
  *
@@ -47,10 +47,7 @@ function main() {
       step("1/4 Build", "npm run build");
       step("2/4 Tests", "npm test");
       if (!skipSmoke) {
-        step("3/4 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
-      }
-      if (!skipDocs && process.argv.includes("--with-docs")) {
-        step("4/4 Release docs", "node scripts/node/validate-release-docs.mjs");
+        step("3/4 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 

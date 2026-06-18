@@ -3,6 +3,7 @@
  * consumer-install-smoke.mjs — Clean-room pack + install verification.
  *
  * Simulates what consumers receive from npm without publishing.
+ * Runs fresh install checks + upgrade merge simulation.
  *
  * Usage:
  *   node scripts/node/consumer-install-smoke.mjs
@@ -36,6 +37,85 @@ function run(cmd, cwd, { inherit = false } = {}) {
     stdio: inherit ? "inherit" : "pipe",
   });
   return inherit ? "" : String(result).trim();
+}
+
+function assertFreshInstallDefaults(tmpRoot, version) {
+  const consumerFeaturesPath = path.join(tmpRoot, ".xray", "features.json");
+  if (!fs.existsSync(consumerFeaturesPath)) {
+    throw new Error(".xray/features.json not deployed to consumer project by postinstall");
+  }
+  const features = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
+  if (!features.memory_routing) {
+    throw new Error("Deployed features.json missing memory_routing block");
+  }
+  if (features.memory_routing.enabled !== false) {
+    throw new Error(
+      `Fresh install must default memory_routing.enabled=false (got ${features.memory_routing.enabled})`,
+    );
+  }
+  if (!features.inference_governance) {
+    throw new Error("Deployed features.json missing inference_governance block");
+  }
+  if (features.inference_governance.enabled !== false) {
+    throw new Error("Fresh install must default inference_governance.enabled=false");
+  }
+  console.log("  ✅ .xray/features.json fresh-install defaults (opt-in off)");
+  return { consumerFeaturesPath, features };
+}
+
+function runUpgradeMergeSmoke(tmpRoot, nmRoot, version) {
+  console.log("\n📋 Upgrade merge smoke (consumer opt-ins preserved)...");
+
+  const { deployXrayConfig } = require(path.join(nmRoot, "scripts/node/install-bridges.cjs"));
+  const consumerFeaturesPath = path.join(tmpRoot, ".xray", "features.json");
+
+  fs.writeFileSync(
+    consumerFeaturesPath,
+    `${JSON.stringify(
+      {
+        version: "3.4.0",
+        memory_routing: {
+          enabled: true,
+          provider: "repertoire",
+          module_path: "dist/provider/memory-routing-provider.js",
+        },
+        inference_governance: { enabled: true },
+        consumer_custom_block: { kept: true },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  const shippedTemplate = JSON.parse(
+    fs.readFileSync(path.join(nmRoot, "xray/features.json"), "utf-8"),
+  );
+  const shippedMarker = shippedTemplate.token_optimization ? "token_optimization" : null;
+
+  deployXrayConfig(tmpRoot, nmRoot, () => {});
+
+  const merged = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
+
+  if (merged.memory_routing?.enabled !== true) {
+    throw new Error(`Upgrade merge lost memory_routing.enabled (got ${merged.memory_routing?.enabled})`);
+  }
+  if (merged.memory_routing?.provider !== "repertoire") {
+    throw new Error(`Upgrade merge lost memory_routing.provider (got ${merged.memory_routing?.provider})`);
+  }
+  if (merged.inference_governance?.enabled !== true) {
+    throw new Error("Upgrade merge lost inference_governance.enabled");
+  }
+  if (merged.consumer_custom_block?.kept !== true) {
+    throw new Error("Upgrade merge dropped consumer-only keys");
+  }
+  if (merged.version !== version) {
+    throw new Error(`Upgrade merge version: expected ${version}, got ${merged.version}`);
+  }
+  if (shippedMarker && !merged[shippedMarker]) {
+    throw new Error(`Upgrade merge missing shipped template key: ${shippedMarker}`);
+  }
+
+  console.log("  ✅ upgrade merge preserves opt-ins + bumps features.version");
 }
 
 function main() {
@@ -94,7 +174,7 @@ function main() {
     }
 
     const bridges = require(path.join(nmRoot, "scripts/node/install-bridges.cjs"));
-    for (const exp of ["installAllBridges", "resolveConsumerTargetDir", "isConsumerInstall"]) {
+    for (const exp of ["installAllBridges", "resolveConsumerTargetDir", "isConsumerInstall", "deployXrayConfig"]) {
       if (typeof bridges[exp] !== "function") {
         throw new Error(`install-bridges missing export: ${exp}`);
       }
@@ -106,7 +186,6 @@ function main() {
     }
     console.log("  ✅ consumer target resolution");
 
-    // Postinstall should have run; verify .mcp.json merge
     const mcpPath = path.join(tmpRoot, ".mcp.json");
     if (!fs.existsSync(mcpPath)) {
       throw new Error(".mcp.json not created by postinstall");
@@ -124,32 +203,15 @@ function main() {
     }
     console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} npx MCP servers`);
 
-    const consumerFeaturesPath = path.join(tmpRoot, ".xray", "features.json");
-    if (!fs.existsSync(consumerFeaturesPath)) {
-      throw new Error(".xray/features.json not deployed to consumer project by postinstall");
-    }
-    const features = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
-    if (!features.memory_routing) {
-      throw new Error("Deployed features.json missing memory_routing block");
-    }
-    if (features.memory_routing.enabled !== false) {
-      throw new Error(
-        `Shipped template must default memory_routing.enabled=false (got ${features.memory_routing.enabled})`,
-      );
-    }
-    if (!features.inference_governance) {
-      throw new Error("Deployed features.json missing inference_governance block");
-    }
-    if (features.inference_governance.enabled !== false) {
-      throw new Error("Shipped template must default inference_governance.enabled=false");
-    }
-    console.log("  ✅ .xray/features.json deployed (memory_routing + inference_governance opt-in defaults)");
+    assertFreshInstallDefaults(tmpRoot, version);
 
     const schemaInPackage = path.join(nmRoot, "xray", "features.schema.json");
     if (!fs.existsSync(schemaInPackage)) {
       throw new Error("xray/features.schema.json missing from installed package");
     }
     console.log("  ✅ xray/features.schema.json in package");
+
+    runUpgradeMergeSmoke(tmpRoot, nmRoot, version);
 
     console.log("\n✅ Consumer install smoke passed\n");
   } catch (err) {

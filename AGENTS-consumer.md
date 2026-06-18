@@ -1,5 +1,7 @@
 # 0xRay AI Agents
 
+<!-- 0xray-managed -->
+
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
 **v3.4.6** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
