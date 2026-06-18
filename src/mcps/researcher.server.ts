@@ -461,7 +461,7 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
   async analyzeProposal(args: AnalyzeProposalArgs): Promise<CallToolResult> {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args || {};
 
-    const memoryContext = resolveResearcherMemoryContext({
+    const memoryContext = await resolveResearcherMemoryContext({
       proposalTitle,
       proposalDescription,
       proposalType,

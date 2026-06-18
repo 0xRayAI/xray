@@ -52,6 +52,7 @@ vi.mock('../../memory-routing/index.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../memory-routing/index.js')>();
   return {
     ...actual,
+    getMemoryRoutingProvider: vi.fn().mockResolvedValue(mockProvider),
     getMemoryRoutingProviderSync: () => mockProvider,
     initializeMemoryRouting: mockInitializeMemoryRouting,
   };

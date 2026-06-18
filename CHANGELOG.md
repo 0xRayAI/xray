@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.4] - 2026-06-18
+
+### 🐛 Bug Fixes
+- **Researcher MCP trap routing** — `analyze_proposal` awaits `getMemoryRoutingProvider()` so MEMORY_ROUTING is not silently omitted when the MCP subprocess starts (P0.5 e2e)
+
+---
+
 ## [3.4.3] - 2026-06-18
 
 ### ✨ Features

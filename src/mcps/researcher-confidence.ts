@@ -1,5 +1,5 @@
 import { frameworkLogger } from '../core/framework-logger.js';
-import { getMemoryRoutingProviderSync } from '../memory-routing/index.js';
+import { getMemoryRoutingProvider } from '../memory-routing/index.js';
 import type {
   MemoryRoutingContext,
   MemoryTaskConfidence,
@@ -44,17 +44,17 @@ function buildTaskText(
  * Resolve Repertoire task confidence for researcher proposal analysis.
  * Triggered by ontological-trap language or high-confidence primitive matches.
  */
-export function resolveResearcherMemoryContext(input: {
+export async function resolveResearcherMemoryContext(input: {
   proposalTitle?: string;
   proposalDescription?: string;
   proposalType?: string;
-}): ResearcherMemoryContext | null {
+}): Promise<ResearcherMemoryContext | null> {
   const proposalTitle = input.proposalTitle ?? '';
   const proposalDescription = input.proposalDescription ?? '';
   const proposalType = input.proposalType ?? '';
   const taskText = buildTaskText(proposalTitle, proposalDescription, proposalType);
 
-  const provider = getMemoryRoutingProviderSync();
+  const provider = await getMemoryRoutingProvider();
   if (provider.id === 'null' || !provider.getTaskConfidence) {
     return null;
   }

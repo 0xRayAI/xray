@@ -55,6 +55,7 @@ vi.mock('../../memory-routing/index.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../memory-routing/index.js')>();
   return {
     ...actual,
+    getMemoryRoutingProvider: vi.fn().mockResolvedValue(mockProvider),
     getMemoryRoutingProviderSync: () => mockProvider,
   };
 });
@@ -83,7 +84,7 @@ describe('researcher-confidence', () => {
       ),
     ).toBe(true);
 
-    const context = resolveResearcherMemoryContext({
+    const context = await resolveResearcherMemoryContext({
       proposalTitle: 'Trap review',
       proposalDescription:
         'TYPE: ontological-trap attestation-as-map requires consumer-side revalidation.',
@@ -106,7 +107,7 @@ describe('researcher-confidence', () => {
       '../../mcps/researcher-confidence.js'
     );
 
-    const context = resolveResearcherMemoryContext({
+    const context = await resolveResearcherMemoryContext({
       proposalTitle: 'Attestation boundary',
       proposalDescription:
         'Consumer must revalidate attestation-as-map at the trust boundary.',
@@ -123,7 +124,7 @@ describe('researcher-confidence', () => {
       '../../mcps/researcher-confidence.js'
     );
 
-    const context = resolveResearcherMemoryContext({
+    const context = await resolveResearcherMemoryContext({
       proposalTitle: 'Routine refactor',
       proposalDescription: 'Rename helper functions for readability.',
       proposalType: 'refactor',
