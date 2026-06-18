@@ -23,6 +23,7 @@ const pkgPath = path.join(rootDir, "package.json");
 const args = process.argv.slice(2);
 const checkMode = args.includes("--check");
 const applyMode = args.includes("--apply");
+const printTarget = args.includes("--print-target");
 const bumpType = args.find((a) => ["major", "minor", "patch"].includes(a)) || null;
 
 function run(cmd) {
@@ -91,6 +92,11 @@ function main() {
 
   const baseline = maxVersion(npm, tag || "0.0.0");
   const target = bumpType ? bumpVersion(baseline, bumpType) : local;
+
+  if (printTarget && bumpType) {
+    console.log(target);
+    return;
+  }
 
   console.log("\n=== Version Reconcile ===\n");
   console.log(`  npm registry : ${npm}`);

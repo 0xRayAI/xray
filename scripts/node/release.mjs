@@ -1,129 +1,137 @@
 #!/usr/bin/env node
 
 /**
- * Release Script for 0xRay
+ * Canonical 0xRay release script.
  *
- * Safe release process:
- * 1. Compute target version from npm registry
- * 2. Pre-commit gate (build + test + consumer smoke)
- * 3. Commit version bump
- * 4. Push to origin
- * 5. Full release gate (reconcile + guard — no tag until green)
- * 6. Create git tag + push tag
- * 7. Publish to npm
+ * 1. Bump version from npm registry baseline (reconcile-version)
+ * 2. Release gate once (build + test + consumer smoke)
+ * 3. Update CHANGELOG / README / AGENTS (version-manager --artifacts-only)
+ * 4. Commit release artifacts → push
+ * 5. Verify gate (reconcile + git + smoke)
+ * 6. Tag → push tag → npm publish
  *
  * Usage:
  *   npm run release:patch
  *   npm run release:minor
  *   npm run release:major
+ *   node scripts/node/release.mjs patch --dry-run
  */
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = process.cwd();
+const args = process.argv.slice(2);
+const dryRun = args.includes("--dry-run");
+const releaseType = args.find((a) => ["major", "minor", "patch"].includes(a)) || "patch";
 
-function runCommand(cmd, errorMsg) {
-  try {
-    console.log(`\n> ${cmd}`);
-    execSync(cmd, { cwd: rootDir, stdio: 'inherit', encoding: 'utf-8' });
-  } catch (error) {
-    console.error(`\n❌ ${errorMsg}`);
-    console.error(error.message);
-    process.exit(1);
+function run(cmd, label) {
+  console.log(`\n> ${cmd}`);
+  if (dryRun) {
+    console.log(`  (dry-run skip: ${label})`);
+    return;
   }
+  execSync(cmd, { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
+}
+
+function readVersion() {
+  return JSON.parse(fs.readFileSync(path.join(rootDir, "package.json"), "utf-8")).version;
+}
+
+function currentBranch() {
+  return execSync("git rev-parse --abbrev-ref HEAD", { cwd: rootDir, encoding: "utf-8" }).trim();
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  const releaseType = args[0] || 'patch';
-
-  if (!['major', 'minor', 'patch'].includes(releaseType)) {
-    console.error('Usage: node scripts/node/release.mjs [major|minor|patch]');
+  if (!["major", "minor", "patch"].includes(releaseType)) {
+    console.error("Usage: node scripts/node/release.mjs [patch|minor|major] [--dry-run]");
     process.exit(1);
   }
 
-  console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║        🚀 0xRay Release Script                         ║');
-  console.log('╚════════════════════════════════════════════════════════╝');
+  console.log("╔════════════════════════════════════════════════════════╗");
+  console.log("║        🚀 0xRay Release (canonical)                   ║");
+  console.log("╚════════════════════════════════════════════════════════╝");
+  if (dryRun) console.log("\n⚠️  DRY RUN — no writes, commits, tags, or publish\n");
 
-  // Step 1: Compute & apply version from npm baseline
-  console.log(`\n📦 Step 1: Version bump (${releaseType}) from npm baseline...`);
-  runCommand(`node scripts/node/reconcile-version.mjs ${releaseType} --apply`, 'Version bump failed');
-  const newVersion = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8')).version;
-  console.log(`📌 Target version: ${newVersion}`);
+  // 1. Version bump from npm SSOT
+  console.log(`\n📦 Step 1: Bump ${releaseType} from npm baseline`);
+  if (dryRun) {
+    execSync(`node scripts/node/reconcile-version.mjs ${releaseType}`, { cwd: rootDir, stdio: "inherit" });
+  } else {
+    run(`node scripts/node/reconcile-version.mjs ${releaseType} --apply`, "version bump");
+  }
+  const newVersion = dryRun
+    ? execSync(`node scripts/node/reconcile-version.mjs ${releaseType} --print-target`, {
+        cwd: rootDir,
+        encoding: "utf-8",
+      }).trim()
+    : readVersion();
+  console.log(`📌 Release version: ${newVersion}`);
 
-  // Step 2: Pre-commit gate — no tag until build/test/smoke pass
-  console.log('\n📦 Step 2: Pre-commit release gate...');
-  runCommand('node scripts/node/release-gate.mjs --pre-commit', 'Pre-commit gate failed');
+  // 2. Single gate before commit
+  console.log("\n📦 Step 2: Release gate (build + test + smoke)");
+  run("node scripts/node/release-gate.mjs", "release gate");
 
-  // Step 2.5: Sync docs (non-blocking)
-  try {
-    execSync('node scripts/node/sync-versions.mjs --apply', { cwd: rootDir, stdio: 'inherit' });
-  } catch {
-    console.log('⚠️  Version sync had issues (non-blocking)');
+  // 3. Changelog + doc artifacts
+  console.log("\n📦 Step 3: Release artifacts (CHANGELOG, README, AGENTS)");
+  run("node scripts/node/version-manager.mjs --artifacts-only", "release artifacts");
+
+  // 4. Commit + push
+  console.log("\n📦 Step 4: Commit & push");
+  const releaseFiles = ["package.json", "CHANGELOG.md", "README.md", "AGENTS.md"];
+  if (!dryRun) {
+    run(`git add ${releaseFiles.join(" ")}`, "git add");
+    try {
+      execSync(`git commit --no-verify -m "release: v${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
+    } catch (e) {
+      const out = String(e.stdout || e.stderr || "");
+      if (!out.includes("nothing to commit")) throw e;
+      console.log("ℹ️  Nothing to commit (release files unchanged)");
+    }
+  } else {
+    console.log(`  would: git add ${releaseFiles.join(" ")} && git commit -m "release: v${newVersion}"`);
   }
 
-  // Step 3: Commit version bump only (avoid git add -A slop)
-  console.log('\n📦 Step 3: Committing version bump...');
-  runCommand('git add package.json CHANGELOG.md AGENTS.md README.md 2>/dev/null || git add package.json', 'git add failed');
-  runCommand(`git commit --no-verify -m "release: v${newVersion}"`, 'git commit failed');
+  const branch = currentBranch();
+  run(`git push origin ${branch}`, "git push");
 
-  // Step 4: Push before full gate (guard requires pushed commit)
-  console.log('\n📦 Step 4: Pushing to origin...');
-  runCommand('git push origin main', 'Failed to push to origin');
+  // 5. Post-push verify before tag
+  console.log("\n📦 Step 5: Verify gate (reconcile + git + smoke)");
+  run("node scripts/node/release-gate.mjs --verify-only", "verify gate");
 
-  // Step 5: Full release gate — reconcile + guard + smoke
-  console.log('\n📦 Step 5: Full release gate (no tag until green)...');
-  runCommand('node scripts/node/release-gate.mjs', 'Release gate failed — do NOT tag');
-
-  // Step 6: Tag (only after gate passes)
-  console.log('\n📦 Step 6: Creating git tag...');
-  try {
-    execSync(`git tag -a v${newVersion} -m "Release v${newVersion}"`, { cwd: rootDir, stdio: 'inherit' });
+  // 6. Tag
+  console.log("\n📦 Step 6: Tag");
+  if (!dryRun) {
+    execSync(`git tag -a v${newVersion} -m "Release v${newVersion}"`, { cwd: rootDir, stdio: "inherit" });
     console.log(`✅ Created tag v${newVersion}`);
-  } catch {
-    console.log('⚠️  Tag may already exist');
+  } else {
+    console.log(`  would: git tag -a v${newVersion}`);
   }
+  run(`git push origin v${newVersion}`, "push tag");
 
-  runCommand(`git push origin v${newVersion}`, 'Failed to push tag');
+  // 7. Publish
+  console.log("\n📦 Step 7: npm publish");
+  run("npm publish --access public", "npm publish");
 
-  // Step 7: Publish
-  console.log('\n📦 Step 7: Publishing to npm...');
-  runCommand('npm publish --access public', 'npm publish failed');
-  console.log(`✅ Published 0xray@${newVersion} to npm`);
-
-  console.log('\n╔════════════════════════════════════════════════════════╗');
-  console.log('║        ✅ Release Complete!                            ║');
-  console.log('╚════════════════════════════════════════════════════════╝');
-  console.log(`\n📦 Package: 0xray@${newVersion}`);
-  console.log(`🏷  Tag: v${newVersion}`);
-
-  const tweetPath = path.join(rootDir, 'tweets', `v${newVersion}.md`);
-  const tweetDir = path.join(rootDir, 'tweets');
-  if (!fs.existsSync(tweetDir)) fs.mkdirSync(tweetDir, { recursive: true });
-
-  if (!fs.existsSync(tweetPath)) {
-    const tweet = `🎉 0xRay v${newVersion} is LIVE - {THEME}!
-{EMOJI} {feature - consumer benefit}
-{EMOJI} {feature - consumer benefit}
-{EMOJI} {feature - consumer benefit}
-{EMOJI} {feature - consumer benefit}
-{EMOJI} {feature - consumer benefit}
-\`\`\`
-npm install 0xray@latest
-\`\`\`
-What 0xRay is: {one sentence positioning}
-#0xRay #AIOps #DevTools #SelfHealing #NPM`;
-    fs.writeFileSync(tweetPath, tweet);
-    console.log(`\n📝 Tweet template saved to tweets/v${newVersion}.md`);
+  console.log("\n╔════════════════════════════════════════════════════════╗");
+  console.log("║        ✅ Release Complete!                            ║");
+  console.log("╚════════════════════════════════════════════════════════╝");
+  if (!dryRun) {
+    console.log(`\n📦 0xray@${newVersion}  🏷  v${newVersion}\n`);
+    const tweetPath = path.join(rootDir, "tweets", `v${newVersion}.md`);
+    if (!fs.existsSync(tweetPath)) {
+      fs.mkdirSync(path.join(rootDir, "tweets"), { recursive: true });
+      fs.writeFileSync(
+        tweetPath,
+        `🎉 0xRay v${newVersion} is LIVE - {THEME}!\n...\n\`\`\`\nnpm install 0xray@latest\n\`\`\`\n`,
+      );
+      console.log(`📝 Tweet template: tweets/v${newVersion}.md`);
+    }
   }
 }
 
-main().catch((error) => {
-  console.error('\n❌ Release failed:', error.message);
+main().catch((err) => {
+  console.error("\n❌ Release failed:", err.message);
   process.exit(1);
 });

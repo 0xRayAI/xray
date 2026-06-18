@@ -651,6 +651,10 @@ const UPDATE_PATTERNS = [
   }
 
   async function standardizeVersions() {
+  console.warn("\n⚠️  universal-version-manager.js is DEPRECATED for releases.");
+  console.warn("    Use: npm run release:patch  or  npm run version:sync");
+  console.warn("    (version-manager.mjs --artifacts-only). Mass JSON version replace is disabled.\n");
+  return;
   console.log("🔧 Starting Universal Version Standardization");
   console.log(`📋 Framework: ${OFFICIAL_VERSIONS.framework.displayName}`);
   console.log(

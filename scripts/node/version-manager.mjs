@@ -437,8 +437,25 @@ function createGitTag(version, message) {
   }
 }
 
+/** Update CHANGELOG + README + AGENTS for current package.json version (no bump). */
+function updateReleaseArtifactsOnly(changeDescription = '') {
+  const current = getCurrentVersion();
+  console.log(`\n📌 Release artifacts for v${current}\n`);
+  const counts = getFrameworkCounts();
+  console.log(`📊 Framework counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills`);
+  updateChangelog(current, changeDescription);
+  updateReadme(counts, current);
+  updateAgentsMd(counts);
+  console.log(`\n✅ Release artifacts updated for v${current}\n`);
+}
+
 function main() {
   const args = process.argv.slice(2);
+
+  if (args.includes('--artifacts-only')) {
+    updateReleaseArtifactsOnly('');
+    return;
+  }
   
   // Handle --help flag first
   if (args.includes('--help') || args.includes('-h')) {
@@ -448,6 +465,7 @@ function main() {
     console.log(`  node scripts/node/version-manager.mjs [major|minor|patch] [description]`);
     console.log(`  node scripts/node/version-manager.mjs 1.6.9 "Description of changes"`);
     console.log(`  node scripts/node/version-manager.mjs patch --tag  # auto-changelog + git tag`);
+    console.log(`  node scripts/node/version-manager.mjs --artifacts-only  # CHANGELOG/README/AGENTS only`);
     console.log(`\nExamples:`);
     console.log(`  node scripts/node/version-manager.mjs patch  # 1.6.8 -> 1.6.9 (auto-generates changelog from git)`);
     console.log(`  node scripts/node/version-manager.mjs minor  # 1.6.8 -> 1.7.0`);
