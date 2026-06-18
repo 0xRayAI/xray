@@ -36,18 +36,26 @@ function main() {
 
   try {
     if (verifyOnly) {
-      step("1/4 Git + reconcile", "node scripts/node/pre-publish-guard.js --verify-only");
+      step("1/5 Git + reconcile", "node scripts/node/pre-publish-guard.js --verify-only");
       if (!skipDocs) {
-        step("2/4 Release docs", "node scripts/node/validate-release-docs.mjs");
+        step("2/5 Release docs", "node scripts/node/validate-release-docs.mjs");
       }
+      step(
+        "3/5 Plugin infrastructure",
+        "node scripts/test/validate-plugins-e2e.cjs --structural-only",
+      );
       if (!skipSmoke) {
-        step("3/4 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
+        step("4/5 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
       }
     } else {
-      step("1/4 Build", "npm run build");
-      step("2/4 Tests", "npm test");
+      step("1/5 Build", "npm run build");
+      step("2/5 Tests", "npm test");
+      step(
+        "3/5 Plugin infrastructure",
+        "node scripts/test/validate-plugins-e2e.cjs --structural-only",
+      );
       if (!skipSmoke) {
-        step("3/4 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
+        step("4/5 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 

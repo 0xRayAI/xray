@@ -7,6 +7,7 @@ const os = require('os');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const KEEP = process.argv.includes('--keep');
+const STRUCTURAL_ONLY = process.argv.includes('--structural-only');
 
 let globalPassed = 0;
 let globalFailed = 0;
@@ -152,8 +153,19 @@ async function validatePlugin(name, e2eScript, checkPrereqs, extraArgs = []) {
 async function main() {
   const startTime = Date.now();
   console.log('\n\x1b[1m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('  0xRay Per-Plugin E2E Validation — Hermes · OpenClaw · Grok');
+  console.log(
+    STRUCTURAL_ONLY
+      ? '  0xRay Plugin Infrastructure Validation (structural-only)'
+      : '  0xRay Per-Plugin E2E Validation — Hermes · OpenClaw · Grok',
+  );
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m');
+
+  if (STRUCTURAL_ONLY) {
+    console.log('  \x1b[33m--structural-only: skipping per-plugin CLI E2E (Hermes/OpenClaw/Grok/Opencode)\x1b[0m\n');
+    await runInfrastructureValidation();
+    printSummary(startTime);
+    return;
+  }
 
   // ── Prerequisite: Ensure openclaw gateway is running ─────────────────
   section('Pre-flight: OpenClaw gateway');
@@ -255,6 +267,11 @@ async function main() {
   if (!KEEP) { try { fs.rmSync(opencodeInstallDir, { recursive: true, force: true }); } catch {} }
   else { console.log(`  \x1b[33mKept: ${opencodeInstallDir}\x1b[0m`); }
 
+  await runInfrastructureValidation();
+  printSummary(startTime);
+}
+
+async function runInfrastructureValidation() {
   // ── Infrastructure Validation ───────────────────────────
   section('Infrastructure: MCP Servers + Config Paths');
   const infraDir = path.join(os.tmpdir(), `xray-infra-${Date.now()}`);
@@ -460,7 +477,9 @@ async function main() {
 
   if (!KEEP) { try { fs.rmSync(infraDir, { recursive: true, force: true }); } catch {} }
   else { console.log(`  \x1b[33mKept: ${infraDir}\x1b[0m`); }
+}
 
+function printSummary(startTime) {
   // ── Summary ──────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   section('Plugin Validation Summary');

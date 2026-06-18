@@ -100,6 +100,9 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Plugin infrastructure validation
+        run: node scripts/test/validate-plugins-e2e.cjs --structural-only
+
   # ═══════════════════════════════════════════════════════
   # Pipeline Tests (gated: schedule, needs-pipeline, or ci:full)
   # ═══════════════════════════════════════════════════════
