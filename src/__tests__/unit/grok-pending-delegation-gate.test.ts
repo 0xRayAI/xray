@@ -4,8 +4,10 @@ import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkPendingDelegationGate,
+  checkSubagentGate,
   getActivePendingDelegations,
   isOrchestrateToolEvent,
+  savePersistedLeadDevPlan,
   satisfyDelegationsFromToolInput,
 } from '../../integrations/grok/hooks/grok-hook-utils.js';
 
@@ -122,5 +124,69 @@ describe('grok pending delegation gate', () => {
         arguments: { description: 'x' },
       }),
     ).toBe(true);
+  });
+
+  it('checkSubagentGate denies spawn that skips required todo', () => {
+    savePersistedLeadDevPlan(
+      {
+        active: true,
+        phases: [
+          {
+            id: 'phase-2',
+            name: 'Implementation',
+            todos: [
+              {
+                id: '2.1',
+                task: 'swap deps',
+                subagent: 'backend-engineer',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+        persistedAt: new Date().toISOString(),
+      },
+      tmp,
+    );
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'random exploration', subagent_type: 'explore' },
+    );
+    expect(block?.gate).toBe('spawn-todo-persistence');
+  });
+
+  it('checkSubagentGate allows spawn matching plan todo', () => {
+    savePersistedLeadDevPlan(
+      {
+        active: true,
+        phases: [
+          {
+            id: 'phase-2',
+            name: 'Implementation',
+            todos: [
+              {
+                id: '2.1',
+                task: 'swap deps',
+                subagent: 'backend-engineer',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+        persistedAt: new Date().toISOString(),
+      },
+      tmp,
+    );
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'plan todo 2.1 swap deps in package.json', subagent_type: 'backend-engineer' },
+    );
+    expect(block).toBeNull();
   });
 });

@@ -11,6 +11,8 @@ import {
   readStdinJson,
   resolveSessionId,
   satisfyDelegationsFromToolInput,
+  validateSpawnMatchesTodo,
+  updatePlanTodoStatusInPlace,
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
@@ -32,12 +34,18 @@ async function main() {
     }
 
     if (isSubagentTool(toolName)) {
+      const spawnCheck = validateSpawnMatchesTodo(toolInput, eventRoot);
+      if (spawnCheck.valid && spawnCheck.expectedTodoId) {
+        updatePlanTodoStatusInPlace(spawnCheck.expectedTodoId, 'in_progress', eventRoot);
+      }
+
       const result = satisfyDelegationsFromToolInput(toolInput, eventRoot);
       if (result.satisfied.length > 0) {
         appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-cleared', 'success', {
           tool: toolName,
           satisfied: result.satisfied.map((d) => d.id),
           clearedAll: result.clearedAll,
+          planTodoId: spawnCheck.expectedTodoId ?? null,
         });
       }
     }

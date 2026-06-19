@@ -118,12 +118,48 @@ try {
       toolName: 'Task',
       workspaceRoot: tmp,
       sessionId: 'verify-gate',
-      toolInput: { prompt: 'plan todo 2.1', subagent_type: 'backend-engineer' },
+      toolInput: { prompt: 'plan todo 2.1 swap deps', subagent_type: 'backend-engineer' },
     },
     baseEnv,
   );
   if (allowTask.decision === 'allow') pass('PreToolUse allows Task while pending');
   else fail('Task allow', JSON.stringify(allowTask));
+
+  writeFileSync(
+    join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+    JSON.stringify({
+      active: true,
+      persistedAt: new Date().toISOString(),
+      phases: [
+        {
+          id: 'phase-2',
+          todos: [
+            {
+              id: '2.1',
+              task: 'swap deps',
+              subagent: 'backend-engineer',
+              status: 'pending',
+            },
+          ],
+        },
+      ],
+    }),
+  );
+
+  const denyWrongTodo = runHook(
+    {
+      toolName: 'Task',
+      workspaceRoot: tmp,
+      sessionId: 'verify-gate',
+      toolInput: { prompt: 'explore only', subagent_type: 'explore' },
+    },
+    baseEnv,
+  );
+  if (denyWrongTodo.decision === 'deny' && denyWrongTodo.gate === 'spawn-todo-persistence') {
+    pass('PreToolUse denies spawn skipping required plan todo');
+  } else {
+    fail('spawn todo persistence', JSON.stringify(denyWrongTodo));
+  }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -131,7 +167,7 @@ try {
 console.log(
   '\n' +
     (failed === 0
-      ? '🎉 Grok delegation gate verify passed (3/3).'
+      ? '🎉 Grok delegation gate verify passed (4/4).'
       : `⚠️  ${failed} gate check(s) failed.`),
 );
 process.exit(failed === 0 ? 0 : 1);

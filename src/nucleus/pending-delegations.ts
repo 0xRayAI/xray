@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { featuresConfigLoader } from '../core/features-config.js';
 import type { LeadDevPlan, LeadDevTodo, SubagentRoute } from './autonomy-kernel.js';
+import { updatePlanTodoStatus } from './lead-dev-plan-persistence.js';
 
 export const DEFAULT_PENDING_TTL_MS = 4 * 60 * 60 * 1000;
 
@@ -369,8 +370,20 @@ export function satisfyDelegation(
   }
 
   savePendingDelegationsState(state, projectRoot);
+  for (const m of matches) {
+    if (m.planTodoId) {
+      updatePlanTodoStatus(m.planTodoId, 'in_progress', projectRoot);
+    }
+  }
   const stillPending = state.delegations.some((d) => d.status === 'pending');
   return { satisfied: matches, clearedAll: !stillPending };
+}
+
+export function clearPendingDelegations(projectRoot = process.cwd()): boolean {
+  const filePath = pendingDelegationsPath(projectRoot);
+  if (!fs.existsSync(filePath)) return false;
+  fs.unlinkSync(filePath);
+  return true;
 }
 
 export function clearPendingDelegationsForSessionChange(

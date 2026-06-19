@@ -8,9 +8,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### ✨ Features
 - **3.5.0 auto-chain bridge (PR1)** — `pending-delegations.json` SSOT on `delegate-deferred`; PreToolUse surgical gate blocks writes while pending; PostToolUse logs + targeted clear on Task; session-bound TTL; `delegations[]` in orchestrate response
+- **3.5.0 spawn todo persistence (PR2)** — lead-dev plan stays enforced while outstanding todos remain (beyond 4h mtime); `checkSubagentGate` validates Task targets next plan todo; plan todo `in_progress` sync on matched spawn; new intake clears pending delegations + binds `sessionId`/`planGeneration`
 
 ### ✅ Tests
-- `pending-delegations`, `grok-pending-delegation-gate` unit tests; `verify-grok-delegation-gate.mjs` hook fixture; orchestrator behavior verify 8/8
+- `pending-delegations`, `lead-dev-plan-persistence`, `grok-pending-delegation-gate` unit tests; `verify-grok-delegation-gate.mjs` hook fixture (4/4); orchestrator behavior verify 8/8
 
 ---
 

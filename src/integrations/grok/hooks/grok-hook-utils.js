@@ -120,17 +120,134 @@ export function leadDevPlanPath(root = workspaceRoot()) {
   return path.join(root, '.xray', 'state', 'lead-dev-plan.json');
 }
 
-export function hasFreshLeadDevPlan(maxAgeMs = 4 * 60 * 60 * 1000) {
-  const planPath = leadDevPlanPath();
-  if (!fs.existsSync(planPath)) return false;
+const DEFAULT_PLAN_TTL_MS = 4 * 60 * 60 * 1000;
+
+export function loadPersistedLeadDevPlan(root = workspaceRoot()) {
+  const planPath = leadDevPlanPath(root);
+  if (!fs.existsSync(planPath)) return null;
   try {
-    const stat = fs.statSync(planPath);
-    if (Date.now() - stat.mtimeMs > maxAgeMs) return false;
-    const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
-    return plan.active === true;
+    return JSON.parse(fs.readFileSync(planPath, 'utf8'));
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function savePersistedLeadDevPlan(plan, root = workspaceRoot()) {
+  const planPath = leadDevPlanPath(root);
+  fs.mkdirSync(path.dirname(planPath), { recursive: true });
+  fs.writeFileSync(planPath, JSON.stringify(plan, null, 2));
+  return planPath;
+}
+
+export function getOutstandingPlanTodos(plan) {
+  if (!plan?.phases) return [];
+  return plan.phases.flatMap((p) => p.todos).filter(
+    (t) => t.status === 'pending' || t.status === 'in_progress',
+  );
+}
+
+export function getNextRequiredPlanTodo(plan) {
+  if (!plan?.phases) return null;
+  for (const phase of plan.phases) {
+    const next = phase.todos.find(
+      (t) => t.status === 'pending' || t.status === 'in_progress',
+    );
+    if (next) return next;
+  }
+  return null;
+}
+
+/** Todo-level persistence: plan stays valid while outstanding todos exist */
+export function hasValidLeadDevPlanForSpawn(root = workspaceRoot()) {
+  const plan = loadPersistedLeadDevPlan(root);
+  if (!plan?.active) return false;
+  const outstanding = getOutstandingPlanTodos(plan);
+  if (outstanding.length > 0) return true;
+  const persistedAt = plan.persistedAt;
+  if (!persistedAt) {
+    try {
+      const stat = fs.statSync(leadDevPlanPath(root));
+      return Date.now() - stat.mtimeMs <= DEFAULT_PLAN_TTL_MS;
+    } catch {
+      return false;
+    }
+  }
+  return Date.now() - new Date(persistedAt).getTime() <= DEFAULT_PLAN_TTL_MS;
+}
+
+export function hasFreshLeadDevPlan(maxAgeMs = DEFAULT_PLAN_TTL_MS) {
+  return hasValidLeadDevPlanForSpawn();
+}
+
+function normalizeSpawnAgent(agent) {
+  const key = String(agent || '').toLowerCase().trim();
+  const aliases = {
+    'bug-triage-specialist': 'bug-triage',
+    'code-reviewer': 'code-review',
+  };
+  return aliases[key] ?? key;
+}
+
+function agentsAlign(expected, actual) {
+  const e = normalizeSpawnAgent(expected);
+  const a = normalizeSpawnAgent(actual);
+  return e === a || e.includes(a) || a.includes(e);
+}
+
+export function validateSpawnMatchesTodo(toolInput, root = workspaceRoot(), expectedTodo = null) {
+  const plan = loadPersistedLeadDevPlan(root);
+  const nextTodo = expectedTodo ?? (plan ? getNextRequiredPlanTodo(plan) : null);
+  if (!nextTodo) return { valid: true };
+
+  const prompt = String(
+    toolInput.prompt || toolInput.description || toolInput.task || '',
+  ).toLowerCase();
+  const subagent = String(toolInput.subagent_type || toolInput.agent || '');
+  const explicitTodo = toolInput.planTodoId || toolInput.delegationId;
+
+  if (explicitTodo && explicitTodo === nextTodo.id) {
+    return { valid: true, expectedTodoId: nextTodo.id, hint: null };
+  }
+  if (prompt.includes(nextTodo.id.toLowerCase())) {
+    return { valid: true, expectedTodoId: nextTodo.id, hint: null };
+  }
+  if (prompt.includes(nextTodo.task.toLowerCase().slice(0, 30))) {
+    return { valid: true, expectedTodoId: nextTodo.id, hint: null };
+  }
+  if (subagent && agentsAlign(nextTodo.subagent, subagent) && prompt.length > 20) {
+    return { valid: true, expectedTodoId: nextTodo.id, hint: null };
+  }
+
+  return {
+    valid: false,
+    expectedTodoId: nextTodo.id,
+    reason: `Spawn must target plan todo ${nextTodo.id} before other work`,
+    gate: 'spawn-todo-persistence',
+    hint: {
+      tool: 'Task',
+      subagent_type: nextTodo.subagent,
+      planTodoId: nextTodo.id,
+      description: `Lead-dev todo ${nextTodo.id}: ${nextTodo.task}. Include plan todo id in Task prompt.`,
+    },
+  };
+}
+
+export function updatePlanTodoStatusInPlace(todoId, status, root = workspaceRoot()) {
+  const plan = loadPersistedLeadDevPlan(root);
+  if (!plan) return false;
+  let updated = false;
+  for (const phase of plan.phases) {
+    for (const todo of phase.todos) {
+      if (todo.id === todoId) {
+        todo.status = status;
+        updated = true;
+      }
+    }
+  }
+  if (updated) {
+    fs.writeFileSync(leadDevPlanPath(root), JSON.stringify(plan, null, 2));
+  }
+  return updated;
 }
 
 export function extractToolContext(event) {
@@ -173,14 +290,39 @@ export function checkSurfaceArea(paths, root = workspaceRoot()) {
   return null;
 }
 
-export function checkSubagentGate(toolName, features) {
+export function checkSubagentGate(toolName, features, root = workspaceRoot(), sessionId = null, toolInput = {}) {
   if (!features.lead_dev_mode) return null;
-  if (!SUBAGENT_TOOLS.has(toolName)) return null;
-  if (hasFreshLeadDevPlan()) return null;
-  return (
-    'Codex 59/67: call xray-orchestrator analyze-complexity first — ' +
-    'writes .xray/state/lead-dev-plan.json required before spawn_subagent'
-  );
+  if (!isSubagentTool(toolName)) return null;
+
+  if (!hasValidLeadDevPlanForSpawn(root)) {
+    return {
+      reason:
+        'Codex 59/67: call xray-orchestrator analyze-complexity first — ' +
+        'writes .xray/state/lead-dev-plan.json required before spawn_subagent',
+      gate: 'spawn-plan-missing',
+    };
+  }
+
+  if (features.auto_chain_delegations === false) return null;
+
+  const pending = getActivePendingDelegations(root, sessionId);
+  const expectedTodo =
+    pending[0]?.planTodoId && loadPersistedLeadDevPlan(root)
+      ? loadPersistedLeadDevPlan(root).phases
+          .flatMap((p) => p.todos)
+          .find((t) => t.id === pending[0].planTodoId) ?? null
+      : null;
+
+  const validation = validateSpawnMatchesTodo(toolInput, root, expectedTodo);
+  if (!validation.valid) {
+    return {
+      reason: validation.reason,
+      gate: validation.gate,
+      hint: validation.hint,
+    };
+  }
+
+  return null;
 }
 
 export function checkFullTestSuite(cmd, features) {
@@ -445,6 +587,11 @@ export function satisfyDelegationsFromToolInput(toolInput, root = workspaceRoot(
     }
   }
   savePendingDelegationsState(state, root);
+  for (const m of matches) {
+    if (m.planTodoId) {
+      updatePlanTodoStatusInPlace(m.planTodoId, 'in_progress', root);
+    }
+  }
   const clearedAll = !state.delegations.some((d) => d.status === 'pending');
   return { satisfied: matches, clearedAll };
 }

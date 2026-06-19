@@ -67,8 +67,23 @@ async function main() {
       );
     }
 
-    const subagentBlock = checkSubagentGate(toolName, features);
-    if (subagentBlock) finish(eventRoot, 'deny', subagentBlock, null, toolName);
+    const subagentBlock = checkSubagentGate(
+      toolName,
+      features,
+      eventRoot,
+      sessionId,
+      toolInput,
+    );
+    if (subagentBlock) {
+      finish(
+        eventRoot,
+        'deny',
+        subagentBlock.reason || subagentBlock,
+        subagentBlock.hint || null,
+        toolName,
+        { gate: subagentBlock.gate || 'spawn-gate' },
+      );
+    }
 
     if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
       const surfaceBlock = checkSurfaceArea(paths, eventRoot);

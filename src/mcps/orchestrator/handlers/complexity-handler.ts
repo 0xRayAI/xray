@@ -10,6 +10,8 @@ import {
   isLeadDevModeActive,
   persistLeadDevPlan,
 } from '../../../nucleus/autonomy-kernel.js';
+import { bindPlanToSession } from '../../../nucleus/lead-dev-plan-persistence.js';
+import { clearPendingDelegations } from '../../../nucleus/pending-delegations.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { addObservations, extractComplexityObservations } from '../aside-context.js';
 import type { OrchestrationTask, ComplexityAnalysis } from '../types.js';
@@ -65,7 +67,7 @@ export class ComplexityHandler {
    * Handle analyze-complexity request
    */
   async handleAnalyzeComplexity(
-    args: { tasks: AnalyzeComplexityInput[] },
+    args: { tasks: AnalyzeComplexityInput[]; sessionId?: string },
     asideId?: string,
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
     const tasks = normalizeAnalyzeTasks(args.tasks ?? []);
@@ -102,13 +104,18 @@ export class ComplexityHandler {
 
       if (leadDevPlan) {
         try {
+          const sessionId = args.sessionId ?? `analyze-${Date.now()}`;
+          clearPendingDelegations();
           const planPath = persistLeadDevPlan(leadDevPlan);
+          const bound = bindPlanToSession(sessionId);
           await frameworkLogger.log(
             'orchestrator.server',
             'lead-dev-plan-persisted',
             'info',
             {
               planPath,
+              sessionId,
+              planGeneration: bound?.planGeneration,
               phaseCount: leadDevPlan.phases.length,
               todoCount: leadDevPlan.phases.reduce((n, p) => n + p.todos.length, 0),
             },
