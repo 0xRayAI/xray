@@ -72,4 +72,10 @@ export const {
   validateSpawnMatchesTodo,
   updatePlanTodoStatus,
   updatePlanTodoStatusInPlace,
+  writeSynthesisConsultReceipt,
+  hasValidSynthesisConsultReceipt,
+  tryRecordSynthesisConsultReceipt,
+  buildReceiptFromConsultOutput,
+  parseConsultVerdictFromText,
+  isSynthesisConsultTodoId,
 } = gate;

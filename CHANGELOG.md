@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.5.4] - 2026-06-19
+
+### ✨ Features
+- **Synthesis consult receipt gate** — s.1–s.3 todos require `.xray/state/synthesis-consult-{id}.json` before completion; `evaluatePostToolSpawn` records receipts from subagent output; Grok post-tool hook wired
+
+### ✅ Tests
+- `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
+
+---
+
 ## [3.5.3] - 2026-06-19
 
 ### 🔄 Changes

@@ -16,6 +16,7 @@ export { getActivePendingDelegations } from './pending-delegations.js';
 import {
   allPlanTodos,
   areSynthesisConsultTodosComplete,
+  getSynthesisConsultTodos,
   hasValidLeadDevPlanForSpawn,
   isSynthesisRealignmentPlan,
   loadPersistedLeadDevPlan,
@@ -30,12 +31,27 @@ import {
   isSynthesisCheckpointDue,
   recordExecutionSlice,
 } from './synthesis.js';
+import {
+  isSynthesisConsultTodoId,
+  tryRecordSynthesisConsultReceipt,
+} from './synthesis-consult-receipt.js';
 
 export {
   validateSpawnMatchesTodo,
   updatePlanTodoStatus,
   savePersistedLeadDevPlan,
 } from './lead-dev-plan-persistence.js';
+export {
+  buildReceiptFromConsultOutput,
+  hasValidSynthesisConsultReceipt,
+  isSynthesisConsultTodoId,
+  loadSynthesisConsultReceipt,
+  parseConsultVerdictFromText,
+  tryRecordSynthesisConsultReceipt,
+  writeSynthesisConsultReceipt,
+  type SynthesisConsultReceipt,
+  type SynthesisConsultVerdict,
+} from './synthesis-consult-receipt.js';
 export const updatePlanTodoStatusInPlace = updatePlanTodoStatus;
 
 export type DelegationGateHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
@@ -94,6 +110,13 @@ export interface PostToolSpawnResult {
   satisfied: PendingDelegation[];
   clearedAll: boolean;
   expectedTodoId?: string | null;
+  receiptRecorded?: boolean;
+  todoCompleted?: boolean;
+}
+
+export interface PostToolSpawnOptions {
+  toolOutput?: unknown;
+  sessionId?: string | null;
 }
 
 const READ_TOOLS = new Set([
@@ -429,6 +452,7 @@ export function evaluatePostToolSpawn(
   toolName: string,
   toolInput: ToolGateInput,
   projectRoot: string,
+  options: PostToolSpawnOptions = {},
 ): PostToolSpawnResult {
   const normalized = normalizeHostToolInput(toolInput);
   const spawnCheck = validateSpawnMatchesTodo(normalized, projectRoot);
@@ -440,12 +464,45 @@ export function evaluatePostToolSpawn(
   if (agent) satisfyInput.agent = agent;
   if (normalized.planTodoId) satisfyInput.planTodoId = normalized.planTodoId;
   const result = satisfyDelegation(satisfyInput, projectRoot);
-  if (spawnCheck.valid && spawnCheck.expectedTodoId) {
-    updatePlanTodoStatus(spawnCheck.expectedTodoId, 'completed', projectRoot);
+
+  let receiptRecorded = false;
+  let todoCompleted = false;
+  const expectedTodoId = spawnCheck.expectedTodoId ?? null;
+
+  if (spawnCheck.valid && expectedTodoId) {
+    const plan = loadPersistedLeadDevPlan(projectRoot);
+    const sessionId =
+      options.sessionId ?? plan?.sessionId ?? null;
+    const consultTodo = plan
+      ? getSynthesisConsultTodos(plan).find((t) => t.id === expectedTodoId)
+      : undefined;
+
+    if (
+      isSynthesisConsultTodoId(expectedTodoId) &&
+      consultTodo &&
+      sessionId &&
+      options.toolOutput != null
+    ) {
+      const receipt = tryRecordSynthesisConsultReceipt(
+        expectedTodoId,
+        consultTodo.subagent,
+        sessionId,
+        options.toolOutput,
+        projectRoot,
+      );
+      receiptRecorded = receipt != null;
+    }
+
+    if (updatePlanTodoStatus(expectedTodoId, 'completed', projectRoot)) {
+      todoCompleted = true;
+    }
   }
+
   return {
     ...result,
-    expectedTodoId: spawnCheck.expectedTodoId ?? null,
+    expectedTodoId,
+    receiptRecorded,
+    todoCompleted,
   };
 }
 

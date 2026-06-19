@@ -21,6 +21,9 @@ const {
   updatePlanTodoStatus,
   getSynthesisConsultTodos,
 } = await import(join(packageRoot, 'dist/nucleus/lead-dev-plan-persistence.js'));
+const { writeSynthesisConsultReceipt } = await import(
+  join(packageRoot, 'dist/nucleus/synthesis-consult-receipt.js'),
+);
 
 const sessionId = 'verify-synthesis-outcome';
 let failed = 0;
@@ -57,7 +60,20 @@ try {
 
   const todos = getSynthesisConsultTodos(plan);
   for (const todo of todos) {
-    updatePlanTodoStatus(todo.id, 'completed', tmp);
+    writeSynthesisConsultReceipt(
+      todo.id,
+      {
+        sessionId,
+        subagent: todo.subagent,
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'verify fixture receipt',
+      },
+      tmp,
+    );
+    if (!updatePlanTodoStatus(todo.id, 'completed', tmp)) {
+      fail('consult todo completion', todo.id);
+    }
   }
 
   if (!isSynthesisCheckpointDue(tmp, sessionId)) pass('checkpoint cleared after consult todos');

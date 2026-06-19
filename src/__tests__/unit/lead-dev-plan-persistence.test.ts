@@ -20,6 +20,7 @@ import {
   isSynthesisCheckpointDue,
   recordExecutionSlice,
 } from '../../nucleus/synthesis.js';
+import { writeSynthesisConsultReceipt } from '../../nucleus/synthesis-consult-receipt.js';
 
 const basePlan: LeadDevPlan = {
   active: true,
@@ -191,6 +192,17 @@ describe('lead-dev-plan-persistence', () => {
     const consultTodos =
       synthesisPlan!.phases.find((p) => p.id === SYNTHESIS_REALIGNMENT_PHASE_ID)?.todos ?? [];
     for (const todo of consultTodos) {
+      writeSynthesisConsultReceipt(
+        todo.id,
+        {
+          sessionId,
+          subagent: todo.subagent,
+          verdict: 'PASS',
+          topRisks: [],
+          hardeningNote: 'fixture receipt',
+        },
+        tmp,
+      );
       expect(updatePlanTodoStatus(todo.id, 'completed', tmp)).toBe(true);
     }
 

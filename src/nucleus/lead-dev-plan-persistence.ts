@@ -14,6 +14,10 @@ import {
   isSynthesisCheckpointDue,
   recordExecutionSlice,
 } from './synthesis.js';
+import {
+  hasValidSynthesisConsultReceipt,
+  isSynthesisConsultTodoId,
+} from './synthesis-consult-receipt.js';
 
 export interface PersistedLeadDevPlan extends LeadDevPlan {
   persistedAt?: string;
@@ -154,6 +158,26 @@ export function updatePlanTodoStatus(
 ): boolean {
   const plan = loadPersistedLeadDevPlan(projectRoot);
   if (!plan) return false;
+
+  let targetTodo: LeadDevTodo | undefined;
+  for (const phase of plan.phases) {
+    for (const todo of phase.todos) {
+      if (todo.id === todoId) {
+        targetTodo = todo;
+        break;
+      }
+    }
+    if (targetTodo) break;
+  }
+
+  if (status === 'completed' && isSynthesisConsultTodoId(todoId)) {
+    const receiptExpected: { sessionId?: string | null; subagent?: string } = {};
+    if (plan.sessionId !== undefined) receiptExpected.sessionId = plan.sessionId;
+    if (targetTodo?.subagent) receiptExpected.subagent = targetTodo.subagent;
+    if (!hasValidSynthesisConsultReceipt(todoId, projectRoot, receiptExpected)) {
+      return false;
+    }
+  }
 
   let updated = false;
   for (const phase of plan.phases) {

@@ -20,6 +20,9 @@ const {
   updatePlanTodoStatus,
   getSynthesisConsultTodos,
 } = await import(join(packageRoot, 'dist/nucleus/lead-dev-plan-persistence.js'));
+const { writeSynthesisConsultReceipt } = await import(
+  join(packageRoot, 'dist/nucleus/synthesis-consult-receipt.js'),
+);
 const { evaluateSynthesisGate } = await import(
   join(packageRoot, 'dist/nucleus/delegation-gate.js')
 );
@@ -95,9 +98,22 @@ try {
       { projectRoot: tmp, sessionId, features },
     );
     if (!spawn.allow) fail(`step 6: spawn ${todo.id}`, JSON.stringify(spawn));
-    updatePlanTodoStatus(todo.id, 'completed', tmp);
+    writeSynthesisConsultReceipt(
+      todo.id,
+      {
+        sessionId,
+        subagent: todo.subagent,
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'verify fixture receipt',
+      },
+      tmp,
+    );
+    if (!updatePlanTodoStatus(todo.id, 'completed', tmp)) {
+      fail(`step 6: complete ${todo.id}`, 'receipt gate blocked');
+    }
   }
-  pass('step 6: consult spawns allowed and todos completed');
+  pass('step 6: consult spawns allowed and todos completed with receipts');
 
   if (!isSynthesisCheckpointDue(tmp, sessionId)) pass('step 7: checkpoint cleared');
   else fail('step 7: checkpoint still due');

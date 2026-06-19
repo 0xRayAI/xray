@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Grok PostToolUse — auto-chain observability + targeted clear on Task spawn.
+ * Grok PostToolUse — auto-chain observability + consult receipt gate on Task spawn.
  * Passive hook: stdout ignored by Grok; side effects only.
  */
 
@@ -10,12 +10,24 @@ import {
   isSubagentTool,
   readStdinJson,
   resolveSessionId,
-  satisfyDelegationsFromToolInput,
-  validateSpawnMatchesTodo,
-  updatePlanTodoStatusInPlace,
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import {
+  evaluatePostToolSpawn,
+  isOrchestrateToolEvent as gateIsOrchestrateToolEvent,
+} from '../../hooks/delegation-gate-runtime.mjs';
+
+function extractToolOutput(event) {
+  return (
+    event.toolOutput ??
+    event.toolResult ??
+    event.result ??
+    event.output ??
+    event.tool_output ??
+    null
+  );
+}
 
 async function main() {
   const root = workspaceRoot();
@@ -25,7 +37,7 @@ async function main() {
     const sessionId = resolveSessionId(event);
     const { toolName, toolInput } = extractToolContext(event);
 
-    if (isOrchestrateToolEvent(toolName, toolInput)) {
+    if (isOrchestrateToolEvent(toolName, toolInput) || gateIsOrchestrateToolEvent(toolName, toolInput)) {
       appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-pending', 'info', {
         tool: toolName,
         sessionId,
@@ -34,18 +46,19 @@ async function main() {
     }
 
     if (isSubagentTool(toolName)) {
-      const spawnCheck = validateSpawnMatchesTodo(toolInput, eventRoot);
-      if (spawnCheck.valid && spawnCheck.expectedTodoId) {
-        updatePlanTodoStatusInPlace(spawnCheck.expectedTodoId, 'completed', eventRoot);
-      }
+      const spawnResult = evaluatePostToolSpawn(toolName, toolInput, eventRoot, {
+        toolOutput: extractToolOutput(event),
+        sessionId,
+      });
 
-      const result = satisfyDelegationsFromToolInput(toolInput, eventRoot);
-      if (result.satisfied.length > 0) {
+      if (spawnResult.satisfied.length > 0 || spawnResult.expectedTodoId) {
         appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-cleared', 'success', {
           tool: toolName,
-          satisfied: result.satisfied.map((d) => d.id),
-          clearedAll: result.clearedAll,
-          planTodoId: spawnCheck.expectedTodoId ?? null,
+          satisfied: spawnResult.satisfied.map((d) => d.id),
+          clearedAll: spawnResult.clearedAll,
+          planTodoId: spawnResult.expectedTodoId ?? null,
+          receiptRecorded: spawnResult.receiptRecorded ?? false,
+          todoCompleted: spawnResult.todoCompleted ?? false,
         });
       }
     }

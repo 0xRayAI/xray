@@ -270,6 +270,7 @@ export default async function xrayCodexPlugin(input: {
             tool,
             (args ?? {}) as Record<string, unknown>,
             directory,
+            { toolOutput: result },
           );
           if (spawnResult.satisfied.length > 0) {
             logger.log(
