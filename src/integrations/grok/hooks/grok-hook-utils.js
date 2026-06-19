@@ -241,10 +241,23 @@ export function sessionBootPath(root = workspaceRoot()) {
   return path.join(root, '.xray', 'state', 'session-boot.json');
 }
 
+export function loadConferPending(root = workspaceRoot()) {
+  try {
+    const statePath = path.join(root, '.xray', 'state', 'confer-checkpoint.json');
+    const planPath = path.join(root, '.xray', 'state', 'lead-dev-plan.json');
+    if (!fs.existsSync(statePath) || !fs.existsSync(planPath)) return false;
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    return state.status === 'pending' || state.status === 'in_progress';
+  } catch {
+    return false;
+  }
+}
+
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
   const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
   const siblingRoots = features.sibling_repos ?? resolveSiblingWorkspaceRoots(root);
+  const conferPending = loadConferPending(root);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
@@ -256,6 +269,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     enforcement: 'PreToolUse hook — codex patterns + surface area + spawn gate',
     workspaceRoot: root,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
+    ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
     sessionId: process.env.GROK_SESSION_ID || null,
     timestamp: new Date().toISOString(),
     source,

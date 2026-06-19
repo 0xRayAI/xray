@@ -12,7 +12,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
 - **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
 - **Pre-push codex** — commit-range diff scope via `COMMIT_RANGE`; `verify:pre-push-diff` 2/2
-- **Confer automation gap** — mandatory 3-agent quorum (researcher / architect-tools / code-review) should run at synthesis checkpoint + pre-merge via confer; today lead dev spawns Task manually — trigger wiring TBD in orchestrator
+- **Confer quorum** — `confer.ts` SSOT; auto-runs at synthesis `analyze-complexity` (researcher → architect-tools → code-review); `verify:confer` 7/7; config `confer_on_synthesis` (default true); session-boot `conferPending` hint
 - **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced (`hooks/post-commit`, install template)
 - **Multi-repo boot** — `sibling_repos` in `session-boot.json` (discovery metadata for 0xray consumer workspaces)
 - **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`

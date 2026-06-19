@@ -47,9 +47,37 @@ export class TaskHandler {
       sessionId?: string;
       executionMode?: string;
       timeout?: number;
+      confer?: boolean;
+      conferFixture?: boolean;
+      collocatedText?: string;
     },
     deps: TaskHandlerDeps
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
+    if (args.confer === true) {
+      const { runConferQuorum, formatConferQuorumReport, isConferEnabled } = await import(
+        '../../../nucleus/confer.js',
+      );
+      const sid = args.sessionId ?? `confer_${Date.now()}`;
+      if (!isConferEnabled()) {
+        return {
+          content: [{ type: 'text', text: '❌ Confer disabled in features.json' }],
+        };
+      }
+      const conferOpts: {
+        dueReason?: string | null;
+        fixture?: boolean;
+        collocatedText?: string;
+      } = {
+        dueReason: args.description,
+        fixture: args.conferFixture === true,
+      };
+      if (args.collocatedText) conferOpts.collocatedText = args.collocatedText;
+      const result = await runConferQuorum(process.cwd(), sid, conferOpts);
+      return {
+        content: [{ type: 'text', text: formatConferQuorumReport(result) }],
+      };
+    }
+
     const { description, tasks = [], sessionId = `session_${Date.now()}`, executionMode = 'optimized', timeout = 300000 } = args;
 
     await frameworkLogger.log(

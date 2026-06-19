@@ -11,6 +11,11 @@ import {
   isLeadDevModeActive,
   persistLeadDevPlan,
 } from '../../../nucleus/autonomy-kernel.js';
+import {
+  formatConferQuorumReport,
+  isConferEnabled,
+  runConferQuorum,
+} from '../../../nucleus/confer.js';
 import { bindPlanToSession } from '../../../nucleus/lead-dev-plan-persistence.js';
 import { clearPendingDelegations } from '../../../nucleus/pending-delegations.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
@@ -73,6 +78,8 @@ export class ComplexityHandler {
       sessionId?: string;
       synthesisCheckpoint?: boolean;
       synthesisDueReason?: string | null;
+      collocatedText?: string | null;
+      conferFixture?: boolean;
     },
     asideId?: string,
   ): Promise<{ content: Array<{ type: string; text: string }>; ok: boolean }> {
@@ -145,6 +152,37 @@ export class ComplexityHandler {
         }
       }
 
+      let conferReport = '';
+      if (
+        synthesisCheckpoint &&
+        leadDevPlan &&
+        planPersisted &&
+        isConferEnabled() &&
+        args.sessionId
+      ) {
+        const conferOpts: {
+          dueReason?: string | null;
+          fixture?: boolean;
+          collocatedText?: string;
+        } = {
+          dueReason: args.synthesisDueReason ?? null,
+          fixture: args.conferFixture === true,
+        };
+        if (args.collocatedText) conferOpts.collocatedText = args.collocatedText;
+        const conferResult = await runConferQuorum(process.cwd(), args.sessionId, conferOpts);
+        conferReport = `\n\n${formatConferQuorumReport(conferResult)}`;
+        await frameworkLogger.log(
+          'orchestrator.server',
+          'confer-quorum',
+          conferResult.status === 'completed' ? 'info' : 'warning',
+          {
+            status: conferResult.status,
+            agentCount: conferResult.agents.length,
+            sessionId: args.sessionId,
+          },
+        );
+      }
+
       const ok = planPersisted;
 
       return {
@@ -152,13 +190,14 @@ export class ComplexityHandler {
         content: [
           {
             type: 'text',
-            text: this.formatComplexityResponse(
-              analysis,
-              recommendations,
-              tasks.length,
-              leadDevPlan,
-              synthesisCheckpoint,
-            ),
+            text:
+              this.formatComplexityResponse(
+                analysis,
+                recommendations,
+                tasks.length,
+                leadDevPlan,
+                synthesisCheckpoint,
+              ) + conferReport,
           },
         ],
       };

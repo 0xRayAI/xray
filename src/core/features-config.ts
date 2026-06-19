@@ -88,6 +88,9 @@ export interface MultiAgentOrchestrationConfig {
   plan_archive_marker_hours?: number;
   /** Sibling workspace roots for multi-repo session boot metadata */
   sibling_repos?: Array<string | { path: string; label?: string }>;
+  /** Auto-run 3-agent confer at synthesis checkpoint */
+  confer_on_synthesis?: boolean;
+  confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */

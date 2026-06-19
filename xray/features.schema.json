@@ -43,6 +43,18 @@
           "minimum": 1,
           "description": "How long spawn-plan-stale persists after a stale plan was archived (hours)"
         },
+        "confer_on_synthesis": {
+          "type": "boolean",
+          "description": "Auto-run 3-agent confer quorum at synthesis checkpoint (default true)"
+        },
+        "confer": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "on_synthesis": { "type": "boolean" }
+          },
+          "description": "Mandatory researcher/architect-tools/code-review quorum"
+        },
         "sibling_repos": {
           "type": "array",
           "items": {

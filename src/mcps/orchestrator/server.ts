@@ -133,8 +133,21 @@ export class OrchestratorServer {
                   default: 'optimized',
                 },
                 timeout: { type: 'number', default: 300000 },
+                confer: {
+                  type: 'boolean',
+                  description:
+                    'Run mandatory 3-agent confer quorum (researcher, architect-tools, code-review) instead of task execution',
+                },
+                conferFixture: {
+                  type: 'boolean',
+                  description: 'Use fixture confer receipts (CI/verify)',
+                },
+                collocatedText: {
+                  type: 'string',
+                  description: 'Collocated synthesis context for confer prompts',
+                },
               },
-              required: ['description', 'tasks'],
+              required: ['description'],
             },
           },
           {
@@ -391,7 +404,12 @@ export class OrchestratorServer {
                   ...complexityArgs,
                   ...(sessionId ? { sessionId } : {}),
                   ...(synthesisDue
-                    ? { synthesisCheckpoint: true, synthesisDueReason: dueReason }
+                    ? {
+                        synthesisCheckpoint: true,
+                        synthesisDueReason: dueReason,
+                        collocatedText: collocated?.collatedText ?? null,
+                        conferFixture: process.env.XRAY_CONFER_FIXTURE === '1',
+                      }
                     : {}),
                 },
                 aside.asideId,
@@ -408,7 +426,7 @@ export class OrchestratorServer {
                     ? {
                         ...block,
                         text:
-                          `${block.text}\n\n**Synthesis checkpoint remains active** until mandatory consult todos (s.1–s.3) are completed via Task spawns.`,
+                          `${block.text}\n\n**Confer** runs automatically at synthesis checkpoint (researcher → architect-tools → code-review). Checkpoint clears when all consult todos complete.`,
                       }
                     : block,
                 );
