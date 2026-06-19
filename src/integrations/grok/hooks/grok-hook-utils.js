@@ -105,8 +105,8 @@ export function resolveCodexPath(root = workspaceRoot()) {
   return null;
 }
 
-export function loadFeatures() {
-  const featuresPath = resolveFeaturesPath();
+export function loadFeatures(root = workspaceRoot()) {
+  const featuresPath = resolveFeaturesPath(root);
   if (!featuresPath) return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));

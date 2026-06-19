@@ -45,7 +45,7 @@ async function main() {
     const eventRoot = event.workspaceRoot || event.cwd || root;
     ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
-    const features = loadFeatures();
+    const features = loadFeatures(eventRoot);
     const gateFeatures = loadDelegationGateFeatures(eventRoot);
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;

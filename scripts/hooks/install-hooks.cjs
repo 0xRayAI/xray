@@ -36,6 +36,9 @@ const runHookRelativePath = isConsumer
 const loadReflectionRelativePath = isConsumer
   ? "node_modules/0xray/scripts/node/load-reflection-config.mjs"
   : "scripts/node/load-reflection-config.mjs";
+const autoReflectionRelativePath = isConsumer
+  ? "node_modules/0xray/scripts/node/auto-reflection-generator.mjs"
+  : "scripts/node/auto-reflection-generator.mjs";
 
 function hookRunnerExists(projectRoot) {
   return (
@@ -157,8 +160,10 @@ if [ "$AUTO_GENERATE" = true ] && [ -d "$PROJECT_ROOT/docs/reflections" ]; then
     echo "   $COMMITS_SINCE commits since last reflection ($DAYS_SINCE days)"
     if [ "$MODE" != "off" ]; then
       cd "$PROJECT_ROOT"
-      node scripts/node/auto-reflection-generator.mjs --trigger commit-threshold \\
-        --title "Multiple commits since last reflection" 2>/dev/null || true
+      if [ -f "$PROJECT_ROOT/${autoReflectionRelativePath}" ]; then
+        node "$PROJECT_ROOT/${autoReflectionRelativePath}" --trigger commit-threshold \\
+          --title "Multiple commits since last reflection" 2>/dev/null || true
+      fi
     fi
   fi
 fi
