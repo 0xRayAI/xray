@@ -96,6 +96,7 @@ export class ComplexityHandler {
               primaryDescription,
               taskTypes.length ? taskTypes : ['implement'],
               planTaskInputs,
+              analysis.overallComplexity,
             )
           : null;
 

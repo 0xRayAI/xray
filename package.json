@@ -125,7 +125,8 @@
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",
-    "release:patch": "node scripts/node/release.mjs patch"
+    "release:patch": "node scripts/node/release.mjs patch",
+    "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs"
   },
   "files": [
     "dist/",
@@ -137,6 +138,7 @@
     "scripts/mjs/test-mcp-functionality.mjs",
     "scripts/mjs/validate-mcp-connectivity.cjs",
     "scripts/mjs/validate-postinstall-config.mjs",
+    "scripts/mjs/verify-orchestrator-behavior.mjs",
     "src/opencode/",
     "src/opencode/codex.codex",
     "src/opencode/commands/",

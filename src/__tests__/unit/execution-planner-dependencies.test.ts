@@ -53,4 +53,15 @@ describe('ExecutionPlanner.calculateTaskComplexity', () => {
     expect(Number.isFinite(analysis.overallComplexity)).toBe(true);
     expect(analysis.overallComplexity).toBeGreaterThan(0);
   });
+
+  it('routes type implement to backend-engineer (routeSubagent SSOT)', async () => {
+    const analysis = await planner.analyzeTaskComplexity([
+      {
+        id: 'impl-1',
+        description: 'swap dependencies',
+        type: 'implement',
+      },
+    ]);
+    expect(analysis.agentAssignments[0]?.agent).toBe('backend-engineer');
+  });
 });

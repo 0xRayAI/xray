@@ -31,6 +31,17 @@ describe('lead-dev plan builder (internal)', () => {
     expect(result?.phases.length).toBeGreaterThan(0);
   });
 
+  it('uses max(thin-dispatch, MCP) for phased plan threshold', () => {
+    const result = buildLeadDevPlan(
+      'short label',
+      ['implement'],
+      [{ description: 'single task', type: 'implement' }],
+      70,
+    );
+    expect(result?.requiresPhasedPlan).toBe(true);
+    expect(result?.complexity).toBeGreaterThanOrEqual(70);
+  });
+
   it('buildLeadDevPlan creates one todo per analyze-complexity task input', () => {
     const result = buildLeadDevPlan('Jelly P1', ['implement'], [
       { description: 'Publish 0xray@3.4.9', type: 'release' },

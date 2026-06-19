@@ -13,6 +13,25 @@ import {
   toMemoryCapabilityMap,
   fromMemoryCapabilityMap,
 } from './memory-routing-bridge.js';
+import { routeSubagent } from '../../../nucleus/autonomy-kernel.js';
+
+/** routeSubagent names → AGENT_REGISTRY keys */
+const ROUTE_AGENT_ALIASES: Record<string, string> = {
+  'code-review': 'code-reviewer',
+  'security-audit': 'security-auditor',
+  'bug-triage': 'bug-triage-specialist',
+  'architect-tools': 'architect',
+};
+
+function resolveRoutedAgent(
+  routed: string,
+  capabilities: Map<string, AgentCapability>,
+): string | null {
+  const candidate = ROUTE_AGENT_ALIASES[routed] ?? routed;
+  if (capabilities.has(candidate)) return candidate;
+  if (capabilities.has(routed)) return routed;
+  return null;
+}
 
 const DEFAULT_AGENT_CAPABILITIES: Record<string, AgentCapability> = Object.fromEntries(
   Object.entries(AGENT_REGISTRY).map(([name, entry]) => [
@@ -81,7 +100,14 @@ export class AgentCapabilitiesManager {
     requiredCapabilities: string[],
     complexity: number,
     operationDescription = '',
+    taskType = '',
   ): string | null {
+    if (taskType.trim()) {
+      const routed = routeSubagent(taskType);
+      const resolved = resolveRoutedAgent(routed, this.capabilities);
+      if (resolved) return resolved;
+    }
+
     const provider = getProvider();
 
     if (provider.id !== 'null' && operationDescription) {

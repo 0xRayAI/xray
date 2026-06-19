@@ -243,6 +243,7 @@ export class ExecutionPlanner {
         requiredCaps,
         complexity,
         operationDescription,
+        task.type,
       ) || 'orchestrator';
 
       if (!agentAssignments.has(agent)) {
@@ -298,6 +299,7 @@ export class ExecutionPlanner {
         requiredCaps,
         complexity,
         task.description,
+        task.type,
       ) || 'orchestrator';
 
       if (!assignments.has(agent)) {

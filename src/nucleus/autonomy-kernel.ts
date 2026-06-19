@@ -137,13 +137,18 @@ export function buildLeadDevPlan(
   description: string,
   taskTypes: string[] = ['implement'],
   taskInputs: LeadDevPlanTaskInput[] = [],
+  mcpOverallComplexity?: number,
 ): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
   const threshold = cfg.phased_plan_threshold ?? 25;
   const score = scoreComplexity(description, { taskTypes });
-  const complexity = score.score;
+  const mcpScore =
+    mcpOverallComplexity !== undefined && Number.isFinite(mcpOverallComplexity)
+      ? Math.round(mcpOverallComplexity)
+      : 0;
+  const complexity = Math.max(score.score, mcpScore);
   const requiresPhasedPlan = complexity > threshold || taskInputs.length > 1;
 
   const mandatoryConsults =
