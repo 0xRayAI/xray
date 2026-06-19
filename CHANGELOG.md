@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.10] - 2026-06-19
+
+### 🐛 Bug Fixes
+- **Routing SSOT** — `selectAgentForTask` checks `routeSubagent(taskType)` before capability scoring or memory routing; `type: implement` → `backend-engineer` (not `code-reviewer`)
+- **Unified complexity** — `buildLeadDevPlan` uses `max(thin-dispatch, MCP overallComplexity)`; `dependencyCount: 8` at complexity 70 forces phased plan
+
+### ✅ Tests
+- `verify-orchestrator-behavior.mjs` ships in tarball — 5 behavior assertions (NaN, multi-task todos, implement routing, phased plan, honest deferral)
+- Unit coverage: `agent-capabilities-routing`, extended `autonomy-kernel` + `execution-planner-dependencies`
+
+---
+
 ## [3.4.9] - 2026-06-19
 
 ### ⚠️ Breaking Changes

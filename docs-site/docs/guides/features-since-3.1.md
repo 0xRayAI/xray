@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.9**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.10**.
+
+## 3.4.10 — Routing SSOT + complexity unification
+
+| Feature | Description |
+|---------|-------------|
+| **`routeSubagent` SSOT** | `selectAgentForTask` checks `routeSubagent(taskType)` before capability scoring; `type: implement` → `backend-engineer` |
+| **Unified complexity** | `buildLeadDevPlan` uses `max(thin-dispatch, MCP overallComplexity)`; phased plans at complexity 70+ |
+| **Behavior verify script** | `verify-orchestrator-behavior.mjs` ships in tarball — 5 assertions (routing, deferrals, NaN, phased plan) |
 
 ## 3.4.9 — Orchestrator honesty + Hermes `-z` voters
 
