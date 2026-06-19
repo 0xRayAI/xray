@@ -63,6 +63,79 @@ interface HermesOAuthEntry {
   provider?: string;
 }
 
+function resolveHermesExpiresAt(
+  provider: Record<string, unknown>,
+  tokens?: Record<string, unknown>,
+): number | undefined {
+  if (typeof provider.expires_at === "number") return provider.expires_at;
+  const expiresIn = tokens?.expires_in ?? provider.expires_in;
+  if (typeof expiresIn !== "number") return undefined;
+
+  const refreshCandidates = [provider.last_refresh, tokens?.last_refresh];
+  for (const lastRefresh of refreshCandidates) {
+    if (typeof lastRefresh !== "string") continue;
+    const base = Date.parse(lastRefresh);
+    if (!Number.isNaN(base)) {
+      return Math.floor((base + expiresIn * 1000) / 1000);
+    }
+  }
+  return undefined;
+}
+
+function extractHermesOAuthEntry(data: unknown): HermesOAuthEntry | undefined {
+  if (!data || typeof data !== "object") return undefined;
+
+  if (Array.isArray(data)) {
+    return data.find(
+      (e: HermesOAuthEntry) => e.provider === "xai-oauth" || !!e.access_token,
+    );
+  }
+
+  const record = data as Record<string, unknown>;
+
+  const legacy = record["xai-oauth"];
+  if (legacy && typeof legacy === "object") {
+    const entry = legacy as HermesOAuthEntry;
+    if (entry.access_token) return entry;
+  }
+
+  if (typeof record.access_token === "string") {
+    return record as HermesOAuthEntry;
+  }
+
+  for (const bucket of ["providers", "credential_pool"] as const) {
+    const pool = record[bucket];
+    if (!pool || typeof pool !== "object") continue;
+    const provider = (pool as Record<string, unknown>)["xai-oauth"];
+    if (!provider || typeof provider !== "object") continue;
+    const prov = provider as Record<string, unknown>;
+    const tokens =
+      prov.tokens && typeof prov.tokens === "object"
+        ? (prov.tokens as Record<string, unknown>)
+        : undefined;
+
+    if (tokens && typeof tokens.access_token === "string") {
+      const entry: HermesOAuthEntry = {
+        access_token: tokens.access_token,
+        provider: "xai-oauth",
+      };
+      if (typeof tokens.refresh_token === "string") {
+        entry.refresh_token = tokens.refresh_token;
+      }
+      const expiresAt = resolveHermesExpiresAt(prov, tokens);
+      if (expiresAt !== undefined) entry.expires_at = expiresAt;
+      if (typeof tokens.token_type === "string") entry.token_type = tokens.token_type;
+      return entry;
+    }
+
+    if (typeof prov.access_token === "string") {
+      return prov as HermesOAuthEntry;
+    }
+  }
+
+  return undefined;
+}
+
 function readHermesOAuthToken(): string | null {
   try {
     const authPath = join(homedir(), ".hermes", "auth.json");
@@ -71,20 +144,7 @@ function readHermesOAuthToken(): string | null {
     const raw = readFileSync(authPath, "utf-8");
     const data = JSON.parse(raw);
 
-    let entry: HermesOAuthEntry | undefined;
-
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      entry = data["xai-oauth"];
-      if (!entry?.access_token && data.access_token) {
-        entry = data;
-      }
-    }
-
-    if (!entry?.access_token && Array.isArray(data)) {
-      entry = data.find(
-        (e: HermesOAuthEntry) => e.provider === "xai-oauth" || !!e.access_token,
-      );
-    }
+    const entry = extractHermesOAuthEntry(data);
 
     if (!entry?.access_token) {
       process.stderr.write("[llm] readHermesOAuthToken: no access_token in auth file\n");
