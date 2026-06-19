@@ -118,6 +118,8 @@ const SUBAGENT_TOOLS = new Set(['spawn_subagent', 'task', 'Task', 'delegate_task
 const ORCHESTRATOR_CONSULT_TOOLS = new Set([
   'analyze-complexity',
   'analyze_complexity',
+  'govern-and-apply',
+  'govern_and_apply',
   'get-orchestration-status',
   'get_orchestration_status',
   'orchestrate-task',

@@ -113,6 +113,13 @@ function loadConfig() {
     try {
       const content = readFileSync(configPath, "utf-8");
       const parsed = JSON.parse(content);
+      if (parsed.synthesis?.reflection) {
+        return {
+          mode: parsed.synthesis.reflection.mode ?? "minimal",
+          triggers: parsed.synthesis.reflection.triggers,
+          thresholds: parsed.synthesis.reflection.thresholds,
+        };
+      }
       if (parsed.auto_reflection) {
         return parsed.auto_reflection;
       }

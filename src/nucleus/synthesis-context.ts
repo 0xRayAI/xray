@@ -73,6 +73,22 @@ export async function buildSynthesisCollocatedContext(
   return fallbackContext(dueReason);
 }
 
+/** Refresh meta-inference before collation so synthesis.md is current for reflect. */
+export async function prepareSynthesisCollocatedContext(
+  projectRoot = process.cwd(),
+  dueReason: string | null = null,
+): Promise<SynthesisCollocatedContext> {
+  try {
+    const provider = await getMemoryRoutingProvider();
+    if (provider.refreshMetaInference) {
+      await provider.refreshMetaInference().catch(() => undefined);
+    }
+  } catch {
+    // non-blocking — collation still proceeds
+  }
+  return buildSynthesisCollocatedContext(projectRoot, dueReason);
+}
+
 export function isAnalyzeComplexitySuccess(
   content: Array<{ type: string; text: string }>,
 ): boolean {

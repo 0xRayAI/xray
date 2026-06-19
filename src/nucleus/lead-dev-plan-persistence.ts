@@ -119,6 +119,15 @@ export function areSynthesisConsultTodosComplete(plan: PersistedLeadDevPlan): bo
   return todos.length > 0 && todos.every((t) => t.status === 'completed');
 }
 
+function shouldRecordGeneralTodoSlice(
+  plan: PersistedLeadDevPlan,
+  todoId: string,
+): boolean {
+  if (!isSynthesisRealignmentPlan(plan)) return true;
+  const consultIds = new Set(getSynthesisConsultTodos(plan).map((t) => t.id));
+  return !consultIds.has(todoId);
+}
+
 function tryCompleteSynthesisCheckpointAfterTodo(
   projectRoot: string,
   sessionId?: string | null,
@@ -130,7 +139,6 @@ function tryCompleteSynthesisCheckpointAfterTodo(
   if (!plan || !isSynthesisRealignmentPlan(plan)) return;
   if (!areSynthesisConsultTodosComplete(plan)) return;
 
-  recordExecutionSlice('todo_completed', { projectRoot, sessionId: sid });
   const completed = completeSynthesisCheckpoint(projectRoot, sid);
   if (completed) {
     void import('./synthesis-completion.js').then(({ runSynthesisCheckpointSideEffects }) =>
@@ -159,6 +167,12 @@ export function updatePlanTodoStatus(
   if (updated) {
     savePersistedLeadDevPlan(plan, projectRoot);
     if (status === 'completed') {
+      if (shouldRecordGeneralTodoSlice(plan, todoId)) {
+        const sid = plan.sessionId ?? getSynthesisCheckpointSessionId(projectRoot);
+        if (sid) {
+          recordExecutionSlice('todo_completed', { projectRoot, sessionId: sid });
+        }
+      }
       tryCompleteSynthesisCheckpointAfterTodo(projectRoot, plan.sessionId);
     }
   }

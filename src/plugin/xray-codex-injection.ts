@@ -402,6 +402,24 @@ export default async function xrayCodexPlugin(input: {
         return;
       }
 
+      try {
+        const { recordExecutionSlice } = await import("../nucleus/synthesis.js");
+        let sessionId: string | null = process.env.GROK_SESSION_ID ?? null;
+        try {
+          const boot = JSON.parse(
+            readFileSync(join(directory, ".xray", "state", "session-boot.json"), "utf8"),
+          ) as { sessionId?: string };
+          sessionId = boot.sessionId ?? sessionId;
+        } catch {
+          /* no session boot */
+        }
+        if (sessionId) {
+          recordExecutionSlice("turn", { projectRoot: directory, sessionId });
+        }
+      } catch {
+        /* synthesis turn slice optional */
+      }
+
       const agentMentionRegex = /@([\w-]+)(?:\s+(.+?))?(?=$|\n\n|\r\r)/g;
       let match;
       let hasAgentMention = false;

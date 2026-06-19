@@ -145,6 +145,30 @@ describe('lead-dev-plan-persistence', () => {
     expect(bound?.planGeneration).toBe(1);
   });
 
+  it('records todo_completed slice on general plan todo completion', () => {
+    const sessionId = 'todo-slice-session';
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: {
+          enabled: true,
+          every_n_gates: 0,
+          every_n_turns: 0,
+          every_n_todos_completed: 2,
+        },
+      }),
+    );
+    savePersistedLeadDevPlan({
+      ...basePlan,
+      persistedAt: new Date().toISOString(),
+      sessionId,
+    });
+    expect(updatePlanTodoStatus('2.1', 'completed', tmp)).toBe(true);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(false);
+    expect(updatePlanTodoStatus('2.2', 'completed', tmp)).toBe(true);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  });
+
   it('completes synthesis checkpoint when all consult todos finish', () => {
     const sessionId = 'synth-complete-session';
     fs.writeFileSync(

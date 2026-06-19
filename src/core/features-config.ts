@@ -84,12 +84,21 @@ export interface MultiAgentOrchestrationConfig {
   auto_chain_delegations?: boolean;
 }
 
+/** Reflection triggers merged from legacy auto_reflection when synthesis is configured */
+export interface SynthesisReflectionConfig {
+  mode?: AutoReflectionConfig['mode'];
+  triggers?: AutoReflectionConfig['triggers'];
+  thresholds?: AutoReflectionConfig['thresholds'];
+}
+
 /** 3.6.0 — periodic reflect & realign checkpoint (Synthesis PR1) */
 export interface SynthesisConfig {
   enabled: boolean;
   every_n_gates: number;
   every_n_turns: number;
   every_n_todos_completed: number;
+  /** SSOT for reflection triggers when synthesis enabled; seeded from auto_reflection */
+  reflection?: SynthesisReflectionConfig;
 }
 
 export interface AutonomousReportingConfig {
@@ -746,10 +755,25 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         ...defaults.caching,
         ...configData.caching,
       },
-      synthesis: {
-        ...defaults.synthesis,
-        ...configData.synthesis,
-      },
+      synthesis: (() => {
+        const merged = {
+          ...defaults.synthesis,
+          ...configData.synthesis,
+        };
+        const reflection =
+          configData.synthesis?.reflection ??
+          (configData.auto_reflection
+            ? {
+                mode: configData.auto_reflection.mode,
+                triggers: configData.auto_reflection.triggers,
+                thresholds: configData.auto_reflection.thresholds,
+              }
+            : undefined);
+        if (reflection) {
+          merged.reflection = reflection;
+        }
+        return merged;
+      })(),
     };
   }
 

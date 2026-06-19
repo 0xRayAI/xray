@@ -16,12 +16,26 @@ import {
 import { appendHookActivity } from './grok-hook-activity.js';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 
-const HOOK_EVENT = process.env.GROK_HOOK_EVENT || 'session_start';
+function resolveHookEvent(event) {
+  if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
+  const flag = process.argv.find((a) => a.startsWith('--hook-event='));
+  if (flag) return flag.slice('--hook-event='.length);
+  if (
+    event.prompt != null ||
+    event.userMessage != null ||
+    event.user_prompt != null ||
+    event.hook === 'UserPromptSubmit'
+  ) {
+    return 'user_prompt_submit';
+  }
+  return 'session_start';
+}
 
 async function main() {
   const root = workspaceRoot();
   try {
     const event = await readStdinJson();
+    const HOOK_EVENT = resolveHookEvent(event);
     const eventRoot = event.workspaceRoot || event.cwd || root;
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {

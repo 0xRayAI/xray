@@ -291,8 +291,15 @@ export class OrchestratorServer {
               getSynthesisDueReason,
               getSynthesisCheckpointSessionId,
             } = await import('../../nucleus/synthesis.js');
-            const { appendSynthesisContextToResponse, buildSynthesisCollocatedContext } =
+            const { appendSynthesisContextToResponse, prepareSynthesisCollocatedContext } =
               await import('../../nucleus/synthesis-context.js');
+            const {
+              loadPersistedLeadDevPlan,
+              isSynthesisRealignmentPlan,
+              areSynthesisConsultTodosComplete,
+              getSynthesisConsultTodos,
+              getNextRequiredTodo,
+            } = await import('../../nucleus/lead-dev-plan-persistence.js');
 
             const checkpointSession = getSynthesisCheckpointSessionId(projectRoot);
             if (
@@ -333,8 +340,39 @@ export class OrchestratorServer {
               };
             }
 
+            const existingPlan = loadPersistedLeadDevPlan(projectRoot);
+            const realignmentInProgress =
+              synthesisDue &&
+              existingPlan &&
+              isSynthesisRealignmentPlan(existingPlan) &&
+              !areSynthesisConsultTodosComplete(existingPlan);
+
+            if (realignmentInProgress) {
+              const collocated = await prepareSynthesisCollocatedContext(projectRoot, dueReason);
+              const nextTodo = getNextRequiredTodo(existingPlan);
+              const consultTodos = getSynthesisConsultTodos(existingPlan);
+              const todoList = consultTodos
+                .map(
+                  (t) =>
+                    `- [${t.status === 'completed' ? 'x' : ' '}] ${t.id} (${t.subagent}): ${t.task}`,
+                )
+                .join('\n');
+              let text =
+                '🔄 Synthesis realignment in progress — consult todos preserved (analyze-complexity no-op).\n\n' +
+                `**Next required todo:** ${nextTodo?.id ?? 'none'} (${nextTodo?.subagent ?? ''})\n\n` +
+                `${todoList}\n\n` +
+                'Complete mandatory consult todos via Task spawns before other gated work.';
+              if (collocated.collatedText) {
+                text = appendSynthesisContextToResponse(
+                  [{ type: 'text', text }],
+                  collocated.collatedText,
+                )[0]!.text;
+              }
+              return { content: [{ type: 'text' as const, text }] };
+            }
+
             const collocated = synthesisDue
-              ? await buildSynthesisCollocatedContext(projectRoot, dueReason)
+              ? await prepareSynthesisCollocatedContext(projectRoot, dueReason)
               : null;
             const inheritedContext = synthesisDue && collocated
               ? { synthesis: true, ...collocated }
@@ -451,13 +489,50 @@ export class OrchestratorServer {
     skipApply?: boolean;
   }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
     try {
+      const projectRoot = process.cwd();
+      const {
+        isSynthesisCheckpointDue,
+        getSynthesisDueReason,
+        getSynthesisCheckpointSessionId,
+        recordExecutionSlice,
+      } = await import('../../nucleus/synthesis.js');
+      const {
+        loadPersistedLeadDevPlan,
+        isSynthesisRealignmentPlan,
+        areSynthesisConsultTodosComplete,
+      } = await import('../../nucleus/lead-dev-plan-persistence.js');
+
+      const checkpointSession = getSynthesisCheckpointSessionId(projectRoot);
+      const sessionId = checkpointSession ?? null;
+      if (sessionId && isSynthesisCheckpointDue(projectRoot, sessionId)) {
+        const plan = loadPersistedLeadDevPlan(projectRoot);
+        const realignmentPending =
+          plan && isSynthesisRealignmentPlan(plan) && !areSynthesisConsultTodosComplete(plan);
+        if (!realignmentPending) {
+          const dueReason = getSynthesisDueReason(projectRoot, sessionId);
+          return {
+            content: [{
+              type: 'text' as const,
+              text: JSON.stringify({
+                blocked: true,
+                gate: 'synthesis-checkpoint',
+                dueReason,
+                primitive: 'synthesis',
+                hint: 'Run analyze-complexity to reflect and realign before govern-and-apply',
+              }, null, 2),
+            }],
+          };
+        }
+      }
+
       const { InferenceCycle } = await import('../../inference/inference-cycle.js');
-      const cycle = InferenceCycle.getInstance(process.cwd(), {
+      const cycle = InferenceCycle.getInstance(projectRoot, {
         skipApply: args.skipApply ?? false,
       });
 
       const aside = await spawnAside({
         description: `Governance cycle: ${args.proposals.length} proposals`,
+        ...(sessionId ? { sessionId } : {}),
         priorVerdictContext: { proposalCount: args.proposals.length },
       });
 
@@ -472,12 +547,17 @@ export class OrchestratorServer {
       const approved = result!.votes.filter((v) => v.decision === 'approve').length;
       const rejected = result!.votes.length - approved;
 
+      if (sessionId) {
+        recordExecutionSlice('gate', { projectRoot, sessionId });
+      }
+
       return {
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
             cycleId: result!.cycleId,
             asideId: aside.asideId,
+            synthesisBridged: Boolean(sessionId),
             approved,
             rejected,
             votes: result!.votes,
