@@ -16,6 +16,7 @@ export { getActivePendingDelegations } from './pending-delegations.js';
 import {
   allPlanTodos,
   areSynthesisConsultTodosComplete,
+  findRecentStalePlanArchive,
   getSynthesisConsultTodos,
   hasValidLeadDevPlanForSpawn,
   isLeadDevPlanStale,
@@ -324,6 +325,16 @@ export function evaluateSpawnPlanGate(
   }
 
   if (!hasValidLeadDevPlanForSpawn(ctx.projectRoot, ctx.sessionId)) {
+    if (findRecentStalePlanArchive(ctx.projectRoot)) {
+      return {
+        allow: false,
+        reason:
+          'Lead-dev plan was stale and archived — ' +
+          're-run xray-orchestrator analyze-complexity to refresh the plan',
+        gate: 'spawn-plan-stale',
+        hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
+      };
+    }
     return {
       allow: false,
       reason:

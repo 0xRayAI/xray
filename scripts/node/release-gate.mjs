@@ -49,13 +49,17 @@ function main() {
       }
     } else {
       step("1/5 Build", "npm run build");
-      step("2/5 Tests", "npm test");
+      step("2/6 Tests", "npm test");
       step(
-        "3/5 Plugin infrastructure",
+        "3/6 Consumer hook verifiers",
+        "npm run verify:pre-commit-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok",
+      );
+      step(
+        "4/6 Plugin infrastructure",
         "node scripts/test/validate-plugins-e2e.cjs --structural-only",
       );
       if (!skipSmoke) {
-        step("4/5 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
+        step("5/6 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 

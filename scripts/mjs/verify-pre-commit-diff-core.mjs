@@ -71,10 +71,32 @@ if (scanBad.errors.length > 0) {
   fail('new console.log in diff was not flagged');
 }
 
+mkdirSync(join(tmp, 'src/nested path'), { recursive: true });
+const spacedFile = 'src/nested path/spaced flow.ts';
+const spacedPath = join(tmp, spacedFile);
+writeFileSync(
+  spacedPath,
+  `export function flow() {\n  console.log('legacy');\n  return 1;\n}\n`,
+);
+execSync('git add .', { cwd: tmp });
+execSync('git commit -q -m "spaced baseline"', { cwd: tmp });
+writeFileSync(
+  spacedPath,
+  `export function flow() {\n  console.log('legacy');\n  return 9;\n}\n`,
+);
+execSync(`git add "${spacedFile}"`, { cwd: tmp });
+const spacedAdded = getStagedAddedLinesByFile([spacedFile], tmp);
+const spacedScan = scanAddedLinesForCodex(spacedFile, spacedAdded.get(spacedFile) ?? []);
+if (spacedScan.errors.length === 0) {
+  pass('handles staged paths with spaces');
+} else {
+  fail('spaced path diff scope', spacedScan.errors.join('; '));
+}
+
 console.log(
   '\n' +
     (failed === 0
-      ? '🎉 Pre-commit diff-scope verify passed (2/2).'
+      ? '🎉 Pre-commit diff-scope verify passed (3/3).'
       : `⚠️  ${failed} diff-scope check(s) failed.`),
 );
 process.exit(failed === 0 ? 0 : 1);

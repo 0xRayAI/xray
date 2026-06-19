@@ -216,11 +216,15 @@ export function getStagedAddedLinesByFile(files, root = projectRoot) {
   for (const file of files) {
     if (!/\.(ts|tsx|js|jsx|mjs)$/.test(file)) continue;
     try {
-      const diff = execSync(`git diff --cached -U0 -- ${JSON.stringify(file).slice(1, -1)}`, {
-        cwd: root,
-        encoding: "utf-8",
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+      const diff = execFileSync(
+        "git",
+        ["diff", "--cached", "-U0", "--", file],
+        {
+          cwd: root,
+          encoding: "utf-8",
+          stdio: ["pipe", "pipe", "pipe"],
+        },
+      );
       const addedLines = [];
       for (const line of diff.split("\n")) {
         if (

@@ -27,7 +27,7 @@ mkdirSync(join(tmp, '.git'), { recursive: true });
 writeFileSync(
   join(tmp, 'package.json'),
   JSON.stringify({
-    name: 'postalocity-ai-fixture',
+    name: 'consumer-sibling-fixture',
     devDependencies: { '0xray': '^3.5.1' },
   }),
 );

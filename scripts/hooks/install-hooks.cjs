@@ -119,7 +119,7 @@ if command -v node >/dev/null 2>&1; then
     export PROJECT_ROOT="$PROJECT_ROOT"
     REFLECTION_JSON=$(node "$LOAD_SCRIPT" --json 2>/dev/null || echo '{}')
     MODE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.mode||"minimal"))' "$REFLECTION_JSON")
-    COMMIT_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.commitThreshold??25))' "$REFLECTION_JSON")
+    COMMIT_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.commitThreshold??50))' "$REFLECTION_JSON")
     DAYS_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.daysThreshold??14))' "$REFLECTION_JSON")
     AUTO_GENERATE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.autoGenerate===false?"false":"true")' "$REFLECTION_JSON")
     PROMPT_USER=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.promptUser===false?"false":"true")' "$REFLECTION_JSON")

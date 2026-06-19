@@ -12,7 +12,10 @@ import {
 } from '../../nucleus/delegation-gate.js';
 import { buildSynthesisCheckpointPlan } from '../../nucleus/autonomy-kernel.js';
 import { recordExecutionSlice } from '../../nucleus/synthesis.js';
-import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
+import {
+  archiveStaleLeadDevPlan,
+  savePersistedLeadDevPlan,
+} from '../../nucleus/lead-dev-plan-persistence.js';
 
 describe('delegation-gate SSOT', () => {
   let tmp: string;
@@ -87,6 +90,52 @@ describe('delegation-gate SSOT', () => {
     );
     expect(result.allow).toBe(false);
     if (!result.allow) expect(result.gate).toBe('auto-chain-pending');
+  });
+
+  it('checkSubagentGate denies spawn-plan-stale after stale plan archived', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({
+        sessionId,
+        createdAt: new Date().toISOString(),
+        ttlMs: 4 * 60 * 60 * 1000,
+        delegations: [],
+      }),
+    );
+    savePersistedLeadDevPlan(
+      {
+        active: true,
+        persistedAt: staleAt,
+        phases: [
+          {
+            id: 'phase-1',
+            name: 'Stale',
+            goal: 'g',
+            definitionOfDone: 'd',
+            todos: [
+              {
+                id: '1.1',
+                task: 'old task',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+      } as Parameters<typeof savePersistedLeadDevPlan>[0],
+      tmp,
+    );
+    archiveStaleLeadDevPlan(tmp);
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'plan todo 1.1', subagent_type: 'researcher' },
+    );
+    expect(block?.gate).toBe('spawn-plan-stale');
   });
 
   it('checkSubagentGate denies spawn when lead-dev plan is stale', () => {

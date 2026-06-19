@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LeadDevPlan } from '../../nucleus/autonomy-kernel.js';
 import {
   archiveStaleLeadDevPlan,
+  findRecentStalePlanArchive,
   bindPlanToSession,
   getNextRequiredTodo,
   getOutstandingTodos,
@@ -241,5 +242,6 @@ describe('lead-dev-plan-persistence', () => {
     const result = archiveStaleLeadDevPlan(tmp);
     expect(result.archived).toBe(true);
     expect(loadPersistedLeadDevPlan(tmp)).toBeNull();
+    expect(findRecentStalePlanArchive(tmp)).not.toBeNull();
   });
 });

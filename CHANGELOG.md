@@ -7,10 +7,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased] — suit tuning PR (not published)
 
 ### Planned (iterate before next release)
-- **Pre-commit codex** — diff-hunk scope only; pre-existing `console.log` in staged files no longer blocks unrelated fixes
-- **Stale lead-dev plan** — archive when all todos still `pending` after `plan_stale_hours` (default 8h); spawn gate `spawn-plan-stale`
-- **Reflection noise** — minimal mode defaults: 50-commit threshold, `autoGenerate: false`
-- **Multi-repo boot** — `multi_agent_orchestration.sibling_repos` surfaced in `session-boot.json`
+- **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)
+- **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker
+- **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced (`hooks/post-commit`, install template)
+- **Multi-repo boot** — `sibling_repos` in `session-boot.json` (discovery metadata for 0xray consumer workspaces)
+- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
 - **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
 
 ---

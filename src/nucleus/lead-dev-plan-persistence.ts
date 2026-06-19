@@ -59,7 +59,8 @@ export function loadLeadDevPlanStaleMs(projectRoot = process.cwd()): number {
 function planAgeMs(plan: PersistedLeadDevPlan, projectRoot: string): number {
   const persistedAt = plan.persistedAt;
   if (persistedAt) {
-    return Date.now() - new Date(persistedAt).getTime();
+    const age = Date.now() - new Date(persistedAt).getTime();
+    if (Number.isFinite(age)) return age;
   }
   try {
     const stat = fs.statSync(leadDevPlanStatePath(projectRoot));
@@ -108,6 +109,47 @@ export function archiveStaleLeadDevPlan(
   fs.writeFileSync(archivePath, JSON.stringify(payload, null, 2));
   fs.unlinkSync(leadDevPlanStatePath(projectRoot));
   return { archived: true, archivePath, reason: 'stale-unstarted-todos' };
+}
+
+const STALE_ARCHIVE_MARKER_MS = 24 * 60 * 60 * 1000;
+
+/** Recent stale archival — keeps spawn-plan-stale gate after session-start cleanup. */
+export function findRecentStalePlanArchive(
+  projectRoot = process.cwd(),
+  maxAgeMs = STALE_ARCHIVE_MARKER_MS,
+): { archivePath: string; archivedAt: string } | null {
+  const stateDir = path.join(projectRoot, '.xray', 'state');
+  if (!fs.existsSync(stateDir)) return null;
+
+  const candidates = fs
+    .readdirSync(stateDir)
+    .filter((name) => name.startsWith('lead-dev-plan.archived-') && name.endsWith('.json'))
+    .map((name) => {
+      const archivePath = path.join(stateDir, name);
+      return { archivePath, mtimeMs: fs.statSync(archivePath).mtimeMs };
+    })
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  for (const candidate of candidates) {
+    try {
+      const data = JSON.parse(
+        fs.readFileSync(candidate.archivePath, 'utf8'),
+      ) as { archiveReason?: string; archivedAt?: string };
+      if (data.archiveReason !== 'stale-unstarted-todos') continue;
+      const archivedAtMs = data.archivedAt
+        ? new Date(data.archivedAt).getTime()
+        : candidate.mtimeMs;
+      if (!Number.isFinite(archivedAtMs)) continue;
+      if (Date.now() - archivedAtMs > maxAgeMs) continue;
+      return {
+        archivePath: candidate.archivePath,
+        archivedAt: data.archivedAt ?? new Date(archivedAtMs).toISOString(),
+      };
+    } catch {
+      /* skip corrupt archive */
+    }
+  }
+  return null;
 }
 
 export function loadPersistedLeadDevPlan(
