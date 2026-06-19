@@ -1,6 +1,6 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.2**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.3**.
 
 ## 3.5.2 — Grok synthesis gate parity + consumer install hardening
 

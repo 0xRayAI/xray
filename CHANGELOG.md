@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.5.3] - 2026-06-19
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- fix(release): ship verify-grok-synthesis-gate.mjs in npm tarball (c2d32627e)
+
+---
+
 ## [3.5.2] - 2026-06-19
 
 ### 🐛 Bug Fixes
