@@ -332,4 +332,19 @@ describe('GovernanceService', () => {
       expect(result.results[0].finalDecision).toBe('approve');
     });
   });
+
+  describe('in-process skill path (XRAY_GOVERNANCE_IN_PROCESS=1)', () => {
+    it('uses callInProcessSkill for headless nucleus consumers', async () => {
+      process.env.XRAY_GOVERNANCE_IN_PROCESS = '1';
+      const { callInProcessSkill } = await import('../../mcps/in-process-skill-registry.js');
+      (callInProcessSkill as any).mockResolvedValue({
+        content: [{ text: 'DECISION: reject\nCONFIDENCE: 0.9\nREASONING: headless path' }],
+      });
+
+      const result = await service.govern({ proposals: [mockProposals[0]] });
+
+      expect(callInProcessSkill).toHaveBeenCalled();
+      expect(result.results[0].finalDecision).toBe('reject');
+    });
+  });
 });
