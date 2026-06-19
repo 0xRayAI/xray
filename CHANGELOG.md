@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.9] - 2026-06-19
+
+### ⚠️ Breaking Changes
+- **`orchestrate-task`** — returns `success: false` when implementation agents (backend-engineer, frontend-engineer, bug-triage, etc.) are **deferred**. Only MCP consult skills execute in-process. Callers must not treat a completed response as work done; delegate via host `Task` / `spawn_subagent` per lead-dev-plan.
+
+### 🐛 Bug Fixes
+- **Orchestrator honesty** — no fake-complete for implementation agents; `delegate-deferred` + `lead-dev-plan-persisted` logged to `activity.log`
+- **`analyze-complexity` NaN** — `dependencyCount` + `dependencies[]` schema; numeric dependency hints no longer produce NaN scores
+- **Lead-dev plan** — `buildLeadDevPlan` uses per-task inputs; multi-task intake forces phased plan (not collapsed "Direct execution")
+- **Hermes governance voters** — route through `hermes -z` CLI (same path as groover `hermes-runner`); honor `HERMES_BIN`, `HERMES_HOME`
+
+### ✅ Tests
+- Unit coverage: `execution-planner-dependencies`, deferred task-handler, per-task lead-dev todos
+
+---
+
 ## [3.4.8] - 2026-06-19
 
 ### 🐛 Bug Fixes

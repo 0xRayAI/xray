@@ -1,6 +1,20 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.4.8** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.4.9** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+
+## Your AI Power Suit
+
+**Your AI Power ⚡️ Suit 🦾** — an exoskeleton that blocks AI slop from becoming real damage.
+
+- learns with **Repertoire** 🧠
+- has a **Solar Ban Hammer** ☀️🔨 (Dynamo governance)
+- can also **Confer** 🗣️ (3-agent internal deliberation)
+
+The core AI Governance OS stack is **complete and open source**. A commercial version is next — powers up the suit further.
+
+```bash
+npm install 0xray@latest
+```
 
 xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers with zero manual config.
 

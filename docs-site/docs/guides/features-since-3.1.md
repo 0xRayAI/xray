@@ -1,6 +1,15 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.8**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.9**.
+
+## 3.4.9 — Orchestrator honesty + Hermes `-z` voters
+
+| Feature | Description |
+|---------|-------------|
+| **Honest `orchestrate-task`** | Implementation agents deferred (not fake-completed); `success: false` until host delegates via `Task` / `spawn_subagent` |
+| **`analyze-complexity` NaN fix** | `dependencyCount` + `dependencies[]` schema; numeric hints safe |
+| **Per-task lead-dev plans** | `buildLeadDevPlan` from task inputs; multi-task forces phased todos |
+| **Hermes `-z` governance path** | LLM voters use `hermes -z` CLI; honors `HERMES_BIN`, `HERMES_HOME` |
 
 ## 3.4.8 — Local governance + Hermes v2 auth
 

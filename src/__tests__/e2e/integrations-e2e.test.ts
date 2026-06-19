@@ -3,6 +3,7 @@ import { execFile, spawn } from "child_process";
 import * as http from "http";
 import * as path from "path";
 import * as fs from "fs";
+import { pathToFileURL } from "url";
 
 // These Hermes Bridge E2E tests require a full Hermes runtime + LLM access
 // and can take a very long time. They should NOT run in standard PR CI.
@@ -177,8 +178,14 @@ describe("OpenClaw API Server E2E", { timeout: 30000 }, () => {
   let serverReady = false;
 
   beforeAll(async () => {
-    serverProcess = spawn("node", ["-e", `
-      const { XrayAPIServer } = require("${API_SERVER_PATH}");
+    const apiModuleUrl = pathToFileURL(API_SERVER_PATH).href;
+    serverProcess = spawn(
+      "node",
+      [
+        "--input-type=module",
+        "-e",
+        `
+      import { XrayAPIServer } from "${apiModuleUrl}";
       const server = new XrayAPIServer({ port: ${PORT}, host: "127.0.0.1" });
       server.start().then(() => {
         process.stdout.write("READY\\n");
@@ -187,7 +194,10 @@ describe("OpenClaw API Server E2E", { timeout: 30000 }, () => {
         process.exit(1);
       });
       process.on("SIGTERM", () => { server.stop().then(() => process.exit(0)); });
-    `], { stdio: ["pipe", "pipe", "pipe"] });
+    `,
+      ],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
 
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("Server startup timeout")), 8000);
