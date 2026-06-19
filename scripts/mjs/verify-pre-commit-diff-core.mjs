@@ -34,7 +34,7 @@ const tmp = mkdtempSync(join(tmpdir(), 'xray-precommit-diff-'));
 mkdirSync(join(tmp, 'src'), { recursive: true });
 initGitRepo(tmp);
 
-const file = 'src/useMailingFlow.ts';
+const file = 'src/example-flow.ts';
 const filePath = join(tmp, file);
 writeFileSync(
   filePath,
