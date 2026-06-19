@@ -83,6 +83,29 @@ describe('llm-governance-provider — Hermes auth', () => {
     expect(status.error).toContain('no valid xai-oauth token');
   });
 
+  it('reads Hermes credential_pool.xai-oauth oauth array (gateway format)', () => {
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        credential_pool: {
+          'xai-oauth': [
+            {
+              id: 'cc475e',
+              auth_type: 'oauth',
+              access_token: 'pool-array-token',
+              refresh_token: 'refresh',
+              expires_at: Math.floor(Date.now() / 1000) + 3600,
+            },
+          ],
+        },
+      }),
+    );
+
+    const status = checkHermesOAuthStatus();
+
+    expect(status.configured).toBe(true);
+  });
+
   it('still reads legacy top-level xai-oauth format', () => {
     mockReadFileSync.mockReturnValue(
       JSON.stringify({

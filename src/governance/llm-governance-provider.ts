@@ -107,7 +107,18 @@ function extractHermesOAuthEntry(data: unknown): HermesOAuthEntry | undefined {
     const pool = record[bucket];
     if (!pool || typeof pool !== "object") continue;
     const provider = (pool as Record<string, unknown>)["xai-oauth"];
-    if (!provider || typeof provider !== "object") continue;
+    if (!provider) continue;
+
+    // Hermes gateway / credential_pool: xai-oauth is an array of oauth credentials
+    if (Array.isArray(provider)) {
+      const fromPool = extractHermesOAuthEntry(provider);
+      if (fromPool?.access_token) {
+        return { ...fromPool, provider: fromPool.provider ?? "xai-oauth" };
+      }
+      continue;
+    }
+
+    if (typeof provider !== "object") continue;
     const prov = provider as Record<string, unknown>;
     const tokens =
       prov.tokens && typeof prov.tokens === "object"
