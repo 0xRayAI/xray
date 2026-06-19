@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.4.8] - 2026-06-19
+
+### 🐛 Bug Fixes
+- **Hermes v2 OAuth** — governance LLM voters read `providers.xai-oauth.tokens` from `~/.hermes/auth.json` (npm consumers on modern Hermes no longer abstain)
+- **Headless deliberation** — honor `XRAY_GOVERNANCE_IN_PROCESS=1` for in-process skill voters without MCP subprocesses
+- **Governance MCP HTTP** — per-session Streamable HTTP transports on Railway
+
+### ✅ Tests
+- Unit coverage for Hermes v2 auth parsing and `XRAY_GOVERNANCE_IN_PROCESS` governance path
+
+---
+
 ## [3.4.7] - 2026-06-18
 
 ### 🐛 Bug Fixes

@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.7**.
+Complete reference of capabilities shipped from **3.1.0** through **3.4.8**.
+
+## 3.4.8 — Local governance + Hermes v2 auth
+
+| Feature | Description |
+|---------|-------------|
+| **Hermes v2 OAuth reader** | Governance LLM voters read `providers.xai-oauth.tokens` from `~/.hermes/auth.json` (fixes abstain for modern Hermes installs) |
+| **Headless in-process deliberation** | `XRAY_GOVERNANCE_IN_PROCESS=1` enables skill voters without MCP child processes (groover deploy / nucleus consumers) |
+| **Railway Streamable HTTP** | Per-session transports on hosted governance MCP |
 
 ## 3.4.7 — Consumer-safe release pipeline
 
