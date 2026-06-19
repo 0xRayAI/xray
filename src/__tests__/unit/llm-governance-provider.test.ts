@@ -1,27 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const mockHomedir = vi.fn(() => '/mock-home');
-const mockExistsSync = vi.fn();
-const mockReadFileSync = vi.fn();
+const mockExecFileSync = vi.fn();
 
-vi.mock('node:os', () => ({
-  homedir: () => mockHomedir(),
-}));
-
-vi.mock('node:fs', () => ({
-  existsSync: (...args: unknown[]) => mockExistsSync(...args),
-  readFileSync: (...args: unknown[]) => mockReadFileSync(...args),
+vi.mock('node:child_process', () => ({
+  execFileSync: (...args: unknown[]) => mockExecFileSync(...args),
 }));
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn() },
 }));
 
-import { checkHermesOAuthStatus } from '../../governance/llm-governance-provider.js';
+import {
+  checkHermesOAuthStatus,
+  tryLLMGovernance,
+  hermesCliAvailable,
+} from '../../governance/llm-governance-provider.js';
 
-describe('llm-governance-provider — Hermes auth', () => {
-  const authPath = '/mock-home/.hermes/auth.json';
-
+describe('llm-governance-provider — Hermes CLI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.XRAY_GOVERNANCE_LLM_ENABLED;
@@ -30,121 +25,97 @@ describe('llm-governance-provider — Hermes auth', () => {
     delete process.env.XRAY_GOVERNANCE_LLM_API_KEY;
     delete process.env.XRAY_LLM_ENDPOINT;
     delete process.env.XRAY_LLM_API_KEY;
-    delete process.env.HERMES_HOME;
-    delete process.env.HERMES_AUTH_PATH;
-    mockHomedir.mockReturnValue('/mock-home');
-    mockExistsSync.mockImplementation((path: string) => path === authPath);
+    delete process.env.HERMES_PROVIDER;
+    delete process.env.HERMES_MODEL;
+    mockExecFileSync.mockImplementation((cmd: string, args?: string[]) => {
+      if (cmd === 'hermes' && args?.[0] === '--version') return 'hermes 0.7.0\n';
+      if (cmd === 'hermes' && args?.[0] === '-z') {
+        return 'DECISION: approve\nCONFIDENCE: 0.91\nREASONING: Looks good.';
+      }
+      throw new Error(`unexpected exec: ${cmd} ${args?.join(' ')}`);
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('reads Hermes v2 providers.xai-oauth.tokens.access_token', () => {
-    const lastRefresh = new Date().toISOString();
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        providers: {
-          'xai-oauth': {
-            last_refresh: lastRefresh,
-            expires_in: 86_400,
-            tokens: {
-              access_token: 'v2-test-token',
-              token_type: 'Bearer',
-            },
-          },
-        },
-      }),
-    );
-
+  it('reports configured when hermes CLI is on PATH', () => {
     const status = checkHermesOAuthStatus();
 
     expect(status.configured).toBe(true);
-    expect(status.endpoint).toBe('https://api.x.ai/v1/chat/completions');
+    expect(status.endpoint).toBe('hermes-cli');
     expect(status.model).toBe('grok-4.3');
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'hermes',
+      ['--version'],
+      expect.objectContaining({ encoding: 'utf8' }),
+    );
   });
 
-  it('rejects expired Hermes v2 tokens', () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        providers: {
-          'xai-oauth': {
-            last_refresh: '2020-01-01T00:00:00.000Z',
-            expires_in: 60,
-            tokens: {
-              access_token: 'expired-token',
-            },
-          },
-        },
-      }),
-    );
+  it('reports not configured when hermes CLI is missing', () => {
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('not found');
+    });
 
     const status = checkHermesOAuthStatus();
 
     expect(status.configured).toBe(false);
-    expect(status.error).toContain('no valid xai-oauth token');
+    expect(status.error).toContain('Hermes CLI not found');
   });
 
-  it('reads Hermes credential_pool.xai-oauth oauth array (gateway format)', () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        version: 1,
-        credential_pool: {
-          'xai-oauth': [
-            {
-              id: 'cc475e',
-              auth_type: 'oauth',
-              access_token: 'pool-array-token',
-              refresh_token: 'refresh',
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
-            },
-          ],
-        },
-      }),
+  it('uses hermes -z with default provider and model', async () => {
+    const vote = await tryLLMGovernance(
+      'code-review',
+      'Test proposal',
+      'Description',
+      ['evidence-a'],
+      'strategic',
     );
+
+    expect(vote).toEqual({
+      decision: 'approve',
+      confidence: 0.91,
+      reasoning: 'Looks good.',
+    });
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'hermes',
+      ['-z', expect.stringContaining('Test proposal'), '--provider', 'xai-oauth', '--model', 'grok-4.3'],
+      expect.objectContaining({ encoding: 'utf8' }),
+    );
+  });
+
+  it('honors HERMES_PROVIDER and HERMES_MODEL env overrides', async () => {
+    process.env.HERMES_PROVIDER = 'custom:opencode.ai';
+    process.env.HERMES_MODEL = 'grok-4.1';
+
+    await tryLLMGovernance('researcher', 'Title', 'Body', [], 'strategic');
+
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'hermes',
+      expect.arrayContaining(['--provider', 'custom:opencode.ai', '--model', 'grok-4.1']),
+      expect.any(Object),
+    );
+  });
+
+  it('prefers explicit direct LLM config over hermes CLI', () => {
+    process.env.XRAY_GOVERNANCE_LLM_ENABLED = 'true';
+    process.env.XRAY_GOVERNANCE_LLM_ENDPOINT = 'https://example.com/v1/chat/completions';
+    process.env.XRAY_GOVERNANCE_LLM_API_KEY = 'test-key';
+    process.env.XRAY_GOVERNANCE_LLM_MODEL = 'gpt-4o';
 
     const status = checkHermesOAuthStatus();
 
     expect(status.configured).toBe(true);
+    expect(status.endpoint).toBe('https://example.com/v1/chat/completions');
+    expect(status.model).toBe('gpt-4o');
   });
 
-  it('reads credential_pool from HERMES_HOME when set', () => {
-    const customAuthPath = '/gateway-root/.hermes/auth.json';
-    process.env.HERMES_HOME = '/gateway-root/.hermes';
-    mockExistsSync.mockImplementation((path: string) => path === customAuthPath);
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        credential_pool: {
-          'xai-oauth': [
-            {
-              id: 'gateway-cred',
-              auth_type: 'oauth',
-              access_token: 'gateway-token',
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
-            },
-          ],
-        },
-      }),
-    );
+  it('hermesCliAvailable returns false when exec fails', () => {
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('missing');
+    });
 
-    const status = checkHermesOAuthStatus();
-
-    expect(status.configured).toBe(true);
-    expect(mockReadFileSync).toHaveBeenCalledWith(customAuthPath, 'utf-8');
-  });
-
-  it('still reads legacy top-level xai-oauth format', () => {
-    mockReadFileSync.mockReturnValue(
-      JSON.stringify({
-        'xai-oauth': {
-          access_token: 'legacy-token',
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-        },
-      }),
-    );
-
-    const status = checkHermesOAuthStatus();
-
-    expect(status.configured).toBe(true);
+    expect(hermesCliAvailable()).toBe(false);
   });
 });

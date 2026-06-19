@@ -488,7 +488,7 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
     if (!vote) {
       const abstainReason = memoryContext?.confidence.highConfidenceTrapPresent
         ? "No LLM governance provider configured. Repertoire detected a high-confidence ontological trap — route to the recommended agent before proceeding."
-        : "No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser";
+        : "No LLM governance provider configured. Install Hermes on PATH (hermes -z) with xai-oauth, or set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT.";
 
       return {
         content: [

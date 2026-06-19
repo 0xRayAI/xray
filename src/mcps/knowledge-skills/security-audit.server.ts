@@ -1008,7 +1008,7 @@ class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
         content: [
           {
             type: "text",
-            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT, or install Hermes and run: hermes auth add xai-oauth --no-browser",
+            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Install Hermes on PATH (hermes -z) with xai-oauth, or set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT.",
           },
         ],
       };
