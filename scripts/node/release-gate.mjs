@@ -48,7 +48,7 @@ function main() {
         step("4/5 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
       }
     } else {
-      step("1/5 Build", "npm run build");
+      step("1/6 Build", "npm run build");
       step("2/6 Tests", "npm test");
       step(
         "3/6 Consumer hook verifiers",
