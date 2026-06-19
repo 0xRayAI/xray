@@ -33,9 +33,10 @@ function resolveHookEvent(event) {
 
 async function main() {
   const root = workspaceRoot();
+  let HOOK_EVENT = 'session_start';
   try {
     const event = await readStdinJson();
-    const HOOK_EVENT = resolveHookEvent(event);
+    HOOK_EVENT = resolveHookEvent(event);
     const eventRoot = event.workspaceRoot || event.cwd || root;
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
