@@ -88,7 +88,6 @@ export class TaskHandler {
         });
       }
 
-      // Execute orchestration (simulated for MCP server)
       const results = await this.executePlan(executionPlan, sessionId, timeout);
 
       // Feed per-task outcomes back to memory provider (not aggregate session stats)
@@ -118,6 +117,8 @@ export class TaskHandler {
       orchestrationResult.success = results.success;
       orchestrationResult.completedTasks = results.completedTasks;
       orchestrationResult.failedTasks = results.failedTasks;
+      orchestrationResult.deferredTasks = results.deferredTasks;
+      orchestrationResult.recommendations.push(...results.recommendations);
       orchestrationResult.agentUtilization = results.agentUtilization;
       orchestrationResult.bottlenecks = results.bottlenecks;
       orchestrationResult.recommendations = results.recommendations;
@@ -167,6 +168,7 @@ export class TaskHandler {
     success: boolean;
     completedTasks: number;
     failedTasks: number;
+    deferredTasks: number;
     agentUtilization: Record<string, number>;
     bottlenecks: string[];
     recommendations: string[];
@@ -181,6 +183,7 @@ export class TaskHandler {
     const agentUtilization: Record<string, number> = {};
     let completedTasks = 0;
     let failedTasks = 0;
+    let deferredTasks = 0;
     const agentOutputs: Record<string, string> = {};
     const taskOutcomes: Array<{
       taskId: string;
@@ -240,21 +243,32 @@ export class TaskHandler {
           }
         }
       } else {
-        // For non-MCP agents we still count them as "assigned" (they will be handled by the caller or legacy path)
         for (const task of tasks) {
-          completedTasks++;
+          deferredTasks++;
           taskOutcomes.push({
             taskId: task.id,
             agent,
-            success: true,
+            success: false,
             durationMs: 0,
           });
+          await frameworkLogger.log(
+            'orchestrator.task-handler',
+            'delegate-deferred',
+            'info',
+            { agent, taskId: task.id, sessionId },
+          );
         }
       }
     }
 
     const recommendations: string[] = [];
     const bottlenecks: string[] = [];
+
+    if (deferredTasks > 0) {
+      recommendations.push(
+        `${deferredTasks} task(s) require host delegation (Task/spawn_subagent per lead-dev-plan) — orchestrate-task only invokes MCP consult skills directly`,
+      );
+    }
 
     if (plan.agentAssignments.size > 5) {
       recommendations.push('Consider reducing the number of agents for better coordination');
@@ -266,9 +280,10 @@ export class TaskHandler {
     }
 
     return {
-      success: failedTasks === 0,
+      success: failedTasks === 0 && deferredTasks === 0,
       completedTasks,
       failedTasks,
+      deferredTasks,
       agentUtilization,
       bottlenecks,
       recommendations,
@@ -321,9 +336,10 @@ export class TaskHandler {
 **Session ID:** ${result.sessionId}
 **Success:** ${result.success ? '✅ COMPLETED' : '❌ FAILED'}
 **Duration:** ${result.duration}ms
-**Tasks:** ${result.completedTasks + result.failedTasks} total
+**Tasks:** ${result.completedTasks + result.failedTasks + (result.deferredTasks ?? 0)} total
   - ✅ Completed: ${result.completedTasks}
   - ❌ Failed: ${result.failedTasks}
+  - ⏸ Deferred (host delegation required): ${result.deferredTasks ?? 0}
 
 **Agent Utilization:**
 ${Object.entries(result.agentUtilization)

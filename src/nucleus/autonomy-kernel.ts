@@ -51,6 +51,11 @@ export interface LeadDevPhase {
   todos: LeadDevTodo[];
 }
 
+export interface LeadDevPlanTaskInput {
+  description: string;
+  type?: string;
+}
+
 export interface LeadDevPlan {
   active: boolean;
   rules: readonly string[];
@@ -106,9 +111,32 @@ export function shouldFlagFullTestSuite(command: string): boolean {
   return isTest && !hasFocusedTarget;
 }
 
+function buildImplementationTodos(
+  description: string,
+  taskTypes: string[],
+  taskInputs: LeadDevPlanTaskInput[],
+  idPrefix: string,
+): LeadDevTodo[] {
+  if (taskInputs.length > 0) {
+    return taskInputs.map((t, i) => ({
+      id: `${idPrefix}.${i + 1}`,
+      task: t.description.slice(0, 200),
+      subagent: routeSubagent(t.type ?? 'implement'),
+      status: 'pending' as const,
+    }));
+  }
+  return taskTypes.map((type, i) => ({
+    id: `${idPrefix}.${i + 1}`,
+    task: description.slice(0, 200),
+    subagent: routeSubagent(type),
+    status: 'pending' as const,
+  }));
+}
+
 export function buildLeadDevPlan(
   description: string,
   taskTypes: string[] = ['implement'],
+  taskInputs: LeadDevPlanTaskInput[] = [],
 ): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
@@ -116,7 +144,7 @@ export function buildLeadDevPlan(
   const threshold = cfg.phased_plan_threshold ?? 25;
   const score = scoreComplexity(description, { taskTypes });
   const complexity = score.score;
-  const requiresPhasedPlan = complexity > threshold;
+  const requiresPhasedPlan = complexity > threshold || taskInputs.length > 1;
 
   const mandatoryConsults =
     cfg.auto_consult_major_work !== false && requiresPhasedPlan
@@ -142,12 +170,7 @@ export function buildLeadDevPlan(
           name: 'Implementation',
           goal: 'Execute with best subagent per todo',
           definitionOfDone: 'Affected per-suite tests green',
-          todos: taskTypes.map((type, i) => ({
-            id: `2.${i + 1}`,
-            task: description.slice(0, 200),
-            subagent: routeSubagent(type),
-            status: 'pending' as const,
-          })),
+          todos: buildImplementationTodos(description, taskTypes, taskInputs, '2'),
         },
         {
           id: 'phase-3',
@@ -176,14 +199,7 @@ export function buildLeadDevPlan(
           name: 'Direct execution',
           goal: description.slice(0, 120),
           definitionOfDone: 'Task complete with tests green',
-          todos: [
-            {
-              id: '1.1',
-              task: description.slice(0, 200),
-              subagent: routeSubagent(taskTypes[0] ?? 'implement'),
-              status: 'pending',
-            },
-          ],
+          todos: buildImplementationTodos(description, taskTypes, taskInputs, '1'),
         },
       ];
 

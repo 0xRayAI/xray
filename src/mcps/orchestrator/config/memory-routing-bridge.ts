@@ -39,7 +39,9 @@ export function toMemoryTask(task: OrchestrationTask): MemoryOrchestrationTask {
     type: task.type,
   };
   if (task.priority) result.priority = task.priority;
-  if (task.dependencies) result.dependencies = task.dependencies;
+  if (Array.isArray(task.dependencies) && task.dependencies.length > 0) {
+    result.dependencies = task.dependencies;
+  }
   if (task.estimatedComplexity !== undefined) result.estimatedComplexity = task.estimatedComplexity;
   if (task.metadata) result.metadata = task.metadata as Record<string, unknown>;
   return result;

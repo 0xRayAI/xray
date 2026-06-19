@@ -152,7 +152,15 @@ export class OrchestratorServer {
                       description: { type: 'string' },
                       type: { type: 'string' },
                       files: { type: 'array', items: { type: 'string' } },
-                      dependencies: { type: 'number' },
+                      dependencyCount: {
+                        type: 'number',
+                        description: 'Upstream dependency count (complexity hint only)',
+                      },
+                      dependencies: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Task IDs this task depends on',
+                      },
                       riskLevel: {
                         type: 'string',
                         enum: ['low', 'medium', 'high', 'critical'],

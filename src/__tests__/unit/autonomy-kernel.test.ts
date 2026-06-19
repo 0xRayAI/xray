@@ -31,6 +31,18 @@ describe('lead-dev plan builder (internal)', () => {
     expect(result?.phases.length).toBeGreaterThan(0);
   });
 
+  it('buildLeadDevPlan creates one todo per analyze-complexity task input', () => {
+    const result = buildLeadDevPlan('Jelly P1', ['implement'], [
+      { description: 'Publish 0xray@3.4.9', type: 'release' },
+      { description: 'Jelly strray to 0xray swap', type: 'migration' },
+      { description: 'Wire memory_routing', type: 'config' },
+    ]);
+    const implPhase = result?.phases.find((p) => p.id === 'phase-2');
+    const todos = implPhase?.todos ?? result?.phases[0]?.todos ?? [];
+    expect(todos.length).toBe(3);
+    expect(todos[0]?.task).toContain('3.4.9');
+  });
+
   it('buildSessionBootContext reflects lead dev mode', () => {
     const ctx = buildSessionBootContext() as { lead_dev_mode: boolean };
     expect(ctx.lead_dev_mode).toBe(true);

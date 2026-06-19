@@ -14,6 +14,46 @@ import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { addObservations, extractComplexityObservations } from '../aside-context.js';
 import type { OrchestrationTask, ComplexityAnalysis } from '../types.js';
 
+type AnalyzeComplexityInput = {
+  id?: string;
+  description?: string;
+  type?: string;
+  files?: string[];
+  dependencyCount?: number;
+  dependencies?: string[] | number;
+  riskLevel?: string;
+  estimatedComplexity?: number;
+  priority?: OrchestrationTask['priority'];
+};
+
+function normalizeAnalyzeTasks(raw: AnalyzeComplexityInput[]): OrchestrationTask[] {
+  return raw.map((task, index) => {
+    let deps: OrchestrationTask['dependencies'];
+    if (Array.isArray(task.dependencies)) {
+      deps = task.dependencies;
+    } else if (typeof task.dependencies === 'number' && Number.isFinite(task.dependencies)) {
+      deps = task.dependencies;
+    } else if (
+      typeof task.dependencyCount === 'number' &&
+      Number.isFinite(task.dependencyCount)
+    ) {
+      deps = task.dependencyCount;
+    }
+
+    const normalized: OrchestrationTask = {
+      id: task.id ?? `task-${index + 1}`,
+      description: task.description ?? '',
+      type: task.type ?? 'implement',
+    };
+    if (task.priority) normalized.priority = task.priority;
+    if (deps !== undefined) normalized.dependencies = deps;
+    if (task.estimatedComplexity !== undefined) {
+      normalized.estimatedComplexity = task.estimatedComplexity;
+    }
+    return normalized;
+  });
+}
+
 /**
  * Complexity Handler
  * Processes analyze-complexity requests
@@ -25,10 +65,10 @@ export class ComplexityHandler {
    * Handle analyze-complexity request
    */
   async handleAnalyzeComplexity(
-    args: { tasks: OrchestrationTask[] },
+    args: { tasks: AnalyzeComplexityInput[] },
     asideId?: string,
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
-    const { tasks = [] } = args;
+    const tasks = normalizeAnalyzeTasks(args.tasks ?? []);
 
     await frameworkLogger.log(
       'orchestrator.server',
@@ -47,14 +87,31 @@ export class ComplexityHandler {
 
       const primaryDescription = tasks.map((t) => t.description).filter(Boolean).join(' ');
       const taskTypes = tasks.map((t) => t.type).filter(Boolean) as string[];
+      const planTaskInputs = tasks
+        .filter((t) => t.description?.trim())
+        .map((t) => ({ description: t.description, type: t.type }));
       const leadDevPlan =
-        isLeadDevModeActive() && primaryDescription
-          ? buildLeadDevPlan(primaryDescription, taskTypes.length ? taskTypes : ['implement'])
+        isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
+          ? buildLeadDevPlan(
+              primaryDescription,
+              taskTypes.length ? taskTypes : ['implement'],
+              planTaskInputs,
+            )
           : null;
 
       if (leadDevPlan) {
         try {
-          persistLeadDevPlan(leadDevPlan);
+          const planPath = persistLeadDevPlan(leadDevPlan);
+          await frameworkLogger.log(
+            'orchestrator.server',
+            'lead-dev-plan-persisted',
+            'info',
+            {
+              planPath,
+              phaseCount: leadDevPlan.phases.length,
+              todoCount: leadDevPlan.phases.reduce((n, p) => n + p.todos.length, 0),
+            },
+          );
         } catch (err) {
           await frameworkLogger.log(
             'orchestrator.server',

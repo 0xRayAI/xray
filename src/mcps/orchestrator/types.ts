@@ -30,7 +30,8 @@ export interface OrchestrationTask {
   description: string;
   type: string;
   priority?: 'critical' | 'high' | 'medium' | 'low';
-  dependencies?: string[];
+  /** Task IDs (orchestrate-task) or dependency count hint (analyze-complexity) */
+  dependencies?: string[] | number;
   estimatedComplexity?: number;
   metadata?: OrchestrationTaskMetadata;
 }
@@ -48,6 +49,8 @@ export interface OrchestrationResult {
   success: boolean;
   completedTasks: number;
   failedTasks: number;
+  /** Implementation agents not executed by orchestrate-task — lead must delegate via host Task */
+  deferredTasks?: number;
   duration: number;
   agentUtilization: Record<string, number>;
   agentOutputs?: Record<string, string>;

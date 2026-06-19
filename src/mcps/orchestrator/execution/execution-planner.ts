@@ -17,6 +17,24 @@ import {
   fromMemoryTask,
 } from '../config/memory-routing-bridge.js';
 
+/** Dependency count from task-ID list or numeric hint from analyze-complexity */
+export function dependencyCount(
+  deps: OrchestrationTask['dependencies'] | undefined,
+): number {
+  if (deps == null) return 0;
+  if (typeof deps === 'number' && Number.isFinite(deps)) {
+    return Math.max(0, Math.round(deps));
+  }
+  if (Array.isArray(deps)) return deps.length;
+  return 0;
+}
+
+function isDependencyIdList(
+  deps: OrchestrationTask['dependencies'] | undefined,
+): deps is string[] {
+  return Array.isArray(deps) && deps.length > 0;
+}
+
 /**
  * Execution Planner
  * Plans and optimizes task execution strategies
@@ -51,8 +69,8 @@ export class ExecutionPlanner {
         errors.push(`Task ${i}: Missing required field 'type'`);
       }
 
-      // Check dependencies exist
-      if (task.dependencies && task.id) {
+      // Check task-ID dependencies exist (numeric hints skip graph validation)
+      if (isDependencyIdList(task.dependencies) && task.id) {
         const taskIds = new Set(tasks.map(t => t.id).filter((id): id is string => !!id));
         for (const depId of task.dependencies) {
           if (!taskIds.has(depId)) {
@@ -162,10 +180,10 @@ export class ExecutionPlanner {
     const dependentTasks: OrchestrationTask[] = [];
 
     for (const task of sortedTasks) {
-      if (!task.dependencies || task.dependencies.length === 0) {
-        independentTasks.push(task);
-      } else {
+      if (isDependencyIdList(task.dependencies)) {
         dependentTasks.push(task);
+      } else {
+        independentTasks.push(task);
       }
     }
 
@@ -188,7 +206,7 @@ export class ExecutionPlanner {
       if (visited.has(task.id)) return;
       visited.add(task.id);
 
-      if (task.dependencies) {
+      if (isDependencyIdList(task.dependencies)) {
         for (const depId of task.dependencies) {
           const depTask = taskMap.get(depId);
           if (depTask) visit(depTask);
@@ -344,10 +362,7 @@ export class ExecutionPlanner {
       complexity = (complexity + task.estimatedComplexity) / 2;
     }
 
-    // Adjust based on dependencies
-    if (task.dependencies) {
-      complexity += task.dependencies.length * 5;
-    }
+    complexity += dependencyCount(task.dependencies) * 5;
 
     if (task.metadata?.memoryComplexityBoost !== undefined) {
       complexity += task.metadata.memoryComplexityBoost;
@@ -376,7 +391,7 @@ export class ExecutionPlanner {
    */
   private calculateParallelPotential(tasks: OrchestrationTask[]): number {
     // Tasks without dependencies can run in parallel
-    const independent = tasks.filter(t => !t.dependencies || t.dependencies.length === 0);
+    const independent = tasks.filter((t) => !isDependencyIdList(t.dependencies));
     return independent.length / tasks.length;
   }
 }
