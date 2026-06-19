@@ -126,6 +126,14 @@ const ORCHESTRATOR_CONSULT_TOOLS = new Set([
   'orchestrate_task',
 ]);
 
+/** Allowed orchestrator MCP tools while synthesis checkpoint is due (govern-and-apply excluded). */
+const SYNTHESIS_ALLOWED_CONSULT_TOOLS = new Set([
+  'analyze-complexity',
+  'analyze_complexity',
+  'get-orchestration-status',
+  'get_orchestration_status',
+]);
+
 const HERMES_WRITE_TOOLS = new Set(['write_file', 'patch', 'write', 'edit']);
 
 const OPENCODE_WRITE_TOOLS = new Set(['write', 'edit', 'multiedit']);
@@ -213,6 +221,19 @@ function isOrchestratorConsultMcp(toolName: string, toolInput: ToolGateInput): b
   const inner = extractMcpToolName(toolInput).toLowerCase();
   if (!inner) return false;
   for (const t of ORCHESTRATOR_CONSULT_TOOLS) {
+    if (inner.includes(t) || inner.includes(t.replace(/-/g, '_'))) return true;
+  }
+  return false;
+}
+
+function isSynthesisAllowedOrchestratorConsult(
+  toolName: string,
+  toolInput: ToolGateInput,
+): boolean {
+  if (!/mcp|CallMcpTool/i.test(toolName)) return false;
+  const inner = extractMcpToolName(toolInput).toLowerCase();
+  if (!inner) return false;
+  for (const t of SYNTHESIS_ALLOWED_CONSULT_TOOLS) {
     if (inner.includes(t) || inner.includes(t.replace(/-/g, '_'))) return true;
   }
   return false;
@@ -310,7 +331,7 @@ export function evaluateSynthesisGate(
   }
 
   if (isReadOnlyTool(toolName)) return { allow: true };
-  if (isOrchestratorConsultMcp(toolName, toolInput)) return { allow: true };
+  if (isSynthesisAllowedOrchestratorConsult(toolName, toolInput)) return { allow: true };
 
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   if (

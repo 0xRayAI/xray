@@ -505,24 +505,25 @@ export class OrchestratorServer {
       const checkpointSession = getSynthesisCheckpointSessionId(projectRoot);
       const sessionId = checkpointSession ?? null;
       if (sessionId && isSynthesisCheckpointDue(projectRoot, sessionId)) {
+        const dueReason = getSynthesisDueReason(projectRoot, sessionId);
         const plan = loadPersistedLeadDevPlan(projectRoot);
         const realignmentPending =
           plan && isSynthesisRealignmentPlan(plan) && !areSynthesisConsultTodosComplete(plan);
-        if (!realignmentPending) {
-          const dueReason = getSynthesisDueReason(projectRoot, sessionId);
-          return {
-            content: [{
-              type: 'text' as const,
-              text: JSON.stringify({
-                blocked: true,
-                gate: 'synthesis-checkpoint',
-                dueReason,
-                primitive: 'synthesis',
-                hint: 'Run analyze-complexity to reflect and realign before govern-and-apply',
-              }, null, 2),
-            }],
-          };
-        }
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              blocked: true,
+              gate: 'synthesis-checkpoint',
+              dueReason,
+              primitive: 'synthesis',
+              realignmentPending,
+              hint: realignmentPending
+                ? 'Complete mandatory consult todos (s.1–s.3) before govern-and-apply'
+                : 'Run analyze-complexity to reflect and realign before govern-and-apply',
+            }, null, 2),
+          }],
+        };
       }
 
       const { InferenceCycle } = await import('../../inference/inference-cycle.js');

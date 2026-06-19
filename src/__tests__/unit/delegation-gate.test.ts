@@ -181,6 +181,26 @@ describe('delegation-gate SSOT', () => {
     expect(spawn.allow).toBe(true);
   });
 
+  it('evaluateSynthesisGate denies govern-and-apply during synthesis due', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+
+    const block = evaluateSynthesisGate(
+      'CallMcpTool',
+      {
+        server: 'xray-orchestrator',
+        toolName: 'govern-and-apply',
+        arguments: { proposals: [] },
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(block.allow).toBe(false);
+    if (!block.allow) expect(block.gate).toBe('synthesis-checkpoint');
+  });
+
   it('evaluatePreToolGate allows orchestrator consult during synthesis due', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),

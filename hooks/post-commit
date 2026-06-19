@@ -20,39 +20,19 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
   fi
 ) &
 
-# Load auto_reflection config from features.json
-CONFIG_FILE="$PROJECT_ROOT/.xray/features.json"
+# Load reflection config — synthesis.reflection SSOT, fallback auto_reflection
 MODE="minimal"
 COMMIT_THRESHOLD=25
 DAYS_THRESHOLD=14
 AUTO_GENERATE=true
 PROMPT_USER=true
 
-if [ -f "$CONFIG_FILE" ]; then
-  MODE=$(grep -o '"mode": *"[^"]*"' "$CONFIG_FILE" | cut -d'"' -f4)
-  MODE=${MODE:-minimal}
-  
-  # Get thresholds based on mode
-  case "$MODE" in
-    full)
-      COMMIT_THRESHOLD=10
-      DAYS_THRESHOLD=5
-      AUTO_GENERATE=true
-      PROMPT_USER=true
-      ;;
-    minimal)
-      COMMIT_THRESHOLD=25
-      DAYS_THRESHOLD=14
-      AUTO_GENERATE=true
-      PROMPT_USER=true
-      ;;
-    off)
-      COMMIT_THRESHOLD=999
-      DAYS_THRESHOLD=365
-      AUTO_GENERATE=false
-      PROMPT_USER=false
-      ;;
-  esac
+if command -v node >/dev/null 2>&1; then
+  LOAD_SCRIPT="$PROJECT_ROOT/scripts/node/load-reflection-config.mjs"
+  if [ -f "$LOAD_SCRIPT" ]; then
+    export PROJECT_ROOT="$PROJECT_ROOT"
+    eval "$(node "$LOAD_SCRIPT")"
+  fi
 fi
 
 # Check if this was a significant commit - prompt for reflection
