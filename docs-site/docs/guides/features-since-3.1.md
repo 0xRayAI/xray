@@ -1,6 +1,11 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.3**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.4**.
+
+## 3.5.4 — Synthesis consult receipt gate
+
+- **Consult receipt gate** — s.1–s.3 todos require `.xray/state/synthesis-consult-{id}.json` with verdict before completion
+- **Post-tool spawn** — `evaluatePostToolSpawn` records receipts from subagent output; Grok post-tool hook wired
 
 ## 3.5.2 — Grok synthesis gate parity + consumer install hardening
 

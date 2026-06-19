@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.5.3** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
 
 ## Your AI Power Suit
 

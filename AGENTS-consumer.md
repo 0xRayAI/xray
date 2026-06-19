@@ -4,7 +4,7 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v3.5.3** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+**v3.5.4** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
 
 ## Postinstall (automatic)
 
