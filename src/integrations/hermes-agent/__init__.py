@@ -781,7 +781,7 @@ def register(ctx):
 
     # Log session-start since on_session_start may not fire in oneshot mode
     _log_to_file("activity.log",
-        f"[session-start] session={session_id}")
+        "[session-start] session=bootstrap source=plugin-load")
 
     logger.info(
         "[xray] Plugin v2.2 loaded: 6 tools, 2 hooks, "

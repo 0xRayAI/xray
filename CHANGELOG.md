@@ -9,7 +9,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### Planned (iterate before next release)
 - **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)
 - **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
-- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (3/3)
+- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
 - **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
 - **Pre-push codex** — commit-range diff scope via `COMMIT_RANGE`; `verify:pre-push-diff` 2/2
 - **Confer automation gap** — mandatory 3-agent quorum (researcher / architect-tools / code-review) should run at synthesis checkpoint + pre-merge via confer; today lead dev spawns Task manually — trigger wiring TBD in orchestrator
