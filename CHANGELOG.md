@@ -14,6 +14,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### ✅ Tests
 - `pending-delegations`, `lead-dev-plan-persistence`, `grok-pending-delegation-gate` unit tests; `verify-grok-delegation-gate.mjs` hook fixture (4/4); orchestrator behavior verify 8/8
 
+### 📋 Deferred in 3.5.0 (post-PR1/PR2)
+- **#3 Observability** — full session trail (`sessionId` / `taskId` / `planTodoId` / gate deny count correlation)
+- **#4 Rule 1 vs Rule 2** — lead-dev arbitration when read/triage conflicts with spawn-first gate
+- **#5 Codex hard-fail** — silent fallback removal (independent of auto-chain)
+
 ---
 
 ## [3.4.10] - 2026-06-19
