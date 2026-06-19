@@ -7,6 +7,7 @@ const {
   resolveConsumerTargetDir,
   isConsumerInstall,
 } = require("./install-bridges.cjs");
+const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
 
 function structuredLog(component, action, status, details) {
   const ts = new Date().toISOString();
@@ -39,12 +40,14 @@ if (fs.existsSync(agentsConsumer) && isConsumerInstall(resolvedPackage, resolved
   }
 }
 
-// Copy .gitignore.default → .gitignore (never overwrite existing)
-const gitignoreSource = path.join(packageRoot, ".gitignore.default");
-const gitignoreDest = path.join(targetDir, ".gitignore");
-if (!fs.existsSync(gitignoreDest) && isConsumerInstall(resolvedPackage, resolvedTarget)) {
-  fs.copyFileSync(gitignoreSource, gitignoreDest);
-  structuredLog("postinstall", "Created .gitignore from template", "info");
+// .gitignore: full template when absent; merge suit block when existing
+if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
+  const gitignoreResult = applyConsumerGitignore(targetDir, packageRoot);
+  if (gitignoreResult === "created") {
+    structuredLog("postinstall", "Created .gitignore from template", "info");
+  } else if (gitignoreResult === "merged") {
+    structuredLog("postinstall", "Merged 0xray suit entries into .gitignore", "info");
+  }
 }
 
 // Unified 4-platform bridge install (OpenCode, Grok, Hermes, OpenClaw)

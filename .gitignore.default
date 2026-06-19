@@ -20,6 +20,13 @@ credentials.json
 *.pem
 *.key
 
+# 0xray suit artifacts (postinstall / bridge install)
+.grok/
+.mcp.json
+opencode.json
+AGENTS.md
+SKILLS.md
+
 # Runtime state (xray inference workflows, session state)
 .xray/
 .strray/
@@ -41,6 +48,7 @@ xray/inference/
 
 # Logs
 logs/
+logs/framework/
 *.log
 
 # OS files
