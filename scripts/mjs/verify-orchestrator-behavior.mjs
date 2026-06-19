@@ -121,8 +121,8 @@ if (text.includes('delegations') && text.includes('spawnHint')) {
   fail('delegations block', 'missing JSON delegations in response');
 }
 
-// 7. pending-delegations.json written on defer
-const pendingPath = join(packageRoot, '.xray', 'state', 'pending-delegations.json');
+// 7. pending-delegations.json written on defer (consumer cwd, not package root)
+const pendingPath = join(process.cwd(), '.xray', 'state', 'pending-delegations.json');
 if (existsSync(pendingPath)) {
   try {
     const pending = JSON.parse(readFileSync(pendingPath, 'utf8'));
