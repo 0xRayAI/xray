@@ -15,6 +15,7 @@
  *   codex-check   - Check code against codex rules
  *   stats         - Return bridge/framework statistics
  *   hooks         - Manage git hooks (install, uninstall, list, status)
+ *   session-start - Session boot: archive stale lead-dev plans (synthesis exempt)
  *   govern        - Govern inference proposals through weighted voting
  *   apply         - Govern + apply approved inference proposals
  *
@@ -387,6 +388,27 @@ async function handleHealth(input) {
     components,
     nodeVersion: process.version,
   };
+}
+
+async function handleSessionStart(input, projectRoot, logDir) {
+  const sessionId = input.sessionId || `bridge-${Date.now()}`;
+  let planArchive = { archived: false };
+
+  try {
+    const { archiveStaleLeadDevPlan } = await import('../hooks/plan-hook-runtime.mjs');
+    planArchive = archiveStaleLeadDevPlan(projectRoot);
+    if (planArchive.archived) {
+      logToActivity(
+        logDir,
+        `session-start: stale-plan-archived path=${planArchive.archivePath ?? 'unknown'}`,
+      );
+    }
+  } catch {
+    /* non-blocking — dist may be absent during dev */
+  }
+
+  logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
+  return { ok: true, sessionId, planArchive };
 }
 
 async function handlePreProcess(input, projectRoot, logDir) {
@@ -955,6 +977,9 @@ async function main() {
       break;
     case "skill-registry":
       response = await handleSkillRegistry(command, projectRoot, logDir);
+      break;
+    case "session-start":
+      response = await handleSessionStart(command, projectRoot, logDir);
       break;
     case "delegation-gate":
       response = await handleDelegationGate(command, projectRoot, logDir);

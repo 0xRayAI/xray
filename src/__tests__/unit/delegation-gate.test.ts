@@ -244,6 +244,37 @@ describe('delegation-gate SSOT', () => {
     expect(read.allow).toBe(true);
   });
 
+  it('evaluateSpawnPlanGate allows consult spawn on aged synthesis realignment plan', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...plan!,
+        persistedAt: staleAt,
+        sessionId,
+      },
+      tmp,
+    );
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      {
+        prompt: 'Synthesis consult researcher plan todo s.1 review checkpoint',
+        subagent_type: 'researcher',
+        planTodoId: 's.1',
+      },
+    );
+    expect(block).toBeNull();
+  });
+
   it('evaluateSynthesisGate allows next consult spawn during realignment', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),

@@ -71,6 +71,16 @@ function planAgeMs(plan: PersistedLeadDevPlan, projectRoot: string): number {
 }
 
 /**
+ * Mandatory synthesis consults (s.1–s.3) must stay spawnable until complete —
+ * never treat an active realignment plan as stale while consult todos remain.
+ */
+export function isProtectedSynthesisRealignmentPlan(
+  plan: PersistedLeadDevPlan,
+): boolean {
+  return isSynthesisRealignmentPlan(plan) && !areSynthesisConsultTodosComplete(plan);
+}
+
+/**
  * Stale when every outstanding todo is still pending and plan age exceeds TTL.
  * In-progress or completed todos imply active work — plan stays valid.
  */
@@ -79,6 +89,7 @@ export function isLeadDevPlanStale(
   projectRoot = process.cwd(),
 ): boolean {
   if (!plan.active) return false;
+  if (isProtectedSynthesisRealignmentPlan(plan)) return false;
   const outstanding = getOutstandingTodos(plan);
   if (outstanding.length === 0) return false;
   const allStillPending = outstanding.every((t) => t.status === 'pending');
@@ -90,7 +101,13 @@ export function archiveStaleLeadDevPlan(
   projectRoot = process.cwd(),
 ): { archived: boolean; archivePath?: string; reason?: string } {
   const plan = loadPersistedLeadDevPlan(projectRoot);
-  if (!plan || !isLeadDevPlanStale(plan, projectRoot)) {
+  if (!plan) {
+    return { archived: false };
+  }
+  if (isProtectedSynthesisRealignmentPlan(plan)) {
+    return { archived: false, reason: 'synthesis-realignment-active' };
+  }
+  if (!isLeadDevPlanStale(plan, projectRoot)) {
     return { archived: false };
   }
 

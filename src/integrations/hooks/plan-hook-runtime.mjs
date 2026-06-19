@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Load lead-dev plan persistence from consumer or package dist.
- * Used by Grok session-start for stale plan archival.
+ * Used by Grok/Hermes session-start for stale plan archival.
  */
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
@@ -49,6 +49,19 @@ function loadPlanPersistence() {
   return createRequire(import.meta.url)(found);
 }
 
-const persistence = loadPlanPersistence();
+let persistence;
 
-export const { archiveStaleLeadDevPlan, isLeadDevPlanStale } = persistence;
+function getPersistence() {
+  if (!persistence) {
+    persistence = loadPlanPersistence();
+  }
+  return persistence;
+}
+
+export function archiveStaleLeadDevPlan(projectRoot) {
+  return getPersistence().archiveStaleLeadDevPlan(projectRoot);
+}
+
+export function isLeadDevPlanStale(plan, projectRoot) {
+  return getPersistence().isLeadDevPlanStale(plan, projectRoot);
+}

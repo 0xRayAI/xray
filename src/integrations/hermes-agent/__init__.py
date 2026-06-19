@@ -452,6 +452,10 @@ def _on_session_start(session_id: str, platform: str, **kwargs):
     _ensure_log_dir()
     _log_to_file("activity.log",
         f"[session-start] session={session_id} platform={platform}")
+    try:
+        _call_bridge({"command": "session-start", "sessionId": session_id}, timeout=10)
+    except Exception as e:
+        logger.debug("[xray] session-start bridge skipped: %s", e)
     logger.info("[xray] Session %s started on %s", session_id, platform)
 
 

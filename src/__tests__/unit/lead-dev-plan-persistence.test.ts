@@ -229,6 +229,27 @@ describe('lead-dev-plan-persistence', () => {
     expect(hasValidLeadDevPlanForSpawn(tmp)).toBe(false);
   });
 
+  it('never treats synthesis realignment plan as stale while consult todos pending', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    const synthesisPlan = buildSynthesisCheckpointPlan('gate threshold');
+    expect(synthesisPlan).not.toBeNull();
+    savePersistedLeadDevPlan(
+      {
+        ...synthesisPlan!,
+        persistedAt: staleAt,
+        sessionId: 'synth-stale-session',
+      },
+      tmp,
+    );
+    const plan = loadPersistedLeadDevPlan(tmp);
+    expect(plan).not.toBeNull();
+    expect(isLeadDevPlanStale(plan!, tmp)).toBe(false);
+    expect(hasValidLeadDevPlanForSpawn(tmp)).toBe(true);
+    const archive = archiveStaleLeadDevPlan(tmp);
+    expect(archive.archived).toBe(false);
+    expect(loadPersistedLeadDevPlan(tmp)).not.toBeNull();
+  });
+
   it('archives stale plan on session boot path', () => {
     const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
     savePersistedLeadDevPlan(
