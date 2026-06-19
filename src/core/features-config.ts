@@ -82,6 +82,12 @@ export interface MultiAgentOrchestrationConfig {
   no_new_surface?: boolean;
   /** 3.5.0 — PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
   auto_chain_delegations?: boolean;
+  /** Hours before unstarted lead-dev plan is archived (default 8) */
+  plan_stale_hours?: number;
+  /** Hours spawn-plan-stale persists after archival (default 24) */
+  plan_archive_marker_hours?: number;
+  /** Sibling workspace roots for multi-repo session boot metadata */
+  sibling_repos?: Array<string | { path: string; label?: string }>;
 }
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */

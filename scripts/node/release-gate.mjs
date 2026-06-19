@@ -52,7 +52,7 @@ function main() {
       step("2/6 Tests", "npm test");
       step(
         "3/6 Consumer hook verifiers",
-        "npm run verify:pre-commit-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-hermes-session-start.mjs",
+        "npm run verify:pre-commit-diff && npm run verify:pre-push-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-hermes-session-start.mjs",
       );
       step(
         "4/6 Plugin infrastructure",

@@ -134,7 +134,8 @@
     "verify:synthesis": "npm run build && node scripts/mjs/verify-synthesis-core.mjs && node scripts/mjs/verify-synthesis-gate-core.mjs && node scripts/mjs/verify-synthesis-outcome-core.mjs && node scripts/mjs/verify-synthesis-p2-core.mjs && node scripts/mjs/verify-synthesis-e2e-core.mjs",
     "verify:find-project-root": "node scripts/mjs/verify-find-project-root-core.mjs",
     "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs",
-    "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs"
+    "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs",
+    "verify:pre-push-diff": "node scripts/mjs/verify-pre-push-diff-core.mjs"
   },
   "files": [
     "dist/",
@@ -151,6 +152,7 @@
     "scripts/mjs/verify-grok-synthesis-gate.mjs",
     "scripts/mjs/verify-hermes-delegation-gate.mjs",
     "scripts/mjs/verify-hermes-session-start.mjs",
+    "scripts/mjs/verify-pre-push-diff-core.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",

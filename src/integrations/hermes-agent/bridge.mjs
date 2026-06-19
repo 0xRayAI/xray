@@ -814,7 +814,12 @@ async function handleDelegationGate(command, projectRoot, logDir) {
       if (!gate.isSubagentTool(tool)) {
         return { allow: true, phase: "post", skipped: true };
       }
-      const result = gate.evaluatePostToolSpawn(tool, args, projectRoot);
+      const toolOutput =
+        command.toolOutput ?? command.result ?? command.output ?? args?.result ?? null;
+      const result = gate.evaluatePostToolSpawn(tool, args, projectRoot, {
+        sessionId,
+        toolOutput,
+      });
       if (result.satisfied.length > 0) {
         logToActivity(
           logDir,
@@ -845,7 +850,15 @@ async function handleDelegationGate(command, projectRoot, logDir) {
 
     return { phase: "pre", ...outcome };
   } catch (error) {
-    return { error: `delegation-gate failed: ${error.message || error}` };
+    const message = `delegation-gate failed: ${error.message || error}`;
+    logToActivity(logDir, `[delegation-gate] error ${message}`);
+    return {
+      allow: false,
+      phase: "pre",
+      gate: "delegation-gate-error",
+      reason: message,
+      error: message,
+    };
   }
 }
 
@@ -931,10 +944,6 @@ async function main() {
 
   const projectRoot = resolveBridgeProjectRoot();
   const logDir = ensureLogDir(projectRoot);
-
-  // Log session start for test verification
-  const sessionId = `bridge-${Date.now()}`;
-  logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
 
   // Lazy-load framework on first call
   if (!frameworkReady && !frameworkLoadAttempted) {

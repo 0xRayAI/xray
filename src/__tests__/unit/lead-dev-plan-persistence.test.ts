@@ -7,6 +7,7 @@ import {
   archiveStaleLeadDevPlan,
   findRecentStalePlanArchive,
   loadLeadDevPlanArchiveMarkerMs,
+  loadLeadDevPlanStaleMs,
   bindPlanToSession,
   getNextRequiredTodo,
   getOutstandingTodos,
@@ -251,6 +252,16 @@ describe('lead-dev-plan-persistence', () => {
     expect(loadPersistedLeadDevPlan(tmp)).not.toBeNull();
   });
 
+  it('loads plan_stale_hours from features.json', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_stale_hours: 2 },
+      }),
+    );
+    expect(loadLeadDevPlanStaleMs(tmp)).toBe(2 * 60 * 60 * 1000);
+  });
+
   it('loads plan_archive_marker_hours from features.json', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
@@ -259,6 +270,25 @@ describe('lead-dev-plan-persistence', () => {
       }),
     );
     expect(loadLeadDevPlanArchiveMarkerMs(tmp)).toBe(6 * 60 * 60 * 1000);
+  });
+
+  it('findRecentStalePlanArchive ignores archives past marker TTL', () => {
+    const stateDir = path.join(tmp, '.xray', 'state');
+    const oldArchivedAt = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(stateDir, 'lead-dev-plan.archived-old.json'),
+      JSON.stringify({
+        archiveReason: 'stale-unstarted-todos',
+        archivedAt: oldArchivedAt,
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_archive_marker_hours: 6 },
+      }),
+    );
+    expect(findRecentStalePlanArchive(tmp)).toBeNull();
   });
 
   it('archives stale plan on session boot path', () => {

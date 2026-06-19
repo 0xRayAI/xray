@@ -37,6 +37,7 @@ function resolvePackageRoot() {
 function loadPlanPersistence() {
   const root = resolvePackageRoot();
   const candidates = [
+    join(__dirname, '../../nucleus/lead-dev-plan-persistence.js'),
     join(root, 'dist/nucleus/lead-dev-plan-persistence.js'),
     join(process.cwd(), 'node_modules/0xray/dist/nucleus/lead-dev-plan-persistence.js'),
   ];

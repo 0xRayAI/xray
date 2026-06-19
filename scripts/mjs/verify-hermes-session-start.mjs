@@ -78,6 +78,52 @@ try {
   const archived = result.planArchive?.archived === true;
   if (!archived) pass('session-start did not archive protected synthesis plan');
   else fail('synthesis archive skip', JSON.stringify(result.planArchive));
+
+  const staleTmp = mkdtempSync(join(tmpdir(), 'xray-hermes-stale-'));
+  const stalePlanPath = join(staleTmp, '.xray', 'state', 'lead-dev-plan.json');
+  mkdirSync(join(staleTmp, '.xray', 'state'), { recursive: true });
+  writeFileSync(
+    join(staleTmp, '.xray', 'features.json'),
+    JSON.stringify({
+      multi_agent_orchestration: { enabled: true, lead_dev_mode: true },
+    }),
+  );
+  const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+  writeFileSync(
+    stalePlanPath,
+    JSON.stringify(
+      {
+        active: true,
+        persistedAt: staleAt,
+        phases: [
+          {
+            id: 'phase-1',
+            todos: [
+              {
+                id: '1.1',
+                task: 'stale hygiene',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const staleResult = runBridge(
+    { command: 'session-start', sessionId: 'hermes-stale-archive-fixture' },
+    staleTmp,
+  );
+  if (staleResult.planArchive?.archived === true && !existsSync(stalePlanPath)) {
+    pass('session-start archives ordinary stale lead-dev plan');
+  } else {
+    fail('stale plan archival', JSON.stringify(staleResult.planArchive));
+  }
+  rmSync(staleTmp, { recursive: true, force: true });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -85,7 +131,7 @@ try {
 console.log(
   '\n' +
     (failed === 0
-      ? '🎉 Hermes session-start verify passed (3/3).'
+      ? '🎉 Hermes session-start verify passed (4/4).'
       : `⚠️  ${failed} Hermes session-start check(s) failed.`),
 );
 process.exit(failed === 0 ? 0 : 1);
