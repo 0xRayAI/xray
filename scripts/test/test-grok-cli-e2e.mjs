@@ -103,22 +103,27 @@ function assertContains(filePath, substring, label) {
   }
 }
 
-async function runHookScript(hookPath, envOverrides = {}) {
+async function runHookScript(hookPath, { env: envOverrides = {}, stdin = null, cwd = null } = {}) {
   return new Promise((resolve) => {
     const env = { ...process.env, ...envOverrides };
+    const workDir = cwd || envOverrides.PWD || envOverrides.GROK_WORKSPACE_ROOT || process.cwd();
     const child = spawn('node', [hookPath], {
-      cwd: process.cwd(),
-      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: workDir,
+      stdio: ['pipe', 'pipe', 'pipe'],
       env,
     });
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', d => { stdout += d.toString(); });
-    child.stderr.on('data', d => { stderr += d.toString(); });
+    child.stdout.on('data', (d) => { stdout += d.toString(); });
+    child.stderr.on('data', (d) => { stderr += d.toString(); });
     child.on('close', (code) => {
       resolve({ stdout: stdout.trim(), stderr: stderr.trim(), code });
     });
     child.on('error', (err) => resolve({ stdout, stderr: err.message, code: -1 }));
+    if (stdin != null) {
+      child.stdin.write(typeof stdin === 'string' ? stdin : JSON.stringify(stdin));
+    }
+    child.stdin.end();
   });
 }
 
@@ -134,7 +139,7 @@ function printGrokIntegrationTree() {
 │   └── .mcp.json                    xray-governance + skills + orchestrator + enforcer (full v2) │
 │                                                                     │
 │  dist/integrations/grok/hooks/pre-tool-use.js   (real hook)         │
-│       └── robust resolver → applyDecisionMatrix()                    │
+│       └── delegation gate + codex patterns + spawn todo gate         │
 │                                                                     │
 │  dist/governance/                                                   │
 │   ├── governance-core.js            Dynamo Solar SSOT matrix        │
@@ -149,11 +154,11 @@ function printGrokIntegrationTree() {
 │          │                                                          │
 │          ▼                                                          │
 │    PreToolUse hook (spawned)                                        │
-│          │  - derive resonance from tool + content                  │
-│          │  - call applyDecisionMatrix({resonance, isotopic...})    │
-│          │  - emit {solar_recommendation, resonance, gov}           │
+│          │  - pending delegation gate (auto-chain)                  │
+│          │  - spawn todo persistence (codex 59/67)                  │
+│          │  - codex pattern deny (any, eval, surface)               │
 │          ▼                                                          │
-│    (currently non-blocking; future: exit 1 on strong REJECT)        │
+│    stdout: {"decision":"allow"|"deny","reason":"...","gate":"..."}  │
 │                                                                     │
 │  MCP Tools inside Grok chat: governance.*, orchestrator.*, enforcer.*, skills.* (full governed surface) │
 └─────────────────────────────────────────────────────────────────────┘
@@ -176,21 +181,37 @@ async function main() {
     testDir = path.join(os.tmpdir(), `grok-0xray-e2e-${Date.now()}`);
     fs.mkdirSync(testDir, { recursive: true });
     pass('Created temporary consumer directory');
+  }
 
-    if (TARBALL_PATH) {
-      const tarballAbs = path.resolve(projectRoot, TARBALL_PATH);
-      run('git init', { cwd: testDir, ignoreError: true });
-      run('npm init -y', { cwd: testDir });
-      run(`npm install "${tarballAbs}"`, { cwd: testDir, timeout: 180000 });
-      if (fs.existsSync(path.join(testDir, 'node_modules', '0xray', 'package.json'))) {
-        pass('Installed 0xray from local tarball into consumer dir');
-      } else {
-        fail('Tarball installation', 'package.json missing after npm install');
+  const needsInstall = !fs.existsSync(path.join(testDir, 'node_modules', '0xray', 'package.json'));
+  if (needsInstall) {
+    let tarballAbs = TARBALL_PATH ? path.resolve(projectRoot, TARBALL_PATH) : null;
+    if (!tarballAbs) {
+      const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 120000 });
+      const tarballMatch = packResult.match(/(0xray-\d+\.\d+\.\d+\.tgz)/);
+      if (!tarballMatch) {
+        fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
         process.exit(1);
       }
+      tarballAbs = path.join(projectRoot, tarballMatch[1]);
+      pass(`npm pack: ${tarballMatch[1]}`);
     } else {
-      skip('Tarball install', 'No --tarball; using existing consumer dir');
+      pass(`Using tarball: ${tarballAbs}`);
     }
+
+    run('git init', { cwd: testDir, ignoreError: true });
+    run('git config user.email "test@test.com"', { cwd: testDir, ignoreError: true });
+    run('git config user.name "Test"', { cwd: testDir, ignoreError: true });
+    run('npm init -y', { cwd: testDir });
+    run(`npm install "${tarballAbs}"`, { cwd: testDir, timeout: 180000 });
+    if (fs.existsSync(path.join(testDir, 'node_modules', '0xray', 'package.json'))) {
+      pass('Installed 0xray from tarball into consumer dir');
+    } else {
+      fail('Tarball installation', 'package.json missing after npm install');
+      process.exit(1);
+    }
+  } else {
+    pass('0xray already installed in consumer dir');
   }
 
   const nodeModules0xray = path.join(testDir, 'node_modules', '0xray');
@@ -330,9 +351,13 @@ async function main() {
   // Active execution of the hook with simulated Grok context (parity with OpenClaw firing hooks + Hermes tool calls)
   if (fs.existsSync(hookImpl)) {
     const hookResult = await runHookScript(hookImpl, {
-      TOOL_NAME: 'read_file',
-      HOOK_TOOL: 'read_file',
-      PWD: testDir,
+      env: { GROK_WORKSPACE_ROOT: testDir },
+      cwd: testDir,
+      stdin: {
+        toolName: 'read_file',
+        workspaceRoot: testDir,
+        toolInput: { path: 'src/index.ts' },
+      },
     });
     if (hookResult.stdout.includes('"decision"') && hookResult.stdout.includes('allow')) {
       pass('pre-tool-use hook executed and emitted governance decision JSON');
@@ -343,9 +368,10 @@ async function main() {
       pass('hook produced expected 0xRay log prefix');
     }
 
-    // Content inspection of the hook implementation (like OpenClaw/Hermes inspect hook code and logs)
-    assertContains(hookImpl, 'applyDecisionMatrix', 'pre-tool-use.js calls real Solar decision matrix');
-    assertContains(hookImpl, 'Solar', 'pre-tool-use.js aware of Solar / decision matrix');
+    // Content inspection — 3.5.1 ironclad OS gate (delegation + codex, not legacy Solar hook path)
+    assertContains(hookImpl, 'checkPendingDelegationGate', 'pre-tool-use.js enforces pending delegation gate');
+    assertContains(hookImpl, 'checkSubagentGate', 'pre-tool-use.js enforces spawn todo gate');
+    assertContains(hookImpl, 'checkCodexPatterns', 'pre-tool-use.js enforces codex pattern deny');
   }
 
   // ── Phase 5: Package Dist Structure for Grok ───────────────
@@ -545,35 +571,54 @@ async function main() {
 
   const hookImpl2 = path.join(distDir, 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
 
-  // Bad case: dangerous code
+  // Bad case: codex violations in proposed edit
   const badResult = await runHookScript(hookImpl2, {
-    TOOL_NAME: 'write_file',
-    HOOK_TOOL: 'write_file',
-    HOOK_ARGS: 'const x: any = eval(userInput); console.log(x)',
+    env: { GROK_WORKSPACE_ROOT: testDir },
+    cwd: testDir,
+    stdin: {
+      toolName: 'search_replace',
+      workspaceRoot: testDir,
+      toolInput: {
+        path: 'src/a.ts',
+        new_string: 'const x: any = eval(userInput); console.log(x);',
+      },
+    },
   });
   try {
     const lines = badResult.stdout.trim().split('\n').filter(Boolean);
     const last = lines[lines.length - 1] || badResult.stdout;
     const badJson = JSON.parse(last);
-    if (badJson.resonance < 0.75) pass('Hook derived low resonance on dangerous code');
-    if (badJson.solar_recommendation) pass(`Hook ran real applyDecisionMatrix → ${badJson.solar_recommendation}`);
-    if (badJson.gov && badJson.gov.recommendation) pass('Hook produced full Solar decision object from core');
-  } catch (e) { fail('bad hook parse', e.message + ' stdout=' + badResult.stdout.substring(0,120)); }
+    if (badJson.decision === 'deny') pass('Hook denies codex-violating write');
+    if (String(badJson.reason || '').includes('Codex')) {
+      pass(`Hook codex deny reason present → ${badJson.reason.slice(0, 80)}`);
+    } else {
+      fail('codex deny reason', `unexpected: ${JSON.stringify(badJson).slice(0, 120)}`);
+    }
+  } catch (e) {
+    fail('bad hook parse', `${e.message} stdout=${badResult.stdout.substring(0, 120)}`);
+  }
 
   // Clean case
   const cleanResult = await runHookScript(hookImpl2, {
-    TOOL_NAME: 'read_file',
-    HOOK_TOOL: 'read_file',
-    HOOK_ARGS: 'src/index.ts',
+    env: { GROK_WORKSPACE_ROOT: testDir },
+    cwd: testDir,
+    stdin: {
+      toolName: 'read_file',
+      workspaceRoot: testDir,
+      toolInput: { path: 'src/index.ts' },
+    },
   });
   try {
     const lines = cleanResult.stdout.trim().split('\n').filter(Boolean);
     const last = lines[lines.length - 1] || cleanResult.stdout;
     const cleanJson = JSON.parse(last);
-    if (cleanJson.resonance > 0.8) pass('Hook gave high resonance to clean operation');
-  } catch {}
+    if (cleanJson.decision === 'allow') pass('Hook allows clean read_file');
+    else fail('clean hook allow', JSON.stringify(cleanJson).slice(0, 120));
+  } catch (e) {
+    fail('clean hook parse', e.message);
+  }
 
-  pass('Hook governance pipeline exercised end-to-end (first-class enforcement)');
+  pass('Hook OS gate pipeline exercised end-to-end (delegation + codex)');
 
   // ── Cleanup ────────────────────────────────────────────────
   if (!KEEP && !CUSTOM_DIR) {
