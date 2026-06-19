@@ -92,14 +92,47 @@ function recordMetrics(duration, exitCode) {
 
 // ── TypeScript checking ──────────────────────────────────────
 
+function packageHasTypecheckScript() {
+  try {
+    const pkgPath = join(projectRoot, "package.json");
+    if (!existsSync(pkgPath)) return false;
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    return typeof pkg.scripts?.typecheck === "string" && pkg.scripts.typecheck.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function runTypeScriptCheck(files) {
   /**
-   * Run tsc --noEmit on a subset of files.
-   * Falls back to full project check if per-file fails.
+   * Prefer npm run typecheck when defined (matches CI).
+   * Otherwise tsc --noEmit on staged files or full project.
    */
   log("Running TypeScript validation...");
 
   try {
+    if (packageHasTypecheckScript()) {
+      try {
+        execSync("npm run typecheck", {
+          cwd: projectRoot,
+          encoding: "utf-8",
+          timeout: 120000,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+        log("npm run typecheck passed");
+        return { passed: true, errors: [] };
+      } catch (err) {
+        const stderr = (err.stderr || err.stdout || "").toString();
+        const errorLines = stderr
+          .split("\n")
+          .filter((l) => /error TS\d+/.test(l))
+          .map((l) => l.trim())
+          .slice(0, 20);
+        log(`npm run typecheck failed: ${errorLines.length} errors`);
+        return { passed: false, errors: errorLines };
+      }
+    }
+
     // Check if tsconfig.json exists
     const tsconfigPath = join(projectRoot, "tsconfig.json");
     if (!existsSync(tsconfigPath)) {

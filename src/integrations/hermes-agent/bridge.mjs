@@ -39,6 +39,7 @@ import {
 import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
+import { findProjectRoot } from "../../../scripts/helpers/find-project-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -52,62 +53,19 @@ let frameworkReady = false;
 let frameworkLoadAttempted = false;
 
 // ── Project root detection ───────────────────────────────────
-function isConsumerWorkspace(dir) {
-  return (
-    existsSync(join(dir, ".xray", "features.json")) ||
-    existsSync(join(dir, "node_modules", "0xray", "package.json"))
-  );
-}
-
-function findProjectRoot() {
-  const envHome = process.env.XRAY_HOME || process.env.XRAY_ROOT;
-  if (envHome) {
-    const resolved = join(envHome);
-    if (existsSync(join(resolved, "package.json")) || isConsumerWorkspace(resolved)) {
-      return resolved;
-    }
-  }
-
+function resolveBridgeProjectRoot() {
   const consumerMarker = join(__dirname, "xray-consumer-root.txt");
   if (existsSync(consumerMarker)) {
     try {
       const marked = readFileSync(consumerMarker, "utf-8").trim();
-      if (marked && (existsSync(join(marked, "package.json")) || isConsumerWorkspace(marked))) {
+      if (marked && existsSync(join(marked, "package.json"))) {
         return marked;
       }
     } catch {
-      // fall through
+      // fall through to shared SSOT
     }
   }
-
-  // Prefer consumer workspace (--cwd / process.chdir) over framework package root
-  let dir = process.cwd();
-  for (let i = 0; i < 12; i++) {
-    if (isConsumerWorkspace(dir)) return dir;
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-
-  const candidates = [
-    join(homedir(), "dev", "xray"),
-    join(dirname(__dirname), "..", "..", "..", ".."), // plugin dir -> package root
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      const pkgPath = join(candidate, "package.json");
-      if (existsSync(pkgPath)) {
-        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
-          return candidate;
-        }
-      }
-    } catch {
-      continue;
-    }
-  }
-  return process.cwd();
+  return findProjectRoot([join(dirname(__dirname), "..", "..", "..", "..")]);
 }
 
 // ── Log directory ────────────────────────────────────────────
@@ -403,7 +361,7 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
 // ── Command handlers ─────────────────────────────────────────
 
 async function handleHealth(input) {
-  const projectRoot = findProjectRoot();
+  const projectRoot = resolveBridgeProjectRoot();
   const loaded = await loadFramework(projectRoot);
 
   const components = {
@@ -760,7 +718,7 @@ function handleStats() {
     qualityGateAvailable: !!runQualityGateWithLogging,
     processorsAvailable: !!ProcessorManager,
     nodeVersion: process.version,
-    projectRoot: findProjectRoot(),
+    projectRoot: resolveBridgeProjectRoot(),
   };
 }
 
@@ -949,7 +907,7 @@ async function main() {
     }
   }
 
-  const projectRoot = findProjectRoot();
+  const projectRoot = resolveBridgeProjectRoot();
   const logDir = ensureLogDir(projectRoot);
 
   // Log session start for test verification

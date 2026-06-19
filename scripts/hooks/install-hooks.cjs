@@ -78,13 +78,25 @@ else
 fi
 `;
 
+function hookRunnerExists(projectRoot) {
+  return (
+    fs.existsSync(path.join(projectRoot, "node_modules/0xray/scripts/hooks/run-hook.js")) ||
+    fs.existsSync(path.join(projectRoot, "scripts/hooks/run-hook.js"))
+  );
+}
+
 const hookPath = path.join(gitHooksDir, "pre-commit");
 const existing = fs.existsSync(hookPath);
 if (existing) {
   const existingContent = fs.readFileSync(hookPath, "utf-8");
-  if (existingContent.includes("0xRay") || existingContent.includes("xray")) {
+  const isXrayHook =
+    existingContent.includes("0xRay") || existingContent.includes("xray");
+  if (isXrayHook && hookRunnerExists(targetDir)) {
     console.log("ℹ️  Pre-commit hook already installed by xray — skipping");
     process.exit(0);
+  }
+  if (isXrayHook && !hookRunnerExists(targetDir)) {
+    console.log("⚠️  Stale xray pre-commit hook detected — reinstalling");
   }
 }
 

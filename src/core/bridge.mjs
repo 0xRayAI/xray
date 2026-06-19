@@ -51,6 +51,7 @@ import { join, dirname, resolve, relative } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
 import { createServer } from "http";
+import { findProjectRoot } from "../../scripts/helpers/find-project-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -63,35 +64,11 @@ let CodexFormatterModule = null;
 let frameworkReady = false;
 let frameworkLoadAttempted = false;
 
-// ============================================================================
-// Project Root Detection
-// ============================================================================
-
-function findProjectRoot() {
-  const envHome = process.env.XRAY_HOME;
-  if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
-
-  const candidates = [
-    process.cwd(),
-    join(homedir(), "dev", "xray"),
-    join(dirname(__dirname), "..", ".."), // core/ -> project root
-    join(dirname(__dirname), "..", "..", ".."), // integrations/ -> project root
-  ];
-
-  for (const dir of candidates) {
-    try {
-      const pkgPath = join(dir, "package.json");
-      if (existsSync(pkgPath)) {
-        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
-          return dir;
-        }
-      }
-    } catch {
-      continue;
-    }
-  }
-  return process.cwd();
+function resolveBridgeProjectRoot() {
+  return findProjectRoot([
+    join(dirname(__dirname), "..", ".."),
+    join(dirname(__dirname), "..", "..", ".."),
+  ]);
 }
 
 // ============================================================================
@@ -184,7 +161,7 @@ const BRIDGE_CODEX_FALLBACK = {
 // ============================================================================
 
 async function handleHealth(input) {
-  const projectRoot = findProjectRoot();
+  const projectRoot = resolveBridgeProjectRoot();
   const loaded = await loadFramework(projectRoot);
 
   const pkgPath = join(projectRoot, "package.json");
@@ -374,7 +351,7 @@ async function handleStats() {
     codexFormatterAvailable: !!CodexFormatterModule,
     qualityGateAvailable: !!QualityGateModule,
     nodeVersion: process.version,
-    projectRoot: findProjectRoot(),
+    projectRoot: resolveBridgeProjectRoot(),
   };
 }
 
@@ -893,7 +870,7 @@ async function main() {
     }
   }
 
-  const projectRoot = findProjectRoot();
+  const projectRoot = resolveBridgeProjectRoot();
   const logDir = ensureLogDir(projectRoot);
 
   // Lazy-load framework
