@@ -291,15 +291,31 @@ export class OrchestratorServer {
               getSynthesisDueReason,
               getSynthesisCheckpointSessionId,
             } = await import('../../nucleus/synthesis.js');
-            const {
-              appendSynthesisContextToResponse,
-              buildSynthesisCollocatedContext,
-              isAnalyzeComplexitySuccess,
-            } = await import('../../nucleus/synthesis-context.js');
+            const { appendSynthesisContextToResponse, buildSynthesisCollocatedContext } =
+              await import('../../nucleus/synthesis-context.js');
 
             const checkpointSession = getSynthesisCheckpointSessionId(projectRoot);
-            const sessionId = complexityArgs.sessionId ?? checkpointSession;
-            const synthesisDue = isSynthesisCheckpointDue(projectRoot, sessionId);
+            if (
+              checkpointSession &&
+              complexityArgs.sessionId &&
+              complexityArgs.sessionId !== checkpointSession
+            ) {
+              return {
+                content: [
+                  {
+                    type: 'text' as const,
+                    text:
+                      `❌ Synthesis sessionId mismatch — expected \`${checkpointSession}\` ` +
+                      `(from synthesis-checkpoint.json), got \`${complexityArgs.sessionId}\`.`,
+                  },
+                ],
+              };
+            }
+
+            const sessionId = checkpointSession ?? complexityArgs.sessionId ?? null;
+            const synthesisDue = checkpointSession
+              ? isSynthesisCheckpointDue(projectRoot, checkpointSession)
+              : false;
             const dueReason = synthesisDue
               ? getSynthesisDueReason(projectRoot, sessionId)
               : null;
@@ -348,11 +364,7 @@ export class OrchestratorServer {
                 content = appendSynthesisContextToResponse(content, collocated.collatedText);
               }
 
-              if (
-                synthesisDue &&
-                result.ok &&
-                isAnalyzeComplexitySuccess(content)
-              ) {
+              if (synthesisDue && result.ok) {
                 content = content.map((block, index) =>
                   index === 0
                     ? {

@@ -811,6 +811,16 @@ const KNOWN_COMMANDS = new Set([
   "skill-install", "skill-registry", "delegation-gate",
 ]);
 
+async function recordHermesSynthesisTurn(projectRoot, sessionId) {
+  if (!sessionId) return;
+  try {
+    const { recordSynthesisTurnSlice } = await import("../hooks/synthesis-hook-runtime.mjs");
+    recordSynthesisTurnSlice(projectRoot, sessionId);
+  } catch {
+    /* optional */
+  }
+}
+
 async function handleDelegationGate(command, projectRoot, logDir) {
   try {
     const gate = await import("../hooks/delegation-gate-runtime.mjs");
@@ -832,6 +842,10 @@ async function handleDelegationGate(command, projectRoot, logDir) {
         );
       }
       return { allow: true, phase: "post", ...result };
+    }
+
+    if (command.recordTurn === true || command.event === 'user_prompt_submit') {
+      await recordHermesSynthesisTurn(projectRoot, sessionId);
     }
 
     const features = gate.loadDelegationGateFeatures(projectRoot);

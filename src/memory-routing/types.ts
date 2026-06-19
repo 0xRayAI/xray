@@ -112,6 +112,7 @@ export interface MemoryRoutingProvider {
     projectRoot: string;
     dueReason?: string | null;
   }): Record<string, unknown> | null;
+  refreshMetaInference?(): Promise<{ refreshed: boolean }>;
 }
 
 export interface MemoryRoutingConfig {

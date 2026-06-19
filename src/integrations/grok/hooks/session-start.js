@@ -14,6 +14,7 @@ import {
   writeSessionBoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 
 const HOOK_EVENT = process.env.GROK_HOOK_EVENT || 'session_start';
 
@@ -23,6 +24,9 @@ async function main() {
     const event = await readStdinJson();
     const eventRoot = event.workspaceRoot || event.cwd || root;
     const sessionId = resolveSessionId(event);
+    if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
+      recordSynthesisTurnSlice(eventRoot, sessionId);
+    }
     if (clearPendingDelegationsForSessionChange(sessionId, eventRoot)) {
       appendHookActivity(eventRoot, 'grok-session-start', 'stale-pending-cleared', 'info', {
         sessionId,

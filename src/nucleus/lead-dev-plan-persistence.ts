@@ -131,7 +131,12 @@ function tryCompleteSynthesisCheckpointAfterTodo(
   if (!areSynthesisConsultTodosComplete(plan)) return;
 
   recordExecutionSlice('todo_completed', { projectRoot, sessionId: sid });
-  completeSynthesisCheckpoint(projectRoot, sid);
+  const completed = completeSynthesisCheckpoint(projectRoot, sid);
+  if (completed) {
+    void import('./synthesis-completion.js').then(({ runSynthesisCheckpointSideEffects }) =>
+      runSynthesisCheckpointSideEffects(projectRoot, sid, plan, completed),
+    );
+  }
 }
 
 export function updatePlanTodoStatus(

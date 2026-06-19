@@ -95,6 +95,11 @@ describe('synthesis PR1', () => {
     expect(recordExecutionSlice('gate', { projectRoot: tmp, sessionId })).toBeNull();
   });
 
+  it('records turn slice when synthesis enabled', () => {
+    const turn = recordExecutionSlice('turn', { projectRoot: tmp, sessionId });
+    expect(turn?.state.slicesSinceLastSynthesis.turns).toBe(1);
+  });
+
   it('allows todo_completed slice while synthesisDue', () => {
     for (let i = 0; i < 3; i++) {
       recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
