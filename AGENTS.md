@@ -1,6 +1,6 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.4.10**).
+Quick reference for the xray AI orchestration framework (**v3.5.0**).
 
 **42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
 

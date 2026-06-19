@@ -4,17 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [Unreleased]
+## [3.5.0] - 2026-06-19
 
 ### ✨ Features
-- **3.5.0 auto-chain bridge (PR1)** — `pending-delegations.json` SSOT on `delegate-deferred`; PreToolUse surgical gate blocks writes while pending; PostToolUse logs + targeted clear on Task; session-bound TTL; `delegations[]` in orchestrate response
-- **3.5.0 spawn todo persistence (PR2)** — lead-dev plan stays enforced while outstanding todos remain (beyond 4h mtime); `checkSubagentGate` validates Task targets next plan todo; plan todo `in_progress` sync on matched spawn; new intake clears pending delegations + binds `sessionId`/`planGeneration`
+- **Auto-chain bridge (PR1)** — `pending-delegations.json` SSOT on `delegate-deferred`; PreToolUse surgical gate blocks writes while pending; PostToolUse logs + targeted clear on Task; session-bound TTL; `delegations[]` in orchestrate response
+- **Spawn todo persistence (PR2)** — lead-dev plan stays enforced while outstanding todos remain (beyond 4h mtime); `checkSubagentGate` validates Task targets next plan todo; plan todo `in_progress` sync on matched spawn; new intake clears pending delegations + binds `sessionId`/`planGeneration`
 - **`auto_chain_delegations: false`** — disables PR1 delegation gate and PR2 spawn-todo validation (opt-out of full auto-chain enforcement)
+
+### 🐛 Bug Fixes
+- **verify-orchestrator-behavior** — checks `pending-delegations.json` in consumer cwd (not package root)
 
 ### ✅ Tests
 - `pending-delegations`, `lead-dev-plan-persistence`, `grok-pending-delegation-gate` unit tests; `verify-grok-delegation-gate.mjs` hook fixture (4/4); orchestrator behavior verify 8/8
 
-### 📋 Deferred in 3.5.0 (post-PR1/PR2)
+### 📋 Deferred (3.5.1+)
 - **#3 Observability** — full session trail (`sessionId` / `taskId` / `planTodoId` / gate deny count correlation)
 - **#4 Rule 1 vs Rule 2** — lead-dev arbitration when read/triage conflicts with spawn-first gate
 - **#5 Codex hard-fail** — silent fallback removal (independent of auto-chain)

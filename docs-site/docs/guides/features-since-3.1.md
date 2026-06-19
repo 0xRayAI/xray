@@ -1,6 +1,15 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.4.10**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.0**.
+
+## 3.5.0 — Auto-chain loop closure
+
+| Feature | Description |
+|---------|-------------|
+| **Delegation bridge (PR1)** | `pending-delegations.json` on defer; PreToolUse surgical gate; PostToolUse observability; `delegations[]` in orchestrate response |
+| **Spawn todo persistence (PR2)** | Plan enforced while todos outstanding; `spawn-todo-persistence` gate; todo `in_progress` sync; analyze intake clears stale pending |
+| **`auto_chain_delegations`** | Feature flag (default on with `lead_dev_mode`); `false` disables PR1+PR2 enforcement |
+| **Verify** | `verify-grok-delegation-gate.mjs` hook fixture (4/4); orchestrator behavior 8/8 |
 
 ## 3.4.10 — Routing SSOT + complexity unification
 
