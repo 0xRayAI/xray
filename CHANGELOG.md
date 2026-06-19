@@ -9,7 +9,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### Planned (iterate before next release)
 - **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)
 - **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
-- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`
+- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (3/3)
+- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
 - **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced (`hooks/post-commit`, install template)
 - **Multi-repo boot** — `sibling_repos` in `session-boot.json` (discovery metadata for 0xray consumer workspaces)
 - **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`

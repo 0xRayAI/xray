@@ -34,6 +34,7 @@ export interface SpawnTodoValidation {
 }
 
 export const DEFAULT_PLAN_STALE_MS = 8 * 60 * 60 * 1000;
+export const DEFAULT_PLAN_ARCHIVE_MARKER_MS = 24 * 60 * 60 * 1000;
 
 export function leadDevPlanStatePath(projectRoot = process.cwd()): string {
   return path.join(projectRoot, '.xray', 'state', 'lead-dev-plan.json');
@@ -54,6 +55,23 @@ export function loadLeadDevPlanStaleMs(projectRoot = process.cwd()): number {
     /* keep default */
   }
   return DEFAULT_PLAN_STALE_MS;
+}
+
+export function loadLeadDevPlanArchiveMarkerMs(projectRoot = process.cwd()): number {
+  const featuresPath = path.join(projectRoot, '.xray', 'features.json');
+  if (!fs.existsSync(featuresPath)) return DEFAULT_PLAN_ARCHIVE_MARKER_MS;
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      multi_agent_orchestration?: { plan_archive_marker_hours?: number };
+    };
+    const hours = data.multi_agent_orchestration?.plan_archive_marker_hours;
+    if (typeof hours === 'number' && hours > 0) {
+      return hours * 60 * 60 * 1000;
+    }
+  } catch {
+    /* keep default */
+  }
+  return DEFAULT_PLAN_ARCHIVE_MARKER_MS;
 }
 
 function planAgeMs(plan: PersistedLeadDevPlan, projectRoot: string): number {
@@ -128,12 +146,10 @@ export function archiveStaleLeadDevPlan(
   return { archived: true, archivePath, reason: 'stale-unstarted-todos' };
 }
 
-const STALE_ARCHIVE_MARKER_MS = 24 * 60 * 60 * 1000;
-
 /** Recent stale archival — keeps spawn-plan-stale gate after session-start cleanup. */
 export function findRecentStalePlanArchive(
   projectRoot = process.cwd(),
-  maxAgeMs = STALE_ARCHIVE_MARKER_MS,
+  maxAgeMs = loadLeadDevPlanArchiveMarkerMs(projectRoot),
 ): { archivePath: string; archivedAt: string } | null {
   const stateDir = path.join(projectRoot, '.xray', 'state');
   if (!fs.existsSync(stateDir)) return null;

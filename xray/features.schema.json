@@ -38,6 +38,11 @@
           "minimum": 1,
           "description": "Archive lead-dev-plan when all todos still pending after N hours"
         },
+        "plan_archive_marker_hours": {
+          "type": "number",
+          "minimum": 1,
+          "description": "How long spawn-plan-stale persists after a stale plan was archived (hours)"
+        },
         "sibling_repos": {
           "type": "array",
           "items": {

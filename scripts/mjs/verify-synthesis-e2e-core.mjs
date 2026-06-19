@@ -19,7 +19,12 @@ const {
   savePersistedLeadDevPlan,
   updatePlanTodoStatus,
   getSynthesisConsultTodos,
+  archiveStaleLeadDevPlan,
+  loadPersistedLeadDevPlan,
 } = await import(join(packageRoot, 'dist/nucleus/lead-dev-plan-persistence.js'));
+const { evaluateSpawnPlanGate } = await import(
+  join(packageRoot, 'dist/nucleus/delegation-gate.js')
+);
 const { writeSynthesisConsultReceipt } = await import(
   join(packageRoot, 'dist/nucleus/synthesis-consult-receipt.js'),
 );
@@ -121,6 +126,47 @@ try {
   const state = loadSynthesisCheckpointState(tmp);
   if (state && state.synthesisCount === 1) pass('step 8: synthesisCount incremented');
   else fail('step 8: synthesisCount', JSON.stringify(state?.synthesisCount));
+
+  const staleTmp = mkdtempSync(join(tmpdir(), 'xray-synth-stale-'));
+  mkdirSync(join(staleTmp, '.xray', 'state'), { recursive: true });
+  writeFileSync(
+    join(staleTmp, '.xray', 'features.json'),
+    JSON.stringify({
+      multi_agent_orchestration: { lead_dev_mode: true, auto_consult_major_work: true },
+      synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+    }),
+  );
+  recordExecutionSlice('gate', { projectRoot: staleTmp, sessionId: 'stale-synth-session' });
+  const stalePlan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+  savePersistedLeadDevPlan(
+    { ...stalePlan, persistedAt: staleAt, sessionId: 'stale-synth-session' },
+    staleTmp,
+  );
+  const archive = archiveStaleLeadDevPlan(staleTmp);
+  if (!archive.archived && loadPersistedLeadDevPlan(staleTmp)) {
+    pass('step 9: aged synthesis plan not archived');
+  } else {
+    fail('step 9: synthesis stale exemption', JSON.stringify(archive));
+  }
+
+  const spawn = evaluateSpawnPlanGate(
+    'Task',
+    {
+      prompt: 'Synthesis consult researcher plan todo s.1 review checkpoint',
+      subagent_type: 'researcher',
+      planTodoId: 's.1',
+    },
+    {
+      projectRoot: staleTmp,
+      sessionId: 'stale-synth-session',
+      features,
+    },
+  );
+  if (spawn.allow) pass('step 10: consult spawn allowed on aged synthesis plan');
+  else fail('step 10: consult spawn on aged plan', JSON.stringify(spawn));
+
+  rmSync(staleTmp, { recursive: true, force: true });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -128,7 +174,7 @@ try {
 console.log(
   '\n' +
     (failed === 0
-      ? '🎉 Synthesis E2E verify passed (8/8).'
+      ? '🎉 Synthesis E2E verify passed (10/10).'
       : `⚠️  ${failed} E2E check(s) failed.`),
 );
 process.exit(failed === 0 ? 0 : 1);

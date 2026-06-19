@@ -6,6 +6,7 @@ import type { LeadDevPlan } from '../../nucleus/autonomy-kernel.js';
 import {
   archiveStaleLeadDevPlan,
   findRecentStalePlanArchive,
+  loadLeadDevPlanArchiveMarkerMs,
   bindPlanToSession,
   getNextRequiredTodo,
   getOutstandingTodos,
@@ -248,6 +249,16 @@ describe('lead-dev-plan-persistence', () => {
     const archive = archiveStaleLeadDevPlan(tmp);
     expect(archive.archived).toBe(false);
     expect(loadPersistedLeadDevPlan(tmp)).not.toBeNull();
+  });
+
+  it('loads plan_archive_marker_hours from features.json', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_archive_marker_hours: 6 },
+      }),
+    );
+    expect(loadLeadDevPlanArchiveMarkerMs(tmp)).toBe(6 * 60 * 60 * 1000);
   });
 
   it('archives stale plan on session boot path', () => {

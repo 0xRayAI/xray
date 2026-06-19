@@ -788,7 +788,7 @@ async function handleApply(input, projectRoot, logDir) {
 // ── Known commands for positional-arg mode ──────────────────
 const KNOWN_COMMANDS = new Set([
   "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks", "govern", "apply",
-  "skill-install", "skill-registry", "delegation-gate",
+  "skill-install", "skill-registry", "delegation-gate", "session-start",
 ]);
 
 async function recordHermesSynthesisTurn(projectRoot, sessionId) {
