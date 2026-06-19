@@ -84,6 +84,14 @@ export interface MultiAgentOrchestrationConfig {
   auto_chain_delegations?: boolean;
 }
 
+/** 3.6.0 — periodic reflect & realign checkpoint (Synthesis PR1) */
+export interface SynthesisConfig {
+  enabled: boolean;
+  every_n_gates: number;
+  every_n_turns: number;
+  every_n_todos_completed: number;
+}
+
 export interface AutonomousReportingConfig {
   enabled: boolean;
   interval_minutes: number;
@@ -376,6 +384,7 @@ export interface FeaturesConfig {
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
   memory_routing?: MemoryRoutingConfig;
+  synthesis: SynthesisConfig;
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;
   enforcement?: EnforcementConfig;
@@ -737,6 +746,10 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         ...defaults.caching,
         ...configData.caching,
       },
+      synthesis: {
+        ...defaults.synthesis,
+        ...configData.synthesis,
+      },
     };
   }
 
@@ -861,6 +874,13 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         search_result_cache: true,
         cache_ttl_seconds: 300,
         max_cache_size_mb: 50,
+      },
+
+      synthesis: {
+        enabled: false,
+        every_n_gates: 12,
+        every_n_turns: 0,
+        every_n_todos_completed: 0,
       },
     };
   }

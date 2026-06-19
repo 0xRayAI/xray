@@ -129,7 +129,8 @@
     "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs",
     "verify:grok-delegation-gate": "npm run build && node scripts/mjs/verify-grok-delegation-gate.mjs",
     "verify:hermes-delegation-gate": "npm run build && node scripts/mjs/verify-hermes-delegation-gate.mjs",
-    "verify:delegation-gate": "npm run build && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-grok-delegation-gate.mjs && node scripts/mjs/verify-hermes-delegation-gate.mjs"
+    "verify:delegation-gate": "npm run build && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-grok-delegation-gate.mjs && node scripts/mjs/verify-hermes-delegation-gate.mjs",
+    "verify:synthesis": "npm run build && node scripts/mjs/verify-synthesis-core.mjs && node scripts/mjs/verify-synthesis-gate-core.mjs"
   },
   "files": [
     "dist/",
