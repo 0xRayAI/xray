@@ -33,8 +33,81 @@ export interface SpawnTodoValidation {
   expectedTodoId?: string | null;
 }
 
+export const DEFAULT_PLAN_STALE_MS = 8 * 60 * 60 * 1000;
+
 export function leadDevPlanStatePath(projectRoot = process.cwd()): string {
   return path.join(projectRoot, '.xray', 'state', 'lead-dev-plan.json');
+}
+
+export function loadLeadDevPlanStaleMs(projectRoot = process.cwd()): number {
+  const featuresPath = path.join(projectRoot, '.xray', 'features.json');
+  if (!fs.existsSync(featuresPath)) return DEFAULT_PLAN_STALE_MS;
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      multi_agent_orchestration?: { plan_stale_hours?: number };
+    };
+    const hours = data.multi_agent_orchestration?.plan_stale_hours;
+    if (typeof hours === 'number' && hours > 0) {
+      return hours * 60 * 60 * 1000;
+    }
+  } catch {
+    /* keep default */
+  }
+  return DEFAULT_PLAN_STALE_MS;
+}
+
+function planAgeMs(plan: PersistedLeadDevPlan, projectRoot: string): number {
+  const persistedAt = plan.persistedAt;
+  if (persistedAt) {
+    return Date.now() - new Date(persistedAt).getTime();
+  }
+  try {
+    const stat = fs.statSync(leadDevPlanStatePath(projectRoot));
+    return Date.now() - stat.mtimeMs;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+/**
+ * Stale when every outstanding todo is still pending and plan age exceeds TTL.
+ * In-progress or completed todos imply active work — plan stays valid.
+ */
+export function isLeadDevPlanStale(
+  plan: PersistedLeadDevPlan,
+  projectRoot = process.cwd(),
+): boolean {
+  if (!plan.active) return false;
+  const outstanding = getOutstandingTodos(plan);
+  if (outstanding.length === 0) return false;
+  const allStillPending = outstanding.every((t) => t.status === 'pending');
+  if (!allStillPending) return false;
+  return planAgeMs(plan, projectRoot) > loadLeadDevPlanStaleMs(projectRoot);
+}
+
+export function archiveStaleLeadDevPlan(
+  projectRoot = process.cwd(),
+): { archived: boolean; archivePath?: string; reason?: string } {
+  const plan = loadPersistedLeadDevPlan(projectRoot);
+  if (!plan || !isLeadDevPlanStale(plan, projectRoot)) {
+    return { archived: false };
+  }
+
+  const stateDir = path.dirname(leadDevPlanStatePath(projectRoot));
+  fs.mkdirSync(stateDir, { recursive: true });
+  const archivePath = path.join(
+    stateDir,
+    `lead-dev-plan.archived-${Date.now()}.json`,
+  );
+  const payload = {
+    ...plan,
+    active: false,
+    archivedAt: new Date().toISOString(),
+    archiveReason: 'stale-unstarted-todos',
+  };
+  fs.writeFileSync(archivePath, JSON.stringify(payload, null, 2));
+  fs.unlinkSync(leadDevPlanStatePath(projectRoot));
+  return { archived: true, archivePath, reason: 'stale-unstarted-todos' };
 }
 
 export function loadPersistedLeadDevPlan(
@@ -93,6 +166,7 @@ export function hasValidLeadDevPlanForSpawn(
 ): boolean {
   const plan = loadPersistedLeadDevPlan(projectRoot);
   if (!plan?.active) return false;
+  if (isLeadDevPlanStale(plan, projectRoot)) return false;
 
   const outstanding = getOutstandingTodos(plan);
   if (outstanding.length > 0) return true;

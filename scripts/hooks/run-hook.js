@@ -20,8 +20,9 @@
  */
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { execSync, exec, execFileSync } from "child_process";
+import { fileURLToPath } from "url";
 
 // ── Parse arguments ──────────────────────────────────────────
 
@@ -203,82 +204,123 @@ function runTypeScriptCheck(files) {
   }
 }
 
-// ── Codex validation ─────────────────────────────────────────
+// ── Codex validation (diff-hunk scoped) ──────────────────────
+
+/**
+ * Collect added lines per staged file from `git diff --cached`.
+ * Only + lines are validated — pre-existing violations in untouched hunks are ignored.
+ */
+export function getStagedAddedLinesByFile(files, root = projectRoot) {
+  const addedByFile = new Map();
+
+  for (const file of files) {
+    if (!/\.(ts|tsx|js|jsx|mjs)$/.test(file)) continue;
+    try {
+      const diff = execSync(`git diff --cached -U0 -- ${JSON.stringify(file).slice(1, -1)}`, {
+        cwd: root,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      const addedLines = [];
+      for (const line of diff.split("\n")) {
+        if (
+          line.startsWith("+++") ||
+          line.startsWith("---") ||
+          line.startsWith("@@") ||
+          line.startsWith("diff ") ||
+          line.startsWith("index ")
+        ) {
+          continue;
+        }
+        if (line.startsWith("+")) {
+          addedLines.push(line.slice(1));
+        }
+      }
+      if (addedLines.length > 0) {
+        addedByFile.set(file, addedLines);
+      }
+    } catch {
+      // Deletions-only or unreadable diff — skip codex for this file
+    }
+  }
+
+  return addedByFile;
+}
+
+export function scanAddedLinesForCodex(file, addedLines) {
+  const errors = [];
+  const warnings = [];
+  const content = addedLines.join("\n");
+  const lines = addedLines;
+
+  const consoleLogLines = lines.reduce((acc, line, i) => {
+    if (/\bconsole\.(log|warn|error)\b/.test(line) && !line.includes("NOSONAR")) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (consoleLogLines.length > 0) {
+    errors.push(
+      `${file}: console.log/warn/error in staged diff at hunk line(s) ${consoleLogLines.slice(0, 3).join(", ")}`,
+    );
+  }
+
+  const todoLines = lines.reduce((acc, line, i) => {
+    if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(line)) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (todoLines.length > 0) {
+    warnings.push(`${file}: ${todoLines.length} TODO/FIXME in staged diff`);
+  }
+
+  const tsIgnoreLines = lines.reduce((acc, line, i) => {
+    if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(line)) {
+      acc.push(i + 1);
+    }
+    return acc;
+  }, []);
+  if (tsIgnoreLines.length > 0) {
+    warnings.push(`${file}: ${tsIgnoreLines.length} @ts-ignore/@ts-nocheck in staged diff`);
+  }
+
+  if (/\bany\b/.test(content)) {
+    const anyLines = lines.reduce((acc, line, i) => {
+      if (/\bany\b/.test(line) && !line.includes("//") && !line.includes("*")) {
+        acc.push(i + 1);
+      }
+      return acc;
+    }, []);
+    if (anyLines.length > 0) {
+      warnings.push(`${file}: ${anyLines.length} use(s) of 'any' in staged diff`);
+    }
+  }
+
+  return { errors, warnings };
+}
 
 async function runCodexValidation(files) {
   /**
-   * Run lightweight codex validation on files.
-   * Uses dynamic import of framework modules when available.
+   * Run lightweight codex validation on staged diff hunks only.
    */
-  log("Running Codex validation...");
+  log("Running Codex validation (diff-hunk scope)...");
 
-  const tsFiles = files.filter((f) => /\.(ts|tsx)$/.test(f));
-  const jsFiles = files.filter((f) => /\.(js|jsx|mjs)$/.test(f));
-
-  if (tsFiles.length === 0 && jsFiles.length === 0) {
+  const codexFiles = files.filter((f) => /\.(ts|tsx|js|jsx|mjs)$/.test(f));
+  if (codexFiles.length === 0) {
     return { passed: true, warnings: [], errors: [] };
   }
 
-  // Quick static checks without framework dependency
+  const addedByFile = getStagedAddedLinesByFile(codexFiles);
   const errors = [];
   const warnings = [];
 
-  for (const file of [...tsFiles, ...jsFiles]) {
-    const filePath = join(projectRoot, file);
-    if (!existsSync(filePath)) continue;
-
-    try {
-      const content = readFileSync(filePath, "utf-8");
-      const lines = content.split("\n");
-
-      // Check for console.log (codex violation)
-      const consoleLogLines = lines.reduce((acc, line, i) => {
-        if (/\bconsole\.(log|warn|error)\b/.test(line) && !line.includes("NOSONAR")) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (consoleLogLines.length > 0) {
-        errors.push(`${file}: console.log/warn/error found at lines ${consoleLogLines.slice(0, 3).join(", ")}`);
-      }
-
-      // Check for TODO/FIXME
-      const todoLines = lines.reduce((acc, line, i) => {
-        if (/\/\/\s*(TODO|FIXME|HACK|XXX)\b/i.test(line)) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (todoLines.length > 0) {
-        warnings.push(`${file}: ${todoLines.length} TODO/FIXME comment(s) found`);
-      }
-
-      // Check for @ts-ignore
-      const tsIgnoreLines = lines.reduce((acc, line, i) => {
-        if (/@ts-ignore|@ts-nocheck|@ts-expect-error/.test(line)) {
-          acc.push(i + 1);
-        }
-        return acc;
-      }, []);
-      if (tsIgnoreLines.length > 0) {
-        warnings.push(`${file}: ${tsIgnoreLines.length} @ts-ignore/@ts-nocheck found`);
-      }
-
-      // Check for any type
-      if (/\bany\b/.test(content)) {
-        const anyLines = lines.reduce((acc, line, i) => {
-          if (/\bany\b/.test(line) && !line.includes("//") && !line.includes("*")) {
-            acc.push(i + 1);
-          }
-          return acc;
-        }, []);
-        if (anyLines.length > 3) {
-          warnings.push(`${file}: ${anyLines.length} uses of 'any' type`);
-        }
-      }
-    } catch {
-      // Skip unreadable files
-    }
+  for (const file of codexFiles) {
+    const addedLines = addedByFile.get(file);
+    if (!addedLines || addedLines.length === 0) continue;
+    const scan = scanAddedLinesForCodex(file, addedLines);
+    errors.push(...scan.errors);
+    warnings.push(...scan.warnings);
   }
 
   const passed = errors.length === 0;
@@ -302,6 +344,7 @@ async function runLogMaintenance() {
   try {
     const distDirs = [
       join(projectRoot, "dist"),
+      join(projectRoot, "node_modules", "0xray", "dist"),
       join(projectRoot, "node_modules", "xray", "dist"),
     ];
 
@@ -586,22 +629,27 @@ const handlers = {
   "pre-command": handlePreCommand,
 };
 
-const handler = handlers[hookType];
-if (!handler) {
-  console.error(`Unknown hook type: ${hookType}`);
-  console.error(`Valid types: ${Object.keys(handlers).join(", ")}`);
-  process.exit(1);
-}
+const isDirectRun =
+  process.argv[1] &&
+  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 
-// Run with timing
-const startTime = Date.now();
-handler()
-  .then(() => {
-    const duration = Date.now() - startTime;
-    log(`Hook completed in ${duration}ms`);
-  })
-  .catch((err) => {
-    logError(`Hook crashed: ${err.message}`);
-    console.error(`0xRay hook error: ${err.message}`);
+if (isDirectRun) {
+  const handler = handlers[hookType];
+  if (!handler) {
+    console.error(`Unknown hook type: ${hookType}`);
+    console.error(`Valid types: ${Object.keys(handlers).join(", ")}`);
     process.exit(1);
-  });
+  }
+
+  const startTime = Date.now();
+  handler()
+    .then(() => {
+      const duration = Date.now() - startTime;
+      log(`Hook completed in ${duration}ms`);
+    })
+    .catch((err) => {
+      logError(`Hook crashed: ${err.message}`);
+      console.error(`0xRay hook error: ${err.message}`);
+      process.exit(1);
+    });
+}

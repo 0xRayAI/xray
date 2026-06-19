@@ -28,6 +28,35 @@
         "required": ["module_path"]
       }
     },
+    "multi_agent_orchestration": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "lead_dev_mode": { "type": "boolean" },
+        "plan_stale_hours": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Archive lead-dev-plan when all todos still pending after N hours"
+        },
+        "sibling_repos": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "label": { "type": "string" }
+                },
+                "required": ["path"]
+              }
+            ]
+          },
+          "description": "Sibling workspace roots (e.g. UI repo when MCP host is cwd)"
+        }
+      }
+    },
     "synthesis": {
       "type": "object",
       "properties": {

@@ -89,6 +89,48 @@ describe('delegation-gate SSOT', () => {
     if (!result.allow) expect(result.gate).toBe('auto-chain-pending');
   });
 
+  it('checkSubagentGate denies spawn when lead-dev plan is stale', () => {
+    const staleAt = new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({
+        sessionId,
+        createdAt: new Date().toISOString(),
+        ttlMs: 4 * 60 * 60 * 1000,
+        delegations: [],
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+      JSON.stringify({
+        active: true,
+        persistedAt: staleAt,
+        phases: [
+          {
+            id: 'phase-1',
+            todos: [
+              {
+                id: '1.1',
+                task: 'old hygiene task',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'plan todo 1.1 refresh', subagent_type: 'researcher' },
+    );
+    expect(block?.gate).toBe('spawn-plan-stale');
+  });
+
   it('checkSubagentGate denies spawn that skips required plan todo', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),

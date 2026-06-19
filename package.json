@@ -133,7 +133,8 @@
     "verify:delegation-gate": "npm run build && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-grok-delegation-gate.mjs && node scripts/mjs/verify-grok-synthesis-gate.mjs && node scripts/mjs/verify-hermes-delegation-gate.mjs",
     "verify:synthesis": "npm run build && node scripts/mjs/verify-synthesis-core.mjs && node scripts/mjs/verify-synthesis-gate-core.mjs && node scripts/mjs/verify-synthesis-outcome-core.mjs && node scripts/mjs/verify-synthesis-p2-core.mjs && node scripts/mjs/verify-synthesis-e2e-core.mjs",
     "verify:find-project-root": "node scripts/mjs/verify-find-project-root-core.mjs",
-    "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs"
+    "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs",
+    "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs"
   },
   "files": [
     "dist/",

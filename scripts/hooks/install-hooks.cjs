@@ -108,9 +108,9 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ) &
 
 MODE="minimal"
-COMMIT_THRESHOLD=25
+COMMIT_THRESHOLD=50
 DAYS_THRESHOLD=14
-AUTO_GENERATE=true
+AUTO_GENERATE=false
 PROMPT_USER=true
 
 if command -v node >/dev/null 2>&1; then

@@ -4,10 +4,13 @@ import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LeadDevPlan } from '../../nucleus/autonomy-kernel.js';
 import {
+  archiveStaleLeadDevPlan,
   bindPlanToSession,
   getNextRequiredTodo,
   getOutstandingTodos,
   hasValidLeadDevPlanForSpawn,
+  isLeadDevPlanStale,
+  loadPersistedLeadDevPlan,
   savePersistedLeadDevPlan,
   updatePlanTodoStatus,
   validateSpawnMatchesTodo,
@@ -207,5 +210,36 @@ describe('lead-dev-plan-persistence', () => {
     }
 
     expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(false);
+  });
+
+  it('treats unstarted plan as stale after TTL', () => {
+    const staleAt = new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...basePlan,
+        persistedAt: staleAt,
+        sessionId: 'stale-session',
+      },
+      tmp,
+    );
+    const plan = loadPersistedLeadDevPlan(tmp);
+    expect(plan).not.toBeNull();
+    expect(isLeadDevPlanStale(plan!, tmp)).toBe(true);
+    expect(hasValidLeadDevPlanForSpawn(tmp)).toBe(false);
+  });
+
+  it('archives stale plan on session boot path', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...basePlan,
+        persistedAt: staleAt,
+        sessionId: 'archive-session',
+      },
+      tmp,
+    );
+    const result = archiveStaleLeadDevPlan(tmp);
+    expect(result.archived).toBe(true);
+    expect(loadPersistedLeadDevPlan(tmp)).toBeNull();
   });
 });

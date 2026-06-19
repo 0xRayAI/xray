@@ -18,6 +18,7 @@ import {
   areSynthesisConsultTodosComplete,
   getSynthesisConsultTodos,
   hasValidLeadDevPlanForSpawn,
+  isLeadDevPlanStale,
   isSynthesisRealignmentPlan,
   loadPersistedLeadDevPlan,
   getNextRequiredTodo,
@@ -310,6 +311,18 @@ export function evaluateSpawnPlanGate(
     return { allow: true };
   }
 
+  const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
+  if (plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
+    return {
+      allow: false,
+      reason:
+        'Lead-dev plan is stale (unstarted todos exceeded TTL) — ' +
+        're-run xray-orchestrator analyze-complexity to refresh the plan',
+      gate: 'spawn-plan-stale',
+      hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
+    };
+  }
+
   if (!hasValidLeadDevPlanForSpawn(ctx.projectRoot, ctx.sessionId)) {
     return {
       allow: false,
@@ -325,10 +338,10 @@ export function evaluateSpawnPlanGate(
   }
 
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
-  const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
+  const activePlan = loadPersistedLeadDevPlan(ctx.projectRoot);
   const expectedTodo =
-    pending[0]?.planTodoId && plan
-      ? allPlanTodos(plan).find((t) => t.id === pending[0]!.planTodoId) ?? null
+    pending[0]?.planTodoId && activePlan
+      ? allPlanTodos(activePlan).find((t) => t.id === pending[0]!.planTodoId) ?? null
       : null;
 
   const validation = validateSpawnMatchesTodo(

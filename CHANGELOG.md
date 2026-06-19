@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased] — suit tuning PR (not published)
+
+### Planned (iterate before next release)
+- **Pre-commit codex** — diff-hunk scope only; pre-existing `console.log` in staged files no longer blocks unrelated fixes
+- **Stale lead-dev plan** — archive when all todos still `pending` after `plan_stale_hours` (default 8h); spawn gate `spawn-plan-stale`
+- **Reflection noise** — minimal mode defaults: 50-commit threshold, `autoGenerate: false`
+- **Multi-repo boot** — `multi_agent_orchestration.sibling_repos` surfaced in `session-boot.json`
+- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
+
+---
+
 ## [3.5.4] - 2026-06-19
 
 ### ✨ Features

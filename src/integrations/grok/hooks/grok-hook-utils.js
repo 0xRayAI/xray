@@ -105,6 +105,30 @@ export function resolveCodexPath(root = workspaceRoot()) {
   return null;
 }
 
+export function resolveSiblingWorkspaceRoots(root = workspaceRoot()) {
+  const featuresPath = resolveFeaturesPath(root);
+  if (!featuresPath) return [];
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));
+    const siblings = data.multi_agent_orchestration?.sibling_repos ?? [];
+    if (!Array.isArray(siblings)) return [];
+    const resolved = [];
+    for (const entry of siblings) {
+      const rel = typeof entry === 'string' ? entry : entry?.path;
+      if (!rel || typeof rel !== 'string') continue;
+      const abs = path.isAbsolute(rel) ? rel : path.resolve(root, rel);
+      if (!fs.existsSync(abs)) continue;
+      resolved.push({
+        path: abs,
+        label: typeof entry === 'object' && entry.label ? entry.label : path.basename(abs),
+      });
+    }
+    return resolved;
+  } catch {
+    return [];
+  }
+}
+
 export function loadFeatures(root = workspaceRoot()) {
   const featuresPath = resolveFeaturesPath(root);
   if (!featuresPath) return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
@@ -116,6 +140,7 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: orch.no_new_surface !== false,
       per_suite_test_triage: orch.per_suite_test_triage !== false,
       auto_chain_delegations: orch.auto_chain_delegations !== false,
+      sibling_repos: resolveSiblingWorkspaceRoots(root),
     };
   } catch {
     return {
@@ -123,6 +148,7 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: true,
       per_suite_triage: true,
       auto_chain_delegations: true,
+      sibling_repos: [],
     };
   }
 }
@@ -216,8 +242,9 @@ export function sessionBootPath(root = workspaceRoot()) {
 }
 
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
-  const features = loadFeatures();
+  const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
+  const siblingRoots = features.sibling_repos ?? resolveSiblingWorkspaceRoots(root);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
@@ -228,6 +255,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     mcpIntake: 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — codex patterns + surface area + spawn gate',
     workspaceRoot: root,
+    ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     sessionId: process.env.GROK_SESSION_ID || null,
     timestamp: new Date().toISOString(),
     source,

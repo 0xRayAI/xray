@@ -15,6 +15,7 @@ import {
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
+import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -46,6 +47,18 @@ async function main() {
       appendHookActivity(eventRoot, 'grok-session-start', 'stale-pending-cleared', 'info', {
         sessionId,
       });
+    }
+
+    try {
+      const archived = archiveStaleLeadDevPlan(eventRoot);
+      if (archived.archived) {
+        appendHookActivity(eventRoot, 'grok-session-start', 'stale-plan-archived', 'info', {
+          archivePath: archived.archivePath,
+          reason: archived.reason,
+        });
+      }
+    } catch {
+      /* non-blocking */
     }
     const source =
       HOOK_EVENT === 'user_prompt_submit'
