@@ -19,6 +19,8 @@ export const LEAD_DEV_RULES = [
   'Resolve all errors before phase completion',
 ] as const;
 
+export const SYNTHESIS_REALIGNMENT_PHASE_ID = 'phase-synthesis';
+
 export const MANDATORY_MAJOR_CONSULTS = [
   'researcher',
   'architect-tools',
@@ -156,7 +158,7 @@ export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevP
     mandatoryConsults,
     phases: [
       {
-        id: 'phase-synthesis',
+        id: SYNTHESIS_REALIGNMENT_PHASE_ID,
         name: 'Reflect & realign',
         goal: 'Review collocated context and mandatory consults before resuming execution',
         definitionOfDone:

@@ -12,6 +12,14 @@ import {
   updatePlanTodoStatus,
   validateSpawnMatchesTodo,
 } from '../../nucleus/lead-dev-plan-persistence.js';
+import {
+  buildSynthesisCheckpointPlan,
+  SYNTHESIS_REALIGNMENT_PHASE_ID,
+} from '../../nucleus/autonomy-kernel.js';
+import {
+  isSynthesisCheckpointDue,
+  recordExecutionSlice,
+} from '../../nucleus/synthesis.js';
 
 const basePlan: LeadDevPlan = {
   active: true,
@@ -135,5 +143,33 @@ describe('lead-dev-plan-persistence', () => {
     const bound = bindPlanToSession('sess-abc');
     expect(bound?.sessionId).toBe('sess-abc');
     expect(bound?.planGeneration).toBe(1);
+  });
+
+  it('completes synthesis checkpoint when all consult todos finish', () => {
+    const sessionId = 'synth-complete-session';
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+
+    const synthesisPlan = buildSynthesisCheckpointPlan('gate threshold');
+    expect(synthesisPlan).not.toBeNull();
+    savePersistedLeadDevPlan({
+      ...synthesisPlan!,
+      persistedAt: new Date().toISOString(),
+      sessionId,
+    });
+
+    const consultTodos =
+      synthesisPlan!.phases.find((p) => p.id === SYNTHESIS_REALIGNMENT_PHASE_ID)?.todos ?? [];
+    for (const todo of consultTodos) {
+      expect(updatePlanTodoStatus(todo.id, 'completed', tmp)).toBe(true);
+    }
+
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(false);
   });
 });

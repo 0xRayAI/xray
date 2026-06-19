@@ -36,7 +36,7 @@ async function main() {
     if (isSubagentTool(toolName)) {
       const spawnCheck = validateSpawnMatchesTodo(toolInput, eventRoot);
       if (spawnCheck.valid && spawnCheck.expectedTodoId) {
-        updatePlanTodoStatusInPlace(spawnCheck.expectedTodoId, 'in_progress', eventRoot);
+        updatePlanTodoStatusInPlace(spawnCheck.expectedTodoId, 'completed', eventRoot);
       }
 
       const result = satisfyDelegationsFromToolInput(toolInput, eventRoot);

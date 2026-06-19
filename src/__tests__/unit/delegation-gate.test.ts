@@ -10,7 +10,9 @@ import {
   getActivePendingDelegations,
   satisfyDelegationsFromToolInput,
 } from '../../nucleus/delegation-gate.js';
+import { buildSynthesisCheckpointPlan } from '../../nucleus/autonomy-kernel.js';
 import { recordExecutionSlice } from '../../nucleus/synthesis.js';
+import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
 
 describe('delegation-gate SSOT', () => {
   let tmp: string;
@@ -149,6 +151,34 @@ describe('delegation-gate SSOT', () => {
       { projectRoot: tmp, sessionId, features },
     );
     expect(read.allow).toBe(true);
+  });
+
+  it('evaluateSynthesisGate allows next consult spawn during realignment', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      {
+        ...plan!,
+        persistedAt: new Date().toISOString(),
+        sessionId,
+      },
+      tmp,
+    );
+
+    const spawn = evaluateSynthesisGate(
+      'Task',
+      {
+        prompt: 'Synthesis consult researcher plan todo s.1 review checkpoint',
+        subagent_type: 'researcher',
+        planTodoId: 's.1',
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
   });
 
   it('evaluatePreToolGate allows orchestrator consult during synthesis due', () => {

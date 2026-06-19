@@ -288,7 +288,6 @@ export class OrchestratorServer {
             const projectRoot = process.cwd();
             const {
               isSynthesisCheckpointDue,
-              completeSynthesisCheckpoint,
               getSynthesisDueReason,
               getSynthesisCheckpointSessionId,
             } = await import('../../nucleus/synthesis.js');
@@ -349,9 +348,20 @@ export class OrchestratorServer {
                 content = appendSynthesisContextToResponse(content, collocated.collatedText);
               }
 
-              const success = result.ok && isAnalyzeComplexitySuccess(content);
-              if (synthesisDue && sessionId && success) {
-                completeSynthesisCheckpoint(projectRoot, sessionId);
+              if (
+                synthesisDue &&
+                result.ok &&
+                isAnalyzeComplexitySuccess(content)
+              ) {
+                content = content.map((block, index) =>
+                  index === 0
+                    ? {
+                        ...block,
+                        text:
+                          `${block.text}\n\n**Synthesis checkpoint remains active** until mandatory consult todos (s.1–s.3) are completed via Task spawns.`,
+                      }
+                    : block,
+                );
               }
 
               return { content };

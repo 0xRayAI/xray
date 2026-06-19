@@ -93,7 +93,7 @@ export function appendSynthesisContextToResponse(
 
 ${collatedText}
 
-**Next:** Consult researcher, architect-tools, and code-review per the realignment plan before resuming execution.`;
+**Next:** Spawn Task for each mandatory consult todo (s.1 researcher, s.2 architect-tools, s.3 code-review). Checkpoint clears only when all consult todos complete.`;
   if (content.length === 0) {
     return [{ type: 'text', text: synthesisSection.trim() }];
   }

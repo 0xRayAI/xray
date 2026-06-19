@@ -95,7 +95,16 @@ describe('synthesis PR1', () => {
     expect(recordExecutionSlice('gate', { projectRoot: tmp, sessionId })).toBeNull();
   });
 
-  it('skips slice increment while synthesisDue', () => {
+  it('allows todo_completed slice while synthesisDue', () => {
+    for (let i = 0; i < 3; i++) {
+      recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    }
+    const todoSlice = recordExecutionSlice('todo_completed', { projectRoot: tmp, sessionId });
+    expect(todoSlice?.state.slicesSinceLastSynthesis.todosCompleted).toBe(1);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  });
+
+  it('skips gate slice increment while synthesisDue', () => {
     for (let i = 0; i < 3; i++) {
       recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
     }

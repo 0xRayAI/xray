@@ -15,8 +15,11 @@ import {
 export { getActivePendingDelegations } from './pending-delegations.js';
 import {
   allPlanTodos,
+  areSynthesisConsultTodosComplete,
   hasValidLeadDevPlanForSpawn,
+  isSynthesisRealignmentPlan,
   loadPersistedLeadDevPlan,
+  getNextRequiredTodo,
   validateSpawnMatchesTodo,
   updatePlanTodoStatus,
   type SpawnToolInput,
@@ -307,16 +310,40 @@ export function evaluateSynthesisGate(
   if (isReadOnlyTool(toolName)) return { allow: true };
   if (isOrchestratorConsultMcp(toolName, toolInput)) return { allow: true };
 
+  const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
+  if (
+    plan &&
+    isSynthesisRealignmentPlan(plan) &&
+    !areSynthesisConsultTodosComplete(plan) &&
+    isSubagentTool(toolName)
+  ) {
+    const nextTodo = getNextRequiredTodo(plan);
+    const validation = validateSpawnMatchesTodo(
+      normalizeHostToolInput(toolInput),
+      ctx.projectRoot,
+      nextTodo,
+    );
+    if (validation.valid) return { allow: true };
+  }
+
   const dueReason = getSynthesisDueReason(ctx.projectRoot, ctx.sessionId);
+  const realignmentPending =
+    plan && isSynthesisRealignmentPlan(plan) && !areSynthesisConsultTodosComplete(plan);
+
   return {
     allow: false,
-    reason:
-      'Synthesis checkpoint due — call xray-orchestrator analyze-complexity to reflect and realign before continuing',
+    reason: realignmentPending
+      ? 'Synthesis realignment in progress — complete mandatory consult todos (s.1–s.3) before other work'
+      : 'Synthesis checkpoint due — call xray-orchestrator analyze-complexity to reflect and realign before continuing',
     gate: 'synthesis-checkpoint',
     hint: {
-      tool: 'analyze-complexity',
+      tool: realignmentPending ? 'Task' : 'analyze-complexity',
       dueReason,
       primitive: 'synthesis',
+      sessionId: ctx.sessionId,
+      ...(realignmentPending && plan
+        ? { nextTodoId: getNextRequiredTodo(plan)?.id }
+        : {}),
     },
   };
 }
@@ -359,10 +386,12 @@ export function evaluatePreToolGate(
   const synthesisBlock = evaluateSynthesisGate(toolName, toolInput, ctx);
   if (!synthesisBlock.allow) return synthesisBlock;
 
-  recordExecutionSlice('gate', {
-    projectRoot: ctx.projectRoot,
-    sessionId: ctx.sessionId,
-  });
+  if (!isSynthesisCheckpointDue(ctx.projectRoot, ctx.sessionId)) {
+    recordExecutionSlice('gate', {
+      projectRoot: ctx.projectRoot,
+      sessionId: ctx.sessionId,
+    });
+  }
 
   const pendingBlock = evaluatePendingDelegationGate(toolName, toolInput, ctx);
   if (!pendingBlock.allow) return pendingBlock;
@@ -388,6 +417,9 @@ export function evaluatePostToolSpawn(
   if (agent) satisfyInput.agent = agent;
   if (normalized.planTodoId) satisfyInput.planTodoId = normalized.planTodoId;
   const result = satisfyDelegation(satisfyInput, projectRoot);
+  if (spawnCheck.valid && spawnCheck.expectedTodoId) {
+    updatePlanTodoStatus(spawnCheck.expectedTodoId, 'completed', projectRoot);
+  }
   return {
     ...result,
     expectedTodoId: spawnCheck.expectedTodoId ?? null,

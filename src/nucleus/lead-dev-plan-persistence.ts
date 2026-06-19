@@ -6,7 +6,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LeadDevPlan, LeadDevTodo } from './autonomy-kernel.js';
+import { SYNTHESIS_REALIGNMENT_PHASE_ID } from './autonomy-kernel.js';
 import { DEFAULT_PENDING_TTL_MS } from './pending-delegations.js';
+import {
+  completeSynthesisCheckpoint,
+  getSynthesisCheckpointSessionId,
+  isSynthesisCheckpointDue,
+  recordExecutionSlice,
+} from './synthesis.js';
 
 export interface PersistedLeadDevPlan extends LeadDevPlan {
   persistedAt?: string;
@@ -98,6 +105,35 @@ export function hasValidLeadDevPlanForSpawn(
   return Date.now() - new Date(persistedAt).getTime() <= DEFAULT_PENDING_TTL_MS;
 }
 
+export function isSynthesisRealignmentPlan(plan: PersistedLeadDevPlan): boolean {
+  return (plan.phases ?? []).some((p) => p.id === SYNTHESIS_REALIGNMENT_PHASE_ID);
+}
+
+export function getSynthesisConsultTodos(plan: PersistedLeadDevPlan): LeadDevTodo[] {
+  const phase = (plan.phases ?? []).find((p) => p.id === SYNTHESIS_REALIGNMENT_PHASE_ID);
+  return phase?.todos ?? [];
+}
+
+export function areSynthesisConsultTodosComplete(plan: PersistedLeadDevPlan): boolean {
+  const todos = getSynthesisConsultTodos(plan);
+  return todos.length > 0 && todos.every((t) => t.status === 'completed');
+}
+
+function tryCompleteSynthesisCheckpointAfterTodo(
+  projectRoot: string,
+  sessionId?: string | null,
+): void {
+  const sid = sessionId ?? getSynthesisCheckpointSessionId(projectRoot);
+  if (!sid || !isSynthesisCheckpointDue(projectRoot, sid)) return;
+
+  const plan = loadPersistedLeadDevPlan(projectRoot);
+  if (!plan || !isSynthesisRealignmentPlan(plan)) return;
+  if (!areSynthesisConsultTodosComplete(plan)) return;
+
+  recordExecutionSlice('todo_completed', { projectRoot, sessionId: sid });
+  completeSynthesisCheckpoint(projectRoot, sid);
+}
+
 export function updatePlanTodoStatus(
   todoId: string,
   status: LeadDevTodo['status'],
@@ -115,7 +151,12 @@ export function updatePlanTodoStatus(
       }
     }
   }
-  if (updated) savePersistedLeadDevPlan(plan, projectRoot);
+  if (updated) {
+    savePersistedLeadDevPlan(plan, projectRoot);
+    if (status === 'completed') {
+      tryCompleteSynthesisCheckpointAfterTodo(projectRoot, plan.sessionId);
+    }
+  }
   return updated;
 }
 

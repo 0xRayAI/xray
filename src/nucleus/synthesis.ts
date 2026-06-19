@@ -196,7 +196,7 @@ export function recordExecutionSlice(
       ? existing
       : createInitialSynthesisState(ctx.sessionId);
 
-  if (base.synthesisDue) return null;
+  if (base.synthesisDue && kind !== 'todo_completed') return null;
 
   const now = new Date().toISOString();
   const slicesSinceLastSynthesis = incrementCounter(base.slicesSinceLastSynthesis, kind);

@@ -110,7 +110,7 @@ export class ComplexityHandler {
             )
           : null;
 
-      let planPersisted = !leadDevPlan;
+      let planPersisted = synthesisCheckpoint ? leadDevPlan !== null : !leadDevPlan;
 
       if (leadDevPlan) {
         try {
