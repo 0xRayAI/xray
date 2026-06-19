@@ -9,7 +9,7 @@ import {
   isOrchestrateToolEvent,
   savePersistedLeadDevPlan,
   satisfyDelegationsFromToolInput,
-} from '../../integrations/grok/hooks/grok-hook-utils.js';
+} from '../../nucleus/delegation-gate.js';
 
 describe('grok pending delegation gate', () => {
   let tmp: string;
@@ -104,7 +104,7 @@ describe('grok pending delegation gate', () => {
   it('ignores pending from different session', () => {
     const block = checkPendingDelegationGate('search_replace', {}, features, tmp, 'other-session');
     expect(block).toBeNull();
-    expect(getActivePendingDelegations(tmp, 'other-session')).toHaveLength(0);
+    expect(getActivePendingDelegations('other-session', tmp)).toHaveLength(0);
   });
 
   it('clears delegation on matched Task spawn', () => {
@@ -114,7 +114,7 @@ describe('grok pending delegation gate', () => {
     );
     expect(result.satisfied).toHaveLength(1);
     expect(result.clearedAll).toBe(true);
-    expect(getActivePendingDelegations(tmp, sessionId)).toHaveLength(0);
+    expect(getActivePendingDelegations(sessionId, tmp)).toHaveLength(0);
   });
 
   it('detects orchestrate MCP tool events', () => {

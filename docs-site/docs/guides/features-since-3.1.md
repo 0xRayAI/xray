@@ -1,6 +1,15 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.0**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.1**.
+
+## 3.5.1 — Multi-host delegation gate parity
+
+| Feature | Description |
+|---------|-------------|
+| **Delegation gate SSOT** | `src/nucleus/delegation-gate.ts` — `evaluatePreToolGate` / `evaluatePostToolSpawn` shared across Grok, Hermes, OpenCode |
+| **Hermes** | `pre_tool_call` returns `{"action":"block"}` via bridge `delegation-gate`; `post_tool_call` clears pending on `delegate_task` |
+| **OpenCode** | `tool.execute.before` / `after` enforce delegation gate + post-spawn clear |
+| **Verify** | `verify-delegation-gate-core.mjs` (grok/hermes/opencode); `verify-hermes-delegation-gate.mjs` bridge 4/4 |
 
 ## 3.5.0 — Auto-chain loop closure
 

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.5.1] - 2026-06-19
+
+### ✨ Features
+- **Multi-host delegation gates** — `src/nucleus/delegation-gate.ts` SSOT; `evaluatePreToolGate` / `evaluatePostToolSpawn` shared across Grok, Hermes, OpenCode
+- **Hermes** — `pre_tool_call` returns `{"action":"block"}` via bridge `delegation-gate`; `post_tool_call` clears pending on `delegate_task`
+- **OpenCode** — `tool.execute.before` / `after` enforce delegation gate + post-spawn clear
+
+### ✅ Tests
+- `delegation-gate.test.ts`; `verify-delegation-gate-core.mjs`; `verify-hermes-delegation-gate.mjs`; shared `delegation-gate-fixture.mjs`
+- Grok hook-utils deduped — re-exports nucleus SSOT via `delegation-gate-runtime.mjs`
+
+### 📋 Deferred
+- **OpenClaw host veto** — no consumer tool-block API; observability-only until platform supports pre-tool deny
+
+---
+
 ## [3.5.0] - 2026-06-19
 
 ### ✨ Features

@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -127,7 +127,9 @@
     "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",
     "release:patch": "node scripts/node/release.mjs patch",
     "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs",
-    "verify:grok-delegation-gate": "npm run build && node scripts/mjs/verify-grok-delegation-gate.mjs"
+    "verify:grok-delegation-gate": "npm run build && node scripts/mjs/verify-grok-delegation-gate.mjs",
+    "verify:hermes-delegation-gate": "npm run build && node scripts/mjs/verify-hermes-delegation-gate.mjs",
+    "verify:delegation-gate": "npm run build && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-grok-delegation-gate.mjs && node scripts/mjs/verify-hermes-delegation-gate.mjs"
   },
   "files": [
     "dist/",
@@ -141,6 +143,9 @@
     "scripts/mjs/validate-postinstall-config.mjs",
     "scripts/mjs/verify-orchestrator-behavior.mjs",
     "scripts/mjs/verify-grok-delegation-gate.mjs",
+    "scripts/mjs/verify-hermes-delegation-gate.mjs",
+    "scripts/mjs/verify-delegation-gate-core.mjs",
+    "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",
     "src/opencode/codex.codex",
     "src/opencode/commands/",

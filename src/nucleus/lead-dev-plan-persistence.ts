@@ -49,7 +49,7 @@ export function savePersistedLeadDevPlan(
 }
 
 export function allPlanTodos(plan: PersistedLeadDevPlan): LeadDevTodo[] {
-  return plan.phases.flatMap((p) => p.todos);
+  return (plan.phases ?? []).flatMap((p) => p.todos ?? []);
 }
 
 export function getOutstandingTodos(plan: PersistedLeadDevPlan): LeadDevTodo[] {
@@ -62,8 +62,8 @@ export function getOutstandingTodos(plan: PersistedLeadDevPlan): LeadDevTodo[] {
 export function getNextRequiredTodo(
   plan: PersistedLeadDevPlan,
 ): LeadDevTodo | null {
-  for (const phase of plan.phases) {
-    const next = phase.todos.find(
+  for (const phase of plan.phases ?? []) {
+    const next = (phase.todos ?? []).find(
       (t) => t.status === 'pending' || t.status === 'in_progress',
     );
     if (next) return next;

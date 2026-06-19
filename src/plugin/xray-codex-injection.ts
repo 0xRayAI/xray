@@ -38,6 +38,14 @@ import {
   spawnPromise,
 } from "./plugin-helpers.js";
 import { runEnforcerQualityGate } from "./plugin-quality-gate.js";
+import {
+  evaluatePostToolSpawn,
+  evaluatePreToolGate,
+  isSubagentTool,
+  loadDelegationGateFeatures,
+} from "../nucleus/delegation-gate.js";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 // Re-export all public API for test compatibility
 export { classifyTaskType } from "./plugin-helpers.js";
@@ -135,6 +143,31 @@ export default async function xrayCodexPlugin(input: {
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
+      const features = loadDelegationGateFeatures(directory);
+      let sessionId: string | null = process.env.GROK_SESSION_ID ?? null;
+      try {
+        const boot = JSON.parse(
+          readFileSync(join(directory, ".xray", "state", "session-boot.json"), "utf8"),
+        ) as { sessionId?: string };
+        sessionId = boot.sessionId ?? sessionId;
+      } catch {
+        /* no session boot */
+      }
+      const delegationGate = evaluatePreToolGate(
+        tool,
+        (args ?? {}) as Record<string, unknown>,
+        {
+          projectRoot: directory,
+          sessionId,
+          features,
+          host: "opencode",
+        },
+      );
+      if (!delegationGate.allow) {
+        logger.error(`🚫 Delegation gate: ${delegationGate.reason}`);
+        throw new Error(`DELEGATION GATE: ${delegationGate.reason}`);
+      }
+
       if (isWriteEditOperation(tool)) {
         const _ProcessorManager = getProcessorManager();
         const _XrayStateManager = getXrayStateManager();
@@ -230,6 +263,23 @@ export default async function xrayCodexPlugin(input: {
       await loadXrayComponents();
 
       const { tool, args, result } = input;
+
+      if (isSubagentTool(tool)) {
+        try {
+          const spawnResult = evaluatePostToolSpawn(
+            tool,
+            (args ?? {}) as Record<string, unknown>,
+            directory,
+          );
+          if (spawnResult.satisfied.length > 0) {
+            logger.log(
+              `🔗 Delegation gate post: satisfied ${spawnResult.satisfied.map((d) => d.id).join(", ")}`,
+            );
+          }
+        } catch (error) {
+          logger.error("Delegation gate post-hook error", error);
+        }
+      }
 
       try {
         const { routingOutcomeTracker } = await import(

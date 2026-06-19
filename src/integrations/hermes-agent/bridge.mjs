@@ -52,33 +52,55 @@ let frameworkReady = false;
 let frameworkLoadAttempted = false;
 
 // ── Project root detection ───────────────────────────────────
+function isConsumerWorkspace(dir) {
+  return (
+    existsSync(join(dir, ".xray", "features.json")) ||
+    existsSync(join(dir, "node_modules", "0xray", "package.json"))
+  );
+}
+
 function findProjectRoot() {
   const envHome = process.env.XRAY_HOME || process.env.XRAY_ROOT;
-  if (envHome && existsSync(join(envHome, "package.json"))) return envHome;
+  if (envHome) {
+    const resolved = join(envHome);
+    if (existsSync(join(resolved, "package.json")) || isConsumerWorkspace(resolved)) {
+      return resolved;
+    }
+  }
 
   const consumerMarker = join(__dirname, "xray-consumer-root.txt");
   if (existsSync(consumerMarker)) {
     try {
       const marked = readFileSync(consumerMarker, "utf-8").trim();
-      if (marked && existsSync(join(marked, "package.json"))) return marked;
+      if (marked && (existsSync(join(marked, "package.json")) || isConsumerWorkspace(marked))) {
+        return marked;
+      }
     } catch {
       // fall through
     }
   }
 
+  // Prefer consumer workspace (--cwd / process.chdir) over framework package root
+  let dir = process.cwd();
+  for (let i = 0; i < 12; i++) {
+    if (isConsumerWorkspace(dir)) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
   const candidates = [
-    process.cwd(),
     join(homedir(), "dev", "xray"),
-    join(dirname(__dirname), "..", "..", "..", ".."), // plugin dir -> project root
+    join(dirname(__dirname), "..", "..", "..", ".."), // plugin dir -> package root
   ];
 
-  for (const dir of candidates) {
+  for (const candidate of candidates) {
     try {
-      const pkgPath = join(dir, "package.json");
+      const pkgPath = join(candidate, "package.json");
       if (existsSync(pkgPath)) {
         const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"] || pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
-          return dir;
+        if (pkg.name === "0xray" || pkg.dependencies?.["0xray"]) {
+          return candidate;
         }
       }
     } catch {
@@ -786,8 +808,52 @@ async function handleApply(input, projectRoot, logDir) {
 // ── Known commands for positional-arg mode ──────────────────
 const KNOWN_COMMANDS = new Set([
   "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks", "govern", "apply",
-  "skill-install", "skill-registry",
+  "skill-install", "skill-registry", "delegation-gate",
 ]);
+
+async function handleDelegationGate(command, projectRoot, logDir) {
+  try {
+    const gate = await import("../hooks/delegation-gate-runtime.mjs");
+    const phase = command.phase || "pre";
+    const tool = command.tool || command.toolName || "unknown";
+    const args = command.args || command.toolInput || {};
+    const sessionId = command.sessionId || command.taskId || null;
+    const host = command.host || "hermes";
+
+    if (phase === "post") {
+      if (!gate.isSubagentTool(tool)) {
+        return { allow: true, phase: "post", skipped: true };
+      }
+      const result = gate.evaluatePostToolSpawn(tool, args, projectRoot);
+      if (result.satisfied.length > 0) {
+        logToActivity(
+          logDir,
+          `[delegation-gate-post] satisfied=${result.satisfied.map((d) => d.id).join(",")} clearedAll=${result.clearedAll}`,
+        );
+      }
+      return { allow: true, phase: "post", ...result };
+    }
+
+    const features = gate.loadDelegationGateFeatures(projectRoot);
+    const outcome = gate.evaluatePreToolGate(tool, args, {
+      projectRoot,
+      sessionId,
+      features,
+      host,
+    });
+
+    if (!outcome.allow) {
+      logToActivity(
+        logDir,
+        `[delegation-gate] deny tool=${tool} gate=${outcome.gate} reason=${outcome.reason}`,
+      );
+    }
+
+    return { phase: "pre", ...outcome };
+  } catch (error) {
+    return { error: `delegation-gate failed: ${error.message || error}` };
+  }
+}
 
 // ── Skill management ──────────────────────────────────────────
 
@@ -917,6 +983,9 @@ async function main() {
       break;
     case "skill-registry":
       response = await handleSkillRegistry(command, projectRoot, logDir);
+      break;
+    case "delegation-gate":
+      response = await handleDelegationGate(command, projectRoot, logDir);
       break;
     default:
       response = { error: `Unknown command: ${cmd}` };

@@ -4,10 +4,15 @@
  * Run: node scripts/mjs/verify-grok-delegation-gate.mjs
  */
 import { execSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  FIXTURE_SESSION_ID,
+  seedDelegationGateFixture,
+  seedSpawnTodoPlan,
+} from './delegation-gate-fixture.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, '../..');
@@ -32,57 +37,11 @@ function runHook(fixture, env = {}) {
 }
 
 const tmp = mkdtempSync(join(tmpdir(), 'xray-gate-verify-'));
-mkdirSync(join(tmp, '.xray', 'state'), { recursive: true });
-writeFileSync(
-  join(tmp, '.xray', 'features.json'),
-  JSON.stringify({
-    multi_agent_orchestration: {
-      enabled: true,
-      lead_dev_mode: true,
-      auto_chain_delegations: true,
-    },
-  }),
-);
-writeFileSync(
-  join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
-  JSON.stringify({ active: true }),
-);
-writeFileSync(
-  join(tmp, '.xray', 'state', 'pending-delegations.json'),
-  JSON.stringify({
-    sessionId: 'verify-gate',
-    createdAt: new Date().toISOString(),
-    ttlMs: 14400000,
-    delegations: [
-      {
-        id: 'del-verify',
-        taskId: 'impl-1',
-        agent: 'backend-engineer',
-        taskDescription: 'implement',
-        taskType: 'implement',
-        sessionId: 'verify-gate',
-        planTodoId: '2.1',
-        planTodoTask: 'swap deps',
-        matchMethod: 'agent-only',
-        matchConfidence: 0.5,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        satisfiedAt: null,
-        spawnHint: {
-          tool: 'Task',
-          subagent_type: 'backend-engineer',
-          description: 'Lead-dev delegation 2.1',
-          planTodoId: '2.1',
-          delegationId: 'del-verify',
-        },
-      },
-    ],
-  }),
-);
+seedDelegationGateFixture(tmp);
 
 const baseEnv = {
   GROK_WORKSPACE_ROOT: tmp,
-  GROK_SESSION_ID: 'verify-gate',
+  GROK_SESSION_ID: FIXTURE_SESSION_ID,
 };
 
 try {
@@ -125,26 +84,7 @@ try {
   if (allowTask.decision === 'allow') pass('PreToolUse allows Task while pending');
   else fail('Task allow', JSON.stringify(allowTask));
 
-  writeFileSync(
-    join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
-    JSON.stringify({
-      active: true,
-      persistedAt: new Date().toISOString(),
-      phases: [
-        {
-          id: 'phase-2',
-          todos: [
-            {
-              id: '2.1',
-              task: 'swap deps',
-              subagent: 'backend-engineer',
-              status: 'pending',
-            },
-          ],
-        },
-      ],
-    }),
-  );
+  seedSpawnTodoPlan(tmp);
 
   const denyWrongTodo = runHook(
     {

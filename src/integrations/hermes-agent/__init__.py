@@ -187,16 +187,51 @@ def _is_xray_mcp(tool_name: str) -> bool:
     return tool_name.startswith("mcp_xray_")
 
 
+def _delegation_gate_block(tool_name: str, args: dict, task_id: str, **kwargs):
+    """3.5.1 multi-host parity — block via nucleus delegation-gate SSOT."""
+    session_id = (
+        kwargs.get("session_id")
+        or kwargs.get("sessionId")
+        or task_id
+        or ""
+    )
+    bridge_result = _call_bridge(
+        {
+            "command": "delegation-gate",
+            "phase": "pre",
+            "tool": tool_name,
+            "args": args or {},
+            "sessionId": session_id,
+            "host": "hermes",
+        },
+        timeout=10,
+    )
+    if bridge_result.get("allow") is False:
+        reason = bridge_result.get("reason", "Delegation gate blocked this tool")
+        gate = bridge_result.get("gate", "delegation-gate")
+        _log_to_file(
+            "activity.log",
+            f"[delegation-gate] deny tool={tool_name} gate={gate} reason={reason}",
+        )
+        return {"action": "block", "message": reason}
+    return None
+
+
 def _on_pre_tool_call(tool_name: str, args: dict, task_id: str, **kwargs):
     """Fires before ANY tool executes.
 
     Pipeline:
       1. Track stats
       2. Log tool-start event to disk
-      3. For code-producing tools: run quality gate + pre-processors via bridge
-      4. For non-code tools: nudge if Xray alternative exists
+      3. Delegation gate (pending + spawn todo) — may block tool
+      4. For code-producing tools: run quality gate + pre-processors via bridge
+      5. For non-code tools: nudge if Xray alternative exists
     """
     _session_stats["total_tool_calls"] += 1
+
+    block = _delegation_gate_block(tool_name, args, task_id, **kwargs)
+    if block:
+        return block
 
     # Log start event
     _log_tool_event("start", tool_name, args)
@@ -329,9 +364,21 @@ def _on_post_tool_call(tool_name: str, args: dict, result, task_id: str, **kwarg
     # Record outcome for the inference feedback loop
     _record_tool_outcome(tool_name, args or {}, error is None)
 
-    # delegate_task: validate all files the subagent changed
+    # delegate_task: clear pending delegations + validate subagent changes
     if tool_name == "delegate_task":
         tid = kwargs.get("task_id", "") or args.get("task_id", "") or task_id
+        session_id = kwargs.get("session_id") or kwargs.get("sessionId") or tid
+        _call_bridge(
+            {
+                "command": "delegation-gate",
+                "phase": "post",
+                "tool": tool_name,
+                "args": args or {},
+                "sessionId": session_id,
+                "host": "hermes",
+            },
+            timeout=10,
+        )
         if tid:
             _validate_subagent_changes(tid)
         return

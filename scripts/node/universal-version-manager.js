@@ -152,7 +152,7 @@ const OFFICIAL_VERSIONS = {
   framework: {
     version: PACKAGE_VERSION,
       displayName: "xray: Self-Healing AI Governance OS",
-      lastUpdated: "2026-06-17",
+      lastUpdated: "2026-06-19",
     // Counts (auto-calculated, but can be overridden)
     ...CALCULATED_COUNTS,
   },
