@@ -420,7 +420,7 @@ export class OrchestratorServer {
                 content = appendSynthesisContextToResponse(content, collocated.collatedText);
               }
 
-              if (synthesisDue && result.ok) {
+              if (synthesisDue && result.ok && !result.content[0]?.text?.includes('Confer quorum')) {
                 content = content.map((block, index) =>
                   index === 0
                     ? {

@@ -18,7 +18,7 @@ import {
 import {
   buildReceiptFromConsultOutput,
   tryRecordSynthesisConsultReceipt,
-  writeSynthesisConsultReceipt,
+  parseConsultVerdictFromText,
   type SynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
@@ -173,7 +173,6 @@ export function conferAgentMcpTarget(subagent: string): {
   tool: string;
   args: (prompt: string, projectRoot: string) => Record<string, unknown>;
 } {
-  const root = process.cwd();
   switch (subagent) {
     case 'architect-tools':
       return {
@@ -234,12 +233,14 @@ export async function invokeConferAgent(
   const target = conferAgentMcpTarget(subagent);
   const args = target.args(prompt, projectRoot);
   const result = await mcpClientManager.callServerTool(target.server, target.tool, args);
-  let text = extractMcpText(result);
+  const text = extractMcpText(result);
   if (!text.trim()) {
     throw new Error(`Empty confer response from ${subagent}`);
   }
-  if (!buildReceiptFromConsultOutput('s.0', subagent, 'confer', text)?.verdict) {
-    text = `${text}\n\nVerdict: PASS\nTop risks: none identified\nHardening: ${subagent} MCP consult completed`;
+  if (!parseConsultVerdictFromText(text)) {
+    throw new Error(
+      `Confer response from ${subagent} missing parseable verdict (expected Verdict: PASS|CONDITIONAL|FAIL or DECISION: approve|reject|abstain)`,
+    );
   }
   return text;
 }
@@ -259,7 +260,7 @@ export function applyConferConsultResult(
     projectRoot,
   );
   let todoCompleted = false;
-  if (receipt) {
+  if (receipt && receipt.verdict !== 'FAIL') {
     todoCompleted = updatePlanTodoStatus(todoId, 'completed', projectRoot);
   }
   return {

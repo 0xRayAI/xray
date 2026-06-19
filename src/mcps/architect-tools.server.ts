@@ -235,16 +235,21 @@ class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
   private async architectureAssessment(args: Record<string, unknown> | undefined) {
     const projectRoot = (args?.projectRoot as string) || "";
     const assessmentType = (args?.assessmentType as "quick" | "comprehensive") || "comprehensive";
+    const conferPrompt = typeof args?.conferPrompt === "string" ? args.conferPrompt : "";
 
     frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
 
     const result = await architectArchitectureAssessment(projectRoot, assessmentType);
+    const assessmentJson = JSON.stringify(result, null, 2);
+    const text = conferPrompt.trim()
+      ? `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: CONDITIONAL\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`
+      : assessmentJson;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify(result, null, 2),
+          text,
         },
       ],
     };

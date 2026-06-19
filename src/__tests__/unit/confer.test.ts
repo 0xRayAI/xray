@@ -16,6 +16,7 @@ import {
   loadPersistedLeadDevPlan,
   savePersistedLeadDevPlan,
 } from '../../nucleus/lead-dev-plan-persistence.js';
+import { parseConsultVerdictFromText } from '../../nucleus/synthesis-consult-receipt.js';
 import { recordExecutionSlice, isSynthesisCheckpointDue } from '../../nucleus/synthesis.js';
 
 describe('confer quorum SSOT', () => {
@@ -78,6 +79,30 @@ describe('confer quorum SSOT', () => {
     triggerConferCheckpoint(sessionId, 'due', tmp);
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
     expect(isConferPending(tmp, sessionId)).toBe(true);
+  });
+
+  it('maps DECISION reject to FAIL verdict', () => {
+    expect(parseConsultVerdictFromText('DECISION: reject\nreason: bad')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('DECISION: approve\n')).toBe('PASS');
+    expect(parseConsultVerdictFromText('DECISION: abstain\n')).toBe('CONDITIONAL');
+  });
+
+  it('FAIL verdict records receipt but does not complete todo', () => {
+    const plan = buildSynthesisCheckpointPlan('due');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const applied = applyConferConsultResult(
+      's.1',
+      'researcher',
+      sessionId,
+      'DECISION: reject\nTop risks: critical flaw\nHardening: fix first',
+      tmp,
+    );
+    expect(applied.verdict).toBe('FAIL');
+    expect(applied.receiptRecorded).toBe(true);
+    expect(applied.todoCompleted).toBe(false);
   });
 
   it('applyConferConsultResult records receipt and completes todo', () => {

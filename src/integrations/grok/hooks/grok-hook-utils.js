@@ -18,6 +18,7 @@ import {
   validateSpawnMatchesTodo,
   updatePlanTodoStatusInPlace,
 } from '../../hooks/delegation-gate-runtime.mjs';
+import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -241,13 +242,9 @@ export function sessionBootPath(root = workspaceRoot()) {
   return path.join(root, '.xray', 'state', 'session-boot.json');
 }
 
-export function loadConferPending(root = workspaceRoot()) {
+export function loadConferPending(root = workspaceRoot(), sessionId = null) {
   try {
-    const statePath = path.join(root, '.xray', 'state', 'confer-checkpoint.json');
-    const planPath = path.join(root, '.xray', 'state', 'lead-dev-plan.json');
-    if (!fs.existsSync(statePath) || !fs.existsSync(planPath)) return false;
-    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    return state.status === 'pending' || state.status === 'in_progress';
+    return isConferPendingForSession(root, sessionId);
   } catch {
     return false;
   }
