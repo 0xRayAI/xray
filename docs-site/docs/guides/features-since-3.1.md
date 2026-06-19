@@ -1,6 +1,15 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.1**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.2**.
+
+## 3.5.2 — Grok synthesis gate parity + consumer install hardening
+
+| Feature | Description |
+|---------|-------------|
+| **Grok PreToolUse SSOT** | Live `pre-tool-use.js` calls `evaluatePreToolGate` — synthesis deny, gate slices, `govern-and-apply` block |
+| **Synthesis hook verify** | `verify-grok-synthesis-gate.mjs` (4/4 live hook fixtures) chained in `verify:grok-delegation-gate` |
+| **Consumer postinstall** | `findProjectRoot` SSOT, stale pre-commit reinstall, `.gitignore` idempotent merge, post-commit hook install |
+| **Hardening** | Post-commit reflection JSON load (no `eval`); pre-commit fail-closed; `execFileSync` for staged `tsc` |
 
 ## 3.5.1 — Multi-host delegation gate parity
 

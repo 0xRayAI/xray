@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.5.2] - 2026-06-19
+
+### 🐛 Bug Fixes
+- **Grok synthesis gate** — `pre-tool-use.js` wires `evaluatePreToolGate` SSOT (synthesis deny, gate slices, `govern-and-apply` block); fail-closed on hook errors
+- **Consumer bridge root** — `findProjectRoot` git-root + devDependency detection; `findGitRoot` applies `normalizePath`
+- **Consumer hooks** — stale xray pre-commit reinstall; post-commit hook installed; pre-commit fails closed when runner missing; non-xray hooks backed up before overwrite
+- **Consumer `.gitignore`** — idempotent suit block merge on postinstall; preserves orphan tail on incomplete marker
+- **`bridge.mjs`** — `handleGetConfig` fixes undeclared `envDir` ReferenceError
+- **Post-commit reflection** — `load-reflection-config.mjs` mode whitelist + `--json` output (no shell `eval`); macOS/BSD `stat` support
+
+### ✅ Tests
+- `verify-grok-synthesis-gate.mjs` (4/4 live Grok hook); chained in `verify:grok-delegation-gate` and `verify:delegation-gate`
+- `verify-consumer-gitignore` incomplete-marker fixture; `verify:find-project-root` 3/3
+
+---
+
 ## [3.5.1] - 2026-06-19
 
 ### ✨ Features
