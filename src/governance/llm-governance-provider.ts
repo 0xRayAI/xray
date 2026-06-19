@@ -147,9 +147,18 @@ function extractHermesOAuthEntry(data: unknown): HermesOAuthEntry | undefined {
   return undefined;
 }
 
+function resolveHermesAuthPath(): string {
+  const hermesHome =
+    process.env.HERMES_HOME ||
+    process.env.HERMES_AUTH_HOME ||
+    join(homedir(), ".hermes");
+  if (process.env.HERMES_AUTH_PATH) return process.env.HERMES_AUTH_PATH;
+  return join(hermesHome, "auth.json");
+}
+
 function readHermesOAuthToken(): string | null {
   try {
-    const authPath = join(homedir(), ".hermes", "auth.json");
+    const authPath = resolveHermesAuthPath();
     if (!existsSync(authPath)) return null;
 
     const raw = readFileSync(authPath, "utf-8");
@@ -354,7 +363,7 @@ export function checkHermesOAuthStatus(): {
 } {
   const config = getConfig();
   if (!config) {
-    const hermesPath = join(homedir(), ".hermes", "auth.json");
+    const hermesPath = resolveHermesAuthPath();
     if (existsSync(hermesPath)) {
       return {
         configured: false,

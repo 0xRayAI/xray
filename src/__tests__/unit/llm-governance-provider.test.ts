@@ -30,6 +30,8 @@ describe('llm-governance-provider — Hermes auth', () => {
     delete process.env.XRAY_GOVERNANCE_LLM_API_KEY;
     delete process.env.XRAY_LLM_ENDPOINT;
     delete process.env.XRAY_LLM_API_KEY;
+    delete process.env.HERMES_HOME;
+    delete process.env.HERMES_AUTH_PATH;
     mockHomedir.mockReturnValue('/mock-home');
     mockExistsSync.mockImplementation((path: string) => path === authPath);
   });
@@ -104,6 +106,31 @@ describe('llm-governance-provider — Hermes auth', () => {
     const status = checkHermesOAuthStatus();
 
     expect(status.configured).toBe(true);
+  });
+
+  it('reads credential_pool from HERMES_HOME when set', () => {
+    const customAuthPath = '/gateway-root/.hermes/auth.json';
+    process.env.HERMES_HOME = '/gateway-root/.hermes';
+    mockExistsSync.mockImplementation((path: string) => path === customAuthPath);
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({
+        credential_pool: {
+          'xai-oauth': [
+            {
+              id: 'gateway-cred',
+              auth_type: 'oauth',
+              access_token: 'gateway-token',
+              expires_at: Math.floor(Date.now() / 1000) + 3600,
+            },
+          ],
+        },
+      }),
+    );
+
+    const status = checkHermesOAuthStatus();
+
+    expect(status.configured).toBe(true);
+    expect(mockReadFileSync).toHaveBeenCalledWith(customAuthPath, 'utf-8');
   });
 
   it('still reads legacy top-level xai-oauth format', () => {
