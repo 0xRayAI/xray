@@ -108,6 +108,7 @@ export interface MemoryRoutingProvider {
   ): MemoryThinDispatchResult;
   getTaskConfidence?(task: MemoryOrchestrationTask): MemoryTaskConfidence;
   ingestFeedback?(entry: OrchestratorFeedbackEntry): void;
+  buildSynthesisContext?(opts: { projectRoot: string }): Record<string, unknown> | null;
 }
 
 export interface MemoryRoutingConfig {

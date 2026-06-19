@@ -276,12 +276,43 @@ export class OrchestratorServer {
             }
           }
           case 'analyze-complexity': {
-            const complexityArgs = args as { tasks: OrchestrationTask[] };
+            const complexityArgs = args as {
+              tasks: OrchestrationTask[];
+              sessionId?: string;
+            };
+            const projectRoot = process.cwd();
+            const sessionId = complexityArgs.sessionId ?? null;
+            const { isSynthesisCheckpointDue, completeSynthesisCheckpoint, getSynthesisDueReason } =
+              await import('../../nucleus/synthesis.js');
+            const { buildSynthesisCollocatedContext } = await import(
+              '../../nucleus/synthesis-context.js'
+            );
+            const synthesisDue = isSynthesisCheckpointDue(projectRoot, sessionId);
+            const inheritedContext = synthesisDue
+              ? {
+                  synthesis: true,
+                  ...buildSynthesisCollocatedContext(
+                    projectRoot,
+                    getSynthesisDueReason(projectRoot, sessionId),
+                  ),
+                }
+              : { taskCount: complexityArgs.tasks.length };
             const aside = await spawnAside({
-              description: `Complexity analysis: ${complexityArgs.tasks.length} tasks`,
+              description: synthesisDue
+                ? 'Synthesis checkpoint: reflect & realign'
+                : `Complexity analysis: ${complexityArgs.tasks.length} tasks`,
+              ...(sessionId ? { sessionId } : {}),
+              inheritedContext,
             });
             try {
-              return await this.complexityHandler.handleAnalyzeComplexity(complexityArgs, aside.asideId);
+              const result = await this.complexityHandler.handleAnalyzeComplexity(
+                complexityArgs,
+                aside.asideId,
+              );
+              if (synthesisDue && sessionId) {
+                completeSynthesisCheckpoint(projectRoot, sessionId);
+              }
+              return result;
             } finally {
               closeAside(aside.asideId);
             }

@@ -22,6 +22,11 @@ import {
   type SpawnToolInput,
   type SpawnTodoValidation,
 } from './lead-dev-plan-persistence.js';
+import {
+  getSynthesisDueReason,
+  isSynthesisCheckpointDue,
+  recordExecutionSlice,
+} from './synthesis.js';
 
 export {
   validateSpawnMatchesTodo,
@@ -289,6 +294,33 @@ export function evaluateSpawnPlanGate(
   return { allow: true };
 }
 
+/** Block writes / spawns / shell while synthesis checkpoint is due. */
+export function evaluateSynthesisGate(
+  toolName: string,
+  toolInput: ToolGateInput,
+  ctx: PreToolGateContext,
+): PreToolGateResult {
+  if (!ctx.sessionId || !isSynthesisCheckpointDue(ctx.projectRoot, ctx.sessionId)) {
+    return { allow: true };
+  }
+
+  if (isReadOnlyTool(toolName)) return { allow: true };
+  if (isOrchestratorConsultMcp(toolName, toolInput)) return { allow: true };
+
+  const dueReason = getSynthesisDueReason(ctx.projectRoot, ctx.sessionId);
+  return {
+    allow: false,
+    reason:
+      'Synthesis checkpoint due — call xray-orchestrator analyze-complexity to reflect and realign before continuing',
+    gate: 'synthesis-checkpoint',
+    hint: {
+      tool: 'analyze-complexity',
+      dueReason,
+      primitive: 'synthesis',
+    },
+  };
+}
+
 /** Block writes / unrelated work while pending delegations exist. */
 export function evaluatePendingDelegationGate(
   toolName: string,
@@ -316,14 +348,22 @@ export function evaluatePendingDelegationGate(
 }
 
 /**
- * Full pre-tool evaluation — same order as Grok PreToolUse:
- * pending gate first, then spawn todo gate for subagent tools.
+ * Full pre-tool evaluation — synthesis gate first, slice recording, then
+ * pending gate, then spawn todo gate for subagent tools.
  */
 export function evaluatePreToolGate(
   toolName: string,
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
+  const synthesisBlock = evaluateSynthesisGate(toolName, toolInput, ctx);
+  if (!synthesisBlock.allow) return synthesisBlock;
+
+  recordExecutionSlice('gate', {
+    projectRoot: ctx.projectRoot,
+    sessionId: ctx.sessionId,
+  });
+
   const pendingBlock = evaluatePendingDelegationGate(toolName, toolInput, ctx);
   if (!pendingBlock.allow) return pendingBlock;
 

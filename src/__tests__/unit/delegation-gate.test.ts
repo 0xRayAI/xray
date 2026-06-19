@@ -6,9 +6,11 @@ import {
   checkPendingDelegationGate,
   checkSubagentGate,
   evaluatePreToolGate,
+  evaluateSynthesisGate,
   getActivePendingDelegations,
   satisfyDelegationsFromToolInput,
 } from '../../nucleus/delegation-gate.js';
+import { recordExecutionSlice } from '../../nucleus/synthesis.js';
 
 describe('delegation-gate SSOT', () => {
   let tmp: string;
@@ -124,5 +126,47 @@ describe('delegation-gate SSOT', () => {
     );
     expect(result.satisfied.length).toBe(1);
     expect(getActivePendingDelegations(sessionId, tmp).length).toBe(0);
+  });
+
+  it('evaluateSynthesisGate denies writes when synthesis checkpoint is due', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+
+    const block = evaluateSynthesisGate(
+      'search_replace',
+      { path: 'src/foo.ts' },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(block.allow).toBe(false);
+    if (!block.allow) expect(block.gate).toBe('synthesis-checkpoint');
+
+    const read = evaluateSynthesisGate(
+      'read_file',
+      { path: 'src/foo.ts' },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(read.allow).toBe(true);
+  });
+
+  it('evaluatePreToolGate allows orchestrator consult during synthesis due', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+
+    const consult = evaluatePreToolGate(
+      'CallMcpTool',
+      {
+        server: 'xray-orchestrator',
+        toolName: 'analyze-complexity',
+        arguments: { tasks: [{ description: 'reflect', type: 'plan' }] },
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(consult.allow).toBe(true);
   });
 });
