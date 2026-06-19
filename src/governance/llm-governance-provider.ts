@@ -85,6 +85,12 @@ function resolveHermesTimeoutMs(): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_HERMES_TIMEOUT_MS;
 }
 
+export function resolveHermesBin(): string {
+  const explicit = process.env.HERMES_BIN?.trim();
+  if (explicit) return explicit;
+  return "hermes";
+}
+
 function getDirectLlmConfig(): DirectLlmConfig | null {
   const endpoint =
     process.env.XRAY_LLM_ENDPOINT ||
@@ -131,7 +137,7 @@ function getConfig(): GovernanceLlmConfig | null {
 
 export function hermesCliAvailable(): boolean {
   try {
-    execFileSync("hermes", ["--version"], {
+    execFileSync(resolveHermesBin(), ["--version"], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
       timeout: 5_000,
@@ -174,7 +180,7 @@ function runHermesGovernanceInference(
   config: HermesCliConfig,
 ): string {
   return execFileSync(
-    "hermes",
+    resolveHermesBin(),
     ["-z", prompt, "--provider", config.provider, "--model", config.model],
     {
       encoding: "utf8",
