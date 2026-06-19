@@ -267,3 +267,12 @@ export function getSynthesisDueReason(
   if (sessionId && state.sessionId !== sessionId) return null;
   return state.dueReason;
 }
+
+/** Session bound to an active synthesis checkpoint (for MCP when host omits sessionId). */
+export function getSynthesisCheckpointSessionId(
+  projectRoot = process.cwd(),
+): string | null {
+  const state = loadSynthesisCheckpointState(projectRoot);
+  if (!state?.synthesisDue) return null;
+  return state.sessionId;
+}

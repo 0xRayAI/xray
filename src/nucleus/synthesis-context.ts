@@ -1,104 +1,103 @@
 /**
- * Collocated context for synthesis Aside — codex + plan + memory routing provider.
+ * Collocated context for synthesis Aside — delegates to memory routing provider SSOT.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { getMemoryRoutingProviderSync } from '../memory-routing/index.js';
+import { getMemoryRoutingProvider } from '../memory-routing/index.js';
 
 export interface SynthesisCollocatedContext {
   primitive: 'synthesis';
   dueReason: string | null;
-  codexTermCount: number;
-  codexExcerpt: string;
-  planExcerpt: string;
-  memoryContext?: Record<string, unknown>;
   collatedText: string;
+  matchedSignals?: Array<{ name: string; definition: string; priority: string }>;
+  codexTermCount?: number;
+  codexExcerpt?: string;
+  planExcerpt?: string;
+  synthesisExcerpt?: string;
 }
 
-function readCodexExcerpt(projectRoot: string, maxChars = 1200): { termCount: number; excerpt: string } {
-  const codexPath = path.join(projectRoot, '.xray', 'codex.json');
-  if (!fs.existsSync(codexPath)) {
-    return { termCount: 0, excerpt: '' };
-  }
-  try {
-    const data = JSON.parse(fs.readFileSync(codexPath, 'utf8')) as {
-      terms?: Array<{ id?: number; rule?: string; title?: string }>;
-    };
-    const terms = data.terms ?? [];
-    const lines = terms.slice(0, 12).map((t) => {
-      const label = t.title ?? t.rule ?? '';
-      return t.id != null ? `${t.id}. ${label}` : label;
-    });
-    const excerpt = lines.join('\n').slice(0, maxChars);
-    return { termCount: terms.length, excerpt };
-  } catch {
-    return { termCount: 0, excerpt: '' };
-  }
-}
-
-function readPlanExcerpt(projectRoot: string, maxChars = 1200): string {
-  const planPath = path.join(projectRoot, '.xray', 'state', 'lead-dev-plan.json');
-  if (!fs.existsSync(planPath)) return '';
-  try {
-    const plan = JSON.parse(fs.readFileSync(planPath, 'utf8')) as {
-      active?: boolean;
-      phases?: Array<{
-        id: string;
-        name?: string;
-        todos: Array<{ id: string; task: string; status: string; subagent?: string }>;
-      }>;
-    };
-    const phases = plan.phases ?? [];
-    const lines: string[] = [`active: ${plan.active !== false}`];
-    for (const phase of phases) {
-      lines.push(`## ${phase.id}${phase.name ? ` — ${phase.name}` : ''}`);
-      for (const todo of phase.todos) {
-        lines.push(`- [${todo.status}] ${todo.id} (${todo.subagent ?? 'agent'}): ${todo.task}`);
-      }
-    }
-    return lines.join('\n').slice(0, maxChars);
-  } catch {
-    return '';
-  }
-}
-
-export function buildSynthesisCollocatedContext(
-  projectRoot = process.cwd(),
-  dueReason: string | null = null,
-): SynthesisCollocatedContext {
-  const codex = readCodexExcerpt(projectRoot);
-  const planExcerpt = readPlanExcerpt(projectRoot);
-
-  let memoryContext: Record<string, unknown> | undefined;
-  try {
-    const provider = getMemoryRoutingProviderSync();
-    if (provider.isAvailable() && provider.buildSynthesisContext) {
-      memoryContext = provider.buildSynthesisContext({ projectRoot }) ?? undefined;
-    }
-  } catch {
-    memoryContext = undefined;
-  }
-
-  const sections = [
+function fallbackContext(dueReason: string | null): SynthesisCollocatedContext {
+  const lines = [
     '# Synthesis checkpoint',
     dueReason ? `Due: ${dueReason}` : '',
-    codex.excerpt ? `## Codex (${codex.termCount} terms)\n${codex.excerpt}` : '',
-    planExcerpt ? `## Lead-dev plan\n${planExcerpt}` : '',
-    memoryContext?.collatedText
-      ? `## Memory routing\n${String(memoryContext.collatedText)}`
-      : memoryContext?.synthesisExcerpt
-        ? `## Prior synthesis\n${String(memoryContext.synthesisExcerpt)}`
-        : '',
+    '(Enable memory_routing with Repertoire for full signal + codex + plan collation)',
   ].filter(Boolean);
+  return {
+    primitive: 'synthesis',
+    dueReason,
+    collatedText: lines.join('\n\n'),
+  };
+}
+
+function normalizeProviderContext(
+  raw: Record<string, unknown>,
+  dueReason: string | null,
+): SynthesisCollocatedContext {
+  const collatedText =
+    typeof raw.collatedText === 'string' && raw.collatedText.trim()
+      ? dueReason && !raw.collatedText.includes('Due:')
+        ? `# Synthesis checkpoint\n\nDue: ${dueReason}\n\n${raw.collatedText}`
+        : raw.collatedText
+      : fallbackContext(dueReason).collatedText;
+
+  const matchedSignals = Array.isArray(raw.matchedSignals)
+    ? (raw.matchedSignals as SynthesisCollocatedContext['matchedSignals'])
+    : undefined;
 
   return {
     primitive: 'synthesis',
     dueReason,
-    codexTermCount: codex.termCount,
-    codexExcerpt: codex.excerpt,
-    planExcerpt,
-    ...(memoryContext ? { memoryContext } : {}),
-    collatedText: sections.join('\n\n'),
+    collatedText,
+    ...(matchedSignals ? { matchedSignals } : {}),
+    ...(typeof raw.codexTermCount === 'number' ? { codexTermCount: raw.codexTermCount } : {}),
+    ...(typeof raw.codexExcerpt === 'string' ? { codexExcerpt: raw.codexExcerpt } : {}),
+    ...(typeof raw.planExcerpt === 'string' ? { planExcerpt: raw.planExcerpt } : {}),
+    ...(typeof raw.synthesisExcerpt === 'string'
+      ? { synthesisExcerpt: raw.synthesisExcerpt }
+      : {}),
   };
+}
+
+export async function buildSynthesisCollocatedContext(
+  projectRoot = process.cwd(),
+  dueReason: string | null = null,
+): Promise<SynthesisCollocatedContext> {
+  try {
+    const provider = await getMemoryRoutingProvider();
+    if (provider.isAvailable() && provider.buildSynthesisContext) {
+      const raw = provider.buildSynthesisContext({ projectRoot, dueReason });
+      if (raw) return normalizeProviderContext(raw, dueReason);
+    }
+  } catch {
+    // fall through to minimal fallback
+  }
+  return fallbackContext(dueReason);
+}
+
+export function isAnalyzeComplexitySuccess(
+  content: Array<{ type: string; text: string }>,
+): boolean {
+  const text = content.map((c) => c.text).join('\n');
+  return !text.includes('❌') && !/^error handling tool/i.test(text);
+}
+
+export function appendSynthesisContextToResponse(
+  content: Array<{ type: string; text: string }>,
+  collatedText: string,
+): Array<{ type: string; text: string }> {
+  if (!collatedText.trim()) return content;
+  const synthesisSection = `
+
+---
+
+## Synthesis checkpoint — collocated context
+
+${collatedText}
+
+**Next:** Consult researcher, architect-tools, and code-review per the realignment plan before resuming execution.`;
+  if (content.length === 0) {
+    return [{ type: 'text', text: synthesisSection.trim() }];
+  }
+  return content.map((block, index) =>
+    index === 0 ? { ...block, text: `${block.text}${synthesisSection}` } : block,
+  );
 }

@@ -140,10 +140,15 @@ export class OrchestratorServer {
           {
             name: 'analyze-complexity',
             description:
-              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes.',
+              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
             inputSchema: {
               type: 'object',
               properties: {
+                sessionId: {
+                  type: 'string',
+                  description:
+                    'Active session id (required to clear synthesis checkpoint; inferred from checkpoint state when omitted)',
+                },
                 tasks: {
                   type: 'array',
                   items: {
@@ -281,22 +286,45 @@ export class OrchestratorServer {
               sessionId?: string;
             };
             const projectRoot = process.cwd();
-            const sessionId = complexityArgs.sessionId ?? null;
-            const { isSynthesisCheckpointDue, completeSynthesisCheckpoint, getSynthesisDueReason } =
-              await import('../../nucleus/synthesis.js');
-            const { buildSynthesisCollocatedContext } = await import(
-              '../../nucleus/synthesis-context.js'
-            );
+            const {
+              isSynthesisCheckpointDue,
+              completeSynthesisCheckpoint,
+              getSynthesisDueReason,
+              getSynthesisCheckpointSessionId,
+            } = await import('../../nucleus/synthesis.js');
+            const {
+              appendSynthesisContextToResponse,
+              buildSynthesisCollocatedContext,
+              isAnalyzeComplexitySuccess,
+            } = await import('../../nucleus/synthesis-context.js');
+
+            const checkpointSession = getSynthesisCheckpointSessionId(projectRoot);
+            const sessionId = complexityArgs.sessionId ?? checkpointSession;
             const synthesisDue = isSynthesisCheckpointDue(projectRoot, sessionId);
-            const inheritedContext = synthesisDue
-              ? {
-                  synthesis: true,
-                  ...buildSynthesisCollocatedContext(
-                    projectRoot,
-                    getSynthesisDueReason(projectRoot, sessionId),
-                  ),
-                }
+            const dueReason = synthesisDue
+              ? getSynthesisDueReason(projectRoot, sessionId)
+              : null;
+
+            if (synthesisDue && !sessionId) {
+              return {
+                content: [
+                  {
+                    type: 'text' as const,
+                    text:
+                      '❌ Synthesis checkpoint due but sessionId could not be resolved. ' +
+                      'Pass sessionId matching .xray/state/synthesis-checkpoint.json.',
+                  },
+                ],
+              };
+            }
+
+            const collocated = synthesisDue
+              ? await buildSynthesisCollocatedContext(projectRoot, dueReason)
+              : null;
+            const inheritedContext = synthesisDue && collocated
+              ? { synthesis: true, ...collocated }
               : { taskCount: complexityArgs.tasks.length };
+
             const aside = await spawnAside({
               description: synthesisDue
                 ? 'Synthesis checkpoint: reflect & realign'
@@ -306,13 +334,27 @@ export class OrchestratorServer {
             });
             try {
               const result = await this.complexityHandler.handleAnalyzeComplexity(
-                complexityArgs,
+                {
+                  ...complexityArgs,
+                  ...(sessionId ? { sessionId } : {}),
+                  ...(synthesisDue
+                    ? { synthesisCheckpoint: true, synthesisDueReason: dueReason }
+                    : {}),
+                },
                 aside.asideId,
               );
-              if (synthesisDue && sessionId) {
+
+              let content = result.content;
+              if (synthesisDue && collocated?.collatedText) {
+                content = appendSynthesisContextToResponse(content, collocated.collatedText);
+              }
+
+              const success = result.ok && isAnalyzeComplexitySuccess(content);
+              if (synthesisDue && sessionId && success) {
                 completeSynthesisCheckpoint(projectRoot, sessionId);
               }
-              return result;
+
+              return { content };
             } finally {
               closeAside(aside.asideId);
             }

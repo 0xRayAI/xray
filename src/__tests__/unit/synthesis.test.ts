@@ -6,6 +6,7 @@ import {
   completeSynthesisCheckpoint,
   createInitialSynthesisState,
   evaluateSynthesisDue,
+  getSynthesisCheckpointSessionId,
   isSynthesisCheckpointDue,
   loadSynthesisConfig,
   loadSynthesisCheckpointState,
@@ -101,6 +102,15 @@ describe('synthesis PR1', () => {
     expect(recordExecutionSlice('gate', { projectRoot: tmp, sessionId })).toBeNull();
     const persisted = loadSynthesisCheckpointState(tmp);
     expect(persisted?.slicesSinceLastSynthesis.gates).toBe(3);
+  });
+
+  it('getSynthesisCheckpointSessionId returns bound session when due', () => {
+    for (let i = 0; i < 3; i++) {
+      recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    }
+    expect(getSynthesisCheckpointSessionId(tmp)).toBe(sessionId);
+    completeSynthesisCheckpoint(tmp, sessionId);
+    expect(getSynthesisCheckpointSessionId(tmp)).toBeNull();
   });
 
   it('createInitialSynthesisState has stable shape', () => {

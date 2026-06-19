@@ -7,6 +7,7 @@
 import { frameworkLogger } from '../../../core/framework-logger.js';
 import {
   buildLeadDevPlan,
+  buildSynthesisCheckpointPlan,
   isLeadDevModeActive,
   persistLeadDevPlan,
 } from '../../../nucleus/autonomy-kernel.js';
@@ -67,9 +68,14 @@ export class ComplexityHandler {
    * Handle analyze-complexity request
    */
   async handleAnalyzeComplexity(
-    args: { tasks: AnalyzeComplexityInput[]; sessionId?: string },
+    args: {
+      tasks: AnalyzeComplexityInput[];
+      sessionId?: string;
+      synthesisCheckpoint?: boolean;
+      synthesisDueReason?: string | null;
+    },
     asideId?: string,
-  ): Promise<{ content: Array<{ type: string; text: string }> }> {
+  ): Promise<{ content: Array<{ type: string; text: string }>; ok: boolean }> {
     const tasks = normalizeAnalyzeTasks(args.tasks ?? []);
 
     await frameworkLogger.log(
@@ -92,8 +98,10 @@ export class ComplexityHandler {
       const planTaskInputs = tasks
         .filter((t) => t.description?.trim())
         .map((t) => ({ description: t.description, type: t.type }));
-      const leadDevPlan =
-        isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
+      const synthesisCheckpoint = args.synthesisCheckpoint === true;
+      const leadDevPlan = synthesisCheckpoint
+        ? buildSynthesisCheckpointPlan(args.synthesisDueReason ?? null)
+        : isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
           ? buildLeadDevPlan(
               primaryDescription,
               taskTypes.length ? taskTypes : ['implement'],
@@ -102,15 +110,20 @@ export class ComplexityHandler {
             )
           : null;
 
+      let planPersisted = !leadDevPlan;
+
       if (leadDevPlan) {
         try {
           const sessionId = args.sessionId ?? `analyze-${Date.now()}`;
-          clearPendingDelegations();
+          if (!synthesisCheckpoint) {
+            clearPendingDelegations();
+          }
           const planPath = persistLeadDevPlan(leadDevPlan);
           const bound = bindPlanToSession(sessionId);
+          planPersisted = true;
           await frameworkLogger.log(
             'orchestrator.server',
-            'lead-dev-plan-persisted',
+            synthesisCheckpoint ? 'synthesis-plan-persisted' : 'lead-dev-plan-persisted',
             'info',
             {
               planPath,
@@ -118,19 +131,24 @@ export class ComplexityHandler {
               planGeneration: bound?.planGeneration,
               phaseCount: leadDevPlan.phases.length,
               todoCount: leadDevPlan.phases.reduce((n, p) => n + p.todos.length, 0),
+              synthesisCheckpoint,
             },
           );
         } catch (err) {
+          planPersisted = false;
           await frameworkLogger.log(
             'orchestrator.server',
-            'lead-dev-plan-persist-failed',
+            synthesisCheckpoint ? 'synthesis-plan-persist-failed' : 'lead-dev-plan-persist-failed',
             'warning',
             { error: err instanceof Error ? err.message : String(err) },
           );
         }
       }
 
+      const ok = planPersisted;
+
       return {
+        ok,
         content: [
           {
             type: 'text',
@@ -139,12 +157,14 @@ export class ComplexityHandler {
               recommendations,
               tasks.length,
               leadDevPlan,
+              synthesisCheckpoint,
             ),
           },
         ],
       };
     } catch (error) {
       return {
+        ok: false,
         content: [
           {
             type: 'text',
@@ -195,6 +215,7 @@ export class ComplexityHandler {
     recommendations: string[],
     taskCount: number,
     leadDevPlan: ReturnType<typeof buildLeadDevPlan> = null,
+    synthesisCheckpoint = false,
   ): string {
     const leadDevSection = leadDevPlan
       ? `
@@ -216,7 +237,11 @@ ${JSON.stringify(leadDevPlan, null, 2)}
 \`\`\``
       : '';
 
-    return `🔍 Complexity Analysis Results
+    const header = synthesisCheckpoint
+      ? '🔄 Synthesis Checkpoint — Reflect & Realign'
+      : '🔍 Complexity Analysis Results';
+
+    return `${header}
 
 **Tasks Analyzed:** ${taskCount}
 **Overall Complexity:** ${analysis.overallComplexity}/100

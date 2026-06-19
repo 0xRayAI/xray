@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   LEAD_DEV_RULES,
+  MANDATORY_MAJOR_CONSULTS,
   buildLeadDevPlan,
+  buildSynthesisCheckpointPlan,
   shouldFlagFullTestSuite,
   routeSubagent,
   buildSessionBootContext,
@@ -52,6 +54,15 @@ describe('lead-dev plan builder (internal)', () => {
     const todos = implPhase?.todos ?? result?.phases[0]?.todos ?? [];
     expect(todos.length).toBe(3);
     expect(todos[0]?.task).toContain('3.4.9');
+  });
+
+  it('buildSynthesisCheckpointPlan injects mandatory consult todos', () => {
+    const plan = buildSynthesisCheckpointPlan('gate threshold (12/12)');
+    expect(plan?.phases[0]?.id).toBe('phase-synthesis');
+    expect(plan?.mandatoryConsults).toEqual([...MANDATORY_MAJOR_CONSULTS]);
+    expect(plan?.phases[0]?.todos.map((t) => t.subagent)).toEqual([
+      ...MANDATORY_MAJOR_CONSULTS,
+    ]);
   });
 
   it('buildSessionBootContext reflects lead dev mode', () => {

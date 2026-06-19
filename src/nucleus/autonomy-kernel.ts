@@ -133,6 +133,50 @@ function buildImplementationTodos(
   }));
 }
 
+/** Mandatory-consult plan for synthesis checkpoint realignment (no implementation phase). */
+export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevPlan | null {
+  if (!isLeadDevModeActive()) return null;
+
+  const cfg = orchestrationConfig();
+  const mandatoryConsults =
+    cfg.auto_consult_major_work !== false ? [...MANDATORY_MAJOR_CONSULTS] : [];
+
+  if (mandatoryConsults.length === 0) return null;
+
+  const reasonSuffix = dueReason ? ` (${dueReason})` : '';
+
+  return {
+    active: true,
+    rules: LEAD_DEV_RULES,
+    codexTerms: [59, 67, 68, 69],
+    description: `Synthesis checkpoint: reflect and realign${reasonSuffix}`,
+    complexity: 30,
+    requiresPhasedPlan: true,
+    recommendedStrategy: 'sequential',
+    mandatoryConsults,
+    phases: [
+      {
+        id: 'phase-synthesis',
+        name: 'Reflect & realign',
+        goal: 'Review collocated context and mandatory consults before resuming execution',
+        definitionOfDone:
+          'researcher + architect-tools + code-review consulted; todos realigned',
+        todos: mandatoryConsults.map((subagent, i) => ({
+          id: `s.${i + 1}`,
+          task: `Synthesis consult ${subagent}: review checkpoint context and realign plan`,
+          subagent: subagent as SubagentRoute,
+          status: 'pending' as const,
+        })),
+      },
+    ],
+    testProtocol: {
+      perSuiteFirst: cfg.per_suite_test_triage !== false,
+      fullSuiteGate: false,
+      hint: 'Synthesis checkpoint — consult mandatory agents before resuming gated work',
+    },
+  };
+}
+
 export function buildLeadDevPlan(
   description: string,
   taskTypes: string[] = ['implement'],
