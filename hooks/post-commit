@@ -31,7 +31,12 @@ if command -v node >/dev/null 2>&1; then
   LOAD_SCRIPT="$PROJECT_ROOT/scripts/node/load-reflection-config.mjs"
   if [ -f "$LOAD_SCRIPT" ]; then
     export PROJECT_ROOT="$PROJECT_ROOT"
-    eval "$(node "$LOAD_SCRIPT")"
+    REFLECTION_JSON=$(node "$LOAD_SCRIPT" --json 2>/dev/null || echo '{}')
+    MODE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.mode||"minimal"))' "$REFLECTION_JSON")
+    COMMIT_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.commitThreshold??25))' "$REFLECTION_JSON")
+    DAYS_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.daysThreshold??14))' "$REFLECTION_JSON")
+    AUTO_GENERATE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.autoGenerate===false?"false":"true")' "$REFLECTION_JSON")
+    PROMPT_USER=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.promptUser===false?"false":"true")' "$REFLECTION_JSON")
   fi
 fi
 
@@ -52,7 +57,11 @@ fi
 
 # Auto-reflection check - count commits since last reflection
 if [ "$AUTO_GENERATE" = true ] && [ -d "$PROJECT_ROOT/docs/reflections" ]; then
-  LAST_REFLECTION=$(find "$PROJECT_ROOT/docs/reflections" -name "*.md" -type f -exec stat --format="%Y" {} \; 2>/dev/null | sort -rn | head -1)
+  if stat --version >/dev/null 2>&1; then
+    LAST_REFLECTION=$(find "$PROJECT_ROOT/docs/reflections" -name "*.md" -type f -exec stat --format="%Y" {} \; 2>/dev/null | sort -rn | head -1)
+  else
+    LAST_REFLECTION=$(find "$PROJECT_ROOT/docs/reflections" -name "*.md" -type f -exec stat -f "%m" {} \; 2>/dev/null | sort -rn | head -1)
+  fi
   
   if [ -n "$LAST_REFLECTION" ]; then
     REFLECTION_EPOCH=$(date -r "$LAST_REFLECTION" +%s 2>/dev/null || echo "0")

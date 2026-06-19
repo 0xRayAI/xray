@@ -3,7 +3,7 @@
  * Prefers git root when 0xray is a dependency or devDependency.
  */
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { homedir } from 'node:os';
 
@@ -43,7 +43,7 @@ function readPkg(dir) {
 
 export function findGitRoot(cwd = process.cwd()) {
   try {
-    return execSync('git rev-parse --show-toplevel 2>/dev/null', {
+    const gitRoot = execSync('git rev-parse --show-toplevel 2>/dev/null', {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
@@ -57,7 +57,7 @@ export function findGitRoot(cwd = process.cwd()) {
 export function findProjectRoot(extraCandidates = []) {
   const envHome = process.env.XRAY_HOME || process.env.XRAY_ROOT;
   if (envHome) {
-    const resolved = join(envHome);
+    const resolved = normalizePath(resolve(envHome));
     const pkg = readPkg(resolved);
     if (pkg && (isConsumerWorkspace(resolved) || hasXrayDependency(pkg))) {
       return resolved;

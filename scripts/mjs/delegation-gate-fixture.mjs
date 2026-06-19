@@ -60,6 +60,43 @@ export function seedDelegationGateFixture(tmp) {
   );
 }
 
+export const SYNTHESIS_FIXTURE_SESSION_ID = 'verify-synthesis';
+
+export function seedSynthesisDueFixture(tmp, sessionId = SYNTHESIS_FIXTURE_SESSION_ID) {
+  mkdirSync(join(tmp, '.xray', 'state'), { recursive: true });
+  const now = new Date().toISOString();
+  writeFileSync(
+    join(tmp, '.xray', 'features.json'),
+    JSON.stringify({
+      synthesis: {
+        enabled: true,
+        every_n_gates: 12,
+        every_n_turns: 0,
+        every_n_todos_completed: 0,
+      },
+      multi_agent_orchestration: {
+        enabled: true,
+        lead_dev_mode: true,
+        auto_chain_delegations: true,
+      },
+    }),
+  );
+  writeFileSync(
+    join(tmp, '.xray', 'state', 'synthesis-checkpoint.json'),
+    JSON.stringify({
+      version: 1,
+      sessionId,
+      slicesSinceLastSynthesis: { gates: 12, turns: 0, todosCompleted: 0 },
+      lifetimeSlices: { gates: 12, turns: 0, todosCompleted: 0 },
+      synthesisDue: true,
+      dueReason: 'gate_threshold',
+      lastSynthesisAt: null,
+      lastSliceAt: now,
+      synthesisCount: 0,
+    }),
+  );
+}
+
 export function seedSpawnTodoPlan(tmp) {
   writeFileSync(
     join(tmp, '.xray', 'state', 'lead-dev-plan.json'),

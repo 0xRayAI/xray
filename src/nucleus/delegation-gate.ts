@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
- * Grok / Hermes / OpenCode adapters call evaluatePreToolGate; Grok-only logic was
- * previously duplicated in grok-hook-utils.js.
+ * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
+ * Grok-only codex/surface checks remain in pre-tool-use.js after the SSOT gate.
  */
 
 import * as fs from 'fs';

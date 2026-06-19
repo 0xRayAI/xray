@@ -40,7 +40,8 @@ function stripMarkerBlock(content) {
   if (start === -1) return content;
   const end = content.indexOf(MARKER_END);
   if (end === -1) {
-    return `${content.slice(0, start).trimEnd()}\n`;
+    // Incomplete marker — preserve content before START; orphan tail handled in merge
+    return content.slice(0, start).trimEnd();
   }
   const tail = content.slice(end + MARKER_END.length);
   return `${content.slice(0, start).trimEnd()}${tail}`.trimEnd();
@@ -77,8 +78,15 @@ function applyConsumerGitignore(targetDir, packageRoot) {
     return "unchanged";
   }
 
+  const hasIncompleteMarker =
+    raw.includes(MARKER_START) && !raw.includes(MARKER_END);
+  const orphanTail = hasIncompleteMarker
+    ? raw.slice(raw.indexOf(MARKER_START)).trimEnd()
+    : "";
   const content = stripMarkerBlock(raw);
-  const next = `${content.trimEnd()}\n\n${buildMarkerBlock()}\n`;
+  const next = orphanTail
+    ? `${content.trimEnd()}\n\n${buildMarkerBlock()}\n\n${orphanTail}\n`
+    : `${content.trimEnd()}\n\n${buildMarkerBlock()}\n`;
   fs.writeFileSync(gitignoreDest, next);
   return "merged";
 }

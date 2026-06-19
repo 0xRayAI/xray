@@ -21,7 +21,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "fs";
 import { join, dirname } from "path";
-import { execSync, exec } from "child_process";
+import { execSync, exec, execFileSync } from "child_process";
 
 // ── Parse arguments ──────────────────────────────────────────
 
@@ -148,12 +148,16 @@ function runTypeScriptCheck(files) {
     const tsFiles = files.filter((f) => /\.(ts|tsx)$/.test(f));
     if (tsFiles.length > 0 && tsFiles.length <= 20) {
       try {
-        execSync(`${tscCmd} --noEmit ${tsFiles.map((f) => `"${f}"`).join(" ")}`, {
-          cwd: projectRoot,
-          encoding: "utf-8",
-          timeout: 30000,
-          stdio: ["pipe", "pipe", "pipe"],
-        });
+        execFileSync(
+          tscCmd,
+          ["--noEmit", ...tsFiles],
+          {
+            cwd: projectRoot,
+            encoding: "utf-8",
+            timeout: 30000,
+            stdio: ["pipe", "pipe", "pipe"],
+          },
+        );
         log(`TypeScript check passed: ${tsFiles.length} files`);
         return { passed: true, errors: [] };
       } catch (err) {

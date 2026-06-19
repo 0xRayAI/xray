@@ -290,6 +290,7 @@ async function handleGetCodexPrompt(input, projectRoot, logDir) {
 
 async function handleGetConfig(input, projectRoot, logDir) {
   logToActivity(logDir, "get-config");
+  const envDir = process.env.XRAY_CONFIG_DIR;
 
   const result = {
     status: "ok",

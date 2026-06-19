@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 /**
- * Emit shell exports for post-commit auto-reflection thresholds.
+ * Emit reflection config for post-commit hook.
  * SSOT: synthesis.reflection, fallback auto_reflection.
+ *
+ * Usage:
+ *   node load-reflection-config.mjs          # shell-safe export lines
+ *   node load-reflection-config.mjs --json   # JSON for hook parsers
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+
+const ALLOWED_MODES = new Set(['minimal', 'full', 'off']);
 
 const root = process.env.PROJECT_ROOT || process.cwd();
 const configPath = join(root, '.xray', 'features.json');
@@ -20,7 +26,8 @@ if (existsSync(configPath)) {
     const parsed = JSON.parse(readFileSync(configPath, 'utf8'));
     const reflection = parsed.synthesis?.reflection ?? parsed.auto_reflection;
     if (reflection) {
-      mode = reflection.mode ?? 'minimal';
+      const rawMode = reflection.mode ?? 'minimal';
+      mode = ALLOWED_MODES.has(rawMode) ? rawMode : 'minimal';
       const thresholds = reflection.thresholds?.[mode];
       if (thresholds) {
         if (typeof thresholds.commit_threshold === 'number') {
@@ -50,8 +57,21 @@ if (mode === 'off') {
   promptUser = false;
 }
 
-console.log(`export MODE="${mode}"`);
-console.log(`export COMMIT_THRESHOLD="${commitThreshold}"`);
-console.log(`export DAYS_THRESHOLD="${daysThreshold}"`);
-console.log(`export AUTO_GENERATE="${autoGenerate}"`);
-console.log(`export PROMPT_USER="${promptUser}"`);
+const config = {
+  mode,
+  commitThreshold,
+  daysThreshold,
+  autoGenerate,
+  promptUser,
+};
+
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify(config));
+  process.exit(0);
+}
+
+console.log(`MODE=${mode}`);
+console.log(`COMMIT_THRESHOLD=${commitThreshold}`);
+console.log(`DAYS_THRESHOLD=${daysThreshold}`);
+console.log(`AUTO_GENERATE=${autoGenerate}`);
+console.log(`PROMPT_USER=${promptUser}`);

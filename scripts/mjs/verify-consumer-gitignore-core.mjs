@@ -51,6 +51,23 @@ try {
   if (again === 'unchanged' || again === 'merged') pass('idempotent re-run');
   else fail('idempotent', again);
 
+  const corrupt = mkdtempSync(join(tmpdir(), 'xray-gitignore-corrupt-'));
+  try {
+    writeFileSync(
+      join(corrupt, '.gitignore'),
+      '# rules\nbuild/\n# --- 0xray suit (postinstall) ---\n.grok/\n# user tail must stay\n',
+    );
+    applyConsumerGitignore(corrupt, packageRoot);
+    const corruptContent = readFileSync(join(corrupt, '.gitignore'), 'utf8');
+    if (corruptContent.includes('build/') && corruptContent.includes('# user tail must stay')) {
+      pass('preserves orphan tail after incomplete marker');
+    } else {
+      fail('incomplete marker orphan tail', corruptContent);
+    }
+  } finally {
+    rmSync(corrupt, { recursive: true, force: true });
+  }
+
   const fresh = mkdtempSync(join(tmpdir(), 'xray-gitignore-fresh-'));
   try {
     const freshResult = applyConsumerGitignore(fresh, packageRoot);

@@ -5,10 +5,12 @@
  */
 
 import {
+  evaluatePreToolGate,
+  loadDelegationGateFeatures,
+} from '../../hooks/delegation-gate-runtime.mjs';
+import {
   checkCodexPatterns,
   checkFullTestSuite,
-  checkPendingDelegationGate,
-  checkSubagentGate,
   checkSurfaceArea,
   ensureSessionBoot,
   isShellTool,
@@ -44,44 +46,26 @@ async function main() {
     ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
     const features = loadFeatures();
+    const gateFeatures = loadDelegationGateFeatures(eventRoot);
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;
     const { paths, content, cmd, toolInput } = ctx;
     const sessionId = resolveSessionId(event);
 
-    const delegationBlock = checkPendingDelegationGate(
-      toolName,
-      toolInput,
-      features,
-      eventRoot,
+    const gateBlock = evaluatePreToolGate(toolName, toolInput, {
+      projectRoot: eventRoot,
       sessionId,
-    );
-    if (delegationBlock) {
+      features: gateFeatures,
+      host: 'grok',
+    });
+    if (!gateBlock.allow) {
       finish(
         eventRoot,
         'deny',
-        delegationBlock.reason,
-        delegationBlock.hint,
+        gateBlock.reason,
+        gateBlock.hint,
         toolName,
-        { gate: delegationBlock.gate },
-      );
-    }
-
-    const subagentBlock = checkSubagentGate(
-      toolName,
-      features,
-      eventRoot,
-      sessionId,
-      toolInput,
-    );
-    if (subagentBlock) {
-      finish(
-        eventRoot,
-        'deny',
-        subagentBlock.reason || subagentBlock,
-        subagentBlock.hint || null,
-        toolName,
-        { gate: subagentBlock.gate || 'spawn-gate' },
+        { gate: gateBlock.gate },
       );
     }
 
@@ -110,7 +94,14 @@ async function main() {
       tool: toolName,
       error: err.message,
     });
-    finish(root, 'allow', null, null, toolName);
+    finish(
+      root,
+      'deny',
+      `PreToolUse hook error — blocked for safety: ${err.message}`,
+      null,
+      toolName,
+      { gate: 'hook-error' },
+    );
   }
 }
 
