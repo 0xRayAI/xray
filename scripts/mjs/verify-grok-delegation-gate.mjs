@@ -1,0 +1,137 @@
+#!/usr/bin/env node
+/**
+ * Hook fixture verify — PreToolUse delegation gate with seeded pending-delegations.json.
+ * Run: node scripts/mjs/verify-grok-delegation-gate.mjs
+ */
+import { execSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageRoot = join(__dirname, '../..');
+const preToolHook = join(packageRoot, 'dist/integrations/grok/hooks/pre-tool-use.js');
+
+let failed = 0;
+function pass(n) {
+  console.log(`✅ ${n}`);
+}
+function fail(n, d = '') {
+  failed++;
+  console.error(`❌ ${n}${d ? ` — ${d}` : ''}`);
+}
+
+function runHook(fixture, env = {}) {
+  const payload = JSON.stringify(fixture);
+  const out = execSync(`printf '%s' '${payload.replace(/'/g, "'\\''")}' | node "${preToolHook}"`, {
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
+  });
+  return JSON.parse(out.trim());
+}
+
+const tmp = mkdtempSync(join(tmpdir(), 'xray-gate-verify-'));
+mkdirSync(join(tmp, '.xray', 'state'), { recursive: true });
+writeFileSync(
+  join(tmp, '.xray', 'features.json'),
+  JSON.stringify({
+    multi_agent_orchestration: {
+      enabled: true,
+      lead_dev_mode: true,
+      auto_chain_delegations: true,
+    },
+  }),
+);
+writeFileSync(
+  join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+  JSON.stringify({ active: true }),
+);
+writeFileSync(
+  join(tmp, '.xray', 'state', 'pending-delegations.json'),
+  JSON.stringify({
+    sessionId: 'verify-gate',
+    createdAt: new Date().toISOString(),
+    ttlMs: 14400000,
+    delegations: [
+      {
+        id: 'del-verify',
+        taskId: 'impl-1',
+        agent: 'backend-engineer',
+        taskDescription: 'implement',
+        taskType: 'implement',
+        sessionId: 'verify-gate',
+        planTodoId: '2.1',
+        planTodoTask: 'swap deps',
+        matchMethod: 'agent-only',
+        matchConfidence: 0.5,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        satisfiedAt: null,
+        spawnHint: {
+          tool: 'Task',
+          subagent_type: 'backend-engineer',
+          description: 'Lead-dev delegation 2.1',
+          planTodoId: '2.1',
+          delegationId: 'del-verify',
+        },
+      },
+    ],
+  }),
+);
+
+const baseEnv = {
+  GROK_WORKSPACE_ROOT: tmp,
+  GROK_SESSION_ID: 'verify-gate',
+};
+
+try {
+  const deny = runHook(
+    {
+      toolName: 'search_replace',
+      workspaceRoot: tmp,
+      sessionId: 'verify-gate',
+      toolInput: { path: 'src/a.ts', new_string: 'x' },
+    },
+    baseEnv,
+  );
+  if (deny.decision === 'deny' && deny.gate === 'auto-chain-pending') {
+    pass('PreToolUse denies write while pending');
+  } else {
+    fail('write deny', JSON.stringify(deny));
+  }
+
+  const allowRead = runHook(
+    {
+      toolName: 'read_file',
+      workspaceRoot: tmp,
+      sessionId: 'verify-gate',
+      toolInput: { path: 'src/a.ts' },
+    },
+    baseEnv,
+  );
+  if (allowRead.decision === 'allow') pass('PreToolUse allows read while pending');
+  else fail('read allow', JSON.stringify(allowRead));
+
+  const allowTask = runHook(
+    {
+      toolName: 'Task',
+      workspaceRoot: tmp,
+      sessionId: 'verify-gate',
+      toolInput: { prompt: 'plan todo 2.1', subagent_type: 'backend-engineer' },
+    },
+    baseEnv,
+  );
+  if (allowTask.decision === 'allow') pass('PreToolUse allows Task while pending');
+  else fail('Task allow', JSON.stringify(allowTask));
+} finally {
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+console.log(
+  '\n' +
+    (failed === 0
+      ? '🎉 Grok delegation gate verify passed (3/3).'
+      : `⚠️  ${failed} gate check(s) failed.`),
+);
+process.exit(failed === 0 ? 0 : 1);

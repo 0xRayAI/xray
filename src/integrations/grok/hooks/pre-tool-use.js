@@ -7,6 +7,7 @@
 import {
   checkCodexPatterns,
   checkFullTestSuite,
+  checkPendingDelegationGate,
   checkSubagentGate,
   checkSurfaceArea,
   ensureSessionBoot,
@@ -14,18 +15,20 @@ import {
   isWriteTool,
   loadFeatures,
   readStdinJson,
+  resolveSessionId,
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
 
-function finish(root, decision, reason, hint, toolName) {
-  const out = { decision };
+function finish(root, decision, reason, hint, toolName, extra = {}) {
+  const out = { decision, ...extra };
   if (reason) out.reason = reason;
   if (hint) out.hint = hint;
   console.log(JSON.stringify(out));
   appendHookActivity(root, 'grok-pre-tool-use', decision, decision === 'deny' ? 'error' : 'info', {
     tool: toolName,
     reason: reason || hint || null,
+    gate: extra.gate || null,
     livePath: true,
   });
   process.exit(0);
@@ -43,7 +46,26 @@ async function main() {
     const features = loadFeatures();
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;
-    const { paths, content, cmd } = ctx;
+    const { paths, content, cmd, toolInput } = ctx;
+    const sessionId = resolveSessionId(event);
+
+    const delegationBlock = checkPendingDelegationGate(
+      toolName,
+      toolInput,
+      features,
+      eventRoot,
+      sessionId,
+    );
+    if (delegationBlock) {
+      finish(
+        eventRoot,
+        'deny',
+        delegationBlock.reason,
+        delegationBlock.hint,
+        toolName,
+        { gate: delegationBlock.gate },
+      );
+    }
 
     const subagentBlock = checkSubagentGate(toolName, features);
     if (subagentBlock) finish(eventRoot, 'deny', subagentBlock, null, toolName);
@@ -95,6 +117,7 @@ function extractFromEvent(event) {
 
   return {
     toolName,
+    toolInput,
     paths,
     content,
     cmd: String(toolInput.command || ''),

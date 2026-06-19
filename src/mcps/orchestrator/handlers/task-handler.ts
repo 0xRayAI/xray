@@ -9,6 +9,11 @@ import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { mcpClientManager } from '../../../mcps/mcp-client.js';
 import { addObservations, extractOrchestrationObservations, spawnAside } from '../aside-context.js';
 import { getProvider } from '../config/memory-routing-bridge.js';
+import {
+  delegationSummaryForResponse,
+  recordDeferredDelegations,
+  type PendingDelegation,
+} from '../../../nucleus/pending-delegations.js';
 import type { OrchestrationResult, OrchestrationTask } from '../types.js';
 
 export interface TaskHandlerDeps {
@@ -66,6 +71,7 @@ export class TaskHandler {
     };
 
     const startTime = Date.now();
+    let pendingDelegations: PendingDelegation[] = [];
 
     try {
       // Validate tasks
@@ -89,6 +95,16 @@ export class TaskHandler {
       }
 
       const results = await this.executePlan(executionPlan, sessionId, timeout);
+
+      if (results.deferredRecords.length > 0) {
+        pendingDelegations = recordDeferredDelegations(sessionId, results.deferredRecords);
+        await frameworkLogger.log(
+          'orchestrator.task-handler',
+          'pending-delegations-recorded',
+          'info',
+          { count: pendingDelegations.length, sessionId },
+        );
+      }
 
       // Feed per-task outcomes back to memory provider (not aggregate session stats)
       if (memoryProvider.ingestFeedback) {
@@ -150,7 +166,12 @@ export class TaskHandler {
 
     orchestrationResult.duration = Date.now() - startTime;
 
-    const response = this.formatOrchestrationResponse(description, orchestrationResult, executionMode);
+    const response = this.formatOrchestrationResponse(
+      description,
+      orchestrationResult,
+      executionMode,
+      pendingDelegations,
+    );
 
     return { content: [{ type: 'text', text: response }] };
   }
@@ -173,6 +194,12 @@ export class TaskHandler {
     bottlenecks: string[];
     recommendations: string[];
     agentOutputs?: Record<string, string>;
+    deferredRecords: Array<{
+      taskId: string;
+      agent: string;
+      description: string;
+      type?: string;
+    }>;
     taskOutcomes: Array<{
       taskId: string;
       agent: string;
@@ -185,6 +212,12 @@ export class TaskHandler {
     let failedTasks = 0;
     let deferredTasks = 0;
     const agentOutputs: Record<string, string> = {};
+    const deferredRecords: Array<{
+      taskId: string;
+      agent: string;
+      description: string;
+      type?: string;
+    }> = [];
     const taskOutcomes: Array<{
       taskId: string;
       agent: string;
@@ -245,6 +278,12 @@ export class TaskHandler {
       } else {
         for (const task of tasks) {
           deferredTasks++;
+          deferredRecords.push({
+            taskId: task.id,
+            agent,
+            description: task.description,
+            type: task.type,
+          });
           taskOutcomes.push({
             taskId: task.id,
             agent,
@@ -288,6 +327,7 @@ export class TaskHandler {
       bottlenecks,
       recommendations,
       agentOutputs,
+      deferredRecords,
       taskOutcomes,
     };
   }
@@ -329,8 +369,18 @@ export class TaskHandler {
   private formatOrchestrationResponse(
     description: string,
     result: OrchestrationResult,
-    executionMode: string
+    executionMode: string,
+    pendingDelegations: PendingDelegation[] = [],
   ): string {
+    const delegationsBlock =
+      pendingDelegations.length > 0
+        ? `\n**Delegations (host Task required):**\n\`\`\`json\n${JSON.stringify(
+            { delegations: delegationSummaryForResponse(pendingDelegations) },
+            null,
+            2,
+          )}\n\`\`\`\n`
+        : '';
+
     return `🎯 Orchestration Complete: "${description}"
 
 **Session ID:** ${result.sessionId}
@@ -355,6 +405,6 @@ ${result.recommendations.length > 0 ? result.recommendations.map((r) => `• �
 
 ${result.agentOutputs && Object.keys(result.agentOutputs).length > 0 
   ? `**Agent Outputs (real MCP responses):**\n${Object.entries(result.agentOutputs).map(([k, v]) => `• ${k}: ${v.substring(0, 200)}${v.length > 200 ? '...' : ''}`).join('\n')}\n`
-  : ''}`;
+  : ''}${delegationsBlock}`;
   }
 }

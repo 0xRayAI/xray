@@ -80,6 +80,8 @@ export interface MultiAgentOrchestrationConfig {
   auto_consult_major_work?: boolean;
   /** Codex 69 — block new MCP/skill/handler files via PreToolUse (default true) */
   no_new_surface?: boolean;
+  /** 3.5.0 — PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
+  auto_chain_delegations?: boolean;
 }
 
 export interface AutonomousReportingConfig {

@@ -126,7 +126,8 @@
     "safe-publish": "npm run prepare-consumer && npm run build",
     "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",
     "release:patch": "node scripts/node/release.mjs patch",
-    "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs"
+    "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs",
+    "verify:grok-delegation-gate": "npm run build && node scripts/mjs/verify-grok-delegation-gate.mjs"
   },
   "files": [
     "dist/",
@@ -139,6 +140,7 @@
     "scripts/mjs/validate-mcp-connectivity.cjs",
     "scripts/mjs/validate-postinstall-config.mjs",
     "scripts/mjs/verify-orchestrator-behavior.mjs",
+    "scripts/mjs/verify-grok-delegation-gate.mjs",
     "src/opencode/",
     "src/opencode/codex.codex",
     "src/opencode/commands/",

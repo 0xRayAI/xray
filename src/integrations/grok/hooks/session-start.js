@@ -6,8 +6,10 @@
 
 import {
   buildSessionBootPayload,
+  clearPendingDelegationsForSessionChange,
   ensureSessionBoot,
   readStdinJson,
+  resolveSessionId,
   workspaceRoot,
   writeSessionBoot,
 } from './grok-hook-utils.js';
@@ -20,6 +22,12 @@ async function main() {
   try {
     const event = await readStdinJson();
     const eventRoot = event.workspaceRoot || event.cwd || root;
+    const sessionId = resolveSessionId(event);
+    if (clearPendingDelegationsForSessionChange(sessionId, eventRoot)) {
+      appendHookActivity(eventRoot, 'grok-session-start', 'stale-pending-cleared', 'info', {
+        sessionId,
+      });
+    }
     const source =
       HOOK_EVENT === 'user_prompt_submit'
         ? '0xray/grok-user-prompt-submit'

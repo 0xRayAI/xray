@@ -42,6 +42,21 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/post-tool-use.js"
+            ],
+            "timeout": 15000
+          }
+        ]
+      }
     ]
   }
 }

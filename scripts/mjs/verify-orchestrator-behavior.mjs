@@ -3,6 +3,7 @@
  * Consumer behavior verify — orchestrator honesty (ships in 0xray tarball).
  * Run: node node_modules/0xray/scripts/mjs/verify-orchestrator-behavior.mjs
  */
+import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
@@ -113,10 +114,55 @@ if (text.includes('Deferred') && text.includes('❌ FAILED')) {
   fail('defer honesty', text.slice(0, 200));
 }
 
+// 6. delegations[] block in response
+if (text.includes('delegations') && text.includes('spawnHint')) {
+  pass('orchestrate-task includes delegations[] JSON block');
+} else {
+  fail('delegations block', 'missing JSON delegations in response');
+}
+
+// 7. pending-delegations.json written on defer
+const pendingPath = join(packageRoot, '.xray', 'state', 'pending-delegations.json');
+if (existsSync(pendingPath)) {
+  try {
+    const pending = JSON.parse(readFileSync(pendingPath, 'utf8'));
+    if (pending.delegations?.some((d) => d.status === 'pending' && d.agent === 'backend-engineer')) {
+      pass('pending-delegations.json recorded on defer');
+    } else {
+      fail('pending file content', 'no pending backend-engineer delegation');
+    }
+  } catch (e) {
+    fail('pending file parse', e.message);
+  }
+} else {
+  fail('pending-delegations.json', 'file missing after defer');
+}
+
+// 8. spawnHint includes Task tool
+try {
+  const match = text.match(/```json\n([\s\S]*?)\n```/);
+  const block = match ? JSON.parse(match[1]) : null;
+  const hint = block?.delegations?.[0]?.spawnHint;
+  if (hint?.tool === 'Task' && hint?.subagent_type) {
+    pass('delegations spawnHint routes to host Task');
+  } else {
+    fail('spawnHint', JSON.stringify(hint));
+  }
+} catch (e) {
+  fail('spawnHint parse', e.message);
+}
+
+try {
+  if (existsSync(pendingPath)) unlinkSync(pendingPath);
+} catch {
+  /* cleanup best-effort */
+}
+
+const total = 8;
 console.log(
   '\n' +
     (failed === 0
-      ? '🎉 Orchestrator behavior verify passed (5/5).'
+      ? `🎉 Orchestrator behavior verify passed (${total}/${total}).`
       : `⚠️  ${failed} behavior check(s) failed.`),
 );
 process.exit(failed === 0 ? 0 : 1);

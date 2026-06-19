@@ -90,9 +90,15 @@ export function loadFeatures() {
       lead_dev_mode: orch.enabled !== false && orch.lead_dev_mode !== false,
       no_new_surface: orch.no_new_surface !== false,
       per_suite_test_triage: orch.per_suite_test_triage !== false,
+      auto_chain_delegations: orch.auto_chain_delegations !== false,
     };
   } catch {
-    return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
+    return {
+      lead_dev_mode: true,
+      no_new_surface: true,
+      per_suite_triage: true,
+      auto_chain_delegations: true,
+    };
   }
 }
 
@@ -258,4 +264,225 @@ export function ensureSessionBoot(root = workspaceRoot(), source = '0xray/grok-b
     }
   }
   return writeSessionBoot(root, buildSessionBootPayload(root, source));
+}
+
+const READ_TOOLS = new Set([
+  'read_file',
+  'Read',
+  'grep',
+  'Grep',
+  'glob',
+  'Glob',
+  'list_dir',
+  'ListDir',
+  'web_search',
+  'WebSearch',
+  'codebase_search',
+  'SemanticSearch',
+]);
+
+const ORCHESTRATOR_CONSULT_TOOLS = new Set([
+  'analyze-complexity',
+  'analyze_complexity',
+  'get-orchestration-status',
+  'get_orchestration_status',
+  'orchestrate-task',
+  'orchestrate_task',
+]);
+
+export function pendingDelegationsPath(root = workspaceRoot()) {
+  return path.join(root, '.xray', 'state', 'pending-delegations.json');
+}
+
+export function loadPendingDelegationsState(root = workspaceRoot()) {
+  const filePath = pendingDelegationsPath(root);
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+export function savePendingDelegationsState(state, root = workspaceRoot()) {
+  const filePath = pendingDelegationsPath(root);
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+}
+
+export function resolveSessionId(event) {
+  return (
+    event.sessionId ||
+    process.env.GROK_SESSION_ID ||
+    null
+  );
+}
+
+export function isPendingStateActive(state, sessionId) {
+  if (!state || !sessionId || state.sessionId !== sessionId) return false;
+  const age = Date.now() - new Date(state.createdAt).getTime();
+  if (age > (state.ttlMs ?? 4 * 60 * 60 * 1000)) return false;
+  return state.delegations?.some((d) => d.status === 'pending');
+}
+
+export function getActivePendingDelegations(root, sessionId) {
+  const state = loadPendingDelegationsState(root);
+  if (!isPendingStateActive(state, sessionId)) return [];
+  return state.delegations.filter((d) => d.status === 'pending');
+}
+
+export function clearPendingDelegationsForSessionChange(newSessionId, root = workspaceRoot()) {
+  const state = loadPendingDelegationsState(root);
+  if (!state) return false;
+  if (newSessionId && state.sessionId === newSessionId) return false;
+  try {
+    fs.unlinkSync(pendingDelegationsPath(root));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isFocusedTestCommand(cmd) {
+  const cmdText = (cmd || '').toLowerCase();
+  return (
+    /\b(npm\s+(run\s+)?test|vitest\s+run|pnpm\s+test|yarn\s+test)\b/.test(cmdText) &&
+    (/--\s+\S+\.test/.test(cmdText) || /vitest\s+run\s+\S+\.test/.test(cmdText))
+  );
+}
+
+function isReadOnlyTool(toolName) {
+  return READ_TOOLS.has(toolName) || /^(read|grep|glob|list)/i.test(toolName);
+}
+
+export function isSubagentTool(toolName) {
+  return SUBAGENT_TOOLS.has(toolName) || /^task$/i.test(toolName) || toolName === 'spawn_subagent';
+}
+
+function extractMcpToolName(toolInput) {
+  const candidates = [
+    toolInput.toolName,
+    toolInput.tool,
+    toolInput.name,
+    toolInput.mcpToolName,
+  ];
+  for (const c of candidates) {
+    if (c) return String(c);
+  }
+  const server = String(toolInput.server || toolInput.mcpServer || '');
+  const args = toolInput.arguments ?? toolInput.args ?? {};
+  if (args.toolName) return String(args.toolName);
+  if (server.includes('orchestrator') && args.name) return String(args.name);
+  return '';
+}
+
+function isOrchestratorConsultMcp(toolName, toolInput) {
+  if (!/mcp|CallMcpTool/i.test(toolName)) return false;
+  const inner = extractMcpToolName(toolInput).toLowerCase();
+  if (!inner) return false;
+  for (const t of ORCHESTRATOR_CONSULT_TOOLS) {
+    if (inner.includes(t) || inner.includes(t.replace(/-/g, '_'))) return true;
+  }
+  return false;
+}
+
+export function isOrchestrateToolEvent(toolName, toolInput = {}) {
+  const inner = extractMcpToolName(toolInput).toLowerCase();
+  if (/orchestrate[-_]?task/.test(inner)) return true;
+  const blob = JSON.stringify(toolInput).toLowerCase();
+  return /orchestrate[-_]?task/.test(blob);
+}
+
+export function satisfyDelegationsFromToolInput(toolInput, root = workspaceRoot()) {
+  const state = loadPendingDelegationsState(root);
+  if (!state) return { satisfied: [], clearedAll: false };
+
+  const prompt = String(
+    toolInput.prompt || toolInput.description || toolInput.task || '',
+  ).toLowerCase();
+  const subagent = String(toolInput.subagent_type || toolInput.agent || '').toLowerCase();
+  const delegationId = toolInput.delegationId || toolInput.delegation_id;
+
+  const pending = state.delegations.filter((d) => d.status === 'pending');
+  if (pending.length === 0) return { satisfied: [], clearedAll: false };
+
+  let matches = [];
+  if (delegationId) {
+    matches = pending.filter((d) => d.id === delegationId);
+  } else {
+    for (const d of pending) {
+      if (d.planTodoId && prompt.includes(d.planTodoId.toLowerCase())) {
+        matches.push(d);
+        break;
+      }
+      if (prompt.includes(d.taskId.toLowerCase())) {
+        matches.push(d);
+        break;
+      }
+      if (subagent && d.agent.toLowerCase().includes(subagent)) {
+        matches.push(d);
+        break;
+      }
+    }
+  }
+
+  if (matches.length === 0 && pending.length === 1) {
+    const only = pending[0];
+    const hint = (only.spawnHint?.description || '').toLowerCase();
+    if (prompt && hint && prompt.includes(hint.slice(0, 30))) {
+      matches = [only];
+    }
+  }
+
+  if (matches.length === 0) return { satisfied: [], clearedAll: false };
+
+  const now = new Date().toISOString();
+  const ids = new Set(matches.map((m) => m.id));
+  for (const d of state.delegations) {
+    if (ids.has(d.id) && d.status === 'pending') {
+      d.status = 'satisfied';
+      d.satisfiedAt = now;
+    }
+  }
+  savePendingDelegationsState(state, root);
+  const clearedAll = !state.delegations.some((d) => d.status === 'pending');
+  return { satisfied: matches, clearedAll };
+}
+
+/**
+ * Surgical gate: block writes and unrelated work while pending delegations exist.
+ * Allows read-only tools, orchestrator consult MCP, focused test shell, and Task/spawn.
+ */
+export function checkPendingDelegationGate(toolName, toolInput, features, root, sessionId) {
+  if (!features.lead_dev_mode || features.auto_chain_delegations === false) return null;
+  if (!sessionId) return null;
+
+  const pending = getActivePendingDelegations(root, sessionId);
+  if (pending.length === 0) return null;
+
+  if (isSubagentTool(toolName)) return null;
+
+  if (isReadOnlyTool(toolName)) return null;
+
+  if (isOrchestratorConsultMcp(toolName, toolInput)) return null;
+
+  if (isShellTool(toolName)) {
+    const cmd = String(toolInput.command || '');
+    if (isFocusedTestCommand(cmd)) return null;
+  }
+
+  const primary = pending[0];
+  return {
+    reason: 'Pending implementation delegation — spawn host Task before other work',
+    gate: 'auto-chain-pending',
+    hint: primary.spawnHint ?? {
+      tool: 'Task',
+      subagent_type: primary.agent,
+      description: primary.taskDescription,
+      planTodoId: primary.planTodoId,
+      delegationId: primary.id,
+    },
+    pendingCount: pending.length,
+    delegationId: primary.id,
+  };
 }

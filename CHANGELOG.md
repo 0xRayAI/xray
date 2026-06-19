@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### ✨ Features
+- **3.5.0 auto-chain bridge (PR1)** — `pending-delegations.json` SSOT on `delegate-deferred`; PreToolUse surgical gate blocks writes while pending; PostToolUse logs + targeted clear on Task; session-bound TTL; `delegations[]` in orchestrate response
+
+### ✅ Tests
+- `pending-delegations`, `grok-pending-delegation-gate` unit tests; `verify-grok-delegation-gate.mjs` hook fixture; orchestrator behavior verify 8/8
+
+---
+
 ## [3.4.10] - 2026-06-19
 
 ### 🐛 Bug Fixes
