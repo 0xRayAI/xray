@@ -254,7 +254,9 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
   const siblingRoots = features.sibling_repos ?? resolveSiblingWorkspaceRoots(root);
-  const conferPending = loadConferPending(root);
+  const sessionId =
+    extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
+  const conferPending = loadConferPending(root, sessionId);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
@@ -267,7 +269,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     workspaceRoot: root,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
-    sessionId: process.env.GROK_SESSION_ID || null,
+    sessionId,
     timestamp: new Date().toISOString(),
     source,
     ...extra,

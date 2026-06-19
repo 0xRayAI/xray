@@ -17,6 +17,7 @@ import {
 import {
   hasValidSynthesisConsultReceipt,
   isSynthesisConsultTodoId,
+  loadSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 
 export interface PersistedLeadDevPlan extends LeadDevPlan {
@@ -324,6 +325,10 @@ export function updatePlanTodoStatus(
     if (plan.sessionId !== undefined) receiptExpected.sessionId = plan.sessionId;
     if (targetTodo?.subagent) receiptExpected.subagent = targetTodo.subagent;
     if (!hasValidSynthesisConsultReceipt(todoId, projectRoot, receiptExpected)) {
+      return false;
+    }
+    const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
+    if (receipt?.verdict === 'FAIL') {
       return false;
     }
   }

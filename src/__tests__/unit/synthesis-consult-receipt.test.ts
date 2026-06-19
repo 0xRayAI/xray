@@ -37,6 +37,27 @@ describe('synthesis-consult-receipt', () => {
     expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
   });
 
+  it('blocks consult todo completion when receipt verdict is FAIL', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'FAIL',
+        topRisks: ['critical'],
+        hardeningNote: 'do not ship',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+  });
+
   it('allows consult todo completion with valid receipt', () => {
     writeSynthesisConsultReceipt(
       's.1',
