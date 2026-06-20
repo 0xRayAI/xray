@@ -410,4 +410,66 @@ describe('delegation-gate SSOT', () => {
     );
     expect(spawn.allow).toBe(true);
   });
+
+  it('session-bound active aside does not route spawns for other sessions', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'iso-aside',
+      'Iso',
+      'Session isolation',
+      [{ description: 'work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('iso-aside', tmp, 'session-owner');
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const otherSession = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId: 'session-other', features },
+    );
+    expect(otherSession.allow).toBe(false);
+  });
+
+  it('evaluatePendingDelegationGate allows aside spawn while main pending', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'pend-aside',
+      'Pend',
+      'Pending bypass',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('pend-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
 });

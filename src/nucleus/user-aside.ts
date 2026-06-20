@@ -290,7 +290,9 @@ export function getActiveAsideId(
   if (!isUserAsidesEnabled(projectRoot)) return null;
   const pointer = loadActiveAsidePointer(projectRoot);
   if (!pointer) return null;
-  if (pointer.sessionId && sessionId && pointer.sessionId !== sessionId) return null;
+  if (pointer.sessionId) {
+    if (!sessionId || pointer.sessionId !== sessionId) return null;
+  }
   const aside = loadUserAside(pointer.asideId, projectRoot);
   if (!aside || aside.status !== 'active') return null;
   return pointer.asideId;

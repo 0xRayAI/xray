@@ -165,7 +165,7 @@ export class OrchestratorServer {
           {
             name: 'analyze-complexity',
             description:
-              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. Pass userAsideId to intake a parallel user aside (a.* todos, worktree-like). During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
+              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. Pass userAsideId to intake a parallel user aside ({asideId}.a.* namespaced todos, worktree-like). During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -177,7 +177,7 @@ export class OrchestratorServer {
                 userAsideId: {
                   type: 'string',
                   description:
-                    'User aside id — persists .xray/state/asides/{id}.json with a.* todos (parallel track)',
+                    'User aside id — persists .xray/state/asides/{id}.json with {asideId}.a.* todos (parallel track)',
                 },
                 userAsideTitle: {
                   type: 'string',

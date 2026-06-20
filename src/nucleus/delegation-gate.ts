@@ -41,6 +41,7 @@ import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolut
 import {
   isUserAsidesEnabled,
   isUserAsideTodoId,
+  loadActiveAsidePointer,
   loadActiveUserAside,
 } from './user-aside.js';
 
@@ -320,7 +321,9 @@ export function evaluateSpawnPlanGate(
   }
 
   const activeAside =
-    isUserAsidesEnabled(ctx.projectRoot) ? loadActiveUserAside(ctx.projectRoot) : null;
+    isUserAsidesEnabled(ctx.projectRoot)
+      ? loadActiveUserAside(ctx.projectRoot, ctx.sessionId)
+      : null;
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   if (!activeAside && plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
     return {
@@ -522,7 +525,16 @@ export function evaluatePostToolSpawn(
   options: PostToolSpawnOptions = {},
 ): PostToolSpawnResult {
   const normalized = normalizeHostToolInput(toolInput);
-  const spawnCheck = validateSpawnMatchesTodo(normalized, projectRoot);
+  const pointer = loadActiveAsidePointer(projectRoot);
+  const mainPlan = loadPersistedLeadDevPlan(projectRoot);
+  const sessionId =
+    options.sessionId ?? mainPlan?.sessionId ?? pointer?.sessionId ?? null;
+  const spawnCheck = validateSpawnMatchesTodo(
+    normalized,
+    projectRoot,
+    undefined,
+    sessionId,
+  );
   const satisfyInput: Parameters<typeof satisfyDelegation>[0] = {
     toolPrompt: normalized.prompt ?? '',
   };
@@ -538,8 +550,6 @@ export function evaluatePostToolSpawn(
 
   if (spawnCheck.valid && expectedTodoId) {
     const plan = loadPersistedLeadDevPlan(projectRoot);
-    const sessionId =
-      options.sessionId ?? plan?.sessionId ?? null;
     const consultTodo = plan
       ? getSynthesisConsultTodos(plan).find((t) => t.id === expectedTodoId)
       : undefined;
