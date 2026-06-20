@@ -77,6 +77,16 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 - Observation extractors: governance, orchestration, complexity
 - Repertoire context flows via `ExecutionPlan.memoryContext`
 
+## User asides (parallel work tracks)
+
+**Not** AsideContext — user-declared parallel tracks (worktree-like):
+
+- SSOT: `.xray/state/asides/{id}.json` + `_active.json`; todos use `a.*` prefix
+- Intake: `analyze-complexity` with `userAsideId` (+ optional `worktree`, `branch`)
+- Activate / resume main: `orchestrate-task` with `userAsideId` or `clearActiveAside: true`
+- Spawn gate routes to active aside plan; session-boot exposes `activeAside`
+- Config: `features.json` → `multi_agent_orchestration.user_asides.enabled`
+
 ## Confidence gate (v3.3.1)
 
 `ExecutionPlanner.calculateTaskComplexity()` + `getTaskConfidence()` — complexity boost and ontological-trap routing.

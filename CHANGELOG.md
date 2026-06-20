@@ -6,6 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased] — suit tuning PR (not published)
 
+### ✨ Features
+- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; `a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot `activeAside` hint; `verify:user-aside` 7/7
+
 ### Planned (iterate before next release)
 - **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)
 - **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete

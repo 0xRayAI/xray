@@ -19,6 +19,12 @@ import {
   isSynthesisConsultTodoId,
   loadSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import {
+  isUserAsideTodoId,
+  isUserAsidesEnabled,
+  resolveSpawnPlan,
+  updateUserAsideTodoStatus,
+} from './user-aside.js';
 
 export interface PersistedLeadDevPlan extends LeadDevPlan {
   persistedAt?: string;
@@ -306,6 +312,10 @@ export function updatePlanTodoStatus(
   status: LeadDevTodo['status'],
   projectRoot = process.cwd(),
 ): boolean {
+  if (isUserAsidesEnabled(projectRoot) && isUserAsideTodoId(todoId)) {
+    return updateUserAsideTodoStatus(todoId, status, projectRoot);
+  }
+
   const plan = loadPersistedLeadDevPlan(projectRoot);
   if (!plan) return false;
 
@@ -404,7 +414,11 @@ export function validateSpawnMatchesTodo(
   projectRoot = process.cwd(),
   expectedTodo?: LeadDevTodo | null,
 ): SpawnTodoValidation {
-  const plan = loadPersistedLeadDevPlan(projectRoot);
+  const resolved = isUserAsidesEnabled(projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
+
+  const plan = resolved.plan;
   const nextTodo = expectedTodo ?? (plan ? getNextRequiredTodo(plan) : null);
 
   if (!nextTodo) {
@@ -433,19 +447,30 @@ export function validateSpawnMatchesTodo(
     return { valid: true, expectedTodoId: nextTodo.id };
   }
 
+  const hint: Record<string, unknown> = {
+    tool: 'Task',
+    subagent_type: nextTodo.subagent,
+    planTodoId: nextTodo.id,
+    description:
+      `Lead-dev todo ${nextTodo.id}: ${nextTodo.task}. ` +
+      `Include plan todo id in Task prompt.`,
+  };
+  if (resolved.source === 'aside' && resolved.asideId) {
+    hint.asideId = resolved.asideId;
+    hint.track = 'user-aside';
+    if (resolved.worktree) hint.worktree = resolved.worktree;
+    if (resolved.branch) hint.branch = resolved.branch;
+  }
+
   return {
     valid: false,
-    reason: `Spawn must target plan todo ${nextTodo.id} before other work`,
-    gate: 'spawn-todo-persistence',
+    reason:
+      resolved.source === 'aside'
+        ? `Spawn must target aside todo ${nextTodo.id} (aside ${resolved.asideId}) before other work`
+        : `Spawn must target plan todo ${nextTodo.id} before other work`,
+    gate: resolved.source === 'aside' ? 'aside-spawn-todo' : 'spawn-todo-persistence',
     expectedTodoId: nextTodo.id,
-    hint: {
-      tool: 'Task',
-      subagent_type: nextTodo.subagent,
-      planTodoId: nextTodo.id,
-      description:
-        `Lead-dev todo ${nextTodo.id}: ${nextTodo.task}. ` +
-        `Include plan todo id in Task prompt.`,
-    },
+    hint,
   };
 }
 
@@ -453,8 +478,10 @@ export function markTodoInProgressOnSpawn(
   toolInput: SpawnToolInput,
   projectRoot = process.cwd(),
 ): string | null {
-  const plan = loadPersistedLeadDevPlan(projectRoot);
-  if (!plan) return null;
+  const resolved = isUserAsidesEnabled(projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
+  if (!resolved.plan) return null;
 
   const validation = validateSpawnMatchesTodo(toolInput, projectRoot);
   if (!validation.valid || !validation.expectedTodoId) return null;

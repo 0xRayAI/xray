@@ -19,6 +19,7 @@ import {
   updatePlanTodoStatusInPlace,
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
+import { getActiveUserAsideBoot } from '../../hooks/user-aside-hook-runtime.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -257,6 +258,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const sessionId =
     extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
   const conferPending = loadConferPending(root, sessionId);
+  const userAsideBoot = getActiveUserAsideBoot(root);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
@@ -269,6 +271,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     workspaceRoot: root,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
+    ...(userAsideBoot ?? {}),
     sessionId,
     timestamp: new Date().toISOString(),
     source,

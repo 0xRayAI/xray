@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://0xray.ai/schemas/features.schema.json",
+  "title": "0xRay Features Configuration",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "memory_routing": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "provider": {
+          "type": "string",
+          "enum": ["null", "repertoire", "custom"]
+        },
+        "module_path": { "type": "string" },
+        "config": { "type": "object" }
+      },
+      "required": ["enabled", "provider"],
+      "if": {
+        "properties": {
+          "enabled": { "const": true },
+          "provider": { "enum": ["repertoire", "custom"] }
+        }
+      },
+      "then": {
+        "required": ["module_path"]
+      }
+    },
+    "multi_agent_orchestration": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "lead_dev_mode": { "type": "boolean" },
+        "plan_stale_hours": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Archive lead-dev-plan when all todos still pending after N hours"
+        },
+        "plan_archive_marker_hours": {
+          "type": "number",
+          "minimum": 1,
+          "description": "How long spawn-plan-stale persists after a stale plan was archived (hours)"
+        },
+        "confer_on_synthesis": {
+          "type": "boolean",
+          "description": "Auto-run 3-agent confer quorum at synthesis checkpoint (default true)"
+        },
+        "confer": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "on_synthesis": { "type": "boolean" }
+          },
+          "description": "Mandatory researcher/architect-tools/code-review quorum"
+        },
+        "sibling_repos": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "label": { "type": "string" }
+                },
+                "required": ["path"]
+              }
+            ]
+          },
+          "description": "Sibling workspace roots (e.g. UI repo when MCP host is cwd)"
+        }
+      }
+    },
+    "synthesis": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "every_n_gates": { "type": "integer", "minimum": 0 },
+        "every_n_turns": { "type": "integer", "minimum": 0 },
+        "every_n_todos_completed": { "type": "integer", "minimum": 0 },
+        "reflection": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string", "enum": ["full", "minimal", "off"] },
+            "triggers": { "type": "object" },
+            "thresholds": { "type": "object" }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -37,6 +37,12 @@ import {
   isSynthesisConsultTodoId,
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import {
+  hasValidSpawnPlanContext,
+  isUserAsidesEnabled,
+  loadActiveUserAside,
+  asideToSpawnPlan,
+} from './user-aside.js';
 
 export {
   validateSpawnMatchesTodo,
@@ -312,8 +318,10 @@ export function evaluateSpawnPlanGate(
     return { allow: true };
   }
 
+  const activeAside =
+    isUserAsidesEnabled(ctx.projectRoot) ? loadActiveUserAside(ctx.projectRoot) : null;
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
-  if (plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
+  if (!activeAside && plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
     return {
       allow: false,
       reason:
@@ -324,7 +332,7 @@ export function evaluateSpawnPlanGate(
     };
   }
 
-  if (!hasValidLeadDevPlanForSpawn(ctx.projectRoot, ctx.sessionId)) {
+  if (!hasValidSpawnPlanContext(ctx.projectRoot)) {
     if (findRecentStalePlanArchive(ctx.projectRoot)) {
       return {
         allow: false,
@@ -349,10 +357,13 @@ export function evaluateSpawnPlanGate(
   }
 
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
-  const activePlan = loadPersistedLeadDevPlan(ctx.projectRoot);
+  const spawnPlan =
+    activeAside && activeAside.status === 'active'
+      ? asideToSpawnPlan(activeAside)
+      : loadPersistedLeadDevPlan(ctx.projectRoot);
   const expectedTodo =
-    pending[0]?.planTodoId && activePlan
-      ? allPlanTodos(activePlan).find((t) => t.id === pending[0]!.planTodoId) ?? null
+    pending[0]?.planTodoId && spawnPlan
+      ? allPlanTodos(spawnPlan).find((t) => t.id === pending[0]!.planTodoId) ?? null
       : null;
 
   const validation = validateSpawnMatchesTodo(

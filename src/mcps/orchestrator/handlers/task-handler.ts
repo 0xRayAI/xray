@@ -50,9 +50,68 @@ export class TaskHandler {
       confer?: boolean;
       conferFixture?: boolean;
       collocatedText?: string;
+      userAsideId?: string;
+      setActiveAside?: boolean;
+      clearActiveAside?: boolean;
     },
     deps: TaskHandlerDeps
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
+    if (args.clearActiveAside === true) {
+      const { clearActiveAside, getActiveAsideId } = await import(
+        '../../../nucleus/user-aside.js',
+      );
+      const prior = getActiveAsideId();
+      clearActiveAside();
+      return {
+        content: [
+          {
+            type: 'text',
+            text: prior
+              ? `✅ Cleared active aside \`${prior}\` — spawns resume main lead-dev plan.`
+              : 'ℹ️ No active aside was set.',
+          },
+        ],
+      };
+    }
+
+    if (args.userAsideId?.trim()) {
+      const {
+        setActiveAsideId,
+        loadUserAside,
+        formatUserAsideSummary,
+        isUserAsidesEnabled,
+      } = await import('../../../nucleus/user-aside.js');
+      if (!isUserAsidesEnabled()) {
+        return {
+          content: [{ type: 'text', text: '❌ User asides disabled in features.json' }],
+        };
+      }
+      const asideId = args.userAsideId.trim();
+      const aside = loadUserAside(asideId);
+      if (!aside) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `❌ User aside \`${asideId}\` not found — run analyze-complexity with userAsideId first.`,
+            },
+          ],
+        };
+      }
+      if (args.setActiveAside !== false) {
+        setActiveAsideId(asideId, process.cwd(), args.sessionId ?? null);
+      }
+      return {
+        content: [
+          {
+            type: 'text',
+            text:
+              `✅ Active aside: \`${asideId}\`\n\n${formatUserAsideSummary(aside)}`,
+          },
+        ],
+      };
+    }
+
     if (args.confer === true) {
       const { runConferQuorum, formatConferQuorumReport, isConferEnabled } = await import(
         '../../../nucleus/confer.js',
