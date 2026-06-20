@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-20T20:48:51.177Z",
+  "timestamp": "2026-06-20T20:54:37.049Z",
   "dataLocations": {
     "reflections": [
       "/Users/blaze/dev/xray/docs/reflections/aside-context-integration-analysis.md",
@@ -24,7 +24,6 @@
     ],
     "logs": [
       "/Users/blaze/dev/xray/logs/framework/activity-report.json",
-      "/Users/blaze/dev/xray/logs/framework/activity.log",
       "/Users/blaze/dev/xray/logs/framework/activity.log.orig",
       "/Users/blaze/dev/xray/logs/framework/routing-outcomes.json",
       "/Users/blaze/dev/xray/logs/framework/session-routing.json"

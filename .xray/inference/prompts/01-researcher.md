@@ -24,7 +24,6 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/xray/docs/reflections/v3.4-reboot-readiness.md
 - /Users/blaze/dev/xray/docs/reflections/what-is-v3.md
 - /Users/blaze/dev/xray/logs/framework/activity-report.json
-- /Users/blaze/dev/xray/logs/framework/activity.log
 - /Users/blaze/dev/xray/logs/framework/activity.log.orig
 - /Users/blaze/dev/xray/logs/framework/routing-outcomes.json
 - /Users/blaze/dev/xray/logs/framework/session-routing.json
