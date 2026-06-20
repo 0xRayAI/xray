@@ -1,7 +1,7 @@
 # AsideContext (v3.2+)
 
 ::: warning Not User Asides
-**AsideContext** (this page) is an internal orchestrator subcontext. For user-declared parallel work tracks (worktree-like), see **[User Asides](./user-asides.md)**.
+**AsideContext** (this page) is an internal orchestrator subcontext. For user-declared parallel work tracks (worktree-like), see **[Parallel Work Tracks](./parallel-work-tracks.md)** and **[User Asides](./user-asides.md)**.
 :::
 
 **AsideContext** is a bounded sub-investigation layer in the MCP orchestrator. It lets multi-step orchestration spawn structured subcontexts that inherit session state, accumulate observations from governance/orchestration/complexity flows, and feed results back into the pipeline.

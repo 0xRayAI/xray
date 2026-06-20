@@ -74,6 +74,7 @@ Optional: **`@0xray/repertoire` MCP** for external hosts — see [Repertoire](./
 | Platform bridges (4) | [Integrations](./guides/integrations.md) |
 | `features.json` / `memory_routing` | [features.json](./guides/features-json.md) |
 | Repertoire deep memory | [Repertoire](./guides/repertoire.md) |
+| Parallel work (Grok + asides) | [Parallel Work Tracks](./guides/parallel-work-tracks.md) |
 | AsideContext subcontexts | [AsideContext](./guides/aside-context.md) |
 | Full changelog | [Features Since 3.1](./guides/features-since-3.1.md) |
 
@@ -84,6 +85,9 @@ Optional: **`@0xray/repertoire` MCP** for external hosts — see [Repertoire](./
 - [Features Since 3.1](./guides/features-since-3.1.md)
 - [features.json Reference](./guides/features-json.md)
 - [Memory Routing](./guides/memory-routing.md)
+- [Parallel Work Tracks](./guides/parallel-work-tracks.md)
+- [User Asides](./guides/user-asides.md)
+- [User Asides Roadmap](./guides/user-asides-roadmap.md)
 - [AsideContext](./guides/aside-context.md)
 - [Repertoire Integration](./guides/repertoire.md)
 - [Consumer Migration (v3.4+)](./guides/consumer-migration.md)
