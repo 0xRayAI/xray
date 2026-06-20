@@ -122,4 +122,29 @@ describe('confer quorum SSOT', () => {
     expect(applied.todoCompleted).toBe(true);
     expect(formatConferQuorumReport({ status: 'completed', agents: [applied], message: 'ok' })).toContain('s.1');
   });
+
+  it('formatConferQuorumReport includes agent emoji panel', () => {
+    const report = formatConferQuorumReport({
+      status: 'completed',
+      message: 'quorum ok',
+      agents: [
+        {
+          todoId: 's.1',
+          subagent: 'researcher',
+          verdict: 'PASS',
+          receiptRecorded: true,
+          todoCompleted: true,
+        },
+        {
+          todoId: 's.2',
+          subagent: 'architect-tools',
+          verdict: 'PASS',
+          receiptRecorded: true,
+          todoCompleted: true,
+        },
+      ],
+    });
+    expect(report).toContain('🔍');
+    expect(report).toContain('🏗️');
+  });
 });

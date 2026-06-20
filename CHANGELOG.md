@@ -4,32 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [Unreleased] — suit tuning PR (not published)
-
-### ✨ Features
-- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; namespaced `{asideId}.a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot hints; synthesis/pending bypass for aside spawns; `verify:user-aside` 9/9; docs `guides/user-asides.md`
-
-### Planned (iterate before next release)
-- **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)
-- **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
-- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
-- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
-- **Pre-push codex** — commit-range diff scope via `COMMIT_RANGE`; `verify:pre-push-diff` 2/2
-- **Confer quorum** — `confer.ts` SSOT; auto-runs at synthesis `analyze-complexity` (researcher → architect-tools → code-review); `verify:confer` 7/7; config `confer_on_synthesis` (default true); session-boot `conferPending` hint
-- **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced (`hooks/post-commit`, install template)
-- **Multi-repo boot** — `sibling_repos` in `session-boot.json` (discovery metadata for 0xray consumer workspaces)
-- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
-- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
-
----
-
 ## [3.5.4] - 2026-06-19
 
 ### ✨ Features
 - **Synthesis consult receipt gate** — s.1–s.3 todos require `.xray/state/synthesis-consult-{id}.json` before completion; `evaluatePostToolSpawn` records receipts from subagent output; Grok post-tool hook wired
+- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; namespaced `{asideId}.a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot hints; synthesis/pending bypass for aside spawns; `verify:user-aside` 9/9; docs `guides/user-asides.md`
+- **Confer quorum** — `confer.ts` SSOT; auto-runs at synthesis `analyze-complexity` (researcher → architect-tools → code-review); `verify:confer` 7/7; config `confer_on_synthesis` (default true); session-boot `conferPending` hint; emoji agent panel in quorum report
+- **Pipeline integration (P0–P2)** — enforcement-gate `{ proposals: [...] }` shape; `applyDecisionMatrix` + `calculateMetamorphosisScore` in `GovernanceService`; Grok `pipeline-hook-runtime.mjs` (reflection stubs, routing outcomes, reporting, inference-improvement light); `SelfProposalEngine` wired in PostProcessor; aside worktree cwd warn in delegation-gate; `autonomous_reporting` config key fix in SessionSummaryProcessor
+- **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
+- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
+- **Pre-commit / pre-push codex** — diff-hunk and commit-range scope verifiers (`verify:pre-commit-diff`, `verify:pre-push-diff`)
+- **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced
+- **Multi-repo boot** — `sibling_repos` in `session-boot.json`
+
+### 🔄 Changes
+- **autonomy-command.md** — SSOT is `analyze-complexity` + `multi_agent_orchestration`; removed stale `autonomy-intake` / `autonomy_kernel` references
 
 ### ✅ Tests
 - `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
+- `governance-service-metamorphosis.test.ts`; `confer.test.ts` emoji panel
+
+---
+
+## [Unreleased]
+
+### Planned (iterate before next release)
+- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
+- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
+- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
+- **grok_postprocessor_light** — opt-in marker + activity.log on Grok write tools (full PP subset deferred)
+- **P2 session capture** — git post-commit → `captureSessionInference` when threshold met
 
 ---
 

@@ -321,12 +321,23 @@ export async function afterToolHook(
       const result = _result as Record<string, unknown> | null;
       if (result && typeof result === "object" && "title" in result && "description" in result) {
         const { handleGovernRequest } = await import("../nucleus/index.js");
+        const localMode =
+          process.env.XRAY_LOCAL_MODE === "1" || process.env.XRAY_LOCAL_MODE === "true";
         const governanceResult = await handleGovernRequest({
-          proposalId: `gate-${Date.now()}`,
-          title: String(result.title || ""),
-          description: String(result.description || ""),
-          type: String(result.type || "fix"),
-          content: result,
+          proposals: [
+            {
+              id: `gate-${Date.now()}`,
+              type: (String(result.type || "fix") as import("../governance/governance-types.js").ProposalType),
+              title: String(result.title || ""),
+              description: String(result.description || ""),
+              evidence: [],
+              source: "manual",
+              metadata: result,
+            },
+          ],
+          options: {
+            requireExternalDynamo: localMode ? false : undefined,
+          },
         });
         governanceTriggered = governanceResult?.overallDecision === 'approve';
         if (governanceTriggered) {

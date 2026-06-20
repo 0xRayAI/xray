@@ -16,6 +16,11 @@ import {
 import { appendHookActivity } from './grok-hook-activity.js';
 import { recordSynthesisTurnSlice } from '../../hooks/synthesis-hook-runtime.mjs';
 import { archiveStaleLeadDevPlan } from '../../hooks/plan-hook-runtime.mjs';
+import {
+  maybeRunReflectionStub,
+  scheduleAutonomousReportingMarker,
+  runInferenceImprovementLight,
+} from '../../hooks/pipeline-hook-runtime.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -77,6 +82,16 @@ async function main() {
       hookEvent: HOOK_EVENT,
       lead_dev_mode: payload.lead_dev_mode,
     });
+
+    try {
+      scheduleAutonomousReportingMarker(eventRoot);
+      if (HOOK_EVENT === 'session_start') {
+        maybeRunReflectionStub(eventRoot);
+        runInferenceImprovementLight(eventRoot);
+      }
+    } catch {
+      /* non-blocking pipeline facets */
+    }
 
     console.log(JSON.stringify(payload));
     process.exit(0);

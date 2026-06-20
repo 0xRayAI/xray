@@ -112,6 +112,9 @@ export interface PreToolGateDeny {
 
 export interface PreToolGateAllow {
   allow: true;
+  reason?: string;
+  gate?: string;
+  hint?: Record<string, unknown>;
 }
 
 export type PreToolGateResult = PreToolGateAllow | PreToolGateDeny;
@@ -381,6 +384,21 @@ export function evaluateSpawnPlanGate(
     return denyFromSpawnValidation(validation);
   }
 
+  if (activeAside?.worktree) {
+    const worktree = activeAside.worktree.replace(/\/$/, '');
+    const cwd = ctx.projectRoot.replace(/\/$/, '');
+    if (worktree !== cwd && !cwd.startsWith(`${worktree}/`)) {
+      return {
+        allow: true,
+        gate: 'aside-worktree-cwd-warn',
+        reason:
+          `Aside worktree is ${worktree} but project root is ${cwd} — ` +
+          'spawn may lack aside file context until cwd matches worktree',
+        hint: { worktree, cwd },
+      };
+    }
+  }
+
   return { allow: true };
 }
 
@@ -515,7 +533,7 @@ export function evaluatePreToolGate(
   const spawnBlock = evaluateSpawnPlanGate(toolName, toolInput, ctx);
   if (!spawnBlock.allow) return spawnBlock;
 
-  return { allow: true };
+  return spawnBlock;
 }
 
 export function evaluatePostToolSpawn(

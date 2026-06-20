@@ -17,6 +17,7 @@ import {
   evaluatePostToolSpawn,
   isOrchestrateToolEvent as gateIsOrchestrateToolEvent,
 } from '../../hooks/delegation-gate-runtime.mjs';
+import { recordRoutingOutcome } from '../../hooks/pipeline-hook-runtime.mjs';
 
 function extractToolOutput(event) {
   return (
@@ -43,6 +44,16 @@ async function main() {
         sessionId,
         note: 'orchestrate-task completed — pending-delegations.json written by task-handler',
       });
+      try {
+        recordRoutingOutcome(eventRoot, {
+          tool: toolName,
+          agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'orchestrate-task',
+          planTodoId: toolInput?.planTodoId ?? null,
+          sessionId,
+        });
+      } catch {
+        /* non-blocking */
+      }
     }
 
     if (isSubagentTool(toolName)) {
@@ -60,6 +71,16 @@ async function main() {
           receiptRecorded: spawnResult.receiptRecorded ?? false,
           todoCompleted: spawnResult.todoCompleted ?? false,
         });
+      }
+      try {
+        recordRoutingOutcome(eventRoot, {
+          tool: toolName,
+          agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'subagent',
+          planTodoId: toolInput?.planTodoId ?? spawnResult.expectedTodoId ?? null,
+          sessionId,
+        });
+      } catch {
+        /* non-blocking */
       }
     }
 

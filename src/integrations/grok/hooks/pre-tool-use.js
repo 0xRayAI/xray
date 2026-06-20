@@ -21,6 +21,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { runGrokPostprocessorLight } from '../../hooks/pipeline-hook-runtime.mjs';
 
 function finish(root, decision, reason, hint, toolName, extra = {}) {
   const out = { decision, ...extra };
@@ -69,6 +70,17 @@ async function main() {
       );
     }
 
+    if (gateBlock.reason) {
+      finish(
+        eventRoot,
+        'allow',
+        gateBlock.reason,
+        gateBlock.hint,
+        toolName,
+        { gate: gateBlock.gate, warn: true },
+      );
+    }
+
     if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
       const surfaceBlock = checkSurfaceArea(paths, eventRoot);
       if (surfaceBlock) finish(eventRoot, 'deny', surfaceBlock, null, toolName);
@@ -86,6 +98,14 @@ async function main() {
 
       const testHint = checkFullTestSuite(cmd, features);
       if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+    }
+
+    if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {
+      try {
+        runGrokPostprocessorLight(eventRoot, { tool: toolName, paths });
+      } catch {
+        /* non-blocking */
+      }
     }
 
     finish(eventRoot, 'allow', null, null, toolName);

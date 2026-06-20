@@ -11,6 +11,8 @@ Analyze the following data sources to gather insights for inference improvement:
 - /Users/blaze/dev/xray/docs/reflections/mcp-skill-server-inference-gap.md
 - /Users/blaze/dev/xray/docs/reflections/reflection-pattern-suggestions.md
 - /Users/blaze/dev/xray/docs/reflections/subtract-simplify-phase-reflection.md
+- /Users/blaze/dev/xray/docs/reflections/user-asides-review-quorum-2026-06-20.md
+- /Users/blaze/dev/xray/docs/reflections/user-asides-roadmap-quorum-2026-06-20.md
 - /Users/blaze/dev/xray/docs/reflections/v3-architecture-plan.md
 - /Users/blaze/dev/xray/docs/reflections/v3-completion-reflection.md
 - /Users/blaze/dev/xray/docs/reflections/v3-deep-reflection.md

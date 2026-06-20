@@ -406,6 +406,19 @@ export async function runConferQuorum(
   };
 }
 
+const CONFER_AGENT_EMOJI: Record<string, string> = {
+  researcher: '🔍',
+  'architect-tools': '🏗️',
+  'code-review': '✅',
+  'code-reviewer': '✅',
+  architect: '🏗️',
+  strategist: '🎯',
+};
+
+function conferAgentEmoji(subagent: string): string {
+  return CONFER_AGENT_EMOJI[subagent] ?? '🤖';
+}
+
 export function formatConferQuorumReport(result: ConferQuorumResult): string {
   if (result.status === 'skipped') {
     return `ℹ️ Confer skipped: ${result.message}`;
@@ -416,8 +429,9 @@ export function formatConferQuorumReport(result: ConferQuorumResult): string {
     '',
   ];
   for (const agent of result.agents) {
+    const emoji = conferAgentEmoji(agent.subagent);
     lines.push(
-      `- **${agent.todoId}** (${agent.subagent}): verdict=${agent.verdict ?? 'n/a'} receipt=${agent.receiptRecorded} todo=${agent.todoCompleted}${agent.error ? ` error=${agent.error}` : ''}`,
+      `- ${emoji} **${agent.todoId}** (${agent.subagent}): verdict=${agent.verdict ?? 'n/a'} receipt=${agent.receiptRecorded} todo=${agent.todoCompleted}${agent.error ? ` error=${agent.error}` : ''}`,
     );
   }
   const plan = loadPersistedLeadDevPlan();

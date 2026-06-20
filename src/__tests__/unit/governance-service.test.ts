@@ -12,9 +12,13 @@ vi.mock('../../integrations/governance/index.js', () => ({
   getGovernanceIntegration: vi.fn(),
 }));
 
-vi.mock('../../governance/governance-core.js', () => ({
-  mergeVotes: vi.fn(),
-}));
+vi.mock('../../governance/governance-core.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../governance/governance-core.js')>();
+  return {
+    ...actual,
+    mergeVotes: vi.fn(),
+  };
+});
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn() },
@@ -49,8 +53,6 @@ describe('GovernanceService', () => {
       isAvailable: vi.fn().mockReturnValue(true),
       checkProposal: vi.fn().mockResolvedValue({
         vote: 'YES', reason: 'Approved', passed: true, governanceResponse: { confidence: 0.9 },
-        moralTension: 'Aligned', moralScore: 0.95, moralFusion: 0.88,
-        detectedVirtues: ['clarity'], detectedConcerns: [],
       }),
     };
     (getGovernanceIntegration as any).mockReturnValue(mockIntegration);
