@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased] — suit tuning PR (not published)
 
 ### ✨ Features
-- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; `a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot `activeAside` hint; `verify:user-aside` 7/7
+- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; namespaced `{asideId}.a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot hints; synthesis/pending bypass for aside spawns; `verify:user-aside` 9/9; docs `guides/user-asides.md`
 
 ### Planned (iterate before next release)
 - **Pre-commit codex** — diff-hunk scope via `execFileSync('git', …)`; paths with spaces supported (`verify:pre-commit-diff` 3/3)

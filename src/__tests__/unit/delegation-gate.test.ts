@@ -16,6 +16,11 @@ import {
   archiveStaleLeadDevPlan,
   savePersistedLeadDevPlan,
 } from '../../nucleus/lead-dev-plan-persistence.js';
+import {
+  buildUserAsidePlan,
+  saveUserAside,
+  setActiveAsideId,
+} from '../../nucleus/user-aside.js';
 
 describe('delegation-gate SSOT', () => {
   let tmp: string;
@@ -340,5 +345,69 @@ describe('delegation-gate SSOT', () => {
       { projectRoot: tmp, sessionId, features },
     );
     expect(consult.allow).toBe(true);
+  });
+
+  it('evaluateSpawnPlanGate routes to active aside todos', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'gate-aside',
+      'Gate Aside',
+      'Aside spawn test',
+      [{ description: 'implement slice', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('gate-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
+
+  it('evaluateSynthesisGate allows aside subagent spawn during synthesis due', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const aside = buildUserAsidePlan(
+      'syn-aside',
+      'Syn Aside',
+      'Synthesis bypass test',
+      [{ description: 'aside work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('syn-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluateSynthesisGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
   });
 });

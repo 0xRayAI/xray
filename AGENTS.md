@@ -81,7 +81,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 **Not** AsideContext — user-declared parallel tracks (worktree-like):
 
-- SSOT: `.xray/state/asides/{id}.json` + `_active.json`; todos use `a.*` prefix
+- SSOT: `.xray/state/asides/{id}.json` + `_active.json`; todos use `{asideId}.a.*` (namespaced)
 - Intake: `analyze-complexity` with `userAsideId` (+ optional `worktree`, `branch`)
 - Activate / resume main: `orchestrate-task` with `userAsideId` or `clearActiveAside: true`
 - Spawn gate routes to active aside plan; session-boot exposes `activeAside`

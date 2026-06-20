@@ -1,0 +1,62 @@
+{
+  "active": true,
+  "rules": [
+    "Phased plan + detailed todos; assign best subagent; monitor output; iterate fully",
+    "Lead dev takes helm — loop test fix until complete; no permission pings",
+    "Per-suite test triage after major changes; full suite only when individuals pass",
+    "Lead stays main thread; subagents execute; update todos continuously",
+    "Read all console and test output; triage fix rerun",
+    "Never defer errors as pre-existing — add todo and resolve",
+    "Resolve all errors before phase completion"
+  ],
+  "codexTerms": [
+    59,
+    67,
+    68,
+    69
+  ],
+  "description": "Synthesis checkpoint: reflect and realign (gate threshold)",
+  "complexity": 30,
+  "requiresPhasedPlan": true,
+  "recommendedStrategy": "sequential",
+  "mandatoryConsults": [
+    "researcher",
+    "architect-tools",
+    "code-review"
+  ],
+  "phases": [
+    {
+      "id": "phase-synthesis",
+      "name": "Reflect & realign",
+      "goal": "Review collocated context and mandatory consults before resuming execution",
+      "definitionOfDone": "researcher + architect-tools + code-review consulted; todos realigned",
+      "todos": [
+        {
+          "id": "s.1",
+          "task": "Synthesis consult researcher: review checkpoint context and realign plan",
+          "subagent": "researcher",
+          "status": "pending"
+        },
+        {
+          "id": "s.2",
+          "task": "Synthesis consult architect-tools: review checkpoint context and realign plan",
+          "subagent": "architect-tools",
+          "status": "pending"
+        },
+        {
+          "id": "s.3",
+          "task": "Synthesis consult code-review: review checkpoint context and realign plan",
+          "subagent": "code-review",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "testProtocol": {
+    "perSuiteFirst": true,
+    "fullSuiteGate": false,
+    "hint": "Synthesis checkpoint — consult mandatory agents before resuming gated work"
+  },
+  "persistedAt": "2026-06-19T19:32:23.947Z",
+  "sessionId": "gate-test-session"
+}

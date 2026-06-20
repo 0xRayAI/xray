@@ -23,8 +23,10 @@ import {
   formatUserAsideSummary,
   isUserAsidesEnabled,
   loadUserAside,
+  mergeUserAsideIntake,
   saveUserAside,
   setActiveAsideId,
+  UserAsideValidationError,
 } from '../../../nucleus/user-aside.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { addObservations, extractComplexityObservations } from '../aside-context.js';
@@ -119,10 +121,11 @@ export class ComplexityHandler {
         .filter((t) => t.description?.trim())
         .map((t) => ({ description: t.description, type: t.type }));
       const synthesisCheckpoint = args.synthesisCheckpoint === true;
+      const projectRoot = process.cwd();
       const userAsideIntake =
         !synthesisCheckpoint &&
         Boolean(args.userAsideId?.trim()) &&
-        isUserAsidesEnabled();
+        isUserAsidesEnabled(projectRoot);
 
       let userAsideReport = '';
       let leadDevPlan = synthesisCheckpoint
@@ -148,31 +151,40 @@ export class ComplexityHandler {
         try {
           const asideId = args.userAsideId.trim();
           const title = args.userAsideTitle?.trim() || asideId;
-          const existing = loadUserAside(asideId);
-          const userAside =
-            existing ??
-            buildUserAsidePlan(
-              asideId,
-              title,
-              primaryDescription || title,
-              planTaskInputs,
-              analysis.overallComplexity,
-            );
+          const existing = loadUserAside(asideId, projectRoot);
+          const userAside = existing
+            ? mergeUserAsideIntake(
+                existing,
+                primaryDescription || existing.description,
+                planTaskInputs,
+                analysis.overallComplexity,
+                projectRoot,
+              )
+            : buildUserAsidePlan(
+                asideId,
+                title,
+                primaryDescription || title,
+                planTaskInputs,
+                analysis.overallComplexity,
+                projectRoot,
+              );
           if (!userAside) {
             planPersisted = false;
           } else {
             if (args.worktree) userAside.worktree = args.worktree;
             if (args.branch) userAside.branch = args.branch;
             if (args.sessionId) userAside.sessionId = args.sessionId;
-            const asidePath = saveUserAside(userAside);
+            if (args.userAsideTitle) userAside.title = title;
+            const asidePath = saveUserAside(userAside, projectRoot);
             const activate = args.setActiveAside !== false;
             if (activate) {
-              setActiveAsideId(asideId, process.cwd(), args.sessionId ?? null);
+              clearPendingDelegations(projectRoot);
+              setActiveAsideId(asideId, projectRoot, args.sessionId ?? null);
             }
             planPersisted = true;
             userAsideReport = `\n\n## User aside\n\n${formatUserAsideSummary(userAside)}`;
             if (activate) {
-              userAsideReport += `\n\n**Active aside:** \`${asideId}\` — spawns route to a.* todos.`;
+              userAsideReport += `\n\n**Active aside:** \`${asideId}\` — spawns route to \`${asideId}.a.*\` todos.`;
             }
             await frameworkLogger.log(
               'orchestrator.server',
@@ -188,11 +200,16 @@ export class ComplexityHandler {
           }
         } catch (err) {
           planPersisted = false;
+          const message = err instanceof Error ? err.message : String(err);
+          userAsideReport = `\n\n❌ User aside intake failed: ${message}`;
           await frameworkLogger.log(
             'orchestrator.server',
             'user-aside-persist-failed',
             'warning',
-            { error: err instanceof Error ? err.message : String(err) },
+            {
+              error: message,
+              validation: err instanceof UserAsideValidationError,
+            },
           );
         }
       } else if (leadDevPlan) {

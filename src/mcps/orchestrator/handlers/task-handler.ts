@@ -57,11 +57,12 @@ export class TaskHandler {
     deps: TaskHandlerDeps
   ): Promise<{ content: Array<{ type: string; text: string }> }> {
     if (args.clearActiveAside === true) {
+      const projectRoot = process.cwd();
       const { clearActiveAside, getActiveAsideId } = await import(
         '../../../nucleus/user-aside.js',
       );
-      const prior = getActiveAsideId();
-      clearActiveAside();
+      const prior = getActiveAsideId(projectRoot, args.sessionId ?? null);
+      clearActiveAside(projectRoot);
       return {
         content: [
           {
@@ -75,19 +76,24 @@ export class TaskHandler {
     }
 
     if (args.userAsideId?.trim()) {
+      const projectRoot = process.cwd();
       const {
         setActiveAsideId,
         loadUserAside,
         formatUserAsideSummary,
         isUserAsidesEnabled,
+        UserAsideValidationError,
       } = await import('../../../nucleus/user-aside.js');
-      if (!isUserAsidesEnabled()) {
+      const { clearPendingDelegations } = await import(
+        '../../../nucleus/pending-delegations.js',
+      );
+      if (!isUserAsidesEnabled(projectRoot)) {
         return {
           content: [{ type: 'text', text: '❌ User asides disabled in features.json' }],
         };
       }
       const asideId = args.userAsideId.trim();
-      const aside = loadUserAside(asideId);
+      const aside = loadUserAside(asideId, projectRoot);
       if (!aside) {
         return {
           content: [
@@ -99,7 +105,13 @@ export class TaskHandler {
         };
       }
       if (args.setActiveAside !== false) {
-        setActiveAsideId(asideId, process.cwd(), args.sessionId ?? null);
+        try {
+          clearPendingDelegations(projectRoot);
+          setActiveAsideId(asideId, projectRoot, args.sessionId ?? null);
+        } catch (err) {
+          const message = err instanceof UserAsideValidationError ? err.message : String(err);
+          return { content: [{ type: 'text', text: `❌ ${message}` }] };
+        }
       }
       return {
         content: [

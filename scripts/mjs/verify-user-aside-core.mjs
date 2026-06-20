@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * verify-user-aside-core — user aside SSOT + spawn routing (7 checks).
+ * verify-user-aside-core — user aside SSOT + spawn routing.
  */
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getActiveUserAsideBoot } from '../../dist/integrations/hooks/user-aside-hook-runtime.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, '../..');
@@ -18,11 +19,14 @@ const {
   buildUserAsidePlan,
   saveUserAside,
   setActiveAsideId,
-  resolveSpawnPlan,
   clearActiveAside,
   getActiveAsideId,
   isUserAsideTodoId,
+  assertSafeAsideId,
+  UserAsideValidationError,
+  getUserAsideBootHints,
 } = await import(dist('nucleus/user-aside.js'));
+const { resolveSpawnPlan } = await import(dist('nucleus/spawn-plan-resolution.js'));
 const { validateSpawnMatchesTodo } = await import(dist('nucleus/lead-dev-plan-persistence.js'));
 
 let passed = 0;
@@ -50,47 +54,60 @@ writeFileSync(
 );
 
 try {
-  if (!isUserAsideTodoId('a.1.1')) fail('step 1: a.* pattern');
-  else pass('step 1: a.* todo pattern');
+  const namespaced = 'suit-nft.a.1.1';
+  if (!isUserAsideTodoId(namespaced)) fail('step 1: namespaced todo pattern');
+  else pass('step 1: namespaced todo pattern');
+
+  try {
+    assertSafeAsideId('../bad');
+    fail('step 2: path rejection');
+  } catch (err) {
+    if (err instanceof UserAsideValidationError) pass('step 2: rejects unsafe aside id');
+    else fail('step 2: path rejection', String(err));
+  }
 
   const aside = buildUserAsidePlan(
     'suit-nft',
     'Suit NFT',
-    'Mint on Base for suit-certified agents',
+    'Mint on Base',
     [{ description: 'Groover proof', type: 'research' }],
     35,
-  );
-  if (!aside?.plan.phases[0]?.todos[0]?.id?.startsWith('a.')) {
-    fail('step 2: build aside plan', aside?.plan.phases[0]?.todos[0]?.id);
-  } else pass('step 2: build aside plan with a.* ids');
-
-  saveUserAside(aside, tmp);
-  setActiveAsideId('suit-nft', tmp);
-  if (getActiveAsideId(tmp) !== 'suit-nft') fail('step 3: active pointer');
-  else pass('step 3: active aside pointer');
-
-  const resolved = resolveSpawnPlan({ planTodoId: 'a.1.1' }, tmp);
-  if (resolved.source !== 'aside' || resolved.asideId !== 'suit-nft') {
-    fail('step 4: resolve spawn plan', JSON.stringify(resolved));
-  } else pass('step 4: spawn plan resolves to active aside');
-
-  const todo = aside.plan.phases[0].todos[0];
-  const validation = validateSpawnMatchesTodo(
-    {
-      planTodoId: todo.id,
-      subagent_type: todo.subagent,
-      prompt: `${todo.id}: ${todo.task}`,
-    },
     tmp,
   );
-  if (!validation.valid) fail('step 5: spawn matches aside todo', validation.reason);
-  else pass('step 5: spawn gate accepts aside todo');
+  if (aside?.plan.phases[0]?.todos[0]?.id !== 'suit-nft.a.1.1') {
+    fail('step 3: build aside plan', aside?.plan.phases[0]?.todos[0]?.id);
+  } else pass('step 3: namespaced aside todos');
+
+  saveUserAside(aside, tmp);
+  setActiveAsideId('suit-nft', tmp, 'verify-session');
+  if (getActiveAsideId(tmp, 'verify-session') !== 'suit-nft') fail('step 4: active pointer');
+  else pass('step 4: active aside pointer with session');
+
+  const todo = aside.plan.phases[0].todos[0];
+  const resolved = resolveSpawnPlan({ planTodoId: todo.id }, tmp, 'verify-session');
+  if (resolved.source !== 'aside') fail('step 5: resolve spawn plan', JSON.stringify(resolved));
+  else pass('step 5: spawn plan resolves to aside');
+
+  const validation = validateSpawnMatchesTodo(
+    { planTodoId: todo.id, subagent_type: todo.subagent, prompt: todo.id },
+    tmp,
+    undefined,
+    'verify-session',
+  );
+  if (!validation.valid) fail('step 6: spawn gate', validation.reason);
+  else pass('step 6: spawn gate accepts aside todo');
+
+  const boot = getUserAsideBootHints(tmp, 'verify-session');
+  if (!boot?.activeAside) fail('step 7: boot hints', JSON.stringify(boot));
+  else pass('step 7: session-boot hints from getUserAsideBootHints');
+
+  const hookBoot = getActiveUserAsideBoot(tmp, 'verify-session');
+  if (!hookBoot?.activeAside) fail('step 8: hook runtime', JSON.stringify(hookBoot));
+  else pass('step 8: user-aside-hook-runtime import');
 
   clearActiveAside(tmp);
-  if (getActiveAsideId(tmp) !== null) fail('step 6: clear active');
-  else pass('step 6: clear active aside');
-
-  pass('step 7: user-aside hook runtime importable');
+  if (getActiveAsideId(tmp) !== null) fail('step 9: clear active');
+  else pass('step 9: clear active aside');
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

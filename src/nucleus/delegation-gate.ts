@@ -37,12 +37,13 @@ import {
   isSynthesisConsultTodoId,
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
 import {
-  hasValidSpawnPlanContext,
   isUserAsidesEnabled,
+  isUserAsideTodoId,
   loadActiveUserAside,
-  asideToSpawnPlan,
 } from './user-aside.js';
+
 
 export {
   validateSpawnMatchesTodo,
@@ -332,7 +333,7 @@ export function evaluateSpawnPlanGate(
     };
   }
 
-  if (!hasValidSpawnPlanContext(ctx.projectRoot)) {
+  if (!hasValidSpawnPlanContext(ctx.projectRoot, ctx.sessionId)) {
     if (findRecentStalePlanArchive(ctx.projectRoot)) {
       return {
         allow: false,
@@ -356,20 +357,22 @@ export function evaluateSpawnPlanGate(
     return { allow: true };
   }
 
+  const normalized = normalizeHostToolInput(toolInput);
+  const resolved = isUserAsidesEnabled(ctx.projectRoot)
+    ? resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(ctx.projectRoot) };
+
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
-  const spawnPlan =
-    activeAside && activeAside.status === 'active'
-      ? asideToSpawnPlan(activeAside)
-      : loadPersistedLeadDevPlan(ctx.projectRoot);
   const expectedTodo =
-    pending[0]?.planTodoId && spawnPlan
-      ? allPlanTodos(spawnPlan).find((t) => t.id === pending[0]!.planTodoId) ?? null
+    pending[0]?.planTodoId && resolved.plan
+      ? allPlanTodos(resolved.plan).find((t) => t.id === pending[0]!.planTodoId) ?? null
       : null;
 
   const validation = validateSpawnMatchesTodo(
-    normalizeHostToolInput(toolInput),
+    normalized,
     ctx.projectRoot,
     expectedTodo,
+    ctx.sessionId,
   );
   if (!validation.valid) {
     return denyFromSpawnValidation(validation);
@@ -391,6 +394,27 @@ export function evaluateSynthesisGate(
   if (isReadOnlyTool(toolName)) return { allow: true };
   if (isSynthesisAllowedOrchestratorConsult(toolName, toolInput)) return { allow: true };
 
+  // Active user aside: allow aside-track subagent spawns during main synthesis checkpoint.
+  if (isUserAsidesEnabled(ctx.projectRoot)) {
+    const normalized = normalizeHostToolInput(toolInput);
+    const resolved = resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId);
+    if (
+      resolved.source === 'aside' &&
+      isSubagentTool(toolName) &&
+      (normalized.planTodoId
+        ? isUserAsideTodoId(normalized.planTodoId)
+        : Boolean(resolved.asideId))
+    ) {
+      const validation = validateSpawnMatchesTodo(
+        normalized,
+        ctx.projectRoot,
+        undefined,
+        ctx.sessionId,
+      );
+      if (validation.valid) return { allow: true };
+    }
+  }
+
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   if (
     plan &&
@@ -403,6 +427,7 @@ export function evaluateSynthesisGate(
       normalizeHostToolInput(toolInput),
       ctx.projectRoot,
       nextTodo,
+      ctx.sessionId,
     );
     if (validation.valid) return { allow: true };
   }
@@ -442,6 +467,13 @@ export function evaluatePendingDelegationGate(
 
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
   if (pending.length === 0) return { allow: true };
+
+  // Aside-track work: pending main delegations do not block aside spawns.
+  if (isUserAsidesEnabled(ctx.projectRoot) && isSubagentTool(toolName)) {
+    const normalized = normalizeHostToolInput(toolInput);
+    const resolved = resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId);
+    if (resolved.source === 'aside') return { allow: true };
+  }
 
   if (isSubagentTool(toolName)) return { allow: true };
   if (isReadOnlyTool(toolName)) return { allow: true };

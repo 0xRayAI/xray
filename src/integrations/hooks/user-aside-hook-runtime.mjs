@@ -42,23 +42,8 @@ function loadUserAside() {
   return createRequire(import.meta.url)(found);
 }
 
-export function getActiveUserAsideBoot(projectRoot) {
+export function getActiveUserAsideBoot(projectRoot, sessionId = null) {
   const mod = loadUserAside();
-  if (!mod?.getActiveAsideId || !mod?.loadUserAside || !mod?.isUserAsidesEnabled) {
-    return null;
-  }
-  if (!mod.isUserAsidesEnabled(projectRoot)) return null;
-  const id = mod.getActiveAsideId(projectRoot);
-  if (!id) return null;
-  const aside = mod.loadUserAside(id, projectRoot);
-  if (!aside) return null;
-  return {
-    activeAside: id,
-    asideTitle: aside.title,
-    asideStatus: aside.status,
-    ...(aside.worktree ? { asideWorktree: aside.worktree } : {}),
-    ...(aside.branch ? { asideBranch: aside.branch } : {}),
-    asideTodoPrefix: 'a.*',
-    asideHint: 'Spawns route to active aside a.* todos; orchestrate-task clearActiveAside to resume main',
-  };
+  if (!mod?.getUserAsideBootHints) return null;
+  return mod.getUserAsideBootHints(projectRoot, sessionId);
 }

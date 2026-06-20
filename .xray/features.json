@@ -35,7 +35,11 @@
     "per_suite_test_triage": true,
     "phased_plan_threshold": 25,
     "auto_consult_major_work": true,
-    "no_new_surface": true
+    "no_new_surface": true,
+    "auto_chain_delegations": true,
+    "user_asides": {
+      "enabled": true
+    }
   },
   "autonomous_reporting": {
     "enabled": true,
@@ -139,6 +143,12 @@
     "provider": "null",
     "module_path": "",
     "config": {}
+  },
+  "synthesis": {
+    "enabled": false,
+    "every_n_gates": 12,
+    "every_n_turns": 0,
+    "every_n_todos_completed": 0
   },
   "inference_governance": {
     "enabled": false,

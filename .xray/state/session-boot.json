@@ -1,0 +1,27 @@
+{
+  "hook": "0xray/grok-pre-tool-use-boot",
+  "lead_dev_mode": true,
+  "no_new_surface": true,
+  "codexBlockingTermCount": 19,
+  "codexTerms": [
+    59,
+    67,
+    68,
+    69
+  ],
+  "rules": [
+    "Phased plan + todos; assign best subagent; monitor output",
+    "Lead dev loops test→fix until green; no permission pings",
+    "Per-suite test triage; full suite last",
+    "Lead stays main; subagents execute; update todos",
+    "Read all output; triage fix rerun",
+    "No buck-passing — resolve every error",
+    "Zero open errors at phase completion"
+  ],
+  "mcpIntake": "xray-orchestrator → analyze-complexity (required before spawn_subagent)",
+  "enforcement": "PreToolUse hook — codex patterns + surface area + spawn gate",
+  "workspaceRoot": "/Users/blaze/dev/xray",
+  "sessionId": null,
+  "timestamp": "2026-06-19T18:28:19.380Z",
+  "source": "0xray/grok-pre-tool-use-boot"
+}

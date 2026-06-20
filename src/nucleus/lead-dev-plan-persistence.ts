@@ -19,10 +19,10 @@ import {
   isSynthesisConsultTodoId,
   loadSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import { resolveSpawnPlan } from './spawn-plan-resolution.js';
 import {
   isUserAsideTodoId,
   isUserAsidesEnabled,
-  resolveSpawnPlan,
   updateUserAsideTodoStatus,
 } from './user-aside.js';
 
@@ -413,9 +413,10 @@ export function validateSpawnMatchesTodo(
   toolInput: SpawnToolInput,
   projectRoot = process.cwd(),
   expectedTodo?: LeadDevTodo | null,
+  sessionId?: string | null,
 ): SpawnTodoValidation {
   const resolved = isUserAsidesEnabled(projectRoot)
-    ? resolveSpawnPlan(toolInput, projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot, sessionId)
     : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
 
   const plan = resolved.plan;
@@ -477,13 +478,14 @@ export function validateSpawnMatchesTodo(
 export function markTodoInProgressOnSpawn(
   toolInput: SpawnToolInput,
   projectRoot = process.cwd(),
+  sessionId?: string | null,
 ): string | null {
   const resolved = isUserAsidesEnabled(projectRoot)
-    ? resolveSpawnPlan(toolInput, projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot, sessionId)
     : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
   if (!resolved.plan) return null;
 
-  const validation = validateSpawnMatchesTodo(toolInput, projectRoot);
+  const validation = validateSpawnMatchesTodo(toolInput, projectRoot, undefined, sessionId);
   if (!validation.valid || !validation.expectedTodoId) return null;
 
   updatePlanTodoStatus(validation.expectedTodoId, 'in_progress', projectRoot);
