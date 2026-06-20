@@ -121,6 +121,15 @@ function buildPortableProjectMcpJson() {
   return { mcpServers };
 }
 
+function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
+  const helperSrc = path.join(packageRoot, "scripts", "helpers", "find-project-root.mjs");
+  if (!fs.existsSync(helperSrc)) return false;
+  const helperDst = path.join(targetPluginDir, "scripts", "helpers", "find-project-root.mjs");
+  fs.mkdirSync(path.dirname(helperDst), { recursive: true });
+  fs.copyFileSync(helperSrc, helperDst);
+  return true;
+}
+
 function writeHermesPluginArtifacts(targetDir) {
   if (!fs.existsSync(HERMES_PLUGIN_DIR)) return false;
   fs.writeFileSync(path.join(HERMES_PLUGIN_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
@@ -295,6 +304,7 @@ module.exports = {
   buildStdioMcpServer,
   buildPluginMcpJson,
   buildPortableProjectMcpJson,
+  copyHermesFindProjectRootHelper,
   writeHermesPluginArtifacts,
   syncHermesMcpRegistry,
   mergeOpencodeMcpRegistry,

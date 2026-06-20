@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRequire } from 'module';
+import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -37,5 +38,16 @@ describe('bridge-mcp-wiring', () => {
     expect(Object.keys(servers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
     expect(servers['xray-governance'].env.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
     expect(servers['xray-governance'].env.XRAY_ROOT).toBe(targetDir);
+  });
+
+  it('keeps install-bridges and grok-cli wired to bridge-mcp-wiring SSOT', () => {
+    const packageRoot = path.join(__dirname, '..', '..', '..');
+    const installSrc = readFileSync(path.join(packageRoot, 'scripts/node/install-bridges.cjs'), 'utf8');
+    const grokSrc = readFileSync(path.join(packageRoot, 'src/integrations/grok/grok-cli.ts'), 'utf8');
+    expect(installSrc).toContain('XRAY_MCP_SERVERS');
+    expect(installSrc).toContain('bridge-mcp-wiring.cjs');
+    expect(installSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
+    expect(grokSrc).toContain('bridge-mcp-wiring.cjs');
+    expect(grokSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
   });
 });

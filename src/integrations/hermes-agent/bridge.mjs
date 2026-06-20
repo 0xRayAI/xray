@@ -37,12 +37,41 @@ import {
   unlinkSync,
   renameSync,
 } from "fs";
-import { join, dirname, relative } from "path";
-import { fileURLToPath } from "url";
+import { join, dirname, relative, resolve } from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import { homedir } from "os";
-import { findProjectRoot } from "../../../scripts/helpers/find-project-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Resolve find-project-root from plugin install, dist layout, or consumer node_modules. */
+function resolveFindProjectRootPath() {
+  const candidates = [];
+  const marker = join(__dirname, "xray-consumer-root.txt");
+  if (existsSync(marker)) {
+    try {
+      const marked = readFileSync(marker, "utf-8").trim();
+      if (marked) {
+        candidates.push(
+          join(marked, "node_modules", "0xray", "scripts", "helpers", "find-project-root.mjs"),
+        );
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  candidates.push(
+    join(__dirname, "scripts", "helpers", "find-project-root.mjs"),
+    join(__dirname, "..", "..", "..", "scripts", "helpers", "find-project-root.mjs"),
+    join(__dirname, "../../../scripts/helpers/find-project-root.mjs"),
+  );
+  for (const candidate of candidates) {
+    const abs = resolve(candidate);
+    if (existsSync(abs)) return abs;
+  }
+  throw new Error("find-project-root.mjs not found — re-run: npx 0xray hermes install --force");
+}
+
+const { findProjectRoot } = await import(pathToFileURL(resolveFindProjectRootPath()).href);
 
 // ── Framework components (lazy-loaded) ───────────────────────
 let ProcessorManager = null;

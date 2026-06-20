@@ -29,17 +29,15 @@ const requireCjs = createRequire(import.meta.url);
 const { resolveConsumerTargetDir } = requireCjs(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs')
 );
-
-/** Canonical 7-server MCP surface — matches install-bridges.cjs and package .mcp.json */
-const XRAY_MCP_SERVERS = [
-  { name: 'xray-governance', mcpCmd: 'governance', env: { XRAY_FORCE_MCP_GOVERNANCE: 'true' } },
-  { name: 'xray-skills', mcpCmd: 'skills', env: {} },
-  { name: 'xray-orchestrator', mcpCmd: 'orchestrator', env: {} },
-  { name: 'xray-enforcer', mcpCmd: 'enforcer', env: {} },
-  { name: 'xray-researcher', mcpCmd: 'researcher', env: {} },
-  { name: 'xray-code-review', mcpCmd: 'code-review', env: {} },
-  { name: 'xray-architect-tools', mcpCmd: 'architect-tools', env: {} },
-] as const;
+const { XRAY_MCP_SERVERS } = requireCjs(
+  path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')
+) as {
+  XRAY_MCP_SERVERS: ReadonlyArray<{
+    name: string;
+    mcpCmd: string;
+    env: Record<string, string>;
+  }>;
+};
 
 function registerGrokMcpServers(targetDir: string): void {
   try {

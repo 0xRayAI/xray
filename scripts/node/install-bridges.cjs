@@ -13,22 +13,13 @@ const {
   wireOpencodeBridge,
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
+  copyHermesFindProjectRootHelper,
+  XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const MERGE_FILES = new Set(["enforcer-config.json"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
-
-/** Canonical 7-server MCP surface — matches package .mcp.json and Grok plugin */
-const XRAY_MCP_SERVERS = [
-  { name: "xray-governance", mcpCmd: "governance", env: { XRAY_FORCE_MCP_GOVERNANCE: "true" } },
-  { name: "xray-skills", mcpCmd: "skills", env: {} },
-  { name: "xray-orchestrator", mcpCmd: "orchestrator", env: {} },
-  { name: "xray-enforcer", mcpCmd: "enforcer", env: {} },
-  { name: "xray-researcher", mcpCmd: "researcher", env: {} },
-  { name: "xray-code-review", mcpCmd: "code-review", env: {} },
-  { name: "xray-architect-tools", mcpCmd: "architect-tools", env: {} },
-];
 
 function resolveConsumerTargetDir(packageRoot, fallbackDir) {
   const resolved = path.resolve(packageRoot);
@@ -335,6 +326,7 @@ function installHermesBridge(targetDir, packageRoot, log) {
       fs.copyFileSync(src, dst);
     }
   }
+  copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
   log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
 
   writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
