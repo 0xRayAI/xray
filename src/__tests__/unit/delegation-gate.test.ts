@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkPendingDelegationGate,
   checkSubagentGate,
+  evaluatePostToolSpawn,
   evaluatePreToolGate,
   evaluateSynthesisGate,
   getActivePendingDelegations,
@@ -15,6 +16,7 @@ import { recordExecutionSlice } from '../../nucleus/synthesis.js';
 import {
   archiveStaleLeadDevPlan,
   savePersistedLeadDevPlan,
+  validateSpawnMatchesTodo,
 } from '../../nucleus/lead-dev-plan-persistence.js';
 import {
   buildUserAsidePlan,
@@ -440,6 +442,18 @@ describe('delegation-gate SSOT', () => {
       { projectRoot: tmp, sessionId: 'session-other', features },
     );
     expect(otherSession.allow).toBe(false);
+
+    const validation = validateSpawnMatchesTodo(
+      {
+        planTodoId: todo.id,
+        subagent_type: todo.subagent,
+        prompt: todo.id,
+      },
+      tmp,
+      undefined,
+      'session-other',
+    );
+    expect(validation.valid).toBe(false);
   });
 
   it('evaluatePendingDelegationGate allows aside spawn while main pending', () => {
@@ -471,5 +485,42 @@ describe('delegation-gate SSOT', () => {
       { projectRoot: tmp, sessionId, features },
     );
     expect(spawn.allow).toBe(true);
+  });
+
+  it('evaluatePostToolSpawn completes aside todo with session context', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({ sessionId, createdAt: new Date().toISOString(), ttlMs: 999999, delegations: [] }),
+    );
+    const aside = buildUserAsidePlan(
+      'post-aside',
+      'Post',
+      'Post-tool aside',
+      [{ description: 'done', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('post-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const result = evaluatePostToolSpawn(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      tmp,
+      { sessionId, toolOutput: 'Verdict: PASS\nTop risks: none\nHardening: ok' },
+    );
+    expect(result.todoCompleted).toBe(true);
+    expect(result.expectedTodoId).toBe(todo.id);
   });
 });

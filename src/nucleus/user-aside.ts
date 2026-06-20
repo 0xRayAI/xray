@@ -367,6 +367,20 @@ export function asideToSpawnPlan(aside: UserAside): PersistedLeadDevPlan {
   return plan;
 }
 
+/** Aside routable when active for session, or pointer is unscoped (accepted exception). */
+export function isAsideActiveForSession(
+  asideId: string,
+  projectRoot = process.cwd(),
+  sessionId?: string | null,
+): boolean {
+  const activeId = getActiveAsideId(projectRoot, sessionId);
+  if (activeId === asideId) return true;
+  const pointer = loadActiveAsidePointer(projectRoot);
+  if (!pointer || pointer.asideId !== asideId) return false;
+  if (!pointer.sessionId) return true;
+  return Boolean(sessionId && pointer.sessionId === sessionId);
+}
+
 export function findAsideContainingTodo(
   todoId: string,
   projectRoot = process.cwd(),
@@ -398,11 +412,16 @@ export function updateUserAsideTodoStatus(
   todoId: string,
   status: LeadDevTodo['status'],
   projectRoot = process.cwd(),
+  sessionId?: string | null,
 ): boolean {
   const parsedId = parseAsideIdFromTodoId(todoId);
-  const aside = parsedId
+  let aside = parsedId
     ? findAsideContainingTodo(todoId, projectRoot, parsedId)
-    : loadActiveUserAside(projectRoot);
+    : null;
+  if (aside && parsedId && !isAsideActiveForSession(parsedId, projectRoot, sessionId)) {
+    aside = null;
+  }
+  if (!aside) aside = loadActiveUserAside(projectRoot, sessionId);
   if (!aside) return false;
 
   let updated = false;

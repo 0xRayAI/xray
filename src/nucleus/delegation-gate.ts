@@ -570,7 +570,7 @@ export function evaluatePostToolSpawn(
       receiptRecorded = receipt != null;
     }
 
-    if (updatePlanTodoStatus(expectedTodoId, 'completed', projectRoot)) {
+    if (updatePlanTodoStatus(expectedTodoId, 'completed', projectRoot, sessionId)) {
       todoCompleted = true;
     }
   }

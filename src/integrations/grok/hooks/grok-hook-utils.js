@@ -258,7 +258,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const sessionId =
     extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
   const conferPending = loadConferPending(root, sessionId);
-  const userAsideBoot = getActiveUserAsideBoot(root);
+  const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,

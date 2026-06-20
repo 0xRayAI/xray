@@ -21,8 +21,11 @@ import {
 } from './synthesis-consult-receipt.js';
 import { resolveSpawnPlan } from './spawn-plan-resolution.js';
 import {
+  isAsideActiveForSession,
   isUserAsideTodoId,
   isUserAsidesEnabled,
+  parseAsideIdFromTodoId,
+  findAsideContainingTodo,
   updateUserAsideTodoStatus,
 } from './user-aside.js';
 
@@ -311,9 +314,10 @@ export function updatePlanTodoStatus(
   todoId: string,
   status: LeadDevTodo['status'],
   projectRoot = process.cwd(),
+  sessionId?: string | null,
 ): boolean {
   if (isUserAsidesEnabled(projectRoot) && isUserAsideTodoId(todoId)) {
-    return updateUserAsideTodoStatus(todoId, status, projectRoot);
+    return updateUserAsideTodoStatus(todoId, status, projectRoot, sessionId);
   }
 
   const plan = loadPersistedLeadDevPlan(projectRoot);
@@ -415,6 +419,31 @@ export function validateSpawnMatchesTodo(
   expectedTodo?: LeadDevTodo | null,
   sessionId?: string | null,
 ): SpawnTodoValidation {
+  const explicitTodo = toolInput.planTodoId;
+  if (
+    explicitTodo &&
+    isUserAsideTodoId(explicitTodo) &&
+    isUserAsidesEnabled(projectRoot)
+  ) {
+    const parsedId = parseAsideIdFromTodoId(explicitTodo);
+    const targetAside = parsedId
+      ? findAsideContainingTodo(explicitTodo, projectRoot, parsedId)
+      : null;
+    if (targetAside && !isAsideActiveForSession(targetAside.id, projectRoot, sessionId)) {
+      return {
+        valid: false,
+        reason: `Aside \`${targetAside.id}\` is not active for this session`,
+        gate: 'aside-session-mismatch',
+        expectedTodoId: explicitTodo,
+        hint: {
+          tool: 'orchestrate-task',
+          userAsideId: targetAside.id,
+          track: 'user-aside',
+        },
+      };
+    }
+  }
+
   const resolved = isUserAsidesEnabled(projectRoot)
     ? resolveSpawnPlan(toolInput, projectRoot, sessionId)
     : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
@@ -430,9 +459,9 @@ export function validateSpawnMatchesTodo(
     toolInput.prompt || toolInput.description || toolInput.task || '',
   ).toLowerCase();
   const subagent = String(toolInput.subagent_type || toolInput.agent || '');
-  const explicitTodo = toolInput.planTodoId || toolInput.delegationId;
+  const explicitMatch = toolInput.planTodoId || toolInput.delegationId;
 
-  if (explicitTodo && explicitTodo === nextTodo.id) {
+  if (explicitMatch && explicitMatch === nextTodo.id) {
     return { valid: true, expectedTodoId: nextTodo.id };
   }
 

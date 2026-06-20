@@ -12,6 +12,7 @@ import {
 import {
   asideToSpawnPlan,
   findAsideContainingTodo,
+  isAsideActiveForSession,
   isUserAsideTodoId,
   isUserAsidesEnabled,
   loadActiveUserAside,
@@ -43,7 +44,7 @@ export function resolveSpawnPlan(
   if (explicitTodo && isUserAsideTodoId(explicitTodo)) {
     const parsedAsideId = parseAsideIdFromTodoId(explicitTodo);
     const aside = findAsideContainingTodo(explicitTodo, projectRoot, parsedAsideId ?? undefined);
-    if (aside) {
+    if (aside && isAsideActiveForSession(aside.id, projectRoot, sessionId)) {
       return asideResolution(aside);
     }
   }
