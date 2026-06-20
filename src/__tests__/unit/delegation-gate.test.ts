@@ -456,7 +456,7 @@ describe('delegation-gate SSOT', () => {
     expect(validation.valid).toBe(false);
   });
 
-  it('evaluatePreToolGate propagates aside-worktree-cwd-warn when worktree mismatches cwd', () => {
+  it('evaluatePreToolGate denies aside spawn when worktree cwd missing', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
       JSON.stringify({
@@ -466,7 +466,7 @@ describe('delegation-gate SSOT', () => {
     const aside = buildUserAsidePlan(
       'cwd-aside',
       'Cwd Aside',
-      'Worktree mismatch warn',
+      'Worktree cwd enforce',
       [{ description: 'aside impl', type: 'implement' }],
       30,
       tmp,
@@ -485,11 +485,45 @@ describe('delegation-gate SSOT', () => {
       },
       { projectRoot: tmp, sessionId, features },
     );
-    expect(spawn.allow).toBe(true);
-    if (spawn.allow) {
-      expect(spawn.gate).toBe('aside-worktree-cwd-warn');
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) {
+      expect(spawn.gate).toBe('aside-worktree-cwd-missing');
       expect(spawn.reason).toContain('worktree');
     }
+  });
+
+  it('evaluatePreToolGate allows aside spawn when cwd matches worktree', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const worktree = path.join(tmp, 'aside-wt');
+    const aside = buildUserAsidePlan(
+      'cwd-ok',
+      'Cwd Ok',
+      'Worktree cwd match',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('cwd-ok', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+        cwd: worktree,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
   });
 
   it('evaluatePendingDelegationGate allows aside spawn while main pending', () => {

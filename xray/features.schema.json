@@ -71,6 +71,16 @@
             ]
           },
           "description": "Sibling workspace roots (e.g. UI repo when MCP host is cwd)"
+        },
+        "user_asides": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "auto_provision_worktree": {
+              "type": "boolean",
+              "description": "Run guarded git worktree add on analyze-complexity aside intake when worktree+branch set"
+            }
+          }
         }
       }
     },

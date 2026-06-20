@@ -19,6 +19,10 @@ import {
 import { bindPlanToSession } from '../../../nucleus/lead-dev-plan-persistence.js';
 import { clearPendingDelegations } from '../../../nucleus/pending-delegations.js';
 import {
+  isAutoProvisionWorktreeEnabled,
+  provisionGitWorktree,
+} from '../../../nucleus/aside-worktree.js';
+import {
   buildUserAsidePlan,
   formatUserAsideSummary,
   isUserAsidesEnabled,
@@ -175,6 +179,28 @@ export class ComplexityHandler {
             if (args.branch) userAside.branch = args.branch;
             if (args.sessionId) userAside.sessionId = args.sessionId;
             if (args.userAsideTitle) userAside.title = title;
+
+            let worktreeProvisionNote = '';
+            if (
+              args.worktree?.trim() &&
+              args.branch?.trim() &&
+              isAutoProvisionWorktreeEnabled(projectRoot)
+            ) {
+              const provision = provisionGitWorktree({
+                projectRoot,
+                worktree: args.worktree.trim(),
+                branch: args.branch.trim(),
+              });
+              if (!provision.ok) {
+                throw new UserAsideValidationError(
+                  `Worktree auto-provision failed: ${provision.message}`,
+                );
+              }
+              worktreeProvisionNote = provision.created
+                ? `\n\n**Worktree provisioned:** \`${provision.path}\` (branch \`${args.branch.trim()}\`)`
+                : `\n\n**Worktree ready:** \`${provision.path}\``;
+            }
+
             const asidePath = saveUserAside(userAside, projectRoot);
             const activate = args.setActiveAside !== false;
             if (activate) {
@@ -182,7 +208,7 @@ export class ComplexityHandler {
               setActiveAsideId(asideId, projectRoot, args.sessionId ?? null);
             }
             planPersisted = true;
-            userAsideReport = `\n\n## User aside\n\n${formatUserAsideSummary(userAside)}`;
+            userAsideReport = `\n\n## User aside\n\n${formatUserAsideSummary(userAside)}${worktreeProvisionNote}`;
             if (activate) {
               userAsideReport += `\n\n**Active aside:** \`${asideId}\` — spawns route to \`${asideId}.a.*\` todos.`;
             }

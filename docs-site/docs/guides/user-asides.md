@@ -69,7 +69,7 @@ When an aside is active, PreToolUse spawn gate matches todos on `{asideId}.a.*`.
 
 | Limitation | Rationale |
 |------------|-----------|
-| **Worktree cwd not enforced** | `worktree` / `branch` are hints for the host and subagents; PreToolUse does not chdir. Host must route Task prompts to the correct directory. |
+| **Worktree cwd enforced on spawn** | PreToolUse denies aside spawns without `cwd` / `working_directory` matching `aside.worktree` when project root ≠ worktree. Lead must pass cwd on Task/spawn_subagent. |
 | **Single active aside per workspace** | `_active.json` is workspace-scoped; one parallel track at a time. Use `clearActiveAside` before switching. |
 | **Unscoped activation** | If `setActiveAsideId` runs without `sessionId`, any session may route to that aside until cleared (discouraged; always pass `sessionId` on intake). |
 | **Synthesis writes still blocked** | Aside **spawns** bypass main synthesis checkpoint; main-track **writes** remain blocked until synthesis clears. |

@@ -38,7 +38,8 @@
     "no_new_surface": true,
     "auto_chain_delegations": true,
     "user_asides": {
-      "enabled": true
+      "enabled": true,
+      "auto_provision_worktree": false
     }
   },
   "autonomous_reporting": {

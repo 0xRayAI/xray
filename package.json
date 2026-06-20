@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "3.5.4",
+  "version": "3.5.5",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -134,6 +134,7 @@
     "verify:synthesis": "npm run build && node scripts/mjs/verify-synthesis-core.mjs && node scripts/mjs/verify-synthesis-gate-core.mjs && node scripts/mjs/verify-synthesis-outcome-core.mjs && node scripts/mjs/verify-synthesis-p2-core.mjs && node scripts/mjs/verify-synthesis-e2e-core.mjs && node scripts/mjs/verify-confer-core.mjs",
     "verify:confer": "npm run build && node scripts/mjs/verify-confer-core.mjs",
     "verify:user-aside": "npm run build && node scripts/mjs/verify-user-aside-core.mjs",
+    "verify:pipeline-facets": "npm run build && node scripts/mjs/verify-pipeline-facets.mjs",
     "verify:find-project-root": "node scripts/mjs/verify-find-project-root-core.mjs",
     "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs",
     "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs",

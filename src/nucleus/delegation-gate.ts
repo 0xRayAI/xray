@@ -44,6 +44,21 @@ import {
   loadActiveAsidePointer,
   loadActiveUserAside,
 } from './user-aside.js';
+import {
+  validateAsideWorktreeCwd,
+  type AsideWorktreeCwdResult,
+} from './aside-worktree.js';
+
+export { extractSpawnCwd, validateAsideWorktreeCwd, provisionGitWorktree } from './aside-worktree.js';
+
+function denyAsideWorktreeCwd(cwdCheck: AsideWorktreeCwdResult): PreToolGateResult {
+  const base = {
+    allow: false as const,
+    reason: cwdCheck.reason ?? 'Aside spawn cwd must match worktree',
+    gate: cwdCheck.gate ?? 'aside-worktree-cwd-missing',
+  };
+  return cwdCheck.hint ? { ...base, hint: cwdCheck.hint } : base;
+}
 
 
 export {
@@ -385,17 +400,13 @@ export function evaluateSpawnPlanGate(
   }
 
   if (activeAside?.worktree) {
-    const worktree = activeAside.worktree.replace(/\/$/, '');
-    const cwd = ctx.projectRoot.replace(/\/$/, '');
-    if (worktree !== cwd && !cwd.startsWith(`${worktree}/`)) {
-      return {
-        allow: true,
-        gate: 'aside-worktree-cwd-warn',
-        reason:
-          `Aside worktree is ${worktree} but project root is ${cwd} — ` +
-          'spawn may lack aside file context until cwd matches worktree',
-        hint: { worktree, cwd },
-      };
+    const cwdCheck = validateAsideWorktreeCwd(
+      activeAside.worktree,
+      toolInput,
+      ctx.projectRoot,
+    );
+    if (!cwdCheck.valid) {
+      return denyAsideWorktreeCwd(cwdCheck);
     }
   }
 
@@ -432,7 +443,20 @@ export function evaluateSynthesisGate(
         undefined,
         ctx.sessionId,
       );
-      if (validation.valid) return { allow: true };
+      if (validation.valid) {
+        const activeAside = loadActiveUserAside(ctx.projectRoot, ctx.sessionId);
+        if (activeAside?.worktree) {
+          const cwdCheck = validateAsideWorktreeCwd(
+            activeAside.worktree,
+            toolInput,
+            ctx.projectRoot,
+          );
+          if (!cwdCheck.valid) {
+            return denyAsideWorktreeCwd(cwdCheck);
+          }
+        }
+        return { allow: true };
+      }
     }
   }
 

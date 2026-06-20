@@ -29,15 +29,13 @@ Items below are **known shortcomings** accepted for initial ship (see review quo
 
 ## P0 — Must fix for trustworthy parallel work
 
-- [ ] **Enforce worktree cwd on aside spawns**  
-  **Gap:** `worktree` / `branch` on aside intake are hints only. PreToolUse does not `chdir` or deny spawns whose Task prompt omits the aside worktree. Spawn routing can be correct while files land in the wrong directory.  
-  **Target:** Spawn gate validates `cwd` / `working_directory` / `isolation: worktree` resolves to `aside.worktree` when active; deny with actionable message if missing.  
-  **Files:** `delegation-gate.ts`, `grok-hook-utils.js`, spawn tool input normalizer.
+- [x] **Enforce worktree cwd on aside spawns** (2026-06-20)  
+  PreToolUse **denies** aside spawns when `aside.worktree` is set, project root ≠ worktree, and spawn lacks `cwd` / `working_directory` / `isolation:worktree` matching the aside path.  
+  **Files:** `aside-worktree.ts`, `delegation-gate.ts`, `verify-user-aside-core.mjs` step 10.
 
-- [ ] **Optional git worktree provisioning from aside intake**  
-  **Gap:** User must manually `git worktree add` or ask Grok separately. Aside metadata records paths that may not exist.  
-  **Target:** `analyze-complexity` with `worktree` + `branch` runs guarded `git worktree add` (feature-flagged `user_asides.auto_provision_worktree`).  
-  **Files:** new nucleus helper, `complexity-handler.ts`, verify script.
+- [x] **Optional git worktree provisioning from aside intake** (2026-06-20)  
+  `analyze-complexity` with `worktree` + `branch` runs guarded `git worktree add` when `user_asides.auto_provision_worktree: true`.  
+  **Files:** `aside-worktree.ts`, `complexity-handler.ts`, `features.schema.json`.
 
 ---
 

@@ -28,6 +28,7 @@ const {
 } = await import(dist('nucleus/user-aside.js'));
 const { resolveSpawnPlan } = await import(dist('nucleus/spawn-plan-resolution.js'));
 const { validateSpawnMatchesTodo } = await import(dist('nucleus/lead-dev-plan-persistence.js'));
+const { evaluatePreToolGate } = await import(dist('nucleus/delegation-gate.js'));
 
 let passed = 0;
 let failed = 0;
@@ -108,6 +109,24 @@ try {
   clearActiveAside(tmp);
   if (getActiveAsideId(tmp) !== null) fail('step 9: clear active');
   else pass('step 9: clear active aside');
+
+  setActiveAsideId('suit-nft', tmp, 'verify-session');
+  const wtPath = join(tmp, 'aside-worktree');
+  aside.worktree = wtPath;
+  saveUserAside(aside, tmp);
+  const denySpawn = evaluatePreToolGate(
+    'Task',
+    { planTodoId: todo.id, subagent_type: todo.subagent, prompt: todo.id },
+    {
+      projectRoot: tmp,
+      sessionId: 'verify-session',
+      features: { lead_dev_mode: true, auto_chain_delegations: true },
+    },
+  );
+  if (denySpawn.allow) fail('step 10: worktree cwd deny', JSON.stringify(denySpawn));
+  else if (denySpawn.gate !== 'aside-worktree-cwd-missing') {
+    fail('step 10: worktree cwd gate', denySpawn.gate);
+  } else pass('step 10: denies aside spawn without worktree cwd');
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
