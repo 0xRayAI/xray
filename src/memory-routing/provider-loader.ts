@@ -10,6 +10,24 @@ import type {
 import { createMemoryRoutingProvider as createNullProvider } from './null-provider.js';
 import { validateMemoryRoutingConfig } from './validate-config.js';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function resolveUnavailableReason(provider: MemoryRoutingProvider): string | null {
+  const statusProvider = provider as MemoryRoutingProvider & {
+    getAvailabilityStatus?: () => { reason?: string };
+  };
+  if (typeof statusProvider.getAvailabilityStatus !== 'function') {
+    return null;
+  }
+  try {
+    return statusProvider.getAvailabilityStatus().reason ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const REPERTOIRE_CANDIDATE_PATHS = [
   '../repertoire/dist/provider/memory-routing-provider.js',
   '../../repertoire/dist/provider/memory-routing-provider.js',
@@ -112,6 +130,8 @@ export async function loadMemoryRoutingProvider(
       throw new Error(`Invalid memory routing provider from ${modulePath}`);
     }
 
+    const availabilityReason = resolveUnavailableReason(provider);
+
     if (!provider.isAvailable()) {
       await frameworkLogger.log(
         'memory-routing',
@@ -120,10 +140,26 @@ export async function loadMemoryRoutingProvider(
         {
           providerId: provider.id,
           modulePath,
-          message: `Provider "${provider.id}" loaded but isAvailable() returned false. Falling back to null provider.`,
+          unavailableReason: availabilityReason,
+          message: `Provider "${provider.id}" loaded but isAvailable() returned false (${availabilityReason ?? 'unknown'}). Falling back to null provider.`,
         },
       );
-      return createNullProvider();
+
+      if (availabilityReason === 'empty_registry') {
+        await sleep(100);
+        if (provider.isAvailable()) {
+          await frameworkLogger.log(
+            'memory-routing',
+            'provider-retry-ok',
+            'info',
+            { providerId: provider.id, modulePath },
+          );
+        } else {
+          return createNullProvider();
+        }
+      } else {
+        return createNullProvider();
+      }
     }
 
     await frameworkLogger.log(
