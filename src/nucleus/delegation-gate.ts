@@ -60,6 +60,17 @@ function denyAsideWorktreeCwd(cwdCheck: AsideWorktreeCwdResult): PreToolGateResu
   return cwdCheck.hint ? { ...base, hint: cwdCheck.hint } : base;
 }
 
+function asideWorktreeCwdDenyIfNeeded(
+  activeAside: { worktree?: string } | null | undefined,
+  toolInput: ToolGateInput,
+  projectRoot: string,
+): PreToolGateResult | undefined {
+  if (!activeAside?.worktree) return undefined;
+  const cwdCheck = validateAsideWorktreeCwd(activeAside.worktree, toolInput, projectRoot);
+  if (!cwdCheck.valid) return denyAsideWorktreeCwd(cwdCheck);
+  return undefined;
+}
+
 
 export {
   validateSpawnMatchesTodo,
@@ -375,6 +386,8 @@ export function evaluateSpawnPlanGate(
   }
 
   if (ctx.features.auto_chain_delegations === false) {
+    const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+    if (cwdDeny) return cwdDeny;
     return { allow: true };
   }
 
@@ -399,16 +412,8 @@ export function evaluateSpawnPlanGate(
     return denyFromSpawnValidation(validation);
   }
 
-  if (activeAside?.worktree) {
-    const cwdCheck = validateAsideWorktreeCwd(
-      activeAside.worktree,
-      toolInput,
-      ctx.projectRoot,
-    );
-    if (!cwdCheck.valid) {
-      return denyAsideWorktreeCwd(cwdCheck);
-    }
-  }
+  const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+  if (cwdDeny) return cwdDeny;
 
   return { allow: true };
 }
@@ -445,16 +450,8 @@ export function evaluateSynthesisGate(
       );
       if (validation.valid) {
         const activeAside = loadActiveUserAside(ctx.projectRoot, ctx.sessionId);
-        if (activeAside?.worktree) {
-          const cwdCheck = validateAsideWorktreeCwd(
-            activeAside.worktree,
-            toolInput,
-            ctx.projectRoot,
-          );
-          if (!cwdCheck.valid) {
-            return denyAsideWorktreeCwd(cwdCheck);
-          }
-        }
+        const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+        if (cwdDeny) return cwdDeny;
         return { allow: true };
       }
     }

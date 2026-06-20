@@ -10,6 +10,7 @@ import { pathToFileURL } from 'node:url';
 
 const packageRoot = resolve(import.meta.dirname, '../..');
 const consumerRoot = process.cwd();
+const packageOnly = process.argv.includes('--package-only');
 let failed = 0;
 let passed = 0;
 
@@ -50,13 +51,18 @@ function xrayPath(...segments) {
   return candidates.find((p) => existsSync(p)) ?? null;
 }
 
-console.log('═══ 0xRay Pipeline Facet Verify ═══\n');
+console.log(`═══ 0xRay Pipeline Facet Verify${packageOnly ? ' (package-only)' : ''} ═══\n`);
 
 const features = readFeatures();
 if (!features) {
   fail('.xray/features.json');
 } else {
   pass('.xray/features.json');
+}
+
+function skipConsumerFacet(name, detail = 'skipped in package-only mode') {
+  passed++;
+  console.log(`⏭️  ${name} — ${detail}`);
 }
 
 // P0 — governance config
@@ -67,6 +73,8 @@ if (ig?.enabled && (ig.local_mode === true || ig.require_external_dynamo === fal
   pass('inference_governance endpoint', ig.endpoint_url);
 } else if (ig?.enabled) {
   pass('inference_governance.enabled', 'set local_mode or endpoint_url for full wire');
+} else if (packageOnly) {
+  skipConsumerFacet('inference_governance wiring');
 } else {
   fail('inference_governance wiring', 'enable inference_governance in features.json');
 }
@@ -82,43 +90,52 @@ if (pipelineRuntime) {
 }
 
 // P1 — synthesis + reflection config
-if (features?.synthesis?.enabled === true) {
-  pass('synthesis.enabled');
+if (packageOnly) {
+  skipConsumerFacet('synthesis.enabled');
+  skipConsumerFacet('synthesis.reflection');
+  skipConsumerFacet('autonomous_reporting.enabled');
+  skipConsumerFacet('memory_routing.repertoire');
+  skipConsumerFacet('lead_dev_mode');
+  skipConsumerFacet('user_asides.enabled');
 } else {
-  fail('synthesis.enabled');
-}
-if (features?.synthesis?.reflection?.mode) {
-  pass('synthesis.reflection.mode', features.synthesis.reflection.mode);
-} else {
-  fail('synthesis.reflection');
-}
+  if (features?.synthesis?.enabled === true) {
+    pass('synthesis.enabled');
+  } else {
+    fail('synthesis.enabled');
+  }
+  if (features?.synthesis?.reflection?.mode) {
+    pass('synthesis.reflection.mode', features.synthesis.reflection.mode);
+  } else {
+    fail('synthesis.reflection');
+  }
 
-// P1 — autonomous reporting
-if (features?.autonomous_reporting?.enabled === true) {
-  pass('autonomous_reporting.enabled');
-} else {
-  fail('autonomous_reporting.enabled');
-}
+  // P1 — autonomous reporting
+  if (features?.autonomous_reporting?.enabled === true) {
+    pass('autonomous_reporting.enabled');
+  } else {
+    fail('autonomous_reporting.enabled');
+  }
 
-// P1 — memory routing (live)
-if (features?.memory_routing?.enabled === true && features.memory_routing.provider === 'repertoire') {
-  pass('memory_routing.repertoire');
-} else {
-  fail('memory_routing.repertoire');
-}
+  // P1 — memory routing (live)
+  if (features?.memory_routing?.enabled === true && features.memory_routing.provider === 'repertoire') {
+    pass('memory_routing.repertoire');
+  } else {
+    fail('memory_routing.repertoire');
+  }
 
-// P1 — lead dev OS
-if (features?.multi_agent_orchestration?.lead_dev_mode === true) {
-  pass('lead_dev_mode');
-} else {
-  fail('lead_dev_mode');
-}
+  // P1 — lead dev OS
+  if (features?.multi_agent_orchestration?.lead_dev_mode === true) {
+    pass('lead_dev_mode');
+  } else {
+    fail('lead_dev_mode');
+  }
 
-// P2 — user asides
-if (features?.multi_agent_orchestration?.user_asides?.enabled === true) {
-  pass('user_asides.enabled');
-} else {
-  fail('user_asides.enabled');
+  // P2 — user asides
+  if (features?.multi_agent_orchestration?.user_asides?.enabled === true) {
+    pass('user_asides.enabled');
+  } else {
+    fail('user_asides.enabled');
+  }
 }
 
 // Runtime artifacts (optional — created after hook fire)

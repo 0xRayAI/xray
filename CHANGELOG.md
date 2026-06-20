@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.5.6] - 2026-06-20
+
+### 🐛 Fixes
+- **Worktree cwd enforce** — `auto_chain_delegations: false` no longer bypasses aside worktree cwd check; synthesis-gate parity retained
+- **`isAutoProvisionWorktreeEnabled`** — requires `user_asides.enabled` before honoring `auto_provision_worktree`
+- **`provisionGitWorktree`** — macOS `/var` vs `/private/var` path resolution for idempotent worktree detection
+
+### 🔄 Changes
+- **`verify:pipeline-facets --package-only`** — release-gate probes shipped artifacts without consumer feature matrix
+- **`release-gate.mjs`** — wires pipeline facet verify (package-only mode)
+
+### ✅ Tests
+- auto_chain-off cwd deny; synthesis + worktree deny; `extractSpawnCwd` isolation branches; `provisionGitWorktree` guards; `isAutoProvisionWorktreeEnabled` gate
+
+---
+
+## [3.5.5] - 2026-06-20
+
+### ✨ Features
+- **User-asides P0** — PreToolUse **denies** aside spawns without `cwd` / `working_directory` matching `aside.worktree`; `aside-worktree.ts` SSOT; synthesis-gate parity
+- **Worktree auto-provision** — `analyze-complexity` runs guarded `git worktree add` when `user_asides.auto_provision_worktree: true`
+- **Pipeline P3** — `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit` wiring
+
+### ✅ Tests
+- `aside-worktree.test.ts`; delegation-gate cwd deny/allow; `verify-user-aside-core` 10/10
+
+---
+
 ## [3.5.4] - 2026-06-19
 
 ### ✨ Features
@@ -23,18 +51,6 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### ✅ Tests
 - `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
 - `governance-service-metamorphosis.test.ts`; `confer.test.ts` emoji panel
-
----
-
-## [3.5.5] - 2026-06-20
-
-### ✨ Features
-- **User-asides P0** — PreToolUse **denies** aside spawns without `cwd` / `working_directory` matching `aside.worktree`; `aside-worktree.ts` SSOT; synthesis-gate parity
-- **Worktree auto-provision** — `analyze-complexity` runs guarded `git worktree add` when `user_asides.auto_provision_worktree: true`
-- **Pipeline P3** — `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit` wiring
-
-### ✅ Tests
-- `aside-worktree.test.ts`; delegation-gate cwd deny/allow; `verify-user-aside-core` 10/10
 
 ---
 

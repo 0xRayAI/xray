@@ -1,6 +1,18 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.4**.
+Complete reference of capabilities shipped from **3.1.0** through **3.5.6**.
+
+## 3.5.6 — User-asides hardening
+
+- Worktree cwd enforce with `auto_chain_delegations: false`; synthesis-gate parity
+- `isAutoProvisionWorktreeEnabled` requires `user_asides.enabled`
+- `provisionGitWorktree` macOS realpath fix; `verify:pipeline-facets --package-only` in release-gate
+
+## 3.5.5 — User-asides P0 + pipeline P3
+
+- PreToolUse **denies** aside spawns without worktree cwd; `aside-worktree.ts` SSOT
+- Worktree auto-provision on `analyze-complexity` when `auto_provision_worktree: true`
+- `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit`
 
 ## 3.5.4 — Synthesis consult receipt gate
 

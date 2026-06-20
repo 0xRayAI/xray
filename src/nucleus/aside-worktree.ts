@@ -5,6 +5,7 @@
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isUserAsidesEnabled } from './user-aside.js';
 /** Minimal spawn tool input for cwd extraction (avoids circular import with delegation-gate). */
 export interface SpawnCwdToolInput {
   cwd?: string;
@@ -39,15 +40,18 @@ export function normalizeWorktreePath(worktree: string, projectRoot: string): st
 }
 
 export function isAutoProvisionWorktreeEnabled(projectRoot = process.cwd()): boolean {
+  if (!isUserAsidesEnabled(projectRoot)) return false;
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
   if (!fs.existsSync(featuresPath)) return false;
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
       multi_agent_orchestration?: {
-        user_asides?: { auto_provision_worktree?: boolean };
+        user_asides?: { enabled?: boolean; auto_provision_worktree?: boolean };
       };
     };
-    return data.multi_agent_orchestration?.user_asides?.auto_provision_worktree === true;
+    const raw = data.multi_agent_orchestration?.user_asides;
+    if (raw?.enabled === false) return false;
+    return raw?.auto_provision_worktree === true;
   } catch {
     return false;
   }
@@ -132,6 +136,14 @@ function gitBranchExists(projectRoot: string, branch: string): boolean {
   }
 }
 
+function resolvePathForCompare(p: string): string {
+  try {
+    return fs.realpathSync.native(p).replace(/\/$/, '');
+  } catch {
+    return path.resolve(p).replace(/\/$/, '');
+  }
+}
+
 function isGitWorktreePath(wtPath: string, projectRoot: string): boolean {
   try {
     const out = execFileSync('git', ['worktree', 'list', '--porcelain'], {
@@ -139,11 +151,11 @@ function isGitWorktreePath(wtPath: string, projectRoot: string): boolean {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    const normalized = wtPath.replace(/\/$/, '');
+    const normalized = resolvePathForCompare(wtPath);
     return out.split('\n').some((line) => {
       if (!line.startsWith('worktree ')) return false;
-      const listed = line.slice('worktree '.length).trim().replace(/\/$/, '');
-      return listed === normalized;
+      const listed = line.slice('worktree '.length).trim();
+      return resolvePathForCompare(listed) === normalized;
     });
   } catch {
     return false;

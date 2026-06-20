@@ -492,6 +492,82 @@ describe('delegation-gate SSOT', () => {
     }
   });
 
+  it('evaluateSpawnPlanGate denies worktree cwd when auto_chain_delegations is false', () => {
+    const noAutoChain = { lead_dev_mode: true, auto_chain_delegations: false };
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: {
+          enabled: true,
+          lead_dev_mode: true,
+          auto_chain_delegations: false,
+          user_asides: { enabled: true },
+        },
+      }),
+    );
+    const worktree = path.join(tmp, 'aside-wt');
+    const aside = buildUserAsidePlan(
+      'no-chain',
+      'No Chain',
+      'auto_chain off cwd enforce',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('no-chain', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features: noAutoChain },
+    );
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) expect(spawn.gate).toBe('aside-worktree-cwd-missing');
+  });
+
+  it('evaluateSynthesisGate denies aside spawn when worktree cwd missing', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const worktree = path.join(tmp, 'syn-wt');
+    const aside = buildUserAsidePlan(
+      'syn-cwd',
+      'Syn Cwd',
+      'Synthesis worktree deny',
+      [{ description: 'aside work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('syn-cwd', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluateSynthesisGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) expect(spawn.gate).toBe('aside-worktree-cwd-missing');
+  });
+
   it('evaluatePreToolGate allows aside spawn when cwd matches worktree', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
