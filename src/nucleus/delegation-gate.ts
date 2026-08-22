@@ -446,6 +446,9 @@ export function evaluateSpawnPlanGate(
       ? allPlanTodos(resolved.plan).find((t) => t.id === pending[0]!.planTodoId) ?? null
       : null;
 
+  const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+  if (cwdDeny) return cwdDeny;
+
   const validation = validateSpawnMatchesTodo(
     normalized,
     ctx.projectRoot,
@@ -461,9 +464,6 @@ export function evaluateSpawnPlanGate(
     }
     return denyFromSpawnValidation(validation);
   }
-
-  const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
-  if (cwdDeny) return cwdDeny;
 
   return { allow: true };
 }
@@ -627,7 +627,10 @@ export function evaluateConstitutionGate(
 
   if (writing && ctx.features.no_new_surface !== false) {
     for (const p of paths) {
-      if (SURFACE_DENY.some((re) => re.test(p))) {
+      const normalized = p.replace(/\\/g, '/');
+      const abs = path.isAbsolute(p) ? p : path.join(ctx.projectRoot, p);
+      if (fs.existsSync(abs)) continue;
+      if (SURFACE_DENY.some((re) => re.test(normalized))) {
         return {
           allow: false,
           reason: 'Codex 69: new MCP/skill/handler surface — rewire existing',

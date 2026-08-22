@@ -224,6 +224,33 @@ describe('delegation-gate temperament', () => {
     expect(loadConferConfig(tmp).enabled).toBe(true);
   });
 
+  it('codex 69 denies new skill file but allows rewrite of existing SKILL.md', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true, no_new_surface: true },
+      }),
+    );
+    const existing = path.join(tmp, 'src', 'skills', 'orchestrator', 'SKILL.md');
+    fs.mkdirSync(path.dirname(existing), { recursive: true });
+    fs.writeFileSync(existing, '# orchestrator\n');
+    const features = loadDelegationGateFeatures(tmp, 'grok');
+    const rewrite = evaluatePreToolGate(
+      'search_replace',
+      { path: 'src/skills/orchestrator/SKILL.md', new_string: '# rewire\n' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(rewrite.allow).toBe(true);
+    const create = evaluatePreToolGate(
+      'search_replace',
+      { path: 'src/skills/brand-new/SKILL.md', new_string: '# new\n' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(create.allow).toBe(false);
+    if (!create.allow) expect(create.gate).toBe('no-new-surface');
+  });
+
   it('constitution denies any on hermes write even on frontier', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
