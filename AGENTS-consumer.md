@@ -4,7 +4,9 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v3.5.5** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+**v3 temperament** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+
+**Constitution always on** (Codex PreToolUse, no new surface, no `eval`). **Ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes sessions stay in check. Frontier hosts (Grok 4.6 class) use `suit_temperament.profile: auto` → **warn** on spawn-without-plan, not deny. Existing `.xray/features.json` without `suit_temperament` stays **guided**. See docs: Suit temperament.
 
 ## Postinstall (automatic)
 

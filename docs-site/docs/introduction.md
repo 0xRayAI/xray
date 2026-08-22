@@ -1,8 +1,11 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.5.5** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3 temperament** — constitution always on; ceremony scales by host. Still 7 MCP servers · 4 bridges · Codex.
 
-0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
+0xRay prevents AI coding mistakes **before they land**. It is an exoskeleton for **every** coding agent: free models in OpenCode/Hermes **and** frontier hosts (Grok 4.6 + Grok Build). Those hosts are not equal — see [Suit temperament](./guides/v3-temperament.md).
+
+- **Always on:** Codex PreToolUse, no new MCP/skill surface, destructive-shell block  
+- **Ceremony (optional by profile):** lead-dev intake, spawn-plan deny, confer — **required** for weaker agents, **lite** for frontier hosts so the suit does not fight the host
 
 ## Quick Start
 

@@ -17,6 +17,7 @@ import {
   getActivePendingDelegations,
   validateSpawnMatchesTodo,
   updatePlanTodoStatusInPlace,
+  loadDelegationGateFeatures,
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
 import { getActiveUserAsideBoot } from '../../hooks/user-aside-hook-runtime.mjs';
@@ -259,15 +260,22 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
   const conferPending = loadConferPending(root, sessionId);
   const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
+  const gateFeatures = loadDelegationGateFeatures(root, 'grok');
+  const frontier = gateFeatures.ceremony === 'lite';
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
+    suit_profile: gateFeatures.suit_profile ?? 'guided',
+    ceremony: gateFeatures.ceremony ?? 'full',
+    spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',
     codexBlockingTermCount: blockingTerms.length,
     codexTerms: [59, 67, 68, 69],
     rules: features.lead_dev_mode ? LEAD_DEV_RULES : [],
-    mcpIntake: 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
-    enforcement: 'PreToolUse hook — codex patterns + surface area + spawn gate',
+    mcpIntake: frontier
+      ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'
+      : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
+    enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
     workspaceRoot: root,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),

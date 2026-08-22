@@ -93,6 +93,15 @@ export interface MultiAgentOrchestrationConfig {
   confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
 
+/** 0xRay v3 — constitution vs ceremony. See docs-site/docs/guides/v3-temperament.md */
+export type SuitProfile = 'frontier' | 'guided' | 'strict';
+export type SuitHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
+
+export interface SuitTemperamentConfig {
+  profile?: 'auto' | SuitProfile;
+  host_defaults?: Partial<Record<SuitHost, SuitProfile>>;
+}
+
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */
 export interface SynthesisReflectionConfig {
   mode?: AutoReflectionConfig['mode'];
@@ -406,6 +415,8 @@ export interface FeaturesConfig {
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;
   enforcement?: EnforcementConfig;
+  /** v3 temperament — missing key means guided (existing consumers unchanged) */
+  suit_temperament?: SuitTemperamentConfig;
 }
 
 // ============================================================================

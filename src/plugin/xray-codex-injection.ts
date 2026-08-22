@@ -143,7 +143,7 @@ export default async function xrayCodexPlugin(input: {
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
-      const features = loadDelegationGateFeatures(directory);
+      const features = loadDelegationGateFeatures(directory, "opencode");
       let sessionId: string | null = process.env.GROK_SESSION_ID ?? null;
       try {
         const boot = JSON.parse(

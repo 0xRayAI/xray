@@ -48,6 +48,16 @@ import {
   validateAsideWorktreeCwd,
   type AsideWorktreeCwdResult,
 } from './aside-worktree.js';
+import {
+  ceremonyForProfile,
+  resolveSuitProfile,
+  spawnPlanModeForProfile,
+  type CeremonyLevel,
+  type SpawnPlanMode,
+  type SuitHost,
+  type SuitProfile,
+  type SuitTemperamentConfig,
+} from './suit-temperament.js';
 
 export { extractSpawnCwd, validateAsideWorktreeCwd, provisionGitWorktree } from './aside-worktree.js';
 
@@ -90,11 +100,15 @@ export {
 } from './synthesis-consult-receipt.js';
 export const updatePlanTodoStatusInPlace = updatePlanTodoStatus;
 
-export type DelegationGateHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
+export type DelegationGateHost = SuitHost;
 
 export interface DelegationGateFeatures {
   lead_dev_mode: boolean;
   auto_chain_delegations: boolean;
+  /** v3 — deny (guided/strict), warn (frontier), off */
+  spawn_plan_mode?: SpawnPlanMode;
+  ceremony?: CeremonyLevel;
+  suit_profile?: SuitProfile;
 }
 
 export interface ToolGateInput {
@@ -200,13 +214,24 @@ const HERMES_WRITE_TOOLS = new Set(['write_file', 'patch', 'write', 'edit']);
 
 const OPENCODE_WRITE_TOOLS = new Set(['write', 'edit', 'multiedit']);
 
-export function loadDelegationGateFeatures(projectRoot = process.cwd()): DelegationGateFeatures {
+export function loadDelegationGateFeatures(
+  projectRoot = process.cwd(),
+  host: DelegationGateHost = 'generic',
+): DelegationGateFeatures {
+  const fallback = (profile: SuitProfile): DelegationGateFeatures => ({
+    lead_dev_mode: true,
+    auto_chain_delegations: true,
+    spawn_plan_mode: spawnPlanModeForProfile(profile),
+    ceremony: ceremonyForProfile(profile),
+    suit_profile: profile,
+  });
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
   if (!fs.existsSync(featuresPath)) {
-    return { lead_dev_mode: true, auto_chain_delegations: true };
+    return fallback(resolveSuitProfile(undefined, host));
   }
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      suit_temperament?: SuitTemperamentConfig;
       multi_agent_orchestration?: {
         enabled?: boolean;
         lead_dev_mode?: boolean;
@@ -214,12 +239,16 @@ export function loadDelegationGateFeatures(projectRoot = process.cwd()): Delegat
       };
     };
     const orch = data.multi_agent_orchestration ?? {};
+    const profile = resolveSuitProfile(data.suit_temperament, host);
     return {
       lead_dev_mode: orch.enabled !== false && orch.lead_dev_mode !== false,
       auto_chain_delegations: orch.auto_chain_delegations !== false,
+      spawn_plan_mode: spawnPlanModeForProfile(profile),
+      ceremony: ceremonyForProfile(profile),
+      suit_profile: profile,
     };
   } catch {
-    return { lead_dev_mode: true, auto_chain_delegations: true };
+    return fallback(resolveSuitProfile(undefined, host));
   }
 }
 
@@ -339,6 +368,10 @@ function denyFromPending(
   };
 }
 
+function spawnPlanSoftAllow(gate: string, reason: string): PreToolGateAllow {
+  return { allow: true, reason, gate };
+}
+
 /** Spawn plan missing — applies before auto_chain opt-out for subagent tools. */
 export function evaluateSpawnPlanGate(
   toolName: string,
@@ -348,6 +381,10 @@ export function evaluateSpawnPlanGate(
   if (!ctx.features.lead_dev_mode || !isSubagentTool(toolName)) {
     return { allow: true };
   }
+  const spawnMode = ctx.features.spawn_plan_mode ?? 'deny';
+  if (spawnMode === 'off') {
+    return { allow: true };
+  }
 
   const activeAside =
     isUserAsidesEnabled(ctx.projectRoot)
@@ -355,34 +392,37 @@ export function evaluateSpawnPlanGate(
       : null;
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   if (!activeAside && plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
-    return {
-      allow: false,
+    const stale = {
       reason:
         'Lead-dev plan is stale (unstarted todos exceeded TTL) — ' +
         're-run xray-orchestrator analyze-complexity to refresh the plan',
       gate: 'spawn-plan-stale',
       hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
     };
+    if (spawnMode === 'warn') return spawnPlanSoftAllow(stale.gate, stale.reason);
+    return { allow: false, ...stale };
   }
 
   if (!hasValidSpawnPlanContext(ctx.projectRoot, ctx.sessionId)) {
     if (findRecentStalePlanArchive(ctx.projectRoot)) {
-      return {
-        allow: false,
+      const archived = {
         reason:
           'Lead-dev plan was stale and archived — ' +
           're-run xray-orchestrator analyze-complexity to refresh the plan',
         gate: 'spawn-plan-stale',
         hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
       };
+      if (spawnMode === 'warn') return spawnPlanSoftAllow(archived.gate, archived.reason);
+      return { allow: false, ...archived };
     }
-    return {
-      allow: false,
+    const missing = {
       reason:
         'Codex 59/67: call xray-orchestrator analyze-complexity first — ' +
         'writes .xray/state/lead-dev-plan.json required before spawn_subagent',
       gate: 'spawn-plan-missing',
     };
+    if (spawnMode === 'warn') return spawnPlanSoftAllow(missing.gate, missing.reason);
+    return { allow: false, ...missing };
   }
 
   if (ctx.features.auto_chain_delegations === false) {
@@ -538,7 +578,10 @@ export function evaluatePreToolGate(
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
-  const synthesisBlock = evaluateSynthesisGate(toolName, toolInput, ctx);
+  const lite = ctx.features.ceremony === 'lite';
+  const synthesisBlock = lite
+    ? ({ allow: true } as PreToolGateAllow)
+    : evaluateSynthesisGate(toolName, toolInput, ctx);
   if (!synthesisBlock.allow) return synthesisBlock;
 
   if (!isSynthesisCheckpointDue(ctx.projectRoot, ctx.sessionId)) {
@@ -548,7 +591,9 @@ export function evaluatePreToolGate(
     });
   }
 
-  const pendingBlock = evaluatePendingDelegationGate(toolName, toolInput, ctx);
+  const pendingBlock = lite
+    ? ({ allow: true } as PreToolGateAllow)
+    : evaluatePendingDelegationGate(toolName, toolInput, ctx);
   if (!pendingBlock.allow) return pendingBlock;
 
   const spawnBlock = evaluateSpawnPlanGate(toolName, toolInput, ctx);

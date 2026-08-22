@@ -47,7 +47,7 @@ async function main() {
     ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
     const features = loadFeatures(eventRoot);
-    const gateFeatures = loadDelegationGateFeatures(eventRoot);
+    const gateFeatures = loadDelegationGateFeatures(eventRoot, 'grok');
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;
     const { paths, content, cmd, toolInput } = ctx;
@@ -70,17 +70,7 @@ async function main() {
       );
     }
 
-    if (gateBlock.reason) {
-      finish(
-        eventRoot,
-        'allow',
-        gateBlock.reason,
-        gateBlock.hint,
-        toolName,
-        { gate: gateBlock.gate, warn: true },
-      );
-    }
-
+    // Constitution always runs — even when ceremony only warned (frontier spawn).
     if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
       const surfaceBlock = checkSurfaceArea(paths, eventRoot);
       if (surfaceBlock) finish(eventRoot, 'deny', surfaceBlock, null, toolName);
@@ -98,6 +88,17 @@ async function main() {
 
       const testHint = checkFullTestSuite(cmd, features);
       if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+    }
+
+    if (gateBlock.reason) {
+      finish(
+        eventRoot,
+        'allow',
+        gateBlock.reason,
+        gateBlock.hint,
+        toolName,
+        { gate: gateBlock.gate, warn: true },
+      );
     }
 
     if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {

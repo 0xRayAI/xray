@@ -84,6 +84,55 @@ describe("install-bridges xray config deploy", () => {
     expect(deployed.new_framework_block?.enabled).toBe(true);
   });
 
+  it("upgrade without suit_temperament pins profile guided (does not auto-frontier Grok)", () => {
+    const xrayDir = path.join(packageRoot, "xray");
+    fs.mkdirSync(xrayDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({ name: "0xray", version: "3.6.0" }),
+    );
+    fs.writeFileSync(
+      path.join(xrayDir, "features.json"),
+      JSON.stringify({
+        version: "3.6.0",
+        suit_temperament: { profile: "auto" },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+
+    const consumerXray = path.join(consumerRoot, ".xray");
+    fs.mkdirSync(consumerXray, { recursive: true });
+    fs.writeFileSync(
+      path.join(consumerXray, "features.json"),
+      JSON.stringify({
+        version: "3.5.5",
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+
+    deployXrayConfig(consumerRoot, packageRoot, () => {});
+    const deployed = JSON.parse(
+      fs.readFileSync(path.join(consumerXray, "features.json"), "utf-8"),
+    );
+    expect(deployed.suit_temperament?.profile).toBe("guided");
+  });
+
+  it("fresh features.json keeps shipped auto profile", () => {
+    const xrayDir = path.join(packageRoot, "xray");
+    fs.mkdirSync(xrayDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(xrayDir, "features.json"),
+      JSON.stringify({
+        suit_temperament: { profile: "auto" },
+      }),
+    );
+    deployXrayConfig(consumerRoot, packageRoot, () => {});
+    const deployed = JSON.parse(
+      fs.readFileSync(path.join(consumerRoot, ".xray", "features.json"), "utf-8"),
+    );
+    expect(deployed.suit_temperament?.profile).toBe("auto");
+  });
+
   it("merges codex.json — adds new shipped terms without dropping consumer file", () => {
     const xrayDir = path.join(packageRoot, "xray");
     fs.mkdirSync(xrayDir, { recursive: true });

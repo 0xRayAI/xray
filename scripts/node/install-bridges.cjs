@@ -119,8 +119,21 @@ function copyTree(src, dest, relPath = "") {
 
 function copyPluginDir(src, dest) {
   if (!fs.existsSync(src)) return false;
-  fs.cpSync(src, dest, { recursive: true, force: true });
-  return true;
+  try {
+    if (fs.existsSync(dest)) {
+      fs.rmSync(dest, { recursive: true, force: true });
+    }
+    fs.cpSync(src, dest, { recursive: true, force: true });
+    return true;
+  } catch (e) {
+    try {
+      fs.rmSync(dest, { recursive: true, force: true });
+      fs.cpSync(src, dest, { recursive: true, force: true });
+      return true;
+    } catch {
+      throw e;
+    }
+  }
 }
 
 function writePluginMcpJson(pluginDir, targetDir, log, label) {
@@ -160,9 +173,13 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
 }
 
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
-  const hooksPath = path.join(pluginDir, "hooks", "hooks.json");
+  const hooksDir = path.join(pluginDir, "hooks");
+  const hooksPath = path.join(hooksDir, "hooks.json");
   const hookScript = path.join(packageRoot, "dist", "integrations", "grok", "hooks", "pre-tool-use.js");
-  if (!fs.existsSync(hooksPath)) return;
+  if (!fs.existsSync(hooksPath)) {
+    if (!fs.existsSync(hooksDir)) fs.mkdirSync(hooksDir, { recursive: true });
+    if (!fs.existsSync(hooksPath)) return;
+  }
 
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
@@ -434,6 +451,18 @@ function deployXrayConfigFile(file, src, dst, packageRoot) {
         const pkgVersion = readPackageVersion(packageRoot);
         if (pkgVersion) merged.version = pkgVersion;
         else if (shipped.version) merged.version = shipped.version;
+        // v3: existing consumers without suit_temperament stay guided on upgrade.
+        // Fresh copy (dst missing) already returned above with shipped auto.
+        const hadTemperament =
+          consumer.suit_temperament &&
+          typeof consumer.suit_temperament === "object" &&
+          consumer.suit_temperament.profile;
+        if (!hadTemperament) {
+          merged.suit_temperament = {
+            ...(merged.suit_temperament || {}),
+            profile: "guided",
+          };
+        }
       }
       writeJsonFile(dst, merged);
       return true;

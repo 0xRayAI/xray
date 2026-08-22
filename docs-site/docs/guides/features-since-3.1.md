@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.5**.
+Complete reference of capabilities shipped from **3.1.0** through **3.6.0 temperament**.
+
+## 3.6.0 — Suit temperament (v3)
+
+- **Constitution vs ceremony** — Codex / no_new_surface / destructive-shell always on; lead-dev intake and spawn-plan **deny** scale by profile
+- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes / OpenClaw, including free models) · `strict` · `auto` (host table)
+- **Upgrade safety:** missing `suit_temperament` stays **guided**; postinstall merge will not frontier existing consumers
+- **Frontier:** spawn without plan **warns** (does not deny); synthesis/pending ceremony lite; Codex still denies `any` / `eval` / new MCP surface
+- Docs: [Suit temperament](./v3-temperament.md) · [v3 museum](../architecture/v3-museum.md)
 
 ## 3.5.5 — User-asides P0 + pipeline P3
 

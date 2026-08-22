@@ -1,7 +1,17 @@
 {
   "$schema": "./features.schema.json",
-  "version": "3.4.3",
+  "version": "3.6.0",
   "description": "0xRay Framework - Unified Feature Configuration",
+  "suit_temperament": {
+    "profile": "auto",
+    "host_defaults": {
+      "grok": "frontier",
+      "hermes": "guided",
+      "opencode": "guided",
+      "openclaw": "guided",
+      "generic": "guided"
+    }
+  },
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,

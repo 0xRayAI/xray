@@ -862,7 +862,7 @@ async function handleDelegationGate(command, projectRoot, logDir) {
       await recordHermesSynthesisTurn(projectRoot, sessionId);
     }
 
-    const features = gate.loadDelegationGateFeatures(projectRoot);
+    const features = gate.loadDelegationGateFeatures(projectRoot, host);
     const outcome = gate.evaluatePreToolGate(tool, args, {
       projectRoot,
       sessionId,
