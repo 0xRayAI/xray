@@ -8,6 +8,7 @@ import * as path from 'path';
 import { featuresConfigLoader } from '../core/features-config.js';
 import type { MultiAgentOrchestrationConfig } from '../core/features-config.js';
 import { scoreComplexity } from './thin-dispatch.js';
+import { conferDefaultForProfile, resolveRuntimeSuitProfile } from './suit-temperament.js';
 
 export const LEAD_DEV_RULES = [
   'Phased plan + detailed todos; assign best subagent; monitor output; iterate fully',
@@ -140,8 +141,14 @@ export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevP
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
-  const mandatoryConsults =
-    cfg.auto_consult_major_work !== false ? [...MANDATORY_MAJOR_CONSULTS] : [];
+  const profile = resolveRuntimeSuitProfile(process.cwd());
+  const autoConsult =
+    profile === 'frontier'
+      ? cfg.auto_consult_major_work === true
+      : profile === 'strict'
+        ? true
+        : cfg.auto_consult_major_work !== false;
+  const mandatoryConsults = autoConsult ? [...MANDATORY_MAJOR_CONSULTS] : [];
 
   if (mandatoryConsults.length === 0) return null;
 
@@ -188,6 +195,7 @@ export function buildLeadDevPlan(
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
+  const profile = resolveRuntimeSuitProfile(process.cwd());
   const threshold = cfg.phased_plan_threshold ?? 25;
   const score = scoreComplexity(description, { taskTypes });
   const mcpScore =
@@ -197,10 +205,14 @@ export function buildLeadDevPlan(
   const complexity = Math.max(score.score, mcpScore);
   const requiresPhasedPlan = complexity > threshold || taskInputs.length > 1;
 
+  const autoConsult =
+    profile === 'frontier'
+      ? cfg.auto_consult_major_work === true
+      : profile === 'strict' || conferDefaultForProfile(profile)
+        ? cfg.auto_consult_major_work !== false
+        : false;
   const mandatoryConsults =
-    cfg.auto_consult_major_work !== false && requiresPhasedPlan
-      ? [...MANDATORY_MAJOR_CONSULTS]
-      : [];
+    autoConsult && requiresPhasedPlan ? [...MANDATORY_MAJOR_CONSULTS] : [];
 
   const phases: LeadDevPhase[] = requiresPhasedPlan
     ? [

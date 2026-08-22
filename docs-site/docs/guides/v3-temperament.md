@@ -18,12 +18,14 @@ Frontier models will keep evolving. Many agents **will not**. The suit has to se
 
 ## Always on (constitution)
 
-Every profile, every host:
+Every profile:
 
-- PreToolUse **Codex** — no `any`, no `@ts-ignore`, no `eval()`
-- **no_new_surface** (Codex 69) — rewire existing MCP/skills/handlers; do not grow a parallel API
+- PreToolUse **Codex 11 / 29** — no `any`, no `@ts-ignore`, no `eval()` (SSOT `evaluatePreToolGate` — Grok, Hermes, OpenCode)
+- **no_new_surface** (Codex 69) — rewire existing MCP/skills/handlers
 - Destructive shell block (`rm -rf /`, etc.)
 - 7 consumer MCP servers still exist; you *may* call them
+
+**Host honesty:** **OpenClaw** today wires MCP + skills; it does **not** yet abort tools via this PreToolUse SSOT. Treat OpenClaw guided as config intent until that rewire. Aside worktree **cwd** stays deny on every profile.
 
 This is **External Governance**. It does not come off because the model got smarter. The Autonomous Engine is still there — temperament only changes whether intake is *mandatory* before spawn.
 
@@ -31,11 +33,11 @@ This is **External Governance**. It does not come off because the model got smar
 
 Ceremony is lead-dev *process*: `analyze-complexity` before spawn, 3-agent confer, synthesis checkpoints, spawn-plan **deny**.
 
-| Profile | Who | Spawn without plan | Synthesis / confer |
-|---------|-----|--------------------|--------------------|
-| **guided** (default) | Hermes, OpenCode, OpenClaw, unknown, **any consumer with no `suit_temperament` key** | **Deny** (Codex 59) | Full |
-| **strict** | Opt-in max | Deny | Full + confer |
-| **frontier** | Grok when `profile: "auto"` **or** explicit | **Warn** (allow) | Lite (skip synthesis deny) |
+| Profile | Who | Spawn without plan / leftover-plan mismatch | Synthesis / pending-write | Confer |
+|---------|-----|---------------------------------------------|---------------------------|--------|
+| **guided** (default) | Hermes, OpenCode, unknown, **any consumer with no `suit_temperament` key** | **Deny** (Codex 59) | Full deny | On |
+| **strict** | Opt-in max | Deny | Full deny | **Locked on** |
+| **frontier** | Grok when `profile: "auto"` **or** explicit | **Warn** (allow) — missing, stale, **and todo-mismatch** | Lite (skip) | **Off** unless `confer.enabled: true` |
 
 **Upgrade safety:** if `.xray/features.json` has **no** `suit_temperament` field, the profile is **guided**. Existing installs do not silently become frontier.
 

@@ -109,6 +109,7 @@ export interface DelegationGateFeatures {
   spawn_plan_mode?: SpawnPlanMode;
   ceremony?: CeremonyLevel;
   suit_profile?: SuitProfile;
+  no_new_surface?: boolean;
 }
 
 export interface ToolGateInput {
@@ -224,6 +225,7 @@ export function loadDelegationGateFeatures(
     spawn_plan_mode: spawnPlanModeForProfile(profile),
     ceremony: ceremonyForProfile(profile),
     suit_profile: profile,
+    no_new_surface: true,
   });
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
   if (!fs.existsSync(featuresPath)) {
@@ -236,6 +238,7 @@ export function loadDelegationGateFeatures(
         enabled?: boolean;
         lead_dev_mode?: boolean;
         auto_chain_delegations?: boolean;
+        no_new_surface?: boolean;
       };
     };
     const orch = data.multi_agent_orchestration ?? {};
@@ -246,6 +249,7 @@ export function loadDelegationGateFeatures(
       spawn_plan_mode: spawnPlanModeForProfile(profile),
       ceremony: ceremonyForProfile(profile),
       suit_profile: profile,
+      no_new_surface: orch.no_new_surface !== false,
     };
   } catch {
     return fallback(resolveSuitProfile(undefined, host));
@@ -449,6 +453,12 @@ export function evaluateSpawnPlanGate(
     ctx.sessionId,
   );
   if (!validation.valid) {
+    if (spawnMode === 'warn') {
+      return spawnPlanSoftAllow(
+        validation.gate ?? 'spawn-todo-persistence',
+        validation.reason ?? 'Spawn did not match lead-dev plan todo (frontier: warn, not deny)',
+      );
+    }
     return denyFromSpawnValidation(validation);
   }
 
@@ -573,11 +583,96 @@ export function evaluatePendingDelegationGate(
  * Full pre-tool evaluation — synthesis gate first, slice recording, then
  * pending gate, then spawn todo gate for subagent tools.
  */
+const CONSTITUTION_ANY = /:\s*any\b|as\s+any\b/;
+const CONSTITUTION_TS_IGNORE = /@ts-ignore|@ts-expect-error/;
+const CONSTITUTION_EVAL = /\beval\s*\(/;
+const CONSTITUTION_DESTRUCTIVE =
+  /\brm\s+-rf\s+\/\b|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i;
+const SURFACE_DENY = [
+  /(?:^|\/)src\/mcps\/[^/]+\.server\.(ts|js)$/i,
+  /(?:^|\/)src\/skills\/[^/]+\/SKILL\.md$/i,
+  /(?:^|\/)src\/mcps\/orchestrator\/handlers\/[^/]+-handler\.(ts|js)$/i,
+];
+
+function collectWriteContent(toolInput: ToolGateInput): string {
+  return [
+    toolInput.new_string,
+    toolInput.contents,
+    toolInput.content,
+    toolInput.command,
+  ]
+    .filter((v) => v != null)
+    .map(String)
+    .join('\n');
+}
+
+function collectWritePaths(toolInput: ToolGateInput): string[] {
+  const paths: string[] = [];
+  for (const key of ['path', 'file_path', 'filePath'] as const) {
+    const v = toolInput[key];
+    if (typeof v === 'string' && v) paths.push(v);
+  }
+  return paths;
+}
+
+/** Codex 11 / 29 / 69 + destructive shell — always on, all hosts that call this SSOT. */
+export function evaluateConstitutionGate(
+  toolName: string,
+  toolInput: ToolGateInput,
+  ctx: PreToolGateContext,
+): PreToolGateResult {
+  const content = collectWriteContent(toolInput);
+  const paths = collectWritePaths(toolInput);
+  const writing = isWriteTool(toolName, ctx.host ?? 'generic');
+
+  if (writing && ctx.features.no_new_surface !== false) {
+    for (const p of paths) {
+      if (SURFACE_DENY.some((re) => re.test(p))) {
+        return {
+          allow: false,
+          reason: 'Codex 69: new MCP/skill/handler surface — rewire existing',
+          gate: 'no-new-surface',
+        };
+      }
+    }
+  }
+
+  if (writing && content) {
+    if (CONSTITUTION_ANY.test(content) || CONSTITUTION_TS_IGNORE.test(content)) {
+      return {
+        allow: false,
+        reason: 'Codex 11 Type Safety: no `any` / @ts-ignore / @ts-expect-error',
+        gate: 'codex-11',
+      };
+    }
+    if (CONSTITUTION_EVAL.test(content)) {
+      return {
+        allow: false,
+        reason: 'Codex 29 Security: eval() prohibited',
+        gate: 'codex-29',
+      };
+    }
+  }
+
+  if (isShellTool(toolName) && CONSTITUTION_DESTRUCTIVE.test(String(toolInput.command ?? ''))) {
+    return {
+      allow: false,
+      reason: 'Blocked destructive shell command',
+      gate: 'destructive-shell',
+    };
+  }
+
+  return { allow: true };
+}
+
 export function evaluatePreToolGate(
   toolName: string,
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
+  const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);
+  if (!constitution.allow) return constitution;
+
   const lite = ctx.features.ceremony === 'lite';
   const synthesisBlock = lite
     ? ({ allow: true } as PreToolGateAllow)

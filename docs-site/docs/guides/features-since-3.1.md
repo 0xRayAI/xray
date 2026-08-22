@@ -6,7 +6,9 @@ Complete reference of capabilities shipped from **3.1.0** through **3.6.0 temper
 
 - **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
 - **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile
-- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes / OpenClaw, including free models) · `strict` · `auto`
+- **Frontier:** missing/stale/**todo-mismatch** spawn **warns**; confer off unless `confer.enabled: true`; pending/synthesis skip
+- **Constitution SSOT:** Codex 11/29/69 + destructive shell in `evaluatePreToolGate` (Grok, Hermes, OpenCode)
+- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes; OpenClaw MCP-only until PreToolUse) · `strict` (lock) · `auto`
 - **Upgrade safety:** missing `suit_temperament` stays **guided**
 - **Trim later:** duplicate orchestrators, extra MCP files — [trim list](../architecture/v3-museum.md)
 - Docs: [v3 from v2](../architecture/v3-from-v2.md) · [Suit temperament](./v3-temperament.md)

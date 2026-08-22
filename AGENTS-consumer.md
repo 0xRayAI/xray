@@ -106,7 +106,7 @@ The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced b
 |------|------|-------------|
 | 11 | No `any`, `@ts-ignore`, `@ts-expect-error` | PreToolUse deny on edits |
 | 29 | Security by design — no `eval()` | PreToolUse deny |
-| 59 | Complex work → orchestrator intake | PreToolUse deny `spawn_subagent` without plan |
+| 59 | Complex work → orchestrator intake | **guided/strict:** PreToolUse **deny** spawn without plan. **frontier:** **warn** (allow) — engine still available; leftover-plan todo mismatch also warns. Codex 11/29/69 still **deny**. |
 | 67–68 | Best subagents + lead dev ownership | `analyze-complexity` + orchestrator skill |
 | **69** | **No new MCP/skill/handler surface** | PreToolUse deny new `*.server.ts`, `SKILL.md` |
 
@@ -125,7 +125,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 | Test triage | PreToolUse hook | Per-suite hint on full `npm test` |
 | Playbook | **`orchestrator`** skill | Codex 59, 67–69 rules |
 
-**First substantive task:** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. You are the **lead developer**. Users speak in goals, not keywords.
+**First substantive task (guided/strict):** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. **Frontier:** intake is optional; spawn without a plan **warns**. You are the **lead developer**. Users speak in goals, not keywords.
 
 | # | Rule |
 |---|------|

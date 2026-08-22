@@ -22,6 +22,7 @@ import {
   type SynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
+import { conferDefaultForProfile, resolveRuntimeSuitProfile } from './suit-temperament.js';
 
 export const CONFER_AGENTS = [...MANDATORY_MAJOR_CONSULTS] as const;
 
@@ -68,7 +69,15 @@ export function defaultConferConfig(): ConferConfig {
 
 export function loadConferConfig(projectRoot = process.cwd()): ConferConfig {
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
-  if (!fs.existsSync(featuresPath)) return defaultConferConfig();
+  const profile = resolveRuntimeSuitProfile(projectRoot);
+  if (profile === 'strict') {
+    return { enabled: true, on_synthesis: true };
+  }
+  if (!fs.existsSync(featuresPath)) {
+    return conferDefaultForProfile(profile)
+      ? defaultConferConfig()
+      : { enabled: false, on_synthesis: false };
+  }
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
       multi_agent_orchestration?: {
@@ -78,12 +87,18 @@ export function loadConferConfig(projectRoot = process.cwd()): ConferConfig {
     };
     const orch = data.multi_agent_orchestration ?? {};
     const raw = orch.confer ?? {};
+    if (profile === 'frontier') {
+      const optedIn = raw.enabled === true || orch.confer_on_synthesis === true;
+      return { enabled: optedIn, on_synthesis: optedIn };
+    }
     return {
       enabled: raw.enabled !== false && orch.confer_on_synthesis !== false,
       on_synthesis: raw.on_synthesis !== false && orch.confer_on_synthesis !== false,
     };
   } catch {
-    return defaultConferConfig();
+    return conferDefaultForProfile(profile)
+      ? defaultConferConfig()
+      : { enabled: false, on_synthesis: false };
   }
 }
 

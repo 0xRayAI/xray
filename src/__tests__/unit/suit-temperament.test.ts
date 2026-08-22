@@ -8,17 +8,19 @@ import {
   resolveSuitProfile,
   spawnPlanModeForProfile,
 } from '../../nucleus/suit-temperament.js';
+import { isConferEnabled, loadConferConfig } from '../../nucleus/confer.js';
 import {
   evaluatePreToolGate,
   evaluateSpawnPlanGate,
   loadDelegationGateFeatures,
 } from '../../nucleus/delegation-gate.js';
+import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
 
 describe('suit temperament (v3)', () => {
   it('missing config is guided for every host (existing consumers)', () => {
     expect(resolveSuitProfile(undefined, 'grok')).toBe('guided');
     expect(resolveSuitProfile(undefined, 'hermes')).toBe('guided');
-    expect(resolveSuitProfile({}, 'grok')).toBe('frontier');
+    expect(resolveSuitProfile({}, 'grok')).toBe('guided');
   });
 
   it('auto uses host defaults', () => {
@@ -147,6 +149,97 @@ describe('delegation-gate temperament', () => {
       { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
     );
     expect(result.allow).toBe(true);
+  });
+
+  it('frontier leftover plan does not deny spawn-todo mismatch', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: {
+          enabled: true,
+          lead_dev_mode: true,
+          auto_chain_delegations: true,
+        },
+      }),
+    );
+    savePersistedLeadDevPlan(
+      {
+        active: true,
+        rules: [],
+        codexTerms: [59, 67, 68, 69],
+        description: 'leftover',
+        complexity: 10,
+        requiresPhasedPlan: true,
+        recommendedStrategy: 'sequential',
+        mandatoryConsults: [],
+        persistedAt: new Date().toISOString(),
+        sessionId: 's',
+        phases: [
+          {
+            id: 'phase-1',
+            name: 'One',
+            goal: 'g',
+            definitionOfDone: 'd',
+            todos: [
+              {
+                id: '1.1',
+                task: 'consult researcher',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+        testProtocol: { perSuiteFirst: true, fullSuiteGate: false, hint: '' },
+      },
+      tmp,
+    );
+    const features = loadDelegationGateFeatures(tmp, 'grok');
+    const result = evaluateSpawnPlanGate(
+      'spawn_subagent',
+      { prompt: 'explore the repo', subagent_type: 'explore' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(result.allow).toBe(true);
+    expect(result.gate).toBe('spawn-todo-persistence');
+  });
+
+  it('frontier confer is off unless explicitly opted in', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    expect(isConferEnabled(tmp)).toBe(false);
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true, confer: { enabled: true } },
+      }),
+    );
+    expect(loadConferConfig(tmp).enabled).toBe(true);
+  });
+
+  it('constitution denies any on hermes write even on frontier', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    const features = loadDelegationGateFeatures(tmp, 'hermes');
+    const result = evaluatePreToolGate(
+      'write_file',
+      { path: 'src/foo.ts', content: 'const x: any = 1' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'hermes' },
+    );
+    expect(result.allow).toBe(false);
+    if (!result.allow) expect(result.gate).toBe('codex-11');
   });
 
   it('hermes auto stays guided (spawn still denied)', () => {

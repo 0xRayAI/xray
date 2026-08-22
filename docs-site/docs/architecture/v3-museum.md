@@ -28,7 +28,7 @@ This page is the **fat**: duplicate conductors, unused MCP files, decoupled expe
 | `advanced-features/` | Off consumer boot; dashboards/scaling not the OS |
 | `src/postprocessor/` metamorphosis | Soft-deprecated overlay on Governance |
 | Extra `src/processors/implementations/` beyond the live OpenCode/Hermes subset | Duplicate enforcement vs Codex hook |
-| Extra `src/mcps/*.server.ts` **not** in the 7 | Mall behind the gift shop |
+| Extra `src/mcps/*.server.ts` **not** in the 7 | Do **not** delete while `xray-skills` `invoke-skill` still proxies them. Collapse to in-process map first. |
 | `src/core/orchestrator.ts` + `src/orchestrator/enhanced-*.ts` | **Duplicate** conductors — nucleus + `mcps/orchestrator` already *are* the engine |
 | `src/integrations/grok/hooks/pre-tool-use.ts` | Dead TS; live hook is `.js` |
 
