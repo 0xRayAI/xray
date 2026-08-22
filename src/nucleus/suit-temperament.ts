@@ -1,11 +1,13 @@
 /**
- * 0xRay v3 suit temperament — constitution always on; ceremony scales by host.
+ * 0xRay v3 suit temperament — how loudly the Autonomous Engine insists.
  *
- * Frontier hosts (Grok 4.6 / Grok Build class) already have subagents, plan mode, hooks.
- * Guided hosts (OpenCode / Hermes / OpenClaw, including free models) still need full
- * lead-dev intake so weaker agents stay in check.
+ * v2 three-subsystem OS stays: Inference · External Governance · Autonomous Engine.
+ * This module does not replace thinDispatch or Codex. It only scales *ceremony*
+ * (spawn-plan deny, synthesis, confer) by host strength.
  *
- * Missing config → guided (no surprise for existing consumers).
+ * Frontier (Grok 4.6 / Grok Build): engine available, spawn warns if no plan.
+ * Guided (OpenCode / Hermes / OpenClaw, including free models): full v2 ceremony.
+ * Missing config → guided (existing consumers unchanged).
  */
 
 export type SuitHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';

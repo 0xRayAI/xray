@@ -1,10 +1,10 @@
-# 0xRay v3 museum
+# 0xRay v3 trim list (fat, not bone)
 
-Internal code that is **not** the consumer product surface. Kept in-tree for now; not the lean suit. Do not add *new* parallel APIs here (Codex 69).
+The **bone** is the v2 three-subsystem OS — Inference, External Governance, Autonomous Engine. Do not list those as disposable. See [v3 from v2](./v3-from-v2.md).
 
-v3 temperament (ceremony vs constitution) does **not** require deleting these on day one. Deletion is a later, gated PR.
+This page is the **fat**: duplicate conductors, unused MCP files, decoupled experiments. Kept in-tree for now. Do not grow them (Codex 69). Deletion is a later, gated PR — not the temperament commit.
 
-## Keep as product (lean suit)
+## Keep as product (the three subsystems + bridges)
 
 | Path | Role |
 |------|------|
@@ -15,26 +15,21 @@ v3 temperament (ceremony vs constitution) does **not** require deleting these on
 | `scripts/node/install-bridges.cjs` | Four-bridge postinstall |
 | `src/nucleus/delegation-gate.ts` | Multi-host spawn / pending SSOT |
 | `src/nucleus/suit-temperament.ts` | v3 profile resolution |
-| 7 consumer MCP servers | governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools |
-| `xray/codex.json` | 68 terms |
+| 7 consumer MCP servers | Public face of the three subsystems |
+| `src/mcps/orchestrator/` + `src/nucleus/thin-dispatch.ts` | **Autonomous Engine** — keep |
+| `src/nucleus/confer.ts` · `synthesis.ts` | Engine ceremony — keep; temperament decides when mandatory |
+| `src/governance/` · `xray/codex.json` | **External Governance** — keep |
+| `src/inference/` · `src/memory-routing/` | **Inference** — keep |
 
-## Optional (still wired, not default-path for frontier)
+## Fat / duplicate (do not grow)
 
-| Path | Role |
-|------|------|
-| `src/mcps/orchestrator/` | thinDispatch, analyze-complexity, confer |
-| `src/nucleus/confer.ts` | 3-agent quorum |
-| `src/nucleus/synthesis.ts` | checkpoint |
+| Path | Why it is fat, not bone |
+|------|-------------------------|
+| `advanced-features/` | Off consumer boot; dashboards/scaling not the OS |
+| `src/postprocessor/` metamorphosis | Soft-deprecated overlay on Governance |
+| Extra `src/processors/implementations/` beyond the live OpenCode/Hermes subset | Duplicate enforcement vs Codex hook |
+| Extra `src/mcps/*.server.ts` **not** in the 7 | Mall behind the gift shop |
+| `src/core/orchestrator.ts` + `src/orchestrator/enhanced-*.ts` | **Duplicate** conductors — nucleus + `mcps/orchestrator` already *are* the engine |
+| `src/integrations/grok/hooks/pre-tool-use.ts` | Dead TS; live hook is `.js` |
 
-## Museum / decoupled (do not grow)
-
-| Path | Notes |
-|------|------|
-| `advanced-features/` | Explicitly off consumer boot |
-| `src/postprocessor/` | Soft-deprecated since 3.0 |
-| `src/processors/implementations/` | 26 processors — framework-internal |
-| Extra `src/mcps/*.server.ts` beyond the 7 | lint, estimation, boot-orchestrator, knowledge-skills/*, … |
-| `src/core/orchestrator.ts` + `src/orchestrator/enhanced-*.ts` | Duplicate conductors vs nucleus |
-| `src/agents/*.ts` | Prompt-config agents; host owns real subagents |
-
-Consumer `.mcp.json` remains **seven** servers. Extra `*.server.ts` files are not an invitation to register them.
+Consumer `.mcp.json` remains **seven** servers. Extra `*.server.ts` files are not an invitation to register them. Prompt-config `src/agents/*.ts` stay as host YML companions — not a fourth orchestrator.

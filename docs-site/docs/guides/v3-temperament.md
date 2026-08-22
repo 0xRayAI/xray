@@ -1,8 +1,10 @@
 # 0xRay v3 — Suit temperament
 
-0xRay is **for everyone**: a free-model session in OpenCode or Hermes, and a frontier host like Grok 4.6 + Grok Build.
+v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. v3 does not throw it away.
 
-Those are not the same creature. v3 **does not fork the suit**. It **tempers ceremony** while the **constitution stays on**.
+0xRay is **for everyone**: a free-model session in OpenCode or Hermes, and a frontier host like Grok 4.6 + Grok Build. Those are not the same creature. v3 **tempers ceremony** (how loudly the Autonomous Engine insists) while **Governance stays on** and the three subsystems stay the product.
+
+Architecture: [v3 from v2](../architecture/v3-from-v2.md).
 
 ## The distinction
 
@@ -23,7 +25,7 @@ Every profile, every host:
 - Destructive shell block (`rm -rf /`, etc.)
 - 7 consumer MCP servers still exist; you *may* call them
 
-This is the exoskeleton. It does not come off because the model got smarter.
+This is **External Governance**. It does not come off because the model got smarter. The Autonomous Engine is still there — temperament only changes whether intake is *mandatory* before spawn.
 
 ## Ceremony (temperament)
 
@@ -60,18 +62,17 @@ New framework `xray/features.json` ships `auto`. Postinstall copies that templat
 
 ## What v3 does *not* do (first cut)
 
-- Does **not** delete processors, PostProcessor, extra internal MCP servers, or `advanced-features/`
+- Does **not** retire Inference, Dynamo governance, or thinDispatch
 - Does **not** drop the 7 consumer MCP servers
 - Does **not** add an 8th MCP (Codex 69)
 - Does **not** turn off Codex because “Grok is good now”
-
-See [v3 museum](../architecture/v3-museum.md) for paths we are **not** shipping as the product surface.
+- Does **not** mass-delete processors / extra servers in this cut — those are **fat to trim later**, listed in the [trim list](../architecture/v3-museum.md)
 
 ## Host notes
 
-**Grok Build** already has subagents, Plan Mode, native hooks, skills, workflows. On frontier, 0xRay stops competing for the conductor job and keeps the **hammer**.
+**Grok Build** already has subagents, Plan Mode, native hooks, skills, workflows. On frontier, the Autonomous Engine stays **available** (analyze-complexity, confer, asides) but spawn is not blocked for lack of a lead-dev plan. Governance still denies `any` / `eval` / new surface.
 
-**OpenCode / Hermes (including free models)** still get the full conductor: analyze-complexity, spawn deny, confer. That is not optional for those hosts unless you set `frontier` yourself.
+**OpenCode / Hermes (including free models)** still get **full engine ceremony**: analyze-complexity, spawn deny, confer. That is not optional for those hosts unless you set `frontier` yourself. Those agents need the v2 OS as it was forged.
 
 ## Related
 

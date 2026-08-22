@@ -55,6 +55,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'architecture/ARCHITECTURE',
         'architecture/CONCEPTUAL_ARCHITECTURE',
+        'architecture/v3-from-v2',
         'architecture/GROK_GUIDE',
         'architecture/v3-museum',
       ],

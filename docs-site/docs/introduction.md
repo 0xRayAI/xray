@@ -1,11 +1,10 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3 temperament** — constitution always on; ceremony scales by host. Still 7 MCP servers · 4 bridges · Codex.
+**v3** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [v3 from v2](./architecture/v3-from-v2.md) · [Suit temperament](./guides/v3-temperament.md).
 
-0xRay prevents AI coding mistakes **before they land**. It is an exoskeleton for **every** coding agent: free models in OpenCode/Hermes **and** frontier hosts (Grok 4.6 + Grok Build). Those hosts are not equal — see [Suit temperament](./guides/v3-temperament.md).
-
-- **Always on:** Codex PreToolUse, no new MCP/skill surface, destructive-shell block  
-- **Ceremony (optional by profile):** lead-dev intake, spawn-plan deny, confer — **required** for weaker agents, **lite** for frontier hosts so the suit does not fight the host
+- **Bone (keep):** three subsystems, 7 MCP servers, Codex PreToolUse, 4 bridges  
+- **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  
+- **Fat (trim later):** duplicate orchestrators, extra `*.server.ts`, `advanced-features/` — [trim list](./architecture/v3-museum.md)
 
 ## Quick Start
 
