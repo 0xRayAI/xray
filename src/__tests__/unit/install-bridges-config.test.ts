@@ -89,12 +89,12 @@ describe("install-bridges xray config deploy", () => {
     fs.mkdirSync(xrayDir, { recursive: true });
     fs.writeFileSync(
       path.join(packageRoot, "package.json"),
-      JSON.stringify({ name: "0xray", version: "3.6.0" }),
+      JSON.stringify({ name: "0xray", version: "3.0.0" }),
     );
     fs.writeFileSync(
       path.join(xrayDir, "features.json"),
       JSON.stringify({
-        version: "3.6.0",
+        version: "3.0.0",
         suit_temperament: { profile: "auto" },
         multi_agent_orchestration: { lead_dev_mode: true },
       }),

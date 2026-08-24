@@ -1,15 +1,17 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.5.5**).
+Quick reference for the xray AI orchestration framework (**v3.0.0**).
 
-**42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
+**Three-subsystem OS** (Inference · External Governance · Autonomous Engine) · **7 consumer MCP servers** · **45 skills** · **69 Codex terms** · **4 bridges**
+
+**Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
 
 - **Inference** — proposals, reflection, memory routing (optional)
-- **External Governance** — Dynamo Solar SSOT, 68-term Codex
+- **External Governance** — Dynamo Solar SSOT, 69-term Codex
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
 Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md). Consumer projects receive slimmed copies via postinstall (`AGENTS-consumer.md` → `AGENTS.md`, skills synced to platform dirs).

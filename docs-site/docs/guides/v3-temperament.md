@@ -1,4 +1,4 @@
-# 0xRay v3 — Suit temperament
+# 0xRay 3.0 — Suit temperament
 
 v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. v3 does not throw it away.
 
@@ -25,7 +25,7 @@ Every profile:
 - Destructive shell block (`rm -rf /`, etc.)
 - 7 consumer MCP servers still exist; you *may* call them
 
-**Host honesty:** **OpenClaw** today wires MCP + skills; it does **not** yet abort tools via this PreToolUse SSOT. Treat OpenClaw guided as config intent until that rewire. Aside worktree **cwd** stays deny on every profile.
+**Host honesty:** **OpenClaw** writes `session-boot.json` (`host: openclaw`) and wires MCP + skills. It does **not** yet abort the OpenClaw *host agent* via this PreToolUse SSOT (no consumer tool-block API). Treat OpenClaw guided as config intent until that rewire. Aside worktree **cwd** stays deny on every profile.
 
 This is **External Governance**. It does not come off because the model got smarter. The Autonomous Engine is still there — temperament only changes whether intake is *mandatory* before spawn.
 

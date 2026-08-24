@@ -45,13 +45,15 @@ function loadDelegationGate() {
   const found = candidates.find((p) => existsSync(p));
   if (!found) {
     throw new Error(
-      'delegation-gate.js missing — run npm run build in 0xray or npm install 0xray@^3.5.1',
+      'delegation-gate.js missing — run npm run build in 0xray or npm install 0xray',
     );
   }
   return createRequire(import.meta.url)(found);
 }
 
 const gate = loadDelegationGate();
+
+export const writeSuitSessionBoot = gate.writeSuitSessionBoot;
 
 export const {
   loadDelegationGateFeatures,

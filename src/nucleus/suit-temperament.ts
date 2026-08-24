@@ -52,14 +52,31 @@ export function loadSuitTemperamentRaw(
   }
 }
 
-function readSessionBootProfile(projectRoot: string): SuitProfile | null {
+function isSuitHost(value: unknown): value is SuitHost {
+  return (
+    value === 'grok' ||
+    value === 'hermes' ||
+    value === 'opencode' ||
+    value === 'openclaw' ||
+    value === 'generic'
+  );
+}
+
+function readSessionBoot(projectRoot: string): {
+  host: SuitHost | null;
+  suit_profile: SuitProfile | null;
+} | null {
   try {
     const bootPath = path.join(projectRoot, '.xray', 'state', 'session-boot.json');
     if (!fs.existsSync(bootPath)) return null;
     const boot = JSON.parse(fs.readFileSync(bootPath, 'utf8')) as {
+      host?: unknown;
       suit_profile?: unknown;
     };
-    return isSuitProfile(boot.suit_profile) ? boot.suit_profile : null;
+    return {
+      host: isSuitHost(boot.host) ? boot.host : null,
+      suit_profile: isSuitProfile(boot.suit_profile) ? boot.suit_profile : null,
+    };
   } catch {
     return null;
   }
@@ -81,17 +98,53 @@ export function resolveSuitProfile(
   return defaults[host] ?? 'guided';
 }
 
-/** Host-aware when known; MCP/kernel (no host) may use Grok session-boot.suit_profile. */
+/**
+ * Host-aware when known. Kernel/MCP (`generic`) uses last session-boot profile.
+ * A Hermes/OpenCode host ignores a leftover Grok boot (and vice versa).
+ */
 export function resolveRuntimeSuitProfile(
   projectRoot: string,
   host: SuitHost = 'generic',
 ): SuitProfile {
   const raw = loadSuitTemperamentRaw(projectRoot);
-  if (host === 'generic' && raw?.profile === 'auto') {
-    const boot = readSessionBootProfile(projectRoot);
-    if (boot) return boot;
+  const boot = readSessionBoot(projectRoot);
+  if (raw?.profile === 'auto' && boot?.suit_profile) {
+    if (host === 'generic' || boot.host == null || boot.host === host) {
+      return boot.suit_profile;
+    }
   }
   return resolveSuitProfile(raw, host);
+}
+
+/** Merge temperament fields into session-boot.json for the host that just started. */
+export function writeSuitSessionBoot(
+  projectRoot: string,
+  host: SuitHost,
+  extra: Record<string, unknown> = {},
+): string {
+  const profile = resolveSuitProfile(loadSuitTemperamentRaw(projectRoot), host);
+  const stateDir = path.join(projectRoot, '.xray', 'state');
+  fs.mkdirSync(stateDir, { recursive: true });
+  const bootPath = path.join(stateDir, 'session-boot.json');
+  let existing: Record<string, unknown> = {};
+  if (fs.existsSync(bootPath)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(bootPath, 'utf8')) as Record<string, unknown>;
+    } catch {
+      existing = {};
+    }
+  }
+  const payload: Record<string, unknown> = {
+    ...existing,
+    ...extra,
+    host,
+    suit_profile: profile,
+    ceremony: ceremonyForProfile(profile),
+    spawn_plan_mode: spawnPlanModeForProfile(profile),
+    timestamp: new Date().toISOString(),
+  };
+  fs.writeFileSync(bootPath, JSON.stringify(payload, null, 2));
+  return bootPath;
 }
 
 export function ceremonyForProfile(profile: SuitProfile): CeremonyLevel {

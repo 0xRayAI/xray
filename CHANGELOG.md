@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [3.0.0] - 2026-08-24
+
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). This is **3.0.0**, not a 3.5.6 / 3.6.0 patch of the 3.5.x development tags.
+
+### ✨ Features
+- **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
+- **Grok 4.6 / Grok Build** — `auto` → frontier: spawn missing/stale/todo-mismatch **warns**; confer off unless opted in.
+- **OpenCode / Hermes** (including free models) — stay **guided**: full v2 engine ceremony.
+- **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
+- **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
+- **Docs** — [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
+
+### 🔄 Changes
+- Product version **3.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.5.x entries below are historical pre-3.0 work on the same OS.
+- `evaluatePreToolGate` is constitution-first (Grok, Hermes, OpenCode). Grok PreToolUse no longer re-runs 11/29/69/surface/destructive after the SSOT.
+- Codex 69 denies **new** surface only (existing MCP/skill files may be rewired). `paths[]` / `target_notebook` / `prompt` content are in the SSOT collector.
+- **strict** locks `no_new_surface` on (cannot opt out).
+- Dual-host session-boot: Hermes / OpenCode / OpenClaw write `host` + `suit_profile`. A Hermes host ignores leftover Grok boot (and vice versa). Kernel/`generic` uses last boot.
+- Frontier `auto_consult` follows confer opt-in (`confer.enabled` / `confer_on_synthesis`).
+
+### ✅ Tests
+- `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
+
+## [Unreleased]
+
+### Planned (iterate before next release)
+- **OpenClaw host-agent PreToolUse** — platform has no consumer tool-block API yet; constitution still applies via MCP/kernel when those paths run. Guided OpenClaw is config intent until the host can abort tools.
+- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
+- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
+- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
+- **grok_postprocessor_light** — opt-in marker + activity.log on Grok write tools (full PP subset deferred)
+- **P2 session capture** — git post-commit → `captureSessionInference` when threshold met
+
+---
+
 ## [3.5.5] - 2026-06-20
 
 ### ✨ Features
@@ -44,17 +79,6 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### ✅ Tests
 - `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
 - `governance-service-metamorphosis.test.ts`; `confer.test.ts` emoji panel
-
----
-
-## [Unreleased]
-
-### Planned (iterate before next release)
-- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
-- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
-- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
-- **grok_postprocessor_light** — opt-in marker + activity.log on Grok write tools (full PP subset deferred)
-- **P2 session capture** — git post-commit → `captureSessionInference` when threshold met
 
 ---
 

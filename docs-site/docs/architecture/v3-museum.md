@@ -1,4 +1,4 @@
-# 0xRay v3 trim list (fat, not bone)
+# 0xRay 3.0 trim list (fat, not bone)
 
 The **bone** is the v2 three-subsystem OS — Inference, External Governance, Autonomous Engine. Do not list those as disposable. See [v3 from v2](./v3-from-v2.md).
 

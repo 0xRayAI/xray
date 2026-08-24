@@ -84,6 +84,24 @@
         }
       }
     },
+    "suit_temperament": {
+      "type": "object",
+      "description": "0xRay 3.0 — constitution always on; ceremony scales by host. Missing key = guided (existing consumers unchanged).",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "enum": ["auto", "frontier", "guided", "strict"],
+          "description": "auto = host_defaults (grok→frontier, hermes/opencode/openclaw→guided)"
+        },
+        "host_defaults": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["frontier", "guided", "strict"]
+          }
+        }
+      }
+    },
     "synthesis": {
       "type": "object",
       "properties": {

@@ -1,12 +1,12 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.5.5** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v3.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 
 0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer that sits between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
 
-Every code change is checked against a **68-term Codex** (coding constitution), deliberated by specialized AI agents, and either approved, revised, or blocked before it ever touches your codebase.
+Every code change is checked against a **69-term Codex** (coding constitution), deliberated by specialized AI agents, and either approved, revised, or blocked before it ever touches your codebase.
 
 Think of it as an **AI supervisor for your AI coders**: catch hallucinations, prevent slop, enforce standards — automatically.
 
@@ -231,7 +231,7 @@ Governance is your quality gate. Configure it under `inference_governance` in `f
 
 The governance pipeline works in three stages:
 1. **3 AI reviewers** (`code-review`, `security-audit`, `researcher`) analyze each proposal independently
-2. **Dynamo** cross-checks against the 68-term Codex for compliance, security, and coherence
+2. **Dynamo** cross-checks against the 69-term Codex for compliance, security, and coherence
 3. **Weighted voting** (PHI/TAU matrix) produces a final decision: approve, revise, or reject
 
 > ⚠️ **Privacy Notice**: All proposals submitted to the governance endpoint are **public by default**. They are **not persisted on-chain** unless the `onChain: true` flag is set. 0xRay framework self-governance proposals (tagged `0xray`) save on-chain by default; project proposals do not. Set `onChain: false` or omit the field for non-public governance checks.

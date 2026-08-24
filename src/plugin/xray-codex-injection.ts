@@ -43,6 +43,7 @@ import {
   evaluatePreToolGate,
   isSubagentTool,
   loadDelegationGateFeatures,
+  writeSuitSessionBoot,
 } from "../nucleus/delegation-gate.js";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -66,6 +67,11 @@ export default async function xrayCodexPlugin(input: {
 }) {
   const { directory: inputDirectory } = input;
   const directory = inputDirectory || process.cwd();
+  try {
+    writeSuitSessionBoot(directory, "opencode", { source: "0xray/opencode-plugin" });
+  } catch {
+    /* session-boot is best-effort */
+  }
 
   return {
     "experimental.chat.system.transform": async (

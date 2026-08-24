@@ -1,14 +1,16 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.6.0 temperament**.
+Complete reference of capabilities through **0xRay 3.0.0** (first ship of temperament on the v2 three-subsystem OS). Pre-3.0 development tags (3.1–3.5.x) remain below as history.
 
-## 3.6.0 — Suit temperament (v3)
+## 3.0.0 — Suit temperament (first ship)
 
 - **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
 - **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile
 - **Frontier:** missing/stale/**todo-mismatch** spawn **warns**; confer off unless `confer.enabled: true`; pending/synthesis skip
-- **Constitution SSOT:** Codex 11/29/69 + destructive shell in `evaluatePreToolGate` (Grok, Hermes, OpenCode)
-- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes; OpenClaw MCP-only until PreToolUse) · `strict` (lock) · `auto`
+- **Constitution SSOT:** Codex 11/29/69 + destructive shell in `evaluatePreToolGate` (Grok, Hermes, OpenCode). Grok extra 2/7 only.
+- **Codex 69** is in `codex.json` (blocking). **strict** cannot opt out of `no_new_surface`.
+- **Dual-host boot:** Hermes / OpenCode / OpenClaw write `session-boot.json` with `host` + `suit_profile`; leftover Grok boot does not frontier a Hermes session
+- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes; OpenClaw host-agent PreToolUse still pending platform API) · `strict` (lock) · `auto`
 - **Upgrade safety:** missing `suit_temperament` stays **guided**
 - **Trim later:** duplicate orchestrators, extra MCP files — [trim list](../architecture/v3-museum.md)
 - Docs: [v3 from v2](../architecture/v3-from-v2.md) · [Suit temperament](./v3-temperament.md)

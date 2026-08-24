@@ -18,6 +18,7 @@ import { OpenClawClient } from './client.js';
 import { XrayAPIServer } from './api-server.js';
 import { initializeGovernanceIntegration } from '../governance/index.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
+import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 import { OpenClawHooksManager, XrayToolEvent } from './hooks/xray-hooks.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
@@ -68,6 +69,12 @@ export class OpenClawIntegration extends BaseIntegration {
     }
 
     await this.log('info', 'Initializing...');
+
+    try {
+      writeSuitSessionBoot(process.cwd(), 'openclaw', { source: '0xray/openclaw-init' });
+    } catch {
+      await this.log('warning', 'Failed to write suit session-boot');
+    }
 
     // Initialize API server if enabled
     if (config.apiServer?.enabled) {

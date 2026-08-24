@@ -436,6 +436,18 @@ async function handleSessionStart(input, projectRoot, logDir) {
     /* non-blocking — dist may be absent during dev */
   }
 
+  try {
+    const gate = await import('../hooks/delegation-gate-runtime.mjs');
+    if (typeof gate.writeSuitSessionBoot === 'function') {
+      gate.writeSuitSessionBoot(projectRoot, 'hermes', {
+        source: '0xray/hermes-session-start',
+        sessionId,
+      });
+    }
+  } catch {
+    /* dist may be absent during dev */
+  }
+
   logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
   return { ok: true, sessionId, planArchive };
 }

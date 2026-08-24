@@ -11,6 +11,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 import type { MemoryRoutingConfig } from "../memory-routing/types.js";
+import type {
+  SuitHost,
+  SuitProfile,
+  SuitTemperamentConfig,
+} from "../nucleus/suit-temperament.js";
 
 export type { MemoryRoutingConfig };
 
@@ -80,7 +85,7 @@ export interface MultiAgentOrchestrationConfig {
   auto_consult_major_work?: boolean;
   /** Codex 69 — block new MCP/skill/handler files via PreToolUse (default true) */
   no_new_surface?: boolean;
-  /** 3.5.0 — PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
+  /** PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
   auto_chain_delegations?: boolean;
   /** Hours before unstarted lead-dev plan is archived (default 8) */
   plan_stale_hours?: number;
@@ -93,14 +98,8 @@ export interface MultiAgentOrchestrationConfig {
   confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
 
-/** 0xRay v3 — constitution vs ceremony. See docs-site/docs/guides/v3-temperament.md */
-export type SuitProfile = 'frontier' | 'guided' | 'strict';
-export type SuitHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
-
-export interface SuitTemperamentConfig {
-  profile?: 'auto' | SuitProfile;
-  host_defaults?: Partial<Record<SuitHost, SuitProfile>>;
-}
+/** 0xRay 3.0 — nucleus SSOT. See docs-site/docs/guides/v3-temperament.md */
+export type { SuitHost, SuitProfile, SuitTemperamentConfig };
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */
 export interface SynthesisReflectionConfig {
@@ -109,7 +108,7 @@ export interface SynthesisReflectionConfig {
   thresholds?: AutoReflectionConfig['thresholds'];
 }
 
-/** 3.6.0 — periodic reflect & realign checkpoint (Synthesis PR1) */
+/** Periodic reflect & realign checkpoint (Synthesis) */
 export interface SynthesisConfig {
   enabled: boolean;
   every_n_gates: number;

@@ -5,8 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_HOST_PROFILES,
   ceremonyForProfile,
+  resolveRuntimeSuitProfile,
   resolveSuitProfile,
   spawnPlanModeForProfile,
+  writeSuitSessionBoot,
 } from '../../nucleus/suit-temperament.js';
 import { isConferEnabled, loadConferConfig } from '../../nucleus/confer.js';
 import {
@@ -267,6 +269,59 @@ describe('delegation-gate temperament', () => {
     );
     expect(result.allow).toBe(false);
     if (!result.allow) expect(result.gate).toBe('codex-11');
+  });
+
+  it('strict locks no_new_surface even when config opts out', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'strict' },
+        multi_agent_orchestration: { lead_dev_mode: true, no_new_surface: false },
+      }),
+    );
+    const features = loadDelegationGateFeatures(tmp, 'grok');
+    expect(features.no_new_surface).toBe(true);
+    const create = evaluatePreToolGate(
+      'write',
+      { path: 'src/skills/brand-new/SKILL.md', contents: '# new\n' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(create.allow).toBe(false);
+    if (!create.allow) expect(create.gate).toBe('no-new-surface');
+  });
+
+  it('constitution 69 sees paths[] not only path', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true, no_new_surface: true },
+      }),
+    );
+    const features = loadDelegationGateFeatures(tmp, 'grok');
+    const create = evaluatePreToolGate(
+      'write',
+      { paths: ['src/mcps/brand-new.server.ts'], contents: 'export {}\n' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(create.allow).toBe(false);
+    if (!create.allow) expect(create.gate).toBe('no-new-surface');
+  });
+
+  it('hermes ignores leftover grok session-boot on auto', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    writeSuitSessionBoot(tmp, 'grok', { source: 'test' });
+    expect(resolveRuntimeSuitProfile(tmp, 'generic')).toBe('frontier');
+    expect(resolveRuntimeSuitProfile(tmp, 'hermes')).toBe('guided');
+    writeSuitSessionBoot(tmp, 'hermes', { source: 'test' });
+    expect(resolveRuntimeSuitProfile(tmp, 'generic')).toBe('guided');
+    expect(resolveRuntimeSuitProfile(tmp, 'grok')).toBe('frontier');
   });
 
   it('hermes auto stays guided (spawn still denied)', () => {

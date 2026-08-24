@@ -1,6 +1,6 @@
 {
   "version": "3.1.0",
-  "lastUpdated": "2026-06-05",
+  "lastUpdated": "2026-08-24",
   "errorPreventionTarget": 0.998,
   "terms": {
     "1": {
@@ -546,6 +546,14 @@
       "category": "process",
       "zeroTolerance": false,
       "enforcementLevel": "high"
+    },
+    "69": {
+      "number": 69,
+      "title": "No New MCP, Skill, or Handler Surface",
+      "description": "Do not add parallel APIs. Rewire existing MCP servers, skills, and orchestrator handlers. PreToolUse denies creating new src/mcps/*.server.ts, src/skills/*/SKILL.md, or orchestrator *-handler files. Existing files may be rewritten.",
+      "category": "process",
+      "zeroTolerance": true,
+      "enforcementLevel": "blocking"
     }
   },
   "interweaves": [
@@ -589,10 +597,11 @@
     "No type errors or any usage": true,
     "Agent spawns go through governor": true,
     "Subagent spawning prevented": true,
-    "PostProcessor validation passes": true
+    "PostProcessor validation passes": true,
+    "No new MCP/skill/handler surface": true
   },
   "frameworkAlignment": {
     "OpenCode": "v1.1.1",
-    "0xRay": "v2.0.0"
+    "0xRay": "v3.0.0"
   }
 }

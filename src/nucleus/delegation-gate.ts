@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Grok-only codex/surface checks remain in pre-tool-use.js after the SSOT gate.
+ * Constitution (11/29/69 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -52,12 +52,15 @@ import {
   ceremonyForProfile,
   resolveSuitProfile,
   spawnPlanModeForProfile,
+  writeSuitSessionBoot,
   type CeremonyLevel,
   type SpawnPlanMode,
   type SuitHost,
   type SuitProfile,
   type SuitTemperamentConfig,
 } from './suit-temperament.js';
+
+export { writeSuitSessionBoot };
 
 export { extractSpawnCwd, validateAsideWorktreeCwd, provisionGitWorktree } from './aside-worktree.js';
 
@@ -249,7 +252,7 @@ export function loadDelegationGateFeatures(
       spawn_plan_mode: spawnPlanModeForProfile(profile),
       ceremony: ceremonyForProfile(profile),
       suit_profile: profile,
-      no_new_surface: orch.no_new_surface !== false,
+      no_new_surface: profile === 'strict' ? true : orch.no_new_surface !== false,
     };
   } catch {
     return fallback(resolveSuitProfile(undefined, host));
@@ -592,6 +595,8 @@ const SURFACE_DENY = [
   /(?:^|\/)src\/mcps\/[^/]+\.server\.(ts|js)$/i,
   /(?:^|\/)src\/skills\/[^/]+\/SKILL\.md$/i,
   /(?:^|\/)src\/mcps\/orchestrator\/handlers\/[^/]+-handler\.(ts|js)$/i,
+  /(?:^|\/)src\/nucleus\/autonomy-kernel\.(ts|js)$/i,
+  /(?:^|\/)src\/mcps\/[^/]+\/handlers\/autonomy-handler\.(ts|js)$/i,
 ];
 
 function collectWriteContent(toolInput: ToolGateInput): string {
@@ -600,6 +605,7 @@ function collectWriteContent(toolInput: ToolGateInput): string {
     toolInput.contents,
     toolInput.content,
     toolInput.command,
+    toolInput.prompt,
   ]
     .filter((v) => v != null)
     .map(String)
@@ -608,9 +614,15 @@ function collectWriteContent(toolInput: ToolGateInput): string {
 
 function collectWritePaths(toolInput: ToolGateInput): string[] {
   const paths: string[] = [];
-  for (const key of ['path', 'file_path', 'filePath'] as const) {
+  for (const key of ['path', 'file_path', 'filePath', 'target_notebook'] as const) {
     const v = toolInput[key];
     if (typeof v === 'string' && v) paths.push(v);
+  }
+  const extra = toolInput.paths;
+  if (Array.isArray(extra)) {
+    for (const p of extra) {
+      if (typeof p === 'string' && p) paths.push(p);
+    }
   }
   return paths;
 }

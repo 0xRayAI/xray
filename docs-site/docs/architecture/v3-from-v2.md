@@ -1,4 +1,4 @@
-# 0xRay v3 from v2 — keep the marvel, trim the fat
+# 0xRay 3.0 from v2 — keep the marvel, trim the fat
 
 v2 was forged as a **three-subsystem OS**. That design is not disposable. v3 does not replace it. v3 **tempers how loudly the engine speaks** to different hosts, and **cuts duplicate organs** that grew around the core.
 

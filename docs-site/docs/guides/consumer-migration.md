@@ -2,7 +2,11 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
-**Version**: 3.4.1
+**Version**: 3.0.0
+
+## Temperament on upgrade (v3.0)
+
+Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).
 
 ## Quick Start for v3 Consumers
 

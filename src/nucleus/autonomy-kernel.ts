@@ -144,7 +144,7 @@ export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevP
   const profile = resolveRuntimeSuitProfile(process.cwd());
   const autoConsult =
     profile === 'frontier'
-      ? cfg.auto_consult_major_work === true
+      ? cfg.confer?.enabled === true || cfg.confer_on_synthesis === true
       : profile === 'strict'
         ? true
         : cfg.auto_consult_major_work !== false;
@@ -207,7 +207,7 @@ export function buildLeadDevPlan(
 
   const autoConsult =
     profile === 'frontier'
-      ? cfg.auto_consult_major_work === true
+      ? cfg.confer?.enabled === true || cfg.confer_on_synthesis === true
       : profile === 'strict' || conferDefaultForProfile(profile)
         ? cfg.auto_consult_major_work !== false
         : false;

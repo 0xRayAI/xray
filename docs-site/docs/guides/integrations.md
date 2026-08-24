@@ -1,4 +1,6 @@
-# Platform Integrations (v3.5.4)
+# Platform Integrations (v3.0)
+
+Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` is `auto` (new installs). **Hermes / OpenCode / OpenClaw** stay **guided** (full engine ceremony). Existing consumers without the key stay guided on upgrade. See [Suit temperament](./v3-temperament.md).
 
 0xRay integrates with four AI coding platforms. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
 

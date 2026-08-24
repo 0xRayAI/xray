@@ -50,5 +50,6 @@ describe('grok-hook-utils', () => {
     const payload = buildSessionBootPayload(tmp, 'test/session-start');
     expect(payload.siblingWorkspaceRoots).toBeDefined();
     expect(payload.siblingWorkspaceRoots?.[0]?.path).toBe(siblingDir);
+    expect(payload.host).toBe('grok');
   });
 });

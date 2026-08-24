@@ -189,9 +189,11 @@ export function extractToolContext(event) {
   return { toolName, toolInput, paths, content, cmd: String(toolInput.command || '') };
 }
 
-export function checkCodexPatterns(content) {
+export function checkCodexPatterns(content, options = {}) {
   if (!content) return null;
-  for (const { message, pattern } of CODEX_BLOCK_PATTERNS) {
+  const only = Array.isArray(options.terms) ? options.terms : null;
+  for (const { message, pattern, terms } of CODEX_BLOCK_PATTERNS) {
+    if (only && !terms.some((n) => only.includes(n))) continue;
     if (pattern.test(content)) return message;
     pattern.lastIndex = 0;
   }
@@ -266,6 +268,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
+    host: 'grok',
     suit_profile: gateFeatures.suit_profile ?? 'guided',
     ceremony: gateFeatures.ceremony ?? 'full',
     spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',

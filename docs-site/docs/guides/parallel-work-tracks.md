@@ -2,7 +2,7 @@
 
 **Audience:** End users wearing the 0xRay suit in **Grok Build** (Cursor) who want to run main-thread work and a side quest in parallel — without stepping on each other's files or spawn rules.
 
-**Prerequisite:** `npm install 0xray` + `npx 0xray grok install`. User asides ship on **0xRay 3.5.5+** (`feat/user-asides`).
+**Prerequisite:** `npm install 0xray` + `npx 0xray grok install`. User asides ship in **0xRay 3.0.0**.
 
 :::tip Three names, three jobs
 Do not confuse these:

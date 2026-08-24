@@ -11,7 +11,6 @@ import {
 import {
   checkCodexPatterns,
   checkFullTestSuite,
-  checkSurfaceArea,
   ensureSessionBoot,
   isShellTool,
   isWriteTool,
@@ -70,22 +69,14 @@ async function main() {
       );
     }
 
-    // Constitution always runs — even when ceremony only warned (frontier spawn).
-    if (features.no_new_surface && isWriteTool(toolName) && paths.length) {
-      const surfaceBlock = checkSurfaceArea(paths, eventRoot);
-      if (surfaceBlock) finish(eventRoot, 'deny', surfaceBlock, null, toolName);
-    }
-
+    // Constitution (11/29/69 + destructive shell) is in evaluatePreToolGate.
+    // Grok extra: Codex 2/7 (TODO/FIXME/STUB, console.log).
     if (isWriteTool(toolName) && content) {
-      const codexBlock = checkCodexPatterns(content);
-      if (codexBlock) finish(eventRoot, 'deny', codexBlock, null, toolName);
+      const extraBlock = checkCodexPatterns(content, { terms: [2, 7] });
+      if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
 
     if (isShellTool(toolName) && cmd) {
-      const destructive =
-        /\brm\s+-rf\s+\/\b|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i.test(cmd);
-      if (destructive) finish(eventRoot, 'deny', 'Blocked destructive shell command', null, toolName);
-
       const testHint = checkFullTestSuite(cmd, features);
       if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
     }

@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "3.5.5",
+  "version": "3.0.0",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -158,6 +158,7 @@
     "scripts/mjs/verify-pre-push-diff-core.mjs",
     "scripts/mjs/verify-confer-core.mjs",
     "scripts/mjs/verify-user-aside-core.mjs",
+    "scripts/mjs/verify-pipeline-facets.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",

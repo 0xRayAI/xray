@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { describe, expect, it } from 'vitest';
 import {
   LEAD_DEV_RULES,
   MANDATORY_MAJOR_CONSULTS,
@@ -57,12 +60,31 @@ describe('lead-dev plan builder (internal)', () => {
   });
 
   it('buildSynthesisCheckpointPlan injects mandatory consult todos', () => {
-    const plan = buildSynthesisCheckpointPlan('gate threshold (12/12)');
-    expect(plan?.phases[0]?.id).toBe('phase-synthesis');
-    expect(plan?.mandatoryConsults).toEqual([...MANDATORY_MAJOR_CONSULTS]);
-    expect(plan?.phases[0]?.todos.map((t) => t.subagent)).toEqual([
-      ...MANDATORY_MAJOR_CONSULTS,
-    ]);
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-kernel-'));
+    const prev = process.cwd();
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          multi_agent_orchestration: {
+            lead_dev_mode: true,
+            auto_consult_major_work: true,
+            confer_on_synthesis: true,
+          },
+        }),
+      );
+      process.chdir(tmp);
+      const plan = buildSynthesisCheckpointPlan('gate threshold (12/12)');
+      expect(plan?.phases[0]?.id).toBe('phase-synthesis');
+      expect(plan?.mandatoryConsults).toEqual([...MANDATORY_MAJOR_CONSULTS]);
+      expect(plan?.phases[0]?.todos.map((t) => t.subagent)).toEqual([
+        ...MANDATORY_MAJOR_CONSULTS,
+      ]);
+    } finally {
+      process.chdir(prev);
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('buildSessionBootContext reflects lead dev mode', () => {
