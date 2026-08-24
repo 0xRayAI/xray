@@ -1,8 +1,8 @@
 # Features Since 3.1
 
-Complete reference of capabilities through **0xRay 3.0.0** (first ship of temperament on the v2 three-subsystem OS). Pre-3.0 development tags (3.1–3.5.x) remain below as history.
+Complete reference of capabilities through **0xRay 4.0.0** (first ship of temperament on the v2 three-subsystem OS). 3.x development tags (3.1–3.5.x) remain below as history.
 
-## 3.0.0 — Suit temperament (first ship)
+## 4.0.0 — Suit temperament (first ship)
 
 - **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
 - **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile

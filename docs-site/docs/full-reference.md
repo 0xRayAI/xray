@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
+**v4.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 [![Docs](https://img.shields.io/badge/docs-0xRayAI.github.io/xray-10b981?style=flat-square)](https://0xrayai.github.io/xray/)
 

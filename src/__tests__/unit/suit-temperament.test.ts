@@ -18,7 +18,7 @@ import {
 } from '../../nucleus/delegation-gate.js';
 import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
 
-describe('suit temperament (v3)', () => {
+describe('suit temperament (v4)', () => {
   it('missing config is guided for every host (existing consumers)', () => {
     expect(resolveSuitProfile(undefined, 'grok')).toBe('guided');
     expect(resolveSuitProfile(undefined, 'hermes')).toBe('guided');

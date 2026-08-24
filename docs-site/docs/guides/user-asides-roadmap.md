@@ -107,7 +107,7 @@ Items below are **known shortcomings** accepted for initial ship (see review quo
 
 - [ ] **Docusaurus + CHANGELOG sync on ship**  
   **Gap:** `parallel-work-tracks.md` and this roadmap ship on branch; older npm 3.5.x consumers lack user asides.  
-  **Target:** Release gate includes `verify:user-aside`; docs linked from `index.md` and sidebars on the 3.0.0 ship.  
+  **Target:** Release gate includes `verify:user-aside`; docs linked from `index.md` and sidebars on the 4.0.0 ship.  
   **Files:** `release-gate.mjs`, `CHANGELOG.md`, `sidebars.ts`.
 
 ---

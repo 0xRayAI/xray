@@ -86,7 +86,7 @@
     },
     "suit_temperament": {
       "type": "object",
-      "description": "0xRay 3.0 — constitution always on; ceremony scales by host. Missing key = guided (existing consumers unchanged).",
+      "description": "0xRay 4.0 — constitution always on; ceremony scales by host. Missing key = guided (existing consumers unchanged).",
       "properties": {
         "profile": {
           "type": "string",

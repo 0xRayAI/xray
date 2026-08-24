@@ -1,6 +1,6 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.0.0**).
+Quick reference for the xray AI orchestration framework (**v4.0.0**).
 
 **Three-subsystem OS** (Inference · External Governance · Autonomous Engine) · **7 consumer MCP servers** · **45 skills** · **69 Codex terms** · **4 bridges**
 

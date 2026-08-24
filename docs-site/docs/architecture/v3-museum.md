@@ -1,4 +1,4 @@
-# 0xRay 3.0 trim list (fat, not bone)
+# 0xRay 4.0 trim list (fat, not bone)
 
 The **bone** is the v2 three-subsystem OS — Inference, External Governance, Autonomous Engine. Do not list those as disposable. See [v3 from v2](./v3-from-v2.md).
 
@@ -14,7 +14,7 @@ This page is the **fat**: duplicate conductors, unused MCP files, decoupled expe
 | `src/integrations/openclaw/` | OpenClaw |
 | `scripts/node/install-bridges.cjs` | Four-bridge postinstall |
 | `src/nucleus/delegation-gate.ts` | Multi-host spawn / pending SSOT |
-| `src/nucleus/suit-temperament.ts` | v3 profile resolution |
+| `src/nucleus/suit-temperament.ts` | 4.0 profile resolution |
 | 7 consumer MCP servers | Public face of the three subsystems |
 | `src/mcps/orchestrator/` + `src/nucleus/thin-dispatch.ts` | **Autonomous Engine** — keep |
 | `src/nucleus/confer.ts` · `synthesis.ts` | Engine ceremony — keep; temperament decides when mandatory |

@@ -1,6 +1,6 @@
 # 0xRay — Self-Healing AI Governance OS
 
-**v3.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [v3 from v2](./architecture/v3-from-v2.md) · [Suit temperament](./guides/v3-temperament.md).
+**v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [v3 from v2](./architecture/v3-from-v2.md) · [Suit temperament](./guides/v3-temperament.md).
 
 - **Bone (keep):** three subsystems, 7 MCP servers, Codex PreToolUse, 4 bridges  
 - **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  

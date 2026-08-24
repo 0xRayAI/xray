@@ -1,5 +1,5 @@
 /**
- * 0xRay v3 suit temperament — how loudly the Autonomous Engine insists.
+ * 0xRay 4.0 suit temperament — how loudly the Autonomous Engine insists.
  *
  * v2 three-subsystem OS stays: Inference · External Governance · Autonomous Engine.
  * This module does not replace thinDispatch or Codex. It only scales *ceremony*

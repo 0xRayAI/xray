@@ -28,7 +28,7 @@ writeFileSync(
   join(tmp, 'package.json'),
   JSON.stringify({
     name: 'consumer-sibling-fixture',
-    devDependencies: { '0xray': '^3.0.0' },
+    devDependencies: { '0xray': '^4.0.0' },
   }),
 );
 execSync('git init', { cwd: tmp, stdio: 'ignore' });

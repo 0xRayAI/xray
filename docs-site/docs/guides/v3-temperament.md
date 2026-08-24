@@ -1,8 +1,8 @@
-# 0xRay 3.0 — Suit temperament
+# 0xRay 4.0 — Suit temperament
 
-v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. v3 does not throw it away.
+v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. 4.0 does not throw it away.
 
-0xRay is **for everyone**: a free-model session in OpenCode or Hermes, and a frontier host like Grok 4.6 + Grok Build. Those are not the same creature. v3 **tempers ceremony** (how loudly the Autonomous Engine insists) while **Governance stays on** and the three subsystems stay the product.
+0xRay is **for everyone**: a free-model session in OpenCode or Hermes, and a frontier host like Grok 4.6 + Grok Build. Those are not the same creature. 4.0 **tempers ceremony** (how loudly the Autonomous Engine insists) while **Governance stays on** and the three subsystems stay the product.
 
 Architecture: [v3 from v2](../architecture/v3-from-v2.md).
 
@@ -62,7 +62,7 @@ Ceremony is lead-dev *process*: `analyze-complexity` before spawn, 3-agent confe
 
 New framework `xray/features.json` ships `auto`. Postinstall copies that template to **new** consumers.
 
-## What v3 does *not* do (first cut)
+## What 4.0 does *not* do (first cut)
 
 - Does **not** retire Inference, Dynamo governance, or thinDispatch
 - Does **not** drop the 7 consumer MCP servers

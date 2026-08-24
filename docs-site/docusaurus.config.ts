@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'xray',
-  tagline: '0xRay 3.0 — three-subsystem OS · temperament by host · 7 MCP servers · 69 Codex terms',
+  tagline: '0xRay 4.0 — three-subsystem OS · temperament by host · 7 MCP servers · 69 Codex terms',
   favicon: 'img/favicon.ico',
   url: 'https://0xrayai.github.io',
   baseUrl: '/xray/',

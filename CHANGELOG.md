@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [3.0.0] - 2026-08-24
+## [4.0.0] - 2026-08-24
 
-First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). This is **3.0.0**, not a 3.5.6 / 3.6.0 patch of the 3.5.x development tags.
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm already has `3.0.0`–`3.5.5`; this is **4.0.0**, not a reuse of 3.0.0 and not a 3.5.6 patch.
 
 ### ✨ Features
 - **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
@@ -17,7 +17,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **Docs** — [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
 
 ### 🔄 Changes
-- Product version **3.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.5.x entries below are historical pre-3.0 work on the same OS.
+- Product version **4.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.x entries below are historical (npm `3.0.0`–`3.5.5`).
 - `evaluatePreToolGate` is constitution-first (Grok, Hermes, OpenCode). Grok PreToolUse no longer re-runs 11/29/69/surface/destructive after the SSOT.
 - Codex 69 denies **new** surface only (existing MCP/skill files may be rewired). `paths[]` / `target_notebook` / `prompt` content are in the SSOT collector.
 - **strict** locks `no_new_surface` on (cannot opt out).

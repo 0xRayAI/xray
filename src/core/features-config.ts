@@ -98,7 +98,7 @@ export interface MultiAgentOrchestrationConfig {
   confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
 
-/** 0xRay 3.0 — nucleus SSOT. See docs-site/docs/guides/v3-temperament.md */
+/** 0xRay 4.0 — nucleus SSOT. See docs-site/docs/guides/v3-temperament.md */
 export type { SuitHost, SuitProfile, SuitTemperamentConfig };
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */

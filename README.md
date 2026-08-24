@@ -1,6 +1,6 @@
 # xray — MCP-Centric AI Governance OS
 
-**v3.0.0** — three-subsystem OS (Inference · Governance · Autonomous Engine) · temperament by host · 7 MCP servers · 4 bridges · Codex
+**v4.0.0** — three-subsystem OS (Inference · Governance · Autonomous Engine) · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 ## Your AI Power Suit
 

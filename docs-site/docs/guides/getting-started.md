@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v3.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
+**v4.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 

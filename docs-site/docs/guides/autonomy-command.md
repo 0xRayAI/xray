@@ -1,6 +1,6 @@
 # Autonomy Command — Suit Default Operating Model
 
-**v3.0** · Codex terms **67–68** · Skill: `orchestrator` · temperament-aware ceremony
+**v4.0** · Codex terms **67–68** · Skill: `orchestrator` · temperament-aware ceremony
 
 ---
 
@@ -14,7 +14,7 @@ The **autonomy command** is the default operating model when the 0xRay suit is w
 
 On **guided/strict** hosts, intake (`analyze-complexity`) is **required** before spawn. On **frontier**, the engine is available but spawn **warns** instead of denying. Governance (Codex 11/29/69) is always on.
 
-## Kernel-level activation (v3.0 — temperament)
+## Kernel-level activation (v4.0 — temperament)
 
 Lead-dev mode is wired through **`multi_agent_orchestration` in `features.json`** and host hooks (no separate `autonomy_kernel` block):
 

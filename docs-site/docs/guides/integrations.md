@@ -1,4 +1,4 @@
-# Platform Integrations (v3.0)
+# Platform Integrations (v4.0)
 
 Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` is `auto` (new installs). **Hermes / OpenCode / OpenClaw** stay **guided** (full engine ceremony). Existing consumers without the key stay guided on upgrade. See [Suit temperament](./v3-temperament.md).
 
