@@ -253,6 +253,24 @@ describe('delegation-gate temperament', () => {
     if (!create.allow) expect(create.gate).toBe('no-new-surface');
   });
 
+  it('constitution denies rm -rf / on run_terminal_command', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'frontier' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    const features = loadDelegationGateFeatures(tmp, 'grok');
+    const result = evaluatePreToolGate(
+      'run_terminal_command',
+      { command: 'rm -rf /' },
+      { projectRoot: tmp, sessionId: 's', features, host: 'grok' },
+    );
+    expect(result.allow).toBe(false);
+    if (!result.allow) expect(result.gate).toBe('destructive-shell');
+  });
+
   it('constitution denies any on hermes write even on frontier', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),

@@ -590,7 +590,7 @@ const CONSTITUTION_ANY = /:\s*any\b|as\s+any\b/;
 const CONSTITUTION_TS_IGNORE = /@ts-ignore|@ts-expect-error/;
 const CONSTITUTION_EVAL = /\beval\s*\(/;
 const CONSTITUTION_DESTRUCTIVE =
-  /\brm\s+-rf\s+\/\b|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i;
+  /\brm\s+-rf\s+\/(?:\s|$)|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i;
 const SURFACE_DENY = [
   /(?:^|\/)src\/mcps\/[^/]+\.server\.(ts|js)$/i,
   /(?:^|\/)src\/skills\/[^/]+\/SKILL\.md$/i,
