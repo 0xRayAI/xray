@@ -138,7 +138,8 @@
     "verify:find-project-root": "node scripts/mjs/verify-find-project-root-core.mjs",
     "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs",
     "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs",
-    "verify:pre-push-diff": "node scripts/mjs/verify-pre-push-diff-core.mjs"
+    "verify:pre-push-diff": "node scripts/mjs/verify-pre-push-diff-core.mjs",
+    "verify:temperament-live": "node scripts/mjs/verify-temperament-live.mjs"
   },
   "files": [
     "dist/",
@@ -159,6 +160,7 @@
     "scripts/mjs/verify-confer-core.mjs",
     "scripts/mjs/verify-user-aside-core.mjs",
     "scripts/mjs/verify-pipeline-facets.mjs",
+    "scripts/mjs/verify-temperament-live.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",
