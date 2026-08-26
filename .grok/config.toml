@@ -1,0 +1,4 @@
+[mcp_servers.repertoire]
+command = "node"
+args = ["scripts/mjs/run-repertoire-mcp.mjs"]
+enabled = true
