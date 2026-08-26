@@ -23,6 +23,9 @@ xray/inference/
 0xray-*.tgz
 *.tmp
 
+# Machine-local Grok MCP (absolute Repertoire path written by `0xray grok install`)
+.grok/config.toml
+
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts
 .opencode/**/*.d.ts.map

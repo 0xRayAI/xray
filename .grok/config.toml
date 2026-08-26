@@ -1,4 +1,0 @@
-[mcp_servers.repertoire]
-command = "node"
-args = ["/Users/henrytafolla/dev/repertoire/dist/mcp/server.js"]
-enabled = true

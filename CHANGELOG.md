@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [4.0.0] - 2026-08-24
+## [4.0.0] - 2026-08-26
 
 First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm already has `3.0.0`–`3.5.5`; this is **4.0.0**, not a reuse of 3.0.0 and not a 3.5.6 patch.
 
@@ -14,6 +14,11 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **OpenCode / Hermes** (including free models) — stay **guided**: full v2 engine ceremony.
 - **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
 - **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
+- **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
+- **Repertoire online** — framework `memory_routing` enabled with sibling provider; Grok install writes a cwd-proof absolute MCP path into local `.grok/config.toml`.
+- **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
+- **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
+- **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
 - **Docs** — [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
 
 ### 🔄 Changes
@@ -23,21 +28,13 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **strict** locks `no_new_surface` on (cannot opt out).
 - Dual-host session-boot: Hermes / OpenCode / OpenClaw write `host` + `suit_profile`. A Hermes host ignores leftover Grok boot (and vice versa). Kernel/`generic` uses last boot.
 - Frontier `auto_consult` follows confer opt-in (`confer.enabled` / `confer_on_synthesis`).
+- Session-boot refreshes leftover host/workspace from another machine.
+- Post-commit log maintenance prefers consumer `node_modules/0xray/dist` and ESM `pathToFileURL`.
 
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
-
-## [Unreleased]
-
-### ✨ Features
-- **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`; tool.before throws on constitution/spawn deny. Platform still has no native abort API; this is the host adapter.
-- **Repertoire online** — framework `memory_routing` enabled with sibling provider; bridge auto-detects `../repertoire/dist/mcp/server.js`; repo `.mcp.json` uses local `dist/cli` so 4.0 runs instead of npm 3.5.x
-- **Repertoire MCP launcher** — `scripts/mjs/run-repertoire-mcp.mjs` is cwd-proof (no `../` in Grok spawn args); session-boot refreshes leftover host/workspace from another machine
-- **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
-- **Verifier coverage** — `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`
-- **Post-commit log maintenance** — consumer `node_modules/0xray/dist` first; ESM `pathToFileURL` import
-- **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
-- **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
+- `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
+- OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
 
 ---
 
