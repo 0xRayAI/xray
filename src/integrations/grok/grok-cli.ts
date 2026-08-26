@@ -173,22 +173,47 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
         server.args = [cliJs, 'mcp', mcpCmd];
       }
     }
-    const repertoireLauncher = path.join(xrayRoot, 'scripts', 'mjs', 'run-repertoire-mcp.mjs');
     const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
-    if (mcp.mcpServers && !mcp.mcpServers.repertoire) {
-      if (fs.existsSync(repertoireLauncher)) {
-        mcp.mcpServers.repertoire = {
-          command: 'node',
-          args: [repertoireLauncher],
-        };
-      } else if (fs.existsSync(repertoireMcp)) {
+    if (mcp.mcpServers) {
+      if (fs.existsSync(repertoireMcp)) {
         mcp.mcpServers.repertoire = {
           command: 'node',
           args: [repertoireMcp],
         };
+      } else {
+        delete mcp.mcpServers.repertoire;
       }
     }
     fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
+  }
+
+  writeProjectRepertoireMcp(xrayRoot);
+}
+
+function writeProjectRepertoireMcp(xrayRoot: string): void {
+  const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
+  const grokDir = path.join(xrayRoot, '.grok');
+  fs.mkdirSync(grokDir, { recursive: true });
+  const tomlPath = path.join(grokDir, 'config.toml');
+  if (!fs.existsSync(repertoireMcp)) return;
+  const block = `[mcp_servers.repertoire]
+command = "node"
+args = [${JSON.stringify(repertoireMcp)}]
+enabled = true
+`;
+  let existing = '';
+  if (fs.existsSync(tomlPath)) {
+    existing = fs.readFileSync(tomlPath, 'utf8');
+  }
+  if (/\[mcp_servers\.repertoire\]/.test(existing)) {
+    existing = existing.replace(
+      /\[mcp_servers\.repertoire\][\s\S]*?(?=\n\[|$)/,
+      block.trim(),
+    );
+    fs.writeFileSync(tomlPath, existing.endsWith('\n') ? existing : `${existing}\n`);
+  } else {
+    const prefix = existing.trim() ? `${existing.trim()}\n\n` : '';
+    fs.writeFileSync(tomlPath, `${prefix}${block}`);
   }
 }
 
