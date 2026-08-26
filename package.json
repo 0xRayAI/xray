@@ -161,6 +161,7 @@
     "scripts/mjs/verify-user-aside-core.mjs",
     "scripts/mjs/verify-pipeline-facets.mjs",
     "scripts/mjs/verify-temperament-live.mjs",
+    "scripts/mjs/run-repertoire-mcp.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",

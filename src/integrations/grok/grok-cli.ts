@@ -173,12 +173,20 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
         server.args = [cliJs, 'mcp', mcpCmd];
       }
     }
+    const repertoireLauncher = path.join(xrayRoot, 'scripts', 'mjs', 'run-repertoire-mcp.mjs');
     const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
-    if (fs.existsSync(repertoireMcp) && mcp.mcpServers && !mcp.mcpServers.repertoire) {
-      mcp.mcpServers.repertoire = {
-        command: 'node',
-        args: [repertoireMcp],
-      };
+    if (mcp.mcpServers && !mcp.mcpServers.repertoire) {
+      if (fs.existsSync(repertoireLauncher)) {
+        mcp.mcpServers.repertoire = {
+          command: 'node',
+          args: [repertoireLauncher],
+        };
+      } else if (fs.existsSync(repertoireMcp)) {
+        mcp.mcpServers.repertoire = {
+          command: 'node',
+          args: [repertoireMcp],
+        };
+      }
     }
     fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
   }

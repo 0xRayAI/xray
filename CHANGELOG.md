@@ -32,6 +32,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 ### ✨ Features
 - **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`; tool.before throws on constitution/spawn deny. Platform still has no native abort API; this is the host adapter.
 - **Repertoire online** — framework `memory_routing` enabled with sibling provider; bridge auto-detects `../repertoire/dist/mcp/server.js`; repo `.mcp.json` uses local `dist/cli` so 4.0 runs instead of npm 3.5.x
+- **Repertoire MCP launcher** — `scripts/mjs/run-repertoire-mcp.mjs` is cwd-proof (no `../` in Grok spawn args); session-boot refreshes leftover host/workspace from another machine
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **Verifier coverage** — `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`
 - **Post-commit log maintenance** — consumer `node_modules/0xray/dist` first; ESM `pathToFileURL` import

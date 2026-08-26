@@ -4,7 +4,9 @@ import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   buildSessionBootPayload,
+  ensureSessionBoot,
   resolveSiblingWorkspaceRoots,
+  sessionBootNeedsRefresh,
 } from '../../integrations/grok/hooks/grok-hook-utils.js';
 
 describe('grok-hook-utils', () => {
@@ -51,5 +53,51 @@ describe('grok-hook-utils', () => {
     expect(payload.siblingWorkspaceRoots).toBeDefined();
     expect(payload.siblingWorkspaceRoots?.[0]?.path).toBe(siblingDir);
     expect(payload.host).toBe('grok');
+  });
+
+  it('sessionBootNeedsRefresh when workspaceRoot or host is stale', () => {
+    expect(
+      sessionBootNeedsRefresh(
+        { lead_dev_mode: true, workspaceRoot: '/Users/blaze/dev/xray' },
+        tmp,
+      ),
+    ).toBe(true);
+    expect(
+      sessionBootNeedsRefresh(
+        {
+          lead_dev_mode: true,
+          host: 'grok',
+          suit_profile: 'frontier',
+          workspaceRoot: tmp,
+        },
+        tmp,
+      ),
+    ).toBe(false);
+  });
+
+  it('ensureSessionBoot rewrites leftover boot from another machine', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'session-boot.json'),
+      JSON.stringify({
+        lead_dev_mode: true,
+        workspaceRoot: '/Users/blaze/dev/xray',
+        source: '0xray/grok-pre-tool-use-boot',
+      }),
+    );
+    ensureSessionBoot(tmp, 'test/refresh');
+    const boot = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    );
+    expect(boot.host).toBe('grok');
+    expect(boot.workspaceRoot).toBe(tmp);
+    expect(boot.suit_profile).toBe('frontier');
   });
 });

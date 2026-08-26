@@ -301,13 +301,22 @@ export function writeSessionBoot(root, payload) {
   }
 }
 
-/** Boot on SessionStart, UserPromptSubmit, or first PreToolUse if missing. */
+export function sessionBootNeedsRefresh(existing, root) {
+  if (!existing || typeof existing !== 'object') return true;
+  if (existing.lead_dev_mode === undefined) return true;
+  if (existing.host !== 'grok') return true;
+  if (!existing.suit_profile) return true;
+  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  return false;
+}
+
+/** Boot on SessionStart, UserPromptSubmit, or first PreToolUse if missing/stale. */
 export function ensureSessionBoot(root = workspaceRoot(), source = '0xray/grok-boot') {
   const bootPath = sessionBootPath(root);
   if (fs.existsSync(bootPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(bootPath, 'utf8'));
-      if (existing.lead_dev_mode !== undefined) return bootPath;
+      if (!sessionBootNeedsRefresh(existing, root)) return bootPath;
     } catch {
       /* rewrite corrupt boot */
     }
