@@ -1,35 +1,39 @@
 {
   "mcpServers": {
     "xray-governance": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "governance"],
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "governance"],
       "env": {
         "XRAY_FORCE_MCP_GOVERNANCE": "true"
       }
     },
     "xray-skills": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "skills"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "skills"]
     },
     "xray-enforcer": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "enforcer"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "enforcer"]
     },
     "xray-orchestrator": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "orchestrator"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "orchestrator"]
     },
     "xray-researcher": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "researcher"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "researcher"]
     },
     "xray-code-review": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "code-review"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "code-review"]
     },
     "xray-architect-tools": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "architect-tools"]
+      "command": "node",
+      "args": ["dist/cli/index.js", "mcp", "architect-tools"]
+    },
+    "repertoire": {
+      "command": "node",
+      "args": ["../repertoire/dist/mcp/server.js"]
     }
   }
 }

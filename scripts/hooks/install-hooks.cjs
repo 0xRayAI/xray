@@ -30,19 +30,34 @@ if (!fs.existsSync(gitHooksDir)) {
 }
 
 const isConsumer = packageRoot.includes("node_modules");
+
+function firstExistingRelative(root, rels) {
+  return rels.find((rel) => fs.existsSync(path.join(root, rel))) || rels[0];
+}
+
 const runHookRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/hooks/run-hook.js"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/hooks/run-hook.js",
+      "node_modules/0xray/dist/scripts/hooks/run-hook.js",
+    ])
   : "scripts/hooks/run-hook.js";
 const loadReflectionRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/node/load-reflection-config.mjs"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/node/load-reflection-config.mjs",
+      "node_modules/0xray/dist/scripts/node/load-reflection-config.mjs",
+    ])
   : "scripts/node/load-reflection-config.mjs";
 const autoReflectionRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/node/auto-reflection-generator.mjs"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/node/auto-reflection-generator.mjs",
+      "node_modules/0xray/dist/scripts/node/auto-reflection-generator.mjs",
+    ])
   : "scripts/node/auto-reflection-generator.mjs";
 
 function hookRunnerExists(projectRoot) {
   return (
     fs.existsSync(path.join(projectRoot, "node_modules/0xray/scripts/hooks/run-hook.js")) ||
+    fs.existsSync(path.join(projectRoot, "node_modules/0xray/dist/scripts/hooks/run-hook.js")) ||
     fs.existsSync(path.join(projectRoot, "scripts/hooks/run-hook.js"))
   );
 }

@@ -4,6 +4,8 @@ sidebar_label: Overview
 
 # 0xRay Documentation
 
+**v4.0.0** — 42 agents · 45 skills · 7 MCP servers · 69 codex terms · 3,226 tests
+
 **v4.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with the [Introduction](./introduction).

@@ -24,31 +24,35 @@ const HERMES_PLUGIN_DIR = path.join(os.homedir(), ".hermes", "plugins", "xray-he
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const OPENCLAW_STATE_DIR = path.join(os.homedir(), ".openclaw");
 
+function resolveRepertoireMcp(targetDir) {
+  const candidates = [
+    path.join(targetDir, "dist", "mcp", "server.js"),
+    path.join(targetDir, "..", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+  ];
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
-    const pkgPath = path.join(targetDir, "package.json");
-    if (!fs.existsSync(pkgPath)) return extras;
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-    const localRepertoireMcp = path.join(targetDir, "dist", "mcp", "server.js");
-    if (pkg.name === "@0xray/repertoire" && fs.existsSync(localRepertoireMcp)) {
-      extras.hermes.repertoire = {
-        command: "node",
-        args: [localRepertoireMcp],
-        env: { XRAY_ROOT: targetDir },
-      };
-      extras.opencode.repertoire = {
-        type: "local",
-        command: ["node", "dist/mcp/server.js"],
-        enabled: true,
-        cwd: ".",
-      };
-      extras.openclaw.repertoire = {
-        command: "node",
-        args: [localRepertoireMcp],
-        env: { XRAY_ROOT: targetDir },
-      };
-    }
+    const repertoireMcp = resolveRepertoireMcp(targetDir);
+    if (!repertoireMcp) return extras;
+    extras.hermes.repertoire = {
+      command: "node",
+      args: [repertoireMcp],
+      env: { XRAY_ROOT: targetDir },
+    };
+    extras.opencode.repertoire = {
+      type: "local",
+      command: ["node", repertoireMcp],
+      enabled: true,
+    };
+    extras.openclaw.repertoire = {
+      command: "node",
+      args: [repertoireMcp],
+      env: { XRAY_ROOT: targetDir },
+    };
   } catch {
     // best-effort
   }

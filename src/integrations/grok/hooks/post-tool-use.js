@@ -8,6 +8,8 @@ import {
   extractToolContext,
   isOrchestrateToolEvent,
   isSubagentTool,
+  isWriteTool,
+  loadFeatures,
   readStdinJson,
   resolveSessionId,
   workspaceRoot,
@@ -17,7 +19,7 @@ import {
   evaluatePostToolSpawn,
   isOrchestrateToolEvent as gateIsOrchestrateToolEvent,
 } from '../../hooks/delegation-gate-runtime.mjs';
-import { recordRoutingOutcome } from '../../hooks/pipeline-hook-runtime.mjs';
+import { recordRoutingOutcome, runGrokPostprocessorLight } from '../../hooks/pipeline-hook-runtime.mjs';
 
 function extractToolOutput(event) {
   return (
@@ -51,6 +53,20 @@ async function main() {
           planTodoId: toolInput?.planTodoId ?? null,
           sessionId,
         });
+      } catch {
+        /* non-blocking */
+      }
+    }
+
+    const features = loadFeatures(eventRoot);
+    if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {
+      try {
+        const paths = [
+          toolInput?.path,
+          toolInput?.filePath,
+          toolInput?.file_path,
+        ].filter(Boolean);
+        runGrokPostprocessorLight(eventRoot, { tool: toolName, paths });
       } catch {
         /* non-blocking */
       }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shared 4/4 delegation gate fixture against nucleus SSOT (any host adapter).
+ * Shared 6/6 delegation gate fixture against nucleus SSOT (any host adapter).
  * Usage: node scripts/mjs/verify-delegation-gate-core.mjs [--host=grok|hermes|opencode]
  */
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -21,6 +21,9 @@ const host = hostArg?.split('=')[1] || 'generic';
 
 const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(
   join(packageRoot, 'dist/integrations/hooks/delegation-gate-runtime.mjs')
+);
+const { archiveStaleLeadDevPlan } = await import(
+  join(packageRoot, 'dist/nucleus/lead-dev-plan-persistence.js')
 );
 
 const WRITE_TOOL =
@@ -130,6 +133,30 @@ try {
   } else {
     fail('spawn plan stale', JSON.stringify(denyStale));
   }
+
+  const archived = archiveStaleLeadDevPlan(staleTmp);
+  const denyAfterArchive = evaluatePreToolGate(
+    SPAWN_TOOL,
+    { prompt: 'plan todo 1.1 consult', subagent_type: 'researcher' },
+    {
+      projectRoot: staleTmp,
+      sessionId: FIXTURE_SESSION_ID,
+      features: loadDelegationGateFeatures(staleTmp),
+      host,
+    },
+  );
+  if (
+    archived.archived &&
+    !denyAfterArchive.allow &&
+    denyAfterArchive.gate === 'spawn-plan-stale'
+  ) {
+    pass('denies spawn after stale plan archival (marker)');
+  } else {
+    fail(
+      'spawn plan stale after archive',
+      JSON.stringify({ archived, denyAfterArchive }),
+    );
+  }
   rmSync(staleTmp, { recursive: true, force: true });
 } finally {
   rmSync(tmp, { recursive: true, force: true });
@@ -139,7 +166,7 @@ const label = host === 'generic' ? 'core' : host;
 console.log(
   '\n' +
     (failed === 0
-      ? `🎉 Delegation gate verify passed (5/5) [${label}].`
+      ? `🎉 Delegation gate verify passed (6/6) [${label}].`
       : `⚠️  ${failed} gate check(s) failed [${label}].`),
 );
 process.exit(failed === 0 ? 0 : 1);

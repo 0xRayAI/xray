@@ -6,6 +6,7 @@ import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
 import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
+import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
@@ -66,6 +67,17 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
     );
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);
 
+    try {
+      writeSuitSessionBoot(targetDir, 'openclaw', { source: '0xray/openclaw-install' });
+    } catch {
+      /* session-boot is best-effort */
+    }
+
+    const hookInstalled = installOpenClawPreToolHook();
+    if (hookInstalled) {
+      console.log(`\x1b[32m✓ OpenClaw PreToolUse hook → ${hookInstalled}\x1b[0m`);
+    }
+
     console.log('\n✅ 0xRay OpenClaw integration configured!');
     console.log('Run `openclaw mcp list` to verify MCP servers.');
     console.log('Edit `.xray/config/openclaw.json` for gateway URL, auth token, and device ID.');
@@ -76,4 +88,34 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
   }
 
   frameworkLogger.log('openclaw-integration', 'install-complete', 'info', {});
+}
+
+function installOpenClawPreToolHook(): string | null {
+  const packageRoot = path.resolve(__dirname, '..', '..', '..');
+  const candidates = [
+    path.join(packageRoot, 'src/integrations/openclaw/hooks/pre-tool-gate-runtime.mjs'),
+    path.join(packageRoot, 'dist/integrations/openclaw/hooks/pre-tool-gate-runtime.mjs'),
+  ];
+  const source = candidates.find((p) => fs.existsSync(p));
+  if (!source) return null;
+
+  const hookDir = path.join(homedir(), '.openclaw', 'hooks');
+  fs.mkdirSync(hookDir, { recursive: true });
+  const dest = path.join(hookDir, 'xray-pre-tool.mjs');
+  fs.copyFileSync(source, dest);
+  fs.writeFileSync(
+    path.join(hookDir, 'xray-pre-tool.json'),
+    `${JSON.stringify(
+      {
+        name: 'xray-pre-tool',
+        command: 'node',
+        args: [dest],
+        stdin: 'json',
+        blockExitCode: 2,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  return dest;
 }

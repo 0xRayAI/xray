@@ -22,7 +22,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from "fs";
 import { join, dirname, resolve } from "path";
 import { execSync, exec, execFileSync } from "child_process";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 // ── Parse arguments ──────────────────────────────────────────
 
@@ -372,9 +372,9 @@ async function runLogMaintenance() {
 
   try {
     const distDirs = [
-      join(projectRoot, "dist"),
       join(projectRoot, "node_modules", "0xray", "dist"),
       join(projectRoot, "node_modules", "xray", "dist"),
+      join(projectRoot, "dist"),
     ];
 
     for (const distDir of distDirs) {
@@ -382,7 +382,9 @@ async function runLogMaintenance() {
       if (!existsSync(triggerPath)) continue;
 
       try {
-        const { archiveLogFiles, cleanupLogFiles } = await import(triggerPath);
+        const { archiveLogFiles, cleanupLogFiles } = await import(
+          pathToFileURL(triggerPath).href
+        );
 
         // Archive logs
         try {
@@ -541,6 +543,67 @@ async function handlePreCommit() {
   process.exit(0);
 }
 
+function loadFeaturesJson() {
+  const featuresPath = join(projectRoot, ".xray", "features.json");
+  if (!existsSync(featuresPath)) return {};
+  try {
+    return JSON.parse(readFileSync(featuresPath, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+function resolveXrayDistModule(relPath) {
+  const candidates = [
+    join(projectRoot, "node_modules", "0xray", "dist", relPath),
+    join(projectRoot, "node_modules", "xray", "dist", relPath),
+    join(projectRoot, "dist", relPath),
+  ];
+  return candidates.find((p) => existsSync(p)) || null;
+}
+
+async function runSessionInferenceCapture() {
+  const features = loadFeaturesJson();
+  const cfg = features.inference_session_capture ?? {};
+  if (cfg.enabled !== true) {
+    log("Session inference capture disabled");
+    return;
+  }
+
+  const modulePath = resolveXrayDistModule("inference/session-capture.js");
+  if (!modulePath) {
+    log("Session capture module missing (node_modules/0xray/dist or dist)");
+    return;
+  }
+
+  const minCommits = typeof cfg.min_commits === "number" && cfg.min_commits > 0
+    ? cfg.min_commits
+    : 3;
+  const lookback = typeof cfg.lookback_commits === "number" && cfg.lookback_commits > 0
+    ? cfg.lookback_commits
+    : 20;
+
+  try {
+    const mod = await import(pathToFileURL(modulePath).href);
+    const inference = mod.captureSessionInference(`HEAD~${lookback}`, "HEAD");
+    if (!inference) {
+      log("Session capture: no commits in span");
+      return;
+    }
+    if ((inference.metrics?.commits ?? 0) < minCommits) {
+      log(
+        `Session capture: ${inference.metrics?.commits ?? 0} commits < min ${minCommits}`,
+      );
+      return;
+    }
+    const outDir = join(projectRoot, "docs", "inference");
+    const saved = mod.saveSessionInference(inference, outDir);
+    log(`Session capture saved ${saved}`);
+  } catch (err) {
+    logError(`Session capture failed: ${err.message}`);
+  }
+}
+
 async function handlePostCommit() {
   const commitSha = process.env.COMMIT_SHA || "unknown";
   const branch = process.env.BRANCH || "unknown";
@@ -549,6 +612,7 @@ async function handlePostCommit() {
 
   // Run log maintenance
   await runLogMaintenance();
+  await runSessionInferenceCapture();
 
   // Record metrics
   recordMetrics(0, 0);

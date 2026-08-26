@@ -1,5 +1,7 @@
 # Getting Started with 0xRay
 
+**v4.0.0** — 42 agents · 45 skills · 7 MCP servers · 69 codex terms · 3,226 tests
+
 **v4.0.0** — three-subsystem OS · temperament by host · 7 MCP servers · 4 bridges · Codex
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.

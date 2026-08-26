@@ -29,13 +29,14 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 
 ## [Unreleased]
 
-### Planned (iterate before next release)
-- **OpenClaw host-agent PreToolUse** — platform has no consumer tool-block API yet; constitution still applies via MCP/kernel when those paths run. Guided OpenClaw is config intent until the host can abort tools.
-- **Configurable archive marker** — `plan_archive_marker_hours` controls `spawn-plan-stale` persistence after archival
-- **Verifier coverage** — `spawn-plan-stale` in `verify-delegation-gate-core` (5/5); wired into `release-gate`
-- **Post-commit log maintenance** — consumer path fix (`node_modules/0xray/dist`)
-- **grok_postprocessor_light** — opt-in marker + activity.log on Grok write tools (full PP subset deferred)
-- **P2 session capture** — git post-commit → `captureSessionInference` when threshold met
+### ✨ Features
+- **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`; tool.before throws on constitution/spawn deny. Platform still has no native abort API; this is the host adapter.
+- **Repertoire online** — framework `memory_routing` enabled with sibling provider; bridge auto-detects `../repertoire/dist/mcp/server.js`; repo `.mcp.json` uses local `dist/cli` so 4.0 runs instead of npm 3.5.x
+- **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
+- **Verifier coverage** — `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`
+- **Post-commit log maintenance** — consumer `node_modules/0xray/dist` first; ESM `pathToFileURL` import
+- **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
+- **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
 
 ---
 

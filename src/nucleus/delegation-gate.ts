@@ -89,6 +89,8 @@ export {
   validateSpawnMatchesTodo,
   updatePlanTodoStatus,
   savePersistedLeadDevPlan,
+  archiveStaleLeadDevPlan,
+  findRecentStalePlanArchive,
 } from './lead-dev-plan-persistence.js';
 export {
   buildReceiptFromConsultOutput,

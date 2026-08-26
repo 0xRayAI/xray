@@ -32,7 +32,7 @@ describe('pipeline-hook-runtime', () => {
       fs.readFileSync(path.join(tmp, '.xray', 'inference', 'postprocessor-light-latest.json'), 'utf8'),
     );
     expect(payload.tool).toBe('Write');
-    expect(payload.mode).toBe('grok-pre-tool-light');
+    expect(payload.mode).toBe('grok-post-tool-light');
   });
 
   it('recordRoutingOutcome appends routing-outcomes.json', () => {

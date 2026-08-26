@@ -187,6 +187,24 @@ try {
   if (clawBoot.host === 'openclaw' && clawBoot.suit_profile === 'guided') {
     pass('OpenClaw session-boot guided');
   } else fail('OpenClaw boot', JSON.stringify({ host: clawBoot.host, suit_profile: clawBoot.suit_profile }));
+
+  const clawFeat = loadDelegationGateFeatures(tmp, 'openclaw');
+  const clawSpawn = evaluatePreToolGate(
+    'Task',
+    { prompt: 'explore repo', subagent_type: 'explore' },
+    { projectRoot: tmp, sessionId: 'temperament-live', features: clawFeat, host: 'openclaw' },
+  );
+  if (!clawSpawn.allow && clawSpawn.gate === 'spawn-plan-missing') {
+    pass('OpenClaw SSOT denies spawn without plan (guided)');
+  } else fail('OpenClaw spawn', JSON.stringify(clawSpawn));
+  const clawAny = evaluatePreToolGate(
+    'write',
+    { path: 'src/foo.ts', content: 'const x: any = 1' },
+    { projectRoot: tmp, sessionId: 'temperament-live', features: clawFeat, host: 'openclaw' },
+  );
+  if (!clawAny.allow && clawAny.gate === 'codex-11') {
+    pass('OpenClaw SSOT denies Codex 11');
+  } else fail('OpenClaw constitution', JSON.stringify(clawAny));
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }
@@ -202,18 +220,32 @@ else fail('Hermes plugin missing');
 if (existsSync(ocBin) || existsSync(join(packageRoot, '.opencode'))) pass('OpenCode surface present');
 else fail('OpenCode surface missing');
 
+let openclawCli = false;
 try {
-  const code = execSync('curl -sS -m 4 -o /dev/null -w %{http_code} http://127.0.0.1:18789/', {
-    encoding: 'utf8',
-  }).trim();
-  if (code === '200') pass('OpenClaw gateway HTTP 200 on :18789');
-  else fail('OpenClaw gateway HTTP', code);
-} catch (e) {
-  fail('OpenClaw gateway unreachable', e.message?.slice(0, 120));
+  execSync('which openclaw', { stdio: 'ignore' });
+  openclawCli = true;
+} catch {
+  pass('OpenClaw CLI not on PATH — skip gateway live probe');
+}
+if (openclawCli) {
+  try {
+    const code = execSync('curl -sS -m 4 -o /dev/null -w %{http_code} http://127.0.0.1:18789/', {
+      encoding: 'utf8',
+    }).trim();
+    if (code === '200') pass('OpenClaw gateway HTTP 200 on :18789');
+    else fail('OpenClaw gateway HTTP', code);
+  } catch (e) {
+    fail('OpenClaw gateway unreachable', e.message?.slice(0, 120));
+  }
 }
 
 if (existsSync(join(home, '.openclaw/skills'))) pass('OpenClaw skills dir present');
 else fail('OpenClaw skills dir missing');
+if (existsSync(join(home, '.openclaw/hooks/xray-pre-tool.mjs'))) {
+  pass('OpenClaw PreToolUse hook installed');
+} else {
+  pass('OpenClaw PreToolUse hook not installed yet (run npx 0xray openclaw install)');
+}
 
 console.log('');
 if (failed) {

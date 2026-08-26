@@ -189,7 +189,7 @@ export function runGrokPostprocessorLight(projectRoot, entry = {}) {
     phase: 'post-process-light',
     tool: entry.tool ?? 'unknown',
     paths: entry.paths ?? [],
-    mode: 'grok-pre-tool-light',
+    mode: 'grok-post-tool-light',
   };
   writeFileSync(markerPath, `${JSON.stringify(payload, null, 2)}\n`);
   appendActivity(projectRoot, 'postprocessor-light', 'info', {

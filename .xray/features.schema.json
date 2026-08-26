@@ -84,6 +84,19 @@
         }
       }
     },
+    "grok_postprocessor_light": {
+      "type": "boolean",
+      "description": "Opt-in lightweight postprocessor marker + activity.log on Grok write tools"
+    },
+    "inference_session_capture": {
+      "type": "object",
+      "description": "git post-commit → captureSessionInference when commit threshold is met",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "min_commits": { "type": "integer", "minimum": 1 },
+        "lookback_commits": { "type": "integer", "minimum": 1 }
+      }
+    },
     "suit_temperament": {
       "type": "object",
       "description": "0xRay 4.0 — constitution always on; ceremony scales by host. Missing key = guided (existing consumers unchanged).",

@@ -166,7 +166,8 @@ export function getFrameworkCounts(baseDir = rootDir) {
   const counts = {
     agents: 0,
     mcps: 0,
-    skills: 0
+    skills: 0,
+    codexTerms: 68,
   };
   
   // Count agents (.yml files in src/opencode/agents/ — source of truth)
@@ -183,7 +184,8 @@ export function getFrameworkCounts(baseDir = rootDir) {
     try {
       const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf-8'));
       const servers = mcpJson.mcpServers || mcpJson.servers || {};
-      counts.mcps = Object.keys(servers).length;
+      const xrayServers = Object.keys(servers).filter((name) => name.startsWith('xray-'));
+      counts.mcps = xrayServers.length || 7;
     } catch {
       counts.mcps = 7;
     }
@@ -198,6 +200,17 @@ export function getFrameworkCounts(baseDir = rootDir) {
       .filter(f => fs.statSync(path.join(skillsDir, f)).isDirectory())
       .filter(f => fs.existsSync(path.join(skillsDir, f, 'SKILL.md')))
       .length;
+  }
+
+  const codexPath = path.join(baseDir, 'xray/codex.json');
+  if (fs.existsSync(codexPath)) {
+    try {
+      const codex = JSON.parse(fs.readFileSync(codexPath, 'utf-8'));
+      const terms = codex.terms && typeof codex.terms === 'object' ? Object.keys(codex.terms) : [];
+      if (terms.length > 0) counts.codexTerms = terms.length;
+    } catch {
+      /* keep default */
+    }
   }
   
   return counts;
@@ -274,7 +287,7 @@ function updateReadme(counts, newVersion) {
   // Update header line: **v3.4.1** — 42 agents · 45 skills · 7 MCP servers · ...
   readme = readme.replace(
     /^\*\*v[\d.]+\*\* — \d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m,
-    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · 68 codex terms · 3,226 tests`
+    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · ${counts.codexTerms} codex terms · 3,226 tests`
   );
   
   // Update version badge: [![Version](https://img.shields.io/badge/version-1.6.x-blue...)]
@@ -314,7 +327,7 @@ export const DOCS_SITE_HEADER_FILES = [
 ];
 
 export function buildDocsHeader(counts, newVersion) {
-  return `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · 68 codex terms · 3,226 tests`;
+  return `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · ${counts.codexTerms} codex terms · 3,226 tests`;
 }
 
 function syncDocsSiteHeaders(counts, newVersion) {
@@ -347,7 +360,7 @@ function updateConsumerAgentsHeader(newVersion, counts) {
   let content = fs.readFileSync(consumerPath, 'utf-8');
   content = content.replace(
     /^\*\*v[\d.]+\*\* — \d+ MCP servers · \d+ skills · \d+ codex terms/m,
-    `**v${newVersion}** — ${counts.mcps} MCP servers · ${counts.skills} skills · 68 codex terms`
+    `**v${newVersion}** — ${counts.mcps} MCP servers · ${counts.skills} skills · ${counts.codexTerms} codex terms`
   );
   fs.writeFileSync(consumerPath, content);
   console.log(`✅ Updated AGENTS-consumer.md version header`);

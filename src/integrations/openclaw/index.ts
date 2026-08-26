@@ -20,6 +20,8 @@ import { initializeGovernanceIntegration } from '../governance/index.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 import { OpenClawHooksManager, XrayToolEvent } from './hooks/xray-hooks.js';
+import { evaluateOpenClawHostPreTool } from './pre-tool-gate.js';
+import type { ToolGateInput } from '../../nucleus/delegation-gate.js';
 import { mcpClientManager, ToolBeforeEvent, ToolAfterEvent } from '../../mcps/mcp-client.js';
 import type { AgentInvoker } from './api-server.js';
 
@@ -159,6 +161,23 @@ export class OpenClawIntegration extends BaseIntegration {
     this.mcpToolBeforeUnsubscribe = await mcpClientManager.onToolEvent('tool.before', async (event) => {
       const toolEvent = event as ToolBeforeEvent;
       try {
+        const gate = evaluateOpenClawHostPreTool(
+          toolEvent.toolName,
+          (toolEvent.args ?? {}) as ToolGateInput,
+          {
+            projectRoot: process.cwd(),
+            sessionId: String(
+              (toolEvent as ToolBeforeEvent & { sessionId?: string }).sessionId ?? 'openclaw',
+            ),
+          },
+        );
+        if (!gate.allow) {
+          await this.log(
+            'error',
+            `OpenClaw PreToolUse blocked ${toolEvent.toolName}: ${gate.reason}`,
+          );
+          throw new Error(`xray-openclaw-pre-tool:${gate.gate}:${gate.reason}`);
+        }
         await this.hooksManager!.onToolBefore({
           toolName: toolEvent.toolName,
           toolId: `${toolEvent.serverName}:${toolEvent.toolName}`,
@@ -169,6 +188,7 @@ export class OpenClawIntegration extends BaseIntegration {
         });
       } catch (error) {
         await this.log('error', `Error in tool.before handler: ${error}`);
+        throw error;
       }
     });
 

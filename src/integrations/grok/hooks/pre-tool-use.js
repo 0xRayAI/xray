@@ -20,7 +20,6 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { runGrokPostprocessorLight } from '../../hooks/pipeline-hook-runtime.mjs';
 
 function finish(root, decision, reason, hint, toolName, extra = {}) {
   const out = { decision, ...extra };
@@ -49,7 +48,7 @@ async function main() {
     const gateFeatures = loadDelegationGateFeatures(eventRoot, 'grok');
     const ctx = extractFromEvent(event);
     toolName = ctx.toolName;
-    const { paths, content, cmd, toolInput } = ctx;
+    const { content, cmd, toolInput } = ctx;
     const sessionId = resolveSessionId(event);
 
     const gateBlock = evaluatePreToolGate(toolName, toolInput, {
@@ -90,14 +89,6 @@ async function main() {
         toolName,
         { gate: gateBlock.gate, warn: true },
       );
-    }
-
-    if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {
-      try {
-        runGrokPostprocessorLight(eventRoot, { tool: toolName, paths });
-      } catch {
-        /* non-blocking */
-      }
     }
 
     finish(eventRoot, 'allow', null, null, toolName);

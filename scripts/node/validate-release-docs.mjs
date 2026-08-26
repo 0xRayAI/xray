@@ -69,8 +69,8 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes(`${counts.skills} skills`)) {
         errors.push(`expected ${counts.skills} skills in header`);
       }
-      if (!content.includes('68 codex terms')) {
-        errors.push('expected 68 codex terms in header');
+      if (!content.includes(`${counts.codexTerms} Codex terms`) && !content.includes(`${counts.codexTerms} codex terms`)) {
+        errors.push(`expected ${counts.codexTerms} codex terms in header`);
       }
       if (!content.includes('aside-context.md') && !content.includes('AsideContext')) {
         errors.push('missing AsideContext documentation reference');
@@ -85,7 +85,7 @@ const ROOT_DOC_CHECKS = [
     rel: 'AGENTS-consumer.md',
     validate: (content, version, counts) => {
       const errors = [];
-      const expected = `**v${version}** — ${counts.mcps} MCP servers · ${counts.skills} skills · 68 codex terms`;
+      const expected = `**v${version}** — ${counts.mcps} MCP servers · ${counts.skills} skills · ${counts.codexTerms} codex terms`;
       if (!content.includes(expected)) {
         errors.push(`consumer header stale (expected substring: ${expected})`);
       }
@@ -162,7 +162,7 @@ function validateDocusaurusTagline(content, counts) {
     `${counts.agents} agents`,
     `${counts.skills} skills`,
     `${counts.mcps} MCP servers`,
-    '68 codex terms',
+    `${counts.codexTerms} codex terms`,
   ];
   for (const part of expectedParts) {
     if (!content.includes(part)) {

@@ -120,6 +120,8 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to ~/.grok/skills/\x1b[0m`);
     }
 
+    pinGrokPluginToInstalledDist(targetPluginDir, packageRoot);
+
     // Attempt auto-trust (best effort)
     try {
       execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });
@@ -142,6 +144,44 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
   }
 
   frameworkLogger.log('grok-integration', 'install-complete', 'info', {});
+}
+
+function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void {
+  const hookJs = path.join(xrayRoot, 'dist/integrations/grok/hooks/pre-tool-use.js');
+  const cliJs = path.join(xrayRoot, 'dist/cli/index.js');
+  if (!fs.existsSync(hookJs)) return;
+
+  const hooksPath = path.join(pluginDir, 'hooks', 'hooks.json');
+  if (fs.existsSync(hooksPath)) {
+    const text = fs.readFileSync(hooksPath, 'utf8');
+    fs.writeFileSync(
+      hooksPath,
+      text.split('${XRAY_AI_PATH:-node_modules/0xray}').join(xrayRoot),
+    );
+  }
+
+  const mcpPath = path.join(pluginDir, '.mcp.json');
+  if (fs.existsSync(mcpPath) && fs.existsSync(cliJs)) {
+    const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8')) as {
+      mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
+    };
+    for (const server of Object.values(mcp.mcpServers ?? {})) {
+      if (server.command === 'npx' && Array.isArray(server.args) && server.args.includes('mcp')) {
+        const mcpIdx = server.args.indexOf('mcp');
+        const mcpCmd = server.args[mcpIdx + 1] ?? 'governance';
+        server.command = 'node';
+        server.args = [cliJs, 'mcp', mcpCmd];
+      }
+    }
+    const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
+    if (fs.existsSync(repertoireMcp) && mcp.mcpServers && !mcp.mcpServers.repertoire) {
+      mcp.mcpServers.repertoire = {
+        command: 'node',
+        args: [repertoireMcp],
+      };
+    }
+    fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
+  }
 }
 
 export default {

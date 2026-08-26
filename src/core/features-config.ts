@@ -410,6 +410,14 @@ export interface FeaturesConfig {
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
   memory_routing?: MemoryRoutingConfig;
+  /** P2.2 — lightweight Grok write-tool postprocessor marker */
+  grok_postprocessor_light?: boolean;
+  /** P2 — git post-commit session inference capture */
+  inference_session_capture?: {
+    enabled?: boolean;
+    min_commits?: number;
+    lookback_commits?: number;
+  };
   synthesis: SynthesisConfig;
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;

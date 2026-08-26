@@ -47,10 +47,18 @@
     "auto_consult_major_work": true,
     "no_new_surface": true,
     "auto_chain_delegations": true,
+    "plan_stale_hours": 8,
+    "plan_archive_marker_hours": 24,
     "user_asides": {
       "enabled": true,
       "auto_provision_worktree": false
     }
+  },
+  "grok_postprocessor_light": true,
+  "inference_session_capture": {
+    "enabled": true,
+    "min_commits": 3,
+    "lookback_commits": 20
   },
   "autonomous_reporting": {
     "enabled": true,
@@ -150,10 +158,14 @@
     "min_success_rate": 0.7
   },
   "memory_routing": {
-    "enabled": false,
-    "provider": "null",
-    "module_path": "",
-    "config": {}
+    "enabled": true,
+    "provider": "repertoire",
+    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "config": {
+      "dataDir": "../repertoire/data",
+      "signalsPath": "../repertoire/data/curated_signals.json",
+      "logDir": "../repertoire/logs/groover-inference"
+    }
   },
   "synthesis": {
     "enabled": false,

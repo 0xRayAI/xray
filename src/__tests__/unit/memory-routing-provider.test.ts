@@ -166,4 +166,24 @@ describe('MemoryRoutingProvider', () => {
       expect(provider.id).toBe('null');
     }
   });
+
+  it.skipIf(
+    !existsSync(resolve(process.cwd(), '../repertoire/dist/provider/memory-routing-provider.js')),
+    'repertoire sibling not built',
+  )('loads repertoire provider via framework features default', async () => {
+    const provider = await loadMemoryRoutingProvider(
+      {
+        enabled: true,
+        provider: 'repertoire',
+        module_path: '../repertoire/dist/provider/memory-routing-provider.js',
+        config: {
+          dataDir: '../repertoire/data',
+          signalsPath: '../repertoire/data/curated_signals.json',
+        },
+      },
+      process.cwd(),
+    );
+    expect(provider.id).toBe('repertoire');
+    expect(provider.isAvailable()).toBe(true);
+  });
 });
