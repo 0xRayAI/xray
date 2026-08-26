@@ -15,7 +15,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
 - **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
 - **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
-- **Repertoire online** — framework `memory_routing` enabled with sibling provider; Grok install writes a cwd-proof absolute MCP path into local `.grok/config.toml`.
+- **Repertoire online** — sibling provider auto-detect + Grok install writes a cwd-proof MCP path into local `.grok/config.toml`. Consumer `features.json` still defaults `memory_routing.enabled: false`.
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
 - **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
