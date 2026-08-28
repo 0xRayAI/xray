@@ -30,7 +30,7 @@ HEAD: `049ff83` + this takeover (Grok wear / compact persist / host-swap keep). 
 
 The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change host, and the work is still moving.**
 
-1. **Live compact — hook binary done; TUI attach was still cold after first reboot.** Wear lived in `.grok/plugins/0xray/hooks`. Grok TUI loads `<project>/.grok/hooks/*.json` (this repo is trusted). First reboot after `e1c8503` did **not** fire SessionStart (boot stayed `2026-08-28T16:46:58Z`). Takeover now copies patched JSON to `.grok/hooks/0xray.json`. **One more Grok restart** so TUI SessionStart / `/compact` actually run.
+1. **Live compact — TUI attach proven.** Second reboot fired SessionStart (`18:23:59Z`) then UserPromptSubmit (`18:24:05Z`, session `01a03ecd…`). PreToolUse is live (`read_file` / `run_terminal_command` allow). Card rewritten. `/compact` is now on the same hook file — that is the remaining TUI compact demo, not another wear fix.
 2. **Live host swap — done.** Same repo, OpenCode CLI (1.16.2) `opencode run` **Read** `.xray/state/STATION.md` and answered `Hot-swap: grok → opencode` / `Host: opencode (guided)`. Did not cold-start. Intent and git unchanged. Return to this Grok floor stamps `Hot-swap: opencode → grok`.
 3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0**. Machine `~/.openclaw/xray-consumer-root.txt` mtime still `1787777404`. Throwaway HOME grew `.hermes` / `.openclaw` — plant markers untouched. Hermes/OpenClaw **CLIs** are not on PATH; do not install.
 
@@ -66,4 +66,4 @@ These are why the card is not yet a finished bus.
 
 ## One line
 
-**Card is written. Compact, OpenCode host-swap, and isolated-HOME OpenCode e2e proven on this plant. npm is still 3.5.5. Do not merge.**
+**Card is written. TUI SessionStart + PreToolUse attached. Compact, OpenCode host-swap, and isolated-HOME OpenCode e2e proven. npm is still 3.5.5. Do not merge.**
