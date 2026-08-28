@@ -137,11 +137,14 @@ function buildImplementationTodos(
 }
 
 /** Mandatory-consult plan for synthesis checkpoint realignment (no implementation phase). */
-export function buildSynthesisCheckpointPlan(dueReason: string | null): LeadDevPlan | null {
+export function buildSynthesisCheckpointPlan(
+  dueReason: string | null,
+  projectRoot = process.cwd(),
+): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
-  const profile = resolveRuntimeSuitProfile(process.cwd());
+  const profile = resolveRuntimeSuitProfile(projectRoot);
   const autoConsult =
     profile === 'frontier'
       ? cfg.confer?.enabled === true || cfg.confer_on_synthesis === true
@@ -191,11 +194,12 @@ export function buildLeadDevPlan(
   taskTypes: string[] = ['implement'],
   taskInputs: LeadDevPlanTaskInput[] = [],
   mcpOverallComplexity?: number,
+  projectRoot = process.cwd(),
 ): LeadDevPlan | null {
   if (!isLeadDevModeActive()) return null;
 
   const cfg = orchestrationConfig();
-  const profile = resolveRuntimeSuitProfile(process.cwd());
+  const profile = resolveRuntimeSuitProfile(projectRoot);
   const threshold = cfg.phased_plan_threshold ?? 25;
   const score = scoreComplexity(description, { taskTypes });
   const mcpScore =

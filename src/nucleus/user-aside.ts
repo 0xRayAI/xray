@@ -175,7 +175,13 @@ export function buildUserAsidePlan(
 
   const safeId = assertSafeAsideId(asideId);
   const taskTypes = taskInputs.map((t) => t.type ?? 'implement');
-  const basePlan = buildLeadDevPlan(description, taskTypes, taskInputs, mcpOverallComplexity);
+  const basePlan = buildLeadDevPlan(
+    description,
+    taskTypes,
+    taskInputs,
+    mcpOverallComplexity,
+    projectRoot,
+  );
   if (!basePlan) return null;
 
   return {

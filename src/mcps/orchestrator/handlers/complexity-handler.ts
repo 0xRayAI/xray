@@ -133,7 +133,7 @@ export class ComplexityHandler {
 
       let userAsideReport = '';
       let leadDevPlan = synthesisCheckpoint
-        ? buildSynthesisCheckpointPlan(args.synthesisDueReason ?? null)
+        ? buildSynthesisCheckpointPlan(args.synthesisDueReason ?? null, projectRoot)
         : userAsideIntake
           ? null
           : isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
@@ -142,6 +142,7 @@ export class ComplexityHandler {
                 taskTypes.length ? taskTypes : ['implement'],
                 planTaskInputs,
                 analysis.overallComplexity,
+                projectRoot,
               )
             : null;
 

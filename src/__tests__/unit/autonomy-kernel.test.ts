@@ -87,6 +87,48 @@ describe('lead-dev plan builder (internal)', () => {
     }
   });
 
+  it('buildLeadDevPlan consults from projectRoot profile, not cwd boot', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-kernel-profile-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          suit_temperament: { profile: 'auto' },
+          multi_agent_orchestration: {
+            enabled: true,
+            lead_dev_mode: true,
+            auto_consult_major_work: true,
+          },
+        }),
+      );
+      const isolated = buildLeadDevPlan(
+        'Aside worktree isolation',
+        ['implement'],
+        [{ description: 'aside impl', type: 'implement' }],
+        30,
+        tmp,
+      );
+      expect(isolated?.phases[0]?.todos.length).toBe(MANDATORY_MAJOR_CONSULTS.length);
+
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'session-boot.json'),
+        JSON.stringify({ host: 'grok', suit_profile: 'frontier' }),
+      );
+      const frontier = buildLeadDevPlan(
+        'Aside worktree isolation',
+        ['implement'],
+        [{ description: 'aside impl', type: 'implement' }],
+        30,
+        tmp,
+      );
+      expect(frontier?.phases[0]?.todos.length).toBe(0);
+      expect(frontier?.phases[1]?.todos.length).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('buildSessionBootContext reflects lead dev mode', () => {
     const ctx = buildSessionBootContext() as { lead_dev_mode: boolean };
     expect(ctx.lead_dev_mode).toBe(true);

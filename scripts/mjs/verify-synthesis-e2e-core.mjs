@@ -78,7 +78,7 @@ try {
   if (!governBlock.allow) pass('step 3: govern-and-apply blocked while due');
   else fail('step 3: govern block');
 
-  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)', tmp);
   if (!plan) fail('step 4: synthesis plan');
   else {
     savePersistedLeadDevPlan(
@@ -137,7 +137,7 @@ try {
     }),
   );
   recordExecutionSlice('gate', { projectRoot: staleTmp, sessionId: 'stale-synth-session' });
-  const stalePlan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const stalePlan = buildSynthesisCheckpointPlan('gate threshold (1/1)', staleTmp);
   const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
   savePersistedLeadDevPlan(
     { ...stalePlan, persistedAt: staleAt, sessionId: 'stale-synth-session' },

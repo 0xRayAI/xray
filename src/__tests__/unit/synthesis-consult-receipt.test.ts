@@ -28,7 +28,7 @@ describe('synthesis-consult-receipt', () => {
 
   it('blocks consult todo completion without receipt', () => {
     fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       { ...plan!, persistedAt: new Date().toISOString(), sessionId },
       tmp,
@@ -39,7 +39,7 @@ describe('synthesis-consult-receipt', () => {
 
   it('blocks consult todo completion when receipt verdict is FAIL', () => {
     fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       { ...plan!, persistedAt: new Date().toISOString(), sessionId },
       tmp,

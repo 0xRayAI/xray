@@ -48,7 +48,7 @@ try {
   if (!isSynthesisCheckpointDue(tmp, sessionId)) fail('step 1: synthesis due');
   else pass('step 1: synthesis checkpoint due');
 
-  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)', tmp);
   if (!plan) fail('step 2: synthesis plan');
   else {
     savePersistedLeadDevPlan(

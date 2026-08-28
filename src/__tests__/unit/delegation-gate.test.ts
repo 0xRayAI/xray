@@ -257,7 +257,7 @@ describe('delegation-gate SSOT', () => {
       JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
     savePersistedLeadDevPlan(
       {
@@ -288,7 +288,7 @@ describe('delegation-gate SSOT', () => {
       JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       {
         ...plan!,

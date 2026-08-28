@@ -24,6 +24,9 @@ function gitInit(root: string) {
 describe('station hot-swap', () => {
   it('clips intent and formats a card without Repertoire', () => {
     expect(clipIntent('  keep moving  \n')).toBe('keep moving');
+    expect(clipIntent('<user_query> put the suit through the paces </user_query>')).toBe(
+      'put the suit through the paces',
+    );
     const md = formatStationMarkdown({
       host: 'grok',
       suit_profile: 'frontier',

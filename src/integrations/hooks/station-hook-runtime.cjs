@@ -19,7 +19,10 @@ function sessionBootPath(root) {
 
 function clipIntent(raw) {
   if (raw == null) return null;
-  const text = String(raw).replace(/\s+/g, " ").trim();
+  const text = String(raw)
+    .replace(/<\/?user_query>/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!text) return null;
   if (text.length <= INTENT_MAX) return text;
   return `${text.slice(0, INTENT_MAX - 1)}…`;
