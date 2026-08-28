@@ -8,11 +8,11 @@ Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so 
 
 ## What 4.0 is
 
-Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Repertoire**. Repertoire was built for that and is **not fully harnessed** — `memory_routing` still defaults off, Grok needs unprefixed MCP names, stations do not yet *read* signals as working state.
+Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Repertoire**.
 
 ## Line (feat/v4-temperament)
 
-npm still **3.5.5**. Product version **4.0.0**. Branch is the plant, not `main`.
+npm still **3.5.5**. Product version **4.0.0**. **Still in development — do not npm publish, do not tag, do not merge to `main`.** Branch is the plant.
 
 **Bone that is already worn (this machine + branch):**
 
@@ -21,19 +21,20 @@ npm still **3.5.5**. Product version **4.0.0**. Branch is the plant, not `main`.
 - OpenClaw handshake minProtocol 3 / maxProtocol 4; `xray-pre-tool` loaded
 - Pickle = OpenCode CLI (`opencode run --pure`), not Zen/Go HTTP
 - Hermes pack local 4.0; plugin id `xray-hermes`
-- Repertoire `feat/mcp-unprefix` (Grok MCP names) — companion branch, pushed. **Wired, not harnessed:** flag off for consumers; not yet the factory resume path.
-- Stranger-install wear commit: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH (`4bbdef610` and follow-ons)
+- Repertoire `feat/mcp-unprefix` (Grok MCP names) — companion branch. Wired on this floor.
+- **Harness (this station):** leftover `memory_routing` default-off auto-enables when the Repertoire module resolves; Grok session-start writes `repertoireResume`. Explicit opt-out preserved. No 8th MCP.
+- Stranger-install wear: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
 
 ## Next bites (in order)
 
-1. **Stranger install** — `npm pack` 4.0 from this branch → empty dirs → `npx 0xray {grok,hermes,opencode,openclaw} install`. Assert constitution blocks Codex 11. Ephemeral e2e must not rewrite machine markers.
-2. **Harness Repertoire** — unprefix with 4.0 on the Grok floor; treat signals as the station resume (compaction / host swap / review handoff), not an opt-in MCP. Default-off is leftover toolset. Do this without an 8th server (Codex 69).
-3. **Ship** — merge `feat/v4-temperament` → `npm publish 4.0.0` only after (1).
+1. Keep wearing on `feat/v4-temperament` + repertoire `feat/mcp-unprefix`. Per-suite tests green. No publish.
+2. Host e2e only in isolated HOME — do not clobber machine markers.
+3. **Ship later** — merge + tag + `npm publish 4.0.0` only when leaving dev.
 
 Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo.
 
 ## One line for the next model
 
-**Suit that survives the context window. Linear problems, low friction. Next proof is stranger install, then harness Repertoire.**
+**Suit that survives the context window. Linear problems, low friction. Still in dev — no npm publish.**

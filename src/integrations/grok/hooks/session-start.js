@@ -81,6 +81,7 @@ async function main() {
       bootPath,
       hookEvent: HOOK_EVENT,
       lead_dev_mode: payload.lead_dev_mode,
+      repertoireResume: payload.repertoireResume,
     });
 
     try {

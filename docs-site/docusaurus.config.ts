@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'xray',
-  tagline: '0xRay 4.0 — 42 agents · 45 skills · 7 MCP servers · 69 codex terms · temperament by host',
+  tagline: '0xRay 4.0 — a suit that survives the context window. Exo, not toolset. Temperament by host.',
   favicon: 'img/favicon.ico',
   url: 'https://0xrayai.github.io',
   baseUrl: '/xray/',

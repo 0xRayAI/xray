@@ -132,6 +132,73 @@ export function resolveSiblingWorkspaceRoots(root = workspaceRoot()) {
   }
 }
 
+function resolveRepertoireProviderModule(root) {
+  const siblingRoot = path.join(root, '..', 'repertoire');
+  const siblingProvider = path.join(siblingRoot, 'dist', 'provider', 'memory-routing-provider.js');
+  const nmProvider = path.join(
+    root,
+    'node_modules',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(siblingRoot, 'package.json'), 'utf8'));
+    if (
+      (pkg.name === '@0xray/repertoire' || pkg.name === 'repertoire') &&
+      fs.existsSync(siblingProvider)
+    ) {
+      return siblingProvider;
+    }
+  } catch {
+    /* sibling missing or not Repertoire */
+  }
+  if (fs.existsSync(nmProvider)) return nmProvider;
+  return null;
+}
+
+function countCuratedSignals(signalsPath) {
+  try {
+    const data = JSON.parse(fs.readFileSync(signalsPath, 'utf8'));
+    if (Array.isArray(data.signals)) return data.signals.length;
+    if (Array.isArray(data)) return data.length;
+  } catch {
+    /* unreadable registry */
+  }
+  return null;
+}
+
+export function buildRepertoireResume(root = workspaceRoot()) {
+  const modulePath = resolveRepertoireProviderModule(root);
+  let mr = {};
+  const featuresPath = resolveFeaturesPath(root);
+  if (featuresPath) {
+    try {
+      mr = JSON.parse(fs.readFileSync(featuresPath, 'utf8')).memory_routing || {};
+    } catch {
+      mr = {};
+    }
+  }
+  if (!modulePath) {
+    return 'Repertoire: not installed (memory_routing stays off)';
+  }
+  let signalsPath = mr.config && mr.config.signalsPath;
+  if (signalsPath && !path.isAbsolute(signalsPath)) {
+    signalsPath = path.resolve(root, signalsPath);
+  }
+  if (!signalsPath) {
+    signalsPath = path.resolve(modulePath, '..', '..', '..', 'data', 'curated_signals.json');
+  }
+  const n = fs.existsSync(signalsPath) ? countCuratedSignals(signalsPath) : null;
+  const count = n == null ? '' : ` — ${n} signals`;
+  if (mr.enabled === true && mr.provider === 'repertoire') {
+    return `Repertoire: on${count}`;
+  }
+  return `Repertoire: present, memory_routing off${count}`;
+}
+
 export function loadFeatures(root = workspaceRoot()) {
   const featuresPath = resolveFeaturesPath(root);
   if (!featuresPath) return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
@@ -264,6 +331,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
   const gateFeatures = loadDelegationGateFeatures(root, 'grok');
   const frontier = gateFeatures.ceremony === 'lite';
+  const repertoireResume = buildRepertoireResume(root);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
@@ -280,6 +348,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
       : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
     workspaceRoot: root,
+    repertoireResume,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
     ...(userAsideBoot ?? {}),
@@ -307,6 +376,7 @@ export function sessionBootNeedsRefresh(existing, root) {
   if (existing.host !== 'grok') return true;
   if (!existing.suit_profile) return true;
   if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (!existing.repertoireResume) return true;
   return false;
 }
 

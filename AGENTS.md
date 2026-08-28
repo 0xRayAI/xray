@@ -2,7 +2,9 @@
 
 Quick reference for the xray AI orchestration framework (**v4.0.0**).
 
-**42 agents** · **Three-subsystem OS** (Inference · External Governance · Autonomous Engine) · **7 consumer MCP servers** · **45 skills** · **69 Codex terms** · **4 bridges**
+**v4.0.0** — a suit that survives the context window.
+
+**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · Repertoire when it resolves.
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 

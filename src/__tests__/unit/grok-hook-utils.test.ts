@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  buildRepertoireResume,
   buildSessionBootPayload,
   ensureSessionBoot,
   resolveSiblingWorkspaceRoots,
@@ -53,6 +54,7 @@ describe('grok-hook-utils', () => {
     expect(payload.siblingWorkspaceRoots).toBeDefined();
     expect(payload.siblingWorkspaceRoots?.[0]?.path).toBe(siblingDir);
     expect(payload.host).toBe('grok');
+    expect(payload.repertoireResume).toMatch(/^Repertoire:/);
   });
 
   it('sessionBootNeedsRefresh when workspaceRoot or host is stale', () => {
@@ -69,6 +71,7 @@ describe('grok-hook-utils', () => {
           host: 'grok',
           suit_profile: 'frontier',
           workspaceRoot: tmp,
+          repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
         },
         tmp,
       ),
@@ -99,5 +102,36 @@ describe('grok-hook-utils', () => {
     expect(boot.host).toBe('grok');
     expect(boot.workspaceRoot).toBe(tmp);
     expect(boot.suit_profile).toBe('frontier');
+    expect(boot.repertoireResume).toMatch(/^Repertoire:/);
+  });
+
+  it('buildRepertoireResume reports on when sibling Repertoire is enabled', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-rep-parent-'));
+    const consumer = path.join(parent, 'xray-app');
+    const repertoire = path.join(parent, 'repertoire');
+    fs.mkdirSync(path.join(consumer, '.xray'), { recursive: true });
+    fs.mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+    fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+    fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+    fs.writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+    fs.writeFileSync(
+      path.join(repertoire, 'data', 'curated_signals.json'),
+      JSON.stringify({ signals: [{ name: 'a' }, { name: 'b' }] }),
+    );
+    fs.writeFileSync(
+      path.join(consumer, '.xray', 'features.json'),
+      JSON.stringify({
+        memory_routing: {
+          enabled: true,
+          provider: 'repertoire',
+          config: { signalsPath: '../repertoire/data/curated_signals.json' },
+        },
+      }),
+    );
+    try {
+      expect(buildRepertoireResume(consumer)).toBe('Repertoire: on — 2 signals');
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
   });
 });

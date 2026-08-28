@@ -284,10 +284,11 @@ function updateReadme(counts, newVersion) {
   
   let readme = fs.readFileSync(readmePath, 'utf-8');
 
-  // Update header line: **v3.4.1** — 42 agents · 45 skills · 7 MCP servers · ...
+  // Kernel header (4.0): exo, not catalog counts
+  const kernel = buildDocsHeader(counts, newVersion);
   readme = readme.replace(
-    /^\*\*v[\d.]+\*\* — \d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m,
-    `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · ${counts.codexTerms} codex terms · 3,226 tests`
+    /^\*\*v[\d.]+\*\* — (?:\d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?|a suit that survives the context window.*)$/m,
+    kernel,
   );
   
   // Update version badge: [![Version](https://img.shields.io/badge/version-1.6.x-blue...)]
@@ -326,13 +327,14 @@ export const DOCS_SITE_HEADER_FILES = [
   'docs-site/docs/full-reference.md',
 ];
 
-export function buildDocsHeader(counts, newVersion) {
-  return `**v${newVersion}** — ${counts.agents} agents · ${counts.skills} skills · ${counts.mcps} MCP servers · ${counts.codexTerms} codex terms · 3,226 tests`;
+export function buildDocsHeader(_counts, newVersion) {
+  return `**v${newVersion}** — a suit that survives the context window`;
 }
 
 function syncDocsSiteHeaders(counts, newVersion) {
   const header = buildDocsHeader(counts, newVersion);
-  const headerRe = /^\*{0,2}v?[\d.]*\*{0,2}\s*—?\s*\d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m;
+  const headerRe =
+    /^\*{0,2}v?[\d.]*\*{0,2}\s*—?\s*(?:\d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?|a suit that survives the context window.*|exo, not toolset.*|wear the exo.*)/im;
   for (const rel of DOCS_SITE_HEADER_FILES) {
     const filePath = path.join(rootDir, rel);
     if (!fs.existsSync(filePath)) continue;
@@ -359,8 +361,8 @@ function updateConsumerAgentsHeader(newVersion, counts) {
   if (!fs.existsSync(consumerPath)) return;
   let content = fs.readFileSync(consumerPath, 'utf-8');
   content = content.replace(
-    /^\*\*v[\d.]+\*\* — \d+ MCP servers · \d+ skills · \d+ codex terms/m,
-    `**v${newVersion}** — ${counts.mcps} MCP servers · ${counts.skills} skills · ${counts.codexTerms} codex terms`
+    /^\*\*v[\d.]+\*\* — .+$/m,
+    buildDocsHeader(counts, newVersion),
   );
   fs.writeFileSync(consumerPath, content);
   console.log(`✅ Updated AGENTS-consumer.md version header`);

@@ -24,13 +24,79 @@ const HERMES_PLUGIN_DIR = path.join(os.homedir(), ".hermes", "plugins", "xray-he
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const OPENCLAW_STATE_DIR = path.join(os.homedir(), ".openclaw");
 
+function isRepertoirePackageRoot(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    return pkg.name === "@0xray/repertoire" || pkg.name === "repertoire";
+  } catch {
+    return false;
+  }
+}
+
 function resolveRepertoireMcp(targetDir) {
+  const selfRoot = targetDir;
+  const siblingRoot = path.join(targetDir, "..", "repertoire");
   const candidates = [
-    path.join(targetDir, "dist", "mcp", "server.js"),
-    path.join(targetDir, "..", "repertoire", "dist", "mcp", "server.js"),
+    isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
+    isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
     path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
   ];
-  return candidates.find((p) => fs.existsSync(p)) || null;
+  return candidates.find((p) => p && fs.existsSync(p)) || null;
+}
+
+function resolveRepertoireProvider(targetDir) {
+  const siblingRoot = path.join(targetDir, "..", "repertoire");
+  const siblingProvider = path.join(siblingRoot, "dist", "provider", "memory-routing-provider.js");
+  const nmProvider = path.join(
+    targetDir,
+    "node_modules",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
+  if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
+  if (fs.existsSync(nmProvider)) return nmProvider;
+  return null;
+}
+
+function isDefaultMemoryRoutingOff(mr) {
+  if (!mr || typeof mr !== "object") return true;
+  if (mr.enabled === true) return false;
+  const provider = mr.provider == null || mr.provider === "" ? "null" : mr.provider;
+  return provider === "null";
+}
+
+function enableMemoryRoutingIfResolves(features, targetDir) {
+  const modulePath = resolveRepertoireProvider(targetDir);
+  if (!modulePath) return { features, changed: false };
+  const mr = (features && features.memory_routing) || {};
+  if (!isDefaultMemoryRoutingOff(mr)) return { features, changed: false };
+
+  const siblingRel = "../repertoire/dist/provider/memory-routing-provider.js";
+  const siblingAbs = path.join(targetDir, "..", "repertoire", "dist", "provider", "memory-routing-provider.js");
+  const useSibling = path.resolve(modulePath) === path.resolve(siblingAbs);
+  const repertoireRoot = path.resolve(modulePath, "..", "..", "..");
+  const signalsAbs = path.join(repertoireRoot, "data", "curated_signals.json");
+  const config = { ...(mr.config || {}) };
+  if (!config.signalsPath && fs.existsSync(signalsAbs)) {
+    config.signalsPath = useSibling ? "../repertoire/data/curated_signals.json" : signalsAbs;
+  }
+
+  return {
+    features: {
+      ...features,
+      memory_routing: {
+        ...mr,
+        enabled: true,
+        provider: "repertoire",
+        module_path: useSibling ? siblingRel : modulePath,
+        config,
+      },
+    },
+    changed: true,
+  };
 }
 
 function detectConsumerExtraMcpServers(targetDir) {
@@ -214,11 +280,13 @@ function deployPortableProjectMcpJson(targetDir) {
       existing = { mcpServers: {} };
     }
   }
+  const extras = detectConsumerExtraMcpServers(targetDir);
   const merged = {
     ...existing,
     mcpServers: {
       ...(existing.mcpServers || {}),
       ...portable.mcpServers,
+      ...(extras.openclaw || {}),
     },
   };
   fs.writeFileSync(destPath, `${JSON.stringify(merged, null, 2)}\n`);
@@ -469,6 +537,11 @@ module.exports = {
   writeOpenClawConsumerArtifacts,
   resolveOpenClawConfigPath,
   detectConsumerExtraMcpServers,
+  isRepertoirePackageRoot,
+  resolveRepertoireMcp,
+  resolveRepertoireProvider,
+  isDefaultMemoryRoutingOff,
+  enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,

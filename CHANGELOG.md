@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [4.0.0] - 2026-08-26
+## [4.0.0] - 2026-08-28
 
-First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm already has `3.0.0`–`3.5.5`; this is **4.0.0**, not a reuse of 3.0.0 and not a 3.5.6 patch.
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm is still `3.5.5`; this line is **4.0.0** on `feat/v4-temperament` — **still in development, not published**.
 
 ### ✨ Features
 - **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
@@ -15,7 +15,9 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
 - **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
 - **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
-- **Repertoire online** — sibling provider auto-detect + Grok install writes a cwd-proof MCP path into local `.grok/config.toml`. Consumer `features.json` still defaults `memory_routing.enabled: false`.
+- **Repertoire harness** — leftover `memory_routing` default-off auto-enables when sibling `@0xray/repertoire` or `node_modules/@0xray/repertoire` resolves. Explicit `enabled: false` + `provider: repertoire` is opt-out. Consumers without the module stay off. Not an 8th 0xRay MCP.
+- **Session resume** — Grok session-start writes `repertoireResume` (one line, signal count) into `session-boot.json` so the next station survives compaction.
+- **Repertoire MCP names** — unprefixed server tools; Grok TUI namespaces them as `repertoire__*`. Grok install resolves sibling *or* `node_modules/@0xray/repertoire`.
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
 - **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
@@ -43,6 +45,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
 - OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
 - Wear-layout: plugin/hook resolve, ephemeral marker skip, opencode-cli backend write.
+- Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
 
 ---
 

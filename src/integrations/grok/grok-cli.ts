@@ -29,7 +29,7 @@ const requireCjs = createRequire(import.meta.url);
 const { resolveConsumerTargetDir } = requireCjs(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs')
 );
-const { XRAY_MCP_SERVERS } = requireCjs(
+const { XRAY_MCP_SERVERS, resolveRepertoireMcp } = requireCjs(
   path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')
 ) as {
   XRAY_MCP_SERVERS: ReadonlyArray<{
@@ -37,6 +37,7 @@ const { XRAY_MCP_SERVERS } = requireCjs(
     mcpCmd: string;
     env: Record<string, string>;
   }>;
+  resolveRepertoireMcp: (targetDir: string) => string | null;
 };
 
 function registerGrokMcpServers(targetDir: string): void {
@@ -138,9 +139,10 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
     console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
 
-  } catch (err: any) {
-    frameworkLogger.log('grok-integration', 'install-error', 'error', { error: err.message });
-    console.error('Failed to install Grok plugin:', err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    frameworkLogger.log('grok-integration', 'install-error', 'error', { error: message });
+    console.error('Failed to install Grok plugin:', message);
   }
 
   frameworkLogger.log('grok-integration', 'install-complete', 'info', {});
@@ -173,9 +175,9 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
         server.args = [cliJs, 'mcp', mcpCmd];
       }
     }
-    const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
+    const repertoireMcp = resolveRepertoireMcp(xrayRoot);
     if (mcp.mcpServers) {
-      if (fs.existsSync(repertoireMcp)) {
+      if (repertoireMcp) {
         mcp.mcpServers.repertoire = {
           command: 'node',
           args: [repertoireMcp],
@@ -191,11 +193,11 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
 }
 
 function writeProjectRepertoireMcp(xrayRoot: string): void {
-  const repertoireMcp = path.join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js');
+  const repertoireMcp = resolveRepertoireMcp(xrayRoot);
   const grokDir = path.join(xrayRoot, '.grok');
   fs.mkdirSync(grokDir, { recursive: true });
   const tomlPath = path.join(grokDir, 'config.toml');
-  if (!fs.existsSync(repertoireMcp)) return;
+  if (!repertoireMcp) return;
   const block = `[mcp_servers.repertoire]
 command = "node"
 args = [${JSON.stringify(repertoireMcp)}]

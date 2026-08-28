@@ -1,11 +1,13 @@
-# 0xRay — Self-Healing AI Governance OS
+# 0xRay — exo for coding agents
 
-**v4.0.0** — 42 agents · 45 skills · 7 MCP servers · 69 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Not a catalog of 42 agents. The product is the skeleton you wear.
 
-**v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [v3 from v2](./architecture/v3-from-v2.md) · [Suit temperament](./guides/v3-temperament.md).
+**v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
-- **Bone (keep):** three subsystems, 7 MCP servers, Codex PreToolUse, 4 bridges  
+- **Bone:** three subsystems, Codex PreToolUse, four host adapters  
+- **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface  
 - **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  
+- **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume  
 - **Fat (trim later):** duplicate orchestrators, extra `*.server.ts`, `advanced-features/` — [trim list](./architecture/v3-museum.md)
 
 ## Quick Start

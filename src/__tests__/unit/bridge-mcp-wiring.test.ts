@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRequire } from 'module';
-import { readFileSync } from 'fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -49,5 +50,44 @@ describe('bridge-mcp-wiring', () => {
     expect(installSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
     expect(grokSrc).toContain('bridge-mcp-wiring.cjs');
     expect(grokSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
+    expect(grokSrc).toContain('resolveRepertoireMcp');
+  });
+
+  it('enableMemoryRoutingIfResolves only when leftover default-off and module exists', () => {
+    const parent = mkdtempSync(path.join(os.tmpdir(), 'xray-rep-enable-'));
+    const consumer = path.join(parent, 'app');
+    const repertoire = path.join(parent, 'repertoire');
+    mkdirSync(consumer, { recursive: true });
+    mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+    writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+    writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+    try {
+      const on = wiring.enableMemoryRoutingIfResolves(
+        { memory_routing: { enabled: false, provider: 'null' } },
+        consumer,
+      );
+      expect(on.changed).toBe(true);
+      expect(on.features.memory_routing.enabled).toBe(true);
+      expect(on.features.memory_routing.provider).toBe('repertoire');
+
+      const optOut = wiring.enableMemoryRoutingIfResolves(
+        { memory_routing: { enabled: false, provider: 'repertoire' } },
+        consumer,
+      );
+      expect(optOut.changed).toBe(false);
+
+      const other = mkdtempSync(path.join(os.tmpdir(), 'xray-rep-none-'));
+      try {
+        const missing = wiring.enableMemoryRoutingIfResolves(
+          { memory_routing: { enabled: false, provider: 'null' } },
+          other,
+        );
+        expect(missing.changed).toBe(false);
+      } finally {
+        rmSync(other, { recursive: true, force: true });
+      }
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 });

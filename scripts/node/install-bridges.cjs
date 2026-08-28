@@ -18,6 +18,7 @@ const {
   installOpenClawHostWear,
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
+  enableMemoryRoutingIfResolves,
   XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
@@ -471,9 +472,20 @@ function writeJsonFile(filePath, data) {
   fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-function deployXrayConfigFile(file, src, dst, packageRoot) {
+function applyResolvedMemoryRouting(dst, targetDir) {
+  try {
+    const features = JSON.parse(fs.readFileSync(dst, "utf8"));
+    const next = enableMemoryRoutingIfResolves(features, targetDir);
+    if (next.changed) writeJsonFile(dst, next.features);
+  } catch {
+    /* leftover default stays off when features.json is unreadable */
+  }
+}
+
+function deployXrayConfigFile(file, src, dst, packageRoot, targetDir) {
   if (!fs.existsSync(dst)) {
     fs.copyFileSync(src, dst);
+    if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
     return true;
   }
 
@@ -506,12 +518,16 @@ function deployXrayConfigFile(file, src, dst, packageRoot) {
             profile: "guided",
           };
         }
+        writeJsonFile(dst, merged);
+        applyResolvedMemoryRouting(dst, targetDir);
+        return true;
       }
       writeJsonFile(dst, merged);
       return true;
     } catch {
       if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
         fs.copyFileSync(src, dst);
+        if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
         return true;
       }
       return false;
@@ -545,7 +561,7 @@ function deployXrayConfig(targetDir, packageRoot, log) {
     const src = resolveXrayConfigSource(packageRoot, file);
     const dst = path.join(xrayTargetDir, file);
     if (!src) continue;
-    if (deployXrayConfigFile(file, src, dst, packageRoot)) {
+    if (deployXrayConfigFile(file, src, dst, packageRoot, targetDir)) {
       copied++;
     }
   }
