@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
@@ -112,10 +113,35 @@ function installOpenClawPreToolHook(): string | null {
         args: [dest],
         stdin: 'json',
         blockExitCode: 2,
+        env: {
+          XRAY_AI_PATH: packageRoot,
+        },
       },
       null,
       2,
     )}\n`,
   );
+
+  const pluginSrc = path.join(packageRoot, 'src/integrations/openclaw/plugin/xray-pre-tool');
+  if (fs.existsSync(path.join(pluginSrc, 'index.js'))) {
+    try {
+      execFileSync('openclaw', ['plugins', 'install', '-l', pluginSrc], {
+        stdio: 'pipe',
+        encoding: 'utf8',
+        timeout: 60000,
+      });
+    } catch {
+      /* link is best-effort — files still installed for stdin runtime */
+    }
+    try {
+      execFileSync(
+        'openclaw',
+        ['config', 'set', 'plugins.entries.xray-pre-tool.enabled', 'true'],
+        { stdio: 'pipe', encoding: 'utf8', timeout: 20000 },
+      );
+    } catch {
+      /* enable is best-effort */
+    }
+  }
   return dest;
 }

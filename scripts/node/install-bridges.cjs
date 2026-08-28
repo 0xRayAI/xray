@@ -172,6 +172,25 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
   }
 }
 
+function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
+  const script = path.join(packageRoot, "dist", "integrations", "grok", "hooks", scriptName);
+  const extra = extraArgs ? ` ${extraArgs}` : "";
+  return `XRAY_AI_PATH=${packageRoot} node ${script}${extra}`;
+}
+
+function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs) {
+  if (!hook) return;
+  hook.type = "command";
+  hook.command = grokHookShellCommand(packageRoot, scriptName, extraArgs);
+  hook.timeout = 30;
+  delete hook.args;
+  hook.env = {
+    ...(hook.env || {}),
+    XRAY_ROOT: targetDir,
+    XRAY_AI_PATH: packageRoot,
+  };
+}
+
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
@@ -183,18 +202,19 @@ function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
 
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
-    const preTool = hooks.hooks?.PreToolUse?.[0]?.hooks?.[0];
-    if (preTool && fs.existsSync(hookScript)) {
-      preTool.command = "node";
-      preTool.args = [hookScript];
-      preTool.env = {
-        ...(preTool.env || {}),
-        XRAY_ROOT: targetDir,
-        XRAY_AI_PATH: packageRoot,
-      };
-      fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
-      log(label, "hooks.json patched → enforcement gate", "info");
-    }
+    if (!fs.existsSync(hookScript)) return;
+    patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js");
+    patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js");
+    patchGrokHookEntry(
+      hooks.hooks?.UserPromptSubmit?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=user_prompt_submit",
+    );
+    patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
+    fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
+    log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {
     log(label, "hooks.json patch failed", "warn", { error: e.message });
   }
@@ -287,6 +307,11 @@ function registerGrokMcpServers(targetDir, log) {
   }
 }
 
+function isEphemeralInstallRoot(targetDir) {
+  const normalized = String(targetDir || "").replace(/\\/g, "/");
+  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
+}
+
 function installGrokBridge(targetDir, packageRoot, log) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -295,10 +320,13 @@ function installGrokBridge(targetDir, packageRoot, log) {
   }
 
   const home = os.homedir();
-  const targets = [
-    path.join(targetDir, ".grok", "plugins", "0xray"),
-    path.join(home, ".grok", "plugins", "0xray"),
-  ];
+  const ephemeral = isEphemeralInstallRoot(targetDir);
+  const targets = [path.join(targetDir, ".grok", "plugins", "0xray")];
+  if (!ephemeral) {
+    targets.push(path.join(home, ".grok", "plugins", "0xray"));
+  } else {
+    log("grok-bridge", "skip machine ~/.grok plugin — ephemeral consumer", "info");
+  }
 
   for (const dest of targets) {
     if (copyPluginDir(sourceDir, dest)) {
@@ -311,14 +339,14 @@ function installGrokBridge(targetDir, packageRoot, log) {
     }
   }
 
-  // Grok Build / Cursor also reads ~/.grok/skills/ for agent_skills
-  const grokGlobalSkills = path.join(home, ".grok", "skills");
-  const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
-  if (globalCopied > 0) {
-    log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+  if (!ephemeral) {
+    const grokGlobalSkills = path.join(home, ".grok", "skills");
+    const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
+    if (globalCopied > 0) {
+      log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+    }
+    registerGrokMcpServers(targetDir, log);
   }
-
-  registerGrokMcpServers(targetDir, log);
 }
 
 function installHermesBridge(targetDir, packageRoot, log) {
@@ -560,4 +588,7 @@ module.exports = {
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
   MERGE_CONFIG_FILES,
+  patchGrokHooks,
+  grokHookShellCommand,
+  isEphemeralInstallRoot,
 };

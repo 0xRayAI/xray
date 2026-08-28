@@ -8,6 +8,7 @@
 
 import { describe, test, expect } from 'vitest';
 import { OpenClawIntegration } from './index.js';
+import { isUsableOpenClawDeviceIdentity } from './client.js';
 
 describe('OpenClawIntegration', () => {
   describe('Basic Properties', () => {
@@ -46,6 +47,12 @@ describe('OpenClawIntegration', () => {
     test('getAgentInvoker returns null when not set', () => {
       const integration = new OpenClawIntegration();
       expect(integration.getAgentInvoker()).toBeNull();
+    });
+
+    test('rejects placeholder and empty device identity', () => {
+      expect(isUsableOpenClawDeviceIdentity('your-device-id', { publicKey: 'a', privateKey: 'b' })).toBe(false);
+      expect(isUsableOpenClawDeviceIdentity('dev-1', { publicKey: '', privateKey: '' })).toBe(false);
+      expect(isUsableOpenClawDeviceIdentity('dev-1', { publicKey: 'pub', privateKey: 'priv' })).toBe(true);
     });
 
     test('setAgentInvoker works', () => {

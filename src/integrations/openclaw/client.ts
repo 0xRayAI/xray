@@ -27,6 +27,16 @@ import {
   OpenClawErrorCode,
 } from './types.js';
 
+export function isUsableOpenClawDeviceIdentity(
+  deviceId: string | undefined,
+  keyPair: { publicKey?: string; privateKey?: string } | undefined,
+): boolean {
+  if (!deviceId || deviceId === 'your-device-id') {
+    return false;
+  }
+  return Boolean(keyPair?.publicKey && keyPair?.privateKey);
+}
+
 /**
  * OpenClaw WebSocket Client
  */
@@ -327,12 +337,14 @@ export class OpenClawClient {
       params.auth = { token: this.config.authToken };
     }
 
-    // Add device if provided
-    if (this.config.deviceId && this.config.deviceKeyPair) {
+    // Never send a placeholder device — gateway treats stub identity as NOT_PAIRED.
+    const deviceId = this.config.deviceId;
+    const keyPair = this.config.deviceKeyPair;
+    if (isUsableOpenClawDeviceIdentity(deviceId, keyPair) && deviceId && keyPair) {
       params.device = {
-        id: this.config.deviceId,
-        publicKey: this.config.deviceKeyPair.publicKey,
-        signature: this.signDeviceChallenge(this.config.deviceId),
+        id: deviceId,
+        publicKey: keyPair.publicKey,
+        signature: this.signDeviceChallenge(deviceId),
         signedAt: Date.now(),
         nonce: this.generateNonce(),
       };

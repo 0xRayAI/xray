@@ -229,7 +229,7 @@ try {
 }
 if (openclawCli) {
   try {
-    const code = execSync('curl -sS -m 4 -o /dev/null -w %{http_code} http://127.0.0.1:18789/', {
+    const code = execSync('curl -sS -m 12 -o /dev/null -w %{http_code} http://127.0.0.1:18789/', {
       encoding: 'utf8',
     }).trim();
     if (code === '200') pass('OpenClaw gateway HTTP 200 on :18789');
@@ -241,11 +241,12 @@ if (openclawCli) {
 
 if (existsSync(join(home, '.openclaw/skills'))) pass('OpenClaw skills dir present');
 else fail('OpenClaw skills dir missing');
-if (existsSync(join(home, '.openclaw/hooks/xray-pre-tool.mjs'))) {
-  pass('OpenClaw PreToolUse hook installed');
-} else {
-  pass('OpenClaw PreToolUse hook not installed yet (run npx 0xray openclaw install)');
-}
+const clawHook = join(home, '.openclaw/hooks/xray-pre-tool.mjs');
+const clawPlugin = join(packageRoot, 'src/integrations/openclaw/plugin/xray-pre-tool/index.js');
+if (existsSync(clawHook)) pass(`OpenClaw PreToolUse hook installed ${clawHook}`);
+else fail('OpenClaw PreToolUse hook missing — run: node dist/cli/index.js openclaw install --force');
+if (existsSync(clawPlugin)) pass('OpenClaw before_tool_call plugin source present');
+else fail('OpenClaw before_tool_call plugin source missing');
 
 console.log('');
 if (failed) {

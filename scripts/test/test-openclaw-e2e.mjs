@@ -67,6 +67,13 @@ function isBillingError(text) {
   return text && /billing error|insufficient balance|out of credits|API key has run out/i.test(text);
 }
 
+function isProviderInfraError(text) {
+  return Boolean(
+    isBillingError(text) ||
+      /HTTP 500|Internal server error|ECONNRESET|ETIMEDOUT|providerRuntimeFailure/i.test(String(text || '')),
+  );
+}
+
 function section(title) {
   console.log(`\n\x1b[1m${'='.repeat(60)}\n  ${title}\n${'='.repeat(60)}\x1b[0m`);
 }
@@ -296,9 +303,13 @@ async function main() {
   if (ws) {
     console.log('  Sending: "What is 2+2? Reply with just the number."');
     const r1 = await sendChat(ws, 'What is 2+2? Reply with just the number.');
+    let chatProviderDown = false;
     if (r1.error) {
       if (isBillingError(r1.error)) {
         pass('chat.send works (billing error from provider — infrastructure OK)');
+      } else if (isProviderInfraError(r1.error)) {
+        skip('chat.send simple', `LLM timeout or error: ${r1.error.substring(0, 80)}`);
+        chatProviderDown = true;
       } else {
         skip('chat.send simple', `LLM timeout or error: ${r1.error.substring(0, 80)}`);
       }
@@ -309,6 +320,13 @@ async function main() {
     } else {
       fail('chat.send simple', `no number in reply: "${(r1.text || '').substring(0, 100)}"`);
     }
+
+    if (chatProviderDown) {
+      skip('orchestration multi-step', 'provider infra error on first chat.send — skipping remaining chat phases');
+      skip('multi-turn turn 1', 'provider infra error on first chat.send');
+      skip('multi-turn turn 2', 'provider infra error on first chat.send');
+      skip('tool-calling', 'provider infra error on first chat.send');
+    } else {
 
     // ── Phase 4: chat.send Orchestration ──────────────────
     section('Phase 4: chat.send Orchestration (multi-step)');
@@ -389,7 +407,11 @@ async function main() {
     const toolPrompt = 'Use any available tools to find out what day of the week April 27, 2026 falls on.';
     const r4 = await sendChat(ws, toolPrompt, 90000);
     if (r4.error) {
-      fail('tool-calling', r4.error.substring(0, 120));
+      if (isProviderInfraError(r4.error)) {
+        skip('tool-calling', r4.error.substring(0, 120));
+      } else {
+        fail('tool-calling', r4.error.substring(0, 120));
+      }
     } else if (r4.text) {
       const hasMonday = /monday/i.test(r4.text);
       const hadToolCalls = r4.toolCalls.length > 0;
@@ -406,6 +428,7 @@ async function main() {
       }
     } else {
       skip('tool-calling', 'empty response');
+    }
     }
     }
 
@@ -998,8 +1021,26 @@ async function main() {
 
   if (OpenClawIntegration) {
     let integration;
+    const tmpCfg = path.join(os.tmpdir(), `xray-oc-e2e-cfg-${Date.now()}.json`);
     try {
-      integration = new OpenClawIntegration('/nonexistent/config.json');
+      fs.writeFileSync(
+        tmpCfg,
+        JSON.stringify({
+          gatewayUrl: `ws://127.0.0.1:${gatewayPort}`,
+          authToken,
+          autoReconnect: false,
+          apiServer: { enabled: true, port: 18431, host: '127.0.0.1' },
+          hooks: {
+            enabled: true,
+            toolBefore: true,
+            toolAfter: true,
+            includeArgs: true,
+            includeResult: true,
+          },
+          enabled: true,
+        }),
+      );
+      integration = new OpenClawIntegration(tmpCfg);
       pass('OpenClawIntegration instantiated');
     } catch (e) {
       fail('OpenClawIntegration instantiate', e.message);
@@ -1048,10 +1089,18 @@ async function main() {
         fail('getOpenClawConfig', e.message);
       }
 
-      // Client
+      // Client — live gateway + token must authorize; stub device must not force NOT_PAIRED
       const client = integration.getClient();
-      if (client) pass(`getClient() → state: ${client.getState()}`);
-      else pass('getClient() → null (expected without live gateway connection)');
+      if (!client) {
+        fail('getClient', 'null after initialize with live gateway');
+      } else {
+        const state = client.getState();
+        if (state === 'authorized' || state === 'connected') {
+          pass(`getClient() → state: ${state}`);
+        } else {
+          fail('getClient state', `expected authorized, got ${state}`);
+        }
+      }
 
       // API server
       const apiSrv = integration.getAPIServer();
@@ -1087,6 +1136,11 @@ async function main() {
         pass('integration.shutdown() completed');
       } catch (e) {
         fail('shutdown', e.message);
+      }
+      try {
+        fs.unlinkSync(tmpCfg);
+      } catch {
+        /* best-effort */
       }
     }
   } else {

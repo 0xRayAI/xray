@@ -13,12 +13,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 function resolveGate() {
+  const envRoot = process.env.XRAY_AI_PATH || process.env.XRAY_ROOT || '';
   const candidates = [
+    envRoot ? join(envRoot, 'dist/nucleus/delegation-gate.js') : '',
     join(__dirname, '../../../nucleus/delegation-gate.js'),
     join(__dirname, '../../../../dist/nucleus/delegation-gate.js'),
     join(process.cwd(), 'node_modules/0xray/dist/nucleus/delegation-gate.js'),
     join(process.cwd(), 'dist/nucleus/delegation-gate.js'),
-  ];
+  ].filter(Boolean);
   const found = candidates.find((p) => existsSync(p));
   if (!found) {
     throw new Error('delegation-gate.js missing — build 0xray or npm install 0xray');
