@@ -8,7 +8,7 @@ Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so 
 
 ## What 4.0 is
 
-Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. Factory lens: plan → build → review → ship as **testable handoffs**. Bite-sized work must survive the next compaction from wear + git + **Repertoire**. Repertoire was built to fill that gap; it is **not fully harnessed** — consumer `memory_routing` still defaults off, Grok needs unprefixed MCP names, station handoffs do not yet *read* signals as the working state.
+Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Repertoire**. Repertoire was built for that and is **not fully harnessed** — `memory_routing` still defaults off, Grok needs unprefixed MCP names, stations do not yet *read* signals as working state.
 
 ## Line (feat/v4-temperament)
 
@@ -36,4 +36,4 @@ Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok
 
 ## One line for the next model
 
-**Kernel wear, factory handoffs, bite-sized so compaction does not kill the plant. Next proof is stranger install, not another manifesto.**
+**Suit that survives the context window. Linear problems, low friction. Next proof is stranger install, then harness Repertoire.**

@@ -54,6 +54,14 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 
 Not going: a fifth orchestrator for models that already grew up. Not going: chasing pickle by upgrading a host 17k commits. Not going: numbered agents on the chest.
 
+## The actual problem
+
+Build a suit that **survives the context window**. Compaction is the name in this host. New session, host swap, model upgrade, plan → code → review — same physics: **linear steps, each one can drop state, friction compounds.**
+
+These are not exotic research problems. They are sequential. Every extra MCP to “remember,” every cold chat, every marker that points at a dead temp dir, every Repertoire flag left off — another linear hit. Factory grade is **low friction across the line**, not a bigger window.
+
+Repertoire was the organ for that. Unharnessed, the exo still dies when the window dies.
+
 ## The lens (reimagine workflow)
 
 Nothing new under the sun. The loop is still **plan → build → review → ship**. Waterfall, agile, lead-dev, agent swarms — same stations, different badges.
@@ -87,4 +95,4 @@ The tweet named the evolution. 4.0 is that evolution **if** we wear it as a plan
 
 ## One line
 
-**Keep the three-subsystem OS. Wear it as an exo. Temper the ceremony. See the old loop as factory interfaces. Make the plant the install, not the catalog.**
+**Keep the three-subsystem OS. Wear it as an exo. Survive the context window. Linear handoffs, low friction. Make the plant the install, not the catalog.**
