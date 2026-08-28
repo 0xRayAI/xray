@@ -54,6 +54,25 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 
 Not going: a fifth orchestrator for models that already grew up. Not going: chasing pickle by upgrading a host 17k commits. Not going: numbered agents on the chest.
 
+## The lens (reimagine workflow)
+
+Nothing new under the sun. The loop is still **plan → build → review → ship**. Waterfall, agile, lead-dev, agent swarms — same stations, different badges.
+
+The opportunity is not a new methodology. It is a **super-powered lens** on that old loop: see work as a **factory line of interfaces**, not as prompts and tool picks.
+
+| Station | Old (toolset) view | Factory lens |
+|---|---|---|
+| Plan | Invoke an orchestrator / write a plan file | Same **session identity** holds the intent |
+| Build | Call write/edit/shell, maybe a subagent | Constitution is PPE on every stroke |
+| Review | Another model, another chat, cold start | Handoff is a **testable interface** — state must survive |
+| Ship | Human remembers CI, memory, which host | Wear + Repertoire + gate are the plant, not the operator’s head |
+
+**Temperament** is how much foreman you put on a floor (frontier vs guided).  
+**Synchronicity** is whether the working state survives the handoff (session id, Repertoire, host markers that still point at a live dist).  
+**The exo** is what makes the old loop factory-grade across models and hosts without inventing a fifth religion of process.
+
+First observable breaks are at those interfaces, not inside the model: session identity dropped, wear marker pointing at a dead temp dir, memory routing off so the next station starts ignorant. Treat them as tests. That is the workflow 4.0 has to mean, or “factory” stays a metaphor.
+
 ## Why
 
 Frontier coding agents (Grok 4.6 + Grok Build) already have subagents, plan mode, hooks, skills, workflows. A suit that forces `analyze-complexity` before every spawn **fights the host**. A suit that blocks `any`, Codex 29, new surface, and destructive shell **is the exo**.
@@ -66,4 +85,4 @@ The tweet named the evolution. 4.0 is that evolution **if** we wear it as a plan
 
 ## One line
 
-**Keep the three-subsystem OS. Wear it as an exo. Temper the ceremony. Make the factory the install, not the catalog.**
+**Keep the three-subsystem OS. Wear it as an exo. Temper the ceremony. See the old loop as factory interfaces. Make the plant the install, not the catalog.**
