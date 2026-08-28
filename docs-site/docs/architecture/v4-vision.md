@@ -18,7 +18,7 @@ This page is the north star. Mechanism lives in [suit temperament](../guides/v3-
 | **Always on** | Constitution: Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface |
 | **Temperament** | `frontier` \| `guided` \| `strict` \| `auto` — how loud the engine is, not whether governance exists |
 | **Wear** | Four host floors: Grok, OpenCode, Hermes, OpenClaw. One SSOT gate (`evaluatePreToolGate`) |
-| **Muscle** | Repertoire memory routing — synchronicity, not a second brain |
+| **Muscle** | Repertoire — built for synchronicity; **not fully harnessed** yet (see below) |
 
 The exo is what the host puts on. The host still walks. Frontier models get **honesty** without a second planner. Guided hosts still get a **floor boss** because they will invent APIs.
 
@@ -47,7 +47,7 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 |---|---|
 | **Kernel, not catalog** | Ship the gate, temperament, four adapters, Repertoire hookup. Stop selling 42/45/7 as the product. |
 | **Factory wear** | `npm i 0xray` lights constitution on this host in one shot. Stranger install is the release gate. |
-| **Synchronicity as muscle** | Repertoire unprefix belongs on the Grok floor. Default-off memory routing is leftover toolset thinking. |
+| **Synchronicity as muscle** | Repertoire *is* the gap-filler for handoffs and compaction. Today it is a sibling package, MCP, and a flag default **off**. Factory 4.0 means wear actually **uses** it at station boundaries — not “available if you wire it.” |
 | **Host-native inference** | Use the plant’s existing line (OpenCode CLI, Grok OAuth, whatever the floor already runs). Do not add an 8th MCP. |
 | **Codex 69 as factory law** | No new MCP/skill/handler. Trim duplicate conductors on the museum list. “Trim later” is now if this page is true. |
 | **Temperament as shifts** | Frontier = the model runs the line, suit is PPE. Guided = suit is also the foreman. Strict = lock confer. Auto = pick by host. |
