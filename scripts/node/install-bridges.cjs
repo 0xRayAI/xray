@@ -245,9 +245,24 @@ function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
       "--hook-event=post_compact",
     );
     fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
+    writeGrokDiscoveredHooks(targetDir, hooksPath, log, label);
     log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {
     log(label, "hooks.json patch failed", "warn", { error: e.message });
+  }
+}
+
+/** Grok TUI loads `<project>/.grok/hooks/*.json`, not `plugins/0xray/hooks`. */
+function writeGrokDiscoveredHooks(targetDir, hooksPath, log, label) {
+  if (!targetDir || !fs.existsSync(hooksPath)) return;
+  try {
+    const destDir = path.join(targetDir, ".grok", "hooks");
+    fs.mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, "0xray.json");
+    fs.copyFileSync(hooksPath, dest);
+    log(label, "Grok discovered hooks → .grok/hooks/0xray.json", "info", { dest });
+  } catch (e) {
+    log(label, "Grok discovered hooks copy failed", "warn", { error: e.message });
   }
 }
 
@@ -647,5 +662,6 @@ module.exports = {
   MERGE_CONFIG_FILES,
   patchGrokHooks,
   grokHookShellCommand,
+  writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
 };

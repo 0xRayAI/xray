@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -122,6 +122,9 @@ describe('Grok hooks.json command strings', () => {
       expect(JSON.stringify(patched)).toContain('PreCompact');
       expect(JSON.stringify(patched)).toContain('--hook-event=pre_compact');
       expect(JSON.stringify(patched)).toContain('PostCompact');
+      const discovered = path.join(tmp, '.grok', 'hooks', '0xray.json');
+      expect(existsSync(discovered)).toBe(true);
+      expect(readFileSync(discovered, 'utf8')).toContain('PreCompact');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

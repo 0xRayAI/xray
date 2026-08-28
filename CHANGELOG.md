@@ -40,7 +40,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
 - Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
 - OpenClaw install writes `opencode-cli` backend when `opencode` is on PATH (CLI pickle, not Zen HTTP).
-- `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold.
+- `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold. Patched JSON is also copied to `<project>/.grok/hooks/0xray.json` — the path Grok TUI actually loads.
 - Stop committing machine-local `.grok/` (absolute hook paths). Template stays `src/integrations/grok/plugin/0xray`.
 
 ### ✅ Tests

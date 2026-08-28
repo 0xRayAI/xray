@@ -30,7 +30,7 @@ HEAD: `049ff83` + this takeover (Grok wear / compact persist / host-swap keep). 
 
 The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change host, and the work is still moving.**
 
-1. **Live compact — done.** This floor’s Grok wear was dead (project hooks at `/Users/blaze/dev/xray`, `~/.grok` still `args[]` smoke with no PreCompact), so `STATION.md` did not exist. Takeover: `0xray grok install --force` now always runs `patchGrokHooks`. Fired SessionStart → PreCompact → PostCompact against compiled `session-start.js`. Card written. Intent + `git feat/v4-temperament@049ff83` survived. **TUI `/compact` still needs a Grok restart** so the running session loads the worn hooks.
+1. **Live compact — hook binary done; TUI attach was still cold after first reboot.** Wear lived in `.grok/plugins/0xray/hooks`. Grok TUI loads `<project>/.grok/hooks/*.json` (this repo is trusted). First reboot after `e1c8503` did **not** fire SessionStart (boot stayed `2026-08-28T16:46:58Z`). Takeover now copies patched JSON to `.grok/hooks/0xray.json`. **One more Grok restart** so TUI SessionStart / `/compact` actually run.
 2. **Live host swap — done.** Same repo, OpenCode CLI (1.16.2) `opencode run` **Read** `.xray/state/STATION.md` and answered `Hot-swap: grok → opencode` / `Host: opencode (guided)`. Did not cold-start. Intent and git unchanged. Return to this Grok floor stamps `Hot-swap: opencode → grok`.
 3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0**. Machine `~/.openclaw/xray-consumer-root.txt` mtime still `1787777404`. Throwaway HOME grew `.hermes` / `.openclaw` — plant markers untouched. Hermes/OpenClaw **CLIs** are not on PATH; do not install.
 
