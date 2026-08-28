@@ -6,7 +6,7 @@ sidebar_label: 4.0 vision
 
 Public thesis: [temperament and synchronicity move the stack from toolsets to factories](https://x.com/Blaze0x1/status/2093318114217763225). 4.0 is the **eXo suit** for that shift.
 
-This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md).
+This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md). Station card for the next session: [4.0 now](./v4-now.md).
 
 ## What 4.0 is (roots)
 
@@ -72,6 +72,8 @@ The opportunity is not a new methodology. It is a **super-powered lens** on that
 **The exo** is what makes the old loop factory-grade across models and hosts without inventing a fifth religion of process.
 
 First observable breaks are at those interfaces, not inside the model: session identity dropped, wear marker pointing at a dead temp dir, memory routing off so the next station starts ignorant. Treat them as tests. That is the workflow 4.0 has to mean, or “factory” stays a metaphor.
+
+**Bite-sized work is how the line survives context death.** A compaction, a new session, a host swap, a model upgrade — same event: the working memory is gone. Stations must be small enough to resume from **wear + Repertoire + git**, not from a novel-length chat. If a unit of work cannot survive the next compaction, it was never factory grade. That is synchronicity at human scale, not a bigger window.
 
 ## Why
 

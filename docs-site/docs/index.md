@@ -18,6 +18,7 @@ Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with t
 - [Features Since 3.1](./guides/features-since-3.1) — Full capability changelog
 - [features.json](./guides/features-json) — Config reference including `memory_routing`
 - [4.0 vision](./architecture/v4-vision) — exo, not toolset: where we are, where we are going, why
+- [4.0 now](./architecture/v4-now) — compaction handoff / next bites
 - [Suit temperament](./guides/v3-temperament) — guided vs frontier (4.0)
 - [v3 from v2](./architecture/v3-from-v2) — keep the three subsystems, trim fat
 - [Parallel Work Tracks](./guides/parallel-work-tracks) — Grok Build + user asides + worktrees
