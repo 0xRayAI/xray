@@ -17,6 +17,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
 - **Repertoire harness** — leftover `memory_routing` default-off auto-enables when sibling `@0xray/repertoire` or `node_modules/@0xray/repertoire` resolves. Explicit `enabled: false` + `provider: repertoire` is opt-out. Consumers without the module stay off. Not an 8th 0xRay MCP.
 - **Session resume** — Grok session-start writes `repertoireResume` (one line, signal count) into `session-boot.json` so the next station survives compaction.
+- **Hot-swap station card** — `.xray/state/STATION.md` is the projection of `session-boot.json` (intent, git, plan, last host, Repertoire). PreCompact/PostCompact persist it. AGENTS.md tells the model to Read it. Host change sets `hotSwap`. Works without Repertoire.
 - **Repertoire MCP names** — unprefixed server tools; Grok TUI namespaces them as `repertoire__*`. Grok install resolves sibling *or* `node_modules/@0xray/repertoire`.
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log

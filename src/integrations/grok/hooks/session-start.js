@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Grok SessionStart / UserPromptSubmit — writes session-boot.json + activity.log.
- * Stdout is ignored by Grok for these events; side effects are the suit contract.
+ * Grok SessionStart / UserPromptSubmit / PreCompact / PostCompact.
+ * Grok ignores stdout here; station heat is session-boot.json + STATION.md.
  */
 
 import {
@@ -26,15 +26,23 @@ function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
   const flag = process.argv.find((a) => a.startsWith('--hook-event='));
   if (flag) return flag.slice('--hook-event='.length);
+  const named = event.hookEventName || event.hook;
+  if (named === 'PreCompact' || named === 'pre_compact') return 'pre_compact';
+  if (named === 'PostCompact' || named === 'post_compact') return 'post_compact';
   if (
     event.prompt != null ||
     event.userMessage != null ||
     event.user_prompt != null ||
-    event.hook === 'UserPromptSubmit'
+    named === 'UserPromptSubmit' ||
+    named === 'user_prompt_submit'
   ) {
     return 'user_prompt_submit';
   }
   return 'session_start';
+}
+
+function extractIntent(event) {
+  return event.prompt || event.userMessage || event.user_prompt || event.compactContext || null;
 }
 
 async function main() {
@@ -68,11 +76,15 @@ async function main() {
     const source =
       HOOK_EVENT === 'user_prompt_submit'
         ? '0xray/grok-user-prompt-submit'
-        : '0xray/grok-session-start';
+        : HOOK_EVENT === 'pre_compact' || HOOK_EVENT === 'post_compact'
+          ? '0xray/grok-compact'
+          : '0xray/grok-session-start';
 
+    const intent = extractIntent(event);
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
+      ...(intent ? { intent } : {}),
     });
 
     const bootPath = writeSessionBoot(eventRoot, payload) || ensureSessionBoot(eventRoot, source);
@@ -82,6 +94,8 @@ async function main() {
       hookEvent: HOOK_EVENT,
       lead_dev_mode: payload.lead_dev_mode,
       repertoireResume: payload.repertoireResume,
+      stationLine: payload.stationLine,
+      hotSwap: payload.hotSwap || null,
     });
 
     try {

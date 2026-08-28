@@ -43,6 +43,28 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "XRAY_AI_PATH=${XRAY_AI_PATH:-node_modules/0xray} node ${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js --hook-event=pre_compact",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "XRAY_AI_PATH=${XRAY_AI_PATH:-node_modules/0xray} node ${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js --hook-event=post_compact",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   }
 }

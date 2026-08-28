@@ -21,6 +21,12 @@ import {
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
 import { getActiveUserAsideBoot } from '../../hooks/user-aside-hook-runtime.mjs';
+import {
+  applyStationHeat,
+  buildRepertoireResume as stationRepertoireResume,
+  readExistingBoot,
+  writeStationMarkdown,
+} from '../../hooks/station-hook-runtime.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -132,71 +138,8 @@ export function resolveSiblingWorkspaceRoots(root = workspaceRoot()) {
   }
 }
 
-function resolveRepertoireProviderModule(root) {
-  const siblingRoot = path.join(root, '..', 'repertoire');
-  const siblingProvider = path.join(siblingRoot, 'dist', 'provider', 'memory-routing-provider.js');
-  const nmProvider = path.join(
-    root,
-    'node_modules',
-    '@0xray',
-    'repertoire',
-    'dist',
-    'provider',
-    'memory-routing-provider.js',
-  );
-  try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(siblingRoot, 'package.json'), 'utf8'));
-    if (
-      (pkg.name === '@0xray/repertoire' || pkg.name === 'repertoire') &&
-      fs.existsSync(siblingProvider)
-    ) {
-      return siblingProvider;
-    }
-  } catch {
-    /* sibling missing or not Repertoire */
-  }
-  if (fs.existsSync(nmProvider)) return nmProvider;
-  return null;
-}
-
-function countCuratedSignals(signalsPath) {
-  try {
-    const data = JSON.parse(fs.readFileSync(signalsPath, 'utf8'));
-    if (Array.isArray(data.signals)) return data.signals.length;
-    if (Array.isArray(data)) return data.length;
-  } catch {
-    /* unreadable registry */
-  }
-  return null;
-}
-
 export function buildRepertoireResume(root = workspaceRoot()) {
-  const modulePath = resolveRepertoireProviderModule(root);
-  let mr = {};
-  const featuresPath = resolveFeaturesPath(root);
-  if (featuresPath) {
-    try {
-      mr = JSON.parse(fs.readFileSync(featuresPath, 'utf8')).memory_routing || {};
-    } catch {
-      mr = {};
-    }
-  }
-  if (!modulePath) {
-    return 'Repertoire: not installed (memory_routing stays off)';
-  }
-  let signalsPath = mr.config && mr.config.signalsPath;
-  if (signalsPath && !path.isAbsolute(signalsPath)) {
-    signalsPath = path.resolve(root, signalsPath);
-  }
-  if (!signalsPath) {
-    signalsPath = path.resolve(modulePath, '..', '..', '..', 'data', 'curated_signals.json');
-  }
-  const n = fs.existsSync(signalsPath) ? countCuratedSignals(signalsPath) : null;
-  const count = n == null ? '' : ` — ${n} signals`;
-  if (mr.enabled === true && mr.provider === 'repertoire') {
-    return `Repertoire: on${count}`;
-  }
-  return `Repertoire: present, memory_routing off${count}`;
+  return stationRepertoireResume(root);
 }
 
 export function loadFeatures(root = workspaceRoot()) {
@@ -331,12 +274,13 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
   const gateFeatures = loadDelegationGateFeatures(root, 'grok');
   const frontier = gateFeatures.ceremony === 'lite';
-  const repertoireResume = buildRepertoireResume(root);
+  const existing = readExistingBoot(root);
+  const heat = applyStationHeat(root, extra.host || 'grok', extra, existing);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
-    host: 'grok',
+    host: extra.host || 'grok',
     suit_profile: gateFeatures.suit_profile ?? 'guided',
     ceremony: gateFeatures.ceremony ?? 'full',
     spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',
@@ -348,7 +292,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
       : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
     workspaceRoot: root,
-    repertoireResume,
+    ...heat,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
     ...(userAsideBoot ?? {}),
@@ -356,6 +300,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     timestamp: new Date().toISOString(),
     source,
     ...extra,
+    ...heat,
   };
 }
 
@@ -364,6 +309,7 @@ export function writeSessionBoot(root, payload) {
     const stateDir = path.join(root, '.xray', 'state');
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
+    writeStationMarkdown(root, payload);
     return sessionBootPath(root);
   } catch {
     return null;
@@ -377,6 +323,7 @@ export function sessionBootNeedsRefresh(existing, root) {
   if (!existing.suit_profile) return true;
   if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
   if (!existing.repertoireResume) return true;
+  if (!existing.stationLine) return true;
   return false;
 }
 

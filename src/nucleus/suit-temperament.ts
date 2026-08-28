@@ -12,6 +12,18 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { createRequire } from 'node:module';
+
+const requireCjs = createRequire(import.meta.url);
+const stationHeat = requireCjs('../integrations/hooks/station-hook-runtime.cjs') as {
+  applyStationHeat: (
+    root: string,
+    host: string,
+    extra?: Record<string, unknown>,
+    existing?: Record<string, unknown>,
+  ) => Record<string, unknown>;
+  writeStationMarkdown: (root: string, fields: Record<string, unknown>) => string | null;
+};
 
 export type SuitHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
 export type SuitProfile = 'frontier' | 'guided' | 'strict';
@@ -134,9 +146,11 @@ export function writeSuitSessionBoot(
       existing = {};
     }
   }
+  const heat = stationHeat.applyStationHeat(projectRoot, host, extra, existing);
   const payload: Record<string, unknown> = {
     ...existing,
     ...extra,
+    ...heat,
     host,
     suit_profile: profile,
     ceremony: ceremonyForProfile(profile),
@@ -144,6 +158,7 @@ export function writeSuitSessionBoot(
     timestamp: new Date().toISOString(),
   };
   fs.writeFileSync(bootPath, JSON.stringify(payload, null, 2));
+  stationHeat.writeStationMarkdown(projectRoot, payload);
   return bootPath;
 }
 

@@ -23,6 +23,7 @@ npm still **3.5.5**. Product version **4.0.0**. **Still in development — do no
 - Hermes pack local 4.0; plugin id `xray-hermes`
 - Repertoire `feat/mcp-unprefix` (Grok MCP names) — companion branch. Wired on this floor.
 - **Harness (this station):** leftover `memory_routing` default-off auto-enables when the Repertoire module resolves; Grok session-start writes `repertoireResume`. Explicit opt-out preserved. No 8th MCP.
+- **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact) and host change write it. AGENTS.md: Read the card, continue, do not cold-start. Stranger without Repertoire still has git + intent + plan.
 - Stranger-install wear: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
@@ -37,4 +38,4 @@ Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok
 
 ## One line for the next model
 
-**Suit that survives the context window. Linear problems, low friction. Still in dev — no npm publish.**
+**Suit that survives the context window. The cut is the test: compact or change host, Read STATION.md, keep moving. Still in dev — no npm publish.**

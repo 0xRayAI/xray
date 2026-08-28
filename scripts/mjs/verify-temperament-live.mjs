@@ -152,6 +152,10 @@ try {
   if (boot.host === 'grok' && boot.suit_profile === 'frontier') {
     pass('Grok session-start writes host=grok frontier boot');
   } else fail('Grok session-boot', JSON.stringify({ host: boot.host, suit_profile: boot.suit_profile }));
+  const stationCard = join(tmp, '.xray', 'state', 'STATION.md');
+  if (existsSync(stationCard) && readFileSync(stationCard, 'utf8').includes('Do not cold-start')) {
+    pass('Grok session-start writes STATION.md');
+  } else fail('Grok STATION.md');
 
   const hSpawn = runHermes(tmp, {
     tool: 'delegate_task',

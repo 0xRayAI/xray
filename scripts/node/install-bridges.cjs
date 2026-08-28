@@ -196,6 +196,16 @@ function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs)
   };
 }
 
+function ensureGrokHookEvent(hooks, eventName) {
+  if (!hooks.hooks) hooks.hooks = {};
+  if (!Array.isArray(hooks.hooks[eventName]) || !hooks.hooks[eventName][0]) {
+    hooks.hooks[eventName] = [{ hooks: [{}] }];
+  }
+  if (!Array.isArray(hooks.hooks[eventName][0].hooks) || !hooks.hooks[eventName][0].hooks[0]) {
+    hooks.hooks[eventName][0].hooks = [{}];
+  }
+}
+
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
@@ -218,6 +228,22 @@ function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
       "--hook-event=user_prompt_submit",
     );
     patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
+    ensureGrokHookEvent(hooks, "PreCompact");
+    ensureGrokHookEvent(hooks, "PostCompact");
+    patchGrokHookEntry(
+      hooks.hooks?.PreCompact?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=pre_compact",
+    );
+    patchGrokHookEntry(
+      hooks.hooks?.PostCompact?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=post_compact",
+    );
     fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
     log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {

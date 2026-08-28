@@ -96,7 +96,9 @@ export default async function xrayCodexPlugin(input: {
         }
 
         if (output.system && Array.isArray(output.system)) {
-          output.system = [leanPrompt];
+          const cardPath = path.join(directory, ".xray", "state", "STATION.md");
+          const card = fs.existsSync(cardPath) ? fs.readFileSync(cardPath, "utf8").trim() : "";
+          output.system = card ? [leanPrompt, card] : [leanPrompt];
         }
       } catch (error) {
         const logger = await getOrCreateLogger(directory);

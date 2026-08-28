@@ -33,7 +33,7 @@ describe('Grok hooks.json command strings', () => {
       ),
     );
     const commands = collectHookCommands(raw);
-    expect(commands.length).toBeGreaterThanOrEqual(4);
+    expect(commands.length).toBeGreaterThanOrEqual(6);
     for (const hook of commands) {
       expect(hook.args).toBeUndefined();
       expect(String(hook.command)).toContain('node ');
@@ -45,6 +45,9 @@ describe('Grok hooks.json command strings', () => {
     expect(joined).toContain('session-start.js');
     expect(joined).toContain('post-tool-use.js');
     expect(joined).toContain('--hook-event=user_prompt_submit');
+    expect(joined).toContain('PreCompact');
+    expect(joined).toContain('PostCompact');
+    expect(joined).toContain('--hook-event=pre_compact');
   });
 
   it('patchGrokHooks pins absolute command strings and strips args', () => {
