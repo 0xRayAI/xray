@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { homedir } from 'os';
@@ -13,6 +12,8 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
 const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
   wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
+  installOpenClawHostWear: (packageRoot: string) => string | null;
+  maybeWriteOpenClawCliBackend: () => boolean;
 };
 
 export function registerOpenClawCommands(openclawCmd: Command) {
@@ -74,7 +75,10 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
       /* session-boot is best-effort */
     }
 
-    const hookInstalled = installOpenClawPreToolHook();
+    const packageRoot = path.resolve(__dirname, '..', '..', '..');
+    const hookInstalled = wiring.installOpenClawHostWear(packageRoot);
+    const cliBackend = wiring.maybeWriteOpenClawCliBackend();
+    frameworkLogger.log('openclaw-integration', 'cli-backend', 'info', { written: cliBackend });
     if (hookInstalled) {
       console.log(`\x1b[32m✓ OpenClaw PreToolUse hook → ${hookInstalled}\x1b[0m`);
     }
@@ -89,59 +93,4 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
   }
 
   frameworkLogger.log('openclaw-integration', 'install-complete', 'info', {});
-}
-
-function installOpenClawPreToolHook(): string | null {
-  const packageRoot = path.resolve(__dirname, '..', '..', '..');
-  const candidates = [
-    path.join(packageRoot, 'src/integrations/openclaw/hooks/pre-tool-gate-runtime.mjs'),
-    path.join(packageRoot, 'dist/integrations/openclaw/hooks/pre-tool-gate-runtime.mjs'),
-  ];
-  const source = candidates.find((p) => fs.existsSync(p));
-  if (!source) return null;
-
-  const hookDir = path.join(homedir(), '.openclaw', 'hooks');
-  fs.mkdirSync(hookDir, { recursive: true });
-  const dest = path.join(hookDir, 'xray-pre-tool.mjs');
-  fs.copyFileSync(source, dest);
-  fs.writeFileSync(
-    path.join(hookDir, 'xray-pre-tool.json'),
-    `${JSON.stringify(
-      {
-        name: 'xray-pre-tool',
-        command: 'node',
-        args: [dest],
-        stdin: 'json',
-        blockExitCode: 2,
-        env: {
-          XRAY_AI_PATH: packageRoot,
-        },
-      },
-      null,
-      2,
-    )}\n`,
-  );
-
-  const pluginSrc = path.join(packageRoot, 'src/integrations/openclaw/plugin/xray-pre-tool');
-  if (fs.existsSync(path.join(pluginSrc, 'index.js'))) {
-    try {
-      execFileSync('openclaw', ['plugins', 'install', '-l', pluginSrc], {
-        stdio: 'pipe',
-        encoding: 'utf8',
-        timeout: 60000,
-      });
-    } catch {
-      /* link is best-effort — files still installed for stdin runtime */
-    }
-    try {
-      execFileSync(
-        'openclaw',
-        ['config', 'set', 'plugins.entries.xray-pre-tool.enabled', 'true'],
-        { stdio: 'pipe', encoding: 'utf8', timeout: 20000 },
-      );
-    } catch {
-      /* enable is best-effort */
-    }
-  }
-  return dest;
 }

@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { execSync } = require("child_process");
+const { execFileSync, execSync } = require("child_process");
 
 /** Canonical 7-server MCP surface */
 const XRAY_MCP_SERVERS = [
@@ -134,13 +134,31 @@ function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
   return true;
 }
 
+function isEphemeralInstallRoot(targetDir) {
+  const normalized = String(targetDir || "").replace(/\\/g, "/");
+  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
+}
+
+function copyHermesHookRuntimes(packageRoot) {
+  const hooksSrc = [
+    path.join(packageRoot, "dist", "integrations", "hooks"),
+    path.join(packageRoot, "src", "integrations", "hooks"),
+  ].find((p) => fs.existsSync(p));
+  if (!hooksSrc) return false;
+  const hooksDst = path.join(os.homedir(), ".hermes", "plugins", "hooks");
+  fs.mkdirSync(hooksDst, { recursive: true });
+  fs.cpSync(hooksSrc, hooksDst, { recursive: true, force: true });
+  return true;
+}
+
 function writeHermesPluginArtifacts(targetDir) {
   if (!fs.existsSync(HERMES_PLUGIN_DIR)) return false;
-  fs.writeFileSync(path.join(HERMES_PLUGIN_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   fs.writeFileSync(
     path.join(HERMES_PLUGIN_DIR, ".mcp.json"),
     `${JSON.stringify(buildPluginMcpJson(targetDir), null, 2)}\n`
   );
+  if (isEphemeralInstallRoot(targetDir)) return true;
+  fs.writeFileSync(path.join(HERMES_PLUGIN_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   return true;
 }
 
@@ -208,10 +226,20 @@ function deployPortableProjectMcpJson(targetDir) {
 
 function enableHermesPluginBestEffort() {
   try {
-    execSync("hermes plugins enable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    execSync("hermes plugins enable xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    try {
+      execSync("hermes plugins disable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    } catch {
+      /* stale id may be absent */
+    }
     return true;
   } catch {
-    return false;
+    try {
+      execSync("hermes plugins enable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -273,10 +301,12 @@ function syncOpenClawMcpRegistry(targetDir) {
 }
 
 function writeOpenClawConsumerArtifacts(targetDir) {
-  if (!fs.existsSync(OPENCLAW_STATE_DIR)) {
-    fs.mkdirSync(OPENCLAW_STATE_DIR, { recursive: true });
+  if (!isEphemeralInstallRoot(targetDir)) {
+    if (!fs.existsSync(OPENCLAW_STATE_DIR)) {
+      fs.mkdirSync(OPENCLAW_STATE_DIR, { recursive: true });
+    }
+    fs.writeFileSync(path.join(OPENCLAW_STATE_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   }
-  fs.writeFileSync(path.join(OPENCLAW_STATE_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
 
   const consumerConfigPath = path.join(targetDir, ".xray", "config", "openclaw.json");
   if (fs.existsSync(consumerConfigPath)) {
@@ -288,6 +318,124 @@ function writeOpenClawConsumerArtifacts(targetDir) {
       // best-effort
     }
   }
+  return true;
+}
+
+function resolveOpenClawPreToolHookSource(packageRoot) {
+  return [
+    path.join(packageRoot, "dist", "integrations", "openclaw", "hooks", "pre-tool-gate-runtime.mjs"),
+    path.join(packageRoot, "src", "integrations", "openclaw", "hooks", "pre-tool-gate-runtime.mjs"),
+  ].find((p) => fs.existsSync(p)) || null;
+}
+
+function resolveOpenClawPluginDir(packageRoot) {
+  return [
+    path.join(packageRoot, "dist", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+    path.join(packageRoot, "src", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+  ].find((p) => fs.existsSync(path.join(p, "index.js"))) || null;
+}
+
+function installOpenClawHostWear(packageRoot) {
+  const source = resolveOpenClawPreToolHookSource(packageRoot);
+  if (!source) return null;
+
+  const hookDir = path.join(os.homedir(), ".openclaw", "hooks");
+  fs.mkdirSync(hookDir, { recursive: true });
+  const dest = path.join(hookDir, "xray-pre-tool.mjs");
+  fs.copyFileSync(source, dest);
+  fs.writeFileSync(
+    path.join(hookDir, "xray-pre-tool.json"),
+    `${JSON.stringify(
+      {
+        name: "xray-pre-tool",
+        command: "node",
+        args: [dest],
+        stdin: "json",
+        blockExitCode: 2,
+        env: { XRAY_AI_PATH: packageRoot },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  const pluginSrc = resolveOpenClawPluginDir(packageRoot);
+  if (pluginSrc) {
+    try {
+      execFileSync("openclaw", ["plugins", "install", "-l", pluginSrc], {
+        stdio: "pipe",
+        encoding: "utf8",
+        timeout: 60000,
+      });
+    } catch {
+      /* link is best-effort — stdin runtime is still installed */
+    }
+    try {
+      execFileSync("openclaw", ["config", "set", "plugins.entries.xray-pre-tool.enabled", "true"], {
+        stdio: "pipe",
+        encoding: "utf8",
+        timeout: 20000,
+      });
+    } catch {
+      /* enable is best-effort */
+    }
+  }
+  return dest;
+}
+
+function resolveOpencodeBin() {
+  try {
+    const found = execSync("command -v opencode", { encoding: "utf8" }).trim();
+    return found || null;
+  } catch {
+    return null;
+  }
+}
+
+function maybeWriteOpenClawCliBackend() {
+  const bin = resolveOpencodeBin();
+  if (!bin) return false;
+  const configPath = resolveOpenClawConfigPath();
+  if (!fs.existsSync(configPath)) return false;
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  } catch {
+    return false;
+  }
+  if (!config.agents || typeof config.agents !== "object") config.agents = {};
+  if (!config.agents.defaults || typeof config.agents.defaults !== "object") {
+    config.agents.defaults = {};
+  }
+  const defaults = config.agents.defaults;
+  if (!defaults.cliBackends || typeof defaults.cliBackends !== "object") {
+    defaults.cliBackends = {};
+  }
+  defaults.cliBackends["opencode-cli"] = {
+    command: bin,
+    args: ["run", "--pure"],
+    output: "text",
+    input: "arg",
+    modelArg: "--model",
+    modelAliases: { "big-pickle": "opencode/big-pickle" },
+    sessionMode: "none",
+  };
+  if (!defaults.models || typeof defaults.models !== "object") defaults.models = {};
+  defaults.models["opencode-cli/big-pickle"] = {};
+  const model = defaults.model && typeof defaults.model === "object" ? defaults.model : {};
+  const primary = model.primary;
+  if (!primary || primary === "opencode/big-pickle") {
+    const fallbacks = Array.isArray(model.fallbacks) ? model.fallbacks.slice() : [];
+    if (primary === "opencode/big-pickle" && !fallbacks.includes("opencode/big-pickle")) {
+      fallbacks.unshift("opencode/big-pickle");
+    }
+    defaults.model = {
+      ...model,
+      primary: "opencode-cli/big-pickle",
+      fallbacks,
+    };
+  }
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
   return true;
 }
 
@@ -321,4 +469,10 @@ module.exports = {
   writeOpenClawConsumerArtifacts,
   resolveOpenClawConfigPath,
   detectConsumerExtraMcpServers,
+  isEphemeralInstallRoot,
+  copyHermesHookRuntimes,
+  resolveOpenClawPreToolHookSource,
+  resolveOpenClawPluginDir,
+  installOpenClawHostWear,
+  maybeWriteOpenClawCliBackend,
 };

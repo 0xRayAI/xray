@@ -31,10 +31,18 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - Session-boot refreshes leftover host/workspace from another machine.
 - Post-commit log maintenance prefers consumer `node_modules/0xray/dist` and ESM `pathToFileURL`.
 
+### 🐛 Fixes
+- OpenClaw plugin ships in the npm tarball; install resolves `dist` then `src`.
+- Postinstall wears OpenClaw PreToolUse (stdin hook + plugin link), not only `0xray openclaw install`.
+- Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
+- Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
+- OpenClaw install writes `opencode-cli` backend when `opencode` is on PATH (CLI pickle, not Zen HTTP).
+
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
 - `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
 - OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
+- Wear-layout: plugin/hook resolve, ephemeral marker skip, opencode-cli backend write.
 
 ---
 

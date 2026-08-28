@@ -14,6 +14,10 @@ const {
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
   copyHermesFindProjectRootHelper,
+  copyHermesHookRuntimes,
+  installOpenClawHostWear,
+  maybeWriteOpenClawCliBackend,
+  isEphemeralInstallRoot,
   XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
@@ -307,11 +311,6 @@ function registerGrokMcpServers(targetDir, log) {
   }
 }
 
-function isEphemeralInstallRoot(targetDir) {
-  const normalized = String(targetDir || "").replace(/\\/g, "/");
-  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
-}
-
 function installGrokBridge(targetDir, packageRoot, log) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -372,6 +371,9 @@ function installHermesBridge(targetDir, packageRoot, log) {
     }
   }
   copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+  if (copyHermesHookRuntimes(packageRoot)) {
+    log("hermes-bridge", "hook runtimes copied", "info", { path: "~/.hermes/plugins/hooks" });
+  }
   log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
 
   writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
@@ -379,10 +381,13 @@ function installHermesBridge(targetDir, packageRoot, log) {
   const copied = syncBuiltinSkills(path.join(targetPluginDir, "skills"), packageRoot);
   if (copied > 0) log("hermes-bridge", `skills synced (${copied})`, "info");
 
-  // Marker so bridge.mjs resolves the consumer project on hook invocation
   const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
-  fs.writeFileSync(rootMarker, targetDir + "\n");
-  log("hermes-bridge", "consumer root marker written", "info");
+  if (!isEphemeralInstallRoot(targetDir)) {
+    fs.writeFileSync(rootMarker, targetDir + "\n");
+    log("hermes-bridge", "consumer root marker written", "info");
+  } else {
+    log("hermes-bridge", "skip machine consumer marker — ephemeral consumer", "info");
+  }
 
   try {
     const result = wireHermesBridge(targetDir);
@@ -435,6 +440,16 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
     });
   } catch (e) {
     log("openclaw-bridge", "openclaw.json mcp wire failed", "warn", { error: e.message });
+  }
+
+  if (!isEphemeralInstallRoot(targetDir)) {
+    const hook = installOpenClawHostWear(packageRoot);
+    if (hook) log("openclaw-bridge", "PreToolUse hook installed", "info", { path: hook });
+    if (maybeWriteOpenClawCliBackend()) {
+      log("openclaw-bridge", "opencode-cli backend written", "info");
+    }
+  } else {
+    log("openclaw-bridge", "skip machine PreToolUse wear — ephemeral consumer", "info");
   }
 }
 

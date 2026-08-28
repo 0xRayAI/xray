@@ -6,14 +6,14 @@
  * Full end-to-end test that:
  *   1. Creates a temp consumer directory
  *   2. npm pack + install local 0xray (4.0) into temp dir — `--registry` uses npm 0xray
- *   3. Enables the 0xray-hermes plugin in Hermes
+ *   3. Enables the xray-hermes plugin in Hermes
  *   4. Runs Hermes with queries that exercise all plugin paths
  *   5. Verifies logs, hooks, routing, bridge calls, and tool events
  *
  * Prerequisites:
  *   - Node.js >= 18
  *   - Hermes Agent CLI (`hermes`) installed and configured
- *   - `hermes plugins enable 0xray-hermes` run at least once
+ *   - `hermes plugins enable xray-hermes` run at least once
  *   - Working API key in ~/.hermes/.env
  *
  * Usage:
@@ -144,16 +144,14 @@ async function main() {
   pass(`Hermes version: ${hermesVersion}`);
 
   const pluginStatus = run('hermes plugins list');
-  if (pluginStatus.includes('0xray-hermes')) {
-    pass('0xray-hermes plugin visible to Hermes');
-    if (pluginStatus.includes('not enabled')) {
-      run('hermes plugins enable 0xray-hermes');
-      pass('0xray-hermes plugin enabled');
-    } else {
-pass('0xray-hermes plugin already enabled');
-    }
+  const hasModern = /(?:^|[^0])xray-hermes/.test(pluginStatus);
+  const hasLegacy = pluginStatus.includes('0xray-hermes');
+  if (hasModern || hasLegacy) {
+    pass('xray-hermes plugin visible to Hermes');
+    run('hermes plugins enable xray-hermes');
+    pass('xray-hermes plugin enabled');
   } else {
-    fail('0xray-hermes plugin visible', 'plugin not found in hermes plugins list');
+    fail('xray-hermes plugin visible', 'plugin not found in hermes plugins list');
   }
 
   // Check for Hermes auth credentials (API key)
