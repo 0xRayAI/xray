@@ -58,6 +58,7 @@ const sidebars: SidebarsConfig = {
         'architecture/CONCEPTUAL_ARCHITECTURE',
         'architecture/v4-vision',
         'architecture/v4-now',
+        'architecture/v4-left',
         'architecture/v3-from-v2',
         'architecture/GROK_GUIDE',
         'architecture/v3-museum',

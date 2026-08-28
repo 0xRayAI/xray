@@ -4,7 +4,7 @@ sidebar_label: 4.0 now (handoff)
 
 # 4.0 now — compaction handoff
 
-Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so the next session is not born amnesiac.
+Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so the next session is not born amnesiac. What's still open: [4.0 left](./v4-left.md).
 
 ## What 4.0 is
 
@@ -28,11 +28,9 @@ npm still **3.5.5**. Product version **4.0.0**. **Still in development — do no
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
 
-## Next bites (in order)
+## Next bites
 
-1. Keep wearing on `feat/v4-temperament` + repertoire `feat/mcp-unprefix`. Per-suite tests green. No publish.
-2. Host e2e only in isolated HOME — do not clobber machine markers.
-3. **Ship later** — merge + tag + `npm publish 4.0.0` only when leaving dev.
+Open list: [4.0 left](./v4-left.md). Proof first (live compact + live host swap), then isolated host e2e, then ship only when leaving dev.
 
 Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo.
 
