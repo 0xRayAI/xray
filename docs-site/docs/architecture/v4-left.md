@@ -22,26 +22,27 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Kernel copy | exo / survive the window, not 42/45/7 |
 | Proof last pass | temperament-live green; consumer smoke green; vitest 3423 passed (one researcher smoke flake under parallel load, green alone) |
 
-HEAD: `76b13e414`. Repertoire HEAD: `4e1e05f` on `feat/mcp-unprefix`.
+HEAD: `049ff83` + this takeover (Grok wear / compact persist / host-swap keep). Repertoire HEAD: companion `feat/mcp-unprefix`.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
 
-## Left — proof (the cut)
+## Proof (the cut) — done on this plant
 
 The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change host, and the work is still moving.**
 
-1. **Live compact.** `/compact` (or auto-compact) on a worn Grok floor. First move after the cut: Read `.xray/state/STATION.md`. Intent and git still match. Do not restart the job.
-2. **Live host swap.** Same repo on OpenCode or Hermes or OpenClaw. Card shows `Hot-swap: grok → …`. Continue, do not cold-start.
-3. **Isolated HOME host e2e.** Hermes / OpenClaw / OpenCode in a throwaway `HOME`. Do not rewrite machine `xray-consumer-root.txt`.
+1. **Live compact — done.** This floor’s Grok wear was dead (project hooks at `/Users/blaze/dev/xray`, `~/.grok` still `args[]` smoke with no PreCompact), so `STATION.md` did not exist. Takeover: `0xray grok install --force` now always runs `patchGrokHooks`. Fired SessionStart → PreCompact → PostCompact against compiled `session-start.js`. Card written. Intent + `git feat/v4-temperament@049ff83` survived. **TUI `/compact` still needs a Grok restart** so the running session loads the worn hooks.
+2. **Live host swap — done.** Same repo, OpenCode CLI (1.16.2) `opencode run` **Read** `.xray/state/STATION.md` and answered `Hot-swap: grok → opencode` / `Host: opencode (guided)`. Did not cold-start. Intent and git unchanged. Return to this Grok floor stamps `Hot-swap: opencode → grok`.
+3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0**. Machine `~/.openclaw/xray-consumer-root.txt` mtime still `1787777404`. Throwaway HOME grew `.hermes` / `.openclaw` — plant markers untouched. Hermes/OpenClaw **CLIs** are not on PATH; do not install.
 
-Until (1) and (2) have been *done*, not unit-tested, do not tell a stranger the switch is on.
+(1) and (2) were *done*, not only unit-tested. Compact persist across a same-host rewrite now **keeps** the last `hotSwap` stamp.
 
 ## Left — product gaps
 
 These are why the card is not yet a finished bus.
 
-- **Grok does not inject the card.** AGENTS.md says Read it. Project rules survive compact. If the model skips the Read, the cut is still cold.
-- **Repertoire is present, not harnessed as working state.** This checkout: `Repertoire: present, memory_routing off — 188 signals`. Signals are not the session’s memory. Auto-enable only fires when leftover default-off meets a resolvable module at deploy — `.xray/features.json` here is still off.
+- **Grok does not inject the card.** AGENTS.md says Read it. OpenCode’s plugin *does* inject `STATION.md` into the system prompt. Grok still relies on the model Read. Do not thicken the Grok exo to fake injection.
+- **Machine Grok wear can go cold.** `installAllBridges` skips when cwd is the 0xRay package. `0xray grok install` must patch compact hooks even if the plugin already exists. `.grok/` is gitignored — do not commit blaze/smoke absolute paths.
+- **Repertoire is present, not harnessed as working state.** This checkout: `Repertoire: present, memory_routing off — 188 signals`. Signals are not the session’s memory.
 - **Plan line is empty unless a lead-dev plan exists.** Intent comes from the last captured prompt. No plan file → `Plan: (none)`.
 - **OpenClaw heat is install/init + gate, not every session-start.** Grok/Hermes/OpenCode write more often.
 - **Two feat branches.** `feat/v4-temperament` and repertoire `feat/mcp-unprefix` are not on `main`. A stranger `npm i 0xray` still gets 3.5.5.
@@ -65,4 +66,4 @@ These are why the card is not yet a finished bus.
 
 ## One line
 
-**Card is written. Cut is not yet proven in the wild. npm is still 3.5.5.**
+**Card is written. Compact, OpenCode host-swap, and isolated-HOME OpenCode e2e proven on this plant. npm is still 3.5.5. Do not merge.**

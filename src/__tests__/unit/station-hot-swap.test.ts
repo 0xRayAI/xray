@@ -97,6 +97,35 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('same-host compact keeps the last hot-swap stamp', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-keep-swap-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({ suit_temperament: { profile: 'auto' } }),
+      );
+      writeSuitSessionBoot(tmp, 'grok', { intent: 'survive compact after swap' });
+      writeSuitSessionBoot(tmp, 'opencode', {});
+      const afterSwap = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+      ) as { hotSwap: { from: string; to: string } };
+      expect(afterSwap.hotSwap).toEqual({ from: 'grok', to: 'opencode' });
+      writeSuitSessionBoot(tmp, 'opencode', { source: '0xray/grok-compact' });
+      const afterCompact = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+      ) as { host: string; hotSwap: { from: string; to: string }; intent: string };
+      expect(afterCompact.host).toBe('opencode');
+      expect(afterCompact.hotSwap).toEqual({ from: 'grok', to: 'opencode' });
+      expect(afterCompact.intent).toBe('survive compact after swap');
+      const card = fs.readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Hot-swap: grok → opencode');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('applyStationHeat keeps prior intent when the new event has none', () => {
     const heat = applyStationHeat(
       os.tmpdir(),

@@ -23,8 +23,11 @@ xray/inference/
 0xray-*.tgz
 *.tmp
 
-# Machine-local Grok MCP (absolute Repertoire path written by `0xray grok install`)
-.grok/config.toml
+# Machine-local Grok wear (absolute paths from `0xray grok install`). Template: src/integrations/grok/plugin/0xray
+.grok/
+
+# Station card is a projection of session-boot.json — disk contract, not git
+.xray/state/STATION.md
 
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts

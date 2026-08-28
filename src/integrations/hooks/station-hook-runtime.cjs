@@ -125,7 +125,15 @@ function buildRepertoireResume(root) {
 
 function applyStationHeat(root, host, extra = {}, existing = {}) {
   const prevHost = typeof existing.host === "string" ? existing.host : null;
-  const hotSwap = prevHost && host && prevHost !== host ? { from: prevHost, to: host } : null;
+  const nextSwap = prevHost && host && prevHost !== host ? { from: prevHost, to: host } : null;
+  const keptSwap =
+    existing.hotSwap &&
+    typeof existing.hotSwap === "object" &&
+    existing.hotSwap.from &&
+    existing.hotSwap.to
+      ? existing.hotSwap
+      : null;
+  const hotSwap = nextSwap || keptSwap;
   const intent =
     clipIntent(extra.intent || extra.prompt || extra.userMessage || extra.user_prompt) ||
     (typeof existing.intent === "string" ? existing.intent : null);

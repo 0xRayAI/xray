@@ -84,6 +84,49 @@ describe('Grok hooks.json command strings', () => {
     expect(cmd).not.toContain('args');
   });
 
+  it('patchGrokHooks rewires stale args[] smoke hooks and adds compact events', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-grok-stale-'));
+    try {
+      const pluginDir = path.join(tmp, 'plugin');
+      mkdirSync(path.join(pluginDir, 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(pluginDir, 'hooks', 'hooks.json'),
+        JSON.stringify({
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: '.*',
+                hooks: [
+                  {
+                    type: 'command',
+                    command: 'node',
+                    args: ['/tmp/0xray-smoke/dist/integrations/grok/hooks/pre-tool-use.js'],
+                    timeout: 30000,
+                  },
+                ],
+              },
+            ],
+            SessionStart: [{ hooks: [{ type: 'command', command: 'node', args: ['old.js'] }] }],
+          },
+        }),
+      );
+      mkdirSync(path.join(packageRoot, 'dist/integrations/grok/hooks'), { recursive: true });
+      patchGrokHooks(pluginDir, packageRoot, tmp, () => {}, 'stale');
+      const patched = JSON.parse(readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8'));
+      const commands = collectHookCommands(patched);
+      for (const hook of commands) {
+        expect(hook.args).toBeUndefined();
+        expect(String(hook.command)).toContain('node ');
+        expect(hook.timeout).toBe(30);
+      }
+      expect(JSON.stringify(patched)).toContain('PreCompact');
+      expect(JSON.stringify(patched)).toContain('--hook-event=pre_compact');
+      expect(JSON.stringify(patched)).toContain('PostCompact');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('isEphemeralInstallRoot skips machine ~/.grok for temp consumers', () => {
     expect(isEphemeralInstallRoot('/var/folders/jx/abc/T/opencode-0xray-e2e-1')).toBe(true);
     expect(isEphemeralInstallRoot('/tmp/hermes-0xray-e2e-1')).toBe(true);

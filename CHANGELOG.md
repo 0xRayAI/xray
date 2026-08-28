@@ -17,7 +17,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
 - **Repertoire harness** — leftover `memory_routing` default-off auto-enables when sibling `@0xray/repertoire` or `node_modules/@0xray/repertoire` resolves. Explicit `enabled: false` + `provider: repertoire` is opt-out. Consumers without the module stay off. Not an 8th 0xRay MCP.
 - **Session resume** — Grok session-start writes `repertoireResume` (one line, signal count) into `session-boot.json` so the next station survives compaction.
-- **Hot-swap station card** — `.xray/state/STATION.md` is the projection of `session-boot.json` (intent, git, plan, last host, Repertoire). PreCompact/PostCompact persist it. AGENTS.md tells the model to Read it. Host change sets `hotSwap`. Works without Repertoire.
+- **Hot-swap station card** — `.xray/state/STATION.md` is the projection of `session-boot.json` (intent, git, plan, last host, Repertoire). PreCompact/PostCompact persist it. AGENTS.md tells the model to Read it. Host change sets `hotSwap`. Same-host compact **keeps** the last swap stamp. Works without Repertoire.
 - **Repertoire MCP names** — unprefixed server tools; Grok TUI namespaces them as `repertoire__*`. Grok install resolves sibling *or* `node_modules/@0xray/repertoire`.
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
@@ -40,12 +40,15 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
 - Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
 - OpenClaw install writes `opencode-cli` backend when `opencode` is on PATH (CLI pickle, not Zen HTTP).
+- `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold.
+- Stop committing machine-local `.grok/` (absolute hook paths). Template stays `src/integrations/grok/plugin/0xray`.
 
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
 - `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
 - OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
 - Wear-layout: plugin/hook resolve, ephemeral marker skip, opencode-cli backend write.
+- `grok-hooks-json`: stale `args[]` smoke hooks gain compact events; station compact keeps `hotSwap`.
 - Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
 
 ---
