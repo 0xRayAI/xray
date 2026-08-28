@@ -22,7 +22,7 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Kernel copy | exo / survive the window, not 42/45/7 |
 | Proof last pass | temperament-live green; consumer smoke green; vitest 3423 passed (one researcher smoke flake under parallel load, green alone) |
 
-HEAD: `049ff83` + this takeover (Grok wear / compact persist / host-swap keep). Repertoire HEAD: companion `feat/mcp-unprefix`.
+HEAD: `2d43f51` + TUI `/compact` fire (same-host `hotSwap` kept). Repertoire HEAD: companion `feat/mcp-unprefix`.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
 
@@ -30,11 +30,11 @@ HEAD: `049ff83` + this takeover (Grok wear / compact persist / host-swap keep). 
 
 The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change host, and the work is still moving.**
 
-1. **Live compact — TUI attach proven; TUI `/compact` not yet fired this session.** SessionStart + UserPromptSubmit + PreToolUse live. Constitution denied Codex 11/29/69 and `rm -rf /` on this TUI. Frontier spawn warned. Explore subagent confirmed no `pre_compact` after 18:23Z. Discovery-path hooks are loaded — **run `/compact`** to finish the cut.
+1. **Live compact — done.** TUI `/compact` on this Grok floor. PreCompact `18:44:37Z` and PostCompact `18:45:43Z` rewrote `.xray/state/STATION.md`. Same session `01a03ecd-…`. Intent clipped (no `<user_query>`). git `feat/v4-temperament@2d43f51`. Same-host rewrite **kept** `hotSwap: opencode → grok`. Successor Read the card; did not cold-start.
 2. **Live host swap — done.** Same repo, OpenCode CLI (1.16.2) `opencode run` **Read** `.xray/state/STATION.md` and answered `Hot-swap: grok → opencode` / `Host: opencode (guided)`. Did not cold-start. Intent and git unchanged. Return to this Grok floor stamps `Hot-swap: opencode → grok`.
 3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0**. Machine `~/.openclaw/xray-consumer-root.txt` mtime still `1787777404`. Throwaway HOME grew `.hermes` / `.openclaw` — plant markers untouched. Hermes/OpenClaw **CLIs** are not on PATH; do not install.
 
-(1) and (2) were *done*, not only unit-tested. Compact persist across a same-host rewrite now **keeps** the last `hotSwap` stamp.
+(1), (2), and (3) were *done*, not only unit-tested. Compact persist across a same-host rewrite **kept** the last `hotSwap` stamp.
 
 ## Left — product gaps
 
@@ -66,4 +66,4 @@ These are why the card is not yet a finished bus.
 
 ## One line
 
-**Card is written. TUI constitution live. `/compact` is the remaining TUI compact fire. npm is still 3.5.5. Do not merge.**
+**Cut proven on this plant: compact, OpenCode host-swap, isolated-HOME OpenCode e2e. npm is still 3.5.5. Do not merge.**

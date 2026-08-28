@@ -30,9 +30,9 @@ npm still **3.5.5**. Product version **4.0.0**. **Still in development — do no
 
 ## Next bites
 
-Open list: [4.0 left](./v4-left.md). Live compact, live OpenCode host-swap, and isolated-HOME OpenCode e2e are proven on this plant. Ship only when leaving dev.
+Open list: [4.0 left](./v4-left.md). Live TUI compact, live OpenCode host-swap, and isolated-HOME OpenCode e2e are proven on this plant. Ship only when leaving dev.
 
-Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo. Restart Grok so TUI `/compact` loads worn PreCompact/PostCompact.
+Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo.
 
 ## One line for the next model
 
