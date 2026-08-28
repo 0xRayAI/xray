@@ -19,7 +19,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
 - **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
 - **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
-- **Docs** — [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
+- **Docs** — [4.0 vision](docs-site/docs/architecture/v4-vision.md), [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
 
 ### 🔄 Changes
 - Product version **4.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.x entries below are historical (npm `3.0.0`–`3.5.5`).

@@ -50,3 +50,5 @@ Details: [Suit temperament](../guides/v3-temperament.md).
 ## One-line 4.0
 
 **Keep the three-subsystem OS. Temper the ceremony. Trim the duplicate organs.**
+
+North star (exo vs toolset, factory wear): [4.0 vision](./v4-vision.md).

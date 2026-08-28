@@ -17,6 +17,7 @@ Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with t
 - [Platform Integrations](./guides/integrations) — OpenCode, Grok, Hermes, OpenClaw
 - [Features Since 3.1](./guides/features-since-3.1) — Full capability changelog
 - [features.json](./guides/features-json) — Config reference including `memory_routing`
+- [4.0 vision](./architecture/v4-vision) — exo, not toolset: where we are, where we are going, why
 - [Suit temperament](./guides/v3-temperament) — guided vs frontier (4.0)
 - [v3 from v2](./architecture/v3-from-v2) — keep the three subsystems, trim fat
 - [Parallel Work Tracks](./guides/parallel-work-tracks) — Grok Build + user asides + worktrees

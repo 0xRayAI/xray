@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       items: [
         'guides/getting-started',
+        'architecture/v4-vision',
         'guides/v3-temperament',
         'guides/autonomy-command',
         'guides/integrations',
@@ -55,6 +56,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'architecture/ARCHITECTURE',
         'architecture/CONCEPTUAL_ARCHITECTURE',
+        'architecture/v4-vision',
         'architecture/v3-from-v2',
         'architecture/GROK_GUIDE',
         'architecture/v3-museum',

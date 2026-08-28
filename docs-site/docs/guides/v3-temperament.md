@@ -78,6 +78,7 @@ New framework `xray/features.json` ships `auto`. Postinstall copies that templat
 
 ## Related
 
+- [4.0 vision](../architecture/v4-vision.md) — exo, not toolset
 - [features.json](./features-json.md)
 - [Autonomy command](./autonomy-command.md)
 - [Integrations](./integrations.md)
