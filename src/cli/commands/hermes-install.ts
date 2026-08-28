@@ -82,6 +82,16 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
     }
 
     wiring.copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+    const hooksSrc = [
+      path.join(packageRoot, 'dist/integrations/hooks'),
+      path.join(packageRoot, 'src/integrations/hooks'),
+    ].find((p) => fs.existsSync(p));
+    if (hooksSrc) {
+      const hooksDst = path.join(home, '.hermes/plugins/hooks');
+      fs.mkdirSync(hooksDst, { recursive: true });
+      fs.cpSync(hooksSrc, hooksDst, { recursive: true, force: true });
+      frameworkLogger.log('hermes-integration', 'hooks-copied', 'info', { destination: hooksDst });
+    }
     const wired = wiring.wireHermesBridge(targetDir);
     console.log(`\x1b[32m✓ Wired Hermes mcp_servers (${wired.count} servers)\x1b[0m`);
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);

@@ -4,7 +4,8 @@
  * Used by Grok hooks, Hermes bridge, and verify fixtures.
  */
 import { createRequire } from 'node:module';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,13 +36,36 @@ function resolvePackageRoot() {
   return resolve(__dirname, '../../..');
 }
 
+function markedRoots() {
+  const files = [
+    join(homedir(), '.hermes', 'plugins', 'xray-hermes', 'xray-consumer-root.txt'),
+    join(homedir(), '.openclaw', 'xray-consumer-root.txt'),
+  ];
+  const roots = [];
+  for (const file of files) {
+    if (!existsSync(file)) continue;
+    try {
+      const marked = readFileSync(file, 'utf8').trim();
+      if (marked) {
+        roots.push(marked, join(marked, 'node_modules', '0xray'));
+      }
+    } catch {
+      /* ignore unreadable marker */
+    }
+  }
+  return roots;
+}
+
 function loadDelegationGate() {
   const root = resolvePackageRoot();
+  const envRoot = process.env.XRAY_AI_PATH || '';
   const candidates = [
     join(__dirname, '../../nucleus/delegation-gate.js'),
     join(root, 'dist/nucleus/delegation-gate.js'),
+    envRoot ? join(envRoot, 'dist/nucleus/delegation-gate.js') : '',
+    ...markedRoots().map((r) => join(r, 'dist/nucleus/delegation-gate.js')),
     join(process.cwd(), 'node_modules/0xray/dist/nucleus/delegation-gate.js'),
-  ];
+  ].filter(Boolean);
   const found = candidates.find((p) => existsSync(p));
   if (!found) {
     throw new Error(
