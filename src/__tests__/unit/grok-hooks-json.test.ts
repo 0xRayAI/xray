@@ -8,7 +8,7 @@ import { createRequire } from 'module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.join(__dirname, '../../..');
 const require = createRequire(import.meta.url);
-const { patchGrokHooks, grokHookShellCommand, isEphemeralInstallRoot } = require(
+const { patchGrokHooks, grokHookShellCommand, isEphemeralInstallRoot, installAllBridges } = require(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs'),
 );
 
@@ -127,6 +127,44 @@ describe('Grok hooks.json command strings', () => {
       expect(readFileSync(discovered, 'utf8')).toContain('PreCompact');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('installAllBridges dogfood still patches discovery-path hooks', () => {
+    const parent = mkdtempSync(path.join(tmpdir(), 'xray-dogfood-wear-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      mkdirSync(tmp, { recursive: true });
+      const pluginSrc = path.join(tmp, 'src/integrations/grok/plugin/0xray/hooks');
+      mkdirSync(pluginSrc, { recursive: true });
+      writeFileSync(
+        path.join(pluginSrc, 'hooks.json'),
+        readFileSync(
+          path.join(packageRoot, 'src/integrations/grok/plugin/0xray/hooks/hooks.json'),
+          'utf8',
+        ),
+      );
+      mkdirSync(path.join(tmp, 'dist/integrations/grok/hooks'), { recursive: true });
+      writeFileSync(path.join(tmp, 'dist/integrations/grok/hooks/pre-tool-use.js'), '');
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({ memory_routing: { enabled: false, provider: 'null' } }),
+      );
+      mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+
+      installAllBridges({ packageRoot: tmp, targetDir: tmp, log: () => {} });
+      const discovered = path.join(tmp, '.grok', 'hooks', '0xray.json');
+      expect(existsSync(discovered)).toBe(true);
+      expect(readFileSync(discovered, 'utf8')).toContain('PreCompact');
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray', 'features.json'), 'utf8'));
+      expect(features.memory_routing.enabled).toBe(true);
+      expect(features.memory_routing.provider).toBe('repertoire');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
     }
   });
 

@@ -38,7 +38,7 @@ After enable, features look like:
 }
 ```
 
-Grok session-start writes a one-line `repertoireResume` into `.xray/state/session-boot.json` (signal count when the registry is readable).
+Grok session-start writes a one-line `repertoireResume` into `.xray/state/session-boot.json` (signal count when the registry is readable). Leftover default-off also **resolves at runtime** in `loadMemoryRoutingProvider` / `getMemoryRoutingConfig` when the module is on disk — ExecutionPlanner and thinDispatch then use Repertoire without a features rewrite. Station heat persists **working state** (not Bedrock primitives) to `.xray/state/repertoire-working.json` and a `Working:` line on `STATION.md`. Compact may `ingestFeedback` for non-Bedrock matches. Explicit opt-out remains `enabled: false` + `provider: "repertoire"`.
 
 ## `features.json` fields (`memory_routing`)
 

@@ -128,6 +128,35 @@ export function resolveRuntimeSuitProfile(
   return resolveSuitProfile(raw, host);
 }
 
+/**
+ * Write station heat when this host/session has no live card yet.
+ * OpenClaw has no SessionStart — PreToolUse is the session boundary.
+ */
+export function maybeHeatHostStation(
+  projectRoot: string,
+  host: SuitHost,
+  extra: Record<string, unknown> = {},
+): string | null {
+  const bootPath = path.join(projectRoot, '.xray', 'state', 'session-boot.json');
+  const cardPath = path.join(projectRoot, '.xray', 'state', 'STATION.md');
+  let existing: Record<string, unknown> = {};
+  if (fs.existsSync(bootPath)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(bootPath, 'utf8')) as Record<string, unknown>;
+    } catch {
+      existing = {};
+    }
+  }
+  const sessionId = typeof extra.sessionId === 'string' ? extra.sessionId : null;
+  const sameHost = existing.host === host;
+  const sameSession =
+    !sessionId || existing.sessionId == null || existing.sessionId === sessionId;
+  if (sameHost && sameSession && fs.existsSync(cardPath)) {
+    return bootPath;
+  }
+  return writeSuitSessionBoot(projectRoot, host, extra);
+}
+
 /** Merge temperament fields into session-boot.json for the host that just started. */
 export function writeSuitSessionBoot(
   projectRoot: string,

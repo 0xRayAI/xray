@@ -22,8 +22,8 @@ npm still **3.5.5**. Product version **4.0.0**. **Still in development — do no
 - Pickle = OpenCode CLI (`opencode run --pure`), not Zen/Go HTTP
 - Hermes pack local 4.0; plugin id `xray-hermes`
 - Repertoire `feat/mcp-unprefix` (Grok MCP names) — companion branch. Wired on this floor.
-- **Harness (this station):** leftover `memory_routing` default-off auto-enables when the Repertoire module resolves; Grok session-start writes `repertoireResume`. Explicit opt-out preserved. No 8th MCP.
-- **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact) and host change write it. AGENTS.md: Read the card, continue, do not cold-start. Stranger without Repertoire still has git + intent + plan.
+- **Harness (this station):** leftover `memory_routing` default-off auto-enables at install **and** at runtime when the Repertoire module resolves. Station heat writes `.xray/state/repertoire-working.json` (session memory). Explicit opt-out preserved. No 8th MCP.
+- **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact), host change, and OpenClaw first-tool write it. AGENTS.md: Read the card (Grok does not inject). Live plan line. Stranger without Repertoire still has git + intent + plan.
 - Stranger-install wear: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.
@@ -36,4 +36,4 @@ Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok
 
 ## One line for the next model
 
-**Suit that survives the context window. Compact, OpenCode swap, and isolated-HOME OpenCode e2e kept moving from STATION.md. npm still 3.5.5. Still in dev — no npm publish.**
+**Suit that survives the context window. Compact, host-swap, isolated-HOME OpenCode e2e, Repertoire working state. npm still 3.5.5. Still in dev — no npm publish.**

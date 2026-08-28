@@ -45,6 +45,70 @@ function extractIntent(event) {
   return event.prompt || event.userMessage || event.user_prompt || event.compactContext || null;
 }
 
+async function loadStationProvider(root) {
+  const { loadMemoryRoutingProvider } = await import('../../../memory-routing/index.js');
+  const { readFileSync, existsSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  let routing = { enabled: false, provider: 'null' };
+  const featuresPath = join(root, '.xray', 'features.json');
+  if (existsSync(featuresPath)) {
+    try {
+      routing = JSON.parse(readFileSync(featuresPath, 'utf8')).memory_routing || routing;
+    } catch {
+      /* leftover default */
+    }
+  }
+  return loadMemoryRoutingProvider(routing, root);
+}
+
+async function matchStationSignals(root, intent) {
+  if (!intent) return [];
+  try {
+    const provider = await loadStationProvider(root);
+    if (!provider || provider.id === 'null' || typeof provider.getTaskConfidence !== 'function') {
+      return [];
+    }
+    const conf = provider.getTaskConfidence({
+      id: 'station',
+      description: String(intent),
+      type: 'station',
+    });
+    const names = Array.isArray(conf.matchedSignals) ? conf.matchedSignals : [];
+    const safe = [];
+    for (const signalName of names) {
+      const name = String(signalName || '').trim();
+      if (!name || name.toLowerCase().startsWith('bedrock-')) continue;
+      safe.push(name);
+      if (safe.length >= 4) break;
+    }
+    return safe;
+  } catch {
+    return [];
+  }
+}
+
+const COMPACT_EVENTS = new Set(['pre_compact', 'post_compact']);
+
+async function ingestStationFeedback(root, sessionId, hookEvent, matchedSignals) {
+  if (!COMPACT_EVENTS.has(hookEvent) || !matchedSignals.length) return;
+  try {
+    const provider = await loadStationProvider(root);
+    if (!provider || typeof provider.ingestFeedback !== 'function') return;
+    provider.ingestFeedback({
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId || 'station',
+      taskId: `station-${hookEvent}`,
+      assignedAgent: 'station',
+      memorySignals: matchedSignals,
+      complexity: 0,
+      success: true,
+      durationMs: 0,
+    });
+  } catch {
+    /* working-state file is the session memory; registry ingest is best-effort */
+  }
+}
+
 async function main() {
   const root = workspaceRoot();
   let HOOK_EVENT = 'session_start';
@@ -81,13 +145,16 @@ async function main() {
           : '0xray/grok-session-start';
 
     const intent = extractIntent(event);
+    const matchedSignals = await matchStationSignals(eventRoot, intent);
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
       ...(intent ? { intent } : {}),
+      ...(matchedSignals.length ? { matchedSignals } : {}),
     });
 
     const bootPath = writeSessionBoot(eventRoot, payload) || ensureSessionBoot(eventRoot, source);
+    await ingestStationFeedback(eventRoot, sessionId, HOOK_EVENT, matchedSignals);
 
     appendHookActivity(eventRoot, 'grok-session-start', 'session-boot-written', 'success', {
       bootPath,

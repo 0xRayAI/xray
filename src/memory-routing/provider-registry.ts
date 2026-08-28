@@ -1,7 +1,7 @@
 import { featuresConfigLoader } from '../core/features-config.js';
 import type { MemoryRoutingConfig, MemoryRoutingProvider } from './types.js';
 import { NullMemoryRoutingProvider } from './null-provider.js';
-import { loadMemoryRoutingProvider } from './provider-loader.js';
+import { loadMemoryRoutingProvider, resolveLeftoverEnabledConfig } from './provider-loader.js';
 import { validateMemoryRoutingConfig } from './validate-config.js';
 
 let cachedProvider: MemoryRoutingProvider | null = null;
@@ -13,7 +13,10 @@ export function getMemoryRoutingConfig(): MemoryRoutingConfig {
   const validation = validateMemoryRoutingConfig(
     raw ?? { enabled: false, provider: 'null' },
   );
-  return validation.normalized;
+  return (
+    resolveLeftoverEnabledConfig(validation.normalized, process.cwd()) ??
+    validation.normalized
+  );
 }
 
 export async function getMemoryRoutingProvider(

@@ -38,6 +38,7 @@ describe('station hot-swap', () => {
     expect(md).toContain('Host: grok (frontier)');
     expect(md).toContain('Intent: survive the cut');
     expect(md).toContain('Do not cold-start');
+    expect(md).toContain('Grok does not inject this file');
     expect(md).not.toContain('Hot-swap:');
   });
 
@@ -130,14 +131,103 @@ describe('station hot-swap', () => {
   });
 
   it('applyStationHeat keeps prior intent when the new event has none', () => {
-    const heat = applyStationHeat(
-      os.tmpdir(),
-      'grok',
-      {},
-      { host: 'grok', intent: 'keep the line moving' },
-    );
-    expect(heat.intent).toBe('keep the line moving');
-    expect(heat.hotSwap).toBeNull();
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-keep-intent-'));
+    try {
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {},
+        { host: 'grok', intent: 'keep the line moving' },
+      );
+      expect(heat.intent).toBe('keep the line moving');
+      expect(heat.hotSwap).toBeNull();
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('plan line uses live todos, not a stale description, then git subject', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plan-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+        JSON.stringify({
+          active: true,
+          description: 'STALE description that is already done',
+          phases: [
+            {
+              todos: [
+                { id: '2.1', task: 'Live constitution deny', status: 'completed' },
+                { id: '2.2', task: 'Harness Repertoire working state', status: 'in_progress' },
+              ],
+            },
+          ],
+        }),
+      );
+      const live = applyStationHeat(tmp, 'grok', { intent: 'integrate repertoire' }, {});
+      expect(live.planLine).toBe('Harness Repertoire working state');
+
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+        JSON.stringify({
+          active: true,
+          description: 'STALE description that is already done',
+          phases: [{ todos: [{ id: '2.1', task: 'done work', status: 'completed' }] }],
+        }),
+      );
+      const gitPlan = applyStationHeat(tmp, 'grok', { intent: 'integrate repertoire' }, {});
+      expect(gitPlan.planLine).toBe('init');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('leftover memory_routing off becomes Repertoire on when the module resolves', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-rep-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: false, provider: 'null' },
+        }),
+      );
+      fs.mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      fs.writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'curated_signals.json'),
+        JSON.stringify({ signals: [{ name: 'three-subsystem-verifiable-os' }] }),
+      );
+      const heat = applyStationHeat(tmp, 'grok', { intent: 'wear repertoire', matchedSignals: ['three-subsystem-verifiable-os', 'bedrock-field-guide'] }, {});
+      expect(heat.repertoireResume).toMatch(/^Repertoire: on/);
+      expect(heat.repertoireResume).toContain('1 signals');
+      expect(heat.workingLine).toContain('three-subsystem-verifiable-os');
+      expect(heat.workingLine).not.toContain('bedrock-');
+      const card = writeStationMarkdown(tmp, { ...heat, host: 'grok', suit_profile: 'frontier' });
+      const md = fs.readFileSync(card || '', 'utf8');
+      expect(md).toContain('Repertoire: on');
+      expect(md).toContain('Working:');
+      expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'repertoire-working.json'))).toBe(true);
+
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: false, provider: 'repertoire' },
+        }),
+      );
+      const opted = applyStationHeat(tmp, 'grok', { intent: 'opt out' }, {});
+      expect(opted.repertoireResume).toMatch(/memory_routing off/);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
   });
 
   it('writeStationMarkdown is the Read target', () => {

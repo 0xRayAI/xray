@@ -622,6 +622,29 @@ function installGitHooks(packageRoot, log) {
 }
 
 /**
+ * Framework dogfood: do not deploy consumer copies over the package,
+ * but keep Grok discovery hooks hot and enable Repertoire when it resolves.
+ */
+function installFrameworkDogfoodWear(packageRoot, log) {
+  const featuresPath = path.join(packageRoot, ".xray", "features.json");
+  if (fs.existsSync(featuresPath)) {
+    applyResolvedMemoryRouting(featuresPath, packageRoot);
+  }
+
+  const sourceDir = findGrokPluginSource(packageRoot);
+  const pluginDest = path.join(packageRoot, ".grok", "plugins", "0xray");
+  if (!sourceDir) {
+    log("grok-dogfood", "skipped", "warn", { reason: "grok plugin source missing" });
+    return;
+  }
+  const hooksJson = path.join(pluginDest, "hooks", "hooks.json");
+  if (!fs.existsSync(hooksJson)) {
+    copyPluginDir(sourceDir, pluginDest);
+  }
+  patchGrokHooks(pluginDest, packageRoot, packageRoot, log, "grok-dogfood");
+}
+
+/**
  * Install all 4 platform bridges for a consumer project.
  * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
  */
@@ -634,7 +657,11 @@ function installAllBridges(opts) {
       /* noop */
     });
 
-  if (!isConsumerInstall(packageRoot, targetDir)) return;
+  if (!isConsumerInstall(packageRoot, targetDir)) {
+    log("install-bridges", "framework dogfood wear", "info");
+    installFrameworkDogfoodWear(packageRoot, log);
+    return;
+  }
 
   log("install-bridges", "starting 4-platform install", "info");
 
@@ -664,4 +691,5 @@ module.exports = {
   grokHookShellCommand,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
+  installFrameworkDogfoodWear,
 };

@@ -10,7 +10,7 @@ Quick reference for the xray AI orchestration framework (**v4.0.0**).
 
 ## Hot-swap
 
-Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job.
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 ## What is xray?
 

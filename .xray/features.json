@@ -158,10 +158,12 @@
     "min_success_rate": 0.7
   },
   "memory_routing": {
-    "enabled": false,
-    "provider": "null",
-    "module_path": "",
-    "config": {}
+    "enabled": true,
+    "provider": "repertoire",
+    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "config": {
+      "signalsPath": "../repertoire/data/curated_signals.json"
+    }
   },
   "synthesis": {
     "enabled": false,

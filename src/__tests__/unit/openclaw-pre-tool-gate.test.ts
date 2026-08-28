@@ -55,4 +55,36 @@ describe('OpenClaw host PreToolUse', () => {
     );
     expect(result.action).toBe('allow');
   });
+
+  it('heats STATION.md on first OpenClaw tool of a session, not again', () => {
+    const first = evaluateOpenClawHostPreTool(
+      'read_file',
+      { path: 'src/foo.ts' },
+      { projectRoot: tmp, sessionId: 'oc-heat-1' },
+    );
+    expect(first.action).toBe('allow');
+    const card = path.join(tmp, '.xray', 'state', 'STATION.md');
+    expect(fs.existsSync(card)).toBe(true);
+    const boot = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { host: string; sessionId: string };
+    expect(boot.host).toBe('openclaw');
+    expect(boot.sessionId).toBe('oc-heat-1');
+    const firstMtime = fs.statSync(card).mtimeMs;
+    evaluateOpenClawHostPreTool(
+      'read_file',
+      { path: 'src/bar.ts' },
+      { projectRoot: tmp, sessionId: 'oc-heat-1' },
+    );
+    expect(fs.statSync(card).mtimeMs).toBe(firstMtime);
+    evaluateOpenClawHostPreTool(
+      'read_file',
+      { path: 'src/baz.ts' },
+      { projectRoot: tmp, sessionId: 'oc-heat-2' },
+    );
+    const boot2 = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { sessionId: string };
+    expect(boot2.sessionId).toBe('oc-heat-2');
+  });
 });

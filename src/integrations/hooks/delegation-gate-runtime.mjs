@@ -78,6 +78,7 @@ function loadDelegationGate() {
 const gate = loadDelegationGate();
 
 export const writeSuitSessionBoot = gate.writeSuitSessionBoot;
+export const maybeHeatHostStation = gate.maybeHeatHostStation;
 
 export const {
   loadDelegationGateFeatures,

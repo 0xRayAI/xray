@@ -51,15 +51,44 @@ function readGitBrief(root) {
   }
 }
 
-function readPlanLine(root) {
-  const planPath = join(root, ".xray", "state", "lead-dev-plan.json");
-  if (!existsSync(planPath)) return null;
+function readGitSubject(root) {
   try {
-    const plan = JSON.parse(readFileSync(planPath, "utf8"));
-    return clipIntent(plan.description || plan.goal || plan.name);
+    const opts = { cwd: root, encoding: "utf8", timeout: 2000, stdio: ["ignore", "pipe", "ignore"] };
+    const subject = execFileSync("git", ["log", "-1", "--format=%s"], opts).trim();
+    return clipIntent(subject);
   } catch {
     return null;
   }
+}
+
+function readLiveTodoLine(plan) {
+  const phases = Array.isArray(plan.phases) ? plan.phases : [];
+  for (const phase of phases) {
+    const todos = Array.isArray(phase && phase.todos) ? phase.todos : [];
+    for (const todo of todos) {
+      const status = String((todo && todo.status) || "pending");
+      if (status === "completed" || status === "cancelled") continue;
+      const task = clipIntent((todo && (todo.task || todo.description)) || "");
+      if (task) return task;
+    }
+  }
+  return null;
+}
+
+function readPlanLine(root) {
+  const planPath = join(root, ".xray", "state", "lead-dev-plan.json");
+  if (existsSync(planPath)) {
+    try {
+      const plan = JSON.parse(readFileSync(planPath, "utf8"));
+      if (plan && plan.active !== false) {
+        const live = readLiveTodoLine(plan);
+        if (live) return live;
+      }
+    } catch {
+      /* fall through to git subject — stale / empty plan is not the card */
+    }
+  }
+  return readGitSubject(root);
 }
 
 function resolveRepertoireProviderModule(root) {
@@ -97,17 +126,89 @@ function countCuratedSignals(signalsPath) {
   return null;
 }
 
+function readMemoryRoutingConfig(root) {
+  const featuresPath = join(root, ".xray", "features.json");
+  if (!existsSync(featuresPath)) return {};
+  try {
+    return JSON.parse(readFileSync(featuresPath, "utf8")).memory_routing || {};
+  } catch {
+    return {};
+  }
+}
+
+function isExplicitMemoryRoutingOptOut(mr) {
+  return Boolean(mr) && mr.enabled === false && mr.provider === "repertoire";
+}
+
+function isLeftoverMemoryRoutingOff(mr) {
+  if (!mr || typeof mr !== "object") return true;
+  if (mr.enabled === true) return false;
+  if (isExplicitMemoryRoutingOptOut(mr)) return false;
+  const provider = mr.provider == null || mr.provider === "" ? "null" : mr.provider;
+  return provider === "null";
+}
+
+function isMemoryRoutingResolvedOn(mr, modulePath) {
+  if (!modulePath) return false;
+  if (isExplicitMemoryRoutingOptOut(mr)) return false;
+  if (mr.enabled === true && (mr.provider === "repertoire" || mr.provider === "custom")) return true;
+  return isLeftoverMemoryRoutingOff(mr);
+}
+
+function repertoireWorkingPath(root) {
+  return join(root, ".xray", "state", "repertoire-working.json");
+}
+
+function readRepertoireWorking(root) {
+  const dest = repertoireWorkingPath(root);
+  if (!existsSync(dest)) return null;
+  try {
+    const data = JSON.parse(readFileSync(dest, "utf8"));
+    return data && typeof data === "object" ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function stationSafeSignals(names) {
+  if (!Array.isArray(names)) return [];
+  const out = [];
+  for (const raw of names) {
+    const name = String(raw || "").trim();
+    if (!name) continue;
+    if (name.toLowerCase().startsWith("bedrock-")) continue;
+    out.push(name);
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+function persistRepertoireWorking(root, snapshot) {
+  try {
+    mkdirSync(join(root, ".xray", "state"), { recursive: true });
+    const prev = readRepertoireWorking(root) || {};
+    const next = { ...prev, ...snapshot, updatedAt: new Date().toISOString() };
+    writeFileSync(repertoireWorkingPath(root), `${JSON.stringify(next, null, 2)}\n`);
+    return next;
+  } catch {
+    return null;
+  }
+}
+
+function formatWorkingLine(working) {
+  if (!working || typeof working !== "object") return null;
+  const matched = stationSafeSignals(working.matchedSignals);
+  if (matched.length) return `Working: ${matched.join(", ")}`;
+  const hook = typeof working.hookEvent === "string" ? working.hookEvent : null;
+  const head = working.git && working.git.head ? String(working.git.head) : null;
+  if (hook && head) return `Working: last ${hook} @ ${head}`;
+  if (hook) return `Working: last ${hook}`;
+  return "Working: station snapshot";
+}
+
 function buildRepertoireResume(root) {
   const modulePath = resolveRepertoireProviderModule(root);
-  let mr = {};
-  const featuresPath = join(root, ".xray", "features.json");
-  if (existsSync(featuresPath)) {
-    try {
-      mr = JSON.parse(readFileSync(featuresPath, "utf8")).memory_routing || {};
-    } catch {
-      mr = {};
-    }
-  }
+  const mr = readMemoryRoutingConfig(root);
   if (!modulePath) {
     return "Repertoire: not installed (memory_routing stays off)";
   }
@@ -120,7 +221,7 @@ function buildRepertoireResume(root) {
   }
   const n = existsSync(signalsPath) ? countCuratedSignals(signalsPath) : null;
   const count = n == null ? "" : ` — ${n} signals`;
-  if (mr.enabled === true && mr.provider === "repertoire") {
+  if (isMemoryRoutingResolvedOn(mr, modulePath)) {
     return `Repertoire: on${count}`;
   }
   return `Repertoire: present, memory_routing off${count}`;
@@ -148,7 +249,21 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const intentBit = intent ? `intent: ${intent}` : "intent: (none yet)";
   const gitBit = git ? `git ${git.branch}@${git.head}` : "git: n/a";
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
-  const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}`;
+  const matchedSignals = stationSafeSignals(extra.matchedSignals);
+  const workingSnapshot = {
+    host,
+    intent,
+    git,
+    hotSwap,
+    hookEvent: extra.hookEvent || extra.source || null,
+    memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
+    repertoireResume,
+  };
+  if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals;
+  const working = persistRepertoireWorking(root, workingSnapshot);
+  const workingLine = formatWorkingLine(working);
+  const workingBit = workingLine ? workingLine : "working: (none)";
+  const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;
   return {
     lastHost: prevHost,
     hotSwap,
@@ -156,6 +271,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     git,
     planLine,
     repertoireResume,
+    workingLine,
     stationLine,
   };
 }
@@ -176,8 +292,12 @@ function formatStationMarkdown(fields) {
     lines.push("Git: n/a");
   }
   lines.push(fields.repertoireResume || "Repertoire: not installed (memory_routing stays off)");
+  if (fields.workingLine) {
+    lines.push(fields.workingLine);
+  }
   lines.push("");
   lines.push("Continue this card. Compaction and host change are the same cut. Do not cold-start.");
+  lines.push("Grok does not inject this file — Read it. OpenCode injects. Do not thicken the Grok exo.");
   lines.push("");
   return lines.join("\n");
 }
@@ -200,8 +320,14 @@ module.exports = {
   clipIntent,
   readExistingBoot,
   readGitBrief,
+  readGitSubject,
   readPlanLine,
   buildRepertoireResume,
+  isExplicitMemoryRoutingOptOut,
+  isLeftoverMemoryRoutingOff,
+  persistRepertoireWorking,
+  readRepertoireWorking,
+  formatWorkingLine,
   applyStationHeat,
   formatStationMarkdown,
   writeStationMarkdown,

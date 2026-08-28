@@ -53,6 +53,7 @@ import {
   resolveSuitProfile,
   spawnPlanModeForProfile,
   writeSuitSessionBoot,
+  maybeHeatHostStation,
   type CeremonyLevel,
   type SpawnPlanMode,
   type SuitHost,
@@ -60,7 +61,7 @@ import {
   type SuitTemperamentConfig,
 } from './suit-temperament.js';
 
-export { writeSuitSessionBoot };
+export { writeSuitSessionBoot, maybeHeatHostStation };
 
 export { extractSpawnCwd, validateAsideWorktreeCwd, provisionGitWorktree } from './aside-worktree.js';
 
@@ -687,6 +688,18 @@ export function evaluatePreToolGate(
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
+  if (ctx.host === 'openclaw') {
+    try {
+      maybeHeatHostStation(ctx.projectRoot, 'openclaw', {
+        source: '0xray/openclaw-pre-tool',
+        sessionId: ctx.sessionId || 'openclaw',
+        hookEvent: 'session_start',
+      });
+    } catch {
+      /* station heat is best-effort — constitution still runs */
+    }
+  }
+
   const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);
   if (!constitution.allow) return constitution;
 

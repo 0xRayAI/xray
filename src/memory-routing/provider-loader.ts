@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { frameworkLogger } from '../core/framework-logger.js';
 import type {
@@ -32,6 +32,7 @@ const REPERTOIRE_CANDIDATE_PATHS = [
   '../repertoire/dist/provider/memory-routing-provider.js',
   '../../repertoire/dist/provider/memory-routing-provider.js',
   '../../../repertoire/dist/provider/memory-routing-provider.js',
+  'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js',
 ];
 
 /**
@@ -67,7 +68,59 @@ function defaultPathForProvider(
     const abs = resolve(cwd, rel);
     if (existsSync(abs)) return abs;
   }
-  return null;
+  const nm = join(
+    cwd,
+    'node_modules',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  return existsSync(nm) ? nm : null;
+}
+
+export function isExplicitMemoryRoutingOptOut(config: MemoryRoutingConfig): boolean {
+  return config.enabled === false && config.provider === 'repertoire';
+}
+
+/** Leftover shipped default: enabled false + provider null. Not an explicit opt-out. */
+export function isLeftoverMemoryRoutingOff(config: MemoryRoutingConfig): boolean {
+  if (config.enabled === true) return false;
+  if (isExplicitMemoryRoutingOptOut(config)) return false;
+  return config.provider === 'null' || !config.provider;
+}
+
+function leftoverRepertoireModulePath(cwd: string): string | null {
+  const sibling = resolve(cwd, '../repertoire/dist/provider/memory-routing-provider.js');
+  if (existsSync(sibling)) return sibling;
+  const nm = join(
+    cwd,
+    'node_modules',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  return existsSync(nm) ? nm : null;
+}
+
+export function resolveLeftoverEnabledConfig(
+  config: MemoryRoutingConfig,
+  cwd: string,
+): MemoryRoutingConfig | null {
+  if (!isLeftoverMemoryRoutingOff(config)) return null;
+  const modulePath =
+    resolveModulePath(config.module_path, cwd) ?? leftoverRepertoireModulePath(cwd);
+  if (!modulePath) return null;
+  const enabled: MemoryRoutingConfig = {
+    enabled: true,
+    provider: 'repertoire',
+    module_path: modulePath,
+  };
+  if (config.config) enabled.config = config.config;
+  return enabled;
 }
 
 export async function loadMemoryRoutingProvider(
@@ -86,7 +139,8 @@ export async function loadMemoryRoutingProvider(
     return createNullProvider();
   }
 
-  const effective = validation.normalized;
+  const leftover = resolveLeftoverEnabledConfig(validation.normalized, cwd);
+  const effective = leftover ?? validation.normalized;
 
   if (!effective.enabled || effective.provider === 'null') {
     return createNullProvider();
