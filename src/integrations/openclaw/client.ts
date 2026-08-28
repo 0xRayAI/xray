@@ -1,7 +1,7 @@
 /**
  * OpenClaw WebSocket Client
  *
- * Implements OpenClaw Gateway Protocol v3 with proper request/response handling,
+ * Implements OpenClaw Gateway Protocol v3–v4 with proper request/response handling,
  * reconnection logic, and event management.
  *
  * @since 2026-03-14
@@ -318,7 +318,7 @@ export class OpenClawClient {
   private sendHandshake(): void {
     const params: OpenClawConnectParams = {
       minProtocol: 3,
-      maxProtocol: 3,
+      maxProtocol: 4,
       client: {
         id: 'openclaw-tui',
         version: '1.0.0',
@@ -329,7 +329,7 @@ export class OpenClawClient {
       scopes: ['operator.read', 'operator.write', 'operator.admin'],
       caps: [],
       commands: [],
-      userAgent: `OpenClaw-TUI/2026.4.25`,
+      userAgent: `OpenClaw-TUI/2026.7.1`,
     };
 
     // Add auth if provided

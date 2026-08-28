@@ -1,13 +1,19 @@
 import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { definePluginEntry } from 'openclaw/plugin-sdk/plugin-entry';
 
 const require = createRequire(import.meta.url);
+const pluginDir = dirname(fileURLToPath(import.meta.url));
+
+function hasGate(root) {
+  return Boolean(root) && existsSync(join(root, 'dist/nucleus/delegation-gate.js'));
+}
 
 function resolveXrayRoot() {
-  if (process.env.XRAY_AI_PATH && existsSync(join(process.env.XRAY_AI_PATH, 'dist/nucleus/delegation-gate.js'))) {
+  if (hasGate(process.env.XRAY_AI_PATH || '')) {
     return process.env.XRAY_AI_PATH;
   }
   const marker = join(homedir(), '.openclaw', 'xray-consumer-root.txt');
@@ -16,9 +22,11 @@ function resolveXrayRoot() {
     marked,
     marked ? join(marked, 'node_modules', '0xray') : '',
     marked ? join(marked, '..', 'xray') : '',
+    // Linked plugin lives at src/integrations/openclaw/plugin/xray-pre-tool
+    join(pluginDir, '..', '..', '..', '..', '..'),
   ].filter(Boolean);
   for (const candidate of candidates) {
-    if (existsSync(join(candidate, 'dist/nucleus/delegation-gate.js'))) {
+    if (hasGate(candidate)) {
       return candidate;
     }
   }

@@ -123,7 +123,7 @@ function wsConnect(token, port = 18789) {
         ws.send(JSON.stringify({
           type: 'req', method: 'connect', id: 'c-' + Date.now(),
           params: {
-            minProtocol: 3, maxProtocol: 3,
+            minProtocol: 3, maxProtocol: 4,
             client: { id: 'openclaw-tui', version: '1.0.0', platform: process.platform, mode: 'cli' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write', 'operator.admin'],
