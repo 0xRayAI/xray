@@ -78,6 +78,8 @@ node_modules/
 
 # Build artifacts
 dist/
+!vendor/@0xray/repertoire/dist/
+!vendor/@0xray/repertoire/dist/**
 tsconfig.tsbuildinfo
 
 # Docs inference (generated at runtime)
