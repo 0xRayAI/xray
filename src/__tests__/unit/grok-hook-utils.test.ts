@@ -6,9 +6,11 @@ import {
   buildRepertoireResume,
   buildSessionBootPayload,
   ensureSessionBoot,
+  loadFeatures,
   resolveSiblingWorkspaceRoots,
   sessionBootNeedsRefresh,
 } from '../../integrations/grok/hooks/grok-hook-utils.js';
+import { handlePostToolUse } from '../../integrations/grok/hooks/post-tool-use.js';
 
 describe('grok-hook-utils', () => {
   let tmp: string;
@@ -104,6 +106,42 @@ describe('grok-hook-utils', () => {
     expect(boot.workspaceRoot).toBe(tmp);
     expect(boot.suit_profile).toBe('frontier');
     expect(boot.repertoireResume).toMatch(/^Repertoire:/);
+  });
+
+  it('loadFeatures forwards grok_postprocessor_light from features.json', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        grok_postprocessor_light: true,
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    expect(loadFeatures(tmp).grok_postprocessor_light).toBe(true);
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    expect(loadFeatures(tmp).grok_postprocessor_light).toBe(false);
+  });
+
+  it('PostToolUse runs grok_postprocessor_light when the flag is on', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ grok_postprocessor_light: true }),
+    );
+    handlePostToolUse(
+      {
+        workspaceRoot: tmp,
+        toolName: 'Write',
+        toolInput: { path: 'src/a.ts' },
+      },
+      tmp,
+    );
+    const marker = path.join(tmp, '.xray', 'inference', 'postprocessor-light-latest.json');
+    expect(fs.existsSync(marker)).toBe(true);
+    const payload = JSON.parse(fs.readFileSync(marker, 'utf8')) as { tool: string; mode: string };
+    expect(payload.tool).toBe('Write');
+    expect(payload.mode).toBe('grok-post-tool-light');
   });
 
   it('buildRepertoireResume reports on when sibling Repertoire is enabled', () => {

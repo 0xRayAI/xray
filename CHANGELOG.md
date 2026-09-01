@@ -45,6 +45,11 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold. Patched JSON is also copied to `<project>/.grok/hooks/0xray.json` — the path Grok TUI actually loads.
 - `buildLeadDevPlan` / `buildSynthesisCheckpointPlan` resolve temperament from `projectRoot`, not `process.cwd()` session-boot. A Grok frontier checkout no longer empties guided confer todos in tmp asides and release-gate verify scripts.
 - Stop committing machine-local `.grok/` (absolute hook paths). Template stays `src/integrations/grok/plugin/0xray`.
+- Grok hook `command` strings quote `XRAY_AI_PATH` and the script path so installs with spaces still start PreToolUse (Grok fail-opens on crash).
+- OpenClaw `maybeHeatHostStation` skips only when both sides have a concrete matching session id. An install card with no session no longer swallows first PreToolUse.
+- `postinstall.cjs` always calls `installAllBridges` (framework dogfood wear is no longer gated out of the production caller).
+- `loadFeatures` forwards `grok_postprocessor_light`; PostToolUse can run the advertised write-tool marker path.
+- `0xray grok install` writes `[mcp_servers.repertoire]` to `<project>/.grok/config.toml` and resolves the sibling from the consumer root.
 
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
@@ -54,6 +59,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `grok-hooks-json`: stale `args[]` smoke hooks gain compact events; station compact keeps `hotSwap`.
 - `autonomy-kernel`: plan consults follow `projectRoot` profile; confer/synthesis verify scripts pass tmp, not cwd Grok boot.
 - Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
+- Quoted Grok hook commands; postinstall dogfood wear; OpenClaw install-then-first-tool heat; `grok_postprocessor_light` loadFeatures; project Repertoire `config.toml`.
 
 ---
 

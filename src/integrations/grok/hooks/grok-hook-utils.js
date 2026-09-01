@@ -144,7 +144,14 @@ export function buildRepertoireResume(root = workspaceRoot()) {
 
 export function loadFeatures(root = workspaceRoot()) {
   const featuresPath = resolveFeaturesPath(root);
-  if (!featuresPath) return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
+  if (!featuresPath) {
+    return {
+      lead_dev_mode: true,
+      no_new_surface: true,
+      per_suite_triage: true,
+      grok_postprocessor_light: false,
+    };
+  }
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));
     const orch = data.multi_agent_orchestration ?? {};
@@ -153,6 +160,7 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: orch.no_new_surface !== false,
       per_suite_test_triage: orch.per_suite_test_triage !== false,
       auto_chain_delegations: orch.auto_chain_delegations !== false,
+      grok_postprocessor_light: data.grok_postprocessor_light === true,
       sibling_repos: resolveSiblingWorkspaceRoots(root),
     };
   } catch {
@@ -161,6 +169,7 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: true,
       per_suite_triage: true,
       auto_chain_delegations: true,
+      grok_postprocessor_light: false,
       sibling_repos: [],
     };
   }

@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { evaluateOpenClawHostPreTool } from '../../integrations/openclaw/pre-tool-gate.js';
+import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
 describe('OpenClaw host PreToolUse', () => {
   let tmp: string;
@@ -86,5 +87,22 @@ describe('OpenClaw host PreToolUse', () => {
       fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
     ) as { sessionId: string };
     expect(boot2.sessionId).toBe('oc-heat-2');
+  });
+
+  it('install-then-first-tool rewrites a session-less OpenClaw card', () => {
+    writeSuitSessionBoot(tmp, 'openclaw', { source: '0xray/openclaw-install' });
+    const card = path.join(tmp, '.xray', 'state', 'STATION.md');
+    const installMtime = fs.statSync(card).mtimeMs;
+    const first = evaluateOpenClawHostPreTool(
+      'read_file',
+      { path: 'src/foo.ts' },
+      { projectRoot: tmp, sessionId: 'oc-after-install' },
+    );
+    expect(first.action).toBe('allow');
+    const boot = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { sessionId: string };
+    expect(boot.sessionId).toBe('oc-after-install');
+    expect(fs.statSync(card).mtimeMs).toBeGreaterThanOrEqual(installMtime);
   });
 });

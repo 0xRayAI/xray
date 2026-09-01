@@ -38,6 +38,12 @@ describe('Grok hooks.json command strings', () => {
       expect(hook.args).toBeUndefined();
       expect(String(hook.command)).toContain('node ');
       expect(String(hook.command)).toContain('dist/integrations/grok/hooks/');
+      expect(String(hook.command)).toMatch(
+        /XRAY_AI_PATH="\$\{XRAY_AI_PATH:-node_modules\/0xray\}"/,
+      );
+      expect(String(hook.command)).toMatch(
+        /node "\$\{XRAY_AI_PATH:-node_modules\/0xray\}\/dist\//,
+      );
       expect(hook.timeout).toBe(30);
     }
     const joined = JSON.stringify(raw);
@@ -68,7 +74,7 @@ describe('Grok hooks.json command strings', () => {
       const commands = collectHookCommands(patched);
       for (const hook of commands) {
         expect(hook.args).toBeUndefined();
-        expect(String(hook.command)).toContain(`XRAY_AI_PATH=${packageRoot}`);
+        expect(String(hook.command)).toContain(`XRAY_AI_PATH=${JSON.stringify(packageRoot)}`);
         expect(String(hook.command)).toContain('node ');
         expect(hook.timeout).toBe(30);
       }
@@ -82,6 +88,16 @@ describe('Grok hooks.json command strings', () => {
     expect(cmd.startsWith('XRAY_AI_PATH=')).toBe(true);
     expect(cmd).toContain('pre-tool-use.js');
     expect(cmd).not.toContain('args');
+  });
+
+  it('grokHookShellCommand quotes paths so spaces survive', () => {
+    const spaced = '/tmp/My Project/0xray';
+    const cmd = grokHookShellCommand(spaced, 'pre-tool-use.js', '--hook-event=pre_compact');
+    expect(cmd).toBe(
+      `XRAY_AI_PATH=${JSON.stringify(spaced)} node ${JSON.stringify(
+        path.join(spaced, 'dist', 'integrations', 'grok', 'hooks', 'pre-tool-use.js'),
+      )} --hook-event=pre_compact`,
+    );
   });
 
   it('patchGrokHooks rewires stale args[] smoke hooks and adds compact events', () => {
@@ -127,6 +143,48 @@ describe('Grok hooks.json command strings', () => {
       expect(readFileSync(discovered, 'utf8')).toContain('PreCompact');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('postinstall dogfood wear patches discovery-path hooks', () => {
+    const parent = mkdtempSync(path.join(tmpdir(), 'xray-postinstall-dogfood-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    const { runPostinstall } = require(path.join(packageRoot, 'scripts/node/postinstall.cjs'));
+    try {
+      mkdirSync(tmp, { recursive: true });
+      const pluginSrc = path.join(tmp, 'src/integrations/grok/plugin/0xray/hooks');
+      mkdirSync(pluginSrc, { recursive: true });
+      writeFileSync(
+        path.join(pluginSrc, 'hooks.json'),
+        readFileSync(
+          path.join(packageRoot, 'src/integrations/grok/plugin/0xray/hooks/hooks.json'),
+          'utf8',
+        ),
+      );
+      mkdirSync(path.join(tmp, 'dist/integrations/grok/hooks'), { recursive: true });
+      writeFileSync(path.join(tmp, 'dist/integrations/grok/hooks/pre-tool-use.js'), '');
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({ memory_routing: { enabled: false, provider: 'null' } }),
+      );
+      mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+
+      runPostinstall(tmp, tmp, () => {});
+      const discovered = path.join(tmp, '.grok', 'hooks', '0xray.json');
+      expect(existsSync(discovered)).toBe(true);
+      const discoveredJson = JSON.parse(readFileSync(discovered, 'utf8'));
+      expect(JSON.stringify(discoveredJson)).toContain('PreCompact');
+      const preTool = discoveredJson.hooks?.PreToolUse?.[0]?.hooks?.[0]?.command as string;
+      expect(preTool).toContain(`XRAY_AI_PATH=${JSON.stringify(tmp)}`);
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray', 'features.json'), 'utf8'));
+      expect(features.memory_routing.enabled).toBe(true);
+      expect(features.memory_routing.provider).toBe('repertoire');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
     }
   });
 

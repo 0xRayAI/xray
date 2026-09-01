@@ -32,74 +32,77 @@ function extractToolOutput(event) {
   );
 }
 
+export function handlePostToolUse(event, root = workspaceRoot()) {
+  const eventRoot = event.workspaceRoot || event.cwd || root;
+  const sessionId = resolveSessionId(event);
+  const { toolName, toolInput } = extractToolContext(event);
+
+  if (isOrchestrateToolEvent(toolName, toolInput) || gateIsOrchestrateToolEvent(toolName, toolInput)) {
+    appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-pending', 'info', {
+      tool: toolName,
+      sessionId,
+      note: 'orchestrate-task completed — pending-delegations.json written by task-handler',
+    });
+    try {
+      recordRoutingOutcome(eventRoot, {
+        tool: toolName,
+        agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'orchestrate-task',
+        planTodoId: toolInput?.planTodoId ?? null,
+        sessionId,
+      });
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  const features = loadFeatures(eventRoot);
+  if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {
+    try {
+      const paths = [
+        toolInput?.path,
+        toolInput?.filePath,
+        toolInput?.file_path,
+      ].filter(Boolean);
+      runGrokPostprocessorLight(eventRoot, { tool: toolName, paths });
+    } catch {
+      /* non-blocking */
+    }
+  }
+
+  if (isSubagentTool(toolName)) {
+    const spawnResult = evaluatePostToolSpawn(toolName, toolInput, eventRoot, {
+      toolOutput: extractToolOutput(event),
+      sessionId,
+    });
+
+    if (spawnResult.satisfied.length > 0 || spawnResult.expectedTodoId) {
+      appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-cleared', 'success', {
+        tool: toolName,
+        satisfied: spawnResult.satisfied.map((d) => d.id),
+        clearedAll: spawnResult.clearedAll,
+        planTodoId: spawnResult.expectedTodoId ?? null,
+        receiptRecorded: spawnResult.receiptRecorded ?? false,
+        todoCompleted: spawnResult.todoCompleted ?? false,
+      });
+    }
+    try {
+      recordRoutingOutcome(eventRoot, {
+        tool: toolName,
+        agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'subagent',
+        planTodoId: toolInput?.planTodoId ?? spawnResult.expectedTodoId ?? null,
+        sessionId,
+      });
+    } catch {
+      /* non-blocking */
+    }
+  }
+}
+
 async function main() {
   const root = workspaceRoot();
   try {
     const event = await readStdinJson();
-    const eventRoot = event.workspaceRoot || event.cwd || root;
-    const sessionId = resolveSessionId(event);
-    const { toolName, toolInput } = extractToolContext(event);
-
-    if (isOrchestrateToolEvent(toolName, toolInput) || gateIsOrchestrateToolEvent(toolName, toolInput)) {
-      appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-pending', 'info', {
-        tool: toolName,
-        sessionId,
-        note: 'orchestrate-task completed — pending-delegations.json written by task-handler',
-      });
-      try {
-        recordRoutingOutcome(eventRoot, {
-          tool: toolName,
-          agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'orchestrate-task',
-          planTodoId: toolInput?.planTodoId ?? null,
-          sessionId,
-        });
-      } catch {
-        /* non-blocking */
-      }
-    }
-
-    const features = loadFeatures(eventRoot);
-    if (features.grok_postprocessor_light === true && isWriteTool(toolName)) {
-      try {
-        const paths = [
-          toolInput?.path,
-          toolInput?.filePath,
-          toolInput?.file_path,
-        ].filter(Boolean);
-        runGrokPostprocessorLight(eventRoot, { tool: toolName, paths });
-      } catch {
-        /* non-blocking */
-      }
-    }
-
-    if (isSubagentTool(toolName)) {
-      const spawnResult = evaluatePostToolSpawn(toolName, toolInput, eventRoot, {
-        toolOutput: extractToolOutput(event),
-        sessionId,
-      });
-
-      if (spawnResult.satisfied.length > 0 || spawnResult.expectedTodoId) {
-        appendHookActivity(eventRoot, 'grok-post-tool-use', 'auto-chain-cleared', 'success', {
-          tool: toolName,
-          satisfied: spawnResult.satisfied.map((d) => d.id),
-          clearedAll: spawnResult.clearedAll,
-          planTodoId: spawnResult.expectedTodoId ?? null,
-          receiptRecorded: spawnResult.receiptRecorded ?? false,
-          todoCompleted: spawnResult.todoCompleted ?? false,
-        });
-      }
-      try {
-        recordRoutingOutcome(eventRoot, {
-          tool: toolName,
-          agent: toolInput?.subagent_type ?? toolInput?.agent ?? 'subagent',
-          planTodoId: toolInput?.planTodoId ?? spawnResult.expectedTodoId ?? null,
-          sessionId,
-        });
-      } catch {
-        /* non-blocking */
-      }
-    }
-
+    handlePostToolUse(event, root);
     process.exit(0);
   } catch (err) {
     appendHookActivity(root, 'grok-post-tool-use', 'hook-error', 'error', {
@@ -109,4 +112,7 @@ async function main() {
   }
 }
 
-main();
+const launchedAsCli = Boolean(process.argv[1] && process.argv[1].endsWith('post-tool-use.js'));
+if (launchedAsCli) {
+  main();
+}

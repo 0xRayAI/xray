@@ -24,6 +24,7 @@ npm still **3.5.5**. Product version **4.0.0**. **Still in development — do no
 - Repertoire `feat/mcp-unprefix` (Grok MCP names) — companion branch. Wired on this floor.
 - **Harness (this station):** leftover `memory_routing` default-off auto-enables at install **and** at runtime when the Repertoire module resolves. Station heat writes `.xray/state/repertoire-working.json` (session memory). Explicit opt-out preserved. No 8th MCP.
 - **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact), host change, and OpenClaw first-tool write it. AGENTS.md: Read the card (Grok does not inject). Live plan line. Stranger without Repertoire still has git + intent + plan.
+- **Wear review P0:** quoted Grok hook commands; `postinstall` dogfood actually runs; OpenClaw heat skips only on a concrete session; `grok_postprocessor_light` forwarded; Repertoire `config.toml` on the project.
 - Stranger-install wear: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH.
 
 **Not 0xRay bugs:** Zen 429, glm billing, xAI chat key, `hermes update` 17k commits, OpenCode 1.17 vs 1.18.

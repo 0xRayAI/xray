@@ -20,11 +20,14 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap` |
 | Repertoire working state | `.xray/state/repertoire-working.json` at compact / host-swap / session heat. Card `Working:` line. Routing uses the registry; Bedrock names stay off the card |
 | Grok Read contract | AGENTS.md Read. OpenCode injects. Grok does not — do not thicken the exo |
-| Framework dogfood wear | `installAllBridges` on the 0xRay package still patches `.grok/hooks/0xray.json` and enable-when-resolves |
-| OpenClaw session heat | first PreToolUse of a session writes the card (no SessionStart on that floor) |
+| Framework dogfood wear | `postinstall.cjs` always calls `installAllBridges`; non-consumer path patches `.grok/hooks/0xray.json` and enable-when-resolves |
+| OpenClaw session heat | first PreToolUse with a **concrete** session id writes the card (install/init cards with no session id do not skip that heat) |
+| Grok hook quoting | `grokHookShellCommand` and the shipped template quote `XRAY_AI_PATH` and the script path (Grok fail-opens if the shell never starts) |
+| grok_postprocessor_light | `loadFeatures` forwards the flag; PostToolUse actually runs the light pipeline |
+| Project Repertoire toml | `0xray grok install` writes `<project>/.grok/config.toml`, not the package copy |
 | Compact persist | Grok `PreCompact` / `PostCompact` rewrite the card. SessionStart stdout is ignored — disk is the contract |
 | Kernel copy | exo / survive the window, not 42/45/7 |
-| Proof last pass | temperament-live green; consumer smoke green; vitest 3423 passed (one researcher smoke flake under parallel load, green alone) |
+| Proof last pass | temperament-live green; wear-review P0 unit 77/77; isolated-HOME OpenCode e2e 42/0/0 (prior). Full vitest not re-run this pass |
 
 HEAD: `feat/v4-temperament` (Repertoire working-state / leftover bus). Repertoire: `47f46cc` unprefix (`htafolla/repertoire#1`).
 
@@ -45,10 +48,11 @@ The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change
 Closed on this plant (worn, not npm-shipped):
 
 - **Grok Read contract.** AGENTS.md + the card. OpenCode injects. Do not thicken the Grok exo.
-- **Framework dogfood wear.** `installAllBridges` on the package still patches discovery-path hooks and enable-when-resolves. `.grok/` stays gitignored.
+- **Framework dogfood wear.** `postinstall` always calls `installAllBridges`. Consumer vs dogfood is decided inside it. `.grok/` stays gitignored.
 - **Repertoire working state.** Leftover default-off + module → routing **on**. Station snapshot at `.xray/state/repertoire-working.json`. Registry primitives are not the session; the working file is.
 - **Live plan line.** First incomplete lead-dev todo, else `git log -1` subject. Stale descriptions do not stick.
-- **OpenClaw session heat.** First PreToolUse of a session writes the card.
+- **OpenClaw session heat.** Skip only when host + concrete session id already match a live card. Install without a session id is not a live session.
+- **Wear review P0.** Quoted Grok hook commands; postprocessor flag forwarded; Repertoire toml on the project.
 
 Still ship-only (do not merge from this work):
 
@@ -73,4 +77,4 @@ Still ship-only (do not merge from this work):
 
 ## One line
 
-**Bus is worn on this plant: compact, host-swap, isolated-HOME OpenCode e2e, Repertoire working state. npm is still 3.5.5. Do not merge.**
+**Bus is worn on this plant: compact, host-swap, isolated-HOME OpenCode e2e, Repertoire working state, wear-review P0s. npm is still 3.5.5. Do not merge.**

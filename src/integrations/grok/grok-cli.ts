@@ -130,7 +130,7 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to ~/.grok/skills/\x1b[0m`);
     }
 
-    pinGrokPluginToInstalledDist(targetPluginDir, packageRoot);
+    pinGrokPluginToInstalledDist(targetPluginDir, packageRoot, targetDir);
     wearGrokHookCommands(targetPluginDir, packageRoot, targetDir);
 
     const projectPluginDir = path.join(targetDir, '.grok', 'plugins', '0xray');
@@ -138,9 +138,11 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       if (!fs.existsSync(projectPluginDir) || options.force) {
         fs.cpSync(sourceDir, projectPluginDir, { recursive: true, force: true });
       }
-      pinGrokPluginToInstalledDist(projectPluginDir, packageRoot);
+      pinGrokPluginToInstalledDist(projectPluginDir, packageRoot, targetDir);
       wearGrokHookCommands(projectPluginDir, packageRoot, targetDir);
     }
+
+    writeProjectRepertoireMcp(targetDir);
 
     // Attempt auto-trust (best effort)
     try {
@@ -187,7 +189,7 @@ function wearGrokHookCommands(pluginDir: string, xrayRoot: string, targetDir: st
   );
 }
 
-function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void {
+function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targetDir: string): void {
   const hookJs = path.join(xrayRoot, 'dist/integrations/grok/hooks/pre-tool-use.js');
   const cliJs = path.join(xrayRoot, 'dist/cli/index.js');
   if (!fs.existsSync(hookJs)) return;
@@ -214,7 +216,7 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
         server.args = [cliJs, 'mcp', mcpCmd];
       }
     }
-    const repertoireMcp = resolveRepertoireMcp(xrayRoot);
+    const repertoireMcp = resolveRepertoireMcp(targetDir);
     if (mcp.mcpServers) {
       if (repertoireMcp) {
         mcp.mcpServers.repertoire = {
@@ -227,16 +229,15 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string): void
     }
     fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
   }
-
-  writeProjectRepertoireMcp(xrayRoot);
 }
 
-function writeProjectRepertoireMcp(xrayRoot: string): void {
-  const repertoireMcp = resolveRepertoireMcp(xrayRoot);
-  const grokDir = path.join(xrayRoot, '.grok');
+/** Grok TUI reads <project>/.grok/config.toml, not the package copy. */
+export function writeProjectRepertoireMcp(projectRoot: string): string | null {
+  const repertoireMcp = resolveRepertoireMcp(projectRoot);
+  if (!repertoireMcp) return null;
+  const grokDir = path.join(projectRoot, '.grok');
   fs.mkdirSync(grokDir, { recursive: true });
   const tomlPath = path.join(grokDir, 'config.toml');
-  if (!repertoireMcp) return;
   const block = `[mcp_servers.repertoire]
 command = "node"
 args = [${JSON.stringify(repertoireMcp)}]
@@ -256,8 +257,10 @@ enabled = true
     const prefix = existing.trim() ? `${existing.trim()}\n\n` : '';
     fs.writeFileSync(tomlPath, `${prefix}${block}`);
   }
+  return tomlPath;
 }
 
 export default {
   installForGrokCLI,
+  writeProjectRepertoireMcp,
 };

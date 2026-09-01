@@ -128,9 +128,14 @@ export function resolveRuntimeSuitProfile(
   return resolveSuitProfile(raw, host);
 }
 
+function concreteSessionId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
 /**
  * Write station heat when this host/session has no live card yet.
  * OpenClaw has no SessionStart — PreToolUse is the session boundary.
+ * Install/init cards without a session id are not a live session.
  */
 export function maybeHeatHostStation(
   projectRoot: string,
@@ -147,10 +152,11 @@ export function maybeHeatHostStation(
       existing = {};
     }
   }
-  const sessionId = typeof extra.sessionId === 'string' ? extra.sessionId : null;
+  const sessionId = concreteSessionId(extra.sessionId);
+  const existingSessionId = concreteSessionId(existing.sessionId);
   const sameHost = existing.host === host;
   const sameSession =
-    !sessionId || existing.sessionId == null || existing.sessionId === sessionId;
+    existingSessionId !== null && sessionId !== null && existingSessionId === sessionId;
   if (sameHost && sameSession && fs.existsSync(cardPath)) {
     return bootPath;
   }

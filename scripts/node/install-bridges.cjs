@@ -180,7 +180,8 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
 function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
   const script = path.join(packageRoot, "dist", "integrations", "grok", "hooks", scriptName);
   const extra = extraArgs ? ` ${extraArgs}` : "";
-  return `XRAY_AI_PATH=${packageRoot} node ${script}${extra}`;
+  // JSON.stringify quotes so spaces/$ in install paths still exec (Grok fail-opens on crash).
+  return `XRAY_AI_PATH=${JSON.stringify(packageRoot)} node ${JSON.stringify(script)}${extra}`;
 }
 
 function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs) {

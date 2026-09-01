@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_HOST_PROFILES,
   ceremonyForProfile,
+  maybeHeatHostStation,
   resolveRuntimeSuitProfile,
   resolveSuitProfile,
   spawnPlanModeForProfile,
@@ -340,6 +341,40 @@ describe('delegation-gate temperament', () => {
     writeSuitSessionBoot(tmp, 'hermes', { source: 'test' });
     expect(resolveRuntimeSuitProfile(tmp, 'generic')).toBe('guided');
     expect(resolveRuntimeSuitProfile(tmp, 'grok')).toBe('frontier');
+  });
+
+  it('OpenClaw install card without sessionId is rewritten on first PreToolUse', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    writeSuitSessionBoot(tmp, 'openclaw', { source: '0xray/openclaw-install' });
+    const card = path.join(tmp, '.xray', 'state', 'STATION.md');
+    expect(fs.existsSync(card)).toBe(true);
+    const installBoot = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { sessionId?: string; host: string };
+    expect(installBoot.host).toBe('openclaw');
+    expect(installBoot.sessionId == null || installBoot.sessionId === '').toBe(true);
+
+    maybeHeatHostStation(tmp, 'openclaw', {
+      source: '0xray/openclaw-pre-tool',
+      sessionId: 'oc-live-1',
+    });
+    const live = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { sessionId: string };
+    expect(live.sessionId).toBe('oc-live-1');
+
+    const firstMtime = fs.statSync(card).mtimeMs;
+    maybeHeatHostStation(tmp, 'openclaw', {
+      source: '0xray/openclaw-pre-tool',
+      sessionId: 'oc-live-1',
+    });
+    expect(fs.statSync(card).mtimeMs).toBe(firstMtime);
   });
 
   it('hermes auto stays guided (spawn still denied)', () => {
