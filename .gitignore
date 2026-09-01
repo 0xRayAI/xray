@@ -4,6 +4,7 @@ docs-site/.docusaurus/
 docs-site/node_modules/
 
 # Generated runtime files
+.ci-reports/
 performance-reports/
 logs/performance-reports/
 logs/framework/activity-report.json

@@ -93,6 +93,7 @@ const cjsScripts = [
     expectedExports: [],
     description: 'Development environment setup script',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'prepare-consumer.cjs'),
@@ -100,6 +101,7 @@ const cjsScripts = [
     expectedExports: [],
     description: 'Consumer preparation script',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'reflection-processor.cjs'),
@@ -107,6 +109,7 @@ const cjsScripts = [
     expectedExports: [],
     description: 'Reflection post-processor',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'basic-security-audit.cjs'),
@@ -121,6 +124,7 @@ const cjsScripts = [
     expectedExports: [],
     description: 'CI/CD auto-fix script',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'helpers', 'resolve-config-path.cjs'),
@@ -143,12 +147,14 @@ const mjsScripts = [
     name: 'scripts/node/version-manager.mjs',
     description: 'Version manager script',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'release.mjs'),
     name: 'scripts/node/release.mjs',
     description: 'Release script',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'validate-release-docs.mjs'),
@@ -161,12 +167,14 @@ const mjsScripts = [
     name: 'scripts/node/auto-reflection-generator.mjs',
     description: 'Auto-reflection generator',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'node', 'ci-report-generator.mjs'),
     name: 'scripts/node/ci-report-generator.mjs',
     description: 'CI report generator',
     selfInvoking: true,
+    syntaxOnly: true,
   },
   {
     path: path.join(ROOT, 'scripts', 'mjs', 'validate-postinstall-config.mjs'),
@@ -176,11 +184,32 @@ const mjsScripts = [
   },
 ];
 
+const MUTATING_TREE_SCRIPTS = new Set([
+  'scripts/node/version-manager.mjs',
+  'scripts/node/release.mjs',
+  'scripts/node/auto-reflection-generator.mjs',
+  'scripts/node/ci-report-generator.mjs',
+  'scripts/node/reflection-processor.cjs',
+  'scripts/node/prepare-consumer.cjs',
+  'scripts/node/setup-dev.cjs',
+  'scripts/node/ci-cd-auto-fix.cjs',
+]);
+
 async function runTests() {
   console.log('=== CJS/MJS Scripts Loadability Tests ===\n');
 
   // ── CJS Scripts ──────────────────────────────────────────────
   console.log('--- CJS Scripts ---\n');
+
+  const pkgPath = path.join(ROOT, 'package.json');
+  const versionBefore = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+  const reflectionPath = path.join(ROOT, 'docs/reflections/reflection-pattern-suggestions.md');
+  const reflectionBefore = fs.existsSync(reflectionPath) ? fs.readFileSync(reflectionPath, 'utf8') : '';
+  for (const script of [...cjsScripts, ...mjsScripts]) {
+    if (MUTATING_TREE_SCRIPTS.has(script.name) && !script.syntaxOnly) {
+      fail(`${script.name} must be syntax-only`, 'executing it mutates the repo (version/changelog/reflections)');
+    }
+  }
 
   for (const script of cjsScripts) {
     console.log(`Testing: ${script.name} (${script.description})`);
@@ -202,7 +231,9 @@ async function runTests() {
       continue;
     }
 
-    if (script.selfInvoking) {
+    if (script.syntaxOnly) {
+      pass(`${script.name} syntax-only (does not execute; mutates the tree)`);
+    } else if (script.selfInvoking) {
       // Self-invoking scripts: run in subprocess with timeout
       // Exit code 0 = ran without crash, anything else = error
       const runResult = await runSubprocess(script.path, 10000);
@@ -279,7 +310,9 @@ async function runTests() {
     }
 
     // Attempt dynamic import or subprocess test
-    if (script.selfInvoking) {
+    if (script.syntaxOnly) {
+      pass(`${script.name} syntax-only (does not execute; mutates the tree)`);
+    } else if (script.selfInvoking) {
       // Self-invoking MJS scripts: run in subprocess with timeout
       const runResult = await runSubprocess(script.path, 10000);
       if (runResult.code === 0 || runResult.code === null) {
@@ -402,6 +435,19 @@ async function runTests() {
   }
 
   console.log('');
+
+  const versionAfter = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+  if (versionAfter === versionBefore) {
+    pass(`package.json version unchanged (${versionBefore})`);
+  } else {
+    fail('package.json version unchanged', `loadability run mutated ${versionBefore} → ${versionAfter}`);
+  }
+  const reflectionAfter = fs.existsSync(reflectionPath) ? fs.readFileSync(reflectionPath, 'utf8') : '';
+  if (reflectionAfter === reflectionBefore) {
+    pass('docs/reflections/reflection-pattern-suggestions.md unchanged');
+  } else {
+    fail('docs/reflections unchanged', 'loadability run mutated reflection-pattern-suggestions.md');
+  }
 
   // ── Summary ──────────────────────────────────────────────────
   console.log('=== Summary ===');

@@ -38,6 +38,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 
 ### 🐛 Fixes
 - OpenClaw plugin ships in the npm tarball; install resolves `dist` then `src`.
+- Bare `node scripts/node/release.mjs` no longer defaults to patch (that path applied npm `3.5.5` → `3.5.6` over the 4.0 plant). Bump type is required. CJS/MJS loadability syntax-checks version/release/reflection/prepare/setup/CI-report scripts instead of executing them.
 - Postinstall wears OpenClaw PreToolUse (stdin hook + plugin link), not only `0xray openclaw install`.
 - Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
 - Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
