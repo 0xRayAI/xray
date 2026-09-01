@@ -74,6 +74,30 @@ function isProviderInfraError(text) {
   );
 }
 
+function isScopeError(text) {
+  return /missing scope:\s*operator\.write|FORBIDDEN/i.test(String(text || ''));
+}
+
+/** 2026.8.2: token-only WS often lacks operator.write. Official CLI is the write path. */
+function agentChat(message, timeoutSec = 90) {
+  try {
+    const out = execSync(
+      `openclaw agent --thinking low --timeout ${timeoutSec} --model xai/grok-4.5 --message ${JSON.stringify(message)}`,
+      {
+        encoding: 'utf-8',
+        timeout: (timeoutSec + 20) * 1000,
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    return { text: String(out || ''), error: null, toolCalls: [], agentPhases: [] };
+  } catch (e) {
+    const text = String(e.stdout || '');
+    const err = String(e.stderr || e.message || '');
+    return { text, error: err || 'openclaw agent failed', toolCalls: [], agentPhases: [] };
+  }
+}
+
 function section(title) {
   console.log(`\n\x1b[1m${'='.repeat(60)}\n  ${title}\n${'='.repeat(60)}\x1b[0m`);
 }
@@ -315,7 +339,12 @@ async function main() {
 
   if (ws) {
     console.log('  Sending: "What is 2+2? Reply with just the number."');
-    const r1 = await sendChat(ws, 'What is 2+2? Reply with just the number.');
+    let chatViaAgent = false;
+    let r1 = await sendChat(ws, 'What is 2+2? Reply with just the number.');
+    if (r1.error && isScopeError(r1.error)) {
+      chatViaAgent = true;
+      r1 = agentChat('What is 2+2? Reply with just the number.', 90);
+    }
     let chatProviderDown = false;
     if (r1.error) {
       if (isBillingError(r1.error)) {
@@ -352,7 +381,7 @@ async function main() {
       '3. Tell me if the final number is prime',
       'Reply with: step1=<n> step2=<n> prime=<true|false>',
     ].join(' ');
-    const r2 = await sendChat(ws, orchPrompt, 120000);
+    const r2 = chatViaAgent ? agentChat(orchPrompt, 120) : await sendChat(ws, orchPrompt, 120000);
     if (r2.error) {
       skip('orchestration multi-step', r2.error.substring(0, 120));
     } else if (r2.text) {
@@ -379,7 +408,9 @@ async function main() {
     section('Phase 5: chat.send Multi-turn Session');
 
     const multiKey = `e2e-multi-${Date.now()}`;
-    const r3a = await sendChat(ws, 'Remember the secret word: "quasar". Just say OK.', 60000, multiKey);
+    const r3a = chatViaAgent
+      ? agentChat('Remember the secret word: "quasar". Just say OK.', 60)
+      : await sendChat(ws, 'Remember the secret word: "quasar". Just say OK.', 60000, multiKey);
     if (r3a.error) {
       skip('multi-turn turn 1', r3a.error.substring(0, 120));
     } else {
@@ -389,7 +420,9 @@ async function main() {
     // Small delay to let gateway finish streaming
     await new Promise((r) => setTimeout(r, 2000));
 
-    const r3b = await sendChat(ws, 'What was the secret word I asked you to remember? Reply with just the word.', 60000, multiKey);
+    const r3b = chatViaAgent
+      ? agentChat('What was the secret word I asked you to remember? Reply with just the word.', 60)
+      : await sendChat(ws, 'What was the secret word I asked you to remember? Reply with just the word.', 60000, multiKey);
     if (r3b.error) {
       skip('multi-turn turn 2', r3b.error.substring(0, 120));
     } else if (/quasar/i.test(r3b.text)) {
@@ -418,9 +451,14 @@ async function main() {
     } else {
     console.log('  Sending prompt that may trigger tool use...');
     const toolPrompt = 'Use any available tools to find out what day of the week April 27, 2026 falls on.';
-    const r4 = await sendChat(ws, toolPrompt, 90000);
+    let r4 = await sendChat(ws, toolPrompt, 90000);
+    if (r4.error && isScopeError(r4.error)) {
+      r4 = agentChat(toolPrompt, 90);
+    }
+    r4.toolCalls = r4.toolCalls || [];
+    r4.agentPhases = r4.agentPhases || [];
     if (r4.error) {
-      if (isProviderInfraError(r4.error)) {
+      if (isProviderInfraError(r4.error) || isScopeError(r4.error)) {
         skip('tool-calling', r4.error.substring(0, 120));
       } else {
         fail('tool-calling', r4.error.substring(0, 120));

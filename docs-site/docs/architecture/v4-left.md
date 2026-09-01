@@ -27,7 +27,7 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Project Repertoire toml | `0xray grok install` writes `<project>/.grok/config.toml`, not the package copy |
 | Compact persist | Grok `PreCompact` / `PostCompact` rewrite the card. SessionStart stdout is ignored — disk is the contract |
 | Kernel copy | exo / survive the window, not 42/45/7 |
-| Proof last pass | temperament-live green with Hermes+OpenClaw CLIs on PATH; isolated-HOME OpenCode e2e **42/0/0** on 4.0.0 tarball; OpenClaw 2026.8.2 isolated gateway ready (`gateway-client` handshake). Hermes xAI API key from OpenCode auth is 403 — pickle/Grok OAuth are the live free paths |
+| Proof last pass | temperament-live green (gateway :18789 HTTP 200). Host e2e: OpenCode **42/0/0**, Grok **64/0/0**, Hermes **42/0/2**, OpenClaw **96/0/1**. All four on xAI OAuth (`xai-oauth` / `xai/oauth` / OpenCode `xAI oauth`). |
 
 HEAD: `feat/v4-temperament` (Repertoire working-state / leftover bus). Repertoire: `47f46cc` unprefix (`htafolla/repertoire#1`).
 

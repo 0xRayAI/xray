@@ -51,6 +51,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `loadFeatures` forwards `grok_postprocessor_light`; PostToolUse can run the advertised write-tool marker path.
 - `0xray grok install` writes `[mcp_servers.repertoire]` to `<project>/.grok/config.toml` and resolves the sibling from the consumer root.
 - OpenClaw 2026.8.2 handshake uses client id `gateway-client` (not `openclaw-tui`). Control-UI id requires device identity; TUI id is rejected on loopback.
+- OpenClaw e2e falls back to `openclaw agent` when token-only WS lacks `operator.write`. Grok e2e asserts `evaluatePreToolGate` SSOT instead of inlined gate names.
 
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
