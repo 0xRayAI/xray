@@ -27,7 +27,7 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Project Repertoire toml | `0xray grok install` writes `<project>/.grok/config.toml`, not the package copy |
 | Compact persist | Grok `PreCompact` / `PostCompact` rewrite the card. SessionStart stdout is ignored — disk is the contract |
 | Kernel copy | exo / survive the window, not 42/45/7 |
-| Proof last pass | temperament-live green; wear-review P0 unit 77/77; isolated-HOME OpenCode e2e 42/0/0 (prior). Full vitest not re-run this pass |
+| Proof last pass | temperament-live green with Hermes+OpenClaw CLIs on PATH; isolated-HOME OpenCode e2e **42/0/0** on 4.0.0 tarball; OpenClaw 2026.8.2 isolated gateway ready (`gateway-client` handshake). Hermes xAI API key from OpenCode auth is 403 — pickle/Grok OAuth are the live free paths |
 
 HEAD: `feat/v4-temperament` (Repertoire working-state / leftover bus). Repertoire: `47f46cc` unprefix (`htafolla/repertoire#1`).
 
@@ -39,7 +39,8 @@ The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change
 
 1. **Live compact — done.** TUI `/compact` on this Grok floor. PreCompact `18:44:37Z` and PostCompact `18:45:43Z` rewrote `.xray/state/STATION.md`. Same session `01a03ecd-…`. Intent clipped (no `<user_query>`). git `feat/v4-temperament@2d43f51`. Same-host rewrite **kept** `hotSwap: opencode → grok`. Successor Read the card; did not cold-start.
 2. **Live host swap — done.** Same repo, OpenCode CLI (1.16.2) `opencode run` **Read** `.xray/state/STATION.md` and answered `Hot-swap: grok → opencode` / `Host: opencode (guided)`. Did not cold-start. Intent and git unchanged. Return to this Grok floor stamps `Hot-swap: opencode → grok`.
-3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0**. Machine `~/.openclaw/xray-consumer-root.txt` mtime still `1787777404`. Throwaway HOME grew `.hermes` / `.openclaw` — plant markers untouched. Hermes/OpenClaw **CLIs** are not on PATH; do not install.
+3. **Isolated HOME host e2e — OpenCode done.** `HOME=/tmp/xray-isolated-home-*` `test-opencode-e2e.mjs` **42/0/0** on local `0xray-4.0.0.tgz`. Machine OpenClaw consumer marker held after that isolated run.
+4. **CLIs now on PATH (this plant).** Hermes Agent **0.19.0** via `uv tool install` (Python 3.12, not the 17k-commit git installer). OpenClaw **2026.8.2** via Node **24.20.0** (system Node 25.6.1 is outside OpenClaw engines). OpenCode **1.16.2** already present. `xray-hermes` enabled with tool override. Isolated OpenClaw gateway listens; chat.send still needs 2026.8.2 device pairing for `operator.write` (token-only is read-scoped). No machine gateway daemon on :18789.
 
 (1), (2), and (3) were *done*, not only unit-tested. Compact persist across a same-host rewrite **kept** the last `hotSwap` stamp.
 

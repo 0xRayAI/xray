@@ -320,7 +320,7 @@ export class OpenClawClient {
       minProtocol: 3,
       maxProtocol: 4,
       client: {
-        id: 'openclaw-tui',
+        id: 'gateway-client',
         version: '1.0.0',
         platform: process.platform,
         mode: 'cli',

@@ -50,6 +50,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `postinstall.cjs` always calls `installAllBridges` (framework dogfood wear is no longer gated out of the production caller).
 - `loadFeatures` forwards `grok_postprocessor_light`; PostToolUse can run the advertised write-tool marker path.
 - `0xray grok install` writes `[mcp_servers.repertoire]` to `<project>/.grok/config.toml` and resolves the sibling from the consumer root.
+- OpenClaw 2026.8.2 handshake uses client id `gateway-client` (not `openclaw-tui`). Control-UI id requires device identity; TUI id is rejected on loopback.
 
 ### ✅ Tests
 - `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.

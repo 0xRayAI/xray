@@ -124,7 +124,7 @@ function wsConnect(token, port = 18789) {
           type: 'req', method: 'connect', id: 'c-' + Date.now(),
           params: {
             minProtocol: 3, maxProtocol: 4,
-            client: { id: 'openclaw-tui', version: '1.0.0', platform: process.platform, mode: 'cli' },
+            client: { id: 'gateway-client', version: '1.0.0', platform: process.platform, mode: 'cli' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write', 'operator.admin'],
             auth: { token },
@@ -160,6 +160,19 @@ function sendChat(ws, message, timeoutMs = 90000, sessionKey = null) {
 
     const handler = (data) => {
       const msg = JSON.parse(data.toString());
+
+      if (msg.type === 'res' && msg.ok === false) {
+        clearTimeout(timeout);
+        ws.off('message', handler);
+        resolve({
+          text,
+          error: msg.error?.message || 'request failed',
+          runId,
+          toolCalls,
+          agentPhases,
+        });
+        return;
+      }
 
       if (msg.event === 'agent' && msg.payload?.data) {
         const d = msg.payload.data;
