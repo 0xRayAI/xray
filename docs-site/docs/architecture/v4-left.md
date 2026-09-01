@@ -15,6 +15,7 @@ What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./
 | Constitution on four floors | Grok, OpenCode, Hermes, OpenClaw — one SSOT gate |
 | Temperament | `frontier` / `guided` / `strict` / `auto`. Missing key stays guided |
 | Stranger-install wear | pack → isolated install → Codex 11 blocks. Ephemeral e2e does not clobber machine markers |
+| Factory memory organ | `@0xray/repertoire@0.2.0` vendored (8 seed primitives, no Bedrock). Isolated tarball wears it without `../repertoire`. Extra MCP `repertoire`, not an 8th `xray-*`. |
 | Repertoire unprefix | companion `feat/mcp-unprefix`. Grok TUI sees `repertoire__*` |
 | Enable-when-resolves | leftover `memory_routing` default-off turns on if the module is actually there (install **and** runtime). Explicit opt-out kept |
 | Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap` |

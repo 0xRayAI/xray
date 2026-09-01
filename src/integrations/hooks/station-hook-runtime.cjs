@@ -103,6 +103,17 @@ function resolveRepertoireProviderModule(root) {
     "provider",
     "memory-routing-provider.js",
   );
+  const vendorProvider = join(
+    root,
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
+  if (existsSync(nmProvider)) return nmProvider;
+  if (existsSync(vendorProvider)) return vendorProvider;
   try {
     const pkg = JSON.parse(readFileSync(join(siblingRoot, "package.json"), "utf8"));
     if ((pkg.name === "@0xray/repertoire" || pkg.name === "repertoire") && existsSync(siblingProvider)) {
@@ -111,7 +122,6 @@ function resolveRepertoireProviderModule(root) {
   } catch {
     /* sibling missing */
   }
-  if (existsSync(nmProvider)) return nmProvider;
   return null;
 }
 

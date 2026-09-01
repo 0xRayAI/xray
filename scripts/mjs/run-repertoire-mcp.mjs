@@ -10,8 +10,9 @@ import { fileURLToPath } from 'node:url';
 
 const xrayRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const candidates = [
-  join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js'),
   join(xrayRoot, 'node_modules', '@0xray', 'repertoire', 'dist', 'mcp', 'server.js'),
+  join(xrayRoot, 'vendor', '@0xray', 'repertoire', 'dist', 'mcp', 'server.js'),
+  join(xrayRoot, '..', 'repertoire', 'dist', 'mcp', 'server.js'),
 ];
 const server = candidates.find((p) => existsSync(p));
 if (!server) {

@@ -29,10 +29,11 @@ function resolveUnavailableReason(provider: MemoryRoutingProvider): string | nul
 }
 
 const REPERTOIRE_CANDIDATE_PATHS = [
+  'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js',
+  'vendor/@0xray/repertoire/dist/provider/memory-routing-provider.js',
   '../repertoire/dist/provider/memory-routing-provider.js',
   '../../repertoire/dist/provider/memory-routing-provider.js',
   '../../../repertoire/dist/provider/memory-routing-provider.js',
-  'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js',
 ];
 
 /**
@@ -92,8 +93,6 @@ export function isLeftoverMemoryRoutingOff(config: MemoryRoutingConfig): boolean
 }
 
 function leftoverRepertoireModulePath(cwd: string): string | null {
-  const sibling = resolve(cwd, '../repertoire/dist/provider/memory-routing-provider.js');
-  if (existsSync(sibling)) return sibling;
   const nm = join(
     cwd,
     'node_modules',
@@ -103,7 +102,20 @@ function leftoverRepertoireModulePath(cwd: string): string | null {
     'provider',
     'memory-routing-provider.js',
   );
-  return existsSync(nm) ? nm : null;
+  if (existsSync(nm)) return nm;
+  const vendor = join(
+    cwd,
+    'vendor',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  if (existsSync(vendor)) return vendor;
+  const sibling = resolve(cwd, '../repertoire/dist/provider/memory-routing-provider.js');
+  if (existsSync(sibling)) return sibling;
+  return null;
 }
 
 export function resolveLeftoverEnabledConfig(

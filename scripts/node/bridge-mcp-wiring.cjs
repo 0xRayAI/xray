@@ -37,9 +37,10 @@ function resolveRepertoireMcp(targetDir) {
   const selfRoot = targetDir;
   const siblingRoot = path.join(targetDir, "..", "repertoire");
   const candidates = [
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
     isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
-    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
   ];
   return candidates.find((p) => p && fs.existsSync(p)) || null;
 }
@@ -56,8 +57,18 @@ function resolveRepertoireProvider(targetDir) {
     "provider",
     "memory-routing-provider.js",
   );
-  if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
+  const vendorProvider = path.join(
+    targetDir,
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
   if (fs.existsSync(nmProvider)) return nmProvider;
+  if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
   return null;
 }
 
@@ -82,6 +93,12 @@ function enableMemoryRoutingIfResolves(features, targetDir) {
   const config = { ...(mr.config || {}) };
   if (!config.signalsPath && fs.existsSync(signalsAbs)) {
     config.signalsPath = useSibling ? "../repertoire/data/curated_signals.json" : signalsAbs;
+  }
+  if (!config.statePath) {
+    config.statePath = ".xray/state/repertoire/inference-state.json";
+  }
+  if (!config.feedbackDir) {
+    config.feedbackDir = ".xray/state/repertoire/feedback";
   }
 
   return {

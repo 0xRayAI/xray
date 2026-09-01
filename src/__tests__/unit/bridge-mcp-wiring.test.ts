@@ -69,6 +69,12 @@ describe('bridge-mcp-wiring', () => {
       expect(on.changed).toBe(true);
       expect(on.features.memory_routing.enabled).toBe(true);
       expect(on.features.memory_routing.provider).toBe('repertoire');
+      expect(on.features.memory_routing.config.statePath).toBe(
+        '.xray/state/repertoire/inference-state.json',
+      );
+      expect(on.features.memory_routing.config.feedbackDir).toBe(
+        '.xray/state/repertoire/feedback',
+      );
 
       const optOut = wiring.enableMemoryRoutingIfResolves(
         { memory_routing: { enabled: false, provider: 'repertoire' } },
@@ -89,5 +95,40 @@ describe('bridge-mcp-wiring', () => {
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
+  });
+
+  it('prefers node_modules organ over sibling repertoire', () => {
+    const parent = mkdtempSync(path.join(os.tmpdir(), 'xray-rep-prefer-'));
+    const consumer = path.join(parent, 'app');
+    mkdirSync(path.join(consumer, 'node_modules', '@0xray', 'repertoire', 'dist', 'mcp'), { recursive: true });
+    mkdirSync(path.join(consumer, 'node_modules', '@0xray', 'repertoire', 'dist', 'provider'), { recursive: true });
+    writeFileSync(
+      path.join(consumer, 'node_modules', '@0xray', 'repertoire', 'dist', 'mcp', 'server.js'),
+      'export {}\n',
+    );
+    writeFileSync(
+      path.join(consumer, 'node_modules', '@0xray', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
+      'export {}\n',
+    );
+    const sibling = path.join(parent, 'repertoire');
+    mkdirSync(path.join(sibling, 'dist', 'mcp'), { recursive: true });
+    mkdirSync(path.join(sibling, 'dist', 'provider'), { recursive: true });
+    writeFileSync(path.join(sibling, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+    writeFileSync(path.join(sibling, 'dist', 'mcp', 'server.js'), 'export {}\n');
+    writeFileSync(path.join(sibling, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+    try {
+      const mcp = wiring.resolveRepertoireMcp(consumer);
+      const provider = wiring.resolveRepertoireProvider(consumer);
+      expect(mcp).toContain(`${path.sep}node_modules${path.sep}@0xray${path.sep}repertoire${path.sep}`);
+      expect(provider).toContain(`${path.sep}node_modules${path.sep}@0xray${path.sep}repertoire${path.sep}`);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('portable project mcp stays 7 xray servers', () => {
+    const portable = wiring.buildPortableProjectMcpJson();
+    expect(Object.keys(portable.mcpServers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(portable.mcpServers.repertoire).toBeUndefined();
   });
 });

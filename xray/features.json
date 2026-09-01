@@ -158,10 +158,14 @@
     "min_success_rate": 0.7
   },
   "memory_routing": {
-    "enabled": false,
-    "provider": "null",
-    "module_path": "",
-    "config": {}
+    "enabled": true,
+    "provider": "repertoire",
+    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+    "config": {
+      "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+      "statePath": ".xray/state/repertoire/inference-state.json",
+      "feedbackDir": ".xray/state/repertoire/feedback"
+    }
   },
   "synthesis": {
     "enabled": false,

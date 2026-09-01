@@ -1,0 +1,208 @@
+{
+  "description": "Factory seed primitives for 0xRay 4.0 memory routing. Not a plant diary.",
+  "last_updated": "2026-09-01T19:18:27.821Z",
+  "source": "factory-seed-4.0",
+  "schema_version": "1.1",
+  "implementation_guidance": {
+    "how_to_use": "Package seed is read-only. Ingest hydrates a project copy under .xray/state/repertoire/.",
+    "integration_points": [
+      "MemoryRoutingProvider",
+      "thinDispatch",
+      "repertoire MCP"
+    ],
+    "priority_order": "ontological-trap and consumer-boundary first, then governance/three-subsystem."
+  },
+  "signals": [
+    {
+      "name": "attestation-as-map",
+      "definition": "Attestation should be treated as a directional trust map that obligates the consumer to perform ongoing re-evaluation, rather than a terminating verdict that ends responsibility.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "The inference reply explicitly states that attestation is directional/ongoing rather than final, or criticizes treating signatures as sufficient without consumer-side checks.",
+      "validation_experiment": "Create a test post containing only static attestation metadata with no consumer recheck hook. Run it through govern_with_solar and check whether the result is REJECT or resonanceScore < 0.3.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Treat attestation as an ongoing map. Trap-route to architect when matched.",
+      "example_inference_snippet": "Attestation functions as a trust map rather than a conclusive verdict, so the consuming boundary must still execute its own invariant checks...",
+      "observation_stats": {
+        "observation_count": 580,
+        "avg_confidence": 0.5536206896551725,
+        "max_confidence": 1,
+        "last_seen": "2026-09-01T19:18:27.821Z",
+        "governance_forced_count": 566
+      }
+    },
+    {
+      "name": "consumption-boundary-revalidation-gate",
+      "definition": "There must be an explicit, mandatory re-validation step of key invariants at every trust-transfer boundary before the receiving agent/system is allowed to consume or act on the artifact.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Reply mentions that re-validation must occur at the consumption boundary or that upstream attestation alone is insufficient without this step.",
+      "validation_experiment": "Instrument a parser/loader boundary with a controlled schema mutation after upstream attestation. Verify the system emits an explicit re-validation obligation record before permitting downstream action.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Re-validate invariants at every trust-transfer before consume.",
+      "example_inference_snippet": "Mandatory re-validation of invariants at every trust-transfer boundary before consumption is permitted.",
+      "observation_stats": {
+        "observation_count": 564,
+        "avg_confidence": 0.55,
+        "max_confidence": 1,
+        "last_seen": "2026-07-07T18:17:42.741Z",
+        "governance_forced_count": 550
+      }
+    },
+    {
+      "name": "consumer-boundary-revalidation-gate",
+      "definition": "Every attestation or output must pass an explicit consumer-side revalidation gate. Treating attestation as a terminating verdict is an ontological error.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "The inference distinguishes 'map' semantics (ongoing responsibility) from 'verdict' semantics (terminated responsibility).",
+      "validation_experiment": "Test with static attestation metadata that has no revalidation hook.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Consumer-side gate; attestation is not a terminating verdict.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-01T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "governance-as-mandatory-external-filter",
+      "definition": "Governance is the mandatory external filter between internal deliberation and action. Internal consistency alone is insufficient.",
+      "tags": [
+        "ontological-trap",
+        "governance",
+        "external-filter",
+        "mandatory"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Reply states governance is mandatory or criticizes bypassing external governance.",
+      "validation_experiment": "Submit a high-resonance internal proposal that has not passed Dynamo. Verify it is blocked or marked NEEDS_REVISION.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Governance sits between deliberation and action. Always on.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-01T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "three-subsystem-verifiable-os",
+      "definition": "A complete verifiable agent operating system requires three mandatory subsystems: Inference, External Governance (Dynamo Solar SSOT), and Autonomous Engine (0xRay). Governance is not optional.",
+      "tags": [
+        "ontological-trap",
+        "governance",
+        "architecture",
+        "three-subsystem"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Inference references the three-subsystem model or criticizes treating inference/orchestration as sufficient without external governance.",
+      "validation_experiment": "Create a proposal that skips Dynamo governance entirely. Check if govern_with_solar or repertoire rejects it with low resonance.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Inference, External Governance, Autonomous Engine — all three required.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-01T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "parse-mutation-detector",
+      "definition": "A runtime mechanism that detects when parsing or transformation has altered an artifact and triggers fail-closed behavior or explicit re-evaluation of invariants.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Reply identifies that a parser or transformation step can silently change meaning and that current attestation does not cover this mutation surface.",
+      "validation_experiment": "Feed the system an attested artifact, apply a controlled parse transformation, and measure whether a fail-closed signal or re-evaluation trigger is emitted within one inference cycle.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Detect schema/parse mutation after upstream attestation.",
+      "example_inference_snippet": "Runtime mechanism to detect parse transformations and trigger fail-closed or explicit re-evaluation.",
+      "observation_stats": {
+        "observation_count": 564,
+        "avg_confidence": 0.55,
+        "max_confidence": 1,
+        "last_seen": "2026-07-07T18:17:42.741Z",
+        "governance_forced_count": 550
+      }
+    },
+    {
+      "name": "trust-transfer-boundary",
+      "definition": "An explicit, first-class signal that records the obligation to re-validate invariants at each handoff point between agents or systems.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Reply argues that re-validation obligations must be explicitly recorded and passed along at every trust transfer.",
+      "validation_experiment": "Simulate a multi-hop agent workflow where an attested artifact crosses two trust boundaries. Verify that a trust-transfer-boundary record is created at each hop.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Name the boundary where trust moves; require a check there.",
+      "example_inference_snippet": "Explicit recording of re-validation obligation as a first-class signal at each handoff point.",
+      "observation_stats": {
+        "observation_count": 564,
+        "avg_confidence": 0.55,
+        "max_confidence": 1,
+        "last_seen": "2026-07-07T18:17:42.741Z",
+        "governance_forced_count": 550
+      }
+    },
+    {
+      "name": "interpreter-mode-boundary-invariant",
+      "definition": "A self-enforcing contract hash or invariant that lives at the parser-consumer trust boundary and must survive any transformation or reinterpretation.",
+      "tags": [
+        "ontological-trap",
+        "attestation",
+        "consumer-boundary"
+      ],
+      "priority": "high",
+      "status": "validated",
+      "first_seen": "2026-06-17",
+      "evaluation_criteria": "Reply emphasizes that some invariant must be embedded in a way that forces the consumer to recompute or re-validate it after any parsing step.",
+      "validation_experiment": "Design an attestation payload that embeds a contract hash which the consumer must independently recompute after parsing. Verify the system treats failure to recompute as a governance violation.",
+      "master_index_integration": "MemoryRoutingProvider, thinDispatch, repertoire MCP get_task_confidence.",
+      "implementation_notes": "Interpreter/agent mode changes are a boundary, not a silent switch.",
+      "example_inference_snippet": "Self-enforcing contract hash at parser-consumer trust boundary that survives transformation.",
+      "observation_stats": {
+        "observation_count": 564,
+        "avg_confidence": 0.55,
+        "max_confidence": 1,
+        "last_seen": "2026-07-07T18:17:42.741Z",
+        "governance_forced_count": 550
+      }
+    }
+  ]
+}

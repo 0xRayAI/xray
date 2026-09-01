@@ -18,7 +18,7 @@ git clone https://github.com/0xRayAI/repertoire ../repertoire
 cd ../repertoire && npm install && npm run build
 ```
 
-Shipped `xray/features.json` defaults **off** (`provider: "null"`). Postinstall **auto-enables** when the provider module resolves:
+Shipped `xray/features.json` is **on** (`provider: "repertoire"`) with `@0xray/repertoire@0.2.0` vendored. Postinstall still **auto-enables leftover default-off** when the provider module resolves:
 
 - sibling `../repertoire` with `package.json` name `@0xray/repertoire` (or `repertoire`)
 - or `node_modules/@0xray/repertoire`

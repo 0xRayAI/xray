@@ -18,7 +18,7 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four platform bridges and seven MCP servers. Repertoire is not an eighth 0xRay server — when the sibling or `@0xray/repertoire` is present, wear turns it on. Without it, `memory_routing` stays off.
+Consumer `npm install 0xray` auto-wires four platform bridges and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
 
 ## Quick Start
 
@@ -168,7 +168,7 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 
 **External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.
 
-Consumers without Repertoire: `"memory_routing": { "enabled": false, "provider": "null" }`.
+Opt out: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
 
 Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](docs-site/docs/guides/repertoire.md) · [features.json](docs-site/docs/guides/features-json.md) · [all features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 

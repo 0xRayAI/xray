@@ -9,6 +9,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm is still `3.5.5`; this line is **4.0.0** on `feat/v4-temperament` — **still in development, not published**.
 
 ### ✨ Features
+- **Factory memory organ** — `@0xray/repertoire@0.2.0` vendored as a runtime dependency. Shipped `memory_routing` is **on** (8 factory primitives). Extra host MCP stays `repertoire`, not an 8th `xray-*` server. Compact ingest writes `.xray/state/repertoire/`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.
 - **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
 - **Grok 4.6 / Grok Build** — `auto` → frontier: spawn missing/stale/todo-mismatch **warns**; confer off unless opted in.
 - **OpenCode / Hermes** (including free models) — stay **guided**: full v2 engine ceremony.
