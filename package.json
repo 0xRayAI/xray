@@ -139,7 +139,8 @@
     "verify:consumer-gitignore": "node scripts/mjs/verify-consumer-gitignore-core.mjs",
     "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs",
     "verify:pre-push-diff": "node scripts/mjs/verify-pre-push-diff-core.mjs",
-    "verify:temperament-live": "node scripts/mjs/verify-temperament-live.mjs"
+    "verify:temperament-live": "node scripts/mjs/verify-temperament-live.mjs",
+    "verify:four-floor-compact": "node scripts/mjs/verify-four-floor-compact.mjs"
   },
   "files": [
     "dist/",
@@ -161,6 +162,7 @@
     "scripts/mjs/verify-user-aside-core.mjs",
     "scripts/mjs/verify-pipeline-facets.mjs",
     "scripts/mjs/verify-temperament-live.mjs",
+    "scripts/mjs/verify-four-floor-compact.mjs",
     "scripts/mjs/run-repertoire-mcp.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
