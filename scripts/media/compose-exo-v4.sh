@@ -2,7 +2,7 @@
 # Compose the v4 hero: photo plate + exact HUD/caption type.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PLATE="${1:-$ROOT/scripts/media/exo-v4-plate-launch.jpg}"
+PLATE="${1:-$ROOT/scripts/media/exo-v4-plate-59.jpg}"
 OUT="${2:-$ROOT/docs-site/static/img/exo-skeleton-v4.jpg}"
 SOCIAL="${3:-$ROOT/docs-site/static/img/social-card.png}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -10,22 +10,8 @@ WORK="$(mktemp -d /tmp/exo-v4-XXXX)"
 trap 'rm -rf "$WORK"' EXIT
 
 PLATE_ABS="$(cd "$(dirname "$PLATE")" && pwd)/$(basename "$PLATE")"
-# Snapshot + paint out generated type so the overlay is the only copy.
-python3 - "$PLATE_ABS" "$WORK/plate.jpg" <<'PY'
-from PIL import Image, ImageDraw, ImageFilter
-src, dst = __import__('sys').argv[1], __import__('sys').argv[2]
-im = Image.open(src).convert("RGBA")
-w, h = im.size
-overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-d = ImageDraw.Draw(overlay)
-# Light footer only — launch plate has no baked captions
-for y in range(628, h):
-    t = min(1.0, (y - 628) / 22.0)
-    a = int(210 * t)
-    d.line([(0, y), (w, y)], fill=(5, 9, 16, a))
-im = Image.alpha_composite(im, overlay).convert("RGB")
-im.save(dst, "JPEG", quality=95)
-PY
+# 59 plate is clean — no paint-out. HUD type is HTML only.
+cp "$PLATE_ABS" "$WORK/plate.jpg"
 PLATE_URL="file://$WORK/plate.jpg"
 HTML="$WORK/hero.html"
 sed "s|PLATE_SRC|$PLATE_URL|" "$ROOT/scripts/media/exo-v4-hero.html" > "$HTML"
