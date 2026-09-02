@@ -13,7 +13,7 @@ Do not confuse these:
 | **User aside** (0xRay) | Yes | **Which plan + spawn rules** — parallel todo track |
 | **AsideContext** (0xRay) | No — internal | **MCP observation subcontext** — implementation detail |
 
-For a real parallel feature (e.g. `suit-nft`), use **user aside + worktree together**. See [User Asides](./user-asides.md) for MCP fields and [roadmap](./user-asides-roadmap.md) for known gaps.
+For a real parallel feature (e.g. `suit-nft`), use **user aside + worktree together**. See [User Asides](./user-asides.md) for MCP fields.
 :::
 
 ---
@@ -114,7 +114,7 @@ Every session, Grok hooks write **`.xray/state/session-boot.json`** on SessionSt
 
 Boot carries **hints** (`activeAside`, `asideWorktree`, confer flags). It does not yet embed `leadDevPlanSummary` or `activeAsidePlanSummary` (next todo, phase progress). For full todo lists on intake, `analyze-complexity` and `orchestrate-task` already return formatted plan text in the MCP response.
 
-On resume without MCP, the lead should Read `session-boot.json` plus the active plan file, or call `get-orchestration-status`. See [Roadmap](./user-asides-roadmap.md) P1 awareness items.
+On resume without MCP, the lead should Read `session-boot.json` plus the active plan file, or call `get-orchestration-status`.
 
 :::info Enforcement is always live
 Spawn routing reads `_active.json` and plan files directly — not `session-boot.json`. Activating an aside updates routing immediately even if boot hints lag until the next user message.
@@ -322,7 +322,6 @@ If docs or agents mention "aside" without "user aside", check context — they m
 ## Related
 
 - [User Asides](./user-asides.md) — MCP fields, state layout, accepted limitations
-- [User Asides Roadmap](./user-asides-roadmap.md) — engineering backlog (state loading, cwd enforcement, …)
 - [AsideContext](./aside-context.md) — internal orchestrator subcontext (different concept)
 - [Platform Integrations](./integrations.md) — Grok bridge install
 - [Autonomy Command](./autonomy-command.md) — lead-dev default operating model

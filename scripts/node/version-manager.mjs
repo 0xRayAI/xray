@@ -320,11 +320,13 @@ function updateReadme(counts, newVersion) {
 }
 
 export const DOCS_SITE_HEADER_FILES = [
-  'docs-site/docs/README.md',
   'docs-site/docs/index.md',
   'docs-site/docs/introduction.md',
   'docs-site/docs/guides/getting-started.md',
   'docs-site/docs/full-reference.md',
+  'docs-site/docs/architecture/GROK_GUIDE.md',
+  'docs-site/docs/mcp/README.md',
+  'docs-site/docs/agents/README.md',
 ];
 
 export function buildDocsHeader(_counts, newVersion) {
@@ -354,6 +356,22 @@ function updatePluginJsonVersion(newVersion) {
   plugin.version = newVersion;
   fs.writeFileSync(pluginPath, JSON.stringify(plugin, null, 2) + '\n');
   console.log(`✅ Updated .grok-plugin/plugin.json (version: ${newVersion})`);
+}
+
+function updateJsonVersionField(relPath, newVersion) {
+  const full = path.join(rootDir, relPath);
+  if (!fs.existsSync(full)) return;
+  const data = JSON.parse(fs.readFileSync(full, 'utf-8'));
+  data.version = newVersion;
+  fs.writeFileSync(full, JSON.stringify(data, null, 2) + '\n');
+}
+
+function updateFeaturesJsonVersion(newVersion) {
+  updateJsonVersionField('xray/features.json', newVersion);
+}
+
+function updateOpenclawPluginVersion(newVersion) {
+  updateJsonVersionField('src/integrations/openclaw/plugin/xray-pre-tool/package.json', newVersion);
 }
 
 function updateConsumerAgentsHeader(newVersion, counts) {
@@ -401,15 +419,20 @@ function applyAgentCountUpdates(content, counts) {
 /**
  * Update AGENTS.md with actual framework counts
  */
-function updateAgentsMd(counts) {
+function updateAgentsMd(counts, newVersion = getCurrentVersion()) {
   const agentsPath = path.join(rootDir, 'AGENTS.md');
   if (!fs.existsSync(agentsPath)) {
-    console.log(`⚠️  AGENTS.md not found, skipping`);
     return;
   }
 
-  fs.writeFileSync(agentsPath, applyAgentCountUpdates(fs.readFileSync(agentsPath, 'utf-8'), counts));
-  console.log(`✅ Updated AGENTS.md`);
+  let agentsMd = applyAgentCountUpdates(fs.readFileSync(agentsPath, 'utf-8'), counts);
+  agentsMd = agentsMd.replace(/\(\*\*v[\d.]+\*\*\)/, `(**v${newVersion}**)`);
+  agentsMd = agentsMd.replace(
+    /^\*\*v[\d.]+\*\* — a suit that survives the context window\.?$/m,
+    buildDocsHeader(counts, newVersion),
+  );
+  agentsMd = agentsMd.replace(/^## Postinstall \(v[\d.]+\)$/m, `## Postinstall (v${newVersion})`);
+  fs.writeFileSync(agentsPath, agentsMd);
 }
 
 function updateAgentsConsumerMd(counts) {
@@ -516,8 +539,10 @@ function updateVersion(newVersion, changeDescription = '') {
   updateReadme(counts, newVersion);
   syncDocsSiteHeaders(counts, newVersion);
   updatePluginJsonVersion(newVersion);
+  updateFeaturesJsonVersion(newVersion);
+  updateOpenclawPluginVersion(newVersion);
   updateConsumerAgentsHeader(newVersion, counts);
-  updateAgentsMd(counts);
+  updateAgentsMd(counts, newVersion);
   updateAgentsConsumerMd(counts);
   updateSkillsMd(counts, newVersion);
   
@@ -555,7 +580,6 @@ export function getReleaseArtifactPaths() {
     'SKILLS.md',
     '.grok-plugin/plugin.json',
     'docs/README.md',
-    'docs-site/docs/README.md',
     'docs-site/docs/index.md',
     'docs-site/docs/introduction.md',
     'docs-site/docs/guides/getting-started.md',
@@ -569,7 +593,9 @@ export function getReleaseArtifactPaths() {
     'docs-site/docs/guides/consumer-migration.md',
     'docs-site/docs/mcp/README.md',
     'docs-site/docs/agents/README.md',
+    'docs-site/docs/architecture/GROK_GUIDE.md',
     'docs-site/sidebars.ts',
+    'xray/features.json',
   ];
   return candidates.filter((rel) => fs.existsSync(path.join(rootDir, rel)));
 }
@@ -584,9 +610,11 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   updateReadme(counts, current);
   syncDocsSiteHeaders(counts, current);
   updatePluginJsonVersion(current);
+  updateFeaturesJsonVersion(current);
+  updateOpenclawPluginVersion(current);
   updateConsumerAgentsHeader(current, counts);
   updateDocsReadme(current);
-  updateAgentsMd(counts);
+  updateAgentsMd(counts, current);
   updateAgentsConsumerMd(counts);
   updateSkillsMd(counts, current);
   runReleaseDocsValidation();
@@ -648,6 +676,8 @@ function main() {
     updateReadme(counts, current);
     syncDocsSiteHeaders(counts, current);
     updatePluginJsonVersion(current);
+    updateFeaturesJsonVersion(current);
+    updateOpenclawPluginVersion(current);
     updateConsumerAgentsHeader(current, counts);
     updateDocsReadme(current);
     updateAgentsMd(counts);

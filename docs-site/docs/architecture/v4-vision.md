@@ -20,7 +20,7 @@ This page is the north star. Mechanism lives in [suit temperament](../guides/v3-
 | **Always on** | Constitution: Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface |
 | **Temperament** | `frontier` \| `guided` \| `strict` \| `auto` — how loud the engine is, not whether governance exists |
 | **Wear** | Four host floors: Grok, OpenCode, Hermes, OpenClaw. One SSOT gate (`evaluatePreToolGate`) |
-| **Muscle** | Repertoire — built for synchronicity; **not fully harnessed** yet (see below) |
+| **Muscle** | Repertoire 0.2 vendored — 8 factory primitives, session resume, station heat. Not a full memory of the job. |
 
 The exo is what the host puts on. The host still walks. Frontier models get **honesty** without a second planner. Guided hosts still get a **floor boss** because they will invent APIs.
 
@@ -33,9 +33,7 @@ What is built and worn is a **tempered v2 OS with four bridges**. That bone is r
 - Grok 4.6 class hosts (`profile: auto` → frontier): spawn-without-plan **warns**; confer off unless opted in. Codex still denies `any`, Codex 29, and new surface.
 - OpenCode / Hermes / OpenClaw stay **guided** unless you say otherwise. Full ceremony: analyze-complexity, spawn-plan deny, confer.
 - Inference pickle on this generation of hosts is **OpenCode CLI** (`opencode run`), not a fifth provider 0xRay owns. Zen/Go HTTP catalogs are host env, not the suit.
-- npm is still **3.5.5**. Product version on `feat/v4-temperament` is **4.0.0**. The ship test is a **stranger install** (`npm pack` → fresh dirs → four-host install), not a hero machine.
-
-README still leads with catalog counts. That is toolset-era copy. The suit is already the kernel; the docs were lagging the tweet.
+- npm is **4.0.0**. Stranger install (`npm i 0xray@4.0.0` → four-host `--force`) is the wear test, not a hero machine.
 
 ## Where we are going
 
@@ -49,7 +47,7 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 |---|---|
 | **Kernel, not catalog** | Ship the gate, temperament, four adapters, Repertoire hookup. Stop selling 42/45/7 as the product. |
 | **Factory wear** | `npm i 0xray` lights constitution on this host in one shot. Stranger install is the release gate. |
-| **Synchronicity as muscle** | Repertoire *is* the gap-filler for handoffs and compaction. Today it is a sibling package, MCP, and a flag default **off**. Factory 4.0 means wear actually **uses** it at station boundaries — not “available if you wire it.” |
+| **Synchronicity as muscle** | Repertoire *is* the gap-filler for handoffs and compaction. 4.0 vendors `@0xray/repertoire@0.2.0` and ships `memory_routing.enabled: true`. Opt out with `"enabled": false, "provider": "repertoire"`. |
 | **Host-native inference** | Use the plant’s existing line (OpenCode CLI, Grok OAuth, whatever the floor already runs). Do not add an 8th MCP. |
 | **Codex 69 as factory law** | No new MCP/skill/handler. Trim duplicate conductors on the museum list. “Trim later” is now if this page is true. |
 | **Temperament as shifts** | Frontier = the model runs the line, suit is PPE. Guided = suit is also the foreman. Strict = lock confer. Auto = pick by host. |
@@ -60,9 +58,9 @@ Not going: a fifth orchestrator for models that already grew up. Not going: chas
 
 Build a suit that **survives the context window**. Compaction is the name in this host. New session, host swap, model upgrade, plan → code → review — same physics: **linear steps, each one can drop state, friction compounds.**
 
-These are not exotic research problems. They are sequential. Every extra MCP to “remember,” every cold chat, every marker that points at a dead temp dir, every Repertoire flag left off — another linear hit. Factory grade is **low friction across the line**, not a bigger window.
+These are not exotic research problems. They are sequential. Every extra MCP to “remember,” every cold chat, every marker that points at a dead temp dir — another linear hit. Factory grade is **low friction across the line**, not a bigger window.
 
-Repertoire was the organ for that. Unharnessed, the exo still dies when the window dies.
+4.0 vendors Repertoire 0.2 and turns routing **on**. That is eight factory primitives and a station card, not a continuous mind. The exo still dies if the next body does not Read the card.
 
 ## The lens (reimagine workflow)
 

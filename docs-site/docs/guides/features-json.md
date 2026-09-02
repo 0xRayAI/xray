@@ -34,12 +34,11 @@ See [Suit temperament](./v3-temperament.md). Missing key = **guided** (existing 
   "memory_routing": {
     "enabled": true,
     "provider": "repertoire",
-    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
     "config": {
-      "dataDir": "../repertoire/data",
-      "signalsPath": "../repertoire/data/curated_signals.json",
-      "statePath": "../repertoire/data/inference-state.json",
-      "logDir": "../repertoire/logs/groover-inference"
+      "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+      "statePath": ".xray/state/repertoire/inference-state.json",
+      "feedbackDir": ".xray/state/repertoire/feedback"
     }
   }
 }

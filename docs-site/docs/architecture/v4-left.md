@@ -6,9 +6,9 @@ sidebar_label: 4.0 left
 
 What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md).
 
-Product **4.0.0** on `feat/v4-temperament` (PR #3). npm registry is still **3.5.5**. Do not run `release:major` (that becomes 5.0.0). Leave-dev is: merge PRs → tag `v4.0.0` → `npm publish` 4.0.0.
+Product **4.0.0** is on npm. Tag `v4.0.0` is on `0xRayAI/xray`. Do not run `release:major` (that becomes 5.0.0). Next upload: `npm run release:npm`.
 
-## Done (worn, not shipped)
+## Done (worn and shipped as 4.0.0)
 
 | Piece | Where |
 |---|---|
@@ -50,7 +50,7 @@ The job is hot-swap / multiplicity. A stranger’s proof is: **compact or change
 
 ## Left — product gaps
 
-Closed on this plant (worn, not npm-shipped):
+Closed on this plant and shipped as **0xray@4.0.0**:
 
 - **Grok Read contract.** AGENTS.md + the card. OpenCode injects. Do not thicken the Grok exo.
 - **Framework dogfood wear.** `postinstall` always calls `installAllBridges`. Consumer vs dogfood is decided inside it. `.grok/` stays gitignored.
@@ -79,4 +79,4 @@ Still open:
 
 ## One line
 
-**Suit is worn and attested on this plant (constitution, temperament, station card, four floors, Repertoire, compact+memory, live successor). npm is still 3.5.5. Ship = approve CI, merge the two PRs, tag v4.0.0, publish 4.0.0.**
+**Suit is worn and attested. npm is 4.0.0. Remaining: land the release-gate follow-up on main; optional `@0xray/repertoire@0.2.0` npm (4.0 already vendors 0.2).**

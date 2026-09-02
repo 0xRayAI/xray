@@ -1,332 +1,58 @@
-# 0xRay AI - Guide for Grok Users
+---
+sidebar_label: Grok floor
+---
 
-## 🚀 Welcome to 0xRay
+# Grok floor
 
-**0xRay** is the AI agent orchestration framework that eliminates dead ends in AI-assisted development. Designed specifically for modern AI workflows, 0xRay coordinates specialized agents to deliver production-ready code while preventing common AI development pitfalls.
+**v4.0.1** — a suit that survives the context window
 
-## 🎯 Why 0xRay for Grok?
+Grok Build wears the same exo as OpenCode, Hermes, and OpenClaw. Constitution always on. Temperament on this floor is **frontier** when `suit_temperament.profile` is `auto`. Codex 11 / 29 / 69 still **deny**. Spawn-without-plan **warns**.
 
-0xRay is **optimized for Grok** and other advanced AI models. It leverages Grok's reasoning capabilities through specialized agents that work together to:
+Grok does **not** inject `.xray/state/STATION.md`. Read the card after compact or host-swap. Do not thicken the Grok exo.
 
-- **Eliminate spaghetti code** through coordinated architecture
-- **Prevent AI hallucinations** with cross-agent validation
-- **Eradicate code rot** with systematic maintenance
-- **Handle concurrency chaos** with safe patterns
-- **Deliver production-ready code** every time
-
-## 🛠️ Quick Start for Grok Users (v3.4.1)
-
-### Prerequisites
-
-- **Node.js 18+**
-- **npm 9+**
-- Grok CLI, Grok Build, or Cursor with Grok agent skills
-
-### 1. Install 0xRay
+## Wear
 
 ```bash
-# In your project — postinstall auto-wires Grok + 7 MCP servers
 npm install 0xray
-
-# Or explicit Grok bridge (idempotent)
-npx 0xray grok install
-```
-
-This installs:
-
-- Plugin at `~/.grok/plugins/0xray` (and project `.grok/plugins/0xray`)
-- **7 MCP servers** via `npx -y 0xray mcp <cmd>` (governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools)
-- **46 skills** synced to both `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/` (Grok Build / Cursor `agent_skills` path)
-- **`autonomy-command`** — default operating model (lead dev, phased todos, subagent dispatch)
-
-### 2. Verify
-
-```bash
+npx 0xray grok install --force   # plugin + 7 MCP + skills
 npx 0xray status
-npx 0xray grok install --force   # re-sync if needed
 ```
 
-Tier 1 consumers (repertoire): `npm run confirm:suit` after reboot.
+Installs:
 
-### 3. Autonomy command (default mode)
+- Plugin `~/.grok/plugins/0xray` and project `.grok/plugins/0xray`
+- Seven MCP servers via `npx -y 0xray mcp <cmd>`
+- Skills to `~/.grok/plugins/0xray/skills/` and `~/.grok/skills/`
+- `autonomy-command` as the default operating model
 
-When the suit is worn, agents operate under **`autonomy-command`** — no keywords required:
+## Station card
 
-1. Phased plan + detailed todos; assign best subagent; monitor output
-2. Lead dev loops test → fix until green
-3. Per-suite test triage; full suite last
-4. Researcher + architect + code-review on major work — automatic
-
-Slash: `/autonomy-command` · Docs: [Autonomy Command](../guides/autonomy-command.md)
-
-### 4. Configure for Grok
-
-Update your `.opencode/OpenCode.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/OpenCode.schema.json",
-  "model_routing": {
-    "enforcer": "grok-code",
-    "architect": "grok-code",
-    "orchestrator": "grok-code",
-    "bug-triage-specialist": "grok-code",
-    "code-reviewer": "grok-code",
-    "security-auditor": "grok-code",
-    "refactorer": "grok-code",
-    "testing-lead": "grok-code",
-    "storyteller": "grok-code",
-    "researcher": "grok-code"
-  },
-  "framework": {
-    "name": "0xray",
-    "version": "3.4.1"
-  }
-}
-```
- 
-### 3. Launch the Dashboard
+Before other work:
 
 ```bash
-# Start the web interface
-npm start
-# or for development
-npm run dev
+# Read, don't reinvent
+cat .xray/state/STATION.md
 ```
 
-**Visit http://localhost:3000** to see your 0xRay dashboard with Grok-powered agents.
+Compaction and host change are the same cut. Continue the card.
 
-## 🤖 The 27 Grok-Powered Agents
+## Temperament
 
-### Core 8 Agents
+| Profile | Grok (`auto` → frontier) |
+|---------|--------------------------|
+| Spawn without plan | **warn** |
+| Codex 11 / 29 / 69 | **deny** |
+| Confer | off unless `confer.enabled: true` |
 
-#### 1. **Enforcer** - The Guardian
+See [Suit temperament](../guides/v3-temperament.md).
 
-- **Role**: Framework compliance and error prevention
-- **Module**: RuleEnforcer (416 lines) with 6 modules
-- **Grok Integration**: Uses Grok's reasoning to detect and prevent violations
-- **Triggers**: Compliance checks, threshold violations, scheduled audits
+## Repertoire
 
-#### 2. **Architect** - The Visionary
+Shipped `memory_routing.enabled: true` with vendored `@0xray/repertoire@0.2.0`. Extra host MCP `repertoire`, not an eighth `xray-*`. Opt out: `"enabled": false, "provider": "repertoire"`.
 
-- **Role**: System design and dependency mapping
-- **Module**: TaskSkillRouter (490 lines) with Architecture Mapping Module
-- **Grok Integration**: Leverages Grok's architectural reasoning for optimal designs
-- **Use Cases**: Complex planning, refactoring strategies, pattern selection
+## Related
 
-#### 3. **Orchestrator** - The Conductor
-
-- **Role**: Multi-agent coordination and workflow management
-- **Module**: TaskSkillRouter (490 lines) with Routing Module
-- **Grok Integration**: Grok's coordination capabilities for seamless agent interaction
-- **Features**: Async delegation, conflict resolution, task distribution
-
-#### 4. **Bug Triage Specialist** - The Detective
-
-- **Role**: Error investigation and surgical fixes
-- **Module**: TaskSkillRouter with Bug Fix Mapping Module
-- **Grok Integration**: Grok's analytical skills for root cause analysis
-- **Capabilities**: Automated bug detection, fix suggestions, impact assessment
-
-#### 5. **Code Reviewer** - The Critic
-
-- **Role**: Code quality assurance and best practices
-- **Module**: TaskSkillRouter with Review Mapping Module
-- **Grok Integration**: Grok's code understanding for comprehensive reviews
-- **Focus**: Quality metrics, security validation, performance optimization
-
-#### 6. **Security Auditor** - The Sentinel
-
-- **Role**: Vulnerability detection and threat analysis
-- **Module**: TaskSkillRouter with Security Mapping Module
-- **Grok Integration**: Grok's security reasoning for comprehensive audits
-- **Coverage**: Injection attacks, data leaks, compliance violations
-
-#### 7. **Refactorer** - The Surgeon
-
-- **Role**: Technical debt elimination and code modernization
-- **Module**: TaskSkillRouter with Refactoring Mapping Module
-- **Grok Integration**: Grok's refactoring intelligence for clean transformations
-- **Operations**: Safe refactoring, consolidation, performance improvements
-
-#### 8. **Test Architect** - The Validator
-
-- **Role**: Testing strategy design and coverage optimization
-- **Module**: TaskSkillRouter with Testing Mapping Module
-- **Grok Integration**: Grok's testing expertise for comprehensive validation
-- **Output**: High coverage, behavioral testing, integration suites
-
-### Additional Agents
-
-#### 9. **Storyteller** - The Narrator
-
-- **Role**: Narrative deep reflections and journey documentation
-- **Types**: Reflection, Saga, Journey, Narrative
-- **Use**: Technical deep dives, learning journeys, code narratives
-
-#### 10. **Researcher** - The Explorer
-
-- **Role**: Codebase exploration and implementation research
-- **Use**: Finding patterns, researching solutions, codebase analysis
-
-#### And More Specialized Agents...
-
-## 🎯 Dead Ends 0xRay Eliminates
-
-### Spaghetti Code & Monoliths
-
-**Problem**: Tangled, unmaintainable code structures
-**0xRay Solution**: Coordinated agents enforce clean architecture and single sources of truth
-
-### AI Hallucinations
-
-**Problem**: Inconsistent or incorrect AI-generated code
-**0xRay Solution**: Cross-agent validation and Grok's reasoning prevent false assumptions
-
-### Code Rot
-
-**Problem**: Quality degradation over time
-**0xRay Solution**: Systematic maintenance and modernization prevent entropy
-
-### Concurrency & State Chaos
-
-**Problem**: Race conditions and tangled state management
-**0xRay Solution**: Safe patterns and disciplined flow enforced by agents
-
-## 📊 Performance & Reliability
-
-- **Production-Ready Output**: Every deliverable meets production standards
-- **Grok-Optimized**: Designed for Grok's advanced reasoning capabilities
-
-### Performance Improvements
-
-| Metric | Before | After | Improvement |
-|--------|--------|--------|-------------|
-| **Agent Spawning** | Slower | Faster | Better performance |
-| **Memory Usage** | Higher | Lower | More efficient |
-
-## 🔧 Advanced Configuration for Grok
-
-### Custom Model Routing
-
-```json
-{
-  "model_routing": {
-    "enforcer": "grok-code",
-    "architect": "grok-code",
-    "orchestrator": "grok-code",
-    "bug-triage-specialist": "grok-code",
-    "code-reviewer": "grok-code",
-    "security-auditor": "grok-code",
-    "refactorer": "grok-code",
-    "testing-lead": "grok-code",
-    "storyteller": "grok-code",
-    "researcher": "grok-code"
-  }
-}
-```
-
-### Framework Thresholds
-
-```json
-{
-  "framework_thresholds": {
-    "bundle_size": "2MB",
-    "test_coverage": 0.85,
-    "duplication_rate": 0.05,
-    "error_rate": 0.1
-  }
-}
-```
-
-### Agent Coordination
-
-```json
-{
-  "sisyphus_orchestrator": {
-    "enabled": true,
-    "coordination_model": "async-multi-agent",
-    "max_concurrent_agents": 8
-  }
-}
-```
-
-## 🚀 Getting Started with Your First Project
-
-### Step 1: Initialize
-
-```bash
-npm run init
-```
-
-### Step 2: Configure Grok
-
-Update `.opencode/OpenCode.json` with your Grok model settings (see example above).
-
-### Step 3: Start Developing
-
-```bash
-# Launch dashboard
-npm start
-
-# Begin development with 0xRay's Grok-powered agents
-```
-
-### Step 4: Monitor Progress
-
-Visit http://localhost:3000 to see real-time agent coordination and project status.
-
-## 🎉 Why Grok + 0xRay = Perfect Match
-
-**Grok's Strengths:**
-
-- Advanced reasoning and code understanding
-- Helpful and truthful responses
-- Real-time learning capabilities
-
-**0xRay Strengths:**
-
-- **Specialized agents** for comprehensive coverage
-- **Modular architecture** for clean, maintainable code
-- **Multi-agent coordination** and validation
-- **Systematic error prevention**
-- **Production-ready code guarantees**
-
-**Together:** Grok's intelligence is amplified through 0xRay's orchestration, creating a development experience that's both powerful and reliable.
-
-## 📚 Resources
-
-- **Documentation**: See `docs/` directory
-- **Architecture Guide**: `docs/architecture/ARCHITECTURE.md`
-- **API Reference**: `docs/api/API_REFERENCE.md`
-- **Model Configuration**: `docs/0xRay_MODEL_CONFIG.md`
-- **Installation Guide**: `docs/0xRay_INSTALLATION_GUIDE.md`
-
-## 🆘 Need Help?
-
-- Check the troubleshooting guide: `docs/troubleshooting/`
-- Visit the dashboard at http://localhost:3000 for status
-- Run `npx 0xray health` for framework diagnostics
-- Run `npx 0xray --version`
-
-## Staying Current
-
-The framework maintains backward compatibility:
-
-```bash
-# Update to latest
-npm install 0xray@latest
-
-# Verify installation
-npx 0xray health
-```
-
----
-
-**0xRay + Grok = The Future of AI-Assisted Development** ⚡🤖
-
-_Eliminate dead ends. Ship production-ready code. Every time._
-
----
-
-*0xRay AI - Architecture Guide*
+- [Getting started](../guides/getting-started.md)
+- [Integrations](../guides/integrations.md)
+- [4.0 vision](./v4-vision.md)
+- [Autonomy command](../guides/autonomy-command.md)

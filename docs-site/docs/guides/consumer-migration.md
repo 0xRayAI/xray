@@ -151,4 +151,4 @@ If you only use `@agent` invocations, the CLI/TUI, or default plugin hook inject
 - [Memory Routing](./memory-routing.md)
 - [MCP Servers](../mcp/README.md)
 - [Full Reference](../full-reference.md)
-- Architecture: `PIPELINE_INVENTORY`, `V3-ENFORCEMENT-PIPELINES`, `PIPELINE_ARCHITECTURES`
+- [4.0 vision](../architecture/v4-vision.md) · [Trim list](../architecture/v3-museum.md)

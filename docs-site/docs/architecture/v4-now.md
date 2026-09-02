@@ -12,7 +12,7 @@ Exo skeleton: constitution always on, temperament scales ceremony, four host flo
 
 ## Line (feat/v4-temperament)
 
-npm still **3.5.5**. Product version **4.0.0** on `feat/v4-temperament` ([PR #3](https://github.com/0xRayAI/xray/pull/3)). Leave-dev: merge → tag `v4.0.0` → `npm publish` 4.0.0 (not `release:major`).
+npm **4.0.0** (`https://www.npmjs.com/package/0xray`). Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`). Next 4.x fix is `npm run release:npm` — never `release:major` (that becomes 5.0.0).
 
 **Bone that is already worn (this machine + branch):**
 

@@ -10,32 +10,30 @@
 | External LLM host (Hermes, Grok, OpenCode MCP) | `repertoire-mcp` stdio server |
 | Ad-hoc signal queries / ingest pipeline | Repertoire CLI (`npm run query`, `pipeline`) |
 
-## Setup (framework monorepo)
+## Setup
 
-```bash
-# Sibling layout (default in 0xRay repo)
-git clone https://github.com/0xRayAI/repertoire ../repertoire
-cd ../repertoire && npm install && npm run build
-```
+`0xray@4.0.0` vendors `@0xray/repertoire@0.2.0`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. Explicit opt-out: `enabled: false` with `provider: "repertoire"`. This is not an 8th 0xRay MCP.
 
-Shipped `xray/features.json` is **on** (`provider: "repertoire"`) with `@0xray/repertoire@0.2.0` vendored. Postinstall still **auto-enables leftover default-off** when the provider module resolves:
-
-- sibling `../repertoire` with `package.json` name `@0xray/repertoire` (or `repertoire`)
-- or `node_modules/@0xray/repertoire`
-
-Explicit opt-out: `enabled: false` with `provider: "repertoire"`. Without the module, consumers stay off. This is not an 8th 0xRay MCP.
-
-After enable, features look like:
+Shipped `xray/features.json`:
 
 ```json
 "memory_routing": {
   "enabled": true,
   "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "../repertoire/data/curated_signals.json"
+    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "statePath": ".xray/state/repertoire/inference-state.json",
+    "feedbackDir": ".xray/state/repertoire/feedback"
   }
 }
+```
+
+Optional sibling (framework monorepo only):
+
+```bash
+git clone https://github.com/0xRayAI/repertoire ../repertoire
+cd ../repertoire && npm install && npm run build
 ```
 
 Grok session-start writes a one-line `repertoireResume` into `.xray/state/session-boot.json` (signal count when the registry is readable). Leftover default-off also **resolves at runtime** in `loadMemoryRoutingProvider` / `getMemoryRoutingConfig` when the module is on disk â€” ExecutionPlanner and thinDispatch then use Repertoire without a features rewrite. Station heat persists **working state** (not Bedrock primitives) to `.xray/state/repertoire-working.json` and a `Working:` line on `STATION.md`. Compact may `ingestFeedback` for non-Bedrock matches. Explicit opt-out remains `enabled: false` + `provider: "repertoire"`.
@@ -55,7 +53,7 @@ Validated by `xray/features.schema.json` at load time:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `dataDir` | `../repertoire/data` | Registry + inference state root |
+| `dataDir` | package `data/` (vendored 0.2) | Registry + inference state root |
 | `signalsPath` | `data/curated_signals.json` | Primitive registry file |
 | `statePath` | `data/inference-state.json` | Idempotent ingest cursor |
 | `logDir` | `logs/groover-inference` | Enriched JSONL log directory |
@@ -116,7 +114,7 @@ Server tools are **unprefixed** so Grok TUI can register them (`server__tool` â†
 ```json
 "repertoire": {
   "command": "node",
-  "args": ["../repertoire/dist/mcp/server.js"]
+  "args": ["node_modules/@0xray/repertoire/dist/mcp/server.js"]
 }
 ```
 

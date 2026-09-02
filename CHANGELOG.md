@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [Unreleased]
+## [4.0.1] - 2026-09-02
 
-### 🐛 Fixes
-- **Release gate vs 4.0 organ** — consumer smoke now expects shipped `memory_routing.enabled: true` (vendored `@0xray/repertoire@0.2.0`) and keeps explicit `enabled: false` + `provider: repertoire` on upgrade. The 4.0.0 upload tripped a leftover default-off assertion after the tarball was already on npm.
-- **`npm publish` lifecycle** — removed `scripts.publish` (it ran `release:gate` *after* the registry PUT). Gate-then-upload is `npm run release:npm`.
-- **reconcile-version --check** — tagged-but-unpublished is the publish path, not a fail (that blocked `prepublishOnly` if `v4.0.0` existed locally).
+Patch on the 4.0 temperament line. npm **4.0.0** stays latest until this tag publishes.
+
+### 🐛 Bug Fixes
+- CLI `-V` / `--version` no longer dumps a Commander stack after `exitOverride`
+- Hermes: post-processor logs `[nudge]`; e2e calls `session-start`
+- OpenClaw e2e reads `plugins.entries` (OpenClaw 2026.8.2)
+- Release gate: consumer smoke expects organ **on**; no `scripts.publish` after the registry PUT; reconcile allows tagged-but-unpublished
+
+### 📚 Documentation
+- Archive catalog / enterprise Docusaurus boiler; live site is exo wear
+- Version-manager stamps live Docusaurus kernel headers (no archived `docs-site/docs/README.md`)
+
+---
 
 ## [4.0.0] - 2026-09-02
 
