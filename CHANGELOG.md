@@ -65,6 +65,7 @@ First ship of the **temperament** line on the **v2 three-subsystem OS** (Inferen
 - `autonomy-kernel`: plan consults follow `projectRoot` profile; confer/synthesis verify scripts pass tmp, not cwd Grok boot.
 - Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
 - Quoted Grok hook commands; postinstall dogfood wear; OpenClaw install-then-first-tool heat; `grok_postprocessor_light` loadFeatures; project Repertoire `config.toml`.
+- Four-floor compact survival attests Codex 11 / 69 / destructive shell plus temperament after the cut. `XRAY_LIVE_SUCCESSOR=1` asks each host CLI to quote the station card.
 
 ---
 

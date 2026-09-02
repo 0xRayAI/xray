@@ -25,6 +25,11 @@ describe('four-floor compact survival', () => {
     expect(out).toContain('FLOOR-COMPACT-SURVIVE-openclaw');
     expect(out).toContain('Hot-swap: grok → opencode');
     expect(out).toContain('grok constitution denies Codex 11');
+    expect(out).toContain('grok constitution denies Codex 69 new surface');
+    expect(out).toContain('grok constitution denies destructive shell');
+    expect(out).toContain('hermes constitution denies Codex 69 new surface');
+    expect(out).toContain('opencode constitution denies destructive shell');
+    expect(out).toContain('openclaw constitution denies Codex 11');
     expect(out).toContain('hermes temperament denies spawn without plan');
     expect(out).toContain('grok memory signals survived');
     expect(out).toContain('openclaw Repertoire still on');

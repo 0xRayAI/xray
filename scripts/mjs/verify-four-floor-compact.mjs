@@ -11,9 +11,9 @@
  *
  * Pass = intent + git + host + "Do not cold-start" still on the card after the cut.
  */
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -31,6 +31,9 @@ function pass(n) {
 function fail(n, d = '') {
   failed++;
   process.stderr.write(`FAIL ${n}${d ? ` — ${d}` : ''}\n`);
+}
+function skip(n) {
+  process.stdout.write(`SKIP ${n}\n`);
 }
 
 function gitInit(root) {
@@ -175,6 +178,170 @@ function runGrokPreTool(root, fixture) {
   return JSON.parse(out.trim().split('\n').filter(Boolean).at(-1));
 }
 
+function constitutionBundle(root, host) {
+  const feat = loadDelegationGateFeatures(root, host);
+  const surfacePath = 'src/mcps/floor-new.server.ts';
+  const evalPayload = { path: surfacePath, new_string: 'export {}\n' };
+  if (host === 'grok') {
+    return {
+      spawn: runGrokPreTool(root, {
+        toolName: 'spawn_subagent',
+        workspaceRoot: root,
+        sessionId: 'compact-grok-1',
+        toolInput: { prompt: 'explore repo', subagent_type: 'explore' },
+      }),
+      eleven: runGrokPreTool(root, {
+        toolName: 'search_replace',
+        workspaceRoot: root,
+        sessionId: 'compact-grok-1',
+        toolInput: { path: 'src/foo.ts', new_string: UNSAFE_TS },
+      }),
+      surface: runGrokPreTool(root, {
+        toolName: 'search_replace',
+        workspaceRoot: root,
+        sessionId: 'compact-grok-1',
+        toolInput: evalPayload,
+      }),
+      destructive: runGrokPreTool(root, {
+        toolName: 'bash',
+        workspaceRoot: root,
+        sessionId: 'compact-grok-1',
+        toolInput: { command: 'rm -rf /' },
+      }),
+    };
+  }
+  if (host === 'hermes') {
+    return {
+      spawn: runHermesGate(root, {
+        tool: 'delegate_task',
+        args: { prompt: 'explore repo', subagent_type: 'explore' },
+      }),
+      eleven: runHermesGate(root, {
+        tool: 'write_file',
+        args: { path: 'src/foo.ts', content: UNSAFE_TS },
+      }),
+      surface: runHermesGate(root, {
+        tool: 'write_file',
+        args: { path: surfacePath, content: 'export {}\n' },
+      }),
+      destructive: runHermesGate(root, {
+        tool: 'bash',
+        args: { command: 'rm -rf /' },
+      }),
+    };
+  }
+  const sessionId = host === 'opencode' ? 'compact-oc-1' : 'compact-claw-1';
+  const writeTool = host === 'opencode' ? 'write' : 'write';
+  return {
+    spawn: evaluatePreToolGate(
+      'Task',
+      { prompt: 'explore repo', subagent_type: 'explore' },
+      { projectRoot: root, sessionId, features: feat, host },
+    ),
+    eleven: evaluatePreToolGate(
+      writeTool,
+      { path: 'src/foo.ts', content: UNSAFE_TS },
+      { projectRoot: root, sessionId, features: feat, host },
+    ),
+    surface: evaluatePreToolGate(
+      writeTool,
+      { path: surfacePath, content: 'export {}\n' },
+      { projectRoot: root, sessionId, features: feat, host },
+    ),
+    destructive: evaluatePreToolGate(
+      'bash',
+      { command: 'rm -rf /' },
+      { projectRoot: root, sessionId, features: feat, host },
+    ),
+  };
+}
+
+function liveQuotedCard(text, intent) {
+  return (
+    text.includes('Do not cold-start') ||
+    text.includes(`Intent: ${intent}`) ||
+    text.includes(intent.slice(0, 28)) ||
+    /Host:\s+\w+\s+\((frontier|guided|strict)\)/.test(text)
+  );
+}
+
+function liveAuthBlocked(text) {
+  return /403|bad-credentials|unauthenticated|401|spend.?limit|insufficient/i.test(text);
+}
+
+function tryLiveSuccessor(root, host, intent) {
+  if (process.env.XRAY_LIVE_SUCCESSOR !== '1') return;
+  const relQuote =
+    'Read .xray/state/STATION.md. Reply with only the Host line and the Intent line. Do not edit files.';
+  const absQuote = `Read ${join(root, '.xray', 'state', 'STATION.md')}. Reply with only the Host line and the Intent line. Do not edit files.`;
+  const cmds = {
+    grok: ['grok', '-p', relQuote, '--cwd', root, '--always-approve', '--disable-web-search'],
+    opencode: ['opencode', 'run', '--dir', root, relQuote],
+    hermes: [
+      'hermes',
+      '-z',
+      relQuote,
+      '--cli',
+      '--provider',
+      'xai-oauth',
+      '-m',
+      'grok-4.5',
+      '--yolo',
+      '--no-restore-cwd',
+    ],
+    openclaw: [
+      'openclaw',
+      'agent',
+      '--thinking',
+      'low',
+      '--timeout',
+      '90',
+      '--model',
+      'xai/grok-4.5',
+      '--message',
+      absQuote,
+    ],
+  };
+  const argv = cmds[host];
+  if (!argv) return;
+  const which = spawnSync('which', [argv[0]], { encoding: 'utf8' });
+  if (which.status !== 0) {
+    skip(`${host} live successor (CLI not on PATH)`);
+    return;
+  }
+  const node24 = join(homedir(), '.local/node24/current/bin');
+  const env = {
+    ...process.env,
+    GROK_WORKSPACE_ROOT: root,
+    XRAY_ROOT: root,
+    PATH: existsSync(join(node24, 'node')) ? `${node24}:${process.env.PATH || ''}` : process.env.PATH,
+  };
+  const timeoutMs = host === 'openclaw' ? 110000 : 80000;
+  const result = spawnSync(argv[0], argv.slice(1), {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: timeoutMs,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const text = `${result.stdout || ''}\n${result.stderr || ''}`;
+  const err = result.error ? String(result.error.message || result.error) : '';
+  const combined = `${text}\n${err}`;
+  if (liveQuotedCard(combined, intent)) {
+    pass(`${host} live successor quoted the station card`);
+    return;
+  }
+  if (liveAuthBlocked(combined)) {
+    skip(`${host} live successor (host auth)`);
+    return;
+  }
+  if (/ETIMEDOUT|timed out|TIMEOUT/i.test(combined) || result.error?.code === 'ETIMEDOUT') {
+    fail(`${host} live successor timed out`, combined.slice(0, 200));
+    return;
+  }
+  fail(`${host} live successor did not quote the card`, combined.slice(0, 240));
+}
+
 function runHermesGate(root, extra) {
   const json = JSON.stringify({
     command: 'delegation-gate',
@@ -191,22 +358,27 @@ function runHermesGate(root, extra) {
   return JSON.parse(out.trim().split('\n').filter(Boolean).at(-1));
 }
 
-function assertConstitutionAndTemperament(root, host, { spawn, gate }) {
+function denied(g) {
+  return g && (g.allow === false || g.decision === 'deny');
+}
+
+function assertConstitutionAndTemperament(root, host, { spawn, eleven, surface, destructive }) {
   if (spawn.allow === false && spawn.gate === 'spawn-plan-missing') {
     pass(`${host} temperament denies spawn without plan (guided)`);
-  } else if (spawn.allow !== false && spawn.warn === true) {
-    pass(`${host} temperament warns spawn without plan (frontier)`);
-  } else if (spawn.allow === false && host === 'grok') {
-    fail(`${host} frontier should warn not deny spawn`, JSON.stringify(spawn));
   } else if (host === 'grok' && spawn.decision === 'allow' && spawn.warn === true) {
+    pass(`${host} temperament warns spawn without plan (frontier)`);
+  } else if (spawn.allow !== false && spawn.warn === true) {
     pass(`${host} temperament warns spawn without plan (frontier)`);
   } else {
     fail(`${host} temperament spawn`, JSON.stringify(spawn));
   }
-  const denied = gate.allow === false || gate.decision === 'deny';
-  const which = gate.gate || '';
-  if (denied && which === 'codex-11') pass(`${host} constitution denies Codex 11`);
-  else fail(`${host} constitution Codex 11`, JSON.stringify(gate));
+  if (denied(eleven) && eleven.gate === 'codex-11') pass(`${host} constitution denies Codex 11`);
+  else fail(`${host} constitution Codex 11`, JSON.stringify(eleven));
+  if (denied(surface) && surface.gate === 'no-new-surface') pass(`${host} constitution denies Codex 69 new surface`);
+  else fail(`${host} constitution Codex 69`, JSON.stringify(surface));
+  if (denied(destructive) && destructive.gate === 'destructive-shell') {
+    pass(`${host} constitution denies destructive shell`);
+  } else fail(`${host} constitution destructive shell`, JSON.stringify(destructive));
 }
 
 for (const p of [grokSession, grokPreTool, hermesBridge, suitJs, gateJs]) {
@@ -222,25 +394,14 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
   try {
     seedFloor(tmp);
     const intent = memoryIntent('grok');
-    const spawn = runGrokPreTool(tmp, {
-      toolName: 'spawn_subagent',
-      workspaceRoot: tmp,
-      sessionId: 'compact-grok-1',
-      toolInput: { prompt: 'explore repo', subagent_type: 'explore' },
-    });
-    const banned = runGrokPreTool(tmp, {
-      toolName: 'search_replace',
-      workspaceRoot: tmp,
-      sessionId: 'compact-grok-1',
-      toolInput: { path: 'src/foo.ts', new_string: UNSAFE_TS },
-    });
-    assertConstitutionAndTemperament(tmp, 'grok', { spawn, gate: banned });
+    assertConstitutionAndTemperament(tmp, 'grok', constitutionBundle(tmp, 'grok'));
     runGrokSession(tmp, 'session_start', { intent, sessionId: 'compact-grok-1' });
     runGrokSession(tmp, 'pre_compact', { sessionId: 'compact-grok-1' });
     runGrokSession(tmp, 'post_compact', { sessionId: 'compact-grok-1' });
     assertSurvived(tmp, { host: 'grok', intent, profile: 'frontier' });
     const boot = readBoot(tmp);
     pass(`Grok compact source=${boot.source} hookEvent=${boot.hookEvent}`);
+    tryLiveSuccessor(tmp, 'grok', intent);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -251,15 +412,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
   try {
     seedFloor(tmp);
     const intent = memoryIntent('hermes');
-    const spawn = runHermesGate(tmp, {
-      tool: 'delegate_task',
-      args: { prompt: 'explore repo', subagent_type: 'explore' },
-    });
-    const banned = runHermesGate(tmp, {
-      tool: 'write_file',
-      args: { path: 'src/foo.ts', content: UNSAFE_TS },
-    });
-    assertConstitutionAndTemperament(tmp, 'hermes', { spawn, gate: banned });
+    assertConstitutionAndTemperament(tmp, 'hermes', constitutionBundle(tmp, 'hermes'));
     writeSuitSessionBoot(tmp, 'hermes', {
       source: '0xray/hermes-user',
       sessionId: 'compact-hermes-1',
@@ -277,6 +430,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
       env: { ...process.env, XRAY_ROOT: tmp },
     });
     assertSurvived(tmp, { host: 'hermes', intent, profile: 'guided' });
+    tryLiveSuccessor(tmp, 'hermes', intent);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -287,18 +441,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
   try {
     seedFloor(tmp);
     const intent = memoryIntent('opencode');
-    const feat = loadDelegationGateFeatures(tmp, 'opencode');
-    const spawn = evaluatePreToolGate(
-      'Task',
-      { prompt: 'explore repo', subagent_type: 'explore' },
-      { projectRoot: tmp, sessionId: 'compact-oc-1', features: feat, host: 'opencode' },
-    );
-    const banned = evaluatePreToolGate(
-      'write',
-      { path: 'src/foo.ts', content: UNSAFE_TS },
-      { projectRoot: tmp, sessionId: 'compact-oc-1', features: feat, host: 'opencode' },
-    );
-    assertConstitutionAndTemperament(tmp, 'opencode', { spawn, gate: banned });
+    assertConstitutionAndTemperament(tmp, 'opencode', constitutionBundle(tmp, 'opencode'));
     writeSuitSessionBoot(tmp, 'opencode', {
       source: '0xray/opencode-user',
       sessionId: 'compact-oc-1',
@@ -309,6 +452,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
       hookEvent: 'post_compact',
     });
     assertSurvived(tmp, { host: 'opencode', intent, profile: 'guided' });
+    tryLiveSuccessor(tmp, 'opencode', intent);
     const card = readCard(tmp);
     if (card.includes(intent) && card.includes('Do not cold-start')) {
       pass('OpenCode successor would inject STATION.md (plugin system.transform)');
@@ -324,17 +468,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
     seedFloor(tmp);
     const intent = memoryIntent('openclaw');
     const feat = loadDelegationGateFeatures(tmp, 'openclaw');
-    const spawn = evaluatePreToolGate(
-      'Task',
-      { prompt: 'explore repo', subagent_type: 'explore' },
-      { projectRoot: tmp, sessionId: 'compact-claw-1', features: feat, host: 'openclaw' },
-    );
-    const banned = evaluatePreToolGate(
-      'write',
-      { path: 'src/foo.ts', content: UNSAFE_TS },
-      { projectRoot: tmp, sessionId: 'compact-claw-1', features: feat, host: 'openclaw' },
-    );
-    assertConstitutionAndTemperament(tmp, 'openclaw', { spawn, gate: banned });
+    assertConstitutionAndTemperament(tmp, 'openclaw', constitutionBundle(tmp, 'openclaw'));
     writeSuitSessionBoot(tmp, 'openclaw', {
       source: '0xray/openclaw-user',
       sessionId: 'compact-claw-1',
@@ -357,6 +491,7 @@ const { evaluatePreToolGate, loadDelegationGateFeatures } = await import(pathToF
       hookEvent: 'post_compact',
     });
     assertSurvived(tmp, { host: 'openclaw', intent, profile: 'guided' });
+    tryLiveSuccessor(tmp, 'openclaw', intent);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

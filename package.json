@@ -140,7 +140,8 @@
     "verify:pre-commit-diff": "node scripts/mjs/verify-pre-commit-diff-core.mjs",
     "verify:pre-push-diff": "node scripts/mjs/verify-pre-push-diff-core.mjs",
     "verify:temperament-live": "node scripts/mjs/verify-temperament-live.mjs",
-    "verify:four-floor-compact": "node scripts/mjs/verify-four-floor-compact.mjs"
+    "verify:four-floor-compact": "node scripts/mjs/verify-four-floor-compact.mjs",
+    "verify:four-floor-compact:live": "XRAY_LIVE_SUCCESSOR=1 node scripts/mjs/verify-four-floor-compact.mjs"
   },
   "files": [
     "dist/",
