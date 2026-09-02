@@ -109,7 +109,7 @@ export function appendSynthesisContextToResponse(
 
 ${collatedText}
 
-**Next:** Spawn Task for each mandatory consult todo (s.1 researcher, s.2 architect-tools, s.3 code-review). Checkpoint clears only when all consult todos complete.`;
+**Next:** Confer quorum runs automatically via analyze-complexity (researcher → architect-tools → code-review). If confer partial-fails, spawn Task for the next consult todo (s.1–s.3). Checkpoint clears when all consult todos complete.`;
   if (content.length === 0) {
     return [{ type: 'text', text: synthesisSection.trim() }];
   }

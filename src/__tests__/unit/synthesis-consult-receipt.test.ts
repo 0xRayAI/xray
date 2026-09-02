@@ -28,12 +28,33 @@ describe('synthesis-consult-receipt', () => {
 
   it('blocks consult todo completion without receipt', () => {
     fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       { ...plan!, persistedAt: new Date().toISOString(), sessionId },
       tmp,
     );
 
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+  });
+
+  it('blocks consult todo completion when receipt verdict is FAIL', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'FAIL',
+        topRisks: ['critical'],
+        hardeningNote: 'do not ship',
+      },
+      tmp,
+    );
     expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
   });
 

@@ -50,7 +50,7 @@ try {
   if (!isSynthesisCheckpointDue(tmp, sessionId)) fail('checkpoint due after gate');
   else pass('checkpoint due after gate');
 
-  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)');
+  const plan = buildSynthesisCheckpointPlan('gate threshold (1/1)', tmp);
   savePersistedLeadDevPlan(
     { ...plan, persistedAt: new Date().toISOString(), sessionId },
     tmp,

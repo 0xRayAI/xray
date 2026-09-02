@@ -29,6 +29,7 @@ import { defaultConfig } from "./config.js";
 import { frameworkReportingSystem } from "../reporting/framework-reporting-system.js";
 import { ReportContentValidator } from "../validation/report-content-validator.js";
 import { RegressionAnalysisService } from "./services/RegressionAnalysisService.js";
+import { SelfProposalEngine } from "./metamorphosis/SelfProposalEngine.js";
 
 export class PostProcessor {
   private config: PostProcessorConfig;
@@ -46,6 +47,7 @@ export class PostProcessor {
     webhook: WebhookTrigger;
     api: APITrigger;
   };
+  private metamorphosisEngines: SelfProposalEngine[];
 
   constructor(
     private stateManager: XrayStateManager,
@@ -75,6 +77,8 @@ export class PostProcessor {
     // Initialize escalation and success handlers
     this.escalationEngine = new EscalationEngine(this.config.escalation);
     this.successHandler = new SuccessHandler(this.config.success);
+
+    this.metamorphosisEngines = [new SelfProposalEngine({ projectRoot: process.cwd() })];
 
     // Initialize trigger mechanisms
     this.triggers = {
@@ -1111,6 +1115,19 @@ All path violations will be automatically detected and blocked.
           result,
           monitoringResults,
         );
+
+        for (const engine of this.metamorphosisEngines) {
+          try {
+            await engine.onPhase('post-process-complete', { context, result, monitoringResults });
+          } catch (metaErr) {
+            await frameworkLogger.log(
+              '-post-processor',
+              'self-proposal-phase-error',
+              'warning',
+              { error: String(metaErr) },
+            );
+          }
+        }
 
         // AGENTS.md auto-update with smart triggers
         // Only updates when agent-related files have changed

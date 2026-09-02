@@ -67,6 +67,37 @@ function isBillingError(text) {
   return text && /billing error|insufficient balance|out of credits|API key has run out/i.test(text);
 }
 
+function isProviderInfraError(text) {
+  return Boolean(
+    isBillingError(text) ||
+      /HTTP 500|Internal server error|ECONNRESET|ETIMEDOUT|providerRuntimeFailure/i.test(String(text || '')),
+  );
+}
+
+function isScopeError(text) {
+  return /missing scope:\s*operator\.write|FORBIDDEN/i.test(String(text || ''));
+}
+
+/** 2026.8.2: token-only WS often lacks operator.write. Official CLI is the write path. */
+function agentChat(message, timeoutSec = 90) {
+  try {
+    const out = execSync(
+      `openclaw agent --thinking low --timeout ${timeoutSec} --model xai/grok-4.5 --message ${JSON.stringify(message)}`,
+      {
+        encoding: 'utf-8',
+        timeout: (timeoutSec + 20) * 1000,
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    return { text: String(out || ''), error: null, toolCalls: [], agentPhases: [] };
+  } catch (e) {
+    const text = String(e.stdout || '');
+    const err = String(e.stderr || e.message || '');
+    return { text, error: err || 'openclaw agent failed', toolCalls: [], agentPhases: [] };
+  }
+}
+
 function section(title) {
   console.log(`\n\x1b[1m${'='.repeat(60)}\n  ${title}\n${'='.repeat(60)}\x1b[0m`);
 }
@@ -116,8 +147,8 @@ function wsConnect(token, port = 18789) {
         ws.send(JSON.stringify({
           type: 'req', method: 'connect', id: 'c-' + Date.now(),
           params: {
-            minProtocol: 3, maxProtocol: 3,
-            client: { id: 'openclaw-tui', version: '1.0.0', platform: process.platform, mode: 'cli' },
+            minProtocol: 3, maxProtocol: 4,
+            client: { id: 'gateway-client', version: '1.0.0', platform: process.platform, mode: 'cli' },
             role: 'operator',
             scopes: ['operator.read', 'operator.write', 'operator.admin'],
             auth: { token },
@@ -153,6 +184,19 @@ function sendChat(ws, message, timeoutMs = 90000, sessionKey = null) {
 
     const handler = (data) => {
       const msg = JSON.parse(data.toString());
+
+      if (msg.type === 'res' && msg.ok === false) {
+        clearTimeout(timeout);
+        ws.off('message', handler);
+        resolve({
+          text,
+          error: msg.error?.message || 'request failed',
+          runId,
+          toolCalls,
+          agentPhases,
+        });
+        return;
+      }
 
       if (msg.event === 'agent' && msg.payload?.data) {
         const d = msg.payload.data;
@@ -295,10 +339,19 @@ async function main() {
 
   if (ws) {
     console.log('  Sending: "What is 2+2? Reply with just the number."');
-    const r1 = await sendChat(ws, 'What is 2+2? Reply with just the number.');
+    let chatViaAgent = false;
+    let r1 = await sendChat(ws, 'What is 2+2? Reply with just the number.');
+    if (r1.error && isScopeError(r1.error)) {
+      chatViaAgent = true;
+      r1 = agentChat('What is 2+2? Reply with just the number.', 90);
+    }
+    let chatProviderDown = false;
     if (r1.error) {
       if (isBillingError(r1.error)) {
         pass('chat.send works (billing error from provider — infrastructure OK)');
+      } else if (isProviderInfraError(r1.error)) {
+        skip('chat.send simple', `LLM timeout or error: ${r1.error.substring(0, 80)}`);
+        chatProviderDown = true;
       } else {
         skip('chat.send simple', `LLM timeout or error: ${r1.error.substring(0, 80)}`);
       }
@@ -309,6 +362,13 @@ async function main() {
     } else {
       fail('chat.send simple', `no number in reply: "${(r1.text || '').substring(0, 100)}"`);
     }
+
+    if (chatProviderDown) {
+      skip('orchestration multi-step', 'provider infra error on first chat.send — skipping remaining chat phases');
+      skip('multi-turn turn 1', 'provider infra error on first chat.send');
+      skip('multi-turn turn 2', 'provider infra error on first chat.send');
+      skip('tool-calling', 'provider infra error on first chat.send');
+    } else {
 
     // ── Phase 4: chat.send Orchestration ──────────────────
     section('Phase 4: chat.send Orchestration (multi-step)');
@@ -321,7 +381,7 @@ async function main() {
       '3. Tell me if the final number is prime',
       'Reply with: step1=<n> step2=<n> prime=<true|false>',
     ].join(' ');
-    const r2 = await sendChat(ws, orchPrompt, 120000);
+    const r2 = chatViaAgent ? agentChat(orchPrompt, 120) : await sendChat(ws, orchPrompt, 120000);
     if (r2.error) {
       skip('orchestration multi-step', r2.error.substring(0, 120));
     } else if (r2.text) {
@@ -348,7 +408,9 @@ async function main() {
     section('Phase 5: chat.send Multi-turn Session');
 
     const multiKey = `e2e-multi-${Date.now()}`;
-    const r3a = await sendChat(ws, 'Remember the secret word: "quasar". Just say OK.', 60000, multiKey);
+    const r3a = chatViaAgent
+      ? agentChat('Remember the secret word: "quasar". Just say OK.', 60)
+      : await sendChat(ws, 'Remember the secret word: "quasar". Just say OK.', 60000, multiKey);
     if (r3a.error) {
       skip('multi-turn turn 1', r3a.error.substring(0, 120));
     } else {
@@ -358,7 +420,9 @@ async function main() {
     // Small delay to let gateway finish streaming
     await new Promise((r) => setTimeout(r, 2000));
 
-    const r3b = await sendChat(ws, 'What was the secret word I asked you to remember? Reply with just the word.', 60000, multiKey);
+    const r3b = chatViaAgent
+      ? agentChat('What was the secret word I asked you to remember? Reply with just the word.', 60)
+      : await sendChat(ws, 'What was the secret word I asked you to remember? Reply with just the word.', 60000, multiKey);
     if (r3b.error) {
       skip('multi-turn turn 2', r3b.error.substring(0, 120));
     } else if (/quasar/i.test(r3b.text)) {
@@ -387,9 +451,18 @@ async function main() {
     } else {
     console.log('  Sending prompt that may trigger tool use...');
     const toolPrompt = 'Use any available tools to find out what day of the week April 27, 2026 falls on.';
-    const r4 = await sendChat(ws, toolPrompt, 90000);
+    let r4 = await sendChat(ws, toolPrompt, 90000);
+    if (r4.error && isScopeError(r4.error)) {
+      r4 = agentChat(toolPrompt, 90);
+    }
+    r4.toolCalls = r4.toolCalls || [];
+    r4.agentPhases = r4.agentPhases || [];
     if (r4.error) {
-      fail('tool-calling', r4.error.substring(0, 120));
+      if (isProviderInfraError(r4.error) || isScopeError(r4.error)) {
+        skip('tool-calling', r4.error.substring(0, 120));
+      } else {
+        fail('tool-calling', r4.error.substring(0, 120));
+      }
     } else if (r4.text) {
       const hasMonday = /monday/i.test(r4.text);
       const hadToolCalls = r4.toolCalls.length > 0;
@@ -406,6 +479,7 @@ async function main() {
       }
     } else {
       skip('tool-calling', 'empty response');
+    }
     }
     }
 
@@ -998,8 +1072,26 @@ async function main() {
 
   if (OpenClawIntegration) {
     let integration;
+    const tmpCfg = path.join(os.tmpdir(), `xray-oc-e2e-cfg-${Date.now()}.json`);
     try {
-      integration = new OpenClawIntegration('/nonexistent/config.json');
+      fs.writeFileSync(
+        tmpCfg,
+        JSON.stringify({
+          gatewayUrl: `ws://127.0.0.1:${gatewayPort}`,
+          authToken,
+          autoReconnect: false,
+          apiServer: { enabled: true, port: 18431, host: '127.0.0.1' },
+          hooks: {
+            enabled: true,
+            toolBefore: true,
+            toolAfter: true,
+            includeArgs: true,
+            includeResult: true,
+          },
+          enabled: true,
+        }),
+      );
+      integration = new OpenClawIntegration(tmpCfg);
       pass('OpenClawIntegration instantiated');
     } catch (e) {
       fail('OpenClawIntegration instantiate', e.message);
@@ -1048,10 +1140,18 @@ async function main() {
         fail('getOpenClawConfig', e.message);
       }
 
-      // Client
+      // Client — live gateway + token must authorize; stub device must not force NOT_PAIRED
       const client = integration.getClient();
-      if (client) pass(`getClient() → state: ${client.getState()}`);
-      else pass('getClient() → null (expected without live gateway connection)');
+      if (!client) {
+        fail('getClient', 'null after initialize with live gateway');
+      } else {
+        const state = client.getState();
+        if (state === 'authorized' || state === 'connected') {
+          pass(`getClient() → state: ${state}`);
+        } else {
+          fail('getClient state', `expected authorized, got ${state}`);
+        }
+      }
 
       // API server
       const apiSrv = integration.getAPIServer();
@@ -1087,6 +1187,11 @@ async function main() {
         pass('integration.shutdown() completed');
       } catch (e) {
         fail('shutdown', e.message);
+      }
+      try {
+        fs.unlinkSync(tmpCfg);
+      } catch {
+        /* best-effort */
       }
     }
   } else {

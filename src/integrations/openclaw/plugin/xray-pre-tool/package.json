@@ -1,0 +1,10 @@
+{
+  "name": "xray-pre-tool",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "0xRay constitution + temperament PreToolUse for OpenClaw",
+  "openclaw": {
+    "extensions": ["./index.js"]
+  }
+}

@@ -11,6 +11,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { getConfigDir, resolveConfigPath } from "./config-paths.js";
 import type { MemoryRoutingConfig } from "../memory-routing/types.js";
+import type {
+  SuitHost,
+  SuitProfile,
+  SuitTemperamentConfig,
+} from "../nucleus/suit-temperament.js";
 
 export type { MemoryRoutingConfig };
 
@@ -80,9 +85,21 @@ export interface MultiAgentOrchestrationConfig {
   auto_consult_major_work?: boolean;
   /** Codex 69 — block new MCP/skill/handler files via PreToolUse (default true) */
   no_new_surface?: boolean;
-  /** 3.5.0 — PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
+  /** PreToolUse gate after delegate-deferred (default true when lead_dev_mode) */
   auto_chain_delegations?: boolean;
+  /** Hours before unstarted lead-dev plan is archived (default 8) */
+  plan_stale_hours?: number;
+  /** Hours spawn-plan-stale persists after archival (default 24) */
+  plan_archive_marker_hours?: number;
+  /** Sibling workspace roots for multi-repo session boot metadata */
+  sibling_repos?: Array<string | { path: string; label?: string }>;
+  /** Auto-run 3-agent confer at synthesis checkpoint */
+  confer_on_synthesis?: boolean;
+  confer?: { enabled?: boolean; on_synthesis?: boolean };
 }
+
+/** 0xRay 4.0 — nucleus SSOT. See docs-site/docs/guides/v3-temperament.md */
+export type { SuitHost, SuitProfile, SuitTemperamentConfig };
 
 /** Reflection triggers merged from legacy auto_reflection when synthesis is configured */
 export interface SynthesisReflectionConfig {
@@ -91,7 +108,7 @@ export interface SynthesisReflectionConfig {
   thresholds?: AutoReflectionConfig['thresholds'];
 }
 
-/** 3.6.0 — periodic reflect & realign checkpoint (Synthesis PR1) */
+/** Periodic reflect & realign checkpoint (Synthesis) */
 export interface SynthesisConfig {
   enabled: boolean;
   every_n_gates: number;
@@ -393,10 +410,20 @@ export interface FeaturesConfig {
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
   memory_routing?: MemoryRoutingConfig;
+  /** P2.2 — lightweight Grok write-tool postprocessor marker */
+  grok_postprocessor_light?: boolean;
+  /** P2 — git post-commit session inference capture */
+  inference_session_capture?: {
+    enabled?: boolean;
+    min_commits?: number;
+    lookback_commits?: number;
+  };
   synthesis: SynthesisConfig;
   kernel?: KernelConfig;
   processors?: ProcessorsConfig;
   enforcement?: EnforcementConfig;
+  /** v3 temperament — missing key means guided (existing consumers unchanged) */
+  suit_temperament?: SuitTemperamentConfig;
 }
 
 // ============================================================================

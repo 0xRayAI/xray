@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { frameworkLogger } from '../core/framework-logger.js';
 import type {
@@ -10,7 +10,27 @@ import type {
 import { createMemoryRoutingProvider as createNullProvider } from './null-provider.js';
 import { validateMemoryRoutingConfig } from './validate-config.js';
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function resolveUnavailableReason(provider: MemoryRoutingProvider): string | null {
+  const statusProvider = provider as MemoryRoutingProvider & {
+    getAvailabilityStatus?: () => { reason?: string };
+  };
+  if (typeof statusProvider.getAvailabilityStatus !== 'function') {
+    return null;
+  }
+  try {
+    return statusProvider.getAvailabilityStatus().reason ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const REPERTOIRE_CANDIDATE_PATHS = [
+  'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js',
+  'vendor/@0xray/repertoire/dist/provider/memory-routing-provider.js',
   '../repertoire/dist/provider/memory-routing-provider.js',
   '../../repertoire/dist/provider/memory-routing-provider.js',
   '../../../repertoire/dist/provider/memory-routing-provider.js',
@@ -49,7 +69,70 @@ function defaultPathForProvider(
     const abs = resolve(cwd, rel);
     if (existsSync(abs)) return abs;
   }
+  const nm = join(
+    cwd,
+    'node_modules',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  return existsSync(nm) ? nm : null;
+}
+
+export function isExplicitMemoryRoutingOptOut(config: MemoryRoutingConfig): boolean {
+  return config.enabled === false && config.provider === 'repertoire';
+}
+
+/** Leftover shipped default: enabled false + provider null. Not an explicit opt-out. */
+export function isLeftoverMemoryRoutingOff(config: MemoryRoutingConfig): boolean {
+  if (config.enabled === true) return false;
+  if (isExplicitMemoryRoutingOptOut(config)) return false;
+  return config.provider === 'null' || !config.provider;
+}
+
+function leftoverRepertoireModulePath(cwd: string): string | null {
+  const nm = join(
+    cwd,
+    'node_modules',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  if (existsSync(nm)) return nm;
+  const vendor = join(
+    cwd,
+    'vendor',
+    '@0xray',
+    'repertoire',
+    'dist',
+    'provider',
+    'memory-routing-provider.js',
+  );
+  if (existsSync(vendor)) return vendor;
+  const sibling = resolve(cwd, '../repertoire/dist/provider/memory-routing-provider.js');
+  if (existsSync(sibling)) return sibling;
   return null;
+}
+
+export function resolveLeftoverEnabledConfig(
+  config: MemoryRoutingConfig,
+  cwd: string,
+): MemoryRoutingConfig | null {
+  if (!isLeftoverMemoryRoutingOff(config)) return null;
+  const modulePath =
+    resolveModulePath(config.module_path, cwd) ?? leftoverRepertoireModulePath(cwd);
+  if (!modulePath) return null;
+  const enabled: MemoryRoutingConfig = {
+    enabled: true,
+    provider: 'repertoire',
+    module_path: modulePath,
+  };
+  if (config.config) enabled.config = config.config;
+  return enabled;
 }
 
 export async function loadMemoryRoutingProvider(
@@ -68,7 +151,8 @@ export async function loadMemoryRoutingProvider(
     return createNullProvider();
   }
 
-  const effective = validation.normalized;
+  const leftover = resolveLeftoverEnabledConfig(validation.normalized, cwd);
+  const effective = leftover ?? validation.normalized;
 
   if (!effective.enabled || effective.provider === 'null') {
     return createNullProvider();
@@ -112,6 +196,8 @@ export async function loadMemoryRoutingProvider(
       throw new Error(`Invalid memory routing provider from ${modulePath}`);
     }
 
+    const availabilityReason = resolveUnavailableReason(provider);
+
     if (!provider.isAvailable()) {
       await frameworkLogger.log(
         'memory-routing',
@@ -120,10 +206,26 @@ export async function loadMemoryRoutingProvider(
         {
           providerId: provider.id,
           modulePath,
-          message: `Provider "${provider.id}" loaded but isAvailable() returned false. Falling back to null provider.`,
+          unavailableReason: availabilityReason,
+          message: `Provider "${provider.id}" loaded but isAvailable() returned false (${availabilityReason ?? 'unknown'}). Falling back to null provider.`,
         },
       );
-      return createNullProvider();
+
+      if (availabilityReason === 'empty_registry') {
+        await sleep(100);
+        if (provider.isAvailable()) {
+          await frameworkLogger.log(
+            'memory-routing',
+            'provider-retry-ok',
+            'info',
+            { providerId: provider.id, modulePath },
+          );
+        } else {
+          return createNullProvider();
+        }
+      } else {
+        return createNullProvider();
+      }
     }
 
     await frameworkLogger.log(

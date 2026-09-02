@@ -2,6 +2,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { beforeToolHook, afterToolHook } from "../enforcement-gate.js";
 import type { GateViolation } from "../enforcement-gate.js";
 
+const handleGovernRequest = vi.fn().mockResolvedValue({
+  overallDecision: "approve",
+  results: [],
+});
+
+vi.mock("../../nucleus/index.js", () => ({
+  handleGovernRequest: (...args: unknown[]) => handleGovernRequest(...args),
+}));
+
 describe("enforcement-gate", () => {
   beforeEach(() => {
     (globalThis as any).xrayValidatorRegistry = undefined;
@@ -113,6 +122,7 @@ describe("enforcement-gate", () => {
     });
 
     it("handles governance routing for proposal-like results", async () => {
+      handleGovernRequest.mockClear();
       const result = await afterToolHook("write", { filePath: "src/test.ts", content: "const a = 1;" }, {
         title: "Refactor handler",
         description: "Extract logic to helper",
@@ -120,6 +130,17 @@ describe("enforcement-gate", () => {
       });
       expect(result.processed).toBe(true);
       expect(typeof result.governanceTriggered).toBe("boolean");
+      expect(handleGovernRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          proposals: [
+            expect.objectContaining({
+              title: "Refactor handler",
+              description: "Extract logic to helper",
+              type: "refactor",
+            }),
+          ],
+        }),
+      );
     });
 
     it("returns safe defaults on error", async () => {

@@ -4,10 +4,16 @@ import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LeadDevPlan } from '../../nucleus/autonomy-kernel.js';
 import {
+  archiveStaleLeadDevPlan,
+  findRecentStalePlanArchive,
+  loadLeadDevPlanArchiveMarkerMs,
+  loadLeadDevPlanStaleMs,
   bindPlanToSession,
   getNextRequiredTodo,
   getOutstandingTodos,
   hasValidLeadDevPlanForSpawn,
+  isLeadDevPlanStale,
+  loadPersistedLeadDevPlan,
   savePersistedLeadDevPlan,
   updatePlanTodoStatus,
   validateSpawnMatchesTodo,
@@ -207,5 +213,97 @@ describe('lead-dev-plan-persistence', () => {
     }
 
     expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(false);
+  });
+
+  it('treats unstarted plan as stale after TTL', () => {
+    const staleAt = new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...basePlan,
+        persistedAt: staleAt,
+        sessionId: 'stale-session',
+      },
+      tmp,
+    );
+    const plan = loadPersistedLeadDevPlan(tmp);
+    expect(plan).not.toBeNull();
+    expect(isLeadDevPlanStale(plan!, tmp)).toBe(true);
+    expect(hasValidLeadDevPlanForSpawn(tmp)).toBe(false);
+  });
+
+  it('never treats synthesis realignment plan as stale while consult todos pending', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    const synthesisPlan = buildSynthesisCheckpointPlan('gate threshold');
+    expect(synthesisPlan).not.toBeNull();
+    savePersistedLeadDevPlan(
+      {
+        ...synthesisPlan!,
+        persistedAt: staleAt,
+        sessionId: 'synth-stale-session',
+      },
+      tmp,
+    );
+    const plan = loadPersistedLeadDevPlan(tmp);
+    expect(plan).not.toBeNull();
+    expect(isLeadDevPlanStale(plan!, tmp)).toBe(false);
+    expect(hasValidLeadDevPlanForSpawn(tmp)).toBe(true);
+    const archive = archiveStaleLeadDevPlan(tmp);
+    expect(archive.archived).toBe(false);
+    expect(loadPersistedLeadDevPlan(tmp)).not.toBeNull();
+  });
+
+  it('loads plan_stale_hours from features.json', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_stale_hours: 2 },
+      }),
+    );
+    expect(loadLeadDevPlanStaleMs(tmp)).toBe(2 * 60 * 60 * 1000);
+  });
+
+  it('loads plan_archive_marker_hours from features.json', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_archive_marker_hours: 6 },
+      }),
+    );
+    expect(loadLeadDevPlanArchiveMarkerMs(tmp)).toBe(6 * 60 * 60 * 1000);
+  });
+
+  it('findRecentStalePlanArchive ignores archives past marker TTL', () => {
+    const stateDir = path.join(tmp, '.xray', 'state');
+    const oldArchivedAt = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(stateDir, 'lead-dev-plan.archived-old.json'),
+      JSON.stringify({
+        archiveReason: 'stale-unstarted-todos',
+        archivedAt: oldArchivedAt,
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { plan_archive_marker_hours: 6 },
+      }),
+    );
+    expect(findRecentStalePlanArchive(tmp)).toBeNull();
+  });
+
+  it('archives stale plan on session boot path', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...basePlan,
+        persistedAt: staleAt,
+        sessionId: 'archive-session',
+      },
+      tmp,
+    );
+    const result = archiveStaleLeadDevPlan(tmp);
+    expect(result.archived).toBe(true);
+    expect(loadPersistedLeadDevPlan(tmp)).toBeNull();
+    expect(findRecentStalePlanArchive(tmp)).not.toBeNull();
   });
 });

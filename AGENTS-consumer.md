@@ -4,7 +4,15 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v3.5.4** — 7 MCP servers · 45 skills · 68 codex terms · 4 platform bridges
+**v4.0.0** — a suit that survives the context window.
+
+**v4.0.0** — same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire auto-enables when the module is present; otherwise `memory_routing` stays off. Trim fat, do not gut the design.
+
+**Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
+
+## Hot-swap
+
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 ## Postinstall (automatic)
 
@@ -76,14 +84,16 @@ Configure in `.xray/features.json`:
 "memory_routing": {
   "enabled": true,
   "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "../repertoire/data/curated_signals.json"
+    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "statePath": ".xray/state/repertoire/inference-state.json",
+    "feedbackDir": ".xray/state/repertoire/feedback"
   }
 }
 ```
 
-Without Repertoire: `{ "enabled": false, "provider": "null" }`.
+Opt out: `{ "enabled": false, "provider": "repertoire" }`.
 
 **External MCP** (Hermes/Grok): add Repertoire alongside 0xRay servers:
 
@@ -104,7 +114,7 @@ The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced b
 |------|------|-------------|
 | 11 | No `any`, `@ts-ignore`, `@ts-expect-error` | PreToolUse deny on edits |
 | 29 | Security by design — no `eval()` | PreToolUse deny |
-| 59 | Complex work → orchestrator intake | PreToolUse deny `spawn_subagent` without plan |
+| 59 | Complex work → orchestrator intake | **guided/strict:** PreToolUse **deny** spawn without plan. **frontier:** **warn** (allow) — engine still available; leftover-plan todo mismatch also warns. Codex 11/29/69 still **deny**. |
 | 67–68 | Best subagents + lead dev ownership | `analyze-complexity` + orchestrator skill |
 | **69** | **No new MCP/skill/handler surface** | PreToolUse deny new `*.server.ts`, `SKILL.md` |
 
@@ -123,7 +133,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 | Test triage | PreToolUse hook | Per-suite hint on full `npm test` |
 | Playbook | **`orchestrator`** skill | Codex 59, 67–69 rules |
 
-**First substantive task:** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. You are the **lead developer**. Users speak in goals, not keywords.
+**First substantive task (guided/strict):** `analyze-complexity` with `tasks` array — **required before** `spawn_subagent`. **Frontier:** intake is optional; spawn without a plan **warns**. You are the **lead developer**. Users speak in goals, not keywords.
 
 | # | Rule |
 |---|------|

@@ -17,7 +17,17 @@ import {
 import {
   hasValidSynthesisConsultReceipt,
   isSynthesisConsultTodoId,
+  loadSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import { resolveSpawnPlan } from './spawn-plan-resolution.js';
+import {
+  isAsideActiveForSession,
+  isUserAsideTodoId,
+  isUserAsidesEnabled,
+  parseAsideIdFromTodoId,
+  findAsideContainingTodo,
+  updateUserAsideTodoStatus,
+} from './user-aside.js';
 
 export interface PersistedLeadDevPlan extends LeadDevPlan {
   persistedAt?: string;
@@ -33,8 +43,156 @@ export interface SpawnTodoValidation {
   expectedTodoId?: string | null;
 }
 
+export const DEFAULT_PLAN_STALE_MS = 8 * 60 * 60 * 1000;
+export const DEFAULT_PLAN_ARCHIVE_MARKER_MS = 24 * 60 * 60 * 1000;
+
 export function leadDevPlanStatePath(projectRoot = process.cwd()): string {
   return path.join(projectRoot, '.xray', 'state', 'lead-dev-plan.json');
+}
+
+export function loadLeadDevPlanStaleMs(projectRoot = process.cwd()): number {
+  const featuresPath = path.join(projectRoot, '.xray', 'features.json');
+  if (!fs.existsSync(featuresPath)) return DEFAULT_PLAN_STALE_MS;
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      multi_agent_orchestration?: { plan_stale_hours?: number };
+    };
+    const hours = data.multi_agent_orchestration?.plan_stale_hours;
+    if (typeof hours === 'number' && hours > 0) {
+      return hours * 60 * 60 * 1000;
+    }
+  } catch {
+    /* keep default */
+  }
+  return DEFAULT_PLAN_STALE_MS;
+}
+
+export function loadLeadDevPlanArchiveMarkerMs(projectRoot = process.cwd()): number {
+  const featuresPath = path.join(projectRoot, '.xray', 'features.json');
+  if (!fs.existsSync(featuresPath)) return DEFAULT_PLAN_ARCHIVE_MARKER_MS;
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      multi_agent_orchestration?: { plan_archive_marker_hours?: number };
+    };
+    const hours = data.multi_agent_orchestration?.plan_archive_marker_hours;
+    if (typeof hours === 'number' && hours > 0) {
+      return hours * 60 * 60 * 1000;
+    }
+  } catch {
+    /* keep default */
+  }
+  return DEFAULT_PLAN_ARCHIVE_MARKER_MS;
+}
+
+function planAgeMs(plan: PersistedLeadDevPlan, projectRoot: string): number {
+  const persistedAt = plan.persistedAt;
+  if (persistedAt) {
+    const age = Date.now() - new Date(persistedAt).getTime();
+    if (Number.isFinite(age)) return age;
+  }
+  try {
+    const stat = fs.statSync(leadDevPlanStatePath(projectRoot));
+    return Date.now() - stat.mtimeMs;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+/**
+ * Mandatory synthesis consults (s.1–s.3) must stay spawnable until complete —
+ * never treat an active realignment plan as stale while consult todos remain.
+ */
+export function isProtectedSynthesisRealignmentPlan(
+  plan: PersistedLeadDevPlan,
+): boolean {
+  return isSynthesisRealignmentPlan(plan) && !areSynthesisConsultTodosComplete(plan);
+}
+
+/**
+ * Stale when every outstanding todo is still pending and plan age exceeds TTL.
+ * In-progress or completed todos imply active work — plan stays valid.
+ */
+export function isLeadDevPlanStale(
+  plan: PersistedLeadDevPlan,
+  projectRoot = process.cwd(),
+): boolean {
+  if (!plan.active) return false;
+  if (isProtectedSynthesisRealignmentPlan(plan)) return false;
+  const outstanding = getOutstandingTodos(plan);
+  if (outstanding.length === 0) return false;
+  const allStillPending = outstanding.every((t) => t.status === 'pending');
+  if (!allStillPending) return false;
+  return planAgeMs(plan, projectRoot) > loadLeadDevPlanStaleMs(projectRoot);
+}
+
+export function archiveStaleLeadDevPlan(
+  projectRoot = process.cwd(),
+): { archived: boolean; archivePath?: string; reason?: string } {
+  const plan = loadPersistedLeadDevPlan(projectRoot);
+  if (!plan) {
+    return { archived: false };
+  }
+  if (isProtectedSynthesisRealignmentPlan(plan)) {
+    return { archived: false, reason: 'synthesis-realignment-active' };
+  }
+  if (!isLeadDevPlanStale(plan, projectRoot)) {
+    return { archived: false };
+  }
+
+  const stateDir = path.dirname(leadDevPlanStatePath(projectRoot));
+  fs.mkdirSync(stateDir, { recursive: true });
+  const archivePath = path.join(
+    stateDir,
+    `lead-dev-plan.archived-${Date.now()}.json`,
+  );
+  const payload = {
+    ...plan,
+    active: false,
+    archivedAt: new Date().toISOString(),
+    archiveReason: 'stale-unstarted-todos',
+  };
+  fs.writeFileSync(archivePath, JSON.stringify(payload, null, 2));
+  fs.unlinkSync(leadDevPlanStatePath(projectRoot));
+  return { archived: true, archivePath, reason: 'stale-unstarted-todos' };
+}
+
+/** Recent stale archival — keeps spawn-plan-stale gate after session-start cleanup. */
+export function findRecentStalePlanArchive(
+  projectRoot = process.cwd(),
+  maxAgeMs = loadLeadDevPlanArchiveMarkerMs(projectRoot),
+): { archivePath: string; archivedAt: string } | null {
+  const stateDir = path.join(projectRoot, '.xray', 'state');
+  if (!fs.existsSync(stateDir)) return null;
+
+  const candidates = fs
+    .readdirSync(stateDir)
+    .filter((name) => name.startsWith('lead-dev-plan.archived-') && name.endsWith('.json'))
+    .map((name) => {
+      const archivePath = path.join(stateDir, name);
+      return { archivePath, mtimeMs: fs.statSync(archivePath).mtimeMs };
+    })
+    .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  for (const candidate of candidates) {
+    try {
+      const data = JSON.parse(
+        fs.readFileSync(candidate.archivePath, 'utf8'),
+      ) as { archiveReason?: string; archivedAt?: string };
+      if (data.archiveReason !== 'stale-unstarted-todos') continue;
+      const archivedAtMs = data.archivedAt
+        ? new Date(data.archivedAt).getTime()
+        : candidate.mtimeMs;
+      if (!Number.isFinite(archivedAtMs)) continue;
+      if (Date.now() - archivedAtMs > maxAgeMs) continue;
+      return {
+        archivePath: candidate.archivePath,
+        archivedAt: data.archivedAt ?? new Date(archivedAtMs).toISOString(),
+      };
+    } catch {
+      /* skip corrupt archive */
+    }
+  }
+  return null;
 }
 
 export function loadPersistedLeadDevPlan(
@@ -93,6 +251,7 @@ export function hasValidLeadDevPlanForSpawn(
 ): boolean {
   const plan = loadPersistedLeadDevPlan(projectRoot);
   if (!plan?.active) return false;
+  if (isLeadDevPlanStale(plan, projectRoot)) return false;
 
   const outstanding = getOutstandingTodos(plan);
   if (outstanding.length > 0) return true;
@@ -155,7 +314,12 @@ export function updatePlanTodoStatus(
   todoId: string,
   status: LeadDevTodo['status'],
   projectRoot = process.cwd(),
+  sessionId?: string | null,
 ): boolean {
+  if (isUserAsidesEnabled(projectRoot) && isUserAsideTodoId(todoId)) {
+    return updateUserAsideTodoStatus(todoId, status, projectRoot, sessionId);
+  }
+
   const plan = loadPersistedLeadDevPlan(projectRoot);
   if (!plan) return false;
 
@@ -175,6 +339,10 @@ export function updatePlanTodoStatus(
     if (plan.sessionId !== undefined) receiptExpected.sessionId = plan.sessionId;
     if (targetTodo?.subagent) receiptExpected.subagent = targetTodo.subagent;
     if (!hasValidSynthesisConsultReceipt(todoId, projectRoot, receiptExpected)) {
+      return false;
+    }
+    const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
+    if (receipt?.verdict === 'FAIL') {
       return false;
     }
   }
@@ -249,8 +417,38 @@ export function validateSpawnMatchesTodo(
   toolInput: SpawnToolInput,
   projectRoot = process.cwd(),
   expectedTodo?: LeadDevTodo | null,
+  sessionId?: string | null,
 ): SpawnTodoValidation {
-  const plan = loadPersistedLeadDevPlan(projectRoot);
+  const explicitTodo = toolInput.planTodoId;
+  if (
+    explicitTodo &&
+    isUserAsideTodoId(explicitTodo) &&
+    isUserAsidesEnabled(projectRoot)
+  ) {
+    const parsedId = parseAsideIdFromTodoId(explicitTodo);
+    const targetAside = parsedId
+      ? findAsideContainingTodo(explicitTodo, projectRoot, parsedId)
+      : null;
+    if (targetAside && !isAsideActiveForSession(targetAside.id, projectRoot, sessionId)) {
+      return {
+        valid: false,
+        reason: `Aside \`${targetAside.id}\` is not active for this session`,
+        gate: 'aside-session-mismatch',
+        expectedTodoId: explicitTodo,
+        hint: {
+          tool: 'orchestrate-task',
+          userAsideId: targetAside.id,
+          track: 'user-aside',
+        },
+      };
+    }
+  }
+
+  const resolved = isUserAsidesEnabled(projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot, sessionId)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
+
+  const plan = resolved.plan;
   const nextTodo = expectedTodo ?? (plan ? getNextRequiredTodo(plan) : null);
 
   if (!nextTodo) {
@@ -261,9 +459,9 @@ export function validateSpawnMatchesTodo(
     toolInput.prompt || toolInput.description || toolInput.task || '',
   ).toLowerCase();
   const subagent = String(toolInput.subagent_type || toolInput.agent || '');
-  const explicitTodo = toolInput.planTodoId || toolInput.delegationId;
+  const explicitMatch = toolInput.planTodoId || toolInput.delegationId;
 
-  if (explicitTodo && explicitTodo === nextTodo.id) {
+  if (explicitMatch && explicitMatch === nextTodo.id) {
     return { valid: true, expectedTodoId: nextTodo.id };
   }
 
@@ -279,30 +477,44 @@ export function validateSpawnMatchesTodo(
     return { valid: true, expectedTodoId: nextTodo.id };
   }
 
+  const hint: Record<string, unknown> = {
+    tool: 'Task',
+    subagent_type: nextTodo.subagent,
+    planTodoId: nextTodo.id,
+    description:
+      `Lead-dev todo ${nextTodo.id}: ${nextTodo.task}. ` +
+      `Include plan todo id in Task prompt.`,
+  };
+  if (resolved.source === 'aside' && resolved.asideId) {
+    hint.asideId = resolved.asideId;
+    hint.track = 'user-aside';
+    if (resolved.worktree) hint.worktree = resolved.worktree;
+    if (resolved.branch) hint.branch = resolved.branch;
+  }
+
   return {
     valid: false,
-    reason: `Spawn must target plan todo ${nextTodo.id} before other work`,
-    gate: 'spawn-todo-persistence',
+    reason:
+      resolved.source === 'aside'
+        ? `Spawn must target aside todo ${nextTodo.id} (aside ${resolved.asideId}) before other work`
+        : `Spawn must target plan todo ${nextTodo.id} before other work`,
+    gate: resolved.source === 'aside' ? 'aside-spawn-todo' : 'spawn-todo-persistence',
     expectedTodoId: nextTodo.id,
-    hint: {
-      tool: 'Task',
-      subagent_type: nextTodo.subagent,
-      planTodoId: nextTodo.id,
-      description:
-        `Lead-dev todo ${nextTodo.id}: ${nextTodo.task}. ` +
-        `Include plan todo id in Task prompt.`,
-    },
+    hint,
   };
 }
 
 export function markTodoInProgressOnSpawn(
   toolInput: SpawnToolInput,
   projectRoot = process.cwd(),
+  sessionId?: string | null,
 ): string | null {
-  const plan = loadPersistedLeadDevPlan(projectRoot);
-  if (!plan) return null;
+  const resolved = isUserAsidesEnabled(projectRoot)
+    ? resolveSpawnPlan(toolInput, projectRoot, sessionId)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(projectRoot) };
+  if (!resolved.plan) return null;
 
-  const validation = validateSpawnMatchesTodo(toolInput, projectRoot);
+  const validation = validateSpawnMatchesTodo(toolInput, projectRoot, undefined, sessionId);
   if (!validation.valid || !validation.expectedTodoId) return null;
 
   updatePlanTodoStatus(validation.expectedTodoId, 'in_progress', projectRoot);

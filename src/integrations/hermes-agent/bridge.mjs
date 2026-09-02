@@ -15,6 +15,7 @@
  *   codex-check   - Check code against codex rules
  *   stats         - Return bridge/framework statistics
  *   hooks         - Manage git hooks (install, uninstall, list, status)
+ *   session-start - Session boot: archive stale lead-dev plans (synthesis exempt)
  *   govern        - Govern inference proposals through weighted voting
  *   apply         - Govern + apply approved inference proposals
  *
@@ -36,12 +37,41 @@ import {
   unlinkSync,
   renameSync,
 } from "fs";
-import { join, dirname, relative } from "path";
-import { fileURLToPath } from "url";
+import { join, dirname, relative, resolve } from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import { homedir } from "os";
-import { findProjectRoot } from "../../../scripts/helpers/find-project-root.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/** Resolve find-project-root from plugin install, dist layout, or consumer node_modules. */
+function resolveFindProjectRootPath() {
+  const candidates = [];
+  const marker = join(__dirname, "xray-consumer-root.txt");
+  if (existsSync(marker)) {
+    try {
+      const marked = readFileSync(marker, "utf-8").trim();
+      if (marked) {
+        candidates.push(
+          join(marked, "node_modules", "0xray", "scripts", "helpers", "find-project-root.mjs"),
+        );
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  candidates.push(
+    join(__dirname, "scripts", "helpers", "find-project-root.mjs"),
+    join(__dirname, "..", "..", "..", "scripts", "helpers", "find-project-root.mjs"),
+    join(__dirname, "../../../scripts/helpers/find-project-root.mjs"),
+  );
+  for (const candidate of candidates) {
+    const abs = resolve(candidate);
+    if (existsSync(abs)) return abs;
+  }
+  throw new Error("find-project-root.mjs not found — re-run: npx 0xray hermes install --force");
+}
+
+const { findProjectRoot } = await import(pathToFileURL(resolveFindProjectRootPath()).href);
 
 // ── Framework components (lazy-loaded) ───────────────────────
 let ProcessorManager = null;
@@ -387,6 +417,45 @@ async function handleHealth(input) {
     components,
     nodeVersion: process.version,
   };
+}
+
+async function handleSessionStart(input, projectRoot, logDir) {
+  const sessionId = input.sessionId || `bridge-${Date.now()}`;
+  let planArchive = { archived: false };
+
+  try {
+    const { archiveStaleLeadDevPlan } = await import('../hooks/plan-hook-runtime.mjs');
+    planArchive = archiveStaleLeadDevPlan(projectRoot);
+    if (planArchive.archived) {
+      logToActivity(
+        logDir,
+        `session-start: stale-plan-archived path=${planArchive.archivePath ?? 'unknown'}`,
+      );
+    }
+  } catch {
+    /* non-blocking — dist may be absent during dev */
+  }
+
+  try {
+    const gate = await import('../hooks/delegation-gate-runtime.mjs');
+    if (typeof gate.writeSuitSessionBoot === 'function') {
+      const compact =
+        input.compact === true ||
+        input.hookEvent === 'pre_compact' ||
+        input.hookEvent === 'post_compact';
+      gate.writeSuitSessionBoot(projectRoot, 'hermes', {
+        source: compact ? '0xray/hermes-compact' : '0xray/hermes-session-start',
+        sessionId,
+        hookEvent: compact ? 'post_compact' : 'session_start',
+        ...(input.intent ? { intent: input.intent } : {}),
+      });
+    }
+  } catch {
+    /* dist may be absent during dev */
+  }
+
+  logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
+  return { ok: true, sessionId, planArchive };
 }
 
 async function handlePreProcess(input, projectRoot, logDir) {
@@ -766,7 +835,7 @@ async function handleApply(input, projectRoot, logDir) {
 // ── Known commands for positional-arg mode ──────────────────
 const KNOWN_COMMANDS = new Set([
   "health", "stats", "pre-process", "post-process", "validate", "codex-check", "hooks", "govern", "apply",
-  "skill-install", "skill-registry", "delegation-gate",
+  "skill-install", "skill-registry", "delegation-gate", "session-start",
 ]);
 
 async function recordHermesSynthesisTurn(projectRoot, sessionId) {
@@ -792,7 +861,12 @@ async function handleDelegationGate(command, projectRoot, logDir) {
       if (!gate.isSubagentTool(tool)) {
         return { allow: true, phase: "post", skipped: true };
       }
-      const result = gate.evaluatePostToolSpawn(tool, args, projectRoot);
+      const toolOutput =
+        command.toolOutput ?? command.result ?? command.output ?? args?.result ?? null;
+      const result = gate.evaluatePostToolSpawn(tool, args, projectRoot, {
+        sessionId,
+        toolOutput,
+      });
       if (result.satisfied.length > 0) {
         logToActivity(
           logDir,
@@ -806,7 +880,7 @@ async function handleDelegationGate(command, projectRoot, logDir) {
       await recordHermesSynthesisTurn(projectRoot, sessionId);
     }
 
-    const features = gate.loadDelegationGateFeatures(projectRoot);
+    const features = gate.loadDelegationGateFeatures(projectRoot, host);
     const outcome = gate.evaluatePreToolGate(tool, args, {
       projectRoot,
       sessionId,
@@ -823,7 +897,15 @@ async function handleDelegationGate(command, projectRoot, logDir) {
 
     return { phase: "pre", ...outcome };
   } catch (error) {
-    return { error: `delegation-gate failed: ${error.message || error}` };
+    const message = `delegation-gate failed: ${error.message || error}`;
+    logToActivity(logDir, `[delegation-gate] error ${message}`);
+    return {
+      allow: false,
+      phase: "pre",
+      gate: "delegation-gate-error",
+      reason: message,
+      error: message,
+    };
   }
 }
 
@@ -910,10 +992,6 @@ async function main() {
   const projectRoot = resolveBridgeProjectRoot();
   const logDir = ensureLogDir(projectRoot);
 
-  // Log session start for test verification
-  const sessionId = `bridge-${Date.now()}`;
-  logToActivity(logDir, `session-start: session=${sessionId} source=bridge`);
-
   // Lazy-load framework on first call
   if (!frameworkReady && !frameworkLoadAttempted) {
     await loadFramework(projectRoot);
@@ -955,6 +1033,9 @@ async function main() {
       break;
     case "skill-registry":
       response = await handleSkillRegistry(command, projectRoot, logDir);
+      break;
+    case "session-start":
+      response = await handleSessionStart(command, projectRoot, logDir);
       break;
     case "delegation-gate":
       response = await handleDelegationGate(command, projectRoot, logDir);

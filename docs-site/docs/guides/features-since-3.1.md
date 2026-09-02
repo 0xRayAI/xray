@@ -1,6 +1,28 @@
 # Features Since 3.1
 
-Complete reference of capabilities shipped from **3.1.0** through **3.5.4**.
+Complete reference of capabilities through **0xRay 4.0.0** (first ship of temperament on the v2 three-subsystem OS). 3.x development tags (3.1–3.5.x) remain below as history.
+
+## 4.0.0 — Suit temperament (first ship)
+
+- **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
+- **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile
+- **Frontier:** missing/stale/**todo-mismatch** spawn **warns**; confer off unless `confer.enabled: true`; pending/synthesis skip
+- **Constitution SSOT:** Codex 11/29/69 + destructive shell in `evaluatePreToolGate` (Grok, Hermes, OpenCode). Grok extra 2/7 only.
+- **Codex 69** is in `codex.json` (blocking). **strict** cannot opt out of `no_new_surface`.
+- **Dual-host boot:** Hermes / OpenCode / OpenClaw write `session-boot.json` with `host` + `suit_profile`; leftover Grok boot does not frontier a Hermes session
+- **Profiles:** `frontier` (Grok 4.6 class) · `guided` (OpenCode / Hermes; OpenClaw host-agent PreToolUse still pending platform API) · `strict` (lock) · `auto`
+- **Upgrade safety:** missing `suit_temperament` stays **guided**
+- **Trim later:** duplicate orchestrators, extra MCP files — [trim list](../architecture/v3-museum.md)
+- Docs: [v3 from v2](../architecture/v3-from-v2.md) · [Suit temperament](./v3-temperament.md)
+
+## 3.5.5 — User-asides P0 + pipeline P3
+
+- PreToolUse **denies** aside spawns without worktree cwd; `aside-worktree.ts` SSOT
+- Worktree auto-provision on `analyze-complexity` when `auto_provision_worktree: true`
+- `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit`
+- Worktree cwd enforce with `auto_chain_delegations: false`; synthesis-gate parity
+- `isAutoProvisionWorktreeEnabled` requires `user_asides.enabled`; macOS realpath worktree fix
+- `verify:pipeline-facets --package-only` in release-gate
 
 ## 3.5.4 — Synthesis consult receipt gate
 

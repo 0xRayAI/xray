@@ -6,11 +6,14 @@ import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
 import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
+import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
 const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
   wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
+  installOpenClawHostWear: (packageRoot: string) => string | null;
+  maybeWriteOpenClawCliBackend: () => boolean;
 };
 
 export function registerOpenClawCommands(openclawCmd: Command) {
@@ -65,6 +68,20 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
       `\x1b[32m✓ Wired OpenClaw MCP servers (${wired.count} via ${wired.method}) → ${wired.path}\x1b[0m`,
     );
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);
+
+    try {
+      writeSuitSessionBoot(targetDir, 'openclaw', { source: '0xray/openclaw-install' });
+    } catch {
+      /* session-boot is best-effort */
+    }
+
+    const packageRoot = path.resolve(__dirname, '..', '..', '..');
+    const hookInstalled = wiring.installOpenClawHostWear(packageRoot);
+    const cliBackend = wiring.maybeWriteOpenClawCliBackend();
+    frameworkLogger.log('openclaw-integration', 'cli-backend', 'info', { written: cliBackend });
+    if (hookInstalled) {
+      console.log(`\x1b[32m✓ OpenClaw PreToolUse hook → ${hookInstalled}\x1b[0m`);
+    }
 
     console.log('\n✅ 0xRay OpenClaw integration configured!');
     console.log('Run `openclaw mcp list` to verify MCP servers.');

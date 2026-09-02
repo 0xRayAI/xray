@@ -105,6 +105,32 @@ console.log("Execution complete");
     });
   });
 
+  describe("Release script safety", () => {
+    test("bare release.mjs does not bump package.json", () => {
+      const root = path.resolve(__dirname, "../../..");
+      const pkgPath = path.join(root, "package.json");
+      const before = JSON.parse(fs.readFileSync(pkgPath, "utf8")).version;
+      let status = 0;
+      let combined = "";
+      try {
+        combined = execSync("node scripts/node/release.mjs", {
+          cwd: root,
+          encoding: "utf-8",
+          timeout: 15000,
+          stdio: ["pipe", "pipe", "pipe"],
+        });
+      } catch (e: unknown) {
+        const err = e as { status?: number; stdout?: string; stderr?: string };
+        status = typeof err.status === "number" ? err.status : 1;
+        combined = `${err.stdout || ""}${err.stderr || ""}`;
+      }
+      const after = JSON.parse(fs.readFileSync(pkgPath, "utf8")).version;
+      expect(after).toBe(before);
+      expect(status).not.toBe(0);
+      expect(combined).toMatch(/Usage:/);
+    });
+  });
+
   describe("ES Module (.mjs) Script Execution", () => {
     test("should execute simple ES Module script successfully", () => {
       const script = createScript("hello.mjs", `#!/usr/bin/env node

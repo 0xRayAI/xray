@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { execSync } = require("child_process");
+const { execFileSync, execSync } = require("child_process");
 
 /** Canonical 7-server MCP surface */
 const XRAY_MCP_SERVERS = [
@@ -24,31 +24,118 @@ const HERMES_PLUGIN_DIR = path.join(os.homedir(), ".hermes", "plugins", "xray-he
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), ".openclaw", "openclaw.json");
 const OPENCLAW_STATE_DIR = path.join(os.homedir(), ".openclaw");
 
+function isRepertoirePackageRoot(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    return pkg.name === "@0xray/repertoire" || pkg.name === "repertoire";
+  } catch {
+    return false;
+  }
+}
+
+function resolveRepertoireMcp(targetDir) {
+  const selfRoot = targetDir;
+  const siblingRoot = path.join(targetDir, "..", "repertoire");
+  const candidates = [
+    path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
+    isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
+  ];
+  return candidates.find((p) => p && fs.existsSync(p)) || null;
+}
+
+function resolveRepertoireProvider(targetDir) {
+  const siblingRoot = path.join(targetDir, "..", "repertoire");
+  const siblingProvider = path.join(siblingRoot, "dist", "provider", "memory-routing-provider.js");
+  const nmProvider = path.join(
+    targetDir,
+    "node_modules",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
+  const vendorProvider = path.join(
+    targetDir,
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
+  if (fs.existsSync(nmProvider)) return nmProvider;
+  if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
+  return null;
+}
+
+function isDefaultMemoryRoutingOff(mr) {
+  if (!mr || typeof mr !== "object") return true;
+  if (mr.enabled === true) return false;
+  const provider = mr.provider == null || mr.provider === "" ? "null" : mr.provider;
+  return provider === "null";
+}
+
+function enableMemoryRoutingIfResolves(features, targetDir) {
+  const modulePath = resolveRepertoireProvider(targetDir);
+  if (!modulePath) return { features, changed: false };
+  const mr = (features && features.memory_routing) || {};
+  if (!isDefaultMemoryRoutingOff(mr)) return { features, changed: false };
+
+  const siblingRel = "../repertoire/dist/provider/memory-routing-provider.js";
+  const siblingAbs = path.join(targetDir, "..", "repertoire", "dist", "provider", "memory-routing-provider.js");
+  const useSibling = path.resolve(modulePath) === path.resolve(siblingAbs);
+  const repertoireRoot = path.resolve(modulePath, "..", "..", "..");
+  const signalsAbs = path.join(repertoireRoot, "data", "curated_signals.json");
+  const config = { ...(mr.config || {}) };
+  if (!config.signalsPath && fs.existsSync(signalsAbs)) {
+    config.signalsPath = useSibling ? "../repertoire/data/curated_signals.json" : signalsAbs;
+  }
+  if (!config.statePath) {
+    config.statePath = ".xray/state/repertoire/inference-state.json";
+  }
+  if (!config.feedbackDir) {
+    config.feedbackDir = ".xray/state/repertoire/feedback";
+  }
+
+  return {
+    features: {
+      ...features,
+      memory_routing: {
+        ...mr,
+        enabled: true,
+        provider: "repertoire",
+        module_path: useSibling ? siblingRel : modulePath,
+        config,
+      },
+    },
+    changed: true,
+  };
+}
+
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
-    const pkgPath = path.join(targetDir, "package.json");
-    if (!fs.existsSync(pkgPath)) return extras;
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-    const localRepertoireMcp = path.join(targetDir, "dist", "mcp", "server.js");
-    if (pkg.name === "@0xray/repertoire" && fs.existsSync(localRepertoireMcp)) {
-      extras.hermes.repertoire = {
-        command: "node",
-        args: [localRepertoireMcp],
-        env: { XRAY_ROOT: targetDir },
-      };
-      extras.opencode.repertoire = {
-        type: "local",
-        command: ["node", "dist/mcp/server.js"],
-        enabled: true,
-        cwd: ".",
-      };
-      extras.openclaw.repertoire = {
-        command: "node",
-        args: [localRepertoireMcp],
-        env: { XRAY_ROOT: targetDir },
-      };
-    }
+    const repertoireMcp = resolveRepertoireMcp(targetDir);
+    if (!repertoireMcp) return extras;
+    extras.hermes.repertoire = {
+      command: "node",
+      args: [repertoireMcp],
+      env: { XRAY_ROOT: targetDir },
+    };
+    extras.opencode.repertoire = {
+      type: "local",
+      command: ["node", repertoireMcp],
+      enabled: true,
+    };
+    extras.openclaw.repertoire = {
+      command: "node",
+      args: [repertoireMcp],
+      env: { XRAY_ROOT: targetDir },
+    };
   } catch {
     // best-effort
   }
@@ -121,13 +208,40 @@ function buildPortableProjectMcpJson() {
   return { mcpServers };
 }
 
+function copyHermesFindProjectRootHelper(packageRoot, targetPluginDir) {
+  const helperSrc = path.join(packageRoot, "scripts", "helpers", "find-project-root.mjs");
+  if (!fs.existsSync(helperSrc)) return false;
+  const helperDst = path.join(targetPluginDir, "scripts", "helpers", "find-project-root.mjs");
+  fs.mkdirSync(path.dirname(helperDst), { recursive: true });
+  fs.copyFileSync(helperSrc, helperDst);
+  return true;
+}
+
+function isEphemeralInstallRoot(targetDir) {
+  const normalized = String(targetDir || "").replace(/\\/g, "/");
+  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
+}
+
+function copyHermesHookRuntimes(packageRoot) {
+  const hooksSrc = [
+    path.join(packageRoot, "dist", "integrations", "hooks"),
+    path.join(packageRoot, "src", "integrations", "hooks"),
+  ].find((p) => fs.existsSync(p));
+  if (!hooksSrc) return false;
+  const hooksDst = path.join(os.homedir(), ".hermes", "plugins", "hooks");
+  fs.mkdirSync(hooksDst, { recursive: true });
+  fs.cpSync(hooksSrc, hooksDst, { recursive: true, force: true });
+  return true;
+}
+
 function writeHermesPluginArtifacts(targetDir) {
   if (!fs.existsSync(HERMES_PLUGIN_DIR)) return false;
-  fs.writeFileSync(path.join(HERMES_PLUGIN_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   fs.writeFileSync(
     path.join(HERMES_PLUGIN_DIR, ".mcp.json"),
     `${JSON.stringify(buildPluginMcpJson(targetDir), null, 2)}\n`
   );
+  if (isEphemeralInstallRoot(targetDir)) return true;
+  fs.writeFileSync(path.join(HERMES_PLUGIN_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   return true;
 }
 
@@ -183,11 +297,13 @@ function deployPortableProjectMcpJson(targetDir) {
       existing = { mcpServers: {} };
     }
   }
+  const extras = detectConsumerExtraMcpServers(targetDir);
   const merged = {
     ...existing,
     mcpServers: {
       ...(existing.mcpServers || {}),
       ...portable.mcpServers,
+      ...(extras.openclaw || {}),
     },
   };
   fs.writeFileSync(destPath, `${JSON.stringify(merged, null, 2)}\n`);
@@ -195,10 +311,20 @@ function deployPortableProjectMcpJson(targetDir) {
 
 function enableHermesPluginBestEffort() {
   try {
-    execSync("hermes plugins enable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    execSync("hermes plugins enable xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    try {
+      execSync("hermes plugins disable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+    } catch {
+      /* stale id may be absent */
+    }
     return true;
   } catch {
-    return false;
+    try {
+      execSync("hermes plugins enable 0xray-hermes", { stdio: "pipe", encoding: "utf8" });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -260,10 +386,12 @@ function syncOpenClawMcpRegistry(targetDir) {
 }
 
 function writeOpenClawConsumerArtifacts(targetDir) {
-  if (!fs.existsSync(OPENCLAW_STATE_DIR)) {
-    fs.mkdirSync(OPENCLAW_STATE_DIR, { recursive: true });
+  if (!isEphemeralInstallRoot(targetDir)) {
+    if (!fs.existsSync(OPENCLAW_STATE_DIR)) {
+      fs.mkdirSync(OPENCLAW_STATE_DIR, { recursive: true });
+    }
+    fs.writeFileSync(path.join(OPENCLAW_STATE_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
   }
-  fs.writeFileSync(path.join(OPENCLAW_STATE_DIR, "xray-consumer-root.txt"), `${targetDir}\n`);
 
   const consumerConfigPath = path.join(targetDir, ".xray", "config", "openclaw.json");
   if (fs.existsSync(consumerConfigPath)) {
@@ -275,6 +403,124 @@ function writeOpenClawConsumerArtifacts(targetDir) {
       // best-effort
     }
   }
+  return true;
+}
+
+function resolveOpenClawPreToolHookSource(packageRoot) {
+  return [
+    path.join(packageRoot, "dist", "integrations", "openclaw", "hooks", "pre-tool-gate-runtime.mjs"),
+    path.join(packageRoot, "src", "integrations", "openclaw", "hooks", "pre-tool-gate-runtime.mjs"),
+  ].find((p) => fs.existsSync(p)) || null;
+}
+
+function resolveOpenClawPluginDir(packageRoot) {
+  return [
+    path.join(packageRoot, "dist", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+    path.join(packageRoot, "src", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+  ].find((p) => fs.existsSync(path.join(p, "index.js"))) || null;
+}
+
+function installOpenClawHostWear(packageRoot) {
+  const source = resolveOpenClawPreToolHookSource(packageRoot);
+  if (!source) return null;
+
+  const hookDir = path.join(os.homedir(), ".openclaw", "hooks");
+  fs.mkdirSync(hookDir, { recursive: true });
+  const dest = path.join(hookDir, "xray-pre-tool.mjs");
+  fs.copyFileSync(source, dest);
+  fs.writeFileSync(
+    path.join(hookDir, "xray-pre-tool.json"),
+    `${JSON.stringify(
+      {
+        name: "xray-pre-tool",
+        command: "node",
+        args: [dest],
+        stdin: "json",
+        blockExitCode: 2,
+        env: { XRAY_AI_PATH: packageRoot },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
+  const pluginSrc = resolveOpenClawPluginDir(packageRoot);
+  if (pluginSrc) {
+    try {
+      execFileSync("openclaw", ["plugins", "install", "-l", pluginSrc], {
+        stdio: "pipe",
+        encoding: "utf8",
+        timeout: 60000,
+      });
+    } catch {
+      /* link is best-effort — stdin runtime is still installed */
+    }
+    try {
+      execFileSync("openclaw", ["config", "set", "plugins.entries.xray-pre-tool.enabled", "true"], {
+        stdio: "pipe",
+        encoding: "utf8",
+        timeout: 20000,
+      });
+    } catch {
+      /* enable is best-effort */
+    }
+  }
+  return dest;
+}
+
+function resolveOpencodeBin() {
+  try {
+    const found = execSync("command -v opencode", { encoding: "utf8" }).trim();
+    return found || null;
+  } catch {
+    return null;
+  }
+}
+
+function maybeWriteOpenClawCliBackend() {
+  const bin = resolveOpencodeBin();
+  if (!bin) return false;
+  const configPath = resolveOpenClawConfigPath();
+  if (!fs.existsSync(configPath)) return false;
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  } catch {
+    return false;
+  }
+  if (!config.agents || typeof config.agents !== "object") config.agents = {};
+  if (!config.agents.defaults || typeof config.agents.defaults !== "object") {
+    config.agents.defaults = {};
+  }
+  const defaults = config.agents.defaults;
+  if (!defaults.cliBackends || typeof defaults.cliBackends !== "object") {
+    defaults.cliBackends = {};
+  }
+  defaults.cliBackends["opencode-cli"] = {
+    command: bin,
+    args: ["run", "--pure"],
+    output: "text",
+    input: "arg",
+    modelArg: "--model",
+    modelAliases: { "big-pickle": "opencode/big-pickle" },
+    sessionMode: "none",
+  };
+  if (!defaults.models || typeof defaults.models !== "object") defaults.models = {};
+  defaults.models["opencode-cli/big-pickle"] = {};
+  const model = defaults.model && typeof defaults.model === "object" ? defaults.model : {};
+  const primary = model.primary;
+  if (!primary || primary === "opencode/big-pickle") {
+    const fallbacks = Array.isArray(model.fallbacks) ? model.fallbacks.slice() : [];
+    if (primary === "opencode/big-pickle" && !fallbacks.includes("opencode/big-pickle")) {
+      fallbacks.unshift("opencode/big-pickle");
+    }
+    defaults.model = {
+      ...model,
+      primary: "opencode-cli/big-pickle",
+      fallbacks,
+    };
+  }
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
   return true;
 }
 
@@ -295,6 +541,7 @@ module.exports = {
   buildStdioMcpServer,
   buildPluginMcpJson,
   buildPortableProjectMcpJson,
+  copyHermesFindProjectRootHelper,
   writeHermesPluginArtifacts,
   syncHermesMcpRegistry,
   mergeOpencodeMcpRegistry,
@@ -307,4 +554,15 @@ module.exports = {
   writeOpenClawConsumerArtifacts,
   resolveOpenClawConfigPath,
   detectConsumerExtraMcpServers,
+  isRepertoirePackageRoot,
+  resolveRepertoireMcp,
+  resolveRepertoireProvider,
+  isDefaultMemoryRoutingOff,
+  enableMemoryRoutingIfResolves,
+  isEphemeralInstallRoot,
+  copyHermesHookRuntimes,
+  resolveOpenClawPreToolHookSource,
+  resolveOpenClawPluginDir,
+  installOpenClawHostWear,
+  maybeWriteOpenClawCliBackend,
 };

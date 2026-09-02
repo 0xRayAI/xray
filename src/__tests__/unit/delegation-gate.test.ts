@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkPendingDelegationGate,
   checkSubagentGate,
+  evaluatePostToolSpawn,
   evaluatePreToolGate,
   evaluateSynthesisGate,
   getActivePendingDelegations,
@@ -12,7 +13,16 @@ import {
 } from '../../nucleus/delegation-gate.js';
 import { buildSynthesisCheckpointPlan } from '../../nucleus/autonomy-kernel.js';
 import { recordExecutionSlice } from '../../nucleus/synthesis.js';
-import { savePersistedLeadDevPlan } from '../../nucleus/lead-dev-plan-persistence.js';
+import {
+  archiveStaleLeadDevPlan,
+  savePersistedLeadDevPlan,
+  validateSpawnMatchesTodo,
+} from '../../nucleus/lead-dev-plan-persistence.js';
+import {
+  buildUserAsidePlan,
+  saveUserAside,
+  setActiveAsideId,
+} from '../../nucleus/user-aside.js';
 
 describe('delegation-gate SSOT', () => {
   let tmp: string;
@@ -89,6 +99,94 @@ describe('delegation-gate SSOT', () => {
     if (!result.allow) expect(result.gate).toBe('auto-chain-pending');
   });
 
+  it('checkSubagentGate denies spawn-plan-stale after stale plan archived', () => {
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({
+        sessionId,
+        createdAt: new Date().toISOString(),
+        ttlMs: 4 * 60 * 60 * 1000,
+        delegations: [],
+      }),
+    );
+    savePersistedLeadDevPlan(
+      {
+        active: true,
+        persistedAt: staleAt,
+        phases: [
+          {
+            id: 'phase-1',
+            name: 'Stale',
+            goal: 'g',
+            definitionOfDone: 'd',
+            todos: [
+              {
+                id: '1.1',
+                task: 'old task',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+      } as Parameters<typeof savePersistedLeadDevPlan>[0],
+      tmp,
+    );
+    archiveStaleLeadDevPlan(tmp);
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'plan todo 1.1', subagent_type: 'researcher' },
+    );
+    expect(block?.gate).toBe('spawn-plan-stale');
+  });
+
+  it('checkSubagentGate denies spawn when lead-dev plan is stale', () => {
+    const staleAt = new Date(Date.now() - 9 * 60 * 60 * 1000).toISOString();
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({
+        sessionId,
+        createdAt: new Date().toISOString(),
+        ttlMs: 4 * 60 * 60 * 1000,
+        delegations: [],
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+      JSON.stringify({
+        active: true,
+        persistedAt: staleAt,
+        phases: [
+          {
+            id: 'phase-1',
+            todos: [
+              {
+                id: '1.1',
+                task: 'old hygiene task',
+                subagent: 'researcher',
+                status: 'pending',
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      { prompt: 'plan todo 1.1 refresh', subagent_type: 'researcher' },
+    );
+    expect(block?.gate).toBe('spawn-plan-stale');
+  });
+
   it('checkSubagentGate denies spawn that skips required plan todo', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
@@ -153,13 +251,44 @@ describe('delegation-gate SSOT', () => {
     expect(read.allow).toBe(true);
   });
 
+  it('evaluateSpawnPlanGate allows consult spawn on aged synthesis realignment plan', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
+    const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
+    savePersistedLeadDevPlan(
+      {
+        ...plan!,
+        persistedAt: staleAt,
+        sessionId,
+      },
+      tmp,
+    );
+
+    const block = checkSubagentGate(
+      'Task',
+      features,
+      tmp,
+      sessionId,
+      {
+        prompt: 'Synthesis consult researcher plan todo s.1 review checkpoint',
+        subagent_type: 'researcher',
+        planTodoId: 's.1',
+      },
+    );
+    expect(block).toBeNull();
+  });
+
   it('evaluateSynthesisGate allows next consult spawn during realignment', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
       JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
-    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       {
         ...plan!,
@@ -218,5 +347,326 @@ describe('delegation-gate SSOT', () => {
       { projectRoot: tmp, sessionId, features },
     );
     expect(consult.allow).toBe(true);
+  });
+
+  it('evaluateSpawnPlanGate routes to active aside todos', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'gate-aside',
+      'Gate Aside',
+      'Aside spawn test',
+      [{ description: 'implement slice', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('gate-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
+
+  it('evaluateSynthesisGate allows aside subagent spawn during synthesis due', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const aside = buildUserAsidePlan(
+      'syn-aside',
+      'Syn Aside',
+      'Synthesis bypass test',
+      [{ description: 'aside work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('syn-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluateSynthesisGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
+
+  it('session-bound active aside does not route spawns for other sessions', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'iso-aside',
+      'Iso',
+      'Session isolation',
+      [{ description: 'work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('iso-aside', tmp, 'session-owner');
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const otherSession = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId: 'session-other', features },
+    );
+    expect(otherSession.allow).toBe(false);
+
+    const validation = validateSpawnMatchesTodo(
+      {
+        planTodoId: todo.id,
+        subagent_type: todo.subagent,
+        prompt: todo.id,
+      },
+      tmp,
+      undefined,
+      'session-other',
+    );
+    expect(validation.valid).toBe(false);
+  });
+
+  it('evaluatePreToolGate denies aside spawn when worktree cwd missing', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'cwd-aside',
+      'Cwd Aside',
+      'Worktree cwd enforce',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = '/tmp/different-worktree';
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('cwd-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) {
+      expect(spawn.gate).toBe('aside-worktree-cwd-missing');
+      expect(spawn.reason).toContain('worktree');
+    }
+  });
+
+  it('evaluateSpawnPlanGate denies worktree cwd when auto_chain_delegations is false', () => {
+    const noAutoChain = { lead_dev_mode: true, auto_chain_delegations: false };
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: {
+          enabled: true,
+          lead_dev_mode: true,
+          auto_chain_delegations: false,
+          user_asides: { enabled: true },
+        },
+      }),
+    );
+    const worktree = path.join(tmp, 'aside-wt');
+    const aside = buildUserAsidePlan(
+      'no-chain',
+      'No Chain',
+      'auto_chain off cwd enforce',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('no-chain', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features: noAutoChain },
+    );
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) expect(spawn.gate).toBe('aside-worktree-cwd-missing');
+  });
+
+  it('evaluateSynthesisGate denies aside spawn when worktree cwd missing', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const worktree = path.join(tmp, 'syn-wt');
+    const aside = buildUserAsidePlan(
+      'syn-cwd',
+      'Syn Cwd',
+      'Synthesis worktree deny',
+      [{ description: 'aside work', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('syn-cwd', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluateSynthesisGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(false);
+    if (!spawn.allow) expect(spawn.gate).toBe('aside-worktree-cwd-missing');
+  });
+
+  it('evaluatePreToolGate allows aside spawn when cwd matches worktree', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const worktree = path.join(tmp, 'aside-wt');
+    const aside = buildUserAsidePlan(
+      'cwd-ok',
+      'Cwd Ok',
+      'Worktree cwd match',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    aside!.worktree = worktree;
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('cwd-ok', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+        cwd: worktree,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
+
+  it('evaluatePendingDelegationGate allows aside spawn while main pending', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    const aside = buildUserAsidePlan(
+      'pend-aside',
+      'Pend',
+      'Pending bypass',
+      [{ description: 'aside impl', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('pend-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const spawn = evaluatePreToolGate(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      { projectRoot: tmp, sessionId, features },
+    );
+    expect(spawn.allow).toBe(true);
+  });
+
+  it('evaluatePostToolSpawn completes aside todo with session context', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, user_asides: { enabled: true } },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'pending-delegations.json'),
+      JSON.stringify({ sessionId, createdAt: new Date().toISOString(), ttlMs: 999999, delegations: [] }),
+    );
+    const aside = buildUserAsidePlan(
+      'post-aside',
+      'Post',
+      'Post-tool aside',
+      [{ description: 'done', type: 'implement' }],
+      30,
+      tmp,
+    );
+    saveUserAside(aside!, tmp);
+    setActiveAsideId('post-aside', tmp, sessionId);
+    const todo = aside!.plan.phases[0]!.todos[0]!;
+
+    const result = evaluatePostToolSpawn(
+      'Task',
+      {
+        subagent_type: todo.subagent,
+        planTodoId: todo.id,
+        prompt: `${todo.id}: ${todo.task}`,
+      },
+      tmp,
+      { sessionId, toolOutput: 'Verdict: PASS\nTop risks: none\nHardening: ok' },
+    );
+    expect(result.todoCompleted).toBe(true);
+    expect(result.expectedTodoId).toBe(todo.id);
   });
 });

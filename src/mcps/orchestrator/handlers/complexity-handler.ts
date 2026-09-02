@@ -11,8 +11,27 @@ import {
   isLeadDevModeActive,
   persistLeadDevPlan,
 } from '../../../nucleus/autonomy-kernel.js';
+import {
+  formatConferQuorumReport,
+  isConferEnabled,
+  runConferQuorum,
+} from '../../../nucleus/confer.js';
 import { bindPlanToSession } from '../../../nucleus/lead-dev-plan-persistence.js';
 import { clearPendingDelegations } from '../../../nucleus/pending-delegations.js';
+import {
+  isAutoProvisionWorktreeEnabled,
+  provisionGitWorktree,
+} from '../../../nucleus/aside-worktree.js';
+import {
+  buildUserAsidePlan,
+  formatUserAsideSummary,
+  isUserAsidesEnabled,
+  loadUserAside,
+  mergeUserAsideIntake,
+  saveUserAside,
+  setActiveAsideId,
+  UserAsideValidationError,
+} from '../../../nucleus/user-aside.js';
 import { getExecutionPlanner } from '../execution/execution-planner.js';
 import { addObservations, extractComplexityObservations } from '../aside-context.js';
 import type { OrchestrationTask, ComplexityAnalysis } from '../types.js';
@@ -73,6 +92,13 @@ export class ComplexityHandler {
       sessionId?: string;
       synthesisCheckpoint?: boolean;
       synthesisDueReason?: string | null;
+      collocatedText?: string | null;
+      conferFixture?: boolean;
+      userAsideId?: string;
+      userAsideTitle?: string;
+      worktree?: string;
+      branch?: string;
+      setActiveAside?: boolean;
     },
     asideId?: string,
   ): Promise<{ content: Array<{ type: string; text: string }>; ok: boolean }> {
@@ -99,20 +125,121 @@ export class ComplexityHandler {
         .filter((t) => t.description?.trim())
         .map((t) => ({ description: t.description, type: t.type }));
       const synthesisCheckpoint = args.synthesisCheckpoint === true;
-      const leadDevPlan = synthesisCheckpoint
-        ? buildSynthesisCheckpointPlan(args.synthesisDueReason ?? null)
-        : isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
-          ? buildLeadDevPlan(
-              primaryDescription,
-              taskTypes.length ? taskTypes : ['implement'],
-              planTaskInputs,
-              analysis.overallComplexity,
-            )
-          : null;
+      const projectRoot = process.cwd();
+      const userAsideIntake =
+        !synthesisCheckpoint &&
+        Boolean(args.userAsideId?.trim()) &&
+        isUserAsidesEnabled(projectRoot);
 
-      let planPersisted = synthesisCheckpoint ? leadDevPlan !== null : !leadDevPlan;
+      let userAsideReport = '';
+      let leadDevPlan = synthesisCheckpoint
+        ? buildSynthesisCheckpointPlan(args.synthesisDueReason ?? null, projectRoot)
+        : userAsideIntake
+          ? null
+          : isLeadDevModeActive() && (primaryDescription || planTaskInputs.length > 0)
+            ? buildLeadDevPlan(
+                primaryDescription,
+                taskTypes.length ? taskTypes : ['implement'],
+                planTaskInputs,
+                analysis.overallComplexity,
+                projectRoot,
+              )
+            : null;
 
-      if (leadDevPlan) {
+      let planPersisted = synthesisCheckpoint
+        ? leadDevPlan !== null
+        : userAsideIntake
+          ? false
+          : !leadDevPlan;
+
+      if (userAsideIntake && args.userAsideId) {
+        try {
+          const asideId = args.userAsideId.trim();
+          const title = args.userAsideTitle?.trim() || asideId;
+          const existing = loadUserAside(asideId, projectRoot);
+          const userAside = existing
+            ? mergeUserAsideIntake(
+                existing,
+                primaryDescription || existing.description,
+                planTaskInputs,
+                analysis.overallComplexity,
+                projectRoot,
+              )
+            : buildUserAsidePlan(
+                asideId,
+                title,
+                primaryDescription || title,
+                planTaskInputs,
+                analysis.overallComplexity,
+                projectRoot,
+              );
+          if (!userAside) {
+            planPersisted = false;
+          } else {
+            if (args.worktree) userAside.worktree = args.worktree;
+            if (args.branch) userAside.branch = args.branch;
+            if (args.sessionId) userAside.sessionId = args.sessionId;
+            if (args.userAsideTitle) userAside.title = title;
+
+            let worktreeProvisionNote = '';
+            if (
+              args.worktree?.trim() &&
+              args.branch?.trim() &&
+              isAutoProvisionWorktreeEnabled(projectRoot)
+            ) {
+              const provision = provisionGitWorktree({
+                projectRoot,
+                worktree: args.worktree.trim(),
+                branch: args.branch.trim(),
+              });
+              if (!provision.ok) {
+                throw new UserAsideValidationError(
+                  `Worktree auto-provision failed: ${provision.message}`,
+                );
+              }
+              worktreeProvisionNote = provision.created
+                ? `\n\n**Worktree provisioned:** \`${provision.path}\` (branch \`${args.branch.trim()}\`)`
+                : `\n\n**Worktree ready:** \`${provision.path}\``;
+            }
+
+            const asidePath = saveUserAside(userAside, projectRoot);
+            const activate = args.setActiveAside !== false;
+            if (activate) {
+              clearPendingDelegations(projectRoot);
+              setActiveAsideId(asideId, projectRoot, args.sessionId ?? null);
+            }
+            planPersisted = true;
+            userAsideReport = `\n\n## User aside\n\n${formatUserAsideSummary(userAside)}${worktreeProvisionNote}`;
+            if (activate) {
+              userAsideReport += `\n\n**Active aside:** \`${asideId}\` — spawns route to \`${asideId}.a.*\` todos.`;
+            }
+            await frameworkLogger.log(
+              'orchestrator.server',
+              'user-aside-persisted',
+              'info',
+              {
+                asidePath,
+                asideId,
+                todoCount: userAside.plan.phases.reduce((n, p) => n + p.todos.length, 0),
+                activated: activate,
+              },
+            );
+          }
+        } catch (err) {
+          planPersisted = false;
+          const message = err instanceof Error ? err.message : String(err);
+          userAsideReport = `\n\n❌ User aside intake failed: ${message}`;
+          await frameworkLogger.log(
+            'orchestrator.server',
+            'user-aside-persist-failed',
+            'warning',
+            {
+              error: message,
+              validation: err instanceof UserAsideValidationError,
+            },
+          );
+        }
+      } else if (leadDevPlan) {
         try {
           const sessionId = args.sessionId ?? `analyze-${Date.now()}`;
           if (!synthesisCheckpoint) {
@@ -145,6 +272,37 @@ export class ComplexityHandler {
         }
       }
 
+      let conferReport = '';
+      if (
+        synthesisCheckpoint &&
+        leadDevPlan &&
+        planPersisted &&
+        isConferEnabled() &&
+        args.sessionId
+      ) {
+        const conferOpts: {
+          dueReason?: string | null;
+          fixture?: boolean;
+          collocatedText?: string;
+        } = {
+          dueReason: args.synthesisDueReason ?? null,
+          fixture: args.conferFixture === true,
+        };
+        if (args.collocatedText) conferOpts.collocatedText = args.collocatedText;
+        const conferResult = await runConferQuorum(process.cwd(), args.sessionId, conferOpts);
+        conferReport = `\n\n${formatConferQuorumReport(conferResult)}`;
+        await frameworkLogger.log(
+          'orchestrator.server',
+          'confer-quorum',
+          conferResult.status === 'completed' ? 'info' : 'warning',
+          {
+            status: conferResult.status,
+            agentCount: conferResult.agents.length,
+            sessionId: args.sessionId,
+          },
+        );
+      }
+
       const ok = planPersisted;
 
       return {
@@ -152,13 +310,14 @@ export class ComplexityHandler {
         content: [
           {
             type: 'text',
-            text: this.formatComplexityResponse(
-              analysis,
-              recommendations,
-              tasks.length,
-              leadDevPlan,
-              synthesisCheckpoint,
-            ),
+            text:
+              this.formatComplexityResponse(
+                analysis,
+                recommendations,
+                tasks.length,
+                leadDevPlan,
+                synthesisCheckpoint,
+              ) + conferReport + userAsideReport,
           },
         ],
       };

@@ -17,7 +17,16 @@ import {
   getActivePendingDelegations,
   validateSpawnMatchesTodo,
   updatePlanTodoStatusInPlace,
+  loadDelegationGateFeatures,
 } from '../../hooks/delegation-gate-runtime.mjs';
+import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
+import { getActiveUserAsideBoot } from '../../hooks/user-aside-hook-runtime.mjs';
+import {
+  applyStationHeat,
+  buildRepertoireResume as stationRepertoireResume,
+  readExistingBoot,
+  writeStationMarkdown,
+} from '../../hooks/station-hook-runtime.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -105,9 +114,44 @@ export function resolveCodexPath(root = workspaceRoot()) {
   return null;
 }
 
+export function resolveSiblingWorkspaceRoots(root = workspaceRoot()) {
+  const featuresPath = resolveFeaturesPath(root);
+  if (!featuresPath) return [];
+  try {
+    const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));
+    const siblings = data.multi_agent_orchestration?.sibling_repos ?? [];
+    if (!Array.isArray(siblings)) return [];
+    const resolved = [];
+    for (const entry of siblings) {
+      const rel = typeof entry === 'string' ? entry : entry?.path;
+      if (!rel || typeof rel !== 'string') continue;
+      const abs = path.isAbsolute(rel) ? rel : path.resolve(root, rel);
+      if (!fs.existsSync(abs)) continue;
+      resolved.push({
+        path: abs,
+        label: typeof entry === 'object' && entry.label ? entry.label : path.basename(abs),
+      });
+    }
+    return resolved;
+  } catch {
+    return [];
+  }
+}
+
+export function buildRepertoireResume(root = workspaceRoot()) {
+  return stationRepertoireResume(root);
+}
+
 export function loadFeatures(root = workspaceRoot()) {
   const featuresPath = resolveFeaturesPath(root);
-  if (!featuresPath) return { lead_dev_mode: true, no_new_surface: true, per_suite_triage: true };
+  if (!featuresPath) {
+    return {
+      lead_dev_mode: true,
+      no_new_surface: true,
+      per_suite_triage: true,
+      grok_postprocessor_light: false,
+    };
+  }
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8'));
     const orch = data.multi_agent_orchestration ?? {};
@@ -116,6 +160,8 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: orch.no_new_surface !== false,
       per_suite_test_triage: orch.per_suite_test_triage !== false,
       auto_chain_delegations: orch.auto_chain_delegations !== false,
+      grok_postprocessor_light: data.grok_postprocessor_light === true,
+      sibling_repos: resolveSiblingWorkspaceRoots(root),
     };
   } catch {
     return {
@@ -123,6 +169,8 @@ export function loadFeatures(root = workspaceRoot()) {
       no_new_surface: true,
       per_suite_triage: true,
       auto_chain_delegations: true,
+      grok_postprocessor_light: false,
+      sibling_repos: [],
     };
   }
 }
@@ -160,9 +208,11 @@ export function extractToolContext(event) {
   return { toolName, toolInput, paths, content, cmd: String(toolInput.command || '') };
 }
 
-export function checkCodexPatterns(content) {
+export function checkCodexPatterns(content, options = {}) {
   if (!content) return null;
-  for (const { message, pattern } of CODEX_BLOCK_PATTERNS) {
+  const only = Array.isArray(options.terms) ? options.terms : null;
+  for (const { message, pattern, terms } of CODEX_BLOCK_PATTERNS) {
+    if (only && !terms.some((n) => only.includes(n))) continue;
     if (pattern.test(content)) return message;
     pattern.lastIndex = 0;
   }
@@ -215,23 +265,51 @@ export function sessionBootPath(root = workspaceRoot()) {
   return path.join(root, '.xray', 'state', 'session-boot.json');
 }
 
+export function loadConferPending(root = workspaceRoot(), sessionId = null) {
+  try {
+    return isConferPendingForSession(root, sessionId);
+  } catch {
+    return false;
+  }
+}
+
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
-  const features = loadFeatures();
+  const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
+  const siblingRoots = features.sibling_repos ?? resolveSiblingWorkspaceRoots(root);
+  const sessionId =
+    extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
+  const conferPending = loadConferPending(root, sessionId);
+  const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
+  const gateFeatures = loadDelegationGateFeatures(root, 'grok');
+  const frontier = gateFeatures.ceremony === 'lite';
+  const existing = readExistingBoot(root);
+  const heat = applyStationHeat(root, extra.host || 'grok', extra, existing);
   return {
     hook: source,
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
+    host: extra.host || 'grok',
+    suit_profile: gateFeatures.suit_profile ?? 'guided',
+    ceremony: gateFeatures.ceremony ?? 'full',
+    spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',
     codexBlockingTermCount: blockingTerms.length,
     codexTerms: [59, 67, 68, 69],
     rules: features.lead_dev_mode ? LEAD_DEV_RULES : [],
-    mcpIntake: 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
-    enforcement: 'PreToolUse hook — codex patterns + surface area + spawn gate',
+    mcpIntake: frontier
+      ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'
+      : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
+    enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
     workspaceRoot: root,
-    sessionId: process.env.GROK_SESSION_ID || null,
+    ...heat,
+    ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
+    ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
+    ...(userAsideBoot ?? {}),
+    sessionId,
     timestamp: new Date().toISOString(),
     source,
     ...extra,
+    ...heat,
   };
 }
 
@@ -240,19 +318,31 @@ export function writeSessionBoot(root, payload) {
     const stateDir = path.join(root, '.xray', 'state');
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
+    writeStationMarkdown(root, payload);
     return sessionBootPath(root);
   } catch {
     return null;
   }
 }
 
-/** Boot on SessionStart, UserPromptSubmit, or first PreToolUse if missing. */
+export function sessionBootNeedsRefresh(existing, root) {
+  if (!existing || typeof existing !== 'object') return true;
+  if (existing.lead_dev_mode === undefined) return true;
+  if (existing.host !== 'grok') return true;
+  if (!existing.suit_profile) return true;
+  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (!existing.repertoireResume) return true;
+  if (!existing.stationLine) return true;
+  return false;
+}
+
+/** Boot on SessionStart, UserPromptSubmit, or first PreToolUse if missing/stale. */
 export function ensureSessionBoot(root = workspaceRoot(), source = '0xray/grok-boot') {
   const bootPath = sessionBootPath(root);
   if (fs.existsSync(bootPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(bootPath, 'utf8'));
-      if (existing.lead_dev_mode !== undefined) return bootPath;
+      if (!sessionBootNeedsRefresh(existing, root)) return bootPath;
     } catch {
       /* rewrite corrupt boot */
     }

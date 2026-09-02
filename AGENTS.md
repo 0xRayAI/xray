@@ -1,15 +1,23 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v3.5.4**).
+Quick reference for the xray AI orchestration framework (**v4.0.0**).
 
-**42 agents** · **45 skills** · **7 consumer MCP servers** · **68 codex terms** · **3,226 tests**
+**v4.0.0** — a suit that survives the context window.
+
+**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · Repertoire when it resolves.
+
+**Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
+
+## Hot-swap
+
+Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
 
 - **Inference** — proposals, reflection, memory routing (optional)
-- **External Governance** — Dynamo Solar SSOT, 68-term Codex
+- **External Governance** — Dynamo Solar SSOT, 69-term Codex
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
 Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md). Consumer projects receive slimmed copies via postinstall (`AGENTS-consumer.md` → `AGENTS.md`, skills synced to platform dirs).
@@ -76,6 +84,16 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 - `spawnAside` / `closeAside` on `orchestrate-task`, `analyze-complexity`, `govern-and-apply`
 - Observation extractors: governance, orchestration, complexity
 - Repertoire context flows via `ExecutionPlan.memoryContext`
+
+## User asides (parallel work tracks)
+
+**Not** AsideContext — user-declared parallel tracks (worktree-like):
+
+- SSOT: `.xray/state/asides/{id}.json` + `_active.json`; todos use `{asideId}.a.*` (namespaced)
+- Intake: `analyze-complexity` with `userAsideId` (+ optional `worktree`, `branch`)
+- Activate / resume main: `orchestrate-task` with `userAsideId` or `clearActiveAside: true`
+- Spawn gate routes to active aside plan; session-boot exposes `activeAside`
+- Config: `features.json` → `multi_agent_orchestration.user_asides.enabled`
 
 ## Confidence gate (v3.3.1)
 

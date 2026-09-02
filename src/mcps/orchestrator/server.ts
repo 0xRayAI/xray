@@ -133,14 +133,39 @@ export class OrchestratorServer {
                   default: 'optimized',
                 },
                 timeout: { type: 'number', default: 300000 },
+                confer: {
+                  type: 'boolean',
+                  description:
+                    'Run mandatory 3-agent confer quorum (researcher, architect-tools, code-review) instead of task execution',
+                },
+                conferFixture: {
+                  type: 'boolean',
+                  description: 'Use fixture confer receipts (CI/verify)',
+                },
+                collocatedText: {
+                  type: 'string',
+                  description: 'Collocated synthesis context for confer prompts',
+                },
+                userAsideId: {
+                  type: 'string',
+                  description: 'Activate an existing user aside for spawn routing',
+                },
+                setActiveAside: {
+                  type: 'boolean',
+                  description: 'Set userAsideId as the active aside (default true)',
+                },
+                clearActiveAside: {
+                  type: 'boolean',
+                  description: 'Clear active aside — resume main lead-dev plan spawns',
+                },
               },
-              required: ['description', 'tasks'],
+              required: ['description'],
             },
           },
           {
             name: 'analyze-complexity',
             description:
-              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
+              'Analyze task complexity and recommend orchestration strategy. When lead_dev_mode is on (features.json), includes phased plan + todos + subagent routes. Pass userAsideId to intake a parallel user aside ({asideId}.a.* namespaced todos, worktree-like). During synthesis checkpoint, returns collocated context and mandatory-consult realignment plan — pass sessionId from the active session.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -148,6 +173,27 @@ export class OrchestratorServer {
                   type: 'string',
                   description:
                     'Active session id (required to clear synthesis checkpoint; inferred from checkpoint state when omitted)',
+                },
+                userAsideId: {
+                  type: 'string',
+                  description:
+                    'User aside id — persists .xray/state/asides/{id}.json with {asideId}.a.* todos (parallel track)',
+                },
+                userAsideTitle: {
+                  type: 'string',
+                  description: 'Display title for the user aside (defaults to userAsideId)',
+                },
+                worktree: {
+                  type: 'string',
+                  description: 'Optional worktree path for aside isolation',
+                },
+                branch: {
+                  type: 'string',
+                  description: 'Optional git branch for the aside',
+                },
+                setActiveAside: {
+                  type: 'boolean',
+                  description: 'Activate aside for spawn routing (default true when userAsideId set)',
                 },
                 tasks: {
                   type: 'array',
@@ -391,7 +437,12 @@ export class OrchestratorServer {
                   ...complexityArgs,
                   ...(sessionId ? { sessionId } : {}),
                   ...(synthesisDue
-                    ? { synthesisCheckpoint: true, synthesisDueReason: dueReason }
+                    ? {
+                        synthesisCheckpoint: true,
+                        synthesisDueReason: dueReason,
+                        collocatedText: collocated?.collatedText ?? null,
+                        conferFixture: process.env.XRAY_CONFER_FIXTURE === '1',
+                      }
                     : {}),
                 },
                 aside.asideId,
@@ -402,13 +453,13 @@ export class OrchestratorServer {
                 content = appendSynthesisContextToResponse(content, collocated.collatedText);
               }
 
-              if (synthesisDue && result.ok) {
+              if (synthesisDue && result.ok && !result.content[0]?.text?.includes('Confer quorum')) {
                 content = content.map((block, index) =>
                   index === 0
                     ? {
                         ...block,
                         text:
-                          `${block.text}\n\n**Synthesis checkpoint remains active** until mandatory consult todos (s.1–s.3) are completed via Task spawns.`,
+                          `${block.text}\n\n**Confer** runs automatically at synthesis checkpoint (researcher → architect-tools → code-review). Checkpoint clears when all consult todos complete.`,
                       }
                     : block,
                 );

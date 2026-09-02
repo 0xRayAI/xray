@@ -24,7 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(__dirname, '../..');
 
 const STANDARD_HEADER_RE =
-  /^\*{0,2}v[\d.]+\*{0,2}\s*—\s*\d+ agents · \d+ skills · \d+ MCP servers? · \d+ codex terms(?: · [\d,]+ tests)?/m;
+  /^\*{0,2}v[\d.]+\*{0,2}\s*—\s*a suit that survives the context window/m;
 
 /** Guides that must exist and reference the current release (body or header). */
 const REQUIRED_GUIDES = [
@@ -45,7 +45,10 @@ const ROOT_DOC_CHECKS = [
     validate: (content, version, counts, header) => {
       const errors = [];
       if (!content.includes(header)) {
-        errors.push(`missing or stale standard header (expected: ${header})`);
+        errors.push(`missing kernel header (expected substring: ${header})`);
+      }
+      if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+        errors.push('missing context-window / exo kernel copy');
       }
       if (!content.includes('SKILLS.md')) {
         errors.push('missing SKILLS.md reference in postinstall/docs section');
@@ -63,14 +66,8 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes(`**v${version}**`)) {
         errors.push(`missing version marker **v${version}**`);
       }
-      if (!content.includes(`${counts.agents} agents`)) {
-        errors.push(`expected ${counts.agents} agents in header`);
-      }
-      if (!content.includes(`${counts.skills} skills`)) {
-        errors.push(`expected ${counts.skills} skills in header`);
-      }
-      if (!content.includes('68 codex terms')) {
-        errors.push('expected 68 codex terms in header');
+      if (!content.includes('survive the context window') && !content.includes('survives the context window') && !content.includes('Exo, not catalog')) {
+        errors.push('missing exo / context-window kernel copy');
       }
       if (!content.includes('aside-context.md') && !content.includes('AsideContext')) {
         errors.push('missing AsideContext documentation reference');
@@ -85,9 +82,11 @@ const ROOT_DOC_CHECKS = [
     rel: 'AGENTS-consumer.md',
     validate: (content, version, counts) => {
       const errors = [];
-      const expected = `**v${version}** — ${counts.mcps} MCP servers · ${counts.skills} skills · 68 codex terms`;
-      if (!content.includes(expected)) {
-        errors.push(`consumer header stale (expected substring: ${expected})`);
+      if (!content.includes(`**v${version}**`)) {
+        errors.push(`missing version marker **v${version}**`);
+      }
+      if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+        errors.push('consumer header missing context-window kernel copy');
       }
       if (!content.includes('SKILLS.md')) {
         errors.push('missing SKILLS.md in postinstall section');
@@ -146,28 +145,16 @@ function validateChangelog(content, version) {
 }
 
 function validateStandardHeader(content, expectedHeader, label) {
-  const match = content.match(STANDARD_HEADER_RE);
-  if (!match) {
-    return [`${label}: no standard docs header line found`];
-  }
-  if (match[0] !== expectedHeader) {
-    return [`${label}: header is "${match[0]}", expected "${expectedHeader}"`];
+  if (!content.includes(expectedHeader) && !STANDARD_HEADER_RE.test(content)) {
+    return [`${label}: missing kernel header (expected substring: ${expectedHeader})`];
   }
   return [];
 }
 
-function validateDocusaurusTagline(content, counts) {
+function validateDocusaurusTagline(content) {
   const errors = [];
-  const expectedParts = [
-    `${counts.agents} agents`,
-    `${counts.skills} skills`,
-    `${counts.mcps} MCP servers`,
-    '68 codex terms',
-  ];
-  for (const part of expectedParts) {
-    if (!content.includes(part)) {
-      errors.push(`docusaurus.config.ts tagline missing "${part}"`);
-    }
+  if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
+    errors.push('docusaurus.config.ts tagline missing context-window kernel copy');
   }
   return errors;
 }
@@ -184,8 +171,8 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
   const expectedHeader = buildDocsHeader(counts, version);
   const codexTerms = getCodexTermCount(rootDir);
 
-  if (codexTerms !== null && codexTerms !== 68) {
-    warnings.push(`codex.json has ${codexTerms} terms (docs reference 68)`);
+  if (codexTerms !== null && counts.codexTerms && codexTerms !== counts.codexTerms) {
+    warnings.push(`codex.json has ${codexTerms} terms (counts.codexTerms is ${counts.codexTerms})`);
   }
 
   const changelog = readFile(rootDir, 'CHANGELOG.md');
@@ -234,7 +221,7 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
   if (!docusaurus) {
     errors.push('docs-site/docusaurus.config.ts: missing');
   } else {
-    errors.push(...validateDocusaurusTagline(docusaurus, counts));
+    errors.push(...validateDocusaurusTagline(docusaurus));
   }
 
   for (const rel of getReleaseArtifactPaths()) {

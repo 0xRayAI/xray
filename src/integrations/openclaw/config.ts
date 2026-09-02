@@ -357,7 +357,6 @@ export class OpenClawConfigLoader {
       // SECURITY WARNING: authToken MUST be configured before use.
       // Leaving this empty will prevent authenticated connections.
       authToken: process.env.OPENCLAW_AUTH_TOKEN || '',
-      deviceId: process.env.OPENCLAW_DEVICE_ID || 'your-device-id',
       autoReconnect: true,
       maxReconnectAttempts: 5,
       reconnectDelay: 1000,

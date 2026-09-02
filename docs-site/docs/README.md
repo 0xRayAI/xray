@@ -1,8 +1,8 @@
-# xray — MCP-Centric AI Governance OS
+# xray — exo for coding agents
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
-xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges, seven MCP servers, **AGENTS.md**, and **SKILLS.md**.
+Consumer `npm install 0xray` wears the skeleton: four platform bridges, seven MCP servers, **AGENTS.md**, and **SKILLS.md**. Repertoire is extra muscle, not an eighth 0xRay server.
 
 ## Quick Start
 
@@ -74,6 +74,7 @@ Optional: **`@0xray/repertoire` MCP** for external hosts — see [Repertoire](./
 | Platform bridges (4) | [Integrations](./guides/integrations.md) |
 | `features.json` / `memory_routing` | [features.json](./guides/features-json.md) |
 | Repertoire deep memory | [Repertoire](./guides/repertoire.md) |
+| Parallel work (Grok + asides) | [Parallel Work Tracks](./guides/parallel-work-tracks.md) |
 | AsideContext subcontexts | [AsideContext](./guides/aside-context.md) |
 | Full changelog | [Features Since 3.1](./guides/features-since-3.1.md) |
 
@@ -84,6 +85,9 @@ Optional: **`@0xray/repertoire` MCP** for external hosts — see [Repertoire](./
 - [Features Since 3.1](./guides/features-since-3.1.md)
 - [features.json Reference](./guides/features-json.md)
 - [Memory Routing](./guides/memory-routing.md)
+- [Parallel Work Tracks](./guides/parallel-work-tracks.md)
+- [User Asides](./guides/user-asides.md)
+- [User Asides Roadmap](./guides/user-asides-roadmap.md)
 - [AsideContext](./guides/aside-context.md)
 - [Repertoire Integration](./guides/repertoire.md)
 - [Consumer Migration (v3.4+)](./guides/consumer-migration.md)

@@ -110,9 +110,27 @@ export function hasValidSynthesisConsultReceipt(
 
 export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
   const normalized = text.toUpperCase();
+  const decisionMatch = text.match(/\bDECISION:\s*(\w+)/i);
+  if (decisionMatch) {
+    const decision = decisionMatch[1]!.toLowerCase();
+    if (decision === 'approve' || decision === 'approved' || decision === 'pass') {
+      return 'PASS';
+    }
+    if (decision === 'reject' || decision === 'rejected' || decision === 'fail') {
+      return 'FAIL';
+    }
+    if (
+      decision === 'abstain' ||
+      decision === 'needs_revision' ||
+      decision === 'conditional' ||
+      decision === 'revise'
+    ) {
+      return 'CONDITIONAL';
+    }
+  }
   if (/\bCONDITIONAL(\s+PASS)?\b/.test(normalized)) return 'CONDITIONAL';
-  if (/\b(?:PASS|SHIP)\b/.test(normalized)) return 'PASS';
-  if (/\bFAIL\b/.test(normalized)) return 'FAIL';
+  if (/\b(?:PASS|SHIP|APPROVE)\b/.test(normalized)) return 'PASS';
+  if (/\b(?:FAIL|REJECT)\b/.test(normalized)) return 'FAIL';
   return null;
 }
 

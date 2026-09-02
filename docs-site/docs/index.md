@@ -4,7 +4,7 @@ sidebar_label: Overview
 
 # 0xRay Documentation
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Exo, not toolset. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
 Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with the [Introduction](./introduction).
 
@@ -15,6 +15,12 @@ Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with t
 - [Platform Integrations](./guides/integrations) — OpenCode, Grok, Hermes, OpenClaw
 - [Features Since 3.1](./guides/features-since-3.1) — Full capability changelog
 - [features.json](./guides/features-json) — Config reference including `memory_routing`
+- [4.0 vision](./architecture/v4-vision) — exo, not toolset: where we are, where we are going, why
+- [4.0 now](./architecture/v4-now) — compaction handoff / next bites
+- [4.0 left](./architecture/v4-left) — what is still open before a stranger demo and npm
+- [Suit temperament](./guides/v3-temperament) — guided vs frontier (4.0)
+- [v3 from v2](./architecture/v3-from-v2) — keep the three subsystems, trim fat
+- [Parallel Work Tracks](./guides/parallel-work-tracks) — Grok Build + user asides + worktrees
 - [AsideContext](./guides/aside-context) — Orchestrator subcontexts + Repertoire inheritance (v3.2+)
 - [Repertoire](./guides/repertoire) — Deep memory provider + MCP tools
 - [Memory Routing](./guides/memory-routing) — Provider plug-in model (v3.3)

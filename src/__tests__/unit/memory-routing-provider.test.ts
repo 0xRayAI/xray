@@ -7,6 +7,8 @@ import {
   loadMemoryRoutingProvider,
   validateMemoryRoutingConfig,
   getMemoryRoutingProviderSync,
+  resolveLeftoverEnabledConfig,
+  isLeftoverMemoryRoutingOff,
 } from '../../memory-routing/index.js';
 
 vi.mock('../../core/framework-logger.js', () => ({
@@ -68,6 +70,50 @@ describe('MemoryRoutingProvider', () => {
     const b = getMemoryRoutingProviderSync();
     expect(a).toBe(b);
     expect(a.id).toBe('null');
+  });
+
+  it('leftover default-off enables repertoire when the module resolves', async () => {
+    const leftover = { enabled: false, provider: 'null' as const };
+    expect(isLeftoverMemoryRoutingOff(leftover)).toBe(true);
+    expect(resolveLeftoverEnabledConfig(leftover, join(process.cwd(), 'no-such-consumer'))).toBeNull();
+
+    const parent = join(process.cwd(), '.tmp-memory-routing-leftover');
+    const consumer = join(parent, 'app');
+    const repertoire = join(parent, 'repertoire');
+    mkdirSync(join(repertoire, 'dist', 'provider'), { recursive: true });
+    mkdirSync(consumer, { recursive: true });
+    writeFileSync(join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+    const fakeModule = join(repertoire, 'dist', 'provider', 'memory-routing-provider.js');
+    writeFileSync(
+      fakeModule,
+      `export function createMemoryRoutingProvider() {
+        return {
+          id: 'repertoire',
+          name: 'fake',
+          isAvailable: () => true,
+          buildRoutingContext: () => ({ providerId: 'repertoire', matchedSignals: [], matchedTags: [], flags: {}, synthesisAvailable: false }),
+          enhanceAgentCapabilities: (m) => m,
+          enrichTasks: (t) => t,
+          buildInheritedContext: () => ({ providerId: 'repertoire', matchedSignals: [], flags: {} }),
+          selectAgent: () => null,
+          resolveThinDispatch: (agent, _op, score) => ({ agent, adjustedScore: score, context: { providerId: 'repertoire', matchedSignals: [], matchedTags: [], flags: {}, synthesisAvailable: false } }),
+        };
+      }\n`,
+    );
+    try {
+      const resolved = resolveLeftoverEnabledConfig(leftover, consumer);
+      expect(resolved?.enabled).toBe(true);
+      expect(resolved?.provider).toBe('repertoire');
+      const provider = await loadMemoryRoutingProvider(leftover, consumer);
+      expect(provider.id).toBe('repertoire');
+      const optOut = await loadMemoryRoutingProvider(
+        { enabled: false, provider: 'repertoire' },
+        consumer,
+      );
+      expect(optOut.id).toBe('null');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 
   it('returns null provider when config is invalid', async () => {
@@ -165,5 +211,25 @@ describe('MemoryRoutingProvider', () => {
     } else {
       expect(provider.id).toBe('null');
     }
+  });
+
+  it.skipIf(
+    !existsSync(resolve(process.cwd(), '../repertoire/dist/provider/memory-routing-provider.js')),
+    'repertoire sibling not built',
+  )('loads repertoire provider via framework features default', async () => {
+    const provider = await loadMemoryRoutingProvider(
+      {
+        enabled: true,
+        provider: 'repertoire',
+        module_path: '../repertoire/dist/provider/memory-routing-provider.js',
+        config: {
+          dataDir: '../repertoire/data',
+          signalsPath: '../repertoire/data/curated_signals.json',
+        },
+      },
+      process.cwd(),
+    );
+    expect(provider.id).toBe('repertoire');
+    expect(provider.isAvailable()).toBe(true);
   });
 });

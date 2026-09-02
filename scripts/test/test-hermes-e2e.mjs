@@ -5,21 +5,23 @@
  *
  * Full end-to-end test that:
  *   1. Creates a temp consumer directory
- *   2. Installs 0xray from npm
- *   3. Enables the 0xray-hermes plugin in Hermes
+ *   2. npm pack + install local 0xray (4.0) into temp dir — `--registry` uses npm 0xray
+ *   3. Enables the xray-hermes plugin in Hermes
  *   4. Runs Hermes with queries that exercise all plugin paths
  *   5. Verifies logs, hooks, routing, bridge calls, and tool events
  *
  * Prerequisites:
  *   - Node.js >= 18
  *   - Hermes Agent CLI (`hermes`) installed and configured
- *   - `hermes plugins enable 0xray-hermes` run at least once
+ *   - `hermes plugins enable xray-hermes` run at least once
  *   - Working API key in ~/.hermes/.env
  *
  * Usage:
  *   node scripts/test/test-hermes-e2e.mjs
  *   node scripts/test/test-hermes-e2e.mjs --keep       # don't delete temp dir
  *   node scripts/test/test-hermes-e2e.mjs --dir /path   # use existing dir
+ *   node scripts/test/test-hermes-e2e.mjs --registry    # install published npm 0xray
+ *   node scripts/test/test-hermes-e2e.mjs --tarball ./0xray-4.0.0.tgz
  */
 
 import { execSync, spawn } from 'child_process';
@@ -33,6 +35,8 @@ const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[
 
 const TARBALL_FLAG = process.argv.indexOf('--tarball');
 const TARBALL_PATH = TARBALL_FLAG !== -1 && process.argv[TARBALL_FLAG + 1] ? process.argv[TARBALL_FLAG + 1] : null;
+const USE_REGISTRY = process.argv.includes('--registry');
+const PROJECT_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
 
 let passed = 0;
 let failed = 0;
@@ -140,16 +144,14 @@ async function main() {
   pass(`Hermes version: ${hermesVersion}`);
 
   const pluginStatus = run('hermes plugins list');
-  if (pluginStatus.includes('0xray-hermes')) {
-    pass('0xray-hermes plugin visible to Hermes');
-    if (pluginStatus.includes('not enabled')) {
-      run('hermes plugins enable 0xray-hermes');
-      pass('0xray-hermes plugin enabled');
-    } else {
-pass('0xray-hermes plugin already enabled');
-    }
+  const hasModern = /(?:^|[^0])xray-hermes/.test(pluginStatus);
+  const hasLegacy = pluginStatus.includes('0xray-hermes');
+  if (hasModern || hasLegacy) {
+    pass('xray-hermes plugin visible to Hermes');
+    run('hermes plugins enable xray-hermes');
+    pass('xray-hermes plugin enabled');
   } else {
-    fail('0xray-hermes plugin visible', 'plugin not found in hermes plugins list');
+    fail('xray-hermes plugin visible', 'plugin not found in hermes plugins list');
   }
 
   // Check for Hermes auth credentials (API key)
@@ -184,13 +186,30 @@ pass('0xray-hermes plugin already enabled');
     if (TARBALL_PATH) {
       installOut = run(`npm install "${TARBALL_PATH}"`, { cwd: testDir, timeout: 120000 });
       pass(`Installed from local tarball: ${TARBALL_PATH}`);
-    } else {
+    } else if (USE_REGISTRY) {
       installOut = run('npm install 0xray', { cwd: testDir, timeout: 120000 });
+      pass('Installed 0xray from npm registry');
+    } else {
+      const packResult = run(`cd "${PROJECT_ROOT}" && npm pack`, { timeout: 30000 });
+      const tarballMatch = packResult.match(/(0xray-\d+\.\d+\.\d+\.tgz)/);
+      if (!tarballMatch) {
+        fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
+        process.exit(1);
+      }
+      const tarball = path.join(PROJECT_ROOT, tarballMatch[1]);
+      pass(`npm pack: ${tarballMatch[1]}`);
+      installOut = run(`npm install "${tarball}"`, { cwd: testDir, timeout: 120000 });
+      pass(`Installed from local pack: ${tarballMatch[1]}`);
     }
 
     if (fs.existsSync(path.join(testDir, 'node_modules', '0xray', 'package.json'))) {
       const pkg = JSON.parse(fs.readFileSync(path.join(testDir, 'node_modules', '0xray', 'package.json'), 'utf-8'));
       pass(`0xray installed: v${pkg.version}`);
+      const expected = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'package.json'), 'utf-8')).version;
+      if (!USE_REGISTRY && pkg.version !== expected) {
+        fail('0xray version', `expected local v${expected}, got v${pkg.version}`);
+        process.exit(1);
+      }
     } else {
       fail('0xray installed', 'npm install failed');
       console.log(`\n\x1b[31mABORT: npm install failed.\x1b[0m`);

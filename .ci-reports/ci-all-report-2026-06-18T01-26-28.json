@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-06-18T01:26:28.977Z",
+  "logFile": "/Users/blaze/dev/xray/logs/framework/activity.log",
+  "totalLogLines": 190,
+  "agent": {
+    "totalSpawns": 0,
+    "byType": {},
+    "completed": 0,
+    "failures": 0,
+    "successes": 0,
+    "failureRate": "N/A",
+    "breakdown": {
+      "withResult": {
+        "completed": 0,
+        "failures": 0,
+        "successes": 0
+      },
+      "governance": {
+        "completed": 0
+      }
+    }
+  },
+  "processor": {
+    "preProcessors": {
+      "count": 0,
+      "byName": {},
+      "avgDuration": {}
+    },
+    "postProcessors": {
+      "count": 0,
+      "byName": {}
+    },
+    "failures": 0,
+    "successRate": "N/A"
+  },
+  "error": {
+    "totalErrors": 37,
+    "bySource": {},
+    "recentErrors": []
+  },
+  "tool": {
+    "totalToolCalls": 7,
+    "byTool": {
+      "govern_proposals": 7
+    }
+  }
+}

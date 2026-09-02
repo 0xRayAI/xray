@@ -2,15 +2,11 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/pre-tool-use.js"
-            ],
-            "timeout": 30000
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/pre-tool-use.js\"",
+            "timeout": 30
           }
         ]
       }
@@ -20,11 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js"
-            ],
-            "timeout": 15000
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js\"",
+            "timeout": 30
           }
         ]
       }
@@ -34,27 +27,41 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js",
-              "--hook-event=user_prompt_submit"
-            ],
-            "timeout": 15000
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js\" --hook-event=user_prompt_submit",
+            "timeout": 30
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/post-tool-use.js"
-            ],
-            "timeout": 15000
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/post-tool-use.js\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js\" --hook-event=pre_compact",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "XRAY_AI_PATH=\"${XRAY_AI_PATH:-node_modules/0xray}\" node \"${XRAY_AI_PATH:-node_modules/0xray}/dist/integrations/grok/hooks/session-start.js\" --hook-event=post_compact",
+            "timeout": 30
           }
         ]
       }

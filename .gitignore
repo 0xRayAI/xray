@@ -4,6 +4,7 @@ docs-site/.docusaurus/
 docs-site/node_modules/
 
 # Generated runtime files
+.ci-reports/
 performance-reports/
 logs/performance-reports/
 logs/framework/activity-report.json
@@ -22,6 +23,14 @@ xray/inference/
 *.log
 0xray-*.tgz
 *.tmp
+
+# Machine-local Grok wear (absolute paths from `0xray grok install`). Template: src/integrations/grok/plugin/0xray
+.grok/
+
+# Station card is a projection of session-boot.json — disk contract, not git
+.xray/state/STATION.md
+.xray/state/repertoire-working.json
+.xray/state/repertoire/
 
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts
@@ -69,6 +78,8 @@ node_modules/
 
 # Build artifacts
 dist/
+!vendor/@0xray/repertoire/dist/
+!vendor/@0xray/repertoire/dist/**
 tsconfig.tsbuildinfo
 
 # Docs inference (generated at runtime)

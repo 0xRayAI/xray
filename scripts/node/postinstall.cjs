@@ -15,17 +15,12 @@ function structuredLog(component, action, status, details) {
   console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
 }
 
-const packageRoot = path.join(__dirname, "..", "..");
-const targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
-const resolvedPackage = path.resolve(packageRoot);
-const resolvedTarget = path.resolve(targetDir);
-
 const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
 
-// Copy AGENTS-consumer.md → AGENTS.md (only if absent or still 0xray-managed)
-const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
-const agentsDest = path.join(targetDir, "AGENTS.md");
-if (fs.existsSync(agentsConsumer) && isConsumerInstall(resolvedPackage, resolvedTarget)) {
+function deployManagedAgents(packageRoot, targetDir, log) {
+  const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
+  const agentsDest = path.join(targetDir, "AGENTS.md");
+  if (!fs.existsSync(agentsConsumer)) return;
   const shouldDeployAgents =
     !fs.existsSync(agentsDest) ||
     fs.readFileSync(agentsDest, "utf8").includes(XRAY_MANAGED_AGENTS_MARKER);
@@ -36,37 +31,65 @@ if (fs.existsSync(agentsConsumer) && isConsumerInstall(resolvedPackage, resolved
     }
     fs.writeFileSync(agentsDest, content);
   } else {
-    structuredLog("postinstall", "Skipped AGENTS.md (consumer-customized)", "info");
+    log("postinstall", "Skipped AGENTS.md (consumer-customized)", "info");
   }
 }
 
-// .gitignore: full template when absent; merge suit block when existing
-if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
+function deployConsumerGitignore(packageRoot, targetDir, log) {
   const gitignoreResult = applyConsumerGitignore(targetDir, packageRoot);
   if (gitignoreResult === "created") {
-    structuredLog("postinstall", "Created .gitignore from template", "info");
+    log("postinstall", "Created .gitignore from template", "info");
   } else if (gitignoreResult === "merged") {
-    structuredLog("postinstall", "Merged 0xray suit entries into .gitignore", "info");
+    log("postinstall", "Merged 0xray suit entries into .gitignore", "info");
   }
 }
 
-// Unified 4-platform bridge install (OpenCode, Grok, Hermes, OpenClaw)
-if (isConsumerInstall(resolvedPackage, resolvedTarget)) {
+/**
+ * Wear bridges for consumers (full 4-platform) and the framework repo (dogfood).
+ * installAllBridges already decides which path.
+ */
+function runPostinstall(packageRoot, targetDir, log) {
+  const logFn = log || structuredLog;
+  const resolvedPackage = path.resolve(packageRoot);
+  const resolvedTarget = path.resolve(targetDir);
+  const consumer = isConsumerInstall(resolvedPackage, resolvedTarget);
+
+  if (consumer) {
+    deployManagedAgents(resolvedPackage, resolvedTarget, logFn);
+    deployConsumerGitignore(resolvedPackage, resolvedTarget, logFn);
+  }
+
   try {
     installAllBridges({
-      targetDir,
-      packageRoot,
-      log: structuredLog,
+      targetDir: resolvedTarget,
+      packageRoot: resolvedPackage,
+      log: logFn,
     });
   } catch (e) {
-    structuredLog("postinstall", "Bridge install failed", "error", { error: e.message });
+    logFn("postinstall", "Bridge install failed", "error", { error: e.message });
+    throw e;
+  }
+
+  if (consumer) {
+    logFn(
+      "postinstall",
+      "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
+      "success",
+    );
+  } else {
+    logFn("postinstall", "framework dogfood wear complete", "success");
+  }
+}
+
+module.exports = { runPostinstall };
+
+if (require.main === module) {
+  const packageRoot = path.join(__dirname, "..", "..");
+  const targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
+  try {
+    runPostinstall(packageRoot, targetDir);
+  } catch {
     console.error("\n❌ 0xRay postinstall failed — bridge wiring did not complete.\n");
     process.exit(1);
   }
-
-  structuredLog(
-    "postinstall",
-    "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
-    "success"
-  );
 }

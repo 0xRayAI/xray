@@ -10,6 +10,22 @@
 | Framework repo | `xray/features.json` |
 | Schema | `xray/features.schema.json` |
 
+## suit_temperament (v3)
+
+See [Suit temperament](./v3-temperament.md). Missing key = **guided** (existing consumers unchanged).
+
+```json
+"suit_temperament": {
+  "profile": "auto",
+  "host_defaults": {
+    "grok": "frontier",
+    "hermes": "guided",
+    "opencode": "guided",
+    "openclaw": "guided"
+  }
+}
+```
+
 ## memory_routing (v3.3+)
 
 ```json
@@ -68,6 +84,8 @@ Framework repo (`0xray` package) uses `source: 'system'`, `onChain: true` automa
 ```
 
 Works with memory routing confidence signals and thinDispatch tiers.
+
+Frontier profile does **not** turn this off — it only stops **denying** spawn when no lead-dev plan exists.
 
 ## complexity_thresholds
 

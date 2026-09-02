@@ -15,7 +15,7 @@
  * - All knowledge-skill MCP servers (code-review, security-audit, researcher, etc.)
  */
 
-import { frameworkLogger } from '../../core/framework-logger.js';
+import { frameworkLogger, type LogStatus } from '../../core/framework-logger.js';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -26,20 +26,28 @@ import { syncBuiltinSkills } from '../../cli/commands/skill-install.js';
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const packageRoot = path.resolve(__dirname, '..', '..', '..');
 const requireCjs = createRequire(import.meta.url);
-const { resolveConsumerTargetDir } = requireCjs(
+const { resolveConsumerTargetDir, patchGrokHooks } = requireCjs(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs')
-);
-
-/** Canonical 7-server MCP surface — matches install-bridges.cjs and package .mcp.json */
-const XRAY_MCP_SERVERS = [
-  { name: 'xray-governance', mcpCmd: 'governance', env: { XRAY_FORCE_MCP_GOVERNANCE: 'true' } },
-  { name: 'xray-skills', mcpCmd: 'skills', env: {} },
-  { name: 'xray-orchestrator', mcpCmd: 'orchestrator', env: {} },
-  { name: 'xray-enforcer', mcpCmd: 'enforcer', env: {} },
-  { name: 'xray-researcher', mcpCmd: 'researcher', env: {} },
-  { name: 'xray-code-review', mcpCmd: 'code-review', env: {} },
-  { name: 'xray-architect-tools', mcpCmd: 'architect-tools', env: {} },
-] as const;
+) as {
+  resolveConsumerTargetDir: (packageRoot: string, cwd: string) => string;
+  patchGrokHooks: (
+    pluginDir: string,
+    packageRoot: string,
+    targetDir: string,
+    log: (label: string, action: string, status: string, details?: unknown) => void,
+    label: string,
+  ) => void;
+};
+const { XRAY_MCP_SERVERS, resolveRepertoireMcp } = requireCjs(
+  path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')
+) as {
+  XRAY_MCP_SERVERS: ReadonlyArray<{
+    name: string;
+    mcpCmd: string;
+    env: Record<string, string>;
+  }>;
+  resolveRepertoireMcp: (targetDir: string) => string | null;
+};
 
 function registerGrokMcpServers(targetDir: string): void {
   try {
@@ -122,6 +130,20 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
       console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to ~/.grok/skills/\x1b[0m`);
     }
 
+    pinGrokPluginToInstalledDist(targetPluginDir, packageRoot, targetDir);
+    wearGrokHookCommands(targetPluginDir, packageRoot, targetDir);
+
+    const projectPluginDir = path.join(targetDir, '.grok', 'plugins', '0xray');
+    if (projectPluginDir !== targetPluginDir) {
+      if (!fs.existsSync(projectPluginDir) || options.force) {
+        fs.cpSync(sourceDir, projectPluginDir, { recursive: true, force: true });
+      }
+      pinGrokPluginToInstalledDist(projectPluginDir, packageRoot, targetDir);
+      wearGrokHookCommands(projectPluginDir, packageRoot, targetDir);
+    }
+
+    writeProjectRepertoireMcp(targetDir);
+
     // Attempt auto-trust (best effort)
     try {
       execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });
@@ -138,14 +160,107 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
     console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
 
-  } catch (err: any) {
-    frameworkLogger.log('grok-integration', 'install-error', 'error', { error: err.message });
-    console.error('Failed to install Grok plugin:', err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    frameworkLogger.log('grok-integration', 'install-error', 'error', { error: message });
+    console.error('Failed to install Grok plugin:', message);
   }
 
   frameworkLogger.log('grok-integration', 'install-complete', 'info', {});
 }
 
+function wearGrokHookCommands(pluginDir: string, xrayRoot: string, targetDir: string): void {
+  patchGrokHooks(
+    pluginDir,
+    xrayRoot,
+    targetDir,
+    (label, action, status, details) => {
+      const level: LogStatus =
+        status === 'success' ||
+        status === 'error' ||
+        status === 'info' ||
+        status === 'debug' ||
+        status === 'warning'
+          ? status
+          : 'info';
+      frameworkLogger.log(label, action, level, details ?? {});
+    },
+    'grok-install',
+  );
+}
+
+function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targetDir: string): void {
+  const hookJs = path.join(xrayRoot, 'dist/integrations/grok/hooks/pre-tool-use.js');
+  const cliJs = path.join(xrayRoot, 'dist/cli/index.js');
+  if (!fs.existsSync(hookJs)) return;
+
+  const hooksPath = path.join(pluginDir, 'hooks', 'hooks.json');
+  if (fs.existsSync(hooksPath)) {
+    const text = fs.readFileSync(hooksPath, 'utf8');
+    fs.writeFileSync(
+      hooksPath,
+      text.split('${XRAY_AI_PATH:-node_modules/0xray}').join(xrayRoot),
+    );
+  }
+
+  const mcpPath = path.join(pluginDir, '.mcp.json');
+  if (fs.existsSync(mcpPath) && fs.existsSync(cliJs)) {
+    const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8')) as {
+      mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
+    };
+    for (const server of Object.values(mcp.mcpServers ?? {})) {
+      if (server.command === 'npx' && Array.isArray(server.args) && server.args.includes('mcp')) {
+        const mcpIdx = server.args.indexOf('mcp');
+        const mcpCmd = server.args[mcpIdx + 1] ?? 'governance';
+        server.command = 'node';
+        server.args = [cliJs, 'mcp', mcpCmd];
+      }
+    }
+    const repertoireMcp = resolveRepertoireMcp(targetDir);
+    if (mcp.mcpServers) {
+      if (repertoireMcp) {
+        mcp.mcpServers.repertoire = {
+          command: 'node',
+          args: [repertoireMcp],
+        };
+      } else {
+        delete mcp.mcpServers.repertoire;
+      }
+    }
+    fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
+  }
+}
+
+/** Grok TUI reads <project>/.grok/config.toml, not the package copy. */
+export function writeProjectRepertoireMcp(projectRoot: string): string | null {
+  const repertoireMcp = resolveRepertoireMcp(projectRoot);
+  if (!repertoireMcp) return null;
+  const grokDir = path.join(projectRoot, '.grok');
+  fs.mkdirSync(grokDir, { recursive: true });
+  const tomlPath = path.join(grokDir, 'config.toml');
+  const block = `[mcp_servers.repertoire]
+command = "node"
+args = [${JSON.stringify(repertoireMcp)}]
+enabled = true
+`;
+  let existing = '';
+  if (fs.existsSync(tomlPath)) {
+    existing = fs.readFileSync(tomlPath, 'utf8');
+  }
+  if (/\[mcp_servers\.repertoire\]/.test(existing)) {
+    existing = existing.replace(
+      /\[mcp_servers\.repertoire\][\s\S]*?(?=\n\[|$)/,
+      block.trim(),
+    );
+    fs.writeFileSync(tomlPath, existing.endsWith('\n') ? existing : `${existing}\n`);
+  } else {
+    const prefix = existing.trim() ? `${existing.trim()}\n\n` : '';
+    fs.writeFileSync(tomlPath, `${prefix}${block}`);
+  }
+  return tomlPath;
+}
+
 export default {
   installForGrokCLI,
+  writeProjectRepertoireMcp,
 };

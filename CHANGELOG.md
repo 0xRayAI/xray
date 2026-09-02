@@ -4,13 +4,111 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [4.0.0] - 2026-08-28
+
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm is still `3.5.5`; this line is **4.0.0** on `feat/v4-temperament` — **still in development, not published**.
+
+### ✨ Features
+- **Factory memory organ** — `@0xray/repertoire@0.2.0` vendored as a runtime dependency. Shipped `memory_routing` is **on** (8 factory primitives). Extra host MCP stays `repertoire`, not an 8th `xray-*` server. Compact ingest writes `.xray/state/repertoire/`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.
+- **Four-floor compact + memory** — station heat matches Repertoire on every host (not only Grok). Compact on Grok Pre/PostCompact, Hermes session-start, OpenCode plugin boot, OpenClaw PreToolUse keeps intent, Working signals, and `Repertoire: on`.
+- **Suit temperament** — `frontier` | `guided` | `strict` | `auto`. Constitution (Codex 11/29/69, destructive shell) always on. Ceremony (spawn-plan deny, confer, synthesis) scales by host.
+- **Grok 4.6 / Grok Build** — `auto` → frontier: spawn missing/stale/todo-mismatch **warns**; confer off unless opted in.
+- **OpenCode / Hermes** (including free models) — stay **guided**: full v2 engine ceremony.
+- **Upgrade safety** — consumers without `suit_temperament` stay **guided**; postinstall merge will not frontier existing Grok installs.
+- **Codex 69** — in `codex.json` (blocking). PreToolUse already denied new MCP/skill/handler files.
+- **OpenClaw host PreToolUse** — `evaluateOpenClawHostPreTool` SSOT + `~/.openclaw/hooks/xray-pre-tool.mjs` on `0xray openclaw install`. Platform still has no native abort API; this is the host adapter.
+- **Repertoire harness** — leftover `memory_routing` default-off auto-enables when sibling `@0xray/repertoire` or `node_modules/@0xray/repertoire` resolves (install **and** runtime provider load). Explicit `enabled: false` + `provider: repertoire` is opt-out. Consumers without the module stay off. Not an 8th 0xRay MCP.
+- **Repertoire working state** — station heat writes `.xray/state/repertoire-working.json` and a `Working:` line on the card. Compact may ingest non-Bedrock matches. Registry primitives are routing; the working file is session memory.
+- **Session resume** — Grok session-start writes `repertoireResume` (one line, signal count) into `session-boot.json` so the next station survives compaction.
+- **Hot-swap station card** — `.xray/state/STATION.md` is the projection of `session-boot.json` (intent, git, **live** plan, last host, Repertoire). PreCompact/PostCompact persist it. AGENTS.md tells the model to Read it (Grok does not inject). Host change sets `hotSwap`. Same-host compact **keeps** the last swap stamp. OpenClaw first PreToolUse heats the card. Intent strips `<user_query>` wrappers. Works without Repertoire.
+- **Framework dogfood wear** — `installAllBridges` on the 0xRay package still patches `<project>/.grok/hooks/0xray.json` and enable-when-resolves. Does not deploy consumer copies over the package.
+- **Repertoire MCP names** — unprefixed server tools; Grok TUI namespaces them as `repertoire__*`. Grok install resolves sibling *or* `node_modules/@0xray/repertoire`.
+- **Configurable archive marker** — `plan_archive_marker_hours` (default 24) in `features.json`
+- **grok_postprocessor_light** — PostToolUse write-tool marker + activity.log
+- **P2 session capture** — git post-commit → `captureSessionInference` when `inference_session_capture.min_commits` met
+- **Docs** — [4.0 vision](docs-site/docs/architecture/v4-vision.md), [v3 from v2](docs-site/docs/architecture/v3-from-v2.md), [temperament](docs-site/docs/guides/v3-temperament.md), [trim list](docs-site/docs/architecture/v3-museum.md).
+
+### 🔄 Changes
+- Product version **4.0.0** throughout (`package.json`, `features.json`, plugin, banners). 3.x entries below are historical (npm `3.0.0`–`3.5.5`).
+- `evaluatePreToolGate` is constitution-first (Grok, Hermes, OpenCode). Grok PreToolUse no longer re-runs 11/29/69/surface/destructive after the SSOT.
+- Codex 69 denies **new** surface only (existing MCP/skill files may be rewired). `paths[]` / `target_notebook` / `prompt` content are in the SSOT collector.
+- **strict** locks `no_new_surface` on (cannot opt out).
+- Dual-host session-boot: Hermes / OpenCode / OpenClaw write `host` + `suit_profile`. A Hermes host ignores leftover Grok boot (and vice versa). Kernel/`generic` uses last boot.
+- Frontier `auto_consult` follows confer opt-in (`confer.enabled` / `confer_on_synthesis`).
+- Session-boot refreshes leftover host/workspace from another machine.
+- Post-commit log maintenance prefers consumer `node_modules/0xray/dist` and ESM `pathToFileURL`.
+
+### 🐛 Fixes
+- OpenClaw plugin ships in the npm tarball; install resolves `dist` then `src`.
+- Bare `node scripts/node/release.mjs` no longer defaults to patch (that path applied npm `3.5.5` → `3.5.6` over the 4.0 plant). Bump type is required. CJS/MJS loadability syntax-checks version/release/reflection/prepare/setup/CI-report scripts instead of executing them.
+- Postinstall wears OpenClaw PreToolUse (stdin hook + plugin link), not only `0xray openclaw install`.
+- Ephemeral e2e consumers no longer overwrite machine Hermes/OpenClaw `xray-consumer-root.txt`.
+- Hermes postinstall copies hook runtimes; plugin enable prefers `xray-hermes`.
+- OpenClaw install writes `opencode-cli` backend when `opencode` is on PATH (CLI pickle, not Zen HTTP).
+- `0xray grok install` always runs `patchGrokHooks` (command strings, PreCompact/PostCompact) even when the plugin already exists. Stale `args[]` / smoke / blaze paths no longer leave compact cold. Patched JSON is also copied to `<project>/.grok/hooks/0xray.json` — the path Grok TUI actually loads.
+- `buildLeadDevPlan` / `buildSynthesisCheckpointPlan` resolve temperament from `projectRoot`, not `process.cwd()` session-boot. A Grok frontier checkout no longer empties guided confer todos in tmp asides and release-gate verify scripts.
+- Stop committing machine-local `.grok/` (absolute hook paths). Template stays `src/integrations/grok/plugin/0xray`.
+- Grok hook `command` strings quote `XRAY_AI_PATH` and the script path so installs with spaces still start PreToolUse (Grok fail-opens on crash).
+- OpenClaw `maybeHeatHostStation` skips only when both sides have a concrete matching session id. An install card with no session no longer swallows first PreToolUse.
+- `postinstall.cjs` always calls `installAllBridges` (framework dogfood wear is no longer gated out of the production caller).
+- `loadFeatures` forwards `grok_postprocessor_light`; PostToolUse can run the advertised write-tool marker path.
+- `0xray grok install` writes `[mcp_servers.repertoire]` to `<project>/.grok/config.toml` and resolves the sibling from the consumer root.
+- OpenClaw 2026.8.2 handshake uses client id `gateway-client` (not `openclaw-tui`). Control-UI id requires device identity; TUI id is rejected on loopback.
+- OpenClaw e2e falls back to `openclaw agent` when token-only WS lacks `operator.write`. Grok e2e asserts `evaluatePreToolGate` SSOT instead of inlined gate names.
+
+### ✅ Tests
+- `suit-temperament.test.ts`; leftover-plan warn; confer frontier opt-in; install-bridges guided pin; Codex 69 rewrite vs create; strict lock; `paths[]`; dual-host boot.
+- `spawn-plan-stale` after archival in `verify-delegation-gate-core` (6/6); OpenCode host in `release-gate`.
+- OpenClaw PreToolUse unit coverage; live temperament probe across Grok, Hermes, OpenCode, OpenClaw.
+- Wear-layout: plugin/hook resolve, ephemeral marker skip, opencode-cli backend write.
+- `grok-hooks-json`: stale `args[]` smoke hooks gain compact events; station compact keeps `hotSwap`.
+- `autonomy-kernel`: plan consults follow `projectRoot` profile; confer/synthesis verify scripts pass tmp, not cwd Grok boot.
+- Repertoire enable-when-resolves + session-start `repertoireResume` unit coverage.
+- Quoted Grok hook commands; postinstall dogfood wear; OpenClaw install-then-first-tool heat; `grok_postprocessor_light` loadFeatures; project Repertoire `config.toml`.
+- Four-floor compact survival attests Codex 11 / 69 / destructive shell plus temperament after the cut. `XRAY_LIVE_SUCCESSOR=1` asks each host CLI to quote the station card.
+
+---
+
+## [3.5.5] - 2026-06-20
+
+### ✨ Features
+- **User-asides P0** — PreToolUse **denies** aside spawns without `cwd` / `working_directory` matching `aside.worktree`; `aside-worktree.ts` SSOT; synthesis-gate parity
+- **Worktree auto-provision** — `analyze-complexity` runs guarded `git worktree add` when `user_asides.auto_provision_worktree: true`
+- **Pipeline P3** — `verify:pipeline-facets` script; consumer `confirm:suit:full --pipeline-audit` wiring
+
+### 🐛 Fixes
+- **Worktree cwd enforce** — `auto_chain_delegations: false` no longer bypasses aside worktree cwd check; synthesis-gate parity retained
+- **`isAutoProvisionWorktreeEnabled`** — requires `user_asides.enabled` before honoring `auto_provision_worktree`
+- **`provisionGitWorktree`** — macOS `/var` vs `/private/var` path resolution for idempotent worktree detection
+
+### 🔄 Changes
+- **`verify:pipeline-facets --package-only`** — release-gate probes shipped artifacts without consumer feature matrix
+- **`release-gate.mjs`** — wires pipeline facet verify (package-only mode)
+
+### ✅ Tests
+- `aside-worktree.test.ts`; delegation-gate cwd deny/allow; auto_chain-off + synthesis worktree deny; `provisionGitWorktree` guards; `verify-user-aside-core` 10/10
+
+---
+
 ## [3.5.4] - 2026-06-19
 
 ### ✨ Features
 - **Synthesis consult receipt gate** — s.1–s.3 todos require `.xray/state/synthesis-consult-{id}.json` before completion; `evaluatePostToolSpawn` records receipts from subagent output; Grok post-tool hook wired
+- **User asides** — parallel work tracks (worktree-like) via `.xray/state/asides/{id}.json`; namespaced `{asideId}.a.*` todo routing; `analyze-complexity` + `orchestrate-task` rewire (no new MCP); session-boot hints; synthesis/pending bypass for aside spawns; `verify:user-aside` 9/9; docs `guides/user-asides.md`
+- **Confer quorum** — `confer.ts` SSOT; auto-runs at synthesis `analyze-complexity` (researcher → architect-tools → code-review); `verify:confer` 7/7; config `confer_on_synthesis` (default true); session-boot `conferPending` hint; emoji agent panel in quorum report
+- **Pipeline integration (P0–P2)** — enforcement-gate `{ proposals: [...] }` shape; `applyDecisionMatrix` + `calculateMetamorphosisScore` in `GovernanceService`; Grok `pipeline-hook-runtime.mjs` (reflection stubs, routing outcomes, reporting, inference-improvement light); `SelfProposalEngine` wired in PostProcessor; aside worktree cwd warn in delegation-gate; `autonomous_reporting` config key fix in SessionSummaryProcessor
+- **Stale lead-dev plan** — archive after `plan_stale_hours`; `spawn-plan-stale` persists after archival via recent archive marker; synthesis realignment (s.1–s.3) exempt until consult todos complete
+- **Hermes session-start parity** — `bridge.mjs` `session-start` command archives stale plans; lazy `plan-hook-runtime.mjs`; `verify-hermes-session-start.mjs` (4/4)
+- **Pre-commit / pre-push codex** — diff-hunk and commit-range scope verifiers (`verify:pre-commit-diff`, `verify:pre-push-diff`)
+- **Reflection noise** — minimal defaults 50 commits / `autoGenerate: false`; shell fallbacks synced
+- **Multi-repo boot** — `sibling_repos` in `session-boot.json`
+
+### 🔄 Changes
+- **autonomy-command.md** — SSOT is `analyze-complexity` + `multi_agent_orchestration`; removed stale `autonomy-intake` / `autonomy_kernel` references
 
 ### ✅ Tests
 - `synthesis-consult-receipt.test.ts`; E2E/outcome verifiers write fixture receipts
+- `governance-service-metamorphosis.test.ts`; `confer.test.ts` emoji panel
 
 ---
 

@@ -13,22 +13,18 @@ const {
   wireOpencodeBridge,
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
+  copyHermesFindProjectRootHelper,
+  copyHermesHookRuntimes,
+  installOpenClawHostWear,
+  maybeWriteOpenClawCliBackend,
+  isEphemeralInstallRoot,
+  enableMemoryRoutingIfResolves,
+  XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const MERGE_FILES = new Set(["enforcer-config.json"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
-
-/** Canonical 7-server MCP surface — matches package .mcp.json and Grok plugin */
-const XRAY_MCP_SERVERS = [
-  { name: "xray-governance", mcpCmd: "governance", env: { XRAY_FORCE_MCP_GOVERNANCE: "true" } },
-  { name: "xray-skills", mcpCmd: "skills", env: {} },
-  { name: "xray-orchestrator", mcpCmd: "orchestrator", env: {} },
-  { name: "xray-enforcer", mcpCmd: "enforcer", env: {} },
-  { name: "xray-researcher", mcpCmd: "researcher", env: {} },
-  { name: "xray-code-review", mcpCmd: "code-review", env: {} },
-  { name: "xray-architect-tools", mcpCmd: "architect-tools", env: {} },
-];
 
 function resolveConsumerTargetDir(packageRoot, fallbackDir) {
   const resolved = path.resolve(packageRoot);
@@ -128,8 +124,21 @@ function copyTree(src, dest, relPath = "") {
 
 function copyPluginDir(src, dest) {
   if (!fs.existsSync(src)) return false;
-  fs.cpSync(src, dest, { recursive: true, force: true });
-  return true;
+  try {
+    if (fs.existsSync(dest)) {
+      fs.rmSync(dest, { recursive: true, force: true });
+    }
+    fs.cpSync(src, dest, { recursive: true, force: true });
+    return true;
+  } catch (e) {
+    try {
+      fs.rmSync(dest, { recursive: true, force: true });
+      fs.cpSync(src, dest, { recursive: true, force: true });
+      return true;
+    } catch {
+      throw e;
+    }
+  }
 }
 
 function writePluginMcpJson(pluginDir, targetDir, log, label) {
@@ -168,27 +177,93 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
   }
 }
 
+function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
+  const script = path.join(packageRoot, "dist", "integrations", "grok", "hooks", scriptName);
+  const extra = extraArgs ? ` ${extraArgs}` : "";
+  // JSON.stringify quotes so spaces/$ in install paths still exec (Grok fail-opens on crash).
+  return `XRAY_AI_PATH=${JSON.stringify(packageRoot)} node ${JSON.stringify(script)}${extra}`;
+}
+
+function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs) {
+  if (!hook) return;
+  hook.type = "command";
+  hook.command = grokHookShellCommand(packageRoot, scriptName, extraArgs);
+  hook.timeout = 30;
+  delete hook.args;
+  hook.env = {
+    ...(hook.env || {}),
+    XRAY_ROOT: targetDir,
+    XRAY_AI_PATH: packageRoot,
+  };
+}
+
+function ensureGrokHookEvent(hooks, eventName) {
+  if (!hooks.hooks) hooks.hooks = {};
+  if (!Array.isArray(hooks.hooks[eventName]) || !hooks.hooks[eventName][0]) {
+    hooks.hooks[eventName] = [{ hooks: [{}] }];
+  }
+  if (!Array.isArray(hooks.hooks[eventName][0].hooks) || !hooks.hooks[eventName][0].hooks[0]) {
+    hooks.hooks[eventName][0].hooks = [{}];
+  }
+}
+
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
-  const hooksPath = path.join(pluginDir, "hooks", "hooks.json");
+  const hooksDir = path.join(pluginDir, "hooks");
+  const hooksPath = path.join(hooksDir, "hooks.json");
   const hookScript = path.join(packageRoot, "dist", "integrations", "grok", "hooks", "pre-tool-use.js");
-  if (!fs.existsSync(hooksPath)) return;
+  if (!fs.existsSync(hooksPath)) {
+    if (!fs.existsSync(hooksDir)) fs.mkdirSync(hooksDir, { recursive: true });
+    if (!fs.existsSync(hooksPath)) return;
+  }
 
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
-    const preTool = hooks.hooks?.PreToolUse?.[0]?.hooks?.[0];
-    if (preTool && fs.existsSync(hookScript)) {
-      preTool.command = "node";
-      preTool.args = [hookScript];
-      preTool.env = {
-        ...(preTool.env || {}),
-        XRAY_ROOT: targetDir,
-        XRAY_AI_PATH: packageRoot,
-      };
-      fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
-      log(label, "hooks.json patched → enforcement gate", "info");
-    }
+    if (!fs.existsSync(hookScript)) return;
+    patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js");
+    patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js");
+    patchGrokHookEntry(
+      hooks.hooks?.UserPromptSubmit?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=user_prompt_submit",
+    );
+    patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
+    ensureGrokHookEvent(hooks, "PreCompact");
+    ensureGrokHookEvent(hooks, "PostCompact");
+    patchGrokHookEntry(
+      hooks.hooks?.PreCompact?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=pre_compact",
+    );
+    patchGrokHookEntry(
+      hooks.hooks?.PostCompact?.[0]?.hooks?.[0],
+      packageRoot,
+      targetDir,
+      "session-start.js",
+      "--hook-event=post_compact",
+    );
+    fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
+    writeGrokDiscoveredHooks(targetDir, hooksPath, log, label);
+    log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {
     log(label, "hooks.json patch failed", "warn", { error: e.message });
+  }
+}
+
+/** Grok TUI loads `<project>/.grok/hooks/*.json`, not `plugins/0xray/hooks`. */
+function writeGrokDiscoveredHooks(targetDir, hooksPath, log, label) {
+  if (!targetDir || !fs.existsSync(hooksPath)) return;
+  try {
+    const destDir = path.join(targetDir, ".grok", "hooks");
+    fs.mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, "0xray.json");
+    fs.copyFileSync(hooksPath, dest);
+    log(label, "Grok discovered hooks → .grok/hooks/0xray.json", "info", { dest });
+  } catch (e) {
+    log(label, "Grok discovered hooks copy failed", "warn", { error: e.message });
   }
 }
 
@@ -287,10 +362,13 @@ function installGrokBridge(targetDir, packageRoot, log) {
   }
 
   const home = os.homedir();
-  const targets = [
-    path.join(targetDir, ".grok", "plugins", "0xray"),
-    path.join(home, ".grok", "plugins", "0xray"),
-  ];
+  const ephemeral = isEphemeralInstallRoot(targetDir);
+  const targets = [path.join(targetDir, ".grok", "plugins", "0xray")];
+  if (!ephemeral) {
+    targets.push(path.join(home, ".grok", "plugins", "0xray"));
+  } else {
+    log("grok-bridge", "skip machine ~/.grok plugin — ephemeral consumer", "info");
+  }
 
   for (const dest of targets) {
     if (copyPluginDir(sourceDir, dest)) {
@@ -303,14 +381,14 @@ function installGrokBridge(targetDir, packageRoot, log) {
     }
   }
 
-  // Grok Build / Cursor also reads ~/.grok/skills/ for agent_skills
-  const grokGlobalSkills = path.join(home, ".grok", "skills");
-  const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
-  if (globalCopied > 0) {
-    log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+  if (!ephemeral) {
+    const grokGlobalSkills = path.join(home, ".grok", "skills");
+    const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
+    if (globalCopied > 0) {
+      log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+    }
+    registerGrokMcpServers(targetDir, log);
   }
-
-  registerGrokMcpServers(targetDir, log);
 }
 
 function installHermesBridge(targetDir, packageRoot, log) {
@@ -335,6 +413,10 @@ function installHermesBridge(targetDir, packageRoot, log) {
       fs.copyFileSync(src, dst);
     }
   }
+  copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+  if (copyHermesHookRuntimes(packageRoot)) {
+    log("hermes-bridge", "hook runtimes copied", "info", { path: "~/.hermes/plugins/hooks" });
+  }
   log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
 
   writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
@@ -342,10 +424,13 @@ function installHermesBridge(targetDir, packageRoot, log) {
   const copied = syncBuiltinSkills(path.join(targetPluginDir, "skills"), packageRoot);
   if (copied > 0) log("hermes-bridge", `skills synced (${copied})`, "info");
 
-  // Marker so bridge.mjs resolves the consumer project on hook invocation
   const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
-  fs.writeFileSync(rootMarker, targetDir + "\n");
-  log("hermes-bridge", "consumer root marker written", "info");
+  if (!isEphemeralInstallRoot(targetDir)) {
+    fs.writeFileSync(rootMarker, targetDir + "\n");
+    log("hermes-bridge", "consumer root marker written", "info");
+  } else {
+    log("hermes-bridge", "skip machine consumer marker — ephemeral consumer", "info");
+  }
 
   try {
     const result = wireHermesBridge(targetDir);
@@ -399,6 +484,16 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
   } catch (e) {
     log("openclaw-bridge", "openclaw.json mcp wire failed", "warn", { error: e.message });
   }
+
+  if (!isEphemeralInstallRoot(targetDir)) {
+    const hook = installOpenClawHostWear(packageRoot);
+    if (hook) log("openclaw-bridge", "PreToolUse hook installed", "info", { path: hook });
+    if (maybeWriteOpenClawCliBackend()) {
+      log("openclaw-bridge", "opencode-cli backend written", "info");
+    }
+  } else {
+    log("openclaw-bridge", "skip machine PreToolUse wear — ephemeral consumer", "info");
+  }
 }
 
 const XRAY_CONFIG_FILES = ["codex.json", "features.json", "features.schema.json", "config.json"];
@@ -419,9 +514,20 @@ function writeJsonFile(filePath, data) {
   fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-function deployXrayConfigFile(file, src, dst, packageRoot) {
+function applyResolvedMemoryRouting(dst, targetDir) {
+  try {
+    const features = JSON.parse(fs.readFileSync(dst, "utf8"));
+    const next = enableMemoryRoutingIfResolves(features, targetDir);
+    if (next.changed) writeJsonFile(dst, next.features);
+  } catch {
+    /* leftover default stays off when features.json is unreadable */
+  }
+}
+
+function deployXrayConfigFile(file, src, dst, packageRoot, targetDir) {
   if (!fs.existsSync(dst)) {
     fs.copyFileSync(src, dst);
+    if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
     return true;
   }
 
@@ -442,12 +548,28 @@ function deployXrayConfigFile(file, src, dst, packageRoot) {
         const pkgVersion = readPackageVersion(packageRoot);
         if (pkgVersion) merged.version = pkgVersion;
         else if (shipped.version) merged.version = shipped.version;
+        // v3: existing consumers without suit_temperament stay guided on upgrade.
+        // Fresh copy (dst missing) already returned above with shipped auto.
+        const hadTemperament =
+          consumer.suit_temperament &&
+          typeof consumer.suit_temperament === "object" &&
+          consumer.suit_temperament.profile;
+        if (!hadTemperament) {
+          merged.suit_temperament = {
+            ...(merged.suit_temperament || {}),
+            profile: "guided",
+          };
+        }
+        writeJsonFile(dst, merged);
+        applyResolvedMemoryRouting(dst, targetDir);
+        return true;
       }
       writeJsonFile(dst, merged);
       return true;
     } catch {
       if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
         fs.copyFileSync(src, dst);
+        if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
         return true;
       }
       return false;
@@ -481,7 +603,7 @@ function deployXrayConfig(targetDir, packageRoot, log) {
     const src = resolveXrayConfigSource(packageRoot, file);
     const dst = path.join(xrayTargetDir, file);
     if (!src) continue;
-    if (deployXrayConfigFile(file, src, dst, packageRoot)) {
+    if (deployXrayConfigFile(file, src, dst, packageRoot, targetDir)) {
       copied++;
     }
   }
@@ -501,6 +623,29 @@ function installGitHooks(packageRoot, log) {
 }
 
 /**
+ * Framework dogfood: do not deploy consumer copies over the package,
+ * but keep Grok discovery hooks hot and enable Repertoire when it resolves.
+ */
+function installFrameworkDogfoodWear(packageRoot, log) {
+  const featuresPath = path.join(packageRoot, ".xray", "features.json");
+  if (fs.existsSync(featuresPath)) {
+    applyResolvedMemoryRouting(featuresPath, packageRoot);
+  }
+
+  const sourceDir = findGrokPluginSource(packageRoot);
+  const pluginDest = path.join(packageRoot, ".grok", "plugins", "0xray");
+  if (!sourceDir) {
+    log("grok-dogfood", "skipped", "warn", { reason: "grok plugin source missing" });
+    return;
+  }
+  const hooksJson = path.join(pluginDest, "hooks", "hooks.json");
+  if (!fs.existsSync(hooksJson)) {
+    copyPluginDir(sourceDir, pluginDest);
+  }
+  patchGrokHooks(pluginDest, packageRoot, packageRoot, log, "grok-dogfood");
+}
+
+/**
  * Install all 4 platform bridges for a consumer project.
  * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
  */
@@ -513,7 +658,11 @@ function installAllBridges(opts) {
       /* noop */
     });
 
-  if (!isConsumerInstall(packageRoot, targetDir)) return;
+  if (!isConsumerInstall(packageRoot, targetDir)) {
+    log("install-bridges", "framework dogfood wear", "info");
+    installFrameworkDogfoodWear(packageRoot, log);
+    return;
+  }
 
   log("install-bridges", "starting 4-platform install", "info");
 
@@ -539,4 +688,9 @@ module.exports = {
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
   MERGE_CONFIG_FILES,
+  patchGrokHooks,
+  grokHookShellCommand,
+  writeGrokDiscoveredHooks,
+  isEphemeralInstallRoot,
+  installFrameworkDogfoodWear,
 };

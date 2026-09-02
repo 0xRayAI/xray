@@ -24,7 +24,7 @@ import { getReleaseArtifactPaths } from "./version-manager.mjs";
 const rootDir = process.cwd();
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
-const releaseType = args.find((a) => ["major", "minor", "patch"].includes(a)) || "patch";
+const releaseType = args.find((a) => ["major", "minor", "patch"].includes(a));
 
 function run(cmd, label) {
   console.log(`\n> ${cmd}`);
@@ -70,7 +70,7 @@ function publishIdempotent(version) {
 }
 
 async function main() {
-  if (!["major", "minor", "patch"].includes(releaseType)) {
+  if (!releaseType || !["major", "minor", "patch"].includes(releaseType)) {
     console.error("Usage: node scripts/node/release.mjs [patch|minor|major] [--dry-run]");
     process.exit(1);
   }

@@ -1,22 +1,24 @@
-# xray — MCP-Centric AI Governance OS
+# xray — exo for coding agents
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Constitution always on. Temperament scales ceremony. Four host floors. Repertoire is the muscle for handoffs.
+
+Not a catalog of agents. The product is the **skeleton you wear**.
 
 ## Your AI Power Suit
 
 **Your AI Power ⚡️ Suit 🦾** — an exoskeleton that blocks AI slop from becoming real damage.
 
-- learns with **Repertoire** 🧠
-- has a **Solar Ban Hammer** ☀️🔨 (Dynamo governance)
-- can also **Confer** 🗣️ (3-agent internal deliberation)
-
-The core AI Governance OS stack is **complete and open source**. A commercial version is next — powers up the suit further.
+- **Bone** — three-subsystem OS: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch)
+- **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
+- **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
+- **Wear** — Grok, OpenCode, Hermes, OpenClaw. One SSOT gate
+- **Muscle** — Repertoire: auto-enables when the module resolves; session-start writes a one-line resume so the next station is not born amnesiac
 
 ```bash
-npm install 0xray@latest
+npm install 0xray
 ```
 
-xray is the pure v2 three-subsystem AI orchestration framework — **MCP-centric**, governed by Dynamo, and autonomous via thinDispatch. Consumer `npm install 0xray` auto-wires all four platform bridges and seven MCP servers with zero manual config.
+Consumer `npm install 0xray` auto-wires four platform bridges and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
 
 ## Quick Start
 
@@ -46,6 +48,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
+| **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire enable-when-resolves + session resume. Survive the context window — still in development, not on npm yet. [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
 | **3.3.1** | Orchestrator confidence gate wired into execution planning. |
 | **3.3.0** | Pluggable **Memory Routing** (`features.json` → `memory_routing`). Repertoire is the default provider in the framework repo. |
@@ -165,7 +168,7 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 
 **External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.
 
-Consumers without Repertoire: `"memory_routing": { "enabled": false, "provider": "null" }`.
+Opt out: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
 
 Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](docs-site/docs/guides/repertoire.md) · [features.json](docs-site/docs/guides/features-json.md) · [all features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 

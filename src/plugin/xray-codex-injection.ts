@@ -43,6 +43,7 @@ import {
   evaluatePreToolGate,
   isSubagentTool,
   loadDelegationGateFeatures,
+  writeSuitSessionBoot,
 } from "../nucleus/delegation-gate.js";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -66,6 +67,14 @@ export default async function xrayCodexPlugin(input: {
 }) {
   const { directory: inputDirectory } = input;
   const directory = inputDirectory || process.cwd();
+  try {
+    writeSuitSessionBoot(directory, "opencode", {
+      source: "0xray/opencode-plugin",
+      hookEvent: process.env.XRAY_HOOK_EVENT || "session_start",
+    });
+  } catch {
+    /* session-boot is best-effort */
+  }
 
   return {
     "experimental.chat.system.transform": async (
@@ -90,7 +99,9 @@ export default async function xrayCodexPlugin(input: {
         }
 
         if (output.system && Array.isArray(output.system)) {
-          output.system = [leanPrompt];
+          const cardPath = path.join(directory, ".xray", "state", "STATION.md");
+          const card = fs.existsSync(cardPath) ? fs.readFileSync(cardPath, "utf8").trim() : "";
+          output.system = card ? [leanPrompt, card] : [leanPrompt];
         }
       } catch (error) {
         const logger = await getOrCreateLogger(directory);
@@ -143,7 +154,7 @@ export default async function xrayCodexPlugin(input: {
       }
       logger.log(`✅ Quality gate passed for ${tool}`);
 
-      const features = loadDelegationGateFeatures(directory);
+      const features = loadDelegationGateFeatures(directory, "opencode");
       let sessionId: string | null = process.env.GROK_SESSION_ID ?? null;
       try {
         const boot = JSON.parse(

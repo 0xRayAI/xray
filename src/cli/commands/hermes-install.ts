@@ -8,9 +8,11 @@ import { syncBuiltinSkills } from './skill-install.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
-const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
+const packageRoot = path.join(__dirname, '..', '..', '..');
+const wiring = require(path.join(packageRoot, 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
   wireHermesBridge: (targetDir: string) => { count: number };
-  writeHermesPluginArtifacts: (targetDir: string) => boolean;
+  copyHermesFindProjectRootHelper: (packageRoot: string, targetPluginDir: string) => boolean;
+  copyHermesHookRuntimes: (packageRoot: string) => boolean;
 };
 
 export function registerHermesCommands(hermesCmd: Command) {
@@ -80,6 +82,10 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
       frameworkLogger.log('hermes-integration', 'skills-synced', 'info', { count: skillsCopied });
     }
 
+    wiring.copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+    if (wiring.copyHermesHookRuntimes(packageRoot)) {
+      frameworkLogger.log('hermes-integration', 'hooks-copied', 'info', {});
+    }
     const wired = wiring.wireHermesBridge(targetDir);
     console.log(`\x1b[32m✓ Wired Hermes mcp_servers (${wired.count} servers)\x1b[0m`);
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);

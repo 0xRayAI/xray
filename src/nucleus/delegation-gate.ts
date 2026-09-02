@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Grok-only codex/surface checks remain in pre-tool-use.js after the SSOT gate.
+ * Constitution (11/29/69 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -16,8 +16,10 @@ export { getActivePendingDelegations } from './pending-delegations.js';
 import {
   allPlanTodos,
   areSynthesisConsultTodosComplete,
+  findRecentStalePlanArchive,
   getSynthesisConsultTodos,
   hasValidLeadDevPlanForSpawn,
+  isLeadDevPlanStale,
   isSynthesisRealignmentPlan,
   loadPersistedLeadDevPlan,
   getNextRequiredTodo,
@@ -35,11 +37,61 @@ import {
   isSynthesisConsultTodoId,
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
+import {
+  isUserAsidesEnabled,
+  isUserAsideTodoId,
+  loadActiveAsidePointer,
+  loadActiveUserAside,
+} from './user-aside.js';
+import {
+  validateAsideWorktreeCwd,
+  type AsideWorktreeCwdResult,
+} from './aside-worktree.js';
+import {
+  ceremonyForProfile,
+  resolveSuitProfile,
+  spawnPlanModeForProfile,
+  writeSuitSessionBoot,
+  maybeHeatHostStation,
+  type CeremonyLevel,
+  type SpawnPlanMode,
+  type SuitHost,
+  type SuitProfile,
+  type SuitTemperamentConfig,
+} from './suit-temperament.js';
+
+export { writeSuitSessionBoot, maybeHeatHostStation };
+
+export { extractSpawnCwd, validateAsideWorktreeCwd, provisionGitWorktree } from './aside-worktree.js';
+
+function denyAsideWorktreeCwd(cwdCheck: AsideWorktreeCwdResult): PreToolGateResult {
+  const base = {
+    allow: false as const,
+    reason: cwdCheck.reason ?? 'Aside spawn cwd must match worktree',
+    gate: cwdCheck.gate ?? 'aside-worktree-cwd-missing',
+  };
+  return cwdCheck.hint ? { ...base, hint: cwdCheck.hint } : base;
+}
+
+function asideWorktreeCwdDenyIfNeeded(
+  activeAside: { worktree?: string } | null | undefined,
+  toolInput: ToolGateInput,
+  projectRoot: string,
+): PreToolGateResult | undefined {
+  if (!activeAside?.worktree) return undefined;
+  const cwdCheck = validateAsideWorktreeCwd(activeAside.worktree, toolInput, projectRoot);
+  if (!cwdCheck.valid) return denyAsideWorktreeCwd(cwdCheck);
+  return undefined;
+}
+
 
 export {
   validateSpawnMatchesTodo,
   updatePlanTodoStatus,
   savePersistedLeadDevPlan,
+  archiveStaleLeadDevPlan,
+  findRecentStalePlanArchive,
 } from './lead-dev-plan-persistence.js';
 export {
   buildReceiptFromConsultOutput,
@@ -54,11 +106,16 @@ export {
 } from './synthesis-consult-receipt.js';
 export const updatePlanTodoStatusInPlace = updatePlanTodoStatus;
 
-export type DelegationGateHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
+export type DelegationGateHost = SuitHost;
 
 export interface DelegationGateFeatures {
   lead_dev_mode: boolean;
   auto_chain_delegations: boolean;
+  /** v3 — deny (guided/strict), warn (frontier), off */
+  spawn_plan_mode?: SpawnPlanMode;
+  ceremony?: CeremonyLevel;
+  suit_profile?: SuitProfile;
+  no_new_surface?: boolean;
 }
 
 export interface ToolGateInput {
@@ -89,6 +146,7 @@ export interface PreToolGateContext {
   sessionId: string | null;
   features: DelegationGateFeatures;
   host?: DelegationGateHost;
+  hookEvent?: string;
 }
 
 export interface PreToolGateDeny {
@@ -102,6 +160,9 @@ export interface PreToolGateDeny {
 
 export interface PreToolGateAllow {
   allow: true;
+  reason?: string;
+  gate?: string;
+  hint?: Record<string, unknown>;
 }
 
 export type PreToolGateResult = PreToolGateAllow | PreToolGateDeny;
@@ -161,26 +222,44 @@ const HERMES_WRITE_TOOLS = new Set(['write_file', 'patch', 'write', 'edit']);
 
 const OPENCODE_WRITE_TOOLS = new Set(['write', 'edit', 'multiedit']);
 
-export function loadDelegationGateFeatures(projectRoot = process.cwd()): DelegationGateFeatures {
+export function loadDelegationGateFeatures(
+  projectRoot = process.cwd(),
+  host: DelegationGateHost = 'generic',
+): DelegationGateFeatures {
+  const fallback = (profile: SuitProfile): DelegationGateFeatures => ({
+    lead_dev_mode: true,
+    auto_chain_delegations: true,
+    spawn_plan_mode: spawnPlanModeForProfile(profile),
+    ceremony: ceremonyForProfile(profile),
+    suit_profile: profile,
+    no_new_surface: true,
+  });
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
   if (!fs.existsSync(featuresPath)) {
-    return { lead_dev_mode: true, auto_chain_delegations: true };
+    return fallback(resolveSuitProfile(undefined, host));
   }
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
+      suit_temperament?: SuitTemperamentConfig;
       multi_agent_orchestration?: {
         enabled?: boolean;
         lead_dev_mode?: boolean;
         auto_chain_delegations?: boolean;
+        no_new_surface?: boolean;
       };
     };
     const orch = data.multi_agent_orchestration ?? {};
+    const profile = resolveSuitProfile(data.suit_temperament, host);
     return {
       lead_dev_mode: orch.enabled !== false && orch.lead_dev_mode !== false,
       auto_chain_delegations: orch.auto_chain_delegations !== false,
+      spawn_plan_mode: spawnPlanModeForProfile(profile),
+      ceremony: ceremonyForProfile(profile),
+      suit_profile: profile,
+      no_new_surface: profile === 'strict' ? true : orch.no_new_surface !== false,
     };
   } catch {
-    return { lead_dev_mode: true, auto_chain_delegations: true };
+    return fallback(resolveSuitProfile(undefined, host));
   }
 }
 
@@ -300,6 +379,10 @@ function denyFromPending(
   };
 }
 
+function spawnPlanSoftAllow(gate: string, reason: string): PreToolGateAllow {
+  return { allow: true, reason, gate };
+}
+
 /** Spawn plan missing — applies before auto_chain opt-out for subagent tools. */
 export function evaluateSpawnPlanGate(
   toolName: string,
@@ -309,34 +392,83 @@ export function evaluateSpawnPlanGate(
   if (!ctx.features.lead_dev_mode || !isSubagentTool(toolName)) {
     return { allow: true };
   }
+  const spawnMode = ctx.features.spawn_plan_mode ?? 'deny';
+  if (spawnMode === 'off') {
+    return { allow: true };
+  }
 
-  if (!hasValidLeadDevPlanForSpawn(ctx.projectRoot, ctx.sessionId)) {
-    return {
-      allow: false,
+  const activeAside =
+    isUserAsidesEnabled(ctx.projectRoot)
+      ? loadActiveUserAside(ctx.projectRoot, ctx.sessionId)
+      : null;
+  const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
+  if (!activeAside && plan && isLeadDevPlanStale(plan, ctx.projectRoot)) {
+    const stale = {
+      reason:
+        'Lead-dev plan is stale (unstarted todos exceeded TTL) — ' +
+        're-run xray-orchestrator analyze-complexity to refresh the plan',
+      gate: 'spawn-plan-stale',
+      hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
+    };
+    if (spawnMode === 'warn') return spawnPlanSoftAllow(stale.gate, stale.reason);
+    return { allow: false, ...stale };
+  }
+
+  if (!hasValidSpawnPlanContext(ctx.projectRoot, ctx.sessionId)) {
+    if (findRecentStalePlanArchive(ctx.projectRoot)) {
+      const archived = {
+        reason:
+          'Lead-dev plan was stale and archived — ' +
+          're-run xray-orchestrator analyze-complexity to refresh the plan',
+        gate: 'spawn-plan-stale',
+        hint: { tool: 'analyze-complexity', mcp: 'xray-orchestrator' },
+      };
+      if (spawnMode === 'warn') return spawnPlanSoftAllow(archived.gate, archived.reason);
+      return { allow: false, ...archived };
+    }
+    const missing = {
       reason:
         'Codex 59/67: call xray-orchestrator analyze-complexity first — ' +
         'writes .xray/state/lead-dev-plan.json required before spawn_subagent',
       gate: 'spawn-plan-missing',
     };
+    if (spawnMode === 'warn') return spawnPlanSoftAllow(missing.gate, missing.reason);
+    return { allow: false, ...missing };
   }
 
   if (ctx.features.auto_chain_delegations === false) {
+    const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+    if (cwdDeny) return cwdDeny;
     return { allow: true };
   }
 
+  const normalized = normalizeHostToolInput(toolInput);
+  const resolved = isUserAsidesEnabled(ctx.projectRoot)
+    ? resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId)
+    : { source: 'main' as const, plan: loadPersistedLeadDevPlan(ctx.projectRoot) };
+
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
-  const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   const expectedTodo =
-    pending[0]?.planTodoId && plan
-      ? allPlanTodos(plan).find((t) => t.id === pending[0]!.planTodoId) ?? null
+    pending[0]?.planTodoId && resolved.plan
+      ? allPlanTodos(resolved.plan).find((t) => t.id === pending[0]!.planTodoId) ?? null
       : null;
 
+  const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+  if (cwdDeny) return cwdDeny;
+
   const validation = validateSpawnMatchesTodo(
-    normalizeHostToolInput(toolInput),
+    normalized,
     ctx.projectRoot,
     expectedTodo,
+    ctx.sessionId,
   );
   if (!validation.valid) {
+    if (spawnMode === 'warn') {
+      return spawnPlanSoftAllow(
+        validation.gate ?? 'spawn-todo-persistence',
+        validation.reason ?? 'Spawn did not match lead-dev plan todo (frontier: warn, not deny)',
+      );
+    }
     return denyFromSpawnValidation(validation);
   }
 
@@ -356,6 +488,32 @@ export function evaluateSynthesisGate(
   if (isReadOnlyTool(toolName)) return { allow: true };
   if (isSynthesisAllowedOrchestratorConsult(toolName, toolInput)) return { allow: true };
 
+  // Active user aside: allow aside-track subagent spawns during main synthesis checkpoint.
+  if (isUserAsidesEnabled(ctx.projectRoot)) {
+    const normalized = normalizeHostToolInput(toolInput);
+    const resolved = resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId);
+    if (
+      resolved.source === 'aside' &&
+      isSubagentTool(toolName) &&
+      (normalized.planTodoId
+        ? isUserAsideTodoId(normalized.planTodoId)
+        : Boolean(resolved.asideId))
+    ) {
+      const validation = validateSpawnMatchesTodo(
+        normalized,
+        ctx.projectRoot,
+        undefined,
+        ctx.sessionId,
+      );
+      if (validation.valid) {
+        const activeAside = loadActiveUserAside(ctx.projectRoot, ctx.sessionId);
+        const cwdDeny = asideWorktreeCwdDenyIfNeeded(activeAside, toolInput, ctx.projectRoot);
+        if (cwdDeny) return cwdDeny;
+        return { allow: true };
+      }
+    }
+  }
+
   const plan = loadPersistedLeadDevPlan(ctx.projectRoot);
   if (
     plan &&
@@ -368,6 +526,7 @@ export function evaluateSynthesisGate(
       normalizeHostToolInput(toolInput),
       ctx.projectRoot,
       nextTodo,
+      ctx.sessionId,
     );
     if (validation.valid) return { allow: true };
   }
@@ -408,6 +567,13 @@ export function evaluatePendingDelegationGate(
   const pending = getActivePendingDelegations(ctx.sessionId, ctx.projectRoot);
   if (pending.length === 0) return { allow: true };
 
+  // Aside-track work: pending main delegations do not block aside spawns.
+  if (isUserAsidesEnabled(ctx.projectRoot) && isSubagentTool(toolName)) {
+    const normalized = normalizeHostToolInput(toolInput);
+    const resolved = resolveSpawnPlan(normalized, ctx.projectRoot, ctx.sessionId);
+    if (resolved.source === 'aside') return { allow: true };
+  }
+
   if (isSubagentTool(toolName)) return { allow: true };
   if (isReadOnlyTool(toolName)) return { allow: true };
   if (isOrchestratorConsultMcp(toolName, toolInput)) return { allow: true };
@@ -424,12 +590,124 @@ export function evaluatePendingDelegationGate(
  * Full pre-tool evaluation — synthesis gate first, slice recording, then
  * pending gate, then spawn todo gate for subagent tools.
  */
+const CONSTITUTION_ANY = /:\s*any\b|as\s+any\b/;
+const CONSTITUTION_TS_IGNORE = /@ts-ignore|@ts-expect-error/;
+const CONSTITUTION_EVAL = /\beval\s*\(/;
+const CONSTITUTION_DESTRUCTIVE =
+  /\brm\s+-rf\s+\/(?:\s|$)|\bmkfs\b|\bdd\s+if=|:()\s*\{\s*:\|&\s*\}\s*;:/i;
+const SURFACE_DENY = [
+  /(?:^|\/)src\/mcps\/[^/]+\.server\.(ts|js)$/i,
+  /(?:^|\/)src\/skills\/[^/]+\/SKILL\.md$/i,
+  /(?:^|\/)src\/mcps\/orchestrator\/handlers\/[^/]+-handler\.(ts|js)$/i,
+  /(?:^|\/)src\/nucleus\/autonomy-kernel\.(ts|js)$/i,
+  /(?:^|\/)src\/mcps\/[^/]+\/handlers\/autonomy-handler\.(ts|js)$/i,
+];
+
+function collectWriteContent(toolInput: ToolGateInput): string {
+  return [
+    toolInput.new_string,
+    toolInput.contents,
+    toolInput.content,
+    toolInput.command,
+    toolInput.prompt,
+  ]
+    .filter((v) => v != null)
+    .map(String)
+    .join('\n');
+}
+
+function collectWritePaths(toolInput: ToolGateInput): string[] {
+  const paths: string[] = [];
+  for (const key of ['path', 'file_path', 'filePath', 'target_notebook'] as const) {
+    const v = toolInput[key];
+    if (typeof v === 'string' && v) paths.push(v);
+  }
+  const extra = toolInput.paths;
+  if (Array.isArray(extra)) {
+    for (const p of extra) {
+      if (typeof p === 'string' && p) paths.push(p);
+    }
+  }
+  return paths;
+}
+
+/** Codex 11 / 29 / 69 + destructive shell — always on, all hosts that call this SSOT. */
+export function evaluateConstitutionGate(
+  toolName: string,
+  toolInput: ToolGateInput,
+  ctx: PreToolGateContext,
+): PreToolGateResult {
+  const content = collectWriteContent(toolInput);
+  const paths = collectWritePaths(toolInput);
+  const writing = isWriteTool(toolName, ctx.host ?? 'generic');
+
+  if (writing && ctx.features.no_new_surface !== false) {
+    for (const p of paths) {
+      const normalized = p.replace(/\\/g, '/');
+      const abs = path.isAbsolute(p) ? p : path.join(ctx.projectRoot, p);
+      if (fs.existsSync(abs)) continue;
+      if (SURFACE_DENY.some((re) => re.test(normalized))) {
+        return {
+          allow: false,
+          reason: 'Codex 69: new MCP/skill/handler surface — rewire existing',
+          gate: 'no-new-surface',
+        };
+      }
+    }
+  }
+
+  if (writing && content) {
+    if (CONSTITUTION_ANY.test(content) || CONSTITUTION_TS_IGNORE.test(content)) {
+      return {
+        allow: false,
+        reason: 'Codex 11 Type Safety: no `any` / @ts-ignore / @ts-expect-error',
+        gate: 'codex-11',
+      };
+    }
+    if (CONSTITUTION_EVAL.test(content)) {
+      return {
+        allow: false,
+        reason: 'Codex 29 Security: eval() prohibited',
+        gate: 'codex-29',
+      };
+    }
+  }
+
+  if (isShellTool(toolName) && CONSTITUTION_DESTRUCTIVE.test(String(toolInput.command ?? ''))) {
+    return {
+      allow: false,
+      reason: 'Blocked destructive shell command',
+      gate: 'destructive-shell',
+    };
+  }
+
+  return { allow: true };
+}
+
 export function evaluatePreToolGate(
   toolName: string,
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
-  const synthesisBlock = evaluateSynthesisGate(toolName, toolInput, ctx);
+  if (ctx.host === 'openclaw') {
+    try {
+      maybeHeatHostStation(ctx.projectRoot, 'openclaw', {
+        source: '0xray/openclaw-pre-tool',
+        sessionId: ctx.sessionId || 'openclaw',
+        hookEvent: ctx.hookEvent || 'session_start',
+      });
+    } catch {
+      /* station heat is best-effort — constitution still runs */
+    }
+  }
+
+  const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);
+  if (!constitution.allow) return constitution;
+
+  const lite = ctx.features.ceremony === 'lite';
+  const synthesisBlock = lite
+    ? ({ allow: true } as PreToolGateAllow)
+    : evaluateSynthesisGate(toolName, toolInput, ctx);
   if (!synthesisBlock.allow) return synthesisBlock;
 
   if (!isSynthesisCheckpointDue(ctx.projectRoot, ctx.sessionId)) {
@@ -439,13 +717,15 @@ export function evaluatePreToolGate(
     });
   }
 
-  const pendingBlock = evaluatePendingDelegationGate(toolName, toolInput, ctx);
+  const pendingBlock = lite
+    ? ({ allow: true } as PreToolGateAllow)
+    : evaluatePendingDelegationGate(toolName, toolInput, ctx);
   if (!pendingBlock.allow) return pendingBlock;
 
   const spawnBlock = evaluateSpawnPlanGate(toolName, toolInput, ctx);
   if (!spawnBlock.allow) return spawnBlock;
 
-  return { allow: true };
+  return spawnBlock;
 }
 
 export function evaluatePostToolSpawn(
@@ -455,7 +735,16 @@ export function evaluatePostToolSpawn(
   options: PostToolSpawnOptions = {},
 ): PostToolSpawnResult {
   const normalized = normalizeHostToolInput(toolInput);
-  const spawnCheck = validateSpawnMatchesTodo(normalized, projectRoot);
+  const pointer = loadActiveAsidePointer(projectRoot);
+  const mainPlan = loadPersistedLeadDevPlan(projectRoot);
+  const sessionId =
+    options.sessionId ?? mainPlan?.sessionId ?? pointer?.sessionId ?? null;
+  const spawnCheck = validateSpawnMatchesTodo(
+    normalized,
+    projectRoot,
+    undefined,
+    sessionId,
+  );
   const satisfyInput: Parameters<typeof satisfyDelegation>[0] = {
     toolPrompt: normalized.prompt ?? '',
   };
@@ -471,8 +760,6 @@ export function evaluatePostToolSpawn(
 
   if (spawnCheck.valid && expectedTodoId) {
     const plan = loadPersistedLeadDevPlan(projectRoot);
-    const sessionId =
-      options.sessionId ?? plan?.sessionId ?? null;
     const consultTodo = plan
       ? getSynthesisConsultTodos(plan).find((t) => t.id === expectedTodoId)
       : undefined;
@@ -493,7 +780,7 @@ export function evaluatePostToolSpawn(
       receiptRecorded = receipt != null;
     }
 
-    if (updatePlanTodoStatus(expectedTodoId, 'completed', projectRoot)) {
+    if (updatePlanTodoStatus(expectedTodoId, 'completed', projectRoot, sessionId)) {
       todoCompleted = true;
     }
   }

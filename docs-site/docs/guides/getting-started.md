@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Wear the exo. Constitution on every stroke. Temperament by host.
 
 Welcome to 0xRay — the self-healing AI governance OS that prevents coding mistakes before they ship.
 
@@ -79,7 +79,7 @@ See [MCP Servers](../mcp/README.md) for details.
 | Agents | 42 YML surfaces in `src/opencode/agents/` |
 | Skills | 45 reusable capability modules (`SKILL.md`) |
 | MCP Servers | 7 consumer servers via `npx -y 0xray mcp` |
-| Codex | 68-term error prevention rules |
+| Codex | 69-term error prevention rules |
 | Governance | 3-layer deliberation pipeline (Dynamo SSOT) |
 | Memory Routing | Optional provider enrichment (v3.3) |
 

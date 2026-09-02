@@ -1,0 +1,3 @@
+export declare const MANDATORY_SYNTHESIS_SECTIONS: readonly ["Repeatedly Surfaced Missing Primitives & Invariants", "Concrete Validation Experiments", "System Validation Opportunities (Feats)", "Gap Analysis: Inference Output vs Current System State", "Strategic Recommendations (Actionable Only)"];
+export declare const SYNTHESIS_SECTION_INSTRUCTIONS: string;
+//# sourceMappingURL=concrete-sections.d.ts.map

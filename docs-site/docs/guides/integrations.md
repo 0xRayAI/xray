@@ -1,6 +1,16 @@
-# Platform Integrations (v3.4.1)
+# Platform Integrations (v4.0)
+
+Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` is `auto` (new installs). **Hermes / OpenCode / OpenClaw** stay **guided** (full engine ceremony). Existing consumers without the key stay guided on upgrade. See [Suit temperament](./v3-temperament.md).
 
 0xRay integrates with four AI coding platforms. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
+
+**Repertoire consumer** (full 4-bridge wear matrix):
+
+```bash
+npm run install:bridges       # all four bridges
+npm run verify:suit:all       # verify Grok + OpenCode + OpenClaw + Hermes
+npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e2e
+```
 
 ## Overview
 
@@ -39,7 +49,7 @@
 }
 ```
 
-Shared constant: `XRAY_MCP_SERVERS` in `install-bridges.cjs` and `grok-cli.ts`.
+Shared constant: `XRAY_MCP_SERVERS` in `scripts/node/bridge-mcp-wiring.cjs` (SSOT), consumed by `install-bridges.cjs`, platform install commands, and Repertoire `scripts/suit-bridge-shared.mjs`.
 
 ## OpenCode
 
@@ -69,11 +79,14 @@ See [Grok Guide](../architecture/GROK_GUIDE.md).
 
 - Plugin at `~/.hermes/plugins/xray-hermes`
 - `xray-consumer-root.txt` marker resolves consumer project root on hook invocation
+- `find-project-root.mjs` copied into plugin on install (bridge resolves consumer `node_modules/0xray` dynamically)
 - Honors `XRAY_ROOT` environment variable
 
 ```bash
 npx 0xray hermes install
 ```
+
+Verify: `npm run verify:hermes` (Repertoire consumer) or `node bridge.mjs health --cwd <project>` after install.
 
 :::warning
 `npx 0xray hermes bridge` was **removed** in 3.1.1. Use `hermes install`.
@@ -96,9 +109,21 @@ Configure in `.xray/features.json` when using Repertoire or another provider. Se
 
 ```bash
 npx 0xray status
+npx 0xray health
 npx 0xray validate
 npm run release:gate    # framework repo only — full consumer smoke
 ```
+
+**Repertoire consumer** (`@0xray/repertoire`):
+
+| Script | Checks |
+|--------|--------|
+| `verify:suit` | Grok Build (30 checks + live hooks) |
+| `verify:hermes` | Hermes plugin, bridge health, MCP wiring |
+| `verify:opencode` | OpenCode plugin + `opencode mcp list` (auto-install preflight) |
+| `verify:openclaw` | OpenClaw config + `openclaw mcp list` |
+| `verify:suit:all` | All four bridges in one matrix |
+| `confirm:suit:all` | Install all + Grok harness + trap-routing e2e |
 
 ## Related
 

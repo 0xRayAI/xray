@@ -48,14 +48,18 @@ function main() {
         step("4/5 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
       }
     } else {
-      step("1/5 Build", "npm run build");
-      step("2/5 Tests", "npm test");
+      step("1/6 Build", "npm run build");
+      step("2/6 Tests", "npm test");
       step(
-        "3/5 Plugin infrastructure",
+        "3/6 Consumer hook verifiers",
+        "npm run verify:pre-commit-diff && npm run verify:pre-push-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-hermes-session-start.mjs && node scripts/mjs/verify-confer-core.mjs && npm run verify:user-aside && npm run build && node scripts/mjs/verify-pipeline-facets.mjs --package-only",
+      );
+      step(
+        "4/6 Plugin infrastructure",
         "node scripts/test/validate-plugins-e2e.cjs --structural-only",
       );
       if (!skipSmoke) {
-        step("4/5 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
+        step("5/6 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 

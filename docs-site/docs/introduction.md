@@ -1,8 +1,14 @@
-# 0xRay — Self-Healing AI Governance OS
+# 0xRay — exo for coding agents
 
-**v3.5.4** — 42 agents · 45 skills · 7 MCP servers · 68 codex terms · 3,226 tests
+**v4.0.0** — a suit that survives the context window. Not a catalog of 42 agents. The product is the skeleton you wear.
 
-0xRay prevents AI coding mistakes before they happen. It's an intelligent governance layer between you and your AI coding tools — intercepting bad proposals, enforcing code quality rules, and orchestrating multi-agent workflows automatically.
+**v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
+
+- **Bone:** three subsystems, Codex PreToolUse, four host adapters  
+- **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface  
+- **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  
+- **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume  
+- **Fat (trim later):** duplicate orchestrators, extra `*.server.ts`, `advanced-features/` — [trim list](./architecture/v3-museum.md)
 
 ## Quick Start
 
@@ -22,7 +28,7 @@ npx 0xray skill:install
 
 ## How It Works
 
-Every code change is checked against a **68-term Codex**, deliberated by **3 specialized reviewers** (code review, security audit, research), and approved, revised, or blocked before it touches your codebase.
+Every code change is checked against a **69-term Codex**, deliberated by **3 specialized reviewers** (code review, security audit, research), and approved, revised, or blocked before it touches your codebase.
 
 ```
 ┌─────────────────────────────────────────────────┐

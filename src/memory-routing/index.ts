@@ -18,6 +18,11 @@ export {
 } from './provider-registry.js';
 
 export { NullMemoryRoutingProvider, createMemoryRoutingProvider } from './null-provider.js';
-export { loadMemoryRoutingProvider } from './provider-loader.js';
+export {
+  loadMemoryRoutingProvider,
+  isLeftoverMemoryRoutingOff,
+  isExplicitMemoryRoutingOptOut,
+  resolveLeftoverEnabledConfig,
+} from './provider-loader.js';
 export { validateMemoryRoutingConfig } from './validate-config.js';
 export type { MemoryRoutingValidation } from './validate-config.js';

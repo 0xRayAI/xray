@@ -16,9 +16,16 @@
 # Sibling layout (default in 0xRay repo)
 git clone https://github.com/0xRayAI/repertoire ../repertoire
 cd ../repertoire && npm install && npm run build
-
-# 0xRay xray/features.json already ships:
 ```
+
+Shipped `xray/features.json` is **on** (`provider: "repertoire"`) with `@0xray/repertoire@0.2.0` vendored. Postinstall still **auto-enables leftover default-off** when the provider module resolves:
+
+- sibling `../repertoire` with `package.json` name `@0xray/repertoire` (or `repertoire`)
+- or `node_modules/@0xray/repertoire`
+
+Explicit opt-out: `enabled: false` with `provider: "repertoire"`. Without the module, consumers stay off. This is not an 8th 0xRay MCP.
+
+After enable, features look like:
 
 ```json
 "memory_routing": {
@@ -26,18 +33,12 @@ cd ../repertoire && npm install && npm run build
   "provider": "repertoire",
   "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "dataDir": "../repertoire/data",
-    "signalsPath": "../repertoire/data/curated_signals.json",
-    "logDir": "../repertoire/logs/groover-inference"
+    "signalsPath": "../repertoire/data/curated_signals.json"
   }
 }
 ```
 
-Consumer projects without Repertoire checked out:
-
-```json
-"memory_routing": { "enabled": false, "provider": "null" }
-```
+Grok session-start writes a one-line `repertoireResume` into `.xray/state/session-boot.json` (signal count when the registry is readable). Leftover default-off also **resolves at runtime** in `loadMemoryRoutingProvider` / `getMemoryRoutingConfig` when the module is on disk — ExecutionPlanner and thinDispatch then use Repertoire without a features rewrite. Station heat persists **working state** (not Bedrock primitives) to `.xray/state/repertoire-working.json` and a `Working:` line on `STATION.md`. Compact may `ingestFeedback` for non-Bedrock matches. Explicit opt-out remains `enabled: false` + `provider: "repertoire"`.
 
 ## `features.json` fields (`memory_routing`)
 
@@ -108,38 +109,29 @@ See `src/memory-routing/types.ts` and Repertoire's `docs/MEMORY-ROUTING-PROVIDER
 
 ## Repertoire MCP server (external hosts)
 
-Add alongside 0xRay's 7 MCP servers in `.mcp.json`:
+Not an 8th 0xRay server. Wear adds a `repertoire` extra when the module resolves (Hermes / OpenCode / OpenClaw / project `.mcp.json` / Grok `.grok/config.toml`).
 
-```json
-"repertoire": {
-  "command": "npx",
-  "args": ["-y", "@0xray/repertoire", "mcp"]
-}
-```
-
-Or after local build:
+Server tools are **unprefixed** so Grok TUI can register them (`server__tool` → `repertoire__get_task_confidence`). Hermes/OpenCode see the unprefixed names.
 
 ```json
 "repertoire": {
   "command": "node",
-  "args": ["../repertoire/dist/mcp/server.js"],
-  "env": {
-    "REPERTOIRE_DATA_DIR": "../repertoire/data",
-    "CURATED_SIGNALS_PATH": "../repertoire/data/curated_signals.json"
-  }
+  "args": ["../repertoire/dist/mcp/server.js"]
 }
 ```
 
+In-repo launcher (cwd-proof): `scripts/mjs/run-repertoire-mcp.mjs`.
+
 ### MCP tools
 
-| Tool | Purpose |
-|------|---------|
-| `repertoire__get_high_confidence_signals` | List signals above threshold |
-| `repertoire__get_task_confidence` | Full confidence context for a task |
-| `repertoire__search_primitives` | Text search against registry |
-| `repertoire__ingest_feedback` | Record orchestrator outcome |
+| Server name | Grok TUI name | Purpose |
+|-------------|---------------|---------|
+| `get_high_confidence_signals` | `repertoire__get_high_confidence_signals` | List signals above threshold |
+| `get_task_confidence` | `repertoire__get_task_confidence` | Full confidence context for a task |
+| `search_primitives` | `repertoire__search_primitives` | Text search against registry |
+| `ingest_feedback` | `repertoire__ingest_feedback` | Record orchestrator outcome |
 
-Hermes/OpenCode agents should call `repertoire__get_task_confidence` directly; in-process orchestrator code uses `getMemoryRoutingProviderSync()`.
+In-process orchestrator code uses `getMemoryRoutingProviderSync()`.
 
 ## Repertoire CLI
 

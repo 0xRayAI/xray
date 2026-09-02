@@ -30,19 +30,34 @@ if (!fs.existsSync(gitHooksDir)) {
 }
 
 const isConsumer = packageRoot.includes("node_modules");
+
+function firstExistingRelative(root, rels) {
+  return rels.find((rel) => fs.existsSync(path.join(root, rel))) || rels[0];
+}
+
 const runHookRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/hooks/run-hook.js"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/hooks/run-hook.js",
+      "node_modules/0xray/dist/scripts/hooks/run-hook.js",
+    ])
   : "scripts/hooks/run-hook.js";
 const loadReflectionRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/node/load-reflection-config.mjs"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/node/load-reflection-config.mjs",
+      "node_modules/0xray/dist/scripts/node/load-reflection-config.mjs",
+    ])
   : "scripts/node/load-reflection-config.mjs";
 const autoReflectionRelativePath = isConsumer
-  ? "node_modules/0xray/scripts/node/auto-reflection-generator.mjs"
+  ? firstExistingRelative(targetDir, [
+      "node_modules/0xray/scripts/node/auto-reflection-generator.mjs",
+      "node_modules/0xray/dist/scripts/node/auto-reflection-generator.mjs",
+    ])
   : "scripts/node/auto-reflection-generator.mjs";
 
 function hookRunnerExists(projectRoot) {
   return (
     fs.existsSync(path.join(projectRoot, "node_modules/0xray/scripts/hooks/run-hook.js")) ||
+    fs.existsSync(path.join(projectRoot, "node_modules/0xray/dist/scripts/hooks/run-hook.js")) ||
     fs.existsSync(path.join(projectRoot, "scripts/hooks/run-hook.js"))
   );
 }
@@ -108,9 +123,9 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ) &
 
 MODE="minimal"
-COMMIT_THRESHOLD=25
+COMMIT_THRESHOLD=50
 DAYS_THRESHOLD=14
-AUTO_GENERATE=true
+AUTO_GENERATE=false
 PROMPT_USER=true
 
 if command -v node >/dev/null 2>&1; then
@@ -119,7 +134,7 @@ if command -v node >/dev/null 2>&1; then
     export PROJECT_ROOT="$PROJECT_ROOT"
     REFLECTION_JSON=$(node "$LOAD_SCRIPT" --json 2>/dev/null || echo '{}')
     MODE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.mode||"minimal"))' "$REFLECTION_JSON")
-    COMMIT_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.commitThreshold??25))' "$REFLECTION_JSON")
+    COMMIT_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.commitThreshold??50))' "$REFLECTION_JSON")
     DAYS_THRESHOLD=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(String(c.daysThreshold??14))' "$REFLECTION_JSON")
     AUTO_GENERATE=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.autoGenerate===false?"false":"true")' "$REFLECTION_JSON")
     PROMPT_USER=$(node -e 'const c=JSON.parse(process.argv[1]);process.stdout.write(c.promptUser===false?"false":"true")' "$REFLECTION_JSON")

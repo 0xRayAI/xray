@@ -1,0 +1,124 @@
+{
+  "name": "@0xray/repertoire",
+  "version": "0.2.0",
+  "description": "Factory memory organ for 0xRay — seed primitives, memory routing, extra MCP",
+  "type": "module",
+  "license": "MIT",
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xRayAI/repertoire.git"
+  },
+  "homepage": "https://github.com/0xRayAI/repertoire#readme",
+  "bugs": {
+    "url": "https://github.com/0xRayAI/repertoire/issues"
+  },
+  "keywords": [
+    "0xray",
+    "repertoire",
+    "mcp",
+    "memory-routing",
+    "orchestration",
+    "groover",
+    "agent",
+    "governance"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./provider/memory-routing-provider": {
+      "types": "./dist/provider/memory-routing-provider.d.ts",
+      "import": "./dist/provider/memory-routing-provider.js"
+    }
+  },
+  "bin": {
+    "repertoire-mcp": "./dist/mcp/server.js",
+    "repertoire-verify-suit": "./scripts/verify-grok-suit.mjs"
+  },
+  "files": [
+    "dist/",
+    "scripts/verify-grok-suit.mjs",
+    "scripts/verify-synthesis-dogfood.mjs",
+    "scripts/run-live-synthesis-checkpoint.mjs",
+    "scripts/suit-bridge-shared.mjs",
+    "scripts/confirm-suit-harness.mjs",
+    "scripts/confirm-suit-all.mjs",
+    "scripts/verify-hermes-suit.mjs",
+    "scripts/verify-opencode-suit.mjs",
+    "scripts/verify-openclaw-suit.mjs",
+    "data/curated_signals.json",
+    "schemas/",
+    "skills/repertoire-trap-handling/",
+    "docs/MEMORY-ROUTING-PROVIDER.md",
+    "hermes-mcp.example.json",
+    "mcp-config.example.json",
+    "AGENTS.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build && npm test && node scripts/consumer-install-smoke.mjs",
+    "pack:check": "npm run build && node scripts/consumer-install-smoke.mjs && npm pack --dry-run",
+    "ingest": "node --import tsx scripts/ingest.ts",
+    "health:repertoire": "node --import tsx scripts/repertoire-health.ts",
+    "signals:hygiene": "node --import tsx scripts/signals-hygiene.ts",
+    "enrich": "node --import tsx scripts/enrich-repertoire.ts",
+    "ingest:moltbook-agents": "node --import tsx scripts/ingest-moltbook-agents.ts",
+    "meta-inference": "node --import tsx scripts/run-meta-inference.ts",
+    "pipeline": "node --import tsx scripts/run-pipeline.ts",
+    "feedback-cycle": "node --import tsx scripts/run-feedback-cycle.ts",
+    "query": "node --import tsx scripts/query-signals.ts",
+    "mcp": "node dist/mcp/server.js",
+    "test": "vitest run",
+    "test:e2e": "vitest run scripts/e2e-confidence-loop.test.ts",
+    "test:mcp": "npm run build && vitest run scripts/test-mcp-stdio.test.ts",
+    "test:trap-routing": "npm run build && vitest run --config vitest.trap-routing.config.ts",
+    "verify:suit": "npm run build && node scripts/verify-grok-suit.mjs",
+    "verify:synthesis-dogfood": "npm run build && node scripts/verify-synthesis-dogfood.mjs",
+    "synthesis:live": "node scripts/run-live-synthesis-checkpoint.mjs",
+    "verify:grok-delegation-gate": "node node_modules/0xray/scripts/mjs/verify-grok-delegation-gate.mjs",
+    "confirm:suit": "npm run verify:suit && npm run verify:synthesis-dogfood && node scripts/confirm-suit-harness.mjs && npm run test:trap-routing",
+    "verify:suit:all": "npm run build && node scripts/confirm-suit-all.mjs",
+    "confirm:suit:all": "npm run build && node scripts/confirm-suit-all.mjs --install --grok-harness && npm run test:trap-routing",
+    "confirm:suit:full": "npm run build && node scripts/confirm-suit-all.mjs --install --grok-harness --pipeline-audit && npm run test:trap-routing",
+    "verify:pipeline-facets": "npm run build --prefix node_modules/0xray 2>/dev/null || npm run build && node node_modules/0xray/scripts/mjs/verify-pipeline-facets.mjs",
+    "install:bridges": "npx 0xray grok install --force && npx 0xray hermes install --force && npx 0xray opencode install --force && npx 0xray openclaw install --force",
+    "verify:hermes": "node scripts/verify-hermes-suit.mjs",
+    "verify:opencode": "node scripts/verify-opencode-suit.mjs",
+    "verify:openclaw": "node scripts/verify-openclaw-suit.mjs",
+    "confirm:hermes": "npm run build && npx 0xray hermes install --force && npm run verify:hermes",
+    "confirm:opencode": "npm run build && npx 0xray opencode install --force && npm run verify:opencode",
+    "confirm:openclaw": "npm run build && npx 0xray openclaw install --force && npm run verify:openclaw",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "peerDependencies": {
+    "0xray": ">=3.5.5"
+  },
+  "peerDependenciesMeta": {
+    "0xray": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "0xray": "file:../xray",
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.8"
+  }
+}

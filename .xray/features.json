@@ -1,7 +1,17 @@
 {
   "$schema": "./features.schema.json",
-  "version": "3.4.3",
+  "version": "4.0.0",
   "description": "0xRay Framework - Unified Feature Configuration",
+  "suit_temperament": {
+    "profile": "auto",
+    "host_defaults": {
+      "grok": "frontier",
+      "hermes": "guided",
+      "opencode": "guided",
+      "openclaw": "guided",
+      "generic": "guided"
+    }
+  },
   "token_optimization": {
     "enabled": true,
     "max_context_tokens": 20000,
@@ -35,7 +45,20 @@
     "per_suite_test_triage": true,
     "phased_plan_threshold": 25,
     "auto_consult_major_work": true,
-    "no_new_surface": true
+    "no_new_surface": true,
+    "auto_chain_delegations": true,
+    "plan_stale_hours": 8,
+    "plan_archive_marker_hours": 24,
+    "user_asides": {
+      "enabled": true,
+      "auto_provision_worktree": false
+    }
+  },
+  "grok_postprocessor_light": true,
+  "inference_session_capture": {
+    "enabled": true,
+    "min_commits": 3,
+    "lookback_commits": 20
   },
   "autonomous_reporting": {
     "enabled": true,
@@ -135,10 +158,18 @@
     "min_success_rate": 0.7
   },
   "memory_routing": {
+    "enabled": true,
+    "provider": "repertoire",
+    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "config": {
+      "signalsPath": "../repertoire/data/curated_signals.json"
+    }
+  },
+  "synthesis": {
     "enabled": false,
-    "provider": "null",
-    "module_path": "",
-    "config": {}
+    "every_n_gates": 12,
+    "every_n_turns": 0,
+    "every_n_todos_completed": 0
   },
   "inference_governance": {
     "enabled": false,

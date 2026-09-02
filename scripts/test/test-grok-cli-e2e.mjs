@@ -368,9 +368,13 @@ async function main() {
       pass('hook produced expected 0xRay log prefix');
     }
 
-    // Content inspection — 3.5.1 ironclad OS gate (delegation + codex, not legacy Solar hook path)
-    assertContains(hookImpl, 'checkPendingDelegationGate', 'pre-tool-use.js enforces pending delegation gate');
-    assertContains(hookImpl, 'checkSubagentGate', 'pre-tool-use.js enforces spawn todo gate');
+    // 4.0 SSOT: PreToolUse calls evaluatePreToolGate (pending-delegation + spawn + constitution).
+    assertContains(hookImpl, 'evaluatePreToolGate', 'pre-tool-use.js enforces SSOT pre-tool gate');
+    const hookUtils = path.join(path.dirname(hookImpl), 'grok-hook-utils.js');
+    if (fs.existsSync(hookUtils)) {
+      assertContains(hookUtils, 'checkPendingDelegationGate', 'grok-hook-utils re-exports pending delegation gate');
+      assertContains(hookUtils, 'checkSubagentGate', 'grok-hook-utils re-exports spawn todo gate');
+    }
     assertContains(hookImpl, 'checkCodexPatterns', 'pre-tool-use.js enforces codex pattern deny');
   }
 

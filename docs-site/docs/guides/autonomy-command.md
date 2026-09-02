@@ -1,6 +1,6 @@
 # Autonomy Command — Suit Default Operating Model
 
-**v3.4.1+** · Codex terms **67–68** · Skill: `autonomy-command` · Slash: `/autonomy-command`
+**v4.0** · Codex terms **67–68** · Skill: `orchestrator` · temperament-aware ceremony
 
 ---
 
@@ -12,29 +12,31 @@ The **autonomy command** is the default operating model when the 0xRay suit is w
 
 ---
 
-## Kernel-level activation (P0.0c — automatic)
+On **guided/strict** hosts, intake (`analyze-complexity`) is **required** before spawn. On **frontier**, the engine is available but spawn **warns** instead of denying. Governance (Codex 11/29/69) is always on.
 
-The autonomy command is not only a skill — it is **`autonomy_kernel` in `features.json`**, wired into the exoskeleton:
+## Kernel-level activation (v4.0 — temperament)
+
+Lead-dev mode is wired through **`multi_agent_orchestration` in `features.json`** and host hooks (no separate `autonomy_kernel` block):
 
 | Layer | Mechanism | What it does |
 |-------|-----------|--------------|
-| **SessionStart hook** | `dist/integrations/grok/hooks/session-start.js` | Boots lead-dev mode; injects 7 rules at session start |
-| **PreToolUse hook** | `pre-tool-use.js` | Flags full `npm test` runs → per-suite triage hint |
-| **Orchestrator MCP** | `autonomy-intake` tool | Returns phased plan + todos + subagent routes as JSON |
-| **features.json** | `autonomy_kernel.enabled: true` | Kernel config SSOT (threshold, triage, consults) |
+| **SessionStart hook** | `dist/integrations/grok/hooks/session-start.js` | Boots lead-dev mode; writes `session-boot.json` |
+| **PreToolUse hook** | `pre-tool-use.js` | Codex deny + synthesis/pending/spawn gates + per-suite triage hint |
+| **Orchestrator MCP** | `analyze-complexity` | Persists phased plan + todos to `lead-dev-plan.json` |
+| **features.json** | `multi_agent_orchestration.lead_dev_mode` | Kernel config SSOT (threshold, triage, consults) |
 | **Skill** | `autonomy-command` | Human-readable playbook (synced on grok install) |
 
 ```json
-"autonomy_kernel": {
-  "enabled": true,
-  "default_on": true,
-  "complexity_phased_plan_threshold": 25,
+"multi_agent_orchestration": {
+  "lead_dev_mode": true,
   "per_suite_test_triage": true,
-  "auto_consult_major_work": true
+  "phased_plan_threshold": 25,
+  "auto_consult_major_work": true,
+  "auto_chain_delegations": true
 }
 ```
 
-**First substantive task in every session:** `xray-orchestrator` → `autonomy-intake({ description: "..." })`
+**First substantive task in every session:** `xray-orchestrator` → `analyze-complexity({ tasks: [...] })`
 
 ## When it activates
 
@@ -42,7 +44,7 @@ The autonomy command is not only a skill — it is **`autonomy_kernel` in `featu
 |-----------|--------|
 | `npm install 0xray` + `npx 0xray grok install` | Hooks + MCP + skills synced |
 | Grok **SessionStart** | Autonomy kernel boot JSON on stdout |
-| Substantive user task | Agent calls `autonomy-intake` → phased todos |
+| Substantive user task | Agent calls `analyze-complexity` → phased todos |
 | Full test suite command | PreToolUse emits `per_suite_triage_required` hint |
 
 Tier 1 consumers (repertoire, groover, chrono-warp-drive) may add `npm run confirm:suit` for layered boot checks.
