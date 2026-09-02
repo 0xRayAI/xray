@@ -6,6 +6,8 @@ sidebar_label: Overview
 
 **v4.0.0** — a suit that survives the context window. Exo, not toolset. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
+![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
+
 Welcome to the 0xRay documentation. Use the sidebar to navigate, or start with the [Introduction](./introduction).
 
 ## Quick Links

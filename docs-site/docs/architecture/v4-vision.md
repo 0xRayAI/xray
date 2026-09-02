@@ -6,6 +6,8 @@ sidebar_label: 4.0 vision
 
 Public thesis: [temperament and synchronicity move the stack from toolsets to factories](https://x.com/Blaze0x1/status/2093318114217763225). 4.0 is the **eXo suit** for that shift.
 
+![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
+
 This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md). Station card for the next session: [4.0 now](./v4-now.md). What's still open: [4.0 left](./v4-left.md).
 
 ## What 4.0 is (roots)

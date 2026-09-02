@@ -2,6 +2,8 @@
 
 **v4.0.0** — a suit that survives the context window. Not a catalog of 42 agents. The product is the skeleton you wear.
 
+![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
+
 **v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
 - **Bone:** three subsystems, Codex PreToolUse, four host adapters  

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>0xRay v4 exo</title>
+  <style>
+    @font-face {
+      font-family: "DIN Condensed";
+      src: url("file:///System/Library/Fonts/Supplemental/DIN%20Condensed%20Bold.ttf") format("truetype");
+      font-weight: 700;
+      font-style: normal;
+    }
+    html, body {
+      margin: 0;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      background: #04060c;
+    }
+    .stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+    }
+    .plate {
+      position: absolute;
+      inset: 0;
+      width: 1280px;
+      height: 720px;
+      object-fit: fill;
+    }
+    .bottom-mask {
+      display: none;
+    }
+    .visor-mask {
+      position: absolute;
+      left: 50%;
+      top: 160px;
+      transform: translateX(-50%);
+      width: 380px;
+      height: 42px;
+      background: rgba(5, 10, 18, 0.92);
+      border-radius: 3px;
+      box-shadow: 0 0 16px rgba(90, 190, 255, 0.28);
+    }
+    .copy {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: "DIN Condensed", "Arial Narrow", Arial, sans-serif;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .visor {
+      top: 168px;
+      font-size: 22px;
+      letter-spacing: 0.42em;
+      color: #e7f6ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(140, 210, 255, 0.45);
+    }
+    .line1 {
+      bottom: 68px;
+      font-size: 20px;
+      letter-spacing: 0.28em;
+      color: #8fd4ee;
+    }
+    .line2 {
+      bottom: 40px;
+      font-size: 15px;
+      letter-spacing: 0.36em;
+      color: #f4f7fb;
+      text-transform: uppercase;
+    }
+    .line3 {
+      bottom: 16px;
+      font-size: 13px;
+      letter-spacing: 0.42em;
+      color: #8b93a2;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <img class="plate" alt="" src="PLATE_SRC" />
+    <div class="bottom-mask"></div>
+    <div class="visor-mask"></div>
+    <div class="copy visor">CONSTITUTION ON</div>
+    <div class="copy line1">0xRAY v4 — A SUIT TUIs WEAR</div>
+    <div class="copy line2">CARDS · FLOORS · TEMPERAMENT · MULTIPLICITY · SYNCHRONICITY</div>
+    <div class="copy line3">GROK BUILD · OPENCODE · HERMES · OPENCLAW</div>
+  </div>
+</body>
+</html>

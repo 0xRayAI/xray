@@ -2,6 +2,8 @@
 
 **v4.0.0** — a suit that survives the context window. Constitution always on. Temperament scales ceremony. Four host floors. Repertoire is the muscle for handoffs.
 
+![0xRay v4 exo — CONSTITUTION ON](docs-site/static/img/exo-skeleton-v4.jpg)
+
 Not a catalog of agents. The product is the **skeleton you wear**.
 
 ## Your AI Power Suit
