@@ -2,7 +2,7 @@
 # Compose the v4 hero: photo plate + exact HUD/caption type.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-PLATE="${1:-$ROOT/scripts/media/exo-v4-plate.jpg}"
+PLATE="${1:-$ROOT/scripts/media/exo-v4-plate-launch.jpg}"
 OUT="${2:-$ROOT/docs-site/static/img/exo-skeleton-v4.jpg}"
 SOCIAL="${3:-$ROOT/docs-site/static/img/social-card.png}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -18,12 +18,10 @@ im = Image.open(src).convert("RGBA")
 w, h = im.size
 overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
 d = ImageDraw.Draw(overlay)
-# visor HUD bar (original CONSTITUTION ON)
-d.rounded_rectangle((450, 155, 830, 214), radius=4, fill=(5, 10, 18, 255))
-# solid caption footer — generated type cannot ghost through
-for y in range(568, h):
-    t = min(1.0, (y - 568) / 18.0)
-    a = int(255 * t) if y < 586 else 255
+# Light footer only — launch plate has no baked captions
+for y in range(628, h):
+    t = min(1.0, (y - 628) / 22.0)
+    a = int(210 * t)
     d.line([(0, y), (w, y)], fill=(5, 9, 16, a))
 im = Image.alpha_composite(im, overlay).convert("RGB")
 im.save(dst, "JPEG", quality=95)

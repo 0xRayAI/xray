@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>0xRay v4 exo</title>
+  <title>0xRay v4 exo launch</title>
   <style>
     @font-face {
       font-family: "DIN Condensed";
@@ -29,19 +29,37 @@
       height: 720px;
       object-fit: fill;
     }
-    .bottom-mask {
-      display: none;
+    .mark {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 86px;
+      text-align: center;
+      font-family: "DIN Condensed", "Arial Narrow", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: 0.14em;
+      color: #f4f7fb;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
     }
-    .visor-mask {
+    .visor-chip {
       position: absolute;
       left: 50%;
-      top: 160px;
+      top: 168px;
       transform: translateX(-50%);
-      width: 380px;
-      height: 42px;
-      background: rgba(5, 10, 18, 0.92);
-      border-radius: 3px;
-      box-shadow: 0 0 16px rgba(90, 190, 255, 0.28);
+      min-width: 318px;
+      padding: 7px 22px 6px;
+      background: rgba(4, 10, 18, 0.82);
+      border: 1px solid rgba(143, 212, 238, 0.35);
+      border-radius: 2px;
+      box-shadow: 0 0 18px rgba(90, 190, 255, 0.22);
+      text-align: center;
+      font-family: "DIN Condensed", "Arial Narrow", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.46em;
+      color: #e7f6ff;
+      text-transform: uppercase;
     }
     .copy {
       position: absolute;
@@ -52,31 +70,23 @@
       font-weight: 700;
       white-space: nowrap;
     }
-    .visor {
-      top: 168px;
-      font-size: 22px;
-      letter-spacing: 0.42em;
-      color: #e7f6ff;
-      text-transform: uppercase;
-      text-shadow: 0 0 10px rgba(140, 210, 255, 0.45);
-    }
     .line1 {
-      bottom: 68px;
-      font-size: 20px;
-      letter-spacing: 0.28em;
+      bottom: 54px;
+      font-size: 22px;
+      letter-spacing: 0.34em;
       color: #8fd4ee;
     }
     .line2 {
-      bottom: 40px;
+      bottom: 30px;
       font-size: 15px;
-      letter-spacing: 0.36em;
+      letter-spacing: 0.38em;
       color: #f4f7fb;
       text-transform: uppercase;
     }
     .line3 {
-      bottom: 16px;
-      font-size: 13px;
-      letter-spacing: 0.42em;
+      bottom: 10px;
+      font-size: 12px;
+      letter-spacing: 0.44em;
       color: #8b93a2;
       text-transform: uppercase;
     }
@@ -85,11 +95,10 @@
 <body>
   <div class="stage">
     <img class="plate" alt="" src="PLATE_SRC" />
-    <div class="bottom-mask"></div>
-    <div class="visor-mask"></div>
-    <div class="copy visor">CONSTITUTION ON</div>
-    <div class="copy line1">0xRAY v4 — A SUIT TUIs WEAR</div>
-    <div class="copy line2">CARDS · FLOORS · TEMPERAMENT · MULTIPLICITY · SYNCHRONICITY</div>
+    <div class="mark">0xRay</div>
+    <div class="visor-chip">CONSTITUTION ON</div>
+    <div class="copy line1">0xRAY 4.0.0 — LIVE</div>
+    <div class="copy line2">TEMPERAMENT · MULTIPLICITY · SYNCHRONICITY</div>
     <div class="copy line3">GROK BUILD · OPENCODE · HERMES · OPENCLAW</div>
   </div>
 </body>
