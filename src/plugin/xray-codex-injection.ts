@@ -68,7 +68,10 @@ export default async function xrayCodexPlugin(input: {
   const { directory: inputDirectory } = input;
   const directory = inputDirectory || process.cwd();
   try {
-    writeSuitSessionBoot(directory, "opencode", { source: "0xray/opencode-plugin" });
+    writeSuitSessionBoot(directory, "opencode", {
+      source: "0xray/opencode-plugin",
+      hookEvent: process.env.XRAY_HOOK_EVENT || "session_start",
+    });
   } catch {
     /* session-boot is best-effort */
   }

@@ -439,9 +439,15 @@ async function handleSessionStart(input, projectRoot, logDir) {
   try {
     const gate = await import('../hooks/delegation-gate-runtime.mjs');
     if (typeof gate.writeSuitSessionBoot === 'function') {
+      const compact =
+        input.compact === true ||
+        input.hookEvent === 'pre_compact' ||
+        input.hookEvent === 'post_compact';
       gate.writeSuitSessionBoot(projectRoot, 'hermes', {
-        source: '0xray/hermes-session-start',
+        source: compact ? '0xray/hermes-compact' : '0xray/hermes-session-start',
         sessionId,
+        hookEvent: compact ? 'post_compact' : 'session_start',
+        ...(input.intent ? { intent: input.intent } : {}),
       });
     }
   } catch {

@@ -7,6 +7,8 @@ const { execFileSync } = require("child_process");
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
 const { join } = require("path");
 
+const HOOKS_DIR = __dirname;
+
 const INTENT_MAX = 240;
 
 function stationMarkdownPath(root) {
@@ -92,6 +94,13 @@ function readPlanLine(root) {
 }
 
 function resolveRepertoireProviderModule(root) {
+  const mr = readMemoryRoutingConfig(root);
+  if (mr && typeof mr.module_path === "string" && mr.module_path) {
+    const configured = mr.module_path.startsWith("/") || /^[A-Za-z]:[\\/]/.test(mr.module_path)
+      ? mr.module_path
+      : join(root, mr.module_path);
+    if (existsSync(configured)) return configured;
+  }
   const siblingRoot = join(root, "..", "repertoire");
   const siblingProvider = join(siblingRoot, "dist", "provider", "memory-routing-provider.js");
   const nmProvider = join(
@@ -205,6 +214,50 @@ function persistRepertoireWorking(root, snapshot) {
   }
 }
 
+function matchStationSignalsSync(root, intent) {
+  if (!intent) return [];
+  const helper = join(HOOKS_DIR, "station-memory-match.mjs");
+  if (!existsSync(helper)) return [];
+  try {
+    const out = execFileSync(process.execPath, [helper, root, intent], {
+      encoding: "utf8",
+      timeout: 20000,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: process.env,
+    });
+    const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "[]";
+    const parsed = JSON.parse(line);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function ingestCompactFeedbackSync(root, sessionId, hookEvent, signals) {
+  if (!signals.length) return;
+  const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
+  if (!existsSync(helper)) return;
+  try {
+    execFileSync(
+      process.execPath,
+      [helper, root, sessionId || "station", hookEvent || "post_compact", JSON.stringify(signals)],
+      {
+        encoding: "utf8",
+        timeout: 20000,
+        stdio: ["ignore", "pipe", "pipe"],
+        env: process.env,
+      },
+    );
+  } catch {
+    /* working-state file is the session memory; registry ingest is best-effort */
+  }
+}
+
+function isCompactHook(extra) {
+  const hook = String(extra.hookEvent || extra.source || "");
+  return /compact/i.test(hook);
+}
+
 function formatWorkingLine(working) {
   if (!working || typeof working !== "object") return null;
   const matched = stationSafeSignals(working.matchedSignals);
@@ -259,7 +312,23 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const intentBit = intent ? `intent: ${intent}` : "intent: (none yet)";
   const gitBit = git ? `git ${git.branch}@${git.head}` : "git: n/a";
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
-  const matchedSignals = stationSafeSignals(extra.matchedSignals);
+  let matchedSignals = stationSafeSignals(extra.matchedSignals);
+  const priorWorking = readRepertoireWorking(root);
+  if (!matchedSignals.length && intent) {
+    if (
+      priorWorking &&
+      priorWorking.intent === intent &&
+      Array.isArray(priorWorking.matchedSignals) &&
+      priorWorking.matchedSignals.length
+    ) {
+      matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
+    } else {
+      matchedSignals = stationSafeSignals(matchStationSignalsSync(root, intent));
+    }
+  }
+  if (!matchedSignals.length && priorWorking) {
+    matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
+  }
   const workingSnapshot = {
     host,
     intent,
@@ -271,6 +340,14 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   };
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals;
   const working = persistRepertoireWorking(root, workingSnapshot);
+  if (isCompactHook(extra) && matchedSignals.length) {
+    ingestCompactFeedbackSync(
+      root,
+      typeof extra.sessionId === "string" ? extra.sessionId : "station",
+      extra.hookEvent || extra.source || "post_compact",
+      matchedSignals,
+    );
+  }
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
   const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;

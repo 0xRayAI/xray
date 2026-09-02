@@ -146,6 +146,7 @@ export interface PreToolGateContext {
   sessionId: string | null;
   features: DelegationGateFeatures;
   host?: DelegationGateHost;
+  hookEvent?: string;
 }
 
 export interface PreToolGateDeny {
@@ -693,7 +694,7 @@ export function evaluatePreToolGate(
       maybeHeatHostStation(ctx.projectRoot, 'openclaw', {
         source: '0xray/openclaw-pre-tool',
         sessionId: ctx.sessionId || 'openclaw',
-        hookEvent: 'session_start',
+        hookEvent: ctx.hookEvent || 'session_start',
       });
     } catch {
       /* station heat is best-effort — constitution still runs */
