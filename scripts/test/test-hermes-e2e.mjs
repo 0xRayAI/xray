@@ -342,6 +342,20 @@ async function main() {
     } catch {
       fail('bridge hooks', 'parse error');
     }
+
+    const sessionStartOut = run(
+      `echo '{"command":"session-start","sessionId":"e2e-hermes-1"}' | node "${bridgePath}" --cwd "${testDir}"`,
+    );
+    try {
+      const started = JSON.parse(sessionStartOut);
+      if (started.ok && started.sessionId) {
+        pass(`bridge session-start: session=${started.sessionId}`);
+      } else {
+        fail('bridge session-start', sessionStartOut.slice(0, 120));
+      }
+    } catch {
+      fail('bridge session-start', 'parse error');
+    }
   } else {
     // Fallback: enforce CLI (v2.2+)
     const enforceHealthRaw = run(`node "${enforceBin}" enforce --phase health 2>/dev/null`, { cwd: testDir });

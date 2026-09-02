@@ -332,6 +332,12 @@ async function runProcessors(tool, args, phase, projectRoot, logDir) {
         priority: 30,
         enabled: true,
       });
+      processorManager.registerProcessor({
+        name: "nudge",
+        type: "post",
+        priority: 78,
+        enabled: true,
+      });
     }
 
     let results;
@@ -512,6 +518,7 @@ async function handlePostProcess(input, projectRoot, logDir) {
   });
 
   logToActivity(logDir, `post-process: complete duration=${duration}ms processors=${processorResult.success}`);
+  logToActivity(logDir, `[nudge] post-process tool=${tool}`);
 
   // Log routing outcome for test verification
   logRoutingOutcome(logDir, {
