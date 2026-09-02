@@ -1,6 +1,8 @@
 # xray — exo for coding agents
 
-**v4.0.0** — a suit that survives the context window. Constitution always on. Temperament scales ceremony. Four host floors. Repertoire is the muscle for handoffs.
+**v4.0.1** — a suit that survives the context window
+
+![0xRay v4 exo — CONSTITUTION ON](docs-site/static/img/exo-skeleton-v4.jpg)
 
 Not a catalog of agents. The product is the **skeleton you wear**.
 
@@ -48,7 +50,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire enable-when-resolves + session resume. Survive the context window — still in development, not on npm yet. [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
+| **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
 | **3.3.1** | Orchestrator confidence gate wired into execution planning. |
 | **3.3.0** | Pluggable **Memory Routing** (`features.json` → `memory_routing`). Repertoire is the default provider in the framework repo. |
@@ -149,11 +151,11 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 "memory_routing": {
   "enabled": true,
   "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "dataDir": "../repertoire/data",
-    "signalsPath": "../repertoire/data/curated_signals.json",
-    "logDir": "../repertoire/logs/groover-inference"
+    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "statePath": ".xray/state/repertoire/inference-state.json",
+    "feedbackDir": ".xray/state/repertoire/feedback"
   }
 }
 ```
@@ -183,7 +185,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Governance & Codex
 
-- **68 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance
+- **69 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance (Codex 69: no new MCP/skill/handler surface)
 - CodexPolicyService — Governance-owned SSOT for codex loading
 - Pre-governance gate blocks non-compliant proposals
 - Active codex snapshot via `get_active_codex` MCP tool
@@ -191,27 +193,25 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Testing
 
-| Suite | Status (v3.4.1) |
+| Suite | Status (v4.0.1) |
 |-------|-----------------|
-| Unit / Integration | 185 files, **3,226 passed** |
-| OpenCode E2E | 42/42 solo, 34/34 orchestrator |
-| Grok CLI E2E | 62/0 failures (v3.2.0 verified) |
-| OpenClaw E2E | 9/9 (v3.2.0 verified) |
-| Hermes E2E | 44/0/0 (v3.2.0 verified) |
-| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 bridges |
+| Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 (npm 4.0.0 pack) |
+| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 bridges + organ on |
 
 ```bash
 npm test
-npm run release:gate    # full release gate
+npm run release:gate    # full release gate (before upload)
+npm run release:npm     # gate + prepare + npm publish --access public
 ```
 
 ## Release
 
+Product **4.0.0** is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT.
+
 ```bash
-npm run release:patch   # canonical pipeline
-npm run release:minor
-npm run release:major
-npm run release:patch -- --dry-run
+npm run release:gate
+npm run release:npm     # after gate is green; uses npm publish --access public
+npm run release:patch   # version bump pipeline (not for a already-bumped 4.0.0)
 ```
 
 Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.

@@ -2,8 +2,17 @@
 
 Complete reference of capabilities through **0xRay 4.0.0** (first ship of temperament on the v2 three-subsystem OS). 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.1 — Patch (CLI, host e2e, release gate, docs)
+
+- CLI `-V` / `--version` no longer dumps a Commander stack (`exitOverride` caught)
+- Hermes: `[nudge]` post-processor + e2e `session-start`
+- OpenClaw e2e reads `plugins.entries` (2026.8.2)
+- Release gate: organ-on smoke; no `scripts.publish` after registry PUT
+- Docs: catalog/enterprise boiler archived; version-manager stamps live Docusaurus headers
+
 ## 4.0.0 — Suit temperament (first ship)
 
+- **On npm** as `0xray@4.0.0` (2026-09-02). Tag `v4.0.0` on `0xRayAI/xray`.
 - **Keep v2 bone:** Inference · External Governance · Autonomous Engine — not a redesign
 - **Temper ceremony** on that engine: Codex / no_new_surface always on; spawn-plan **deny** vs **warn** by profile
 - **Frontier:** missing/stale/**todo-mismatch** spawn **warns**; confer off unless `confer.enabled: true`; pending/synthesis skip

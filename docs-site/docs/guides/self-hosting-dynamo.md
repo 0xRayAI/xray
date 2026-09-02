@@ -102,4 +102,4 @@ Dynamo runs as the middle layer of the three-subsystem architecture:
 └─────────────────────────────────┘
 ```
 
-See the [Governance Model](../../architecture/governance-model.md) doc for the full architecture description.
+See [Governance Model](https://github.com/0xRayAI/xray/blob/main/docs/architecture/governance-model.md) for the Dynamo SSOT.

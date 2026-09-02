@@ -1170,4 +1170,12 @@ For more information, visit: https://github.com/0xRayAI/xray
 
 // Parse command line arguments
 program.exitOverride();
-program.parse();
+try {
+  program.parse();
+} catch (err) {
+  const code = err && typeof err === 'object' && 'code' in err ? String((err as { code: string }).code) : '';
+  if (code === 'commander.helpDisplayed' || code === 'commander.help' || code === 'commander.version') {
+    process.exit(0);
+  }
+  throw err;
+}

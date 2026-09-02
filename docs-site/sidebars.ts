@@ -2,68 +2,48 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
 const sidebars: SidebarsConfig = {
   docsSidebar: [
-    {
-      type: 'doc',
-      id: 'README',
-      label: 'xray — MCP-Centric AI Governance OS',
-    },
     'index',
     'introduction',
     {
       type: 'category',
-      label: 'Guides',
+      label: 'Wear',
       items: [
         'guides/getting-started',
-        'architecture/v4-vision',
-        'guides/v3-temperament',
-        'guides/autonomy-command',
         'guides/integrations',
+        'architecture/GROK_GUIDE',
+        'guides/autonomy-command',
+        'guides/consumer-migration',
+      ],
+    },
+    {
+      type: 'category',
+      label: '4.0',
+      items: [
+        'architecture/v4-vision',
+        'architecture/v4-now',
+        'architecture/v4-left',
+        'guides/v3-temperament',
+        'architecture/v3-from-v2',
+        'architecture/v3-museum',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Guides',
+      items: [
         'guides/features-since-3.1',
         'guides/features-json',
         'guides/memory-routing',
-        'guides/parallel-work-tracks',
-        'guides/user-asides',
-        'guides/user-asides-roadmap',
-        'guides/aside-context',
         'guides/repertoire',
-        'guides/consumer-migration',
+        'guides/aside-context',
+        'guides/user-asides',
+        'guides/parallel-work-tracks',
         'guides/self-hosting-dynamo',
       ],
     },
     'full-reference',
-    {
-      type: 'category',
-      label: 'Agents',
-      link: { type: 'doc', id: 'agents/README' },
-      items: [
-        'agents/ADDING_AGENTS',
-        'agents/AGENT_CLASSIFICATION',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'MCP Servers',
-      link: { type: 'doc', id: 'mcp/README' },
-      items: [
-        'mcp/infrastructure',
-        'mcp/knowledge-skills',
-        'mcp/deploy-custom',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Architecture',
-      items: [
-        'architecture/ARCHITECTURE',
-        'architecture/CONCEPTUAL_ARCHITECTURE',
-        'architecture/v4-vision',
-        'architecture/v4-now',
-        'architecture/v4-left',
-        'architecture/v3-from-v2',
-        'architecture/GROK_GUIDE',
-        'architecture/v3-museum',
-      ],
-    },
+    'agents/README',
+    'mcp/README',
   ],
 };
 

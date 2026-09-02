@@ -1,3 +1,7 @@
+---
+sidebar_label: Suit temperament
+---
+
 # 0xRay 4.0 — Suit temperament
 
 v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. 4.0 does not throw it away.

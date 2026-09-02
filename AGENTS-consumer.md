@@ -4,9 +4,9 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v4.0.0** — a suit that survives the context window.
+**v4.0.1** — a suit that survives the context window
 
-**v4.0.0** — same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire auto-enables when the module is present; otherwise `memory_routing` stays off. Trim fat, do not gut the design.
+Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 
@@ -63,7 +63,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 
 xray operates under the three-subsystem model: **Inference** + **External Governance** (Dynamo Solar SSOT) + **Autonomous Engine** (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
 
-**Codex**: `.xray/codex.json` — **68 terms** across all agent interactions.
+**Codex**: `.xray/codex.json` — **69 terms** across all agent interactions.
 
 ## thinDispatch Routing
 

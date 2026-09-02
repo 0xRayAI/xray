@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [4.0.0] - 2026-08-28
+## [4.0.1] - 2026-09-02
 
-First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm is still `3.5.5`; this line is **4.0.0** on `feat/v4-temperament` — **still in development, not published**.
+Patch on the 4.0 temperament line. npm **4.0.0** stays latest until this tag publishes.
+
+### 🐛 Bug Fixes
+- CLI `-V` / `--version` no longer dumps a Commander stack after `exitOverride`
+- Hermes: post-processor logs `[nudge]`; e2e calls `session-start`
+- OpenClaw e2e reads `plugins.entries` (OpenClaw 2026.8.2)
+- Release gate: consumer smoke expects organ **on**; no `scripts.publish` after the registry PUT; reconcile allows tagged-but-unpublished
+
+### 📚 Documentation
+- Archive catalog / enterprise Docusaurus boiler; live site is exo wear
+- Version-manager stamps live Docusaurus kernel headers (no archived `docs-site/docs/README.md`)
+
+---
+
+## [4.0.0] - 2026-09-02
+
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm **4.0.0**. Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`).
 
 ### ✨ Features
 - **Factory memory organ** — `@0xray/repertoire@0.2.0` vendored as a runtime dependency. Shipped `memory_routing` is **on** (8 factory primitives). Extra host MCP stays `repertoire`, not an 8th `xray-*` server. Compact ingest writes `.xray/state/repertoire/`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.

@@ -1,8 +1,12 @@
 # 0xRay — exo for coding agents
 
-**v4.0.0** — a suit that survives the context window. Not a catalog of 42 agents. The product is the skeleton you wear.
+**v4.0.1** — a suit that survives the context window
 
-**v4.0.0** keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
+Not a catalog of 42 agents. The product is the skeleton you wear.
+
+![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
+
+4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
 - **Bone:** three subsystems, Codex PreToolUse, four host adapters  
 - **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface  
@@ -48,6 +52,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 
 | Version | Highlights |
 |---------|------------|
+| **4.0.0** | Exo + temperament. Constitution always on. Repertoire organ on (vendored 0.2). **On npm.** [vision](./architecture/v4-vision.md) |
 | **3.4.1** | `install-bridges.cjs` on postinstall — all 4 platforms + 7 MCP via `npx`. Canonical release pipeline. |
 | **3.3.1** | Orchestrator confidence gate in execution planning. |
 | **3.3.0** | Pluggable memory routing — Repertoire default in framework repo. |
@@ -64,7 +69,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 | No quality enforcement | v3 enforcement: hooks + CI validators + governance MCP |
 | Single-agent blindspots | 3 specialized reviewers debate each proposal |
 | Scattered edits | Multi-agent orchestrator coordinates work |
-| Repeated mistakes | Memory routing enriches selection (optional, v3.3) |
+| Repeated mistakes | Memory routing enriches selection (Repertoire organ on in 4.0) |
 | Deep sub-tasks lose context | AsideContext subcontexts inherit session + memory routing (v3.2+) |
 
 ## Next Steps

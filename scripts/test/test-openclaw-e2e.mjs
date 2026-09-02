@@ -70,7 +70,9 @@ function isBillingError(text) {
 function isProviderInfraError(text) {
   return Boolean(
     isBillingError(text) ||
-      /HTTP 500|Internal server error|ECONNRESET|ETIMEDOUT|providerRuntimeFailure/i.test(String(text || '')),
+      /HTTP 500|Internal server error|ECONNRESET|ETIMEDOUT|providerRuntimeFailure|Node\.js >=|is required \(current:/i.test(
+        String(text || ''),
+      ),
   );
 }
 
@@ -1201,33 +1203,36 @@ async function main() {
   // ── Phase 12: Plugin + Skill Discovery ──────────────────
   section('Phase 12: Plugin + Skill Discovery');
 
+  const pluginEntries = ocConfig?.plugins?.entries && typeof ocConfig.plugins.entries === 'object'
+    ? ocConfig.plugins.entries
+    : null;
   const installsPath = path.join(os.homedir(), '.openclaw', 'plugins', 'installs.json');
-  if (fs.existsSync(installsPath)) {
+  if (pluginEntries) {
+    const names = Object.keys(pluginEntries).filter((k) => pluginEntries[k] && pluginEntries[k].enabled !== false);
+    if (names.length > 0) {
+      pass(`plugins.entries: ${names.join(', ')}`);
+      const modelProviders = names.filter((n) => {
+        const key = n.toLowerCase();
+        return key.includes('opencode') || key.includes('kimi') || key.includes('xai') || key.includes('anthropic') || key.includes('openai') || key.includes('codex');
+      });
+      if (modelProviders.length > 0) {
+        pass(`model providers: ${modelProviders.join(', ')}`);
+      }
+    } else {
+      fail('plugins.entries', 'none enabled');
+    }
+  } else if (fs.existsSync(installsPath)) {
     pass('installs.json exists');
     try {
       const installs = JSON.parse(fs.readFileSync(installsPath, 'utf-8'));
       const plugins = installs.plugins || [];
       const enabled = plugins.filter((p) => p.enabled);
       pass(`plugins: ${enabled.length} enabled / ${plugins.length} total`);
-
-      const enabledNames = enabled.map((p) => p.name || p.id).filter(Boolean);
-      if (enabledNames.length > 0) {
-        pass(`enabled: ${enabledNames.join(', ')}`);
-      }
-
-      // Check for model providers
-      const modelProviders = enabled.filter((p) => {
-        const n = (p.name || p.id || '').toLowerCase();
-        return n.includes('opencode') || n.includes('kimi') || n.includes('xai') || n.includes('anthropic') || n.includes('openai');
-      });
-      if (modelProviders.length > 0) {
-        pass(`model providers: ${modelProviders.map((p) => p.name || p.id).join(', ')}`);
-      }
     } catch {
       fail('installs.json parse', 'invalid JSON');
     }
   } else {
-    skip('installs.json', 'not found');
+    fail('openclaw plugins', 'no plugins.entries and no installs.json');
   }
 
   // Check stringray skills directory (from package dist, not ~/.openclaw/skills)

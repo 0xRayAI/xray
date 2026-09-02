@@ -101,9 +101,9 @@ Verify: `npm run verify:hermes` (Repertoire consumer) or `node bridge.mjs health
 npx 0xray openclaw install
 ```
 
-## Memory routing (optional, v3.3+)
+## Memory routing
 
-Configure in `.xray/features.json` when using Repertoire or another provider. See [Memory Routing](./memory-routing.md).
+Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.0`). Opt out: `"enabled": false, "provider": "repertoire"`. See [Memory Routing](./memory-routing.md).
 
 ## Verify installation
 

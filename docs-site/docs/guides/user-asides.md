@@ -1,7 +1,7 @@
 # User Asides (parallel work tracks)
 
 :::info Consumer guide
-Start with **[Parallel Work Tracks](./parallel-work-tracks.md)** for the full Grok Build + worktree + aside mental model. This page is the MCP/state reference. Known gaps: **[Roadmap](./user-asides-roadmap.md)**.
+Start with **[Parallel Work Tracks](./parallel-work-tracks.md)** for the full Grok Build + worktree + aside mental model. This page is the MCP/state reference.
 :::
 
 **User asides** are parallel work tracks you declare to the lead agent — like git worktrees for agent work. They are **not** [AsideContext](./aside-context.md) (internal orchestrator observation registry).
@@ -77,6 +77,5 @@ When an aside is active, PreToolUse spawn gate matches todos on `{asideId}.a.*`.
 ## Related
 
 - [Parallel Work Tracks](./parallel-work-tracks.md) — end-user guide (Grok Build + worktrees)
-- [User Asides Roadmap](./user-asides-roadmap.md) — engineering backlog
 - [AsideContext](./aside-context.md) — internal orchestrator subcontexts (different concept)
 - [Features since 3.1](./features-since-3.1.md)

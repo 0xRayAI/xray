@@ -21,7 +21,7 @@ Grok 4.2 treated this architecture as the product. Grok 4.6 still does. The work
 
 | Subsystem | What it is | 4.0 rule |
 |-----------|------------|---------|
-| **Inference** | Proposals, reflection, optional Repertoire | Keep. Do not invent a parallel inference MCP. |
+| **Inference** | Proposals, reflection, Repertoire organ (on in 4.0) | Keep. Do not invent a parallel inference MCP. |
 | **External Governance** | Codex + Dynamo + PreToolUse deny | Keep. This is the hammer. Always on. |
 | **Autonomous Engine** | thinDispatch, asides, confer, lead-dev plan | Keep. **Temperament** only changes *when* ceremony is mandatory, not whether the engine exists. |
 

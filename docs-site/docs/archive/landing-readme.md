@@ -30,7 +30,7 @@ npx 0xray skill:install
 │  Proposals · Reflection · Memory routing        │
 ├─────────────────────────────────────────────────┤
 │           External Governance (Dynamo)           │
-│  Codex enforcement · 68 terms · SSOT            │
+│  Codex enforcement · 69 terms · SSOT            │
 │  3 deliberation MCPs within 7-server surface    │
 ├─────────────────────────────────────────────────┤
 │          Autonomous Engine (thinDispatch)        │

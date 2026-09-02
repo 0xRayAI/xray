@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>0xRay v4 exo — 59 visor</title>
+  <style>
+    @font-face {
+      font-family: "DIN Condensed";
+      src: url("file:///System/Library/Fonts/Supplemental/DIN%20Condensed%20Bold.ttf") format("truetype");
+      font-weight: 700;
+      font-style: normal;
+    }
+    html, body {
+      margin: 0;
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      background: #000;
+    }
+    .stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+    }
+    .plate {
+      position: absolute;
+      inset: 0;
+      width: 1280px;
+      height: 720px;
+      object-fit: fill;
+    }
+    .visor-chip {
+      position: absolute;
+      left: 50%;
+      top: 176px;
+      transform: translateX(-50%);
+      padding: 5px 16px 4px;
+      background: rgba(4, 10, 18, 0.72);
+      border: 1px solid rgba(143, 212, 238, 0.4);
+      border-radius: 2px;
+      box-shadow: 0 0 14px rgba(80, 190, 255, 0.28);
+      font-family: "DIN Condensed", "Arial Narrow", Arial, sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.42em;
+      color: #e8f6ff;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <img class="plate" alt="" src="PLATE_SRC" />
+    <div class="visor-chip">CONSTITUTION ON</div>
+  </div>
+</body>
+</html>

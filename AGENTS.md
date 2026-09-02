@@ -1,8 +1,8 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v4.0.0**).
+Quick reference for the xray AI orchestration framework (**v4.0.1**).
 
-**v4.0.0** — a suit that survives the context window.
+**v4.0.1** — a suit that survives the context window.
 
 **Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · Repertoire when it resolves.
 
@@ -16,7 +16,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
 
-- **Inference** — proposals, reflection, memory routing (optional)
+- **Inference** — proposals, reflection, memory routing (Repertoire organ on in 4.0)
 - **External Governance** — Dynamo Solar SSOT, 69-term Codex
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
@@ -38,12 +38,12 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 
 Governance deliberation: **code-review**, **security-audit**, **researcher** within the 7-server set.
 
-## Postinstall (v3.4.1)
+## Postinstall (v4.0.1)
 
 `postinstall.cjs` → `installAllBridges()`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md`
-2. `SKILLS.md` + 46 skills → platform skill directories
+2. `SKILLS.md` + 45 skills → platform skill directories
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`)
 5. `.mcp.json` (7 servers)
@@ -58,11 +58,11 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 "memory_routing": {
   "enabled": true,
   "provider": "repertoire",
-  "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "dataDir": "../repertoire/data",
-    "signalsPath": "../repertoire/data/curated_signals.json",
-    "logDir": "../repertoire/logs/groover-inference"
+    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "statePath": ".xray/state/repertoire/inference-state.json",
+    "feedbackDir": ".xray/state/repertoire/feedback"
   }
 }
 ```

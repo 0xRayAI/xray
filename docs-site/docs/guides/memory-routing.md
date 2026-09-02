@@ -2,7 +2,7 @@
 
 Pluggable memory-routing enrichment for orchestrator agent selection, thinDispatch scoring, researcher votes, and per-task feedback.
 
-**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire`) in the framework repo.
+**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.0` vendored). `0xray@4.0.0` ships `memory_routing.enabled: true`.
 
 ## Overview
 
@@ -27,11 +27,11 @@ In `.xray/features.json` or `xray/features.json` (validated by `features.schema.
   "memory_routing": {
     "enabled": true,
     "provider": "repertoire",
-    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
     "config": {
-      "dataDir": "../repertoire/data",
-      "signalsPath": "../repertoire/data/curated_signals.json",
-      "logDir": "../repertoire/logs/groover-inference"
+      "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+      "statePath": ".xray/state/repertoire/inference-state.json",
+      "feedbackDir": ".xray/state/repertoire/feedback"
     }
   }
 }
@@ -48,7 +48,7 @@ In `.xray/features.json` or `xray/features.json` (validated by `features.schema.
 ### Disable
 
 ```json
-"memory_routing": { "enabled": false, "provider": "null" }
+"memory_routing": { "enabled": false, "provider": "repertoire" }
 ```
 
 Full field reference: [features.json](./features-json.md).

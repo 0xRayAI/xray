@@ -121,7 +121,5 @@ Skill source: `src/skills/autonomy-command/SKILL.md` · synced to `~/.grok/skill
 
 ## Related
 
-- [Grok Guide](../architecture/GROK_GUIDE.md)
-- [Operating Procedures](../agents/OPERATING_PROCEDURES.md)
+- [Grok floor](../architecture/GROK_GUIDE.md)
 - [SKILLS.md](https://github.com/0xRayAI/xray/blob/main/SKILLS.md) — `autonomy-command` catalog entry
-- Platform plan: `0x0/docs/SUIT-AUTONOMY-OPERATING-MODEL.md`

@@ -112,6 +112,7 @@ Every release passes `npm run release:gate` (or CI equivalent):
 
 ```bash
 npm run release:gate
+npm run release:npm    # gate first, then npm publish — do not use a scripts.publish lifecycle
 ```
 
 ## 0xray (framework) vs consumer project
@@ -150,4 +151,4 @@ If you only use `@agent` invocations, the CLI/TUI, or default plugin hook inject
 - [Memory Routing](./memory-routing.md)
 - [MCP Servers](../mcp/README.md)
 - [Full Reference](../full-reference.md)
-- Architecture: `PIPELINE_INVENTORY`, `V3-ENFORCEMENT-PIPELINES`, `PIPELINE_ARCHITECTURES`
+- [4.0 vision](../architecture/v4-vision.md) · [Trim list](../architecture/v3-museum.md)
