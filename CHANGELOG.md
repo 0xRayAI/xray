@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
-## [4.0.0] - 2026-08-28
+## [Unreleased]
 
-First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm is still `3.5.5`; this line is **4.0.0** on `feat/v4-temperament` — **still in development, not published**.
+### 🐛 Fixes
+- **Release gate vs 4.0 organ** — consumer smoke now expects shipped `memory_routing.enabled: true` (vendored `@0xray/repertoire@0.2.0`) and keeps explicit `enabled: false` + `provider: repertoire` on upgrade. The 4.0.0 upload tripped a leftover default-off assertion after the tarball was already on npm.
+- **`npm publish` lifecycle** — removed `scripts.publish` (it ran `release:gate` *after* the registry PUT). Gate-then-upload is `npm run release:npm`.
+- **reconcile-version --check** — tagged-but-unpublished is the publish path, not a fail (that blocked `prepublishOnly` if `v4.0.0` existed locally).
+
+## [4.0.0] - 2026-09-02
+
+First ship of the **temperament** line on the **v2 three-subsystem OS** (Inference · External Governance · Autonomous Engine). npm **4.0.0**. Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`).
 
 ### ✨ Features
 - **Factory memory organ** — `@0xray/repertoire@0.2.0` vendored as a runtime dependency. Shipped `memory_routing` is **on** (8 factory primitives). Extra host MCP stays `repertoire`, not an 8th `xray-*` server. Compact ingest writes `.xray/state/repertoire/`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.

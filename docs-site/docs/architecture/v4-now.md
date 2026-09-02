@@ -31,10 +31,10 @@ npm still **3.5.5**. Product version **4.0.0** on `feat/v4-temperament` ([PR #3]
 
 ## Next bites
 
-Open list: [4.0 left](./v4-left.md). Four-floor compact+memory+constitution, live CLI successor, stranger organ pack, and host e2e are proven on this plant. Remaining is maintainer CI approve + merge + tag + npm.
+Open list: [4.0 left](./v4-left.md). npm is **4.0.0**. Remaining: land the release-gate follow-up (smoke + `scripts.publish` lifecycle + reconcile), optional `@0xray/repertoire@0.2.0` npm.
 
 Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo.
 
 ## One line for the next model
 
-**Suit that survives the context window. Four floors attested: constitution 11/69/destructive, temperament, station card, Repertoire working signals, live successor quoted the card. npm still 3.5.5 until leave-dev publish.**
+**Suit that survives the context window. Four floors attested. npm 4.0.0. Gate follow-up: smoke matches organ-on; do not re-run the gate after the registry PUT.**

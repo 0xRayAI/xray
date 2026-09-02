@@ -124,7 +124,7 @@
     "release:docs-check": "node scripts/node/validate-release-docs.mjs",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
-    "publish": "npm run release:gate && npm run safe-publish && npm publish --access public",
+    "release:npm": "npm run release:gate && npm run safe-publish && npm publish --access public",
     "release:patch": "node scripts/node/release.mjs patch",
     "verify:orchestrator-behavior": "npm run build && node scripts/mjs/verify-orchestrator-behavior.mjs",
     "verify:grok-delegation-gate": "npm run build && node scripts/mjs/verify-grok-delegation-gate.mjs && node scripts/mjs/verify-grok-synthesis-gate.mjs",

@@ -131,10 +131,6 @@ function main() {
     fail(`package.json (${local}) is behind latest tag v${tag}`);
   }
 
-  if (tag && compare(local, tag) === 0 && compare(npm, local) < 0) {
-    fail(`tag v${tag} exists but npm is only ${npm} — publish or retag`);
-  }
-
   if (tag && compare(local, tag) > 0 && compare(npm, tag) === 0) {
     console.log(`✅ Ready to tag v${local} (npm at ${npm})`);
   } else if (compare(local, npm) > 0) {

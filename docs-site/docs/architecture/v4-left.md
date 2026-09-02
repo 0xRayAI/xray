@@ -61,15 +61,13 @@ Closed on this plant (worn, not npm-shipped):
 
 ## Left — ship (maintainer)
 
-A stranger `npm i 0xray` still gets **3.5.5** until this list:
+`npm view 0xray version` is **4.0.0**. Tag `v4.0.0` is on `0xRayAI/xray`. Repertoire lives at `0xRayAI/repertoire`.
 
-1. Approve fork GitHub Actions on [xray PR #3](https://github.com/0xRayAI/xray/pull/3) and [repertoire PR #2](https://github.com/htafolla/repertoire/pull/2) (`action_required` until then).
-2. Merge repertoire `feat/factory-seed-0.2` → `main` (includes MCP unprefix + 8-signal seed).
-3. Merge `feat/v4-temperament` → `0xRayAI/xray` `main`.
-4. Tag `v4.0.0`.
-5. `npm publish` **4.0.0** as htafolla — **not** `npm run release:major`. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
-6. Confirm `npm view 0xray version` is `4.0.0`.
-7. Mark [4.0 now](./v4-now.md) shipped.
+Still open:
+
+1. Land the release-gate follow-up (this plant): smoke expects organ **on**; `scripts.publish` lifecycle removed; reconcile allows tagged-but-unpublished. Use `npm run release:npm` for the next upload — never `release:major`.
+2. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
+3. Mark [4.0 now](./v4-now.md) shipped after the gate follow-up is on `main`.
 
 ## Do not
 

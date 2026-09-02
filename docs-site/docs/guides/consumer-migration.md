@@ -112,6 +112,7 @@ Every release passes `npm run release:gate` (or CI equivalent):
 
 ```bash
 npm run release:gate
+npm run release:npm    # gate first, then npm publish — do not use a scripts.publish lifecycle
 ```
 
 ## 0xray (framework) vs consumer project

@@ -202,16 +202,18 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ```bash
 npm test
-npm run release:gate    # full release gate
+npm run release:gate    # full release gate (before upload)
+npm run release:npm     # gate + prepare + npm publish --access public
 ```
 
 ## Release
 
+Product **4.0.0** is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT.
+
 ```bash
-npm run release:patch   # canonical pipeline
-npm run release:minor
-npm run release:major
-npm run release:patch -- --dry-run
+npm run release:gate
+npm run release:npm     # after gate is green; uses npm publish --access public
+npm run release:patch   # version bump pipeline (not for a already-bumped 4.0.0)
 ```
 
 Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.

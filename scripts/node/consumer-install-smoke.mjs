@@ -48,9 +48,14 @@ function assertFreshInstallDefaults(tmpRoot, version) {
   if (!features.memory_routing) {
     throw new Error("Deployed features.json missing memory_routing block");
   }
-  if (features.memory_routing.enabled !== false) {
+  if (features.memory_routing.enabled !== true) {
     throw new Error(
-      `Fresh install must default memory_routing.enabled=false (got ${features.memory_routing.enabled})`,
+      `Fresh 4.0 install must ship memory_routing.enabled=true with the vendored organ (got ${features.memory_routing.enabled})`,
+    );
+  }
+  if (features.memory_routing.provider !== "repertoire") {
+    throw new Error(
+      `Fresh install memory_routing.provider must be repertoire (got ${features.memory_routing.provider})`,
     );
   }
   if (!features.inference_governance) {
@@ -58,6 +63,33 @@ function assertFreshInstallDefaults(tmpRoot, version) {
   }
   if (features.inference_governance.enabled !== false) {
     throw new Error("Fresh install must default inference_governance.enabled=false");
+  }
+  const organHoisted = path.join(tmpRoot, "node_modules", "@0xray", "repertoire", "package.json");
+  const organNested = path.join(
+    tmpRoot,
+    "node_modules",
+    "0xray",
+    "node_modules",
+    "@0xray",
+    "repertoire",
+    "package.json",
+  );
+  const organVendor = path.join(
+    tmpRoot,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "package.json",
+  );
+  const organPkg = [organNested, organHoisted, organVendor].find((p) => fs.existsSync(p));
+  if (!organPkg) {
+    throw new Error("vendored @0xray/repertoire missing from fresh tarball install");
+  }
+  const organ = JSON.parse(fs.readFileSync(organPkg, "utf-8"));
+  if (organ.version !== "0.2.0") {
+    throw new Error(`expected organ 0.2.0, got ${organ.version}`);
   }
   console.log("  ✅ .xray/features.json fresh-install defaults (opt-in off)");
   return { consumerFeaturesPath, features };
@@ -113,6 +145,27 @@ function runUpgradeMergeSmoke(tmpRoot, nmRoot, version) {
   }
   if (shippedMarker && !merged[shippedMarker]) {
     throw new Error(`Upgrade merge missing shipped template key: ${shippedMarker}`);
+  }
+  fs.writeFileSync(
+    consumerFeaturesPath,
+    `${JSON.stringify(
+      {
+        version: "3.5.5",
+        memory_routing: { enabled: false, provider: "repertoire" },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  deployXrayConfig(tmpRoot, nmRoot, () => {});
+  const optedOut = JSON.parse(fs.readFileSync(consumerFeaturesPath, "utf-8"));
+  if (optedOut.memory_routing?.enabled !== false) {
+    throw new Error(
+      `Upgrade merge must keep explicit memory_routing opt-out (got ${optedOut.memory_routing?.enabled})`,
+    );
+  }
+  if (optedOut.memory_routing?.provider !== "repertoire") {
+    throw new Error("Upgrade merge dropped memory_routing.provider on opt-out");
   }
 
   console.log("  ✅ upgrade merge preserves opt-ins + bumps features.version");
