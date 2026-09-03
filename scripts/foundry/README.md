@@ -39,7 +39,7 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 | Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` (OpenCode hangar; other floors do not read mill YML agents) |
 | Agents card | `xray/AGENTS.md` | `AGENTS.md` if mill-managed |
 
-**Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name or set `*Mode: replace`. Home skill dirs (`~/.grok/skills`, Hermes, OpenClaw) are **off** unless `foundry.json` sets `"homeSkills": true`. CLI re-wear and `syncBuiltinSkills` remint after mill skill copy.
+**Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project hangers only. CLI re-wear calls mint **once** after mill copies.
 
 ## Publish this mill
 

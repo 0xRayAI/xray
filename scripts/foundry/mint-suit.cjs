@@ -7,7 +7,6 @@
  */
 
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 
 const DEFAULT_PARAMS = {
@@ -17,10 +16,6 @@ const DEFAULT_PARAMS = {
   skills: "src/skills",
   agents: "src/opencode/agents",
   agentsCard: "xray/AGENTS.md",
-  codexMode: "merge",
-  featuresMode: "merge",
-  configMode: "merge",
-  homeSkills: false,
 };
 
 function deepMerge(src, dest) {
@@ -97,18 +92,7 @@ function loadFoundryParams(targetDir) {
   for (const key of ["codex", "features", "config", "skills", "agents", "agentsCard"]) {
     if (typeof extra[key] === "string" && extra[key].trim()) params[key] = extra[key].trim();
   }
-  for (const modeKey of ["codexMode", "featuresMode", "configMode"]) {
-    if (extra[modeKey] === "replace" || extra[modeKey] === "merge") {
-      params[modeKey] = extra[modeKey];
-    }
-  }
-  if (extra.homeSkills === true) params.homeSkills = true;
   return params;
-}
-
-function isEphemeralInstallRoot(targetDir) {
-  const normalized = String(targetDir || "").replace(/\\/g, "/");
-  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
 }
 
 function isDirectory(p) {
@@ -119,25 +103,15 @@ function isDirectory(p) {
   }
 }
 
-/** Project hangers only unless foundry.json homeSkills: true. */
-function listSkillHangers(targetDir, params) {
+/** Project skill hangers only. */
+function listSkillHangers(targetDir) {
   const dests = [path.join(targetDir, ".opencode", "skills")];
   const projectGrok = path.join(targetDir, ".grok", "plugins", "0xray", "skills");
   if (isDirectory(projectGrok)) dests.push(projectGrok);
-  if (!params?.homeSkills || isEphemeralInstallRoot(targetDir)) return dests;
-  const home = os.homedir();
-  for (const extra of [
-    path.join(home, ".grok", "plugins", "0xray", "skills"),
-    path.join(home, ".grok", "skills"),
-    path.join(home, ".hermes", "plugins", "xray-hermes", "skills"),
-    path.join(home, ".openclaw", "skills"),
-  ]) {
-    if (isDirectory(extra)) dests.push(extra);
-  }
   return dests;
 }
 
-function overlayJsonFacet(src, dest, replace) {
+function overlayJsonFacet(src, dest) {
   if (!src || !fs.existsSync(src) || !fs.statSync(src).isFile()) return false;
   if (path.resolve(src) === path.resolve(dest)) return false;
   let theirs;
@@ -147,7 +121,7 @@ function overlayJsonFacet(src, dest, replace) {
     return false;
   }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  if (replace || !fs.existsSync(dest)) {
+  if (!fs.existsSync(dest)) {
     fs.writeFileSync(dest, `${JSON.stringify(theirs, null, 2)}\n`);
     return true;
   }
@@ -210,7 +184,7 @@ function overlayConsumerTree(targetDir, log, params) {
   const agents = listConsumerAgentFiles(targetDir, agentsRel);
   const skillsSrc = resolveInside(targetDir, skillsRel);
   const agentsSrc = resolveInside(targetDir, agentsRel);
-  const skillHangers = listSkillHangers(targetDir, resolved);
+  const skillHangers = listSkillHangers(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
 
   for (const hanger of skillHangers) {
@@ -301,17 +275,14 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   tree.codex = overlayJsonFacet(
     resolveInside(targetDir, params.codex),
     path.join(targetDir, ".xray", "codex.json"),
-    params.codexMode === "replace",
   );
   tree.features = overlayJsonFacet(
     resolveInside(targetDir, params.features),
     path.join(targetDir, ".xray", "features.json"),
-    params.featuresMode === "replace",
   );
   tree.config = overlayJsonFacet(
     resolveInside(targetDir, params.config),
     path.join(targetDir, ".xray", "config.json"),
-    params.configMode === "replace",
   );
   tree.agentsCard = overlayAgentsCard(targetDir, params);
   if (log && (tree.codex || tree.features || tree.config)) {
@@ -319,9 +290,6 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
       constitution: tree.codex,
       features: tree.features,
       config: tree.config,
-      codexMode: params.codexMode,
-      featuresMode: params.featuresMode,
-      configMode: params.configMode,
     });
   }
   return mintConsumerFromSsot(millPackageRoot, targetDir, log, tree);
@@ -341,6 +309,5 @@ module.exports = {
   mintConsumerFromSsot,
   mintConsumerSuit,
   isDogfood,
-  isEphemeralInstallRoot,
   readPackageIdentity,
 };

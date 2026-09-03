@@ -388,11 +388,9 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
-  it('featuresMode replace and invalid plant JSON leave mill hanger', () => {
+  it('JSON mill-fill keeps mill keys; invalid plant JSON leaves the hanger', () => {
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
-      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
-        params: { featuresMode: string };
-      };
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
     };
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-modes-'));
     try {
@@ -403,10 +401,6 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, 'xray'), { recursive: true });
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       writeFileSync(
-        path.join(tmp, 'foundry.json'),
-        `${JSON.stringify({ featuresMode: 'replace' }, null, 2)}\n`,
-      );
-      writeFileSync(
         path.join(tmp, '.xray/features.json'),
         `${JSON.stringify({ suit_temperament: { profile: 'guided' }, token_optimization: { enabled: true } }, null, 2)}\n`,
       );
@@ -414,14 +408,13 @@ describe('foundry mill — mint from consumer SSOT', () => {
         path.join(tmp, 'xray/features.json'),
         `${JSON.stringify({ suit_temperament: { profile: 'strict' } }, null, 2)}\n`,
       );
-      const inventory = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inventory.params.featuresMode).toBe('replace');
+      mintConsumerSuit(root, tmp, () => undefined);
       const features = JSON.parse(readFileSync(path.join(tmp, '.xray/features.json'), 'utf8')) as {
-        token_optimization?: unknown;
+        token_optimization?: { enabled: boolean };
         suit_temperament: { profile: string };
       };
       expect(features.suit_temperament.profile).toBe('strict');
-      expect(features.token_optimization).toBeUndefined();
+      expect(features.token_optimization?.enabled).toBe(true);
 
       writeFileSync(path.join(tmp, '.xray/codex.json'), `${JSON.stringify({ terms: { '1': { title: 'keep' } } }, null, 2)}\n`);
       writeFileSync(path.join(tmp, 'xray/codex.json'), 'not-json');
@@ -463,7 +456,10 @@ describe('foundry mill — mint from consumer SSOT', () => {
   it('mintAfterWear overlays plant skills onto the project hanger', () => {
     expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('fileURLToPath');
     expect(read('src/cli/commands/opencode-install.ts')).toContain('mintAfterWear');
-    expect(read('src/cli/commands/skill-install.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/skill-install.ts')).not.toContain('mintAfterWear');
+    expect(read('src/cli/commands/hermes-install.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/openclaw-install.ts')).toContain('mintAfterWear');
+    expect(read('src/integrations/grok/grok-cli.ts')).toContain('mintAfterWear');
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-wear-'));
     try {
       writeFileSync(
@@ -486,28 +482,24 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
-  it('skill hangers stay in the milled tree unless homeSkills is set', () => {
+  it('skill hangers stay in the milled tree', () => {
     const { listSkillHangers } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
-      listSkillHangers: (dir: string, params?: { homeSkills?: boolean }) => string[];
+      listSkillHangers: (dir: string) => string[];
     };
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hangers-'));
     try {
       mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills'), { recursive: true });
-      const dests = listSkillHangers(tmp, { homeSkills: false });
+      const dests = listSkillHangers(tmp);
       expect(dests.every((d) => d.startsWith(tmp))).toBe(true);
       expect(dests.some((d) => d.includes(`${path.sep}.opencode${path.sep}skills`))).toBe(true);
-      const withHome = listSkillHangers(tmp, { homeSkills: true });
-      expect(withHome.every((d) => d.startsWith(tmp))).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
 
-  it('configMode replace and invalid replace JSON leave the hanger', () => {
+  it('config mill-fill keeps mill keys; invalid plant JSON leaves the hanger', () => {
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
-      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
-        params: { configMode: string };
-      };
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
     };
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-config-'));
     try {
@@ -518,10 +510,6 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, 'xray'), { recursive: true });
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       writeFileSync(
-        path.join(tmp, 'foundry.json'),
-        `${JSON.stringify({ configMode: 'replace' }, null, 2)}\n`,
-      );
-      writeFileSync(
         path.join(tmp, '.xray/config.json'),
         `${JSON.stringify({ mill: true, keep: true }, null, 2)}\n`,
       );
@@ -529,17 +517,16 @@ describe('foundry mill — mint from consumer SSOT', () => {
         path.join(tmp, 'xray/config.json'),
         `${JSON.stringify({ mill: false }, null, 2)}\n`,
       );
-      const inventory = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inventory.params.configMode).toBe('replace');
+      mintConsumerSuit(root, tmp, () => undefined);
       const config = JSON.parse(readFileSync(path.join(tmp, '.xray/config.json'), 'utf8')) as {
         mill: boolean;
         keep?: boolean;
       };
       expect(config.mill).toBe(false);
-      expect(config.keep).toBeUndefined();
+      expect(config.keep).toBe(true);
       writeFileSync(path.join(tmp, 'xray/config.json'), 'not-json');
       mintConsumerSuit(root, tmp, () => undefined);
-      expect(JSON.parse(readFileSync(path.join(tmp, '.xray/config.json'), 'utf8')).mill).toBe(false);
+      expect(JSON.parse(readFileSync(path.join(tmp, '.xray/config.json'), 'utf8')).keep).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -566,7 +553,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       writeFileSync(
         path.join(tmp, 'foundry.json'),
-        `${JSON.stringify({ codex: 'suit/codex.json', codexMode: 'replace' }, null, 2)}\n`,
+        `${JSON.stringify({ codex: 'suit/codex.json' }, null, 2)}\n`,
       );
       writeFileSync(
         path.join(tmp, 'suit/codex.json'),
@@ -582,7 +569,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
         terms: Record<string, unknown>;
       };
       expect(codex.terms['99']).toBeTruthy();
-      expect(codex.terms['1']).toBeUndefined();
+      expect(codex.terms['1']).toBeTruthy();
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
