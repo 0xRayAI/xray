@@ -279,6 +279,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
         'CONSUMER ENFORCER\n',
       );
+      expect(readFileSync(path.join(tmp, '.opencode/agents/acme.yml'), 'utf8')).toBe('name: acme\n');
       expect(readFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'utf8')).toBe(
         'name: mill-orchestrator\n',
       );
@@ -296,6 +297,127 @@ describe('foundry mill — mint from consumer SSOT', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  it('overlays skills onto worn Grok plugin hangers; file remap does not throw', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+        garment: string;
+        skipped?: boolean;
+      };
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-floors-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
+      mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer'), { recursive: true });
+      writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      writeFileSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer/SKILL.md'), 'MILL GROK\n');
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.garment).toBe('overlay');
+      expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      expect(
+        readFileSync(path.join(tmp, '.grok/plugins/0xray/skills/acme-tool/SKILL.md'), 'utf8'),
+      ).toBe('CONSUMER ACME\n');
+      expect(
+        readFileSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer/SKILL.md'), 'utf8'),
+      ).toBe('MILL GROK\n');
+
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ skills: 'xray/codex.json' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'xray'), { recursive: true });
+      writeFileSync(path.join(tmp, 'xray/codex.json'), '{ not-a-dir }\n');
+      expect(() => mintConsumerSuit(root, tmp, () => undefined)).not.toThrow();
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('featuresMode replace and invalid plant JSON leave mill hanger', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+        params: { featuresMode: string };
+      };
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-modes-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'xray'), { recursive: true });
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ featuresMode: 'replace' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, '.xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'guided' }, token_optimization: { enabled: true } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, 'xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'strict' } }, null, 2)}\n`,
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.params.featuresMode).toBe('replace');
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray/features.json'), 'utf8')) as {
+        token_optimization?: unknown;
+        suit_temperament: { profile: string };
+      };
+      expect(features.suit_temperament.profile).toBe('strict');
+      expect(features.token_optimization).toBeUndefined();
+
+      writeFileSync(path.join(tmp, '.xray/codex.json'), `${JSON.stringify({ terms: { '1': { title: 'keep' } } }, null, 2)}\n`);
+      writeFileSync(path.join(tmp, 'xray/codex.json'), 'not-json');
+      mintConsumerSuit(root, tmp, () => undefined);
+      const codex = JSON.parse(readFileSync(path.join(tmp, '.xray/codex.json'), 'utf8')) as {
+        terms: Record<string, { title: string }>;
+      };
+      expect(codex.terms['1'].title).toBe('keep');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('skips skills overlay when plant path is the hanger', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-same-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ skills: '.opencode/skills' }, null, 2)}\n`,
+      );
+      mintConsumerSuit(root, tmp, () => undefined);
+      expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
+        'MILL GARMENT\n',
+      );
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('CLI re-wear calls mintAfterWear after mill skill sync', () => {
+    expect(read('src/cli/commands/opencode-install.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/hermes-install.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/openclaw-install.ts')).toContain('mintAfterWear');
+    expect(read('src/integrations/grok/grok-cli.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('mintConsumerSuit');
   });
 
   it('foundry.json remaps mill SSOT paths and rejects traversal', () => {

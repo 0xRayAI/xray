@@ -81,7 +81,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire enable-when-resolves.
 
-**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/*/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and `.opencode` after the garment (`codexMode: merge` unless `replace`). `foundry.json` remaps paths. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when any facet came from their tree, else `copied-onto-hanger`. Dogfood writes no inventory.
+**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and skill hangers the mill already wrote (`.opencode/skills`, project Grok plugin skills, and non-ephemeral `~/.grok` / Hermes / OpenClaw skill dirs). `codexMode` / `featuresMode` / `configMode`: `merge` unless `replace`. `foundry.json` remaps paths. CLI re-wear mints after mill skill sync. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when any facet came from their tree, else `copied-onto-hanger`. Dogfood writes no inventory.
 
 ### 3. Pre / post processors (two stacks)
 

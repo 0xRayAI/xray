@@ -7,6 +7,7 @@
  */
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const DEFAULT_PARAMS = {
@@ -16,6 +17,8 @@ const DEFAULT_PARAMS = {
   skills: "src/skills",
   agents: "src/opencode/agents",
   codexMode: "merge",
+  featuresMode: "merge",
+  configMode: "merge",
 };
 
 function deepMerge(src, dest) {
@@ -92,10 +95,43 @@ function loadFoundryParams(targetDir) {
   for (const key of ["codex", "features", "config", "skills", "agents"]) {
     if (typeof extra[key] === "string" && extra[key].trim()) params[key] = extra[key].trim();
   }
-  if (extra.codexMode === "replace" || extra.codexMode === "merge") {
-    params.codexMode = extra.codexMode;
+  for (const modeKey of ["codexMode", "featuresMode", "configMode"]) {
+    if (extra[modeKey] === "replace" || extra[modeKey] === "merge") {
+      params[modeKey] = extra[modeKey];
+    }
   }
   return params;
+}
+
+function isEphemeralInstallRoot(targetDir) {
+  const normalized = String(targetDir || "").replace(/\\/g, "/");
+  return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
+}
+
+function isDirectory(p) {
+  try {
+    return Boolean(p) && fs.existsSync(p) && fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/** Skill hangers the mill already wrote. Do not mkdir machine-global dests. */
+function listSkillHangers(targetDir) {
+  const dests = [path.join(targetDir, ".opencode", "skills")];
+  const projectGrok = path.join(targetDir, ".grok", "plugins", "0xray", "skills");
+  if (isDirectory(projectGrok)) dests.push(projectGrok);
+  if (isEphemeralInstallRoot(targetDir)) return dests;
+  const home = os.homedir();
+  for (const extra of [
+    path.join(home, ".grok", "plugins", "0xray", "skills"),
+    path.join(home, ".grok", "skills"),
+    path.join(home, ".hermes", "plugins", "xray-hermes", "skills"),
+    path.join(home, ".openclaw", "skills"),
+  ]) {
+    if (isDirectory(extra)) dests.push(extra);
+  }
+  return dests;
 }
 
 function overlayJsonFacet(src, dest, replace) {
@@ -113,15 +149,14 @@ function overlayJsonFacet(src, dest, replace) {
     fs.writeFileSync(dest, `${JSON.stringify(merged, null, 2)}\n`);
     return true;
   } catch {
-    fs.copyFileSync(src, dest);
-    return true;
+    return false;
   }
 }
 
 function listConsumerSkillNames(targetDir, skillsRel) {
   const rel = skillsRel || DEFAULT_PARAMS.skills;
   const skillsSrc = resolveInside(targetDir, rel);
-  if (!skillsSrc || !fs.existsSync(skillsSrc)) return [];
+  if (!isDirectory(skillsSrc)) return [];
   const names = [];
   for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
     if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
@@ -135,7 +170,7 @@ function listConsumerSkillNames(targetDir, skillsRel) {
 function listConsumerAgentFiles(targetDir, agentsRel) {
   const rel = agentsRel || DEFAULT_PARAMS.agents;
   const agentsSrc = resolveInside(targetDir, rel);
-  if (!agentsSrc || !fs.existsSync(agentsSrc)) return [];
+  if (!isDirectory(agentsSrc)) return [];
   return fs
     .readdirSync(agentsSrc, { withFileTypes: true })
     .filter(
@@ -153,24 +188,31 @@ function overlayConsumerTree(targetDir, log, params) {
   const agents = listConsumerAgentFiles(targetDir, agentsRel);
   const skillsSrc = resolveInside(targetDir, skillsRel);
   const agentsSrc = resolveInside(targetDir, agentsRel);
-  const skillsDest = path.join(targetDir, ".opencode", "skills");
+  const skillHangers = listSkillHangers(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
 
-  for (const name of skills) {
-    const src = path.join(skillsSrc, name, "SKILL.md");
-    const destDir = path.join(skillsDest, name);
-    fs.mkdirSync(destDir, { recursive: true });
-    fs.copyFileSync(src, path.join(destDir, "SKILL.md"));
+  for (const hanger of skillHangers) {
+    for (const name of skills) {
+      const src = path.join(skillsSrc, name, "SKILL.md");
+      const destMd = path.join(hanger, name, "SKILL.md");
+      if (path.resolve(src) === path.resolve(destMd)) continue;
+      fs.mkdirSync(path.dirname(destMd), { recursive: true });
+      fs.copyFileSync(src, destMd);
+    }
   }
   for (const file of agents) {
+    const src = path.join(agentsSrc, file);
+    const dest = path.join(agentsDest, file);
+    if (path.resolve(src) === path.resolve(dest)) continue;
     fs.mkdirSync(agentsDest, { recursive: true });
-    fs.copyFileSync(path.join(agentsSrc, file), path.join(agentsDest, file));
+    fs.copyFileSync(src, dest);
   }
 
   if (log && (skills.length > 0 || agents.length > 0)) {
-    log("foundry-mint", "Overlaid consumer skills/agents onto .opencode", "info", {
+    log("foundry-mint", "Overlaid consumer skills/agents onto hangers", "info", {
       skills: skills.length,
       agents: agents.length,
+      skillHangers: skillHangers.length,
     });
   }
   return { skills, agents, params: resolved };
@@ -191,7 +233,7 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     skills.length > 0 || agents.length > 0 || constitution || features || config;
   const garment = overlayed ? "overlay" : "copied-onto-hanger";
   const inventory = {
-    mill: { name: mill.name || "0xray", version: mill.version },
+    mill: { name: mill.name || "@0xray/foundry", version: mill.version },
     consumer: { name: consumer.name, version: consumer.version },
     garment,
     params: tree?.params || loadFoundryParams(targetDir),
@@ -235,12 +277,12 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   tree.features = overlayJsonFacet(
     resolveInside(targetDir, params.features),
     path.join(targetDir, ".xray", "features.json"),
-    false,
+    params.featuresMode === "replace",
   );
   tree.config = overlayJsonFacet(
     resolveInside(targetDir, params.config),
     path.join(targetDir, ".xray", "config.json"),
-    false,
+    params.configMode === "replace",
   );
   if (log && (tree.codex || tree.features || tree.config)) {
     log("foundry-mint", "Overlaid consumer suit facets onto .xray", "info", {
@@ -248,6 +290,8 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
       features: tree.features,
       config: tree.config,
       codexMode: params.codexMode,
+      featuresMode: params.featuresMode,
+      configMode: params.configMode,
     });
   }
   return mintConsumerFromSsot(millPackageRoot, targetDir, log, tree);
@@ -262,8 +306,10 @@ module.exports = {
   overlayConsumerTree,
   listConsumerSkillNames,
   listConsumerAgentFiles,
+  listSkillHangers,
   mintConsumerFromSsot,
   mintConsumerSuit,
   isDogfood,
+  isEphemeralInstallRoot,
   readPackageIdentity,
 };

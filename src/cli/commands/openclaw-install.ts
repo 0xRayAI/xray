@@ -5,6 +5,7 @@ import { homedir } from 'os';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
+import { mintAfterWear } from './foundry-mint-wear.js';
 import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
@@ -62,6 +63,7 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
       console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to ~/.openclaw/skills/\x1b[0m`);
     }
     frameworkLogger.log('openclaw-integration', 'skills-synced', 'info', { count: skillsCopied });
+    mintAfterWear(targetDir);
 
     const wired = wiring.wireOpenClawBridge(targetDir);
     console.log(

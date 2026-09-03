@@ -35,10 +35,10 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 | Constitution | `xray/codex.json` | `.xray/codex.json` |
 | Features / temperament | `xray/features.json` | `.xray/features.json` |
 | Config | `xray/config.json` | `.xray/config.json` |
-| Skills | `src/skills/*/SKILL.md` | `.opencode/skills/` |
+| Skills | `src/skills/<name>/SKILL.md` | `.opencode/skills/` plus worn Grok/Hermes/OpenClaw skill dirs that already exist |
 | Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` |
 
-`codexMode`: `merge` (default — their term keys win, mill fills the rest) or `replace`. Paths must stay inside the milled repo.
+`codexMode` / `featuresMode` / `configMode`: `merge` (default — their keys win, mill fills the rest) or `replace`. Paths must stay inside the milled repo. CLI re-wear (`0xray opencode|grok|hermes|openclaw install`) calls mint after mill skill sync.
 
 ## 0xRay exo
 
