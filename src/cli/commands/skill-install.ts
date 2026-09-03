@@ -3,6 +3,7 @@ import { join, basename, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import { getConfigDir } from "../../core/config-paths.js";
+import { mintAfterWear } from "./foundry-mint-wear.js";
 
 interface RegistrySource {
   name: string;
@@ -548,24 +549,25 @@ export function syncBuiltinSkills(targetSkillsDir: string, packageRoot?: string)
     join(root, "src", "skills"),
   ];
   const sourceDir = candidateDirs.find(existsSync);
-  if (!sourceDir) return 0;
-
   let copied = 0;
   try {
-    if (!existsSync(targetSkillsDir)) mkdirSync(targetSkillsDir, { recursive: true });
-    for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const skillMd = join(sourceDir, entry.name, "SKILL.md");
-      if (!existsSync(skillMd)) continue;
-      const destMd = join(targetSkillsDir, entry.name, "SKILL.md");
-      const destDir = dirname(destMd);
-      if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
-      if (existsSync(destMd) && statSync(skillMd).mtime <= statSync(destMd).mtime) continue;
-      copyFileSync(skillMd, destMd);
-      copied++;
+    if (sourceDir) {
+      if (!existsSync(targetSkillsDir)) mkdirSync(targetSkillsDir, { recursive: true });
+      for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const skillMd = join(sourceDir, entry.name, "SKILL.md");
+        if (!existsSync(skillMd)) continue;
+        const destMd = join(targetSkillsDir, entry.name, "SKILL.md");
+        const destDir = dirname(destMd);
+        if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
+        if (existsSync(destMd) && statSync(skillMd).mtime <= statSync(destMd).mtime) continue;
+        copyFileSync(skillMd, destMd);
+        copied++;
+      }
     }
   } catch {
     // best-effort
   }
+  mintAfterWear(process.cwd());
   return copied;
 }

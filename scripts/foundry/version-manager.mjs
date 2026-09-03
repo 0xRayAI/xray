@@ -7,7 +7,7 @@
  * Does NOT rewrite markdown prose (validate-release-docs.mjs verifies).
  *
  * Usage:
- *   node scripts/node/version-manager.mjs --artifacts-only
+ *   npx @0xray/foundry stamp
  */
 
 import fs from 'fs';
@@ -399,9 +399,9 @@ function runReleaseDocsValidation() {
 
 function refuseBump(reason) {
   process.stderr.write(`${reason}\n`);
-  process.stderr.write('One bumper: node scripts/node/reconcile-version.mjs [patch|minor|major] --apply\n');
-  process.stderr.write('Then stamp:  node scripts/node/version-manager.mjs --artifacts-only\n');
-  process.stderr.write('Ship:        node scripts/node/release.mjs [patch|minor|major]\n');
+  process.stderr.write('One bumper: npx @0xray/foundry reconcile [patch|minor|major] --apply\n');
+  process.stderr.write('Then stamp:  npx @0xray/foundry stamp\n');
+  process.stderr.write('Ship:        npx @0xray/foundry release [patch|minor|major]\n');
   process.exit(1);
 }
 
@@ -410,7 +410,7 @@ function main() {
 
   if (args.includes('--help') || args.includes('-h')) {
     process.stdout.write(`Current version: ${getCurrentVersion()}\n`);
-    process.stdout.write('Usage: node scripts/node/version-manager.mjs --artifacts-only\n');
+    process.stdout.write('Usage: npx @0xray/foundry stamp\n');
     process.stdout.write('Bump is refused. Use reconcile-version.mjs --apply, then this stamper.\n');
     process.exit(0);
   }

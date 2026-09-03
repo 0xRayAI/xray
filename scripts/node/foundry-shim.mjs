@@ -9,8 +9,7 @@ export function millMain(importMetaUrl, millBasename) {
     return;
   }
   const mill = path.resolve(path.dirname(here), "../foundry", millBasename);
-  const exoRoot = path.resolve(path.dirname(here), "../..");
-  const root = process.env.FOUNDRY_ROOT || exoRoot;
+  const root = process.env.FOUNDRY_ROOT || process.cwd();
   const result = spawnSync(process.execPath, [mill, ...process.argv.slice(2)], {
     stdio: "inherit",
     cwd: root,

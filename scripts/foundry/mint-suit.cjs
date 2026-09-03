@@ -16,6 +16,7 @@ const DEFAULT_PARAMS = {
   config: "xray/config.json",
   skills: "src/skills",
   agents: "src/opencode/agents",
+  agentsCard: "xray/AGENTS.md",
   codexMode: "merge",
   featuresMode: "merge",
   configMode: "merge",
@@ -93,7 +94,7 @@ function loadFoundryParams(targetDir) {
     break;
   }
   const params = { ...DEFAULT_PARAMS };
-  for (const key of ["codex", "features", "config", "skills", "agents"]) {
+  for (const key of ["codex", "features", "config", "skills", "agents", "agentsCard"]) {
     if (typeof extra[key] === "string" && extra[key].trim()) params[key] = extra[key].trim();
   }
   for (const modeKey of ["codexMode", "featuresMode", "configMode"]) {
@@ -187,6 +188,20 @@ function listConsumerAgentFiles(targetDir, agentsRel) {
     .map((entry) => entry.name);
 }
 
+const MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
+
+function overlayAgentsCard(targetDir, params) {
+  const src = resolveInside(targetDir, params.agentsCard || DEFAULT_PARAMS.agentsCard);
+  if (!src || !fs.existsSync(src) || !fs.statSync(src).isFile()) return false;
+  const dest = path.join(targetDir, "AGENTS.md");
+  if (path.resolve(src) === path.resolve(dest)) return false;
+  if (fs.existsSync(dest) && !fs.readFileSync(dest, "utf8").includes(MANAGED_AGENTS_MARKER)) {
+    return false;
+  }
+  fs.copyFileSync(src, dest);
+  return true;
+}
+
 function overlayConsumerTree(targetDir, log, params) {
   const resolved = params || loadFoundryParams(targetDir);
   const skillsRel = resolved.skills;
@@ -236,8 +251,14 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   const constitution = Boolean(tree?.codex);
   const features = Boolean(tree?.features);
   const config = Boolean(tree?.config);
+  const agentsCard = Boolean(tree?.agentsCard);
   const overlayed =
-    skills.length > 0 || agents.length > 0 || constitution || features || config;
+    skills.length > 0 ||
+    agents.length > 0 ||
+    constitution ||
+    features ||
+    config ||
+    agentsCard;
   const garment = overlayed ? "overlay" : "copied-onto-hanger";
   const inventory = {
     mill: { name: mill.name || "@0xray/foundry", version: mill.version },
@@ -249,6 +270,7 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
       constitution,
       features,
       config,
+      agentsCard,
       skills,
       agents,
     },
@@ -291,6 +313,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     path.join(targetDir, ".xray", "config.json"),
     params.configMode === "replace",
   );
+  tree.agentsCard = overlayAgentsCard(targetDir, params);
   if (log && (tree.codex || tree.features || tree.config)) {
     log("foundry-mint", "Overlaid consumer suit facets onto .xray", "info", {
       constitution: tree.codex,
@@ -310,6 +333,7 @@ module.exports = {
   loadFoundryParams,
   resolveInside,
   overlayJsonFacet,
+  overlayAgentsCard,
   overlayConsumerTree,
   listConsumerSkillNames,
   listConsumerAgentFiles,

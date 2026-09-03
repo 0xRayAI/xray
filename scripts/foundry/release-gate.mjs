@@ -9,8 +9,8 @@
  *   --skip-docs   skip release docs validation (not recommended for publish)
  *
  * Usage:
- *   node scripts/node/release-gate.mjs
- *   node scripts/node/release-gate.mjs --verify-only
+ *   npx @0xray/foundry gate
+ *   npx @0xray/foundry gate --verify-only
  */
 
 import { execSync } from "child_process";

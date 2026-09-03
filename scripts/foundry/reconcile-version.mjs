@@ -5,10 +5,10 @@
  * Sources: npm registry, package.json, latest git tag.
  *
  * Usage:
- *   node scripts/node/reconcile-version.mjs              # report
- *   node scripts/node/reconcile-version.mjs --check        # fail if not publish-ready
- *   node scripts/node/reconcile-version.mjs patch        # print next patch target
- *   node scripts/node/reconcile-version.mjs patch --apply # write package.json
+ *   npx @0xray/foundry reconcile
+ *   npx @0xray/foundry reconcile --check
+ *   npx @0xray/foundry reconcile patch
+ *   npx @0xray/foundry reconcile patch --apply
  */
 
 import { execSync } from "child_process";
@@ -126,7 +126,7 @@ function main() {
 
   // Strict checks for release gate / pre-tag
   if (compare(local, npm) <= 0) {
-    fail(`package.json (${local}) must be > npm (${npm}). Run: node scripts/foundry/reconcile-version.mjs patch --apply`);
+    fail(`package.json (${local}) must be > npm (${npm}). Run: npx @0xray/foundry reconcile patch --apply`);
   }
 
   if (tag && compare(local, tag) < 0) {

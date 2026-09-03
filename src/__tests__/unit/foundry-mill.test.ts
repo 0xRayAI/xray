@@ -32,7 +32,7 @@ describe('foundry mill — one bumper', () => {
         encoding: 'utf8',
       });
       expect(r.status, arg).not.toBe(0);
-      expect(`${r.stdout}${r.stderr}`).toMatch(/reconcile-version/);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/reconcile/);
     }
   });
 
@@ -223,6 +223,52 @@ describe('foundry mill — mint from consumer SSOT', () => {
     const body = src.slice(start, end);
     expect(body.indexOf('installAllBridges')).toBeGreaterThan(-1);
     expect(body.indexOf('mintConsumerSuit')).toBeGreaterThan(body.indexOf('installAllBridges'));
+
+    const { runPostinstall } = requireCjs(path.join(root, 'scripts/node/postinstall.cjs')) as {
+      runPostinstall: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
+    };
+    const mill = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-millpkg-'));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-consumer-'));
+    try {
+      writeFileSync(
+        path.join(mill, 'package.json'),
+        `${JSON.stringify({ name: '0xray', version: '4.0.1' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(mill, 'AGENTS-consumer.md'),
+        `# Agents\n\n**{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}\n\n<!-- 0xray-managed -->\n`,
+      );
+      mkdirSync(path.join(mill, 'xray'), { recursive: true });
+      writeFileSync(
+        path.join(mill, 'xray/codex.json'),
+        `${JSON.stringify({ terms: { '1': { title: 'mill' } } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(mill, 'xray/features.json'),
+        `${JSON.stringify({ version: '4.0.1' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(consumer, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '2.3.4' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(consumer, 'src/skills/acme-tool'), { recursive: true });
+      writeFileSync(path.join(consumer, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      mkdirSync(path.join(consumer, 'xray'), { recursive: true });
+      writeFileSync(path.join(consumer, 'xray/AGENTS.md'), '# Acme card\n');
+      runPostinstall(mill, consumer, () => undefined);
+      expect(readFileSync(path.join(consumer, 'AGENTS.md'), 'utf8')).toContain('Acme card');
+      expect(readFileSync(path.join(consumer, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      const receipt = JSON.parse(
+        readFileSync(path.join(consumer, '.xray/foundry-inventory.json'), 'utf8'),
+      ) as { garment: string; facets: { agentsCard: boolean } };
+      expect(receipt.garment).toBe('overlay');
+      expect(receipt.facets.agentsCard).toBe(true);
+    } finally {
+      rmSync(mill, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
+    }
   });
 
   it('overlays skills, agents, and constitution onto the hanger', () => {
@@ -417,6 +463,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
   it('mintAfterWear overlays plant skills onto the project hanger', () => {
     expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('fileURLToPath');
     expect(read('src/cli/commands/opencode-install.ts')).toContain('mintAfterWear');
+    expect(read('src/cli/commands/skill-install.ts')).toContain('mintAfterWear');
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-wear-'));
     try {
       writeFileSync(
@@ -556,6 +603,12 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(result.skipped).toBe(true);
       expect(result.garment).toBe('dogfood');
       expect(existsSync(path.join(tmp, '.xray/foundry-inventory.json'))).toBe(false);
+      const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+        mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+          skipped?: boolean;
+        };
+      };
+      expect(mintConsumerSuit(tmp, tmp, () => undefined).skipped).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

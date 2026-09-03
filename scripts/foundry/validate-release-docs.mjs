@@ -6,8 +6,8 @@
  * guides match package.json version and live framework counts before tag/publish.
  *
  * Usage:
- *   node scripts/node/validate-release-docs.mjs
- *   node scripts/node/validate-release-docs.mjs --json
+ *   npx @0xray/foundry docs-check
+ *   npx @0xray/foundry docs-check --json
  */
 
 import fs from 'fs';
@@ -296,7 +296,7 @@ function main() {
       console.error('❌ Release docs validation FAILED:\n');
       for (const e of result.errors) console.error(`   • ${e}`);
       console.error('\nFix docs then run: npm run version:sync');
-      console.error('Or: node scripts/node/validate-release-docs.mjs\n');
+      console.error('Or: npx @0xray/foundry docs-check\n');
     }
     process.exit(1);
   }

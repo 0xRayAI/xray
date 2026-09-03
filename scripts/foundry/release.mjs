@@ -12,8 +12,8 @@
  * 7. Tag → push tag (only after successful publish)
  *
  * Usage:
- *   node scripts/foundry/release.mjs patch|minor|major [--dry-run]
- *   node scripts/foundry/release.mjs --publish-only [--dry-run]
+ *   npx @0xray/foundry release [patch|minor|major] [--dry-run]
+ *   npx @0xray/foundry release --publish-only [--dry-run]
  */
 
 import { execSync } from "child_process";
@@ -131,8 +131,8 @@ async function main() {
   }
 
   if (!releaseType || !["major", "minor", "patch"].includes(releaseType)) {
-    process.stderr.write("Usage: node scripts/foundry/release.mjs [patch|minor|major] [--dry-run]\n");
-    process.stderr.write("       node scripts/foundry/release.mjs --publish-only [--dry-run]\n");
+    process.stderr.write("Usage: npx @0xray/foundry release [patch|minor|major] [--dry-run]\n");
+    process.stderr.write("       npx @0xray/foundry release --publish-only [--dry-run]\n");
     process.exit(1);
   }
 

@@ -36,9 +36,10 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 | Features / temperament | `xray/features.json` | `.xray/features.json` |
 | Config | `xray/config.json` | `.xray/config.json` |
 | Skills | `src/skills/<name>/SKILL.md` | `.opencode/skills/` and project `.grok/plugins/0xray/skills` if that dir exists |
-| Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` |
+| Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` (OpenCode hangar; other floors do not read mill YML agents) |
+| Agents card | `xray/AGENTS.md` | `AGENTS.md` if mill-managed |
 
-`codexMode` / `featuresMode` / `configMode`: `merge` (default — their keys win, mill fills the rest) or `replace`. Paths must stay inside the milled repo. Home skill dirs (`~/.grok/skills`, Hermes, OpenClaw) are **off** unless `foundry.json` sets `"homeSkills": true`. CLI re-wear (`0xray opencode|grok|hermes|openclaw install`) calls mint after mill skill sync.
+**Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name or set `*Mode: replace`. Home skill dirs (`~/.grok/skills`, Hermes, OpenClaw) are **off** unless `foundry.json` sets `"homeSkills": true`. CLI re-wear and `syncBuiltinSkills` remint after mill skill copy.
 
 ## Publish this mill
 
