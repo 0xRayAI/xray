@@ -27,4 +27,11 @@ describe('release pipeline', () => {
     const src = readFileSync(path.join(root, 'scripts/node/reconcile-version.mjs'), 'utf8');
     expect(src).not.toContain('tag v${tag} exists but npm is only');
   });
+
+  it('canonical release.mjs bumps via reconcile, not version-manager', () => {
+    const src = readFileSync(path.join(root, 'scripts/node/release.mjs'), 'utf8');
+    expect(src).toContain('reconcile-version.mjs');
+    expect(src).toContain('version-manager.mjs --artifacts-only');
+    expect(src).not.toContain('version-manager.mjs patch');
+  });
 });

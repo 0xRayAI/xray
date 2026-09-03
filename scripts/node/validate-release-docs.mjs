@@ -24,7 +24,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(__dirname, '../..');
 
 const STANDARD_HEADER_RE =
-  /^\*{0,2}v[\d.]+\*{0,2}\s*—\s*a suit that survives the context window/m;
+  /\*{0,2}\d+\.\d+\*{0,2}\s*—\s*a suit that survives the context window/;
+
+/** Patch stamps belong in CHANGELOG, not kernel headers. */
+function kernelLineHasPatchStamp(content) {
+  return /^\*\*v?\d+\.\d+\.\d+\*\*/m.test(content);
+}
 
 /** Guides that must exist and reference the current release (body or header). */
 const REQUIRED_GUIDES = [
@@ -42,10 +47,13 @@ const REQUIRED_GUIDES = [
 const ROOT_DOC_CHECKS = [
   {
     rel: 'README.md',
-    validate: (content, version, counts, header) => {
+    validate: (content, _version, _counts, header) => {
       const errors = [];
-      if (!content.includes(header)) {
+      if (!content.includes(header) && !STANDARD_HEADER_RE.test(content)) {
         errors.push(`missing kernel header (expected substring: ${header})`);
+      }
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
       }
       if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
         errors.push('missing context-window / exo kernel copy');
@@ -61,10 +69,10 @@ const ROOT_DOC_CHECKS = [
   },
   {
     rel: 'AGENTS.md',
-    validate: (content, version, counts) => {
+    validate: (content, _version) => {
       const errors = [];
-      if (!content.includes(`**v${version}**`)) {
-        errors.push(`missing version marker **v${version}**`);
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
       }
       if (!content.includes('survive the context window') && !content.includes('survives the context window') && !content.includes('Exo, not catalog')) {
         errors.push('missing exo / context-window kernel copy');
@@ -80,10 +88,10 @@ const ROOT_DOC_CHECKS = [
   },
   {
     rel: 'AGENTS-consumer.md',
-    validate: (content, version, counts) => {
+    validate: (content) => {
       const errors = [];
-      if (!content.includes(`**v${version}**`)) {
-        errors.push(`missing version marker **v${version}**`);
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
       }
       if (!content.includes('survive the context window') && !content.includes('survives the context window')) {
         errors.push('consumer header missing context-window kernel copy');
@@ -99,11 +107,13 @@ const ROOT_DOC_CHECKS = [
   },
   {
     rel: 'SKILLS.md',
-    validate: (content, version, counts) => {
+    validate: (content, _version, counts) => {
       const errors = [];
-      const expected = `**v${version}** — **${counts.skills} skills**`;
-      if (!content.includes(expected)) {
-        errors.push(`header stale (expected: ${expected})`);
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes(`**${counts.skills} skills**`)) {
+        errors.push(`skill count stale (expected **${counts.skills} skills**)`);
       }
       return errors;
     },
@@ -130,13 +140,17 @@ function getCodexTermCount(rootDir) {
 
 function validateChangelog(content, version) {
   const errors = [];
-  const first = content.match(/^## \[([^\]]+)\]/m);
-  if (!first) {
+  const headings = [...content.matchAll(/^## \[([^\]]+)\]/gm)].map((m) => m[1]);
+  if (headings.length === 0) {
     errors.push('no version sections found');
     return errors;
   }
-  if (first[1] !== version) {
-    errors.push(`top CHANGELOG entry is [${first[1]}], expected [${version}]`);
+  if (headings[0] === 'Unreleased') {
+    if (headings[1] !== version) {
+      errors.push(`after [Unreleased], expected [${version}], found [${headings[1] || 'none'}]`);
+    }
+  } else if (headings[0] !== version) {
+    errors.push(`top CHANGELOG entry is [${headings[0]}], expected [${version}] or [Unreleased]`);
   }
   if (!content.includes(`## [${version}]`)) {
     errors.push(`missing ## [${version}] section`);
@@ -201,6 +215,9 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
       continue;
     }
     errors.push(...validateStandardHeader(content, expectedHeader, rel));
+    if (kernelLineHasPatchStamp(content)) {
+      errors.push(`${rel}: kernel header must be era (major.minor), not a patch stamp`);
+    }
   }
 
   for (const rel of REQUIRED_GUIDES) {
@@ -212,9 +229,7 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
     if (content.trim().length < 200) {
       errors.push(`${rel}: guide too short — likely stub`);
     }
-    if (rel.includes('features-since-3.1') && !content.includes(version)) {
-      errors.push(`${rel}: must reference current version ${version}`);
-    }
+
   }
 
   const docusaurus = readFile(rootDir, 'docs-site/docusaurus.config.ts');

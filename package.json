@@ -61,7 +61,7 @@
   },
   "scripts": {
     "prepublishOnly": "node scripts/node/reconcile-version.mjs --check && npm run prepare-consumer && npm run build:all && find dist -name '*.js.map' -o -name '*.d.ts.map' | xargs rm -f 2>/dev/null || true",
-    "version:bump": "node scripts/node/version-manager.mjs",
+    "version:bump": "node scripts/node/reconcile-version.mjs",
     "version": "node scripts/node/version-manager.mjs",
     "prebuild": "rm -rf dist tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo",
     "build": "tsc && chmod +x dist/cli/index.js && mkdir -p dist/public dist/scripts && cp -r public/* dist/public/ && cp scripts/hooks/pre-command dist/scripts/ && cp scripts/hooks/pre-command.mjs dist/scripts/ && cp README.md AGENTS.md SKILLS.md CHANGELOG.md LICENSE .gitignore.default dist/ && find src -name '*.mjs' ! -path '*/__tests__/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done && for dir in skills integrations mcps; do find src/$dir -type f ! -name '*.ts' ! -path '*/.pytest_cache/*' | while read f; do tgt=\"dist/${f#src/}\"; mkdir -p \"$(dirname $tgt)\"; cp \"$f\" \"$tgt\"; done; done && mkdir -p dist/plugin && (find dist/plugin -name '*codex-injection*.js' -exec cp {} dist/plugin/xray-codex-injection.js \\; 2>/dev/null || true) && cp -r src/opencode/ .opencode/ && mkdir -p .opencode/skills && cp -R src/skills/. .opencode/skills/ && mkdir -p .xray && for f in codex.json features.json features.schema.json config.json; do cp xray/$f .xray/$f 2>/dev/null || true; done",
@@ -112,7 +112,7 @@
     "build:run": "node scripts/build/utils.js build",
     "build:clean": "node scripts/build/utils.js clean",
     "build:verify": "node scripts/build/utils.js verify",
-    "enforce:versions": "bash scripts/node/enforce-version-compliance.sh",
+    "enforce:versions": "node scripts/node/validate-release-docs.mjs",
     "version:sync": "node scripts/node/version-manager.mjs --artifacts-only",
     "release": "node scripts/node/release.mjs patch",
     "release:minor": "node scripts/node/release.mjs minor",

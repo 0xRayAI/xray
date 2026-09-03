@@ -8,7 +8,7 @@ Public thesis: [temperament and synchronicity move the stack from toolsets to fa
 
 ![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
 
-This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md). Station card for the next session: [4.0 now](./v4-now.md). What's still open: [4.0 left](./v4-left.md).
+This page is the north star. Mechanism lives in [suit temperament](../guides/v3-temperament.md) and [4.0 from v2](./v3-from-v2.md). Fat vs bone is the [trim list](./v3-museum.md). Station card for the next session: [4.0 now](./v4-now.md). Mill vs exo: [4.0 foundry](./v4-foundry.md). What's still open: [4.0 left](./v4-left.md).
 
 ## What 4.0 is (roots)
 
@@ -47,6 +47,7 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 |---|---|
 | **Kernel, not catalog** | Ship the gate, temperament, four adapters, Repertoire hookup. Stop selling 42/45/7 as the product. |
 | **Factory wear** | `npm i 0xray` lights constitution on this host in one shot. Stranger install is the release gate. |
+| **Foundry vs exo** | Wear is the garment. The mill that cuts it (bridges, reconcile, gate, stamps) stays unpublished as a product until it can mint from *their* repo. See [foundry](./v4-foundry.md). |
 | **Synchronicity as muscle** | Repertoire *is* the gap-filler for handoffs and compaction. 4.0 vendors `@0xray/repertoire@0.2.0` and ships `memory_routing.enabled: true`. Opt out with `"enabled": false, "provider": "repertoire"`. |
 | **Host-native inference** | Use the plant’s existing line (OpenCode CLI, Grok OAuth, whatever the floor already runs). Do not add an 8th MCP. |
 | **Codex 69 as factory law** | No new MCP/skill/handler. Trim duplicate conductors on the museum list. “Trim later” is now if this page is true. |

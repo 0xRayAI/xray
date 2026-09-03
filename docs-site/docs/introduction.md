@@ -1,6 +1,6 @@
 # 0xRay — exo for coding agents
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Not a catalog of 42 agents. The product is the skeleton you wear.
 

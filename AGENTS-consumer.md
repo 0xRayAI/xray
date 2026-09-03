@@ -4,7 +4,7 @@
 
 Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 

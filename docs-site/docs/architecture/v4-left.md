@@ -4,9 +4,9 @@ sidebar_label: 4.0 left
 
 # 4.0 left
 
-What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md).
+What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
 
-Product **4.0.0** is on npm. Tag `v4.0.0` is on `0xRayAI/xray`. Do not run `release:major` (that becomes 5.0.0). Next upload: `npm run release:npm`.
+Product **4.0.1** is on npm. Tag `v4.0.1` is on `0xRayAI/xray`. Do not run `release:major` (that becomes 5.0.0). Foundry split is named, not extracted.
 
 ## Done (worn and shipped as 4.0.0)
 
@@ -61,13 +61,12 @@ Closed on this plant and shipped as **0xray@4.0.0**:
 
 ## Left — ship (maintainer)
 
-`npm view 0xray version` is **4.0.0**. Tag `v4.0.0` is on `0xRayAI/xray`. Repertoire lives at `0xRayAI/repertoire`.
+`npm view 0xray version` is **4.0.1**. Tag `v4.0.1` is on `0xRayAI/xray`. Repertoire lives at `0xRayAI/repertoire`.
 
 Still open:
 
-1. Land the release-gate follow-up (this plant): smoke expects organ **on**; `scripts.publish` lifecycle removed; reconcile allows tagged-but-unpublished. Use `npm run release:npm` for the next upload — never `release:major`.
+1. **Foundry mill cuts** — one bumper + docs verify-not-write + exo-cannot-ship landed on this plant ([4.0 foundry](./v4-foundry.md)). Do not extract `@0xray/foundry`. Do not add a mill MCP. Mint-from-their-SSOT is later.
 2. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
-3. Mark [4.0 now](./v4-now.md) shipped after the gate follow-up is on `main`.
 
 ## Do not
 
@@ -79,4 +78,4 @@ Still open:
 
 ## One line
 
-**Suit is worn and attested. npm is 4.0.0. Remaining: land the release-gate follow-up on main; optional `@0xray/repertoire@0.2.0` npm (4.0 already vendors 0.2).**
+**Suit is worn and attested. npm is 4.0.1. Foundry is named. Remaining: one bumper, docs verify-not-write; do not extract a mill package.**

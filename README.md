@@ -1,6 +1,6 @@
 # xray — exo for coding agents
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 ![0xRay v4 exo — CONSTITUTION ON](docs-site/static/img/exo-skeleton-v4.jpg)
 

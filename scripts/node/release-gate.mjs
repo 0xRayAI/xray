@@ -48,18 +48,21 @@ function main() {
         step("4/5 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
       }
     } else {
-      step("1/6 Build", "npm run build");
-      step("2/6 Tests", "npm test");
+      step("1/7 Build", "npm run build");
+      step("2/7 Tests", "npm test");
+      if (!skipDocs) {
+        step("3/7 Release docs", "node scripts/node/validate-release-docs.mjs");
+      }
       step(
-        "3/6 Consumer hook verifiers",
+        "4/7 Consumer hook verifiers",
         "npm run verify:pre-commit-diff && npm run verify:pre-push-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-hermes-session-start.mjs && node scripts/mjs/verify-confer-core.mjs && npm run verify:user-aside && npm run build && node scripts/mjs/verify-pipeline-facets.mjs --package-only",
       );
       step(
-        "4/6 Plugin infrastructure",
+        "5/7 Plugin infrastructure",
         "node scripts/test/validate-plugins-e2e.cjs --structural-only",
       );
       if (!skipSmoke) {
-        step("5/6 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
+        step("6/7 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 
