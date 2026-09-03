@@ -139,7 +139,8 @@ describe('foundry mill — gate and scripts', () => {
     expect(mill.name).toBe('@0xray/foundry');
     expect(mill.private).not.toBe(true);
     expect(mill.version).toBe('0.1.0');
-    expect(mill.bin).toBe('./cli.mjs');
+    expect(mill.bin).toEqual({ '0xray-foundry': './cli.js' });
+    expect(existsSync(path.join(root, 'scripts/foundry/cli.js'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/cli.mjs'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/README.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/release.mjs'))).toBe(true);

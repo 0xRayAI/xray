@@ -17,9 +17,12 @@
   "publishConfig": {
     "access": "public"
   },
-  "bin": "./cli.mjs",
+  "bin": {
+    "0xray-foundry": "./cli.js"
+  },
   "files": [
     "*.mjs",
+    "cli.js",
     "README.md",
     "LICENSE"
   ],
