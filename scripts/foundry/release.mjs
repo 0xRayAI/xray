@@ -66,6 +66,14 @@ function packageName() {
   return name;
 }
 
+function npmPublishCmd() {
+  const pkg = readRootPackage(rootDir);
+  if (isXrayExoRepo(rootDir) || pkg.name === "@0xray/foundry") {
+    return "npm publish --access public";
+  }
+  return "npm publish";
+}
+
 function currentBranch() {
   return execSync("git rev-parse --abbrev-ref HEAD", { cwd: rootDir, encoding: "utf-8" }).trim();
 }
@@ -85,19 +93,20 @@ function npmVersionPublished(version) {
 
 function publishIdempotent(version) {
   if (dryRun) {
-    console.log(`  would: npm publish --access public (check ${packageName()}@${version} first)`);
+    console.log(`  would: ${npmPublishCmd()} (check ${packageName()}@${version} first)`);
     return;
   }
   if (npmVersionPublished(version)) {
     console.log(`ℹ️  ${packageName()}@${version} already on npm — skipping publish`);
     return;
   }
-  execSync("npm publish --access public", { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
+  execSync(npmPublishCmd(), { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
   console.log(`✅ Published ${packageName()}@${version}`);
 }
 
 async function main() {
   if (publishOnly) {
+    packageName();
     const version = readVersion();
     runMill("release-gate.mjs", [], "release gate");
     if (isXrayExoRepo(rootDir)) {

@@ -9,6 +9,7 @@ import { FOUNDRY_EXO_CANNOT_SHIP, executeReleaseWorkflow } from '../../enforceme
 import { VersionComplianceProcessor } from '../../processors/implementations/version-compliance-processor.js';
 import { eraFromVersion, buildDocsHeader } from '../../../scripts/foundry/version-manager.mjs';
 import { validateReleaseDocs } from '../../../scripts/foundry/validate-release-docs.mjs';
+import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 
 const requireCjs = createRequire(import.meta.url);
 
@@ -143,6 +144,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/cli.js'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/cli.mjs'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/README.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/CHANGELOG.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/release.mjs'))).toBe(true);
     expect(read('scripts/foundry/release.mjs')).toContain('--publish-only');
   });
@@ -412,12 +414,88 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
-  it('CLI re-wear calls mintAfterWear after mill skill sync', () => {
+  it('mintAfterWear overlays plant skills onto the project hanger', () => {
+    expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('fileURLToPath');
     expect(read('src/cli/commands/opencode-install.ts')).toContain('mintAfterWear');
-    expect(read('src/cli/commands/hermes-install.ts')).toContain('mintAfterWear');
-    expect(read('src/cli/commands/openclaw-install.ts')).toContain('mintAfterWear');
-    expect(read('src/integrations/grok/grok-cli.ts')).toContain('mintAfterWear');
-    expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('mintConsumerSuit');
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-wear-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
+      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
+      writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
+      mintAfterWear(tmp);
+      expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
+        'MILL GARMENT\n',
+      );
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('skill hangers stay in the milled tree unless homeSkills is set', () => {
+    const { listSkillHangers } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      listSkillHangers: (dir: string, params?: { homeSkills?: boolean }) => string[];
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hangers-'));
+    try {
+      mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills'), { recursive: true });
+      const dests = listSkillHangers(tmp, { homeSkills: false });
+      expect(dests.every((d) => d.startsWith(tmp))).toBe(true);
+      expect(dests.some((d) => d.includes(`${path.sep}.opencode${path.sep}skills`))).toBe(true);
+      const withHome = listSkillHangers(tmp, { homeSkills: true });
+      expect(withHome.every((d) => d.startsWith(tmp))).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('configMode replace and invalid replace JSON leave the hanger', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+        params: { configMode: string };
+      };
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-config-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'xray'), { recursive: true });
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ configMode: 'replace' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, '.xray/config.json'),
+        `${JSON.stringify({ mill: true, keep: true }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, 'xray/config.json'),
+        `${JSON.stringify({ mill: false }, null, 2)}\n`,
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.params.configMode).toBe('replace');
+      const config = JSON.parse(readFileSync(path.join(tmp, '.xray/config.json'), 'utf8')) as {
+        mill: boolean;
+        keep?: boolean;
+      };
+      expect(config.mill).toBe(false);
+      expect(config.keep).toBeUndefined();
+      writeFileSync(path.join(tmp, 'xray/config.json'), 'not-json');
+      mintConsumerSuit(root, tmp, () => undefined);
+      expect(JSON.parse(readFileSync(path.join(tmp, '.xray/config.json'), 'utf8')).mill).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('foundry.json remaps mill SSOT paths and rejects traversal', () => {
@@ -520,6 +598,24 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(readFileSync(path.join(tmp, 'CHANGELOG.md'), 'utf8')).toContain('## [9.9.9]');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+
+    const nameless = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-noname-'));
+    try {
+      writeFileSync(path.join(nameless, 'package.json'), `${JSON.stringify({ version: '1.0.0' }, null, 2)}\n`);
+      const pub = spawnSync(
+        process.execPath,
+        ['scripts/foundry/release.mjs', '--publish-only', '--dry-run'],
+        {
+          cwd: root,
+          encoding: 'utf8',
+          env: { ...process.env, FOUNDRY_ROOT: nameless },
+        },
+      );
+      expect(pub.status, `${pub.stdout}${pub.stderr}`).not.toBe(0);
+      expect(`${pub.stdout}${pub.stderr}`).toMatch(/name is required/);
+    } finally {
+      rmSync(nameless, { recursive: true, force: true });
     }
   });
 });

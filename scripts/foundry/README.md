@@ -35,10 +35,20 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 | Constitution | `xray/codex.json` | `.xray/codex.json` |
 | Features / temperament | `xray/features.json` | `.xray/features.json` |
 | Config | `xray/config.json` | `.xray/config.json` |
-| Skills | `src/skills/<name>/SKILL.md` | `.opencode/skills/` plus worn Grok/Hermes/OpenClaw skill dirs that already exist |
+| Skills | `src/skills/<name>/SKILL.md` | `.opencode/skills/` and project `.grok/plugins/0xray/skills` if that dir exists |
 | Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` |
 
-`codexMode` / `featuresMode` / `configMode`: `merge` (default — their keys win, mill fills the rest) or `replace`. Paths must stay inside the milled repo. CLI re-wear (`0xray opencode|grok|hermes|openclaw install`) calls mint after mill skill sync.
+`codexMode` / `featuresMode` / `configMode`: `merge` (default — their keys win, mill fills the rest) or `replace`. Paths must stay inside the milled repo. Home skill dirs (`~/.grok/skills`, Hermes, OpenClaw) are **off** unless `foundry.json` sets `"homeSkills": true`. CLI re-wear (`0xray opencode|grok|hermes|openclaw install`) calls mint after mill skill sync.
+
+## Publish this mill
+
+From **this directory**, not the 0xray repo root:
+
+```bash
+cd scripts/foundry && npm publish --access public
+```
+
+Repo-root `npm publish` is `0xray`. `npx @0xray/foundry release` publishes the **milled cwd** package (their `publishConfig`; `--access public` only for `0xray` and `@0xray/foundry`).
 
 ## 0xRay exo
 

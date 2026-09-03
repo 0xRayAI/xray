@@ -1,9 +1,10 @@
 import path from "path";
 import { createRequire } from "module";
+import { fileURLToPath } from "url";
 import { frameworkLogger } from "../../core/framework-logger.js";
 
 const require = createRequire(import.meta.url);
-const packageRoot = path.join(path.dirname(new URL(import.meta.url).pathname), "..", "..", "..");
+const packageRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 /** Re-apply mill overlay after CLI re-wear copies mill skills. */
 export function mintAfterWear(targetDir: string): void {

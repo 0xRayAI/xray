@@ -19,6 +19,7 @@ const DEFAULT_PARAMS = {
   codexMode: "merge",
   featuresMode: "merge",
   configMode: "merge",
+  homeSkills: false,
 };
 
 function deepMerge(src, dest) {
@@ -100,6 +101,7 @@ function loadFoundryParams(targetDir) {
       params[modeKey] = extra[modeKey];
     }
   }
+  if (extra.homeSkills === true) params.homeSkills = true;
   return params;
 }
 
@@ -116,12 +118,12 @@ function isDirectory(p) {
   }
 }
 
-/** Skill hangers the mill already wrote. Do not mkdir machine-global dests. */
-function listSkillHangers(targetDir) {
+/** Project hangers only unless foundry.json homeSkills: true. */
+function listSkillHangers(targetDir, params) {
   const dests = [path.join(targetDir, ".opencode", "skills")];
   const projectGrok = path.join(targetDir, ".grok", "plugins", "0xray", "skills");
   if (isDirectory(projectGrok)) dests.push(projectGrok);
-  if (isEphemeralInstallRoot(targetDir)) return dests;
+  if (!params?.homeSkills || isEphemeralInstallRoot(targetDir)) return dests;
   const home = os.homedir();
   for (const extra of [
     path.join(home, ".grok", "plugins", "0xray", "skills"),
@@ -137,14 +139,19 @@ function listSkillHangers(targetDir) {
 function overlayJsonFacet(src, dest, replace) {
   if (!src || !fs.existsSync(src) || !fs.statSync(src).isFile()) return false;
   if (path.resolve(src) === path.resolve(dest)) return false;
+  let theirs;
+  try {
+    theirs = JSON.parse(fs.readFileSync(src, "utf8"));
+  } catch {
+    return false;
+  }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   if (replace || !fs.existsSync(dest)) {
-    fs.copyFileSync(src, dest);
+    fs.writeFileSync(dest, `${JSON.stringify(theirs, null, 2)}\n`);
     return true;
   }
   try {
     const mill = JSON.parse(fs.readFileSync(dest, "utf8"));
-    const theirs = JSON.parse(fs.readFileSync(src, "utf8"));
     const merged = deepMerge(mill, theirs);
     fs.writeFileSync(dest, `${JSON.stringify(merged, null, 2)}\n`);
     return true;
@@ -188,7 +195,7 @@ function overlayConsumerTree(targetDir, log, params) {
   const agents = listConsumerAgentFiles(targetDir, agentsRel);
   const skillsSrc = resolveInside(targetDir, skillsRel);
   const agentsSrc = resolveInside(targetDir, agentsRel);
-  const skillHangers = listSkillHangers(targetDir);
+  const skillHangers = listSkillHangers(targetDir, resolved);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
 
   for (const hanger of skillHangers) {

@@ -14,8 +14,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - `VersionComplianceProcessor` treats `package.json` as SSOT; UVM is frozen.
 - CI: version-compliance and AGENTS.md workflows target `main`; mill check is `validate-release-docs` (not UVM 1-ahead). `publish.yml` runs the docs mill before PUT.
 - Mill extracted to `scripts/foundry/` (`@0xray/foundry`). `release:npm` is `release.mjs --publish-only`. UVM file removed. Consumer mint writes `foundry-inventory.json` from their package.json.
-- Consumer postinstall overlays their mill SSOT onto the hanger: constitution (`xray/codex.json`), features/temperament, config, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Remap with `foundry.json`. Overlay also hits worn Grok/Hermes/OpenClaw skill dirs that already exist. `featuresMode` / `configMode` match `codexMode`. CLI re-wear mints after mill skill sync. `npx @0xray/foundry mint` reapplies overlay.
-- `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd. Full docs corpus only on the 0xray exo; light mill otherwise. Stamp creates CHANGELOG when missing. Publish refuses a nameless `package.json`. Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
+- Consumer postinstall overlays their mill SSOT onto the hanger: constitution (`xray/codex.json`), features/temperament, config, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Remap with `foundry.json`. Overlay defaults to **project** skill hangers; home dirs need `"homeSkills": true`. Plant JSON is parsed before any hanger write. `featuresMode` / `configMode` match `codexMode`. CLI re-wear mints after mill skill sync. `npx @0xray/foundry mint` reapplies overlay.
+- `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd. Full docs corpus only on the 0xray exo; light mill otherwise. Stamp creates CHANGELOG when missing. Publish refuses a nameless `package.json`. Mill PUT is `cd scripts/foundry && npm publish`; stranger `release` does not force `--access public`. Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
 
 ---
 

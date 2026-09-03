@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "0xRay mill: reconcile, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",
+  "description": "0xRay mill: mint their suit params, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,7 +25,8 @@
     "*.cjs",
     "cli.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "exports": {
     "./version-manager": "./version-manager.mjs",
