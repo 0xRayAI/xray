@@ -19,7 +19,7 @@ import {
   getFrameworkCounts,
   getReleaseArtifactPaths,
 } from './version-manager.mjs';
-import { hasDocsSite, resolveMillRoot } from './mill-root.mjs';
+import { isXrayExoRepo, resolveMillRoot } from './mill-root.mjs';
 
 const STANDARD_HEADER_RE =
   /\*{0,2}\d+\.\d+\*{0,2}\s*—\s*a suit that survives the context window/;
@@ -182,7 +182,7 @@ export function validateReleaseDocs(rootDir = resolveMillRoot()) {
   const counts = getFrameworkCounts(rootDir);
   const expectedHeader = buildDocsHeader(counts, version);
   const codexTerms = getCodexTermCount(rootDir);
-  const full = hasDocsSite(rootDir);
+  const full = isXrayExoRepo(rootDir);
 
   if (codexTerms !== null && counts.codexTerms && codexTerms !== counts.codexTerms) {
     warnings.push(`codex.json has ${codexTerms} terms (counts.codexTerms is ${counts.codexTerms})`);

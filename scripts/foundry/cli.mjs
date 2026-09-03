@@ -2,7 +2,7 @@
 /**
  * @0xray/foundry CLI — mill, not exo. No fifth MCP.
  *
- *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check> [...args]
+ *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|mint> [...args]
  */
 
 import { spawnSync } from "node:child_process";
@@ -14,6 +14,7 @@ const COMMANDS = {
   gate: { script: "release-gate.mjs", preset: [] },
   release: { script: "release.mjs", preset: [] },
   "docs-check": { script: "validate-release-docs.mjs", preset: [] },
+  mint: { script: "mint.mjs", preset: [] },
 };
 
 const cmd = process.argv[2];
@@ -21,7 +22,7 @@ const rest = process.argv.slice(3);
 
 if (!cmd || !COMMANDS[cmd]) {
   process.stderr.write(
-    "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check> [...args]\n",
+    "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|mint> [...args]\n",
   );
   process.exit(1);
 }

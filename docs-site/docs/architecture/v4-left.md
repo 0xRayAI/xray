@@ -65,7 +65,7 @@ Closed on this plant and shipped as **0xray@4.0.0**:
 
 Still open:
 
-1. **Foundry mill** — extracted to `scripts/foundry/` (`@0xray/foundry`). Overlay mints their skills/agents from `src/skills` + `src/opencode/agents`. Do not add a mill MCP. Do not `release:major`.
+1. **Foundry mill** — extracted to `scripts/foundry/` (`@0xray/foundry`). Overlay mints their constitution, features, skills, and agents. Do not add a mill MCP. Do not `release:major`.
 2. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
 
 ## Do not

@@ -14,7 +14,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
-import { millScript, resolveMillRoot } from './mill-root.mjs';
+import { isXrayExoRepo, millScript, resolveMillRoot } from './mill-root.mjs';
 
 const rootDir = resolveMillRoot();
 
@@ -74,15 +74,18 @@ function getCommitsSinceLastTag() {
   } catch (error) {
     // If no tags or error, get all commits from initial commit
     console.log('⚠️  Could not get commits from tag, using all commits');
-    const commits = execSync(
-      `git log --oneline --format="%s||%h" -n 50`,
-      { cwd: rootDir, encoding: 'utf-8' }
-    ).trim().split('\n').filter(Boolean);
-    
-    return commits.map(commit => {
-      const [message, hash] = commit.split('||');
-      return { message: message.trim(), hash: hash.trim() };
-    });
+    try {
+      const commits = execSync(
+        `git log --oneline --format="%s||%h" -n 50`,
+        { cwd: rootDir, encoding: 'utf-8' }
+      ).trim().split('\n').filter(Boolean);
+      return commits.map(commit => {
+        const [message, hash] = commit.split('||');
+        return { message: message.trim(), hash: hash.trim() };
+      });
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -161,7 +164,7 @@ export function getFrameworkCounts(baseDir = resolveMillRoot()) {
     agents: 0,
     mcps: 0,
     skills: 0,
-    codexTerms: 68,
+    codexTerms: 0,
   };
   
   // Count agents (.yml files in src/opencode/agents/ — source of truth)
@@ -179,12 +182,12 @@ export function getFrameworkCounts(baseDir = resolveMillRoot()) {
       const mcpJson = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf-8'));
       const servers = mcpJson.mcpServers || mcpJson.servers || {};
       const xrayServers = Object.keys(servers).filter((name) => name.startsWith('xray-'));
-      counts.mcps = xrayServers.length || 7;
+      counts.mcps = xrayServers.length;
     } catch {
-      counts.mcps = 7;
+      counts.mcps = isXrayExoRepo(baseDir) ? 7 : 0;
     }
   } else {
-    counts.mcps = 7;
+    counts.mcps = isXrayExoRepo(baseDir) ? 7 : 0;
   }
   
   // Count skills (directories in src/skills/ with SKILL.md)
@@ -245,6 +248,14 @@ function changelogHasVersion(newVersion) {
 
 function updateChangelog(newVersion, changeDescription) {
   const changelogPath = path.join(rootDir, 'CHANGELOG.md');
+  const newEntry = getChangelogEntry(newVersion, changeDescription);
+
+  if (!fs.existsSync(changelogPath)) {
+    fs.writeFileSync(changelogPath, `# Changelog\n\n${newEntry}`);
+    process.stdout.write('Created CHANGELOG.md\n');
+    return;
+  }
+
   let changelog = fs.readFileSync(changelogPath, 'utf-8');
 
   if (changelogHasVersion(newVersion)) {
@@ -252,14 +263,22 @@ function updateChangelog(newVersion, changeDescription) {
     return;
   }
   
-  // Find the position after the header and insert new entry
-  const headerEnd = changelog.indexOf('## [');
+  const unreleasedHead = changelog.match(/^## \[Unreleased\][^\n]*/m);
+  let headerEnd = changelog.indexOf('## [');
+  if (unreleasedHead && typeof unreleasedHead.index === 'number') {
+    const rest = changelog.slice(unreleasedHead.index + unreleasedHead[0].length);
+    const next = rest.search(/\n## \[/);
+    headerEnd =
+      next === -1
+        ? changelog.length
+        : unreleasedHead.index + unreleasedHead[0].length + next + 1;
+  }
   if (headerEnd === -1) {
-    console.log('⚠️  Could not find version header in CHANGELOG.md');
+    fs.writeFileSync(changelogPath, `${changelog.trimEnd()}\n\n${newEntry}`);
+    process.stdout.write('Updated CHANGELOG.md\n');
     return;
   }
-  
-  const newEntry = getChangelogEntry(newVersion, changeDescription);
+
   const newChangelog = changelog.slice(0, headerEnd) + newEntry + changelog.slice(headerEnd);
   
   fs.writeFileSync(changelogPath, newChangelog);

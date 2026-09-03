@@ -25,7 +25,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 
 ## What a stranger actually gets
 
-`npm install 0xray` **copies the 0xRay garment**, **generates host wiring**, then **overlays** their `src/skills/*/SKILL.md` and `src/opencode/agents/*.yml` onto `.opencode` (same name wins). Codex is still our plant. Their repo is a hanger plus that overlay.
+`npm install 0xray` **copies the 0xRay garment**, **generates host wiring**, then **overlays their mill SSOT** onto the hanger: constitution (`xray/codex.json`), features/temperament (`xray/features.json`), config, skills, agents. Remap with `foundry.json`. PPE stays worn. Their repo is a hanger cut to their params.
 
 ```
 npm i 0xray
@@ -38,7 +38,7 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-Wear copies the garment. Overlay mints skills/agents that already exist in their tree. The mill does not invent skills from source.
+Wear copies the garment. Overlay mints constitution, features, skills, and agents that already exist in their tree. The mill does not invent skills from source. `npx @0xray/foundry mint` reapplies overlay without re-wearing bridges.
 
 ## Mills (inventory)
 
@@ -81,7 +81,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire enable-when-resolves.
 
-**Minted from their tree (overlay).** If they keep SSOT at `src/skills/*/SKILL.md` and `src/opencode/agents/*.yml`, postinstall copies those onto `.opencode` after the garment. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when their tree had files, else `copied-onto-hanger`.
+**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/*/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and `.opencode` after the garment (`codexMode: merge` unless `replace`). `foundry.json` remaps paths. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when any facet came from their tree, else `copied-onto-hanger`. Dogfood writes no inventory.
 
 ### 3. Pre / post processors (two stacks)
 
@@ -121,7 +121,7 @@ Do not add a mill MCP. Name, then cut conductors that cross the line. `@0xray/fo
 1. **Name (this page).** Exo stays thin. Mill stays scripts + templates.
 2. **One bumper — landed.** `reconcile-version` only. `version-manager` refuses bump/`--tag`. UVM writes stay short-circuited. `executeReleaseWorkflow` is blocked.
 3. **Docs mill — landed.** CI **verifies**; it does not rewrite prose. Kernel slogan is era (`4.0`). CHANGELOG is the only patch-versioned prose (`[Unreleased]` allowed above current).
-4. **Mint-from-their-SSOT — overlay.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays their `src/skills` / `src/opencode/agents` onto `.opencode`.
+4. **Mint-from-their-SSOT — overlay.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays constitution, features, skills, and agents from their plant (or `foundry.json` paths).
 5. **Processors.** Do not move ProcessorManager into the Grok exo. Do not call it the OS. Optional later: slim OpenCode/Hermes so constitution is the only pre-tool path on every floor.
 6. **Museum.** UVM file is gone. CI mill workflow is on `main`. Wrappers `sync-versions.mjs` / `release.js` deleted. `features-since-3.1` no longer requires the patch string.
 

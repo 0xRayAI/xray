@@ -58,7 +58,12 @@ function readVersion() {
 }
 
 function packageName() {
-  return readRootPackage(rootDir).name || "0xray";
+  const name = readRootPackage(rootDir).name;
+  if (!name) {
+    process.stderr.write("package.json name is required to mill publish\n");
+    process.exit(1);
+  }
+  return name;
 }
 
 function currentBranch() {

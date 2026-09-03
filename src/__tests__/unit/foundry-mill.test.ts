@@ -214,24 +214,25 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
-  it('overlays consumer src/skills and src/opencode/agents onto .opencode after garment', () => {
+  it('runPostinstall overlays after bridges, not via a file-wide indexOf', () => {
     const src = read('scripts/node/postinstall.cjs');
-    expect(src.indexOf('installAllBridges')).toBeGreaterThan(-1);
-    expect(src.indexOf('overlayConsumerTree')).toBeGreaterThan(src.indexOf('installAllBridges'));
+    const start = src.indexOf('function runPostinstall');
+    const end = src.indexOf('module.exports');
+    const body = src.slice(start, end);
+    expect(body.indexOf('installAllBridges')).toBeGreaterThan(-1);
+    expect(body.indexOf('mintConsumerSuit')).toBeGreaterThan(body.indexOf('installAllBridges'));
+  });
 
-    const { overlayConsumerTree, mintConsumerFromSsot } = requireCjs(
-      path.join(root, 'scripts/node/postinstall.cjs'),
-    ) as {
-      overlayConsumerTree: (
-        target: string,
-        log: (...a: unknown[]) => void,
-      ) => { skills: string[]; agents: string[] };
-      mintConsumerFromSsot: (
+  it('overlays skills, agents, and constitution onto the hanger', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (
         pkg: string,
         target: string,
         log: (...a: unknown[]) => void,
-        tree?: { skills: string[]; agents: string[] },
-      ) => { garment: string; tree: { skills: string[]; agents: string[] } };
+      ) => {
+        garment: string;
+        facets: { constitution: boolean; skills: string[]; agents: string[] };
+      };
     };
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-overlay-'));
     try {
@@ -245,38 +246,122 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, 'src/opencode/agents'), { recursive: true });
       mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
       mkdirSync(path.join(tmp, '.opencode/agents'), { recursive: true });
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      mkdirSync(path.join(tmp, 'xray'), { recursive: true });
       writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
       writeFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'name: mill-orchestrator\n');
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(tmp, 'src/skills/enforcer/SKILL.md'), 'CONSUMER ENFORCER\n');
       writeFileSync(path.join(tmp, 'src/skills/nope/index.ts'), 'export {}\n');
       writeFileSync(path.join(tmp, 'src/opencode/agents/acme.yml'), 'name: acme\n');
-
-      const noop = () => undefined;
-      const tree = overlayConsumerTree(tmp, noop);
-      expect(tree.skills).toEqual(expect.arrayContaining(['acme-tool', 'enforcer']));
-      expect(tree.skills).not.toContain('nope');
-      expect(tree.agents).toContain('acme.yml');
-      expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
-        'CONSUMER ACME\n',
+      writeFileSync(
+        path.join(tmp, '.xray/codex.json'),
+        `${JSON.stringify({ terms: { '1': { title: 'mill-term' }, '11': { title: 'keep' } } }, null, 2)}\n`,
       );
+      writeFileSync(
+        path.join(tmp, 'xray/codex.json'),
+        `${JSON.stringify({ terms: { '1': { title: 'acme-constitution' } } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, 'xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'strict' } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, '.xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'guided' }, token_optimization: { enabled: true } }, null, 2)}\n`,
+      );
+
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.garment).toBe('overlay');
+      expect(inventory.facets.constitution).toBe(true);
+      expect(inventory.facets.skills).toEqual(expect.arrayContaining(['acme-tool', 'enforcer']));
+      expect(inventory.facets.skills).not.toContain('nope');
       expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
         'CONSUMER ENFORCER\n',
       );
-      expect(readFileSync(path.join(tmp, '.opencode/agents/acme.yml'), 'utf8')).toBe('name: acme\n');
       expect(readFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'utf8')).toBe(
         'name: mill-orchestrator\n',
       );
-
-      const inventory = mintConsumerFromSsot(root, tmp, noop, tree);
-      expect(inventory.garment).toBe('overlay');
-      expect(inventory.tree.skills).toContain('acme-tool');
+      const codex = JSON.parse(readFileSync(path.join(tmp, '.xray/codex.json'), 'utf8')) as {
+        terms: Record<string, { title: string }>;
+      };
+      expect(codex.terms['1'].title).toBe('acme-constitution');
+      expect(codex.terms['11'].title).toBe('keep');
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray/features.json'), 'utf8')) as {
+        suit_temperament: { profile: string };
+        token_optimization: { enabled: boolean };
+      };
+      expect(features.suit_temperament.profile).toBe('strict');
+      expect(features.token_optimization.enabled).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
 
-  it('validate-release-docs light mode skips docs-site when absent', () => {
+  it('foundry.json remaps mill SSOT paths and rejects traversal', () => {
+    const { mintConsumerSuit, resolveInside } = requireCjs(
+      path.join(root, 'scripts/foundry/mint-suit.cjs'),
+    ) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+        garment: string;
+        params: { codex: string };
+      };
+      resolveInside: (dir: string, rel: string) => string | null;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-params-'));
+    try {
+      expect(resolveInside(tmp, '../etc/passwd')).toBeNull();
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'suit'), { recursive: true });
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ codex: 'suit/codex.json', codexMode: 'replace' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, 'suit/codex.json'),
+        `${JSON.stringify({ terms: { '99': { title: 'only-theirs' } } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, '.xray/codex.json'),
+        `${JSON.stringify({ terms: { '1': { title: 'mill' } } }, null, 2)}\n`,
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.params.codex).toBe('suit/codex.json');
+      const codex = JSON.parse(readFileSync(path.join(tmp, '.xray/codex.json'), 'utf8')) as {
+        terms: Record<string, unknown>;
+      };
+      expect(codex.terms['99']).toBeTruthy();
+      expect(codex.terms['1']).toBeUndefined();
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('does not write inventory on dogfood', () => {
+    const { mintConsumerFromSsot } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerFromSsot: (
+        pkg: string,
+        target: string,
+        log: (...a: unknown[]) => void,
+      ) => { skipped?: boolean; garment: string };
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-dogfood-'));
+    try {
+      writeFileSync(path.join(tmp, 'package.json'), `${JSON.stringify({ name: 'acme-app' }, null, 2)}\n`);
+      const result = mintConsumerFromSsot(tmp, tmp, () => undefined);
+      expect(result.skipped).toBe(true);
+      expect(result.garment).toBe('dogfood');
+      expect(existsSync(path.join(tmp, '.xray/foundry-inventory.json'))).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('validate-release-docs is light unless the milled repo is 0xray with docs-site', () => {
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-light-'));
     try {
       writeFileSync(
@@ -284,10 +369,33 @@ describe('foundry mill — mint from consumer SSOT', () => {
         `${JSON.stringify({ name: 'acme-app', version: '1.2.3' }, null, 2)}\n`,
       );
       writeFileSync(path.join(tmp, 'CHANGELOG.md'), '## [1.2.3] - 2026-09-03\n\n- mill light\n');
+      mkdirSync(path.join(tmp, 'docs-site'), { recursive: true });
       const result = validateReleaseDocs(tmp);
       expect(result.mode).toBe('light');
       expect(result.ok, result.errors.join('\n')).toBe(true);
       expect(result.version).toBe('1.2.3');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('stamp creates CHANGELOG when missing; publish mill refuses a nameless package.json', () => {
+    expect(read('scripts/foundry/release.mjs')).not.toContain('|| "0xray"');
+    expect(read('scripts/foundry/cli.mjs')).toContain('mint');
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-stamp-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '9.9.9' }, null, 2)}\n`,
+      );
+      const r = spawnSync(process.execPath, ['scripts/foundry/version-manager.mjs', '--artifacts-only'], {
+        cwd: root,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: tmp },
+      });
+      expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+      expect(existsSync(path.join(tmp, 'CHANGELOG.md'))).toBe(true);
+      expect(readFileSync(path.join(tmp, 'CHANGELOG.md'), 'utf8')).toContain('## [9.9.9]');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
