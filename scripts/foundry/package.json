@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/0xRayAI/xray.git",
+    "url": "git+https://github.com/0xRayAI/xray.git",
     "directory": "scripts/foundry"
   },
   "homepage": "https://github.com/0xRayAI/xray/tree/main/scripts/foundry",
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "bin": {
-    "0xray-foundry": "./cli.js"
+    "0xray-foundry": "cli.js"
   },
   "files": [
     "*.mjs",
