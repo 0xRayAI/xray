@@ -3,4 +3,4 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
-exec node scripts/node/validate-release-docs.mjs "$@"
+exec node scripts/foundry/validate-release-docs.mjs "$@"

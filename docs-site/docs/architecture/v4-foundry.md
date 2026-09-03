@@ -48,20 +48,20 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 | Piece | Role |
 |---|---|
-| `scripts/node/reconcile-version.mjs` | **One bumper.** npm + tag vs `package.json` |
-| `scripts/node/version-manager.mjs` | Stamper. `--artifacts-only` only (JSON + CHANGELOG). Bump/`--tag` refused |
-| `scripts/node/release.mjs` | Canonical conductor (reconcile → artifacts → gate → PUT → tag) |
-| `scripts/node/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
-| `scripts/node/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
+| `scripts/foundry/reconcile-version.mjs` | **One bumper.** npm + tag vs `package.json` |
+| `scripts/foundry/version-manager.mjs` | Stamper. `--artifacts-only` only (JSON + CHANGELOG). Bump/`--tag` refused |
+| `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm` |
+| `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
+| `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
 | `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
 
-**Museum (frozen, still on disk):**
+**Mill home:** `scripts/foundry/` (`@0xray/foundry`, private). Old `scripts/node/*.mjs` paths are shims.
 
-- `universal-version-manager.js` — writes short-circuited
-- `sync-versions.mjs`, `release.js` — deprecated wrappers
-- `release:npm` — gate + PUT, no bump (use after reconcile, or use `release.mjs`)
-- `publish.yml` — extra GHA door; now runs the docs mill before PUT
+**Museum (thin wrappers / extra doors):**
+
+- `sync-versions.mjs`, `release.js` — deprecated
+- `publish.yml` — extra GHA door; docs mill runs before PUT
 
 **Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.0** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
 
@@ -121,7 +121,7 @@ Do not publish `@0xray/foundry` tonight. Do not add a mill MCP. Name, then cut c
 1. **Name (this page).** Exo stays thin. Mill stays scripts + templates.
 2. **One bumper — landed.** `reconcile-version` only. `version-manager` refuses bump/`--tag`. UVM writes stay short-circuited. `executeReleaseWorkflow` is blocked.
 3. **Docs mill — landed.** CI **verifies**; it does not rewrite prose. Kernel slogan is era (`4.0`). CHANGELOG is the only patch-versioned prose (`[Unreleased]` allowed above current).
-4. **Mint honesty.** Postinstall copies **our** garment. A later mill that mints from *their* SSOT is a product, not a stamper.
+4. **Mint-from-their-SSOT — first cut.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json` and fills `{{CONSUMER_NAME}}` on the managed AGENTS card. Skills/agents are still our garment.
 5. **Processors.** Do not move ProcessorManager into the Grok exo. Do not call it the OS. Optional later: slim OpenCode/Hermes so constitution is the only pre-tool path on every floor.
 6. **Museum — in progress.** UVM file remains frozen. CI mill workflow is on `main`. `features-since-3.1` no longer requires the patch string.
 

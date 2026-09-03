@@ -6,7 +6,7 @@
  *
  * Rules Enforced:
  * 1. package.json version is the SSOT (semver)
- * 2. universal-version-manager.js is frozen — do not treat it as SSOT
+ * 2. Mill SSOT is package.json via scripts/foundry/reconcile-version.mjs
  * 3. Do not bump or publish from this processor (foundry mill ships)
  *
  * @processor_type pre
@@ -167,7 +167,7 @@ export class VersionComplianceProcessor {
     }
 
     this.warnings.push(
-      "universal-version-manager.js is frozen. SSOT is package.json via reconcile-version.mjs",
+      "SSOT is package.json via scripts/foundry/reconcile-version.mjs",
     );
 
     return {

@@ -9,8 +9,8 @@ describe('release pipeline', () => {
   it('does not hook npm publish lifecycle to re-run the gate after upload', () => {
     const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
     expect(pkg.scripts.publish).toBeUndefined();
-    expect(pkg.scripts['release:npm']).toContain('release:gate');
-    expect(pkg.scripts['release:npm']).toContain('npm publish --access public');
+    expect(pkg.scripts['release:npm']).toContain('--publish-only');
+    expect(pkg.scripts['release:npm']).toContain('scripts/foundry/release.mjs');
     expect(pkg.scripts.prepublishOnly).not.toContain('release:gate');
   });
 
@@ -24,12 +24,12 @@ describe('release pipeline', () => {
   });
 
   it('reconcile --check does not fail tagged-but-unpublished (that is the publish path)', () => {
-    const src = readFileSync(path.join(root, 'scripts/node/reconcile-version.mjs'), 'utf8');
+    const src = readFileSync(path.join(root, 'scripts/foundry/reconcile-version.mjs'), 'utf8');
     expect(src).not.toContain('tag v${tag} exists but npm is only');
   });
 
   it('canonical release.mjs bumps via reconcile, not version-manager', () => {
-    const src = readFileSync(path.join(root, 'scripts/node/release.mjs'), 'utf8');
+    const src = readFileSync(path.join(root, 'scripts/foundry/release.mjs'), 'utf8');
     expect(src).toContain('reconcile-version.mjs');
     expect(src).toContain('version-manager.mjs --artifacts-only');
     expect(src).not.toContain('version-manager.mjs patch');

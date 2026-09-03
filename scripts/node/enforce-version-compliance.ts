@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const result = spawnSync(
   process.execPath,
-  [path.join(root, "scripts/node/validate-release-docs.mjs"), ...process.argv.slice(2)],
+  [path.join(root, "scripts/foundry/validate-release-docs.mjs"), ...process.argv.slice(2)],
   { cwd: root, stdio: "inherit" },
 );
 process.exit(result.status === null ? 1 : result.status);

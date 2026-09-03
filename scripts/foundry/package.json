@@ -1,0 +1,14 @@
+{
+  "name": "@0xray/foundry",
+  "private": true,
+  "version": "4.0.1",
+  "type": "module",
+  "description": "0xRay mill: reconcile, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",
+  "exports": {
+    "./version-manager": "./version-manager.mjs",
+    "./validate-release-docs": "./validate-release-docs.mjs",
+    "./reconcile-version": "./reconcile-version.mjs",
+    "./release": "./release.mjs",
+    "./release-gate": "./release-gate.mjs"
+  }
+}

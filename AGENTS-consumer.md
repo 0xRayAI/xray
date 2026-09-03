@@ -2,7 +2,7 @@
 
 <!-- 0xray-managed -->
 
-Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
+Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
 **4.0** — a suit that survives the context window
 
