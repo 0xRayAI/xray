@@ -129,15 +129,42 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/node/universal-version-manager.js'))).toBe(false);
   });
 
-  it('mill is extracted as private @0xray/foundry', () => {
+  it('mill is extracted as publishable @0xray/foundry', () => {
     const mill = JSON.parse(read('scripts/foundry/package.json')) as {
       name: string;
-      private: boolean;
+      private?: boolean;
+      version: string;
+      bin?: string | Record<string, string>;
     };
     expect(mill.name).toBe('@0xray/foundry');
-    expect(mill.private).toBe(true);
+    expect(mill.private).not.toBe(true);
+    expect(mill.version).toBe('0.1.0');
+    expect(mill.bin).toBe('./cli.mjs');
+    expect(existsSync(path.join(root, 'scripts/foundry/cli.mjs'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/README.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/release.mjs'))).toBe(true);
     expect(read('scripts/foundry/release.mjs')).toContain('--publish-only');
+  });
+
+  it('dead wrappers are gone', () => {
+    expect(existsSync(path.join(root, 'scripts/node/sync-versions.mjs'))).toBe(false);
+    expect(existsSync(path.join(root, 'scripts/node/release.js'))).toBe(false);
+  });
+
+  it('mill root is FOUNDRY_ROOT or cwd, not __dirname/../..', () => {
+    const src = read('scripts/foundry/mill-root.mjs');
+    expect(src).toContain('FOUNDRY_ROOT');
+    expect(src).toContain('process.cwd()');
+    for (const rel of [
+      'version-manager.mjs',
+      'validate-release-docs.mjs',
+      'reconcile-version.mjs',
+      'release.mjs',
+      'release-gate.mjs',
+    ]) {
+      const mill = read(`scripts/foundry/${rel}`);
+      expect(mill, rel).not.toMatch(/path\.resolve\(__dirname,\s*['"]\.\.\/\.\.['"]\)/);
+    }
   });
 
   it('VersionComplianceProcessor uses package.json SSOT, not UVM 1-ahead', async () => {
@@ -157,6 +184,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
     ) as {
       mintConsumerFromSsot: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
         consumer: { name: string; version: string };
+        garment: string;
       };
       deployManagedAgents: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
     };
@@ -180,6 +208,85 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(agents).toContain('**acme-app**');
       expect(agents).toContain('(2.3.4)');
       expect(agents).not.toContain('{{CONSUMER_NAME}}');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('overlays consumer src/skills and src/opencode/agents onto .opencode after garment', () => {
+    const src = read('scripts/node/postinstall.cjs');
+    expect(src.indexOf('installAllBridges')).toBeGreaterThan(-1);
+    expect(src.indexOf('overlayConsumerTree')).toBeGreaterThan(src.indexOf('installAllBridges'));
+
+    const { overlayConsumerTree, mintConsumerFromSsot } = requireCjs(
+      path.join(root, 'scripts/node/postinstall.cjs'),
+    ) as {
+      overlayConsumerTree: (
+        target: string,
+        log: (...a: unknown[]) => void,
+      ) => { skills: string[]; agents: string[] };
+      mintConsumerFromSsot: (
+        pkg: string,
+        target: string,
+        log: (...a: unknown[]) => void,
+        tree?: { skills: string[]; agents: string[] },
+      ) => { garment: string; tree: { skills: string[]; agents: string[] } };
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-overlay-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '2.3.4' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
+      mkdirSync(path.join(tmp, 'src/skills/enforcer'), { recursive: true });
+      mkdirSync(path.join(tmp, 'src/skills/nope'), { recursive: true });
+      mkdirSync(path.join(tmp, 'src/opencode/agents'), { recursive: true });
+      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
+      mkdirSync(path.join(tmp, '.opencode/agents'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
+      writeFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'name: mill-orchestrator\n');
+      writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      writeFileSync(path.join(tmp, 'src/skills/enforcer/SKILL.md'), 'CONSUMER ENFORCER\n');
+      writeFileSync(path.join(tmp, 'src/skills/nope/index.ts'), 'export {}\n');
+      writeFileSync(path.join(tmp, 'src/opencode/agents/acme.yml'), 'name: acme\n');
+
+      const noop = () => undefined;
+      const tree = overlayConsumerTree(tmp, noop);
+      expect(tree.skills).toEqual(expect.arrayContaining(['acme-tool', 'enforcer']));
+      expect(tree.skills).not.toContain('nope');
+      expect(tree.agents).toContain('acme.yml');
+      expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ENFORCER\n',
+      );
+      expect(readFileSync(path.join(tmp, '.opencode/agents/acme.yml'), 'utf8')).toBe('name: acme\n');
+      expect(readFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'utf8')).toBe(
+        'name: mill-orchestrator\n',
+      );
+
+      const inventory = mintConsumerFromSsot(root, tmp, noop, tree);
+      expect(inventory.garment).toBe('overlay');
+      expect(inventory.tree.skills).toContain('acme-tool');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('validate-release-docs light mode skips docs-site when absent', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-light-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.2.3' }, null, 2)}\n`,
+      );
+      writeFileSync(path.join(tmp, 'CHANGELOG.md'), '## [1.2.3] - 2026-09-03\n\n- mill light\n');
+      const result = validateReleaseDocs(tmp);
+      expect(result.mode).toBe('light');
+      expect(result.ok, result.errors.join('\n')).toBe(true);
+      expect(result.version).toBe('1.2.3');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

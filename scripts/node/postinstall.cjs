@@ -30,14 +30,78 @@ function readPackageIdentity(pkgPath) {
   }
 }
 
-/** Mint a receipt from the consumer's package.json. Does not invent their skills. */
-function mintConsumerFromSsot(packageRoot, targetDir, log) {
+function listConsumerSkillNames(targetDir) {
+  const skillsSrc = path.join(targetDir, "src", "skills");
+  if (!fs.existsSync(skillsSrc)) return [];
+  const names = [];
+  for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    const skillMd = path.join(skillsSrc, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMd)) continue;
+    names.push(entry.name);
+  }
+  return names;
+}
+
+function listConsumerAgentFiles(targetDir) {
+  const agentsSrc = path.join(targetDir, "src", "opencode", "agents");
+  if (!fs.existsSync(agentsSrc)) return [];
+  return fs
+    .readdirSync(agentsSrc, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() && (entry.name.endsWith(".yml") || entry.name.endsWith(".yaml")),
+    )
+    .map((entry) => entry.name);
+}
+
+/**
+ * After mill garment is on the hanger, their src/skills and src/opencode/agents win same name.
+ * Does not invent skills from source files that are not SKILL.md / agent yml.
+ */
+function overlayConsumerTree(targetDir, log) {
+  const skills = listConsumerSkillNames(targetDir);
+  const agents = listConsumerAgentFiles(targetDir);
+  const skillsDest = path.join(targetDir, ".opencode", "skills");
+  const agentsDest = path.join(targetDir, ".opencode", "agents");
+
+  for (const name of skills) {
+    const src = path.join(targetDir, "src", "skills", name, "SKILL.md");
+    const destDir = path.join(skillsDest, name);
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.copyFileSync(src, path.join(destDir, "SKILL.md"));
+  }
+  for (const file of agents) {
+    fs.mkdirSync(agentsDest, { recursive: true });
+    fs.copyFileSync(path.join(targetDir, "src", "opencode", "agents", file), path.join(agentsDest, file));
+  }
+
+  if (log && (skills.length > 0 || agents.length > 0)) {
+    log("postinstall", "Overlaid consumer skills/agents onto .opencode", "info", {
+      skills: skills.length,
+      agents: agents.length,
+    });
+  }
+  return { skills, agents };
+}
+
+/** Mint a receipt from the consumer's package.json and optional overlay tree. */
+function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   const mill = readPackageIdentity(path.join(packageRoot, "package.json"));
   const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
+  const skills = Array.isArray(tree?.skills) ? tree.skills : [];
+  const agents = Array.isArray(tree?.agents) ? tree.agents : [];
+  const overlayed = skills.length > 0 || agents.length > 0;
+  const garment = overlayed
+    ? "overlay"
+    : consumer.name && consumer.name !== mill.name
+      ? "copied-onto-hanger"
+      : "dogfood";
   const inventory = {
     mill: { name: mill.name || "0xray", version: mill.version },
     consumer: { name: consumer.name, version: consumer.version },
-    garment: consumer.name && consumer.name !== mill.name ? "copied-onto-hanger" : "dogfood",
+    garment,
+    tree: { skills, agents },
     mintedAt: new Date().toISOString(),
   };
   const xrayDir = path.join(targetDir, ".xray");
@@ -50,6 +114,7 @@ function mintConsumerFromSsot(packageRoot, targetDir, log) {
     log("postinstall", "Minted foundry-inventory from consumer package.json", "info", {
       consumer: consumer.name,
       version: consumer.version,
+      garment,
     });
   }
   return inventory;
@@ -105,7 +170,6 @@ function runPostinstall(packageRoot, targetDir, log) {
   const consumer = isConsumerInstall(resolvedPackage, resolvedTarget);
 
   if (consumer) {
-    mintConsumerFromSsot(resolvedPackage, resolvedTarget, logFn);
     deployManagedAgents(resolvedPackage, resolvedTarget, logFn);
     deployConsumerGitignore(resolvedPackage, resolvedTarget, logFn);
   }
@@ -122,6 +186,8 @@ function runPostinstall(packageRoot, targetDir, log) {
   }
 
   if (consumer) {
+    const tree = overlayConsumerTree(resolvedTarget, logFn);
+    mintConsumerFromSsot(resolvedPackage, resolvedTarget, logFn, tree);
     logFn(
       "postinstall",
       "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
@@ -135,6 +201,9 @@ function runPostinstall(packageRoot, targetDir, log) {
 module.exports = {
   runPostinstall,
   mintConsumerFromSsot,
+  overlayConsumerTree,
+  listConsumerSkillNames,
+  listConsumerAgentFiles,
   fillConsumerPlaceholders,
   readPackageIdentity,
   deployManagedAgents,

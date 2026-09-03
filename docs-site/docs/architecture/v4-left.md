@@ -6,7 +6,7 @@ sidebar_label: 4.0 left
 
 What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
 
-Product **4.0.1** is on npm. Tag `v4.0.1` is on `0xRayAI/xray`. Do not run `release:major` (that becomes 5.0.0). Foundry split is named, not extracted.
+Product **4.0.1** is on npm. Tag `v4.0.1` is on `0xRayAI/xray`. Do not run `release:major` (that becomes 5.0.0). Foundry mill lives in `scripts/foundry/` (`@0xray/foundry`).
 
 ## Done (worn and shipped as 4.0.0)
 
@@ -65,7 +65,7 @@ Closed on this plant and shipped as **0xray@4.0.0**:
 
 Still open:
 
-1. **Foundry mill cuts** — one bumper + docs verify-not-write + exo-cannot-ship landed on this plant ([4.0 foundry](./v4-foundry.md)). Do not extract `@0xray/foundry`. Do not add a mill MCP. Mint-from-their-SSOT is later.
+1. **Foundry mill** — extracted to `scripts/foundry/` (`@0xray/foundry`). Overlay mints their skills/agents from `src/skills` + `src/opencode/agents`. Do not add a mill MCP. Do not `release:major`.
 2. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
 
 ## Do not

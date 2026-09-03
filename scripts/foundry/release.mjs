@@ -19,9 +19,16 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { getReleaseArtifactPaths } from "./version-manager.mjs";
+import {
+  isXrayExoRepo,
+  millScript,
+  readRootPackage,
+  resolveMillRoot,
+} from "./mill-root.mjs";
 
-const rootDir = process.cwd();
+const rootDir = resolveMillRoot();
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const publishOnly = args.includes("--publish-only");
@@ -33,11 +40,25 @@ function run(cmd, label) {
     console.log(`  (dry-run skip: ${label})`);
     return;
   }
-  execSync(cmd, { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
+  execSync(cmd, {
+    cwd: rootDir,
+    stdio: "inherit",
+    encoding: "utf-8",
+    env: { ...process.env, FOUNDRY_ROOT: rootDir },
+  });
+}
+
+function runMill(script, extraArgs, label) {
+  const quoted = [millScript(script), ...extraArgs].map((a) => JSON.stringify(a)).join(" ");
+  run(`${JSON.stringify(process.execPath)} ${quoted}`, label);
 }
 
 function readVersion() {
   return JSON.parse(fs.readFileSync(path.join(rootDir, "package.json"), "utf-8")).version;
+}
+
+function packageName() {
+  return readRootPackage(rootDir).name || "0xray";
 }
 
 function currentBranch() {
@@ -46,7 +67,7 @@ function currentBranch() {
 
 function npmVersionPublished(version) {
   try {
-    const out = execSync(`npm view 0xray@${version} version`, {
+    const out = execSync(`npm view ${packageName()}@${version} version`, {
       cwd: rootDir,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
@@ -59,22 +80,26 @@ function npmVersionPublished(version) {
 
 function publishIdempotent(version) {
   if (dryRun) {
-    console.log(`  would: npm publish --access public (check 0xray@${version} first)`);
+    console.log(`  would: npm publish --access public (check ${packageName()}@${version} first)`);
     return;
   }
   if (npmVersionPublished(version)) {
-    console.log(`ℹ️  0xray@${version} already on npm — skipping publish`);
+    console.log(`ℹ️  ${packageName()}@${version} already on npm — skipping publish`);
     return;
   }
   execSync("npm publish --access public", { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
-  console.log(`✅ Published 0xray@${version}`);
+  console.log(`✅ Published ${packageName()}@${version}`);
 }
 
 async function main() {
   if (publishOnly) {
     const version = readVersion();
-    run("node scripts/foundry/release-gate.mjs", "release gate");
-    run("npm run prepare-consumer && npm run build", "safe-publish");
+    runMill("release-gate.mjs", [], "release gate");
+    if (isXrayExoRepo(rootDir)) {
+      run("npm run prepare-consumer && npm run build", "safe-publish");
+    } else if (readRootPackage(rootDir).scripts.build) {
+      run("npm run build", "build");
+    }
     publishIdempotent(version);
     if (!dryRun) {
       try {
@@ -105,25 +130,29 @@ async function main() {
   // 1. Version bump from npm SSOT
   console.log(`\n📦 Step 1: Bump ${releaseType} from npm baseline`);
   if (dryRun) {
-    execSync(`node scripts/foundry/reconcile-version.mjs ${releaseType}`, { cwd: rootDir, stdio: "inherit" });
+    runMill("reconcile-version.mjs", [releaseType], "version bump (dry)");
   } else {
-    run(`node scripts/foundry/reconcile-version.mjs ${releaseType} --apply`, "version bump");
+    runMill("reconcile-version.mjs", [releaseType, "--apply"], "version bump");
   }
   const newVersion = dryRun
-    ? execSync(`node scripts/foundry/reconcile-version.mjs ${releaseType} --print-target`, {
-        cwd: rootDir,
-        encoding: "utf-8",
-      }).trim()
+    ? execSync(
+        `${JSON.stringify(process.execPath)} ${JSON.stringify(millScript("reconcile-version.mjs"))} ${JSON.stringify(releaseType)} --print-target`,
+        {
+          cwd: rootDir,
+          encoding: "utf-8",
+          env: { ...process.env, FOUNDRY_ROOT: rootDir },
+        },
+      ).trim()
     : readVersion();
   console.log(`📌 Release version: ${newVersion}`);
 
   // 2. Artifacts BEFORE gate (docs vitest matches package.json version)
   console.log("\n📦 Step 2: Release artifacts (CHANGELOG, README, AGENTS, docs)");
-  run("node scripts/foundry/version-manager.mjs --artifacts-only", "release artifacts");
+  runMill("version-manager.mjs", ["--artifacts-only"], "release artifacts");
 
   // 3. Gate
   console.log("\n📦 Step 3: Release gate (build + test + smoke)");
-  run("node scripts/foundry/release-gate.mjs", "release gate");
+  runMill("release-gate.mjs", [], "release gate");
 
   // 4. Commit + push
   console.log("\n📦 Step 4: Commit & push");
@@ -146,11 +175,11 @@ async function main() {
 
   // 5. Post-push verify before publish
   console.log("\n📦 Step 5: Verify gate (reconcile + git + docs + smoke)");
-  run("node scripts/foundry/release-gate.mjs --verify-only", "verify gate");
+  runMill("release-gate.mjs", ["--verify-only"], "verify gate");
 
   // 6. Publish (idempotent)
   console.log("\n📦 Step 6: npm publish");
-  publishIdempotent(newVersion);
+  publishIdempotent(newVersion); // name from package.json via packageName()
 
   // 7. Tag after publish
   console.log("\n📦 Step 7: Tag");
@@ -175,20 +204,27 @@ async function main() {
   console.log("║        ✅ Release Complete!                            ║");
   console.log("╚════════════════════════════════════════════════════════╝");
   if (!dryRun) {
-    console.log(`\n📦 0xray@${newVersion}  🏷  v${newVersion}\n`);
-    const tweetPath = path.join(rootDir, "tweets", `v${newVersion}.md`);
-    if (!fs.existsSync(tweetPath)) {
-      fs.mkdirSync(path.join(rootDir, "tweets"), { recursive: true });
-      fs.writeFileSync(
-        tweetPath,
-        `🎉 0xRay v${newVersion} is LIVE - consumer-safe upgrades!\n...\n\`\`\`\nnpm install 0xray@latest\n\`\`\`\n`,
-      );
-      console.log(`📝 Tweet template: tweets/v${newVersion}.md`);
+    process.stdout.write(`\n📦 ${packageName()}@${newVersion}  🏷  v${newVersion}\n`);
+    if (isXrayExoRepo(rootDir)) {
+      const tweetPath = path.join(rootDir, "tweets", `v${newVersion}.md`);
+      if (!fs.existsSync(tweetPath)) {
+        fs.mkdirSync(path.join(rootDir, "tweets"), { recursive: true });
+        fs.writeFileSync(
+          tweetPath,
+          `🎉 0xRay v${newVersion} is LIVE - consumer-safe upgrades!\n...\n\`\`\`\nnpm install 0xray@latest\n\`\`\`\n`,
+        );
+        process.stdout.write(`📝 Tweet template: tweets/v${newVersion}.md\n`);
+      }
     }
   }
 }
 
-main().catch((err) => {
-  console.error("\n❌ Release failed:", err.message);
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main().catch((err) => {
+    process.stderr.write(`\n❌ Release failed: ${err.message}\n`);
+    process.exit(1);
+  });
+}

@@ -31,7 +31,8 @@ describe('release pipeline', () => {
   it('canonical release.mjs bumps via reconcile, not version-manager', () => {
     const src = readFileSync(path.join(root, 'scripts/foundry/release.mjs'), 'utf8');
     expect(src).toContain('reconcile-version.mjs');
-    expect(src).toContain('version-manager.mjs --artifacts-only');
+    expect(src).toContain('version-manager.mjs');
+    expect(src).toContain('--artifacts-only');
     expect(src).not.toContain('version-manager.mjs patch');
   });
 });

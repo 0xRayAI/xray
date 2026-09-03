@@ -14,9 +14,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { millScript, resolveMillRoot } from './mill-root.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../..');
+const rootDir = resolveMillRoot();
 
 // Files to update with version
 const VERSION_FILES = [
@@ -156,7 +156,7 @@ function generateChangelogFromCommits(commits) {
  * Count actual framework components
  * @param {string} [baseDir]
  */
-export function getFrameworkCounts(baseDir = rootDir) {
+export function getFrameworkCounts(baseDir = resolveMillRoot()) {
   const counts = {
     agents: 0,
     mcps: 0,
@@ -321,7 +321,7 @@ function getCurrentVersion() {
 }
 
 /** Paths written by release artifact updates (existing files only). */
-export function getReleaseArtifactPaths() {
+export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
   const candidates = [
     'package.json',
     'CHANGELOG.md',
@@ -348,7 +348,7 @@ export function getReleaseArtifactPaths() {
     'docs-site/sidebars.ts',
     'xray/features.json',
   ];
-  return candidates.filter((rel) => fs.existsSync(path.join(rootDir, rel)));
+  return candidates.filter((rel) => fs.existsSync(path.join(baseDir, rel)));
 }
 
 /** Update CHANGELOG + README + AGENTS (+ consumer/docs) for current package.json version (no bump). */
@@ -367,9 +367,10 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
 
 function runReleaseDocsValidation() {
   try {
-    execSync('node scripts/node/validate-release-docs.mjs', {
+    execSync(`${JSON.stringify(process.execPath)} ${JSON.stringify(millScript('validate-release-docs.mjs'))}`, {
       cwd: rootDir,
       stdio: 'inherit',
+      env: { ...process.env, FOUNDRY_ROOT: rootDir },
     });
   } catch {
     console.error('\n❌ Release artifact docs failed validation — fix before tagging\n');

@@ -16,16 +16,31 @@
 import { execSync } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isXrayExoRepo, millScript, readRootPackage, resolveMillRoot } from "./mill-root.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, "../..");
+const rootDir = resolveMillRoot();
 const verifyOnly = process.argv.includes("--verify-only");
 const skipSmoke = process.argv.includes("--skip-smoke");
 const skipDocs = process.argv.includes("--skip-docs");
 
 function step(label, cmd) {
   console.log(`\n${"─".repeat(60)}\n🔄 ${label}\n${"─".repeat(60)}\n`);
-  execSync(cmd, { cwd: rootDir, stdio: "inherit" });
+  execSync(cmd, { cwd: rootDir, stdio: "inherit", env: { ...process.env, FOUNDRY_ROOT: rootDir } });
+}
+
+function docsCheckCmd() {
+  return `${JSON.stringify(process.execPath)} ${JSON.stringify(millScript("validate-release-docs.mjs"))}`;
+}
+
+function runLightGate() {
+  const pkg = readRootPackage(rootDir);
+  if (verifyOnly) {
+    if (!skipDocs) step("1/1 Release docs (light)", docsCheckCmd());
+    return;
+  }
+  if (pkg.scripts.build) step("1/3 Build", "npm run build");
+  if (pkg.scripts.test) step("2/3 Tests", "npm test");
+  if (!skipDocs) step("3/3 Release docs (light)", docsCheckCmd());
 }
 
 function main() {
@@ -35,10 +50,12 @@ function main() {
   console.log("╚════════════════════════════════════════════════════════╝");
 
   try {
-    if (verifyOnly) {
+    if (!isXrayExoRepo(rootDir)) {
+      runLightGate();
+    } else if (verifyOnly) {
       step("1/5 Git + reconcile", "node scripts/node/pre-publish-guard.js --verify-only");
       if (!skipDocs) {
-        step("2/5 Release docs", "node scripts/node/validate-release-docs.mjs");
+        step("2/5 Release docs", docsCheckCmd());
       }
       step(
         "3/5 Plugin infrastructure",
@@ -51,7 +68,7 @@ function main() {
       step("1/7 Build", "npm run build");
       step("2/7 Tests", "npm test");
       if (!skipDocs) {
-        step("3/7 Release docs", "node scripts/node/validate-release-docs.mjs");
+        step("3/7 Release docs", docsCheckCmd());
       }
       step(
         "4/7 Consumer hook verifiers",
@@ -75,4 +92,9 @@ function main() {
   }
 }
 
-main();
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main();
+}

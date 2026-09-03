@@ -25,7 +25,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 
 ## What a stranger actually gets
 
-`npm install 0xray` **copies the 0xRay garment** and **generates host wiring**. It does not mint agents/skills/codex from the consumer's code. Their repo is a hanger (root path, merge-safe JSON, git hooks).
+`npm install 0xray` **copies the 0xRay garment**, **generates host wiring**, then **overlays** their `src/skills/*/SKILL.md` and `src/opencode/agents/*.yml` onto `.opencode` (same name wins). Codex is still our plant. Their repo is a hanger plus that overlay.
 
 ```
 npm i 0xray
@@ -38,7 +38,7 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-That is mill **wear**, not mill **mint-from-their-SSOT**. The product gap is the second one.
+Wear copies the garment. Overlay mints skills/agents that already exist in their tree. The mill does not invent skills from source.
 
 ## Mills (inventory)
 
@@ -56,11 +56,11 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
 | `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
 
-**Mill home:** `scripts/foundry/` (`@0xray/foundry`, private). Old `scripts/node/*.mjs` paths are shims.
+**Mill home:** `scripts/foundry/` (`@0xray/foundry`, publishable). Old `scripts/node/*.mjs` paths are shims. Mill root is `FOUNDRY_ROOT` or cwd.
 
-**Museum (thin wrappers / extra doors):**
+**Museum:**
 
-- `sync-versions.mjs`, `release.js` — deprecated
+- `sync-versions.mjs`, `release.js` — deleted
 - `publish.yml` — extra GHA door; docs mill runs before PUT
 
 **Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.0** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
@@ -81,7 +81,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire enable-when-resolves.
 
-**Not minted from their repo.** `SKILLS.md` is **not** written to the consumer root (docs claim it is).
+**Minted from their tree (overlay).** If they keep SSOT at `src/skills/*/SKILL.md` and `src/opencode/agents/*.yml`, postinstall copies those onto `.opencode` after the garment. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when their tree had files, else `copied-onto-hanger`.
 
 ### 3. Pre / post processors (two stacks)
 
@@ -116,14 +116,14 @@ TS `AGENT_REGISTRY` is a parallel mill muscle. It is **not** checked against YML
 
 ## Split (surgical — not a rebuild)
 
-Do not publish `@0xray/foundry` tonight. Do not add a mill MCP. Name, then cut conductors that cross the line.
+Do not add a mill MCP. Name, then cut conductors that cross the line. `@0xray/foundry` is the mill package (independent version, not 0xray's).
 
 1. **Name (this page).** Exo stays thin. Mill stays scripts + templates.
 2. **One bumper — landed.** `reconcile-version` only. `version-manager` refuses bump/`--tag`. UVM writes stay short-circuited. `executeReleaseWorkflow` is blocked.
 3. **Docs mill — landed.** CI **verifies**; it does not rewrite prose. Kernel slogan is era (`4.0`). CHANGELOG is the only patch-versioned prose (`[Unreleased]` allowed above current).
-4. **Mint-from-their-SSOT — first cut.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json` and fills `{{CONSUMER_NAME}}` on the managed AGENTS card. Skills/agents are still our garment.
+4. **Mint-from-their-SSOT — overlay.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays their `src/skills` / `src/opencode/agents` onto `.opencode`.
 5. **Processors.** Do not move ProcessorManager into the Grok exo. Do not call it the OS. Optional later: slim OpenCode/Hermes so constitution is the only pre-tool path on every floor.
-6. **Museum — in progress.** UVM file remains frozen. CI mill workflow is on `main`. `features-since-3.1` no longer requires the patch string.
+6. **Museum.** UVM file is gone. CI mill workflow is on `main`. Wrappers `sync-versions.mjs` / `release.js` deleted. `features-since-3.1` no longer requires the patch string.
 
 Order: (2) and (3) make 4.0.x ships cheap. (4) is the foundry product. (5)–(6) are trim.
 

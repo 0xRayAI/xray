@@ -13,7 +13,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Full `release-gate` now runs `validate-release-docs` (not only `--verify-only`).
 - `VersionComplianceProcessor` treats `package.json` as SSOT; UVM is frozen.
 - CI: version-compliance and AGENTS.md workflows target `main`; mill check is `validate-release-docs` (not UVM 1-ahead). `publish.yml` runs the docs mill before PUT.
-- Mill extracted to `scripts/foundry/` (`@0xray/foundry`, private). `release:npm` is `release.mjs --publish-only`. UVM file removed. Consumer mint writes `foundry-inventory.json` from their package.json.
+- Mill extracted to `scripts/foundry/` (`@0xray/foundry`). `release:npm` is `release.mjs --publish-only`. UVM file removed. Consumer mint writes `foundry-inventory.json` from their package.json.
+- Consumer postinstall overlays their `src/skills/*/SKILL.md` and `src/opencode/agents/*.yml` onto `.opencode` after the mill garment (same name wins).
+- `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd (light docs/gate without `docs-site`). Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
 
 ---
 

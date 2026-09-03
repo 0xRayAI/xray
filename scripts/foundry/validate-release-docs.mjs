@@ -19,9 +19,7 @@ import {
   getFrameworkCounts,
   getReleaseArtifactPaths,
 } from './version-manager.mjs';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const defaultRoot = path.resolve(__dirname, '../..');
+import { hasDocsSite, resolveMillRoot } from './mill-root.mjs';
 
 const STANDARD_HEADER_RE =
   /\*{0,2}\d+\.\d+\*{0,2}\s*—\s*a suit that survives the context window/;
@@ -175,15 +173,16 @@ function validateDocusaurusTagline(content) {
 
 /**
  * @param {string} [rootDir]
- * @returns {{ ok: boolean; version: string; counts: object; errors: string[]; warnings: string[] }}
+ * @returns {{ ok: boolean; version: string; counts: object; errors: string[]; warnings: string[]; mode?: 'full'|'light' }}
  */
-export function validateReleaseDocs(rootDir = defaultRoot) {
+export function validateReleaseDocs(rootDir = resolveMillRoot()) {
   const errors = [];
   const warnings = [];
   const version = getPackageVersion(rootDir);
   const counts = getFrameworkCounts(rootDir);
   const expectedHeader = buildDocsHeader(counts, version);
   const codexTerms = getCodexTermCount(rootDir);
+  const full = hasDocsSite(rootDir);
 
   if (codexTerms !== null && counts.codexTerms && codexTerms !== counts.codexTerms) {
     warnings.push(`codex.json has ${codexTerms} terms (counts.codexTerms is ${counts.codexTerms})`);
@@ -191,9 +190,24 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
 
   const changelog = readFile(rootDir, 'CHANGELOG.md');
   if (!changelog) {
-    errors.push('CHANGELOG.md missing');
+    if (full) {
+      errors.push('CHANGELOG.md missing');
+    } else {
+      warnings.push('CHANGELOG.md missing (light mill)');
+    }
   } else {
     errors.push(...validateChangelog(changelog, version).map((e) => `CHANGELOG.md: ${e}`));
+  }
+
+  if (!full) {
+    return {
+      ok: errors.length === 0,
+      version,
+      counts,
+      errors,
+      warnings,
+      mode: 'light',
+    };
   }
 
   for (const check of ROOT_DOC_CHECKS) {
@@ -239,7 +253,7 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
     errors.push(...validateDocusaurusTagline(docusaurus));
   }
 
-  for (const rel of getReleaseArtifactPaths()) {
+  for (const rel of getReleaseArtifactPaths(rootDir)) {
     if (!fs.existsSync(path.join(rootDir, rel))) {
       errors.push(`release artifact path missing: ${rel}`);
     }
@@ -251,6 +265,7 @@ export function validateReleaseDocs(rootDir = defaultRoot) {
     counts,
     errors,
     warnings,
+    mode: 'full',
   };
 }
 

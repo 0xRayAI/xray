@@ -15,9 +15,9 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readRootPackage, resolveMillRoot } from "./mill-root.mjs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, "../..");
+const rootDir = resolveMillRoot();
 const pkgPath = path.join(rootDir, "package.json");
 
 const args = process.argv.slice(2);
@@ -39,7 +39,9 @@ function readLocalVersion() {
 }
 
 function readPublishedVersion() {
-  const v = run("npm view 0xray version");
+  const name = readRootPackage(rootDir).name;
+  if (!name) return "0.0.0";
+  const v = run(`npm view ${name} version`);
   return v || "0.0.0";
 }
 
@@ -124,7 +126,7 @@ function main() {
 
   // Strict checks for release gate / pre-tag
   if (compare(local, npm) <= 0) {
-    fail(`package.json (${local}) must be > npm (${npm}). Run: node scripts/node/reconcile-version.mjs patch --apply`);
+    fail(`package.json (${local}) must be > npm (${npm}). Run: node scripts/foundry/reconcile-version.mjs patch --apply`);
   }
 
   if (tag && compare(local, tag) < 0) {
@@ -140,4 +142,9 @@ function main() {
   }
 }
 
-main();
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main();
+}
