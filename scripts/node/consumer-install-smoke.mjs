@@ -210,6 +210,7 @@ function main() {
       "scripts/node/postinstall.cjs",
       "scripts/foundry/mint-suit.cjs",
       "scripts/foundry/hooks.mjs",
+      "scripts/foundry/plant/skills/mill/SKILL.md",
       "package.json",
       "xray/features.json",
       "xray/features.schema.json",
@@ -221,6 +222,20 @@ function main() {
         throw new Error(`Missing in tarball install: ${rel}`);
       }
       console.log(`  ✅ ${rel}`);
+    }
+
+    const millSkillHanger = path.join(tmpRoot, ".opencode", "skills", "mill", "SKILL.md");
+    if (!fs.existsSync(millSkillHanger)) {
+      throw new Error("empty garment missing mill plant skill on hanger");
+    }
+    const hangerSkills = path.join(tmpRoot, ".opencode", "skills");
+    const hangerNames = fs.existsSync(hangerSkills)
+      ? fs.readdirSync(hangerSkills).filter((n) =>
+          fs.existsSync(path.join(hangerSkills, n, "SKILL.md")),
+        )
+      : [];
+    if (hangerNames.length > 3) {
+      throw new Error(`costume dump on empty garment: ${hangerNames.join(",")}`);
     }
 
     const installedPkg = JSON.parse(fs.readFileSync(path.join(nmRoot, "package.json"), "utf-8"));

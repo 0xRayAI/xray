@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.5] - 2026-09-04
+
+Empty garment: consumer hangers get mill plant (`plant/skills/mill`), not 45/42 costume. `foundry.json` `"costume": true` restores the dump. Plant overlay still mill-fill.
+
 ## [0.1.4] - 2026-09-04
 
 `npx @0xray/foundry hooks` on a published mill uses the worn garment

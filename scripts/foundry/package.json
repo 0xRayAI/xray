@@ -1,6 +1,6 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": false,
   "type": "module",
   "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
@@ -26,7 +26,8 @@
     "cli.js",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "plant"
   ],
   "exports": {
     "./version-manager": "./version-manager.mjs",

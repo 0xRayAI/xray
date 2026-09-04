@@ -4,7 +4,7 @@ import path from 'path';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
-import { mintAfterWear } from './foundry-mint-wear.js';
+import { mintAfterWear, wantsCostume } from './foundry-mint-wear.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
@@ -113,8 +113,13 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
       console.log('[Opencode] .opencode/ directory already exists.');
       console.log('Use --force to reinstall.');
     } else {
-      copyDir(opencodeSource, opencodeDest);
-      frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
+      if (wantsCostume(process.cwd())) {
+        copyDir(opencodeSource, opencodeDest);
+        frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
+      } else {
+        fs.mkdirSync(opencodeDest, { recursive: true });
+        frameworkLogger.log('opencode-integration', 'empty-garment-plugin', 'info', { destination: opencodeDest });
+      }
 
       const pluginSource = path.join(__dirname, '..', '..', '..', 'dist', 'plugin', 'xray-codex-injection.js');
       const pluginDest = path.join(opencodeDest, 'plugin', 'xray-codex-injection.js');

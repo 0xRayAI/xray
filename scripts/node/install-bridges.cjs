@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
+const { wantsCostume } = require("../foundry/mint-suit.cjs");
 const {
   wireHermesBridge,
   wireOpencodeBridge,
@@ -90,6 +91,11 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
     // best-effort
   }
   return copied;
+}
+
+function syncCostumeSkills(targetSkillsDir, packageRoot, targetDir) {
+  if (targetDir && !wantsCostume(targetDir)) return 0;
+  return syncBuiltinSkills(targetSkillsDir, packageRoot);
 }
 
 function copyTree(src, dest, relPath = "") {
@@ -267,37 +273,45 @@ function writeGrokDiscoveredHooks(targetDir, hooksPath, log, label) {
   }
 }
 
+function copyOpencodePlugin(packageRoot, opencodeDest, log) {
+  const pluginSource = path.join(packageRoot, "dist", "plugin", "xray-codex-injection.js");
+  const pluginDest = path.join(opencodeDest, "plugin", "xray-codex-injection.js");
+  if (!fs.existsSync(pluginSource)) return;
+  const pluginDestDir = path.dirname(pluginDest);
+  if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
+  const shouldCopy =
+    !fs.existsSync(pluginDest) ||
+    fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
+  if (shouldCopy) {
+    fs.copyFileSync(pluginSource, pluginDest);
+    log("opencode-bridge", "plugin updated", "info");
+  }
+}
+
 function installOpencodeBridge(targetDir, packageRoot, log) {
   const opencodeSource = path.join(packageRoot, ".opencode");
   const opencodeDest = path.join(targetDir, ".opencode");
-  if (!fs.existsSync(opencodeSource)) {
-    log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
-    return;
-  }
+  const costume = wantsCostume(targetDir);
 
-  if (!fs.existsSync(opencodeDest)) {
-    copyTree(opencodeSource, opencodeDest);
-    log("opencode-bridge", "copied .opencode tree", "info");
-  } else {
-    log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
-  }
-
-  const pluginSource = path.join(packageRoot, "dist", "plugin", "xray-codex-injection.js");
-  const pluginDest = path.join(opencodeDest, "plugin", "xray-codex-injection.js");
-  if (fs.existsSync(pluginSource)) {
-    const pluginDestDir = path.dirname(pluginDest);
-    if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
-    const shouldCopy =
-      !fs.existsSync(pluginDest) ||
-      fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
-    if (shouldCopy) {
-      fs.copyFileSync(pluginSource, pluginDest);
-      log("opencode-bridge", "plugin updated", "info");
+  if (costume) {
+    if (!fs.existsSync(opencodeSource)) {
+      log("opencode-bridge", "skipped", "warn", { reason: ".opencode source missing" });
+      return;
     }
+    if (!fs.existsSync(opencodeDest)) {
+      copyTree(opencodeSource, opencodeDest);
+      log("opencode-bridge", "copied .opencode tree", "info");
+    } else {
+      log("opencode-bridge", ".opencode exists — merging skills/plugin only", "info");
+    }
+    copyOpencodePlugin(packageRoot, opencodeDest, log);
+    const copied = syncCostumeSkills(path.join(opencodeDest, "skills"), packageRoot, targetDir);
+    if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
+  } else {
+    log("opencode-bridge", "empty garment — plugin only, mill mill-fill mill plant", "info");
+    fs.mkdirSync(opencodeDest, { recursive: true });
+    copyOpencodePlugin(packageRoot, opencodeDest, log);
   }
-
-  const copied = syncBuiltinSkills(path.join(opencodeDest, "skills"), packageRoot);
-  if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
 
   try {
     const count = wireOpencodeBridge(targetDir);
@@ -376,14 +390,14 @@ function installGrokBridge(targetDir, packageRoot, log) {
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
       writePluginMcpJson(dest, targetDir, log, "grok-bridge");
       patchGrokHooks(dest, packageRoot, targetDir, log, "grok-bridge");
-      const copied = syncBuiltinSkills(path.join(dest, "skills"), packageRoot);
+      const copied = syncCostumeSkills(path.join(dest, "skills"), packageRoot, targetDir);
       if (copied > 0) log("grok-bridge", `plugin skills synced (${copied})`, "info", { path: rel });
     }
   }
 
   if (!ephemeral) {
     const grokGlobalSkills = path.join(home, ".grok", "skills");
-    const globalCopied = syncBuiltinSkills(grokGlobalSkills, packageRoot);
+    const globalCopied = syncCostumeSkills(grokGlobalSkills, packageRoot, targetDir);
     if (globalCopied > 0) {
       log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
     }
@@ -421,7 +435,7 @@ function installHermesBridge(targetDir, packageRoot, log) {
 
   writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
 
-  const copied = syncBuiltinSkills(path.join(targetPluginDir, "skills"), packageRoot);
+  const copied = syncCostumeSkills(path.join(targetPluginDir, "skills"), packageRoot, targetDir);
   if (copied > 0) log("hermes-bridge", `skills synced (${copied})`, "info");
 
   const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
@@ -473,7 +487,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
     log("openclaw-bridge", "config created", "info", { path: ".xray/config/openclaw.json" });
   }
 
-  const copied = syncBuiltinSkills(path.join(os.homedir(), ".openclaw", "skills"), packageRoot);
+  const copied = syncCostumeSkills(path.join(os.homedir(), ".openclaw", "skills"), packageRoot, targetDir);
   if (copied > 0) log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
 
   try {

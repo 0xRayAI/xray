@@ -26,6 +26,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Mill CI report: `mill-monitor.yml` (fresh workflow ID) listens for mill CI completion. Report only.
 - Published mill `hooks` uses the 0xray garment installer (`node_modules/0xray/scripts/hooks`), not `node_modules/@0xray/hooks`. Mill tree 0.1.4 (not a 0xray bump).
 - Nested mill in the 0xray tarball (`scripts/foundry/`). Wear no longer needs a second `npm i @0xray/foundry` for mint-on-install. 4.0.2.
+- Empty garment: mill plant (`mill` skill) is the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Mill 0.1.5.
+
+---
+
+## [4.0.3] - 2026-09-04
+
+Empty garment. Their plant is the suit. Mill plant (`mill` skill) is the factory discipline on the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Factory Repertoire still enable-when-resolves. PPE stays worn. Mill **0.1.5**. Not 5.0.0.
 
 ---
 
