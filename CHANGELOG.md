@@ -27,6 +27,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Published mill `hooks` uses the 0xray garment installer (`node_modules/0xray/scripts/hooks`), not `node_modules/@0xray/hooks`. Mill tree 0.1.4 (not a 0xray bump).
 - Nested mill in the 0xray tarball (`scripts/foundry/`). Wear no longer needs a second `npm i @0xray/foundry` for mint-on-install. 4.0.2.
 - Empty garment: mill plant (`mill` skill) is the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Mill 0.1.5.
+- Mill plant fastens **inspect** (inspect AI work) plus `mill`. Not empty. Mill 0.1.6.
+
+---
+
+## [4.0.4] - 2026-09-04
+
+Mill **fastens** an inspect suit: mill plant is `mill` + `inspect` (inspect AI work — diffs, traces, mill receipts, CI). Not empty. Not 45/42 costume unless `foundry.json` `"costume": true`. Factory Repertoire + PPE stay. Mill **0.1.6**. Not 5.0.0.
 
 ---
 

@@ -6,7 +6,7 @@ sidebar_label: 4.0 left
 
 What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
 
-Product **4.0.3** empty garment: mill plant is the hanger. `0xray@4.0.2` nested mill. Do not run `release:major`. `@0xray/foundry` remains the standalone mill CLI. Costume dump is `foundry.json` `"costume": true`.
+Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. `0xray@4.0.3` empty mill plant. Do not run `release:major`. Costume dump is `foundry.json` `"costume": true`.
 
 ## Done (worn and shipped as 4.0.0)
 

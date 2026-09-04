@@ -153,6 +153,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/cli.js');
     expect(paths).toContain('scripts/foundry/mill-root.mjs');
     expect(paths).toContain('scripts/foundry/plant/skills/mill/SKILL.md');
+    expect(paths).toContain('scripts/foundry/plant/skills/inspect/SKILL.md');
   });
 
   it('mill is extracted as publishable @0xray/foundry', () => {
@@ -178,7 +179,9 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/release.mjs'))).toBe(true);
     expect(read('scripts/foundry/release.mjs')).toContain('--publish-only');
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/mill/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/inspect/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/mill.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/inspect.yml'))).toBe(true);
   });
 
   it('empty garment mill-fills mill plant, not 45/42 costume', () => {
@@ -207,11 +210,12 @@ describe('foundry mill — gate and scripts', () => {
       const inventory = mintConsumerSuit(root, tmp, () => undefined);
       expect(inventory.costume).toBe(false);
       expect(inventory.garment).toBe('mill-fill');
-      expect(inventory.millPlant?.skills).toContain('mill');
-      expect(readFileSync(path.join(tmp, '.opencode/skills/mill/SKILL.md'), 'utf8')).toContain(
-        'Their plant is the suit',
+      expect(inventory.millPlant?.skills).toEqual(expect.arrayContaining(['mill', 'inspect']));
+      expect(readFileSync(path.join(tmp, '.opencode/skills/inspect/SKILL.md'), 'utf8')).toContain(
+        'Inspect AI work',
       );
       expect(existsSync(path.join(tmp, '.opencode/agents/mill.yml'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/agents/inspect.yml'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
       mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
@@ -221,6 +225,7 @@ describe('foundry mill — gate and scripts', () => {
         'CONSUMER ACME\n',
       );
       expect(existsSync(path.join(tmp, '.opencode/skills/mill/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/skills/inspect/SKILL.md'))).toBe(true);
       writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ costume: true }, null, 2)}\n`);
       expect(wantsCostume(tmp)).toBe(true);
     } finally {
