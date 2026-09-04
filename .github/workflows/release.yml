@@ -42,9 +42,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Release (canonical pipeline)
-        run: node scripts/node/release.mjs ${{ inputs.bump }}
+      - name: Mill release (opt-in)
+        run: node scripts/foundry/release.mjs ${{ inputs.bump }} --i-mean-it
         env:
+          FOUNDRY_RELEASE: "1"
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

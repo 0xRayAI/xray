@@ -19,6 +19,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Honesty: consumer card does not claim it writes root `SKILLS.md`; mill help is `npx @0xray/foundry`; shims mill cwd; mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. Mill-fill stays law.
 - Scar tissue cut: no `homeSkills`, no `codexMode`/`featuresMode`/`configMode`. JSON always merge. One `mintConsumerSuit` after mill copies (not inside `syncBuiltinSkills`).
 - Mill flesh: live `npx @0xray/foundry release` is opt-in (`--i-mean-it` / `FOUNDRY_RELEASE=1`). Packed mill mint and Unreleased stamp are executed tests. `@0xray/foundry` tree is 0.1.1 (not a 0xray bump).
+- Mill CI: `0xRay CI/CD` is the mill gate on `main` (typecheck, lint, mill tests, build, curated tests, smoke). Monitor reports Actions; it does not auto-push. `npx @0xray/foundry ci` / `hooks`. Mill package 0.1.2.
 
 ---
 

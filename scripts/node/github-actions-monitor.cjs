@@ -1,23 +1,18 @@
 #!/usr/bin/env node
-
 /**
- * GitHub Actions Monitor
- * 
- * For consumer projects without real GitHub Actions, this returns success.
- * In production, this would check actual GitHub Actions workflow status.
- * 
- * Usage: node scripts/node/github-actions-monitor.cjs --commit <sha>
+ * Shim onto the mill CI monitor. Not PPE.
+ *
+ *   node scripts/node/github-actions-monitor.cjs [--commit SHA] [--report]
  */
 
-const args = process.argv.slice(2);
-const commitIndex = args.indexOf('--commit');
-const commitSha = commitIndex >= 0 ? args[commitIndex + 1] : 'unknown';
+const { spawnSync } = require("child_process");
+const path = require("path");
 
-console.log(`Checking GitHub Actions status for commit: ${commitSha}`);
-
-// For consumer projects without GitHub Actions, always return success
-// Real CI environments should override this with actual GitHub API calls
-console.log('SUCCESS: All workflows passed');
-console.log('No failed jobs');
-
-process.exit(0);
+const mill = path.join(__dirname, "../foundry/ci-monitor.mjs");
+const root = process.env.FOUNDRY_ROOT || process.cwd();
+const result = spawnSync(process.execPath, [mill, ...process.argv.slice(2)], {
+  stdio: "inherit",
+  cwd: root,
+  env: { ...process.env, FOUNDRY_ROOT: root },
+});
+process.exit(result.status === null ? 1 : result.status);

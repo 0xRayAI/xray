@@ -53,6 +53,9 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm`. Live run needs `--i-mean-it` or `FOUNDRY_RELEASE=1` |
 | `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
 | `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
+| `scripts/foundry/ci-monitor.mjs` | GitHub Actions report (`npx @0xray/foundry ci`). No auto-push |
+| `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`) |
+| `.github/workflows/ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke |
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
 | `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
 

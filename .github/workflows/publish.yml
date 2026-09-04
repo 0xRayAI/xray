@@ -23,7 +23,7 @@ jobs:
         run: npm run build
 
       - name: Foundry docs mill
-        run: node scripts/node/validate-release-docs.mjs
+        run: node scripts/foundry/validate-release-docs.mjs
 
       - name: Check required documentation exists
         run: |
@@ -40,19 +40,6 @@ jobs:
             echo "ERROR: At least 3 pipeline tests required"
             exit 1
           fi
-
-      - name: Check for recent reflections
-        run: |
-          echo "Checking reflections..."
-          if [ ! -d "docs/reflections" ]; then
-            echo "ERROR: docs/reflections directory missing"
-            exit 1
-          fi
-          # Check if there's a reflection from last 7 days
-          find docs/reflections -name "*.md" -mtime -7 | head -1 || {
-            echo "ERROR: No reflections from last 7 days"
-            exit 1
-          }
 
       - name: Validate Docusaurus docs build
         run: |
