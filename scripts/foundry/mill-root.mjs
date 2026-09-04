@@ -21,6 +21,20 @@ export function resolveMillRoot() {
   return process.cwd();
 }
 
+/**
+ * Git hook installer. Dogfood is `scripts/hooks` next to `scripts/foundry`.
+ * Published mill lives in `node_modules/@0xray/foundry` — sibling `@0xray/hooks`
+ * does not exist. Use the worn 0xray garment installer instead.
+ */
+export function resolveHookInstaller(rootDir = resolveMillRoot(), millPkg = millPackageDir()) {
+  const candidates = [
+    path.join(millPkg, "..", "hooks", "install-hooks.cjs"),
+    path.join(rootDir, "node_modules", "0xray", "scripts", "hooks", "install-hooks.cjs"),
+    path.join(rootDir, "scripts", "hooks", "install-hooks.cjs"),
+  ];
+  return candidates.find((p) => fs.existsSync(p)) ?? null;
+}
+
 export function readRootPackage(rootDir = resolveMillRoot()) {
   const pkgPath = path.join(rootDir, "package.json");
   if (!fs.existsSync(pkgPath)) {

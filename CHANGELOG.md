@@ -24,6 +24,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Mill self-host: `0xRay CI/CD` lives in `mill-ci.yml` so GitHub registers push/PR after the inactivity disable. Mill CI always builds Docusaurus.
 - GitHub Pages homepage: no client `<Redirect to="/docs/…">` (that 404s at the org root). Meta refresh + `useBaseUrl('/docs/')`. `.nojekyll` in static.
 - Mill CI report: `mill-monitor.yml` (fresh workflow ID) listens for mill CI completion. Report only.
+- Published mill `hooks` uses the 0xray garment installer (`node_modules/0xray/scripts/hooks`), not `node_modules/@0xray/hooks`. Mill tree 0.1.4 (not a 0xray bump).
 
 ---
 
