@@ -141,7 +141,7 @@ The mill **plants and gates**. The exo **wears**. GitHub Actions is mill-time.
 | `0xRay CI/CD` (`mill-ci.yml`) | **Mill** — typecheck, lint, mill tests, build, curated tests, smoke, Docusaurus | Yes |
 | `Foundry mill (version + docs)` | **Mill** — kernel headers + mill tests | Yes |
 | `Deploy Docs` | **Mill** — Docusaurus → GitHub Pages | Yes |
-| `CI/CD Health Monitor` | **Mill** — report only, no auto-push | Yes |
+| `Foundry mill (CI report)` (`mill-monitor.yml`) | **Mill** — report only, no auto-push | Yes |
 | `Enforce AGENTS.md` | **Mill** — consumer card | Yes |
 | `Processor Tests` | **Mill CI** of exo processors | Yes |
 | `Hermes Plugin Tests` | **Mill CI** of the Hermes floor, path-gated | Yes |

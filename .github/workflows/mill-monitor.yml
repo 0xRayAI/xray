@@ -1,20 +1,26 @@
-name: CI/CD Health Monitor & Auto-Fix
+name: Foundry mill (CI report)
 
+# Fresh file so GitHub registers workflow_run after inactivity disable
+# (same trap as ci.yml → mill-ci.yml). Report only. No auto-push.
 on:
   workflow_run:
     workflows:
       - "0xRay CI/CD"
       - "Foundry mill (version + docs)"
       - "Enforce AGENTS.md"
-      - "Processor Tests"
+      - "Deploy Docs"
     types:
       - completed
   schedule:
     - cron: "0 8 * * *"
   workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
-  monitor-ci-health:
+  mill-ci-report:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +30,6 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Mill CI monitor
-        id: monitor
         run: node scripts/foundry/ci-monitor.mjs --report --commit ${{ github.event.workflow_run.head_sha || github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,7 +39,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-cd-health-report
+          name: mill-ci-health-report
           path: .opencode/logs/ci-cd-monitor-report.json
           if-no-files-found: ignore
       - name: Health summary
