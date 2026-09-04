@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -139,8 +139,11 @@ describe('foundry mill — gate and scripts', () => {
     };
     expect(mill.name).toBe('@0xray/foundry');
     expect(mill.private).not.toBe(true);
-    expect(mill.version).toBe('0.1.0');
+    expect(mill.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(read('scripts/foundry/CHANGELOG.md')).toContain(`## [${mill.version}]`);
     expect(mill.bin).toEqual({ '0xray-foundry': 'cli.js' });
+    expect(read('scripts/foundry/release.mjs')).toContain('--i-mean-it');
+    expect(read('scripts/foundry/cli.mjs')).toContain('FOUNDRY_RELEASE');
     expect(existsSync(path.join(root, 'scripts/foundry/cli.js'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/cli.mjs'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/README.md'))).toBe(true);
@@ -656,6 +659,130 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(`${pub.stdout}${pub.stderr}`).toMatch(/name is required/);
     } finally {
       rmSync(nameless, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('foundry mill — flesh', () => {
+  it('live release is opt-in; dry-run stays free', () => {
+    const src = read('scripts/foundry/release.mjs');
+    expect(src).toContain('FOUNDRY_RELEASE');
+    expect(src).toContain('--i-mean-it');
+    expect(src).toMatch(/live = \(publishOnly \|\| Boolean\(releaseType\)\) && !dryRun/);
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-trap-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      const env = { ...process.env, FOUNDRY_ROOT: tmp };
+      delete env.FOUNDRY_RELEASE;
+      const blocked = spawnSync(process.execPath, ['scripts/foundry/release.mjs', 'patch'], {
+        cwd: root,
+        encoding: 'utf8',
+        env,
+      });
+      expect(blocked.status, `${blocked.stdout}${blocked.stderr}`).not.toBe(0);
+      expect(`${blocked.stdout}${blocked.stderr}`).toMatch(/--i-mean-it|FOUNDRY_RELEASE/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('stamp inserts the version after [Unreleased]', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-unreleased-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.2.4' }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(tmp, 'CHANGELOG.md'),
+        '# Changelog\n\n## [Unreleased]\n\n- pending\n\n## [1.2.3] - 2026-01-01\n\n- old\n',
+      );
+      const r = spawnSync(process.execPath, ['scripts/foundry/version-manager.mjs', '--artifacts-only'], {
+        cwd: root,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: tmp },
+      });
+      expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+      const log = readFileSync(path.join(tmp, 'CHANGELOG.md'), 'utf8');
+      expect(log.indexOf('## [Unreleased]')).toBeGreaterThan(-1);
+      expect(log).toContain('- pending');
+      expect(log).toContain('## [1.2.4]');
+      expect(log.indexOf('## [Unreleased]')).toBeLessThan(log.indexOf('## [1.2.4]'));
+      expect(log.indexOf('## [1.2.4]')).toBeLessThan(log.indexOf('## [1.2.3]'));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('packed mill tarball mints overlay onto a stranger cwd', () => {
+    const packDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-pack-'));
+    const unpackDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-unpack-'));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-packed-mint-'));
+    try {
+      const pack = spawnSync('npm', ['pack', '--pack-destination', packDir], {
+        cwd: path.join(root, 'scripts/foundry'),
+        encoding: 'utf8',
+      });
+      expect(pack.status, `${pack.stdout}${pack.stderr}`).toBe(0);
+      const tgz = readdirSync(packDir).find((f) => f.endsWith('.tgz'));
+      expect(tgz).toBeTruthy();
+      const tar = spawnSync('tar', ['-xzf', path.join(packDir, tgz as string), '-C', unpackDir], {
+        encoding: 'utf8',
+      });
+      expect(tar.status, `${tar.stdout}${tar.stderr}`).toBe(0);
+      const millRoot = path.join(unpackDir, 'package');
+      expect(existsSync(path.join(millRoot, 'cli.js'))).toBe(true);
+      expect(existsSync(path.join(millRoot, 'mint-suit.cjs'))).toBe(true);
+
+      writeFileSync(
+        path.join(consumer, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '3.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(consumer, 'xray'), { recursive: true });
+      mkdirSync(path.join(consumer, '.xray'), { recursive: true });
+      mkdirSync(path.join(consumer, 'src/skills/acme-tool'), { recursive: true });
+      mkdirSync(path.join(consumer, '.opencode/skills/enforcer'), { recursive: true });
+      writeFileSync(
+        path.join(consumer, 'xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'strict' } }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(consumer, '.xray/features.json'),
+        `${JSON.stringify({ suit_temperament: { profile: 'guided' }, token_optimization: { enabled: true } }, null, 2)}\n`,
+      );
+      writeFileSync(path.join(consumer, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      writeFileSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
+
+      const mint = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint'], {
+        cwd: consumer,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: consumer },
+      });
+      expect(mint.status, `${mint.stdout}${mint.stderr}`).toBe(0);
+      const features = JSON.parse(readFileSync(path.join(consumer, '.xray/features.json'), 'utf8')) as {
+        suit_temperament: { profile: string };
+        token_optimization?: { enabled: boolean };
+      };
+      expect(features.suit_temperament.profile).toBe('strict');
+      expect(features.token_optimization?.enabled).toBe(true);
+      expect(readFileSync(path.join(consumer, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      expect(readFileSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe(
+        'MILL GARMENT\n',
+      );
+      const inventory = JSON.parse(
+        readFileSync(path.join(consumer, '.xray/foundry-inventory.json'), 'utf8'),
+      ) as { mill: { name: string }; garment: string };
+      expect(inventory.mill.name).toBe('@0xray/foundry');
+      expect(inventory.garment).toBe('overlay');
+    } finally {
+      rmSync(packDir, { recursive: true, force: true });
+      rmSync(unpackDir, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
     }
   });
 });

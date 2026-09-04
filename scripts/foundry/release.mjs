@@ -12,8 +12,12 @@
  * 7. Tag → push tag (only after successful publish)
  *
  * Usage:
- *   npx @0xray/foundry release [patch|minor|major] [--dry-run]
- *   npx @0xray/foundry release --publish-only [--dry-run]
+ *   npx @0xray/foundry release [patch|minor|major] --dry-run
+ *   npx @0xray/foundry release [patch|minor|major] --i-mean-it
+ *   npx @0xray/foundry release --publish-only --dry-run
+ *   npx @0xray/foundry release --publish-only --i-mean-it
+ *
+ * Live bump/commit/push/publish requires --i-mean-it or FOUNDRY_RELEASE=1.
  */
 
 import { execSync } from "child_process";
@@ -33,6 +37,14 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const publishOnly = args.includes("--publish-only");
 const releaseType = args.find((a) => ["major", "minor", "patch"].includes(a));
+const optedIn = args.includes("--i-mean-it") || process.env.FOUNDRY_RELEASE === "1";
+
+function writeReleaseTrap() {
+  process.stderr.write(
+    "npx @0xray/foundry release bumps, commits, pushes, and publishes the milled cwd.\n" +
+      "Pass --i-mean-it or set FOUNDRY_RELEASE=1. Preview with --dry-run.\n",
+  );
+}
 
 function run(cmd, label) {
   console.log(`\n> ${cmd}`);
@@ -105,6 +117,12 @@ function publishIdempotent(version) {
 }
 
 async function main() {
+  const live = (publishOnly || Boolean(releaseType)) && !dryRun;
+  if (live && !optedIn) {
+    writeReleaseTrap();
+    process.exit(1);
+  }
+
   if (publishOnly) {
     packageName();
     const version = readVersion();
@@ -131,8 +149,12 @@ async function main() {
   }
 
   if (!releaseType || !["major", "minor", "patch"].includes(releaseType)) {
-    process.stderr.write("Usage: npx @0xray/foundry release [patch|minor|major] [--dry-run]\n");
-    process.stderr.write("       npx @0xray/foundry release --publish-only [--dry-run]\n");
+    process.stderr.write(
+      "Usage: npx @0xray/foundry release [patch|minor|major] [--dry-run|--i-mean-it]\n",
+    );
+    process.stderr.write(
+      "       npx @0xray/foundry release --publish-only [--dry-run|--i-mean-it]\n",
+    );
     process.exit(1);
   }
 

@@ -17,10 +17,14 @@ npx @0xray/foundry reconcile [patch|minor|major] [--apply] [--check]
 npx @0xray/foundry stamp
 npx @0xray/foundry docs-check
 npx @0xray/foundry gate [--verify-only]
-npx @0xray/foundry release [patch|minor|major] [--dry-run]
-npx @0xray/foundry release --publish-only
+npx @0xray/foundry release [patch|minor|major] --dry-run
+npx @0xray/foundry release [patch|minor|major] --i-mean-it
+npx @0xray/foundry release --publish-only --dry-run
+npx @0xray/foundry release --publish-only --i-mean-it
 npx @0xray/foundry mint
 ```
+
+`release` without `--dry-run` requires `--i-mean-it` or `FOUNDRY_RELEASE=1`. It is a bump/commit/push/publish bot for the **milled cwd**, not a casual command.
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
@@ -49,7 +53,7 @@ From **this directory**, not the 0xray repo root:
 cd scripts/foundry && npm publish --access public
 ```
 
-Repo-root `npm publish` is `0xray`. `npx @0xray/foundry release` publishes the **milled cwd** package (their `publishConfig`; `--access public` only for `0xray` and `@0xray/foundry`).
+Repo-root `npm publish` is `0xray`. `npx @0xray/foundry release --i-mean-it` publishes the **milled cwd** package (their `publishConfig`; `--access public` only for `0xray` and `@0xray/foundry`).
 
 ## 0xRay exo
 

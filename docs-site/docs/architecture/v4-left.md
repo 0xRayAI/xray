@@ -65,8 +65,8 @@ Closed on this plant and shipped as **0xray@4.0.0**:
 
 Still open:
 
-1. **Foundry mill** — extracted to `scripts/foundry/` (`@0xray/foundry`). Overlay mints their constitution, features, skills, and agents. Do not add a mill MCP. Do not `release:major`.
-2. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
+1. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
+2. Optional later mill: empty garment (no 45/42 costume) — not this cut. Dual-ship stays until a later 0xray patch that `require`s the npm mill (do not bump 0xray for that here).
 
 ## Do not
 
@@ -78,4 +78,4 @@ Still open:
 
 ## One line
 
-**Suit is worn and attested. npm is 4.0.1. Foundry is named. Remaining: one bumper, docs verify-not-write; do not extract a mill package.**
+**Suit is worn and attested. npm is 4.0.1. Foundry mill is on main (`@0xray/foundry`); overlay is mill-fill. Live mill `release` is opt-in. Do not `release:major`.**
