@@ -38,7 +38,7 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-Wear copies **factory** (PPE hooks, Repertoire enable-when-resolves, 7 MCP, mill plant). Overlay mints their plant onto the hanger. Default is **empty garment**: mill plant (`mill` skill) is the suit, not a sticker on 45/42. `foundry.json` `"costume": true` restores the mill garment dump. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
+Wear copies **factory** (PPE hooks, Repertoire enable-when-resolves, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
 ## Mills (inventory)
 

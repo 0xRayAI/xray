@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.6] - 2026-09-04
+
+Mill plant fastens an **inspect** suit: inspect AI work (diffs, traces, mill receipts, CI). Not empty. `mill` + `inspect` skills. Costume dump still opt-in.
+
 ## [0.1.5] - 2026-09-04
 
 Empty garment: consumer hangers get mill plant (`plant/skills/mill`), not 45/42 costume. `foundry.json` `"costume": true` restores the dump. Plant overlay still mill-fill.

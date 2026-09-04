@@ -52,7 +52,7 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 
 **Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project hangers only. CLI re-wear calls mint **once** after mill copies.
 
-**Empty garment (default):** mill plant (`plant/skills/mill`) is the hanger. Not 45 skills / 42 agents. `foundry.json` `"costume": true` copies that mill garment. Factory Repertoire still enable-when-resolves. PPE stays worn.
+**Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
 ## Publish this mill
 
