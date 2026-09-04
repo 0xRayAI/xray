@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [Unreleased]
+
+### 🔧 Maintenance
+- Foundry mill: one bumper (`reconcile-version.mjs`); `version-manager.mjs` is `--artifacts-only` (JSON + CHANGELOG). Bump and `--tag` are refused.
+- Docs mill verifies era kernel headers (`4.0`) and skill counts; it does not rewrite markdown prose.
+- Exo cannot ship: `executeReleaseWorkflow` is blocked (`FOUNDRY_EXO_CANNOT_SHIP`).
+- Full `release-gate` now runs `validate-release-docs` (not only `--verify-only`).
+- `VersionComplianceProcessor` treats `package.json` as SSOT; UVM is frozen.
+- CI: version-compliance and AGENTS.md workflows target `main`; mill check is `validate-release-docs` (not UVM 1-ahead). `publish.yml` runs the docs mill before PUT.
+- Mill extracted to `scripts/foundry/` (`@0xray/foundry`). `release:npm` is `release.mjs --publish-only`. UVM file removed. Consumer mint writes `foundry-inventory.json` from their package.json.
+- Consumer postinstall overlays their mill SSOT onto the hanger: constitution (`xray/codex.json`), features/temperament, config, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Remap with `foundry.json`. Overlay is **project** skill hangers. JSON mill-fill always merges. CLI re-wear mints once after mill copies. `npx @0xray/foundry mint` reapplies overlay.
+- `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd. Full docs corpus only on the 0xray exo; light mill otherwise. Stamp creates CHANGELOG when missing. Publish refuses a nameless `package.json`. Mill PUT is `cd scripts/foundry && npm publish`; stranger `release` does not force `--access public`. Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
+- Honesty: consumer card does not claim it writes root `SKILLS.md`; mill help is `npx @0xray/foundry`; shims mill cwd; mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. Mill-fill stays law.
+- Scar tissue cut: no `homeSkills`, no `codexMode`/`featuresMode`/`configMode`. JSON always merge. One `mintConsumerSuit` after mill copies (not inside `syncBuiltinSkills`).
+
+---
+
 ## [4.0.1] - 2026-09-02
 
 Patch on the 4.0 temperament line. npm **4.0.0** stays latest until this tag publishes.

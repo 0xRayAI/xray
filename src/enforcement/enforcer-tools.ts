@@ -262,135 +262,38 @@ function buildTaskDescription(
   return parts.join(" ");
 }
 
+/** Foundry mill ships. The worn exo must not bump, commit, or publish. */
+export const FOUNDRY_EXO_CANNOT_SHIP =
+  "Exo cannot ship. Use: node scripts/node/release.mjs [patch|minor|major]";
+
 /**
- * Execute the full release workflow
- * Triggered when user says: release, npm publish, publish to npm, bump and publish, ship it
+ * Release keyword used to run version-manager + git add -A + npm publish from the exo.
+ * That path is refused. Canonical mill: reconcile → artifacts-only → gate → PUT → tag.
  */
-async function executeReleaseWorkflow(
+export async function executeReleaseWorkflow(
   operation: string,
-  context: RuleValidationContext,
+  _context: RuleValidationContext,
   jobId: string,
-  routing: RoutingRecommendation,
+  _routing: RoutingRecommendation,
 ): Promise<EnforcementResult> {
-  const { execSync } = await import('child_process');
-  
-  // Extract release options from routing context
-  const releaseContext = (routing as any).context || {};
-  const bumpType = releaseContext.bumpType || 'patch';
-  const createTag = releaseContext.createTag || false;
-  
-  await frameworkLogger.log(
-    "enforcer-tools",
-    "release-workflow-starting",
-    "info",
-    { jobId, bumpType, createTag },
-  );
-  
-  const steps: string[] = [];
-  const errors: string[] = [];
-  
-  // HARD STOP: Build must pass before release
-  await frameworkLogger.log("enforcer-tools", "release-build-check", "info", { step: "Verifying build passes..." });
-  try {
-    execSync(`npm run build`, {
-      cwd: process.cwd(),
-      stdio: 'pipe'
-    });
-    steps.push("✅ Build verified");
-  } catch (e) {
-    const errorMsg = `🛑 RELEASE STOPPED: Build failed before publishing. Fix build errors first.`;
-    frameworkLogger.log("enforcer-tools", "release-blocked", "error", {
-      message: errorMsg,
-    });
-    frameworkLogger.log("enforcer-tools", "release-build-error", "error", {
-      message: `Error: ${e}`,
-      error: e,
-    });
-    return {
-      operation: "release",
-      passed: false,
-      blocked: true,
-      errors: [errorMsg, `Build error: ${e}`],
-      warnings: [],
-      fixes: [],
-      report: {
-        passed: false,
-        operation: "release",
-        errors: [errorMsg, `Build error: ${e}`],
-        warnings: [],
-        results: [],
-        timestamp: new Date(),
-      },
-    };
-  }
-  
-  try {
-    // Step 1: Run version-manager to bump version and generate changelog
-    await frameworkLogger.log("enforcer-tools", "release-step-1-version", "info", { step: "Bumping version..." });
-    try {
-      const versionArg = createTag ? '--tag' : '';
-      execSync(`node scripts/node/version-manager.mjs ${bumpType} ${versionArg}`, {
-        cwd: process.cwd(),
-        stdio: 'inherit'
-      });
-      steps.push("✅ Version bumped + changelog generated");
-    } catch (e) {
-      errors.push(`Version bump failed: ${e}`);
-    }
-    
-    // Step 2: Git commit and push
-    await frameworkLogger.log("enforcer-tools", "release-step-2-git", "info", { step: "Committing and pushing..." });
-    try {
-      execSync(`git add -A && git commit -m "release: v${bumpType} - Changelog updated" && git push`, {
-        cwd: process.cwd(),
-        stdio: 'inherit'
-      });
-      steps.push("✅ Git commit + push");
-    } catch (e) {
-      errors.push(`Git commit/push failed: ${e}`);
-    }
-    
-    // Step 3: npm publish
-    await frameworkLogger.log("enforcer-tools", "release-step-3-npm", "info", { step: "Publishing to npm..." });
-    try {
-      execSync(`npm publish`, {
-        cwd: process.cwd(),
-        stdio: 'inherit'
-      });
-      steps.push("✅ npm published");
-    } catch (e) {
-      errors.push(`npm publish failed: ${e}`);
-    }
-    
-    // Step 4: Generate tweet context
-    await frameworkLogger.log("enforcer-tools", "release-step-4-tweet", "info", { step: "Generating tweet..." });
-    try {
-      execSync(`node scripts/node/release-tweet.mjs`, {
-        cwd: process.cwd(),
-        stdio: 'inherit'
-      });
-      steps.push("✅ Tweet context generated - ready for @growth-strategist");
-    } catch (e) {
-      errors.push(`Tweet generation failed: ${e}`);
-    }
-    
-  } catch (e) {
-    errors.push(`Release workflow failed: ${e}`);
-  }
-  
+  await frameworkLogger.log("enforcer-tools", "release-workflow-refused", "error", {
+    jobId,
+    operation,
+    reason: "foundry-exo-cannot-ship",
+  });
   return {
     operation: "release",
-    passed: errors.length === 0,
-    blocked: false,
-    errors,
+    passed: false,
+    blocked: true,
+    errors: [FOUNDRY_EXO_CANNOT_SHIP],
     warnings: [],
     fixes: [],
     report: {
-      passed: errors.length === 0,
+      passed: false,
       operation: "release",
-      errors,
-      warnings: steps,
-      results: steps.map(s => ({ rule: 'release', passed: true, message: s })),
+      errors: [FOUNDRY_EXO_CANNOT_SHIP],
+      warnings: [],
+      results: [],
       timestamp: new Date(),
     },
   };
@@ -600,8 +503,7 @@ export async function ruleValidation(
       {
         jobId,
         operation,
-        bumpType: (routing as any).context?.bumpType || 'patch',
-        createTag: (routing as any).context?.createTag || false,
+        reason: "foundry-exo-cannot-ship",
       },
     );
     

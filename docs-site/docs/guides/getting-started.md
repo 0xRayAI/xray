@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Wear the exo. Constitution on every stroke. Temperament by host.
 

@@ -1,8 +1,8 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**v4.0.1**).
+Quick reference for the xray AI orchestration framework (**4.0**).
 
-**v4.0.1** — a suit that survives the context window.
+**4.0** — a suit that survives the context window.
 
 **Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · Repertoire when it resolves.
 
@@ -38,7 +38,7 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 
 Governance deliberation: **code-review**, **security-audit**, **researcher** within the 7-server set.
 
-## Postinstall (v4.0.1)
+## Postinstall
 
 `postinstall.cjs` → `installAllBridges()`:
 

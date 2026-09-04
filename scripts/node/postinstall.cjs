@@ -8,6 +8,15 @@ const {
   isConsumerInstall,
 } = require("./install-bridges.cjs");
 const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
+const {
+  overlayConsumerTree,
+  mintConsumerFromSsot,
+  mintConsumerSuit,
+  listConsumerSkillNames,
+  listConsumerAgentFiles,
+  loadFoundryParams,
+  readPackageIdentity,
+} = require("../foundry/mint-suit.cjs");
 
 function structuredLog(component, action, status, details) {
   const ts = new Date().toISOString();
@@ -16,6 +25,16 @@ function structuredLog(component, action, status, details) {
 }
 
 const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
+
+function fillConsumerPlaceholders(content, consumer) {
+  const name = consumer.name || "this project";
+  const versionParen = consumer.version ? ` (${consumer.version})` : "";
+  return content
+    .split("{{CONSUMER_NAME}}")
+    .join(name)
+    .split("{{CONSUMER_VERSION_PAREN}}")
+    .join(versionParen);
+}
 
 function deployManagedAgents(packageRoot, targetDir, log) {
   const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
@@ -26,6 +45,8 @@ function deployManagedAgents(packageRoot, targetDir, log) {
     fs.readFileSync(agentsDest, "utf8").includes(XRAY_MANAGED_AGENTS_MARKER);
   if (shouldDeployAgents) {
     let content = fs.readFileSync(agentsConsumer, "utf8");
+    const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
+    content = fillConsumerPlaceholders(content, consumer);
     if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
       content = `${content.trimEnd()}\n\n${XRAY_MANAGED_AGENTS_MARKER}\n`;
     }
@@ -65,6 +86,9 @@ function runPostinstall(packageRoot, targetDir, log) {
       packageRoot: resolvedPackage,
       log: logFn,
     });
+    if (consumer) {
+      mintConsumerSuit(resolvedPackage, resolvedTarget, logFn);
+    }
   } catch (e) {
     logFn("postinstall", "Bridge install failed", "error", { error: e.message });
     throw e;
@@ -81,7 +105,18 @@ function runPostinstall(packageRoot, targetDir, log) {
   }
 }
 
-module.exports = { runPostinstall };
+module.exports = {
+  runPostinstall,
+  mintConsumerFromSsot,
+  mintConsumerSuit,
+  overlayConsumerTree,
+  listConsumerSkillNames,
+  listConsumerAgentFiles,
+  loadFoundryParams,
+  fillConsumerPlaceholders,
+  readPackageIdentity,
+  deployManagedAgents,
+};
 
 if (require.main === module) {
   const packageRoot = path.join(__dirname, "..", "..");

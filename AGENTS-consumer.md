@@ -2,9 +2,9 @@
 
 <!-- 0xray-managed -->
 
-Quick reference for the 0xRay AI orchestration framework (shipped to your project on `npm install 0xray`).
+Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
@@ -19,9 +19,9 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Ships root **`SKILLS.md`** and syncs **45 skills** to platform skill directories
+- Syncs **45 mill skills** to platform skill directories, then overlays **your** `src/skills` (same name wins). Does **not** write root **`SKILLS.md`**
 - Seeds **`.gitignore`** (from template, if absent)
-- Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`)
+- Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
 - Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
 

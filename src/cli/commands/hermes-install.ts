@@ -5,6 +5,7 @@ import { homedir } from 'os';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
+import { mintAfterWear } from './foundry-mint-wear.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
@@ -87,6 +88,7 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
       frameworkLogger.log('hermes-integration', 'hooks-copied', 'info', {});
     }
     const wired = wiring.wireHermesBridge(targetDir);
+    mintAfterWear(targetDir);
     console.log(`\x1b[32m✓ Wired Hermes mcp_servers (${wired.count} servers)\x1b[0m`);
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);
 

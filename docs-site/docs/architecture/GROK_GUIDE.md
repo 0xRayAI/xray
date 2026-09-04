@@ -4,7 +4,7 @@ sidebar_label: Grok floor
 
 # Grok floor
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Grok Build wears the same exo as OpenCode, Hermes, and OpenClaw. Constitution always on. Temperament on this floor is **frontier** when `suit_temperament.profile` is `auto`. Codex 11 / 29 / 69 still **deny**. Spawn-without-plan **warns**.
 

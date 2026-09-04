@@ -1,0 +1,50 @@
+{
+  "name": "@0xray/foundry",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "0xRay mill: mint their suit params, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xRayAI/xray.git",
+    "directory": "scripts/foundry"
+  },
+  "homepage": "https://github.com/0xRayAI/xray/tree/main/scripts/foundry",
+  "bugs": {
+    "url": "https://github.com/0xRayAI/xray/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "0xray-foundry": "cli.js"
+  },
+  "files": [
+    "*.mjs",
+    "*.cjs",
+    "cli.js",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    "./version-manager": "./version-manager.mjs",
+    "./validate-release-docs": "./validate-release-docs.mjs",
+    "./reconcile-version": "./reconcile-version.mjs",
+    "./release": "./release.mjs",
+    "./release-gate": "./release-gate.mjs",
+    "./mill-root": "./mill-root.mjs",
+    "./mint-suit": "./mint-suit.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "0xray",
+    "foundry",
+    "mill",
+    "release",
+    "changelog"
+  ]
+}

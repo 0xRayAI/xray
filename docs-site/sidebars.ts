@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'architecture/v4-vision',
         'architecture/v4-now',
+        'architecture/v4-foundry',
         'architecture/v4-left',
         'guides/v3-temperament',
         'architecture/v3-from-v2',

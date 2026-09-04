@@ -4,6 +4,7 @@ import path from 'path';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
+import { mintAfterWear } from './foundry-mint-wear.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
@@ -143,6 +144,7 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
     }
 
     const mcpCount = wiring.wireOpencodeBridge(process.cwd());
+    mintAfterWear(process.cwd());
     console.log(`\x1b[32m✓ Wired opencode.json mcp (${mcpCount} servers)\x1b[0m`);
 
     console.log('\n✅ 0xRay OpenCode plugin installed!');

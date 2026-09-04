@@ -1,6 +1,6 @@
 # MCP Servers
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 0xRay exposes **7 consumer MCP servers** on the published package surface. All run via `npx -y 0xray mcp <cmd>` — no `dist/` path hacks.
 

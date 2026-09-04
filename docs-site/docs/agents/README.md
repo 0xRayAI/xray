@@ -1,6 +1,6 @@
 # Agents
 
-**v4.0.1** — a suit that survives the context window
+**4.0** — a suit that survives the context window
 
 Organs, not the product. The product is the exo.
 
