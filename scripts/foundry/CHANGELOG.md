@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4] - 2026-09-04
+
+`npx @0xray/foundry hooks` on a published mill uses the worn garment
+`node_modules/0xray/scripts/hooks/install-hooks.cjs`. Dogfood still uses
+`scripts/hooks` next to `scripts/foundry`. Missing installer fails honestly
+(no spawn of `node_modules/@0xray/hooks/...`).
+
 ## [0.1.3] - 2026-09-04
 
 Pages homepage is a baseUrl meta refresh to `/docs/`, not a client redirect to `/docs/introduction` (org-root 404).

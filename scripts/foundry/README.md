@@ -35,6 +35,8 @@ npx @0xray/foundry hooks
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 
+`hooks` installs git hooks via `scripts/hooks/install-hooks.cjs` (dogfood) or `node_modules/0xray/scripts/hooks/install-hooks.cjs` (published mill + worn garment). It does not look for `@0xray/hooks`.
+
 ## Suit params (`mint`)
 
 After the garment is on the hanger, overlay their plant (defaults; remap in `foundry.json` or `.xray/foundry.json`):

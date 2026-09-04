@@ -10,6 +10,7 @@ import { VersionComplianceProcessor } from '../../processors/implementations/ver
 import { eraFromVersion, buildDocsHeader } from '../../../scripts/foundry/version-manager.mjs';
 import { validateReleaseDocs } from '../../../scripts/foundry/validate-release-docs.mjs';
 import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
+import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
 
 const requireCjs = createRequire(import.meta.url);
 
@@ -833,6 +834,67 @@ describe('foundry mill — CI and hooks', () => {
       expect(report.issues).toEqual([]);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('dogfood mill hooks installer is scripts/hooks next to scripts/foundry', () => {
+    const installer = resolveHookInstaller(root, millPackageDir());
+    expect(installer).toBe(path.join(root, 'scripts/hooks/install-hooks.cjs'));
+    expect(installer).toBeTruthy();
+    expect(existsSync(path.join(root, 'scripts/hooks/install-hooks.cjs'))).toBe(true);
+    expect(read('scripts/foundry/hooks.mjs')).toContain('resolveHookInstaller');
+    expect(read('scripts/foundry/hooks.mjs')).not.toContain('millPackageDir(), "..", "hooks"');
+  });
+
+  it('packed mill hooks uses the 0xray garment installer, not @0xray/hooks', () => {
+    const packDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hooks-pack-'));
+    const unpackDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hooks-unpack-'));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hooks-consumer-'));
+    try {
+      const pack = spawnSync('npm', ['pack', '--pack-destination', packDir], {
+        cwd: path.join(root, 'scripts/foundry'),
+        encoding: 'utf8',
+      });
+      expect(pack.status, `${pack.stdout}${pack.stderr}`).toBe(0);
+      const tgz = readdirSync(packDir).find((f) => f.endsWith('.tgz'));
+      expect(tgz).toBeTruthy();
+      const tar = spawnSync('tar', ['-xzf', path.join(packDir, tgz as string), '-C', unpackDir], {
+        encoding: 'utf8',
+      });
+      expect(tar.status, `${tar.stdout}${tar.stderr}`).toBe(0);
+      const millRoot = path.join(unpackDir, 'package');
+      expect(existsSync(path.join(millRoot, '..', 'hooks', 'install-hooks.cjs'))).toBe(false);
+
+      writeFileSync(
+        path.join(consumer, 'package.json'),
+        `${JSON.stringify({ name: 'acme-mill', version: '0.0.1' }, null, 2)}\n`,
+      );
+      const missing = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'hooks'], {
+        cwd: consumer,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: consumer },
+      });
+      expect(missing.status, `${missing.stdout}${missing.stderr}`).not.toBe(0);
+      expect(`${missing.stdout}${missing.stderr}`).toMatch(/no install-hooks\.cjs/);
+      expect(`${missing.stdout}${missing.stderr}`).not.toMatch(/@0xray\/hooks/);
+
+      mkdirSync(path.join(consumer, 'node_modules/0xray/scripts/hooks'), { recursive: true });
+      writeFileSync(
+        path.join(consumer, 'node_modules/0xray/scripts/hooks/install-hooks.cjs'),
+        'process.stdout.write(`garment-hooks ${process.cwd()}\\n`);\n',
+      );
+      const ok = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'hooks'], {
+        cwd: consumer,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: consumer },
+      });
+      expect(ok.status, `${ok.stdout}${ok.stderr}`).toBe(0);
+      expect(`${ok.stdout}${ok.stderr}`).toMatch(/garment-hooks /);
+      expect(`${ok.stdout}${ok.stderr}`).toContain(path.basename(consumer));
+    } finally {
+      rmSync(packDir, { recursive: true, force: true });
+      rmSync(unpackDir, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
     }
   });
 });

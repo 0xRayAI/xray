@@ -54,7 +54,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
 | `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
 | `scripts/foundry/ci-monitor.mjs` | GitHub Actions report (`npx @0xray/foundry ci`). No auto-push |
-| `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`) |
+| `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`). Dogfood `scripts/hooks`; published mill uses `node_modules/0xray/scripts/hooks` |
 | `scripts/foundry/docs-build.mjs` | Docusaurus build on the 0xray exo (`npx @0xray/foundry docs-build`) |
 | `.github/workflows/mill-ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke, Docusaurus |
 | `.github/workflows/deploy-docs.yml` | Mill Pages put |
