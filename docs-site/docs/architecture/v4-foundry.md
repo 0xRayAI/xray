@@ -56,7 +56,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/foundry/ci-monitor.mjs` | GitHub Actions report (`npx @0xray/foundry ci`). No auto-push |
 | `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`) |
 | `scripts/foundry/docs-build.mjs` | Docusaurus build on the 0xray exo (`npx @0xray/foundry docs-build`) |
-| `.github/workflows/ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke |
+| `.github/workflows/mill-ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke, Docusaurus |
 | `.github/workflows/deploy-docs.yml` | Mill Pages put |
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
 | `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
@@ -138,7 +138,7 @@ The mill **plants and gates**. The exo **wears**. GitHub Actions is mill-time.
 
 | Workflow | Owner | Keep? |
 |---|---|---|
-| `0xRay CI/CD` (`ci.yml`) | **Mill** — typecheck, lint, mill tests, build, curated tests, smoke | Yes |
+| `0xRay CI/CD` (`mill-ci.yml`) | **Mill** — typecheck, lint, mill tests, build, curated tests, smoke, Docusaurus | Yes |
 | `Foundry mill (version + docs)` | **Mill** — kernel headers + mill tests | Yes |
 | `Deploy Docs` | **Mill** — Docusaurus → GitHub Pages | Yes |
 | `CI/CD Health Monitor` | **Mill** — report only, no auto-push | Yes |

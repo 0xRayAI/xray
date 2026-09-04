@@ -791,7 +791,7 @@ describe('foundry mill — flesh', () => {
 
 describe('foundry mill — CI and hooks', () => {
   it('GitHub mill CI does not auto-commit reflections or run auto-fix', () => {
-    const ci = read('.github/workflows/ci.yml');
+    const ci = read('.github/workflows/mill-ci.yml');
     expect(ci).toContain('branches: [main]');
     expect(ci).not.toContain('auto-reflection-generator');
     expect(ci).not.toContain('ci-cd-auto-fix');
@@ -847,7 +847,7 @@ describe('foundry mill — Docusaurus / Pages', () => {
   it('docs-build is mill; stranger mills skip; deploy uses the mill', () => {
     expect(read('scripts/foundry/cli.mjs')).toContain('docs-build.mjs');
     expect(read('.github/workflows/deploy-docs.yml')).toContain('scripts/foundry/docs-build.mjs');
-    expect(read('.github/workflows/ci.yml')).toContain('scripts/foundry/docs-build.mjs');
+    expect(read('.github/workflows/mill-ci.yml')).toContain('scripts/foundry/docs-build.mjs');
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-docs-'));
     try {
       writeFileSync(
