@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'xray',
   tagline: '0xRay 4.0 — a suit that survives the context window. Exo, not toolset. Temperament by host.',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
   url: 'https://0xrayai.github.io',
   baseUrl: '/xray/',
   organizationName: '0xRayAI',
@@ -48,7 +48,7 @@ const config: Config = {
       title: 'xray',
       logo: {
         alt: 'xray Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.jpg',
       },
       items: [
         {

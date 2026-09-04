@@ -20,6 +20,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Scar tissue cut: no `homeSkills`, no `codexMode`/`featuresMode`/`configMode`. JSON always merge. One `mintConsumerSuit` after mill copies (not inside `syncBuiltinSkills`).
 - Mill flesh: live `npx @0xray/foundry release` is opt-in (`--i-mean-it` / `FOUNDRY_RELEASE=1`). Packed mill mint and Unreleased stamp are executed tests. `@0xray/foundry` tree is 0.1.1 (not a 0xray bump).
 - Mill CI: `0xRay CI/CD` is the mill gate on `main` (typecheck, lint, mill tests, build, curated tests, smoke). Monitor reports Actions; it does not auto-push. `npx @0xray/foundry ci` / `hooks`. Mill package 0.1.2.
+- GitHub Pages: stop copying stale `docs-site/static/index.html` over the Docusaurus homepage (unprefixed `/docs` links 404ed). `npx @0xray/foundry docs-build` is the mill Docusaurus build. Mill 0.1.3.
 
 ---
 

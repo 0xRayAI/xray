@@ -835,3 +835,35 @@ describe('foundry mill — CI and hooks', () => {
     }
   });
 });
+
+describe('foundry mill — Docusaurus / Pages', () => {
+  it('does not clobber the Docusaurus homepage with a static 3.x landing', () => {
+    expect(existsSync(path.join(root, 'docs-site/static/index.html'))).toBe(false);
+    const pkg = JSON.parse(read('docs-site/package.json')) as { scripts: Record<string, string> };
+    expect(pkg.scripts.build).toBe('docusaurus build');
+    expect(pkg.scripts.build).not.toContain('static/index.html');
+  });
+
+  it('docs-build is mill; stranger mills skip; deploy uses the mill', () => {
+    expect(read('scripts/foundry/cli.mjs')).toContain('docs-build.mjs');
+    expect(read('.github/workflows/deploy-docs.yml')).toContain('scripts/foundry/docs-build.mjs');
+    expect(read('.github/workflows/ci.yml')).toContain('scripts/foundry/docs-build.mjs');
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-docs-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, 'docs-site'));
+      const r = spawnSync(process.execPath, ['scripts/foundry/docs-build.mjs'], {
+        cwd: root,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: tmp },
+      });
+      expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/skipped \(not 0xray exo/);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});

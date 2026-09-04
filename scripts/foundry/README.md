@@ -16,6 +16,7 @@ npm i -D @0xray/foundry
 npx @0xray/foundry reconcile [patch|minor|major] [--apply] [--check]
 npx @0xray/foundry stamp
 npx @0xray/foundry docs-check
+npx @0xray/foundry docs-build
 npx @0xray/foundry gate [--verify-only]
 npx @0xray/foundry release [patch|minor|major] --dry-run
 npx @0xray/foundry release [patch|minor|major] --i-mean-it
@@ -30,7 +31,7 @@ npx @0xray/foundry hooks
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
-`gate` is build + test + docs. `ci` reports GitHub Actions for the milled cwd (no auto-push). `hooks` installs git pre-commit / post-commit / pre-push / post-push. GitHub `0xRay CI/CD` is the mill gate on `main`.
+`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 

@@ -98,8 +98,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
-      - run: cd docs-site && npm ci
-      - run: cd docs-site && npm run build
+      - name: Mill Docusaurus build
+        run: node scripts/foundry/docs-build.mjs
 
   ci-summary:
     name: CI Summary

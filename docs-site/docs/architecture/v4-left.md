@@ -79,4 +79,4 @@ Still open:
 
 ## One line
 
-**Suit is worn and attested. npm is 4.0.1. Foundry mill is on main (`@0xray/foundry`); overlay is mill-fill. Live mill `release` is opt-in. Do not `release:major`.**
+**Suit is worn and attested. npm is 4.0.1. Foundry mill is on main (`@0xray/foundry`); overlay is mill-fill. Live mill `release` is opt-in. Docusaurus/Pages is mill `docs-build`. Do not `release:major`.**

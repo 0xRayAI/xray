@@ -55,7 +55,9 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
 | `scripts/foundry/ci-monitor.mjs` | GitHub Actions report (`npx @0xray/foundry ci`). No auto-push |
 | `scripts/foundry/hooks.mjs` | Install git pre/post hooks (`npx @0xray/foundry hooks`) |
+| `scripts/foundry/docs-build.mjs` | Docusaurus build on the 0xray exo (`npx @0xray/foundry docs-build`) |
 | `.github/workflows/ci.yml` | Mill gate on `main`: typecheck, lint, mill tests, build, curated tests, consumer smoke |
+| `.github/workflows/deploy-docs.yml` | Mill Pages put |
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
 | `scripts/node/prepare-consumer.cjs` | Tarball path rewrite (not version) |
 
@@ -130,9 +132,33 @@ Do not add a mill MCP. Name, then cut conductors that cross the line. `@0xray/fo
 
 Order: (2) and (3) make 4.0.x ships cheap. (4) is the foundry product. (5)–(6) are trim.
 
+## GitHub pipelines — mill vs exo
+
+The mill **plants and gates**. The exo **wears**. GitHub Actions is mill-time.
+
+| Workflow | Owner | Keep? |
+|---|---|---|
+| `0xRay CI/CD` (`ci.yml`) | **Mill** — typecheck, lint, mill tests, build, curated tests, smoke | Yes |
+| `Foundry mill (version + docs)` | **Mill** — kernel headers + mill tests | Yes |
+| `Deploy Docs` | **Mill** — Docusaurus → GitHub Pages | Yes |
+| `CI/CD Health Monitor` | **Mill** — report only, no auto-push | Yes |
+| `Enforce AGENTS.md` | **Mill** — consumer card | Yes |
+| `Processor Tests` | **Mill CI** of exo processors | Yes |
+| `Hermes Plugin Tests` | **Mill CI** of the Hermes floor, path-gated | Yes |
+| `Publish to NPM` / `Release` | **Mill** ship doors (`workflow_dispatch`, live `release` opt-in) | Yes |
+| `CodeQL` | Mill skip stub (not a scan) | Yes, skip |
+| `Code Quality` (`lint.yml`) | Folded into `0xRay CI/CD` | Dispatch-only |
+| `Security Audit` (`security-audit.yml`) | Optional weekly mill | Optional |
+| `Security Audit` (`security.yml`) | Duplicate | Stay disabled |
+| `Security Monitoring Dashboard` | Not mill | Stay disabled |
+| `Auto-Report Generation` | Exo inference reports, not mill | Stay disabled |
+
+**Stay exo (not mill, not a fifth CLI):** PPE (`evaluatePreToolGate`), station card, 7 MCP, four-floor live hooks, ProcessorManager, Repertoire routing, inference heat.
+
 ## Not this mill
 
 - Grok Bot as a fifth floor (no PreToolUse deny — not wear).
 - An agent that “updates all the docs.”
 - An 8th `xray-*` server.
 - `release:major` (that is 5.0.0).
+- Copying a static 3.x landing over the Docusaurus homepage.
