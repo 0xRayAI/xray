@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
-const { wantsCostume } = require("../foundry/mint-suit.cjs");
+const { wantsCostume, isIsolatedHome, machineHome } = require("../foundry/mint-suit.cjs");
 const {
   wireHermesBridge,
   wireOpencodeBridge,
@@ -375,18 +375,25 @@ function installGrokBridge(targetDir, packageRoot, log) {
     return;
   }
 
-  const home = os.homedir();
+  const machine = machineHome();
   const ephemeral = isEphemeralInstallRoot(targetDir);
+  const isolated = isIsolatedHome();
   const targets = [path.join(targetDir, ".grok", "plugins", "0xray")];
-  if (!ephemeral) {
-    targets.push(path.join(home, ".grok", "plugins", "0xray"));
+  if (!ephemeral && !isolated) {
+    targets.push(path.join(machine, ".grok", "plugins", "0xray"));
   } else {
-    log("grok-bridge", "skip machine ~/.grok plugin — ephemeral consumer", "info");
+    log(
+      "grok-bridge",
+      isolated
+        ? "skip machine ~/.grok plugin — isolated HOME"
+        : "skip machine ~/.grok plugin — ephemeral consumer",
+      "info",
+    );
   }
 
   for (const dest of targets) {
     if (copyPluginDir(sourceDir, dest)) {
-      const rel = dest.startsWith(home) ? dest.replace(home, "~") : path.relative(targetDir, dest);
+      const rel = dest.startsWith(machine) ? dest.replace(machine, "~") : path.relative(targetDir, dest);
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
       writePluginMcpJson(dest, targetDir, log, "grok-bridge");
       patchGrokHooks(dest, packageRoot, targetDir, log, "grok-bridge");
@@ -395,8 +402,8 @@ function installGrokBridge(targetDir, packageRoot, log) {
     }
   }
 
-  if (!ephemeral) {
-    const grokGlobalSkills = path.join(home, ".grok", "skills");
+  if (!ephemeral && !isolated) {
+    const grokGlobalSkills = path.join(machine, ".grok", "skills");
     const globalCopied = syncCostumeSkills(grokGlobalSkills, packageRoot, targetDir);
     if (globalCopied > 0) {
       log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
@@ -706,5 +713,6 @@ module.exports = {
   grokHookShellCommand,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
+  isIsolatedHome,
   installFrameworkDogfoodWear,
 };

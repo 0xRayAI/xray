@@ -182,6 +182,25 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/inspect/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/mill.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/inspect.yml'))).toBe(true);
+    const millPlantCopy = [
+      'scripts/foundry/plant/skills/inspect/SKILL.md',
+      'scripts/foundry/plant/skills/mill/SKILL.md',
+      'scripts/foundry/plant/agents/mill.yml',
+      'scripts/foundry/plant/agents/inspect.yml',
+      'scripts/foundry/README.md',
+      'scripts/foundry/mint-suit.cjs',
+      'scripts/foundry/inspect.mjs',
+      'scripts/foundry/cli.mjs',
+    ]
+      .map((rel) => read(rel))
+      .join('\n');
+    expect(millPlantCopy).not.toMatch(/\bhangar\b/i);
+    expect(millPlantCopy).not.toMatch(/\bhanger\b/i);
+    expect(millPlantCopy).not.toMatch(/\bgarment\b/i);
+    expect(read('scripts/foundry/plant/agents/mill.yml')).not.toContain('mill-fill mill plant');
+    expect(read('scripts/foundry/plant/skills/inspect/SKILL.md')).toContain('**Isolated HOME.**');
+    expect(read('scripts/foundry/cli.mjs')).toContain('inspect: { script: "inspect.mjs"');
+    expect(read('scripts/foundry/inspect.mjs')).toContain('npmTarballUrl');
   });
 
   it('mill plant fastens mill+inspect, not 45/42 costume', () => {
@@ -217,6 +236,12 @@ describe('foundry mill — gate and scripts', () => {
       expect(existsSync(path.join(tmp, '.opencode/agents/mill.yml'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/inspect.yml'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(tmp, '.grok/plugins/0xray/skills/inspect/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.hermes/plugins/xray-hermes/skills/mill/SKILL.md'))).toBe(
+        true,
+      );
+      expect(existsSync(path.join(tmp, '.openclaw/skills/inspect/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/agents/enforcer.yml'))).toBe(false);
       mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       const overlay = mintConsumerSuit(root, tmp, () => undefined);
@@ -420,7 +445,6 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       mkdirSync(path.join(tmp, 'xray'), { recursive: true });
       writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
-      writeFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'name: mill-orchestrator\n');
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(tmp, 'src/skills/enforcer/SKILL.md'), 'CONSUMER ENFORCER\n');
       writeFileSync(path.join(tmp, 'src/skills/nope/index.ts'), 'export {}\n');
@@ -451,9 +475,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
         'CONSUMER ENFORCER\n',
       );
       expect(readFileSync(path.join(tmp, '.opencode/agents/acme.yml'), 'utf8')).toBe('name: acme\n');
-      expect(readFileSync(path.join(tmp, '.opencode/agents/orchestrator.yml'), 'utf8')).toBe(
-        'name: mill-orchestrator\n',
-      );
+      expect(existsSync(path.join(tmp, '.opencode/agents/orchestrator.yml'))).toBe(false);
       const codex = JSON.parse(readFileSync(path.join(tmp, '.xray/codex.json'), 'utf8')) as {
         terms: Record<string, { title: string }>;
       };
@@ -484,9 +506,8 @@ describe('foundry mill — mint from consumer SSOT', () => {
         `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
       );
       mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
-      mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer'), { recursive: true });
+      mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills'), { recursive: true });
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
-      writeFileSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer/SKILL.md'), 'MILL GROK\n');
       const inventory = mintConsumerSuit(root, tmp, () => undefined);
       expect(inventory.suit).toBe('overlay');
       expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
@@ -495,9 +516,6 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(
         readFileSync(path.join(tmp, '.grok/plugins/0xray/skills/acme-tool/SKILL.md'), 'utf8'),
       ).toBe('CONSUMER ACME\n');
-      expect(
-        readFileSync(path.join(tmp, '.grok/plugins/0xray/skills/enforcer/SKILL.md'), 'utf8'),
-      ).toBe('MILL GROK\n');
 
       writeFileSync(
         path.join(tmp, 'foundry.json'),
@@ -593,6 +611,11 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
       writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
+      expect(() => mintAfterWear(tmp)).toThrow(/costume dump/);
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ costume: true }, null, 2)}\n`,
+      );
       mintAfterWear(tmp);
       expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
         'CONSUMER ACME\n',
@@ -609,12 +632,16 @@ describe('foundry mill — mint from consumer SSOT', () => {
     const { listProjectSkillDirs } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       listProjectSkillDirs: (dir: string) => string[];
     };
-    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-hangers-'));
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-skill-dirs-'));
     try {
-      mkdirSync(path.join(tmp, '.grok/plugins/0xray/skills'), { recursive: true });
       const dests = listProjectSkillDirs(tmp);
       expect(dests.every((d) => d.startsWith(tmp))).toBe(true);
-      expect(dests.some((d) => d.includes(`${path.sep}.opencode${path.sep}skills`))).toBe(true);
+      expect(dests).toEqual([
+        path.join(tmp, '.opencode', 'skills'),
+        path.join(tmp, '.grok', 'plugins', '0xray', 'skills'),
+        path.join(tmp, '.hermes', 'plugins', 'xray-hermes', 'skills'),
+        path.join(tmp, '.openclaw', 'skills'),
+      ]);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -783,6 +810,104 @@ describe('foundry mill — mint from consumer SSOT', () => {
   });
 });
 
+describe('foundry mill — inspect organ', () => {
+  it('mint fails on leftover costume skills unless costume is true', () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-inspect-dump-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
+      expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ costume: true }, null, 2)}\n`,
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined) as { millPlant?: { skills: string[] } };
+      expect(inventory.millPlant?.skills).toEqual(expect.arrayContaining(['mill', 'inspect']));
+      expect(readFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'utf8')).toBe('LEFTOVER\n');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('inspect GET tarball is HTTP 200; metadata-only is a fail; isolated HOME refuses machine grok', async () => {
+    const { npmTarballUrl, isIsolatedHome, wouldClobberMachineGrok, inspectSuit, checkLivePut } =
+      await import('../../../scripts/foundry/inspect.mjs');
+    expect(npmTarballUrl('0xray', '4.0.4')).toBe('https://registry.npmjs.org/0xray/-/0xray-4.0.4.tgz');
+    expect(npmTarballUrl('@0xray/foundry', '0.1.6')).toBe(
+      'https://registry.npmjs.org/@0xray/foundry/-/foundry-0.1.6.tgz',
+    );
+    const { machineHome } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      machineHome: () => string;
+    };
+    const passwd = machineHome();
+    expect(isIsolatedHome({ HOME: '/tmp/lastmile-home' }, passwd)).toBe(true);
+    expect(isIsolatedHome({ HOME: passwd }, passwd)).toBe(false);
+    expect(isIsolatedHome({ HOME: '/tmp/lastmile-home' }, '/Users/henry')).toBe(true);
+    expect(isIsolatedHome({ HOME: '/Users/henry' }, '/Users/henry')).toBe(false);
+    expect(
+      wouldClobberMachineGrok(
+        '/Users/henry/.grok/plugins/0xray',
+        { HOME: '/tmp/lastmile-home' },
+        '/Users/henry',
+      ),
+    ).toBe(true);
+    expect(
+      wouldClobberMachineGrok(
+        '/tmp/lastmile-home/.grok/plugins/0xray',
+        { HOME: '/tmp/lastmile-home' },
+        '/Users/henry',
+      ),
+    ).toBe(false);
+
+    const liveOk = await checkLivePut(
+      [{ name: '0xray', version: '4.0.4' }],
+      async () => ({ status: 200 }) as Response,
+    );
+    expect(liveOk[0]?.ok).toBe(true);
+    const live404 = await checkLivePut(
+      [{ name: '0xray', version: '4.0.4' }],
+      async () => ({ status: 404 }) as Response,
+    );
+    expect(live404[0]?.ok).toBe(false);
+
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-inspect-run-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+        mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+      };
+      mintConsumerSuit(root, tmp, () => undefined);
+      const report = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: true,
+        env: { HOME: path.join(tmp, '.lastmile-home') },
+        machineHome: '/Users/henry',
+      });
+      expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
+      expect(report.checks.map((c) => c.id)).toEqual([
+        'diff',
+        'plant-vs-worn',
+        'receipt',
+        'ci',
+        'live-put',
+        'isolated-home',
+      ]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('foundry mill — flesh', () => {
   it('live release is opt-in; dry-run stays free', () => {
     const src = read('scripts/foundry/release.mjs');
@@ -876,6 +1001,18 @@ describe('foundry mill — flesh', () => {
       writeFileSync(path.join(consumer, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
 
+      const mintDump = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint'], {
+        cwd: consumer,
+        encoding: 'utf8',
+        env: { ...process.env, FOUNDRY_ROOT: consumer },
+      });
+      expect(mintDump.status, `${mintDump.stdout}${mintDump.stderr}`).toBe(1);
+      expect(`${mintDump.stdout}${mintDump.stderr}`).toMatch(/costume dump/);
+
+      writeFileSync(
+        path.join(consumer, 'foundry.json'),
+        `${JSON.stringify({ costume: true }, null, 2)}\n`,
+      );
       const mint = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint'], {
         cwd: consumer,
         encoding: 'utf8',
@@ -945,10 +1082,14 @@ describe('foundry mill — CI and hooks', () => {
       expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
       expect(`${r.stdout}${r.stderr}`).toMatch(/skipped \(no GitHub token\)/);
       const report = JSON.parse(
-        readFileSync(path.join(tmp, '.opencode/logs/ci-cd-monitor-report.json'), 'utf8'),
+        readFileSync(path.join(tmp, '.xray/foundry-ci-report.json'), 'utf8'),
       ) as { ci_status: string; issues: unknown[] };
       expect(report.ci_status).toBe('unknown');
       expect(report.issues).toEqual([]);
+      const shim = JSON.parse(
+        readFileSync(path.join(tmp, '.opencode/logs/ci-cd-monitor-report.json'), 'utf8'),
+      ) as { ci_status: string };
+      expect(shim.ci_status).toBe('unknown');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

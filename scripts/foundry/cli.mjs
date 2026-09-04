@@ -2,7 +2,7 @@
 /**
  * @0xray/foundry CLI — mill, not exo. No fifth MCP.
  *
- *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|ci|hooks> [...args]
+ *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|ci|hooks> [...args]
  */
 
 import { spawnSync } from "node:child_process";
@@ -16,16 +16,18 @@ const COMMANDS = {
   "docs-check": { script: "validate-release-docs.mjs", preset: [] },
   "docs-build": { script: "docs-build.mjs", preset: [] },
   mint: { script: "mint.mjs", preset: [] },
+  inspect: { script: "inspect.mjs", preset: [] },
   ci: { script: "ci-monitor.mjs", preset: [] },
   hooks: { script: "hooks.mjs", preset: [] },
 };
 
 const HELP =
-  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|ci|hooks> [...args]\n" +
+  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|ci|hooks> [...args]\n" +
   "\n" +
   "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
   "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
   "Mint fastens mill plant then overlays their plant (mill-fill JSON). PPE stays worn.\n" +
+  "inspect runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME). Not an 8th MCP.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
 
 const cmd = process.argv[2];

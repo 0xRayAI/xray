@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.7] - 2026-09-04
+
+Inspect is mill flesh: `npx @0xray/foundry inspect` runs diff, plant vs worn (mint fails costume dump), mill receipt, CI, GET the `.tgz` (HTTP 200), isolated HOME vs passwd home. Four project skill floors created on fasten (OpenCode, Grok, Hermes, OpenClaw). CI report is `.xray/foundry-ci-report.json`. Not an 8th MCP. Not 5.0.
+
 ## [0.1.6] - 2026-09-04
 
 Mill plant fastens an **inspect** suit: inspect AI work (diffs, traces, mill receipts, CI). Not empty. `mill` + `inspect` skills. Costume dump still opt-in.

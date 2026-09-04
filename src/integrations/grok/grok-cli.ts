@@ -82,8 +82,21 @@ export interface GrokInstallOptions {
 export async function installForGrokCLI(options: GrokInstallOptions = {}): Promise<void> {
   frameworkLogger.log('grok-integration', 'install-start', 'info', { options });
 
+  const millSuit = requireCjs(path.join(packageRoot, 'scripts/foundry/mint-suit.cjs')) as {
+    machineHome: () => string;
+    wouldClobberMachineGrok: (dest: string, env?: NodeJS.ProcessEnv, machine?: string) => boolean;
+  };
   const home = process.env.HOME || process.env.USERPROFILE || '';
+  const machine = millSuit.machineHome();
   const targetPluginDir = path.join(home, '.grok/plugins/0xray');
+  if (millSuit.wouldClobberMachineGrok(targetPluginDir, process.env, machine)) {
+    frameworkLogger.log('grok-integration', 'refuse-machine-grok-clobber', 'error', {
+      home,
+      machineHome: machine,
+      targetPluginDir,
+    });
+    throw new Error('foundry-inspect: isolated HOME must not clobber ~/.grok/plugins/0xray');
+  }
 
   // Try to find the plugin source from the installed package
   const possibleSources = [

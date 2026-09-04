@@ -16,11 +16,15 @@ const commitIdx = args.indexOf("--commit");
 const shaArg = commitIdx >= 0 ? args[commitIdx + 1] : "";
 const sha = (shaArg && !shaArg.startsWith("-") ? shaArg : process.env.GITHUB_SHA || "").trim();
 const root = resolveMillRoot();
-const reportPath = path.join(root, ".opencode", "logs", "ci-cd-monitor-report.json");
+const millReportPath = path.join(root, ".xray", "foundry-ci-report.json");
+const shimReportPath = path.join(root, ".opencode", "logs", "ci-cd-monitor-report.json");
 
 function writeReport(report) {
-  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-  fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+  const body = `${JSON.stringify(report, null, 2)}\n`;
+  for (const reportPath of [millReportPath, shimReportPath]) {
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+    fs.writeFileSync(reportPath, body);
+  }
 }
 
 function emptyReport(status, reason) {
