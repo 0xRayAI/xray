@@ -18,6 +18,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - `@0xray/foundry@0.1.0` mills `FOUNDRY_ROOT` or cwd. Full docs corpus only on the 0xray exo; light mill otherwise. Stamp creates CHANGELOG when missing. Publish refuses a nameless `package.json`. Mill PUT is `cd scripts/foundry && npm publish`; stranger `release` does not force `--access public`. Deprecated `sync-versions.mjs` and `release.js` wrappers removed.
 - Honesty: consumer card does not claim it writes root `SKILLS.md`; mill help is `npx @0xray/foundry`; shims mill cwd; mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. Mill-fill stays law.
 - Scar tissue cut: no `homeSkills`, no `codexMode`/`featuresMode`/`configMode`. JSON always merge. One `mintConsumerSuit` after mill copies (not inside `syncBuiltinSkills`).
+- Mill flesh: live `npx @0xray/foundry release` is opt-in (`--i-mean-it` / `FOUNDRY_RELEASE=1`). Packed mill mint and Unreleased stamp are executed tests. `@0xray/foundry` tree is 0.1.1 (not a 0xray bump).
 
 ---
 

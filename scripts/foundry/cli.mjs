@@ -17,13 +17,23 @@ const COMMANDS = {
   mint: { script: "mint.mjs", preset: [] },
 };
 
+const HELP =
+  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|mint> [...args]\n" +
+  "\n" +
+  "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
+  "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
+  "Mint overlays their plant onto project hangers (mill-fill). PPE stays worn.\n";
+
 const cmd = process.argv[2];
 const rest = process.argv.slice(3);
 
+if (cmd === "--help" || cmd === "-h" || cmd === "help") {
+  process.stdout.write(HELP);
+  process.exit(0);
+}
+
 if (!cmd || !COMMANDS[cmd]) {
-  process.stderr.write(
-    "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|mint> [...args]\n",
-  );
+  process.stderr.write(HELP);
   process.exit(1);
 }
 

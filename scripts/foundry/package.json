@@ -1,6 +1,6 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "0xRay mill: mint their suit params, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",

@@ -50,7 +50,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 |---|---|
 | `scripts/foundry/reconcile-version.mjs` | **One bumper.** npm + tag vs `package.json` |
 | `scripts/foundry/version-manager.mjs` | Stamper. `--artifacts-only` only (JSON + CHANGELOG). Bump/`--tag` refused |
-| `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm` |
+| `scripts/foundry/release.mjs` | Canonical conductor; `--publish-only` is the old `release:npm`. Live run needs `--i-mean-it` or `FOUNDRY_RELEASE=1` |
 | `scripts/foundry/release-gate.mjs` | Build, test, **docs**, smoke. `--verify-only` is the post-push path |
 | `scripts/foundry/validate-release-docs.mjs` | Read-only freshness (kernel header, CHANGELOG top, counts) |
 | `scripts/node/pre-publish-guard.js` | Git + reconcile |
@@ -121,7 +121,7 @@ Do not add a mill MCP. Name, then cut conductors that cross the line. `@0xray/fo
 1. **Name (this page).** Exo stays thin. Mill stays scripts + templates.
 2. **One bumper — landed.** `reconcile-version` only. `version-manager` refuses bump/`--tag`. UVM writes stay short-circuited. `executeReleaseWorkflow` is blocked.
 3. **Docs mill — landed.** CI **verifies**; it does not rewrite prose. Kernel slogan is era (`4.0`). CHANGELOG is the only patch-versioned prose (`[Unreleased]` allowed above current).
-4. **Mint-from-their-SSOT — overlay.** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays constitution, features, skills, and agents from their plant (or `foundry.json` paths).
+4. **Mint-from-their-SSOT — overlay (landed).** Consumer postinstall writes `.xray/foundry-inventory.json` from **their** `package.json`, fills `{{CONSUMER_NAME}}` on the managed AGENTS card, then overlays constitution, features, skills, and agents from their plant (or `foundry.json` paths). Mill-fill is law. Live `npx @0xray/foundry release` is opt-in. Packed mill tarball mint is executed in tests.
 5. **Processors.** Do not move ProcessorManager into the Grok exo. Do not call it the OS. Optional later: slim OpenCode/Hermes so constitution is the only pre-tool path on every floor.
 6. **Museum.** UVM file is gone. CI mill workflow is on `main`. Wrappers `sync-versions.mjs` / `release.js` deleted. `features-since-3.1` no longer requires the patch string.
 
