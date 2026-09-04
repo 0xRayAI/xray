@@ -1,0 +1,5 @@
+name: mill
+skill: mill
+description: "Mill mill-fill mill plant. Their plant is the suit. Factory Repertoire."
+version: "0.1.5"
+mode: subagent

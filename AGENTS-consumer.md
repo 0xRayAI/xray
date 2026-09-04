@@ -19,7 +19,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Syncs **45 mill skills** to platform skill directories, then overlays **your** `src/skills` (same name wins). Does **not** write root **`SKILLS.md`**
+- Mill plant (`mill` skill) onto hangers, then overlays **your** `src/skills` (same name wins). Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)

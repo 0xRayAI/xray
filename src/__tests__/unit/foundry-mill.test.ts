@@ -152,6 +152,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/hooks.mjs');
     expect(paths).toContain('scripts/foundry/cli.js');
     expect(paths).toContain('scripts/foundry/mill-root.mjs');
+    expect(paths).toContain('scripts/foundry/plant/skills/mill/SKILL.md');
   });
 
   it('mill is extracted as publishable @0xray/foundry', () => {
@@ -176,6 +177,94 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/CHANGELOG.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/release.mjs'))).toBe(true);
     expect(read('scripts/foundry/release.mjs')).toContain('--publish-only');
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/mill/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/mill.yml'))).toBe(true);
+  });
+
+  it('empty garment mill-fills mill plant, not 45/42 costume', () => {
+    const { mintConsumerSuit, wantsCostume } = requireCjs(
+      path.join(root, 'scripts/foundry/mint-suit.cjs'),
+    ) as {
+      mintConsumerSuit: (
+        pkg: string,
+        target: string,
+        log: (...a: unknown[]) => void,
+      ) => {
+        garment: string;
+        millPlant?: { skills: string[] };
+        costume?: boolean;
+      };
+      wantsCostume: (dir: string) => boolean;
+    };
+    expect(wantsCostume(root)).toBe(true);
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-empty-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      expect(wantsCostume(tmp)).toBe(false);
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.costume).toBe(false);
+      expect(inventory.garment).toBe('mill-fill');
+      expect(inventory.millPlant?.skills).toContain('mill');
+      expect(readFileSync(path.join(tmp, '.opencode/skills/mill/SKILL.md'), 'utf8')).toContain(
+        'Their plant is the suit',
+      );
+      expect(existsSync(path.join(tmp, '.opencode/agents/mill.yml'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
+      mkdirSync(path.join(tmp, 'src/skills/acme-tool'), { recursive: true });
+      writeFileSync(path.join(tmp, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
+      const overlay = mintConsumerSuit(root, tmp, () => undefined);
+      expect(overlay.garment).toBe('overlay');
+      expect(readFileSync(path.join(tmp, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
+        'CONSUMER ACME\n',
+      );
+      expect(existsSync(path.join(tmp, '.opencode/skills/mill/SKILL.md'))).toBe(true);
+      writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ costume: true }, null, 2)}\n`);
+      expect(wantsCostume(tmp)).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('consumer postinstall skips costume skill dump unless foundry.json costume', () => {
+    const { runPostinstall } = requireCjs(path.join(root, 'scripts/node/postinstall.cjs')) as {
+      runPostinstall: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
+    };
+    const mill = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-costume-mill-'));
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-costume-app-'));
+    try {
+      writeFileSync(
+        path.join(mill, 'package.json'),
+        `${JSON.stringify({ name: '0xray', version: '4.0.2' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(mill, 'src/skills/enforcer'), { recursive: true });
+      mkdirSync(path.join(mill, 'scripts/foundry/plant/skills/mill'), { recursive: true });
+      mkdirSync(path.join(mill, 'scripts/foundry/plant/agents'), { recursive: true });
+      writeFileSync(path.join(mill, 'src/skills/enforcer/SKILL.md'), 'COSTUME ENFORCER\n');
+      writeFileSync(path.join(mill, 'scripts/foundry/plant/skills/mill/SKILL.md'), 'MILL PLANT\n');
+      writeFileSync(path.join(mill, 'scripts/foundry/plant/agents/mill.yml'), 'name: mill\n');
+      mkdirSync(path.join(mill, '.opencode/agents'), { recursive: true });
+      writeFileSync(path.join(mill, '.opencode/agents/orchestrator.yml'), 'name: costume-orch\n');
+      writeFileSync(
+        path.join(consumer, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      runPostinstall(mill, consumer, () => undefined);
+      expect(existsSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
+      expect(existsSync(path.join(consumer, '.opencode/agents/orchestrator.yml'))).toBe(false);
+      expect(readFileSync(path.join(consumer, '.opencode/skills/mill/SKILL.md'), 'utf8')).toBe(
+        'MILL PLANT\n',
+      );
+      const inv = JSON.parse(
+        readFileSync(path.join(consumer, '.xray/foundry-inventory.json'), 'utf8'),
+      ) as { garment: string };
+      expect(inv.garment).toBe('mill-fill');
+    } finally {
+      rmSync(mill, { recursive: true, force: true });
+      rmSync(consumer, { recursive: true, force: true });
+    }
   });
 
   it('dead wrappers are gone', () => {
@@ -229,7 +318,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
       const noop = () => undefined;
       const inventory = mintConsumerFromSsot(root, tmp, noop);
       expect(inventory.consumer.name).toBe('acme-app');
-      expect(inventory.garment).toBe('copied-onto-hanger');
+      expect(inventory.garment).toBe('mill-fill');
       const receipt = JSON.parse(readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8')) as {
         consumer: { name: string; version: string };
       };

@@ -72,27 +72,104 @@ function resolveInside(targetDir, rel) {
   return resolved;
 }
 
-function loadFoundryParams(targetDir) {
+function loadFoundryExtra(targetDir) {
   const candidates = [
     path.join(targetDir, "foundry.json"),
     path.join(targetDir, ".xray", "foundry.json"),
   ];
-  let extra = {};
   for (const candidate of candidates) {
     if (!fs.existsSync(candidate)) continue;
     try {
       const parsed = JSON.parse(fs.readFileSync(candidate, "utf8"));
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) extra = parsed;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
     } catch {
-      extra = {};
+      return {};
     }
-    break;
   }
+  return {};
+}
+
+function loadFoundryParams(targetDir) {
+  const extra = loadFoundryExtra(targetDir);
   const params = { ...DEFAULT_PARAMS };
   for (const key of ["codex", "features", "config", "skills", "agents", "agentsCard"]) {
     if (typeof extra[key] === "string" && extra[key].trim()) params[key] = extra[key].trim();
   }
   return params;
+}
+
+/** 45/42 costume dump. Default false on consumers. Exo mill keeps the costume. */
+function wantsCostume(targetDir) {
+  if (isExoRepo(targetDir)) return true;
+  return loadFoundryExtra(targetDir).costume === true;
+}
+
+function millPlantDir(millPackageRoot) {
+  const nested = path.join(millPackageRoot, "scripts", "foundry", "plant");
+  if (isDirectory(nested)) return nested;
+  const packed = path.join(millPackageRoot, "plant");
+  if (isDirectory(packed)) return packed;
+  return null;
+}
+
+function listSkillNamesAt(skillsSrc) {
+  if (!isDirectory(skillsSrc)) return [];
+  const names = [];
+  for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    const skillMd = path.join(skillsSrc, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMd)) continue;
+    names.push(entry.name);
+  }
+  return names;
+}
+
+function listAgentFilesAt(agentsSrc) {
+  if (!isDirectory(agentsSrc)) return [];
+  return fs
+    .readdirSync(agentsSrc, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() && (entry.name.endsWith(".yml") || entry.name.endsWith(".yaml")),
+    )
+    .map((entry) => entry.name);
+}
+
+/** Mill mill-fill mill plant: mill mill mill mill-fill mill names they did not plant stay. */
+function millFillMillPlant(millPackageRoot, targetDir, log) {
+  const plant = millPlantDir(millPackageRoot);
+  if (!plant) return { skills: [], agents: [] };
+  const skillsSrc = path.join(plant, "skills");
+  const agentsSrc = path.join(plant, "agents");
+  const skills = listSkillNamesAt(skillsSrc);
+  const agents = listAgentFilesAt(agentsSrc);
+  const skillHangers = listSkillHangers(targetDir);
+  const agentsDest = path.join(targetDir, ".opencode", "agents");
+  for (const hanger of skillHangers) {
+    for (const name of skills) {
+      const src = path.join(skillsSrc, name, "SKILL.md");
+      const destMd = path.join(hanger, name, "SKILL.md");
+      if (path.resolve(src) === path.resolve(destMd)) continue;
+      if (fs.existsSync(destMd)) continue;
+      fs.mkdirSync(path.dirname(destMd), { recursive: true });
+      fs.copyFileSync(src, destMd);
+    }
+  }
+  for (const file of agents) {
+    const src = path.join(agentsSrc, file);
+    const dest = path.join(agentsDest, file);
+    if (path.resolve(src) === path.resolve(dest)) continue;
+    if (fs.existsSync(dest)) continue;
+    fs.mkdirSync(agentsDest, { recursive: true });
+    fs.copyFileSync(src, dest);
+  }
+  if (log && (skills.length > 0 || agents.length > 0)) {
+    log("foundry-mint", "Mill plant onto hangers", "info", {
+      skills: skills.length,
+      agents: agents.length,
+    });
+  }
+  return { skills, agents };
 }
 
 function isDirectory(p) {
@@ -138,28 +215,13 @@ function overlayJsonFacet(src, dest) {
 function listConsumerSkillNames(targetDir, skillsRel) {
   const rel = skillsRel || DEFAULT_PARAMS.skills;
   const skillsSrc = resolveInside(targetDir, rel);
-  if (!isDirectory(skillsSrc)) return [];
-  const names = [];
-  for (const entry of fs.readdirSync(skillsSrc, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
-    const skillMd = path.join(skillsSrc, entry.name, "SKILL.md");
-    if (!fs.existsSync(skillMd)) continue;
-    names.push(entry.name);
-  }
-  return names;
+  return listSkillNamesAt(skillsSrc);
 }
 
 function listConsumerAgentFiles(targetDir, agentsRel) {
   const rel = agentsRel || DEFAULT_PARAMS.agents;
   const agentsSrc = resolveInside(targetDir, rel);
-  if (!isDirectory(agentsSrc)) return [];
-  return fs
-    .readdirSync(agentsSrc, { withFileTypes: true })
-    .filter(
-      (entry) =>
-        entry.isFile() && (entry.name.endsWith(".yml") || entry.name.endsWith(".yaml")),
-    )
-    .map((entry) => entry.name);
+  return listAgentFilesAt(agentsSrc);
 }
 
 const MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
@@ -233,13 +295,28 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     features ||
     config ||
     agentsCard;
-  const garment = overlayed ? "overlay" : "copied-onto-hanger";
+  const millPlanted =
+    (Array.isArray(tree?.millPlantSkills) && tree.millPlantSkills.length > 0) ||
+    (Array.isArray(tree?.millPlantAgents) && tree.millPlantAgents.length > 0);
+  const costume = wantsCostume(targetDir);
+  const garment = overlayed
+    ? "overlay"
+    : millPlanted
+      ? "mill-fill"
+      : costume
+        ? "copied-onto-hanger"
+        : "mill-fill";
   const inventory = {
     mill: { name: mill.name || "@0xray/foundry", version: mill.version },
     consumer: { name: consumer.name, version: consumer.version },
     garment,
     params: tree?.params || loadFoundryParams(targetDir),
     tree: { skills, agents },
+    millPlant: {
+      skills: Array.isArray(tree?.millPlantSkills) ? tree.millPlantSkills : [],
+      agents: Array.isArray(tree?.millPlantAgents) ? tree.millPlantAgents : [],
+    },
+    costume,
     facets: {
       constitution,
       features,
@@ -271,7 +348,10 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     return { garment: "dogfood", skipped: true };
   }
   const params = loadFoundryParams(targetDir);
+  const millPlant = millFillMillPlant(millPackageRoot, targetDir, log);
   const tree = overlayConsumerTree(targetDir, log, params);
+  tree.millPlantSkills = millPlant.skills;
+  tree.millPlantAgents = millPlant.agents;
   tree.codex = overlayJsonFacet(
     resolveInside(targetDir, params.codex),
     path.join(targetDir, ".xray", "codex.json"),
@@ -299,6 +379,10 @@ module.exports = {
   DEFAULT_PARAMS,
   deepMerge,
   loadFoundryParams,
+  loadFoundryExtra,
+  wantsCostume,
+  millPlantDir,
+  millFillMillPlant,
   resolveInside,
   overlayJsonFacet,
   overlayAgentsCard,
