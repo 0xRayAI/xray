@@ -25,7 +25,7 @@ const HELP =
   "\n" +
   "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
   "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
-  "Mint overlays their plant onto project hangers (mill-fill). PPE stays worn.\n" +
+  "Mint fastens mill plant then overlays their plant (mill-fill JSON). PPE stays worn.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
 
 const cmd = process.argv[2];

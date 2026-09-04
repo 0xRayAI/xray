@@ -1,5 +1,5 @@
 /**
- * Mill overlay: their plant onto the hanger. Not PPE (evaluatePreToolGate).
+ * Mill overlay: fasten their plant as the suit. Not PPE (evaluatePreToolGate).
  *
  * Default SSOT (override with foundry.json or .xray/foundry.json):
  *   xray/codex.json, xray/features.json, xray/config.json,
@@ -136,19 +136,19 @@ function listAgentFilesAt(agentsSrc) {
 }
 
 /** Mill mill-fill mill plant: mill mill mill mill-fill mill names they did not plant stay. */
-function millFillMillPlant(millPackageRoot, targetDir, log) {
+function fastenMillPlant(millPackageRoot, targetDir, log) {
   const plant = millPlantDir(millPackageRoot);
   if (!plant) return { skills: [], agents: [] };
   const skillsSrc = path.join(plant, "skills");
   const agentsSrc = path.join(plant, "agents");
   const skills = listSkillNamesAt(skillsSrc);
   const agents = listAgentFilesAt(agentsSrc);
-  const skillHangers = listSkillHangers(targetDir);
+  const skillDirs = listProjectSkillDirs(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
-  for (const hanger of skillHangers) {
+  for (const dir of skillDirs) {
     for (const name of skills) {
       const src = path.join(skillsSrc, name, "SKILL.md");
-      const destMd = path.join(hanger, name, "SKILL.md");
+      const destMd = path.join(dir, name, "SKILL.md");
       if (path.resolve(src) === path.resolve(destMd)) continue;
       if (fs.existsSync(destMd)) continue;
       fs.mkdirSync(path.dirname(destMd), { recursive: true });
@@ -164,7 +164,7 @@ function millFillMillPlant(millPackageRoot, targetDir, log) {
     fs.copyFileSync(src, dest);
   }
   if (log && (skills.length > 0 || agents.length > 0)) {
-    log("foundry-mint", "Mill plant onto hangers", "info", {
+    log("foundry-mint", "Fastened mill plant", "info", {
       skills: skills.length,
       agents: agents.length,
     });
@@ -180,8 +180,8 @@ function isDirectory(p) {
   }
 }
 
-/** Project skill hangers only. */
-function listSkillHangers(targetDir) {
+/** Project skill dirs only (.opencode/skills, project Grok plugin skills). */
+function listProjectSkillDirs(targetDir) {
   const dests = [path.join(targetDir, ".opencode", "skills")];
   const projectGrok = path.join(targetDir, ".grok", "plugins", "0xray", "skills");
   if (isDirectory(projectGrok)) dests.push(projectGrok);
@@ -246,13 +246,13 @@ function overlayConsumerTree(targetDir, log, params) {
   const agents = listConsumerAgentFiles(targetDir, agentsRel);
   const skillsSrc = resolveInside(targetDir, skillsRel);
   const agentsSrc = resolveInside(targetDir, agentsRel);
-  const skillHangers = listSkillHangers(targetDir);
+  const skillDirs = listProjectSkillDirs(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
 
-  for (const hanger of skillHangers) {
+  for (const dir of skillDirs) {
     for (const name of skills) {
       const src = path.join(skillsSrc, name, "SKILL.md");
-      const destMd = path.join(hanger, name, "SKILL.md");
+      const destMd = path.join(dir, name, "SKILL.md");
       if (path.resolve(src) === path.resolve(destMd)) continue;
       fs.mkdirSync(path.dirname(destMd), { recursive: true });
       fs.copyFileSync(src, destMd);
@@ -267,10 +267,10 @@ function overlayConsumerTree(targetDir, log, params) {
   }
 
   if (log && (skills.length > 0 || agents.length > 0)) {
-    log("foundry-mint", "Overlaid consumer skills/agents onto hangers", "info", {
+    log("foundry-mint", "Overlaid consumer skills/agents", "info", {
       skills: skills.length,
       agents: agents.length,
-      skillHangers: skillHangers.length,
+      skillDirs: skillDirs.length,
     });
   }
   return { skills, agents, params: resolved };
@@ -278,7 +278,7 @@ function overlayConsumerTree(targetDir, log, params) {
 
 function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   if (isDogfood(packageRoot, targetDir)) {
-    return { garment: "dogfood", skipped: true, consumer: readPackageIdentity(path.join(targetDir, "package.json")) };
+    return { suit: "dogfood", skipped: true, consumer: readPackageIdentity(path.join(targetDir, "package.json")) };
   }
   const mill = readPackageIdentity(path.join(packageRoot, "package.json"));
   const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
@@ -299,17 +299,17 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     (Array.isArray(tree?.millPlantSkills) && tree.millPlantSkills.length > 0) ||
     (Array.isArray(tree?.millPlantAgents) && tree.millPlantAgents.length > 0);
   const costume = wantsCostume(targetDir);
-  const garment = overlayed
+  const suit = overlayed
     ? "overlay"
     : millPlanted
-      ? "mill-fill"
+      ? "fastened"
       : costume
-        ? "copied-onto-hanger"
-        : "mill-fill";
+        ? "costume"
+        : "fastened";
   const inventory = {
     mill: { name: mill.name || "@0xray/foundry", version: mill.version },
     consumer: { name: consumer.name, version: consumer.version },
-    garment,
+    suit,
     params: tree?.params || loadFoundryParams(targetDir),
     tree: { skills, agents },
     millPlant: {
@@ -337,7 +337,7 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     log("foundry-mint", "Minted foundry-inventory from consumer mill SSOT", "info", {
       consumer: consumer.name,
       version: consumer.version,
-      garment,
+      suit,
     });
   }
   return inventory;
@@ -345,10 +345,10 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
 
 function mintConsumerSuit(millPackageRoot, targetDir, log) {
   if (isDogfood(millPackageRoot, targetDir)) {
-    return { garment: "dogfood", skipped: true };
+    return { suit: "dogfood", skipped: true };
   }
   const params = loadFoundryParams(targetDir);
-  const millPlant = millFillMillPlant(millPackageRoot, targetDir, log);
+  const millPlant = fastenMillPlant(millPackageRoot, targetDir, log);
   const tree = overlayConsumerTree(targetDir, log, params);
   tree.millPlantSkills = millPlant.skills;
   tree.millPlantAgents = millPlant.agents;
@@ -382,14 +382,14 @@ module.exports = {
   loadFoundryExtra,
   wantsCostume,
   millPlantDir,
-  millFillMillPlant,
+  fastenMillPlant,
   resolveInside,
   overlayJsonFacet,
   overlayAgentsCard,
   overlayConsumerTree,
   listConsumerSkillNames,
   listConsumerAgentFiles,
-  listSkillHangers,
+  listProjectSkillDirs,
   mintConsumerFromSsot,
   mintConsumerSuit,
   isDogfood,

@@ -118,7 +118,7 @@ async function installForOpencode(options: OpencodeInstallOptions = {}): Promise
         frameworkLogger.log('opencode-integration', 'opencode-copied', 'info', { destination: opencodeDest });
       } else {
         fs.mkdirSync(opencodeDest, { recursive: true });
-        frameworkLogger.log('opencode-integration', 'empty-garment-plugin', 'info', { destination: opencodeDest });
+        frameworkLogger.log('opencode-integration', 'mill-plant-plugin', 'info', { destination: opencodeDest });
       }
 
       const pluginSource = path.join(__dirname, '..', '..', '..', 'dist', 'plugin', 'xray-codex-injection.js');

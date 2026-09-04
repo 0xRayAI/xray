@@ -35,6 +35,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 Mill **fastens** an inspect suit: mill plant is `mill` + `inspect` (inspect AI work — diffs, traces, mill receipts, CI). Not empty. Not 45/42 costume unless `foundry.json` `"costume": true`. Factory Repertoire + PPE stay. Mill **0.1.6**. Not 5.0.0.
 
+Naming: inventory `suit` (`fastened` / `overlay` / `costume`). Not garment. Not hanger. Costume is the 45/42 dump flag only.
+
 ---
 
 ## [4.0.3] - 2026-09-04

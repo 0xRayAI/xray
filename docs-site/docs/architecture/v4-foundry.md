@@ -6,7 +6,7 @@ sidebar_label: 4.0 foundry
 
 The suit is what an agent **wears**. The foundry is how a team **gets** a suit.
 
-4.0 shipped **wear**. The mill that cut that garment has been in this repo the whole time, unpublished as a product. This page is the inventory. It is not a new MCP, skill, or handler.
+4.0 shipped **wear**. The mill that **fashions** the mill plant (bridges, reconcile, gate, stamps) lives in `scripts/foundry/`. This page is the inventory. It is not a new MCP, skill, or handler.
 
 Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list: [4.0 left](./v4-left.md).
 
@@ -19,13 +19,13 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 | Who | The model on the job | The team that wants an OS on a repo |
 | Failure if confused | Thick exo, agents nuke README, ceremony fights the host | Magic stays internal; strangers get a copy of *our* suit |
 
-**Do not extract constitution with the mill.** `evaluatePreToolGate` is PPE. `install-bridges.cjs` is the hanger.
+**Do not extract constitution with the mill.** `evaluatePreToolGate` is PPE. `install-bridges.cjs` fastens the worn dirs.
 
 **Codex 69.** Naming the mill is not a new surface. A fifth CLI (`0xray foundry`, `0xray grokbot install`) would be.
 
 ## What a stranger actually gets
 
-`npm install 0xray` **copies the 0xRay garment**, **generates host wiring**, then **overlays their mill SSOT** onto the hanger: constitution (`xray/codex.json`), features/temperament (`xray/features.json`), config, skills, agents. Remap with `foundry.json`. PPE stays worn. Their repo is a hanger cut to their params.
+`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. PPE stays worn. `"costume": true` dumps 45/42.
 
 ```
 npm i 0xray
@@ -70,7 +70,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.0** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
 
-### 2. Consumer mint / four-floor hangers
+### 2. Consumer mint / four-floor wear
 
 | Piece | Role |
 |---|---|
@@ -82,11 +82,11 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `AGENTS-consumer.md` | Slim card copied to consumer `AGENTS.md` |
 | `xray/{codex,features,config}.json` | Plant templates → consumer `.xray/` |
 
-**Copied garment:** YML agents, skills, Codex, features, Grok `hooks.json` template, Hermes plugin tree, OpenClaw pre-tool plugin.
+**Costume (opt-in):** YML agents, skills, Codex, features, Grok `hooks.json` template, Hermes plugin tree, OpenClaw pre-tool plugin. Default is mill plant, not this dump.
 
 **Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire enable-when-resolves.
 
-**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and **project** skill hangers (`.opencode/skills`, project `.grok/plugins/0xray/skills` if present). JSON facets always merge (mill-fill). YML agents are the OpenCode hangar. Mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. `foundry.json` remaps paths only. CLI re-wear mints once after mill copies. `SKILLS.md` is still **not** written to the consumer root. Inventory garment is `overlay` when any facet came from their tree, else `copied-onto-hanger`. Dogfood writes no inventory.
+**Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and project skill dirs (`.opencode/skills`, project `.grok/plugins/0xray/skills` if present). JSON facets always merge (mill-fill). YML agents are the OpenCode wear dir. Mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. `foundry.json` remaps paths only. CLI re-wear mints once after mill copies. `SKILLS.md` is still **not** written to the consumer root. Inventory `suit` is `overlay` when any facet came from their tree, `fastened` when only mill plant, `costume` when `"costume": true`. Dogfood writes no inventory.
 
 ### 3. Pre / post processors (two stacks)
 

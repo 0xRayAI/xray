@@ -2,7 +2,7 @@
 
 The **mill**, not the worn exo. Reconcile, stamp JSON/CHANGELOG, verify docs, gate, publish, overlay their suit params.
 
-PPE (`evaluatePreToolGate`) stays worn. The mill plants **their** constitution, features, skills, and agents onto the hanger. It is not a fifth MCP. The suit is [`0xray`](https://www.npmjs.com/package/0xray).
+PPE (`evaluatePreToolGate`) stays worn. The mill **fastens** their constitution, features, skills, and agents as the suit. It is not a fifth MCP. The suit is [`0xray`](https://www.npmjs.com/package/0xray).
 
 ## Install
 
@@ -35,11 +35,11 @@ npx @0xray/foundry hooks
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 
-`hooks` installs git hooks via `scripts/hooks/install-hooks.cjs` (dogfood) or `node_modules/0xray/scripts/hooks/install-hooks.cjs` (published mill + worn garment). It does not look for `@0xray/hooks`.
+`hooks` installs git hooks via `scripts/hooks/install-hooks.cjs` (dogfood) or `node_modules/0xray/scripts/hooks/install-hooks.cjs` (published mill + worn suit). It does not look for `@0xray/hooks`.
 
 ## Suit params (`mint`)
 
-After the garment is on the hanger, overlay their plant (defaults; remap in `foundry.json` or `.xray/foundry.json`):
+After mill plant is fastened, overlay their plant (defaults; remap in `foundry.json` or `.xray/foundry.json`):
 
 | Facet | Default plant | Hanger |
 |---|---|---|
@@ -50,7 +50,7 @@ After the garment is on the hanger, overlay their plant (defaults; remap in `fou
 | Agents | `src/opencode/agents/*.yml` | `.opencode/agents/` (OpenCode hangar; other floors do not read mill YML agents) |
 | Agents card | `xray/AGENTS.md` | `AGENTS.md` if mill-managed |
 
-**Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project hangers only. CLI re-wear calls mint **once** after mill copies.
+**Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project dirs only (`.opencode/skills`, project Grok plugin skills). CLI re-wear calls mint **once** after mill copies.
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
