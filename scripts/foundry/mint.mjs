@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Overlay their mill SSOT onto the hanger (cwd / FOUNDRY_ROOT).
+ * Overlay their mill SSOT onto the project (cwd / FOUNDRY_ROOT).
  * Not a fifth 0xray CLI. Not PPE.
  */
 
@@ -19,7 +19,7 @@ function main() {
     process.stdout.write(`${component} ${action} ${status}\n`);
   });
   if (inventory.skipped) {
-    process.stderr.write("mint: skipped dogfood / 0xray exo plant (not a consumer hanger)\n");
+    process.stderr.write("mint: skipped dogfood / 0xray exo plant (not a consumer project)\n");
     process.exit(0);
   }
   process.stdout.write(`${JSON.stringify(inventory, null, 2)}\n`);

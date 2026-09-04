@@ -13,7 +13,7 @@ Use this when an agent (or a mill) just wrote, minted, or shipped something. Rea
 
 1. **Diff.** What actually changed. Ignore the agent's summary if the diff disagrees.
 2. **Plant vs worn.** `src/skills`, `src/opencode/agents`, `xray/*.json` vs `.opencode/skills`, `.opencode/agents`, `.xray/`. Same name: plant should win. Costume dump (45 skills / 42 agents they did not plant) is a fail unless `foundry.json` has `"costume": true`.
-3. **Mill receipt.** `.xray/foundry-inventory.json` — mill name/version, `garment` (`mill-fill` / `overlay`), `millPlant.skills` should include `mill` and `inspect`.
+3. **Mill receipt.** `.xray/foundry-inventory.json` — mill name/version, `suit` (`fastened` / `overlay` / `costume`), `millPlant.skills` should include `mill` and `inspect`.
 4. **CI.** GitHub mill CI and mill-monitor report, not just a green check in chat.
 5. **Live PUT.** `npm view <pkg> version` and HTTP 200 on the `.tgz`. Metadata without a tarball is not shipped.
 6. **Machine hangar.** Isolated HOME last-mile must not clobber `~/.grok/plugins/0xray`.

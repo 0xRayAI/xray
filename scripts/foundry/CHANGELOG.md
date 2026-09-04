@@ -4,13 +4,15 @@
 
 Mill plant fastens an **inspect** suit: inspect AI work (diffs, traces, mill receipts, CI). Not empty. `mill` + `inspect` skills. Costume dump still opt-in.
 
+Inventory field is `suit` (`fastened` / `overlay` / `costume` / `dogfood`). Not `garment`. `foundry.json` `"costume": true` is the 45/42 dump.
+
 ## [0.1.5] - 2026-09-04
 
-Empty garment: consumer hangers get mill plant (`plant/skills/mill`), not 45/42 costume. `foundry.json` `"costume": true` restores the dump. Plant overlay still mill-fill.
+Mill plant (`plant/skills/mill`) fastened by default, not 45/42 costume. `foundry.json` `"costume": true` restores the dump. Plant overlay still mill-fill.
 
 ## [0.1.4] - 2026-09-04
 
-`npx @0xray/foundry hooks` on a published mill uses the worn garment
+`npx @0xray/foundry hooks` on a published mill uses the worn 0xray installer
 `node_modules/0xray/scripts/hooks/install-hooks.cjs`. Dogfood still uses
 `scripts/hooks` next to `scripts/foundry`. Missing installer fails honestly
 (no spawn of `node_modules/@0xray/hooks/...`).

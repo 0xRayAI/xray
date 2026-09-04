@@ -308,7 +308,7 @@ function installOpencodeBridge(targetDir, packageRoot, log) {
     const copied = syncCostumeSkills(path.join(opencodeDest, "skills"), packageRoot, targetDir);
     if (copied > 0) log("opencode-bridge", `skills synced (${copied})`, "info", { path: ".opencode/skills/" });
   } else {
-    log("opencode-bridge", "empty garment — plugin only, mill mill-fill mill plant", "info");
+    log("opencode-bridge", "mill plant — plugin only, not costume dump", "info");
     fs.mkdirSync(opencodeDest, { recursive: true });
     copyOpencodePlugin(packageRoot, opencodeDest, log);
   }

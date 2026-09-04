@@ -47,7 +47,7 @@ Factory era = one plant. Same constitution on every floor. Memory compounds. Hos
 |---|---|
 | **Kernel, not catalog** | Ship the gate, temperament, four adapters, Repertoire hookup. Stop selling 42/45/7 as the product. |
 | **Factory wear** | `npm i 0xray` lights constitution on this host in one shot. Stranger install is the release gate. |
-| **Foundry vs exo** | Wear is the garment. The mill that cuts it (bridges, reconcile, gate, stamps) stays unpublished as a product until it can mint from *their* repo. See [foundry](./v4-foundry.md). |
+| **Foundry vs exo** | Wear is the **suit**. The mill **fashions** mill plant (bridges, reconcile, gate, stamps) and **fastens** it on install. See [foundry](./v4-foundry.md). |
 | **Synchronicity as muscle** | Repertoire *is* the gap-filler for handoffs and compaction. 4.0 vendors `@0xray/repertoire@0.2.0` and ships `memory_routing.enabled: true`. Opt out with `"enabled": false, "provider": "repertoire"`. |
 | **Host-native inference** | Use the plant’s existing line (OpenCode CLI, Grok OAuth, whatever the floor already runs). Do not add an 8th MCP. |
 | **Codex 69 as factory law** | No new MCP/skill/handler. Trim duplicate conductors on the museum list. “Trim later” is now if this page is true. |

@@ -24,7 +24,7 @@ export function resolveMillRoot() {
 /**
  * Git hook installer. Dogfood is `scripts/hooks` next to `scripts/foundry`.
  * Published mill lives in `node_modules/@0xray/foundry` — sibling `@0xray/hooks`
- * does not exist. Use the worn 0xray garment installer instead.
+ * does not exist. Use the worn 0xray installer instead.
  */
 export function resolveHookInstaller(rootDir = resolveMillRoot(), millPkg = millPackageDir()) {
   const candidates = [
