@@ -208,6 +208,8 @@ function main() {
     const requiredFiles = [
       "scripts/node/install-bridges.cjs",
       "scripts/node/postinstall.cjs",
+      "scripts/foundry/mint-suit.cjs",
+      "scripts/foundry/hooks.mjs",
       "package.json",
       "xray/features.json",
       "xray/features.schema.json",

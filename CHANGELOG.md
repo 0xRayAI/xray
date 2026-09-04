@@ -25,6 +25,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - GitHub Pages homepage: no client `<Redirect to="/docs/…">` (that 404s at the org root). Meta refresh + `useBaseUrl('/docs/')`. `.nojekyll` in static.
 - Mill CI report: `mill-monitor.yml` (fresh workflow ID) listens for mill CI completion. Report only.
 - Published mill `hooks` uses the 0xray garment installer (`node_modules/0xray/scripts/hooks`), not `node_modules/@0xray/hooks`. Mill tree 0.1.4 (not a 0xray bump).
+- Nested mill in the 0xray tarball (`scripts/foundry/`). Wear no longer needs a second `npm i @0xray/foundry` for mint-on-install. 4.0.2.
+
+---
+
+## [4.0.2] - 2026-09-04
+
+Nested mill in the **0xray tarball**. `npm i 0xray` mill-fills via `scripts/foundry/` (postinstall + CLI re-wear `require` it). `@0xray/foundry` stays the standalone mill CLI (**0.1.4**). Not 5.0.0.
+
+Pack tests and consumer smoke require `scripts/foundry/mint-suit.cjs` in the tarball. Mill self-host (mill-ci, mill-monitor, Pages `docs-build`, mill-fill overlay) was already on main; this patch is the npm PUT of that mill next to the garment.
+
+### 🐛 Bug Fixes
+- Processor-test ESLint config is ESLint 9 ESM
 
 ---
 
