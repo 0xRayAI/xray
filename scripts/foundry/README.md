@@ -22,11 +22,15 @@ npx @0xray/foundry release [patch|minor|major] --i-mean-it
 npx @0xray/foundry release --publish-only --dry-run
 npx @0xray/foundry release --publish-only --i-mean-it
 npx @0xray/foundry mint
+npx @0xray/foundry ci [--commit SHA] [--report]
+npx @0xray/foundry hooks
 ```
 
 `release` without `--dry-run` requires `--i-mean-it` or `FOUNDRY_RELEASE=1`. It is a bump/commit/push/publish bot for the **milled cwd**, not a casual command.
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
+
+`gate` is build + test + docs. `ci` reports GitHub Actions for the milled cwd (no auto-push). `hooks` installs git pre-commit / post-commit / pre-push / post-push. GitHub `0xRay CI/CD` is the mill gate on `main`.
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 

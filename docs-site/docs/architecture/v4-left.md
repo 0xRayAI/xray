@@ -67,6 +67,7 @@ Still open:
 
 1. Optional: `npm publish @0xray/repertoire@0.2.0` (4.0 already vendors 0.2).
 2. Optional later mill: empty garment (no 45/42 costume) — not this cut. Dual-ship stays until a later 0xray patch that `require`s the npm mill (do not bump 0xray for that here).
+3. Enable `0xRay CI/CD` and `CI/CD Health Monitor` in GitHub after the mill CI file is on `main` (they were disabled for inactivity).
 
 ## Do not
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.2] - 2026-09-04
+
+Mill owns GitHub CI, git hooks, and CI report. `npx @0xray/foundry ci` reports Actions (no auto-push). `npx @0xray/foundry hooks` installs pre/post git hooks. `0xRay CI/CD` is the mill gate on main.
+
 ## [0.1.1] - 2026-09-04
 
 Live `release` (bump/commit/push/publish of the milled cwd) requires `--i-mean-it` or `FOUNDRY_RELEASE=1`. `--dry-run` stays free. Packed mill tarball mints overlay. Stamp keeps `[Unreleased]` and inserts the version under it.

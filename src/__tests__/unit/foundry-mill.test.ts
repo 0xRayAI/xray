@@ -144,6 +144,8 @@ describe('foundry mill — gate and scripts', () => {
     expect(mill.bin).toEqual({ '0xray-foundry': 'cli.js' });
     expect(read('scripts/foundry/release.mjs')).toContain('--i-mean-it');
     expect(read('scripts/foundry/cli.mjs')).toContain('FOUNDRY_RELEASE');
+    expect(read('scripts/foundry/cli.mjs')).toContain('ci-monitor.mjs');
+    expect(read('scripts/foundry/cli.mjs')).toContain('hooks.mjs');
     expect(existsSync(path.join(root, 'scripts/foundry/cli.js'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/cli.mjs'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/README.md'))).toBe(true);
@@ -783,6 +785,53 @@ describe('foundry mill — flesh', () => {
       rmSync(packDir, { recursive: true, force: true });
       rmSync(unpackDir, { recursive: true, force: true });
       rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('foundry mill — CI and hooks', () => {
+  it('GitHub mill CI does not auto-commit reflections or run auto-fix', () => {
+    const ci = read('.github/workflows/ci.yml');
+    expect(ci).toContain('branches: [main]');
+    expect(ci).not.toContain('auto-reflection-generator');
+    expect(ci).not.toContain('ci-cd-auto-fix');
+    expect(ci).toContain('foundry-mill.test.ts');
+    expect(ci).toContain('npm run lint');
+    expect(ci).toContain('npm run typecheck');
+    const monitor = read('.github/workflows/ci-cd-monitor.yml');
+    expect(monitor).toContain('0xRay CI/CD');
+    expect(monitor).toContain('ci-monitor.mjs');
+    expect(monitor).not.toContain('xray Framework CI/CD v3.0.0');
+    expect(read('scripts/node/github-actions-monitor.cjs')).toContain('foundry/ci-monitor.mjs');
+    expect(read('scripts/node/ci-cd-auto-fix.cjs')).toContain('foundry/ci-monitor.mjs');
+    expect(read('.github/workflows/release.yml')).toContain('scripts/foundry/release.mjs');
+  });
+
+  it('ci monitor skips honestly without a GitHub token', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-ci-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      const env = { ...process.env, FOUNDRY_ROOT: tmp };
+      delete env.GITHUB_TOKEN;
+      delete env.GH_TOKEN;
+      delete env.GITHUB_REPOSITORY;
+      const r = spawnSync(process.execPath, ['scripts/foundry/ci-monitor.mjs', '--report'], {
+        cwd: root,
+        encoding: 'utf8',
+        env,
+      });
+      expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+      expect(`${r.stdout}${r.stderr}`).toMatch(/skipped \(no GitHub token\)/);
+      const report = JSON.parse(
+        readFileSync(path.join(tmp, '.opencode/logs/ci-cd-monitor-report.json'), 'utf8'),
+      ) as { ci_status: string; issues: unknown[] };
+      expect(report.ci_status).toBe('unknown');
+      expect(report.issues).toEqual([]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
     }
   });
 });

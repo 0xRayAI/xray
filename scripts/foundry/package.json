@@ -1,9 +1,9 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
-  "description": "0xRay mill: mint their suit params, stamp JSON/CHANGELOG, verify docs, gate, publish. Not the worn exo.",
+  "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -35,7 +35,9 @@
     "./release": "./release.mjs",
     "./release-gate": "./release-gate.mjs",
     "./mill-root": "./mill-root.mjs",
-    "./mint-suit": "./mint-suit.cjs"
+    "./mint-suit": "./mint-suit.cjs",
+    "./ci-monitor": "./ci-monitor.mjs",
+    "./hooks": "./hooks.mjs"
   },
   "engines": {
     "node": ">=18"
