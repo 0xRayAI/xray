@@ -8,7 +8,7 @@ import { createRequire } from 'module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.join(__dirname, '../../..');
 const require = createRequire(import.meta.url);
-const { patchGrokHooks, grokHookShellCommand, isEphemeralInstallRoot, installAllBridges } = require(
+const { patchGrokHooks, grokHookShellCommand, isEphemeralInstallRoot, isIsolatedHome, installAllBridges } = require(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs'),
 );
 
@@ -231,5 +231,13 @@ describe('Grok hooks.json command strings', () => {
     expect(isEphemeralInstallRoot('/tmp/hermes-0xray-e2e-1')).toBe(true);
     expect(isEphemeralInstallRoot('/Users/blaze/dev/xray')).toBe(false);
     expect(isEphemeralInstallRoot('/Users/blaze/dev/bedrock')).toBe(false);
+  });
+
+  it('isIsolatedHome skips machine ~/.grok when HOME is not os.homedir()', () => {
+    expect(isIsolatedHome({ HOME: '/tmp/lastmile-home' }, '/Users/blaze')).toBe(true);
+    expect(isIsolatedHome({ HOME: '/Users/blaze' }, '/Users/blaze')).toBe(false);
+    expect(readFileSync(path.join(packageRoot, 'scripts/node/install-bridges.cjs'), 'utf8')).toContain(
+      'skip machine ~/.grok plugin — isolated HOME',
+    );
   });
 });

@@ -15,9 +15,15 @@ const { mintConsumerSuit } = require("./mint-suit.cjs");
 function main() {
   const target = resolveMillRoot();
   const millRoot = millPackageDir();
-  const inventory = mintConsumerSuit(millRoot, target, (component, action, status) => {
-    process.stdout.write(`${component} ${action} ${status}\n`);
-  });
+  let inventory;
+  try {
+    inventory = mintConsumerSuit(millRoot, target, (component, action, status) => {
+      process.stdout.write(`${component} ${action} ${status}\n`);
+    });
+  } catch (err) {
+    process.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+    process.exit(1);
+  }
   if (inventory.skipped) {
     process.stderr.write("mint: skipped dogfood / 0xray exo plant (not a consumer project)\n");
     process.exit(0);

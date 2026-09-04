@@ -7,6 +7,7 @@
  */
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const DEFAULT_PARAMS = {
@@ -135,7 +136,7 @@ function listAgentFilesAt(agentsSrc) {
     .map((entry) => entry.name);
 }
 
-/** Mill mill-fill mill plant: mill mill mill mill-fill mill names they did not plant stay. */
+/** Fasten mill plant first. Mill names they did not plant stay; same-name overlay wins. */
 function fastenMillPlant(millPackageRoot, targetDir, log) {
   const plant = millPlantDir(millPackageRoot);
   if (!plant) return { skills: [], agents: [] };
@@ -180,12 +181,57 @@ function isDirectory(p) {
   }
 }
 
-/** Project skill dirs only (.opencode/skills, project Grok plugin skills). */
+/** Passwd home. `os.homedir()` follows $HOME and cannot detect last-mile isolation. */
+function machineHome() {
+  try {
+    const passwd = os.userInfo().homedir;
+    if (typeof passwd === "string" && passwd) return passwd;
+  } catch {
+    /* no passwd */
+  }
+  return os.homedir();
+}
+
+function processHome(env) {
+  const e = env || process.env;
+  return e.HOME || e.USERPROFILE || "";
+}
+
+function isIsolatedHome(env, machine) {
+  const home = processHome(env);
+  if (!home) return false;
+  const real = machine || machineHome();
+  try {
+    return path.resolve(home) !== path.resolve(real);
+  } catch {
+    return false;
+  }
+}
+
+function machineGrokPluginDir(machine) {
+  return path.join(machine || machineHome(), ".grok", "plugins", "0xray");
+}
+
+function wouldClobberMachineGrok(dest, env, machine) {
+  if (!dest) return false;
+  const realMachine = machine || machineHome();
+  if (!isIsolatedHome(env, realMachine)) return false;
+  const real = path.resolve(machineGrokPluginDir(realMachine));
+  const target = path.resolve(dest);
+  return target === real || target.startsWith(`${real}${path.sep}`);
+}
+
+/**
+ * Project skill dirs on every TUI floor. Create on fasten. Never machine home.
+ * YML agents stay OpenCode (`.opencode/agents`).
+ */
 function listProjectSkillDirs(targetDir) {
-  const dests = [path.join(targetDir, ".opencode", "skills")];
-  const projectGrok = path.join(targetDir, ".grok", "plugins", "0xray", "skills");
-  if (isDirectory(projectGrok)) dests.push(projectGrok);
-  return dests;
+  return [
+    path.join(targetDir, ".opencode", "skills"),
+    path.join(targetDir, ".grok", "plugins", "0xray", "skills"),
+    path.join(targetDir, ".hermes", "plugins", "xray-hermes", "skills"),
+    path.join(targetDir, ".openclaw", "skills"),
+  ];
 }
 
 function overlayJsonFacet(src, dest) {
@@ -236,6 +282,69 @@ function overlayAgentsCard(targetDir, params) {
   }
   fs.copyFileSync(src, dest);
   return true;
+}
+
+function wornSkillNames(targetDir) {
+  const names = new Set();
+  for (const dir of listProjectSkillDirs(targetDir)) {
+    for (const name of listSkillNamesAt(dir)) names.add(name);
+  }
+  return [...names];
+}
+
+function wornAgentFiles(targetDir) {
+  return listAgentFilesAt(path.join(targetDir, ".opencode", "agents"));
+}
+
+function previousTreeAllowlist(targetDir) {
+  const file = path.join(targetDir, ".xray", "foundry-inventory.json");
+  if (!fs.existsSync(file)) return { skills: [], agents: [] };
+  try {
+    const inventory = JSON.parse(fs.readFileSync(file, "utf8"));
+    return {
+      skills: Array.isArray(inventory?.tree?.skills) ? inventory.tree.skills : [],
+      agents: Array.isArray(inventory?.tree?.agents) ? inventory.tree.agents : [],
+    };
+  } catch {
+    return { skills: [], agents: [] };
+  }
+}
+
+/** Extra worn names that are neither mill plant, their plant, nor a prior overlay. */
+function costumeDumpExtras(targetDir, millPlant, tree) {
+  const prior = previousTreeAllowlist(targetDir);
+  const allowedSkills = new Set([
+    ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
+    ...(Array.isArray(tree?.skills) ? tree.skills : []),
+    ...prior.skills,
+  ]);
+  const allowedAgents = new Set([
+    ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
+    ...(Array.isArray(tree?.agents) ? tree.agents : []),
+    ...prior.agents,
+  ]);
+  return {
+    extraSkills: wornSkillNames(targetDir).filter((name) => !allowedSkills.has(name)),
+    extraAgents: wornAgentFiles(targetDir).filter((name) => !allowedAgents.has(name)),
+  };
+}
+
+function assertNoCostumeDump(targetDir, millPlant, tree) {
+  if (wantsCostume(targetDir)) {
+    return { ok: true, extraSkills: [], extraAgents: [] };
+  }
+  const extras = costumeDumpExtras(targetDir, millPlant, tree);
+  if (extras.extraSkills.length > 0 || extras.extraAgents.length > 0) {
+    const listed = [...extras.extraSkills, ...extras.extraAgents].join(", ");
+    const err = new Error(
+      `foundry-inspect: costume dump without foundry.json "costume": true (${listed})`,
+    );
+    err.code = "FOUNDRY_COSTUME_DUMP";
+    err.extraSkills = extras.extraSkills;
+    err.extraAgents = extras.extraAgents;
+    throw err;
+  }
+  return { ok: true, extraSkills: [], extraAgents: [] };
 }
 
 function overlayConsumerTree(targetDir, log, params) {
@@ -365,6 +474,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
     path.join(targetDir, ".xray", "config.json"),
   );
   tree.agentsCard = overlayAgentsCard(targetDir, params);
+  assertNoCostumeDump(targetDir, millPlant, tree);
   if (log && (tree.codex || tree.features || tree.config)) {
     log("foundry-mint", "Overlaid consumer suit facets onto .xray", "info", {
       constitution: tree.codex,
@@ -382,6 +492,8 @@ module.exports = {
   loadFoundryExtra,
   wantsCostume,
   millPlantDir,
+  listSkillNamesAt,
+  listAgentFilesAt,
   fastenMillPlant,
   resolveInside,
   overlayJsonFacet,
@@ -394,4 +506,13 @@ module.exports = {
   mintConsumerSuit,
   isDogfood,
   readPackageIdentity,
+  wornSkillNames,
+  wornAgentFiles,
+  costumeDumpExtras,
+  assertNoCostumeDump,
+  machineHome,
+  processHome,
+  isIsolatedHome,
+  machineGrokPluginDir,
+  wouldClobberMachineGrok,
 };

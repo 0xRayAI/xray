@@ -222,6 +222,13 @@ function isEphemeralInstallRoot(targetDir) {
   return /\/T\/|\/tmp\/|\/var\/folders\/|\/Temp\//i.test(normalized);
 }
 
+const millSuit = require("../foundry/mint-suit.cjs");
+
+/** Last-mile isolated HOME vs passwd home. `os.homedir()` follows $HOME. */
+function isIsolatedHome(env = process.env, machine = millSuit.machineHome()) {
+  return millSuit.isIsolatedHome(env, machine);
+}
+
 function copyHermesHookRuntimes(packageRoot) {
   const hooksSrc = [
     path.join(packageRoot, "dist", "integrations", "hooks"),
@@ -560,6 +567,7 @@ module.exports = {
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
+  isIsolatedHome,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,

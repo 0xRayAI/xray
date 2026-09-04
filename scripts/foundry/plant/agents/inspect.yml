@@ -1,5 +1,5 @@
 name: inspect
 skill: inspect
 description: "Inspect AI work: diffs, traces, mill receipts, CI. Fastened mill plant."
-version: "0.1.6"
+version: "0.1.7"
 mode: subagent

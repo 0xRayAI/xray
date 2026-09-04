@@ -28,6 +28,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Nested mill in the 0xray tarball (`scripts/foundry/`). Wear no longer needs a second `npm i @0xray/foundry` for mint-on-install. 4.0.2.
 - Empty garment: mill plant (`mill` skill) is the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Mill 0.1.5.
 - Mill plant fastens **inspect** (inspect AI work) plus `mill`. Not empty. Mill 0.1.6.
+- Nested mill **0.1.7**: inspect organ, four floors, passwd HOME, mill CI receipt. 4.0.5.
+
+---
+
+## [4.0.5] - 2026-09-04
+
+Nested mill **0.1.7**. Inspect is a mill command (`npx @0xray/foundry inspect`): costume dump fails mint, live PUT GETs the `.tgz`, four project floors, mill CI receipt, passwd HOME isolation. Mill plant stays `mill` + `inspect`. Not 45/42 costume. Not 5.0.0.
 
 ---
 

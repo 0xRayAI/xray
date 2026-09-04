@@ -19,7 +19,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Inspect AI work is the mill discipline. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). `npx @0xray/foundry inspect` runs the mill checks (chat is not a receipt). Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
@@ -58,6 +58,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
+| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Chat is not a receipt. |
 
 ## Governance
 
