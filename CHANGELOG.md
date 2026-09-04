@@ -23,6 +23,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - GitHub Pages: stop copying stale `docs-site/static/index.html` over the Docusaurus homepage (unprefixed `/docs` links 404ed). `npx @0xray/foundry docs-build` is the mill Docusaurus build. Mill 0.1.3.
 - Mill self-host: `0xRay CI/CD` lives in `mill-ci.yml` so GitHub registers push/PR after the inactivity disable. Mill CI always builds Docusaurus.
 - GitHub Pages homepage: no client `<Redirect to="/docs/…">` (that 404s at the org root). Meta refresh + `useBaseUrl('/docs/')`. `.nojekyll` in static.
+- Mill CI report: `mill-monitor.yml` (fresh workflow ID) listens for mill CI completion. Report only.
 
 ---
 

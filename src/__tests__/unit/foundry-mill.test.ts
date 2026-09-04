@@ -798,10 +798,11 @@ describe('foundry mill — CI and hooks', () => {
     expect(ci).toContain('foundry-mill.test.ts');
     expect(ci).toContain('npm run lint');
     expect(ci).toContain('npm run typecheck');
-    const monitor = read('.github/workflows/ci-cd-monitor.yml');
+    const monitor = read('.github/workflows/mill-monitor.yml');
     expect(monitor).toContain('0xRay CI/CD');
     expect(monitor).toContain('ci-monitor.mjs');
-    expect(monitor).not.toContain('xray Framework CI/CD v3.0.0');
+    expect(monitor).toContain('Foundry mill (CI report)');
+    expect(existsSync(path.join(root, '.github/workflows/ci-cd-monitor.yml'))).toBe(false);
     expect(read('scripts/node/github-actions-monitor.cjs')).toContain('foundry/ci-monitor.mjs');
     expect(read('scripts/node/ci-cd-auto-fix.cjs')).toContain('foundry/ci-monitor.mjs');
     expect(read('.github/workflows/release.yml')).toContain('scripts/foundry/release.mjs');
