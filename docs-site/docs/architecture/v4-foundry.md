@@ -38,7 +38,7 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-Wear copies the garment. Overlay mints constitution, features, skills, and agents that already exist in their tree. The mill does not invent skills from source. `npx @0xray/foundry mint` reapplies overlay without re-wearing bridges.
+Wear copies the garment. Overlay mints constitution, features, skills, and agents that already exist in their tree. The mill does not invent skills from source. Nested mill lives at `scripts/foundry/` inside the **0xray tarball** (postinstall + CLI re-wear `require` it). `npx @0xray/foundry mint` is the standalone mill CLI and reapplies overlay without re-wearing bridges.
 
 ## Mills (inventory)
 

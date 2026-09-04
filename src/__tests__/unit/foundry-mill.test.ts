@@ -131,6 +131,29 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/node/universal-version-manager.js'))).toBe(false);
   });
 
+  it('0xray pack nests scripts/foundry so wear mints without a second mill install', () => {
+    const pkg = JSON.parse(read('package.json')) as { files?: string[] };
+    expect(pkg.files).toContain('scripts/foundry/');
+    expect(read('scripts/node/postinstall.cjs')).toContain('../foundry/mint-suit.cjs');
+    expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('scripts/foundry/mint-suit.cjs');
+    const pack = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    expect(pack.status, `${pack.stdout}${pack.stderr}`).toBe(0);
+    const parsed: unknown = JSON.parse(pack.stdout);
+    const files = (
+      Array.isArray(parsed)
+        ? (parsed[0] as { files?: Array<{ path?: string } | string> }).files
+        : (parsed as { files?: Array<{ path?: string } | string> }).files
+    ) ?? [];
+    const paths = files.map((f) => (typeof f === 'string' ? f : f.path || ''));
+    expect(paths).toContain('scripts/foundry/mint-suit.cjs');
+    expect(paths).toContain('scripts/foundry/hooks.mjs');
+    expect(paths).toContain('scripts/foundry/cli.js');
+    expect(paths).toContain('scripts/foundry/mill-root.mjs');
+  });
+
   it('mill is extracted as publishable @0xray/foundry', () => {
     const mill = JSON.parse(read('scripts/foundry/package.json')) as {
       name: string;
