@@ -2,7 +2,9 @@
 
 ## [0.1.3] - 2026-09-04
 
-Docusaurus is mill: `npx @0xray/foundry docs-build` (exo only). GitHub Pages no longer clobbers the generated homepage with a stale `static/index.html`.
+Pages homepage is a baseUrl meta refresh to `/docs/`, not a client redirect to `/docs/introduction` (org-root 404).
+
+Docusaurus is mill: `npx @0xray/foundry docs-build` (exo only). GitHub Pages no longer clobbers the generated homepage with a stale 3.x `static/index.html`.
 
 ## [0.1.2] - 2026-09-04
 

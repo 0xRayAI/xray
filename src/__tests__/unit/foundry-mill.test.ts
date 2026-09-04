@@ -842,6 +842,11 @@ describe('foundry mill — Docusaurus / Pages', () => {
     const pkg = JSON.parse(read('docs-site/package.json')) as { scripts: Record<string, string> };
     expect(pkg.scripts.build).toBe('docusaurus build');
     expect(pkg.scripts.build).not.toContain('static/index.html');
+    const home = read('docs-site/src/pages/index.tsx');
+    expect(home).toContain('useBaseUrl');
+    expect(home).toContain('httpEquiv');
+    expect(home).not.toContain('from \'@docusaurus/router\'');
+    expect(existsSync(path.join(root, 'docs-site/static/.nojekyll'))).toBe(true);
   });
 
   it('docs-build is mill; stranger mills skip; deploy uses the mill', () => {
