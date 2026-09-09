@@ -179,7 +179,7 @@ export async function checkLivePut(packages, fetchFn = fetch) {
   return results;
 }
 
-function packagesToProbe(root) {
+export function packagesToProbe(root) {
   const pkgs = [];
   const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
   if (inventory?.mill?.name && inventory?.mill?.version) {
@@ -192,6 +192,17 @@ function packagesToProbe(root) {
   const self = readJson(path.join(root, "package.json"));
   if (self?.name === "0xray" && self?.version) {
     pkgs.push({ name: "0xray", version: self.version });
+  }
+  if (
+    self &&
+    self.private !== true &&
+    inventory?.consumer?.name &&
+    inventory?.consumer?.version
+  ) {
+    pkgs.push({
+      name: inventory.consumer.name,
+      version: inventory.consumer.version,
+    });
   }
   const seen = new Set();
   return pkgs.filter((p) => {

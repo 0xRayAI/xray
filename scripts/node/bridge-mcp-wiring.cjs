@@ -230,12 +230,13 @@ function isIsolatedHome(env = process.env, machine = millSuit.machineHome()) {
 }
 
 function copyHermesHookRuntimes(packageRoot) {
+  if (millSuit.isIsolatedHome()) return false;
   const hooksSrc = [
     path.join(packageRoot, "dist", "integrations", "hooks"),
     path.join(packageRoot, "src", "integrations", "hooks"),
   ].find((p) => fs.existsSync(p));
   if (!hooksSrc) return false;
-  const hooksDst = path.join(os.homedir(), ".hermes", "plugins", "hooks");
+  const hooksDst = path.join(millSuit.machineHome(), ".hermes", "plugins", "hooks");
   fs.mkdirSync(hooksDst, { recursive: true });
   fs.cpSync(hooksSrc, hooksDst, { recursive: true, force: true });
   return true;
@@ -428,10 +429,11 @@ function resolveOpenClawPluginDir(packageRoot) {
 }
 
 function installOpenClawHostWear(packageRoot) {
+  if (millSuit.isIsolatedHome()) return null;
   const source = resolveOpenClawPreToolHookSource(packageRoot);
   if (!source) return null;
 
-  const hookDir = path.join(os.homedir(), ".openclaw", "hooks");
+  const hookDir = path.join(millSuit.machineHome(), ".openclaw", "hooks");
   fs.mkdirSync(hookDir, { recursive: true });
   const dest = path.join(hookDir, "xray-pre-tool.mjs");
   fs.copyFileSync(source, dest);

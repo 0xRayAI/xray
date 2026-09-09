@@ -8,13 +8,15 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { millPackageDir, resolveMillRoot } from "./mill-root.mjs";
+import { inspectSuit } from "./inspect.mjs";
 
 const require = createRequire(import.meta.url);
 const { mintConsumerSuit } = require("./mint-suit.cjs");
 
-function main() {
+async function main() {
   const target = resolveMillRoot();
   const millRoot = millPackageDir();
+  const skipLive = process.argv.includes("--skip-live");
   let inventory;
   try {
     inventory = mintConsumerSuit(millRoot, target, (component, action, status) => {
@@ -29,6 +31,9 @@ function main() {
     process.exit(0);
   }
   process.stdout.write(`${JSON.stringify(inventory, null, 2)}\n`);
+  const report = await inspectSuit(target, { millRoot, skipLive });
+  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  if (!report.ok) process.exit(1);
 }
 
 const isMain =

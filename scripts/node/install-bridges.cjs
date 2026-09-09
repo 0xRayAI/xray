@@ -423,7 +423,16 @@ function installHermesBridge(targetDir, packageRoot, log) {
     return;
   }
 
-  const targetPluginDir = path.join(os.homedir(), ".hermes", "plugins", "xray-hermes");
+  const ephemeral = isEphemeralInstallRoot(targetDir);
+  const isolated = isIsolatedHome();
+  const machine = machineHome();
+  const targetPluginDir =
+    ephemeral || isolated
+      ? path.join(targetDir, ".hermes", "plugins", "xray-hermes")
+      : path.join(machine, ".hermes", "plugins", "xray-hermes");
+  if (isolated) {
+    log("hermes-bridge", "skip machine ~/.hermes plugin — isolated HOME", "info");
+  }
   fs.mkdirSync(targetPluginDir, { recursive: true });
   for (const entry of fs.readdirSync(sourceDir)) {
     const src = path.join(sourceDir, entry);
@@ -435,10 +444,15 @@ function installHermesBridge(targetDir, packageRoot, log) {
     }
   }
   copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
-  if (copyHermesHookRuntimes(packageRoot)) {
+  if (!ephemeral && !isolated && copyHermesHookRuntimes(packageRoot)) {
     log("hermes-bridge", "hook runtimes copied", "info", { path: "~/.hermes/plugins/hooks" });
   }
-  log("hermes-bridge", "plugin copied", "info", { path: "~/.hermes/plugins/xray-hermes" });
+  log(
+    "hermes-bridge",
+    "plugin copied",
+    "info",
+    { path: ephemeral || isolated ? path.relative(targetDir, targetPluginDir) : "~/.hermes/plugins/xray-hermes" },
+  );
 
   writePluginMcpJson(targetPluginDir, targetDir, log, "hermes-bridge");
 
@@ -453,11 +467,13 @@ function installHermesBridge(targetDir, packageRoot, log) {
     log("hermes-bridge", "skip machine consumer marker — ephemeral consumer", "info");
   }
 
-  try {
-    const result = wireHermesBridge(targetDir);
-    log("hermes-bridge", `mcp_servers wired (${result.count} servers)`, "info");
-  } catch (e) {
-    log("hermes-bridge", "mcp_servers wire failed", "warn", { error: e.message });
+  if (!ephemeral && !isolated) {
+    try {
+      const result = wireHermesBridge(targetDir);
+      log("hermes-bridge", `mcp_servers wired (${result.count} servers)`, "info");
+    } catch (e) {
+      log("hermes-bridge", "mcp_servers wire failed", "warn", { error: e.message });
+    }
   }
 }
 
@@ -494,26 +510,52 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
     log("openclaw-bridge", "config created", "info", { path: ".xray/config/openclaw.json" });
   }
 
-  const copied = syncCostumeSkills(path.join(os.homedir(), ".openclaw", "skills"), packageRoot, targetDir);
-  if (copied > 0) log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
-
-  try {
-    const result = wireOpenClawBridge(targetDir);
-    log("openclaw-bridge", `openclaw.json mcp wired (${result.count} servers)`, "info", {
-      method: result.method,
-    });
-  } catch (e) {
-    log("openclaw-bridge", "openclaw.json mcp wire failed", "warn", { error: e.message });
+  const ephemeralOpenclaw = isEphemeralInstallRoot(targetDir);
+  const isolatedOpenclaw = isIsolatedHome();
+  if (!ephemeralOpenclaw && !isolatedOpenclaw) {
+    const copied = syncCostumeSkills(
+      path.join(machineHome(), ".openclaw", "skills"),
+      packageRoot,
+      targetDir,
+    );
+    if (copied > 0) {
+      log("openclaw-bridge", `skills synced (${copied})`, "info", { path: "~/.openclaw/skills/" });
+    }
+  } else {
+    log(
+      "openclaw-bridge",
+      isolatedOpenclaw
+        ? "skip machine ~/.openclaw skills — isolated HOME"
+        : "skip machine ~/.openclaw skills — ephemeral consumer",
+      "info",
+    );
   }
 
-  if (!isEphemeralInstallRoot(targetDir)) {
+  if (!ephemeralOpenclaw && !isolatedOpenclaw) {
+    try {
+      const result = wireOpenClawBridge(targetDir);
+      log("openclaw-bridge", `openclaw.json mcp wired (${result.count} servers)`, "info", {
+        method: result.method,
+      });
+    } catch (e) {
+      log("openclaw-bridge", "openclaw.json mcp wire failed", "warn", { error: e.message });
+    }
+  }
+
+  if (!ephemeralOpenclaw && !isolatedOpenclaw) {
     const hook = installOpenClawHostWear(packageRoot);
     if (hook) log("openclaw-bridge", "PreToolUse hook installed", "info", { path: hook });
     if (maybeWriteOpenClawCliBackend()) {
       log("openclaw-bridge", "opencode-cli backend written", "info");
     }
   } else {
-    log("openclaw-bridge", "skip machine PreToolUse wear — ephemeral consumer", "info");
+    log(
+      "openclaw-bridge",
+      isolatedOpenclaw
+        ? "skip machine PreToolUse wear — isolated HOME"
+        : "skip machine PreToolUse wear — ephemeral consumer",
+      "info",
+    );
   }
 }
 

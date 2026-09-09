@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { homedir } from 'os';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
@@ -10,6 +9,10 @@ import { mintAfterWear } from './foundry-mint-wear.js';
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
 const packageRoot = path.join(__dirname, '..', '..', '..');
+const millSuit = require(path.join(packageRoot, 'scripts', 'foundry', 'mint-suit.cjs')) as {
+  isIsolatedHome: () => boolean;
+  machineHome: () => string;
+};
 const wiring = require(path.join(packageRoot, 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
   wireHermesBridge: (targetDir: string) => { count: number };
   copyHermesFindProjectRootHelper: (packageRoot: string, targetPluginDir: string) => boolean;
@@ -35,8 +38,10 @@ interface HermesInstallOptions {
 async function installForHermes(options: HermesInstallOptions = {}): Promise<void> {
   frameworkLogger.log('hermes-integration', 'install-start', 'info', { options });
 
-  const home = homedir();
-  const targetPluginDir = path.join(home, '.hermes/plugins/xray-hermes');
+  const isolated = millSuit.isIsolatedHome();
+  const targetPluginDir = isolated
+    ? path.join(process.cwd(), '.hermes/plugins/xray-hermes')
+    : path.join(millSuit.machineHome(), '.hermes/plugins/xray-hermes');
 
   const possibleSources = [
     path.join(__dirname, '..', '..', '..', 'dist/integrations/hermes-agent'),
@@ -84,10 +89,10 @@ async function installForHermes(options: HermesInstallOptions = {}): Promise<voi
     }
 
     wiring.copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
-    if (wiring.copyHermesHookRuntimes(packageRoot)) {
+    if (!isolated && wiring.copyHermesHookRuntimes(packageRoot)) {
       frameworkLogger.log('hermes-integration', 'hooks-copied', 'info', {});
     }
-    const wired = wiring.wireHermesBridge(targetDir);
+    const wired = isolated ? { count: 0 } : wiring.wireHermesBridge(targetDir);
     mintAfterWear(targetDir);
     console.log(`\x1b[32m✓ Wired Hermes mcp_servers (${wired.count} servers)\x1b[0m`);
     console.log(`\x1b[32m✓ Consumer root → ${targetDir}\x1b[0m`);

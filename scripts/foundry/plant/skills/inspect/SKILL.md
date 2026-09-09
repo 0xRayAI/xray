@@ -30,3 +30,5 @@ npx @0xray/foundry mint
 npx @0xray/foundry inspect
 npx @0xray/foundry ci --report
 ```
+
+CLI `mint` runs inspect after overlay (exit 1 if inspect fails). Postinstall mint does not; `--skip-live` skips the tarball GET. Chat is not a receipt.

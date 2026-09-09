@@ -29,6 +29,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Empty garment: mill plant (`mill` skill) is the hanger. Not 45/42 costume unless `foundry.json` `"costume": true`. Mill 0.1.5.
 - Mill plant fastens **inspect** (inspect AI work) plus `mill`. Not empty. Mill 0.1.6.
 - Nested mill **0.1.7**: inspect organ, four floors, passwd HOME, mill CI receipt. 4.0.5.
+- Nested mill **0.1.8**: isolated Hermes/OpenClaw, consumer tarball GET, CLI mint inspects. 4.0.6.
+
+---
+
+## [4.0.6] - 2026-09-09
+
+Nested mill **0.1.8**. Isolated HOME skips machine Hermes/OpenClaw. Inspect GETs public consumer `.tgz`. CLI `mint` runs inspect (chat is not done). Postinstall does not inspect. Not 5.0.0.
 
 ---
 
