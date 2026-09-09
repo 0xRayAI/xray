@@ -119,6 +119,8 @@ function checkReceipt(root) {
     suit: inventory.suit,
     mill: inventory.mill,
     millPlant: millPlantSkills,
+    dna: typeof inventory.dna === "string" ? inventory.dna : null,
+    pack: "0xray-suit",
     detail: ok ? null : "millPlant.skills must include mill and inspect",
   };
 }
@@ -273,10 +275,13 @@ export async function inspectSuit(root, opts = {}) {
   checks.push(checkIsolatedHome(env, machineHome));
 
   const failed = checks.filter((c) => c.ok === false);
+  const receipt = checks.find((c) => c.id === "receipt") || {};
   return {
     ok: failed.length === 0,
     failed: failed.map((c) => c.id),
     checks,
+    dna: receipt.dna || null,
+    pack: "0xray-suit",
   };
 }
 

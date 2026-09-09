@@ -10,6 +10,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
+const { attachInventoryDna, inventoryDna } = require("./mill-dna.cjs");
+
 const DEFAULT_PARAMS = {
   codex: "xray/codex.json",
   features: "xray/features.json",
@@ -436,20 +438,22 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     },
     mintedAt: new Date().toISOString(),
   };
+  const withDna = attachInventoryDna(inventory);
   const xrayDir = path.join(targetDir, ".xray");
   if (!fs.existsSync(xrayDir)) fs.mkdirSync(xrayDir, { recursive: true });
   fs.writeFileSync(
     path.join(xrayDir, "foundry-inventory.json"),
-    `${JSON.stringify(inventory, null, 2)}\n`,
+    `${JSON.stringify(withDna, null, 2)}\n`,
   );
   if (log) {
     log("foundry-mint", "Minted foundry-inventory from consumer mill SSOT", "info", {
       consumer: consumer.name,
       version: consumer.version,
       suit,
+      dna: withDna.dna,
     });
   }
-  return inventory;
+  return withDna;
 }
 
 function mintConsumerSuit(millPackageRoot, targetDir, log) {
@@ -504,6 +508,8 @@ module.exports = {
   listProjectSkillDirs,
   mintConsumerFromSsot,
   mintConsumerSuit,
+  attachInventoryDna,
+  inventoryDna,
   isDogfood,
   readPackageIdentity,
   wornSkillNames,

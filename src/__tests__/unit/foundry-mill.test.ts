@@ -149,6 +149,8 @@ describe('foundry mill — gate and scripts', () => {
     ) ?? [];
     const paths = files.map((f) => (typeof f === 'string' ? f : f.path || ''));
     expect(paths).toContain('scripts/foundry/mint-suit.cjs');
+    expect(paths).toContain('scripts/foundry/mill-dna.cjs');
+    expect(paths).toContain('scripts/foundry/mill-keccak.cjs');
     expect(paths).toContain('scripts/foundry/hooks.mjs');
     expect(paths).toContain('scripts/foundry/cli.js');
     expect(paths).toContain('scripts/foundry/mill-root.mjs');
@@ -336,6 +338,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
       mintConsumerFromSsot: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
         consumer: { name: string; version: string };
         suit: string;
+        dna?: string;
       };
       deployManagedAgents: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
     };
@@ -349,10 +352,21 @@ describe('foundry mill — mint from consumer SSOT', () => {
       const inventory = mintConsumerFromSsot(root, tmp, noop);
       expect(inventory.consumer.name).toBe('acme-app');
       expect(inventory.suit).toBe('fastened');
+      expect(inventory).toHaveProperty('dna');
       const receipt = JSON.parse(readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8')) as {
         consumer: { name: string; version: string };
+        dna: string;
+        mintedAt: string;
       };
       expect(receipt.consumer).toEqual({ name: 'acme-app', version: '2.3.4' });
+      expect(receipt.dna).toMatch(/^0x[0-9a-f]{64}$/);
+      const { inventoryDna } = requireCjs(path.join(root, 'scripts/foundry/mill-dna.cjs')) as {
+        inventoryDna: (inv: Record<string, unknown>) => string;
+      };
+      expect(inventoryDna({ ...receipt, mintedAt: '2099-01-01T00:00:00.000Z' })).toBe(receipt.dna);
+      expect(
+        inventoryDna({ consumer: { name: 'acme', version: '1.0.0' }, suit: 'overlay' }),
+      ).toBe('0x8e4801128164478c23726a44b13e6b5bebb9187050ad484495a0ea4718b44424');
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       deployManagedAgents(root, tmp, noop);
       const agents = readFileSync(path.join(tmp, 'AGENTS.md'), 'utf8');
@@ -905,6 +919,18 @@ describe('foundry mill — inspect organ', () => {
         'live-put',
         'isolated-home',
       ]);
+      const receipt = JSON.parse(
+        readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8'),
+      ) as { dna: string };
+      expect(report.dna).toBe(receipt.dna);
+      expect(report.pack).toBe('0xray-suit');
+      expect(receipt.dna).toMatch(/^0x[0-9a-f]{64}$/);
+      const { inventoryDna } = requireCjs(path.join(root, 'scripts/foundry/mill-dna.cjs')) as {
+        inventoryDna: (inv: Record<string, unknown>) => string;
+      };
+      expect(inventoryDna({ consumer: { name: 'acme', version: '1.0.0' }, suit: 'overlay' })).toBe(
+        '0x8e4801128164478c23726a44b13e6b5bebb9187050ad484495a0ea4718b44424',
+      );
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
