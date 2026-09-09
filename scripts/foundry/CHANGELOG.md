@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.9] - 2026-09-09
+
+Inventory writes `dna` (keccak256 of canonical JSON without `mintedAt`). Inspect receipt echoes `dna` + pack `0xray-suit` for Groover GRVR. Mill does not mint on chain. Not an 8th MCP. Not 5.0.
+
 ## [0.1.8] - 2026-09-09
 
 Isolated HOME skips machine `~/.hermes` and `~/.openclaw` (passwd home, same gate as Grok). Inspect GETs a public consumer tarball (`@0xray/review-suit`). CLI `mint` runs inspect after overlay; postinstall does not. Not an 8th MCP. Not 5.0.
