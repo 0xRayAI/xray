@@ -30,6 +30,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Mill plant fastens **inspect** (inspect AI work) plus `mill`. Not empty. Mill 0.1.6.
 - Nested mill **0.1.7**: inspect organ, four floors, passwd HOME, mill CI receipt. 4.0.5.
 - Nested mill **0.1.8**: isolated Hermes/OpenClaw, consumer tarball GET, CLI mint inspects. 4.0.6.
+- Nested mill **0.1.9**: inventory DNA for Groover 0xray-suit pack. 4.0.7.
+
+---
+
+## [4.0.7] - 2026-09-09
+
+Nested mill **0.1.9**. Inventory writes `dna` (keccak256 of canonical JSON without `mintedAt`). Inspect echoes dna + pack `0xray-suit`. Mill does not mint on chain. Not 5.0.0.
 
 ---
 
