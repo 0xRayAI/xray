@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
-import { homedir } from 'os';
 import { createRequire } from 'module';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
@@ -11,6 +10,10 @@ import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const require = createRequire(import.meta.url);
+const millSuit = require(path.join(__dirname, '..', '..', '..', 'scripts', 'foundry', 'mint-suit.cjs')) as {
+  isIsolatedHome: () => boolean;
+  machineHome: () => string;
+};
 const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
   wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
   installOpenClawHostWear: (packageRoot: string) => string | null;
@@ -57,7 +60,10 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
       console.log(`\x1b[32m✓ Created OpenClaw config at ${relative}\x1b[0m`);
     }
 
-    const openclawSkillsDir = path.join(homedir(), '.openclaw', 'skills');
+    const isolated = millSuit.isIsolatedHome();
+    const openclawSkillsDir = isolated
+      ? path.join(targetDir, '.openclaw', 'skills')
+      : path.join(millSuit.machineHome(), '.openclaw', 'skills');
     const skillsCopied = syncBuiltinSkills(openclawSkillsDir);
     if (skillsCopied > 0) {
       console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to ~/.openclaw/skills/\x1b[0m`);
@@ -65,7 +71,9 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
     frameworkLogger.log('openclaw-integration', 'skills-synced', 'info', { count: skillsCopied });
     mintAfterWear(targetDir);
 
-    const wired = wiring.wireOpenClawBridge(targetDir);
+    const wired = isolated
+      ? { count: 0, path: configPath, method: 'skipped-isolated-home' }
+      : wiring.wireOpenClawBridge(targetDir);
     console.log(
       `\x1b[32m✓ Wired OpenClaw MCP servers (${wired.count} via ${wired.method}) → ${wired.path}\x1b[0m`,
     );
@@ -78,8 +86,8 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
     }
 
     const packageRoot = path.resolve(__dirname, '..', '..', '..');
-    const hookInstalled = wiring.installOpenClawHostWear(packageRoot);
-    const cliBackend = wiring.maybeWriteOpenClawCliBackend();
+    const hookInstalled = isolated ? null : wiring.installOpenClawHostWear(packageRoot);
+    const cliBackend = isolated ? false : wiring.maybeWriteOpenClawCliBackend();
     frameworkLogger.log('openclaw-integration', 'cli-backend', 'info', { written: cliBackend });
     if (hookInstalled) {
       console.log(`\x1b[32m✓ OpenClaw PreToolUse hook → ${hookInstalled}\x1b[0m`);

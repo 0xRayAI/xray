@@ -843,6 +843,9 @@ describe('foundry mill — inspect organ', () => {
     expect(npmTarballUrl('@0xray/foundry', '0.1.6')).toBe(
       'https://registry.npmjs.org/@0xray/foundry/-/foundry-0.1.6.tgz',
     );
+    expect(npmTarballUrl('@0xray/review-suit', '0.0.1')).toBe(
+      'https://registry.npmjs.org/@0xray/review-suit/-/review-suit-0.0.1.tgz',
+    );
     const { machineHome } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       machineHome: () => string;
     };
@@ -905,6 +908,69 @@ describe('foundry mill — inspect organ', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  it('live-put probes public consumer tarball; private strangers stay off the GET list', async () => {
+    const { packagesToProbe, inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
+    const publicDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-probe-public-'));
+    const privateDir = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-probe-private-'));
+    try {
+      mkdirSync(path.join(publicDir, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(publicDir, 'package.json'),
+        `${JSON.stringify({ name: '@0xray/review-suit', version: '0.0.1', private: false }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(publicDir, '.xray/foundry-inventory.json'),
+        `${JSON.stringify({
+          mill: { name: '@0xray/foundry', version: '0.1.7' },
+          consumer: { name: '@0xray/review-suit', version: '0.0.1' },
+        }, null, 2)}\n`,
+      );
+      const publicPkgs = packagesToProbe(publicDir);
+      expect(publicPkgs).toEqual(
+        expect.arrayContaining([
+          { name: '@0xray/foundry', version: '0.1.7' },
+          { name: '@0xray/review-suit', version: '0.0.1' },
+        ]),
+      );
+
+      mkdirSync(path.join(privateDir, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(privateDir, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0', private: true }, null, 2)}\n`,
+      );
+      writeFileSync(
+        path.join(privateDir, '.xray/foundry-inventory.json'),
+        `${JSON.stringify({
+          mill: { name: '@0xray/foundry', version: '0.1.7' },
+          consumer: { name: 'acme-app', version: '1.0.0' },
+        }, null, 2)}\n`,
+      );
+      const privatePkgs = packagesToProbe(privateDir);
+      expect(privatePkgs).toEqual([{ name: '@0xray/foundry', version: '0.1.7' }]);
+
+      const fetched: string[] = [];
+      await inspectSuit(publicDir, {
+        millRoot: root,
+        skipLive: false,
+        fetch: async (url: string) => {
+          fetched.push(String(url));
+          return { status: 200 } as Response;
+        },
+      });
+      expect(fetched).toContain(
+        'https://registry.npmjs.org/@0xray/review-suit/-/review-suit-0.0.1.tgz',
+      );
+    } finally {
+      rmSync(publicDir, { recursive: true, force: true });
+      rmSync(privateDir, { recursive: true, force: true });
+    }
+  });
+
+  it('CLI mint runs inspect after overlay; --skip-live keeps unit mills offline', () => {
+    expect(read('scripts/foundry/mint.mjs')).toContain('inspectSuit');
+    expect(read('scripts/foundry/cli.mjs')).toContain('inspect: { script: "inspect.mjs"');
   });
 });
 
@@ -1001,7 +1067,7 @@ describe('foundry mill — flesh', () => {
       writeFileSync(path.join(consumer, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       writeFileSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'), 'MILL GARMENT\n');
 
-      const mintDump = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint'], {
+      const mintDump = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint', '--skip-live'], {
         cwd: consumer,
         encoding: 'utf8',
         env: { ...process.env, FOUNDRY_ROOT: consumer },
@@ -1013,7 +1079,7 @@ describe('foundry mill — flesh', () => {
         path.join(consumer, 'foundry.json'),
         `${JSON.stringify({ costume: true }, null, 2)}\n`,
       );
-      const mint = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint'], {
+      const mint = spawnSync(process.execPath, [path.join(millRoot, 'cli.js'), 'mint', '--skip-live'], {
         cwd: consumer,
         encoding: 'utf8',
         env: { ...process.env, FOUNDRY_ROOT: consumer },
