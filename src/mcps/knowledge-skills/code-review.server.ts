@@ -10,6 +10,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
 import { tryLLMGovernance } from "../../governance/llm-governance-provider.js";
+import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
 
 interface CodeReviewResult {
   file: string;
@@ -435,30 +436,20 @@ class XrayCodeReviewServer extends XrayKnowledgeSkillBase {
   async analyzeProposal(args: AnalyzeProposalArgs) {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args;
 
-    const vote = await tryLLMGovernance(
-      "code-review",
-      proposalTitle,
-      proposalDescription,
-      evidence,
-      proposalType,
-    );
-
-    if (!vote) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: No LLM governance provider configured. Install Hermes on PATH (hermes -z) with xai-oauth, or set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT.",
-          },
-        ],
-      };
-    }
+    const vote =
+      (await tryLLMGovernance(
+        "code-review",
+        proposalTitle,
+        proposalDescription,
+        evidence,
+        proposalType,
+      )) ?? localConferVote({ role: "code-review" });
 
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}`,
+          text: formatGovernanceVoteText(vote),
         },
       ],
     };

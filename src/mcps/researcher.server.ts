@@ -13,6 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import { formatGovernanceVoteText, localConferVote } from "../governance/local-confer.js";
 import { initializeMemoryRouting } from "../memory-routing/index.js";
 import {
   buildMemoryRoutingEvidence,
@@ -472,39 +473,30 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
       enrichedEvidence.push(...buildMemoryRoutingEvidence(memoryContext));
     }
 
-    const vote = await tryLLMGovernance(
-      "researcher",
-      proposalTitle || "",
-      proposalDescription || "",
-      enrichedEvidence,
-      proposalType || "",
-    );
+    const vote =
+      (await tryLLMGovernance(
+        "researcher",
+        proposalTitle || "",
+        proposalDescription || "",
+        enrichedEvidence,
+        proposalType || "",
+      )) ??
+      localConferVote({
+        role: "researcher",
+        highConfidenceTrapPresent: memoryContext?.confidence.highConfidenceTrapPresent,
+        recommendedAgent: memoryContext?.recommendedAgent,
+      });
 
     const memoryRoutingBlock =
       memoryContext?.confidence.highConfidenceTrapPresent
         ? `\n${formatMemoryRoutingBlock(memoryContext)}`
         : "";
 
-    if (!vote) {
-      const abstainReason = memoryContext?.confidence.highConfidenceTrapPresent
-        ? "No LLM governance provider configured. Repertoire detected a high-confidence ontological trap — route to the recommended agent before proceeding."
-        : "No LLM governance provider configured. Install Hermes on PATH (hermes -z) with xai-oauth, or set XRAY_GOVERNANCE_LLM_ENABLED=true + XRAY_LLM_ENDPOINT.";
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `DECISION: abstain\nCONFIDENCE: 0.50\nREASONING: ${abstainReason}${memoryRoutingBlock}`,
-          },
-        ],
-      };
-    }
-
     return {
       content: [
         {
           type: "text",
-          text: `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}${memoryRoutingBlock}`,
+          text: formatGovernanceVoteText(vote, memoryRoutingBlock),
         },
       ],
     };
