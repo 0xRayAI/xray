@@ -2,9 +2,9 @@ import type { GovernanceRole, GovernanceVote } from "./llm-governance-provider.j
 
 export type LocalConferInput = {
   role: GovernanceRole;
-  highConfidenceTrapPresent?: boolean;
-  recommendedAgent?: string | null;
-  llmConfigured?: boolean;
+  highConfidenceTrapPresent?: boolean | undefined;
+  recommendedAgent?: string | null | undefined;
+  llmConfigured?: boolean | undefined;
 };
 
 /** Receipt when nested LLM is absent or returned no vote. Never approve — analyze_proposal feeds mergeVotes. */
