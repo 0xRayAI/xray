@@ -27,23 +27,44 @@ const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const MERGE_FILES = new Set(["enforcer-config.json"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
 
+function isInstallPrefixTarget(dir) {
+  const n = path.resolve(dir);
+  const norm = n.replace(/\\/g, "/");
+  if (norm.includes("/_npx/") || norm.endsWith("/_npx")) return true;
+  if (!fs.existsSync(path.join(n, "package.json"))) return true;
+  return false;
+}
+
 function resolveConsumerTargetDir(packageRoot, fallbackDir) {
   const resolved = path.resolve(packageRoot);
+  const fallback = path.resolve(
+    fallbackDir || process.env.INIT_CWD || process.env.PWD || process.cwd(),
+  );
   const inNodeModules =
     resolved.includes(`${path.sep}node_modules${path.sep}`) ||
     resolved.endsWith(`${path.sep}node_modules`);
 
+  let candidate;
   if (!inNodeModules) {
-    return fallbackDir || process.env.PWD || process.cwd();
+    candidate = fallback;
+  } else {
+    let current = resolved;
+    while (path.basename(current) !== "node_modules") {
+      const parent = path.dirname(current);
+      if (parent === current) {
+        candidate = fallback;
+        break;
+      }
+      current = parent;
+    }
+    if (!candidate) candidate = path.dirname(current);
   }
 
-  let current = resolved;
-  while (path.basename(current) !== "node_modules") {
-    const parent = path.dirname(current);
-    if (parent === current) return fallbackDir || process.cwd();
-    current = parent;
+  if (isInstallPrefixTarget(candidate)) {
+    if (!isInstallPrefixTarget(fallback)) return fallback;
+    return resolved;
   }
-  return path.dirname(current);
+  return candidate;
 }
 
 function isConsumerInstall(packageRoot, targetDir) {
@@ -744,6 +765,7 @@ function installAllBridges(opts) {
 module.exports = {
   installAllBridges,
   resolveConsumerTargetDir,
+  isInstallPrefixTarget,
   syncBuiltinSkills,
   isConsumerInstall,
   deployXrayConfig,

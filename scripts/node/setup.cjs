@@ -11,7 +11,10 @@ const {
   isConsumerInstall,
   deployXrayConfig,
 } = require("./install-bridges.cjs");
-let targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
+let targetDir = resolveConsumerTargetDir(
+  packageRoot,
+  process.env.INIT_CWD || process.env.PWD || process.cwd(),
+);
 
 const resolvedPackage = path.resolve(packageRoot);
 const resolvedTarget = path.resolve(targetDir);

@@ -120,7 +120,10 @@ module.exports = {
 
 if (require.main === module) {
   const packageRoot = path.join(__dirname, "..", "..");
-  const targetDir = resolveConsumerTargetDir(packageRoot, process.env.PWD || process.cwd());
+  const targetDir = resolveConsumerTargetDir(
+    packageRoot,
+    process.env.INIT_CWD || process.env.PWD || process.cwd(),
+  );
   try {
     runPostinstall(packageRoot, targetDir);
   } catch {

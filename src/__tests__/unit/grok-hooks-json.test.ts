@@ -8,7 +8,15 @@ import { createRequire } from 'module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.join(__dirname, '../../..');
 const require = createRequire(import.meta.url);
-const { patchGrokHooks, grokHookShellCommand, isEphemeralInstallRoot, isIsolatedHome, installAllBridges } = require(
+const {
+  patchGrokHooks,
+  grokHookShellCommand,
+  isEphemeralInstallRoot,
+  isIsolatedHome,
+  installAllBridges,
+  resolveConsumerTargetDir,
+  isInstallPrefixTarget,
+} = require(
   path.join(packageRoot, 'scripts/node/install-bridges.cjs'),
 );
 
@@ -231,6 +239,37 @@ describe('Grok hooks.json command strings', () => {
     expect(isEphemeralInstallRoot('/tmp/hermes-0xray-e2e-1')).toBe(true);
     expect(isEphemeralInstallRoot('/Users/blaze/dev/xray')).toBe(false);
     expect(isEphemeralInstallRoot('/Users/blaze/dev/bedrock')).toBe(false);
+  });
+
+  it('resolveConsumerTargetDir does not mill npm global prefix or npx cache', () => {
+    const consumer = mkdtempSync(path.join(tmpdir(), 'xray-consumer-target-'));
+    const prefix = mkdtempSync(path.join(tmpdir(), 'xray-global-lib-'));
+    const npxRoot = mkdtempSync(path.join(tmpdir(), 'xray-_npx-'));
+    try {
+      writeFileSync(
+        path.join(consumer, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      const nested = path.join(consumer, 'node_modules', '0xray');
+      mkdirSync(nested, { recursive: true });
+      expect(resolveConsumerTargetDir(nested, consumer)).toBe(path.resolve(consumer));
+
+      const globalPkg = path.join(prefix, 'node_modules', '0xray');
+      mkdirSync(globalPkg, { recursive: true });
+      expect(isInstallPrefixTarget(prefix)).toBe(true);
+      expect(resolveConsumerTargetDir(globalPkg, prefix)).toBe(path.resolve(globalPkg));
+      expect(resolveConsumerTargetDir(globalPkg, consumer)).toBe(path.resolve(consumer));
+
+      const npxPkg = path.join(npxRoot, '_npx', 'deadbeef', 'node_modules', '0xray');
+      mkdirSync(npxPkg, { recursive: true });
+      const npxParent = path.join(npxRoot, '_npx', 'deadbeef');
+      expect(isInstallPrefixTarget(npxParent)).toBe(true);
+      expect(resolveConsumerTargetDir(npxPkg, consumer)).toBe(path.resolve(consumer));
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+      rmSync(prefix, { recursive: true, force: true });
+      rmSync(npxRoot, { recursive: true, force: true });
+    }
   });
 
   it('isIsolatedHome skips machine ~/.grok when HOME is not os.homedir()', () => {
