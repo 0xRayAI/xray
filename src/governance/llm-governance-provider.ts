@@ -135,6 +135,10 @@ function getConfig(): GovernanceLlmConfig | null {
   return null;
 }
 
+export function isGovernanceLlmConfigured(): boolean {
+  return getConfig() !== null;
+}
+
 export function hermesCliAvailable(): boolean {
   try {
     execFileSync(resolveHermesBin(), ["--version"], {
