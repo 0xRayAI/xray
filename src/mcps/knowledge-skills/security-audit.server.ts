@@ -8,7 +8,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import { tryLLMGovernance } from "../../governance/llm-governance-provider.js";
+import {
+  isGovernanceLlmConfigured,
+  tryLLMGovernance,
+} from "../../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
 
 interface SecurityVulnerability {
@@ -1003,7 +1006,11 @@ class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
         proposalDescription,
         evidence,
         proposalType,
-      )) ?? localConferVote({ role: "security-audit" });
+      )) ??
+      localConferVote({
+        role: "security-audit",
+        llmConfigured: isGovernanceLlmConfigured(),
+      });
 
     return {
       content: [

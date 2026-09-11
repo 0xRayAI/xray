@@ -12,7 +12,10 @@ import { type CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { tryLLMGovernance } from "../governance/llm-governance-provider.js";
+import {
+  isGovernanceLlmConfigured,
+  tryLLMGovernance,
+} from "../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../governance/local-confer.js";
 import { initializeMemoryRouting } from "../memory-routing/index.js";
 import {
@@ -483,6 +486,7 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
       )) ??
       localConferVote({
         role: "researcher",
+        llmConfigured: isGovernanceLlmConfigured(),
         highConfidenceTrapPresent: memoryContext?.confidence.highConfidenceTrapPresent,
         recommendedAgent: memoryContext?.recommendedAgent,
       });

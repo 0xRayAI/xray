@@ -9,7 +9,10 @@ import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { createGracefulShutdown } from "../../utils/shutdown-handler.js";
-import { tryLLMGovernance } from "../../governance/llm-governance-provider.js";
+import {
+  isGovernanceLlmConfigured,
+  tryLLMGovernance,
+} from "../../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
 
 interface CodeReviewResult {
@@ -443,7 +446,11 @@ class XrayCodeReviewServer extends XrayKnowledgeSkillBase {
         proposalDescription,
         evidence,
         proposalType,
-      )) ?? localConferVote({ role: "code-review" });
+      )) ??
+      localConferVote({
+        role: "code-review",
+        llmConfigured: isGovernanceLlmConfigured(),
+      });
 
     return {
       content: [

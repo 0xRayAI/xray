@@ -60,6 +60,7 @@ vi.mock('../../memory-routing/index.js', async (importOriginal) => {
 
 vi.mock('../../governance/llm-governance-provider.js', () => ({
   tryLLMGovernance: vi.fn().mockResolvedValue(null),
+  isGovernanceLlmConfigured: () => false,
 }));
 
 vi.mock('../../core/framework-logger.js', () => ({
