@@ -66,7 +66,7 @@ function main() {
       }
     } else {
       step("1/7 Build", "npm run build");
-      step("2/7 Tests", "npm test");
+      step("2/7 Tests", "npm run test:comprehensive");
       if (!skipDocs) {
         step("3/7 Release docs", docsCheckCmd());
       }
