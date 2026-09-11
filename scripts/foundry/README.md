@@ -55,6 +55,8 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
+**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Nested mill stays **0.1.9**.
+
 ## Publish this mill
 
 From **this directory**, not the 0xray repo root:

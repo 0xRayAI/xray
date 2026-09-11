@@ -62,7 +62,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 ## Platform Installation
 
-`npm install 0xray` runs **`install-bridges.cjs`** on postinstall (consumer projects only):
+`npm install 0xray` runs **`install-bridges.cjs`** on postinstall (consumer projects only). **4.0.9:** does not mill npm global prefix or npx `_npx` as a consumer; isolated HOME skips machine `~/.grok`.
 
 1. `AGENTS-consumer.md` → `AGENTS.md`
 2. `.gitignore.default` → `.gitignore` (if absent)

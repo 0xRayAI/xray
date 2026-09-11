@@ -97,6 +97,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 - Walk from `node_modules` to consumer project root.
 - Legacy `xray` package name tolerance.
 - Hooks and MCPs placed correctly for node_modules and copy-to-root layouts.
+- **4.0.9 mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
 
 ## Verify gate (term 76)
 

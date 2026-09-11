@@ -52,6 +52,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 
 | Version | Highlights |
 |---------|------------|
+| **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
 | **4.0.0** | Exo + temperament. Constitution always on. Repertoire organ on (vendored 0.2). **On npm.** [vision](./architecture/v4-vision.md) |
 | **3.4.1** | `install-bridges.cjs` on postinstall — all 4 platforms + 7 MCP via `npx`. Canonical release pipeline. |
 | **3.3.1** | Orchestrator confidence gate in execution planning. |

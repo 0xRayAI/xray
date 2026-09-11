@@ -33,6 +33,8 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 6. Create OpenClaw config + skill sync
 7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`
 
+**4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. `npm i -g 0xray` dogfood-skips.
+
 ## Seven MCP servers (all platforms)
 
 ```json

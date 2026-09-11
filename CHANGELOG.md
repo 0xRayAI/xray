@@ -34,6 +34,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.9] - 2026-09-11
+
+Postinstall does **not** mill npm global prefix or npx cache as a consumer. `resolveConsumerTargetDir` treats `_npx` and a prefix without `package.json` as an install prefix: mill `INIT_CWD` if it is a real project, else mill the 0xray package (dogfood skip). Isolated HOME still skips machine `~/.grok`. Mill plant stays `mill` + `inspect`. Not 45/42 costume. Nested mill stays **0.1.9**. Not 5.0.0.
+
+- fix(foundry): do not mill npm global prefix or npx cache as a consumer (b08b19612)
+
+---
+
 ## [4.0.8] - 2026-09-11
 
 ### 🔄 Changes

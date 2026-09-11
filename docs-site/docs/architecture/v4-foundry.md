@@ -40,6 +40,8 @@ npm i 0xray
 
 Wear copies **factory** (PPE hooks, Repertoire enable-when-resolves, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
+**4.0.9 mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips; a consumer `npm i 0xray` still fastens mill+inspect.
+
 ## Mills (inventory)
 
 ### 1. Release / version / docs stamp

@@ -20,6 +20,7 @@ Postinstall **automatically** (via `install-bridges.cjs`):
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
 - Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw
 - Syncs **45 framework skills** to platform skill directories. **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
+- **4.0.9:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
 
 ```bash
 npx 0xray status           # verify install
