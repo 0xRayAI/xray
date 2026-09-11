@@ -34,6 +34,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.8] - 2026-09-11
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- fix(foundry): mill release gate uses test:comprehensive like mill CI (bd980ea3f)
+- fix(confer): allow undefined on optional local vote fields (e4436af8f)
+- fix(confer): abstain locally; do not rubber-stamp analyze_proposal (0f6c61cbe)
+- fix(confer): local vote when nested LLM is not configured (eb6004b07)
+
+---
+
 ## [4.0.7] - 2026-09-09
 
 Nested mill **0.1.9**. Inventory writes `dna` (keccak256 of canonical JSON without `mintedAt`). Inspect echoes dna + pack `0xray-suit`. Mill does not mint on chain. Not 5.0.0.
