@@ -12,6 +12,7 @@ export interface GovernanceVote {
 const DEFAULT_HERMES_PROVIDER = "xai-oauth";
 const DEFAULT_HERMES_MODEL = "grok-4.3";
 const DEFAULT_HERMES_TIMEOUT_MS = 120_000;
+const UNIT_TEST_HERMES_TIMEOUT_MS = 2_000;
 
 const ROLE_PROMPTS: Record<GovernanceRole, string> = {
   "code-review": `You are a senior code reviewer on a governance committee for a software project. Analyze the following proposal from a code quality, maintainability, readability, and engineering best practices perspective.
@@ -78,11 +79,24 @@ function resolveHermesModel(): string {
   return process.env.HERMES_MODEL?.trim() || DEFAULT_HERMES_MODEL;
 }
 
+function inUnitTestContext(): boolean {
+  return process.env.NODE_ENV === "test" || Boolean(process.env.VITEST);
+}
+
+/** Dead xai-oauth (invalid_grant) hangs hermes -z until DEFAULT_HERMES_TIMEOUT_MS. Unit/Vitest must not wait. */
+function unitTestBlocksLiveHermes(): boolean {
+  if (process.env.XRAY_GOVERNANCE_ALLOW_HERMES === "true") return false;
+  return inUnitTestContext();
+}
+
 function resolveHermesTimeoutMs(): number {
   const raw = process.env.HERMES_TIMEOUT_MS?.trim();
-  if (!raw) return DEFAULT_HERMES_TIMEOUT_MS;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_HERMES_TIMEOUT_MS;
+  if (raw) {
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  if (inUnitTestContext()) return UNIT_TEST_HERMES_TIMEOUT_MS;
+  return DEFAULT_HERMES_TIMEOUT_MS;
 }
 
 export function resolveHermesBin(): string {
@@ -122,6 +136,7 @@ function getDirectLlmConfig(): DirectLlmConfig | null {
 function getConfig(): GovernanceLlmConfig | null {
   const direct = getDirectLlmConfig();
   if (direct) return direct;
+  if (unitTestBlocksLiveHermes()) return null;
 
   if (hermesCliAvailable()) {
     return {
