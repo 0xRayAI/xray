@@ -79,7 +79,7 @@
     "test:processors": "npm test -- src/__tests__/unit/processor-activation.test.ts src/__tests__/unit/typescript-compilation-processor.test.ts",
     "test:miscellaneous": "npm test -- src/__tests__/unit/blocked-test.test.ts",
     "test:quick": "npm test -- src/__tests__/integration/boot-orchestrator.integration.test.ts src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts",
-    "test:comprehensive": "npm run typecheck && npm run test:unit && npm run test:core-framework && npm run test:security && npm run test:performance && npm run test:session-management && npm run test:code-analysis && npm run test:processors && npm run test:miscellaneous",
+    "test:comprehensive": "npm run typecheck && npm run test:unit && npm run test:core-framework && npm run test:security && npm run test:performance && npm run test:session-management && npm run test:code-analysis && npm run test:processors && npm run test:miscellaneous && npm test -- src/__tests__/unit/llm-governance-provider.test.ts src/__tests__/unit/mcp-server-smoke.test.ts",
     "test:integration-all": "npm test -- src/__tests__/integration/",
     "test:performance-all": "npm test -- src/__tests__/performance/ src/__tests__/unit/performance-system.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
     "test:agents-all": "echo 'Legacy agents test entry retired'",

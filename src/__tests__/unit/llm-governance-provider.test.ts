@@ -27,6 +27,8 @@ describe('llm-governance-provider — Hermes CLI', () => {
     delete process.env.XRAY_LLM_API_KEY;
     delete process.env.HERMES_PROVIDER;
     delete process.env.HERMES_MODEL;
+    delete process.env.HERMES_TIMEOUT_MS;
+    process.env.XRAY_GOVERNANCE_ALLOW_HERMES = 'true';
     mockExecFileSync.mockImplementation((cmd: string, args?: string[]) => {
       if (cmd === 'hermes' && args?.[0] === '--version') return 'hermes 0.7.0\n';
       if (cmd === 'hermes' && args?.[0] === '-z') {
@@ -37,6 +39,8 @@ describe('llm-governance-provider — Hermes CLI', () => {
   });
 
   afterEach(() => {
+    delete process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
+    delete process.env.HERMES_TIMEOUT_MS;
     vi.restoreAllMocks();
   });
 
@@ -117,5 +121,45 @@ describe('llm-governance-provider — Hermes CLI', () => {
     });
 
     expect(hermesCliAvailable()).toBe(false);
+  });
+
+  it('does not exec hermes -z in unit tests unless explicitly allowed', async () => {
+    delete process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
+    const started = Date.now();
+
+    const vote = await tryLLMGovernance(
+      'researcher',
+      'Test proposal',
+      'Description',
+      [],
+      'strategic',
+    );
+
+    expect(vote).toBeNull();
+    expect(Date.now() - started).toBeLessThan(1_000);
+    expect(mockExecFileSync).not.toHaveBeenCalledWith(
+      'hermes',
+      expect.arrayContaining(['-z']),
+      expect.anything(),
+    );
+  });
+
+  it('returns null immediately when hermes -z fails with invalid_grant', async () => {
+    mockExecFileSync.mockImplementation((cmd: string, args?: string[]) => {
+      if (cmd === 'hermes' && args?.[0] === '--version') return 'hermes 0.7.0\n';
+      throw new Error('invalid_grant');
+    });
+    const started = Date.now();
+
+    const vote = await tryLLMGovernance(
+      'researcher',
+      'Test proposal',
+      'Description',
+      [],
+      'strategic',
+    );
+
+    expect(vote).toBeNull();
+    expect(Date.now() - started).toBeLessThan(1_000);
   });
 });
