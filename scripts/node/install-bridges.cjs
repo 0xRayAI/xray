@@ -9,6 +9,7 @@ const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
 const { wantsCostume, isIsolatedHome, machineHome } = require("../foundry/mint-suit.cjs");
+const { wearVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
   wireHermesBridge,
   wireOpencodeBridge,
@@ -742,6 +743,8 @@ function installAllBridges(opts) {
       /* noop */
     });
 
+  wearVendoredRepertoire(packageRoot, targetDir, log);
+
   if (!isConsumerInstall(packageRoot, targetDir)) {
     log("install-bridges", "framework dogfood wear", "info");
     installFrameworkDogfoodWear(packageRoot, log);
@@ -779,4 +782,5 @@ module.exports = {
   isEphemeralInstallRoot,
   isIsolatedHome,
   installFrameworkDogfoodWear,
+  wearVendoredRepertoire,
 };

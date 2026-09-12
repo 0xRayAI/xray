@@ -37,6 +37,21 @@ describe('factory memory organ wear', () => {
     expect(existsSync(path.join(root, 'vendor/@0xray/repertoire/dist/mcp/server.js'))).toBe(true);
   });
 
+  it('does not declare a file: @0xray/repertoire dependency', () => {
+    const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+      optionalDependencies?: Record<string, string>;
+      files?: string[];
+    };
+    expect(pkg.dependencies?.['@0xray/repertoire']).toBeUndefined();
+    expect(pkg.optionalDependencies?.['@0xray/repertoire']).toBeUndefined();
+    expect(pkg.files).toContain('vendor/@0xray/repertoire/');
+    const { hasFileProtocolDependency } = require(
+      path.join(root, 'scripts/node/wear-vendored-repertoire.cjs'),
+    ) as { hasFileProtocolDependency: (pkg: unknown) => boolean };
+    expect(hasFileProtocolDependency(pkg)).toBe(false);
+  });
+
   it('does not add an 8th xray MCP in the canonical list', () => {
     const wiring = require(path.join(root, 'scripts/node/bridge-mcp-wiring.cjs'));
     expect(wiring.XRAY_MCP_SERVERS).toHaveLength(7);

@@ -5,10 +5,11 @@
 import { execSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const xrayRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+const xrayPkg = JSON.parse(readFileSync(join(xrayRoot, 'package.json'), 'utf8'));
 const tmp = mkdtempSync(join(tmpdir(), 'xray-organ-iso-'));
 let failed = 0;
 
@@ -23,12 +24,12 @@ function fail(name, reason) {
 try {
   process.stdout.write('0xRay factory organ isolated install\n');
   execSync('npm pack', { cwd: xrayRoot, stdio: 'pipe', timeout: 120000 });
-  const tarball = join(xrayRoot, '0xray-4.0.0.tgz');
+  const tarball = join(xrayRoot, `0xray-${xrayPkg.version}.tgz`);
   if (!existsSync(tarball)) {
-    fail('npm pack', '0xray-4.0.0.tgz missing');
+    fail('npm pack', `${basename(tarball)} missing`);
     process.exit(1);
   }
-  pass('npm pack 0xray-4.0.0.tgz');
+  pass(`npm pack ${basename(tarball)}`);
 
   writeFileSync(join(tmp, 'package.json'), JSON.stringify({ name: 'stranger-app', version: '1.0.0' }));
   execSync(`npm install "${tarball}"`, { cwd: tmp, stdio: 'pipe', timeout: 180000 });

@@ -126,6 +126,36 @@ describe('bridge-mcp-wiring', () => {
     }
   });
 
+  it('resolves repertoire from packed 0xray vendor when not hoisted', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-rep-packed-vendor-'));
+    const organ = path.join(
+      consumer,
+      'node_modules',
+      '0xray',
+      'vendor',
+      '@0xray',
+      'repertoire',
+    );
+    mkdirSync(path.join(organ, 'dist', 'mcp'), { recursive: true });
+    mkdirSync(path.join(organ, 'dist', 'provider'), { recursive: true });
+    writeFileSync(path.join(organ, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+    writeFileSync(path.join(organ, 'dist', 'mcp', 'server.js'), 'export {}\n');
+    writeFileSync(
+      path.join(organ, 'dist', 'provider', 'memory-routing-provider.js'),
+      'export {}\n',
+    );
+    try {
+      expect(wiring.resolveRepertoireMcp(consumer)).toBe(
+        path.join(organ, 'dist', 'mcp', 'server.js'),
+      );
+      expect(wiring.resolveRepertoireProvider(consumer)).toBe(
+        path.join(organ, 'dist', 'provider', 'memory-routing-provider.js'),
+      );
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+
   it('portable project mcp stays 7 xray servers', () => {
     const portable = wiring.buildPortableProjectMcpJson();
     expect(Object.keys(portable.mcpServers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);

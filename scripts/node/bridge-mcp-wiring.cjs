@@ -39,6 +39,17 @@ function resolveRepertoireMcp(targetDir) {
   const candidates = [
     path.join(targetDir, "node_modules", "@0xray", "repertoire", "dist", "mcp", "server.js"),
     path.join(targetDir, "vendor", "@0xray", "repertoire", "dist", "mcp", "server.js"),
+    path.join(
+      targetDir,
+      "node_modules",
+      "0xray",
+      "vendor",
+      "@0xray",
+      "repertoire",
+      "dist",
+      "mcp",
+      "server.js",
+    ),
     isRepertoirePackageRoot(selfRoot) ? path.join(selfRoot, "dist", "mcp", "server.js") : null,
     isRepertoirePackageRoot(siblingRoot) ? path.join(siblingRoot, "dist", "mcp", "server.js") : null,
   ];
@@ -66,8 +77,20 @@ function resolveRepertoireProvider(targetDir) {
     "provider",
     "memory-routing-provider.js",
   );
+  const packedVendorProvider = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "vendor",
+    "@0xray",
+    "repertoire",
+    "dist",
+    "provider",
+    "memory-routing-provider.js",
+  );
   if (fs.existsSync(nmProvider)) return nmProvider;
   if (fs.existsSync(vendorProvider)) return vendorProvider;
+  if (fs.existsSync(packedVendorProvider)) return packedVendorProvider;
   if (isRepertoirePackageRoot(siblingRoot) && fs.existsSync(siblingProvider)) return siblingProvider;
   return null;
 }
