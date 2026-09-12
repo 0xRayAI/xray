@@ -35,7 +35,7 @@ Manual per-platform install (idempotent, same result as postinstall):
 
 ```bash
 npx 0xray opencode install
-npx 0xray grok install     # 7 MCPs servers + dual skill sync (~/.grok/plugins + ~/.grok/skills)
+npx 0xray grok install     # 7 MCPs servers + project .grok/plugins/0xray (not machine last-wins)
 npx 0xray hermes install
 npx 0xray openclaw install
 npx 0xray skill:install    # starter skills
@@ -185,7 +185,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | Platform | Install | Postinstall behavior |
 |----------|---------|----------------------|
 | **OpenCode** | `npx 0xray opencode install` | Merges `opencode.json`, copies agent YML surfaces |
-| **Grok CLI / Build** | `npx 0xray grok install` | Plugin + `~/.grok/skills/` sync, 7 MCPs servers |
+| **Grok CLI / Build** | `npx 0xray grok install` | Project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin), 7 MCPs servers |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
 

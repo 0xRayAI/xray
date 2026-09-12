@@ -16,7 +16,7 @@ Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costu
 3. **Mill receipt.** `.xray/foundry-inventory.json` — mill name/version, `suit` (`fastened` / `overlay` / `costume`), `millPlant.skills` must include `mill` and `inspect`.
 4. **CI.** GitHub mill CI report (`.opencode/logs/ci-cd-monitor-report.json`), not a green check in chat. No token is a skip, not a pass invented.
 5. **Live PUT.** HTTP 200 on the npm `.tgz`. Metadata without a tarball is not shipped.
-6. **Isolated HOME.** Last-mile must not clobber `~/.grok/plugins/0xray`. Mill compares `$HOME` to the passwd home (`os.userInfo().homedir`), not `os.homedir()` (which follows `$HOME`).
+6. **Isolated HOME.** Last-mile dest is project `.grok/plugins/0xray`. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write machine `~/.grok/plugins/0xray`. Shared HOME (passwd `$HOME`) does not last-wins clobber the machine plugin. Mill compares `$HOME` to the passwd home (`os.userInfo().homedir`), not `os.homedir()` (which follows `$HOME`).
 
 ## How to work
 

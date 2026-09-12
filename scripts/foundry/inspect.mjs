@@ -42,6 +42,18 @@ export function wouldClobberMachineGrok(
   return mint.wouldClobberMachineGrok(dest, env, machine);
 }
 
+export function projectGrokPluginDir(targetDir) {
+  return mint.projectGrokPluginDir(targetDir);
+}
+
+export function resolveGrokPluginDests(
+  targetDir,
+  env = process.env,
+  machine = mint.machineHome(),
+) {
+  return mint.resolveGrokPluginDests(targetDir, env, machine);
+}
+
 function readJson(file) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -218,17 +230,20 @@ export function packagesToProbe(root) {
   });
 }
 
-function checkIsolatedHome(env = process.env, machine = mint.machineHome()) {
+function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()) {
   const isolated = isIsolatedHome(env, machine);
   const machinePlugin = machineGrokPluginDir(machine);
-  const home = env.HOME || env.USERPROFILE || "";
-  const dest = home ? path.join(home, ".grok", "plugins", "0xray") : "";
-  const clobber = wouldClobberMachineGrok(dest, env, machine);
+  const dests = mint.resolveGrokPluginDests(root, env, machine);
+  const dest = dests[0] || null;
+  const clobber = dests.some((d) => wouldClobberMachineGrok(d, env, machine));
   if (clobber) {
     return {
       id: "isolated-home",
       ok: false,
       isolated,
+      dest,
+      dests,
+      machinePlugin,
       detail: `isolated HOME must not write ${machinePlugin}`,
     };
   }
@@ -237,7 +252,8 @@ function checkIsolatedHome(env = process.env, machine = mint.machineHome()) {
     ok: true,
     isolated,
     machinePlugin,
-    dest: dest || null,
+    dest,
+    dests,
   };
 }
 
@@ -275,7 +291,7 @@ export async function inspectSuit(root, opts = {}) {
     }
   }
 
-  checks.push(checkIsolatedHome(env, machineHome));
+  checks.push(checkIsolatedHome(root, env, machineHome));
 
   const failed = checks.filter((c) => c.ok === false);
   const receipt = checks.find((c) => c.id === "receipt") || {};

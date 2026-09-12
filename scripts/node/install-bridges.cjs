@@ -6,9 +6,15 @@
 
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
 const { execSync } = require("child_process");
-const { wantsCostume, isIsolatedHome, machineHome } = require("../foundry/mint-suit.cjs");
+const {
+  wantsCostume,
+  isIsolatedHome,
+  machineHome,
+  processHome,
+  resolveGrokPluginDests,
+  wouldClobberMachineGrok,
+} = require("../foundry/mint-suit.cjs");
 const { wearVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
   wireHermesBridge,
@@ -351,7 +357,7 @@ function findGrokPluginSource(packageRoot) {
   return candidates.find((p) => fs.existsSync(p));
 }
 
-function registerGrokMcpServers(targetDir, log) {
+function registerGrokMcpServers(targetDir, log, pluginDirs) {
   try {
     execSync("which grok", { stdio: "ignore" });
   } catch {
@@ -375,10 +381,11 @@ function registerGrokMcpServers(targetDir, log) {
     }
   }
 
-  for (const pluginDir of [
-    path.join(targetDir, ".grok", "plugins", "0xray"),
-    path.join(os.homedir(), ".grok", "plugins", "0xray"),
-  ]) {
+  const dirs =
+    Array.isArray(pluginDirs) && pluginDirs.length > 0
+      ? pluginDirs
+      : [path.join(targetDir, ".grok", "plugins", "0xray")];
+  for (const pluginDir of dirs) {
     if (!fs.existsSync(pluginDir)) continue;
     try {
       execSync(`grok plugins trust "${pluginDir}"`, { stdio: "ignore" });
@@ -390,30 +397,35 @@ function registerGrokMcpServers(targetDir, log) {
   }
 }
 
-function installGrokBridge(targetDir, packageRoot, log) {
+function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
     log("grok-bridge", "skipped", "warn", { reason: "grok plugin source missing" });
     return;
   }
 
-  const machine = machineHome();
+  const env = (opts && opts.env) || process.env;
+  const machine = (opts && opts.machineHome) || machineHome();
   const ephemeral = isEphemeralInstallRoot(targetDir);
-  const isolated = isIsolatedHome();
-  const targets = [path.join(targetDir, ".grok", "plugins", "0xray")];
-  if (!ephemeral && !isolated) {
-    targets.push(path.join(machine, ".grok", "plugins", "0xray"));
+  const isolated = isIsolatedHome(env, machine);
+  const targets = resolveGrokPluginDests(targetDir, env, machine);
+
+  if (ephemeral) {
+    log("grok-bridge", "skip machine ~/.grok plugin — ephemeral consumer", "info");
+  } else if (isolated) {
+    log("grok-bridge", "skip machine ~/.grok plugin — isolated HOME", "info");
   } else {
-    log(
-      "grok-bridge",
-      isolated
-        ? "skip machine ~/.grok plugin — isolated HOME"
-        : "skip machine ~/.grok plugin — ephemeral consumer",
-      "info",
-    );
+    log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear", "info");
   }
 
   for (const dest of targets) {
+    if (wouldClobberMachineGrok(dest, env, machine)) {
+      log("grok-bridge", "refuse-machine-grok-clobber", "error", {
+        dest,
+        machinePlugin: path.join(machine, ".grok", "plugins", "0xray"),
+      });
+      continue;
+    }
     if (copyPluginDir(sourceDir, dest)) {
       const rel = dest.startsWith(machine) ? dest.replace(machine, "~") : path.relative(targetDir, dest);
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
@@ -424,13 +436,14 @@ function installGrokBridge(targetDir, packageRoot, log) {
     }
   }
 
-  if (!ephemeral && !isolated) {
-    const grokGlobalSkills = path.join(machine, ".grok", "skills");
+  if (isolated && !ephemeral) {
+    const home = processHome(env);
+    const grokGlobalSkills = path.join(home, ".grok", "skills");
     const globalCopied = syncCostumeSkills(grokGlobalSkills, packageRoot, targetDir);
     if (globalCopied > 0) {
-      log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: "~/.grok/skills/" });
+      log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: grokGlobalSkills });
     }
-    registerGrokMcpServers(targetDir, log);
+    registerGrokMcpServers(targetDir, log, targets);
   }
 }
 
@@ -767,6 +780,8 @@ function installAllBridges(opts) {
 
 module.exports = {
   installAllBridges,
+  installGrokBridge,
+  resolveGrokPluginDests,
   resolveConsumerTargetDir,
   isInstallPrefixTarget,
   syncBuiltinSkills,

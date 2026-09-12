@@ -51,7 +51,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray setup` | Symlinks, hook extras, Hermes skill sync |
 | `npx 0xray status` | Verify installation |
 | `npx 0xray opencode install` | OpenCode bridge (also runs on postinstall) |
-| `npx 0xray grok install` | Grok plugin + 7 MCPs servers + skill sync |
+| `npx 0xray grok install` | Project `.grok/plugins/0xray` + 7 MCPs servers (machine plugin not last-wins) |
 | `npx 0xray hermes install` | Hermes plugin bridge |
 | `npx 0xray openclaw install` | OpenClaw config + skills |
 | `npx 0xray skill:install` | Install starter skills |

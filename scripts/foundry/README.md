@@ -32,7 +32,7 @@ npx @0xray/foundry hooks
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
-`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME). Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
+`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME). Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 
@@ -57,7 +57,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 
-**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Nested mill stays **0.1.9**.
+**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not clobber machine plugin). Nested mill stays **0.1.9**.
 
 ## Publish this mill
 
