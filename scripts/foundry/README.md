@@ -55,6 +55,8 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
+**Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
+
 **4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Nested mill stays **0.1.9**.
 
 ## Publish this mill

@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+Shop plant is first-class with mill plant. `shop-extract`, `shop-witness`, `shop-pin` (and `foundry.json` `shopPlant`) are not a costume dump. `"costume": true` still required for 45/42. No mill version bump.
+
 ## [0.1.9] - 2026-09-09
 
 Inventory writes `dna` (keccak256 of canonical JSON without `mintedAt`). Inspect receipt echoes `dna` + pack `0xray-suit` for Groover GRVR. Mill does not mint on chain. Not an 8th MCP. Not 5.0.

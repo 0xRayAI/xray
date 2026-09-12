@@ -12,7 +12,7 @@ Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costu
 ## What mill inspects
 
 1. **Diff.** `git status` / `git diff --stat` of the milled cwd. Ignore the agent's summary if the diff disagrees.
-2. **Plant vs worn.** `src/skills`, `src/opencode/agents` vs `.opencode/skills`, `.opencode/agents`. Same name: plant wins. Costume dump (worn names they did not plant and mill did not fasten) fails mint unless `foundry.json` has `"costume": true`.
+2. **Plant vs worn.** `src/skills`, `src/opencode/agents` vs `.opencode/skills`, `.opencode/agents`. Same name: plant wins. Shop plant (`shop-extract`, `shop-witness`, `shop-pin`, plus `foundry.json` `shopPlant`) is first-class with mill plant. Costume dump (worn names they did not plant, mill did not fasten, and shop plant did not name) fails mint unless `foundry.json` has `"costume": true`.
 3. **Mill receipt.** `.xray/foundry-inventory.json` — mill name/version, `suit` (`fastened` / `overlay` / `costume`), `millPlant.skills` must include `mill` and `inspect`.
 4. **CI.** GitHub mill CI report (`.opencode/logs/ci-cd-monitor-report.json`), not a green check in chat. No token is a skip, not a pass invented.
 5. **Live PUT.** HTTP 200 on the npm `.tgz`. Metadata without a tarball is not shipped.

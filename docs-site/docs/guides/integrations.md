@@ -25,13 +25,13 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 
 `scripts/node/postinstall.cjs` → `installAllBridges()`:
 
-1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`)
+1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) then overlay their plant
 2. Write project `.mcp.json` (7 servers)
-3. Merge `opencode.json`, copy 42 YML agent surfaces
-4. Install Grok plugin + global skill sync
+3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Not a 42-YML / 45-skill costume dump unless `foundry.json` `"costume": true`
+4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
-6. Create OpenClaw config + skill sync
-7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`
+6. Create OpenClaw config (mill plant)
+7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
 
 **4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. `npm i -g 0xray` dogfood-skips.
 

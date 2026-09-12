@@ -25,9 +25,10 @@ Consumer `npm install 0xray` auto-wires four platform bridges and seven MCP serv
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCPs + AGENTS.md + SKILLS.md + .mcp.json
+npm install 0xray          # postinstall: mill+inspect plant + 4 bridges + 7 MCPs + AGENTS.md + .mcp.json
 npx 0xray status          # verify install
 npx 0xray setup            # optional: symlinks, hook extras
+npx @0xray/foundry inspect --skip-live   # mill receipt (chat is not a receipt)
 ```
 
 Manual per-platform install (idempotent, same result as postinstall):
@@ -50,6 +51,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
+| **Unreleased** | Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). Not `"costume": true`. Root `llms.txt`. Pack→tmp fasten proof. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
 | **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
@@ -100,13 +102,16 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 On `npm install 0xray` in a consumer project, postinstall automatically:
 
-1. Copies **`AGENTS-consumer.md` → `AGENTS.md`** and ships root **`SKILLS.md`**
-2. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
-3. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
-4. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-5. Installs **4 bridges**: OpenCode (agents + `opencode.json`), Grok (plugin + global skills), Hermes (`~/.hermes/plugins/xray-hermes`), OpenClaw (config + skills)
-6. Syncs **45 framework skills** to platform skill dirs
-7. Installs git pre-commit hook (non-blocking if not a git repo)
+1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
+2. Fastens **mill plant** (`mill` + `inspect`). Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
+3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
+4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
+5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
+6. Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring; mill plant, not costume)
+7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
+8. Installs git pre-commit hook (non-blocking if not a git repo)
+
+See [llms.txt](llms.txt) for the agent map. Catalog of 45 skills lives in [SKILLS.md](SKILLS.md) — that is the exo catalog, not default consumer wear.
 
 ## Seven MCP Servers (consumer)
 
@@ -198,9 +203,11 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 |-------|-----------------|
 | Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 (npm 4.0.0 pack) |
 | Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 bridges + organ on |
+| Pack → tmp proof | `npm run pack:tmp-proof` — tgz install + `foundry mint --skip-live` + hangar shops + inspect (no costume dump). Playwright n/a (CLI). |
 
 ```bash
 npm test
+npm run pack:tmp-proof  # pack → tmp fasten + hangar inspect
 npm run release:gate    # full release gate (before upload)
 npm run release:npm     # gate + prepare + npm publish --access public
 ```

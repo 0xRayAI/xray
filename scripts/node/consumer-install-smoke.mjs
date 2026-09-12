@@ -15,6 +15,7 @@ import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
+import { proveSuitAfterInstall } from "./pack-tmp-suit-proof.mjs";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -346,6 +347,9 @@ function main() {
     console.log("  ✅ xray/features.schema.json in package");
 
     runUpgradeMergeSmoke(tmpRoot, nmRoot, version);
+
+    console.log("\n📋 Pack → tmp mill fasten + hangar shop plant (not costume)...");
+    proveSuitAfterInstall(tmpRoot, path.join(nmRoot, "scripts", "foundry"));
 
     console.log("\n✅ Consumer install smoke passed\n");
   } catch (err) {

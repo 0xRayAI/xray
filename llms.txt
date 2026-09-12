@@ -1,0 +1,59 @@
+# 0xray
+
+> Exo for coding agents. A suit that survives the context window. Not a catalog of 45 skills.
+
+**4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
+
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops.
+
+## Wear (what a stranger gets)
+
+- `npm install 0xray` — postinstall fastens mill+inspect, writes 7 MCP `.mcp.json`, four host bridges (OpenCode, Grok, Hermes, OpenClaw), overlays their plant. Does **not** write consumer-root `SKILLS.md`.
+- `npx @0xray/foundry mint --skip-live` — re-fasten mill plant, then inspect.
+- `npx @0xray/foundry inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.
+
+## Shop plant (hangar coexistence)
+
+Factory shop plant is first-class with mill plant: `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar). Worn shops are **not** a costume dump.
+
+- Extra shop names: `foundry.json` `"shopPlant"` (string[] / plant dir / `{ skills, dir }`).
+- Field is `shopPlant`, not `hangarPlant` (mill plant copy cannot say hangar).
+- Undeclared leftovers (including undeclared `shop-*`, leftover `enforcer`) still fail plant-vs-worn.
+
+## Seven MCP servers
+
+Registered in `.mcp.json` as `npx -y 0xray mcp <cmd>`:
+
+| Server | Role |
+|--------|------|
+| `xray-governance` | Proposal governance, Codex snapshot |
+| `xray-skills` | Skill invoke (catalog exists; default plant is still mill+inspect) |
+| `xray-orchestrator` | thinDispatch, AsideContext, confidence gate |
+| `xray-enforcer` | Codex compliance |
+| `xray-researcher` | Codebase exploration |
+| `xray-code-review` | Proposal quality |
+| `xray-architect-tools` | System design |
+
+Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoire mcp`), enable-when-resolves.
+
+## Codex 69 (always on)
+
+`.xray/codex.json` — 69 terms. PPE (`evaluatePreToolGate`) denies Codex 11 / 29 / 69. No new MCP / skill / handler surface. No `any`. No `eval`. Temperament scales ceremony (guided vs frontier), not whether governance exists.
+
+## Agent map (exo, not dump)
+
+- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.9.
+- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET.
+- **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
+- **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
+
+## Docs
+
+- [README.md](README.md) — exo landing
+- [AGENTS.md](AGENTS.md) — framework card
+- [AGENTS-consumer.md](AGENTS-consumer.md) — consumer card (copied to `AGENTS.md` on install)
+- [SKILLS.md](SKILLS.md) — catalog (costume / self-plant, not default sync)
+- [Foundry](docs-site/docs/architecture/v4-foundry.md) — mill vs exo, shopPlant
+- [Features since 3.1](docs-site/docs/guides/features-since-3.1.md)
+
+Playwright / UI: n/a. This mill is CLI.
