@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "4.0.11",
+  "version": "4.0.12",
   "description": "0xRay Framework - Unified Feature Configuration",
   "suit_temperament": {
     "profile": "auto",

@@ -45,6 +45,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.12] - 2026-09-12
+
+Public npm is still `0xray@4.0.11`, which predates #29. Isolation cannot be proven from `main` alone — bots dogfood the registry. This patch PUT wears project-scoped Grok plugin dest so multi-seat wear does not last-wins clobber machine `~/.grok/plugins/0xray`. Shared HOME writes project `.grok/plugins/0xray` only. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and still must not write the passwd machine plugin. Mill+inspect default. Nested mill stays **0.1.9**. Not 5.0.0. This PR does not publish.
+
+- fix(grok): project-scoped plugin dest so multi-seat wear does not last-wins clobber machine ~/.grok (747816635)
+
+---
+
 ## [4.0.11] - 2026-09-12
 
 npm pack now includes `.grok-plugin/` so the mill-default Grok marketplace manifest ships in the tarball (`package/.grok-plugin/plugin.json`). Published `0xray@4.0.10` omitted it — the `files` whitelist landed in #27 after that PUT. Not 5.0.0. This PR does not publish.
