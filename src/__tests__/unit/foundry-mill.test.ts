@@ -216,6 +216,9 @@ describe('foundry mill — gate and scripts', () => {
     expect(mill.private).not.toBe(true);
     expect(mill.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(read('scripts/foundry/CHANGELOG.md')).toContain(`## [${mill.version}]`);
+    expect(read('scripts/foundry/plant/agents/mill.yml')).toContain(`version: "${mill.version}"`);
+    expect(read('scripts/foundry/plant/agents/inspect.yml')).toContain(`version: "${mill.version}"`);
+    expect(read('llms.txt')).toContain(`@0xray/foundry\` ${mill.version}`);
     expect(mill.bin).toEqual({ '0xray-foundry': 'cli.js' });
     expect(read('scripts/foundry/release.mjs')).toContain('--i-mean-it');
     expect(read('scripts/foundry/cli.mjs')).toContain('FOUNDRY_RELEASE');
@@ -250,6 +253,10 @@ describe('foundry mill — gate and scripts', () => {
     expect(read('scripts/foundry/plant/skills/inspect/SKILL.md')).toContain('**Isolated HOME.**');
     expect(read('scripts/foundry/cli.mjs')).toContain('inspect: { script: "inspect.mjs"');
     expect(read('scripts/foundry/inspect.mjs')).toContain('npmTarballUrl');
+    expect(read('scripts/foundry/inspect.mjs')).toContain('resolveGrokPluginDests');
+    expect(read('scripts/foundry/inspect.mjs')).not.toMatch(
+      /const dest = home \? path\.join\(home,\s*"\.grok"/,
+    );
   });
 
   it('mill plant fastens mill+inspect, not 45/42 costume', () => {
@@ -1134,6 +1141,24 @@ describe('foundry mill — inspect organ', () => {
           path.join(tmp, '.lastmile-home', '.grok', 'plugins', '0xray'),
         ]),
       );
+      const shared = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: true,
+        env: { HOME: '/Users/henry' },
+        machineHome: '/Users/henry',
+      });
+      expect(shared.ok, JSON.stringify(shared.checks, null, 2)).toBe(true);
+      const sharedHome = shared.checks.find((c) => c.id === 'isolated-home') as {
+        isolated?: boolean;
+        dest?: string;
+        dests?: string[];
+        machinePlugin?: string;
+      };
+      expect(sharedHome.isolated).toBe(false);
+      expect(sharedHome.dest).toBe(path.join(tmp, '.grok', 'plugins', '0xray'));
+      expect(sharedHome.machinePlugin).toBe('/Users/henry/.grok/plugins/0xray');
+      expect(sharedHome.dest).not.toBe(sharedHome.machinePlugin);
+      expect(sharedHome.dests).toEqual([path.join(tmp, '.grok', 'plugins', '0xray')]);
       const receipt = JSON.parse(
         readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8'),
       ) as { dna: string };

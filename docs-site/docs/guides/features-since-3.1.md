@@ -9,7 +9,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - Field is `shopPlant` (mill plant copy cannot say hangar). Costume dump of leftovers still fails
 - Default consumer plant is mill+inspect, not 45-skill sync. Root `llms.txt` is the exo agent map
 - `npm run pack:tmp-proof` — pack tgz → tmp install → `foundry mint --skip-live` → hangar factory shops → inspect (no costume dump). Playwright n/a (CLI)
-- Nested mill stays **0.1.9**. No npm publish for this fix
+- Nested mill **0.1.10**. Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). No npm publish in this PR
 
 ## 4.0.9 — Mill target (global prefix / npx cache)
 

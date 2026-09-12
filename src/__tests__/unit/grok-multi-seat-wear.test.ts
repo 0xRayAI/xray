@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -14,12 +15,14 @@ const {
   resolveGrokPluginDests,
   projectGrokPluginDir,
   machineGrokPluginDir,
+  machineHome,
   wouldClobberMachineGrok,
   mintConsumerSuit,
 } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
   resolveGrokPluginDests: (targetDir: string, env?: NodeJS.ProcessEnv, machine?: string) => string[];
   projectGrokPluginDir: (targetDir: string) => string;
   machineGrokPluginDir: (machine?: string) => string;
+  machineHome: () => string;
   wouldClobberMachineGrok: (dest: string, env?: NodeJS.ProcessEnv, machine?: string) => boolean;
   mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
 };
@@ -132,6 +135,7 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
       };
       expect(isolatedA.isolated).toBe(false);
       expect(isolatedA.dest).toBe(path.join(seatA, '.grok', 'plugins', '0xray'));
+      expect(isolatedA.dest).toBe(resolveGrokPluginDests(seatA, env, machine)[0]);
       expect(isolatedA.machinePlugin).toBe(machinePlugin);
 
       const inspectB = await inspectSuit(seatB, {
@@ -145,6 +149,7 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
         dest?: string;
       };
       expect(isolatedB.dest).toBe(path.join(seatB, '.grok', 'plugins', '0xray'));
+      expect(isolatedB.dest).toBe(resolveGrokPluginDests(seatB, env, machine)[0]);
     } finally {
       rmSync(machine, { recursive: true, force: true });
       rmSync(seatA, { recursive: true, force: true });
@@ -208,6 +213,41 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
       rmSync(machine, { recursive: true, force: true });
       rmSync(seatA, { recursive: true, force: true });
       rmSync(seatB, { recursive: true, force: true });
+    }
+  });
+
+  it('CLI inspect on shared HOME reports dest = project path, not machine plugin', () => {
+    const machine = machineHome();
+    const seat = mkdtempSync(path.join(tmpdir(), 'inspect-cli-seat-'));
+    try {
+      writeSeatPackage(seat, 'inspect-cli-suit');
+      mintConsumerSuit(root, seat, () => undefined);
+      const env = { ...process.env, HOME: machine, USERPROFILE: machine, FOUNDRY_ROOT: seat };
+      const r = spawnSync(process.execPath, [path.join(root, 'scripts/foundry/inspect.mjs'), '--skip-live'], {
+        cwd: seat,
+        encoding: 'utf8',
+        env,
+      });
+      expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+      const report = JSON.parse(r.stdout) as {
+        ok: boolean;
+        checks: Array<{
+          id: string;
+          isolated?: boolean;
+          dest?: string | null;
+          dests?: string[];
+          machinePlugin?: string;
+        }>;
+      };
+      const isolated = report.checks.find((c) => c.id === 'isolated-home');
+      expect(isolated?.isolated).toBe(false);
+      expect(isolated?.dest).toBe(path.join(seat, '.grok', 'plugins', '0xray'));
+      expect(isolated?.dest).toBe(resolveGrokPluginDests(seat, env, machine)[0]);
+      expect(isolated?.machinePlugin).toBe(path.join(machine, '.grok', 'plugins', '0xray'));
+      expect(isolated?.dest).not.toBe(isolated?.machinePlugin);
+      expect(isolated?.dests).toEqual([path.join(seat, '.grok', 'plugins', '0xray')]);
+    } finally {
+      rmSync(seat, { recursive: true, force: true });
     }
   });
 });

@@ -42,7 +42,7 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 
 ## Agent map (exo, not dump)
 
-- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.9.
+- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.10.
 - **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET.
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
