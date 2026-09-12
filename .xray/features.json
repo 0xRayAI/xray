@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "4.0.0",
+  "version": "4.0.10",
   "description": "0xRay Framework - Unified Feature Configuration",
   "suit_temperament": {
     "profile": "auto",
@@ -160,9 +160,11 @@
   "memory_routing": {
     "enabled": true,
     "provider": "repertoire",
-    "module_path": "../repertoire/dist/provider/memory-routing-provider.js",
+    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
     "config": {
-      "signalsPath": "../repertoire/data/curated_signals.json"
+      "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+      "statePath": ".xray/state/repertoire/inference-state.json",
+      "feedbackDir": ".xray/state/repertoire/feedback"
     }
   },
   "synthesis": {
