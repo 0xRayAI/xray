@@ -1119,6 +1119,21 @@ describe('foundry mill — inspect organ', () => {
         'live-put',
         'isolated-home',
       ]);
+      const isolatedHome = report.checks.find((c) => c.id === 'isolated-home') as {
+        isolated?: boolean;
+        dest?: string;
+        dests?: string[];
+        machinePlugin?: string;
+      };
+      expect(isolatedHome.isolated).toBe(true);
+      expect(isolatedHome.dest).toBe(path.join(tmp, '.grok', 'plugins', '0xray'));
+      expect(isolatedHome.machinePlugin).toBe('/Users/henry/.grok/plugins/0xray');
+      expect(isolatedHome.dests).toEqual(
+        expect.arrayContaining([
+          path.join(tmp, '.grok', 'plugins', '0xray'),
+          path.join(tmp, '.lastmile-home', '.grok', 'plugins', '0xray'),
+        ]),
+      );
       const receipt = JSON.parse(
         readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8'),
       ) as { dna: string };

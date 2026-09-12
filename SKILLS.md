@@ -148,7 +148,7 @@ npx 0xray skill:install <source>
 | Source (framework) | `src/skills/<name>/SKILL.md` |
 | Published package | `node_modules/0xray/dist/skills/<name>/SKILL.md` |
 | OpenCode (after setup) | `.opencode/skills/<name>/SKILL.md` |
-| Grok | `~/.grok/skills/<name>/SKILL.md` + plugin dir |
+| Grok | project `.grok/plugins/0xray/skills/<name>/SKILL.md` (machine `~/.grok/plugins/0xray` is not last-wins) |
 | Hermes / OpenClaw | Platform skill dirs (postinstall sync) |
 
 ## Related features (since 3.1)

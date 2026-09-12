@@ -217,6 +217,10 @@ function machineGrokPluginDir(machine) {
   return path.join(machine || machineHome(), ".grok", "plugins", "0xray");
 }
 
+function projectGrokPluginDir(targetDir) {
+  return path.join(targetDir, ".grok", "plugins", "0xray");
+}
+
 function wouldClobberMachineGrok(dest, env, machine) {
   if (!dest) return false;
   const realMachine = machine || machineHome();
@@ -224,6 +228,24 @@ function wouldClobberMachineGrok(dest, env, machine) {
   const real = path.resolve(machineGrokPluginDir(realMachine));
   const target = path.resolve(dest);
   return target === real || target.startsWith(`${real}${path.sep}`);
+}
+
+/**
+ * Last-mile Grok plugin dests. Project floor always.
+ * Isolated HOME may also wear $HOME/.grok/plugins/0xray (not passwd machine).
+ * Shared HOME never writes machine ~/.grok/plugins/0xray (multi-seat last-wins).
+ */
+function resolveGrokPluginDests(targetDir, env, machine) {
+  const realMachine = machine || machineHome();
+  const dests = [projectGrokPluginDir(targetDir)];
+  if (!isIsolatedHome(env, realMachine)) return dests;
+  const home = processHome(env);
+  if (!home) return dests;
+  const isolatedDest = path.join(home, ".grok", "plugins", "0xray");
+  if (wouldClobberMachineGrok(isolatedDest, env, realMachine)) return dests;
+  if (path.resolve(isolatedDest) === path.resolve(dests[0])) return dests;
+  dests.push(isolatedDest);
+  return dests;
 }
 
 /**
@@ -578,5 +600,7 @@ module.exports = {
   processHome,
   isIsolatedHome,
   machineGrokPluginDir,
+  projectGrokPluginDir,
+  resolveGrokPluginDests,
   wouldClobberMachineGrok,
 };

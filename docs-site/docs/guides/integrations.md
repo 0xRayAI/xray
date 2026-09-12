@@ -17,7 +17,7 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 | Platform | Command | Install location | MCP servers |
 |----------|---------|------------------|-------------|
 | **OpenCode** | `npx 0xray opencode install` | Project `opencode.json` + `.opencode/agents/` | Via project `.mcp.json` |
-| **Grok CLI / Build** | `npx 0xray grok install` | `~/.grok/plugins/0xray` + `~/.grok/skills/` | 7 servers in plugin MCP config |
+| **Grok CLI / Build** | `npx 0xray grok install` | project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin) | 7 servers in plugin MCP config |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes` | Via plugin `.mcp.json` |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json` + `~/.openclaw/skills/` | Via project `.mcp.json` |
 
@@ -33,7 +33,7 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 6. Create OpenClaw config (mill plant)
 7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
 
-**4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. `npm i -g 0xray` dogfood-skips.
+**4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
 
 ## Seven MCP servers (all platforms)
 
@@ -65,9 +65,11 @@ npx 0xray opencode install
 
 ## Grok CLI / Grok Build (Cursor)
 
-- Copies plugin to `~/.grok/plugins/0xray` and project `.grok/plugins/0xray`
-- Syncs skills to **both** plugin dir and `~/.grok/skills/` (Grok Build agent_skills path)
-- Registers 7 MCP servers in plugin config
+- Copies plugin to project `.grok/plugins/0xray` (Grok discovers at project+user)
+- Shared HOME does **not** write machine `~/.grok/plugins/0xray` (last-wins XRAY_ROOT clobber)
+- Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write the passwd machine plugin
+- Mill+inspect plant; costume skill dump only when `foundry.json` `"costume": true`
+- Registers 7 MCP servers in the project plugin config
 - Marketplace: `.grok-plugin/plugin.json` + root `.mcp.json`
 
 ```bash

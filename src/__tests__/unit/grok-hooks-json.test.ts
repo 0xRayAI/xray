@@ -277,6 +277,7 @@ describe('Grok hooks.json command strings', () => {
     expect(isIsolatedHome({ HOME: '/Users/blaze' }, '/Users/blaze')).toBe(false);
     const bridges = readFileSync(path.join(packageRoot, 'scripts/node/install-bridges.cjs'), 'utf8');
     expect(bridges).toContain('skip machine ~/.grok plugin — isolated HOME');
+    expect(bridges).toContain('skip machine ~/.grok plugin — project-scoped wear');
     expect(bridges).toContain('skip machine ~/.hermes plugin — isolated HOME');
     expect(bridges).toContain('skip machine ~/.openclaw skills — isolated HOME');
   });

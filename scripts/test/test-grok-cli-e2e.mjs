@@ -233,11 +233,15 @@ async function main() {
   // ── Phase 1: Grok Plugin Install ────────────────────────────
   section('Phase 1: Grok Plugin Install (`npx 0xray grok install`)');
 
-  // Run the actual CLI install command — installs to ~/.grok/plugins/0xray/
+  // Last-mile dest is project .grok/plugins/0xray (machine plugin is not last-wins).
   const isCI = process.env.CI === 'true';
+  const projectGrokPluginDir = path.join(testDir, '.grok', 'plugins', '0xray');
   const userGrokPluginDir = path.join(os.homedir(), '.grok', 'plugins', '0xray');
-  const hooksJson = path.join(userGrokPluginDir, 'hooks', 'hooks.json');
-  const mcpJson = path.join(userGrokPluginDir, '.mcp.json');
+  const pluginPrimaryDir = fs.existsSync(projectGrokPluginDir)
+    ? projectGrokPluginDir
+    : userGrokPluginDir;
+  const hooksJson = path.join(pluginPrimaryDir, 'hooks', 'hooks.json');
+  const mcpJson = path.join(pluginPrimaryDir, '.mcp.json');
 
   if (fs.existsSync(userGrokPluginDir)) {
     pass('0xray Grok plugin already installed at user level');
@@ -254,8 +258,12 @@ async function main() {
     skip('User-level install', 'CI — install skipped, checking project-level fallback');
   }
 
-  // Check plugin files at either user-level or project-level (fallback)
-  const pluginCheckDir = fs.existsSync(userGrokPluginDir) ? userGrokPluginDir : null;
+  // Check plugin files at project-level first (shared-HOME last-mile dest)
+  const pluginCheckDir = fs.existsSync(projectGrokPluginDir)
+    ? projectGrokPluginDir
+    : fs.existsSync(userGrokPluginDir)
+      ? userGrokPluginDir
+      : null;
 
   if (!pluginCheckDir) {
     skip('Phase 1-3', 'Grok plugin directory not found at user or project level');

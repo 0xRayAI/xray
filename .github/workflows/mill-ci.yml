@@ -50,7 +50,8 @@ jobs:
       - name: Mill tests
         # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true)
         # plus llms.txt / mill-law docs + pack-tmp-suit-proof contract.
-        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/release-pipeline.test.ts
+        # plus two-seat Grok wear (project dest, no last-wins machine plugin clobber).
+        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/release-pipeline.test.ts src/__tests__/unit/grok-multi-seat-wear.test.ts
 
   build:
     name: Build

@@ -77,25 +77,37 @@ function registerGrokMcpServers(targetDir: string): void {
 export interface GrokInstallOptions {
   force?: boolean;
   dryRun?: boolean;
+  env?: NodeJS.ProcessEnv;
+  machineHome?: string;
+  targetDir?: string;
 }
 
 export async function installForGrokCLI(options: GrokInstallOptions = {}): Promise<void> {
-  frameworkLogger.log('grok-integration', 'install-start', 'info', { options });
+  frameworkLogger.log('grok-integration', 'install-start', 'info', {
+    options: { force: options.force, dryRun: options.dryRun },
+  });
 
   const millSuit = requireCjs(path.join(packageRoot, 'scripts/foundry/mint-suit.cjs')) as {
     machineHome: () => string;
+    processHome: (env?: NodeJS.ProcessEnv) => string;
+    isIsolatedHome: (env?: NodeJS.ProcessEnv, machine?: string) => boolean;
+    wantsCostume: (targetDir: string) => boolean;
     wouldClobberMachineGrok: (dest: string, env?: NodeJS.ProcessEnv, machine?: string) => boolean;
+    resolveGrokPluginDests: (targetDir: string, env?: NodeJS.ProcessEnv, machine?: string) => string[];
   };
-  const home = process.env.HOME || process.env.USERPROFILE || '';
-  const machine = millSuit.machineHome();
-  const targetPluginDir = path.join(home, '.grok/plugins/0xray');
-  if (millSuit.wouldClobberMachineGrok(targetPluginDir, process.env, machine)) {
-    frameworkLogger.log('grok-integration', 'refuse-machine-grok-clobber', 'error', {
-      home,
-      machineHome: machine,
-      targetPluginDir,
-    });
-    throw new Error('foundry-inspect: isolated HOME must not clobber ~/.grok/plugins/0xray');
+  const env = options.env || process.env;
+  const machine = options.machineHome || millSuit.machineHome();
+  const targetDir = options.targetDir || resolveConsumerTargetDir(packageRoot, process.cwd());
+  const dests = millSuit.resolveGrokPluginDests(targetDir, env, machine);
+  for (const dest of dests) {
+    if (millSuit.wouldClobberMachineGrok(dest, env, machine)) {
+      frameworkLogger.log('grok-integration', 'refuse-machine-grok-clobber', 'error', {
+        home: millSuit.processHome(env),
+        machineHome: machine,
+        dest,
+      });
+      throw new Error('foundry-inspect: isolated HOME must not clobber ~/.grok/plugins/0xray');
+    }
   }
 
   // Try to find the plugin source from the installed package
@@ -112,65 +124,62 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
   }
 
   if (options.dryRun) {
-    console.log(`[Grok] Dry run: Would copy plugin from ${sourceDir} → ${targetPluginDir}`);
+    console.log(`[Grok] Dry run: Would copy plugin from ${sourceDir} → ${dests.join(' , ')}`);
     return;
   }
 
-  const targetDir = resolveConsumerTargetDir(packageRoot, process.cwd());
+  const isolated = millSuit.isIsolatedHome(env, machine);
 
   try {
-    const pluginExists = fs.existsSync(targetPluginDir);
-    if (pluginExists && !options.force) {
-      console.log('[Grok] 0xray Grok plugin is already installed.');
-      console.log('Use --force to reinstall plugin files.');
-    } else {
-      fs.cpSync(sourceDir, targetPluginDir, { recursive: true, force: true });
-      frameworkLogger.log('grok-integration', 'plugin-copied', 'info', { destination: targetPluginDir });
-      console.log(`\x1b[32m✓ Copied Grok plugin to ${targetPluginDir}\x1b[0m`);
-    }
-
-    // Sync builtin skills to Grok plugin skills dir
-    const grokSkillsDir = path.join(targetPluginDir, 'skills');
-    const skillsCopied = syncBuiltinSkills(grokSkillsDir);
-    if (skillsCopied > 0) {
-      console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Grok plugin\x1b[0m`);
-    }
-    frameworkLogger.log('grok-integration', 'skills-synced', 'info', { count: skillsCopied });
-
-    // Grok Build / Cursor also reads ~/.grok/skills/ for agent_skills
-    const globalSkillsDir = path.join(home, '.grok', 'skills');
-    const globalCopied = syncBuiltinSkills(globalSkillsDir);
-    if (globalCopied > 0) {
-      console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to ~/.grok/skills/\x1b[0m`);
-    }
-
-    pinGrokPluginToInstalledDist(targetPluginDir, packageRoot, targetDir);
-    wearGrokHookCommands(targetPluginDir, packageRoot, targetDir);
-
-    const projectPluginDir = path.join(targetDir, '.grok', 'plugins', '0xray');
-    if (projectPluginDir !== targetPluginDir) {
-      if (!fs.existsSync(projectPluginDir) || options.force) {
-        fs.cpSync(sourceDir, projectPluginDir, { recursive: true, force: true });
+    for (const dest of dests) {
+      const pluginExists = fs.existsSync(dest);
+      if (pluginExists && !options.force) {
+        console.log(`[Grok] 0xray Grok plugin is already installed at ${dest}.`);
+        console.log('Use --force to reinstall plugin files.');
+      } else {
+        fs.cpSync(sourceDir, dest, { recursive: true, force: true });
+        frameworkLogger.log('grok-integration', 'plugin-copied', 'info', { destination: dest });
+        console.log(`\x1b[32m✓ Copied Grok plugin to ${dest}\x1b[0m`);
       }
-      pinGrokPluginToInstalledDist(projectPluginDir, packageRoot, targetDir);
-      wearGrokHookCommands(projectPluginDir, packageRoot, targetDir);
+
+      if (millSuit.wantsCostume(targetDir)) {
+        const skillsCopied = syncBuiltinSkills(path.join(dest, 'skills'));
+        if (skillsCopied > 0) {
+          console.log(`\x1b[32m✓ Synced ${skillsCopied} builtin skills to Grok plugin\x1b[0m`);
+        }
+        frameworkLogger.log('grok-integration', 'skills-synced', 'info', { count: skillsCopied });
+      }
+
+      pinGrokPluginToInstalledDist(dest, packageRoot, targetDir);
+      wearGrokHookCommands(dest, packageRoot, targetDir);
+    }
+
+    if (isolated && millSuit.wantsCostume(targetDir)) {
+      const home = millSuit.processHome(env);
+      const globalCopied = syncBuiltinSkills(path.join(home, '.grok', 'skills'));
+      if (globalCopied > 0) {
+        console.log(`\x1b[32m✓ Synced ${globalCopied} builtin skills to isolated ~/.grok/skills/\x1b[0m`);
+      }
     }
 
     writeProjectRepertoireMcp(targetDir);
     mintAfterWear(targetDir);
 
-    // Attempt auto-trust (best effort)
+    const primary = dests[0];
     try {
-      execSync(`grok plugins trust "${targetPluginDir}"`, { stdio: 'ignore' });
+      execSync(`grok plugins trust "${primary}"`, { stdio: 'ignore' });
       console.log('\x1b[32m✓ Auto-trusted the 0xray plugin with Grok CLI\x1b[0m');
     } catch {
       console.log('\nPlease run this command to fully trust the plugin:');
-      console.log(`  grok plugins trust "${targetPluginDir}"`);
+      console.log(`  grok plugins trust "${primary}"`);
     }
 
-    // Register MCP servers via grok mcp add (npx -y 0xray mcp — matches install-bridges)
-    registerGrokMcpServers(targetDir);
-    console.log('\x1b[32m✓ Registered 7 xray MCP servers with Grok CLI (npx)\x1b[0m');
+    if (isolated) {
+      registerGrokMcpServers(targetDir);
+      console.log('\x1b[32m✓ Registered 7 xray MCP servers with Grok CLI (npx)\x1b[0m');
+    } else {
+      console.log('\x1b[32m✓ Project-scoped Grok plugin worn (machine ~/.grok/plugins/0xray not written)\x1b[0m');
+    }
 
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
     console.log('Restart Grok or run `grok` to load the new hooks and MCP servers.');
@@ -207,10 +216,9 @@ function wearGrokHookCommands(pluginDir: string, xrayRoot: string, targetDir: st
 function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targetDir: string): void {
   const hookJs = path.join(xrayRoot, 'dist/integrations/grok/hooks/pre-tool-use.js');
   const cliJs = path.join(xrayRoot, 'dist/cli/index.js');
-  if (!fs.existsSync(hookJs)) return;
 
   const hooksPath = path.join(pluginDir, 'hooks', 'hooks.json');
-  if (fs.existsSync(hooksPath)) {
+  if (fs.existsSync(hookJs) && fs.existsSync(hooksPath)) {
     const text = fs.readFileSync(hooksPath, 'utf8');
     fs.writeFileSync(
       hooksPath,
@@ -219,31 +227,37 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targe
   }
 
   const mcpPath = path.join(pluginDir, '.mcp.json');
-  if (fs.existsSync(mcpPath) && fs.existsSync(cliJs)) {
-    const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8')) as {
-      mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
-    };
-    for (const server of Object.values(mcp.mcpServers ?? {})) {
-      if (server.command === 'npx' && Array.isArray(server.args) && server.args.includes('mcp')) {
-        const mcpIdx = server.args.indexOf('mcp');
-        const mcpCmd = server.args[mcpIdx + 1] ?? 'governance';
-        server.command = 'node';
-        server.args = [cliJs, 'mcp', mcpCmd];
-      }
+  if (!fs.existsSync(mcpPath)) return;
+
+  const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8')) as {
+    mcpServers?: Record<string, { command?: string; args?: string[]; env?: Record<string, string> }>;
+  };
+  for (const server of Object.values(mcp.mcpServers ?? {})) {
+    server.env = { ...server.env, XRAY_ROOT: targetDir };
+    if (
+      fs.existsSync(cliJs) &&
+      server.command === 'npx' &&
+      Array.isArray(server.args) &&
+      server.args.includes('mcp')
+    ) {
+      const mcpIdx = server.args.indexOf('mcp');
+      const mcpCmd = server.args[mcpIdx + 1] ?? 'governance';
+      server.command = 'node';
+      server.args = [cliJs, 'mcp', mcpCmd];
     }
-    const repertoireMcp = resolveRepertoireMcp(targetDir);
-    if (mcp.mcpServers) {
-      if (repertoireMcp) {
-        mcp.mcpServers.repertoire = {
-          command: 'node',
-          args: [repertoireMcp],
-        };
-      } else {
-        delete mcp.mcpServers.repertoire;
-      }
-    }
-    fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
   }
+  const repertoireMcp = resolveRepertoireMcp(targetDir);
+  if (mcp.mcpServers) {
+    if (repertoireMcp) {
+      mcp.mcpServers.repertoire = {
+        command: 'node',
+        args: [repertoireMcp],
+      };
+    } else {
+      delete mcp.mcpServers.repertoire;
+    }
+  }
+  fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
 }
 
 /** Grok TUI reads <project>/.grok/config.toml, not the package copy. */
