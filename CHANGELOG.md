@@ -12,6 +12,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Pack → tmp suit proof: `npm run pack:tmp-proof` (and consumer smoke) installs the packed tgz, runs `foundry mint --skip-live`, plants factory hangar shops, and inspects without costume dump. Playwright n/a (mill CLI).
 
 ### 🐛 Bug Fixes
+- **Grok marketplace manifest** — `.grok-plugin/plugin.json` matches `4.0.10`: `author` is an object, `mcpServers` is a flat path (not `components.mcpServers`), description is mill+inspect default wear (not a 45 knowledge-skills claim). Fixes `grok plugin validate`.
 - **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.
 
 ### 🔧 Maintenance

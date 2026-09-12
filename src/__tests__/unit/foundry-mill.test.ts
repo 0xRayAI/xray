@@ -57,6 +57,28 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(existsSync(path.join(root, 'llms.txt'))).toBe(true);
   });
 
+  it('Grok marketplace manifest is mill-default and matches package version', () => {
+    const pkg = JSON.parse(read('package.json')) as { version: string };
+    const plugin = JSON.parse(read('.grok-plugin/plugin.json')) as {
+      name: string;
+      version: string;
+      description: string;
+      author: { name: string; url?: string } | string;
+      mcpServers?: string;
+      components?: { mcpServers?: unknown };
+    };
+    expect(plugin.version).toBe(pkg.version);
+    expect(plugin.name).toBe('0xray');
+    expect(plugin.author).toEqual({
+      name: '0xRay AI',
+      url: 'https://0xray.ai',
+    });
+    expect(plugin.mcpServers).toBe('.mcp.json');
+    expect(plugin.components).toBeUndefined();
+    expect(plugin.description).toMatch(/mill\+inspect/);
+    expect(plugin.description).not.toMatch(/45 knowledge skills/i);
+  });
+
   it('llms.txt is the exo agent map: mill+inspect, 7 MCPs, shopPlant, Codex 69, no costume dump', () => {
     const card = read('llms.txt');
     expect(card).toMatch(/mill/);
