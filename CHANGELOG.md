@@ -44,6 +44,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.11] - 2026-09-12
+
+npm pack now includes `.grok-plugin/` so the mill-default Grok marketplace manifest ships in the tarball (`package/.grok-plugin/plugin.json`). Published `0xray@4.0.10` omitted it — the `files` whitelist landed in #27 after that PUT. Not 5.0.0. This PR does not publish.
+
+- fix(pack): ship .grok-plugin in npm files whitelist (5a65851cb)
+
+---
+
 ## [4.0.10] - 2026-09-12
 
 ### 🔄 Changes
