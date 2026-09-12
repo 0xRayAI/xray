@@ -58,7 +58,7 @@ describe('foundry mill — docs verify, do not rewrite', () => {
   });
 
   it('Grok marketplace manifest is mill-default and matches package version', () => {
-    const pkg = JSON.parse(read('package.json')) as { version: string };
+    const pkg = JSON.parse(read('package.json')) as { version: string; files?: string[] };
     const plugin = JSON.parse(read('.grok-plugin/plugin.json')) as {
       name: string;
       version: string;
@@ -67,6 +67,7 @@ describe('foundry mill — docs verify, do not rewrite', () => {
       mcpServers?: string;
       components?: { mcpServers?: unknown };
     };
+    expect(pkg.files).toContain('.grok-plugin/');
     expect(plugin.version).toBe(pkg.version);
     expect(plugin.name).toBe('0xray');
     expect(plugin.author).toEqual({
@@ -201,6 +202,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/plant/skills/inspect/SKILL.md');
     expect(paths).toContain('llms.txt');
     expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
+    expect(paths).toContain('.grok-plugin/plugin.json');
   });
 
   it('mill is extracted as publishable @0xray/foundry', () => {

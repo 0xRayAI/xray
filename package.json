@@ -180,6 +180,7 @@
     "src/skills/",
     "src/mcps/",
     ".plugin/",
+    ".grok-plugin/",
     ".opencode/agents/",
     ".opencode/commands/",
     ".opencode/hooks/",
