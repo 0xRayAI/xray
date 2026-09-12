@@ -1,10 +1,10 @@
 # 0xray Skills
 
-**4.0** — **45 skills** · invoked via `xray-skills` MCP · synced on postinstall
+**4.0** — a suit that survives the context window
 
-xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) across the full software lifecycle. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`), agent `@mentions`, or platform skill directories after postinstall.
+**45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Agent map: [llms.txt](llms.txt).
 
-Consumer `npm install 0xray` syncs all 45 skills to Grok, Hermes, and OpenClaw skill dirs. Framework repo also ships this file to consumers (3.1.1+).
+xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
 
 ---
 

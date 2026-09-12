@@ -2,8 +2,8 @@
 /**
  * validate-release-docs.mjs — Blocking guard for release doc freshness.
  *
- * Ensures README, AGENTS, SKILLS, CHANGELOG, Docusaurus headers, and required
- * guides match package.json version and live framework counts before tag/publish.
+ * Ensures README, AGENTS, SKILLS, llms.txt, CHANGELOG, Docusaurus headers, and
+ * required guides match package.json version and mill law before tag/publish.
  *
  * Usage:
  *   npx @0xray/foundry docs-check
@@ -42,6 +42,24 @@ const REQUIRED_GUIDES = [
   'docs-site/docs/agents/README.md',
 ];
 
+function millLawLagErrors(content) {
+  const errors = [];
+  if (/Syncs \*\*45 framework skills\*\*/.test(content) || /syncs all 45 skills/i.test(content)) {
+    errors.push('lags mill law: default plant is mill+inspect, not 45-skill sync');
+  }
+  if (/SKILLS\.md \+ 45 skills → platform skill directories/.test(content)) {
+    errors.push('lags mill law: postinstall must not sync 45 skills as default plant');
+  }
+  return errors;
+}
+
+function millPlantMentionErrors(content) {
+  if (!content.includes('mill') || !content.includes('inspect')) {
+    return ['missing mill+inspect plant'];
+  }
+  return [];
+}
+
 const ROOT_DOC_CHECKS = [
   {
     rel: 'README.md',
@@ -62,6 +80,14 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes('install-bridges') && !content.includes('installAllBridges')) {
         errors.push('missing install-bridges / installAllBridges reference');
       }
+      if (!content.includes('llms.txt')) {
+        errors.push('missing llms.txt agent-map reference');
+      }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing shop plant / shopPlant');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
       return errors;
     },
   },
@@ -81,6 +107,11 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes('SKILLS.md')) {
         errors.push('missing SKILLS.md link');
       }
+      if (!content.includes('llms.txt')) {
+        errors.push('missing llms.txt agent-map reference');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
       return errors;
     },
   },
@@ -100,6 +131,11 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes('AsideContext')) {
         errors.push('missing AsideContext section');
       }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing shop plant / shopPlant');
+      }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
       return errors;
     },
   },
@@ -113,6 +149,37 @@ const ROOT_DOC_CHECKS = [
       if (!content.includes(`**${counts.skills} skills**`)) {
         errors.push(`skill count stale (expected **${counts.skills} skills**)`);
       }
+      errors.push(...millPlantMentionErrors(content));
+      errors.push(...millLawLagErrors(content));
+      return errors;
+    },
+  },
+  {
+    rel: 'llms.txt',
+    validate: (content) => {
+      const errors = [];
+      if (kernelLineHasPatchStamp(content)) {
+        errors.push('kernel header must be era (major.minor), not a patch stamp');
+      }
+      if (!content.includes('mill') || !content.includes('inspect')) {
+        errors.push('missing mill+inspect plant');
+      }
+      if (!content.includes('shopPlant') && !content.includes('shop-extract')) {
+        errors.push('missing hangar / shopPlant coexistence');
+      }
+      if (!content.includes('69')) {
+        errors.push('missing Codex 69');
+      }
+      if (!content.includes('xray-governance') || !content.includes('xray-orchestrator')) {
+        errors.push('missing 7 MCP agent map');
+      }
+      if (!content.toLowerCase().includes('costume')) {
+        errors.push('missing no-costume-dump law');
+      }
+      if (/^## Complete catalog/m.test(content) || content.includes('`api-design` · `architect-tools`')) {
+        errors.push('llms.txt must not costume-dump the 45-skill catalog');
+      }
+      errors.push(...millLawLagErrors(content));
       return errors;
     },
   },

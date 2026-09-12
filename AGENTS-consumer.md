@@ -20,6 +20,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 
 - Copies this file → **`AGENTS.md`** in your project root
 - Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). `npx @0xray/foundry inspect` runs the mill checks (chat is not a receipt). Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
+- Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)

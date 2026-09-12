@@ -54,6 +54,26 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(result.errors, result.errors.join('\n')).toEqual([]);
     expect(result.ok).toBe(true);
     expect(result.version).toBe(pkg.version);
+    expect(existsSync(path.join(root, 'llms.txt'))).toBe(true);
+  });
+
+  it('llms.txt is the exo agent map: mill+inspect, 7 MCPs, shopPlant, Codex 69, no costume dump', () => {
+    const card = read('llms.txt');
+    expect(card).toMatch(/mill/);
+    expect(card).toMatch(/inspect/);
+    expect(card).toMatch(/shop-extract/);
+    expect(card).toMatch(/shopPlant/);
+    expect(card).toMatch(/69/);
+    expect(card).toMatch(/xray-governance/);
+    expect(card).toMatch(/xray-orchestrator/);
+    expect(card.toLowerCase()).toMatch(/costume/);
+    expect(card).not.toMatch(/syncs all 45 skills/i);
+    expect(card).not.toContain('`api-design` · `architect-tools`');
+    expect(read('README.md')).not.toMatch(/Syncs \*\*45 framework skills\*\*/);
+    expect(read('AGENTS.md')).not.toContain('SKILLS.md + 45 skills → platform skill directories');
+    expect(read('SKILLS.md')).not.toMatch(/syncs all 45 skills/i);
+    expect(read('SKILLS.md')).toMatch(/mill/);
+    expect(read('AGENTS-consumer.md')).toMatch(/shopPlant|shop-extract/);
   });
 
   it('does not require the patch version in features-since-3.1', () => {
@@ -67,6 +87,7 @@ describe('foundry mill — docs verify, do not rewrite', () => {
       'AGENTS.md',
       'AGENTS-consumer.md',
       'SKILLS.md',
+      'llms.txt',
       'docs-site/docs/index.md',
     ];
     for (const rel of files) {
@@ -156,6 +177,8 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/mill-root.mjs');
     expect(paths).toContain('scripts/foundry/plant/skills/mill/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/inspect/SKILL.md');
+    expect(paths).toContain('llms.txt');
+    expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
   });
 
   it('mill is extracted as publishable @0xray/foundry', () => {
@@ -825,6 +848,44 @@ describe('foundry mill — mint from consumer SSOT', () => {
 });
 
 describe('foundry mill — inspect organ', () => {
+  it('pack-tmp-suit-proof hangar plant + inspect does not costume-dump factory shops', async () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => {
+        suit: string;
+        costume?: boolean;
+      };
+    };
+    const {
+      plantHangarFactoryShops,
+      proveSuitAfterInstall,
+      FACTORY_SHOP_SKILLS,
+    } = await import('../../../scripts/node/pack-tmp-suit-proof.mjs');
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-pack-tmp-proof-unit-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.costume).toBe(false);
+      expect(inventory.suit).toBe('fastened');
+      plantHangarFactoryShops(tmp);
+      for (const name of FACTORY_SHOP_SKILLS) {
+        expect(existsSync(path.join(tmp, `.opencode/skills/${name}/SKILL.md`))).toBe(true);
+      }
+      const { report } = proveSuitAfterInstall(tmp, path.join(root, 'scripts/foundry'));
+      expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
+      const plantVsWorn = report.checks.find((c: { id: string }) => c.id === 'plant-vs-worn') as {
+        shopPlant?: string[];
+        extraSkills?: string[];
+      };
+      expect(plantVsWorn?.shopPlant).toEqual(expect.arrayContaining(FACTORY_SHOP_SKILLS));
+      expect(plantVsWorn?.extraSkills ?? []).toEqual([]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('inspect accepts factory shop plant with mill plant and still blocks costume dump', async () => {
     const { mintConsumerSuit, FACTORY_SHOP_SKILLS, loadShopPlant, wantsCostume } = requireCjs(
       path.join(root, 'scripts/foundry/mint-suit.cjs'),

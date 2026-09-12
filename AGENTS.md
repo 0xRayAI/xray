@@ -20,7 +20,7 @@ xray provides intelligent multi-agent orchestration with automatic delegation an
 - **External Governance** — Dynamo Solar SSOT, 69-term Codex
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
-Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md). Consumer projects receive slimmed copies via postinstall (`AGENTS-consumer.md` → `AGENTS.md`, skills synced to platform dirs).
+Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 45-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
 
 ## Consumer MCP surface (7 servers)
 
@@ -42,13 +42,15 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 `postinstall.cjs` → `installAllBridges()`:
 
-1. `AGENTS-consumer.md` → `AGENTS.md`
-2. `SKILLS.md` + 45 skills → platform skill directories
+1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
+2. Fasten mill plant (`mill` + `inspect`). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 3. `.gitignore.default` → `.gitignore` (if absent)
-4. `.xray/` config (`codex.json`, `features.json`, `config.json`)
+4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
 6. Four bridges: OpenCode, Grok, Hermes, OpenClaw
 7. Optional git hooks
+
+**Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
 ## Memory routing + Repertoire (v3.3+)
 
@@ -141,7 +143,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 | Source | `src/` |
 | Config | `.xray/` or `config/` |
 
-**Root essentials only:** `README.md`, `CHANGELOG.md`, `package.json`, `AGENTS.md`, `SKILLS.md`, `tsconfig.json`.
+**Root essentials only:** `README.md`, `CHANGELOG.md`, `package.json`, `AGENTS.md`, `SKILLS.md`, `llms.txt`, `tsconfig.json`.
 
 ## Available agents (42 YML surfaces)
 
@@ -207,6 +209,8 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 | Topic | Path |
 |-------|------|
+| Agent map (`llms.txt`) | `llms.txt` |
+| Foundry / mill plant | `docs-site/docs/architecture/v4-foundry.md` |
 | Features since 3.1 | `docs-site/docs/guides/features-since-3.1.md` |
 | features.json | `docs-site/docs/guides/features-json.md` |
 | Platform integrations | `docs-site/docs/guides/integrations.md` |
@@ -218,4 +222,4 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## Release artifacts
 
-`npm run release:patch` updates: `package.json`, `CHANGELOG.md`, `README.md`, `AGENTS.md`, `AGENTS-consumer.md`, `SKILLS.md`, Docusaurus guides.
+`npm run release:patch` updates: `package.json`, `CHANGELOG.md`, `README.md`, `AGENTS.md`, `AGENTS-consumer.md`, `SKILLS.md`, `llms.txt`, Docusaurus guides.

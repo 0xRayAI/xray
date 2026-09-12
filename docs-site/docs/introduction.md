@@ -17,7 +17,7 @@ Not a catalog of 42 agents. The product is the skeleton you wear.
 ## Quick Start
 
 ```bash
-npm install 0xray          # auto: 4 bridges + 7 MCP + AGENTS.md + SKILLS.md + .mcp.json
+npm install 0xray          # auto: mill+inspect plant + 4 bridges + 7 MCP + AGENTS.md + .mcp.json
 
 npx 0xray status           # verify
 npx 0xray setup            # optional extras

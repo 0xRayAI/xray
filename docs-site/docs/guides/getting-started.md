@@ -14,12 +14,14 @@ npm install 0xray
 
 Postinstall **automatically** (via `install-bridges.cjs`):
 
-- Copies **`AGENTS.md`** (from `AGENTS-consumer.md`)
+- Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
+- Fastens **mill plant** (`mill` + `inspect`). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 - Seeds **`.gitignore`** (if absent)
-- Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`)
+- Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
-- Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw
-- Syncs **45 framework skills** to platform skill directories. **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
+- Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring)
+- Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume
+- **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
 - **4.0.9:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
 
 ```bash
@@ -54,7 +56,7 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 - **42 YML agent surfaces** (organs, not the product)
 - **69 Codex terms** — constitution always on
 - **7 MCP servers** on the consumer surface (`npx -y 0xray mcp`)
-- **45 framework skills**. **`autonomy-command`** is the default operating model
+- **Mill plant** `mill` + `inspect` (default). 45-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
 - **4 platform bridges** installed on postinstall
 - **Repertoire organ on** (vendored 0.2)
 

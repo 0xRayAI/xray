@@ -29,5 +29,6 @@ jobs:
         run: npm run release:docs-check
 
       - name: Foundry mill tests
-        # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true).
+        # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true)
+        # plus llms.txt / mill-law docs + pack-tmp-suit-proof contract.
         run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/release-pipeline.test.ts

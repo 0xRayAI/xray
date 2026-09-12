@@ -8,6 +8,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### ✨ Features
 - Mill inspect treats factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) as first-class with mill plant. `foundry.json` `shopPlant` names more shops. Not `"costume": true`. Nested mill stays **0.1.9**.
+- Exo agent map: root `llms.txt` (mill+inspect plant, 7 MCPs, hangar/`shopPlant` coexistence, Codex 69, no costume dump). README / AGENTS / SKILLS / Docusaurus no longer claim default 45-skill sync.
+- Pack → tmp suit proof: `npm run pack:tmp-proof` (and consumer smoke) installs the packed tgz, runs `foundry mint --skip-live`, plants factory hangar shops, and inspects without costume dump. Playwright n/a (mill CLI).
 
 ### 🐛 Bug Fixes
 - **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.

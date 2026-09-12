@@ -25,7 +25,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 
 ## What a stranger actually gets
 
-`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. PPE stays worn. `"costume": true` dumps 45/42.
+`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. PPE stays worn. `"costume": true` dumps 45/42. Default plant is mill+inspect, not a 45-skill sync. Agent map: repo-root `llms.txt`.
 
 ```
 npm i 0xray

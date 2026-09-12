@@ -48,7 +48,8 @@ jobs:
       - name: Docs mill
         run: npm run release:docs-check
       - name: Mill tests
-        # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true).
+        # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true)
+        # plus llms.txt / mill-law docs + pack-tmp-suit-proof contract.
         run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/release-pipeline.test.ts
 
   build:
@@ -95,6 +96,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Consumer install smoke
+        # Pack tgz → tmp install → mill fasten + hangar shop plant + inspect (not costume).
+        # Playwright n/a (mill CLI). Standalone: npm run pack:tmp-proof
         run: node scripts/node/consumer-install-smoke.mjs
 
   docs-build:

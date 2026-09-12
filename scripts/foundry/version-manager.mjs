@@ -348,6 +348,7 @@ export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
     'AGENTS.md',
     'AGENTS-consumer.md',
     'SKILLS.md',
+    'llms.txt',
     '.grok-plugin/plugin.json',
     'docs/README.md',
     'docs-site/docs/index.md',
