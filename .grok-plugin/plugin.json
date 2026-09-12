@@ -1,13 +1,20 @@
 {
-  "id": "0xray",
-  "name": "0xRay",
+  "name": "0xray",
   "version": "4.0.10",
-  "description": "Multi-agent orchestration, Codex governance, and AI-powered development tools. 7 MCP servers (governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools) plus 45 knowledge skills. Auto-installs 4 platform bridges on npm install.",
-  "author": "0xRay AI",
+  "description": "0xRay suit for Grok, Hermes, OpenClaw, OpenCode: mill+inspect, Codex, 7 MCP servers. Costume 45/42 is opt-in foundry, not the default wear.",
+  "author": {
+    "name": "0xRay AI",
+    "url": "https://0xray.ai"
+  },
   "homepage": "https://github.com/0xRayAI/xray",
-  "components": {
-    "mcpServers": [
-      ".mcp.json"
-    ]
-  }
+  "repository": "https://github.com/0xRayAI/xray",
+  "keywords": [
+    "0xray",
+    "mill",
+    "inspect",
+    "codex",
+    "mcp",
+    "suit"
+  ],
+  "mcpServers": ".mcp.json"
 }
