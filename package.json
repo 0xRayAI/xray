@@ -207,7 +207,6 @@
     "vendor/@0xray/repertoire/"
   ],
   "dependencies": {
-    "@0xray/repertoire": "file:./vendor/@0xray/repertoire",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^11.1.0",
     "express": "^5.2.1",

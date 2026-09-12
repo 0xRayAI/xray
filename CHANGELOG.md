@@ -6,6 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### 🐛 Bug Fixes
+- **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.
+
 ### 🔧 Maintenance
 - Foundry mill: one bumper (`reconcile-version.mjs`); `version-manager.mjs` is `--artifacts-only` (JSON + CHANGELOG). Bump and `--tag` are refused.
 - Docs mill verifies era kernel headers (`4.0`) and skill counts; it does not rewrite markdown prose.

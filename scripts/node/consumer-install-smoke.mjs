@@ -39,6 +39,64 @@ function run(cmd, cwd, { inherit = false } = {}) {
   return inherit ? "" : String(result).trim();
 }
 
+function assertPackedPackageHasNoFileDeps(tarballPath) {
+  const packedJson = run(`tar -xOf ${JSON.stringify(tarballPath)} package/package.json`);
+  const packed = JSON.parse(packedJson);
+  const buckets = ["dependencies", "optionalDependencies", "peerDependencies"];
+  for (const bucket of buckets) {
+    const entries = packed[bucket] || {};
+    for (const [name, spec] of Object.entries(entries)) {
+      if (String(spec).startsWith("file:")) {
+        throw new Error(
+          `packed package.json must not ship file: ${bucket} ${name}=${spec} (consumers resolve file: from their root)`,
+        );
+      }
+    }
+  }
+  if (!String(packedJson).includes("vendor/@0xray/repertoire/")) {
+    const listing = run(`tar -tzf ${JSON.stringify(tarballPath)}`);
+    if (!listing.includes("package/vendor/@0xray/repertoire/package.json")) {
+      throw new Error("packed tarball missing vendor/@0xray/repertoire/package.json");
+    }
+  }
+  console.log("  ✅ packed package.json has no file: deps; vendor organ is in the tarball");
+}
+
+function assertOrganRequire(tmpRoot) {
+  const consumerRequire = createRequire(path.join(tmpRoot, "package.json"));
+  let organPkg;
+  try {
+    organPkg = consumerRequire("@0xray/repertoire/package.json");
+  } catch (err) {
+    throw new Error(`require('@0xray/repertoire') failed: ${err.message}`);
+  }
+  if (organPkg.name !== "@0xray/repertoire") {
+    throw new Error(`required organ name ${organPkg.name}`);
+  }
+  if (organPkg.version !== "0.2.0") {
+    throw new Error(`required organ version ${organPkg.version}`);
+  }
+  if (fs.existsSync(path.join(tmpRoot, "vendor"))) {
+    throw new Error("consumer install must not create or require a consumer-root vendor/ tree");
+  }
+  console.log("  ✅ require('@0xray/repertoire') from consumer cwd (no consumer vendor/)");
+}
+
+function writeBareConsumerManifest(tmpRoot) {
+  fs.writeFileSync(
+    path.join(tmpRoot, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "xray-consumer-test",
+        version: "0.0.1",
+        private: true,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
 function assertFreshInstallDefaults(tmpRoot, version) {
   const consumerFeaturesPath = path.join(tmpRoot, ".xray", "features.json");
   if (!fs.existsSync(consumerFeaturesPath)) {
@@ -188,25 +246,30 @@ function main() {
       throw new Error(`Tarball not found: ${tarballPath}`);
     }
 
-    const consumerPkg = {
-      name: "0xray-smoke-consumer",
-      private: true,
-      version: "1.0.0",
-      dependencies: {
-        "0xray": `file:${tarballPath}`,
-      },
-    };
-    fs.writeFileSync(
-      path.join(tmpRoot, "package.json"),
-      JSON.stringify(consumerPkg, null, 2) + "\n",
-    );
+    assertPackedPackageHasNoFileDeps(tarballPath);
 
-    console.log("📥 npm install (runs postinstall)...");
-    run("npm install", tmpRoot, { inherit: true });
+    writeBareConsumerManifest(tmpRoot);
+
+    console.log("📥 npm install tarball into bare consumer (exact ENOENT repro)...");
+    run(`npm install ${JSON.stringify(tarballPath)}`, tmpRoot, { inherit: true });
+
+    const installLinksRoot = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-smoke-links-"));
+    writeBareConsumerManifest(installLinksRoot);
+    console.log("📥 npm install tarball --install-links (file: ENOENT path)...");
+    run(`npm install ${JSON.stringify(tarballPath)} --install-links`, installLinksRoot, {
+      inherit: true,
+    });
+    assertOrganRequire(installLinksRoot);
+    try {
+      fs.rmSync(installLinksRoot, { recursive: true, force: true });
+    } catch {
+      /* best-effort */
+    }
 
     const nmRoot = path.join(tmpRoot, "node_modules", "0xray");
     const requiredFiles = [
       "scripts/node/install-bridges.cjs",
+      "scripts/node/wear-vendored-repertoire.cjs",
       "scripts/node/postinstall.cjs",
       "scripts/foundry/mint-suit.cjs",
       "scripts/foundry/hooks.mjs",
@@ -274,6 +337,7 @@ function main() {
     console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} npx MCP servers`);
 
     assertFreshInstallDefaults(tmpRoot, version);
+    assertOrganRequire(tmpRoot);
 
     const schemaInPackage = path.join(nmRoot, "xray", "features.schema.json");
     if (!fs.existsSync(schemaInPackage)) {
