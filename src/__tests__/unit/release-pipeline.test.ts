@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { getReleaseArtifactPaths } from '../../../scripts/foundry/version-manager.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -44,6 +45,14 @@ describe('release pipeline', () => {
   it('reconcile --check does not fail tagged-but-unpublished (that is the publish path)', () => {
     const src = readFileSync(path.join(root, 'scripts/foundry/reconcile-version.mjs'), 'utf8');
     expect(src).not.toContain('tag v${tag} exists but npm is only');
+  });
+
+  it('release commit set includes stamp/gate version files', () => {
+    const paths = getReleaseArtifactPaths(root);
+    expect(paths).toContain('xray/features.json');
+    expect(paths).toContain('.xray/features.json');
+    expect(paths).toContain('docs/PIPELINE-FACET-SNAPSHOT.json');
+    expect(paths).toContain('src/integrations/openclaw/plugin/xray-pre-tool/package.json');
   });
 
   it('canonical release.mjs bumps via reconcile, not version-manager', () => {

@@ -367,6 +367,9 @@ export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
     'docs-site/docs/architecture/GROK_GUIDE.md',
     'docs-site/sidebars.ts',
     'xray/features.json',
+    '.xray/features.json',
+    'docs/PIPELINE-FACET-SNAPSHOT.json',
+    'src/integrations/openclaw/plugin/xray-pre-tool/package.json',
   ];
   return candidates.filter((rel) => fs.existsSync(path.join(baseDir, rel)));
 }
