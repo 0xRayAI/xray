@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
-Shop plant is first-class with mill plant. `shop-extract`, `shop-witness`, `shop-pin` (and `foundry.json` `shopPlant`) are not a costume dump. `"costume": true` still required for 45/42. Inspect isolated-home dest is project `.grok/plugins/0xray`. Shared HOME last-mile does not write machine `~/.grok/plugins/0xray`. Isolated HOME must not write the passwd machine plugin. No mill version bump.
+## [0.1.10] - 2026-09-12
+
+Inspect isolated-home `dest` is `resolveGrokPluginDests` — on shared HOME that is project `.grok/plugins/0xray`, not machine `$HOME/.grok/plugins/0xray`. Published 0.1.9 still joined dest from `$HOME` (report/CLI lag after 0xray@4.0.12 / #29 wear). Shop plant is first-class with mill plant. `shop-extract`, `shop-witness`, `shop-pin` (and `foundry.json` `shopPlant`) are not a costume dump. `"costume": true` still required for 45/42. Isolated HOME must not write the passwd machine plugin. Not an 8th MCP. Not 5.0.
 
 ## [0.1.9] - 2026-09-09
 

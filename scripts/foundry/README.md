@@ -57,7 +57,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 
-**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not clobber machine plugin). Nested mill stays **0.1.9**.
+**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not clobber machine plugin). Nested mill **0.1.10** (inspect dest matches `resolveGrokPluginDests`; published 0.1.9 still reported machine `$HOME` dest).
 
 ## Publish this mill
 
