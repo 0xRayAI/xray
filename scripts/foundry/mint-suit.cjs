@@ -21,6 +21,9 @@ const DEFAULT_PARAMS = {
   agentsCard: "xray/AGENTS.md",
 };
 
+/** Factory shop plant. First-class with mill plant. Not 45/42 costume. */
+const FACTORY_SHOP_SKILLS = ["shop-extract", "shop-witness", "shop-pin"];
+
 function deepMerge(src, dest) {
   if (typeof src !== "object" || src === null) return dest !== undefined ? dest : src;
   if (Array.isArray(src)) return Array.isArray(dest) ? dest : src;
@@ -298,13 +301,59 @@ function wornAgentFiles(targetDir) {
   return listAgentFilesAt(path.join(targetDir, ".opencode", "agents"));
 }
 
+function normalizeNameList(value) {
+  if (!Array.isArray(value)) return [];
+  const names = [];
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    const name = item.trim();
+    if (name) names.push(name);
+  }
+  return names;
+}
+
+function shopPlantFromDir(targetDir, rel) {
+  const resolved = resolveInside(targetDir, rel);
+  if (!resolved || !isDirectory(resolved)) return [];
+  const nested = path.join(resolved, "skills");
+  return listSkillNamesAt(isDirectory(nested) ? nested : resolved);
+}
+
+function declaredShopPlant(targetDir) {
+  const raw = loadFoundryExtra(targetDir).shopPlant;
+  const names = [];
+  if (Array.isArray(raw)) {
+    names.push(...normalizeNameList(raw));
+  } else if (typeof raw === "string" && raw.trim()) {
+    names.push(...shopPlantFromDir(targetDir, raw.trim()));
+  } else if (raw && typeof raw === "object") {
+    names.push(...normalizeNameList(raw.skills));
+    if (typeof raw.dir === "string" && raw.dir.trim()) {
+      names.push(...shopPlantFromDir(targetDir, raw.dir.trim()));
+    }
+  }
+  return names;
+}
+
+/** Factory shop names plus foundry.json shopPlant. Not costume. */
+function loadShopPlant(targetDir) {
+  return [...new Set([...FACTORY_SHOP_SKILLS, ...declaredShopPlant(targetDir)])];
+}
+
 function previousTreeAllowlist(targetDir) {
   const file = path.join(targetDir, ".xray", "foundry-inventory.json");
   if (!fs.existsSync(file)) return { skills: [], agents: [] };
   try {
     const inventory = JSON.parse(fs.readFileSync(file, "utf8"));
+    const shopFromInv = inventory?.shopPlant;
+    const shopSkills = Array.isArray(shopFromInv)
+      ? normalizeNameList(shopFromInv)
+      : normalizeNameList(shopFromInv?.skills);
     return {
-      skills: Array.isArray(inventory?.tree?.skills) ? inventory.tree.skills : [],
+      skills: [
+        ...(Array.isArray(inventory?.tree?.skills) ? inventory.tree.skills : []),
+        ...shopSkills,
+      ],
       agents: Array.isArray(inventory?.tree?.agents) ? inventory.tree.agents : [],
     };
   } catch {
@@ -312,13 +361,15 @@ function previousTreeAllowlist(targetDir) {
   }
 }
 
-/** Extra worn names that are neither mill plant, their plant, nor a prior overlay. */
+/** Extra worn names that are neither mill plant, their plant, shop plant, nor a prior overlay. */
 function costumeDumpExtras(targetDir, millPlant, tree) {
   const prior = previousTreeAllowlist(targetDir);
+  const shopPlant = loadShopPlant(targetDir);
   const allowedSkills = new Set([
     ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
     ...(Array.isArray(tree?.skills) ? tree.skills : []),
     ...prior.skills,
+    ...shopPlant,
   ]);
   const allowedAgents = new Set([
     ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
@@ -427,6 +478,9 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
       skills: Array.isArray(tree?.millPlantSkills) ? tree.millPlantSkills : [],
       agents: Array.isArray(tree?.millPlantAgents) ? tree.millPlantAgents : [],
     },
+    shopPlant: {
+      skills: Array.isArray(tree?.shopPlantSkills) ? tree.shopPlantSkills : loadShopPlant(targetDir),
+    },
     costume,
     facets: {
       constitution,
@@ -465,6 +519,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   const tree = overlayConsumerTree(targetDir, log, params);
   tree.millPlantSkills = millPlant.skills;
   tree.millPlantAgents = millPlant.agents;
+  tree.shopPlantSkills = loadShopPlant(targetDir);
   tree.codex = overlayJsonFacet(
     resolveInside(targetDir, params.codex),
     path.join(targetDir, ".xray", "codex.json"),
@@ -491,9 +546,12 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
 
 module.exports = {
   DEFAULT_PARAMS,
+  FACTORY_SHOP_SKILLS,
   deepMerge,
   loadFoundryParams,
   loadFoundryExtra,
+  loadShopPlant,
+  declaredShopPlant,
   wantsCostume,
   millPlantDir,
   listSkillNamesAt,

@@ -80,12 +80,14 @@ function checkPlantVsWorn(root, millRoot) {
     skills: mint.listConsumerSkillNames(root, params.skills),
     agents: mint.listConsumerAgentFiles(root, params.agents),
   };
+  const shopPlant = mint.loadShopPlant(root);
   try {
     mint.assertNoCostumeDump(root, millPlant, tree);
     return {
       id: "plant-vs-worn",
       ok: true,
       millPlant: millPlant.skills,
+      shopPlant,
       tree: tree.skills,
       worn: mint.wornSkillNames(root),
     };
@@ -96,6 +98,7 @@ function checkPlantVsWorn(root, millRoot) {
       detail: err instanceof Error ? err.message : String(err),
       extraSkills: err.extraSkills || [],
       extraAgents: err.extraAgents || [],
+      shopPlant,
     };
   }
 }

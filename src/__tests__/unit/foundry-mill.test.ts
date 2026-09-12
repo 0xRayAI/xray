@@ -825,6 +825,121 @@ describe('foundry mill — mint from consumer SSOT', () => {
 });
 
 describe('foundry mill — inspect organ', () => {
+  it('inspect accepts factory shop plant with mill plant and still blocks costume dump', async () => {
+    const { mintConsumerSuit, FACTORY_SHOP_SKILLS, loadShopPlant, wantsCostume } = requireCjs(
+      path.join(root, 'scripts/foundry/mint-suit.cjs'),
+    ) as {
+      mintConsumerSuit: (
+        pkg: string,
+        target: string,
+        log: (...a: unknown[]) => void,
+      ) => { suit: string; costume?: boolean; shopPlant?: { skills: string[] } };
+      FACTORY_SHOP_SKILLS: string[];
+      loadShopPlant: (dir: string) => string[];
+      wantsCostume: (dir: string) => boolean;
+    };
+    const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
+    expect(FACTORY_SHOP_SKILLS).toEqual(['shop-extract', 'shop-witness', 'shop-pin']);
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-shop-plant-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      expect(wantsCostume(tmp)).toBe(false);
+      expect(loadShopPlant(tmp)).toEqual(FACTORY_SHOP_SKILLS);
+
+      const inventory = mintConsumerSuit(root, tmp, () => undefined);
+      expect(inventory.costume).toBe(false);
+      expect(inventory.suit).toBe('fastened');
+      expect(inventory.shopPlant?.skills).toEqual(FACTORY_SHOP_SKILLS);
+
+      for (const name of FACTORY_SHOP_SKILLS) {
+        mkdirSync(path.join(tmp, `.opencode/skills/${name}`), { recursive: true });
+        writeFileSync(path.join(tmp, `.opencode/skills/${name}/SKILL.md`), `SHOP ${name}\n`);
+      }
+
+      const report = await inspectSuit(tmp, {
+        millRoot: root,
+        skipLive: true,
+        env: { HOME: path.join(tmp, '.lastmile-home') },
+        machineHome: '/Users/henry',
+      });
+      expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
+      const plantVsWorn = report.checks.find((c) => c.id === 'plant-vs-worn') as {
+        shopPlant?: string[];
+      };
+      expect(plantVsWorn?.shopPlant).toEqual(FACTORY_SHOP_SKILLS);
+      expect(wantsCostume(tmp)).toBe(false);
+      expect(existsSync(path.join(tmp, 'foundry.json'))).toBe(false);
+
+      mkdirSync(path.join(tmp, '.opencode/skills/enforcer'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/enforcer/SKILL.md'), 'LEFTOVER\n');
+      expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
+      const blocked = await inspectSuit(tmp, { millRoot: root, skipLive: true });
+      expect(blocked.ok).toBe(false);
+      expect(blocked.failed).toContain('plant-vs-worn');
+      const extras = blocked.checks.find((c) => c.id === 'plant-vs-worn') as {
+        extraSkills?: string[];
+      };
+      expect(extras.extraSkills).toEqual(['enforcer']);
+      expect(wantsCostume(tmp)).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('foundry.json shopPlant names extra shops; undeclared shop-* stays a dump', async () => {
+    const { mintConsumerSuit, loadShopPlant } = requireCjs(
+      path.join(root, 'scripts/foundry/mint-suit.cjs'),
+    ) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+      loadShopPlant: (dir: string) => string[];
+    };
+    const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-shop-declared-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mkdirSync(path.join(tmp, '.opencode/skills/shop-custom'), { recursive: true });
+      writeFileSync(path.join(tmp, '.opencode/skills/shop-custom/SKILL.md'), 'CUSTOM SHOP\n');
+      expect(() => mintConsumerSuit(root, tmp, () => undefined)).toThrow(/costume dump/);
+
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ shopPlant: ['shop-custom'] }, null, 2)}\n`,
+      );
+      expect(loadShopPlant(tmp)).toEqual(
+        expect.arrayContaining(['shop-extract', 'shop-witness', 'shop-pin', 'shop-custom']),
+      );
+      const inventory = mintConsumerSuit(root, tmp, () => undefined) as {
+        costume?: boolean;
+        shopPlant?: { skills: string[] };
+      };
+      expect(inventory.costume).toBe(false);
+      expect(inventory.shopPlant?.skills).toEqual(
+        expect.arrayContaining(['shop-custom', 'shop-extract']),
+      );
+      const report = await inspectSuit(tmp, { millRoot: root, skipLive: true });
+      expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
+
+      mkdirSync(path.join(tmp, 'plant/shops/shop-from-dir'), { recursive: true });
+      writeFileSync(path.join(tmp, 'plant/shops/shop-from-dir/SKILL.md'), 'DIR SHOP\n');
+      writeFileSync(
+        path.join(tmp, 'foundry.json'),
+        `${JSON.stringify({ shopPlant: { skills: ['shop-custom'], dir: 'plant/shops' } }, null, 2)}\n`,
+      );
+      expect(loadShopPlant(tmp)).toEqual(
+        expect.arrayContaining(['shop-custom', 'shop-from-dir', 'shop-extract']),
+      );
+      expect(loadShopPlant(tmp)).not.toContain('../etc');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('mint fails on leftover costume skills unless costume is true', () => {
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
