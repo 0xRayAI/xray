@@ -6,6 +6,7 @@
 1. Read `AGENTS.md` (order of operations + multiplicity).
 2. Open `SKILLS.md` and run skills in order for **each** key agent.
 3. Deeper fleet ops live under `ops/` (humans + coordinators).
+4. After a long chat or before coding: `skills/survive-compact/SKILL.md` — read disk, resume the live cloud, do not rebuild.
 
 ## Install
 ```bash

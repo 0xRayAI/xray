@@ -17,6 +17,8 @@ Docs, checklists, board notes, restating CI, reviewing an open PR, deploy/publis
 3. One cloud per ship track unless work is truly independent.
 4. Before launch: list recent clouds; resume if lineage exists.
 
+Chat seats after a long thread or a rolled-up history: `skills/survive-compact/SKILL.md` — read disk first; resume clouds as above.
+
 ## Handoff
 Implementer owns the cloud. Coordinator may point at a track — does not puppeteer.
 

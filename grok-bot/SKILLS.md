@@ -16,7 +16,10 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [enterprise-cos-wave-loop](skills/enterprise-cos-wave-loop/SKILL.md) | Coordinator wave loop |
 | [synaptical-comms](skills/synaptical-comms/SKILL.md) | Friend-test house comms |
+| [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — keep mind across compaction |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Ops reference
 `ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md`
+
+Same problem or open PR? Resume that cloud (`ops/CLOUD-CONTINUITY.md`). After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.

@@ -45,3 +45,10 @@ Cold-seat proof: `ops/GROK-HOOK-PROOF.md`.
 - Fasten **does** plant Grok plugin `PreToolUse` / `PostToolUse` hooks and the gate script runs.
 - Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
 - Where the Grok CLI plugin loads `hooks.json`, A-hooks are live; elsewhere rely on skills + Strict review + mill gates.
+
+## Survive compaction (Grok Bot chat)
+The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.
+
+Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done.
+
+Full Repertoire MCP (optional memory router on the CLI) is an aid, not required theater in every Grok Bot chat.
