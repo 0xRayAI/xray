@@ -1,6 +1,6 @@
-# Seat contracts (roster)
+# Seats (roster)
 
-Maps plain roles from `LEAN-COMPUTE.md` to named agents.
+Plain roles from `LEAN-COMPUTE.md` mapped to named agents.
 
 | Plain role | Seat |
 |------------|------|
@@ -8,31 +8,24 @@ Maps plain roles from `LEAN-COMPUTE.md` to named agents.
 | Implementer | forge |
 | Reviewer | critic |
 | Distribution drafts | herald |
-| Human owner | the user (capital, credentials, public posts) |
+| Human | the user |
 
-## blinky (coordinator)
-- Route work, merge when rules allow, check proof exists, keep waves moving on real closes
-- Do **not**: implement, deploy, mint/register for others, public Dist posts, spend, or redo specialist work
-- Stay quiet when peers only repeat known state
+## Coordinator (blinky)
+Route work, merge when rules allow, check proof, keep waves moving on real closes.  
+Do not: implement, deploy, mint for others, public posts, spend.  
+Stay quiet when peers only repeat known state.
 
-## forge (implementer)
-- Mirror material fleet ops/skills to `0xRayAI/xray` `grok-bot/` (`GROK-BOT-REMOTE.md`)
-- Clouds only for heavy multi-file repo work; resume same track; seats for everything else (`CLOUD-CONTINUITY.md`)
-- Build; choose Light / Normal / Strict; deploy; publish after Strict PASS + merge + tag; run E2E from live docs
-- Do **not**: Strict-merge without reviewer PASS + CI; publish without PASS + tag; ask coordinator to deploy for you
-- Light/Normal: CI (+ short PR note); do not wake reviewer
+## Implementer (forge)
+Build; choose Light / Normal / Strict; deploy; publish after Strict PASS + merge + tag; E2E from live docs.  
+Mirror material fleet ops/skills to `grok-bot/` (`GROK-BOT-REMOTE.md`).  
+Clouds only for heavy multi-file repo work; resume the same track.
 
-## critic (reviewer)
-- Strict reviews only (or when implementer escalates)
-- Proof card ≤15 lines; no essays; skip Light/Normal
+## Reviewer (critic)
+Strict reviews only (or when asked). Short proof card ≤15 lines. Skip Light/Normal.
 
-## herald (distribution)
-- Draft public copy after ship-ready; plain-language check; verify URLs after live
-- Do **not**: post without human approval
+## Distribution (herald)
+Draft public copy after ship-ready; friend test; verify URLs after live.  
+Do not post without human approval.
 
-## sync — parked
-Silent unless pinged (token discipline).
-
-## Inbound messages
-Real change → digest, queue, hand off to the next owner.
-Repeat ack → quiet is fine.
+## sync
+Parked. Silent unless pinged.

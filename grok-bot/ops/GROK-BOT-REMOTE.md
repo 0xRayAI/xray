@@ -1,24 +1,21 @@
-# Grok Bot ops → 0xRay remote
+# Push fleet ops to 0xRay git
 
-**Remote SSOT:** `0xRayAI/xray` → `grok-bot/`  
-**Working copy:** this computer (`/workspace/blinky-suit/ops/`, `/home/box/agent-data/workflows/`)
+**Remote home:** `0xRayAI/xray` → `grok-bot/`  
+**Working copy:** the Grok Bot computer (`ops/` + skill workflows)
 
-0xRay is the OS stack. Groover and other repos are products — do not park fleet op procedures there.
+0xRay is the OS. Product repos (Groover, etc.) are not where fleet procedures live.
 
-## When the implementer mirrors
-Open or update a PR to `grok-bot/` when **material** fleet procedure or skill text changes:
-- review levels, cloud-vs-seats, three layers, seats/roles, release spine, suit attestation
-- shared skill recipes under `workflows/`
+## When to mirror
+Open or update a PR when **material** procedures or skills change (review levels, cloud rules, seats, ship spine, skill recipes).
 
 ## When not to
-- WAVEBOARD, attention noise, proof cards, E2E receipts, one-off handoffs
-- Product docs that belong in groover/chrono/etc.
-- Tiny typos you will batch into the next material PR
+Board noise, one-off receipts, product-only docs, tiny typos you will batch later.
 
 ## How
-1. Diff working copy vs `grok-bot/` on main (or last mirror PR).
-2. Copy only SSOT ops + skill `SKILL.md` files (same allowlist as the first mirror).
-3. PR on `0xRayAI/xray` — usually **Normal** (CI + short attest). **Strict** only if the change alters ship/publish/security/live-agent rules.
-4. Merge when green; confirm paths on main.
+1. Diff working copy vs `grok-bot/` on main.
+2. Copy only the SSOT ops + skill files.
+3. **Friend test** every changed file (`GIBBERISH-CHECK.md`) before open.
+4. PR — usually Normal (CI + short note). Strict only if ship/security/live-agent rules change.
+5. Merge when green.
 
-Seats-first. Cloud only if the diff is heavy. No scheduled spam — event-driven on material change.
+Seats first. Cloud only if the diff is heavy.

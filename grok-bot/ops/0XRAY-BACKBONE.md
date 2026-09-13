@@ -1,47 +1,28 @@
-# 0xRay → Grok Bot enterprise backbone
-Updated: 2026-09-12 (deep pass)
+# What 0xRay is for this fleet
 
-**Pin:** 0xRayAI/xray main @ ec771817 · 0xray@4.0.9 · @0xray/foundry@0.1.9 · repertoire@0.2.0 vendored
-**Hangar allowlist branch (in flight):** cursor/mill-shop-plant-allowlist-afd2
+Updated: 2026-09-13
 
 ## One line
-Run the enterprise as a **mill-fastened frontier suit** (constitution + lead-dev + repertoire/station + mill/inspect receipts + hangar shops). Use 0xray as the factory that fashions that plant — not as a coding-IDE exo Grok Bot pretends to enforce.
+0xRay is the **factory OS**. It plants a thin suit (mill + inspect) on an agent host. Grok Bot wears that plant and runs the company with skills, seats, and proof — not by pretending to be a coding IDE that blocks every tool.
 
-## Critical law for Grok Bot
-Grok Bot is **NOT** a fifth wear floor (v4-foundry). No PreToolUse deny. Do not lie about PPE aborting tools.
-Port: hard rules in prompts + mill band + critic Evidence PASS. Not `costume: true`. Not 7 duplicate Cursor MCP clones.
+## What we wear
+- **Mill + inspect** only (thin plant). Proof: `.xray/foundry-inventory.json` + `npx @0xray/foundry inspect`
+- Hard rules in prompts + reviewer proof on risky ships
+- Current plant pin on seats: `0xray@4.0.12` · `@0xray/foundry@0.1.10`
 
-## Bone
-Inference · External Governance (Dynamo/Codex) · Autonomous Engine (thinDispatch)
-Always on: Codex 11 / 29 / 69, destructive shell deny. Temperament scales ceremony only.
-Grok-class → frontier (spawn warns); missing temperament → guided.
+## What we do not wear
+- Full “costume” dump of dozens of skills/agents
+- Fake tool-deny floor on Grok Bot
+- Cloning the full coding-agent MCP set as seven new servers here
+- Treating unused organs (for example repertoire) as live when they are not installed
 
-## Mill plant (default)
-mill + inspect only. Receipt `.xray/foundry-inventory.json` + DNA. Chat ≠ receipt.
-costume:true = 45/42 dump = refuse for fleet.
+## Three layers (see THREE-LAYERS.md)
+1. **Skills** — recipes agents read  
+2. **Suit** — host hooks + mill config  
+3. **Tools** — CLIs and MCP you call  
 
-## 7 MCPs (coding-agent wear)
-xray-governance, skills, orchestrator, enforcer, researcher, code-review, architect-tools
-+ repertoire host MCP (not 8th xray-*)
-Map **roles** into Grok Bot tools/consults; don’t spawn seven new servers.
+## Ship spine (short)
+pre-tool gate (when worn) → light after-write → git hooks on the product repo → `foundry gate` / `gate --verify-only` → publish/deploy → live proof
 
-## 45 skills
-Organs. Overlay selectively. autonomy-command = operating model (orchestrator + lead_dev_mode), not a 46th mill skill.
-
-## Ship
-foundry gate + consumer-install-smoke. Blaze overlay: docs, README, AGENTS.md, llms.txt, SKILLS.md, Playwright, pack→install→test, CI green on PR/worktree. critic = ship-ready.
-
-## FASTEN on fleet
-1. mill+inspect on forge/critic computers (Wave 2b)
-2. Constitution as hard rules on every eng seat
-3. WAVEBOARD + STATION-style handoffs + PR pair digests
-4. Hangar shops allowlisted (Wave 2), not costume
-5. Dist from 0xRayAI after ship-ready PASS
-
-## MUST NOT dump
-45/42 costume · fake PreToolUse · 8th MCP · Dynamo as hard dep · thicken Grok exo · clobber ~/.grok · release:major · capital automation
-
-## Wear status
-blinky: fastened mill+inspect+hangar (dna 0x3e85c08e…)
-forge/critic: Wave 2b fastening in progress
-sync/herald: CoS/Dist — rules + board; full exo optional
+## Human keeps
+Money, public posts, credentials, destructive actions.

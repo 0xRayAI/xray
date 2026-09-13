@@ -1,39 +1,25 @@
-# Hooks + gate — one-pass checklist
-When: 2026-09-13 · Fit for purpose proof (not a rewrite)
+# Hooks + gate — checklist
+Last pass: 2026-09-13
 
-## Seat plants (box)
-| Seat | 0xray | foundry | `inspect --skip-live` | Light postprocessor ON |
-|------|-------|---------|------------------------|-------------------------|
-| blinky-suit | 4.0.12 | 0.1.10 | ok=true | yes |
-| forge-suit | 4.0.12 | 0.1.10 | ok=true | yes |
-| critic-suit | 4.0.12 | 0.1.10 | ok=true | yes |
-| herald-suit | 4.0.12 | 0.1.10 | ok=true | yes |
+## Seat plants
+| Seat | 0xray | foundry | inspect --skip-live | Light after-write ON |
+|------|-------|---------|---------------------|----------------------|
+| blinky / forge / critic / herald | 4.0.12 | 0.1.10 | ok | yes |
 
-Session capture ON; inference_governance OFF (all four). Shared machine plugin (`isolated: false`).
-
-Commands used:
 ```bash
 cd /workspace/<suit> && ./node_modules/@0xray/foundry/cli.mjs inspect --skip-live
 ```
 
 ## Gate
-`gate --verify-only` on blinky-suit → **passed** (light mill docs check).  
-Full `gate` (build+test) belongs on the **product** being published, not as busywork on every seat folder.
+`gate --verify-only` runs on a fastened seat (light docs check).  
+Full `gate` (build+test) belongs on the **product** being published.
 
-## Git hooks (product repos — Mac)
-Seat folders are **not** git repos → `foundry hooks` does not apply there.
+## Git hooks (product repos)
+Seat folders are not git repos — hooks apply on product repos (for example groover, xray).
 
 | Repo | pre-commit | post-commit | pre-push |
 |------|------------|-------------|----------|
-| ~/dev/groover | yes (0xRay consumer) | yes | **missing** |
-| ~/dev/xray | yes (0xRay consumer) | yes | **missing** |
+| groover / xray (typical) | yes | yes | often missing — install with `npx @0xray/foundry hooks` before next publish |
 
-Gap (one line): install/refresh hooks with `npx @0xray/foundry hooks` on product repos when next publishing — especially **pre-push**. Not done this pass (no surprise mutate).
-
-## Live agent docs (#1)
-Already Done=live — see `C2-LIVE-PROOF-PR30-31.md`.
-
-## Pass verdict
-- Suit wear on seats: **proven**
-- Release gate CLI: **runs**
-- Git hook coverage on products: **partial** (pre-push gap noted, not theater-fixed)
+## Live agent docs
+When agents must read the product: HTTP 200 real markdown/json for AGENTS / SKILLS / llms (and package.json when published) — not an error page or MCP banner.
