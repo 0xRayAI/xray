@@ -1,13 +1,17 @@
-# grok-bot
+# Grok Bot on 0xRay
 
-Grok Bot fleet operating layer on the 0xRay mill.
+How a Grok Bot fleet runs on the 0xRay factory OS.
 
-This folder is the SSOT for fleet **seats**, **lean compute**, **cloud continuity**, and **ship gates**. It is not groover, not a fifth mill floor, and not a costume dump. 0xRay remains the OS stack; this is how the Grok Bot fleet wears it.
+**0xRay** builds and plants a thin work suit (mill + inspect).  
+**This folder** is the fleet operating layer: procedures + skill recipes.  
+Product rails (identity, shops, payments) live in their own repos — not here.
 
-## Ops
+| Path | What |
+|------|------|
+| `ops/` | How we review, ship, talk, and hand off work |
+| `skills/` | Step-by-step recipes seats follow |
 
-Fleet operating docs: [`ops/`](ops/).
+**Voice:** plain words first. Friend test before anything lands on `main`.  
+**Default:** suited seats do the work. Cloud agents only for heavy multi-file repo surgery.
 
-## Skills
-
-Fleet skills (one `SKILL.md` each): [`skills/`](skills/).
+Start here: `ops/THREE-LAYERS.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md`

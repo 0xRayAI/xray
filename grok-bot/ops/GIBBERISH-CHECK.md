@@ -1,19 +1,22 @@
-# Gibberish check (Dist)
+# Friend test (gibberish check)
 
-**Law (Blaze 2026-09-12):** public Dist fails if a friend outside the fleet cannot get the product in ~3 seconds.
+**Law:** if a friend outside the fleet cannot get the point in ~3 seconds, rewrite.
 
-## Checklist (herald self-check · CoS glimpse-review)
-- [ ] Plain product first (what it is)
-- [ ] What you get (shops / artifact)
-- [ ] How to try (one command)
-- [ ] Every stamp glossed on first use (↗ Groover · ⚡ 0xRay …)
-- [ ] No naked jargon (OWS · /sign 410 · ERC-8004 · mill · hangar) without a plain gloss
+Applies to:
+- Public posts (X, site)
+- **PRs and docs in this `grok-bot/` folder** (OS docs are public on GitHub)
+- Board/status when humans must act
+
+## Checklist
+- [ ] Plain meaning first (what it is)
+- [ ] What you get / what changed
+- [ ] How to try or what to do next (one clear step)
+- [ ] Jargon glossed or cut (mill, hangar, suit, MCP, …)
 - [ ] Not fleet-ops theater
 
-## Owners
-- herald: draft + self-check in draft packet
-- CoS: glimpse-review before capital post
-- Fail → rewrite; do not post
+## Fail → rewrite
+Do not merge OS docs or post Dist copy that fails this check.
 
-## Incident
-Hangar Dist 2026-09-12 stamp-stack failed → delete + glimpse rewrite.
+## Owners
+- Author self-checks before PR/post
+- Coordinator glimpse-reviews material OS doc PRs and Dist drafts

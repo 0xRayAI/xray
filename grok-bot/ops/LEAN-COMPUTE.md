@@ -1,63 +1,35 @@
 # Save compute — how we review work
 
-Plain rules so any human or agent can follow them. Prefer the smallest review that matches risk.
+Prefer the smallest review that matches risk.
 
-## Pick a review level
+## Review levels
 
 | Level | Use when | Who checks | What to write |
 |-------|----------|------------|---------------|
-| **Light** | Typos, docs-only, ops notes, chores — nothing that changes running software | Implementer + CI | Nothing extra |
-| **Normal** | Small bug fixes, thin wiring, low blast radius | Implementer writes a short PR note (≤10 lines) | That PR note. No separate reviewer unless asked |
-| **Strict** | Suit/mill changes, package publish, security, identity, or live URLs agents must read | Reviewer says PASS or FAIL | One short proof card (≤15 lines) |
+| **Light** | Typos, docs-only, chores — no running software change | Implementer + CI | Nothing extra |
+| **Normal** | Small bug fixes, thin wiring | Implementer short PR note (≤10 lines) | That note. Reviewer only if asked |
+| **Strict** | Suit/mill, publish, security, identity, live URLs agents must read | Reviewer PASS/FAIL | One short proof card (≤15 lines) |
 
-Always choose the **lowest** level that still covers the risk. Using Strict for a typo is waste.
+Always pick the **lowest** level that covers the risk.
 
 ## Proof cards (Strict only)
-
-A proof card is useful only if it shows something CI did not already show — for example live URL checks, install-from-tarball, or a publish gate.
-
-Keep it short:
-- PASS or FAIL
-- commit hash
-- CI run link
-- the extra checks (commands or curl results)
-
-Write the proof **once**. Do not paste the same “CI is green” into a cloud summary, a long ops essay, a board file, and chat.
-
-Light and Normal: do **not** create separate receipt files.
+Only when they prove something CI did not (live URL checks, install-from-tarball, publish gate). One place for proof — do not copy “CI is green” into four files.
 
 ## Stay quiet on repeats
-
-If another agent only repeats known state (“CI green, waiting on review”, “already with the reviewer”), do nothing: no reply, no status ping to the human, no round of acknowledgements.
-
-Speak up when:
-- who owns the next step changes
-- work is blocked
-- something is live in production
-- money, credentials, public posts, or destructive actions are needed
+If another agent only repeats known state, do nothing. Speak up when ownership, blockers, live proof, or money/public/credentials change.
 
 ## Who does what
 
 | Role | Does | Does not |
 |------|------|----------|
-| **Implementer** | Build, deploy, publish, run end-to-end from live docs | Ask the coordinator to deploy or mint for them |
-| **Reviewer** | Strict reviews only | Review Light/Normal by default; merge; rewrite the fix |
-| **Coordinator** | Route work, merge when rules allow, check that proof exists | Deploy, implement, or drive the implementer’s tools |
-| **Human owner** | Money, public posts, credentials, destructive actions | Everyday eng execution |
-
-## How we know it’s lean
-
-- About two agents woken per real state change (not per chat ack)
-- Reviewer only on Strict
-- Coordinator silent on repeats
-- One place holds the proof
-- Deploy and publish stay with the implementer
+| **Implementer** | Build, deploy, publish, E2E from live docs | Ask the coordinator to deploy for them |
+| **Reviewer** | Strict reviews only | Light/Normal by default; merge; rewrite the fix |
+| **Coordinator** | Route, merge when rules allow, check proof | Deploy or implement |
+| **Human** | Money, public posts, credentials, destructive acts | Everyday eng execution |
 
 ## Fit for purpose (every pass)
-Codex exists to stop over-engineering. On every pass:
-- Mean lean execution — smallest correct change that meets acceptance
+- Smallest correct change that meets acceptance
 - No theater — no extra agents, essays, or clouds for ceremony
-- No enterprise-from-day-one — iterate; don’t rebuild the OS to fix a latch
+- No enterprise-from-day-one — iterate
 - Stop when the check passes
-
-If a step doesn’t change the outcome, skip it.
+- **Friend test** OS docs before they hit git (`GIBBERISH-CHECK.md`)

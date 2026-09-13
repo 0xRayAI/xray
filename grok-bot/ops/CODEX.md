@@ -1,5 +1,8 @@
-# Codex — first-order law for this Grok Bot fleet
-Source: 0xRay xray/codex.json (69 terms). Worn here as rules + critic receipts (no PreToolUse).
+# Codex (always-on coding discipline)
 
-Always-on: 1, 2, 7, 10, 11, 17, 29, 59, 66, 67, 68, 69.
-Skill: Codex fleet constitution (sand-workflow:codex-fleet-constitution)
+Short form of the coding constitution for this fleet.
+
+**Always on:** stay on task · no stubs · surgical edits · YAGNI · no new surface without need  
+Full skill: `skills/codex-fleet-constitution/SKILL.md`
+
+On Grok Bot these are **rules + review**, not a fake tool-block floor.
