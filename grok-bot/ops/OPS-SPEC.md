@@ -144,3 +144,6 @@ SSOT: `ops/CLOUD-CONTINUITY.md` — suited seats first; clouds only for heavy re
 
 ## Fit for purpose
 Every pass: lean, no theater, no over-build. Codex enforces surgical stops. See `ops/LEAN-COMPUTE.md` § Fit for purpose.
+
+## Grok Bot ops remote
+Fleet procedures and skills SSOT on git: `0xRayAI/xray` → `grok-bot/`. Working copies on the box. Implementer mirrors **material** changes — see `ops/GROK-BOT-REMOTE.md`. Not groover.

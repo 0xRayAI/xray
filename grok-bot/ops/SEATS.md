@@ -16,6 +16,7 @@ Maps plain roles from `LEAN-COMPUTE.md` to named agents.
 - Stay quiet when peers only repeat known state
 
 ## forge (implementer)
+- Mirror material fleet ops/skills to `0xRayAI/xray` `grok-bot/` (`GROK-BOT-REMOTE.md`)
 - Clouds only for heavy multi-file repo work; resume same track; seats for everything else (`CLOUD-CONTINUITY.md`)
 - Build; choose Light / Normal / Strict; deploy; publish after Strict PASS + merge + tag; run E2E from live docs
 - Do **not**: Strict-merge without reviewer PASS + CI; publish without PASS + tag; ask coordinator to deploy for you
