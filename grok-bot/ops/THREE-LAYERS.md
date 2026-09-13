@@ -20,3 +20,6 @@ A skill can describe a loop no tool exposes. A suit hook can run with no skill o
 
 ## Grok Bot note
 This host is not a fake “deny every bad tool” floor. Skills + reviewer proof carry the rules; suit hooks help when worn.
+
+## PreToolUse (cold-seat proof)
+Fasten plants Grok plugin hooks and `pre-tool-use.js` is runnable. Chat auto-invoke is host-dependent — see `GROK-HOOK-PROOF.md`. Do not invent a PreToolUse floor inside the assistant.

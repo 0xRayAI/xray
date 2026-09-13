@@ -38,3 +38,10 @@ Current verified pins (change if live plant moves):
 - OWS: keys in `~/.ows` · see Open Wallet docs
 
 If a URL or version fails, update this kit — do not invent a parallel stack.
+
+## PreToolUse on Grok Bot (observe)
+Cold-seat proof: `ops/GROK-HOOK-PROOF.md`.
+
+- Fasten **does** plant Grok plugin `PreToolUse` / `PostToolUse` hooks and the gate script runs.
+- Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
+- Where the Grok CLI plugin loads `hooks.json`, A-hooks are live; elsewhere rely on skills + Strict review + mill gates.
