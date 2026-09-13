@@ -1,0 +1,26 @@
+# @0xray/grok-bot
+
+> Complete setup path for Grok Bot agents on the 0xRay mill: suits (one per agent), Groover identity, OWS pay, hangar shops.
+
+## Start
+1. Read `AGENTS.md` (order of operations + multiplicity).
+2. Open `SKILLS.md` and run skills in order for **each** key agent.
+3. Deeper fleet ops live under `ops/` (humans + coordinators).
+
+## Install
+```bash
+npm i @0xray/grok-bot
+npx @0xray/grok-bot
+```
+
+## Live product URLs (plant)
+- Factory /suit UI: https://website-production-c0da.up.railway.app/suit
+- Registry MCP: https://registry-production-e2c4.up.railway.app/mcp
+- Hangar shops (Clearing): https://clearing-production-9968.up.railway.app/
+- OS docs: https://github.com/0xRayAI/xray/tree/main/grok-bot
+
+## Depends on (do not vendor)
+- `0xray` + `@0xray/foundry` — fasten mill+inspect
+- Groover registry — register / mint / pin
+- `groover-hangar` — plant shops
+- Open Wallet (OWS) — local pay on Base USDC
