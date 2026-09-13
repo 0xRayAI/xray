@@ -4,6 +4,9 @@ description: >-
   use this when registering a seat with Groover identity, minting a suit,
   pinning on-chain identity, or closing register→mint→pin→shops
 ---
+## Multiplicity
+Run this **per agent** that needs a DID/pin — after that agent’s suit exists. Do not reuse another agent’s agentId.
+
 # Identity loop: register → mint → pin → shops
 
 Product UI: https://website-production-c0da.up.railway.app/suit  

@@ -1,0 +1,40 @@
+# AGENTS.md — @0xray/grok-bot
+
+You are setting up **Grok Bot agents** on the 0xRay factory OS.
+
+## Goal
+For **each key agent** (coordinator, implementer, reviewer, Dist, …):
+
+1. Fasten its **own suit** (mill + inspect)  
+2. Register / mint / pin identity (Groover) when it needs a DID  
+3. Set up **OWS pay** if it will call paid shops  
+4. Plant **hangar** shops if it uses the hangar economy  
+
+Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
+
+## Order (complete path)
+Follow `SKILLS.md` in this order **per agent**:
+
+| Step | Skill | What |
+|------|-------|------|
+| A | `fasten-suit-per-agent` | Project root + mint + inspect proof |
+| B | `groover-factory-parity` | Register → Dynamo citation → mint → ERC-8004 → pin (when identity needed) |
+| C | `setup-ows-pay` | Local OWS wallet + fund USDC on Base + how to settle 402s |
+| D | `plant-hangar-shops` | `npx groover-hangar` + call a shop |
+
+Humans: same path; start at `README.md`.
+
+## Rules
+- Chat “done” is not proof — keep inventory, inspect `ok`, txs, curls.
+- Friend test any public copy (`ops/GIBBERISH-CHECK.md`).
+- Coordinator routes; implementer executes; do not ask the coordinator to mint/deploy for you.
+- This package **orchestrates**. It does not replace `0xray` or Groover.
+
+## Adjust from plant (monitor)
+Current verified pins (change if live plant moves):
+- Suit: `0xray@4.0.12` · `@0xray/foundry@0.1.10`
+- Registry MCP + website URLs — see `llms.txt`
+- Hangar: `npx groover-hangar` · shops on Clearing Base USDC
+- OWS: keys in `~/.ows` · see Open Wallet docs
+
+If a URL or version fails, update this kit — do not invent a parallel stack.

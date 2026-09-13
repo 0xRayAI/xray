@@ -1,0 +1,38 @@
+{
+  "name": "@0xray/grok-bot",
+  "version": "0.1.0",
+  "description": "Complete setup path for Grok Bot agents on 0xRay: per-agent suits, Groover identity, OWS pay, hangar shops",
+  "license": "MIT",
+  "bin": {
+    "grok-bot": "bin/grok-bot.js"
+  },
+  "files": [
+    "bin",
+    "llms.txt",
+    "AGENTS.md",
+    "SKILLS.md",
+    "README.md",
+    "ops",
+    "skills"
+  ],
+  "scripts": {
+    "start": "node bin/grok-bot.js"
+  },
+  "keywords": [
+    "grok-bot",
+    "0xray",
+    "mill",
+    "suit",
+    "groover",
+    "hangar",
+    "agents"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xRayAI/xray.git",
+    "directory": "grok-bot"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
