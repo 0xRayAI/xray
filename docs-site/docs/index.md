@@ -24,6 +24,7 @@ npm install 0xray
 
 ## 4.0
 
+- [Ecosystem](./architecture/ecosystem) — full Base stack (suit, mill, Groover, hangar, Clearing)
 - [Vision](./architecture/v4-vision) — exo, not toolset
 - [Now](./architecture/v4-now) — station card for the next session
 - [Left](./architecture/v4-left) — shipped vs still open
