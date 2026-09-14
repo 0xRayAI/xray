@@ -14,4 +14,9 @@ Protocol: **SEED → WORK (`echo hook-probe-ben-001`) → COMPACT → QUIZ → F
 
 If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-compact.js` with Cursor-shaped stdin and `--event-class=cursor-precompact-synthetic`. Host fire is `cursor-host-precompact`.
 
-Receipt: `RECEIPT-PATH-C.md`.
+| Receipt | Compact class | Note |
+|---------|---------------|------|
+| `RECEIPT-PATH-C.md` | `cursor-precompact-synthetic` | PR #45. Manual stdin. Not host fire. |
+| `RECEIPT-HOST-PRECOMPACT.md` | `cursor-host-precompact-FAIL` | HOST-FIRE fill. Host did not spawn `preCompact`. Seed survived on disk. |
+
+EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run.

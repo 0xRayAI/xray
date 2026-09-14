@@ -99,6 +99,10 @@ describe('Cursor cloud hooks adapter', () => {
     };
     expect(template.version).toBe(1);
     expect(repo.version).toBe(1);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/invoke-probe.sh'))).toBe(true);
+    for (const cmd of Object.values(repo.hooks).flat().map((h) => h.command)) {
+      expect(cmd).toContain('invoke-probe.sh');
+    }
     for (const hooks of [template.hooks, repo.hooks]) {
       expect(hooks.sessionStart).toBeUndefined();
       expect(hooks.preToolUse?.[0]?.command).toContain('pre-tool-use.js');
