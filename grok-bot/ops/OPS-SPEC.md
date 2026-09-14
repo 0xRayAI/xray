@@ -1,6 +1,6 @@
 # Fleet operating spec
 
-How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`. `sync` is parked — off everyday eng/ops until pinged.
+How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`.
 
 ## North star
 Wear a thin mill suit. Agents execute and prove. Humans approve money, public posts, and credentials.
@@ -22,10 +22,11 @@ Merged code is not done until it is on the default branch **and** live where it 
 source → owner → artifact → evidence → next owner
 
 ## Review levels
-See `LEAN-COMPUTE.md` — Light / Normal / Strict; Grok lean-wake gleanings. No theater.
+See `LEAN-COMPUTE.md` — Light / Normal / Strict. No theater.
 
 ## Cloud vs seats
 See `CLOUD-CONTINUITY.md` — seats first; clouds only for heavy repo surgery.
+**CoS does not call CloudAgent** — forge owns eng clouds (fatal if broken).
 
 ## Three layers
 See `THREE-LAYERS.md` — skills · suit · tools.
@@ -52,3 +53,6 @@ External send · spend · deletes · taste calls · mint/rotate publish tokens
 
 ## Fit for purpose
 Surgical. No rabbit holes. No enterprise-from-day-one. Codex enforces the stop.
+
+## Friend test — HARD GATE (all comms)
+See `GIBBERISH-CHECK.md`. Every material send needs a plain proof line (“A friend would hear: …”). Stamped PASS alone is invalid. Herald/critic/forge/CoS refuse jargon.
