@@ -28,4 +28,4 @@ Draft public copy after ship-ready; friend test; verify URLs after live.
 Do not post without human approval.
 
 ## sync
-Parked. Silent unless pinged.
+Parked. Silent unless pinged. Off everyday eng/ops while parked.

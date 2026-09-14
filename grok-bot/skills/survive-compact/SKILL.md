@@ -35,12 +35,8 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 ## CLI seats (optional)
 If the Grok CLI plugin host fires `PreCompact` / `PostCompact`, Repertoire + `STATION.md` heat for you — still **Read STATION.md** after compact; the host does not inject it.
 
-## Lean wake
-Cheap resume. Do not reload the world.
-
-- Disk truth first (STATION / WAVEBOARD / memory). Executors return short summaries — do not paste their full context back into the parent.
-- Keep this skill's wording stable so the host can cache the prompt.
-- A group thread is not STATION. Groups share one chat; park silent seats. Survival state lives on disk.
+## Lean wake (Dist↔grok 2026-09-14)
+Cheap resume. Do not reload the world. Disk truth first (STATION / WAVEBOARD / memory); executors return short summaries — do not paste their full context back into the parent. Keep this skill's wording stable so the host can cache the prompt. A group thread is not STATION: groups share one chat; park silent seats; survival state lives on disk.
 
 ## Done when
 You can state intent, live track ids, and what not to redo — from disk — before the next tool call.

@@ -1,6 +1,6 @@
 # Fleet operating spec
 
-How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`.
+How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`. `sync` is parked — off everyday eng/ops until pinged.
 
 ## North star
 Wear a thin mill suit. Agents execute and prove. Humans approve money, public posts, and credentials.
