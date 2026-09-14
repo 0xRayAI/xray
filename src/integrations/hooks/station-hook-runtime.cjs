@@ -2,6 +2,7 @@
  * Station heat — compaction / host-swap card.
  * SSOT remains session-boot.json. STATION.md is the projection the model Reads.
  * Grok ignores SessionStart/UserPromptSubmit stdout; disk + AGENTS.md is the contract.
+ * Heat writers merge stock fields; unknown keys and ## Durable / ## Seed survive.
  */
 const { execFileSync } = require("child_process");
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
@@ -363,6 +364,77 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   };
 }
 
+const STOCK_STATION_PREFIXES = [
+  "hot-swap:",
+  "host:",
+  "intent:",
+  "plan:",
+  "git:",
+  "repertoire:",
+  "working:",
+];
+
+const STOCK_STATION_FOOTERS = [
+  "continue this card. compaction and host change are the same cut. do not cold-start.",
+  "grok does not inject this file — read it. opencode injects. do not thicken the grok exo.",
+];
+
+function isDurableStationHeading(line) {
+  return /^##\s+(durable|seed)\b/i.test(String(line || "").trim());
+}
+
+function isStockStationLine(line) {
+  const trimmed = String(line || "").trim();
+  if (!trimmed) return true;
+  if (/^#\s+station\s*$/i.test(trimmed)) return true;
+  const lower = trimmed.toLowerCase();
+  if (STOCK_STATION_FOOTERS.includes(lower)) return true;
+  return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
+}
+
+/** Keep unknown keys and ## Durable / ## Seed blocks across heat rewrites. */
+function extractPreservedStationLines(existing) {
+  if (!existing || typeof existing !== "string") return [];
+  const preserved = [];
+  let inDurable = false;
+  for (const line of existing.split(/\r?\n/)) {
+    if (isDurableStationHeading(line)) {
+      inDurable = true;
+      preserved.push(line);
+      continue;
+    }
+    if (inDurable) {
+      const trimmed = line.trim();
+      if (/^##\s+\S/.test(trimmed) && !isDurableStationHeading(line)) {
+        inDurable = false;
+      } else {
+        preserved.push(line);
+        continue;
+      }
+    }
+    if (isStockStationLine(line)) continue;
+    preserved.push(line);
+  }
+  while (preserved.length && !preserved[0].trim()) preserved.shift();
+  while (preserved.length && !preserved[preserved.length - 1].trim()) preserved.pop();
+  return preserved;
+}
+
+function mergeStationMarkdown(stockMd, existingMd) {
+  const preserved = extractPreservedStationLines(existingMd);
+  if (!preserved.length) return stockMd;
+  const stock = String(stockMd || "");
+  const block = preserved.join("\n");
+  const marker = "Continue this card.";
+  const idx = stock.indexOf(marker);
+  if (idx === -1) {
+    return `${stock.replace(/\s*$/, "")}\n\n${block}\n`;
+  }
+  const head = stock.slice(0, idx).replace(/\s*$/, "");
+  const foot = stock.slice(idx);
+  return `${head}\n\n${block}\n\n${foot}`;
+}
+
 function formatStationMarkdown(fields) {
   const host = fields.host || "unknown";
   const profile = fields.suit_profile || "guided";
@@ -389,12 +461,23 @@ function formatStationMarkdown(fields) {
   return lines.join("\n");
 }
 
+function readExistingStationMarkdown(root) {
+  const dest = stationMarkdownPath(root);
+  if (!existsSync(dest)) return "";
+  try {
+    return readFileSync(dest, "utf8");
+  } catch {
+    return "";
+  }
+}
+
 function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
     const dest = stationMarkdownPath(root);
-    writeFileSync(dest, formatStationMarkdown(fields));
+    const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
+    writeFileSync(dest, next);
     return dest;
   } catch {
     return null;
@@ -416,6 +499,8 @@ module.exports = {
   readRepertoireWorking,
   formatWorkingLine,
   applyStationHeat,
+  extractPreservedStationLines,
+  mergeStationMarkdown,
   formatStationMarkdown,
   writeStationMarkdown,
 };

@@ -7,10 +7,54 @@ import {
   applyStationHeat,
   clipIntent,
   formatStationMarkdown,
+  mergeStationMarkdown,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 import { buildSessionBootPayload, writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.js';
+
+const SEEDED_CUSTOM_KEYS = [
+  'Ticket: COMPACT-AB-001',
+  'Seed: factory-seed-0.2',
+  'Open cloud: bc-abc123',
+  'Unfinished path: src/integrations/hooks/station-hook-runtime.cjs',
+];
+
+function seedStationCard(root: string, extras: string[] = SEEDED_CUSTOM_KEYS) {
+  const dest = path.join(root, '.xray', 'state', 'STATION.md');
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.writeFileSync(
+    dest,
+    [
+      '# Station',
+      '',
+      'Host: grok (guided)',
+      'Intent: old intent before compact',
+      'Plan: (none)',
+      'Git: n/a',
+      'Repertoire: not installed (memory_routing stays off)',
+      '',
+      ...extras,
+      '',
+      '## Durable',
+      'Keep this seed block across compact.',
+      '',
+      'Continue this card. Compaction and host change are the same cut. Do not cold-start.',
+      'Grok does not inject this file — Read it. OpenCode injects. Do not thicken the Grok exo.',
+      '',
+    ].join('\n'),
+  );
+  return dest;
+}
+
+function expectCustomStationKeys(card: string) {
+  for (const line of SEEDED_CUSTOM_KEYS) {
+    expect(card).toContain(line);
+    expect(card.split(line).length - 1).toBe(1);
+  }
+  expect(card).toContain('## Durable');
+  expect(card).toContain('Keep this seed block across compact.');
+}
 
 function gitInit(root: string) {
   execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
@@ -241,6 +285,107 @@ describe('station hot-swap', () => {
       });
       expect(dest).toBe(path.join(tmp, '.xray', 'state', 'STATION.md'));
       expect(fs.readFileSync(dest || '', 'utf8')).toContain('Host: openclaw (guided)');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('mergeStationMarkdown keeps custom keys and Durable while updating stock', () => {
+    const existing = [
+      '# Station',
+      '',
+      'Host: grok (guided)',
+      'Intent: old intent',
+      ...SEEDED_CUSTOM_KEYS,
+      '',
+      '## Durable',
+      'Keep this seed block across compact.',
+      '',
+      'Continue this card. Compaction and host change are the same cut. Do not cold-start.',
+      '',
+    ].join('\n');
+    const stock = formatStationMarkdown({
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'survive the cut after compact',
+      planLine: 'merge station on PreCompact',
+      git: { branch: 'cursor/station-merge', head: 'deadbeef' },
+      repertoireResume: 'Repertoire: on — 8 signals',
+      workingLine: 'Working: station-merge',
+    });
+    const merged = mergeStationMarkdown(stock, existing);
+    expect(merged).toContain('Host: grok (frontier)');
+    expect(merged).toContain('Intent: survive the cut after compact');
+    expect(merged).toContain('Repertoire: on — 8 signals');
+    expect(merged).toContain('Working: station-merge');
+    expect(merged).not.toContain('Intent: old intent');
+    expectCustomStationKeys(merged);
+  });
+
+  it('writeStationMarkdown merges a seeded card instead of wipe-then-write', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-merge-'));
+    try {
+      const dest = seedStationCard(tmp);
+      writeStationMarkdown(tmp, {
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: 'survive the cut after compact',
+        planLine: 'merge station on PreCompact',
+        git: { branch: 'cursor/station-merge', head: 'deadbeef' },
+        repertoireResume: 'Repertoire: on — 8 signals',
+        workingLine: 'Working: station-merge',
+      });
+      const card = fs.readFileSync(dest, 'utf8');
+      expect(card).toContain('Host: grok (frontier)');
+      expect(card).toContain('Intent: survive the cut after compact');
+      expect(card).toContain('Plan: merge station on PreCompact');
+      expect(card).toContain('Git: cursor/station-merge@deadbeef');
+      expect(card).toContain('Repertoire: on — 8 signals');
+      expect(card).toContain('Working: station-merge');
+      expect(card).not.toContain('Intent: old intent before compact');
+      expectCustomStationKeys(card);
+
+      writeStationMarkdown(tmp, {
+        host: 'hermes',
+        suit_profile: 'guided',
+        intent: 'second heat still merges',
+        repertoireResume: 'Repertoire: on — 8 signals',
+        workingLine: 'Working: last post_compact',
+      });
+      const again = fs.readFileSync(dest, 'utf8');
+      expect(again).toContain('Host: hermes (guided)');
+      expect(again).toContain('Intent: second heat still merges');
+      expect(again).toContain('Working: last post_compact');
+      expectCustomStationKeys(again);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('PreCompact writeSessionBoot path keeps custom Station keys', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-merge-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          suit_temperament: { profile: 'auto' },
+          memory_routing: { enabled: false, provider: 'null' },
+        }),
+      );
+      const dest = seedStationCard(tmp);
+      const payload = buildSessionBootPayload(tmp, '0xray/grok-compact', {
+        host: 'grok',
+        hookEvent: 'pre_compact',
+        intent: 'COMPACT-AB-001 survive compact without wiping seed',
+      });
+      writeSessionBoot(tmp, payload);
+      const card = fs.readFileSync(dest, 'utf8');
+      expect(card).toContain('Host: grok');
+      expect(card).toContain('Intent: COMPACT-AB-001 survive compact without wiping seed');
+      expect(card).not.toContain('Intent: old intent before compact');
+      expectCustomStationKeys(card);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
