@@ -22,7 +22,7 @@ Merged code is not done until it is on the default branch **and** live where it 
 source → owner → artifact → evidence → next owner
 
 ## Review levels
-See `LEAN-COMPUTE.md` — Light / Normal / Strict. No theater.
+See `LEAN-COMPUTE.md` — Light / Normal / Strict; Grok lean-wake gleanings. No theater.
 
 ## Cloud vs seats
 See `CLOUD-CONTINUITY.md` — seats first; clouds only for heavy repo surgery.
