@@ -20,5 +20,7 @@ export const persistRepertoireWorking = impl.persistRepertoireWorking;
 export const readRepertoireWorking = impl.readRepertoireWorking;
 export const formatWorkingLine = impl.formatWorkingLine;
 export const applyStationHeat = impl.applyStationHeat;
+export const extractPreservedStationLines = impl.extractPreservedStationLines;
+export const mergeStationMarkdown = impl.mergeStationMarkdown;
 export const formatStationMarkdown = impl.formatStationMarkdown;
 export const writeStationMarkdown = impl.writeStationMarkdown;
