@@ -5,7 +5,7 @@
  * This module does not replace thinDispatch or Codex. It only scales *ceremony*
  * (spawn-plan deny, synthesis, confer) by host strength.
  *
- * Frontier (Grok 4.6 / Grok Build): engine available, spawn warns if no plan.
+ * Frontier (Grok 4.6 / Grok Build / Cursor cloud): engine available, spawn warns if no plan.
  * Guided (OpenCode / Hermes / OpenClaw, including free models): full v2 ceremony.
  * Missing config → guided (existing consumers unchanged).
  */
@@ -25,7 +25,7 @@ const stationHeat = requireCjs('../integrations/hooks/station-hook-runtime.cjs')
   writeStationMarkdown: (root: string, fields: Record<string, unknown>) => string | null;
 };
 
-export type SuitHost = 'grok' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
+export type SuitHost = 'grok' | 'cursor' | 'hermes' | 'opencode' | 'openclaw' | 'generic';
 export type SuitProfile = 'frontier' | 'guided' | 'strict';
 export type SuitProfileOrAuto = 'auto' | SuitProfile;
 export type CeremonyLevel = 'full' | 'lite';
@@ -39,6 +39,7 @@ export interface SuitTemperamentConfig {
 
 export const DEFAULT_HOST_PROFILES: Record<SuitHost, SuitProfile> = {
   grok: 'frontier',
+  cursor: 'frontier',
   hermes: 'guided',
   opencode: 'guided',
   openclaw: 'guided',
@@ -67,6 +68,7 @@ export function loadSuitTemperamentRaw(
 function isSuitHost(value: unknown): value is SuitHost {
   return (
     value === 'grok' ||
+    value === 'cursor' ||
     value === 'hermes' ||
     value === 'opencode' ||
     value === 'openclaw' ||

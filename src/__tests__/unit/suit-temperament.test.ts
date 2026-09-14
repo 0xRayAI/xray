@@ -28,8 +28,10 @@ describe('suit temperament (v4)', () => {
 
   it('auto uses host defaults', () => {
     expect(resolveSuitProfile({ profile: 'auto' }, 'grok')).toBe('frontier');
+    expect(resolveSuitProfile({ profile: 'auto' }, 'cursor')).toBe('frontier');
     expect(resolveSuitProfile({ profile: 'auto' }, 'hermes')).toBe('guided');
     expect(DEFAULT_HOST_PROFILES.opencode).toBe('guided');
+    expect(DEFAULT_HOST_PROFILES.cursor).toBe('frontier');
   });
 
   it('explicit profile wins over host', () => {
