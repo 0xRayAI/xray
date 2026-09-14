@@ -1,29 +1,30 @@
 ---
 name: Synaptical comms
 description: >-
-  use this when writing house comms — X, PRs, OS docs, seat messages, board —
-  plain first, friend test, Done→Verify→Reflect→Next
+  use this when writing house comms — H lane (human/public) HARD friend-test; B
+  lane (bot-internal) compressed synaptical to save tokens
 ---
-# House comms
+# Synaptical comms
 
-**Tidy. Succinct. Human-friendly.** Plain words first. Short beats.
+**Two lanes (Blaze 2026-09-14):**
 
-## Where it applies
-PRs · public posts · **`grok-bot/` OS docs** · seat↔seat · board updates.
+| Lane | When | Style |
+|------|------|-------|
+| **H — Human / public** | Blaze, Dist/X, public PRs/docs, board needing human | Plain first. HARD friend-test. Proof: **A friend would hear:** … |
+| **B — Bot internal** | seat↔seat only (eng/dist/ops), no human action | **Compressed synaptical** — stamp · Done · Verify · Next · ids. Token-cheap. Quiet on known-state acks. |
 
-## Friend test (required)
-Would someone outside the fleet get it in ~3 seconds?  
-Gloss jargon on first use or cut it. Fail → rewrite.  
-Checklist: `ops/GIBBERISH-CHECK.md`.
+Lane B does **not** waive Lane H. Human audience → H.
 
-## Status beat (material only)
-1. **Done** — what landed (Done = pushed/live)  
-2. **Verify** — how we know  
-3. **Reflect** — what worked / what didn’t  
-4. **Next** — from gaps: no approval / needs human / not now  
+## HARD GATE (Lane H)
+Before material H send: `ops/GIBBERISH-CHECK.md` + proof line. Stamp-only PASS invalid. Herald/critic/forge/CoS refuse H-jargon.
 
-## Stamps
-If you use product stamps, pair stamp + plain name on first use. Never stamp-only.
+## Lane B (experiment)
+Use Meaningful Compression / synaptical concurrency dense form. Prefer one short beat over essays. Seat stamps OK (`SEAT-STAMPS.md`). Still refuse pure noise.
 
-## Public posts
-Human approval required. Friend test PASS before post.
+## Status beat
+**Done** · **Verify** · **Reflect** · **Next** (compress hard on Lane B)
+
+## Public Dist
+Always Lane H. Use Dist 0xRayAI publish skill. No cut-lines by default. Offer→deliver. Cadence in CADENCE.md.
+
+See also `ops/SYNAPTICAL-LANES.md`.

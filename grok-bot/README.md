@@ -1,5 +1,9 @@
 # @0xray/grok-bot
 
+
+## Start here
+
+Read [`ops/OPS-CATALOG.md`](ops/OPS-CATALOG.md) for operating docs and the bot-talk catalog.
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
 Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one suit per key agent**).  

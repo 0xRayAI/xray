@@ -19,3 +19,7 @@ Board noise, one-off receipts, product-only docs, tiny typos you will batch late
 5. Merge when green.
 
 Seats first. Cloud only if the diff is heavy.
+
+## Weekday cadence (Blaze 2026-09-14)
+**Weekdays ~11:28 America/Chicago** — CoS routine cards forge to mirror material ops/skills into `grok-bot/`.
+Empty diff → quiet. Material → Normal PR + friend-test proof line. Not weekends unless Blaze asks.

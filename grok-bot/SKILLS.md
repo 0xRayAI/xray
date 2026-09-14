@@ -23,3 +23,9 @@ Primary scripts for agents. Run in order for **each** key agent.
 `ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md`
 
 Same problem or open PR? Resume that cloud (`ops/CLOUD-CONTINUITY.md`). After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.
+
+## Catalog (2026-09-14)
+
+- `skills/dist-0xrayai-publish/` — Dist posts as @0xRayAI (friend-test + cadence)
+- `ops/OPS-CATALOG.md` — start-here index for op proc + Dist docs + LEXICON
+- `ops/SYNAPTICAL-LANES.md` — H (human/public) vs B (bot-internal) speaking lanes
