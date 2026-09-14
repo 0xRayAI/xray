@@ -32,7 +32,7 @@ SessionStart / UserPromptSubmit
   → PreCompact / PostCompact (station heat)
 ```
 
-Hosts: Grok `hooks.json`, OpenCode plugin `tool.execute.before/after`, Hermes `onPreToolCall` / `onPostToolCall`, OpenClaw `xray-pre-tool`. Shared entry: `src/integrations/enforcement-gate.ts` + `src/integrations/hooks/delegation-gate-runtime.mjs`.
+Hosts: Grok `hooks.json`, Cursor `.cursor/hooks.json` (`preToolUse` / `preCompact`; no `sessionStart` on managed cloud), OpenCode plugin `tool.execute.before/after`, Hermes `onPreToolCall` / `onPostToolCall`, OpenClaw `xray-pre-tool`. Shared entry: `src/integrations/enforcement-gate.ts` + `src/integrations/hooks/delegation-gate-runtime.mjs`.
 
 ### B. ProcessorManager (legacy / boot compat)
 
@@ -156,6 +156,8 @@ These are the **OS gates**. Not ProcessorManager.
 | `scheduleAutonomousReportingMarker` | post | SessionStart | `reports/.autonomous-reporting-scheduled.json` | same | `autonomous_reporting` | live-side-effect (ON) |
 | `runInferenceImprovementLight` | post | SessionStart | Light workflow JSON under `.xray/inference/` | same | skips if `inference_governance.enabled === false` (current plant: false) | off on current plant |
 | Grok session / compact | pre/post | SessionStart, UserPromptSubmit, PreCompact, PostCompact | Session-boot + station + synthesis turn slice | `session-start.js` | `hooks.json` | **live-side-effect** |
+| `cursor-pre-tool-use` | pre | Cursor `preToolUse` | stdin JSON → `{permission:allow\|deny}`; same gate; first-tool Station boot | `src/integrations/cursor/hooks/pre-tool-use.js` | repo `.cursor/hooks.json` | **live-gate** when project hooks load |
+| Cursor preCompact | pre | Cursor `preCompact` | Station merge + `event_class` (`cursor-host-precompact` \| `cursor-precompact-synthetic`) | `pre-compact.js` | same | **live-side-effect** |
 | OpenCode plugin | pre/post | `tool.execute.before/after` | Codex inject + ProcessorManager subset + `evaluatePreToolGate` | `src/plugin/xray-codex-injection.ts` | `package.json` `opencode.plugin` | **live-gate** when OpenCode wears 0xray |
 | `beforeToolHook` / `afterToolHook` | pre/post | all hosts | ValidatorRegistry + optional ProcessorManager + v3 PostProcessor loop + govern | `src/integrations/enforcement-gate.ts` | none | live if host calls it; after-hook is non-blocking on errors |
 | Hermes pre/post | pre/post | `onPreToolCall` / processors | `evaluatePreToolGate` + ProcessorManager if present | `src/integrations/hermes-agent/bridge.mjs` | `npx 0xray hermes install` | **live-gate** when worn |

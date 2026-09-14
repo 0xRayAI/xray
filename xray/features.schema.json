@@ -104,7 +104,7 @@
         "profile": {
           "type": "string",
           "enum": ["auto", "frontier", "guided", "strict"],
-          "description": "auto = host_defaults (grok→frontier, hermes/opencode/openclaw→guided)"
+          "description": "auto = host_defaults (grok/cursor→frontier, hermes/opencode/openclaw→guided)"
         },
         "host_defaults": {
           "type": "object",

@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Cursor cloud hooks adapter** — repo `.cursor/hooks.json` (version 1) runs `preToolUse` / `preCompact` / `afterFileEdit` against 0xRay gates + Station merge. No `sessionStart` (unavailable on managed cloud). Path C seed: `examples/cursor-cloud-compact/` (COMPACT-BEN-001).
 - Mill inspect treats factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) as first-class with mill plant. `foundry.json` `shopPlant` names more shops. Not `"costume": true`. Nested mill **0.1.10**.
 - Exo agent map: root `llms.txt` (mill+inspect plant, 7 MCPs, hangar/`shopPlant` coexistence, Codex 69, no costume dump). README / AGENTS / SKILLS / Docusaurus no longer claim default 45-skill sync.
 - Pack → tmp suit proof: `npm run pack:tmp-proof` (and consumer smoke) installs the packed tgz, runs `foundry mint --skip-live`, plants factory hangar shops, and inspects without costume dump. Playwright n/a (mill CLI).
