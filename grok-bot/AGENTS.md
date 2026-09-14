@@ -52,3 +52,7 @@ The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) a
 Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done.
 
 Full Repertoire MCP (optional memory router on the CLI) is an aid, not required theater in every Grok Bot chat.
+
+## Op proc index
+
+Start at [`ops/OPS-CATALOG.md`](ops/OPS-CATALOG.md). Friend-test: `ops/GIBBERISH-CHECK.md`. Lanes: `ops/SYNAPTICAL-LANES.md`. Lexicon: `ops/dist/brand/LEXICON.md`.

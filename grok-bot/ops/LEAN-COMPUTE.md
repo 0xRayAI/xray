@@ -24,7 +24,7 @@ If another agent only repeats known state, do nothing. Speak up when ownership, 
 |------|------|----------|
 | **Implementer** | Build, deploy, publish, E2E from live docs | Ask the coordinator to deploy for them |
 | **Reviewer** | Strict reviews only | Light/Normal by default; merge; rewrite the fix |
-| **Coordinator** | Route, merge when rules allow, check proof | Deploy or implement |
+| **Coordinator** | Route, merge when rules allow, check proof, Dist drafts | Deploy, implement, **or launch/drive Cursor clouds** (card forge) |
 | **Human** | Money, public posts, credentials, destructive acts | Everyday eng execution |
 
 ## Fit for purpose (every pass)
@@ -35,12 +35,12 @@ If another agent only repeats known state, do nothing. Speak up when ownership, 
 - **Friend test** OS docs before they hit git (`GIBBERISH-CHECK.md`)
 
 ## Grok host gleanings (2026-09-14) — lean wakes
+- **PreToolUse** = Build/CLI only; chat seats use rules + Strict review (no fake hooks).
+- **Subagents** return summaries — parent skips full context reload.
+- **Workflows / skills** = focused seat + progress on disk; prefer stable prompt text (**prompt caching**).
+- **Groups** share one thread — keep membership tight; park silent seats; disk SSOT beats room chatter.
+- **Hooks + ACP** = tool routing on CLI plant path.
+- No host multi-plant sync/churn wake yet — **we** own cascade wakes + Dist reply-vs-quiet.
 
-How Grok actually spends tokens on a wake. Keep wakes cheap.
-
-- **PreToolUse hooks** run on the Build/CLI plant only. Chat seats: rules + Strict review. No fake hooks in the assistant.
-- **Subagents return summaries.** The parent skips a full context reload.
-- **Workflows and skills** = one focused seat + progress written to disk. Keep skill text stable (prompt caching).
-- **Groups share one thread.** Keep membership tight; park silent seats. Disk truth beats room chatter.
-- **Hooks + ACP** (CLI tool routing) live on the plant path, not in chat.
-- **No host multi-plant sync/churn wake yet.** Fleet owns cascade wakes (who to ping next) and Dist reply-vs-quiet (who speaks, who stays quiet).
+## CoS cloud refuse (2026-09-14)
+Coordinator must not launch/resume/dump eng CloudAgents. Card implementer. Ops law in `CLOUD-CONTINUITY.md` + `SEATS.md` — **not** a suit hook on chat.
