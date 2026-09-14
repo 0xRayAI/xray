@@ -17,6 +17,7 @@ If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-
 | Receipt | Compact class | Note |
 |---------|---------------|------|
 | `RECEIPT-PATH-C.md` | `cursor-precompact-synthetic` | PR #45. Manual stdin. Not host fire. |
-| `RECEIPT-HOST-PRECOMPACT.md` | `cursor-host-precompact-FAIL` | HOST-FIRE fill. Host did not spawn `preCompact`. Seed survived on disk. |
+| `RECEIPT-HOST-PRECOMPACT.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#1 fill. Host did not spawn `preCompact`. Seed survived on disk. |
+| `RECEIPT-HOST-PRECOMPACT-2.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#2 retry. STOP: `.cursor/hooks.json` absent at boot (snapshot pre-#45). No FILL. |
 
 EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run.
