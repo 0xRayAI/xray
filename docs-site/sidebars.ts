@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
       label: '4.0',
       items: [
         'architecture/v4-vision',
+        'architecture/ecosystem',
         'architecture/v4-now',
         'architecture/v4-foundry',
         'architecture/v4-left',
