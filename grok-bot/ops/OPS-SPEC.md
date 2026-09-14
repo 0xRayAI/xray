@@ -1,6 +1,6 @@
 # Fleet operating spec
 
-How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`.
+How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`. `sync` is parked — off everyday eng/ops until pinged.
 
 ## North star
 Wear a thin mill suit. Agents execute and prove. Humans approve money, public posts, and credentials.
@@ -22,7 +22,7 @@ Merged code is not done until it is on the default branch **and** live where it 
 source → owner → artifact → evidence → next owner
 
 ## Review levels
-See `LEAN-COMPUTE.md` — Light / Normal / Strict. No theater.
+See `LEAN-COMPUTE.md` — Light / Normal / Strict; Grok lean-wake gleanings. No theater.
 
 ## Cloud vs seats
 See `CLOUD-CONTINUITY.md` — seats first; clouds only for heavy repo surgery.

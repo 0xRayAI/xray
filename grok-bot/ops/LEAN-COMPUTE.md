@@ -33,3 +33,14 @@ If another agent only repeats known state, do nothing. Speak up when ownership, 
 - No enterprise-from-day-one — iterate
 - Stop when the check passes
 - **Friend test** OS docs before they hit git (`GIBBERISH-CHECK.md`)
+
+## Grok host gleanings (2026-09-14) — lean wakes
+
+How Grok actually spends tokens on a wake. Keep wakes cheap.
+
+- **PreToolUse hooks** run on the Build/CLI plant only. Chat seats: rules + Strict review. No fake hooks in the assistant.
+- **Subagents return summaries.** The parent skips a full context reload.
+- **Workflows and skills** = one focused seat + progress written to disk. Keep skill text stable (prompt caching).
+- **Groups share one thread.** Keep membership tight; park silent seats. Disk truth beats room chatter.
+- **Hooks + ACP** (CLI tool routing) live on the plant path, not in chat.
+- **No host multi-plant sync/churn wake yet.** Fleet owns cascade wakes (who to ping next) and Dist reply-vs-quiet (who speaks, who stays quiet).
