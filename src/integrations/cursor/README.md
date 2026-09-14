@@ -26,7 +26,7 @@ Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist
 
 - `cursor-host-precompact` — Cursor actually fired the hook
 - `cursor-precompact-synthetic` — script invoked with `--event-class=cursor-precompact-synthetic` (Path C fallback)
-- `cursor-host-precompact-FAIL` — HOST-FIRE fill ran; host did not spawn `preCompact` (see `examples/cursor-cloud-compact/RECEIPT-HOST-PRECOMPACT.md`)
+- `cursor-host-precompact-FAIL` — HOST-FIRE fill ran; host did not spawn `preCompact` (see `RECEIPT-HOST-PRECOMPACT.md`, `-2.md`, `-3.md`)
 
 ## Friend test
 
