@@ -15,7 +15,7 @@ Friend-test: **a friend would hear: do not replay Path C and call the original j
 
 **Do not rerun Path C.** That quiz already **PASS**ed after the lazy-load fix. Another stdin replay would not be a second host compact.
 
-**Do not FILL to force compact.** HOST-FIRE #5 filled past 85% of 500k and got **0** `event=preCompact`. This work thread compacted because the host summarized a long job, not because of a fill.
+**Do not FILL to force compact.** HOST-FIRE #5 filled past 85% of a **500k lore** window and got **0** `event=preCompact`. Arm S later read host **`context_window_size=256000`**. This work thread compacted because the host summarized a long job, not because of a fill. Do not swap 256k for 500k on B receipts.
 
 ## Two spaces (do not collapse)
 
@@ -37,7 +37,7 @@ Legend: **PASS** observed · **FAIL** observed · **OPEN** not yet earned on a p
 | E5 | Hot-swap card reconstructs (Grok Read contract) | After fix, live `.xray/state/STATION.md` exists. Intent stayed `(none yet)`. Working line can be overwritten by later `afterFileEdit` (`station snapshot` vs `last pre_compact`) | Same Read contract. Chat memory is not survival |
 | E6 | Repertoire organ on the compact path | Heat says **on** because `vendor/@0xray/repertoire/dist/provider/memory-routing-provider.js` exists. `features.json` `module_path` points at **`node_modules/@0xray/repertoire/...` which is absent**. Live routing path **FAIL** vs heat | Skill: do not bolt Repertoire MCP onto every chat seat as theater |
 | E7 | Forward motion after compact | Successor continued from Cursor summary + git tree (seat-ready PR). Break was Station-less Grok contract + dist import. After fix, motion is PR #57 + this map | Resume the same `bc-…`; do not relaunch; do not rebuild what disk shows done |
-| E8 | Usage truth | `cursor-cloud` `run-info` / `events`: **no** token meter. Cite dashboard + probe, not chars÷4 | Chat seat has no PreCompact stdin either |
+| E8 | Usage truth | `cursor-cloud` MCP: **no** token meter. Arm S host stdin (cite S, not B): fire3 **tokens=232105**, **`context_window_size=256000`**. Ticket lore 500k is not that number. B has **no** host tokens (writer died). Never chars÷4 | Chat seat has no PreCompact stdin either |
 
 ## What survived the real host compact (before the writer fix)
 
@@ -69,7 +69,7 @@ Did **not** survive as a card: `STATION.md`, `cursor-precompact.json`, a refresh
 | Candidate | Do it? |
 |-----------|--------|
 | Path C stdin replay | **No** — already PASS |
-| Another 500k FILL | **No** — already falsified as the emit lever |
+| Another 500k FILL | **No** — emit lever already falsified; host window on S is **256k**, not the ticket string |
 | New host compact, fixed writer, repertoire actually on the live `module_path`, no hand-invoke | **Yes, that is the remaining hard path** — only when the host summarizes again |
 | Grok Bot `survive-compact` as its own wake (Read STATION / session-boot / this map, name the live track, do not rebuild) | **Yes, constrained path — that is this turn’s Grok-Bot half** |
 
