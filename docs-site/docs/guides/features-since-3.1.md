@@ -4,7 +4,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 
 ## Unreleased — Factory-blip plant + factory-sound plant + shop plant first-class
 
-- Factory-blip plant: new factory plant sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect`. Dynamic registry. v0: still + Rippel five. Unknown id FAIL. Kapow growth later. No mill package bump.
+- Factory-blip plant: new factory plant sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect`. Dynamic registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a Blips original. Unknown id FAIL. No mill package bump.
 - Factory-sound plant: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Brief → seed → genre → wav → metrics receipt. Inspect reports last bed PASS/FAIL. Not costume. No mill package bump.
 - Sound render is a crystal-clear mill of Rippel SSOT topology (membrane kick / metal hat / duo bass / mixer). Prototype is lineage, not the quality bar. Tone.Offline blocked in Node. `phonk` first-class.
 

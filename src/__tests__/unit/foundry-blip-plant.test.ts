@@ -192,7 +192,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       pictureMode: 'motion:swirl',
       motionId: 'swirl',
     });
-    for (const id of ['still', 'orb', 'swirl', 'snap', 'waves', 'spark']) {
+    for (const id of ['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']) {
       const resolved = resolveMode(id === 'still' ? 'still' : `motion:${id}`);
       expect(resolved.ok, id).toBe(true);
       expect(resolved.motionId).toBe(id);
@@ -200,9 +200,6 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     const unknown = resolveMode('kenburns');
     expect(unknown.ok).toBe(false);
     expect(unknown.reason).toMatch(/unknown motion id/);
-    const kapow = resolveMode('motion:kapow');
-    expect(kapow.ok).toBe(false);
-    expect(kapow.reason).toMatch(/no renderer|growth|stub/);
   });
 
   it('renders still + Rippel five that PASS the gate and inspects the receipt', async () => {
@@ -279,7 +276,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         const again = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(again.receipt.seed).toBe(still.receipt.seed);
 
-        for (const id of V0_IDS.filter((name) => name !== 'still')) {
+        for (const id of [...V0_IDS.filter((name) => name !== 'still'), 'kapow']) {
           const rendered = renderBlip({
             root: tmp,
             brief: `night alley ${id}`,
@@ -299,8 +296,6 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       const unknown = renderBlip({ root: tmp, brief: 'nope', mode: 'kenburns' });
       expect(unknown.receipt.status).toBe('FAIL');
       expect(unknown.receipt.reason).toMatch(/unknown motion id/);
-      const kapow = renderBlip({ root: tmp, brief: 'later', pictureMode: 'motion:kapow' });
-      expect(kapow.receipt.status).toBe('FAIL');
       if (ffmpeg) {
         const restore = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(restore.receipt.status).toBe('PASS');

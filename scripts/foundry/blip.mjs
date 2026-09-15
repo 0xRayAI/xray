@@ -19,7 +19,7 @@ const HELP =
   "Factory-blip plant, sibling to mill + sound. FOUNDRY_ROOT overrides cwd.\n" +
   "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 → receipt.\n" +
   "v0 ids: still, orb, swirl, snap, waves, spark (Rippel five are imports).\n" +
-  "Unknown id FAIL. Kapow is growth later (stub FAIL).\n" +
+  "kapow is a Blips original on the registry. Unknown id FAIL.\n" +
   "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n";
 
 function argValue(argv, name, fallback) {

@@ -13,7 +13,7 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture, op
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports**. Unknown id FAIL. Kapow is growth later (stub FAIL).
+Rippel five are **imports**. `kapow` is a Blips original on the same registry. Unknown id FAIL.
 
 **Spine (headless, no browser):**
 

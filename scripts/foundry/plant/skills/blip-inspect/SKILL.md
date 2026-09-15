@@ -18,7 +18,7 @@ Missing mp4, unreadable mp4, or a thrown probe is **FAIL**. Never pass on a miss
 3. **Mode.** Receipt records a registry id (`still` or `motion:<id>`). Unknown id is FAIL.
 4. **Video.** Stream present. Audio required only when a bed was muxed.
 
-v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. Kapow is growth later.
+v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. `kapow` is a Blips original on the registry. Unknown id FAIL.
 
 Receipt: `.xray/blip/receipt.json`. Mp4 default: `.xray/blip/blip.mp4`.
 

@@ -54,7 +54,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 **Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
 
-**Blip plant:** New factory plant sibling to mill + sound (not a mill copy). Hangar shop pair later. `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|motion:orb` writes a 4.44s mp4. v0 motions: still + Rippel five. Inspect checks duration / mode id / file.
+**Blip plant:** New factory plant sibling to mill + sound (not a mill copy). Hangar shop pair later. `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|motion:orb` writes a 4.44s mp4. Registry: still + Rippel five + Blips `kapow`. Inspect checks duration / mode id / file.
 
 ## Memory routing + Repertoire (v3.3+)
 

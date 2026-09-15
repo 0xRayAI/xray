@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is growth later.",
+  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a Blips original (not a frozen Rippel enum).",
   "v0": ["still", "orb", "swirl", "snap", "waves", "spark"],
   "motions": [
     {
@@ -64,9 +64,9 @@
       "id": "kapow",
       "kind": "motion",
       "source": "blips",
-      "renderer": null,
-      "status": "growth",
-      "notes": "named later — stub FAIL until shipped"
+      "renderer": "kapow",
+      "status": "shipped",
+      "notes": "Blips punch/comic — not a Rippel import"
     }
   ]
 }

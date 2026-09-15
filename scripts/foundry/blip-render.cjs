@@ -4,7 +4,7 @@
  * Headless ffmpeg. Hangar shop is the later pair (not this plant PR).
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
- * Kapow is growth (stub FAIL). Unknown id FAIL. Never silent fallback.
+ * Kapow is a Blips original on the registry (not a Rippel import). Unknown id FAIL.
  *
  * Rippel imports: cloud ls-remote of htafolla/rippel-synapse-flow is 404 here.
  * Tray: animationIcons.ts Animation + ANIMATION_TO_VISUALIZATION. Commit not in tray.
@@ -269,6 +269,25 @@ function paintWaves(rgb, t) {
   };
 }
 
+/** kapow — Blips punch/comic. Factory burst, not a Rippel vis. */
+function paintKapow(rgb, t) {
+  const cx = (WIDTH - 1) / 2;
+  const cy = (HEIGHT - 1) / 2;
+  const burst = 0.35 + 0.65 * Math.abs(Math.sin(Math.PI * phase(t) * 2));
+  const reach = Math.min(WIDTH, HEIGHT) * 0.48 * burst;
+  return function paint(x, y) {
+    const dx = x - cx;
+    const dy = y - cy;
+    const d = Math.hypot(dx, dy);
+    const ang = Math.atan2(dy, dx);
+    const ray = Math.abs(Math.sin(ang * 4));
+    if (d < reach * 0.45 || (ray > 0.78 && d < reach)) {
+      return [255, Math.max(rgb.g, 180) * burst, rgb.b * 0.25];
+    }
+    return [12, 8, 8];
+  };
+}
+
 /** spark → particles. Factory dots from seed. */
 function paintSpark(rgb, t, seedHex) {
   const dots = [];
@@ -298,6 +317,7 @@ function painterFor(renderer, rgb, t, seedHex) {
   if (renderer === "snap") return paintSnap(rgb, t);
   if (renderer === "waves") return paintWaves(rgb, t);
   if (renderer === "spark") return paintSpark(rgb, t, seedHex);
+  if (renderer === "kapow") return paintKapow(rgb, t);
   return null;
 }
 
