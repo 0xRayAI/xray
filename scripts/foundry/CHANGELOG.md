@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip orb nucleus is orb-only (disc / eclipse / pulse, color + size on the grid). Swirl / snap / spark no longer stamp the same double circle.
+
 Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.
 
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait + shells + faces + ghost trails) that fills the 4.44s frame. Receipt `visualConfig.mesh` is the NFT fingerprint. Worn by all five viz and the Power Plant ident.

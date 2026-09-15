@@ -54,6 +54,7 @@ const MESH_FAMILIES = [
   "flower",
 ];
 const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
+const CORE_STYLES = ["disc", "eclipse", "pulse"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -467,9 +468,11 @@ function buildMesh(seedHex, brief) {
   if (faces.length > 36) faces = faces.slice(0, 36);
   const accentIndex = (rng() * THEME_CYCLE.length) | 0;
   const shells = 1 + ((rng() * 3) | 0);
+  const coreStyle = CORE_STYLES[(rng() * CORE_STYLES.length) | 0];
   return {
     family,
     gait,
+    coreStyle,
     id: `${family}-${gait}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
     verts,
     edges,
@@ -973,21 +976,8 @@ function paintCanvas(buf, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
-  const swell = 0.5 + 0.35 * kickAccent(beat) + 0.22 * andAccent(beat);
-  const core = minSide * (0.1 + 0.012 * swell);
-  stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
-    rim: 2.2,
-    glow: 6,
-    glowAlpha: 0.26,
-    rimColor: THEME.ink,
-  });
-  stampFocusDisc(buf, width, height, cx, cy, core * 0.4, THEME.gold, {
-    rim: 1.6,
-    glow: 3,
-    glowAlpha: 0.2,
-    rimColor: THEME.ink,
-  });
-  const tickR = core * 1.08;
+  const nucleus = paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
+  const tickR = nucleus.radius;
   const tickA = beat * Math.PI * 2;
   stampFocusDisc(
     buf,
@@ -1024,6 +1014,33 @@ function paintCanvas(buf, width, height, t, checksum) {
       rimColor: THEME.ink,
     });
   }
+}
+
+/** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
+function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checksum) {
+  const kick = kickAccent(beat);
+  const and = andAccent(beat);
+  const style = (mesh && mesh.coreStyle) || "disc";
+  const swell = style === "pulse" ? 0.55 + 0.55 * kick + 0.35 * and : 0.5 + 0.35 * kick + 0.22 * and;
+  const core = minSide * (style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell);
+  const t = checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
+  const outer = mixRgb((mesh && meshAccent(mesh, t)) || THEME.cyan, THEME.cyan, 0.55);
+  const inner = mixRgb(THEME.gold, THEME.cyan, 0.15 + 0.55 * and);
+  stampFocusDisc(buf, width, height, cx, cy, core * 1.08, outer, {
+    rim: 2.2,
+    glow: 6,
+    glowAlpha: 0.26,
+    rimColor: THEME.ink,
+  });
+  const ix = style === "eclipse" ? cx + Math.cos(beat * Math.PI * 2) * core * 0.22 : cx;
+  const iy = style === "eclipse" ? cy + Math.sin(beat * Math.PI) * core * 0.12 : cy;
+  stampFocusDisc(buf, width, height, ix, iy, core * (style === "eclipse" ? 0.48 : 0.4), inner, {
+    rim: 1.6,
+    glow: 3,
+    glowAlpha: 0.2,
+    rimColor: THEME.ink,
+  });
+  return { radius: core * 1.08, style };
 }
 
 /** Solid cyan/gold disc from center, then short rim. Mesh edges past the disc are not the body. */
@@ -1072,8 +1089,6 @@ function paintSacred(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
-  const minSide = Math.min(width, height);
-  const kick = kickAccent(beatPhase(checksum, t));
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 1.12,
     half: 2,
@@ -1096,12 +1111,6 @@ function paintSacred(buf, width, height, t, checksum) {
       { rim: 1.4, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
     );
   }
-  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.03 + kick * 0.006), mixRgb(THEME.gold, THEME.cyan, 0.4), {
-    rim: 1.5,
-    glow: 3,
-    glowAlpha: 0.2,
-    rimColor: THEME.ink,
-  });
 }
 
 /** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
@@ -1151,12 +1160,6 @@ function paintNeural(buf, width, height, t, checksum) {
         node,
       );
     }
-    stampFocusDisc(buf, width, height, cx, cy, 10 + kick * 3, mixRgb(THEME.cyan, THEME.gold, 0.3 + kick * 0.3), {
-      rim: 1.6,
-      glow: 4,
-      glowAlpha: 0.22,
-      rimColor: THEME.ink,
-    });
     return;
   }
   const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
@@ -1221,12 +1224,6 @@ function paintNeural(buf, width, height, t, checksum) {
       node,
     );
   }
-  stampFocusDisc(buf, width, height, cx, cy, 10 + kick * 3, mixRgb(THEME.cyan, THEME.gold, 0.3 + kick * 0.3), {
-    rim: 1.6,
-    glow: 4,
-    glowAlpha: 0.22,
-    rimColor: THEME.ink,
-  });
 }
 
 /** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
@@ -1291,7 +1288,6 @@ function paintParticles(buf, width, height, t, checksum) {
     color: THEME.blue,
   });
   const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
-  stampFocusDisc(buf, width, height, cx, cy, 8 + kick * 2, mixRgb(THEME.cyan, THEME.gold, 0.35 + kick * 0.25), mote);
   const mesh = checksum.mesh;
   const pts = worn && worn.pts;
   const circles = checksum.visualConfig.circles;
@@ -1515,6 +1511,7 @@ function fingerprintMesh(mesh) {
     dual: Boolean(mesh.dual),
     fill: Boolean(mesh.fill),
     ghost: Boolean(mesh.ghost),
+    coreStyle: mesh.coreStyle || "disc",
   };
 }
 
@@ -1575,4 +1572,5 @@ module.exports = {
   frameFill,
   MESH_FAMILIES,
   MESH_GAITS,
+  CORE_STYLES,
 };

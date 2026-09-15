@@ -506,6 +506,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
             faces: number[][];
             shells: number;
             scale: number;
+            coreStyle: string;
           };
         };
         sampleMotionFrames: (
@@ -546,6 +547,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       /^(tetra|octa|cube|prism|star|cage|spire|icosa|helix|torus|lattice|flower)$/,
     );
     expect(checksum.mesh.gait).toMatch(/^(tumble|shear|pulse|orbit|snap)$/);
+    expect(checksum.mesh.coreStyle).toMatch(/^(disc|eclipse|pulse)$/);
     expect(checksum.mesh.verts.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeGreaterThan(3);
     expect(checksum.mesh.faces.length).toBeGreaterThan(0);
