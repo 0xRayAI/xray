@@ -7,7 +7,7 @@ description: >-
 ---
 # Survive compact
 
-**Job:** keep mind and work alive when the host summarizes or trims the thread. Disk truth beats chat memory.
+**Job:** re-read disk and resume the live track after the host summarizes or trims the thread. Chat may lose early turns. Disk must not lose the ticket. Same-bc plus a re-fed summary is not proof the old context window survived as a mind.
 
 Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wait for them. This skill is the chat-seat path.
 
@@ -24,7 +24,7 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 2. **Name the live track** in one line: intent · open PR/cloud id · next beat · “already built / do not rebuild”
 3. **Clouds:** same problem/PR/ship → **resume** that `bc-…`. New outcome only → launch. Never duplicate a live track.
 4. **Code / docs:** read live `AGENTS.md` / `SKILLS.md` / `llms.txt` (and the repo path you are about to touch) before inventing a parallel stack or second implementation.
-5. **Write forward** if something material changed: update STATION or WAVEBOARD (short), and agent memory for lasting facts. Chat alone is not survival.
+5. **Write forward** if something material changed: update STATION or WAVEBOARD (short), and agent memory for lasting facts. Chat alone is not survival. Recalling a fact that was also in the summary or on disk is not a memory test.
 
 ## Do not
 - Bolt full Repertoire MCP onto every chat seat as theater
@@ -39,4 +39,4 @@ If the Grok CLI plugin host fires `PreCompact` / `PostCompact`, Repertoire + `ST
 Cheap resume. Do not reload the world. Disk truth first (STATION / WAVEBOARD / memory); executors return short summaries — do not paste their full context back into the parent. Keep this skill's wording stable so the host can cache the prompt. A group thread is not STATION: groups share one chat; park silent seats; survival state lives on disk.
 
 ## Done when
-You can state intent, live track ids, and what not to redo — from disk — before the next tool call.
+You can state intent, live track ids, and what not to redo — from **disk** — before the next tool call. That is disk survival, not a claim that pre-compact chat turns are still in context.

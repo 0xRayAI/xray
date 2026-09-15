@@ -16,7 +16,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [enterprise-cos-wave-loop](skills/enterprise-cos-wave-loop/SKILL.md) | Coordinator wave loop |
 | [synaptical-comms](skills/synaptical-comms/SKILL.md) | Friend-test house comms |
-| [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — keep mind across compaction |
+| [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Ops reference

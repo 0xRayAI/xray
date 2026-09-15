@@ -1,8 +1,10 @@
-# RECEIPT-HOST-PRECOMPACT — KILLER-DUAL Arm S survived
+# RECEIPT-HOST-PRECOMPACT — KILLER-DUAL Arm S disk after host fire
 
 First **live** Cursor `preCompact` on this suited cloud. DETECT from disk only. **Did not** hand-invoke `src/integrations/cursor/hooks/pre-compact.js`. **No npm. No FILL / chars÷4.**
 
-Friend-test: **A friend would hear: Cursor finally ran the project compact hook; we Read the Station card and still knew the ticket.**
+Friend-test: **A friend would hear: Cursor ran the project compact hook; Station on disk still has the ticket. That is mill-on-this-machine, not proof the conversation remembered the pre-compact turns.**
+
+Scoring law: `HOST-VS-MILL.md`. Chat may lose early turns. Disk must not lose the ticket.
 
 | | |
 |--|--|
@@ -13,7 +15,8 @@ Friend-test: **A friend would hear: Cursor finally ran the project compact hook;
 | Model (run-info) | `cursor-grok-4.6-high` |
 | Window cite | Ticket **Grok 500k locked**. Host `context_window_size`: **MISS** on fires 1–2; **256000** on fire 3. |
 | Compact class | **`cursor-host-precompact`** |
-| Survive | **yes** |
+| Disk (ticket / Durable / Seed / same `bc`) | **PASS** |
+| Conversation memory | **not scored** — no chat-only canary; summary + disk + this turn are not separable |
 
 ## DIAG
 
@@ -62,7 +65,7 @@ Repertoire: **on — 8 signals**.
 | Host fire? | Y (count=3) |
 | What next? | Continue this card. Prefer #56 CLI; park #54; keep #57 for dist-miss writer. Do not relaunch. |
 
-Survive: **yes** (disk quiz + continued the live job).
+Disk quiz: **PASS** (keys still on Station; same `bc`, not a new launch). Conversation memory: **not scored**. Same-bc plus still naming the ticket after compact can come from Station, from the host summary, or from this turn — those are not separable. See `HOST-VS-MILL.md`.
 
 ## E6 Forward
 

@@ -52,7 +52,7 @@ Cold-seat proof: `ops/GROK-HOOK-PROOF.md`.
 ## Survive compaction (Grok Bot chat)
 The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.
 
-Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done.
+Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
 
 Full Repertoire MCP (optional memory router on the CLI) is an aid, not required theater in every Grok Bot chat.
 
