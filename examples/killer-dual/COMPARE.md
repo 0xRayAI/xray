@@ -7,12 +7,13 @@ Ticket: TICKET-KILLER-DUAL-CLOUD
 | bc | `bc-cd19bb4e` | `bc-12f1ecad` |
 | Model | `cursor-grok-4.6-high` | `cursor-grok-4.6-high` |
 | Window | Grok 500k locked | Grok 500k locked |
-| PR | #55 | #54 |
-| Harness | hooks YES + repertoire@0.2.0 | stripped hooks; repertoire absent; mill profile bare |
-| preCompact | **Y** (count=2) — `cursor-host-precompact` | N |
-| Real usage | `precompact-stdin` tokens=231344; window MISS; run-info no counter | Cloud MCP no token counter |
-| Killer | usage receipt forbid chars÷4; first host fire + survive | mill inspect `--go` harness |
+| PRs | **#55** survive/map · **#56** seat CLI (prefer) | **#57** writer fix + map · **#54 parked** (`--go`) |
+| Harness | hooks YES + repertoire@0.2.0 | stripped hooks; repertoire not fastened |
+| preCompact | **Y** (count=2) 09:30:38 / 09:30:49 | **Y** (probe 09:35:46 / 09:38:20) |
+| Station at fire | writer ran | **FAIL** (`delegation-gate.js` missing at import); Path C PASS after lazy-load |
+| Real usage | `precompact-stdin` tokens=**231344**; window MISS | tokens **MISS** — JS died before stdin parse |
+| Killer | usage receipt forbid chars÷4; survive + doctor CLI | mill `--go` (parked) · dist-miss writer on #57 |
 
-Under pressure: both researched for real. S got host `preCompact` and **survived** (ticket / durable still on Station). B honest N on fire. Complementary: merge B then S after critic.
+Under pressure: both got host fire. S parsed stdin; B’s probe logged fire but the writer process died. Complementary: prefer **#56** for the seat CLI; park **#54**; keep **#57** if critic wants the dist-miss case. Merge after critic.
 
-Next lever: wire `--go` into Groover 0xray-suit; wait for real **window** fields — no FILL.
+Next lever: window fields when the host sends them — **no FILL**. Do not relaunch either bc.
