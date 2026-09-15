@@ -41,4 +41,10 @@ Do **not** run another pass. S already has host compact + tokens + `context_wind
 
 Land **#56** (CLI) and **#55** (survive / usage / window printer). Park **#54**. Keep **#57** only for B’s dist-miss writer story — that is not the CLI.
 
-Grok Bot `survive-compact` is a later chat-seat job when someone opens a Grok seat. Not a second Cursor run. Leave `bc-cd19bb4e` and `bc-12f1ecad` sitting.
+## B on the two “not solid” holes (2026-09-15T10:32Z)
+
+Those holes are this cloud (`bc-12f1ecad`).
+
+**Repertoire on `node_modules` path:** closed on this VM. `features.json` `module_path` now resolves: `@0xray/repertoire@0.2.0`, 8 signals (symlink `node_modules/@0xray/repertoire` → `vendor/@0xray/repertoire`). Station resume: `Repertoire: on — 8 signals`. Not a published dep change; not a new Cursor pass.
+
+**Second live host compact after the writer fix:** still not seen. Cannot summon. FILL does not fire `preCompact`. Path C is not that proof. Staying on this bc with the fixed writer is the wait — not worth buying another FILL/cloud.
