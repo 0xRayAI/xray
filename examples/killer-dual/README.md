@@ -13,6 +13,7 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `COMPARE.md` | Arm S vs Arm B compare (both host fire; token split = writer-liveness) |
 | `TRANSITION.md` | PreToolUse vs PreCompact vs Grok Bot `survive-compact` — eval cases |
 | `NOTES-EXCHANGE.md` | Dual-arm mailbox (no cloud-to-cloud queue) |
-| `STATION.seed.md` | Station card seed (live card is `.xray/state/STATION.md`, gitignored) |
+| `MEMORY-PROTOCOL.md` | Claim A mill / B session / C memory. Quiz-first. No canary values. |
+| `MEMORY-QUIZ.md` | Questions only. After compact, answer before any tools. |
 
 Path C compact receipts stay under `examples/cursor-cloud-compact/`. This directory is the **suited** Arm S track.

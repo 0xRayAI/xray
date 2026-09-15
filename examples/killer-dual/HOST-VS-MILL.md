@@ -32,8 +32,12 @@ Even then: if the summarizer copied the canary, you are testing the **summarizer
 
 Asking after the cut, with no pre-registered canary, is not a memory test. Compact drops the old transcript. What remains is the summary plus files plus the new messages.
 
-## Arm S (this mill-on machine)
+## Claims (split)
 
-Host `preCompact` wrote Station. That scores **mill on this disk** (hooks bound, writer lived, ticket bytes still on the card). It does **not** score that this conversation, as a mind, survived.
+| Claim | What | Valid cell |
+|---|---|---|
+| **A mill** | Unbound boot + host compact → no Station (mill-control PASS). Suited: Station written, hashes hold. Score from disk / snaps only. | COMPACT-PLAIN-001 compact 1; Arm S host fire |
+| **B session** | Same `bc-…` after compact, not a new launch | Identity. Not memory. |
+| **C memory** | After compact, report a fact that existed **only** in pre-compact chat | Chat-only canaries + quiz-first. Protocol: `MEMORY-PROTOCOL.md` |
 
-Receipt: `RECEIPT-HOST-PRECOMPACT.md`. Map: `TRANSITION.md`. Compare: `COMPARE.md`.
+Do not call A or B “I remembered.” Compact 1 “you continued” is underdetermined for C.

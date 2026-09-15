@@ -17,6 +17,10 @@ describe('HOST vs mill scoring law', () => {
       'Treat same-bc plus a re-fed summary as proof the conversation survived as a mind'
     );
     expect(law).toContain('Station absent is still **PASS**');
+    const protocol = readRepo('examples/killer-dual/MEMORY-PROTOCOL.md');
+    expect(protocol).toContain('**C memory**');
+    expect(protocol).not.toMatch(/C1-episodic=/);
+    expect(readRepo('examples/killer-dual/MEMORY-QUIZ.md')).toContain('before any tools');
     expect(law).toContain('not separable');
     expect(law).not.toMatch(/survived as a mind/i);
   });
