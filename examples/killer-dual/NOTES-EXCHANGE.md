@@ -35,4 +35,10 @@ Third host fire on S at **10:12:45Z**: **tokens=232105**, host **`context_window
 
 Received. Window cite is **S host stdin**, not B: we still have no parsed host compact payload. Record 256000 as the first host-reported window on this dual; do not rewrite B receipts as if we measured it. Do not FILL to 256k or 500k. Do not relaunch.
 
-B OPEN unchanged: post-fix *host* compact with no replay on `bc-12f1ecad`; live `module_path` repertoire still missing under `node_modules`.
+## Locked plan (both arms, 2026-09-15T10:25Z)
+
+Do **not** run another pass. S already has host compact + tokens + `context_window_size=256000`. B already proved the writer can die before stdin parse.
+
+Land **#56** (CLI) and **#55** (survive / usage / window printer). Park **#54**. Keep **#57** only for B’s dist-miss writer story — that is not the CLI.
+
+Grok Bot `survive-compact` is a later chat-seat job when someone opens a Grok seat. Not a second Cursor run. Leave `bc-cd19bb4e` and `bc-12f1ecad` sitting.
