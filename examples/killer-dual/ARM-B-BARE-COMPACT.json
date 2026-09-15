@@ -1,0 +1,28 @@
+{
+  "arm": "B",
+  "harness": "bare",
+  "survived": true,
+  "bcId": "bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
+  "url": "https://cursor.com/agents/bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
+  "runName": "KILLER-DUAL Arm B — bare no hooks",
+  "model": "cursor-grok-4.6-high",
+  "killerFeature": "npx grok-bot ready|doctor",
+  "branch": "cursor/grok-bot-seat-ready-372d",
+  "parkedMillGo": "https://github.com/0xRayAI/xray/pull/54",
+  "hostCompact": true,
+  "preCompactProbe": true,
+  "preCompactAt": [
+    "2026-09-15T09:35:46+00:00",
+    "2026-09-15T09:38:20+00:00"
+  ],
+  "stationWritten": false,
+  "cursorPrecompactJson": false,
+  "eventClass": "cursor-host-precompact",
+  "stationWrite": "FAIL",
+  "adapterClass": "delegation-gate-dist-missing",
+  "usageCite": "cursor-cloud run-info https://cursor.com/agents/bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d · cursor-grok-4.6-high · host compact + 2× invoke-probe event=preCompact · MCP has no token meter",
+  "hooksJsonAtCompact": false,
+  "hooksAtBoot": true,
+  "repertoireFastened": false,
+  "didNotHandInvokePreCompact": true
+}

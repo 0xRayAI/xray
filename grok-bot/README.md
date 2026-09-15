@@ -12,8 +12,10 @@ Humans: same files.
 ## Install
 ```bash
 npm i @0xray/grok-bot
-npx @0xray/grok-bot
+npx grok-bot ready
 ```
+
+**A friend would hear:** run `npx grok-bot ready` in a seat folder to see if the mill suit is planted and what to do next for paid shops. `doctor` is the same command.
 
 ## Path (per agent)
 1. **Suit** — mill + inspect (`fasten-suit-per-agent`)  

@@ -2,6 +2,8 @@
 
 Primary scripts for agents. Run in order for **each** key agent.
 
+Prove a seat first: `npx grok-bot ready` (alias `doctor`) — mill plant on disk, then hangar/Clearing next steps. **A friend would hear:** it tells you if the suit is planted and what shop/pay step is next.
+
 | Skill | When to use |
 |-------|-------------|
 | [fasten-suit-per-agent](skills/fasten-suit-per-agent/SKILL.md) | Create/fasten a mill+inspect suit for one agent project |

@@ -11,8 +11,10 @@
 ## Install
 ```bash
 npm i @0xray/grok-bot
-npx @0xray/grok-bot
+npx grok-bot ready
 ```
+
+`ready` / `doctor` proves mill+inspect on disk and prints hangar/Clearing next steps. Chat is not proof.
 
 ## Live product URLs (plant)
 - Factory /suit UI: https://website-production-c0da.up.railway.app/suit
