@@ -13,7 +13,7 @@ This plant **fastens** a music/bed factory. Dist audio beds get a real plant lik
 
 1. **Brief** → checksum seed (stable hash lineage).
 2. **Genre** → tempo + voice prefs: `ambient` | `techno` | `jazz` (`phonk` / `destination` are aliases).
-3. **Render** → wav via Rippel prototype chains (Membrane kick / Metal hat / mixer). Tone.Offline is blocked in Node (`OfflineAudioContext` missing); this is the lean headless port, not a 3-sine bed.
+3. **Render** → wav via a crystal-clear mill of Rippel’s prototype chains (Membrane kick / Metal hat / Duo bass / mixer). Tone.Offline is blocked in Node (`OfflineAudioContext` missing); this is the lean headless port, not a 3-sine bed and not the Lovable volume-hack soup.
 4. **Metrics gate** → chop / levels / peak / hum. Fail-closed.
 5. **Receipt** → `.xray/sound-bed-receipt.json` (`PASS` / `FAIL` + numbers).
 
@@ -26,4 +26,4 @@ npx @0xray/foundry inspect --skip-live
 
 Mint fastens `sound` + `sound-inspect`. It does not dump mill inspect onto a sound-only seat. Chat is not a bed receipt.
 
-A friend would hear: agents that make Dist audio beds get a real plant like mill, with inspect that checks the last bed passed loudness/smoothness gates — not fake code-mill skills on a sound seat.
+A friend would hear: the sound mill mills Dist beds like Rippel’s prototype grew up — kick membranes, metal hats, and a crystal-clear mixer, not a muddy toy and not a 3-sine pad.

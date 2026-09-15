@@ -232,6 +232,8 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
           genre: string;
           metrics: unknown;
           engine?: string;
+          mix?: string;
+          ssot?: { repo: string };
           topology?: string;
           voices?: string[];
         };
@@ -259,6 +261,8 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
       const brief = 'night alley rain pad';
       const first = renderBed({ root: tmp, brief, genre: 'ambient', seconds: 4 });
       expect(first.receipt.engine).toBe('rippel-headless');
+      expect(first.receipt.mix).toBe('crystal');
+      expect(first.receipt.ssot).toMatchObject({ repo: 'htafolla/rippel-synapse-flow' });
       expect(first.receipt.topology).toBe('membrane+metal+mixer');
       expect(first.receipt.status, JSON.stringify(first.receipt.metrics, null, 2)).toBe('PASS');
       expect(first.receipt.seed).toBe(seedFromBrief(brief, 'ambient'));
@@ -336,7 +340,7 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
 
 describe('foundry sound plant — Rippel topology', () => {
   it('techno/phonk use membrane+metal chains and are richer than a 3-sine bed', () => {
-    const { renderSamples, SAMPLE_RATE, TONE_OFFLINE_BLOCKER, crestFactor } = requireCjs(
+    const { renderSamples, SAMPLE_RATE, TONE_OFFLINE_BLOCKER, crestFactor, RIPPEL, MIX } = requireCjs(
       path.join(root, 'scripts/foundry/sound-bed.cjs'),
     ) as {
       renderSamples: (opts: { brief: string; genre: string; seconds: number }) => {
@@ -344,22 +348,31 @@ describe('foundry sound plant — Rippel topology', () => {
         genre: { id: string; voices: string[] };
         topology: string;
         engine: string;
+        mix?: string;
       };
       SAMPLE_RATE: number;
       TONE_OFFLINE_BLOCKER: string;
       crestFactor: (samples: Float64Array) => number;
+      RIPPEL: { technoKick: { octaves: number; pitchDecay: number }; technoHat: { harmonicity: number } };
+      MIX: string;
     };
     expect(TONE_OFFLINE_BLOCKER).toMatch(/OfflineAudioContext/);
+    expect(MIX).toBe('crystal');
+    expect(RIPPEL.technoKick.octaves).toBe(10);
+    expect(RIPPEL.technoKick.pitchDecay).toBe(0.08);
+    expect(RIPPEL.technoHat.harmonicity).toBe(5.1);
     expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderMembrane');
     expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderMetal');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('htafolla/rippel-synapse-flow');
     expect(read('scripts/foundry/sound-bed.cjs')).not.toContain('three-sine');
     expect(read('scripts/foundry/sound-bed.cjs')).toContain('sound-rippel.cjs');
 
     const techno = renderSamples({ brief: 'warehouse floor', genre: 'techno', seconds: 4 });
     expect(techno.engine).toBe('rippel-headless');
+    expect(techno.mix).toBe('crystal');
     expect(techno.topology).toBe('membrane+metal+mixer');
     expect(techno.genre.voices).toEqual(
-      expect.arrayContaining(['membrane-kick', 'metal-hat', 'mixer']),
+      expect.arrayContaining(['membrane-kick', 'metal-hat', 'snare-clap', 'duo-bass', 'mixer']),
     );
     const sine = new Float64Array(SAMPLE_RATE * 4);
     for (let i = 0; i < sine.length; i++) {
@@ -373,6 +386,7 @@ describe('foundry sound plant — Rippel topology', () => {
 describe('foundry sound plant — docs and CI', () => {
   it('friend-tests human docs and keeps mill CI on the sound unit file', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/plant": "sound"/);
+    expect(read('scripts/foundry/README.md')).toMatch(/crystal/i);
     expect(read('scripts/foundry/README.md')).toMatch(/A friend would hear/);
     expect(read('AGENTS.md')).toMatch(/sound-inspect/);
     expect(read('AGENTS-consumer.md')).toMatch(/sound render/);

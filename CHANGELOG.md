@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Factory-sound crystal mill** — sound plant render locks Rippel SSOT numbers (Membrane octaves 10 / pitchDecay 0.08, Metal harmonicity 5.1, Duo bass, ProfessionalMixer) then mixes crystal-clear (rumble HP, mud cut, sidechain, one limiter). Prototype was the topology, not the quality bar. Tone.Offline blocked in Node. Metrics stay fail-closed. No `@0xray/foundry` bump.
 - **Factory-sound Rippel retool** — sound plant render is membrane kick + metal hat + mixer (Rippel prototype topology). Tone.Offline blocked in Node (`OfflineAudioContext`). `phonk` is first-class. Metrics stay fail-closed. No `@0xray/foundry` bump.
 - **Factory-sound plant** — `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill optional/off). Brief → checksum seed → genre → headless wav → metrics gate → `.xray/sound-bed-receipt.json`. `npx @0xray/foundry sound render|inspect`. Foundry inspect reports sound plant + last bed PASS/FAIL. Not a mill copy. Not costume. No `@0xray/foundry` bump — dogfood from branch/pack.
 - **Cursor cloud hooks adapter** — repo `.cursor/hooks.json` (version 1) runs `preToolUse` / `preCompact` / `afterFileEdit` against 0xRay gates + Station merge. No `sessionStart` (unavailable on managed cloud). Path C seed: `examples/cursor-cloud-compact/` (COMPACT-BEN-001).

@@ -52,7 +52,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
-**Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a wav and a bed receipt. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
+**Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
 
 ## Memory routing + Repertoire (v3.3+)
 

@@ -60,7 +60,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
 | `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Chat is not a receipt. |
-| `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → wav → metrics receipt. |
+| `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
 
 ## Governance
 
