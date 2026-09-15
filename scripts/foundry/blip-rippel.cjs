@@ -12,8 +12,8 @@
  * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * Mesh: one sparse seed polyhedron. Field accents (stars, grid, gradient, blinkers)
- * carry uniqueness — not more wire in the middle. Lines: sharp 3px core, cyan/gold/blue
- * gradient along the stroke, subtle glow. No vertex beads. Soft tints, no strobe.
+ * carry uniqueness — not more wire in the middle. Lines: Wu hairline, cyan/gold/blue
+ * gradient along the stroke, coverage AA as the only glow. No vertex beads.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -941,34 +941,51 @@ function livingShade(mesh, t, u, beat, bias) {
   return bias ? mixRgb(c, bias, 0.08) : c;
 }
 
-/** Neon stroke: opaque 3px core, 2px faint bloom. No ink rim — that was the CAD look. */
+/** Hairline Wu stroke: 1px core, coverage AA as the only glow. Gradient via shader(u). */
 function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
-  const glow = opts && opts.glow != null ? opts.glow : 2;
-  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.14;
-  const half = opts && opts.half != null ? opts.half : 1;
   const shader = opts && opts.shader;
-  const dx = x1 - x0;
-  const dy = y1 - y0;
-  const len = Math.hypot(dx, dy);
-  if (len < 0.5) {
-    const c = shader ? shader(0) : color;
-    mixPixel(buf, width, x0, y0, c, 1);
-    return;
+  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.08;
+  let ax = x0;
+  let ay = y0;
+  let bx = x1;
+  let by = y1;
+  const steep = Math.abs(by - ay) > Math.abs(bx - ax);
+  if (steep) {
+    const sx = ax;
+    ax = ay;
+    ay = sx;
+    const ex = bx;
+    bx = by;
+    by = ex;
   }
-  const steps = Math.ceil(len);
-  const nx = -dy / len;
-  const ny = dx / len;
-  for (let i = 0; i <= steps; i++) {
-    const u = i / steps;
+  if (ax > bx) {
+    const sx = ax;
+    ax = bx;
+    bx = sx;
+    const sy = ay;
+    ay = by;
+    by = sy;
+  }
+  const wdx = bx - ax;
+  const wdy = by - ay;
+  const grad = wdx === 0 ? 0 : wdy / wdx;
+  function plot(px, py, a, u) {
+    if (a <= 0.03) return;
     const c = shader ? shader(u) : color;
-    const x = x0 + dx * u;
-    const y = y0 + dy * u;
-    for (let d = -half; d <= half; d++) mixPixel(buf, width, x + nx * d, y + ny * d, c, 1);
-    for (let g = 1; g <= glow; g++) {
-      const a = glowA * (1 - g / (glow + 0.6));
-      mixPixel(buf, width, x + nx * (half + g), y + ny * (half + g), c, a);
-      mixPixel(buf, width, x - nx * (half + g), y - ny * (half + g), c, a);
-    }
+    if (steep) mixPixel(buf, width, py, px, c, a);
+    else mixPixel(buf, width, px, py, c, a);
+  }
+  let y = ay;
+  const x0i = Math.round(ax);
+  const x1i = Math.round(bx);
+  const span = x1i - x0i || 1;
+  for (let x = x0i; x <= x1i; x++) {
+    const u = (x - x0i) / span;
+    const yi = Math.floor(y);
+    const f = y - yi;
+    plot(x, yi, 1, u);
+    plot(x, yi + 1, f * 0.35 + glowA, u);
+    y += grad;
   }
 }
 
@@ -1002,9 +1019,7 @@ function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
     const [a, b] = ranked[i].e;
     const bias = color || null;
     paintGlowLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, THEME.cyan, {
-      half: half || 1,
-      glow: 2,
-      glowAlpha: 0.12 + 0.04 * kick,
+      glowAlpha: 0.07 + 0.03 * kick,
       shader: (u) => livingShade(mesh, t, u, beat, bias),
     });
   }
@@ -1098,9 +1113,7 @@ function paintGrid(buf, width, height, field, t, checksum) {
   const accent = field.gridColor || THEME.cyan;
   const line = (x0, y0, x1, y1) =>
     paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
-      half: 1,
-      glow: 2,
-      glowAlpha: 0.12,
+      glowAlpha: 0.07,
       shader: (u) => iridesce(u, t || 0, beat, accent),
     });
   const cx = (width - 1) * 0.5;

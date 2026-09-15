@@ -596,7 +596,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(sample.differ, id).toBe(true);
       expect(sample.living, id).toBe(true);
       expect(sample.sharpness.edges, id).toBeGreaterThan(400);
-      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.035);
+      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.006);
       expect(sample.width).toBe(1280);
       expect(sample.height).toBe(720);
       expect(sample.circleCount).toBeGreaterThan(0);
