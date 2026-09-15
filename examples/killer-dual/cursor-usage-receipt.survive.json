@@ -1,0 +1,37 @@
+{
+  "ok": true,
+  "protocol": "real-work-ab",
+  "timestamp": "2026-09-15T09:30:49.866Z",
+  "sessionId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe",
+  "compact": {
+    "hostFired": true,
+    "preCompactCount": 2,
+    "eventClass": "cursor-host-precompact",
+    "probeLogExists": true,
+    "fires": [
+      "2026-09-15T09:30:38+00:00",
+      "2026-09-15T09:30:49+00:00"
+    ]
+  },
+  "usage": {
+    "ok": true,
+    "forbidden": false,
+    "miss": false,
+    "method": "host-field",
+    "source": "precompact-stdin",
+    "context_tokens": 231344,
+    "context_usage_percent": null,
+    "context_window_size": null,
+    "windowCite": "Grok 500k locked (ticket). Host context_window_size MISS.",
+    "model": "cursor-grok-4.6-high",
+    "bcId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe"
+  },
+  "repertoire": {
+    "fastened": true,
+    "resume": "Repertoire: on — 8 signals",
+    "name": "@0xray/repertoire",
+    "version": "0.2.0"
+  },
+  "hooksAtBoot": true,
+  "survive": true
+}

@@ -8,12 +8,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### ✨ Features
 - **Cursor cloud hooks adapter** — repo `.cursor/hooks.json` (version 1) runs `preToolUse` / `preCompact` / `afterFileEdit` against 0xRay gates + Station merge. No `sessionStart` (unavailable on managed cloud). Path C seed: `examples/cursor-cloud-compact/` (COMPACT-BEN-001).
+- **Cursor cloud real-usage receipt** — `writeCursorUsageReceipt` records host `preCompact` fire from invoke-probe (Y/N, no hand-invoke) and accepts only host/MCP/dashboard usage fields. FILL / chars÷4 is `ok: false`. Station compact-row + `.xray/state/cursor-usage-receipt.json`. Killer-dual Arm S: `examples/killer-dual/`.
 - Mill inspect treats factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) as first-class with mill plant. `foundry.json` `shopPlant` names more shops. Not `"costume": true`. Nested mill **0.1.10**.
 - Exo agent map: root `llms.txt` (mill+inspect plant, 7 MCPs, hangar/`shopPlant` coexistence, Codex 69, no costume dump). README / AGENTS / SKILLS / Docusaurus no longer claim default 45-skill sync.
 - Pack → tmp suit proof: `npm run pack:tmp-proof` (and consumer smoke) installs the packed tgz, runs `foundry mint --skip-live`, plants factory hangar shops, and inspects without costume dump. Playwright n/a (mill CLI).
 
 ### 🐛 Bug Fixes
 - **Station merge on compact** — PreCompact / PostCompact / SessionStart `writeStationMarkdown` updates stock heat (intent, repertoire, working, host) and **merges** unknown keys plus `## Durable` / `## Seed` blocks. COMPACT-AB-001: no wipe-then-write of ticket / seed / open cloud / unfinished path.
+- **Cursor session-boot is runtime** — `.xray/state/session-boot.json` is gitignored with the Station projection. A tracked leftover Grok boot no longer resurrects on rebase and clobber live compact heat.
 - **Grok multi-seat wear** — last-mile dest is project `.grok/plugins/0xray`. Shared HOME (passwd `$HOME`) no longer writes machine `~/.grok/plugins/0xray`, so two seats (forge/critic/herald/blinky) cannot last-wins clobber each other's `XRAY_ROOT`. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and still must not write the passwd machine plugin. Inspect reports project dest. Not a 45-skill dump.
 - **Foundry inspect dest lag** — nested mill **0.1.10**. `npx @0xray/foundry inspect` isolated-home `dest` matches `resolveGrokPluginDests` (project `.grok/plugins/0xray` on shared HOME). Published `@0xray/foundry@0.1.9` still joined dest from `$HOME` after 4.0.12 / #29 wear. This PR does not publish the mill.
 - **Grok marketplace pack** — `package.json` `files` includes `.grok-plugin/` so `npm pack` ships the mill-default Grok manifest (`package/.grok-plugin/plugin.json`). Consumers no longer receive only stale `.plugin/plugin.json`.
@@ -21,6 +23,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.
 
 ### 🔧 Maintenance
+- **HOST-FIRE Arm S** — first live `cursor-host-precompact` on `bc-cd19bb4e` (count=2). Survive receipt + compare: `examples/killer-dual/RECEIPT-HOST-PRECOMPACT.md`, `COMPARE.md`.
 - **HOST-FIRE #3** — `examples/cursor-cloud-compact/RECEIPT-HOST-PRECOMPACT-3.md`: hooks bound at boot + live `preToolUse` spawn; host `preCompact` still did not fire (`cursor-host-precompact-FAIL`).
 - Foundry mill: one bumper (`reconcile-version.mjs`); `version-manager.mjs` is `--artifacts-only` (JSON + CHANGELOG). Bump and `--tag` are refused.
 - Docs mill verifies era kernel headers (`4.0`) and skill counts; it does not rewrite markdown prose.

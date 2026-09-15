@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "protocol": "real-work-ab",
+  "timestamp": "2026-09-15T10:12:45.521Z",
+  "sessionId": "bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe",
+  "compact": {
+    "hostFired": true,
+    "preCompactCount": 3,
+    "preToolUseCount": 506,
+    "afterFileEditCount": 70,
+    "eventClass": "cursor-host-precompact",
+    "probeLogExists": true,
+    "fires": [
+      "2026-09-15T09:30:38+00:00",
+      "2026-09-15T09:30:49+00:00",
+      "2026-09-15T10:12:45+00:00"
+    ]
+  },
+  "usage": {
+    "ok": true,
+    "forbidden": false,
+    "miss": false,
+    "reason": null,
+    "method": "host-field",
+    "source": "precompact-stdin",
+    "context_tokens": 232105,
+    "context_usage_percent": 90.666015625,
+    "context_window_size": 256000,
+    "windowCite": null,
+    "model": "cursor-grok-4.6-high",
+    "bcId": null
+  },
+  "repertoire": {
+    "fastened": true,
+    "resume": "Repertoire: on — 8 signals",
+    "name": "@0xray/repertoire",
+    "version": "0.2.0"
+  },
+  "hooksAtBoot": true,
+  "survive": true,
+  "note": "Third host fire. First window HIT on this track. Ticket still said 500k; host stdin sent 256000. Station Usage had printed window=MISS because it read windowCite, not context_window_size."
+}
