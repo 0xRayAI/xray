@@ -1,14 +1,13 @@
 /**
  * Factory-blip plant spine — sibling to mill + sound, not a mill bolt-on.
- * Brief → checksum seed → registry picture mode → 4.44s mp4 → inspect gate.
- * Headless ffmpeg. Plant-first. Pair seat is later (not this plant PR).
+ * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
+ *
+ * Phase 1 (TICKET-BLIP-RENDERER-UPGRADE): Rippel VisualConfig.circles at ≥720p.
+ * Still stays the Power Plant plate (Phase 2). ffmpeg wireframe is --engine wireframe only.
+ * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
  * Kapow is a growth stub (renderer null → FAIL). Unknown id FAIL.
- * Still + motions wear the Power Plant intro plate — not seed-RGB stock.
- *
- * Rippel imports: cloud ls-remote of htafolla/rippel-synapse-flow is 404 here.
- * Tray: animationIcons.ts Animation + ANIMATION_TO_VISUALIZATION. Commit not in tray.
  */
 
 const crypto = require("crypto");
@@ -16,14 +15,21 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const rippel = require("./blip-rippel.cjs");
+const sound = require("./sound-bed.cjs");
 
 const SPINE = 1;
 const DURATION_SEC = 4.44;
 const DURATION_TOL_SEC = 0.12;
-/** RIPPEL-ANIM-TYPES.md Codex line (~30fps). Factory encode, not a guessed Rippel canvas. */
+/** RIPPEL-ANIM-TYPES.md Codex line (~30fps). */
 const FPS = 30;
-const WIDTH = 320;
-const HEIGHT = 180;
+/** Still plate stays 320×180 until Phase 2. Motions drop that default. */
+const STILL_WIDTH = 320;
+const STILL_HEIGHT = 180;
+const WIDTH = STILL_WIDTH;
+const HEIGHT = STILL_HEIGHT;
+const MOTION_WIDTH = rippel.MOTION_WIDTH;
+const MOTION_HEIGHT = rippel.MOTION_HEIGHT;
 const RECEIPT_REL = path.join(".xray", "blip", "receipt.json");
 const MP4_REL = path.join(".xray", "blip", "blip.mp4");
 const REGISTRY_REL = path.join("plant", "motions", "registry.json");
@@ -59,14 +65,8 @@ const RGB = {
   blue: hexRgb(PALETTE.blue),
 };
 
-const SSOT = {
-  repo: "htafolla/rippel-synapse-flow",
-  commit: null,
-  access: "tray",
-  tray: "rippel-anim-ssot.tgz",
-  paths: ["animationIcons.ts", "types/index.ts", "SimplifiedVisualConverter.tsx"],
-  note: "RIPPEL-ANIM-TYPES.md + MOTION-REGISTRY.md",
-};
+const SSOT = rippel.SSOT;
+const ANIMATION_TO_VISUALIZATION = rippel.ANIMATION_TO_VISUALIZATION;
 
 function defaultRegistryPath() {
   return path.join(__dirname, REGISTRY_REL);
@@ -304,30 +304,34 @@ function paintStill(seedHex) {
   };
 }
 
-/** orb → canvas. Hard rings on void. Phase is ticket duration, not a guessed Rippel LFO. */
-function paintOrb(t) {
-  const cx = (WIDTH - 1) / 2;
-  const cy = (HEIGHT - 1) / 2;
+/** Wireframe fallback — old ffmpeg geometry. Kept if Rippel headless throws. */
+function paintOrb(t, width, height) {
+  const w = width || WIDTH;
+  const h = height || HEIGHT;
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
   const pulse = Math.sin(2 * Math.PI * phase(t)) > 0 ? 4 : 0;
+  const scale = Math.min(w, h) / HEIGHT;
   return function paint(x, y) {
     const d = Math.hypot(x - cx, y - cy);
-    if (d < 18) return RGB.gold;
-    if (d < 36 + pulse) return RGB.cyan;
-    if (d < 40 + pulse) return RGB.ink;
+    if (d < 18 * scale) return RGB.gold;
+    if (d < (36 + pulse) * scale) return RGB.cyan;
+    if (d < (40 + pulse) * scale) return RGB.ink;
     return RGB.void;
   };
 }
 
-/** swirl → 3d-sacred. Flat cyan / gold / blue arms. */
-function paintSwirl(t) {
-  const cx = (WIDTH - 1) / 2;
-  const cy = (HEIGHT - 1) / 2;
+function paintSwirl(t, width, height) {
+  const w = width || WIDTH;
+  const h = height || HEIGHT;
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
   const spin = 2 * Math.PI * phase(t);
   return function paint(x, y) {
     const dx = x - cx;
     const dy = y - cy;
     const d = Math.hypot(dx, dy);
-    if (d > Math.min(WIDTH, HEIGHT) / 2) return RGB.void;
+    if (d > Math.min(w, h) / 2) return RGB.void;
     const ang = Math.atan2(dy, dx) + spin + d / 18;
     const arm = Math.abs(Math.sin(ang * 3));
     if (arm < 0.55) return RGB.void;
@@ -339,25 +343,29 @@ function paintSwirl(t) {
   };
 }
 
-/** snap → neural. Agent-blue grid, cyan nodes, gold flash. */
-function paintSnap(t) {
+function paintSnap(t, width, height) {
+  const w = width || WIDTH;
+  const h = height || HEIGHT;
   const on = Math.sin(2 * Math.PI * phase(t)) > 0;
+  const gx = Math.max(8, Math.round(40 * (w / WIDTH)));
+  const gy = Math.max(8, Math.round(30 * (h / HEIGHT)));
   return function paint(x, y) {
-    const nearX = x % 40 < 2 || x % 40 > 38;
-    const nearY = y % 30 < 2 || y % 30 > 28;
-    const node = x % 40 < 4 && y % 30 < 4;
+    const nearX = x % gx < 2 || x % gx > gx - 2;
+    const nearY = y % gy < 2 || y % gy > gy - 2;
+    const node = x % gx < 4 && y % gy < 4;
     if (node) return on ? RGB.gold : RGB.cyan;
     if (nearX || nearY) return RGB.blue;
     return RGB.void;
   };
 }
 
-/** waves → waveform. Cyan band, gold cut, blue field. */
-function paintWaves(t) {
-  const mid = (HEIGHT - 1) / 2;
-  const shift = phase(t) * WIDTH;
+function paintWaves(t, width, height) {
+  const w = width || WIDTH;
+  const h = height || HEIGHT;
+  const mid = (h - 1) / 2;
+  const shift = phase(t) * w;
   return function paint(x, y) {
-    const wave = mid + Math.sin((x + shift) / 12) * (HEIGHT / 5);
+    const wave = mid + Math.sin((x + shift) / 12) * (h / 5);
     const d = Math.abs(y - wave);
     if (d < 2) return RGB.gold;
     if (d < 5) return RGB.cyan;
@@ -366,23 +374,24 @@ function paintWaves(t) {
   };
 }
 
-/** spark → particles. Cyan / gold / ink dots on void. */
-function paintSpark(t, seedHex) {
+function paintSpark(t, seedHex, width, height) {
+  const w = width || WIDTH;
+  const h = height || HEIGHT;
   const dots = [];
   let s = seedU32(seedHex, 8);
   const colors = [RGB.cyan, RGB.gold, RGB.ink];
   for (let i = 0; i < 28; i++) {
     s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
     dots.push({
-      x: s % WIDTH,
-      y: (s >>> 9) % HEIGHT,
+      x: s % w,
+      y: (s >>> 9) % h,
       c: colors[i % 3],
     });
   }
   const drift = phase(t) * 40;
   return function paint(x, y) {
     for (const dot of dots) {
-      const dx = x - ((dot.x + drift) % WIDTH);
+      const dx = x - ((dot.x + drift) % w);
       const dy = y - dot.y;
       if (dx * dx + dy * dy < 9) return dot.c;
     }
@@ -390,14 +399,33 @@ function paintSpark(t, seedHex) {
   };
 }
 
-function painterFor(renderer, t, seedHex) {
+function painterFor(renderer, t, seedHex, width, height) {
   if (renderer === "still") return paintStill(seedHex);
-  if (renderer === "orb") return paintOrb(t);
-  if (renderer === "swirl") return paintSwirl(t);
-  if (renderer === "snap") return paintSnap(t);
-  if (renderer === "waves") return paintWaves(t);
-  if (renderer === "spark") return paintSpark(t, seedHex);
+  if (renderer === "orb") return paintOrb(t, width, height);
+  if (renderer === "swirl") return paintSwirl(t, width, height);
+  if (renderer === "snap") return paintSnap(t, width, height);
+  if (renderer === "waves") return paintWaves(t, width, height);
+  if (renderer === "spark") return paintSpark(t, seedHex, width, height);
   return null;
+}
+
+function paintWireframeFrame(buf, width, height, renderer, t, seedHex) {
+  const paint = painterFor(renderer, t, seedHex, width, height);
+  if (!paint) {
+    const err = new Error(`no factory renderer for "${renderer}"`);
+    err.code = "BLIP_WIREFRAME_MISS";
+    throw err;
+  }
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const rgb = paint(x, y);
+      const i = (y * width + x) * 3;
+      buf[i] = clampByte(rgb[0]);
+      buf[i + 1] = clampByte(rgb[1]);
+      buf[i + 2] = clampByte(rgb[2]);
+    }
+  }
+  return buf;
 }
 
 function hasFfmpeg() {
@@ -480,6 +508,57 @@ function encodeFrames(framesDir, frameCount, mp4) {
   );
 }
 
+function encodeRaw(rawFile, width, height, frameCount, mp4) {
+  runTool(
+    "ffmpeg",
+    [
+      "-y",
+      "-f",
+      "rawvideo",
+      "-pix_fmt",
+      "rgb24",
+      "-s",
+      `${width}x${height}`,
+      "-r",
+      String(FPS),
+      "-i",
+      rawFile,
+      "-frames:v",
+      String(frameCount),
+      "-t",
+      String(DURATION_SEC),
+      "-pix_fmt",
+      "yuv420p",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "ultrafast",
+      "-crf",
+      "23",
+      "-an",
+      "-movflags",
+      "+faststart",
+      mp4,
+    ],
+    "ffmpeg motion",
+  );
+}
+
+function writeRawMotion(rawFile, width, height, frameCount, paintInto) {
+  const frameSize = width * height * 3;
+  const buf = Buffer.alloc(frameSize);
+  const fd = fs.openSync(rawFile, "w");
+  try {
+    for (let i = 0; i < frameCount; i++) {
+      paintInto(buf, i / FPS);
+      fs.writeSync(fd, buf);
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+  return rawFile;
+}
+
 function muxBed(video, bed, mp4) {
   runTool(
     "ffmpeg",
@@ -509,7 +588,15 @@ function muxBed(video, bed, mp4) {
 
 function probeMedia(file) {
   if (!file || !fs.existsSync(file)) {
-    return { ok: false, reason: "mp4 missing", hasVideo: false, hasAudio: false, durationSec: null };
+    return {
+      ok: false,
+      reason: "mp4 missing",
+      hasVideo: false,
+      hasAudio: false,
+      durationSec: null,
+      width: null,
+      height: null,
+    };
   }
   const durationRun = spawnSync(
     "ffprobe",
@@ -517,51 +604,94 @@ function probeMedia(file) {
     { encoding: "utf8" },
   );
   if (durationRun.error) {
-    return { ok: false, reason: "ffprobe missing", hasVideo: false, hasAudio: false, durationSec: null };
+    return {
+      ok: false,
+      reason: "ffprobe missing",
+      hasVideo: false,
+      hasAudio: false,
+      durationSec: null,
+      width: null,
+      height: null,
+    };
   }
   if (durationRun.status !== 0) {
-    return { ok: false, reason: "mp4 unreadable", hasVideo: false, hasAudio: false, durationSec: null };
+    return {
+      ok: false,
+      reason: "mp4 unreadable",
+      hasVideo: false,
+      hasAudio: false,
+      durationSec: null,
+      width: null,
+      height: null,
+    };
   }
   const durationSec = Number.parseFloat(String(durationRun.stdout || "").trim());
   const streamsRun = spawnSync(
     "ffprobe",
-    ["-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0", file],
+    ["-v", "error", "-show_entries", "stream=codec_type,width,height", "-of", "csv=p=0", file],
     { encoding: "utf8" },
   );
-  const types = String(streamsRun.stdout || "")
-    .split(/\s+/)
+  const lines = String(streamsRun.stdout || "")
+    .split(/\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const hasVideo = types.includes("video");
-  const hasAudio = types.includes("audio");
+  let hasVideo = false;
+  let hasAudio = false;
+  let width = null;
+  let height = null;
+  for (const line of lines) {
+    const parts = line.split(",").map((part) => part.trim());
+    if (parts[0] === "video") {
+      hasVideo = true;
+      const w = Number.parseInt(parts[1], 10);
+      const h = Number.parseInt(parts[2], 10);
+      if (Number.isFinite(w)) width = w;
+      if (Number.isFinite(h)) height = h;
+    } else if (parts[0] === "audio") {
+      hasAudio = true;
+    } else if (parts.includes("audio")) {
+      hasAudio = true;
+    } else if (parts.includes("video")) {
+      hasVideo = true;
+    }
+  }
   return {
     ok: Number.isFinite(durationSec) && hasVideo,
     durationSec: Number.isFinite(durationSec) ? durationSec : null,
     hasVideo,
     hasAudio,
+    width,
+    height,
     reason: !hasVideo ? "video stream missing" : null,
   };
 }
 
 function evaluateProbe(probe, opts = {}) {
-  const wantAudio = Boolean(opts.wantAudio);
+  const wantAudio = opts.wantAudio !== false;
+  const motion = Boolean(opts.motion);
   const durationSec = probe.durationSec;
   const durationOk =
     Number.isFinite(durationSec) && Math.abs(durationSec - DURATION_SEC) <= DURATION_TOL_SEC;
   const fileOk = Boolean(probe.ok && probe.hasVideo);
   const audioOk = !wantAudio || Boolean(probe.hasAudio);
+  const width = probe.width;
+  const height = probe.height;
+  const resolutionOk =
+    !motion || (Number.isFinite(width) && Number.isFinite(height) && width >= 1280 && height >= 720);
   const gates = {
     file: fileOk,
     duration: durationOk,
     video: Boolean(probe.hasVideo),
     audio: audioOk,
     mode: Boolean(opts.mode),
+    resolution: resolutionOk,
   };
   let reason = null;
   if (!fileOk) reason = probe.reason || "mp4 missing";
   else if (!gates.mode) reason = "mode missing";
   else if (!durationOk) reason = `duration ${durationSec}s not ${DURATION_SEC}s±${DURATION_TOL_SEC}`;
   else if (!audioOk) reason = "audio stream missing";
+  else if (!resolutionOk) reason = `motion ${width}×${height} below 720p`;
   const status = Object.values(gates).every(Boolean) ? "PASS" : "FAIL";
   return {
     status,
@@ -570,6 +700,8 @@ function evaluateProbe(probe, opts = {}) {
     durationSec,
     hasVideo: Boolean(probe.hasVideo),
     hasAudio: Boolean(probe.hasAudio),
+    width: width ?? null,
+    height: height ?? null,
     reason,
   };
 }
@@ -622,7 +754,12 @@ function buildReceipt(input, evaled) {
     stillPlate: input.stillPlate || null,
     durationSec: DURATION_SEC,
     measuredDurationSec: evaled.durationSec ?? null,
-    engine: "ffmpeg-headless",
+    width: evaled.width ?? input.width ?? null,
+    height: evaled.height ?? input.height ?? null,
+    engine: input.engine || rippel.ENGINE,
+    fallback: input.fallback || false,
+    bedSource: input.bedSource || null,
+    visualConfig: input.visualConfig || null,
     ssot: SSOT,
     registry: input.registryIds || listMotionIds(),
     mp4: input.mp4Rel || input.mp4,
@@ -635,6 +772,7 @@ function buildReceipt(input, evaled) {
       video: false,
       audio: false,
       mode: false,
+      resolution: false,
     },
     reason: evaled.reason || null,
     spine: SPINE,
@@ -677,7 +815,8 @@ function evaluateReceipt(root, receipt) {
   const mp4 = path.isAbsolute(mp4Rel) ? mp4Rel : path.join(root, mp4Rel);
   const evaled = evaluateMp4File(mp4, {
     mode: mode.motionId,
-    wantAudio: Boolean(receipt.bed),
+    wantAudio: true,
+    motion: mode.motionId !== "still",
   });
   return {
     ...evaled,
@@ -700,11 +839,88 @@ function failReceipt(root, input, reason, extra = {}) {
       video: false,
       audio: false,
       mode: Boolean(input.motionId),
+      resolution: false,
     },
     reason,
   });
   writeReceipt(root, receipt);
   return { receipt, mp4: input.mp4, seed: input.seed };
+}
+
+function resolveBed(opts, root, brief, work) {
+  if (opts.bed) {
+    const bed = path.resolve(root, opts.bed);
+    if (!fs.existsSync(bed)) {
+      return { ok: false, reason: `bed missing: ${opts.bed}` };
+    }
+    return { ok: true, bed, source: "flag" };
+  }
+  try {
+    const out = opts.autoBedOut
+      ? path.resolve(root, opts.autoBedOut)
+      : path.join(root, ".xray", "blip", "bed.wav");
+    const rendered = sound.renderSamples({
+      brief,
+      genre: opts.genre || "ambient",
+      seconds: DURATION_SEC,
+    });
+    sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
+    if (!fs.existsSync(out)) {
+      return { ok: false, reason: "auto bed missing" };
+    }
+    return { ok: true, bed: out, source: "auto-sound" };
+  } catch (err) {
+    return {
+      ok: false,
+      reason: `auto bed failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+}
+
+function renderMotionPicture(work, modeInfo, seed, brief, opts) {
+  const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
+  const picture = path.join(work, "picture.mp4");
+  const forceFallback = Boolean(opts.forceFallback) || opts.engine === "wireframe";
+  const width = MOTION_WIDTH;
+  const height = MOTION_HEIGHT;
+  const raw = path.join(work, "motion.rgb");
+
+  if (forceFallback) {
+    if (!painterFor(modeInfo.renderer, 0, seed, width, height)) {
+      const err = new Error(`no factory renderer for "${modeInfo.renderer}"`);
+      err.code = "BLIP_WIREFRAME_MISS";
+      throw err;
+    }
+    writeRawMotion(raw, width, height, frames, (buf, t) => {
+      paintWireframeFrame(buf, width, height, modeInfo.renderer, t, seed);
+    });
+    encodeRaw(raw, width, height, frames, picture);
+    return {
+      picture,
+      width,
+      height,
+      engine: "ffmpeg-wireframe-fallback",
+      fallback: true,
+      visualConfig: null,
+    };
+  }
+
+  let visualConfig = null;
+  writeRawMotion(raw, width, height, frames, (buf, t) => {
+    const painted = rippel.paintRippelFrame({
+      renderer: modeInfo.renderer,
+      t,
+      seedHex: seed,
+      brief,
+      durationSec: DURATION_SEC,
+      width,
+      height,
+      buffer: buf,
+    });
+    visualConfig = painted.visualConfig;
+  });
+  encodeRaw(raw, width, height, frames, picture);
+  return { picture, width, height, engine: rippel.ENGINE, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -713,55 +929,66 @@ function renderBlip(opts = {}) {
   const modeInfo = resolveMode(opts.pictureMode || opts.mode, opts.registryPath);
   const seed = opts.seed || seedFromBrief(brief, modeInfo.motionId || modeInfo.id);
   const mp4 = opts.out ? path.resolve(root, opts.out) : defaultMp4Path(root);
-  const bed = opts.bed ? path.resolve(root, opts.bed) : null;
   const input = {
     brief,
     seed,
     pictureMode: modeInfo.pictureMode,
     motionId: modeInfo.motionId || modeInfo.id,
-    visualization: modeInfo.visualization || null,
+    visualization: modeInfo.visualization || rippel.visualizationFor(modeInfo.renderer) || null,
     stillPlate: modeInfo.renderer === "still" ? stillPlate(seed) : null,
     registryIds: listMotionIds(opts.registryPath),
     mp4,
     mp4Rel: path.relative(root, mp4) || mp4,
-    bed: bed || null,
-    bedRel: bed ? path.relative(root, bed) || bed : null,
+    bed: null,
+    bedRel: null,
+    bedSource: null,
+    engine: modeInfo.renderer === "still" ? "ffmpeg-headless" : rippel.ENGINE,
+    fallback: false,
+    visualConfig: null,
+    width: modeInfo.renderer === "still" ? STILL_WIDTH : MOTION_WIDTH,
+    height: modeInfo.renderer === "still" ? STILL_HEIGHT : MOTION_HEIGHT,
   };
 
   if (!modeInfo.ok) {
     return failReceipt(root, input, modeInfo.reason);
   }
-  if (bed && !fs.existsSync(bed)) {
-    return failReceipt(root, input, `bed missing: ${opts.bed}`);
-  }
 
   fs.mkdirSync(path.dirname(mp4), { recursive: true });
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "xray-foundry-blip-"));
   try {
+    const bedInfo = resolveBed(opts, root, brief, work);
+    if (!bedInfo.ok) {
+      return failReceipt(root, input, bedInfo.reason);
+    }
+    input.bed = bedInfo.bed;
+    input.bedRel = path.relative(root, bedInfo.bed) || bedInfo.bed;
+    input.bedSource = bedInfo.source;
+
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {
       const ppm = path.join(work, "still.ppm");
-      writePpm(ppm, WIDTH, HEIGHT, paintStill(seed));
+      writePpm(ppm, STILL_WIDTH, STILL_HEIGHT, paintStill(seed));
       encodeStill(ppm, picture);
+      input.engine = "ffmpeg-headless";
+      input.width = STILL_WIDTH;
+      input.height = STILL_HEIGHT;
     } else {
-      const paint = (t) => painterFor(modeInfo.renderer, t, seed);
-      if (!paint(0)) {
-        return failReceipt(root, input, `no factory renderer for "${modeInfo.renderer}"`);
-      }
-      const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
-      for (let i = 0; i < frames; i++) {
-        writePpm(
-          path.join(work, `frame_${String(i + 1).padStart(4, "0")}.ppm`),
-          WIDTH,
-          HEIGHT,
-          paint(i / FPS),
-        );
-      }
-      encodeFrames(work, frames, picture);
+      const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
+      if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
+      input.engine = motion.engine;
+      input.fallback = motion.fallback;
+      input.width = motion.width;
+      input.height = motion.height;
+      input.visualConfig = motion.visualConfig
+        ? rippel.summarizeVisual({ visualConfig: motion.visualConfig, tlmCommand: "checksum" })
+        : null;
     }
-    if (bed) muxBed(picture, bed, mp4);
-    else fs.copyFileSync(picture, mp4);
-    const evaled = evaluateMp4File(mp4, { mode: modeInfo.motionId, wantAudio: Boolean(bed) });
+    muxBed(picture, bedInfo.bed, mp4);
+    const evaled = evaluateMp4File(mp4, {
+      mode: modeInfo.motionId,
+      wantAudio: true,
+      motion: modeInfo.renderer !== "still",
+    });
     const receipt = buildReceipt(input, evaled);
     writeReceipt(root, receipt);
     return { receipt, mp4, seed };
@@ -780,6 +1007,10 @@ module.exports = {
   FPS,
   WIDTH,
   HEIGHT,
+  STILL_WIDTH,
+  STILL_HEIGHT,
+  MOTION_WIDTH,
+  MOTION_HEIGHT,
   RECEIPT_REL,
   MP4_REL,
   V0_IDS,
@@ -789,6 +1020,7 @@ module.exports = {
   PLATE,
   RGB,
   SSOT,
+  ANIMATION_TO_VISUALIZATION,
   stillPlate,
   paintStill,
   defaultRegistryPath,
@@ -810,4 +1042,7 @@ module.exports = {
   writeReceipt,
   readReceipt,
   buildReceipt,
+  resolveBed,
+  paintWireframeFrame,
+  encodeRaw,
 };

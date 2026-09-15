@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip Phase 1 (TICKET-BLIP-RENDERER-UPGRADE): default motion path is the Rippel converter spine (`VisualConfig.circles` → SimplifiedVisualConverter viz ids) at ≥720p, not ffmpeg geometry labeled as orb. `htafolla/rippel-synapse-flow@e5014cd`. Every Blip muxes a 4.44s audio bed (`--bed` or auto sound mill); silent mp4 = inspect FAIL. ffmpeg wireframe is `--engine wireframe` only. Still stays the Power Plant plate until Phase 2. No `@0xray/foundry` bump.
+
 Factory-blip plant (`blip` + `blip-inspect`) — sibling to mill + sound, not a mill copy. `foundry.json` `"plant": "blip"` fastens the tiny-video factory and turns mill off. Dynamic motion registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a growth stub. Still generator wears the Power Plant intro plate (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`). Headless 4.44s mp4 + receipt. Inspect reports last blip PASS/FAIL. Not costume. No version bump — dogfood from branch / pack.
 
 Sound plant retool: crystal-clear mill of Rippel SSOT chains (membrane / metal / duo-bass / mixer), not the Lovable volume-hack soup and not #62 sine beds. Tone.Offline blocked in Node. `phonk` first-class. No version bump.

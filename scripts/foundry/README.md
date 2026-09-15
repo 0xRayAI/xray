@@ -26,7 +26,7 @@ npx @0xray/foundry mint
 npx @0xray/foundry inspect [--skip-live]
 npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
 npx @0xray/foundry sound inspect
-npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH]
+npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH] [--engine rippel|wireframe]
 npx @0xray/foundry blip inspect
 npx @0xray/foundry ci [--commit SHA] [--report]
 npx @0xray/foundry hooks
@@ -63,9 +63,9 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 A friend would hear: the sound mill mills Dist beds like Rippel’s prototype grew up — kick membranes, metal hats, and a crystal-clear mixer, not a muddy toy and not a 3-sine pad.
 
-**Blip plant (factory-blip):** sibling factory plant to mill + sound — not a mill copy. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Motions live in `plant/motions/registry.json` (not a frozen Rippel enum). v0: `still` + Rippel five (`orb` `swirl` `snap` `waves` `spark`). `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Still generator wears the Power Plant intro plate (void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`) — hard cuts, flat vector, not seed-RGB stock. Headless 4.44s mp4 → `.xray/blip/receipt.json`. Optional `--bed` mux. Inspect reports the plant, live ids, plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
+**Blip plant (factory-blip):** sibling factory plant to mill + sound — not a mill copy. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Motions live in `plant/motions/registry.json` (not a frozen Rippel enum). v0: `still` + Rippel five (`orb` `swirl` `snap` `waves` `spark`). `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Phase 1 default motion path is the Rippel converter (`VisualConfig.circles` → canvas / 3d-sacred / neural / waveform / particles) at ≥720p. ffmpeg wireframe is `--engine wireframe` only. Still generator wears the Power Plant intro plate (void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`) — hard cuts, flat vector, not seed-RGB stock. Every 4.44s mp4 muxes a bed (`--bed` or auto sound mill) → `.xray/blip/receipt.json`. Silent = inspect FAIL. Inspect reports the plant, live ids, plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
 
-A friend would hear: build the tiny-video factory that makes 4.44s Blips next to the sound foundry.
+A friend would hear: Blips should look like Rippel living motions with sound, not a silent wireframe box.
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 
