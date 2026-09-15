@@ -2,8 +2,12 @@
  * Factory-blip plant spine — sibling to mill + sound, not a mill bolt-on.
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
- * Phase 1 (TICKET-BLIP-RENDERER-UPGRADE): Rippel VisualConfig.circles at ≥720p.
- * Still stays the Power Plant plate (Phase 2). ffmpeg wireframe is --engine wireframe only.
+ * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
+ * Sharp focus + tempo/frequency animation on all five viz.
+ * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
+ * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
+ * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
+ * ffmpeg wireframe is --engine wireframe only.
  * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
@@ -23,11 +27,15 @@ const DURATION_SEC = 4.44;
 const DURATION_TOL_SEC = 0.12;
 /** RIPPEL-ANIM-TYPES.md Codex line (~30fps). */
 const FPS = 30;
-/** Still plate stays 320×180 until Phase 2. Motions drop that default. */
-const STILL_WIDTH = 320;
-const STILL_HEIGHT = 180;
-const WIDTH = STILL_WIDTH;
-const HEIGHT = STILL_HEIGHT;
+/** Logical Power Plant plate. Output ident is ≥720p (same as the Rippel five). */
+const PLATE_WIDTH = 320;
+const PLATE_HEIGHT = 180;
+const STILL_WIDTH = PLATE_WIDTH;
+const STILL_HEIGHT = PLATE_HEIGHT;
+const WIDTH = PLATE_WIDTH;
+const HEIGHT = PLATE_HEIGHT;
+const POWER_PLANT_ENGINE = "power-plant-headless";
+const POWER_PLANT_LOOK = "power-plant-blip";
 const MOTION_WIDTH = rippel.MOTION_WIDTH;
 const MOTION_HEIGHT = rippel.MOTION_HEIGHT;
 const RECEIPT_REL = path.join(".xray", "blip", "receipt.json");
@@ -244,11 +252,29 @@ function onEdge(x, y, x0, y0, x1, y1) {
   return inBox(x, y, x0, y0, x1, y1) && (x === x0 || x === x1 - 1 || y === y0 || y === y1 - 1);
 }
 
-function stillPlate(seedHex) {
-  return STILL_PLATES[seedU32(seedHex, 0) % STILL_PLATES.length];
+function stillPlate(seedHex, t) {
+  return plateClock(seedHex, t).plate;
 }
 
-/** Shared Power Plant chrome on every still — gold/cyan ticks, ink label, blue node. */
+function plateClock(seedHex, t) {
+  const start = seedU32(seedHex, 0) % STILL_PLATES.length;
+  const grid = sound.motionGrid(seedHex, "ambient");
+  const beats = Math.max(STILL_PLATES.length, Math.floor(DURATION_SEC / grid.beatSec + 1e-9));
+  const every = Math.max(1, Math.floor(beats / STILL_PLATES.length));
+  const n = t == null || t <= 0 ? 0 : t >= DURATION_SEC ? DURATION_SEC - 1e-6 : t;
+  const beatIndex = Math.floor(n / grid.beatSec);
+  const step = Math.min(STILL_PLATES.length - 1, Math.floor(beatIndex / every));
+  const span = every * grid.beatSec;
+  const cutAt = step * span;
+  return {
+    plate: STILL_PLATES[(start + step) % STILL_PLATES.length],
+    u: span > 0 ? (n - cutAt) / span : 0,
+    start,
+    step,
+  };
+}
+
+/** Shared Power Plant chrome on every plate — gold/cyan ticks, ink label, blue node. */
 function paintChrome(x, y) {
   if (y >= 6 && y < 8 && x >= 136 && x < 168) return RGB.gold;
   if (y >= 6 && y < 8 && x >= 168 && x < 184) return RGB.cyan;
@@ -258,27 +284,31 @@ function paintChrome(x, y) {
 }
 
 /**
- * Still generator: Power Plant plate (titlecard / corridor / rain / endcard).
- * Seed picks the plate. Colors stay the five hexes — not seed-RGB stock.
+ * Power Plant ident — hard-cut titlecard / corridor / rain / endcard over 4.44s.
+ * Seed picks the opening plate, then the other three cut in. Flat vector, five hexes.
+ * u=0 of the opening plate matches the old frozen lockup so palette tests stay honest.
  */
-function paintStill(seedHex) {
-  const plate = stillPlate(seedHex);
+function paintStill(seedHex, t) {
+  const clock = plateClock(seedHex, t || 0);
+  const plate = clock.plate;
+  const u = clock.u;
+  const slide = Math.floor(u * 28);
   return function paint(x, y) {
     const chrome = paintChrome(x, y);
     if (chrome) return chrome;
 
     if (plate === "titlecard") {
       const cards = [
-        [12, 36, 84, 132],
-        [88, 36, 160, 132],
-        [164, 36, 236, 132],
-        [240, 36, 312, 132],
+        [12 - slide, 36, 84 - slide, 132],
+        [88 - slide, 36, 160 - slide, 132],
+        [164 - slide, 36, 236 - slide, 132],
+        [240 - slide, 36, 312 - slide, 132],
       ];
       for (let i = 0; i < cards.length; i++) {
         const [x0, y0, x1, y1] = cards[i];
         if (onEdge(x, y, x0, y0, x1, y1)) return i % 2 === 0 ? RGB.cyan : RGB.gold;
         if (inBox(x, y, x0 + 1, y0 + 1, x1 - 1, y1 - 1)) {
-          if (i === 1 && inBox(x, y, 118, 64, 130, 120)) return RGB.blue;
+          if (i === 1 && inBox(x, y, 118 - slide, 64, 130 - slide, 120)) return RGB.blue;
           if (i === 2 && (x + y) % 8 === 0) return RGB.cyan;
           return RGB.void;
         }
@@ -287,21 +317,50 @@ function paintStill(seedHex) {
     }
 
     if (plate === "corridor") {
-      if (x >= 156 && x < 164) return RGB.cyan;
-      if (inBox(x, y, 148, 72, 172, 148)) return RGB.blue;
+      const slit = 156 + slide;
+      if (x >= slit && x < slit + 8) return RGB.cyan;
+      if (inBox(x, y, 148, 72 - Math.floor(u * 16), 172, 148 - Math.floor(u * 16))) return RGB.blue;
       return RGB.void;
     }
 
     if (plate === "rain") {
-      if (x > 188 && y > 28 && y < 150 && (x + 3 * y) % 9 === 0) return RGB.cyan;
-      if (inBox(x, y, 208, 52, 268, 124)) return RGB.blue;
+      const fall = Math.floor(u * 36);
+      if (x > 188 && y > 28 && y < 150 && (x + 3 * (y + fall)) % 9 === 0) return RGB.cyan;
+      if (inBox(x, y, 208 + Math.floor(u * 12), 52, 268 + Math.floor(u * 12), 124)) return RGB.blue;
       return RGB.void;
     }
 
-    if (inBox(x, y, 208, 64, 300, 96)) return RGB.ink;
-    if (inBox(x, y, 208, 104, 248, 116)) return RGB.gold;
+    if (inBox(x, y, 208 - slide, 64, 300 - slide, 96)) return RGB.ink;
+    if (inBox(x, y, 208 - slide, 104, 248 - slide, 116)) return RGB.gold;
     return RGB.void;
   };
+}
+
+function paintStillFrame(buf, width, height, seedHex, t, brief) {
+  const paint = paintStill(seedHex, t);
+  for (let y = 0; y < height; y++) {
+    const ly = Math.min(PLATE_HEIGHT - 1, ((y * PLATE_HEIGHT) / height) | 0);
+    for (let x = 0; x < width; x++) {
+      const lx = Math.min(PLATE_WIDTH - 1, ((x * PLATE_WIDTH) / width) | 0);
+      const rgb = paint(lx, ly);
+      const i = (y * width + x) * 3;
+      buf[i] = clampByte(rgb[0]);
+      buf[i + 1] = clampByte(rgb[1]);
+      buf[i + 2] = clampByte(rgb[2]);
+    }
+  }
+  if (width >= 1280) {
+    rippel.paintMeshOverlay(buf, width, height, { seedHex, brief, t });
+  }
+  return buf;
+}
+
+function sampleStillFrames(seedHex) {
+  const a = Buffer.alloc(PLATE_WIDTH * PLATE_HEIGHT * 3);
+  const b = Buffer.alloc(PLATE_WIDTH * PLATE_HEIGHT * 3);
+  paintStillFrame(a, PLATE_WIDTH, PLATE_HEIGHT, seedHex, 0);
+  paintStillFrame(b, PLATE_WIDTH, PLATE_HEIGHT, seedHex, DURATION_SEC * 0.5);
+  return { differ: rippel.framesDiffer(a, b), width: PLATE_WIDTH, height: PLATE_HEIGHT };
 }
 
 /** Wireframe fallback — old ffmpeg geometry. Kept if Rippel headless throws. */
@@ -400,7 +459,7 @@ function paintSpark(t, seedHex, width, height) {
 }
 
 function painterFor(renderer, t, seedHex, width, height) {
-  if (renderer === "still") return paintStill(seedHex);
+  if (renderer === "still") return paintStill(seedHex, t);
   if (renderer === "orb") return paintOrb(t, width, height);
   if (renderer === "swirl") return paintSwirl(t, width, height);
   if (renderer === "snap") return paintSnap(t, width, height);
@@ -757,9 +816,11 @@ function buildReceipt(input, evaled) {
     width: evaled.width ?? input.width ?? null,
     height: evaled.height ?? input.height ?? null,
     engine: input.engine || rippel.ENGINE,
+    look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
+    grid: input.grid || null,
     ssot: SSOT,
     registry: input.registryIds || listMotionIds(),
     mp4: input.mp4Rel || input.mp4,
@@ -816,7 +877,7 @@ function evaluateReceipt(root, receipt) {
   const evaled = evaluateMp4File(mp4, {
     mode: mode.motionId,
     wantAudio: true,
-    motion: mode.motionId !== "still",
+    motion: true,
   });
   return {
     ...evaled,
@@ -847,13 +908,13 @@ function failReceipt(root, input, reason, extra = {}) {
   return { receipt, mp4: input.mp4, seed: input.seed };
 }
 
-function resolveBed(opts, root, brief, work) {
+function resolveBed(opts, root, brief, work, seed) {
   if (opts.bed) {
     const bed = path.resolve(root, opts.bed);
     if (!fs.existsSync(bed)) {
       return { ok: false, reason: `bed missing: ${opts.bed}` };
     }
-    return { ok: true, bed, source: "flag" };
+    return { ok: true, bed, source: "flag", grid: null };
   }
   try {
     const out = opts.autoBedOut
@@ -863,12 +924,14 @@ function resolveBed(opts, root, brief, work) {
       brief,
       genre: opts.genre || "ambient",
       seconds: DURATION_SEC,
+      seed,
+      syncopate: true,
     });
     sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
     if (!fs.existsSync(out)) {
       return { ok: false, reason: "auto bed missing" };
     }
-    return { ok: true, bed: out, source: "auto-sound" };
+    return { ok: true, bed: out, source: "auto-sound", grid: rendered.grid || null };
   } catch (err) {
     return {
       ok: false,
@@ -902,10 +965,12 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       engine: "ffmpeg-wireframe-fallback",
       fallback: true,
       visualConfig: null,
+      look: null,
     };
   }
 
   let visualConfig = null;
+  let look = rippel.LOOK;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -918,9 +983,10 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       buffer: buf,
     });
     visualConfig = painted.visualConfig;
+    look = painted.look;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -935,18 +1001,19 @@ function renderBlip(opts = {}) {
     pictureMode: modeInfo.pictureMode,
     motionId: modeInfo.motionId || modeInfo.id,
     visualization: modeInfo.visualization || rippel.visualizationFor(modeInfo.renderer) || null,
-    stillPlate: modeInfo.renderer === "still" ? stillPlate(seed) : null,
+    stillPlate: modeInfo.renderer === "still" ? stillPlate(seed, 0) : null,
     registryIds: listMotionIds(opts.registryPath),
     mp4,
     mp4Rel: path.relative(root, mp4) || mp4,
     bed: null,
     bedRel: null,
     bedSource: null,
-    engine: modeInfo.renderer === "still" ? "ffmpeg-headless" : rippel.ENGINE,
+    engine: modeInfo.renderer === "still" ? POWER_PLANT_ENGINE : rippel.ENGINE,
+    look: modeInfo.renderer === "still" ? POWER_PLANT_LOOK : rippel.LOOK,
     fallback: false,
     visualConfig: null,
-    width: modeInfo.renderer === "still" ? STILL_WIDTH : MOTION_WIDTH,
-    height: modeInfo.renderer === "still" ? STILL_HEIGHT : MOTION_HEIGHT,
+    width: MOTION_WIDTH,
+    height: MOTION_HEIGHT,
   };
 
   if (!modeInfo.ok) {
@@ -956,38 +1023,52 @@ function renderBlip(opts = {}) {
   fs.mkdirSync(path.dirname(mp4), { recursive: true });
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "xray-foundry-blip-"));
   try {
-    const bedInfo = resolveBed(opts, root, brief, work);
+    const bedInfo = resolveBed(opts, root, brief, work, seed);
     if (!bedInfo.ok) {
       return failReceipt(root, input, bedInfo.reason);
     }
     input.bed = bedInfo.bed;
     input.bedRel = path.relative(root, bedInfo.bed) || bedInfo.bed;
     input.bedSource = bedInfo.source;
+    input.grid = bedInfo.grid || null;
 
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {
-      const ppm = path.join(work, "still.ppm");
-      writePpm(ppm, STILL_WIDTH, STILL_HEIGHT, paintStill(seed));
-      encodeStill(ppm, picture);
-      input.engine = "ffmpeg-headless";
-      input.width = STILL_WIDTH;
-      input.height = STILL_HEIGHT;
+      const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
+      const raw = path.join(work, "power-plant.rgb");
+      writeRawMotion(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, (buf, t) => {
+        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief);
+      });
+      encodeRaw(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, picture);
+      input.engine = POWER_PLANT_ENGINE;
+      input.look = POWER_PLANT_LOOK;
+      input.width = MOTION_WIDTH;
+      input.height = MOTION_HEIGHT;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({ brief, seedHex: seed, width: MOTION_WIDTH, height: MOTION_HEIGHT }),
+      );
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
       input.engine = motion.engine;
+      input.look = motion.look || (motion.fallback ? null : rippel.LOOK);
       input.fallback = motion.fallback;
       input.width = motion.width;
       input.height = motion.height;
-      input.visualConfig = motion.visualConfig
-        ? rippel.summarizeVisual({ visualConfig: motion.visualConfig, tlmCommand: "checksum" })
-        : null;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: motion.width,
+          height: motion.height,
+        }),
+      );
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {
       mode: modeInfo.motionId,
       wantAudio: true,
-      motion: modeInfo.renderer !== "still",
+      motion: true,
     });
     const receipt = buildReceipt(input, evaled);
     writeReceipt(root, receipt);
@@ -1022,7 +1103,12 @@ module.exports = {
   SSOT,
   ANIMATION_TO_VISUALIZATION,
   stillPlate,
+  plateClock,
   paintStill,
+  paintStillFrame,
+  sampleStillFrames,
+  POWER_PLANT_ENGINE,
+  POWER_PLANT_LOOK,
   defaultRegistryPath,
   loadRegistry,
   listMotionIds,

@@ -225,11 +225,11 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
   });
 
   it('still generator paints only the Power Plant palette', () => {
-    const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES } =
+    const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES, sampleStillFrames } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
         PALETTE: Record<string, string>;
         RGB: Record<string, number[]>;
-        paintStill: (seed: string) => (x: number, y: number) => number[];
+        paintStill: (seed: string, t?: number) => (x: number, y: number) => number[];
         writePpm: (
           file: string,
           width: number,
@@ -238,8 +238,9 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         ) => string;
         WIDTH: number;
         HEIGHT: number;
-        stillPlate: (seed: string) => string;
+        stillPlate: (seed: string, t?: number) => string;
         STILL_PLATES: string[];
+        sampleStillFrames: (seed: string) => { differ: boolean };
       };
     expect(PALETTE).toEqual({
       void: '#08090B',
@@ -252,9 +253,10 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     const allowed = new Set(Object.values(RGB).map((rgb) => rgb.join(',')));
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-plate-'));
     try {
+      expect(sampleStillFrames('0xdeadbeef').differ).toBe(true);
       for (const seed of ['0x00', '0x01', '0x02', '0x03', '0xdeadbeef']) {
         const file = path.join(tmp, `${stillPlate(seed)}.ppm`);
-        writePpm(file, WIDTH, HEIGHT, paintStill(seed));
+        writePpm(file, WIDTH, HEIGHT, paintStill(seed, 0));
         const raw = readFileSync(file);
         const header = Buffer.from(`P6\n${WIDTH} ${HEIGHT}\n255\n`);
         expect(raw.subarray(0, header.length).equals(header)).toBe(true);
@@ -300,11 +302,12 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             plate?: string;
             stillPlate?: string | null;
             engine?: string;
+            look?: string | null;
             fallback?: boolean;
             hasAudio?: boolean;
             width?: number | null;
             height?: number | null;
-            visualConfig?: { circleCount?: number } | null;
+            visualConfig?: { circleCount?: number; mesh?: { id?: string } | null } | null;
             reason?: string | null;
             ssot?: { repo: string; commit: string | null; access?: string };
           };
@@ -338,7 +341,8 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       const ffmpeg = hasFfmpeg();
       const brief = 'night alley still';
       const still = renderBlip({ root: tmp, brief, mode: 'still' });
-      expect(still.receipt.engine).toBe('ffmpeg-headless');
+      expect(still.receipt.engine).toBe('power-plant-headless');
+      expect(still.receipt.look).toBe('power-plant-blip');
       expect(still.receipt.ssot).toMatchObject({
         repo: 'htafolla/rippel-synapse-flow',
         commit: 'e5014cd46fbe5f132391333d8296f4416896dbee',
@@ -362,8 +366,12 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         });
         expect(still.receipt.plate).toBe('power-plant-intro');
         expect(still.receipt.stillPlate).toMatch(/titlecard|corridor|rain|endcard/);
+        expect(still.receipt.width).toBeGreaterThanOrEqual(1280);
+        expect(still.receipt.height).toBeGreaterThanOrEqual(720);
         expect(existsSync(still.mp4)).toBe(true);
-        expect(evaluateMp4File(still.mp4, { mode: 'still', wantAudio: true }).status).toBe('PASS');
+        expect(
+          evaluateMp4File(still.mp4, { mode: 'still', wantAudio: true, motion: true }).status,
+        ).toBe('PASS');
         expect(still.receipt.hasAudio).toBe(true);
         expect(readReceipt(tmp)?.status).toBe('PASS');
 
@@ -382,11 +390,13 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.motionId).toBe(id);
           expect(rendered.receipt.pictureMode).toBe(`motion:${id}`);
           expect(rendered.receipt.engine).toBe('rippel-headless');
+          expect(rendered.receipt.look).toBe('rippel-v2');
           expect(rendered.receipt.fallback).toBe(false);
           expect(rendered.receipt.hasAudio).toBe(true);
           expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
           expect(rendered.receipt.height).toBeGreaterThanOrEqual(720);
           expect(rendered.receipt.visualConfig?.circleCount).toBeGreaterThan(0);
+          expect(rendered.receipt.visualConfig?.mesh?.id).toBeTruthy();
           expect(rendered.receipt.palette?.void).toBe('#08090B');
         }
 
@@ -483,35 +493,87 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
 
 describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
   it('builds VisualConfig.circles and living frames that differ', () => {
-    const { buildVisualConfig, sampleMotionFrames, ANIMATION_TO_VISUALIZATION } = requireCjs(
-      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
-    ) as {
-      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
-        visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
+    const { buildVisualConfig, sampleMotionFrames, ANIMATION_TO_VISUALIZATION, MESH_FAMILIES, MESH_GAITS } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+        buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+          visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
+          mesh: {
+            id: string;
+            family: string;
+            gait: string;
+            verts: number[][];
+            edges: number[][];
+            faces: number[][];
+            shells: number;
+            scale: number;
+          };
+        };
+        sampleMotionFrames: (
+          renderer: string,
+          seed: string,
+          duration: number,
+          brief: string,
+        ) => {
+          differ: boolean;
+          living: boolean;
+          look: string;
+          sharpness: { ratio: number; edges: number };
+          tempo: number;
+          width: number;
+          height: number;
+          circleCount: number;
+          visualization: string;
+          mesh: { id: string; family: string; gait?: string } | null;
+          fill: number;
+        };
+        ANIMATION_TO_VISUALIZATION: Record<string, string>;
+        MESH_FAMILIES: string[];
+        MESH_GAITS: string[];
       };
-      sampleMotionFrames: (
-        renderer: string,
-        seed: string,
-        duration: number,
-        brief: string,
-      ) => { differ: boolean; width: number; height: number; circleCount: number; visualization: string };
-      ANIMATION_TO_VISUALIZATION: Record<string, string>;
-    };
     const checksum = buildVisualConfig({
       brief: 'warehouse floor · Power Plant',
       seedHex: '0xdeadbeef',
     });
+    const other = buildVisualConfig({
+      brief: 'other mint · alley',
+      seedHex: '0xcafef00d',
+    });
+    expect(MESH_FAMILIES.length).toBeGreaterThanOrEqual(12);
+    expect(MESH_GAITS).toEqual(expect.arrayContaining(['tumble', 'shear', 'pulse', 'orbit', 'snap']));
+    expect(checksum.mesh?.id).toBeTruthy();
+    expect(checksum.mesh.id).not.toBe(other.mesh.id);
+    expect(checksum.mesh.family).toMatch(
+      /^(tetra|octa|cube|prism|star|cage|spire|icosa|helix|torus|lattice|flower)$/,
+    );
+    expect(checksum.mesh.gait).toMatch(/^(tumble|shear|pulse|orbit|snap)$/);
+    expect(checksum.mesh.verts.length).toBeGreaterThan(3);
+    expect(checksum.mesh.edges.length).toBeGreaterThan(3);
+    expect(checksum.mesh.faces.length).toBeGreaterThan(0);
+    expect(checksum.mesh.scale).toBeGreaterThan(0.8);
+    expect(checksum.mesh.shells).toBeGreaterThanOrEqual(1);
     expect(checksum.visualConfig.circles.length).toBeGreaterThan(3);
     expect(checksum.visualConfig.circles[0]?.frequency).toBeGreaterThan(0);
     expect(checksum.visualConfig.circles[0]?.radius).toBeGreaterThan(0);
     for (const id of ['orb', 'swirl', 'snap', 'waves', 'spark']) {
       const sample = sampleMotionFrames(id, '0xdeadbeef', 4.44, 'warehouse floor · Power Plant');
       expect(sample.visualization).toBe(ANIMATION_TO_VISUALIZATION[id]);
+      expect(sample.look).toBe('rippel-v2');
       expect(sample.differ, id).toBe(true);
+      expect(sample.living, id).toBe(true);
+      expect(sample.sharpness.edges, id).toBeGreaterThan(400);
+      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.05);
       expect(sample.width).toBe(1280);
       expect(sample.height).toBe(720);
       expect(sample.circleCount).toBeGreaterThan(0);
+      expect(sample.tempo).toBeGreaterThan(0);
+      expect(sample.mesh?.id, id).toBeTruthy();
+      expect(sample.fill, id).toBeGreaterThan(0.055);
     }
+    const prints = ['warehouse floor · Power Plant', 'other mint · alley', 'neon dock · vault', 'salt mill · dusk'].map(
+      (brief, i) =>
+        buildVisualConfig({ brief, seedHex: `0xdeadbee${i}` }).mesh.id,
+    );
+    expect(new Set(prints).size).toBe(prints.length);
   });
 
   it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {
@@ -541,6 +603,99 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(focus.drop).toBeGreaterThan(0);
     expect(focus.drop).toBeLessThan(16);
     expect(focus.inner + focus.drop).toBeLessThan(120);
+  });
+
+  it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {
+    const { paintRippelFrame, goldPixelCount, LOOK, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      LOOK: string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+      }) => { buffer: Buffer; look: string };
+      goldPixelCount: (buf: Buffer) => number;
+    };
+    expect(LOOK).toBe('rippel-v2');
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const bpm = buildVisualConfig({ brief, seedHex }).genreConfig.tempo;
+    const offBeat = (0.5 * 60) / bpm;
+    for (const id of ['orb', 'swirl', 'snap', 'waves', 'spark']) {
+      const kick = paintRippelFrame({ renderer: id, t: 0, seedHex, brief });
+      const off = paintRippelFrame({ renderer: id, t: offBeat, seedHex, brief });
+      expect(kick.look, id).toBe('rippel-v2');
+      expect(goldPixelCount(kick.buffer), id).not.toBe(goldPixelCount(off.buffer));
+    }
+  });
+
+  it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
+    const rippel = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number; phase0: number };
+      };
+      kickAccent: (beat: number) => number;
+      andAccent: (beat: number) => number;
+    };
+    const sound = requireCjs(path.join(root, 'scripts/foundry/sound-bed.cjs')) as {
+      renderSamples: (opts: {
+        brief: string;
+        genre: string;
+        seconds: number;
+        seed?: string;
+        syncopate?: boolean;
+      }) => {
+        samples: Float64Array;
+        sampleRate: number;
+        genre: { bpm: number };
+        grid: { phase0: number; syncopate: boolean; bpm: number; and: number };
+        seed: string;
+      };
+      highpassEnergy: (samples: Float64Array, sampleRate: number, hz: number) => number;
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = rippel.buildVisualConfig({ brief, seedHex });
+    const bed = sound.renderSamples({
+      brief,
+      genre: 'ambient',
+      seconds: 4.44,
+      seed: seedHex,
+      syncopate: true,
+    });
+    expect(bed.seed).toBe(seedHex);
+    expect(bed.genre.bpm).toBe(checksum.genreConfig.tempo);
+    expect(bed.grid.phase0).toBe(0);
+    expect(checksum.genreConfig.phase0).toBe(0);
+    expect(bed.grid.syncopate).toBe(true);
+    expect(rippel.kickAccent(0)).toBeGreaterThan(rippel.andAccent(0));
+    expect(rippel.andAccent(0.5)).toBeGreaterThan(rippel.kickAccent(0.5));
+    const beat = 60 / bed.genre.bpm;
+    function rms(t: number, dur: number): number {
+      const i0 = Math.max(0, Math.floor(t * bed.sampleRate));
+      const i1 = Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate));
+      let acc = 0;
+      let n = 0;
+      for (let i = i0; i < i1; i += 1) {
+        acc += bed.samples[i] * bed.samples[i];
+        n += 1;
+      }
+      return Math.sqrt(acc / Math.max(1, n));
+    }
+    expect(rms(0, 0.05)).toBeGreaterThan(rms(beat * 0.25, 0.05));
+    const slice = (t: number, dur: number) =>
+      bed.samples.subarray(
+        Math.max(0, Math.floor(t * bed.sampleRate)),
+        Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate)),
+      );
+    expect(sound.highpassEnergy(slice(beat * 0.5, 0.06), bed.sampleRate, 2000)).toBeGreaterThan(
+      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000) * 0.85,
+    );
   });
 
   it('keeps ffmpeg wireframe behind a flag and FAILs silent mp4s', { timeout: 90000 }, async () => {

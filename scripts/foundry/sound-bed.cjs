@@ -65,7 +65,7 @@ function resolveGenre(name) {
   return rippel.resolveGenre(name);
 }
 
-function renderSamples({ brief, genre, seconds, seed }) {
+function renderSamples({ brief, genre, seconds, seed, syncopate }) {
   const dur = Number(seconds) > 0 ? Number(seconds) : DEFAULT_SECONDS;
   const g = resolveGenre(genre);
   const seedHex = seed || seedFromBrief(brief, g.id);
@@ -77,6 +77,7 @@ function renderSamples({ brief, genre, seconds, seed }) {
     seedHex,
     rng,
     sampleRate: SAMPLE_RATE,
+    syncopate: Boolean(syncopate),
   });
 }
 
@@ -429,6 +430,8 @@ module.exports = {
   GENRES,
   seedFromBrief,
   resolveGenre,
+  tempoFromSeed: rippel.tempoFromSeed,
+  motionGrid: rippel.motionGrid,
   renderSamples,
   writeWav16Mono,
   readWav16,

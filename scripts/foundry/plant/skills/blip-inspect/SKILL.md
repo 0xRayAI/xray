@@ -18,7 +18,7 @@ Missing mp4, unreadable mp4, or a thrown probe is **FAIL**. Never pass on a miss
 3. **Mode.** Receipt records a registry id (`still` or `motion:<id>`). Unknown id is FAIL.
 4. **Video.** Stream present.
 5. **Audio.** Stream present. Silent mp4 = FAIL. `--bed` or auto sound mill.
-6. **Resolution.** Motions ≥720p (`1280×720`). Still may stay the Phase 2 plate size.
+6. **Resolution.** Every live blip ≥720p (`1280×720`), including the Power Plant ident (`still`).
 
 v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Receipt records the Power Plant palette.
 

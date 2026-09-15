@@ -13,11 +13,11 @@
   "motions": [
     {
       "id": "still",
-      "kind": "still",
+      "kind": "motion",
       "source": "blips",
       "renderer": "still",
       "status": "v0",
-      "notes": "Power Plant plate still (titlecard / corridor / rain / endcard)"
+      "notes": "Power Plant ident — hard-cut titlecard/corridor/rain/endcard over 4.44s. Not a frozen still. ≥720p + bed."
     },
     {
       "id": "orb",
@@ -27,7 +27,7 @@
       "visualization": "canvas",
       "renderer": "orb",
       "status": "v0",
-      "notes": "Phase 1 Rippel canvas — Orb Glow from VisualConfig.circles (SimplifiedVisualConverter). ≥720p + 4.44s bed."
+      "notes": "Rippel v2 canvas — Orb Glow, sharp discs, dual rings + beat tick. ≥720p + 4.44s bed."
     },
     {
       "id": "swirl",
@@ -37,7 +37,7 @@
       "visualization": "3d-sacred",
       "renderer": "swirl",
       "status": "v0",
-      "notes": "Phase 1 Rippel 3d-sacred — same CircleConfig[] on a sacred plate. ≥720p + 4.44s bed."
+      "notes": "Rippel v2 3d-sacred — merkaba + hex plate, counter-spin, beat vertices. ≥720p + 4.44s bed."
     },
     {
       "id": "snap",
@@ -47,7 +47,7 @@
       "visualization": "neural",
       "renderer": "snap",
       "status": "v0",
-      "notes": "Phase 1 Rippel neural — CircleConfig nodes + frequency pulses. ≥720p + 4.44s bed."
+      "notes": "Rippel v2 neural — dual-ring lattice, hub, skip-links, frequency + beat pulses. ≥720p + 4.44s bed."
     },
     {
       "id": "waves",
@@ -57,7 +57,7 @@
       "visualization": "waveform",
       "renderer": "waves",
       "status": "v0",
-      "notes": "Phase 1 Rippel Wave Flow — one ribbon per CircleConfig.frequency. ≥720p + 4.44s bed."
+      "notes": "Rippel v2 Wave Flow — harmonic ribbons + beat envelope + gold needle. ≥720p + 4.44s bed."
     },
     {
       "id": "spark",
@@ -67,7 +67,7 @@
       "visualization": "particles",
       "renderer": "spark",
       "status": "v0",
-      "notes": "Phase 1 Rippel Spark Drift — motes from each CircleConfig seat. ≥720p + 4.44s bed."
+      "notes": "Rippel v2 Spark Drift — beat bursts, orbital + radial motes, short trails. ≥720p + 4.44s bed."
     },
     {
       "id": "kapow",

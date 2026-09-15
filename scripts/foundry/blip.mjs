@@ -22,7 +22,7 @@ const HELP =
   "Motions: Rippel VisualConfig.circles at ≥720p (default). --engine wireframe is emergency only.\n" +
   "Every mp4 muxes a 4.44s bed (--bed PATH or auto sound mill). Silent = inspect FAIL.\n" +
   "kapow is a growth stub (FAIL until a renderer ships). Unknown id FAIL.\n" +
-  "Still generator: Power Plant plate (void #08090B ink #F5F7FA cyan #3DE0E8 gold #F5C518 blue #4A7FD4).\n" +
+  "still: Power Plant ident — hard-cut plates over 4.44s at ≥720p, not a frozen poster.\n" +
   "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n";
 
 function argValue(argv, name, fallback) {
