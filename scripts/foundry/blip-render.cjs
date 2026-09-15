@@ -330,7 +330,7 @@ function paintStill(seedHex, t) {
   };
 }
 
-function paintStillFrame(buf, width, height, seedHex, t) {
+function paintStillFrame(buf, width, height, seedHex, t, brief) {
   const paint = paintStill(seedHex, t);
   for (let y = 0; y < height; y++) {
     const ly = Math.min(PLATE_HEIGHT - 1, ((y * PLATE_HEIGHT) / height) | 0);
@@ -342,6 +342,9 @@ function paintStillFrame(buf, width, height, seedHex, t) {
       buf[i + 1] = clampByte(rgb[1]);
       buf[i + 2] = clampByte(rgb[2]);
     }
+  }
+  if (width >= 1280) {
+    rippel.paintMeshOverlay(buf, width, height, { seedHex, brief, t });
   }
   return buf;
 }
@@ -1024,13 +1027,16 @@ function renderBlip(opts = {}) {
       const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
       const raw = path.join(work, "power-plant.rgb");
       writeRawMotion(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, (buf, t) => {
-        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t);
+        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief);
       });
       encodeRaw(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, picture);
       input.engine = POWER_PLANT_ENGINE;
       input.look = POWER_PLANT_LOOK;
       input.width = MOTION_WIDTH;
       input.height = MOTION_HEIGHT;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({ brief, seedHex: seed, width: MOTION_WIDTH, height: MOTION_HEIGHT }),
+      );
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);

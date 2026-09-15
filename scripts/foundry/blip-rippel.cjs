@@ -11,6 +11,7 @@
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
  * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
+ * Mesh: seed-unique polyhedron (family + jitter + extra chords). NFT fingerprint.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -34,8 +35,10 @@ const SSOT = {
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — VisualConfig.circles through SimplifiedVisualConverter viz ids. Sharp focus + fast abstract blip motion on all five. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — VisualConfig.circles + seed mesh. Sharp focus, fast abstract blip, unique silhouette per brief/seed. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
+
+const MESH_FAMILIES = ["tetra", "octa", "cube", "prism", "star", "cage", "spire"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -102,6 +105,202 @@ function parseHex(hex) {
   ];
 }
 
+function norm3(x, y, z) {
+  const len = Math.hypot(x, y, z) || 1;
+  return [x / len, y / len, z / len];
+}
+
+function platonic(family) {
+  if (family === "tetra") {
+    return {
+      verts: [
+        [1, 1, 1],
+        [1, -1, -1],
+        [-1, 1, -1],
+        [-1, -1, 1],
+      ].map((v) => norm3(v[0], v[1], v[2])),
+      edges: [
+        [0, 1],
+        [0, 2],
+        [0, 3],
+        [1, 2],
+        [1, 3],
+        [2, 3],
+      ],
+    };
+  }
+  if (family === "octa") {
+    return {
+      verts: [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ],
+      edges: [
+        [0, 2],
+        [0, 3],
+        [0, 4],
+        [0, 5],
+        [1, 2],
+        [1, 3],
+        [1, 4],
+        [1, 5],
+        [2, 4],
+        [2, 5],
+        [3, 4],
+        [3, 5],
+      ],
+    };
+  }
+  if (family === "cube") {
+    const verts = [];
+    for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) verts.push(norm3(x, y, z));
+    const edges = [];
+    for (let i = 0; i < 8; i++) {
+      for (let j = i + 1; j < 8; j++) {
+        let d = 0;
+        for (let k = 0; k < 3; k++) if (verts[i][k] !== verts[j][k]) d += 1;
+        if (d === 1) edges.push([i, j]);
+      }
+    }
+    return { verts, edges };
+  }
+  if (family === "prism") {
+    const verts = [];
+    for (let i = 0; i < 3; i++) {
+      const a = (i * Math.PI * 2) / 3;
+      verts.push(norm3(Math.cos(a), Math.sin(a), 0.7));
+      verts.push(norm3(Math.cos(a), Math.sin(a), -0.7));
+    }
+    return {
+      verts,
+      edges: [
+        [0, 2],
+        [2, 4],
+        [4, 0],
+        [1, 3],
+        [3, 5],
+        [5, 1],
+        [0, 1],
+        [2, 3],
+        [4, 5],
+      ],
+    };
+  }
+  if (family === "star") {
+    const a = platonic("tetra");
+    const verts = a.verts.concat(a.verts.map((v) => [-v[0], -v[1], -v[2]]));
+    const edges = a.edges.concat(a.edges.map((e) => [e[0] + 4, e[1] + 4]));
+    return { verts, edges };
+  }
+  if (family === "spire") {
+    const verts = [[0, 0, 1], [0, 0, -0.35]];
+    const edges = [[0, 1]];
+    for (let i = 0; i < 5; i++) {
+      const a = (i * Math.PI * 2) / 5;
+      verts.push(norm3(Math.cos(a) * 0.95, Math.sin(a) * 0.95, -0.2));
+      edges.push([0, i + 2], [1, i + 2], [i + 2, 2 + ((i + 1) % 5)]);
+    }
+    return { verts, edges };
+  }
+  const verts = [];
+  const n = 8;
+  const phi = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (i / (n - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const a = phi * i;
+    verts.push(norm3(Math.cos(a) * r, y, Math.sin(a) * r));
+  }
+  const edges = [];
+  for (let i = 0; i < n; i++) {
+    const dist = [];
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      const dx = verts[i][0] - verts[j][0];
+      const dy = verts[i][1] - verts[j][1];
+      const dz = verts[i][2] - verts[j][2];
+      dist.push({ j, d: dx * dx + dy * dy + dz * dz });
+    }
+    dist.sort((p, q) => p.d - q.d);
+    for (let k = 0; k < 3; k++) {
+      const j = dist[k].j;
+      const a = i < j ? i : j;
+      const b = i < j ? j : i;
+      if (!edges.some((e) => e[0] === a && e[1] === b)) edges.push([a, b]);
+    }
+  }
+  return { verts, edges };
+}
+
+function buildMesh(seedHex, brief) {
+  const text = String(brief || "factory-blip");
+  let mix = 0;
+  for (let i = 0; i < text.length; i++) mix = (Math.imul(mix, 33) + text.charCodeAt(i)) >>> 0;
+  const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8) ^ seedU32(seedHex, 16) ^ mix);
+  const family = MESH_FAMILIES[(rng() * MESH_FAMILIES.length) | 0];
+  const base = platonic(family);
+  const jitter = 0.08 + rng() * 0.2;
+  const verts = base.verts.map((v) =>
+    norm3(v[0] + (rng() - 0.5) * jitter, v[1] + (rng() - 0.5) * jitter, v[2] + (rng() - 0.5) * jitter),
+  );
+  const edges = base.edges.map((e) => [e[0], e[1]]);
+  const extra = 1 + ((rng() * 4) | 0);
+  for (let i = 0; i < extra; i++) {
+    const a = (rng() * verts.length) | 0;
+    const b = (rng() * verts.length) | 0;
+    if (a === b) continue;
+    const lo = a < b ? a : b;
+    const hi = a < b ? b : a;
+    if (!edges.some((e) => e[0] === lo && e[1] === hi)) edges.push([lo, hi]);
+  }
+  return {
+    family,
+    id: `${family}-${verts.length}v${edges.length}e-${((rng() * 0xfffffff) | 0).toString(16)}`,
+    verts,
+    edges,
+    twist: rng() * Math.PI * 2,
+    spin: 1.4 + rng() * 2.2,
+    scale: 0.4 + rng() * 0.16,
+    dual: rng() > 0.42,
+    accent: THEME_CYCLE[(rng() * THEME_CYCLE.length) | 0],
+  };
+}
+
+function rotate3(v, yaw, pitch, roll) {
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+  const x1 = v[0] * cy + v[2] * sy;
+  const z1 = -v[0] * sy + v[2] * cy;
+  const cp = Math.cos(pitch);
+  const sp = Math.sin(pitch);
+  const y2 = v[1] * cp - z1 * sp;
+  const z2 = v[1] * sp + z1 * cp;
+  const cr = Math.cos(roll);
+  const sr = Math.sin(roll);
+  return [x1 * cr - y2 * sr, x1 * sr + y2 * cr, z2];
+}
+
+function projectMesh(mesh, width, height, t, checksum, scaleMul) {
+  const yaw = t * mesh.spin + mesh.twist;
+  const pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
+  const roll = t * 0.38 + mesh.twist * 0.25;
+  const beat = beatPhase(checksum, t);
+  const breathe = (scaleMul || 1) * mesh.scale * (1 + 0.07 * Math.sin(beat * Math.PI * 2));
+  const minSide = Math.min(width, height);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  return mesh.verts.map((v) => {
+    const r = rotate3(v, yaw, pitch, roll);
+    const z = r[2] + 2.55;
+    const p = (breathe * minSide) / z;
+    return { x: cx + r[0] * p, y: cy + r[1] * p * 0.78, z: r[2] };
+  });
+}
+
 /**
  * Checksum TLM → VisualConfig. Mirrors types/index.ts ChecksumResponse.visualConfig.
  * Sequence notes + genre frequencies become CircleConfig[] (note, frequency, radius, color).
@@ -150,6 +349,7 @@ function buildVisualConfig({ brief, seedHex, genre, width, height }) {
       checksumValue: seedU32(seedHex, 8),
       parity: (seedU32(seedHex, 0) & 1) === 0,
     },
+    mesh: buildMesh(seedHex, text),
   };
 }
 
@@ -359,6 +559,48 @@ function paintSharpLine(buf, width, height, x0, y0, x1, y1, color, half, rimColo
   }
 }
 
+function paintMesh(buf, width, height, mesh, pts, color, half) {
+  const node = { rim: 1, glow: 2, glowAlpha: 0.14, rimColor: THEME.ink };
+  for (let i = 0; i < mesh.edges.length; i++) {
+    const [a, b] = mesh.edges[i];
+    paintSharpLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, color, half);
+  }
+  for (let i = 0; i < pts.length; i++) {
+    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, 3.4, color, node);
+  }
+}
+
+function paintChecksumMesh(buf, width, height, t, checksum, opts) {
+  const mesh = checksum.mesh;
+  if (!mesh) return null;
+  const scale = (opts && opts.scale) || 1;
+  const half = (opts && opts.half) || 1;
+  const color = (opts && opts.color) || mesh.accent || THEME.blue;
+  const pts = projectMesh(mesh, width, height, t, checksum, scale);
+  paintMesh(buf, width, height, mesh, pts, color, half);
+  let dual = null;
+  if (mesh.dual) {
+    dual = projectMesh(mesh, width, height, -t * 0.72, checksum, scale * 0.55);
+    paintMesh(buf, width, height, mesh, dual, THEME.ink, 1);
+  }
+  return { mesh, pts, dual };
+}
+
+function paintMeshOverlay(buf, width, height, opts) {
+  const checksum = cachedChecksum({
+    brief: opts.brief,
+    seedHex: opts.seedHex,
+    genre: opts.genre,
+    width,
+    height,
+  });
+  return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
+    scale: 0.92,
+    half: 1,
+    color: THEME.cyan,
+  });
+}
+
 function layoutRings(circles, width, height, t, checksum) {
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
@@ -393,9 +635,14 @@ function layoutRing(circles, width, height, t, checksum) {
   return layoutRings(circles, width, height, t, checksum || { genreConfig: { tempo: 90 } });
 }
 
-/** orb → canvas / Orb Glow v2. Fast dual rings, gold tick, no hard flash. */
+/** orb → canvas / Orb Glow v2. Seed mesh cage + sharp core + seated motes. */
 function paintCanvas(buf, width, height, t, checksum) {
   fillVoid(buf);
+  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: 1.05,
+    half: 1,
+    color: THEME.blue,
+  });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
@@ -437,44 +684,19 @@ function paintCanvas(buf, width, height, t, checksum) {
     THEME.ink,
     { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
   );
-  const now = layoutRings(checksum.visualConfig.circles, width, height, t, checksum);
-  const trail = layoutRings(checksum.visualConfig.circles, width, height, Math.max(0, t - 0.06), checksum);
-  const fade = layoutRings(checksum.visualConfig.circles, width, height, Math.max(0, t - 0.12), checksum);
-  for (let i = 0; i < now.length; i++) {
-    const placed = now[i];
-    const color = mixRgb(placed.color, THEME.gold, freqTint(placed.circle, t));
-    stampFocusDisc(buf, width, height, fade[i].x, fade[i].y, placed.r * 0.18, color, {
-      rim: 1,
-      glow: 2,
-      glowAlpha: 0.1,
-      rimColor: THEME.ink,
-    });
-    stampFocusDisc(buf, width, height, trail[i].x, trail[i].y, placed.r * 0.26, color, {
-      rim: 1.2,
-      glow: 2,
-      glowAlpha: 0.14,
-      rimColor: THEME.ink,
-    });
-    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.36, color, {
+  const circles = checksum.visualConfig.circles;
+  const seats = worn && worn.pts && worn.pts.length ? worn.pts : layoutRings(circles, width, height, t, checksum);
+  for (let i = 0; i < circles.length; i++) {
+    const seat = seats[i % seats.length];
+    const x = seat.x;
+    const y = seat.y;
+    const color = mixRgb(parseHex(circles[i].color), THEME.gold, freqTint(circles[i], t));
+    stampFocusDisc(buf, width, height, x, y, circlePulse(circles[i], t) * 0.28, color, {
       rim: 1.6,
       glow: 4,
       glowAlpha: 0.2,
       rimColor: THEME.ink,
     });
-    const hop = (i * 1.7 + t * 1.55) % 1;
-    if (hop > 0.72) {
-      const lead = hop * 14;
-      stampFocusDisc(
-        buf,
-        width,
-        height,
-        placed.x + (placed.x - cx) * 0.04,
-        placed.y + (placed.y - cy) * 0.04,
-        3 + lead * 0.08,
-        THEME.ink,
-        { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
-      );
-    }
   }
 }
 
@@ -503,74 +725,24 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - cx, drop: lo - hi };
 }
 
-/** swirl → 3d-sacred v2. Merkaba + hex plate, counter-spin, beat vertices. */
+/** swirl → 3d-sacred v2. Seed mesh + dual as the sacred body. */
 function paintSacred(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const scramble = mulberry32(
-    ((checksum.gematria && checksum.gematria.promptValue) || 1) ^ 0x51ed,
-  );
-  const spin = t * 2.55 + beat * 0.28;
-  const r = minSide * (0.28 + kick * 0.01);
+  const kick = kickAccent(beatPhase(checksum, t));
+  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: 1.12,
+    half: 2,
+    color: THEME.cyan,
+  });
+  const seats = worn && worn.pts ? worn.pts : [];
   const circles = checksum.visualConfig.circles;
-  const node = { rim: 1.3, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
-  const hex = [];
-  for (let i = 0; i < 6; i++) {
-    const a = -spin * 0.85 + (i * Math.PI) / 3 + (scramble() - 0.5) * 0.18;
-    const skew = 0.94 + scramble() * 0.14;
-    hex.push([cx + Math.cos(a) * r * 1.12 * skew, cy + Math.sin(a) * r * 1.12]);
-  }
-  for (let i = 0; i < 6; i++) {
-    paintSharpLine(buf, width, height, hex[i][0], hex[i][1], hex[(i + 1) % 6][0], hex[(i + 1) % 6][1], THEME.blue, 1);
-    paintSharpLine(buf, width, height, cx, cy, hex[i][0], hex[i][1], THEME.blue, 1);
-    stampFocusDisc(buf, width, height, hex[i][0], hex[i][1], 4 + kick, THEME.ink, node);
-  }
-  function triangle(offset, color, scale, half) {
-    const pts = [];
-    for (let i = 0; i < 3; i++) {
-      const a = offset + (i * Math.PI * 2) / 3;
-      pts.push([cx + Math.cos(a) * r * scale, cy + Math.sin(a) * r * scale]);
-    }
-    for (let i = 0; i < 3; i++) {
-      paintSharpLine(
-        buf,
-        width,
-        height,
-        pts[i][0],
-        pts[i][1],
-        pts[(i + 1) % 3][0],
-        pts[(i + 1) % 3][1],
-        color,
-        half,
-      );
-      stampFocusDisc(
-        buf,
-        width,
-        height,
-        pts[i][0],
-        pts[i][1],
-        5 + kick,
-        mixRgb(color, THEME.gold, 0.2 + kick * 0.35),
-        node,
-      );
-    }
-  }
-  triangle(spin, THEME.cyan, 1, 2);
-  triangle(-spin + Math.PI / 3, THEME.gold, 0.88, 2);
-  triangle(spin * 1.7 + Math.PI / 6, THEME.ink, 0.52, 1);
   for (let i = 0; i < circles.length; i++) {
-    const inner = i % 2 === 0;
-    const gem = (checksum.gematria && checksum.gematria.promptValue) || 1;
-    const phase = ((gem >>> ((i * 7) % 24)) & 255) / 40;
-    const ang = (i / circles.length) * Math.PI * 2 + (inner ? -spin * 1.1 : spin * 0.7) + phase;
-    const rad = r * (inner ? 0.42 : 0.78);
-    const wobble = Math.sin(beat * Math.PI * 2 + i) * r * 0.02;
-    const x = cx + Math.cos(ang) * (rad + wobble);
-    const y = cy + Math.sin(ang) * (rad + wobble) * 0.86;
+    const seat = seats[i % Math.max(1, seats.length)];
+    const x = seat ? seat.x : cx;
+    const y = seat ? seat.y : cy;
     stampFocusDisc(
       buf,
       width,
@@ -582,7 +754,7 @@ function paintSacred(buf, width, height, t, checksum) {
       { rim: 1.4, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
     );
   }
-  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.028 + kick * 0.006), mixRgb(THEME.cyan, THEME.gold, 0.35 + kick * 0.25), {
+  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.03 + kick * 0.006), mixRgb(THEME.gold, THEME.cyan, 0.4), {
     rim: 1.5,
     glow: 3,
     glowAlpha: 0.2,
@@ -597,8 +769,55 @@ function paintNeural(buf, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
+  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: 1.08,
+    half: 1,
+    color: THEME.blue,
+  });
+  const pts = (worn && worn.pts) || [];
+  const mesh = checksum.mesh;
   const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
+  if (mesh && pts.length) {
+    for (let i = 0; i < mesh.edges.length; i++) {
+      const [ai, bi] = mesh.edges[i];
+      const a = pts[ai];
+      const b = pts[bi];
+      const speed = 1.6 + ((checksum.visualConfig.circles[i % checksum.visualConfig.circles.length] || {}).frequency || 180) / 160;
+      const travel = (t * speed + i * 0.19) % 1;
+      stampFocusDisc(
+        buf,
+        width,
+        height,
+        a.x + (b.x - a.x) * travel,
+        a.y + (b.y - a.y) * travel,
+        5,
+        i % 2 === 0 ? THEME.gold : THEME.cyan,
+        node,
+      );
+    }
+    const circles = checksum.visualConfig.circles;
+    for (let i = 0; i < circles.length; i++) {
+      const seat = pts[i % pts.length];
+      stampFocusDisc(
+        buf,
+        width,
+        height,
+        seat.x,
+        seat.y,
+        8 + kick,
+        mixRgb(parseHex(circles[i].color), THEME.gold, freqTint(circles[i], t)),
+        node,
+      );
+    }
+    stampFocusDisc(buf, width, height, cx, cy, 10 + kick * 3, mixRgb(THEME.cyan, THEME.gold, 0.3 + kick * 0.3), {
+      rim: 1.6,
+      glow: 4,
+      glowAlpha: 0.22,
+      rimColor: THEME.ink,
+    });
+    return;
+  }
+  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
   for (let i = 0; i < placed.length; i++) {
     const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
     const a = {
@@ -671,6 +890,7 @@ function paintNeural(buf, width, height, t, checksum) {
 /** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
 function paintWaveform(buf, width, height, t, checksum) {
   fillVoid(buf);
+  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.88, half: 1, color: THEME.blue });
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
@@ -715,17 +935,47 @@ function paintWaveform(buf, width, height, t, checksum) {
   }
 }
 
-/** spark → particles v2. Beat bursts, orbital + radial motes, short trails. */
+/** spark → particles v2. Motes ride the seed mesh edges. */
 function paintParticles(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
-  const minSide = Math.min(width, height);
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.15, checksum);
+  const kick = kickAccent(beatPhase(checksum, t));
+  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: 1.1,
+    half: 1,
+    color: THEME.blue,
+  });
   const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
   stampFocusDisc(buf, width, height, cx, cy, 8 + kick * 2, mixRgb(THEME.cyan, THEME.gold, 0.35 + kick * 0.25), mote);
+  const mesh = checksum.mesh;
+  const pts = worn && worn.pts;
+  const circles = checksum.visualConfig.circles;
+  if (mesh && pts) {
+    for (let i = 0; i < mesh.edges.length; i++) {
+      const [ai, bi] = mesh.edges[i];
+      const a = pts[ai];
+      const b = pts[bi];
+      const circle = circles[i % circles.length];
+      for (let k = 0; k < 3; k++) {
+        const life = (t * (1.4 + circle.frequency / 400) + i * 0.13 + k * 0.31) % 1;
+        const x = a.x + (b.x - a.x) * life;
+        const y = a.y + (b.y - a.y) * life;
+        stampFocusDisc(
+          buf,
+          width,
+          height,
+          x,
+          y,
+          2.8 + (1 - life) * 2,
+          mixRgb(parseHex(circle.color), THEME.gold, freqTint(circle, t)),
+          mote,
+        );
+      }
+    }
+    return;
+  }
+  const placed = layoutRings(circles, width, height, t * 1.15, checksum);
   for (let i = 0; i < placed.length; i++) {
     const src = placed[i];
     const tint = freqTint(src.circle, t);
@@ -826,6 +1076,14 @@ function paintRippelFrame(opts) {
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
+    mesh: checksum.mesh
+      ? {
+          id: checksum.mesh.id,
+          family: checksum.mesh.family,
+          vertexCount: checksum.mesh.verts.length,
+          edgeCount: checksum.mesh.edges.length,
+        }
+      : null,
   };
 }
 
@@ -902,6 +1160,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     sharpness: edgeSharpness(a.buffer, a.width),
     circleCount: a.visualConfig.circles.length,
     tempo: a.tempo,
+    mesh: a.mesh,
   };
 }
 
@@ -913,6 +1172,15 @@ function summarizeVisual(checksum) {
     circleCount: checksum.visualConfig.circles.length,
     notes: checksum.visualConfig.circles.map((c) => c.note),
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
+    mesh: checksum.mesh
+      ? {
+          id: checksum.mesh.id,
+          family: checksum.mesh.family,
+          vertexCount: checksum.mesh.verts.length,
+          edgeCount: checksum.mesh.edges.length,
+          dual: Boolean(checksum.mesh.dual),
+        }
+      : null,
   };
 }
 
@@ -941,4 +1209,7 @@ module.exports = {
   kickAccent,
   beatPhase,
   fillVoid,
+  buildMesh,
+  paintMeshOverlay,
+  MESH_FAMILIES,
 };

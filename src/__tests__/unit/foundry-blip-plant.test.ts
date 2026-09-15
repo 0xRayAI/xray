@@ -307,7 +307,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             hasAudio?: boolean;
             width?: number | null;
             height?: number | null;
-            visualConfig?: { circleCount?: number } | null;
+            visualConfig?: { circleCount?: number; mesh?: { id?: string } | null } | null;
             reason?: string | null;
             ssot?: { repo: string; commit: string | null; access?: string };
           };
@@ -396,6 +396,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
           expect(rendered.receipt.height).toBeGreaterThanOrEqual(720);
           expect(rendered.receipt.visualConfig?.circleCount).toBeGreaterThan(0);
+          expect(rendered.receipt.visualConfig?.mesh?.id).toBeTruthy();
           expect(rendered.receipt.palette?.void).toBe('#08090B');
         }
 
@@ -497,6 +498,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     ) as {
       buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
         visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
+        mesh: { id: string; family: string; verts: number[][]; edges: number[][] };
       };
       sampleMotionFrames: (
         renderer: string,
@@ -513,6 +515,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         height: number;
         circleCount: number;
         visualization: string;
+        mesh: { id: string; family: string } | null;
       };
       ANIMATION_TO_VISUALIZATION: Record<string, string>;
     };
@@ -520,6 +523,14 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       brief: 'warehouse floor · Power Plant',
       seedHex: '0xdeadbeef',
     });
+    const other = buildVisualConfig({
+      brief: 'other mint · alley',
+      seedHex: '0xcafef00d',
+    });
+    expect(checksum.mesh?.id).toBeTruthy();
+    expect(checksum.mesh.id).not.toBe(other.mesh.id);
+    expect(checksum.mesh.verts.length).toBeGreaterThan(3);
+    expect(checksum.mesh.edges.length).toBeGreaterThan(3);
     expect(checksum.visualConfig.circles.length).toBeGreaterThan(3);
     expect(checksum.visualConfig.circles[0]?.frequency).toBeGreaterThan(0);
     expect(checksum.visualConfig.circles[0]?.radius).toBeGreaterThan(0);
@@ -535,6 +546,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(sample.height).toBe(720);
       expect(sample.circleCount).toBeGreaterThan(0);
       expect(sample.tempo).toBeGreaterThan(0);
+      expect(sample.mesh?.id, id).toBeTruthy();
     }
   });
 

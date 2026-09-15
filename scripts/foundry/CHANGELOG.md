@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip meshes: every mint gets a seed-unique polyhedron (family + jitter + extra chords) worn by all five viz and the Power Plant ident. Receipt `visualConfig.mesh` is the fingerprint. 4.44s of unique blip art.
+
 Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p. Not a frozen 320×180 poster.
 
 Factory-blip Rippel v2: the sharp orb look (`stampFocusDisc` opaque body + crisp rim + short glow) is now the look on **all five** viz — swirl / snap / waves / spark were still Phase 1 bokeh strokes. Animation is the complex Rippel set, paced as a 4.44s blip (fast abstract travel, soft gold tints — no hard strobe). Video LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed. Mandatory 4.44s mux unchanged. No version bump.
