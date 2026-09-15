@@ -29,6 +29,7 @@ xray/inference/
 
 # Station card is a projection of session-boot.json — disk contract, not git
 .xray/state/STATION.md
+.xray/state/session-boot.json
 .xray/state/repertoire-working.json
 .xray/state/repertoire/
 .xray/state/cursor-precompact.json

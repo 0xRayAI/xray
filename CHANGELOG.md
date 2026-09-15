@@ -15,6 +15,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🐛 Bug Fixes
 - **Station merge on compact** — PreCompact / PostCompact / SessionStart `writeStationMarkdown` updates stock heat (intent, repertoire, working, host) and **merges** unknown keys plus `## Durable` / `## Seed` blocks. COMPACT-AB-001: no wipe-then-write of ticket / seed / open cloud / unfinished path.
+- **Cursor session-boot is runtime** — `.xray/state/session-boot.json` is gitignored with the Station projection. A tracked leftover Grok boot no longer resurrects on rebase and clobber live compact heat.
 - **Grok multi-seat wear** — last-mile dest is project `.grok/plugins/0xray`. Shared HOME (passwd `$HOME`) no longer writes machine `~/.grok/plugins/0xray`, so two seats (forge/critic/herald/blinky) cannot last-wins clobber each other's `XRAY_ROOT`. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and still must not write the passwd machine plugin. Inspect reports project dest. Not a 45-skill dump.
 - **Foundry inspect dest lag** — nested mill **0.1.10**. `npx @0xray/foundry inspect` isolated-home `dest` matches `resolveGrokPluginDests` (project `.grok/plugins/0xray` on shared HOME). Published `@0xray/foundry@0.1.9` still joined dest from `$HOME` after 4.0.12 / #29 wear. This PR does not publish the mill.
 - **Grok marketplace pack** — `package.json` `files` includes `.grok-plugin/` so `npm pack` ships the mill-default Grok manifest (`package/.grok-plugin/plugin.json`). Consumers no longer receive only stale `.plugin/plugin.json`.

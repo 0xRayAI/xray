@@ -240,6 +240,50 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
+  it('host preCompact then preToolUse keeps Compact/Usage rows and last pre_compact', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-survive-'));
+    try {
+      plantFeatures(tmp);
+      const dest = seedBenStation(tmp);
+      mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        'ts=2026-09-15T09:30:49+00:00 event=preCompact cwd=/tmp node=/exec-daemon/node\n',
+      );
+      const compactOut = runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 231344,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      expect(JSON.parse(compactOut.stdout).user_message).toContain('event_class=cursor-host-precompact');
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'README.md' }, cwd: tmp }, tmp);
+      const card = readFileSync(dest, 'utf8');
+      expect(card).toContain('Compact: preCompact Y (count=1)');
+      expect(card).toContain('tokens=231344');
+      expect(card).toContain('Working: last pre_compact');
+      expect(card).toContain('Ticket: COMPACT-BEN-001');
+      expect(card).toContain('keep-me-ben-001');
+      const boot = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+      ) as { host: string; hookEvent?: string };
+      expect(boot.host).toBe('cursor');
+      expect(boot.hookEvent).toBe('pre_compact');
+      const usage = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
+      ) as { usage: { context_tokens: number | null }; compact: { eventClass: string; hostFired: boolean } };
+      expect(usage.usage.context_tokens).toBe(231344);
+      expect(usage.compact.eventClass).toBe('cursor-host-precompact');
+      expect(usage.compact.hostFired).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('afterFileEdit boots Station and emits empty object', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-edit-'));
     try {
@@ -250,6 +294,12 @@ describe('Cursor cloud hooks adapter', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  it('gitignore lists session-boot.json with other Station runtime files', () => {
+    const ignore = readFileSync(path.join(packageRoot, '.gitignore'), 'utf8');
+    expect(ignore).toMatch(/^\.xray\/state\/session-boot\.json$/m);
+    expect(ignore).toMatch(/^\.xray\/state\/cursor-usage-receipt\.json$/m);
   });
 
   it('parseInvokeProbeLog counts host preCompact without synthetic invoke', () => {
