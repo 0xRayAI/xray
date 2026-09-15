@@ -23,6 +23,7 @@ Things with a stamp / npm / live URL. Dist talks about these.
 | **📦 kit** | Setup pack (`@0xray/grok-bot`) |
 | **pin** | Hangar shop (+ pay-to-list gate on the board) |
 | **OWS** | Local wallet for hangar pay (USDC on Base) |
+| **repertoire** | Optional **organ** — compact/memory heat on CLI/cloud suits. Not required for every seat. Heat ≠ fastened |
 
 ---
 
@@ -56,6 +57,8 @@ How we act — not a product, not a ticket type.
 | **foundry / gate** | Ship check before tag / publish (`foundry gate`) |
 | **friend-test** | Plain-English bar before Dist or public docs ship |
 | **dogfood** | Cold-prove on ourselves before we claim it |
+| **organ** | Optional module inside the suit/plant (mill, inspect, repertoire…). Not the whole 0xRay OS. Fasten to use; don’t call it live from heat alone |
+| **wear** | Run with a suit fastened (verb). “Wear check” = `foundry inspect`. Costume ≠ wear |
 
 ---
 
@@ -71,6 +74,10 @@ How we act — not a product, not a ticket type.
 | card ≠ receipt | assign ≠ proof |
 | group ≠ Station | chat bus ≠ durable deck |
 | pin (shop) ≠ pin (verb on-chain) | shop name vs Groover pin step — say which |
+| organ ≠ product SKU | repertoire is an organ of 0xRay; Clearing is a product |
+| heat ≠ fastened | Station “Repertoire: on” ≠ live `node_modules` organ |
+| wear ≠ plant (verb) | wear = run suited; plant = fasten the suit/organs onto a project |
+| wear ≠ costume | files on disk without live hooks/inspect = theater |
 
 Locked 2026-09-14 with Blaze — categorized.
 
@@ -81,3 +88,10 @@ Locked 2026-09-14 with Blaze — categorized.
 | **Lane H** | Practices | Human/public plain English + friend-test |
 | **Lane B** | Practices | Bot-internal compressed synaptical (token-save) |
 | **synaptical** | Practices | Meaningful Compression house style — dense Done/Verify/Next beats |
+
+## Lexicon add (2026-09-15)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **organ** | Practices | Optional module in the suit/plant |
+| **repertoire** | Products (organ) | Optional compact/memory organ — fasten to claim |
+| **wear** | Practices | Run with a fastened suit; inspect = wear check |

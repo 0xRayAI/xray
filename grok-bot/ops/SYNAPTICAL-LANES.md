@@ -12,3 +12,6 @@
 **Kernel:** Meaningful Compression / synaptical concurrency (house style). Friend-test SSOT: `GIBBERISH-CHECK.md`.
 
 **Seat stamps:** `ops/dist/brand/SEAT-STAMPS.md` (blinky 🖲️ · forge 🔨 · …).
+
+## CloudAgent / external workers
+Always **Lane H**. Lane B never crosses into cloud launch prompts.
