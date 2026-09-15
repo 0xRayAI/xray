@@ -1,6 +1,7 @@
 /**
  * Factory-sound spine: brief → checksum seed → genre → headless wav → metrics gate.
- * Render is the Rippel prototype port (membrane / metal / mixer). Not mill inspect.
+ * Render is the Rippel prototype mill (membrane / metal / mixer), crystal-clear mix.
+ * Not mill inspect.
  */
 
 const crypto = require("crypto");
@@ -71,7 +72,7 @@ function renderSamples({ brief, genre, seconds, seed }) {
   const rng = mulberry32(seedU32(seedHex));
   return rippel.renderRippelBed({
     brief,
-    genre: g.id,
+    genre,
     seconds: dur,
     seedHex,
     rng,
@@ -343,7 +344,9 @@ function buildReceipt(input, evaled) {
     tempo: genre.bpm,
     voices: genre.voices,
     engine: input.engine || rippel.ENGINE,
-    topology: input.topology || "membrane+metal+mixer",
+    mix: input.mix || rippel.MIX,
+    ssot: input.ssot || rippel.SSOT,
+    topology: input.topology || rippel.TOPOLOGY,
     toneOffline: input.toneOffline || rippel.TONE_OFFLINE_BLOCKER,
     wav: input.wavRel || input.wav,
     durationSec: input.seconds,
@@ -401,6 +404,8 @@ function renderBed(opts = {}) {
       seed: rendered.seed,
       genre: rendered.genre,
       engine: rendered.engine,
+      mix: rendered.mix,
+      ssot: rendered.ssot,
       topology: rendered.topology,
       toneOffline: rendered.toneOffline,
       wav,
@@ -436,6 +441,9 @@ module.exports = {
   readReceipt,
   buildReceipt,
   TONE_OFFLINE_BLOCKER: rippel.TONE_OFFLINE_BLOCKER,
+  MIX: rippel.MIX,
+  SSOT: rippel.SSOT,
+  RIPPEL: rippel.RIPPEL,
   bandEnergy: rippel.bandEnergy,
   highpassEnergy: rippel.highpassEnergy,
   zeroCrossRate: rippel.zeroCrossRate,
