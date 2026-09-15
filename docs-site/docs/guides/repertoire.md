@@ -1,6 +1,8 @@
 # Repertoire Integration (v3.3+)
 
-[Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire`) is the default **memory routing provider** for the 0xRay framework repo. It ingests enriched Groover inference logs, maintains `curated_signals.json`, and enriches orchestrator routing through the `MemoryRoutingProvider` contract.
+[Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire`) is the default **memory routing provider** for the 0xRay framework repo. It matches named primitives and enriches orchestrator routing through the `MemoryRoutingProvider` contract.
+
+**Not the successor card.** Survive compact / host change is [Station](../architecture/v4-now.md) (Read `.xray/state/STATION.md`). 0.1.0–0.1.8 were the same **judgment** organ; 0.2 cut the factory seed to 8 names. Do not pin 0.1.8. Split: [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
 ## When to use Repertoire
 

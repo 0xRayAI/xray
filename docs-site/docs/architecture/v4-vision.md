@@ -20,7 +20,7 @@ This page is the north star. Mechanism lives in [suit temperament](../guides/v3-
 | **Always on** | Constitution: Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface |
 | **Temperament** | `frontier` \| `guided` \| `strict` \| `auto` — how loud the engine is, not whether governance exists |
 | **Wear** | Four host floors: Grok, OpenCode, Hermes, OpenClaw. One SSOT gate (`evaluatePreToolGate`) |
-| **Muscle** | Repertoire 0.2 vendored — 8 factory primitives, session resume, station heat. Not a full memory of the job. |
+| **Muscle** | **Station** is session resume (`.xray/state/STATION.md`). Repertoire 0.2 is 8 factory primitives for routing heat — not a full memory of the job, not 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md). |
 
 The exo is what the host puts on. The host still walks. Frontier models get **honesty** without a second planner. Guided hosts still get a **floor boss** because they will invent APIs.
 

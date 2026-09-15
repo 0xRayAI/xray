@@ -34,7 +34,7 @@ npm install 0xray
 
 ## Organs
 
-- [features.json](./guides/features-json) · [Repertoire](./guides/repertoire) · [Memory routing](./guides/memory-routing)
+- [features.json](./guides/features-json) · [Repertoire](./guides/repertoire) · [Memory routing](./guides/memory-routing) · [Station vs Repertoire 0.1](./guides/station-vs-repertoire)
 - [AsideContext](./guides/aside-context) · [User asides](./guides/user-asides)
 - [MCP](./mcp/README.md) · [Agents](./agents/README.md) · [Full reference](./full-reference.md)
 - [GitHub](https://github.com/0xRayAI/xray) · [npm](https://www.npmjs.com/package/0xray)

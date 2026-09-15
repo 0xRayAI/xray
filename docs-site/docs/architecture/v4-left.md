@@ -18,7 +18,7 @@ Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. 
 | Factory memory organ | `@0xray/repertoire@0.2.0` vendored (8 seed primitives, no Bedrock). Isolated tarball wears it without `../repertoire`. Extra MCP `repertoire`, not an 8th `xray-*`. |
 | Repertoire unprefix | companion `feat/mcp-unprefix`. Grok TUI sees `repertoire__*` |
 | Enable-when-resolves | leftover `memory_routing` default-off turns on if the module is actually there (install **and** runtime). Explicit opt-out kept |
-| Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap` |
+| Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap`. **This is survive-the-cut** — not Repertoire 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md) |
 | Repertoire working state | `.xray/state/repertoire-working.json` at compact / host-swap / session heat. Card `Working:` line. Routing uses the registry; Bedrock names stay off the card |
 | Grok Read contract | AGENTS.md Read. OpenCode injects. Grok does not — do not thicken the exo |
 | Framework dogfood wear | `postinstall.cjs` always calls `installAllBridges`; non-consumer path patches `.grok/hooks/0xray.json` and enable-when-resolves |
@@ -26,7 +26,7 @@ Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. 
 | Grok hook quoting | `grokHookShellCommand` and the shipped template quote `XRAY_AI_PATH` and the script path (Grok fail-opens if the shell never starts) |
 | grok_postprocessor_light | `loadFeatures` forwards the flag; PostToolUse actually runs the light pipeline |
 | Project Repertoire toml | `0xray grok install` writes `<project>/.grok/config.toml`, not the package copy |
-| Compact persist | Grok `PreCompact` / `PostCompact` rewrite the card. Hermes compact session-start, OpenCode plugin boot, OpenClaw PreToolUse do the same cut. Memory (Working signals + `repertoire-working.json`) survives. SessionStart stdout is ignored — disk is the contract |
+| Compact persist | Grok `PreCompact` / `PostCompact` rewrite the card. Hermes compact session-start, OpenCode plugin boot, OpenClaw PreToolUse do the same cut. **Station** is what the successor Reads. Working-line heat is not 0.1.8 stack memory. SessionStart stdout is ignored — disk is the contract |
 | Compact constitution | After the cut, every floor still denies Codex 11, Codex 69 new surface, and destructive `rm -rf /`. Frontier Grok **warns** spawn-without-plan; guided floors **deny**. |
 | Live successor | `XRAY_LIVE_SUCCESSOR=1` — Grok `-p`, Hermes `xai-oauth`, OpenCode `run --dir`, OpenClaw gateway `agent --message` each **quoted** Host + Intent from the card. |
 | Kernel copy | exo / survive the window, not 42/45/7 |

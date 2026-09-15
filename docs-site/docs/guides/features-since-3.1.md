@@ -10,6 +10,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - Default consumer plant is mill+inspect, not 45-skill sync. Root `llms.txt` is the exo agent map
 - `npm run pack:tmp-proof` — pack tgz → tmp install → `foundry mint --skip-live` → hangar factory shops → inspect (no costume dump). Playwright n/a (CLI)
 - Nested mill **0.1.10**. Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). No npm publish in this PR
+- **Station vs Repertoire 0.1** — Station is survive-the-cut; 0.1.0–0.1.8 are the same judgment organ; do not pin 0.1.8. Guide: [station-vs-repertoire](./station-vs-repertoire.md)
 
 ## 4.0.9 — Mill target (global prefix / npx cache)
 

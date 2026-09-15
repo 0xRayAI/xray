@@ -4,6 +4,8 @@
 
 Eval cloud: `bc-cd19bb4e` · harness hooks + `@0xray/repertoire@0.2.0` · live `cursor-host-precompact` (count=3). Replay test: `src/__tests__/unit/cursor-hooks.test.ts` (host compact then `preToolUse`). CI on #55.
 
+**Organs (do not mix):** Station = successor card. Repertoire 0.1.0–0.1.8 = same judgment organ (do not pin 0.1.8). Groover 0.1 = registry + field, not the brain. Factory guide: `docs-site/docs/guides/station-vs-repertoire.md`.
+
 ## Floors (keep separate)
 
 | Floor | Cursor cloud (this run) | Grok Bot chat |

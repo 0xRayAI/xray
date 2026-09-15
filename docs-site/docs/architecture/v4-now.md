@@ -8,7 +8,7 @@ Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so 
 
 ## What 4.0 is
 
-Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Repertoire**.
+Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Station**. Repertoire 0.2 is a thin routing seed, not the successor card. Split: [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md).
 
 ## Line (feat/v4-temperament)
 
