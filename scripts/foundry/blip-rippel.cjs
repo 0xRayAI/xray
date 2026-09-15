@@ -11,7 +11,8 @@
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
  * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
- * Mesh: seed-unique polyhedron (family + jitter + extra chords). NFT fingerprint.
+ * Mesh: seed-unique polyhedron (family + gait + shells + faces + warp).
+ * NFT fingerprint — 4.44s of unique blip art, not a tiny diagram in void.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -35,10 +36,24 @@ const SSOT = {
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — VisualConfig.circles + seed mesh. Sharp focus, fast abstract blip, unique silhouette per brief/seed. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — VisualConfig.circles + seed mesh. Sharp focus, fast abstract blip, unique silhouette per brief/seed. Family + gait + shells fill the frame. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
-const MESH_FAMILIES = ["tetra", "octa", "cube", "prism", "star", "cage", "spire"];
+const MESH_FAMILIES = [
+  "tetra",
+  "octa",
+  "cube",
+  "prism",
+  "star",
+  "cage",
+  "spire",
+  "icosa",
+  "helix",
+  "torus",
+  "lattice",
+  "flower",
+];
+const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -110,6 +125,60 @@ function norm3(x, y, z) {
   return [x / len, y / len, z / len];
 }
 
+function kNearestEdges(verts, k) {
+  const edges = [];
+  const seen = new Set();
+  for (let i = 0; i < verts.length; i++) {
+    const dist = [];
+    for (let j = 0; j < verts.length; j++) {
+      if (j === i) continue;
+      const dx = verts[i][0] - verts[j][0];
+      const dy = verts[i][1] - verts[j][1];
+      const dz = verts[i][2] - verts[j][2];
+      dist.push({ j, d: dx * dx + dy * dy + dz * dz });
+    }
+    dist.sort((p, q) => p.d - q.d);
+    for (let n = 0; n < k && n < dist.length; n++) {
+      const a = i < dist[n].j ? i : dist[n].j;
+      const b = i < dist[n].j ? dist[n].j : i;
+      const key = `${a}-${b}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        edges.push([a, b]);
+      }
+    }
+  }
+  return edges;
+}
+
+function trianglesFromEdges(verts, edges) {
+  const adj = verts.map(() => []);
+  for (let i = 0; i < edges.length; i++) {
+    const a = edges[i][0];
+    const b = edges[i][1];
+    adj[a].push(b);
+    adj[b].push(a);
+  }
+  const faces = [];
+  const seen = new Set();
+  for (let a = 0; a < verts.length; a++) {
+    for (let bi = 0; bi < adj[a].length; bi++) {
+      const b = adj[a][bi];
+      if (b <= a) continue;
+      for (let ci = 0; ci < adj[a].length; ci++) {
+        const c = adj[a][ci];
+        if (c <= b) continue;
+        if (!adj[b].includes(c)) continue;
+        const key = `${a}-${b}-${c}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        faces.push([a, b, c]);
+      }
+    }
+  }
+  return faces;
+}
+
 function platonic(family) {
   if (family === "tetra") {
     return {
@@ -126,6 +195,12 @@ function platonic(family) {
         [1, 2],
         [1, 3],
         [2, 3],
+      ],
+      faces: [
+        [0, 1, 2],
+        [0, 1, 3],
+        [0, 2, 3],
+        [1, 2, 3],
       ],
     };
   }
@@ -153,6 +228,16 @@ function platonic(family) {
         [3, 4],
         [3, 5],
       ],
+      faces: [
+        [0, 2, 4],
+        [0, 4, 3],
+        [0, 3, 5],
+        [0, 5, 2],
+        [1, 2, 5],
+        [1, 5, 3],
+        [1, 3, 4],
+        [1, 4, 2],
+      ],
     };
   }
   if (family === "cube") {
@@ -166,7 +251,7 @@ function platonic(family) {
         if (d === 1) edges.push([i, j]);
       }
     }
-    return { verts, edges };
+    return { verts, edges, faces: trianglesFromEdges(verts, edges) };
   }
   if (family === "prism") {
     const verts = [];
@@ -188,13 +273,24 @@ function platonic(family) {
         [2, 3],
         [4, 5],
       ],
+      faces: [
+        [0, 2, 4],
+        [1, 3, 5],
+        [0, 1, 2],
+        [2, 1, 3],
+        [2, 3, 4],
+        [4, 3, 5],
+        [4, 5, 0],
+        [0, 5, 1],
+      ],
     };
   }
   if (family === "star") {
     const a = platonic("tetra");
     const verts = a.verts.concat(a.verts.map((v) => [-v[0], -v[1], -v[2]]));
     const edges = a.edges.concat(a.edges.map((e) => [e[0] + 4, e[1] + 4]));
-    return { verts, edges };
+    const faces = (a.faces || []).concat((a.faces || []).map((f) => [f[0] + 4, f[1] + 4, f[2] + 4]));
+    return { verts, edges, faces };
   }
   if (family === "spire") {
     const verts = [[0, 0, 1], [0, 0, -0.35]];
@@ -205,6 +301,111 @@ function platonic(family) {
       edges.push([0, i + 2], [1, i + 2], [i + 2, 2 + ((i + 1) % 5)]);
     }
     return { verts, edges };
+  }
+  if (family === "icosa") {
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const raw = [
+      [0, 1, phi],
+      [0, 1, -phi],
+      [0, -1, phi],
+      [0, -1, -phi],
+      [1, phi, 0],
+      [1, -phi, 0],
+      [-1, phi, 0],
+      [-1, -phi, 0],
+      [phi, 0, 1],
+      [phi, 0, -1],
+      [-phi, 0, 1],
+      [-phi, 0, -1],
+    ].map((v) => norm3(v[0], v[1], v[2]));
+    const edges = kNearestEdges(raw, 5);
+    return { verts: raw, edges, faces: trianglesFromEdges(raw, edges) };
+  }
+  if (family === "helix") {
+    const verts = [];
+    const edges = [];
+    const n = 10;
+    for (let i = 0; i < n; i++) {
+      const a = i * 0.82;
+      const y = (i / (n - 1)) * 2 - 1;
+      verts.push(norm3(Math.cos(a) * 0.92, y, Math.sin(a) * 0.92));
+      if (i > 0) edges.push([i - 1, i]);
+      if (i > 1) edges.push([i - 2, i]);
+    }
+    edges.push([0, n - 1], [0, n - 2]);
+    return { verts, edges, faces: trianglesFromEdges(verts, edges) };
+  }
+  if (family === "torus") {
+    const verts = [];
+    const rings = 7;
+    const tube = 4;
+    const R = 0.78;
+    const r = 0.34;
+    for (let i = 0; i < rings; i++) {
+      const u = (i * Math.PI * 2) / rings;
+      for (let j = 0; j < tube; j++) {
+        const v = (j * Math.PI * 2) / tube;
+        verts.push(
+          norm3(
+            (R + r * Math.cos(v)) * Math.cos(u),
+            r * Math.sin(v),
+            (R + r * Math.cos(v)) * Math.sin(u),
+          ),
+        );
+      }
+    }
+    const edges = [];
+    for (let i = 0; i < rings; i++) {
+      for (let j = 0; j < tube; j++) {
+        const a = i * tube + j;
+        edges.push([a, i * tube + ((j + 1) % tube)]);
+        edges.push([a, ((i + 1) % rings) * tube + j]);
+      }
+    }
+    return { verts, edges, faces: trianglesFromEdges(verts, edges).slice(0, 36) };
+  }
+  if (family === "lattice") {
+    const verts = [];
+    const idx = new Map();
+    const vals = [-0.72, 0, 0.72];
+    for (let i = 0; i < vals.length; i++) {
+      for (let j = 0; j < vals.length; j++) {
+        for (let k = 0; k < vals.length; k++) {
+          idx.set(`${i},${j},${k}`, verts.length);
+          verts.push(norm3(vals[i], vals[j], vals[k]));
+        }
+      }
+    }
+    const edges = [];
+    for (let i = 0; i < vals.length; i++) {
+      for (let j = 0; j < vals.length; j++) {
+        for (let k = 0; k < vals.length; k++) {
+          const a = idx.get(`${i},${j},${k}`);
+          if (i + 1 < vals.length) edges.push([a, idx.get(`${i + 1},${j},${k}`)]);
+          if (j + 1 < vals.length) edges.push([a, idx.get(`${i},${j + 1},${k}`)]);
+          if (k + 1 < vals.length) edges.push([a, idx.get(`${i},${j},${k + 1}`)]);
+        }
+      }
+    }
+    return { verts, edges, faces: trianglesFromEdges(verts, edges).slice(0, 36) };
+  }
+  if (family === "flower") {
+    const verts = [[0, 0, 0.15]];
+    const edges = [];
+    for (let ring = 0; ring < 2; ring++) {
+      const z = ring === 0 ? 0.2 : -0.28;
+      const rad = ring === 0 ? 0.62 : 1;
+      for (let i = 0; i < 7; i++) {
+        const a = (i * Math.PI * 2) / 7 + ring * 0.22;
+        verts.push(norm3(Math.cos(a) * rad, Math.sin(a) * rad, z));
+        const vi = verts.length - 1;
+        edges.push([0, vi]);
+        if (i > 0) edges.push([vi - 1, vi]);
+        if (i === 6) edges.push([vi, 1 + ring * 7]);
+      }
+    }
+    for (let i = 0; i < 7; i++) edges.push([1 + i, 8 + i]);
+    return { verts, edges, faces: trianglesFromEdges(verts, edges) };
   }
   const verts = [];
   const n = 8;
@@ -233,7 +434,7 @@ function platonic(family) {
       if (!edges.some((e) => e[0] === a && e[1] === b)) edges.push([a, b]);
     }
   }
-  return { verts, edges };
+  return { verts, edges, faces: trianglesFromEdges(verts, edges) };
 }
 
 function buildMesh(seedHex, brief) {
@@ -242,13 +443,14 @@ function buildMesh(seedHex, brief) {
   for (let i = 0; i < text.length; i++) mix = (Math.imul(mix, 33) + text.charCodeAt(i)) >>> 0;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8) ^ seedU32(seedHex, 16) ^ mix);
   const family = MESH_FAMILIES[(rng() * MESH_FAMILIES.length) | 0];
+  const gait = MESH_GAITS[(rng() * MESH_GAITS.length) | 0];
   const base = platonic(family);
-  const jitter = 0.08 + rng() * 0.2;
+  const jitter = 0.05 + rng() * 0.16;
   const verts = base.verts.map((v) =>
     norm3(v[0] + (rng() - 0.5) * jitter, v[1] + (rng() - 0.5) * jitter, v[2] + (rng() - 0.5) * jitter),
   );
   const edges = base.edges.map((e) => [e[0], e[1]]);
-  const extra = 1 + ((rng() * 4) | 0);
+  const extra = 2 + ((rng() * 7) | 0);
   for (let i = 0; i < extra; i++) {
     const a = (rng() * verts.length) | 0;
     const b = (rng() * verts.length) | 0;
@@ -257,16 +459,32 @@ function buildMesh(seedHex, brief) {
     const hi = a < b ? b : a;
     if (!edges.some((e) => e[0] === lo && e[1] === hi)) edges.push([lo, hi]);
   }
+  let faces = (base.faces && base.faces.length ? base.faces : trianglesFromEdges(verts, edges)).map((f) => [
+    f[0],
+    f[1],
+    f[2],
+  ]);
+  if (faces.length > 36) faces = faces.slice(0, 36);
+  const accentIndex = (rng() * THEME_CYCLE.length) | 0;
+  const shells = 1 + ((rng() * 3) | 0);
   return {
     family,
-    id: `${family}-${verts.length}v${edges.length}e-${((rng() * 0xfffffff) | 0).toString(16)}`,
+    gait,
+    id: `${family}-${gait}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
     verts,
     edges,
+    faces,
     twist: rng() * Math.PI * 2,
-    spin: 1.4 + rng() * 2.2,
-    scale: 0.4 + rng() * 0.16,
-    dual: rng() > 0.42,
-    accent: THEME_CYCLE[(rng() * THEME_CYCLE.length) | 0],
+    spin: 1.7 + rng() * 2.4,
+    scale: 0.86 + rng() * 0.28,
+    warp: 0.06 + rng() * 0.14,
+    shells,
+    cuts: 3 + ((rng() * 3) | 0),
+    dual: rng() > 0.38,
+    ghost: rng() > 0.28,
+    fill: rng() > 0.22,
+    accentIndex,
+    accent: THEME_CYCLE[accentIndex],
   };
 }
 
@@ -285,19 +503,46 @@ function rotate3(v, yaw, pitch, roll) {
 }
 
 function projectMesh(mesh, width, height, t, checksum, scaleMul) {
-  const yaw = t * mesh.spin + mesh.twist;
-  const pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
-  const roll = t * 0.38 + mesh.twist * 0.25;
+  const gait = mesh.gait || "tumble";
+  let yaw = t * mesh.spin + mesh.twist;
+  let pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
+  let roll = t * 0.38 + mesh.twist * 0.25;
   const beat = beatPhase(checksum, t);
-  const breathe = (scaleMul || 1) * mesh.scale * (1 + 0.07 * Math.sin(beat * Math.PI * 2));
+  let breathe = (scaleMul || 1) * mesh.scale * (1 + 0.08 * Math.sin(beat * Math.PI * 2));
+  let ox = 0;
+  let oy = 0;
+  if (gait === "snap") {
+    const steps = mesh.cuts || 5;
+    const q = Math.floor((t / 4.44) * steps) / steps;
+    yaw = q * Math.PI * 2 + mesh.twist;
+    pitch = Math.sin(q * 5.2 + mesh.twist) * 0.46;
+    roll = q * 1.4 + mesh.twist * 0.3;
+  } else if (gait === "pulse") {
+    breathe *= 1 + mesh.warp * Math.sin(beat * Math.PI * 2);
+  } else if (gait === "orbit") {
+    ox = Math.cos(t * 1.15 + mesh.twist) * mesh.warp * 0.42;
+    oy = Math.sin(t * 0.92 + mesh.twist) * mesh.warp * 0.26;
+  } else if (gait === "tumble") {
+    yaw = t * mesh.spin * 1.38 + mesh.twist;
+    pitch = t * mesh.spin * 0.52 + Math.sin(mesh.twist) * 0.2;
+    roll = t * mesh.spin * 0.3 + mesh.twist;
+  }
   const minSide = Math.min(width, height);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
+  const cx = (width - 1) * 0.5 + ox * minSide;
+  const cy = (height - 1) * 0.5 + oy * minSide;
+  const shear = gait === "shear";
   return mesh.verts.map((v) => {
-    const r = rotate3(v, yaw, pitch, roll);
-    const z = r[2] + 2.55;
+    let r = rotate3(v, yaw, pitch, roll);
+    if (shear) {
+      r = [
+        r[0] + r[1] * Math.sin(t * mesh.spin + mesh.twist) * mesh.warp * 1.55,
+        r[1] + r[2] * Math.cos(t * mesh.spin * 0.7) * mesh.warp,
+        r[2],
+      ];
+    }
+    const z = r[2] + 2.35;
     const p = (breathe * minSide) / z;
-    return { x: cx + r[0] * p, y: cy + r[1] * p * 0.78, z: r[2] };
+    return { x: cx + r[0] * p, y: cy + r[1] * p * 0.84, z: r[2] };
   });
 }
 
@@ -559,14 +804,63 @@ function paintSharpLine(buf, width, height, x0, y0, x1, y1, color, half, rimColo
   }
 }
 
-function paintMesh(buf, width, height, mesh, pts, color, half) {
-  const node = { rim: 1, glow: 2, glowAlpha: 0.14, rimColor: THEME.ink };
-  for (let i = 0; i < mesh.edges.length; i++) {
-    const [a, b] = mesh.edges[i];
-    paintSharpLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, color, half);
+function fillTri(buf, width, height, a, b, c, color, alpha) {
+  if (alpha <= 0) return;
+  const minX = Math.max(0, Math.floor(Math.min(a.x, b.x, c.x)));
+  const maxX = Math.min(width - 1, Math.ceil(Math.max(a.x, b.x, c.x)));
+  const minY = Math.max(0, Math.floor(Math.min(a.y, b.y, c.y)));
+  const maxY = Math.min(height - 1, Math.ceil(Math.max(a.y, b.y, c.y)));
+  if (maxX - minX > 420 || maxY - minY > 320) return;
+  const area = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+  if (Math.abs(area) < 8) return;
+  const a0 = alpha * (area > 0 ? 1 : 0.38);
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const w0 = (b.x - x) * (c.y - y) - (c.x - x) * (b.y - y);
+      const w1 = (c.x - x) * (a.y - y) - (a.x - x) * (c.y - y);
+      const w2 = (a.x - x) * (b.y - y) - (b.x - x) * (a.y - y);
+      if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0)) {
+        mixPixel(buf, width, x, y, color, a0);
+      }
+    }
   }
+}
+
+function meshAccent(mesh, t) {
+  const cut = Math.floor((t / 4.44) * (mesh.cuts || 3));
+  return THEME_CYCLE[((mesh.accentIndex || 0) + cut) % THEME_CYCLE.length];
+}
+
+function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
+  if (!mesh.faces || !mesh.faces.length || alpha <= 0) return;
+  const ranked = mesh.faces
+    .map((f) => {
+      const a = pts[f[0]];
+      const b = pts[f[1]];
+      const c = pts[f[2]];
+      return { a, b, c, z: (a.z + b.z + c.z) / 3 };
+    })
+    .sort((p, q) => p.z - q.z);
+  for (let i = 0; i < ranked.length; i++) {
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, color, alpha);
+  }
+}
+
+function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
+  const node = { rim: 1, glow: 2, glowAlpha: 0.14, rimColor: THEME.ink };
+  const fillA = opts && opts.fill != null ? opts.fill : 0;
+  if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA);
+  const ranked = mesh.edges
+    .map((e, i) => ({ e, i, z: (pts[e[0]].z + pts[e[1]].z) * 0.5 }))
+    .sort((a, b) => a.z - b.z);
+  for (let i = 0; i < ranked.length; i++) {
+    const [a, b] = ranked[i].e;
+    const near = ranked[i].z > 0 ? 1 : 0;
+    paintSharpLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, color, half + near);
+  }
+  const nodeR = opts && opts.nodeR != null ? opts.nodeR : 4.6;
   for (let i = 0; i < pts.length; i++) {
-    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, 3.4, color, node);
+    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, nodeR, color, node);
   }
 }
 
@@ -575,13 +869,33 @@ function paintChecksumMesh(buf, width, height, t, checksum, opts) {
   if (!mesh) return null;
   const scale = (opts && opts.scale) || 1;
   const half = (opts && opts.half) || 1;
-  const color = (opts && opts.color) || mesh.accent || THEME.blue;
+  const color = (opts && opts.color) || meshAccent(mesh, t);
+  if (mesh.ghost) {
+    const ghostA = projectMesh(mesh, width, height, t - 0.1, checksum, scale * 0.97);
+    paintMesh(buf, width, height, mesh, ghostA, mixRgb(THEME.void, color, 0.42), 1, { fill: 0, nodeR: 2.4 });
+    const ghostB = projectMesh(mesh, width, height, t - 0.2, checksum, scale * 0.94);
+    paintMesh(buf, width, height, mesh, ghostB, mixRgb(THEME.void, color, 0.22), 1, { fill: 0, nodeR: 2 });
+  }
+  const allowFill = mesh.fill && !(opts && opts.noFill);
+  const shells = Math.max(1, mesh.shells || 1);
+  for (let s = shells; s > 1; s--) {
+    const shellScale = scale * (0.55 + s * 0.28);
+    const shellT = s % 2 === 0 ? -t * 0.64 : t * 0.84;
+    const ptsS = projectMesh(mesh, width, height, shellT, checksum, shellScale);
+    paintMesh(buf, width, height, mesh, ptsS, s % 2 === 0 ? THEME.ink : mixRgb(color, THEME.blue, 0.35), 1, {
+      fill: allowFill ? 0.05 : 0,
+      nodeR: 3.2,
+    });
+  }
   const pts = projectMesh(mesh, width, height, t, checksum, scale);
-  paintMesh(buf, width, height, mesh, pts, color, half);
+  paintMesh(buf, width, height, mesh, pts, color, half, {
+    fill: allowFill ? 0.11 : 0,
+    nodeR: 5.2,
+  });
   let dual = null;
   if (mesh.dual) {
-    dual = projectMesh(mesh, width, height, -t * 0.72, checksum, scale * 0.55);
-    paintMesh(buf, width, height, mesh, dual, THEME.ink, 1);
+    dual = projectMesh(mesh, width, height, -t * 0.72, checksum, scale * 0.58);
+    paintMesh(buf, width, height, mesh, dual, THEME.ink, 1, { fill: allowFill ? 0.06 : 0, nodeR: 3.4 });
   }
   return { mesh, pts, dual };
 }
@@ -642,6 +956,7 @@ function paintCanvas(buf, width, height, t, checksum) {
     scale: 1.05,
     half: 1,
     color: THEME.blue,
+    noFill: true,
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
@@ -700,19 +1015,30 @@ function paintCanvas(buf, width, height, t, checksum) {
   }
 }
 
-/** Solid-body width from center, then first drop into void. Ink rims can be brighter than the fill — do not peak-hunt them. */
+/** Solid cyan/gold disc from center, then short rim. Mesh edges past the disc are not the body. */
 function orbFocusWidth(buf, width, height) {
   const cx = (width - 1) * 0.5;
   const cy = ((buf.length / 3 / width) | 0) * 0.5;
   const y = cy | 0;
-  function luma(x) {
+  function sample(x) {
     const i = (y * width + (x | 0)) * 3;
-    return (buf[i] * 0.3 + buf[i + 1] * 0.59 + buf[i + 2] * 0.11) / 255;
+    return [buf[i], buf[i + 1], buf[i + 2]];
+  }
+  function luma(x) {
+    const [r, g, b] = sample(x);
+    return (r * 0.3 + g * 0.59 + b * 0.11) / 255;
+  }
+  function isBody(x) {
+    const [r, g, b] = sample(x);
+    const cyan = g > 160 && b > 160 && r < 160;
+    const gold = r > 180 && g > 140 && b < 110;
+    const ink = r > 200 && g > 200 && b > 200;
+    return cyan || gold || ink;
   }
   const peak = luma(cx);
   let hi = cx;
   for (let x = cx; x < width; x++) {
-    if (luma(x) >= 0.4) hi = x;
+    if (isBody(x)) hi = x;
     else break;
   }
   let lo = hi;
@@ -721,6 +1047,11 @@ function orbFocusWidth(buf, width, height) {
       lo = x;
       break;
     }
+    if (!isBody(x)) {
+      lo = x;
+      break;
+    }
+    lo = x;
   }
   return { peak, inner: hi - cx, drop: lo - hi };
 }
@@ -890,7 +1221,7 @@ function paintNeural(buf, width, height, t, checksum) {
 /** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
 function paintWaveform(buf, width, height, t, checksum) {
   fillVoid(buf);
-  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.88, half: 1, color: THEME.blue });
+  paintChecksumMesh(buf, width, height, t, checksum, { scale: 1.02, half: 1, color: THEME.blue });
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
@@ -940,7 +1271,9 @@ function paintParticles(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
-  const kick = kickAccent(beatPhase(checksum, t));
+  const minSide = Math.min(width, height);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 1.1,
     half: 1,
@@ -1076,14 +1409,7 @@ function paintRippelFrame(opts) {
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
-    mesh: checksum.mesh
-      ? {
-          id: checksum.mesh.id,
-          family: checksum.mesh.family,
-          vertexCount: checksum.mesh.verts.length,
-          edgeCount: checksum.mesh.edges.length,
-        }
-      : null,
+    mesh: fingerprintMesh(checksum.mesh),
   };
 }
 
@@ -1161,7 +1487,36 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     circleCount: a.visualConfig.circles.length,
     tempo: a.tempo,
     mesh: a.mesh,
+    fill: frameFill(a.buffer),
   };
+}
+
+function fingerprintMesh(mesh) {
+  if (!mesh) return null;
+  return {
+    id: mesh.id,
+    family: mesh.family,
+    gait: mesh.gait,
+    vertexCount: mesh.verts.length,
+    edgeCount: mesh.edges.length,
+    faceCount: (mesh.faces && mesh.faces.length) || 0,
+    shells: mesh.shells || 1,
+    dual: Boolean(mesh.dual),
+    fill: Boolean(mesh.fill),
+    ghost: Boolean(mesh.ghost),
+  };
+}
+
+function frameFill(buf) {
+  const v = THEME.void;
+  let lit = 0;
+  const pixels = buf.length / 3;
+  for (let i = 0; i < buf.length; i += 3) {
+    if (Math.abs(buf[i] - v[0]) > 2 || Math.abs(buf[i + 1] - v[1]) > 2 || Math.abs(buf[i + 2] - v[2]) > 2) {
+      lit += 1;
+    }
+  }
+  return lit / pixels;
 }
 
 function summarizeVisual(checksum) {
@@ -1172,15 +1527,7 @@ function summarizeVisual(checksum) {
     circleCount: checksum.visualConfig.circles.length,
     notes: checksum.visualConfig.circles.map((c) => c.note),
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
-    mesh: checksum.mesh
-      ? {
-          id: checksum.mesh.id,
-          family: checksum.mesh.family,
-          vertexCount: checksum.mesh.verts.length,
-          edgeCount: checksum.mesh.edges.length,
-          dual: Boolean(checksum.mesh.dual),
-        }
-      : null,
+    mesh: fingerprintMesh(checksum.mesh),
   };
 }
 
@@ -1211,5 +1558,8 @@ module.exports = {
   fillVoid,
   buildMesh,
   paintMeshOverlay,
+  fingerprintMesh,
+  frameFill,
   MESH_FAMILIES,
+  MESH_GAITS,
 };

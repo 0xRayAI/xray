@@ -5,6 +5,7 @@
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
  * Sharp focus + tempo/frequency animation on all five viz. Same mill tempo as the bed.
  * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
+ * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
  * ffmpeg wireframe is --engine wireframe only.
  * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
  *
@@ -1045,9 +1046,14 @@ function renderBlip(opts = {}) {
       input.fallback = motion.fallback;
       input.width = motion.width;
       input.height = motion.height;
-      input.visualConfig = motion.visualConfig
-        ? rippel.summarizeVisual({ visualConfig: motion.visualConfig, tlmCommand: "checksum" })
-        : null;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: motion.width,
+          height: motion.height,
+        }),
+      );
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {

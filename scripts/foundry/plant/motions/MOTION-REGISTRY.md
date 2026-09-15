@@ -26,6 +26,8 @@ Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is 
 | `waves` | `waveform` | Wave Flow — harmonic ribbons + beat envelope + gold needle |
 | `spark` | `particles` | Spark Drift — beat bursts, orbital + radial motes |
 
+Every mint wears a **seed-unique mesh** (12 families · 5 gaits · shells · faces · ghost). Scale fills the 4.44s frame. Receipt `visualConfig.mesh` is the NFT fingerprint.
+
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 
 Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No audio stream = inspect FAIL.
