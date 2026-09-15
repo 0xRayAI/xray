@@ -44,17 +44,22 @@ describe('foundry blip plant — files and mint', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-inspect.yml'))).toBe(true);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/4\.44/);
+    expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/factory plant/i);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/still/);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/orb/);
+    expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/swirl/);
+    expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).not.toMatch(/day-2/i);
     expect(read('scripts/foundry/plant/skills/blip-inspect/SKILL.md')).toMatch(/4\.44/);
     expect(read('scripts/foundry/plant/skills/blip-inspect/SKILL.md')).not.toMatch(/Inspect AI work/);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).not.toMatch(/\bhangar\b/i);
     expect(read('scripts/foundry/cli.mjs')).toContain('blip: { script: "blip.mjs"');
     expect(read('scripts/foundry/mint-suit.cjs')).toContain('FACTORY_PLANT_CATALOG');
     expect(read('scripts/foundry/inspect.mjs')).toContain('checkBlip');
-    expect(read('scripts/foundry/blip-render.cjs')).toContain("orb: \"canvas\"");
+    expect(read('scripts/foundry/blip-render.cjs')).toContain('registry.json');
     expect(read('scripts/foundry/blip-render.cjs')).toContain('animationIcons.ts');
     expect(read('scripts/foundry/blip-render.cjs')).toContain('commit: null');
+    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"orb"/);
+    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"kapow"/);
   });
 
   it('mints a blip seat without mill skills and allowlists them', async () => {
@@ -159,68 +164,81 @@ describe('foundry blip plant — files and mint', () => {
   });
 });
 
-describe('foundry blip plant — modes fail-closed + PASS mp4', () => {
-  it('rejects day-2 Rippel modes and unknown names without inventing them', () => {
-    const { resolveMode, RIPPEL_ANIMATION, ANIMATION_TO_VISUALIZATION, SSOT } = requireCjs(
+describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
+  it('loads the on-disk registry, implements v0 six, and FAILs unknown/kapow', () => {
+    const { resolveMode, listMotionIds, listV0Ids, parsePictureMode, SSOT } = requireCjs(
       path.join(root, 'scripts/foundry/blip-render.cjs'),
     ) as {
-      resolveMode: (name: string) => { id: string; ok: boolean; day2?: boolean; reason?: string };
-      RIPPEL_ANIMATION: string[];
-      ANIMATION_TO_VISUALIZATION: Record<string, string>;
-      SSOT: { commit: string | null; paths: string[]; visualization: Record<string, string> };
+      resolveMode: (name: string) => {
+        ok: boolean;
+        motionId?: string;
+        renderer?: string;
+        reason?: string;
+      };
+      listMotionIds: () => string[];
+      listV0Ids: () => string[];
+      parsePictureMode: (raw: string) => { pictureMode: string; motionId: string };
+      SSOT: { commit: string | null; paths: string[] };
     };
-    expect(RIPPEL_ANIMATION).toEqual(['orb', 'swirl', 'snap', 'waves', 'spark']);
-    expect(ANIMATION_TO_VISUALIZATION).toEqual({
-      orb: 'canvas',
-      swirl: '3d-sacred',
-      snap: 'neural',
-      waves: 'waveform',
-      spark: 'particles',
-    });
+    expect(listV0Ids()).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark']);
+    expect(listMotionIds()).toEqual(
+      expect.arrayContaining(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']),
+    );
     expect(SSOT.commit).toBeNull();
     expect(SSOT.paths).toEqual(
       expect.arrayContaining(['animationIcons.ts', 'types/index.ts', 'SimplifiedVisualConverter.tsx']),
     );
-
-    const swirl = resolveMode('swirl');
-    expect(swirl.ok).toBe(false);
-    expect(swirl.day2).toBe(true);
-    expect(swirl.reason).toMatch(/day-2/);
-
+    expect(parsePictureMode('motion:swirl')).toEqual({
+      pictureMode: 'motion:swirl',
+      motionId: 'swirl',
+    });
+    for (const id of ['still', 'orb', 'swirl', 'snap', 'waves', 'spark']) {
+      const resolved = resolveMode(id === 'still' ? 'still' : `motion:${id}`);
+      expect(resolved.ok, id).toBe(true);
+      expect(resolved.motionId).toBe(id);
+    }
     const unknown = resolveMode('kenburns');
     expect(unknown.ok).toBe(false);
-    expect(unknown.reason).toMatch(/unknown picture mode/);
+    expect(unknown.reason).toMatch(/unknown motion id/);
+    const kapow = resolveMode('motion:kapow');
+    expect(kapow.ok).toBe(false);
+    expect(kapow.reason).toMatch(/no renderer|growth|stub/);
   });
 
-  it('renders still + orb that PASS the gate and inspects the receipt', async () => {
-    const { renderBlip, seedFromBrief, readReceipt, evaluateMp4File, DURATION_SEC } = requireCjs(
-      path.join(root, 'scripts/foundry/blip-render.cjs'),
-    ) as {
-      renderBlip: (opts: {
-        root: string;
-        brief: string;
-        mode?: string;
-        bed?: string;
-      }) => {
-        receipt: {
-          status: string;
-          seed: string;
-          mode: string;
-          durationSec: number;
-          visualization?: string | null;
-          engine?: string;
-          ssot?: { repo: string; commit: string | null; access?: string };
+  it('renders still + Rippel five that PASS the gate and inspects the receipt', async () => {
+    const { renderBlip, seedFromBrief, readReceipt, evaluateMp4File, DURATION_SEC, hasFfmpeg, V0_IDS } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+        renderBlip: (opts: {
+          root: string;
+          brief: string;
+          mode?: string;
+          pictureMode?: string;
+          bed?: string;
+        }) => {
+          receipt: {
+            status: string;
+            seed: string;
+            mode: string;
+            pictureMode?: string;
+            motionId?: string;
+            durationSec: number;
+            visualization?: string | null;
+            engine?: string;
+            reason?: string | null;
+            ssot?: { repo: string; commit: string | null; access?: string };
+          };
+          mp4: string;
         };
-        mp4: string;
+        seedFromBrief: (brief: string, mode: string) => string;
+        readReceipt: (dir: string) => { status: string; mode?: string } | null;
+        evaluateMp4File: (
+          file: string,
+          opts?: { mode?: string; wantAudio?: boolean },
+        ) => { status: string; durationSec?: number | null };
+        DURATION_SEC: number;
+        hasFfmpeg: () => boolean;
+        V0_IDS: string[];
       };
-      seedFromBrief: (brief: string, mode: string) => string;
-      readReceipt: (dir: string) => { status: string; mode?: string } | null;
-      evaluateMp4File: (
-        file: string,
-        opts?: { mode?: string; wantAudio?: boolean },
-      ) => { status: string; durationSec?: number | null };
-      DURATION_SEC: number;
-    };
     const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
       mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
     };
@@ -236,6 +254,7 @@ describe('foundry blip plant — modes fail-closed + PASS mp4', () => {
       writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ plant: 'blip' }, null, 2)}\n`);
       mintConsumerSuit(root, tmp, () => undefined);
 
+      const ffmpeg = hasFfmpeg();
       const brief = 'night alley still';
       const still = renderBlip({ root: tmp, brief, mode: 'still' });
       expect(still.receipt.engine).toBe('ffmpeg-headless');
@@ -244,56 +263,80 @@ describe('foundry blip plant — modes fail-closed + PASS mp4', () => {
         commit: null,
         access: 'tray',
       });
-      expect(still.receipt.status, JSON.stringify(still.receipt, null, 2)).toBe('PASS');
-      expect(still.receipt.seed).toBe(seedFromBrief(brief, 'still'));
-      expect(still.receipt.mode).toBe('still');
-      expect(still.receipt.durationSec).toBe(DURATION_SEC);
-      expect(existsSync(still.mp4)).toBe(true);
-      expect(evaluateMp4File(still.mp4, { mode: 'still' }).status).toBe('PASS');
-      expect(readReceipt(tmp)?.status).toBe('PASS');
+      if (!ffmpeg) {
+        expect(still.receipt.status).toBe('FAIL');
+        expect(still.receipt.reason).toMatch(/ffmpeg/);
+      } else {
+        expect(still.receipt.status, JSON.stringify(still.receipt, null, 2)).toBe('PASS');
+        expect(still.receipt.seed).toBe(seedFromBrief(brief, 'still'));
+        expect(still.receipt.mode).toBe('still');
+        expect(still.receipt.pictureMode).toBe('still');
+        expect(still.receipt.durationSec).toBe(DURATION_SEC);
+        expect(existsSync(still.mp4)).toBe(true);
+        expect(evaluateMp4File(still.mp4, { mode: 'still' }).status).toBe('PASS');
+        expect(readReceipt(tmp)?.status).toBe('PASS');
 
-      const again = renderBlip({ root: tmp, brief, mode: 'still' });
-      expect(again.receipt.seed).toBe(still.receipt.seed);
+        const again = renderBlip({ root: tmp, brief, mode: 'still' });
+        expect(again.receipt.seed).toBe(still.receipt.seed);
 
-      const orb = renderBlip({ root: tmp, brief: 'night alley orb', mode: 'orb' });
-      expect(orb.receipt.mode).toBe('orb');
-      expect(orb.receipt.visualization).toBe('canvas');
-      expect(orb.receipt.status, JSON.stringify(orb.receipt, null, 2)).toBe('PASS');
+        for (const id of V0_IDS.filter((name) => name !== 'still')) {
+          const rendered = renderBlip({
+            root: tmp,
+            brief: `night alley ${id}`,
+            pictureMode: `motion:${id}`,
+          });
+          expect(rendered.receipt.status, JSON.stringify(rendered.receipt, null, 2)).toBe('PASS');
+          expect(rendered.receipt.motionId).toBe(id);
+          expect(rendered.receipt.pictureMode).toBe(`motion:${id}`);
+        }
 
-      const day2 = renderBlip({ root: tmp, brief: 'later', mode: 'spark' });
-      expect(day2.receipt.status).toBe('FAIL');
-      expect(day2.receipt.mode).toBe('spark');
+        const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 2);
+        const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
+        expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
+        expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true });
+      }
 
-      const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 2);
-      const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
-      expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
-      expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true });
+      const unknown = renderBlip({ root: tmp, brief: 'nope', mode: 'kenburns' });
+      expect(unknown.receipt.status).toBe('FAIL');
+      expect(unknown.receipt.reason).toMatch(/unknown motion id/);
+      const kapow = renderBlip({ root: tmp, brief: 'later', pictureMode: 'motion:kapow' });
+      expect(kapow.receipt.status).toBe('FAIL');
+      if (ffmpeg) {
+        const restore = renderBlip({ root: tmp, brief, mode: 'still' });
+        expect(restore.receipt.status).toBe('PASS');
+      }
 
       const report = await inspectSuit(tmp, { millRoot: root, skipLive: true });
-      expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
       const blipCheck = report.checks.find((c) => c.id === 'blip') as {
         status?: string;
         ok?: boolean;
-        mode?: string;
+        motions?: string[];
       };
-      expect(blipCheck.status).toBe('PASS');
-      expect(blipCheck.ok).toBe(true);
-
-      const blipInspect = inspectBlip(tmp);
-      expect(blipInspect.ok).toBe(true);
-      expect(blipInspect.status).toBe('PASS');
-
-      const cli = spawnSync(
-        process.execPath,
-        [path.join(root, 'scripts/foundry/cli.js'), 'blip', 'inspect'],
-        {
-          cwd: tmp,
-          encoding: 'utf8',
-          env: { ...process.env, FOUNDRY_ROOT: tmp },
-        },
+      expect(blipCheck.motions).toEqual(
+        expect.arrayContaining(['still', 'orb', 'swirl', 'snap', 'waves', 'spark']),
       );
-      expect(cli.status, `${cli.stdout}${cli.stderr}`).toBe(0);
-      expect(cli.stdout).toMatch(/"PASS"/);
+      if (ffmpeg) {
+        expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
+        expect(blipCheck.status).toBe('PASS');
+        expect(blipCheck.ok).toBe(true);
+        const blipInspect = inspectBlip(tmp);
+        expect(blipInspect.ok).toBe(true);
+        expect(blipInspect.status).toBe('PASS');
+        const cli = spawnSync(
+          process.execPath,
+          [path.join(root, 'scripts/foundry/cli.js'), 'blip', 'inspect'],
+          {
+            cwd: tmp,
+            encoding: 'utf8',
+            env: { ...process.env, FOUNDRY_ROOT: tmp },
+          },
+        );
+        expect(cli.status, `${cli.stdout}${cli.stderr}`).toBe(0);
+        expect(cli.stdout).toMatch(/"PASS"/);
+      } else {
+        expect(report.ok).toBe(false);
+        expect(report.failed).toContain('blip');
+      }
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -338,6 +381,9 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/plant": "blip"/);
     expect(read('scripts/foundry/README.md')).toMatch(/4\.44/);
     expect(read('scripts/foundry/README.md')).toMatch(/A friend would hear: build the tiny-video factory/);
+    expect(read('scripts/foundry/README.md')).toMatch(/Rippel five/);
+    expect(read('scripts/foundry/README.md')).not.toMatch(/day-2/i);
+    expect(read('.github/workflows/mill-ci.yml')).toContain('ffmpeg');
     expect(read('AGENTS.md')).toMatch(/blip-inspect/);
     expect(read('AGENTS-consumer.md')).toMatch(/blip render/);
     expect(read('README.md')).toMatch(/plant": "blip"/);

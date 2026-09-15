@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Factory-blip CLI. Render a 4.44s mp4 or inspect the last receipt.
- *   npx @0xray/foundry blip render --brief TEXT --mode still|orb [--bed PATH] [--out FILE]
+ * Factory-blip CLI — sibling plant to mill + sound, not a mill bolt-on.
+ *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH] [--out FILE]
  *   npx @0xray/foundry blip inspect
  */
 
@@ -16,10 +16,11 @@ const blip = require("./blip-render.cjs");
 const HELP =
   "Usage: npx @0xray/foundry blip <render|inspect> [...args]\n" +
   "\n" +
-  "Blip plant, not mill. FOUNDRY_ROOT overrides cwd.\n" +
-  "render: brief → checksum seed → still|orb → 4.44s mp4 → receipt.\n" +
-  "Day-2 modes swirl|snap|waves|spark reject with a clear error.\n" +
-  "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL).\n";
+  "Factory-blip plant, sibling to mill + sound. FOUNDRY_ROOT overrides cwd.\n" +
+  "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 → receipt.\n" +
+  "v0 ids: still, orb, swirl, snap, waves, spark (Rippel five are imports).\n" +
+  "Unknown id FAIL. Kapow is growth later (stub FAIL).\n" +
+  "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n";
 
 function argValue(argv, name, fallback) {
   const i = argv.indexOf(name);
@@ -32,12 +33,15 @@ function writeJson(value) {
 }
 
 function inspectBlip(root) {
+  const motions = blip.listMotionIds();
   const receipt = blip.readReceipt(root);
   if (!receipt) {
     return {
       ok: false,
       status: "FAIL",
       failClosed: true,
+      plant: "blip",
+      motions,
       detail: "missing .xray/blip/receipt.json",
       receipt: null,
     };
@@ -49,7 +53,9 @@ function inspectBlip(root) {
     status,
     failClosed: true,
     plant: "blip",
-    mode: evaluated.mode || receipt.mode || null,
+    motions,
+    mode: evaluated.mode || receipt.motionId || receipt.mode || null,
+    pictureMode: evaluated.pictureMode || receipt.pictureMode || null,
     durationSec: evaluated.durationSec ?? receipt.durationSec ?? null,
     receipt,
   };
@@ -76,7 +82,7 @@ function main() {
     const result = blip.renderBlip({
       root,
       brief: argValue(rest, "--brief", "factory-blip"),
-      mode: argValue(rest, "--mode", "still"),
+      pictureMode: argValue(rest, "--picture-mode", argValue(rest, "--mode", "still")),
       bed: argValue(rest, "--bed", null),
       out: argValue(rest, "--out", null),
     });

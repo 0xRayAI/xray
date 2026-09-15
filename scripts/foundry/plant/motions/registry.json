@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is growth later.",
+  "v0": ["still", "orb", "swirl", "snap", "waves", "spark"],
+  "motions": [
+    {
+      "id": "still",
+      "kind": "still",
+      "source": "blips",
+      "renderer": "still",
+      "status": "v0"
+    },
+    {
+      "id": "orb",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "canvas",
+      "renderer": "orb",
+      "status": "v0",
+      "notes": "Orb Glow · canvas"
+    },
+    {
+      "id": "swirl",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "3d-sacred",
+      "renderer": "swirl",
+      "status": "v0",
+      "notes": "3d-sacred"
+    },
+    {
+      "id": "snap",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "neural",
+      "renderer": "snap",
+      "status": "v0",
+      "notes": "neural"
+    },
+    {
+      "id": "waves",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "waveform",
+      "renderer": "waves",
+      "status": "v0",
+      "notes": "Wave Flow · waveform"
+    },
+    {
+      "id": "spark",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "particles",
+      "renderer": "spark",
+      "status": "v0",
+      "notes": "Spark Drift · particles"
+    },
+    {
+      "id": "kapow",
+      "kind": "motion",
+      "source": "blips",
+      "renderer": null,
+      "status": "growth",
+      "notes": "named later — stub FAIL until shipped"
+    }
+  ]
+}

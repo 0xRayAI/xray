@@ -1,36 +1,36 @@
 ---
 name: blip
-description: Factory-blip plant. Brief → checksum seed → still|orb → 4.44s mp4 → inspect gate. Not mill. Not costume.
+description: Factory-blip plant. Brief → checksum seed → still|motion:<id> → 4.44s mp4 → inspect gate. Sibling to mill + sound. Not costume.
 ---
 
 # Blip
 
-This plant **fastens** a tiny-video factory. 4.44 seconds of picture, optional bed mux. Not code-mill skills on a blip seat.
+This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture, optional bed mux. Sibling to mill + sound — not a mill copy.
 
 **Seat:** `foundry.json` `"plant": "blip"` turns mill off. `"plant": ["mill", "blip"]` wears both. Default stays mill+inspect.
 
-**Picture modes** (Rippel `Animation` plus still — do not invent names):
+**Motions** live in an on-disk registry (`plant/motions/registry.json`). v0 seed:
 
-`still` | `orb` | `swirl` | `snap` | `waves` | `spark`
+`still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-MVP: `still` + `orb` (`orb` → vis `canvas`). Day-2: swirl / snap / waves / spark reject.
+Rippel five are **imports**. Unknown id FAIL. Kapow is growth later (stub FAIL).
 
 **Spine (headless, no browser):**
 
-1. **Brief** → checksum seed (stable hash lineage).
-2. **Mode** → `still` (seeded image looped) or `orb` (named-type frames).
+1. **Brief** → checksum seed.
+2. **Mode** → `still` or `motion:<id>` from the registry.
 3. **Render** → 4.44s mp4 via ffmpeg. Optional `--bed` wav/mp3 mux.
-4. **Inspect gate** → file present, duration 4.44s±tol, mode recorded. Fail-closed.
-5. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + mode + durationSec).
+4. **Inspect gate** → file present, duration 4.44s±tol, mode id recorded. Fail-closed.
+5. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId).
 
 ```bash
 npx @0xray/foundry mint --skip-live
 npx @0xray/foundry blip render --brief "night alley still" --mode still
-npx @0xray/foundry blip render --brief "night alley orb" --mode orb
+npx @0xray/foundry blip render --brief "night alley orb" --mode motion:orb
 npx @0xray/foundry blip inspect
 npx @0xray/foundry inspect --skip-live
 ```
 
-Mint fastens `blip` + `blip-inspect`. It does not dump mill inspect onto a blip-only seat. Chat is not a receipt.
+Mint fastens `blip` + `blip-inspect`. Chat is not a receipt.
 
 A friend would hear: build the tiny-video factory that makes 4.44s Blips next to the sound foundry.

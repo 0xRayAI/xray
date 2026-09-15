@@ -26,7 +26,7 @@ npx @0xray/foundry mint
 npx @0xray/foundry inspect [--skip-live]
 npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
 npx @0xray/foundry sound inspect
-npx @0xray/foundry blip render --brief TEXT --mode still|orb [--bed PATH]
+npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH]
 npx @0xray/foundry blip inspect
 npx @0xray/foundry ci [--commit SHA] [--report]
 npx @0xray/foundry hooks
@@ -63,7 +63,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 A friend would hear: the sound mill mills Dist beds like Rippel’s prototype grew up — kick membranes, metal hats, and a crystal-clear mixer, not a muddy toy and not a 3-sine pad.
 
-**Blip plant (factory-blip):** `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Spine: brief → checksum seed → picture mode (`still` | `orb`; Rippel `Animation` plus still) → 4.44s headless mp4 → inspect gate → `.xray/blip/receipt.json`. Optional `--bed` mux. Day-2 swirl/snap/waves/spark reject. Inspect reports the plant plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
+**Blip plant (factory-blip):** sibling factory plant to mill + sound — not a mill copy. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Motions live in `plant/motions/registry.json`. v0: `still` + Rippel five (`orb` `swirl` `snap` `waves` `spark`). Unknown id FAIL. Kapow is growth later. Headless 4.44s mp4 → `.xray/blip/receipt.json`. Optional `--bed` mux. Inspect reports the plant, live ids, plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
 
 A friend would hear: build the tiny-video factory that makes 4.44s Blips next to the sound foundry.
 

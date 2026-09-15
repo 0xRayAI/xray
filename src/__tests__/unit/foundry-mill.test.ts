@@ -204,6 +204,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/plant/skills/sound-inspect/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/blip/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/blip-inspect/SKILL.md');
+    expect(paths).toContain('scripts/foundry/plant/motions/registry.json');
     expect(paths).toContain('scripts/foundry/sound-rippel.cjs');
     expect(paths).toContain('llms.txt');
     expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
@@ -256,6 +257,7 @@ describe('foundry mill — gate and scripts', () => {
       'scripts/foundry/plant/skills/sound-inspect/SKILL.md',
       'scripts/foundry/plant/skills/blip/SKILL.md',
       'scripts/foundry/plant/skills/blip-inspect/SKILL.md',
+      'scripts/foundry/plant/motions/registry.json',
       'scripts/foundry/plant/agents/mill.yml',
       'scripts/foundry/plant/agents/inspect.yml',
       'scripts/foundry/plant/agents/sound.yml',
@@ -1408,6 +1410,7 @@ describe('foundry mill — CI and hooks', () => {
     expect(ci).toContain('foundry-mill.test.ts');
     expect(ci).toContain('foundry-sound-plant.test.ts');
     expect(ci).toContain('foundry-blip-plant.test.ts');
+    expect(ci).toContain('ffmpeg');
     expect(ci).toContain('npm run lint');
     expect(ci).toContain('npm run typecheck');
     const monitor = read('.github/workflows/mill-monitor.yml');

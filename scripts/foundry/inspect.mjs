@@ -212,6 +212,7 @@ function checkBlip(root) {
   if (!kinds.includes("blip")) return null;
   const blip = require("./blip-render.cjs");
   const receipt = blip.readReceipt(root);
+  const motions = blip.listMotionIds();
   if (!receipt) {
     return {
       id: "blip",
@@ -219,6 +220,7 @@ function checkBlip(root) {
       skipped: true,
       status: "NONE",
       plant: kinds,
+      motions,
       detail: "no blip receipt yet — npx @0xray/foundry blip render --brief \"...\" --mode still",
     };
   }
@@ -231,7 +233,9 @@ function checkBlip(root) {
     status,
     failClosed: true,
     plant: kinds,
-    mode: evaluated.mode || receipt.mode || null,
+    motions,
+    mode: evaluated.mode || receipt.motionId || receipt.mode || null,
+    pictureMode: evaluated.pictureMode || receipt.pictureMode || null,
     durationSec: evaluated.durationSec ?? receipt.durationSec ?? null,
     mp4: evaluated.mp4 || receipt.mp4 || null,
     hasVideo: evaluated.hasVideo ?? receipt.hasVideo ?? null,

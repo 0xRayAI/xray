@@ -1,13 +1,13 @@
 /**
- * Factory-blip spine: brief → checksum seed → picture mode → 4.44s mp4 → inspect gate.
- * Still = seeded image looped. Orb = simple animated frames (named type only).
- * Headless ffmpeg. Not mill. Not a FiveDimensionalVisualizer port.
+ * Factory-blip plant spine — sibling to mill + sound, not a mill bolt-on.
+ * Brief → checksum seed → registry picture mode → 4.44s mp4 → inspect gate.
+ * Headless ffmpeg. Hangar shop is the later pair (not this plant PR).
  *
- * Animation SSOT: cloud cannot clone htafolla/rippel-synapse-flow (ls-remote 404).
- * Tray only — do not invent orb/waves construction numbers or viz params.
- *   rippel-anim-ssot.tgz → animationIcons.ts, types/index.ts, SimplifiedVisualConverter.tsx
- *   RIPPEL-ANIM-TYPES.md
- * Commit not in tray — never guess.
+ * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
+ * Kapow is growth (stub FAIL). Unknown id FAIL. Never silent fallback.
+ *
+ * Rippel imports: cloud ls-remote of htafolla/rippel-synapse-flow is 404 here.
+ * Tray: animationIcons.ts Animation + ANIMATION_TO_VISUALIZATION. Commit not in tray.
  */
 
 const crypto = require("crypto");
@@ -19,33 +19,16 @@ const path = require("path");
 const SPINE = 1;
 const DURATION_SEC = 4.44;
 const DURATION_TOL_SEC = 0.12;
-/** RIPPEL-ANIM-TYPES.md Codex line: Orb Glow · Wave Flow · Geo Rise · Spark Drift (~30fps). */
+/** RIPPEL-ANIM-TYPES.md Codex line (~30fps). Factory encode, not a guessed Rippel canvas. */
 const FPS = 30;
-/** Factory encode size. Tray CanvasConfig has width/height/fps fields but no values — do not guess Rippel canvas. */
 const WIDTH = 320;
 const HEIGHT = 180;
 const RECEIPT_REL = path.join(".xray", "blip", "receipt.json");
 const MP4_REL = path.join(".xray", "blip", "blip.mp4");
+const REGISTRY_REL = path.join("plant", "motions", "registry.json");
 
-/** animationIcons.ts + types/index.ts — do not invent names. */
-const RIPPEL_ANIMATION = ["orb", "swirl", "snap", "waves", "spark"];
-const ANIMATION_TO_VISUALIZATION = {
-  orb: "canvas",
-  swirl: "3d-sacred",
-  snap: "neural",
-  waves: "waveform",
-  spark: "particles",
-};
-const ANIMATION_NAMES = {
-  orb: "Orb",
-  swirl: "Swirl",
-  snap: "Snap",
-  waves: "Waves",
-  spark: "Spark",
-};
-const PICTURE_MODES = ["still", ...RIPPEL_ANIMATION];
-const MVP_MODES = ["still", "orb"];
-const DAY2_MODES = ["swirl", "snap", "waves", "spark"];
+const RIPPEL_IMPORTS = ["orb", "swirl", "snap", "waves", "spark"];
+const V0_IDS = ["still", ...RIPPEL_IMPORTS];
 
 const SSOT = {
   repo: "htafolla/rippel-synapse-flow",
@@ -53,13 +36,40 @@ const SSOT = {
   access: "tray",
   tray: "rippel-anim-ssot.tgz",
   paths: ["animationIcons.ts", "types/index.ts", "SimplifiedVisualConverter.tsx"],
-  note: "RIPPEL-ANIM-TYPES.md",
-  animation: RIPPEL_ANIMATION,
-  visualization: ANIMATION_TO_VISUALIZATION,
-  names: ANIMATION_NAMES,
-  still: true,
-  mvp: MVP_MODES,
+  note: "RIPPEL-ANIM-TYPES.md + MOTION-REGISTRY.md",
 };
+
+function defaultRegistryPath() {
+  return path.join(__dirname, REGISTRY_REL);
+}
+
+function loadRegistry(registryPath) {
+  const file = registryPath || defaultRegistryPath();
+  if (!fs.existsSync(file)) {
+    const err = new Error(`motion registry missing: ${file}`);
+    err.code = "BLIP_REGISTRY_MISSING";
+    throw err;
+  }
+  const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+  const motions = Array.isArray(parsed?.motions) ? parsed.motions : [];
+  const byId = new Map();
+  for (const entry of motions) {
+    if (entry && typeof entry.id === "string" && entry.id.trim()) {
+      byId.set(entry.id.trim(), entry);
+    }
+  }
+  return { file, raw: parsed, motions, byId };
+}
+
+function listMotionIds(registryPath) {
+  return loadRegistry(registryPath).motions.map((entry) => entry.id).filter(Boolean);
+}
+
+function listV0Ids(registryPath) {
+  const loaded = loadRegistry(registryPath);
+  const v0 = Array.isArray(loaded.raw?.v0) ? loaded.raw.v0 : V0_IDS;
+  return v0.filter((id) => typeof id === "string");
+}
 
 function canonicalJson(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
@@ -68,15 +78,90 @@ function canonicalJson(value) {
   return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
 }
 
+function parsePictureMode(raw) {
+  const text = String(raw || "still")
+    .trim()
+    .toLowerCase();
+  if (!text) return { pictureMode: "still", motionId: "still" };
+  if (text === "still" || text === "motion:still") {
+    return { pictureMode: "still", motionId: "still" };
+  }
+  if (text.startsWith("motion:")) {
+    const motionId = text.slice("motion:".length).trim();
+    return { pictureMode: motionId === "still" ? "still" : `motion:${motionId}`, motionId };
+  }
+  return {
+    pictureMode: `motion:${text}`,
+    motionId: text,
+  };
+}
+
+function resolveMode(name, registryPath) {
+  const parsed = parsePictureMode(name);
+  const motionId = parsed.motionId;
+  if (!motionId) {
+    return {
+      ok: false,
+      id: "",
+      pictureMode: parsed.pictureMode,
+      motionId: "",
+      reason: "unknown motion id",
+    };
+  }
+  let loaded;
+  try {
+    loaded = loadRegistry(registryPath);
+  } catch (err) {
+    return {
+      ok: false,
+      id: motionId,
+      pictureMode: parsed.pictureMode,
+      motionId,
+      reason: err instanceof Error ? err.message : String(err),
+    };
+  }
+  const entry = loaded.byId.get(motionId);
+  if (!entry) {
+    return {
+      ok: false,
+      id: motionId,
+      pictureMode: parsed.pictureMode,
+      motionId,
+      reason: `unknown motion id "${motionId}"`,
+    };
+  }
+  if (!entry.renderer) {
+    return {
+      ok: false,
+      id: motionId,
+      pictureMode: parsed.pictureMode,
+      motionId,
+      entry,
+      visualization: entry.visualization || null,
+      reason: `motion "${motionId}" is registered but has no renderer (growth/stub)`,
+    };
+  }
+  return {
+    ok: true,
+    id: motionId,
+    pictureMode: parsed.pictureMode,
+    motionId,
+    renderer: entry.renderer,
+    visualization: entry.visualization || null,
+    source: entry.source || null,
+    entry,
+  };
+}
+
 function seedFromBrief(brief, mode) {
+  const parsed = parsePictureMode(mode);
   const payload = canonicalJson({
     brief: String(brief || "").trim(),
-    mode: resolveMode(mode).id || "still",
+    motionId: parsed.motionId,
     durationSec: DURATION_SEC,
     spine: SPINE,
   });
-  const digest = crypto.createHash("sha256").update(payload, "utf8").digest("hex");
-  return `0x${digest}`;
+  return `0x${crypto.createHash("sha256").update(payload, "utf8").digest("hex")}`;
 }
 
 function seedRgb(seedHex) {
@@ -91,34 +176,10 @@ function seedRgb(seedHex) {
   };
 }
 
-function resolveMode(name) {
-  const id = String(name || "still")
-    .trim()
-    .toLowerCase();
-  if (MVP_MODES.includes(id)) {
-    return {
-      id,
-      ok: true,
-      mvp: true,
-      visualization: id === "orb" ? ANIMATION_TO_VISUALIZATION.orb : null,
-    };
-  }
-  if (DAY2_MODES.includes(id) || RIPPEL_ANIMATION.includes(id)) {
-    return {
-      id,
-      ok: false,
-      mvp: false,
-      day2: true,
-      visualization: ANIMATION_TO_VISUALIZATION[id] || null,
-      reason: `picture mode "${id}" is day-2 (MVP is still|orb; Animation = orb|swirl|snap|waves|spark plus still)`,
-    };
-  }
-  return {
-    id,
-    ok: false,
-    mvp: false,
-    reason: `unknown picture mode "${id}" (Rippel: still|orb|swirl|snap|waves|spark; MVP: still|orb)`,
-  };
+function seedU32(seedHex, offset) {
+  const hex = String(seedHex || "").replace(/^0x/, "");
+  const n = Number.parseInt(hex.slice(offset, offset + 8), 16);
+  return Number.isFinite(n) ? n >>> 0 : 1;
 }
 
 function clampByte(n) {
@@ -142,28 +203,107 @@ function writePpm(file, width, height, paint) {
   return file;
 }
 
-/** Seeded still image: checksum RGB fill. Not a Rippel vis construction. */
+function phase(t) {
+  return DURATION_SEC > 0 ? t / DURATION_SEC : 0;
+}
+
 function paintStill(rgb) {
   return function paint() {
     return [rgb.r, rgb.g, rgb.b];
   };
 }
 
-/**
- * Named type orb → canvas. Factory disk on a black canvas.
- * Radius is factory layout (min/3), not InteractiveCanvas / FiveDimensionalVisualizer.
- * Phase is t / DURATION_SEC (ticket length), not a guessed orb LFO.
- */
+/** orb → canvas. Factory disk. Phase is ticket duration, not a guessed Rippel LFO. */
 function paintOrb(rgb, t) {
   const cx = (WIDTH - 1) / 2;
   const cy = (HEIGHT - 1) / 2;
   const radius = Math.floor(Math.min(WIDTH, HEIGHT) / 3);
-  const phase = DURATION_SEC > 0 ? t / DURATION_SEC : 0;
-  const lit = 0.5 + 0.5 * Math.sin(2 * Math.PI * phase);
+  const lit = 0.5 + 0.5 * Math.sin(2 * Math.PI * phase(t));
   return function paint(x, y) {
     if (Math.hypot(x - cx, y - cy) > radius) return [0, 0, 0];
     return [rgb.r * lit, rgb.g * lit, rgb.b * lit];
   };
+}
+
+/** swirl → 3d-sacred. Factory arms. */
+function paintSwirl(rgb, t) {
+  const cx = (WIDTH - 1) / 2;
+  const cy = (HEIGHT - 1) / 2;
+  const spin = 2 * Math.PI * phase(t);
+  return function paint(x, y) {
+    const dx = x - cx;
+    const dy = y - cy;
+    const d = Math.hypot(dx, dy);
+    const ang = Math.atan2(dy, dx) + spin + d / 18;
+    const arm = Math.abs(Math.sin(ang * 3));
+    if (arm < 0.55 || d > Math.min(WIDTH, HEIGHT) / 2) return [6, 6, 12];
+    return [rgb.r * arm, rgb.g * arm, rgb.b];
+  };
+}
+
+/** snap → neural. Factory node grid. */
+function paintSnap(rgb, t) {
+  const stepX = 40;
+  const stepY = 30;
+  const on = Math.sin(2 * Math.PI * phase(t)) > 0;
+  return function paint(x, y) {
+    const nearX = x % stepX < 3 || x % stepX > stepX - 3;
+    const nearY = y % stepY < 3 || y % stepY > stepY - 3;
+    const node = x % stepX < 4 && y % stepY < 4;
+    if (node && on) return [255, rgb.g, rgb.b];
+    if (nearX || nearY) return [rgb.r * 0.35, rgb.g * 0.35, rgb.b * 0.55];
+    return [4, 4, 10];
+  };
+}
+
+/** waves → waveform. Factory bands. */
+function paintWaves(rgb, t) {
+  const mid = (HEIGHT - 1) / 2;
+  const shift = phase(t) * WIDTH;
+  return function paint(x, y) {
+    const wave = mid + Math.sin((x + shift) / 12) * (HEIGHT / 5);
+    const d = Math.abs(y - wave);
+    if (d < 3) return [rgb.r, rgb.g, 255];
+    if (d < 10) return [rgb.r * 0.4, rgb.g * 0.5, rgb.b];
+    return [0, 0, 16];
+  };
+}
+
+/** spark → particles. Factory dots from seed. */
+function paintSpark(rgb, t, seedHex) {
+  const dots = [];
+  let s = seedU32(seedHex, 8);
+  for (let i = 0; i < 28; i++) {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    dots.push({
+      x: s % WIDTH,
+      y: (s >>> 9) % HEIGHT,
+    });
+  }
+  const drift = phase(t) * 40;
+  return function paint(x, y) {
+    for (const dot of dots) {
+      const dx = x - ((dot.x + drift) % WIDTH);
+      const dy = y - dot.y;
+      if (dx * dx + dy * dy < 9) return [255, rgb.g, rgb.r];
+    }
+    return [0, 0, 8];
+  };
+}
+
+function painterFor(renderer, rgb, t, seedHex) {
+  if (renderer === "still") return paintStill(rgb);
+  if (renderer === "orb") return paintOrb(rgb, t);
+  if (renderer === "swirl") return paintSwirl(rgb, t);
+  if (renderer === "snap") return paintSnap(rgb, t);
+  if (renderer === "waves") return paintWaves(rgb, t);
+  if (renderer === "spark") return paintSpark(rgb, t, seedHex);
+  return null;
+}
+
+function hasFfmpeg() {
+  const result = spawnSync("ffmpeg", ["-version"], { encoding: "utf8" });
+  return !result.error && result.status === 0;
 }
 
 function runTool(bin, args, label) {
@@ -211,7 +351,7 @@ function encodeStill(ppm, mp4) {
   );
 }
 
-function encodeOrb(framesDir, frameCount, mp4) {
+function encodeFrames(framesDir, frameCount, mp4) {
   runTool(
     "ffmpeg",
     [
@@ -237,7 +377,7 @@ function encodeOrb(framesDir, frameCount, mp4) {
       "+faststart",
       mp4,
     ],
-    "ffmpeg orb",
+    "ffmpeg motion",
   );
 }
 
@@ -281,13 +421,7 @@ function probeMedia(file) {
     return { ok: false, reason: "ffprobe missing", hasVideo: false, hasAudio: false, durationSec: null };
   }
   if (durationRun.status !== 0) {
-    return {
-      ok: false,
-      reason: "mp4 unreadable",
-      hasVideo: false,
-      hasAudio: false,
-      durationSec: null,
-    };
+    return { ok: false, reason: "mp4 unreadable", hasVideo: false, hasAudio: false, durationSec: null };
   }
   const durationSec = Number.parseFloat(String(durationRun.stdout || "").trim());
   const streamsRun = spawnSync(
@@ -371,25 +505,24 @@ function readReceipt(root) {
   }
 }
 
-function visualizationFor(mode) {
-  if (mode === "still") return null;
-  return ANIMATION_TO_VISUALIZATION[mode] || null;
-}
-
 function buildReceipt(input, evaled) {
   const status = evaled.status === "PASS" ? "PASS" : "FAIL";
   return {
     kind: "blip",
+    plant: "blip",
     status,
     failClosed: true,
     brief: input.brief,
     seed: input.seed,
-    mode: input.mode,
-    visualization: visualizationFor(input.mode),
+    pictureMode: input.pictureMode,
+    motionId: input.motionId,
+    mode: input.motionId,
+    visualization: input.visualization || null,
     durationSec: DURATION_SEC,
     measuredDurationSec: evaled.durationSec ?? null,
     engine: "ffmpeg-headless",
     ssot: SSOT,
+    registry: input.registryIds || listMotionIds(),
     mp4: input.mp4Rel || input.mp4,
     bed: input.bedRel || input.bed || null,
     hasVideo: Boolean(evaled.hasVideo),
@@ -414,12 +547,14 @@ function evaluateReceipt(root, receipt) {
   if (receipt.reason === "receipt-unreadable") {
     return { status: "FAIL", failClosed: true, reason: "receipt-unreadable" };
   }
-  const mode = resolveMode(receipt.mode);
+  const modeRaw = receipt.pictureMode || receipt.mode;
+  const mode = resolveMode(modeRaw);
   if (receipt.status !== "PASS") {
     return {
       status: "FAIL",
       failClosed: true,
-      mode: receipt.mode || null,
+      mode: receipt.motionId || receipt.mode || null,
+      pictureMode: receipt.pictureMode || null,
       durationSec: receipt.durationSec ?? DURATION_SEC,
       mp4: receipt.mp4 || null,
       hasVideo: receipt.hasVideo ?? null,
@@ -427,12 +562,25 @@ function evaluateReceipt(root, receipt) {
       reason: receipt.reason || "blip receipt FAIL",
     };
   }
+  if (!mode.ok) {
+    return {
+      status: "FAIL",
+      failClosed: true,
+      mode: mode.motionId || null,
+      pictureMode: mode.pictureMode || null,
+      reason: mode.reason || "unknown motion id",
+    };
+  }
   const mp4Rel = typeof receipt.mp4 === "string" ? receipt.mp4 : MP4_REL;
   const mp4 = path.isAbsolute(mp4Rel) ? mp4Rel : path.join(root, mp4Rel);
-  const evaled = evaluateMp4File(mp4, { mode: mode.ok ? mode.id : receipt.mode, wantAudio: Boolean(receipt.bed) });
+  const evaled = evaluateMp4File(mp4, {
+    mode: mode.motionId,
+    wantAudio: Boolean(receipt.bed),
+  });
   return {
     ...evaled,
-    mode: receipt.mode || null,
+    mode: mode.motionId,
+    pictureMode: mode.pictureMode,
     mp4: mp4Rel,
   };
 }
@@ -449,7 +597,7 @@ function failReceipt(root, input, reason, extra = {}) {
       duration: false,
       video: false,
       audio: false,
-      mode: Boolean(input.mode),
+      mode: Boolean(input.motionId),
     },
     reason,
   });
@@ -460,14 +608,17 @@ function failReceipt(root, input, reason, extra = {}) {
 function renderBlip(opts = {}) {
   const root = opts.root || process.cwd();
   const brief = String(opts.brief || "factory-blip");
-  const modeInfo = resolveMode(opts.mode);
-  const seed = opts.seed || seedFromBrief(brief, modeInfo.id);
+  const modeInfo = resolveMode(opts.pictureMode || opts.mode, opts.registryPath);
+  const seed = opts.seed || seedFromBrief(brief, modeInfo.motionId || modeInfo.id);
   const mp4 = opts.out ? path.resolve(root, opts.out) : defaultMp4Path(root);
   const bed = opts.bed ? path.resolve(root, opts.bed) : null;
   const input = {
     brief,
     seed,
-    mode: modeInfo.id,
+    pictureMode: modeInfo.pictureMode,
+    motionId: modeInfo.motionId || modeInfo.id,
+    visualization: modeInfo.visualization || null,
+    registryIds: listMotionIds(opts.registryPath),
     mp4,
     mp4Rel: path.relative(root, mp4) || mp4,
     bed: bed || null,
@@ -486,26 +637,29 @@ function renderBlip(opts = {}) {
   try {
     const rgb = seedRgb(seed);
     const picture = path.join(work, "picture.mp4");
-    if (modeInfo.id === "still") {
+    if (modeInfo.renderer === "still") {
       const ppm = path.join(work, "still.ppm");
       writePpm(ppm, WIDTH, HEIGHT, paintStill(rgb));
       encodeStill(ppm, picture);
     } else {
+      const paint = (t) => painterFor(modeInfo.renderer, rgb, t, seed);
+      if (!paint(0)) {
+        return failReceipt(root, input, `no factory renderer for "${modeInfo.renderer}"`);
+      }
       const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
       for (let i = 0; i < frames; i++) {
-        const t = i / FPS;
         writePpm(
           path.join(work, `frame_${String(i + 1).padStart(4, "0")}.ppm`),
           WIDTH,
           HEIGHT,
-          paintOrb(rgb, t),
+          paint(i / FPS),
         );
       }
-      encodeOrb(work, frames, picture);
+      encodeFrames(work, frames, picture);
     }
     if (bed) muxBed(picture, bed, mp4);
     else fs.copyFileSync(picture, mp4);
-    const evaled = evaluateMp4File(mp4, { mode: modeInfo.id, wantAudio: Boolean(bed) });
+    const evaled = evaluateMp4File(mp4, { mode: modeInfo.motionId, wantAudio: Boolean(bed) });
     const receipt = buildReceipt(input, evaled);
     writeReceipt(root, receipt);
     return { receipt, mp4, seed };
@@ -526,17 +680,19 @@ module.exports = {
   HEIGHT,
   RECEIPT_REL,
   MP4_REL,
-  RIPPEL_ANIMATION,
-  ANIMATION_TO_VISUALIZATION,
-  ANIMATION_NAMES,
-  PICTURE_MODES,
-  MVP_MODES,
-  DAY2_MODES,
+  V0_IDS,
+  RIPPEL_IMPORTS,
   SSOT,
+  defaultRegistryPath,
+  loadRegistry,
+  listMotionIds,
+  listV0Ids,
+  parsePictureMode,
   seedFromBrief,
   resolveMode,
   seedRgb,
   writePpm,
+  hasFfmpeg,
   renderBlip,
   probeMedia,
   evaluateMp4File,
