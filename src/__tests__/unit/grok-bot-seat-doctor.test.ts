@@ -1,0 +1,252 @@
+import { describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const requireCjs = createRequire(import.meta.url);
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const bin = path.join(root, 'grok-bot', 'bin', 'grok-bot.js');
+const {
+  diagnoseSeat,
+  formatDoctor,
+  parseDoctorArgs,
+  runDoctorCli,
+  PLANT_URLS,
+} = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs')) as {
+  diagnoseSeat: (opts?: { cwd?: string; home?: string }) => {
+    ok: boolean;
+    cwd: string;
+    seat: { name: string | null; version: string | null } | null;
+    plant: {
+      ok: boolean;
+      mill: boolean;
+      inspect: boolean;
+      millFile: string | null;
+      inspectFile: string | null;
+      costume: boolean;
+      inventoryPresent: boolean;
+      suit: string | null;
+    };
+    repertoire: { status: string; detail?: string; name?: string; version?: string; signals?: number | null };
+    ows: { present: boolean; path: string };
+    next: string[];
+    urls: { clearing: string };
+  };
+  formatDoctor: (report: { ok: boolean; next: string[] } & Record<string, unknown>) => string;
+  parseDoctorArgs: (argv: string[]) => {
+    command: string | null;
+    cwd: string | null;
+    home: string | null;
+    json: boolean;
+  };
+  runDoctorCli: (
+    argv: string[],
+    io?: { stdout?: { write: (s: string) => void }; stderr?: { write: (s: string) => void }; kitRoot?: string },
+  ) => number;
+  PLANT_URLS: { clearing: string; clearingRail: string; suitUi: string };
+};
+
+function scratch(): string {
+  return mkdtempSync(path.join(tmpdir(), 'grok-bot-doctor-'));
+}
+
+function writeSeat(dir: string, name = 'forge-suit'): void {
+  writeFileSync(
+    path.join(dir, 'package.json'),
+    `${JSON.stringify({ name, version: '1.0.0', private: true }, null, 2)}\n`,
+  );
+}
+
+function plantMillInspect(dir: string): void {
+  for (const skill of ['mill', 'inspect']) {
+    const dest = path.join(dir, '.opencode', 'skills', skill);
+    mkdirSync(dest, { recursive: true });
+    writeFileSync(path.join(dest, 'SKILL.md'), `# ${skill}\n`);
+  }
+}
+
+function runBin(args: string[], cwd: string) {
+  return spawnSync(process.execPath, [bin, ...args], { cwd, encoding: 'utf8' });
+}
+
+describe('grok-bot seat doctor — parse', () => {
+  it('treats doctor and ready as the same command', () => {
+    expect(parseDoctorArgs(['doctor', '--json']).command).toBe('doctor');
+    expect(parseDoctorArgs(['ready', '--cwd', '/tmp/seat']).command).toBe('ready');
+    expect(parseDoctorArgs(['ready', '--cwd', '/tmp/seat']).cwd).toBe('/tmp/seat');
+  });
+
+  it('rejects unknown flags', () => {
+    expect(() => parseDoctorArgs(['doctor', '--go'])).toThrow(/unknown flag/);
+  });
+});
+
+describe('grok-bot seat doctor — diagnose', () => {
+  it('fails a directory with no package.json', () => {
+    const dir = scratch();
+    try {
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.ok).toBe(false);
+      expect(report.seat).toBeNull();
+      expect(report.plant.mill).toBe(false);
+      expect(report.next.join('\n')).toMatch(/npx groover-hangar/);
+      expect(report.next.join('\n')).toMatch(/clearing — never xray-clearing/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails a seat without mill+inspect and still prints hangar/Clearing next steps', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.ok).toBe(false);
+      expect(report.seat?.name).toBe('forge-suit');
+      expect(report.plant.ok).toBe(false);
+      const text = formatDoctor(report);
+      expect(text).toMatch(/Plant: FAIL/);
+      expect(text).toContain(PLANT_URLS.clearing);
+      expect(text).toMatch(/npx groover-hangar/);
+      expect(text).toMatch(/Do not mill-plant Clearing/);
+      expect(text).toMatch(/never xray-clearing/);
+      expect(text).toMatch(/OWS pay: miss/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('passes when mill+inspect SKILL.md are fastened', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, '.ows'));
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.ok).toBe(true);
+      expect(report.plant.mill).toBe(true);
+      expect(report.plant.inspect).toBe(true);
+      expect(report.ows.present).toBe(true);
+      expect(report.repertoire.status).toBe('miss');
+      expect(formatDoctor(report)).toMatch(/Plant: PASS/);
+      expect(formatDoctor(report)).toMatch(/Repertoire: miss/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('passes from foundry-inventory millPlant even without skill files', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      mkdirSync(path.join(dir, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(dir, '.xray', 'foundry-inventory.json'),
+        `${JSON.stringify({
+          suit: 'fastened',
+          dna: 'abc',
+          millPlant: { skills: ['mill', 'inspect'] },
+        })}\n`,
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.ok).toBe(true);
+      expect(report.plant.suit).toBe('fastened');
+      expect(report.plant.inventoryPresent).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports repertoire on when the package and signals exist', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      const rep = path.join(dir, 'node_modules', '@0xray', 'repertoire');
+      mkdirSync(path.join(rep, 'data'), { recursive: true });
+      writeFileSync(
+        path.join(rep, 'package.json'),
+        `${JSON.stringify({ name: '@0xray/repertoire', version: '0.2.0' })}\n`,
+      );
+      writeFileSync(
+        path.join(rep, 'data', 'curated_signals.json'),
+        `${JSON.stringify({ signals: [{ name: 'a' }, { name: 'b' }] })}\n`,
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.repertoire.status).toBe('on');
+      expect(report.repertoire.version).toBe('0.2.0');
+      expect(report.repertoire.signals).toBe(2);
+      expect(formatDoctor(report)).toMatch(/Repertoire: on — @0xray\/repertoire@0.2.0 — 2 signals/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('flags costume true without treating it as mill plant', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeFileSync(path.join(dir, 'foundry.json'), `${JSON.stringify({ costume: true })}\n`);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.ok).toBe(true);
+      expect(report.plant.costume).toBe(true);
+      expect(formatDoctor(report)).toMatch(/costume: true/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('grok-bot seat doctor — CLI', () => {
+  it('prints usage with no args (exit 0)', () => {
+    const r = runBin([], root);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/doctor \| ready/);
+    expect(r.stdout).toMatch(/fasten suit/);
+  });
+
+  it('ready on a fastened seat exits 0 and prints next steps', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir, 'critic-suit');
+      plantMillInspect(dir);
+      const r = runBin(['ready', '--cwd', dir, '--home', dir], dir);
+      expect(r.status, r.stdout + r.stderr).toBe(0);
+      expect(r.stdout).toMatch(/Plant: PASS/);
+      expect(r.stdout).toContain(PLANT_URLS.clearing);
+      expect(r.stdout).toMatch(/npx groover-hangar/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('doctor --json on an unfastened seat exits 1', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      const r = runBin(['doctor', '--cwd', dir, '--home', dir, '--json'], dir);
+      expect(r.status).toBe(1);
+      const report = JSON.parse(r.stdout) as { ok: boolean; next: string[]; urls: { clearing: string } };
+      expect(report.ok).toBe(false);
+      expect(report.urls.clearing).toBe(PLANT_URLS.clearing);
+      expect(report.next.some((s) => s.includes('never xray-clearing'))).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('unknown flag exits 2', () => {
+    const chunks: string[] = [];
+    const code = runDoctorCli(['doctor', '--mill-go'], {
+      stdout: { write: (s: string) => { chunks.push(s); } },
+      stderr: { write: (s: string) => { chunks.push(s); } },
+      kitRoot: path.join(root, 'grok-bot'),
+    });
+    expect(code).toBe(2);
+    expect(chunks.join('')).toMatch(/unknown flag/);
+  });
+});

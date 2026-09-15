@@ -15,6 +15,17 @@ npm i @0xray/grok-bot
 npx @0xray/grok-bot
 ```
 
+## Seat doctor (prove plant)
+From an agent project root:
+
+```bash
+npx @0xray/grok-bot doctor
+npx @0xray/grok-bot ready          # same command
+npx @0xray/grok-bot doctor --json
+```
+
+**Plain:** this checks that mill + inspect are fastened on *this* seat, says whether Repertoire and Open Wallet (`~/.ows`) are present, then prints what to do next for hangar shops and Clearing (402 / USDC on Base). It does not mill-plant Clearing into 0xRay. Product MCP name is `clearing`, never `xray-clearing`.
+
 ## Path (per agent)
 1. **Suit** — mill + inspect (`fasten-suit-per-agent`)  
 2. **Identity** — Groover register → mint → pin (`groover-factory-parity`) when needed  
