@@ -13,7 +13,7 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture **w
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports**. Each mint wears a seed-unique mesh (family + gait + shells + faces) — 4.44s of unique blip art; receipt `visualConfig.mesh` is the NFT fingerprint. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
+Rippel five are **imports**. Each mint wears a sparse seed mesh plus field accents (stars, grids, gradients, blinkers) — 4.44s of unique blip art; receipt `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
 
 `still` is the **Power Plant ident** — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p, not a frozen poster: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme.
 
