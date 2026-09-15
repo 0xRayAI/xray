@@ -15,6 +15,7 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `NOTES-EXCHANGE.md` | Dual-arm mailbox (no cloud-to-cloud queue) |
 | `MEMORY-PROTOCOL.md` | Claim A mill / B session / C memory. Quiz-first. No canary values. |
 | `MEMORY-QUIZ.md` | Questions only. After compact, answer before any tools. |
+| `memory_quiz.py` | Prints those questions. No answers. No canary values. |
 | `MEMORY-RECEIPT.md` | Compact 6 Claim C. C1/C2 re-fed in summary → not leftover-window memory. No canary values. |
 | `cursor-usage-receipt.compact6.json` | Compact 6 snapshot — host window **256000**, tokens 298693, `preCompactCount=6` |
 

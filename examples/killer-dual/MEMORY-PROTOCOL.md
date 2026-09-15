@@ -53,3 +53,18 @@ Questions-only file: `MEMORY-QUIZ.md`.
 - **C:** compact 6 (`2026-09-15T15:21:37Z`). **Not proven** as leftover old-window memory: C1/C2 were re-fed in the injected summary. C3 stayed unknown. Receipt: `MEMORY-RECEIPT.md`. Canary values stay off disk.
 
 Mill-control (`bc-5c1b4f51`) Compact 2: same C outcome (summarizer re-fed C1/C2; C3 unknown). Do not copy that cell’s canary **values** into this repo.
+
+## Next cell — compact 7 (quiz-first validation)
+
+Compact 6 is **frozen** (`MEMORY-RECEIPT.md`). It does not validate leftover-window memory. Do not overwrite it.
+
+Printer: `python3 examples/killer-dual/memory_quiz.py` — questions only.
+
+For compact 7, same `bc`:
+
+1. Plant **new** chat-only canaries. Compact 6 values are burned (they live in old summaries).
+2. Say each **once**. Do not put them in a labeled markdown table in-chat — that is why the summarizer re-fed compact 6.
+3. Never write the values to the repo. Operator holds the keys off-machine.
+4. Fill until host `preCompact` count **7**.
+5. **First output after that cut is only the quiz answers**, in order, before any tools. No “keep going,” no Station Read, no receipt, until the three answers are out.
+6. Then write `MEMORY-RECEIPT-7.md`. Two-key score vs a copy of the injected summary. C3 must stay unknown.
