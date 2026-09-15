@@ -13,6 +13,9 @@ describe('HOST vs mill scoring law', () => {
   it('scores disk and mill-on-machine, not conversation memory', () => {
     const law = readRepo('examples/killer-dual/HOST-VS-MILL.md');
     expect(law).toContain('Chat may lose early turns. Disk must not lose the ticket.');
+    expect(readRepo('docs-site/docs/guides/station-vs-repertoire.md')).toContain(
+      'Treat same-bc plus a re-fed summary as proof the conversation survived as a mind'
+    );
     expect(law).toContain('Station absent is still **PASS**');
     expect(law).toContain('not separable');
     expect(law).not.toMatch(/survived as a mind/i);

@@ -42,6 +42,7 @@ Frontier hosts often skip intake (spawn **warns**, does not deny). Then the judg
 - Stuff Bedrock names or activity-log FILL into the factory seed.
 - Thicken `STATION.md` with synthesis reports or JSONL.
 - Confuse Groover’s in-memory challenge sessions with Station (they die on registry restart).
+- Treat same-bc plus a re-fed summary as proof the conversation survived as a mind. Chat may lose early turns. Disk must not lose the ticket. Mill-absence (host did not invent `STATION.md`) is still PASS for mill-control. Killer-dual: `examples/killer-dual/HOST-VS-MILL.md`.
 
 ## Related
 
