@@ -63,7 +63,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 A friend would hear: the sound mill mills Dist beds like Rippel’s prototype grew up — kick membranes, metal hats, and a crystal-clear mixer, not a muddy toy and not a 3-sine pad.
 
-**Blip plant (factory-blip):** sibling factory plant to mill + sound — not a mill copy. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Motions live in `plant/motions/registry.json` (not a frozen Rippel enum). v0: `still` + Rippel five (`orb` `swirl` `snap` `waves` `spark`). `kapow` is a Blips original on the registry. Unknown id FAIL. Headless 4.44s mp4 → `.xray/blip/receipt.json`. Optional `--bed` mux. Inspect reports the plant, live ids, plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
+**Blip plant (factory-blip):** sibling factory plant to mill + sound — not a mill copy. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Motions live in `plant/motions/registry.json` (not a frozen Rippel enum). v0: `still` + Rippel five (`orb` `swirl` `snap` `waves` `spark`). `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Still generator wears the Power Plant intro plate (void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`) — hard cuts, flat vector, not seed-RGB stock. Headless 4.44s mp4 → `.xray/blip/receipt.json`. Optional `--bed` mux. Inspect reports the plant, live ids, plus last blip `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
 
 A friend would hear: build the tiny-video factory that makes 4.44s Blips next to the sound foundry.
 

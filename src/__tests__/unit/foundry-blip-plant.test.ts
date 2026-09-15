@@ -60,6 +60,11 @@ describe('foundry blip plant — files and mint', () => {
     expect(read('scripts/foundry/blip-render.cjs')).toContain('commit: null');
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"orb"/);
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"kapow"/);
+    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/#08090B/);
+    expect(read('scripts/foundry/blip-render.cjs')).toContain('#08090B');
+    expect(read('scripts/foundry/blip-render.cjs')).toContain('#3DE0E8');
+    expect(read('scripts/foundry/blip-render.cjs')).toContain('power-plant-intro');
+    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"status": "growth"/);
   });
 
   it('mints a blip seat without mill skills and allowlists them', async () => {
@@ -192,14 +197,71 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       pictureMode: 'motion:swirl',
       motionId: 'swirl',
     });
-    for (const id of ['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']) {
+    for (const id of ['still', 'orb', 'swirl', 'snap', 'waves', 'spark']) {
       const resolved = resolveMode(id === 'still' ? 'still' : `motion:${id}`);
       expect(resolved.ok, id).toBe(true);
       expect(resolved.motionId).toBe(id);
     }
+    const kapow = resolveMode('motion:kapow');
+    expect(kapow.ok).toBe(false);
+    expect(kapow.reason).toMatch(/growth\/stub/);
     const unknown = resolveMode('kenburns');
     expect(unknown.ok).toBe(false);
     expect(unknown.reason).toMatch(/unknown motion id/);
+  });
+
+  it('still generator paints only the Power Plant palette', () => {
+    const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+        PALETTE: Record<string, string>;
+        RGB: Record<string, number[]>;
+        paintStill: (seed: string) => (x: number, y: number) => number[];
+        writePpm: (
+          file: string,
+          width: number,
+          height: number,
+          paint: (x: number, y: number) => number[],
+        ) => string;
+        WIDTH: number;
+        HEIGHT: number;
+        stillPlate: (seed: string) => string;
+        STILL_PLATES: string[];
+      };
+    expect(PALETTE).toEqual({
+      void: '#08090B',
+      ink: '#F5F7FA',
+      cyan: '#3DE0E8',
+      gold: '#F5C518',
+      blue: '#4A7FD4',
+    });
+    expect(STILL_PLATES).toEqual(['titlecard', 'corridor', 'rain', 'endcard']);
+    const allowed = new Set(Object.values(RGB).map((rgb) => rgb.join(',')));
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-plate-'));
+    try {
+      for (const seed of ['0x00', '0x01', '0x02', '0x03', '0xdeadbeef']) {
+        const file = path.join(tmp, `${stillPlate(seed)}.ppm`);
+        writePpm(file, WIDTH, HEIGHT, paintStill(seed));
+        const raw = readFileSync(file);
+        const header = Buffer.from(`P6\n${WIDTH} ${HEIGHT}\n255\n`);
+        expect(raw.subarray(0, header.length).equals(header)).toBe(true);
+        const pixels = raw.subarray(header.length);
+        expect(pixels.length).toBe(WIDTH * HEIGHT * 3);
+        const counts = new Map<string, number>();
+        for (let i = 0; i < pixels.length; i += 3) {
+          const key = `${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`;
+          expect(allowed.has(key), key).toBe(true);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        }
+        const voidKey = RGB.void.join(',');
+        expect(counts.get(voidKey) || 0).toBeGreaterThan((WIDTH * HEIGHT) / 3);
+        expect(counts.get(RGB.cyan.join(',')) || 0).toBeGreaterThan(0);
+        expect(counts.get(RGB.gold.join(',')) || 0).toBeGreaterThan(0);
+        expect(counts.get(RGB.ink.join(',')) || 0).toBeGreaterThan(0);
+        expect(counts.get(RGB.blue.join(',')) || 0).toBeGreaterThan(0);
+      }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('renders still + Rippel five that PASS the gate and inspects the receipt', async () => {
@@ -220,6 +282,9 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             motionId?: string;
             durationSec: number;
             visualization?: string | null;
+            palette?: Record<string, string>;
+            plate?: string;
+            stillPlate?: string | null;
             engine?: string;
             reason?: string | null;
             ssot?: { repo: string; commit: string | null; access?: string };
@@ -269,6 +334,15 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         expect(still.receipt.mode).toBe('still');
         expect(still.receipt.pictureMode).toBe('still');
         expect(still.receipt.durationSec).toBe(DURATION_SEC);
+        expect(still.receipt.palette).toEqual({
+          void: '#08090B',
+          ink: '#F5F7FA',
+          cyan: '#3DE0E8',
+          gold: '#F5C518',
+          blue: '#4A7FD4',
+        });
+        expect(still.receipt.plate).toBe('power-plant-intro');
+        expect(still.receipt.stillPlate).toMatch(/titlecard|corridor|rain|endcard/);
         expect(existsSync(still.mp4)).toBe(true);
         expect(evaluateMp4File(still.mp4, { mode: 'still' }).status).toBe('PASS');
         expect(readReceipt(tmp)?.status).toBe('PASS');
@@ -276,7 +350,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         const again = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(again.receipt.seed).toBe(still.receipt.seed);
 
-        for (const id of [...V0_IDS.filter((name) => name !== 'still'), 'kapow']) {
+        for (const id of V0_IDS.filter((name) => name !== 'still')) {
           const rendered = renderBlip({
             root: tmp,
             brief: `night alley ${id}`,
@@ -285,7 +359,16 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.status, JSON.stringify(rendered.receipt, null, 2)).toBe('PASS');
           expect(rendered.receipt.motionId).toBe(id);
           expect(rendered.receipt.pictureMode).toBe(`motion:${id}`);
+          expect(rendered.receipt.palette?.void).toBe('#08090B');
         }
+
+        const kapow = renderBlip({
+          root: tmp,
+          brief: 'night alley kapow',
+          pictureMode: 'motion:kapow',
+        });
+        expect(kapow.receipt.status).toBe('FAIL');
+        expect(kapow.receipt.reason).toMatch(/growth\/stub/);
 
         const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 2);
         const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
@@ -377,6 +460,9 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/4\.44/);
     expect(read('scripts/foundry/README.md')).toMatch(/A friend would hear: build the tiny-video factory/);
     expect(read('scripts/foundry/README.md')).toMatch(/Rippel five/);
+    expect(read('scripts/foundry/README.md')).toMatch(/Power Plant/);
+    expect(read('scripts/foundry/README.md')).toMatch(/#08090B/);
+    expect(read('scripts/foundry/README.md')).toMatch(/growth stub/);
     expect(read('scripts/foundry/README.md')).not.toMatch(/day-2/i);
     expect(read('.github/workflows/mill-ci.yml')).toContain('ffmpeg');
     expect(read('AGENTS.md')).toMatch(/blip-inspect/);

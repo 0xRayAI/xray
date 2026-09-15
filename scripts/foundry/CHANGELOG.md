@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip plant (`blip` + `blip-inspect`) — sibling to mill + sound, not a mill copy. `foundry.json` `"plant": "blip"` fastens the tiny-video factory and turns mill off. Dynamic motion registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a Blips original. Headless 4.44s mp4 + receipt. Inspect reports last blip PASS/FAIL. Not costume. No version bump — dogfood from branch / pack.
+Factory-blip plant (`blip` + `blip-inspect`) — sibling to mill + sound, not a mill copy. `foundry.json` `"plant": "blip"` fastens the tiny-video factory and turns mill off. Dynamic motion registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a growth stub. Still generator wears the Power Plant intro plate (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`). Headless 4.44s mp4 + receipt. Inspect reports last blip PASS/FAIL. Not costume. No version bump — dogfood from branch / pack.
 
 Sound plant retool: crystal-clear mill of Rippel SSOT chains (membrane / metal / duo-bass / mixer), not the Lovable volume-hack soup and not #62 sine beds. Tone.Offline blocked in Node. `phonk` first-class. No version bump.
 

@@ -1,14 +1,23 @@
 {
   "version": 1,
-  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a Blips original (not a frozen Rippel enum).",
+  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a growth stub until a renderer ships.",
   "v0": ["still", "orb", "swirl", "snap", "waves", "spark"],
+  "palette": {
+    "void": "#08090B",
+    "ink": "#F5F7FA",
+    "cyan": "#3DE0E8",
+    "gold": "#F5C518",
+    "blue": "#4A7FD4",
+    "plate": "power-plant-intro"
+  },
   "motions": [
     {
       "id": "still",
       "kind": "still",
       "source": "blips",
       "renderer": "still",
-      "status": "v0"
+      "status": "v0",
+      "notes": "Power Plant plate still (titlecard / corridor / rain / endcard)"
     },
     {
       "id": "orb",
@@ -64,9 +73,9 @@
       "id": "kapow",
       "kind": "motion",
       "source": "blips",
-      "renderer": "kapow",
-      "status": "shipped",
-      "notes": "Blips punch/comic — not a Rippel import"
+      "renderer": null,
+      "status": "growth",
+      "notes": "named growth slot — FAIL until a renderer ships"
     }
   ]
 }

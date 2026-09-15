@@ -236,6 +236,8 @@ function checkBlip(root) {
     motions,
     mode: evaluated.mode || receipt.motionId || receipt.mode || null,
     pictureMode: evaluated.pictureMode || receipt.pictureMode || null,
+    palette: receipt.palette || null,
+    plate: receipt.plate || null,
     durationSec: evaluated.durationSec ?? receipt.durationSec ?? null,
     mp4: evaluated.mp4 || receipt.mp4 || null,
     hasVideo: evaluated.hasVideo ?? receipt.hasVideo ?? null,

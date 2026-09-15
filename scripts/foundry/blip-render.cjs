@@ -1,10 +1,11 @@
 /**
  * Factory-blip plant spine — sibling to mill + sound, not a mill bolt-on.
  * Brief → checksum seed → registry picture mode → 4.44s mp4 → inspect gate.
- * Headless ffmpeg. Hangar shop is the later pair (not this plant PR).
+ * Headless ffmpeg. Plant-first. Pair seat is later (not this plant PR).
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
- * Kapow is a Blips original on the registry (not a Rippel import). Unknown id FAIL.
+ * Kapow is a growth stub (renderer null → FAIL). Unknown id FAIL.
+ * Still + motions wear the Power Plant intro plate — not seed-RGB stock.
  *
  * Rippel imports: cloud ls-remote of htafolla/rippel-synapse-flow is 404 here.
  * Tray: animationIcons.ts Animation + ANIMATION_TO_VISUALIZATION. Commit not in tray.
@@ -29,6 +30,34 @@ const REGISTRY_REL = path.join("plant", "motions", "registry.json");
 
 const RIPPEL_IMPORTS = ["orb", "swirl", "snap", "waves", "spark"];
 const V0_IDS = ["still", ...RIPPEL_IMPORTS];
+const STILL_PLATES = ["titlecard", "corridor", "rain", "endcard"];
+
+/** Power Plant intro plate — HARD design SSOT. Hard cuts, flat vector. */
+const PALETTE = {
+  void: "#08090B",
+  ink: "#F5F7FA",
+  cyan: "#3DE0E8",
+  gold: "#F5C518",
+  blue: "#4A7FD4",
+};
+const PLATE = "power-plant-intro";
+
+function hexRgb(hex) {
+  const h = String(hex || "").replace(/^#/, "");
+  return [
+    Number.parseInt(h.slice(0, 2), 16),
+    Number.parseInt(h.slice(2, 4), 16),
+    Number.parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+const RGB = {
+  void: hexRgb(PALETTE.void),
+  ink: hexRgb(PALETTE.ink),
+  cyan: hexRgb(PALETTE.cyan),
+  gold: hexRgb(PALETTE.gold),
+  blue: hexRgb(PALETTE.blue),
+};
 
 const SSOT = {
   repo: "htafolla/rippel-synapse-flow",
@@ -207,26 +236,90 @@ function phase(t) {
   return DURATION_SEC > 0 ? t / DURATION_SEC : 0;
 }
 
-function paintStill(rgb) {
-  return function paint() {
-    return [rgb.r, rgb.g, rgb.b];
+function inBox(x, y, x0, y0, x1, y1) {
+  return x >= x0 && x < x1 && y >= y0 && y < y1;
+}
+
+function onEdge(x, y, x0, y0, x1, y1) {
+  return inBox(x, y, x0, y0, x1, y1) && (x === x0 || x === x1 - 1 || y === y0 || y === y1 - 1);
+}
+
+function stillPlate(seedHex) {
+  return STILL_PLATES[seedU32(seedHex, 0) % STILL_PLATES.length];
+}
+
+/** Shared Power Plant chrome on every still — gold/cyan ticks, ink label, blue node. */
+function paintChrome(x, y) {
+  if (y >= 6 && y < 8 && x >= 136 && x < 168) return RGB.gold;
+  if (y >= 6 && y < 8 && x >= 168 && x < 184) return RGB.cyan;
+  if (inBox(x, y, 24, 164, 120, 172)) return RGB.ink;
+  if (inBox(x, y, 292, 164, 308, 176)) return RGB.blue;
+  return null;
+}
+
+/**
+ * Still generator: Power Plant plate (titlecard / corridor / rain / endcard).
+ * Seed picks the plate. Colors stay the five hexes — not seed-RGB stock.
+ */
+function paintStill(seedHex) {
+  const plate = stillPlate(seedHex);
+  return function paint(x, y) {
+    const chrome = paintChrome(x, y);
+    if (chrome) return chrome;
+
+    if (plate === "titlecard") {
+      const cards = [
+        [12, 36, 84, 132],
+        [88, 36, 160, 132],
+        [164, 36, 236, 132],
+        [240, 36, 312, 132],
+      ];
+      for (let i = 0; i < cards.length; i++) {
+        const [x0, y0, x1, y1] = cards[i];
+        if (onEdge(x, y, x0, y0, x1, y1)) return i % 2 === 0 ? RGB.cyan : RGB.gold;
+        if (inBox(x, y, x0 + 1, y0 + 1, x1 - 1, y1 - 1)) {
+          if (i === 1 && inBox(x, y, 118, 64, 130, 120)) return RGB.blue;
+          if (i === 2 && (x + y) % 8 === 0) return RGB.cyan;
+          return RGB.void;
+        }
+      }
+      return RGB.void;
+    }
+
+    if (plate === "corridor") {
+      if (x >= 156 && x < 164) return RGB.cyan;
+      if (inBox(x, y, 148, 72, 172, 148)) return RGB.blue;
+      return RGB.void;
+    }
+
+    if (plate === "rain") {
+      if (x > 188 && y > 28 && y < 150 && (x + 3 * y) % 9 === 0) return RGB.cyan;
+      if (inBox(x, y, 208, 52, 268, 124)) return RGB.blue;
+      return RGB.void;
+    }
+
+    if (inBox(x, y, 208, 64, 300, 96)) return RGB.ink;
+    if (inBox(x, y, 208, 104, 248, 116)) return RGB.gold;
+    return RGB.void;
   };
 }
 
-/** orb → canvas. Factory disk. Phase is ticket duration, not a guessed Rippel LFO. */
-function paintOrb(rgb, t) {
+/** orb → canvas. Hard rings on void. Phase is ticket duration, not a guessed Rippel LFO. */
+function paintOrb(t) {
   const cx = (WIDTH - 1) / 2;
   const cy = (HEIGHT - 1) / 2;
-  const radius = Math.floor(Math.min(WIDTH, HEIGHT) / 3);
-  const lit = 0.5 + 0.5 * Math.sin(2 * Math.PI * phase(t));
+  const pulse = Math.sin(2 * Math.PI * phase(t)) > 0 ? 4 : 0;
   return function paint(x, y) {
-    if (Math.hypot(x - cx, y - cy) > radius) return [0, 0, 0];
-    return [rgb.r * lit, rgb.g * lit, rgb.b * lit];
+    const d = Math.hypot(x - cx, y - cy);
+    if (d < 18) return RGB.gold;
+    if (d < 36 + pulse) return RGB.cyan;
+    if (d < 40 + pulse) return RGB.ink;
+    return RGB.void;
   };
 }
 
-/** swirl → 3d-sacred. Factory arms. */
-function paintSwirl(rgb, t) {
+/** swirl → 3d-sacred. Flat cyan / gold / blue arms. */
+function paintSwirl(t) {
   const cx = (WIDTH - 1) / 2;
   const cy = (HEIGHT - 1) / 2;
   const spin = 2 * Math.PI * phase(t);
@@ -234,69 +327,56 @@ function paintSwirl(rgb, t) {
     const dx = x - cx;
     const dy = y - cy;
     const d = Math.hypot(dx, dy);
+    if (d > Math.min(WIDTH, HEIGHT) / 2) return RGB.void;
     const ang = Math.atan2(dy, dx) + spin + d / 18;
     const arm = Math.abs(Math.sin(ang * 3));
-    if (arm < 0.55 || d > Math.min(WIDTH, HEIGHT) / 2) return [6, 6, 12];
-    return [rgb.r * arm, rgb.g * arm, rgb.b];
+    if (arm < 0.55) return RGB.void;
+    const turned = ((ang % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const sector = Math.floor(turned / ((Math.PI * 2) / 3)) % 3;
+    if (sector === 0) return RGB.cyan;
+    if (sector === 1) return RGB.gold;
+    return RGB.blue;
   };
 }
 
-/** snap → neural. Factory node grid. */
-function paintSnap(rgb, t) {
-  const stepX = 40;
-  const stepY = 30;
+/** snap → neural. Agent-blue grid, cyan nodes, gold flash. */
+function paintSnap(t) {
   const on = Math.sin(2 * Math.PI * phase(t)) > 0;
   return function paint(x, y) {
-    const nearX = x % stepX < 3 || x % stepX > stepX - 3;
-    const nearY = y % stepY < 3 || y % stepY > stepY - 3;
-    const node = x % stepX < 4 && y % stepY < 4;
-    if (node && on) return [255, rgb.g, rgb.b];
-    if (nearX || nearY) return [rgb.r * 0.35, rgb.g * 0.35, rgb.b * 0.55];
-    return [4, 4, 10];
+    const nearX = x % 40 < 2 || x % 40 > 38;
+    const nearY = y % 30 < 2 || y % 30 > 28;
+    const node = x % 40 < 4 && y % 30 < 4;
+    if (node) return on ? RGB.gold : RGB.cyan;
+    if (nearX || nearY) return RGB.blue;
+    return RGB.void;
   };
 }
 
-/** waves → waveform. Factory bands. */
-function paintWaves(rgb, t) {
+/** waves → waveform. Cyan band, gold cut, blue field. */
+function paintWaves(t) {
   const mid = (HEIGHT - 1) / 2;
   const shift = phase(t) * WIDTH;
   return function paint(x, y) {
     const wave = mid + Math.sin((x + shift) / 12) * (HEIGHT / 5);
     const d = Math.abs(y - wave);
-    if (d < 3) return [rgb.r, rgb.g, 255];
-    if (d < 10) return [rgb.r * 0.4, rgb.g * 0.5, rgb.b];
-    return [0, 0, 16];
+    if (d < 2) return RGB.gold;
+    if (d < 5) return RGB.cyan;
+    if (y > wave) return RGB.blue;
+    return RGB.void;
   };
 }
 
-/** kapow — Blips punch/comic. Factory burst, not a Rippel vis. */
-function paintKapow(rgb, t) {
-  const cx = (WIDTH - 1) / 2;
-  const cy = (HEIGHT - 1) / 2;
-  const burst = 0.35 + 0.65 * Math.abs(Math.sin(Math.PI * phase(t) * 2));
-  const reach = Math.min(WIDTH, HEIGHT) * 0.48 * burst;
-  return function paint(x, y) {
-    const dx = x - cx;
-    const dy = y - cy;
-    const d = Math.hypot(dx, dy);
-    const ang = Math.atan2(dy, dx);
-    const ray = Math.abs(Math.sin(ang * 4));
-    if (d < reach * 0.45 || (ray > 0.78 && d < reach)) {
-      return [255, Math.max(rgb.g, 180) * burst, rgb.b * 0.25];
-    }
-    return [12, 8, 8];
-  };
-}
-
-/** spark → particles. Factory dots from seed. */
-function paintSpark(rgb, t, seedHex) {
+/** spark → particles. Cyan / gold / ink dots on void. */
+function paintSpark(t, seedHex) {
   const dots = [];
   let s = seedU32(seedHex, 8);
+  const colors = [RGB.cyan, RGB.gold, RGB.ink];
   for (let i = 0; i < 28; i++) {
     s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
     dots.push({
       x: s % WIDTH,
       y: (s >>> 9) % HEIGHT,
+      c: colors[i % 3],
     });
   }
   const drift = phase(t) * 40;
@@ -304,20 +384,19 @@ function paintSpark(rgb, t, seedHex) {
     for (const dot of dots) {
       const dx = x - ((dot.x + drift) % WIDTH);
       const dy = y - dot.y;
-      if (dx * dx + dy * dy < 9) return [255, rgb.g, rgb.r];
+      if (dx * dx + dy * dy < 9) return dot.c;
     }
-    return [0, 0, 8];
+    return RGB.void;
   };
 }
 
-function painterFor(renderer, rgb, t, seedHex) {
-  if (renderer === "still") return paintStill(rgb);
-  if (renderer === "orb") return paintOrb(rgb, t);
-  if (renderer === "swirl") return paintSwirl(rgb, t);
-  if (renderer === "snap") return paintSnap(rgb, t);
-  if (renderer === "waves") return paintWaves(rgb, t);
-  if (renderer === "spark") return paintSpark(rgb, t, seedHex);
-  if (renderer === "kapow") return paintKapow(rgb, t);
+function painterFor(renderer, t, seedHex) {
+  if (renderer === "still") return paintStill(seedHex);
+  if (renderer === "orb") return paintOrb(t);
+  if (renderer === "swirl") return paintSwirl(t);
+  if (renderer === "snap") return paintSnap(t);
+  if (renderer === "waves") return paintWaves(t);
+  if (renderer === "spark") return paintSpark(t, seedHex);
   return null;
 }
 
@@ -538,6 +617,9 @@ function buildReceipt(input, evaled) {
     motionId: input.motionId,
     mode: input.motionId,
     visualization: input.visualization || null,
+    palette: PALETTE,
+    plate: PLATE,
+    stillPlate: input.stillPlate || null,
     durationSec: DURATION_SEC,
     measuredDurationSec: evaled.durationSec ?? null,
     engine: "ffmpeg-headless",
@@ -638,6 +720,7 @@ function renderBlip(opts = {}) {
     pictureMode: modeInfo.pictureMode,
     motionId: modeInfo.motionId || modeInfo.id,
     visualization: modeInfo.visualization || null,
+    stillPlate: modeInfo.renderer === "still" ? stillPlate(seed) : null,
     registryIds: listMotionIds(opts.registryPath),
     mp4,
     mp4Rel: path.relative(root, mp4) || mp4,
@@ -655,14 +738,13 @@ function renderBlip(opts = {}) {
   fs.mkdirSync(path.dirname(mp4), { recursive: true });
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "xray-foundry-blip-"));
   try {
-    const rgb = seedRgb(seed);
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {
       const ppm = path.join(work, "still.ppm");
-      writePpm(ppm, WIDTH, HEIGHT, paintStill(rgb));
+      writePpm(ppm, WIDTH, HEIGHT, paintStill(seed));
       encodeStill(ppm, picture);
     } else {
-      const paint = (t) => painterFor(modeInfo.renderer, rgb, t, seed);
+      const paint = (t) => painterFor(modeInfo.renderer, t, seed);
       if (!paint(0)) {
         return failReceipt(root, input, `no factory renderer for "${modeInfo.renderer}"`);
       }
@@ -702,7 +784,13 @@ module.exports = {
   MP4_REL,
   V0_IDS,
   RIPPEL_IMPORTS,
+  STILL_PLATES,
+  PALETTE,
+  PLATE,
+  RGB,
   SSOT,
+  stillPlate,
+  paintStill,
   defaultRegistryPath,
   loadRegistry,
   listMotionIds,

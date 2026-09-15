@@ -13,7 +13,9 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture, op
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports**. `kapow` is a Blips original on the same registry. Unknown id FAIL.
+Rippel five are **imports**. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
+
+Still + motions wear the **Power Plant intro** plate: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Hard cuts, flat vector — not seed-RGB stock.
 
 **Spine (headless, no browser):**
 
