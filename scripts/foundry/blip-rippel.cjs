@@ -451,7 +451,7 @@ function paintCanvas(buf, width, height, t, checksum) {
   }
 }
 
-/** Radial brightness drop from center. Soft Phase-1 soup was 80–200px; focus is a short rim. */
+/** Solid-body width from center, then first drop into void. Ink rims can be brighter than the fill — do not peak-hunt them. */
 function orbFocusWidth(buf, width, height) {
   const cx = (width - 1) * 0.5;
   const cy = ((buf.length / 3 / width) | 0) * 0.5;
@@ -460,28 +460,20 @@ function orbFocusWidth(buf, width, height) {
     const i = (y * width + (x | 0)) * 3;
     return (buf[i] * 0.3 + buf[i + 1] * 0.59 + buf[i + 2] * 0.11) / 255;
   }
-  let peak = 0;
-  let peakX = cx;
+  const peak = luma(cx);
+  let hi = cx;
   for (let x = cx; x < width; x++) {
-    const v = luma(x);
-    if (v > peak) {
-      peak = v;
-      peakX = x;
-    }
-  }
-  let hi = peakX;
-  let lo = peakX;
-  for (let x = peakX; x < width; x++) {
-    if (luma(x) >= peak * 0.72) hi = x;
+    if (luma(x) >= 0.4) hi = x;
     else break;
   }
+  let lo = hi;
   for (let x = hi; x < width; x++) {
-    if (luma(x) <= peak * 0.22) {
+    if (luma(x) <= 0.12) {
       lo = x;
       break;
     }
   }
-  return { peak, inner: hi - peakX, drop: lo - hi };
+  return { peak, inner: hi - cx, drop: lo - hi };
 }
 
 /** swirl → 3d-sacred v2. Merkaba + hex plate, counter-spin, beat vertices. */
@@ -686,7 +678,24 @@ function paintParticles(buf, width, height, t, checksum) {
   for (let i = 0; i < placed.length; i++) {
     const src = placed[i];
     const tint = freqTint(src.circle, t);
-    const moteCount = 14;
+    const orbitR = 26 + (i % 3) * 9;
+    const segs = 11;
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2 + t * 2.1 + i;
+      const a1 = a0 + (Math.PI * 2 * 0.38) / segs;
+      paintSharpLine(
+        buf,
+        width,
+        height,
+        src.x + Math.cos(a0) * orbitR,
+        src.y + Math.sin(a0) * orbitR * 0.72,
+        src.x + Math.cos(a1) * orbitR,
+        src.y + Math.sin(a1) * orbitR * 0.72,
+        THEME.blue,
+        1,
+      );
+    }
+    const moteCount = 16;
     for (let k = 0; k < moteCount; k++) {
       const life = (t * (0.85 + src.circle.frequency / 500) + k * 0.11 + i * 0.07) % 1;
       const orbital = k % 3 === 0;
@@ -696,7 +705,7 @@ function paintParticles(buf, width, height, t, checksum) {
         : life * minSide * 0.38 * (0.7 + kick * 0.12);
       const x = src.x + Math.cos(ang) * dist;
       const y = src.y + Math.sin(ang) * dist * (orbital ? 0.72 : 1);
-      const size = Math.max(1.5, (1 - life) * (2.2 + (k % 3)) + kick * 0.6);
+      const size = Math.max(2.2, (1 - life) * (3.2 + (k % 3)) + kick * 0.6);
       const color = mixRgb(src.color, THEME.gold, k % 2 === 0 ? tint : tint * 0.4);
       stampFocusDisc(buf, width, height, x, y, size, color, mote);
       if (life > 0.12 && !orbital) {
