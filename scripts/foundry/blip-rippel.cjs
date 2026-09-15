@@ -374,7 +374,7 @@ function layoutRings(circles, width, height, t, checksum) {
     const phase = scramble() * Math.PI * 2;
     const ecc = 0.62 + scramble() * 0.22;
     const drift = 0.85 + scramble() * 0.7;
-    const spin = inner ? -t * 2.25 * drift - beat * 0.2 : t * 1.4 * drift + beat * 0.12;
+    const spin = inner ? -t * 3.6 * drift - beat * 0.22 : t * 2.3 * drift + beat * 0.14;
     const ang = (i / circles.length) * Math.PI * 2 + spin + phase;
     const wobble = Math.sin(beat * Math.PI * 2 + phase) * minSide * 0.007;
     const orbit = minSide * (inner ? 0.18 + scramble() * 0.05 : 0.29 + scramble() * 0.05) + wobble + (circle.frequency / 2000) * minSide * 0.04;
@@ -437,17 +437,44 @@ function paintCanvas(buf, width, height, t, checksum) {
     THEME.ink,
     { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
   );
-  for (const placed of layoutRings(checksum.visualConfig.circles, width, height, t, checksum)) {
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      placed.x,
-      placed.y,
-      placed.r * 0.38,
-      mixRgb(placed.color, THEME.gold, freqTint(placed.circle, t)),
-      { rim: 1.6, glow: 4, glowAlpha: 0.2, rimColor: THEME.ink },
-    );
+  const now = layoutRings(checksum.visualConfig.circles, width, height, t, checksum);
+  const trail = layoutRings(checksum.visualConfig.circles, width, height, Math.max(0, t - 0.06), checksum);
+  const fade = layoutRings(checksum.visualConfig.circles, width, height, Math.max(0, t - 0.12), checksum);
+  for (let i = 0; i < now.length; i++) {
+    const placed = now[i];
+    const color = mixRgb(placed.color, THEME.gold, freqTint(placed.circle, t));
+    stampFocusDisc(buf, width, height, fade[i].x, fade[i].y, placed.r * 0.18, color, {
+      rim: 1,
+      glow: 2,
+      glowAlpha: 0.1,
+      rimColor: THEME.ink,
+    });
+    stampFocusDisc(buf, width, height, trail[i].x, trail[i].y, placed.r * 0.26, color, {
+      rim: 1.2,
+      glow: 2,
+      glowAlpha: 0.14,
+      rimColor: THEME.ink,
+    });
+    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.36, color, {
+      rim: 1.6,
+      glow: 4,
+      glowAlpha: 0.2,
+      rimColor: THEME.ink,
+    });
+    const hop = (i * 1.7 + t * 1.55) % 1;
+    if (hop > 0.72) {
+      const lead = hop * 14;
+      stampFocusDisc(
+        buf,
+        width,
+        height,
+        placed.x + (placed.x - cx) * 0.04,
+        placed.y + (placed.y - cy) * 0.04,
+        3 + lead * 0.08,
+        THEME.ink,
+        { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
+      );
+    }
   }
 }
 
@@ -484,14 +511,18 @@ function paintSacred(buf, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
-  const spin = t * 1.25 + beat * 0.2;
+  const scramble = mulberry32(
+    ((checksum.gematria && checksum.gematria.promptValue) || 1) ^ 0x51ed,
+  );
+  const spin = t * 2.55 + beat * 0.28;
   const r = minSide * (0.28 + kick * 0.01);
   const circles = checksum.visualConfig.circles;
   const node = { rim: 1.3, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
   const hex = [];
   for (let i = 0; i < 6; i++) {
-    const a = -spin * 0.35 + (i * Math.PI) / 3;
-    hex.push([cx + Math.cos(a) * r * 1.12, cy + Math.sin(a) * r * 1.12]);
+    const a = -spin * 0.85 + (i * Math.PI) / 3 + (scramble() - 0.5) * 0.18;
+    const skew = 0.94 + scramble() * 0.14;
+    hex.push([cx + Math.cos(a) * r * 1.12 * skew, cy + Math.sin(a) * r * 1.12]);
   }
   for (let i = 0; i < 6; i++) {
     paintSharpLine(buf, width, height, hex[i][0], hex[i][1], hex[(i + 1) % 6][0], hex[(i + 1) % 6][1], THEME.blue, 1);
@@ -566,18 +597,26 @@ function paintNeural(buf, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 0.85, checksum);
+  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
   const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
   for (let i = 0; i < placed.length; i++) {
-    const a = placed[i];
-    const b = placed[(i + 1) % placed.length];
-    const skip = placed[(i + 2) % placed.length];
+    const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
+    const a = {
+      ...placed[i],
+      x: placed[i].x + wander,
+      y: placed[i].y + Math.cos(t * 2.7 + i) * 10,
+    };
+    const rawB = placed[(i + 1) % placed.length];
+    const rawSkip = placed[(i + 2) % placed.length];
+    const b = { x: rawB.x - wander * 0.3, y: rawB.y };
+    const skip = { x: rawSkip.x, y: rawSkip.y + wander * 0.2 };
     paintSharpLine(buf, width, height, a.x, a.y, b.x, b.y, THEME.blue, 1);
     paintSharpLine(buf, width, height, a.x, a.y, skip.x, skip.y, THEME.blue, 1);
     paintSharpLine(buf, width, height, cx, cy, a.x, a.y, THEME.blue, 1);
-    const speed = 0.85 + a.circle.frequency / 220;
+    const speed = 1.8 + a.circle.frequency / 140;
     const travel = (t * speed + i * 0.17) % 1;
-    const inbound = (t * speed * 1.15 + beat * 0.08 + i * 0.41) % 1;
+    const inbound = (t * speed * 1.35 + beat * 0.08 + i * 0.41) % 1;
+    const third = (t * speed * 0.55 + i * 0.63) % 1;
     stampFocusDisc(
       buf,
       width,
@@ -596,6 +635,16 @@ function paintNeural(buf, width, height, t, checksum) {
       a.y + (cy - a.y) * inbound,
       4,
       THEME.cyan,
+      node,
+    );
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      a.x + (skip.x - a.x) * third,
+      a.y + (skip.y - a.y) * third,
+      3,
+      THEME.ink,
       node,
     );
   }
@@ -632,9 +681,10 @@ function paintWaveform(buf, width, height, t, checksum) {
     const color = parseHex(circle.color);
     const amp0 = height * (0.05 + (circle.radius / 420) * 0.11) * env;
     const f0 = 0.0065 + circle.frequency / 22000;
-    const shift = t * (circle.frequency / 3.1);
+    const shift = t * (circle.frequency / 1.85);
     const gem = (checksum.gematria && checksum.gematria.checksumValue) || 1;
     const phase = i * 0.85 + ((gem >>> ((i * 5) % 24)) & 255) / 70;
+    const jitter = 0.08 + ((gem >>> ((i * 3) % 16)) & 7) / 90;
     paintSharpRibbon(
       buf,
       width,
@@ -642,7 +692,8 @@ function paintWaveform(buf, width, height, t, checksum) {
       (x) =>
         mid +
         Math.sin((x + shift) * f0 + phase) * amp0 +
-        Math.sin((x + shift) * f0 * 2 + phase * 1.3) * amp0 * 0.28,
+        Math.sin((x + shift) * f0 * 2 + phase * 1.3) * amp0 * 0.28 +
+        Math.sin((x + shift) * f0 * 5.3 + phase * 2.1) * amp0 * jitter,
       i === 0 ? THEME.cyan : color,
       i === 0 ? 3 : 2,
     );
@@ -672,17 +723,18 @@ function paintParticles(buf, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 0.7, checksum);
+  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.15, checksum);
   const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
   stampFocusDisc(buf, width, height, cx, cy, 8 + kick * 2, mixRgb(THEME.cyan, THEME.gold, 0.35 + kick * 0.25), mote);
   for (let i = 0; i < placed.length; i++) {
     const src = placed[i];
     const tint = freqTint(src.circle, t);
-    const orbitR = 26 + (i % 3) * 9;
+    const orbitR = 22 + (i % 3) * 11 + Math.sin(t * 1.7 + i) * 5;
     const segs = 11;
     for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2 + t * 2.1 + i;
-      const a1 = a0 + (Math.PI * 2 * 0.38) / segs;
+      if ((s + i * 3) % 4 === 0) continue;
+      const a0 = (s / segs) * Math.PI * 2 + t * 3.4 + i * 0.7;
+      const a1 = a0 + (Math.PI * 2 * 0.32) / segs;
       paintSharpLine(
         buf,
         width,
@@ -695,11 +747,12 @@ function paintParticles(buf, width, height, t, checksum) {
         1,
       );
     }
-    const moteCount = 16;
+    const moteCount = 18;
     for (let k = 0; k < moteCount; k++) {
-      const life = (t * (0.85 + src.circle.frequency / 500) + k * 0.11 + i * 0.07) % 1;
+      const life = (t * (1.25 + src.circle.frequency / 420) + k * 0.11 + i * 0.07) % 1;
       const orbital = k % 3 === 0;
-      const ang = orbital ? t * (2.4 + (k % 5) * 0.2) + i + k : t * 3.1 + i * 1.3 + k * 0.62;
+      const dart = Math.sin(t * 5.1 + k * 1.3 + i) * 0.35;
+      const ang = orbital ? t * (3.2 + (k % 5) * 0.28) + i + k + dart : t * 4.2 + i * 1.3 + k * 0.62 + dart;
       const dist = orbital
         ? 18 + (k % 4) * 10 + Math.sin(beat * Math.PI * 2 + k) * 4
         : life * minSide * 0.38 * (0.7 + kick * 0.12);
