@@ -27,7 +27,7 @@ const HELP =
   "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
   "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
   "Mint fastens mill plant then overlays their plant (mill-fill JSON), then runs inspect. PPE stays worn.\n" +
-  "inspect runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME). Not an 8th MCP.\n" +
+  "inspect runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME) plus observational harness (hooks / Repertoire / Station). --go emits a forge GO receipt. Not an 8th MCP.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
 
 const cmd = process.argv[2];

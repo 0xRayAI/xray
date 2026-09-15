@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Inspect `--go` emits a shop-style forge GO receipt (harness profile: bare / suited / partial). Observational by default: Cursor/Grok `hooks.json` bound, Repertoire fastened (`node_modules` or `.xray/state/repertoire`), Station present. `--require-harness=` gates dual-cloud A/B. Vendor Repertoire source and `memory_routing` declaration are not fasten. Not an 8th MCP. Not PPE. Not 5.0.
+
 ## [0.1.10] - 2026-09-12
 
 Inspect isolated-home `dest` is `resolveGrokPluginDests` — on shared HOME that is project `.grok/plugins/0xray`, not machine `$HOME/.grok/plugins/0xray`. Published 0.1.9 still joined dest from `$HOME` (report/CLI lag after 0xray@4.0.12 / #29 wear). Shop plant is first-class with mill plant. `shop-extract`, `shop-witness`, `shop-pin` (and `foundry.json` `shopPlant`) are not a costume dump. `"costume": true` still required for 45/42. Isolated HOME must not write the passwd machine plugin. Not an 8th MCP. Not 5.0.

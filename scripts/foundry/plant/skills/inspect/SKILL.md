@@ -17,6 +17,7 @@ Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costu
 4. **CI.** GitHub mill CI report (`.opencode/logs/ci-cd-monitor-report.json`), not a green check in chat. No token is a skip, not a pass invented.
 5. **Live PUT.** HTTP 200 on the npm `.tgz`. Metadata without a tarball is not shipped.
 6. **Isolated HOME.** Last-mile dest is project `.grok/plugins/0xray`. Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write machine `~/.grok/plugins/0xray`. Shared HOME (passwd `$HOME`) does not last-wins clobber the machine plugin. Mill compares `$HOME` to the passwd home (`os.userInfo().homedir`), not `os.homedir()` (which follows `$HOME`).
+7. **Harness (observational).** Bound Cursor/Grok hooks, fastened Repertoire organ, Station card. Profiles: `bare` / `suited` / `partial`. Does **not** fasten. `--go` prints a forge GO receipt so cloud return is mill, not chat. `--require-harness=bare|suited|partial` fails when the live plant disagrees.
 
 ## How to work
 
@@ -28,6 +29,7 @@ Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costu
 ```bash
 npx @0xray/foundry mint
 npx @0xray/foundry inspect
+npx @0xray/foundry inspect --skip-live --go --require-harness=bare
 npx @0xray/foundry ci --report
 ```
 
