@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip Rippel v2: the sharp orb look (`stampFocusDisc` opaque body + crisp rim + short glow) is now the look on **all five** viz — swirl / snap / waves / spark were still Phase 1 bokeh strokes. Animation is the complex Rippel set: dual rings, merkaba+hex, neural lattice+hub pulses, harmonic ribbons, beat-burst particles. Video LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed. Mandatory 4.44s mux unchanged. No version bump.
+Factory-blip Rippel v2: the sharp orb look (`stampFocusDisc` opaque body + crisp rim + short glow) is now the look on **all five** viz — swirl / snap / waves / spark were still Phase 1 bokeh strokes. Animation is the complex Rippel set, paced as a 4.44s blip (fast abstract travel, soft gold tints — no hard strobe). Video LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed. Mandatory 4.44s mux unchanged. No version bump.
 
 Factory-blip Phase 1 (TICKET-BLIP-RENDERER-UPGRADE): default motion path is the Rippel converter spine (`VisualConfig.circles` → SimplifiedVisualConverter viz ids) at ≥720p, not ffmpeg geometry labeled as orb. `htafolla/rippel-synapse-flow@e5014cd`. Every Blip muxes a 4.44s audio bed (`--bed` or auto sound mill); silent mp4 = inspect FAIL. ffmpeg wireframe is `--engine wireframe` only. Still stays the Power Plant plate until Phase 2. No `@0xray/foundry` bump.
 

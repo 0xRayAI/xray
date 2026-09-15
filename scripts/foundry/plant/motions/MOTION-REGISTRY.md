@@ -10,7 +10,7 @@ On-disk SSOT: `registry.json` next to this file.
 
 ## Rippel v2 — converter + living motions (TICKET-BLIP-RENDERER-UPGRADE)
 
-Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is **sharp** (opaque body + crisp rim + short glow) on all five. Motion shares the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed.
+Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is **sharp** (opaque body + crisp rim + short glow) on all five. Motion is a **4.44s blip**: fast abstract travel, soft gold tints — no hard strobe. LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed.
 
 - **SSOT** `htafolla/rippel-synapse-flow@e5014cd`
 - `animationIcons.ts` → `ANIMATION_TO_VISUALIZATION`
