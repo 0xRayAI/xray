@@ -12,7 +12,8 @@
  * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * Mesh: one sparse seed polyhedron. Field accents (stars, grid, gradient, blinkers)
- * carry uniqueness — not more wire in the middle.
+ * carry uniqueness — not more wire in the middle. Lines iridesce (cyan/gold/blue
+ * travel + glow + beat fireflies). Soft tints, no photosensitive strobe.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -77,6 +78,7 @@ const THEME = {
 };
 
 const THEME_CYCLE = [THEME.cyan, THEME.gold, THEME.blue, THEME.ink];
+const LIGHT_CYCLE = [THEME.cyan, THEME.gold, THEME.blue];
 
 /** getGenreConfig.ts scale tables — same SSOT the sound mill already ported. */
 const SCALES = {
@@ -540,9 +542,10 @@ function buildField(seedHex, brief) {
     stars.push({
       x,
       y,
-      r: 0.7 + rng() * 1.5,
+      r: 1.4 + rng() * 1.8,
       color: THEME_CYCLE[(rng() * THEME_CYCLE.length) | 0],
       phase: rng() * Math.PI * 2,
+      sparkle: rng() > 0.55,
     });
   }
   const blinkers = [];
@@ -563,7 +566,7 @@ function buildField(seedHex, brief) {
     gradient: GRAD_KINDS[(rng() * GRAD_KINDS.length) | 0],
     gridColor: THEME_CYCLE[(rng() * 3) | 0],
     gradColor: THEME_CYCLE[(rng() * 3) | 0],
-    gradStrength: 0.05 + rng() * 0.07,
+    gradStrength: 0.22 + rng() * 0.16,
   };
 }
 
@@ -918,8 +921,62 @@ function fillTri(buf, width, height, a, b, c, color, alpha) {
 }
 
 function meshAccent(mesh, t) {
-  const cut = Math.floor((t / 4.44) * (mesh.cuts || 3));
-  return THEME_CYCLE[((mesh.accentIndex || 0) + cut) % THEME_CYCLE.length];
+  const cuts = mesh.cuts || 3;
+  const phase = ((t / 4.44) * cuts + (mesh.accentIndex || 0)) % LIGHT_CYCLE.length;
+  const i = phase | 0;
+  return mixRgb(LIGHT_CYCLE[i], LIGHT_CYCLE[(i + 1) % LIGHT_CYCLE.length], phase - i);
+}
+
+function iridesce(u, t, beat, accent) {
+  const cycle = [THEME.cyan, THEME.gold, THEME.blue, accent || THEME.cyan];
+  const phase = ((u + beat * 0.16 + t * 0.11) % 1 + 1) % 1;
+  const p = phase * cycle.length;
+  const i = p | 0;
+  const f = p - i;
+  const e = f * f * (3 - 2 * f);
+  return mixRgb(cycle[i % cycle.length], cycle[(i + 1) % cycle.length], e);
+}
+
+function livingShade(mesh, t, u, beat, bias) {
+  const c = iridesce(u + (mesh.accentIndex || 0) * 0.13, t, beat, meshAccent(mesh, t));
+  return bias ? mixRgb(c, bias, 0.12) : c;
+}
+
+function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
+  const glow = opts && opts.glow != null ? opts.glow : 6;
+  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.48;
+  const half = opts && opts.half != null ? opts.half : 1;
+  const shader = opts && opts.shader;
+  const rim = (opts && opts.rimColor) || THEME.ink;
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) {
+    stampFocusDisc(buf, width, height, x0, y0, half + 1.6, shader ? shader(0) : color, {
+      rim: 1,
+      glow,
+      glowAlpha: glowA,
+      rimColor: rim,
+    });
+    return;
+  }
+  const steps = Math.ceil(len);
+  const nx = -dy / len;
+  const ny = dx / len;
+  for (let i = 0; i <= steps; i++) {
+    const u = i / steps;
+    const c = shader ? shader(u) : color;
+    const x = x0 + dx * u;
+    const y = y0 + dy * u;
+    for (let d = -half; d <= half; d++) mixPixel(buf, width, x + nx * d, y + ny * d, c, 1);
+    mixPixel(buf, width, x + nx * (half + 1), y + ny * (half + 1), rim, 0.7);
+    mixPixel(buf, width, x - nx * (half + 1), y - ny * (half + 1), rim, 0.7);
+    for (let g = 1; g <= glow; g++) {
+      const a = glowA * (1 - g / (glow + 1)) * (1 - g / (glow + 1));
+      mixPixel(buf, width, x + nx * (half + g), y + ny * (half + g), c, a);
+      mixPixel(buf, width, x - nx * (half + g), y - ny * (half + g), c, a);
+    }
+  }
 }
 
 function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
@@ -938,7 +995,11 @@ function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
 }
 
 function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
-  const node = { rim: 1, glow: 2, glowAlpha: 0.14, rimColor: THEME.ink };
+  const t = (opts && opts.t) || 0;
+  const checksum = (opts && opts.checksum) || { genreConfig: { tempo: 90 } };
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const and = andAccent(beat);
   const fillA = opts && opts.fill != null ? opts.fill : 0;
   if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA);
   const ranked = mesh.edges
@@ -946,12 +1007,35 @@ function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
     .sort((a, b) => a.z - b.z);
   for (let i = 0; i < ranked.length; i++) {
     const [a, b] = ranked[i].e;
-    const near = ranked[i].z > 0 ? 1 : 0;
-    paintSharpLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, color, half + near);
+    const bias = color || null;
+    paintGlowLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, THEME.cyan, {
+      half: half || 1,
+      glow: 6,
+      glowAlpha: 0.42 + 0.12 * kick,
+      shader: (u) => livingShade(mesh, t, u, beat, bias),
+    });
+    const life = (beat * 0.85 + ranked[i].i * 0.19 + mesh.twist) % 1;
+    const bead = livingShade(mesh, t, life, beat, THEME.gold);
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      pts[a].x + (pts[b].x - pts[a].x) * life,
+      pts[a].y + (pts[b].y - pts[a].y) * life,
+      3.4 + kick * 2.2 + and * 1.4,
+      bead,
+      { rim: 1, glow: 7, glowAlpha: 0.42, rimColor: THEME.ink },
+    );
   }
   const nodeR = opts && opts.nodeR != null ? opts.nodeR : 4.6;
   for (let i = 0; i < pts.length; i++) {
-    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, nodeR, color, node);
+    const nodeC = livingShade(mesh, t, i / Math.max(1, pts.length), beat, THEME.ink);
+    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, nodeR + and * 0.6, nodeC, {
+      rim: 1,
+      glow: 4,
+      glowAlpha: 0.28,
+      rimColor: THEME.ink,
+    });
   }
 }
 
@@ -960,9 +1044,13 @@ function paintChecksumMesh(buf, width, height, t, checksum, opts) {
   if (!mesh) return null;
   const scale = (opts && opts.scale) || 1;
   const half = (opts && opts.half) || 1;
-  const color = (opts && opts.color) || meshAccent(mesh, t);
   const pts = projectMesh(mesh, width, height, t, checksum, scale);
-  paintMesh(buf, width, height, mesh, pts, color, half, { fill: 0, nodeR: 3.2 });
+  paintMesh(buf, width, height, mesh, pts, opts && opts.color, half, {
+    fill: 0,
+    nodeR: 3.6,
+    t,
+    checksum,
+  });
   return { mesh, pts, dual: null };
 }
 
@@ -978,25 +1066,27 @@ function paintMeshOverlay(buf, width, height, opts) {
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
     scale: 0.72,
     half: 1,
-    color: THEME.cyan,
   });
 }
 
-function paintGradient(buf, width, height, field) {
-  const color = field.gradColor || THEME.blue;
-  const s = field.gradStrength || 0.06;
+function paintGradient(buf, width, height, field, t) {
+  const aCol = field.gradColor || THEME.blue;
+  const bCol = mixRgb(THEME.gold, THEME.cyan, 0.45 + 0.2 * Math.sin((t || 0) * 0.7));
+  const s = field.gradStrength || 0.2;
   if (field.gradient === "horizon") {
-    const y0 = (height * 0.62) | 0;
+    const y0 = (height * 0.58) | 0;
     for (let y = y0; y < height; y++) {
-      const a = s * ((y - y0) / Math.max(1, height - y0));
-      for (let x = 0; x < width; x += 1) mixPixel(buf, width, x, y, color, a);
+      const u = (y - y0) / Math.max(1, height - y0);
+      const c = mixRgb(aCol, bCol, u);
+      const a = s * (0.35 + 0.65 * u);
+      for (let x = 0; x < width; x += 1) mixPixel(buf, width, x, y, c, a);
     }
     return;
   }
   if (field.gradient === "corner") {
     const cx = field.stars[0] ? field.stars[0].x * width : width * 0.12;
     const cy = field.stars[0] ? field.stars[0].y * height : height * 0.18;
-    const reach = Math.min(width, height) * 0.55;
+    const reach = Math.min(width, height) * 0.72;
     const x0 = Math.max(0, (cx - reach) | 0);
     const x1 = Math.min(width - 1, (cx + reach) | 0);
     const y0 = Math.max(0, (cy - reach) | 0);
@@ -1005,56 +1095,66 @@ function paintGradient(buf, width, height, field) {
       for (let x = x0; x <= x1; x++) {
         const d = Math.hypot(x - cx, y - cy) / reach;
         if (d >= 1) continue;
-        mixPixel(buf, width, x, y, color, s * (1 - d) * (1 - d));
+        const fade = (1 - d) * (1 - d);
+        mixPixel(buf, width, x, y, mixRgb(aCol, bCol, fade), s * fade);
       }
     }
     return;
   }
-  const y1 = (height * 0.22) | 0;
+  const y1 = (height * 0.28) | 0;
   for (let y = 0; y < y1; y++) {
-    const a = s * (1 - y / y1);
-    for (let x = 0; x < width; x += 1) mixPixel(buf, width, x, y, color, a);
+    const u = 1 - y / y1;
+    const c = mixRgb(THEME.cyan, aCol, 0.35 + 0.4 * u);
+    for (let x = 0; x < width; x += 1) mixPixel(buf, width, x, y, c, s * u);
   }
 }
 
-function paintGrid(buf, width, height, field) {
+function paintGrid(buf, width, height, field, t, checksum) {
   if (!field.grid || field.grid === "none") return;
-  const color = field.gridColor || THEME.blue;
+  const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const accent = field.gridColor || THEME.cyan;
+  const line = (x0, y0, x1, y1) =>
+    paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
+      half: 1,
+      glow: 5,
+      glowAlpha: 0.4,
+      shader: (u) => iridesce(u, t || 0, beat, accent),
+    });
   const cx = (width - 1) * 0.5;
   if (field.grid === "ticks") {
     for (let i = 0; i < 9; i++) {
       const x = ((i + 1) / 10) * width;
-      paintSharpLine(buf, width, height, x, 8, x, 24, color, 1);
-      paintSharpLine(buf, width, height, x, height - 24, x, height - 8, color, 1);
+      line(x, 8, x, 28);
+      line(x, height - 28, x, height - 8);
     }
     for (let i = 0; i < 5; i++) {
       const y = ((i + 1) / 6) * height;
-      paintSharpLine(buf, width, height, 8, y, 24, y, color, 1);
-      paintSharpLine(buf, width, height, width - 24, y, width - 8, y, color, 1);
+      line(8, y, 28, y);
+      line(width - 28, y, width - 8, y);
     }
     return;
   }
   if (field.grid === "meridian") {
-    paintSharpLine(buf, width, height, 28, 28, width - 28, 28, color, 1);
-    paintSharpLine(buf, width, height, 28, height - 28, width - 28, height - 28, color, 1);
-    paintSharpLine(buf, width, height, 28, 28, 28, height - 28, color, 1);
-    paintSharpLine(buf, width, height, width - 28, 28, width - 28, height - 28, color, 1);
+    line(28, 28, width - 28, 28);
+    line(28, height - 28, width - 28, height - 28);
+    line(28, 28, 28, height - 28);
+    line(width - 28, 28, width - 28, height - 28);
     const inset = width * 0.17;
-    paintSharpLine(buf, width, height, inset, 40, inset * 0.82, height - 40, color, 1);
-    paintSharpLine(buf, width, height, width - inset, 40, width - inset * 0.82, height - 40, color, 1);
+    line(inset, 40, inset * 0.82, height - 40);
+    line(width - inset, 40, width - inset * 0.82, height - 40);
     return;
   }
   const vanishY = height * 0.64;
   const floorY = height * 0.76;
-  paintSharpLine(buf, width, height, 0, floorY, width, floorY, color, 1);
+  line(0, floorY, width, floorY);
   for (let i = -4; i <= 4; i++) {
     if (i === 0) continue;
-    paintSharpLine(buf, width, height, cx + i * width * 0.05, vanishY, cx + i * width * 0.26, height - 6, color, 1);
+    line(cx + i * width * 0.05, vanishY, cx + i * width * 0.26, height - 6);
   }
   for (let k = 1; k <= 3; k++) {
     const y = floorY + (height - 8 - floorY) * (k / 4);
     const span = width * (0.24 + k * 0.14);
-    paintSharpLine(buf, width, height, cx - span, y, cx + span, y, color, 1);
+    line(cx - span, y, cx + span, y);
   }
 }
 
@@ -1064,29 +1164,36 @@ function paintField(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const and = andAccent(beat);
-  paintGradient(buf, width, height, field);
-  paintGrid(buf, width, height, field);
+  paintGradient(buf, width, height, field, t);
+  paintGrid(buf, width, height, field, t, checksum);
   const stars = field.stars || [];
   for (let i = 0; i < stars.length; i++) {
     const star = stars[i];
-    const twinkle = 0.28 + 0.4 * (0.5 + 0.5 * Math.sin(beat * Math.PI * 2 + star.phase));
-    stampFocusDisc(buf, width, height, star.x * width, star.y * height, star.r, star.color, {
+    const twinkle = 0.42 + 0.5 * (0.5 + 0.5 * Math.sin(beat * Math.PI * 2 + star.phase));
+    const sx = star.x * width;
+    const sy = star.y * height;
+    const color = iridesce(star.phase, t, beat, star.color);
+    stampFocusDisc(buf, width, height, sx, sy, star.r, color, {
       rim: 1,
-      glow: 2,
-      glowAlpha: 0.12 * twinkle,
+      glow: 4,
+      glowAlpha: 0.22 * twinkle,
       rimColor: THEME.ink,
     });
-    mixPixel(buf, width, star.x * width, star.y * height, star.color, twinkle);
+    if (star.sparkle) {
+      const arm = 4 + twinkle * 3;
+      paintGlowLine(buf, width, height, sx - arm, sy, sx + arm, sy, color, { half: 0, glow: 2, glowAlpha: 0.28 * twinkle });
+      paintGlowLine(buf, width, height, sx, sy - arm, sx, sy + arm, color, { half: 0, glow: 2, glowAlpha: 0.28 * twinkle });
+    }
   }
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
     const on = b.onAnd ? and : kick;
     if (on < 0.08) continue;
-    stampFocusDisc(buf, width, height, b.x * width, b.y * height, 2.4 + on * 2.2, b.color, {
+    stampFocusDisc(buf, width, height, b.x * width, b.y * height, 3.4 + on * 3.2, b.color, {
       rim: 1,
-      glow: 3,
-      glowAlpha: 0.2,
+      glow: 6,
+      glowAlpha: 0.34,
       rimColor: THEME.ink,
     });
   }
@@ -1137,7 +1244,6 @@ function paintCanvas(buf, width, height, t, checksum) {
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.95,
     half: 1,
-    color: THEME.blue,
     noFill: true,
   });
   const cx = (width - 1) * 0.5;
@@ -1192,20 +1298,20 @@ function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checks
   const swell = style === "pulse" ? 0.55 + 0.55 * kick + 0.35 * and : 0.5 + 0.35 * kick + 0.22 * and;
   const core = minSide * (style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell);
   const t = checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
-  const outer = mixRgb((mesh && meshAccent(mesh, t)) || THEME.cyan, THEME.cyan, 0.55);
-  const inner = mixRgb(THEME.gold, THEME.cyan, 0.15 + 0.55 * and);
+  const outer = iridesce(beat, t, beat, (mesh && meshAccent(mesh, t)) || THEME.cyan);
+  const inner = mixRgb(THEME.gold, THEME.cyan, 0.18 + 0.62 * and);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, outer, {
     rim: 2.2,
-    glow: 6,
-    glowAlpha: 0.26,
+    glow: 10,
+    glowAlpha: 0.34,
     rimColor: THEME.ink,
   });
   const ix = style === "eclipse" ? cx + Math.cos(beat * Math.PI * 2) * core * 0.22 : cx;
   const iy = style === "eclipse" ? cy + Math.sin(beat * Math.PI) * core * 0.12 : cy;
   stampFocusDisc(buf, width, height, ix, iy, core * (style === "eclipse" ? 0.48 : 0.4), inner, {
     rim: 1.6,
-    glow: 3,
-    glowAlpha: 0.2,
+    glow: 5,
+    glowAlpha: 0.28,
     rimColor: THEME.ink,
   });
   return { radius: core * 1.08, style };
@@ -1260,7 +1366,6 @@ function paintSacred(buf, width, height, t, checksum) {
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.92,
     half: 1,
-    color: THEME.cyan,
   });
   const seats = worn && worn.pts ? worn.pts : [];
   const circles = checksum.visualConfig.circles;
@@ -1291,7 +1396,6 @@ function paintNeural(buf, width, height, t, checksum) {
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.9,
     half: 1,
-    color: THEME.blue,
   });
   const pts = (worn && worn.pts) || [];
   const mesh = checksum.mesh;
@@ -1398,7 +1502,7 @@ function paintNeural(buf, width, height, t, checksum) {
 /** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
 function paintWaveform(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.72, half: 1, color: THEME.blue });
+  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.72, half: 1 });
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
@@ -1406,7 +1510,7 @@ function paintWaveform(buf, width, height, t, checksum) {
   const circles = checksum.visualConfig.circles;
   paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
   circles.forEach((circle, i) => {
-    const color = parseHex(circle.color);
+    const color = iridesce(i / Math.max(1, circles.length), t, beat, parseHex(circle.color));
     const amp0 = height * (0.05 + (circle.radius / 420) * 0.11) * env;
     const f0 = 0.0065 + circle.frequency / 22000;
     const shift = t * (circle.frequency / 1.85);
@@ -1454,7 +1558,6 @@ function paintParticles(buf, width, height, t, checksum) {
   const worn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.85,
     half: 1,
-    color: THEME.blue,
   });
   const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
   const mesh = checksum.mesh;

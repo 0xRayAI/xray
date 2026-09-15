@@ -6,6 +6,8 @@ Factory-blip orb nucleus is orb-only (disc / eclipse / pulse, color + size on th
 
 Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.
 
+Factory-blip lines iridesce: cyan/gold/blue travel + glow + beat fireflies on the sparse cage. Field stars / grids / gradients / blinkers are luminous, not CAD ticks. Not more wire. Not a strobe.
+
 Factory-blip field accents: uniqueness is stars / grids (`floor` `meridian` `ticks`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
 
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait). Worn by all five viz and the Power Plant ident.
