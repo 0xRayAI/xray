@@ -2,7 +2,9 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
-## Unreleased — Shop plant is first-class
+## Unreleased — Factory-sound plant + shop plant first-class
+
+- Factory-sound plant: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Brief → seed → genre → wav → metrics receipt. Inspect reports last bed PASS/FAIL. Not costume. No mill package bump.
 
 - Inspect / mint plant-vs-worn allow factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) alongside mill plant
 - `foundry.json` `shopPlant` names more shops (array / dir / `{ skills, dir }`). Not `"costume": true`

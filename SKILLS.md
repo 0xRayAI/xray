@@ -2,7 +2,7 @@
 
 **4.0** — a suit that survives the context window
 
-**45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Agent map: [llms.txt](llms.txt).
+**45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Sound seats: `foundry.json` `"plant": "sound"` (foundry plant, not this catalog). Agent map: [llms.txt](llms.txt).
 
 xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
 

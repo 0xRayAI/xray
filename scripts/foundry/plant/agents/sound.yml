@@ -1,0 +1,5 @@
+name: sound
+skill: sound
+description: "Factory-sound plant. Brief → seed → genre → headless wav → metrics gate."
+version: "0.1.10"
+mode: subagent

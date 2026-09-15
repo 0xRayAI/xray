@@ -92,6 +92,8 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Shop plant (not costume).** Plant-vs-worn allowlists mill plant (`mill` + `inspect`), their `src/skills`, prior inventory, and factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar). Those shops are first-class when worn; inspect does not require `"costume": true`. Extra shop names or a plant dir go in `foundry.json` `"shopPlant"` (array, path string, or `{ skills, dir }`). The field is `shopPlant`, not `hangarPlant`: mill plant copy forbids the word hangar. Unknown leftovers (including undeclared `shop-*`) still fail as costume dump.
 
+**Sound plant (not costume).** `foundry.json` `"plant": "sound"` fastens factory-sound (`sound` + `sound-inspect`) and turns mill off. Inspect allowlists those worn names. Last bed receipt (`.xray/sound-bed-receipt.json`) is PASS/FAIL with chop / levels / peak / hum. Not a copy of mill inspect. Not 45/42.
+
 ### 3. Pre / post processors (two stacks)
 
 **Constitution is not a processor.** Live deny is `evaluatePreToolGate` (`src/nucleus/delegation-gate.ts`).

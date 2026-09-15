@@ -200,6 +200,8 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/mill-root.mjs');
     expect(paths).toContain('scripts/foundry/plant/skills/mill/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/inspect/SKILL.md');
+    expect(paths).toContain('scripts/foundry/plant/skills/sound/SKILL.md');
+    expect(paths).toContain('scripts/foundry/plant/skills/sound-inspect/SKILL.md');
     expect(paths).toContain('llms.txt');
     expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
     expect(paths).toContain('.grok-plugin/plugin.json');
@@ -232,13 +234,22 @@ describe('foundry mill — gate and scripts', () => {
     expect(read('scripts/foundry/release.mjs')).toContain('--publish-only');
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/mill/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/inspect/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-inspect/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/mill.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/inspect.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-inspect.yml'))).toBe(true);
+    expect(read('scripts/foundry/plant/agents/sound.yml')).toContain(`version: "${mill.version}"`);
     const millPlantCopy = [
       'scripts/foundry/plant/skills/inspect/SKILL.md',
       'scripts/foundry/plant/skills/mill/SKILL.md',
+      'scripts/foundry/plant/skills/sound/SKILL.md',
+      'scripts/foundry/plant/skills/sound-inspect/SKILL.md',
       'scripts/foundry/plant/agents/mill.yml',
       'scripts/foundry/plant/agents/inspect.yml',
+      'scripts/foundry/plant/agents/sound.yml',
+      'scripts/foundry/plant/agents/sound-inspect.yml',
       'scripts/foundry/README.md',
       'scripts/foundry/mint-suit.cjs',
       'scripts/foundry/inspect.mjs',
@@ -1383,6 +1394,7 @@ describe('foundry mill — CI and hooks', () => {
     expect(ci).not.toContain('auto-reflection-generator');
     expect(ci).not.toContain('ci-cd-auto-fix');
     expect(ci).toContain('foundry-mill.test.ts');
+    expect(ci).toContain('foundry-sound-plant.test.ts');
     expect(ci).toContain('npm run lint');
     expect(ci).toContain('npm run typecheck');
     const monitor = read('.github/workflows/mill-monitor.yml');

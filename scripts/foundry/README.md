@@ -24,6 +24,8 @@ npx @0xray/foundry release --publish-only --dry-run
 npx @0xray/foundry release --publish-only --i-mean-it
 npx @0xray/foundry mint
 npx @0xray/foundry inspect [--skip-live]
+npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
+npx @0xray/foundry sound inspect
 npx @0xray/foundry ci [--commit SHA] [--report]
 npx @0xray/foundry hooks
 ```
@@ -54,6 +56,10 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 **Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project dirs on every TUI floor (OpenCode, Grok, Hermes, OpenClaw). YML agents stay OpenCode. CLI re-wear calls mint **once** after mill copies. Isolated HOME is passwd home, not `os.homedir()`. CI report is `.xray/foundry-ci-report.json` (`.opencode/logs` shim).
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
+
+**Sound plant (factory-sound):** `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz`) → headless wav → metrics gate → `.xray/sound-bed-receipt.json`. Inspect reports the plant plus last bed `PASS`/`FAIL`. Those worn names are not a costume dump. Not a copy of mill inspect. Dogfood from this branch / packed mill — no `@0xray/foundry` bump required.
+
+A friend would hear: agents that make Dist audio beds get a real plant like mill, with inspect that checks the last bed passed loudness/smoothness gates — not fake code-mill skills on a sound seat.
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 

@@ -38,6 +38,8 @@
     "./mill-root": "./mill-root.mjs",
     "./mint-suit": "./mint-suit.cjs",
     "./inspect": "./inspect.mjs",
+    "./sound": "./sound.mjs",
+    "./sound-bed": "./sound-bed.cjs",
     "./ci-monitor": "./ci-monitor.mjs",
     "./hooks": "./hooks.mjs",
     "./docs-build": "./docs-build.mjs"
@@ -49,6 +51,7 @@
     "0xray",
     "foundry",
     "mill",
+    "sound",
     "release",
     "changelog"
   ]
