@@ -43,6 +43,7 @@ xray/inference/
 # Generated config files (source in src/opencode/)
 .opencode/agents/*.yml
 .xray/*.json
+.xray/blip/
 .xray/agents_template.md
 .opencode/commands/*.md
 .opencode/commands/*.sh

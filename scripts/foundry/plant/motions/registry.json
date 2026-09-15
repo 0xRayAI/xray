@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a growth stub until a renderer ships.",
+  "v0": ["still", "orb", "swirl", "snap", "waves", "spark"],
+  "palette": {
+    "void": "#08090B",
+    "ink": "#F5F7FA",
+    "cyan": "#3DE0E8",
+    "gold": "#F5C518",
+    "blue": "#4A7FD4",
+    "plate": "power-plant-intro"
+  },
+  "motions": [
+    {
+      "id": "still",
+      "kind": "still",
+      "source": "blips",
+      "renderer": "still",
+      "status": "v0",
+      "notes": "Power Plant plate still (titlecard / corridor / rain / endcard)"
+    },
+    {
+      "id": "orb",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "canvas",
+      "renderer": "orb",
+      "status": "v0",
+      "notes": "Orb Glow · canvas"
+    },
+    {
+      "id": "swirl",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "3d-sacred",
+      "renderer": "swirl",
+      "status": "v0",
+      "notes": "3d-sacred"
+    },
+    {
+      "id": "snap",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "neural",
+      "renderer": "snap",
+      "status": "v0",
+      "notes": "neural"
+    },
+    {
+      "id": "waves",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "waveform",
+      "renderer": "waves",
+      "status": "v0",
+      "notes": "Wave Flow · waveform"
+    },
+    {
+      "id": "spark",
+      "kind": "motion",
+      "source": "rippel",
+      "import": true,
+      "visualization": "particles",
+      "renderer": "spark",
+      "status": "v0",
+      "notes": "Spark Drift · particles"
+    },
+    {
+      "id": "kapow",
+      "kind": "motion",
+      "source": "blips",
+      "renderer": null,
+      "status": "growth",
+      "notes": "named growth slot — FAIL until a renderer ships"
+    }
+  ]
+}

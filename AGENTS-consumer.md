@@ -19,7 +19,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). `npx @0xray/foundry inspect` runs the mill checks; on a sound seat it also reports the last bed receipt. Chat is not a receipt. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Blip seats: `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` (mill off). `npx @0xray/foundry inspect` runs the mill checks; on a sound seat it also reports the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
@@ -59,8 +59,9 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
-| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Chat is not a receipt. |
+| `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
 | `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
+| `npx @0xray/foundry blip render` | Factory-blip plant: brief → seed → still\|motion:<id> → 4.44s mp4. v0: still + Rippel five. Still generator wears the Power Plant intro plate. |
 
 ## Governance
 
