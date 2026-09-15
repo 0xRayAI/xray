@@ -572,7 +572,9 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(checksum.mesh.coreStyle).toMatch(/^(disc|eclipse|pulse)$/);
     expect(checksum.mesh.verts.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeGreaterThan(3);
+    expect(checksum.mesh.edges.length).toBeLessThanOrEqual(16);
     expect(checksum.mesh.faces.length).toBeGreaterThan(0);
+    expect(checksum.mesh.faces.length).toBeLessThanOrEqual(16);
     expect(checksum.mesh.scale).toBeGreaterThan(0.55);
     expect(checksum.mesh.scale).toBeLessThan(0.8);
     expect(checksum.mesh.shells).toBe(1);
@@ -614,6 +616,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         buildVisualConfig({ brief, seedHex: `0xdeadbee${i}` }).field.id,
     );
     expect(new Set(fields).size).toBe(fields.length);
+    for (let i = 0; i < 24; i++) {
+      const minted = buildVisualConfig({ brief: `mint ${i} · field`, seedHex: `0xabc${i}` });
+      expect(minted.mesh.edges.length).toBeLessThanOrEqual(16);
+      expect(minted.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+    }
   });
 
   it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {

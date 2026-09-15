@@ -441,6 +441,36 @@ function platonic(family) {
   return { verts, edges, faces: trianglesFromEdges(verts, edges) };
 }
 
+function thinConnectedEdges(edges, vertCount, keep, rng) {
+  if (edges.length <= keep) return edges.map((e) => [e[0], e[1]]);
+  const adj = Array.from({ length: vertCount }, () => []);
+  for (let i = 0; i < edges.length; i++) {
+    adj[edges[i][0]].push(edges[i][1]);
+    adj[edges[i][1]].push(edges[i][0]);
+  }
+  const start = (rng() * vertCount) | 0;
+  const seen = new Set([start]);
+  const kept = [];
+  const q = [start];
+  while (q.length && kept.length < keep) {
+    const v = q.shift();
+    const nbrs = adj[v];
+    for (let i = 0; i < nbrs.length && kept.length < keep; i++) {
+      const w = nbrs[i];
+      if (seen.has(w)) continue;
+      seen.add(w);
+      q.push(w);
+      kept.push(v < w ? [v, w] : [w, v]);
+    }
+  }
+  for (let i = 0; i < edges.length && kept.length < keep; i++) {
+    const a = edges[i][0];
+    const b = edges[i][1];
+    if (!kept.some((e) => e[0] === a && e[1] === b)) kept.push([a, b]);
+  }
+  return kept;
+}
+
 function buildMesh(seedHex, brief) {
   const text = String(brief || "factory-blip");
   let mix = 0;
@@ -453,7 +483,7 @@ function buildMesh(seedHex, brief) {
   const verts = base.verts.map((v) =>
     norm3(v[0] + (rng() - 0.5) * jitter, v[1] + (rng() - 0.5) * jitter, v[2] + (rng() - 0.5) * jitter),
   );
-  const edges = base.edges.map((e) => [e[0], e[1]]);
+  let edges = base.edges.map((e) => [e[0], e[1]]);
   const extra = (rng() * 3) | 0;
   for (let i = 0; i < extra; i++) {
     const a = (rng() * verts.length) | 0;
@@ -462,6 +492,9 @@ function buildMesh(seedHex, brief) {
     const lo = a < b ? a : b;
     const hi = a < b ? b : a;
     if (!edges.some((e) => e[0] === lo && e[1] === hi)) edges.push([lo, hi]);
+  }
+  if (edges.length > 16) {
+    edges = thinConnectedEdges(edges, verts.length, 10 + ((rng() * 6) | 0), rng);
   }
   let faces = (base.faces && base.faces.length ? base.faces : trianglesFromEdges(verts, edges)).map((f) => [
     f[0],
