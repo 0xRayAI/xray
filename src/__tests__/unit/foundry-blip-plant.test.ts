@@ -514,6 +514,35 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     }
   });
 
+  it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {
+    const { paintRippelFrame, orbFocusWidth } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+      }) => { buffer: Buffer; width: number; height: number };
+      orbFocusWidth: (
+        buf: Buffer,
+        width: number,
+        height: number,
+      ) => { peak: number; inner: number; drop: number };
+    };
+    const frame = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex: '0xdeadbeef',
+      brief: 'warehouse floor · Power Plant',
+    });
+    const focus = orbFocusWidth(frame.buffer, frame.width, frame.height);
+    expect(focus.peak).toBeGreaterThan(0.55);
+    expect(focus.drop).toBeGreaterThan(0);
+    expect(focus.drop).toBeLessThan(16);
+    expect(focus.inner + focus.drop).toBeLessThan(120);
+  });
+
   it('keeps ffmpeg wireframe behind a flag and FAILs silent mp4s', { timeout: 90000 }, async () => {
     const { renderBlip, evaluateMp4File, hasFfmpeg } = requireCjs(
       path.join(root, 'scripts/foundry/blip-render.cjs'),

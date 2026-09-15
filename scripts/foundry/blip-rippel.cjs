@@ -183,6 +183,11 @@ function mixPixel(buf, width, x, y, color, alpha) {
   buf[i + 2] = (buf[i + 2] + (color[2] - buf[i + 2]) * a + 0.5) | 0;
 }
 
+/**
+ * Soft falloff over the FULL radius. Confirmed CoS #67 look:
+ * hardness ~1.15–2.6 → every stamp is a glow, not a disc. Keep for thin
+ * strokes (sacred/neural/waves). Orb Glow uses stampFocusDisc instead.
+ */
 function stampDisc(buf, width, height, cx, cy, radius, color, hardness) {
   if (radius <= 0) return;
   const hard = hardness > 0 ? hardness : 2;
@@ -201,6 +206,47 @@ function stampDisc(buf, width, height, cx, cy, radius, color, hardness) {
       const u = 1 - Math.sqrt(d2) / radius;
       const a = u <= 0 ? 0 : u >= 1 ? 1 : Math.pow(u, hard);
       mixPixel(buf, width, x, y, color, a);
+    }
+  }
+}
+
+/**
+ * In-focus disc: opaque body + thin crisp rim + short glow tail.
+ * Not pow(u, ~1.2) across the whole radius (that is the Phase 1 bokeh).
+ */
+function stampFocusDisc(buf, width, height, cx, cy, radius, color, opts) {
+  if (radius <= 0) return;
+  const rimW = opts && opts.rim != null ? opts.rim : 2;
+  const glowW = opts && opts.glow != null ? opts.glow : 5;
+  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.3;
+  const rimColor = (opts && opts.rimColor) || THEME.ink;
+  const outer = radius + glowW;
+  const x0 = Math.max(0, Math.floor(cx - outer));
+  const x1 = Math.min(width - 1, Math.ceil(cx + outer));
+  const y0 = Math.max(0, Math.floor(cy - outer));
+  const y1 = Math.min(height - 1, Math.ceil(cy + outer));
+  const bodyR = Math.max(0.5, radius - rimW);
+  for (let y = y0; y <= y1; y++) {
+    const dy = y - cy;
+    const dy2 = dy * dy;
+    for (let x = x0; x <= x1; x++) {
+      const dx = x - cx;
+      const d = Math.sqrt(dx * dx + dy2);
+      if (d <= bodyR) {
+        mixPixel(buf, width, x, y, color, 1);
+        continue;
+      }
+      if (d <= radius) {
+        const u = (radius - d) / Math.max(rimW, 1e-6);
+        mixPixel(buf, width, x, y, rimColor, 1);
+        mixPixel(buf, width, x, y, color, clamp(u, 0, 1));
+        continue;
+      }
+      if (d <= outer) {
+        const u = 1 - (d - radius) / glowW;
+        const a = glowA * Math.pow(clamp(u, 0, 1), 3.6);
+        mixPixel(buf, width, x, y, color, a);
+      }
     }
   }
 }
@@ -243,21 +289,66 @@ function layoutRing(circles, width, height, t) {
   });
 }
 
-/** orb → canvas / Orb Glow. InteractiveCanvas language: frequency circles + breathing core. */
+/** orb → canvas / Orb Glow. Sharp disc body + rim + short tail — not stacked soft blobs. */
 function paintCanvas(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  const circles = checksum.visualConfig.circles;
-  stampDisc(buf, width, height, cx, cy, minSide * 0.42, THEME.blue, 2.6);
-  const core = minSide * (0.1 + 0.025 * Math.sin(t * 1.7));
-  stampDisc(buf, width, height, cx, cy, core * 2.8, THEME.cyan, 1.45);
-  stampDisc(buf, width, height, cx, cy, core * 1.25, THEME.gold, 1.15);
-  stampDisc(buf, width, height, cx, cy, core * 0.42, THEME.ink, 1.3);
-  for (const placed of layoutRing(circles, width, height, t)) {
-    stampDisc(buf, width, height, placed.x, placed.y, placed.r * 1.15, placed.color, 1.55);
+  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7));
+  stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
+    rim: 2.2,
+    glow: 7,
+    glowAlpha: 0.28,
+    rimColor: THEME.ink,
+  });
+  stampFocusDisc(buf, width, height, cx, cy, core * 0.4, THEME.gold, {
+    rim: 1.6,
+    glow: 3,
+    glowAlpha: 0.22,
+    rimColor: THEME.ink,
+  });
+  for (const placed of layoutRing(checksum.visualConfig.circles, width, height, t)) {
+    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.42, placed.color, {
+      rim: 1.6,
+      glow: 4,
+      glowAlpha: 0.24,
+      rimColor: THEME.ink,
+    });
   }
+}
+
+/** Radial brightness drop from center. Soft Phase-1 soup was 80–200px; focus is a short rim. */
+function orbFocusWidth(buf, width, height) {
+  const cx = (width - 1) * 0.5;
+  const cy = ((buf.length / 3 / width) | 0) * 0.5;
+  const y = cy | 0;
+  function luma(x) {
+    const i = (y * width + (x | 0)) * 3;
+    return (buf[i] * 0.3 + buf[i + 1] * 0.59 + buf[i + 2] * 0.11) / 255;
+  }
+  let peak = 0;
+  let peakX = cx;
+  for (let x = cx; x < width; x++) {
+    const v = luma(x);
+    if (v > peak) {
+      peak = v;
+      peakX = x;
+    }
+  }
+  let hi = peakX;
+  let lo = peakX;
+  for (let x = peakX; x < width; x++) {
+    if (luma(x) >= peak * 0.72) hi = x;
+    else break;
+  }
+  for (let x = hi; x < width; x++) {
+    if (luma(x) <= peak * 0.22) {
+      lo = x;
+      break;
+    }
+  }
+  return { peak, inner: hi - peakX, drop: lo - hi };
 }
 
 /** swirl → 3d-sacred. Same CircleConfig[] seated on a merkaba / hex plate. */
@@ -475,5 +566,7 @@ module.exports = {
   sampleMotionFrames,
   summarizeVisual,
   stampDisc,
+  stampFocusDisc,
+  orbFocusWidth,
   fillVoid,
 };
