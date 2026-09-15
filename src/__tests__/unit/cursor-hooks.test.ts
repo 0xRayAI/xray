@@ -71,6 +71,7 @@ function runHook(
   stdin: Record<string, unknown>,
   root: string,
   args: string[] = [],
+  extraEnv: Record<string, string> = {},
 ): { stdout: string; status: number } {
   const result = execFileSync(process.execPath, [script, ...args], {
     cwd: root,
@@ -82,6 +83,7 @@ function runHook(
       XRAY_ROOT: root,
       XRAY_AI_PATH: packageRoot,
       CURSOR_PROJECT_DIR: root,
+      ...extraEnv,
     },
   });
   return { stdout: result.trim(), status: 0 };
@@ -229,6 +231,61 @@ describe('Cursor cloud hooks adapter', () => {
       const { stdout } = runHook(afterEdit, { file_path: 'README.md', cwd: tmp }, tmp);
       expect(JSON.parse(stdout)).toEqual({});
       expect(existsSync(path.join(tmp, '.xray', 'state', 'session-boot.json'))).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('preCompact writes Station when compiled gate dist is absent', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-compact-nodist-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      const { stdout } = runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 120000,
+          cwd: tmp,
+        },
+        tmp,
+        [],
+        { XRAY_DELEGATION_GATE_JS: 'none' },
+      );
+      const out = JSON.parse(stdout) as { user_message?: string };
+      expect(out.user_message).toContain('event_class=cursor-host-precompact');
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'STATION.md'))).toBe(true);
+      const receipt = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-precompact.json'), 'utf8'),
+      ) as { event_class: string };
+      expect(receipt.event_class).toBe('cursor-host-precompact');
+      const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Ticket: COMPACT-BEN-001');
+      expect(card).toContain('keep-me-ben-001');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('preToolUse still denies destructive Shell when dist is absent', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-deny-nodist-'));
+    try {
+      plantFeatures(tmp);
+      const { stdout } = runHook(
+        preTool,
+        {
+          tool_name: 'Shell',
+          tool_input: { command: 'rm -rf /' },
+          cwd: tmp,
+        },
+        tmp,
+        [],
+        { XRAY_DELEGATION_GATE_JS: 'none' },
+      );
+      const out = JSON.parse(stdout) as { permission: string; user_message?: string };
+      expect(out.permission).toBe('deny');
+      expect(out.user_message).toMatch(/destructive/i);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

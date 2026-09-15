@@ -12,7 +12,7 @@ Repertoire MCP is optional. Station + gates work without a full memory-routing r
 4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it.
 5. `preCompact` is observational (cannot block). It merges Station (stock heat updates; ticket / seed / Durable / unfinished keys stay).
 
-Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist paths under `node_modules/0xray`) when wearing the published package. This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`.
+Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist paths under `node_modules/0xray`) when wearing the published package. This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`. `delegation-gate-runtime.mjs` lazy-loads `dist/nucleus/delegation-gate.js`; if dist is missing, preCompact / afterFileEdit still write Station and preToolUse still blocks destructive shell. Full spawn/constitution gate needs the build.
 
 ## Contracts
 
