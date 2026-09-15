@@ -5,7 +5,7 @@ description: Factory-blip plant. Brief → checksum seed → still|motion:<id> �
 
 # Blip
 
-This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture, optional bed mux. Sibling to mill + sound — not a mill copy.
+This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture **with a mandatory audio bed**. Sibling to mill + sound — not a mill copy.
 
 **Seat:** `foundry.json` `"plant": "blip"` turns mill off. `"plant": ["mill", "blip"]` wears both. Default stays mill+inspect.
 
@@ -15,24 +15,25 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture, op
 
 Rippel five are **imports**. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
 
-Still + motions wear the **Power Plant intro** plate: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Hard cuts, flat vector — not seed-RGB stock.
+Still wears the **Power Plant intro** plate until Phase 2: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme.
 
 **Spine (headless, no browser):**
 
-1. **Brief** → checksum seed.
+1. **Brief** → checksum seed → Rippel `VisualConfig` (`CircleConfig[]`).
 2. **Mode** → `still` or `motion:<id>` from the registry.
-3. **Render** → 4.44s mp4 via ffmpeg. Optional `--bed` wav/mp3 mux.
-4. **Inspect gate** → file present, duration 4.44s±tol, mode id recorded. Fail-closed.
-5. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId).
+3. **Render** → 4.44s mp4. Motions are Rippel viz at ≥720p (default). `--engine wireframe` is emergency only.
+4. **Bed** → `--bed PATH` or auto sound mill. Every mp4 muxes audio. Silent = inspect FAIL.
+5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed.
+6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).
 
 ```bash
 npx @0xray/foundry mint --skip-live
 npx @0xray/foundry blip render --brief "night alley still" --mode still
-npx @0xray/foundry blip render --brief "night alley orb" --mode motion:orb
+npx @0xray/foundry blip render --brief "warehouse floor · Power Plant" --mode motion:orb --bed bed.wav
 npx @0xray/foundry blip inspect
 npx @0xray/foundry inspect --skip-live
 ```
 
 Mint fastens `blip` + `blip-inspect`. Chat is not a receipt.
 
-A friend would hear: build the tiny-video factory that makes 4.44s Blips next to the sound foundry.
+A friend would hear: Blips should look like Rippel living motions with sound, not a silent wireframe box.

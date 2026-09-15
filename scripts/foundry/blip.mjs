@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Factory-blip CLI — sibling plant to mill + sound, not a mill bolt-on.
- *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH] [--out FILE]
+ *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH] [--engine rippel|wireframe] [--out FILE]
  *   npx @0xray/foundry blip inspect
  */
 
@@ -17,8 +17,10 @@ const HELP =
   "Usage: npx @0xray/foundry blip <render|inspect> [...args]\n" +
   "\n" +
   "Factory-blip plant, sibling to mill + sound. FOUNDRY_ROOT overrides cwd.\n" +
-  "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 → receipt.\n" +
+  "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 + audio bed → receipt.\n" +
   "v0 ids: still, orb, swirl, snap, waves, spark (Rippel five are imports).\n" +
+  "Motions: Rippel VisualConfig.circles at ≥720p (default). --engine wireframe is emergency only.\n" +
+  "Every mp4 muxes a 4.44s bed (--bed PATH or auto sound mill). Silent = inspect FAIL.\n" +
   "kapow is a growth stub (FAIL until a renderer ships). Unknown id FAIL.\n" +
   "Still generator: Power Plant plate (void #08090B ink #F5F7FA cyan #3DE0E8 gold #F5C518 blue #4A7FD4).\n" +
   "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n";
@@ -85,6 +87,7 @@ function main() {
       brief: argValue(rest, "--brief", "factory-blip"),
       pictureMode: argValue(rest, "--picture-mode", argValue(rest, "--mode", "still")),
       bed: argValue(rest, "--bed", null),
+      engine: argValue(rest, "--engine", "rippel"),
       out: argValue(rest, "--out", null),
     });
     writeJson(result.receipt);

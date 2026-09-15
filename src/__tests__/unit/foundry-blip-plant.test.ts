@@ -56,8 +56,9 @@ describe('foundry blip plant — files and mint', () => {
     expect(read('scripts/foundry/mint-suit.cjs')).toContain('FACTORY_PLANT_CATALOG');
     expect(read('scripts/foundry/inspect.mjs')).toContain('checkBlip');
     expect(read('scripts/foundry/blip-render.cjs')).toContain('registry.json');
-    expect(read('scripts/foundry/blip-render.cjs')).toContain('animationIcons.ts');
-    expect(read('scripts/foundry/blip-render.cjs')).toContain('commit: null');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('animationIcons.ts');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('e5014cd');
+    expect(read('scripts/foundry/blip-render.cjs')).toContain('--engine wireframe');
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"orb"/);
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"kapow"/);
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/#08090B/);
@@ -171,28 +172,41 @@ describe('foundry blip plant — files and mint', () => {
 
 describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
   it('loads the on-disk registry, implements v0 six, and FAILs unknown/kapow', () => {
-    const { resolveMode, listMotionIds, listV0Ids, parsePictureMode, SSOT } = requireCjs(
-      path.join(root, 'scripts/foundry/blip-render.cjs'),
-    ) as {
-      resolveMode: (name: string) => {
-        ok: boolean;
-        motionId?: string;
-        renderer?: string;
-        reason?: string;
+    const { resolveMode, listMotionIds, listV0Ids, parsePictureMode, SSOT, ANIMATION_TO_VISUALIZATION } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+        resolveMode: (name: string) => {
+          ok: boolean;
+          motionId?: string;
+          renderer?: string;
+          reason?: string;
+        };
+        listMotionIds: () => string[];
+        listV0Ids: () => string[];
+        parsePictureMode: (raw: string) => { pictureMode: string; motionId: string };
+        SSOT: { commit: string | null; paths: string[] };
+        ANIMATION_TO_VISUALIZATION: Record<string, string>;
       };
-      listMotionIds: () => string[];
-      listV0Ids: () => string[];
-      parsePictureMode: (raw: string) => { pictureMode: string; motionId: string };
-      SSOT: { commit: string | null; paths: string[] };
-    };
     expect(listV0Ids()).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark']);
     expect(listMotionIds()).toEqual(
       expect.arrayContaining(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']),
     );
-    expect(SSOT.commit).toBeNull();
+    expect(SSOT.commit).toMatch(/^e5014cd/);
     expect(SSOT.paths).toEqual(
-      expect.arrayContaining(['animationIcons.ts', 'types/index.ts', 'SimplifiedVisualConverter.tsx']),
+      expect.arrayContaining([
+        'animationIcons.ts',
+        'types/index.ts',
+        'SimplifiedVisualConverter.tsx',
+        'MiniAnimationViewer',
+        'FiveDimensionalVisualizer',
+      ]),
     );
+    expect(ANIMATION_TO_VISUALIZATION).toMatchObject({
+      orb: 'canvas',
+      swirl: '3d-sacred',
+      snap: 'neural',
+      waves: 'waveform',
+      spark: 'particles',
+    });
     expect(parsePictureMode('motion:swirl')).toEqual({
       pictureMode: 'motion:swirl',
       motionId: 'swirl',
@@ -264,7 +278,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     }
   });
 
-  it('renders still + Rippel five that PASS the gate and inspects the receipt', async () => {
+  it('renders still + Rippel five that PASS the gate and inspects the receipt', { timeout: 90000 }, async () => {
     const { renderBlip, seedFromBrief, readReceipt, evaluateMp4File, DURATION_SEC, hasFfmpeg, V0_IDS } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
         renderBlip: (opts: {
@@ -286,6 +300,11 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             plate?: string;
             stillPlate?: string | null;
             engine?: string;
+            fallback?: boolean;
+            hasAudio?: boolean;
+            width?: number | null;
+            height?: number | null;
+            visualConfig?: { circleCount?: number } | null;
             reason?: string | null;
             ssot?: { repo: string; commit: string | null; access?: string };
           };
@@ -322,8 +341,8 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       expect(still.receipt.engine).toBe('ffmpeg-headless');
       expect(still.receipt.ssot).toMatchObject({
         repo: 'htafolla/rippel-synapse-flow',
-        commit: null,
-        access: 'tray',
+        commit: 'e5014cd46fbe5f132391333d8296f4416896dbee',
+        access: 'headless-port',
       });
       if (!ffmpeg) {
         expect(still.receipt.status).toBe('FAIL');
@@ -344,21 +363,30 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         expect(still.receipt.plate).toBe('power-plant-intro');
         expect(still.receipt.stillPlate).toMatch(/titlecard|corridor|rain|endcard/);
         expect(existsSync(still.mp4)).toBe(true);
-        expect(evaluateMp4File(still.mp4, { mode: 'still' }).status).toBe('PASS');
+        expect(evaluateMp4File(still.mp4, { mode: 'still', wantAudio: true }).status).toBe('PASS');
+        expect(still.receipt.hasAudio).toBe(true);
         expect(readReceipt(tmp)?.status).toBe('PASS');
 
         const again = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(again.receipt.seed).toBe(still.receipt.seed);
 
+        const bed = writeSilentWav(path.join(tmp, 'shared-bed.wav'), 5);
         for (const id of V0_IDS.filter((name) => name !== 'still')) {
           const rendered = renderBlip({
             root: tmp,
             brief: `night alley ${id}`,
             pictureMode: `motion:${id}`,
+            bed,
           });
           expect(rendered.receipt.status, JSON.stringify(rendered.receipt, null, 2)).toBe('PASS');
           expect(rendered.receipt.motionId).toBe(id);
           expect(rendered.receipt.pictureMode).toBe(`motion:${id}`);
+          expect(rendered.receipt.engine).toBe('rippel-headless');
+          expect(rendered.receipt.fallback).toBe(false);
+          expect(rendered.receipt.hasAudio).toBe(true);
+          expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
+          expect(rendered.receipt.height).toBeGreaterThanOrEqual(720);
+          expect(rendered.receipt.visualConfig?.circleCount).toBeGreaterThan(0);
           expect(rendered.receipt.palette?.void).toBe('#08090B');
         }
 
@@ -370,7 +398,6 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         expect(kapow.receipt.status).toBe('FAIL');
         expect(kapow.receipt.reason).toMatch(/growth\/stub/);
 
-        const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 2);
         const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
         expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
         expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true });
@@ -454,11 +481,108 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
   });
 });
 
+describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
+  it('builds VisualConfig.circles and living frames that differ', () => {
+    const { buildVisualConfig, sampleMotionFrames, ANIMATION_TO_VISUALIZATION } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
+      };
+      sampleMotionFrames: (
+        renderer: string,
+        seed: string,
+        duration: number,
+        brief: string,
+      ) => { differ: boolean; width: number; height: number; circleCount: number; visualization: string };
+      ANIMATION_TO_VISUALIZATION: Record<string, string>;
+    };
+    const checksum = buildVisualConfig({
+      brief: 'warehouse floor · Power Plant',
+      seedHex: '0xdeadbeef',
+    });
+    expect(checksum.visualConfig.circles.length).toBeGreaterThan(3);
+    expect(checksum.visualConfig.circles[0]?.frequency).toBeGreaterThan(0);
+    expect(checksum.visualConfig.circles[0]?.radius).toBeGreaterThan(0);
+    for (const id of ['orb', 'swirl', 'snap', 'waves', 'spark']) {
+      const sample = sampleMotionFrames(id, '0xdeadbeef', 4.44, 'warehouse floor · Power Plant');
+      expect(sample.visualization).toBe(ANIMATION_TO_VISUALIZATION[id]);
+      expect(sample.differ, id).toBe(true);
+      expect(sample.width).toBe(1280);
+      expect(sample.height).toBe(720);
+      expect(sample.circleCount).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps ffmpeg wireframe behind a flag and FAILs silent mp4s', { timeout: 90000 }, async () => {
+    const { renderBlip, evaluateMp4File, hasFfmpeg } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-render.cjs'),
+    ) as {
+      renderBlip: (opts: Record<string, unknown>) => {
+        receipt: {
+          status: string;
+          engine?: string;
+          fallback?: boolean;
+          hasAudio?: boolean;
+          reason?: string | null;
+        };
+        mp4: string;
+      };
+      evaluateMp4File: (
+        file: string,
+        opts?: { mode?: string; wantAudio?: boolean; motion?: boolean },
+      ) => { status: string; reason?: string | null; hasAudio?: boolean };
+      hasFfmpeg: () => boolean;
+    };
+    if (!hasFfmpeg()) return;
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-flag-'));
+    try {
+      const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 5);
+      const flagged = renderBlip({
+        root: tmp,
+        brief: 'warehouse floor · Power Plant',
+        mode: 'motion:orb',
+        bed,
+        engine: 'wireframe',
+      });
+      expect(flagged.receipt.status, JSON.stringify(flagged.receipt, null, 2)).toBe('PASS');
+      expect(flagged.receipt.engine).toBe('ffmpeg-wireframe-fallback');
+      expect(flagged.receipt.fallback).toBe(true);
+
+      const picture = path.join(tmp, 'silent.mp4');
+      const ffmpeg = spawnSync(
+        'ffmpeg',
+        [
+          '-y',
+          '-f',
+          'lavfi',
+          '-i',
+          'color=c=black:s=1280x720:d=4.44:r=30',
+          '-pix_fmt',
+          'yuv420p',
+          '-an',
+          picture,
+        ],
+        { encoding: 'utf8' },
+      );
+      expect(ffmpeg.status, ffmpeg.stderr).toBe(0);
+      const silent = evaluateMp4File(picture, { mode: 'orb', wantAudio: true, motion: true });
+      expect(silent.status).toBe('FAIL');
+      expect(silent.reason).toMatch(/audio stream missing/);
+      expect(silent.hasAudio).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('foundry blip plant — docs and CI', () => {
   it('friend-tests human docs and keeps mill CI on the blip unit file', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/plant": "blip"/);
     expect(read('scripts/foundry/README.md')).toMatch(/4\.44/);
-    expect(read('scripts/foundry/README.md')).toMatch(/A friend would hear: build the tiny-video factory/);
+    expect(read('scripts/foundry/README.md')).toMatch(
+      /A friend would hear: Blips should look like Rippel living motions with sound/,
+    );
     expect(read('scripts/foundry/README.md')).toMatch(/Rippel five/);
     expect(read('scripts/foundry/README.md')).toMatch(/Power Plant/);
     expect(read('scripts/foundry/README.md')).toMatch(/#08090B/);

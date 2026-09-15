@@ -16,14 +16,16 @@ Missing mp4, unreadable mp4, or a thrown probe is **FAIL**. Never pass on a miss
 1. **File.** `.xray/blip/blip.mp4` (or receipt `mp4`) exists.
 2. **Duration.** 4.44s ± 0.12s.
 3. **Mode.** Receipt records a registry id (`still` or `motion:<id>`). Unknown id is FAIL.
-4. **Video.** Stream present. Audio required only when a bed was muxed.
+4. **Video.** Stream present.
+5. **Audio.** Stream present. Silent mp4 = FAIL. `--bed` or auto sound mill.
+6. **Resolution.** Motions ≥720p (`1280×720`). Still may stay the Phase 2 plate size.
 
 v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Receipt records the Power Plant palette.
 
 Receipt: `.xray/blip/receipt.json`. Mp4 default: `.xray/blip/blip.mp4`.
 
 ```bash
-npx @0xray/foundry blip render --brief "warm basement swirl" --mode motion:swirl
+npx @0xray/foundry blip render --brief "warm basement swirl" --mode motion:swirl --bed bed.wav
 npx @0xray/foundry blip inspect
 ```
 
