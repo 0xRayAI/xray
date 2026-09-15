@@ -35,6 +35,8 @@ describe('HOST vs mill scoring law', () => {
     expect(protocol).toContain('**C memory**');
     expect(protocol).toContain('compact 7');
     expect(protocol).toContain('MEMORY-RECEIPT-7.md');
+    expect(protocol).toContain('compact 8');
+    expect(protocol).toContain('never again');
     expect(protocol).not.toMatch(/C1-episodic=/);
     expect(readRepo('examples/killer-dual/MEMORY-QUIZ.md')).toContain('before any tools');
     expect(law).toContain('not separable');
@@ -64,6 +66,20 @@ describe('HOST vs mill scoring law', () => {
     expect(receipt).not.toMatch(/the conversation remembered/);
     const snap = readRepo('examples/killer-dual/cursor-usage-receipt.compact6.json');
     expect(snap).toContain('"preCompactCount": 6');
+    expect(snap).not.toMatch(/C1-episodic=/);
+  });
+
+  it('Arm S compact 7 receipt still scores summarizer keep after quiz-first cell', () => {
+    const receipt = readRepo('examples/killer-dual/MEMORY-RECEIPT-7.md');
+    expect(receipt).toContain('**NOT PROVEN** as leftover old-window memory');
+    expect(receipt).toContain('re-fed in the injected conversation summary');
+    expect(receipt).toContain('working notes');
+    expect(receipt).toContain('Hallucination check **PASS**');
+    expect(receipt).not.toMatch(/C1-episodic=/);
+    expect(receipt).not.toMatch(/the conversation remembered/);
+    const snap = readRepo('examples/killer-dual/cursor-usage-receipt.compact7.json');
+    expect(snap).toContain('"preCompactCount": 7');
+    expect(snap).toContain('"context_tokens": 251144');
     expect(snap).not.toMatch(/C1-episodic=/);
   });
 
