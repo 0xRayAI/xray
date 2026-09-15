@@ -21,5 +21,6 @@ If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-
 | `RECEIPT-HOST-PRECOMPACT-2.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#2 retry. STOP: `.cursor/hooks.json` absent at boot (snapshot pre-#45). No FILL. |
 | `RECEIPT-HOST-PRECOMPACT-3.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#3. `hooks-at-boot: YES`. Live `preToolUse` spawn. FILL 4 waves. Host did not fire `preCompact`. |
 | `RECEIPT-HOST-PRECOMPACT-4.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#4 + DIAG. `hooks-at-boot: YES`. Live `preToolUse`. FILL ≥85% of 128k (~22.8% of 500k). Context-constraints summary did not emit `preCompact`. Class: `host-never-emits`. |
+| `RECEIPT-HOST-PRECOMPACT-5.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#5. Window locked **500k**. `hooks-at-boot: YES`. Live `preToolUse`. FILL **110.49% of 500k**. Host did not fire `preCompact`. Class: `host-never-emits-at-500k`. |
 
-EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run.
+EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run. #5 closed the 500k fill bar; remaining gap is host emit.
