@@ -225,11 +225,11 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
   });
 
   it('still generator paints only the Power Plant palette', () => {
-    const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES } =
+    const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES, sampleStillFrames } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
         PALETTE: Record<string, string>;
         RGB: Record<string, number[]>;
-        paintStill: (seed: string) => (x: number, y: number) => number[];
+        paintStill: (seed: string, t?: number) => (x: number, y: number) => number[];
         writePpm: (
           file: string,
           width: number,
@@ -238,8 +238,9 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         ) => string;
         WIDTH: number;
         HEIGHT: number;
-        stillPlate: (seed: string) => string;
+        stillPlate: (seed: string, t?: number) => string;
         STILL_PLATES: string[];
+        sampleStillFrames: (seed: string) => { differ: boolean };
       };
     expect(PALETTE).toEqual({
       void: '#08090B',
@@ -252,9 +253,10 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     const allowed = new Set(Object.values(RGB).map((rgb) => rgb.join(',')));
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-plate-'));
     try {
+      expect(sampleStillFrames('0xdeadbeef').differ).toBe(true);
       for (const seed of ['0x00', '0x01', '0x02', '0x03', '0xdeadbeef']) {
         const file = path.join(tmp, `${stillPlate(seed)}.ppm`);
-        writePpm(file, WIDTH, HEIGHT, paintStill(seed));
+        writePpm(file, WIDTH, HEIGHT, paintStill(seed, 0));
         const raw = readFileSync(file);
         const header = Buffer.from(`P6\n${WIDTH} ${HEIGHT}\n255\n`);
         expect(raw.subarray(0, header.length).equals(header)).toBe(true);
@@ -339,7 +341,8 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       const ffmpeg = hasFfmpeg();
       const brief = 'night alley still';
       const still = renderBlip({ root: tmp, brief, mode: 'still' });
-      expect(still.receipt.engine).toBe('ffmpeg-headless');
+      expect(still.receipt.engine).toBe('power-plant-headless');
+      expect(still.receipt.look).toBe('power-plant-blip');
       expect(still.receipt.ssot).toMatchObject({
         repo: 'htafolla/rippel-synapse-flow',
         commit: 'e5014cd46fbe5f132391333d8296f4416896dbee',
@@ -363,8 +366,12 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         });
         expect(still.receipt.plate).toBe('power-plant-intro');
         expect(still.receipt.stillPlate).toMatch(/titlecard|corridor|rain|endcard/);
+        expect(still.receipt.width).toBeGreaterThanOrEqual(1280);
+        expect(still.receipt.height).toBeGreaterThanOrEqual(720);
         expect(existsSync(still.mp4)).toBe(true);
-        expect(evaluateMp4File(still.mp4, { mode: 'still', wantAudio: true }).status).toBe('PASS');
+        expect(
+          evaluateMp4File(still.mp4, { mode: 'still', wantAudio: true, motion: true }).status,
+        ).toBe('PASS');
         expect(still.receipt.hasAudio).toBe(true);
         expect(readReceipt(tmp)?.status).toBe('PASS');
 

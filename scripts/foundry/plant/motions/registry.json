@@ -13,11 +13,11 @@
   "motions": [
     {
       "id": "still",
-      "kind": "still",
+      "kind": "motion",
       "source": "blips",
       "renderer": "still",
       "status": "v0",
-      "notes": "Power Plant plate still (titlecard / corridor / rain / endcard)"
+      "notes": "Power Plant ident — hard-cut titlecard/corridor/rain/endcard over 4.44s. Not a frozen still. ≥720p + bed."
     },
     {
       "id": "orb",
