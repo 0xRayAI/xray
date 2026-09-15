@@ -9,6 +9,7 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `ARM-S-RECEIPT.md` | Boot probe, hooks-at-boot, repertoire proof, usage cites (pre-fire snapshot) |
 | `RECEIPT-HOST-PRECOMPACT.md` | Host fire + survive DIAG (first live `cursor-host-precompact`) |
 | `COMPARE.md` | Arm S vs Arm B (#55 / #54) compare receipt |
+| `TRANSITION.md` | PreToolUse vs PreCompact vs Grok Bot `survive-compact` — eval cases |
 | `STATION.seed.md` | Station card seed (live card is `.xray/state/STATION.md`, gitignored) |
 
 Path C compact receipts stay under `examples/cursor-cloud-compact/`. This directory is the **suited** Arm S track.
