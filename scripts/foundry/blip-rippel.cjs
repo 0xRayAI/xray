@@ -12,8 +12,8 @@
  * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * Mesh: one sparse seed polyhedron. Field accents (stars, grid, gradient, blinkers)
- * carry uniqueness — not more wire in the middle. Lines iridesce (cyan/gold/blue
- * travel + glow + beat fireflies). Soft tints, no photosensitive strobe.
+ * carry uniqueness — not more wire in the middle. Lines: sharp 3px core, cyan/gold/blue
+ * gradient along the stroke, subtle glow. No vertex beads. Soft tints, no strobe.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -928,36 +928,31 @@ function meshAccent(mesh, t) {
 }
 
 function iridesce(u, t, beat, accent) {
-  const cycle = [THEME.cyan, THEME.gold, THEME.blue, accent || THEME.cyan];
-  const phase = ((u + beat * 0.16 + t * 0.11) % 1 + 1) % 1;
-  const p = phase * cycle.length;
+  const cycle = [THEME.cyan, accent || THEME.gold, THEME.gold, THEME.blue];
+  const phase = ((u * 0.94 + beat * 0.06 + t * 0.035) % 1 + 1) % 1;
+  const p = phase * (cycle.length - 1);
   const i = p | 0;
   const f = p - i;
-  const e = f * f * (3 - 2 * f);
-  return mixRgb(cycle[i % cycle.length], cycle[(i + 1) % cycle.length], e);
+  return mixRgb(cycle[i], cycle[i + 1] || cycle[cycle.length - 1], f);
 }
 
 function livingShade(mesh, t, u, beat, bias) {
-  const c = iridesce(u + (mesh.accentIndex || 0) * 0.13, t, beat, meshAccent(mesh, t));
-  return bias ? mixRgb(c, bias, 0.12) : c;
+  const c = iridesce(u, t, beat, meshAccent(mesh, t));
+  return bias ? mixRgb(c, bias, 0.08) : c;
 }
 
+/** Neon stroke: opaque 3px core, 2px faint bloom. No ink rim — that was the CAD look. */
 function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
-  const glow = opts && opts.glow != null ? opts.glow : 6;
-  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.48;
+  const glow = opts && opts.glow != null ? opts.glow : 2;
+  const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.14;
   const half = opts && opts.half != null ? opts.half : 1;
   const shader = opts && opts.shader;
-  const rim = (opts && opts.rimColor) || THEME.ink;
   const dx = x1 - x0;
   const dy = y1 - y0;
   const len = Math.hypot(dx, dy);
   if (len < 0.5) {
-    stampFocusDisc(buf, width, height, x0, y0, half + 1.6, shader ? shader(0) : color, {
-      rim: 1,
-      glow,
-      glowAlpha: glowA,
-      rimColor: rim,
-    });
+    const c = shader ? shader(0) : color;
+    mixPixel(buf, width, x0, y0, c, 1);
     return;
   }
   const steps = Math.ceil(len);
@@ -969,10 +964,8 @@ function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
     const x = x0 + dx * u;
     const y = y0 + dy * u;
     for (let d = -half; d <= half; d++) mixPixel(buf, width, x + nx * d, y + ny * d, c, 1);
-    mixPixel(buf, width, x + nx * (half + 1), y + ny * (half + 1), rim, 0.7);
-    mixPixel(buf, width, x - nx * (half + 1), y - ny * (half + 1), rim, 0.7);
     for (let g = 1; g <= glow; g++) {
-      const a = glowA * (1 - g / (glow + 1)) * (1 - g / (glow + 1));
+      const a = glowA * (1 - g / (glow + 0.6));
       mixPixel(buf, width, x + nx * (half + g), y + ny * (half + g), c, a);
       mixPixel(buf, width, x - nx * (half + g), y - ny * (half + g), c, a);
     }
@@ -1010,32 +1003,23 @@ function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
     const bias = color || null;
     paintGlowLine(buf, width, height, pts[a].x, pts[a].y, pts[b].x, pts[b].y, THEME.cyan, {
       half: half || 1,
-      glow: 6,
-      glowAlpha: 0.42 + 0.12 * kick,
+      glow: 2,
+      glowAlpha: 0.12 + 0.04 * kick,
       shader: (u) => livingShade(mesh, t, u, beat, bias),
     });
-    const life = (beat * 0.85 + ranked[i].i * 0.19 + mesh.twist) % 1;
-    const bead = livingShade(mesh, t, life, beat, THEME.gold);
-    stampFocusDisc(
+  }
+  if (ranked.length) {
+    const hot = ranked[0];
+    const [a, b] = hot.e;
+    const life = (beat * 0.7 + mesh.twist) % 1;
+    mixPixel(
       buf,
       width,
-      height,
       pts[a].x + (pts[b].x - pts[a].x) * life,
       pts[a].y + (pts[b].y - pts[a].y) * life,
-      3.4 + kick * 2.2 + and * 1.4,
-      bead,
-      { rim: 1, glow: 7, glowAlpha: 0.42, rimColor: THEME.ink },
+      livingShade(mesh, t, life, beat, THEME.gold),
+      0.85 + 0.15 * and,
     );
-  }
-  const nodeR = opts && opts.nodeR != null ? opts.nodeR : 4.6;
-  for (let i = 0; i < pts.length; i++) {
-    const nodeC = livingShade(mesh, t, i / Math.max(1, pts.length), beat, THEME.ink);
-    stampFocusDisc(buf, width, height, pts[i].x, pts[i].y, nodeR + and * 0.6, nodeC, {
-      rim: 1,
-      glow: 4,
-      glowAlpha: 0.28,
-      rimColor: THEME.ink,
-    });
   }
 }
 
@@ -1047,7 +1031,6 @@ function paintChecksumMesh(buf, width, height, t, checksum, opts) {
   const pts = projectMesh(mesh, width, height, t, checksum, scale);
   paintMesh(buf, width, height, mesh, pts, opts && opts.color, half, {
     fill: 0,
-    nodeR: 3.6,
     t,
     checksum,
   });
@@ -1116,8 +1099,8 @@ function paintGrid(buf, width, height, field, t, checksum) {
   const line = (x0, y0, x1, y1) =>
     paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
       half: 1,
-      glow: 5,
-      glowAlpha: 0.4,
+      glow: 2,
+      glowAlpha: 0.12,
       shader: (u) => iridesce(u, t || 0, beat, accent),
     });
   const cx = (width - 1) * 0.5;
@@ -1173,27 +1156,19 @@ function paintField(buf, width, height, t, checksum) {
     const sx = star.x * width;
     const sy = star.y * height;
     const color = iridesce(star.phase, t, beat, star.color);
-    stampFocusDisc(buf, width, height, sx, sy, star.r, color, {
-      rim: 1,
-      glow: 4,
-      glowAlpha: 0.22 * twinkle,
-      rimColor: THEME.ink,
-    });
-    if (star.sparkle) {
-      const arm = 4 + twinkle * 3;
-      paintGlowLine(buf, width, height, sx - arm, sy, sx + arm, sy, color, { half: 0, glow: 2, glowAlpha: 0.28 * twinkle });
-      paintGlowLine(buf, width, height, sx, sy - arm, sx, sy + arm, color, { half: 0, glow: 2, glowAlpha: 0.28 * twinkle });
-    }
+    mixPixel(buf, width, sx, sy, color, twinkle);
+    mixPixel(buf, width, sx + 1, sy, color, twinkle * 0.35);
+    mixPixel(buf, width, sx, sy + 1, color, twinkle * 0.35);
   }
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
     const on = b.onAnd ? and : kick;
     if (on < 0.08) continue;
-    stampFocusDisc(buf, width, height, b.x * width, b.y * height, 3.4 + on * 3.2, b.color, {
+    stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
       rim: 1,
-      glow: 6,
-      glowAlpha: 0.34,
+      glow: 2,
+      glowAlpha: 0.16,
       rimColor: THEME.ink,
     });
   }
@@ -1238,10 +1213,10 @@ function layoutRing(circles, width, height, t, checksum) {
   return layoutRings(circles, width, height, t, checksum || { genreConfig: { tempo: 90 } });
 }
 
-/** orb → canvas / Orb Glow v2. Seed mesh cage + sharp core + seated motes. */
+/** orb → canvas / Orb Glow v2. Seed mesh cage + sharp core. Lines, not vertex beads. */
 function paintCanvas(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+  paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.95,
     half: 1,
     noFill: true,
@@ -1274,20 +1249,6 @@ function paintCanvas(buf, width, height, t, checksum) {
     THEME.ink,
     { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
   );
-  const circles = checksum.visualConfig.circles;
-  const seats = worn && worn.pts && worn.pts.length ? worn.pts : layoutRings(circles, width, height, t, checksum);
-  for (let i = 0; i < circles.length; i++) {
-    const seat = seats[i % seats.length];
-    const x = seat.x;
-    const y = seat.y;
-    const color = mixRgb(parseHex(circles[i].color), THEME.gold, freqTint(circles[i], t));
-    stampFocusDisc(buf, width, height, x, y, circlePulse(circles[i], t) * 0.16, color, {
-      rim: 1.6,
-      glow: 4,
-      glowAlpha: 0.2,
-      rimColor: THEME.ink,
-    });
-  }
 }
 
 /** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
@@ -1298,12 +1259,12 @@ function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checks
   const swell = style === "pulse" ? 0.55 + 0.55 * kick + 0.35 * and : 0.5 + 0.35 * kick + 0.22 * and;
   const core = minSide * (style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell);
   const t = checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
-  const outer = iridesce(beat, t, beat, (mesh && meshAccent(mesh, t)) || THEME.cyan);
+  const outer = mixRgb(THEME.cyan, (mesh && meshAccent(mesh, t)) || THEME.gold, 0.28 + 0.45 * and);
   const inner = mixRgb(THEME.gold, THEME.cyan, 0.18 + 0.62 * and);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, outer, {
     rim: 2.2,
-    glow: 10,
-    glowAlpha: 0.34,
+    glow: 5,
+    glowAlpha: 0.18,
     rimColor: THEME.ink,
   });
   const ix = style === "eclipse" ? cx + Math.cos(beat * Math.PI * 2) * core * 0.22 : cx;
@@ -1358,32 +1319,13 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - cx, drop: lo - hi };
 }
 
-/** swirl → 3d-sacred v2. Seed mesh + dual as the sacred body. */
+/** swirl → 3d-sacred v2. Seed mesh is the sacred body — lines, not vertex beads. */
 function paintSacred(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
+  paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.92,
     half: 1,
   });
-  const seats = worn && worn.pts ? worn.pts : [];
-  const circles = checksum.visualConfig.circles;
-  for (let i = 0; i < circles.length; i++) {
-    const seat = seats[i % Math.max(1, seats.length)];
-    const x = seat ? seat.x : cx;
-    const y = seat ? seat.y : cy;
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      x,
-      y,
-      circlePulse(circles[i], t) * 0.2,
-      mixRgb(parseHex(circles[i].color), THEME.gold, freqTint(circles[i], t)),
-      { rim: 1.4, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
-    );
-  }
 }
 
 /** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
@@ -1400,41 +1342,7 @@ function paintNeural(buf, width, height, t, checksum) {
   const pts = (worn && worn.pts) || [];
   const mesh = checksum.mesh;
   const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
-  if (mesh && pts.length) {
-    for (let i = 0; i < mesh.edges.length; i++) {
-      if (i % 2 === 1) continue;
-      const [ai, bi] = mesh.edges[i];
-      const a = pts[ai];
-      const b = pts[bi];
-      const speed = 1.6 + ((checksum.visualConfig.circles[i % checksum.visualConfig.circles.length] || {}).frequency || 180) / 160;
-      const travel = (t * speed + i * 0.19) % 1;
-      stampFocusDisc(
-        buf,
-        width,
-        height,
-        a.x + (b.x - a.x) * travel,
-        a.y + (b.y - a.y) * travel,
-        5,
-        i % 2 === 0 ? THEME.gold : THEME.cyan,
-        node,
-      );
-    }
-    const circles = checksum.visualConfig.circles;
-    for (let i = 0; i < circles.length; i++) {
-      const seat = pts[i % pts.length];
-      stampFocusDisc(
-        buf,
-        width,
-        height,
-        seat.x,
-        seat.y,
-        8 + kick,
-        mixRgb(parseHex(circles[i].color), THEME.gold, freqTint(circles[i], t)),
-        node,
-      );
-    }
-    return;
-  }
+  if (mesh && pts.length) return;
   const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
   for (let i = 0; i < placed.length; i++) {
     const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
@@ -1547,7 +1455,7 @@ function paintWaveform(buf, width, height, t, checksum) {
   }
 }
 
-/** spark → particles v2. Motes ride the seed mesh edges. */
+/** spark → particles v2. Seed mesh is the spark — lines, not bead rain. */
 function paintParticles(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const cx = (width - 1) * 0.5;
@@ -1563,31 +1471,7 @@ function paintParticles(buf, width, height, t, checksum) {
   const mesh = checksum.mesh;
   const pts = worn && worn.pts;
   const circles = checksum.visualConfig.circles;
-  if (mesh && pts) {
-    for (let i = 0; i < mesh.edges.length; i++) {
-      if (i % 2 === 1) continue;
-      const [ai, bi] = mesh.edges[i];
-      const a = pts[ai];
-      const b = pts[bi];
-      const circle = circles[i % circles.length];
-      for (let k = 0; k < 2; k++) {
-        const life = (t * (1.4 + circle.frequency / 400) + i * 0.13 + k * 0.31) % 1;
-        const x = a.x + (b.x - a.x) * life;
-        const y = a.y + (b.y - a.y) * life;
-        stampFocusDisc(
-          buf,
-          width,
-          height,
-          x,
-          y,
-          2.8 + (1 - life) * 2,
-          mixRgb(parseHex(circle.color), THEME.gold, freqTint(circle, t)),
-          mote,
-        );
-      }
-    }
-    return;
-  }
+  if (mesh && pts) return;
   const placed = layoutRings(circles, width, height, t * 1.15, checksum);
   for (let i = 0; i < placed.length; i++) {
     const src = placed[i];
