@@ -2,6 +2,8 @@
 
 Start here if you wear this kit.
 
+Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agent project. It checks mill + inspect and prints hangar / Clearing next steps.
+
 ## Op proc (how the fleet runs)
 | Doc | Plain what |
 |-----|------------|

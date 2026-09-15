@@ -12,6 +12,9 @@ For **each key agent** (coordinator, implementer, reviewer, Dist, …):
 
 Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
 
+## Prove this seat
+From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). PASS means mill + inspect are fastened. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag). Do not mill-plant Clearing into 0xRay.
+
 ## Order (complete path)
 Follow `SKILLS.md` in this order **per agent**:
 

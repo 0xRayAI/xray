@@ -12,6 +12,8 @@
 ```bash
 npm i @0xray/grok-bot
 npx @0xray/grok-bot
+npx @0xray/grok-bot doctor    # prove mill+inspect; print hangar/Clearing next
+npx @0xray/grok-bot ready     # alias
 ```
 
 ## Live product URLs (plant)
