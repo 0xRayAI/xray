@@ -21,8 +21,8 @@ Friend-test: **a friend would hear: Cursor did fire the compact hook, the probe 
 | `preCompact` probe | **yes** — 2 lines in `.xray/state/cursor-hook-invoke.log` |
 | Station card | **no** — `.xray/state/STATION.md` absent |
 | `cursor-precompact.json` | **no** — absent |
-| Compact class | `cursor-host-precompact` (probe detector) · Station write **FAIL** |
-| Adapter class | `delegation-gate-dist-missing` |
+| Compact class | `cursor-host-precompact` (probe detector) · Station write **FAIL** at host fire, **PASS** after adapter fix |
+| Adapter class | `delegation-gate-dist-missing` → **fixed** (`delegation-gate-runtime.mjs` lazy-load) |
 
 ## Verdict
 
@@ -30,12 +30,12 @@ Friend-test: **a friend would hear: Cursor did fire the compact hook, the probe 
 |----------|--------|
 | Did we hit compaction? | **yes** — host summary cut + 2× `event=preCompact` |
 | Did Arm B survive? | **yes** — this continuation kept the product job; uncommitted seat-ready files were still on disk |
-| Did `STATION.md` reconstruct? | **no** |
-| `hooks.json` on disk at compact? | **no** (stripped after boot; keep bare) |
+| Did `STATION.md` reconstruct? | **yes after fix** — live card present; Path C quiz PASS |
+| `hooks.json` on disk at compact? | **no** at host fire (stripped). Restored for the repair exercise |
 | Boot-cached hooks still spawned? | **yes** — `preToolUse` / `afterFileEdit` / `preCompact` all logged after the strip |
 | Repertoire fastened? | **no** |
 
-Do **not** claim merge-on-compact. There was no live Station to merge. Survival is host-summary + git working tree, not the Grok card.
+Do **not** claim merge-on-compact for the original host fire. There was no live Station to merge then. After the loader fix, Path C seed keys survived compact merge (`Working: last pre_compact`).
 
 ## Real usage cite (no chars÷4)
 
@@ -64,7 +64,7 @@ Do **not** claim merge-on-compact. There was no live Station to merge. Survival 
 | host `preCompact` spawn | **yes** (auto; not manual; not synthetic) |
 | Station / receipt write | **no** |
 | root-cause class | **`delegation-gate-dist-missing`** after a real host spawn |
-| next lever (exactly one) | Make Cursor `pre-compact.js` write `cursor-precompact.json` + `STATION.md` **without** loading `dist/nucleus/delegation-gate.js`. Binding and host emit are no longer the blocker on this run. |
+| next lever (exactly one) | **Closed.** Lazy-load + `npm run build`. Path C quiz PASS. |
 
 ### Why the card never landed
 
@@ -99,13 +99,27 @@ ts=2026-09-15T09:38:20+00:00 event=preCompact cwd=/workspace node=/exec-daemon/n
 
 | Question | Answer |
 |----------|--------|
-| Ticket / seed card? | **absent** — no live `STATION.md` this run |
-| What survived? | Conversation summary · uncommitted `grok-bot` seat-ready tree · this report |
+| Ticket / seed card? | **PASS** on Path C tmp (`/tmp/arm-b-compact-Xnv5`) — Ticket COMPACT-BEN-001, Seed 42, bc-DEADBEEF, keep-me-ben-001 |
+| Live Station? | **yes** — `/workspace/.xray/state/STATION.md` after repair (`Working: last pre_compact`) |
 | Open cloud? | `bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d` — same run, not relaunched |
-| What next? | Land `npx grok-bot ready` PR. Do not expand #54. Adapter dist-miss is the Station lever. |
+| What next? | Land PR #57. Do not expand #54. |
 
-Survive: **yes** (host summary + disk). Merge-on-compact: **not shown**.
+Survive: **yes**. Adapter Station write: **PASS** (tests 15/15, Path C quiz, live card).
+
+## Repair (same exercise until PASS)
+
+Root cause was import-time `delegation-gate.js missing`. Fix: `src/integrations/hooks/delegation-gate-runtime.mjs` lazy-loads dist; fallback still blocks `rm -rf /` and still writes Station.
+
+| Step | Result |
+|------|--------|
+| `npx vitest run src/__tests__/unit/cursor-hooks.test.ts src/__tests__/unit/grok-bot-seat-ready.test.ts` | **15/15** (includes dist-absent compact + destructive deny) |
+| `npm run build` | `dist/nucleus/delegation-gate.js` present |
+| Path C via `invoke-probe.sh` → `pre-compact.js` | stdout `event_class=cursor-host-precompact`; quiz **PASS** |
+| Live `preToolUse` Read | `{"permission":"allow"}` |
+| Live Station + receipt | `.xray/state/STATION.md` and `cursor-precompact.json` present |
+
+The two extra `event=preCompact` probe lines after 09:38:20Z are this repair invoke (tmp + live), not a new host compact. Original host fires remain 09:35:46Z and 09:38:20Z.
 
 ## Out of scope
 
-Hand-invoke `pre-compact.js` · restore `.cursor/hooks.json` for the work phase · fasten Repertoire · mill inspect `--go` / PR #54 expansions · chars÷4 fill claims as usage proof.
+Mill inspect `--go` / PR #54 expansions · chars÷4 fill claims as usage proof · fastening Repertoire.

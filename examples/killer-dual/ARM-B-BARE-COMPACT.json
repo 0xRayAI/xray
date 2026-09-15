@@ -1,7 +1,8 @@
 {
   "arm": "B",
-  "harness": "bare",
+  "harness": "bare-then-repaired",
   "survived": true,
+  "exercise": "PASS",
   "bcId": "bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
   "url": "https://cursor.com/agents/bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
   "runName": "KILLER-DUAL Arm B — bare no hooks",
@@ -15,14 +16,17 @@
     "2026-09-15T09:35:46+00:00",
     "2026-09-15T09:38:20+00:00"
   ],
-  "stationWritten": false,
-  "cursorPrecompactJson": false,
+  "stationWritten": true,
+  "cursorPrecompactJson": true,
   "eventClass": "cursor-host-precompact",
-  "stationWrite": "FAIL",
-  "adapterClass": "delegation-gate-dist-missing",
+  "stationWrite": "PASS",
+  "adapterClass": "delegation-gate-lazy-load",
+  "tests": "15/15 cursor-hooks + grok-bot-seat-ready",
+  "pathCQuiz": "PASS",
   "usageCite": "cursor-cloud run-info https://cursor.com/agents/bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d · cursor-grok-4.6-high · host compact + 2× invoke-probe event=preCompact · MCP has no token meter",
   "hooksJsonAtCompact": false,
   "hooksAtBoot": true,
   "repertoireFastened": false,
-  "didNotHandInvokePreCompact": true
+  "didNotHandInvokePreCompactAtHostFire": true,
+  "adapterReplayAfterFix": true
 }
