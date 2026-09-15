@@ -2,8 +2,9 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
-## Unreleased — Factory-sound plant + shop plant first-class
+## Unreleased — Factory-blip plant + factory-sound plant + shop plant first-class
 
+- Factory-blip plant: `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` (mill off). Brief → seed → still|orb → 4.44s mp4 → inspect receipt. Inspect reports last blip PASS/FAIL. Not costume. No mill package bump.
 - Factory-sound plant: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Brief → seed → genre → wav → metrics receipt. Inspect reports last bed PASS/FAIL. Not costume. No mill package bump.
 - Sound render is a crystal-clear mill of Rippel SSOT topology (membrane kick / metal hat / duo bass / mixer). Prototype is lineage, not the quality bar. Tone.Offline blocked in Node. `phonk` first-class.
 

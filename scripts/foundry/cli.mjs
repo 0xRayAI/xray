@@ -2,7 +2,7 @@
 /**
  * @0xray/foundry CLI — mill, not exo. No fifth MCP.
  *
- *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|ci|hooks> [...args]
+ *   npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|blip|ci|hooks> [...args]
  */
 
 import { spawnSync } from "node:child_process";
@@ -18,18 +18,20 @@ const COMMANDS = {
   mint: { script: "mint.mjs", preset: [] },
   inspect: { script: "inspect.mjs", preset: [] },
   sound: { script: "sound.mjs", preset: [] },
+  blip: { script: "blip.mjs", preset: [] },
   ci: { script: "ci-monitor.mjs", preset: [] },
   hooks: { script: "hooks.mjs", preset: [] },
 };
 
 const HELP =
-  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|ci|hooks> [...args]\n" +
+  "Usage: npx @0xray/foundry <reconcile|stamp|gate|release|docs-check|docs-build|mint|inspect|sound|blip|ci|hooks> [...args]\n" +
   "\n" +
   "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
   "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
-  "Mint fastens the requested factory plant (default mill; foundry.json plant: sound turns mill off), then inspect.\n" +
-  "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL. Not an 8th MCP.\n" +
+  "Mint fastens the requested factory plant (default mill; foundry.json plant: sound|blip turns mill off), then inspect.\n" +
+  "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL; on a blip seat, last blip receipt.\n" +
   "sound render|inspect is the bed factory (brief → seed → genre → wav → metrics). Not mill.\n" +
+  "blip render|inspect is the tiny-video factory (brief → seed → still|orb → 4.44s mp4). Not mill.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
 
 const cmd = process.argv[2];

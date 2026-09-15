@@ -43,7 +43,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 `postinstall.cjs` → `installAllBridges()`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
-2. Fasten mill plant (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+2. Fasten mill plant (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
@@ -53,6 +53,8 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
 **Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
+
+**Blip plant:** Tiny-video factory sibling to mill + sound. `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|orb` writes a 4.44s mp4 and a receipt. Inspect checks duration / mode / file — not fake code-mill skills on a blip seat.
 
 ## Memory routing + Repertoire (v3.3+)
 

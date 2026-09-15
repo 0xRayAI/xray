@@ -40,6 +40,8 @@
     "./inspect": "./inspect.mjs",
     "./sound": "./sound.mjs",
     "./sound-bed": "./sound-bed.cjs",
+    "./blip": "./blip.mjs",
+    "./blip-render": "./blip-render.cjs",
     "./ci-monitor": "./ci-monitor.mjs",
     "./hooks": "./hooks.mjs",
     "./docs-build": "./docs-build.mjs"
@@ -52,6 +54,7 @@
     "foundry",
     "mill",
     "sound",
+    "blip",
     "release",
     "changelog"
   ]

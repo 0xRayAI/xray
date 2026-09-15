@@ -103,7 +103,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 On `npm install 0xray` in a consumer project, postinstall automatically:
 
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
-2. Fastens **mill plant** (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens the bed factory (`sound` + `sound-inspect`) and turns mill off. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
+2. Fastens **mill plant** (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens the bed factory (`sound` + `sound-inspect`) and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens the tiny-video factory (`blip` + `blip-inspect`) and turns mill off. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
 3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)

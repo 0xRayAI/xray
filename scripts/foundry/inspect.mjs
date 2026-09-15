@@ -88,6 +88,7 @@ function checkPlantVsWorn(root, millRoot) {
     skills: kinds.includes("mill") ? mint.catalogPlant("mill").skills : [],
     agents: kinds.includes("mill") ? mint.catalogPlant("mill").agents : [],
     sound: kinds.includes("sound") ? mint.catalogPlant("sound") : { skills: [], agents: [] },
+    blip: kinds.includes("blip") ? mint.catalogPlant("blip") : { skills: [], agents: [] },
   };
   const params = mint.loadFoundryParams(root);
   const tree = {
@@ -97,6 +98,9 @@ function checkPlantVsWorn(root, millRoot) {
     soundPlantSkills: millPlant.sound.skills,
     soundPlantAgents: millPlant.sound.agents,
     sound: millPlant.sound,
+    blipPlantSkills: millPlant.blip.skills,
+    blipPlantAgents: millPlant.blip.agents,
+    blip: millPlant.blip,
   };
   const shopPlant = mint.loadShopPlant(root);
   try {
@@ -107,6 +111,7 @@ function checkPlantVsWorn(root, millRoot) {
       plant: kinds,
       millPlant: millPlant.skills,
       soundPlant: millPlant.sound.skills,
+      blipPlant: millPlant.blip.skills,
       shopPlant,
       tree: tree.skills,
       worn: mint.wornSkillNames(root),
@@ -121,6 +126,7 @@ function checkPlantVsWorn(root, millRoot) {
       extraAgents: err.extraAgents || [],
       plant: kinds,
       soundPlant: millPlant.sound.skills,
+      blipPlant: millPlant.blip.skills,
       shopPlant,
     };
   }
@@ -137,16 +143,21 @@ function checkReceipt(root) {
   }
   const millPlantSkills = inventory.millPlant?.skills || [];
   const soundPlantSkills = inventory.soundPlant?.skills || [];
+  const blipPlantSkills = inventory.blipPlant?.skills || [];
   const kinds = mint.inventoryPlantKinds(inventory);
   const needMill = kinds.includes("mill");
   const needSound = kinds.includes("sound");
+  const needBlip = kinds.includes("blip");
   const millOk = !needMill || (millPlantSkills.includes("mill") && millPlantSkills.includes("inspect"));
   const soundOk =
     !needSound || (soundPlantSkills.includes("sound") && soundPlantSkills.includes("sound-inspect"));
-  const ok = millOk && soundOk && (needMill || needSound);
+  const blipOk =
+    !needBlip || (blipPlantSkills.includes("blip") && blipPlantSkills.includes("blip-inspect"));
+  const ok = millOk && soundOk && blipOk && (needMill || needSound || needBlip);
   let detail = null;
   if (!ok && needMill && !millOk) detail = "millPlant.skills must include mill and inspect";
   else if (!ok && needSound && !soundOk) detail = "soundPlant.skills must include sound and sound-inspect";
+  else if (!ok && needBlip && !blipOk) detail = "blipPlant.skills must include blip and blip-inspect";
   else if (!ok) detail = "inventory plant is empty";
   return {
     id: "receipt",
@@ -156,6 +167,7 @@ function checkReceipt(root) {
     plant: kinds,
     millPlant: millPlantSkills,
     soundPlant: soundPlantSkills,
+    blipPlant: blipPlantSkills,
     dna: typeof inventory.dna === "string" ? inventory.dna : null,
     pack: "0xray-suit",
     detail,
@@ -191,6 +203,40 @@ function checkSoundBed(root) {
     wav: receipt.wav || null,
     seed: receipt.seed || null,
     detail: status === "PASS" ? null : receipt.reason || "bed receipt FAIL",
+  };
+}
+
+function checkBlip(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("blip")) return null;
+  const blip = require("./blip-render.cjs");
+  const receipt = blip.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "blip",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: "no blip receipt yet — npx @0xray/foundry blip render --brief \"...\" --mode still",
+    };
+  }
+  const evaluated = blip.evaluateReceipt(root, receipt);
+  const status = evaluated.status === "PASS" ? "PASS" : "FAIL";
+  const unreadable = receipt.reason === "receipt-unreadable";
+  return {
+    id: "blip",
+    ok: status === "PASS" && !unreadable,
+    status,
+    failClosed: true,
+    plant: kinds,
+    mode: evaluated.mode || receipt.mode || null,
+    durationSec: evaluated.durationSec ?? receipt.durationSec ?? null,
+    mp4: evaluated.mp4 || receipt.mp4 || null,
+    hasVideo: evaluated.hasVideo ?? receipt.hasVideo ?? null,
+    hasAudio: evaluated.hasAudio ?? receipt.hasAudio ?? null,
+    detail: status === "PASS" ? null : evaluated.reason || receipt.reason || "blip receipt FAIL",
   };
 }
 
@@ -324,6 +370,8 @@ export async function inspectSuit(root, opts = {}) {
   checks.push(checkReceipt(root));
   const soundBed = checkSoundBed(root);
   if (soundBed) checks.push(soundBed);
+  const blip = checkBlip(root);
+  if (blip) checks.push(blip);
   checks.push(checkCi(root));
 
   if (skipLive) {

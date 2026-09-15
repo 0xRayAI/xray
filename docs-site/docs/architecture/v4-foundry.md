@@ -94,6 +94,8 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Sound plant (not costume).** `foundry.json` `"plant": "sound"` fastens factory-sound (`sound` + `sound-inspect`) and turns mill off. Inspect allowlists those worn names. Last bed receipt (`.xray/sound-bed-receipt.json`) is PASS/FAIL with chop / levels / peak / hum. Render is a crystal mill of Rippel membrane/metal/mixer chains (prototype lineage, not a 3-sine toy). Not a copy of mill inspect. Not 45/42.
 
+**Blip plant (not costume).** `foundry.json` `"plant": "blip"` fastens factory-blip (`blip` + `blip-inspect`) and turns mill off. Inspect allowlists those worn names. Last blip receipt (`.xray/blip/receipt.json`) is PASS/FAIL with duration 4.44s, mode, file present. Render is a headless 4.44s mp4 (`still` | `orb`). Rippel `Animation` names only. Not a copy of mill inspect. Not 45/42.
+
 ### 3. Pre / post processors (two stacks)
 
 **Constitution is not a processor.** Live deny is `evaluatePreToolGate` (`src/nucleus/delegation-gate.ts`).

@@ -24,11 +24,16 @@ const DEFAULT_PARAMS = {
 /** Factory shop plant. First-class with mill plant. Not 45/42 costume. */
 const FACTORY_SHOP_SKILLS = ["shop-extract", "shop-witness", "shop-pin"];
 
-/** Factory plant kinds. Mill is default. Sound is a bed factory, not a mill copy. */
+/** Factory plant kinds. Mill is default. Sound is a bed factory. Blip is a tiny-video factory. */
 const FACTORY_PLANT_CATALOG = {
   mill: { skills: ["mill", "inspect"], agents: ["mill.yml", "inspect.yml"] },
   sound: { skills: ["sound", "sound-inspect"], agents: ["sound.yml", "sound-inspect.yml"] },
+  blip: { skills: ["blip", "blip-inspect"], agents: ["blip.yml", "blip-inspect.yml"] },
 };
+
+function isFactoryPlantKind(kind) {
+  return Boolean(kind && FACTORY_PLANT_CATALOG[kind]);
+}
 
 function deepMerge(src, dest) {
   if (typeof src !== "object" || src === null) return dest !== undefined ? dest : src;
@@ -133,20 +138,21 @@ function catalogPlant(kind) {
   return spec ? { skills: [...spec.skills], agents: [...spec.agents] } : emptyPlantFiles();
 }
 
-/** foundry.json plant: "sound" | "mill" | ["mill","sound"]. millPlant:false turns mill off. */
+/** foundry.json plant: "sound" | "blip" | "mill" | ["mill","sound","blip"]. millPlant:false turns mill off. */
 function loadFactoryPlantKinds(targetDir) {
   const extra = loadFoundryExtra(targetDir);
   const kinds = [];
   const raw = extra.plant;
   if (Array.isArray(raw)) {
     for (const item of raw) {
-      if (item === "mill" || item === "sound") kinds.push(item);
+      if (isFactoryPlantKind(item)) kinds.push(item);
     }
-  } else if (raw === "mill" || raw === "sound") {
+  } else if (isFactoryPlantKind(raw)) {
     kinds.push(raw);
-  } else if (extra.soundPlant === true) {
+  } else if (extra.soundPlant === true || extra.blipPlant === true) {
     if (extra.millPlant !== false) kinds.push("mill");
-    kinds.push("sound");
+    if (extra.soundPlant === true) kinds.push("sound");
+    if (extra.blipPlant === true) kinds.push("blip");
   } else {
     kinds.push("mill");
   }
@@ -194,14 +200,17 @@ function factoryPlantAllowlist(millPackageRoot, targetDir) {
 function inventoryPlantKinds(inventory) {
   if (!inventory || typeof inventory !== "object") return ["mill"];
   if (Array.isArray(inventory.plant) && inventory.plant.length > 0) {
-    return inventory.plant.filter((kind) => kind === "mill" || kind === "sound");
+    return inventory.plant.filter((kind) => isFactoryPlantKind(kind));
   }
-  if (inventory.plant === "sound" || inventory.plant === "mill") return [inventory.plant];
+  if (isFactoryPlantKind(inventory.plant)) return [inventory.plant];
   const hasSound = Array.isArray(inventory.soundPlant?.skills) && inventory.soundPlant.skills.length > 0;
+  const hasBlip = Array.isArray(inventory.blipPlant?.skills) && inventory.blipPlant.skills.length > 0;
   const hasMill = Array.isArray(inventory.millPlant?.skills) && inventory.millPlant.skills.length > 0;
-  if (hasSound && !hasMill) return ["sound"];
-  if (hasSound && hasMill) return ["mill", "sound"];
-  return ["mill"];
+  const kinds = [];
+  if (hasMill) kinds.push("mill");
+  if (hasSound) kinds.push("sound");
+  if (hasBlip) kinds.push("blip");
+  return kinds.length > 0 ? kinds : ["mill"];
 }
 
 function listSkillNamesAt(skillsSrc) {
@@ -257,12 +266,12 @@ function copyPlantFiles(plant, spec, targetDir) {
   return { skills, agents };
 }
 
-/** Fasten requested factory plants. Default mill only. Sound seats skip mill. */
+/** Fasten requested factory plants. Default mill only. Sound/blip seats skip mill unless asked. */
 function fastenMillPlant(millPackageRoot, targetDir, log) {
   const plant = millPlantDir(millPackageRoot);
   const kinds = loadFactoryPlantKinds(targetDir);
   if (!plant) {
-    return { skills: [], agents: [], kinds, sound: emptyPlantFiles() };
+    return { skills: [], agents: [], kinds, sound: emptyPlantFiles(), blip: emptyPlantFiles() };
   }
   const mill = kinds.includes("mill")
     ? existingPlantFiles(plant, catalogPlant("mill"))
@@ -270,7 +279,14 @@ function fastenMillPlant(millPackageRoot, targetDir, log) {
   const sound = kinds.includes("sound")
     ? existingPlantFiles(plant, catalogPlant("sound"))
     : emptyPlantFiles();
-  const fastened = copyPlantFiles(plant, unionPlantFiles(kinds.filter((kind) => kind === "mill" || kind === "sound")), targetDir);
+  const blip = kinds.includes("blip")
+    ? existingPlantFiles(plant, catalogPlant("blip"))
+    : emptyPlantFiles();
+  const fastened = copyPlantFiles(
+    plant,
+    unionPlantFiles(kinds.filter((kind) => isFactoryPlantKind(kind))),
+    targetDir,
+  );
   if (log && (fastened.skills.length > 0 || fastened.agents.length > 0)) {
     log("foundry-mint", "Fastened factory plant", "info", {
       plant: kinds,
@@ -278,7 +294,7 @@ function fastenMillPlant(millPackageRoot, targetDir, log) {
       agents: fastened.agents.length,
     });
   }
-  return { skills: mill.skills, agents: mill.agents, kinds, sound };
+  return { skills: mill.skills, agents: mill.agents, kinds, sound, blip };
 }
 
 function isDirectory(p) {
@@ -479,17 +495,24 @@ function previousTreeAllowlist(targetDir) {
       ? normalizeNameList(soundFromInv)
       : normalizeNameList(soundFromInv?.skills);
     const soundAgents = normalizeNameList(soundFromInv?.agents);
+    const blipFromInv = inventory?.blipPlant;
+    const blipSkills = Array.isArray(blipFromInv)
+      ? normalizeNameList(blipFromInv)
+      : normalizeNameList(blipFromInv?.skills);
+    const blipAgents = normalizeNameList(blipFromInv?.agents);
     return {
       skills: [
         ...(Array.isArray(inventory?.tree?.skills) ? inventory.tree.skills : []),
         ...(Array.isArray(inventory?.millPlant?.skills) ? inventory.millPlant.skills : []),
         ...shopSkills,
         ...soundSkills,
+        ...blipSkills,
       ],
       agents: [
         ...(Array.isArray(inventory?.tree?.agents) ? inventory.tree.agents : []),
         ...(Array.isArray(inventory?.millPlant?.agents) ? inventory.millPlant.agents : []),
         ...soundAgents,
+        ...blipAgents,
       ],
     };
   } catch {
@@ -508,15 +531,29 @@ function soundPlantFromTree(targetDir, tree) {
   return kinds.includes("sound") ? catalogPlant("sound") : emptyPlantFiles();
 }
 
-/** Extra worn names that are neither mill/sound plant, their plant, shop plant, nor a prior overlay. */
+function blipPlantFromTree(targetDir, tree) {
+  if (Array.isArray(tree?.blipPlantSkills) || Array.isArray(tree?.blip?.skills)) {
+    return {
+      skills: normalizeNameList(tree.blipPlantSkills || tree.blip?.skills),
+      agents: normalizeNameList(tree.blipPlantAgents || tree.blip?.agents),
+    };
+  }
+  const kinds = Array.isArray(tree?.plantKinds) ? tree.plantKinds : loadFactoryPlantKinds(targetDir);
+  return kinds.includes("blip") ? catalogPlant("blip") : emptyPlantFiles();
+}
+
+/** Extra worn names that are neither mill/sound/blip plant, their plant, shop plant, nor a prior overlay. */
 function costumeDumpExtras(targetDir, millPlant, tree) {
   const prior = previousTreeAllowlist(targetDir);
   const shopPlant = loadShopPlant(targetDir);
   const soundPlant = soundPlantFromTree(targetDir, tree);
+  const blipPlant = blipPlantFromTree(targetDir, tree);
   const allowedSkills = new Set([
     ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
     ...(Array.isArray(millPlant?.sound?.skills) ? millPlant.sound.skills : []),
+    ...(Array.isArray(millPlant?.blip?.skills) ? millPlant.blip.skills : []),
     ...soundPlant.skills,
+    ...blipPlant.skills,
     ...(Array.isArray(tree?.skills) ? tree.skills : []),
     ...prior.skills,
     ...shopPlant,
@@ -524,7 +561,9 @@ function costumeDumpExtras(targetDir, millPlant, tree) {
   const allowedAgents = new Set([
     ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
     ...(Array.isArray(millPlant?.sound?.agents) ? millPlant.sound.agents : []),
+    ...(Array.isArray(millPlant?.blip?.agents) ? millPlant.blip.agents : []),
     ...soundPlant.agents,
+    ...blipPlant.agents,
     ...(Array.isArray(tree?.agents) ? tree.agents : []),
     ...prior.agents,
   ]);
@@ -615,13 +654,16 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   const soundPlanted =
     (Array.isArray(tree?.soundPlantSkills) && tree.soundPlantSkills.length > 0) ||
     (Array.isArray(tree?.soundPlantAgents) && tree.soundPlantAgents.length > 0);
+  const blipPlanted =
+    (Array.isArray(tree?.blipPlantSkills) && tree.blipPlantSkills.length > 0) ||
+    (Array.isArray(tree?.blipPlantAgents) && tree.blipPlantAgents.length > 0);
   const plantKinds = Array.isArray(tree?.plantKinds) && tree.plantKinds.length > 0
     ? tree.plantKinds
     : loadFactoryPlantKinds(targetDir);
   const costume = wantsCostume(targetDir);
   const suit = overlayed
     ? "overlay"
-    : millPlanted || soundPlanted
+    : millPlanted || soundPlanted || blipPlanted
       ? "fastened"
       : costume
         ? "costume"
@@ -640,6 +682,10 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     soundPlant: {
       skills: Array.isArray(tree?.soundPlantSkills) ? tree.soundPlantSkills : [],
       agents: Array.isArray(tree?.soundPlantAgents) ? tree.soundPlantAgents : [],
+    },
+    blipPlant: {
+      skills: Array.isArray(tree?.blipPlantSkills) ? tree.blipPlantSkills : [],
+      agents: Array.isArray(tree?.blipPlantAgents) ? tree.blipPlantAgents : [],
     },
     shopPlant: {
       skills: Array.isArray(tree?.shopPlantSkills) ? tree.shopPlantSkills : loadShopPlant(targetDir),
@@ -686,6 +732,9 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   tree.soundPlantSkills = millPlant.sound?.skills || [];
   tree.soundPlantAgents = millPlant.sound?.agents || [];
   tree.sound = millPlant.sound || emptyPlantFiles();
+  tree.blipPlantSkills = millPlant.blip?.skills || [];
+  tree.blipPlantAgents = millPlant.blip?.agents || [];
+  tree.blip = millPlant.blip || emptyPlantFiles();
   tree.shopPlantSkills = loadShopPlant(targetDir);
   tree.codex = overlayJsonFacet(
     resolveInside(targetDir, params.codex),
@@ -715,6 +764,7 @@ module.exports = {
   DEFAULT_PARAMS,
   FACTORY_SHOP_SKILLS,
   FACTORY_PLANT_CATALOG,
+  isFactoryPlantKind,
   deepMerge,
   loadFoundryParams,
   loadFoundryExtra,
