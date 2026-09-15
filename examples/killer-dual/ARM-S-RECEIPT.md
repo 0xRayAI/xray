@@ -9,7 +9,7 @@
 | Cloud | `bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe` — https://cursor.com/agents/bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe |
 | Model (run-info) | `cursor-grok-4.6-high` |
 | Window cite | **Grok 500k locked** (ticket). Host `context_window_size`: **MISS**. |
-| Compact class | `cursor-host-precompact-FAIL` |
+| Compact class (this snapshot) | `cursor-host-precompact-FAIL` (pre-fire). Post-fire: `RECEIPT-HOST-PRECOMPACT.md` |
 
 ## Harness proof
 

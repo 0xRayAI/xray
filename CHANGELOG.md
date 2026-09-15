@@ -22,6 +22,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Consumer install of packed `0xray`** — stop shipping `@0xray/repertoire` as `file:./vendor/@0xray/repertoire`. npm `--install-links`, pnpm, and yarn resolve that path from the **consumer** root (`ENOENT .../vendor/@0xray/repertoire/package.json`), not from `node_modules/0xray`. The organ stays in the tarball at `vendor/@0xray/repertoire/`; postinstall wears it into `node_modules/@0xray/repertoire`. Fresh `npm install 0xray` / `npm install 0xray-*.tgz` no longer needs a consumer-root `vendor/` tree. Mill plant (`mill`+`inspect`) unchanged.
 
 ### 🔧 Maintenance
+- **HOST-FIRE Arm S** — first live `cursor-host-precompact` on `bc-cd19bb4e` (count=2). Survive receipt + compare: `examples/killer-dual/RECEIPT-HOST-PRECOMPACT.md`, `COMPARE.md`.
 - **HOST-FIRE #3** — `examples/cursor-cloud-compact/RECEIPT-HOST-PRECOMPACT-3.md`: hooks bound at boot + live `preToolUse` spawn; host `preCompact` still did not fire (`cursor-host-precompact-FAIL`).
 - Foundry mill: one bumper (`reconcile-version.mjs`); `version-manager.mjs` is `--artifacts-only` (JSON + CHANGELOG). Bump and `--tag` are refused.
 - Docs mill verifies era kernel headers (`4.0`) and skill counts; it does not rewrite markdown prose.
