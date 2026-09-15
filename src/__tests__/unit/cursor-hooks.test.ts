@@ -4,7 +4,14 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { classifyPreCompactEvent } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
+import {
+  classifyPreCompactEvent,
+} from '../../integrations/cursor/hooks/cursor-hook-utils.js';
+import {
+  classifyUsageCite,
+  parseInvokeProbeLog,
+  writeCursorUsageReceipt,
+} from '../../integrations/cursor/hooks/cursor-usage-receipt.js';
 
 const packageRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const preTool = path.join(packageRoot, 'src/integrations/cursor/hooks/pre-tool-use.js');
@@ -195,6 +202,17 @@ describe('Cursor cloud hooks adapter', () => {
         readFileSync(path.join(tmp, '.xray', 'state', 'cursor-precompact.json'), 'utf8'),
       ) as { event_class: string };
       expect(receipt.event_class).toBe('cursor-precompact-synthetic');
+      const usage = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
+      ) as {
+        usage: { context_tokens: number | null; forbidden: boolean };
+        compact: { eventClass: string };
+      };
+      expect(usage.usage.forbidden).toBe(false);
+      expect(usage.usage.context_tokens).toBe(120000);
+      expect(usage.compact.eventClass).toBe('cursor-precompact-synthetic');
+      expect(card).toContain('Compact:');
+      expect(card).toContain('Usage:');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -229,6 +247,107 @@ describe('Cursor cloud hooks adapter', () => {
       const { stdout } = runHook(afterEdit, { file_path: 'README.md', cwd: tmp }, tmp);
       expect(JSON.parse(stdout)).toEqual({});
       expect(existsSync(path.join(tmp, '.xray', 'state', 'session-boot.json'))).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('parseInvokeProbeLog counts host preCompact without synthetic invoke', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-probe-'));
+    try {
+      mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        [
+          'ts=2026-09-15T09:12:31+00:00 event=preToolUse cwd=/workspace node=/exec-daemon/node',
+          'ts=2026-09-15T09:12:32+00:00 event=afterFileEdit cwd=/workspace node=/exec-daemon/node',
+          'ts=2026-09-15T09:13:01+00:00 event=preCompact cwd=/workspace node=/exec-daemon/node',
+        ].join('\n'),
+      );
+      const probe = parseInvokeProbeLog(tmp);
+      expect(probe.exists).toBe(true);
+      expect(probe.hostPreCompactFired).toBe(true);
+      expect(probe.counts.preCompact).toBe(1);
+      expect(probe.counts.preToolUse).toBe(1);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('classifyUsageCite rejects FILL and accepts host fields or MCP identity miss', () => {
+    expect(classifyUsageCite({ method: 'chars÷4', fillBytes: 12000 }).ok).toBe(false);
+    expect(classifyUsageCite({ method: 'chars÷4', fillBytes: 12000 }).forbidden).toBe(true);
+    expect(classifyUsageCite({ method: 'fill-only' }).forbidden).toBe(true);
+    const host = classifyUsageCite({
+      source: 'precompact-stdin',
+      method: 'host-field',
+      context_tokens: 48000,
+      context_usage_percent: 12,
+    });
+    expect(host.ok).toBe(true);
+    expect(host.miss).toBe(false);
+    expect(host.context_tokens).toBe(48000);
+    const mcp = classifyUsageCite({
+      source: 'cursor-cloud-run-info',
+      method: 'mcp',
+      model: 'cursor-grok-4.6-high',
+      bcId: 'bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe',
+      windowCite: 'Grok 500k locked; host context_window_size MISS',
+    });
+    expect(mcp.ok).toBe(true);
+    expect(mcp.miss).toBe(true);
+    expect(mcp.context_tokens).toBeNull();
+    expect(classifyUsageCite({}).ok).toBe(false);
+    expect(classifyUsageCite({}).miss).toBe(true);
+  });
+
+  it('writeCursorUsageReceipt upserts Station compact row and refuses fill as ok', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-usage-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        'ts=2026-09-15T09:12:31+00:00 event=preToolUse cwd=/tmp node=/exec-daemon/node\n',
+      );
+      const dest = writeCursorUsageReceipt(tmp, {
+        hooksAtBoot: true,
+        usage: {
+          source: 'cursor-cloud-run-info',
+          method: 'mcp',
+          model: 'cursor-grok-4.6-high',
+          bcId: 'bc-test',
+          windowCite: 'Grok 500k locked',
+        },
+      });
+      expect(dest).toBe(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'));
+      const receipt = JSON.parse(readFileSync(dest as string, 'utf8')) as {
+        ok: boolean;
+        compact: { hostFired: boolean; preCompactCount: number };
+        usage: { miss: boolean; model: string };
+      };
+      expect(receipt.ok).toBe(true);
+      expect(receipt.compact.hostFired).toBe(false);
+      expect(receipt.compact.preCompactCount).toBe(0);
+      expect(receipt.usage.miss).toBe(true);
+      expect(receipt.usage.model).toBe('cursor-grok-4.6-high');
+      const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Compact: preCompact N (count=0)');
+      expect(card).toContain('Usage: source=cursor-cloud-run-info');
+      expect(card).toContain('Ticket: COMPACT-BEN-001');
+      const compactIdx = card.indexOf('Compact:');
+      const continueIdx = card.lastIndexOf('Continue this card.');
+      expect(compactIdx).toBeGreaterThan(-1);
+      expect(compactIdx).toBeLessThan(continueIdx);
+      const forbiddenDest = writeCursorUsageReceipt(tmp, {
+        usage: { method: 'chars÷4', fillBytes: 99 },
+      });
+      const forbidden = JSON.parse(readFileSync(forbiddenDest as string, 'utf8')) as {
+        ok: boolean;
+        usage: { forbidden: boolean };
+      };
+      expect(forbidden.ok).toBe(false);
+      expect(forbidden.usage.forbidden).toBe(true);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

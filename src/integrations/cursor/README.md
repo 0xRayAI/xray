@@ -28,6 +28,20 @@ Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist
 - `cursor-precompact-synthetic` — script invoked with `--event-class=cursor-precompact-synthetic` (Path C fallback)
 - `cursor-host-precompact-FAIL` — HOST-FIRE fill ran; host did not spawn `preCompact` (see `RECEIPT-HOST-PRECOMPACT.md`, `-2.md`, `-3.md`)
 
+## Real usage (replace FILL)
+
+Do **not** prove window pressure with UTF-8 chars÷4. `src/integrations/cursor/hooks/cursor-usage-receipt.js` (`writeCursorUsageReceipt`) writes `.xray/state/cursor-usage-receipt.json` + Station `Compact:` / `Usage:` rows. No `dist` required (unlike the constitution gate).
+
+| Cite | Valid? |
+|------|--------|
+| `preCompact` stdin `context_tokens` / `context_usage_percent` / `context_window_size` | yes |
+| `cursor-cloud` `run-info` / `get-events` / dashboard (model, bc-id, window) | yes — token MISS is honest |
+| chars÷4, fill-only, `fillBytes` | **forbidden** (`ok: false`) |
+
+Host `preCompact` fire is counted from `.xray/state/cursor-hook-invoke.log` (`event=preCompact`). Do not hand-invoke `pre-compact.js` to mint that Y.
+
+Arm S landscape + receipt: `examples/killer-dual/`.
+
 ## Friend test
 
 From the repo root, after `npm run build` (or from `src/` on this exo):
@@ -43,4 +57,4 @@ echo '{"hook_event_name":"preCompact","trigger":"auto","context_tokens":1}' \
 # → Read .xray/state/STATION.md
 ```
 
-Path C seed + receipt: `examples/cursor-cloud-compact/`.
+Path C seed + receipt: `examples/cursor-cloud-compact/`. Suited Arm S (real usage, no FILL): `examples/killer-dual/`.

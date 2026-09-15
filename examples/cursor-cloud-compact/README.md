@@ -24,3 +24,5 @@ If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-
 | `RECEIPT-HOST-PRECOMPACT-5.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#5. Window locked **500k**. `hooks-at-boot: YES`. Live `preToolUse`. FILL **110.49% of 500k**. Host did not fire `preCompact`. Class: `host-never-emits-at-500k`. |
 
 EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run. #5 closed the 500k fill bar; remaining gap is host emit.
+
+Suited follow-on (KILLER-DUAL Arm S): `examples/killer-dual/` — real-usage receipt, no chars÷4 FILL.

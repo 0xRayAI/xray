@@ -15,6 +15,10 @@ import {
   writeCursorPrecompactReceipt,
   writeSessionBoot,
 } from './cursor-hook-utils.js';
+import {
+  hostUsageFromPreCompactEvent,
+  writeCursorUsageReceipt,
+} from './cursor-usage-receipt.js';
 
 function extractIntent(event) {
   return (
@@ -52,9 +56,15 @@ async function main() {
       bootPath,
       timestamp: new Date().toISOString(),
     });
+    const usagePath = writeCursorUsageReceipt(eventRoot, {
+      eventClass,
+      sessionId,
+      usage: hostUsageFromPreCompactEvent(event),
+    });
     appendHookActivity(eventRoot, 'cursor-pre-compact', 'station-written', 'success', {
       bootPath,
       receiptPath,
+      usagePath,
       event_class: eventClass,
       stationLine: payload.stationLine,
     });

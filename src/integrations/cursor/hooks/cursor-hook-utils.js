@@ -42,6 +42,19 @@ export {
   appendHookActivity,
 };
 
+export {
+  FORBIDDEN_USAGE_METHODS,
+  invokeProbeLogPath,
+  cursorUsageReceiptPath,
+  parseInvokeProbeLog,
+  hostUsageFromPreCompactEvent,
+  classifyUsageCite,
+  buildRepertoireFastenedProof,
+  buildCursorUsageReceipt,
+  upsertStationCompactRow,
+  writeCursorUsageReceipt,
+} from './cursor-usage-receipt.js';
+
 export function cursorWorkspaceRoot(event = {}) {
   const roots = event.workspace_roots || event.workspaceRoots;
   const fromList = Array.isArray(roots) && roots[0] ? String(roots[0]) : '';

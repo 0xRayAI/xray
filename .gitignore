@@ -32,6 +32,7 @@ xray/inference/
 .xray/state/repertoire-working.json
 .xray/state/repertoire/
 .xray/state/cursor-precompact.json
+.xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
 
 # 0xRay runtime artifacts
