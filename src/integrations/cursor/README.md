@@ -31,7 +31,7 @@ Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist
 
 ## Real usage (replace FILL)
 
-Do **not** prove window pressure with UTF-8 chars÷4. `src/integrations/cursor/hooks/cursor-usage-receipt.js` (`writeCursorUsageReceipt`) writes `.xray/state/cursor-usage-receipt.json` + Station `Compact:` / `Usage:` rows. No `dist` required (unlike the constitution gate).
+Do **not** prove window pressure with UTF-8 chars÷4. `src/integrations/cursor/hooks/cursor-usage-receipt.js` (`writeCursorUsageReceipt`) writes `.xray/state/cursor-usage-receipt.json` + Station `Compact:` / `Usage:` rows. Station `window=` prints host `context_window_size` when stdin sent it; ticket `windowCite` is fallback only. No `dist` required (unlike the constitution gate).
 
 | Cite | Valid? |
 |------|--------|

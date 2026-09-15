@@ -244,6 +244,13 @@ function upsertStationKeyedLine(card, key, value) {
   return `${card.trimEnd()}\n${line}\n`;
 }
 
+/** Host numeric window first. Ticket `windowCite` is not a substitute. Do not derive from tokens÷percent. */
+export function stationUsageWindowLabel(usage = {}) {
+  if (typeof usage.context_window_size === 'number') return String(usage.context_window_size);
+  if (typeof usage.windowCite === 'string' && usage.windowCite.trim()) return usage.windowCite.trim();
+  return 'MISS';
+}
+
 export function upsertStationCompactRow(root, receipt) {
   const dest = path.join(root, '.xray', 'state', 'STATION.md');
   if (!fs.existsSync(dest)) return null;
@@ -258,6 +265,7 @@ export function upsertStationCompactRow(root, receipt) {
     const tokens =
       typeof receipt.usage?.context_tokens === 'number' ? String(receipt.usage.context_tokens) : 'MISS';
     const heat = receipt.repertoire?.fastened ? 'fastened' : 'absent';
+    const windowLabel = stationUsageWindowLabel(receipt.usage || {});
     let card = fs.readFileSync(dest, 'utf8');
     card = upsertStationKeyedLine(
       card,
@@ -267,7 +275,7 @@ export function upsertStationCompactRow(root, receipt) {
     card = upsertStationKeyedLine(
       card,
       'Usage',
-      `source=${receipt.usage?.source || 'none'} model=${receipt.usage?.model || 'MISS'} window=${receipt.usage?.windowCite || 'MISS'} tokens=${tokens}`,
+      `source=${receipt.usage?.source || 'none'} model=${receipt.usage?.model || 'MISS'} window=${windowLabel} tokens=${tokens}`,
     );
     fs.writeFileSync(dest, card);
     return dest;

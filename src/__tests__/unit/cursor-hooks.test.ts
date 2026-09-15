@@ -10,6 +10,7 @@ import {
 import {
   classifyUsageCite,
   parseInvokeProbeLog,
+  stationUsageWindowLabel,
   writeCursorUsageReceipt,
 } from '../../integrations/cursor/hooks/cursor-usage-receipt.js';
 
@@ -337,6 +338,11 @@ describe('Cursor cloud hooks adapter', () => {
     expect(host.ok).toBe(true);
     expect(host.miss).toBe(false);
     expect(host.context_tokens).toBe(48000);
+    expect(stationUsageWindowLabel({ context_window_size: 256000, windowCite: 'Grok 500k locked' })).toBe(
+      '256000',
+    );
+    expect(stationUsageWindowLabel({ windowCite: 'Grok 500k locked' })).toBe('Grok 500k locked');
+    expect(stationUsageWindowLabel({})).toBe('MISS');
     const mcp = classifyUsageCite({
       source: 'cursor-cloud-run-info',
       method: 'mcp',
@@ -384,6 +390,7 @@ describe('Cursor cloud hooks adapter', () => {
       const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
       expect(card).toContain('Compact: preCompact N (count=0)');
       expect(card).toContain('Usage: source=cursor-cloud-run-info');
+      expect(card).toContain('window=Grok 500k locked');
       expect(card).toContain('Ticket: COMPACT-BEN-001');
       const compactIdx = card.indexOf('Compact:');
       const continueIdx = card.lastIndexOf('Continue this card.');
@@ -398,6 +405,33 @@ describe('Cursor cloud hooks adapter', () => {
       };
       expect(forbidden.ok).toBe(false);
       expect(forbidden.usage.forbidden).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('Station Usage window cites host context_window_size when stdin sent it', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-window-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        'ts=2026-09-15T10:12:45+00:00 event=preCompact cwd=/tmp node=/exec-daemon/node\n',
+      );
+      writeCursorUsageReceipt(tmp, {
+        usage: {
+          source: 'precompact-stdin',
+          method: 'host-field',
+          context_tokens: 232105,
+          context_usage_percent: 90.666015625,
+          context_window_size: 256000,
+          model: 'cursor-grok-4.6-high',
+        },
+      });
+      const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Usage: source=precompact-stdin model=cursor-grok-4.6-high window=256000 tokens=232105');
+      expect(card).toContain('Compact: preCompact Y (count=1) · usage host-field');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

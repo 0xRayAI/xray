@@ -7,7 +7,8 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `ARM-S-LANDSCAPE.md` | Blaze stack digest (xray, Clearing, Groover/hangar, grok-bot, ZigZag/Dynamo/Chrono) |
 | `ARM-S-KILLER-FEAT.md` | One killer next feature + why |
 | `ARM-S-RECEIPT.md` | Boot probe, hooks-at-boot, repertoire proof, usage cites (pre-fire snapshot) |
-| `RECEIPT-HOST-PRECOMPACT.md` | Host fire + survive DIAG (first live `cursor-host-precompact`) |
+| `RECEIPT-HOST-PRECOMPACT.md` | Host fire + survive DIAG (live `cursor-host-precompact`, count=3) |
+| `cursor-usage-receipt.third.json` | Third fire snapshot — host window **256000**, tokens 232105 |
 | `COMPARE.md` | Arm S vs Arm B compare (both host fire; token split = writer-liveness) |
 | `TRANSITION.md` | PreToolUse vs PreCompact vs Grok Bot `survive-compact` — eval cases |
 | `NOTES-EXCHANGE.md` | Dual-arm mailbox (no cloud-to-cloud queue) |

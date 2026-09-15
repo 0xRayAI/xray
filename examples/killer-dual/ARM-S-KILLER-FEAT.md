@@ -8,7 +8,7 @@
 
 HOST-FIRE #4 (`examples/cursor-cloud-compact/RECEIPT-HOST-PRECOMPACT-4.md`) already ruled out bind/freshness. The leftover “usage” was UTF-8 bytes ÷ 4 against a docs-example 128k window — explicitly **not** a host meter. The next lever written there: **do not run another blind FILL**.
 
-KILLER-DUAL ticket SSOT: *real tokens + real work A/B (replace fake FILL)*. Cloud MCP `run-info` gives model (`cursor-grok-4.6-high`) and bc-id; `get-events` this run is **0**. Host `context_tokens` exists only on `preCompact` stdin, which this host has not fired. A receipt that **forbids FILL** and **allows honest MISS** is the missing organ. Without it every successor re-fakes a window percent.
+KILLER-DUAL ticket SSOT: *real tokens + real work A/B (replace fake FILL)*. Cloud MCP `run-info` gives model (`cursor-grok-4.6-high`) and bc-id; `get-events` this run is identity only. Host `context_tokens` / `context_window_size` exist on `preCompact` stdin. This host later fired: tokens then window (256000 on fire 3). A receipt that **forbids FILL** and **allows honest MISS** is the organ. Station must print the host window number, not a ticket `windowCite`.
 
 A/B real work (this run, not FILL waves):
 
