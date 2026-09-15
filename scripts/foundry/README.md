@@ -57,9 +57,9 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
-**Sound plant (factory-sound):** `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz`) → headless wav → metrics gate → `.xray/sound-bed-receipt.json`. Inspect reports the plant plus last bed `PASS`/`FAIL`. Those worn names are not a costume dump. Not a copy of mill inspect. Dogfood from this branch / packed mill — no `@0xray/foundry` bump required.
+**Sound plant (factory-sound):** `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz` | `phonk`) → Rippel-style headless wav (membrane + metal + mixer) → metrics gate → `.xray/sound-bed-receipt.json`. Tone.Offline is blocked in Node (no `OfflineAudioContext`); `sound-rippel.cjs` is the lean port, not a 3-sine toy. Inspect reports the plant plus last bed `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
 
-A friend would hear: agents that make Dist audio beds get a real plant like mill, with inspect that checks the last bed passed loudness/smoothness gates — not fake code-mill skills on a sound seat.
+A friend would hear: the audio factory should use real synth chains (kick membranes, metal hats, mixers) from Rippel’s app — not thin piddy oscillators.
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 

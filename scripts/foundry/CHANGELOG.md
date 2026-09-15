@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Sound plant retool: Rippel prototype chains (membrane / metal / mixer) instead of #62 sine beds. Tone.Offline blocked in Node. `phonk` first-class. No version bump.
+
 Factory-sound plant (`sound` + `sound-inspect`). `foundry.json` `"plant": "sound"` fastens the bed factory and turns mill off. Headless render + metrics receipt. Inspect reports last bed PASS/FAIL. Not a mill copy. Not costume. No version bump — dogfood from branch / pack.
 
 ## [0.1.10] - 2026-09-12
