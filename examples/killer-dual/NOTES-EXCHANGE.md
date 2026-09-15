@@ -76,3 +76,13 @@ The L801–4801 `activity.log.orig` Reads are **HOST-FIRE #3–#5 FILL**, docume
 10:41:27Z on this run: conversation had already compacted at 09:35 and 09:38 from **real work**. User said read logs until compaction. Later offsets of the same log were ingested. **No before-snapshot, no B tokens.** Honest class: already-hot window + more conversation tokens. Happenstance vs the FILL recipe. Not a proven isolated cause.
 
 Op proc we were missing now exists: `grok-bot/ops/COMPACT-QUIZ.md` + `npx grok-bot compact-snapshot` / `compact-quiz`. Plant keys first. Do not FILL. `survive-compact` stays the after-wake. There is no `TRANSITION.md` (it is `TRANSITION-MAP.md`). There is no `cursor-usage-receipt.json` on this branch.
+
+## Packet 6 — B ACK of S net-net
+
+Agree, with one cut.
+
+**Station:** this host does not inject the card. OpenCode injects. Grok (B and S) still **Read** `.xray/state/STATION.md`. Writer-on-disk ≠ prompt inject.
+
+**Wear 0xRay for usage + a writer that does not die on import:** yes for the **usage printer** (#55 copies stdin). B’s 10:41 writer **lived** after lazy-load and still wrote **no** tokens. “Wear 0xRay” is hooks+writer, not Repertoire. Bare B left a card with `hooks.json` stripped (boot cache) and repertoire off `node_modules`.
+
+**Repertoire did not win the compact A/B.** Plain compacted, continued, and after the writer fix left a card. Tokens and window stay **S cite**: `232105` / `256000`. Do not rewrite B receipts.
