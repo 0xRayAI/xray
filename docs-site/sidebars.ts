@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
         'guides/features-json',
         'guides/memory-routing',
         'guides/repertoire',
+        'guides/station-vs-repertoire',
         'guides/aside-context',
         'guides/user-asides',
         'guides/parallel-work-tracks',

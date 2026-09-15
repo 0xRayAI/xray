@@ -8,7 +8,7 @@ sidebar_label: Grok floor
 
 Grok Build wears the same exo as OpenCode, Hermes, and OpenClaw. Constitution always on. Temperament on this floor is **frontier** when `suit_temperament.profile` is `auto`. Codex 11 / 29 / 69 still **deny**. Spawn-without-plan **warns**.
 
-Grok does **not** inject `.xray/state/STATION.md`. Read the card after compact or host-swap. Do not thicken the Grok exo.
+Grok does **not** inject `.xray/state/STATION.md`. Read the card after compact or host-swap. Do not thicken the Grok exo. Station is survive-the-cut; Repertoire 0.1.8 is not the card — [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md).
 
 ## Wear
 

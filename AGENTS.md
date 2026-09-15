@@ -54,6 +54,8 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Memory routing + Repertoire (v3.3+)
 
+**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
+
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 
 ```json
@@ -216,6 +218,7 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 | Platform integrations | `docs-site/docs/guides/integrations.md` |
 | Memory routing | `docs-site/docs/guides/memory-routing.md` |
 | Repertoire | `docs-site/docs/guides/repertoire.md` |
+| Station vs Repertoire 0.1 | `docs-site/docs/guides/station-vs-repertoire.md` |
 | AsideContext | `docs-site/docs/guides/aside-context.md` |
 | Consumer migration | `docs-site/docs/guides/consumer-migration.md` |
 | Docusaurus site | https://0xrayai.github.io/xray/ |

@@ -34,7 +34,7 @@ Registered in `.mcp.json` as `npx -y 0xray mcp <cmd>`:
 | `xray-code-review` | Proposal quality |
 | `xray-architect-tools` | System design |
 
-Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoire mcp`), enable-when-resolves.
+Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoire mcp`), enable-when-resolves. Survive compact is **Station** (Read `.xray/state/STATION.md`), not Repertoire 0.1.8.
 
 ## Codex 69 (always on)
 
