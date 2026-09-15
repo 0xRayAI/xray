@@ -22,7 +22,7 @@ If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-
 | `RECEIPT-HOST-PRECOMPACT-3.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#3. `hooks-at-boot: YES`. Live `preToolUse` spawn. FILL 4 waves. Host did not fire `preCompact`. |
 | `RECEIPT-HOST-PRECOMPACT-4.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#4 + DIAG. `hooks-at-boot: YES`. Live `preToolUse`. FILL ≥85% of 128k (~22.8% of 500k). Context-constraints summary did not emit `preCompact`. Class: `host-never-emits`. |
 | `RECEIPT-HOST-PRECOMPACT-5.md` | `cursor-host-precompact-FAIL` | HOST-FIRE#5. Window locked **500k**. `hooks-at-boot: YES`. Live `preToolUse`. FILL **110.49% of 500k**. Host did not fire `preCompact`. Class: `host-never-emits-at-500k`. |
-| `../killer-dual/ARM-B-BARE-COMPACT.md` | `cursor-host-precompact` (probe) · Station write FAIL then adapter PASS | Arm B. Host summary + **2×** probe `preCompact`. Writer crashed on missing dist; lazy-load + Path C quiz PASS. |
-| `../killer-dual/TRANSITION-MAP.md` | eval cases | Side-by-side Cursor hooks vs Grok Bot `survive-compact`. Do not rerun Path C. Post-fix *host* compact still OPEN. |
+| `../killer-dual/ARM-B-BARE-COMPACT.md` | `cursor-host-precompact` | Arm B. Host fires 09:35/09:38 writer **FAIL**; Path C **PASS**; live host **10:41:27Z** writer **PASS** (bare disk, no tokens on receipt). |
+| `../killer-dual/TRANSITION-MAP.md` | eval cases | Side-by-side Cursor hooks vs Grok Bot `survive-compact`. E2 post-fix host fire **PASS**. Do not rerun Path C. |
 
 EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. Arm B is probe-positive. Station writer is fixed (`delegation-gate-runtime.mjs` lazy-load); Path C quiz PASS after `npm run build`. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run; boot-cached hooks can still spawn after a mid-run strip.

@@ -1,6 +1,6 @@
 {
   "arm": "B",
-  "harness": "bare-then-repaired",
+  "harness": "bare",
   "survived": true,
   "exercise": "PASS",
   "bcId": "bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
@@ -12,18 +12,39 @@
   "parkedMillGo": "https://github.com/0xRayAI/xray/pull/54",
   "hostCompact": true,
   "preCompactProbe": true,
-  "preCompactAt": [
+  "preCompactAtHost": [
     "2026-09-15T09:35:46+00:00",
-    "2026-09-15T09:38:20+00:00"
+    "2026-09-15T09:38:20+00:00",
+    "2026-09-15T10:41:27+00:00"
   ],
-  "stationWritten": true,
+  "preCompactAtRepairNotHost": [
+    "2026-09-15T09:55:34+00:00",
+    "2026-09-15T09:55:48+00:00"
+  ],
+  "stationWrittenAtFirstFires": false,
+  "stationWrittenAtPostFixHostFire": true,
   "cursorPrecompactJson": true,
+  "postFixHostFire": {
+    "at": "2026-09-15T10:41:27.884Z",
+    "eventClass": "cursor-host-precompact",
+    "trigger": "auto",
+    "sessionId": "bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d",
+    "hooksJsonOnDisk": false,
+    "repertoireOnNodeModules": false,
+    "handInvokedPreCompact": false,
+    "fill": false,
+    "contextTokensOnReceipt": null,
+    "contextWindowSizeOnReceipt": null,
+    "stationIntent": null,
+    "stationRepertoireHeat": "on (vendor dist, not fastened organ)"
+  },
   "eventClass": "cursor-host-precompact",
-  "stationWrite": "PASS",
+  "stationWrite": "FAIL at 09:35/09:38, PASS Path C, PASS live host 10:41:27Z",
   "adapterClass": "delegation-gate-lazy-load",
   "tests": "15/15 cursor-hooks + grok-bot-seat-ready",
   "pathCQuiz": "PASS",
-  "usageCite": "cursor-cloud run-info https://cursor.com/agents/bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d · cursor-grok-4.6-high · host compact + 2× invoke-probe event=preCompact · MCP has no token meter",
+  "e2PostFixHostFire": "PASS",
+  "usageCite": "B receipt has no usage keys. Cite S fire3 tokens=232105 context_window_size=256000. MCP has no token meter. Never chars÷4.",
   "hooksJsonAtCompact": false,
   "hooksAtBoot": true,
   "repertoireFastened": false,

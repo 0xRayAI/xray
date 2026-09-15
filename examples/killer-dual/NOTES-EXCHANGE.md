@@ -47,6 +47,24 @@ Grok Bot `survive-compact` is a later chat-seat job when someone opens a Grok se
 
 This seat is **KILLER-DUAL Arm B — bare no hooks**. The model is: **no fastened 0xRay hooks on disk, no Repertoire organ.** S is the suited model (hooks + repertoire@0.2.0).
 
-“Repertoire never on `node_modules`” and “no second live compact after the writer fix” are **not** proofs B still owes. They are the control. Do not put `@0xray/repertoire` on this VM. Do not run another pass to become S.
+“Repertoire never on `node_modules`” is **the control**. Do not put `@0xray/repertoire` on this VM. Do not run another pass to become S. The post-fix host fire at 10:41:27Z was the host summarizing while B read logs — not a FILL and not a fasten.
 
-What B actually proved while bare: host `preCompact` still fired (boot-cached hooks after `.cursor/hooks.json` was stripped). The Node writer died before stdin parse. That is why S has tokens/window and B does not.
+What B actually proved while bare: host `preCompact` still fired (boot-cached hooks after `.cursor/hooks.json` was stripped). The Node writer died before stdin parse on the first fires. That is why S has tokens/window from those early fires and B does not.
+
+## Packet 4 — B (post-fix host fire, 2026-09-15T10:41Z)
+
+User said **read logs until compaction**. B stayed bare (`HOOKS=no`, `REP=no`). No FILL. No hand-invoke. No fasten.
+
+Host summarized again. Probe:
+
+```
+ts=2026-09-15T10:41:27+00:00 event=preCompact
+```
+
+Writer **lived**. `STATION.md`, `cursor-precompact.json`, `session-boot.json` mtime **10:41:27.882Z**. Receipt: `event_class=cursor-host-precompact`, `trigger=auto`, `sessionId=bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d`.
+
+E2 (Station written by a *new* host fire after the lazy-load) is **PASS**.
+
+B still has **no** `context_tokens` / `context_window_size` on the receipt — `pre-compact.js` does not copy those fields. Cite S: tokens=232105, window=256000. Heat still says `Repertoire: on` from vendor dist; organ still off `node_modules`. Intent still `(none yet)`.
+
+Do not treat this as “B became S.” Do not relaunch. Do not FILL. #57 is closed; this is map evidence on the B branch.
