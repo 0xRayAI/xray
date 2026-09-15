@@ -6,6 +6,7 @@ import { execFileSync } from 'child_process';
 import {
   applyStationHeat,
   clipIntent,
+  extractPreservedStationLines,
   formatStationMarkdown,
   mergeStationMarkdown,
   writeStationMarkdown,
@@ -54,6 +55,13 @@ function expectCustomStationKeys(card: string) {
   }
   expect(card).toContain('## Durable');
   expect(card).toContain('Keep this seed block across compact.');
+}
+
+function countStationFooters(card: string) {
+  return {
+    continueCount: card.split('Continue this card.').length - 1,
+    grokCount: card.split('Grok does not inject this file').length - 1,
+  };
 }
 
 function gitInit(root: string) {
@@ -320,6 +328,62 @@ describe('station hot-swap', () => {
     expect(merged).toContain('Working: station-merge');
     expect(merged).not.toContain('Intent: old intent');
     expectCustomStationKeys(merged);
+    expect(countStationFooters(merged)).toEqual({ continueCount: 1, grokCount: 1 });
+  });
+
+  it('Seed does not swallow stock footers so repeated heat stays one footer', () => {
+    const footer = [
+      'Continue this card. Compaction and host change are the same cut. Do not cold-start.',
+      'Grok does not inject this file — Read it. OpenCode injects. Do not thicken the Grok exo.',
+    ];
+    const existing = [
+      '# Station',
+      '',
+      'Host: cursor (frontier)',
+      'Intent: (none yet)',
+      'Ticket: KILLER-DUAL-CLOUD',
+      '## Durable',
+      'killer-dual-arm-s-suited',
+      '',
+      '## Seed',
+      'Never relaunch this bc. Continue the card.',
+      '',
+      'Compact: preCompact Y (count=4) · usage host-field · repertoire fastened',
+      '',
+      'Usage: source=precompact-stdin window=256000 tokens=230787',
+      '',
+      ...footer,
+      '',
+      ...footer,
+      '',
+      ...footer,
+    ].join('\n');
+    const preserved = extractPreservedStationLines(existing).join('\n');
+    expect(preserved).toContain('Ticket: KILLER-DUAL-CLOUD');
+    expect(preserved).toContain('## Durable');
+    expect(preserved).toContain('killer-dual-arm-s-suited');
+    expect(preserved).toContain('## Seed');
+    expect(preserved).toContain('Never relaunch this bc. Continue the card.');
+    expect(preserved).toContain('Compact: preCompact Y (count=4)');
+    expect(preserved).toContain('Usage: source=precompact-stdin window=256000 tokens=230787');
+    expect(preserved).not.toContain('Continue this card. Compaction');
+    expect(preserved).not.toContain('Grok does not inject this file');
+
+    const stock = formatStationMarkdown({
+      host: 'cursor',
+      suit_profile: 'frontier',
+      intent: '(none yet)',
+      planLine: 'fix station seed footer stack',
+      git: { branch: 'cursor/station-seed-footer-02fe', head: 'abc1234' },
+      repertoireResume: 'Repertoire: on — 8 signals',
+      workingLine: 'Working: last pre_compact @ deadbeef',
+    });
+    const once = mergeStationMarkdown(stock, existing);
+    const twice = mergeStationMarkdown(stock, once);
+    expect(countStationFooters(once)).toEqual({ continueCount: 1, grokCount: 1 });
+    expect(countStationFooters(twice)).toEqual({ continueCount: 1, grokCount: 1 });
+    expect(twice).toContain('Ticket: KILLER-DUAL-CLOUD');
+    expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });
 
   it('writeStationMarkdown merges a seeded card instead of wipe-then-write', () => {
@@ -357,6 +421,7 @@ describe('station hot-swap', () => {
       expect(again).toContain('Intent: second heat still merges');
       expect(again).toContain('Working: last post_compact');
       expectCustomStationKeys(again);
+      expect(countStationFooters(again)).toEqual({ continueCount: 1, grokCount: 1 });
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
