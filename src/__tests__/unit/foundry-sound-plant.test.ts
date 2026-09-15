@@ -225,7 +225,18 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
         brief: string;
         genre?: string;
         seconds?: number;
-      }) => { receipt: { status: string; seed: string; genre: string; metrics: unknown }; wav: string };
+      }) => {
+        receipt: {
+          status: string;
+          seed: string;
+          genre: string;
+          metrics: unknown;
+          engine?: string;
+          topology?: string;
+          voices?: string[];
+        };
+        wav: string;
+      };
       seedFromBrief: (brief: string, genre: string) => string;
       readReceipt: (dir: string) => { status: string } | null;
       evaluateWavFile: (file: string) => { status: string };
@@ -247,6 +258,8 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
 
       const brief = 'night alley rain pad';
       const first = renderBed({ root: tmp, brief, genre: 'ambient', seconds: 4 });
+      expect(first.receipt.engine).toBe('rippel-headless');
+      expect(first.receipt.topology).toBe('membrane+metal+mixer');
       expect(first.receipt.status, JSON.stringify(first.receipt.metrics, null, 2)).toBe('PASS');
       expect(first.receipt.seed).toBe(seedFromBrief(brief, 'ambient'));
       expect(first.receipt.genre).toBe('ambient');
@@ -258,7 +271,11 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
       expect(again.receipt.seed).toBe(first.receipt.seed);
 
       const phonk = renderBed({ root: tmp, brief: 'trunk bounce alias', genre: 'phonk', seconds: 4 });
-      expect(phonk.receipt.genre).toBe('techno');
+      expect(phonk.receipt.genre).toBe('phonk');
+      expect(phonk.receipt.voices).toEqual(
+        expect.arrayContaining(['membrane-808', 'metal-hat', 'mixer']),
+      );
+      expect(phonk.receipt.status, JSON.stringify(phonk.receipt.metrics, null, 2)).toBe('PASS');
 
       const report = await inspectSuit(tmp, { millRoot: root, skipLive: true });
       expect(report.ok, JSON.stringify(report.checks, null, 2)).toBe(true);
@@ -314,6 +331,42 @@ describe('foundry sound plant — metrics fail-closed + PASS wav', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe('foundry sound plant — Rippel topology', () => {
+  it('techno/phonk use membrane+metal chains and are richer than a 3-sine bed', () => {
+    const { renderSamples, SAMPLE_RATE, TONE_OFFLINE_BLOCKER, crestFactor } = requireCjs(
+      path.join(root, 'scripts/foundry/sound-bed.cjs'),
+    ) as {
+      renderSamples: (opts: { brief: string; genre: string; seconds: number }) => {
+        samples: Float64Array;
+        genre: { id: string; voices: string[] };
+        topology: string;
+        engine: string;
+      };
+      SAMPLE_RATE: number;
+      TONE_OFFLINE_BLOCKER: string;
+      crestFactor: (samples: Float64Array) => number;
+    };
+    expect(TONE_OFFLINE_BLOCKER).toMatch(/OfflineAudioContext/);
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderMembrane');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderMetal');
+    expect(read('scripts/foundry/sound-bed.cjs')).not.toContain('three-sine');
+    expect(read('scripts/foundry/sound-bed.cjs')).toContain('sound-rippel.cjs');
+
+    const techno = renderSamples({ brief: 'warehouse floor', genre: 'techno', seconds: 4 });
+    expect(techno.engine).toBe('rippel-headless');
+    expect(techno.topology).toBe('membrane+metal+mixer');
+    expect(techno.genre.voices).toEqual(
+      expect.arrayContaining(['membrane-kick', 'metal-hat', 'mixer']),
+    );
+    const sine = new Float64Array(SAMPLE_RATE * 4);
+    for (let i = 0; i < sine.length; i++) {
+      const t = i / SAMPLE_RATE;
+      sine[i] = 0.2 * Math.sin(2 * Math.PI * 110 * t) + 0.15 * Math.sin(2 * Math.PI * 165 * t);
+    }
+    expect(crestFactor(techno.samples)).toBeGreaterThan(crestFactor(sine) * 1.15);
   });
 });
 

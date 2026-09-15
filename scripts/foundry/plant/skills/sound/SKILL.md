@@ -13,7 +13,7 @@ This plant **fastens** a music/bed factory. Dist audio beds get a real plant lik
 
 1. **Brief** → checksum seed (stable hash lineage).
 2. **Genre** → tempo + voice prefs: `ambient` | `techno` | `jazz` (`phonk` / `destination` are aliases).
-3. **Render** → wav (lean Node synth).
+3. **Render** → wav via Rippel prototype chains (Membrane kick / Metal hat / mixer). Tone.Offline is blocked in Node (`OfflineAudioContext` missing); this is the lean headless port, not a 3-sine bed.
 4. **Metrics gate** → chop / levels / peak / hum. Fail-closed.
 5. **Receipt** → `.xray/sound-bed-receipt.json` (`PASS` / `FAIL` + numbers).
 

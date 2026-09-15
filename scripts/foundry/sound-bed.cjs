@@ -1,13 +1,14 @@
 /**
  * Factory-sound spine: brief → checksum seed → genre → headless wav → metrics gate.
- * Lean Node. No browser. No Tone. Not mill inspect.
+ * Render is the Rippel prototype port (membrane / metal / mixer). Not mill inspect.
  */
 
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const rippel = require("./sound-rippel.cjs");
 
-const SPINE = 1;
+const SPINE = 2;
 const SAMPLE_RATE = 44100;
 const DEFAULT_SECONDS = 4;
 const WINDOW_SEC = 0.25;
@@ -22,19 +23,8 @@ const BODY_MIN_RMS = 0.05;
 const RECEIPT_REL = path.join(".xray", "sound-bed-receipt.json");
 const WAV_REL = path.join(".xray", "sound", "bed.wav");
 
-const GENRE_ALIASES = {
-  ambient: "ambient",
-  techno: "techno",
-  jazz: "jazz",
-  phonk: "techno",
-  destination: "ambient",
-};
-
-const GENRES = {
-  ambient: { bpm: 72, voices: ["pad", "air"] },
-  techno: { bpm: 128, voices: ["pulse", "sub"] },
-  jazz: { bpm: 96, voices: ["warm", "brush"] },
-};
+const GENRE_ALIASES = rippel.GENRE_ALIASES;
+const GENRES = rippel.GENRES;
 
 function canonicalJson(value) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
@@ -71,72 +61,22 @@ function seedU32(seedHex) {
 }
 
 function resolveGenre(name) {
-  const raw = String(name || "ambient")
-    .trim()
-    .toLowerCase();
-  const id = GENRE_ALIASES[raw] || (GENRES[raw] ? raw : "ambient");
-  const spec = GENRES[id];
-  return { id, alias: raw !== id ? raw : null, bpm: spec.bpm, voices: [...spec.voices] };
-}
-
-function easeInOut(t) {
-  const x = Math.min(1, Math.max(0, t));
-  return 0.5 - 0.5 * Math.cos(Math.PI * x);
-}
-
-function envelope(t, seconds) {
-  const introHold = 0.5;
-  const introEase = 0.35;
-  const fadeStart = Math.max(seconds - FADE_SEC, INTRO_SEC + 0.5);
-  if (t < introHold) return 0.34;
-  if (t < introHold + introEase) return 0.34 + 0.66 * easeInOut((t - introHold) / introEase);
-  if (t >= fadeStart) return 1 - easeInOut((t - fadeStart) / Math.max(seconds - fadeStart, 1e-6));
-  return 1;
-}
-
-function voicePartial(t, hz, phase, kind) {
-  const w = 2 * Math.PI * hz * t + phase;
-  if (kind === "pulse") return Math.tanh(2.2 * Math.sin(w));
-  if (kind === "warm") return Math.sin(w) + 0.22 * Math.sin(2 * w);
-  return Math.sin(w);
+  return rippel.resolveGenre(name);
 }
 
 function renderSamples({ brief, genre, seconds, seed }) {
   const dur = Number(seconds) > 0 ? Number(seconds) : DEFAULT_SECONDS;
-  const n = Math.floor(SAMPLE_RATE * dur);
   const g = resolveGenre(genre);
   const seedHex = seed || seedFromBrief(brief, g.id);
   const rng = mulberry32(seedU32(seedHex));
-  const samples = new Float64Array(n);
-
-  const fundamentals = g.id === "techno" ? [55, 82.5, 110] : g.id === "jazz" ? [196, 247, 294] : [98, 147, 196];
-  const kinds = g.voices;
-  const phases = fundamentals.map(() => rng() * Math.PI * 2);
-  const lfoRates = fundamentals.map(() => 0.08 + rng() * 0.28);
-  const lfoDepth = fundamentals.map(() => 0.035 + rng() * 0.045);
-  const amps = [0.5, 0.46, 0.4];
-
-  for (let i = 0; i < n; i++) {
-    const t = i / SAMPLE_RATE;
-    const env = envelope(t, dur);
-    let mix = 0;
-    for (let v = 0; v < fundamentals.length; v++) {
-      const drift = 1 + lfoDepth[v] * Math.sin(2 * Math.PI * lfoRates[v] * t + phases[v]);
-      const trem = 0.78 + 0.22 * Math.sin(2 * Math.PI * (lfoRates[v] * 0.65) * t + phases[(v + 1) % phases.length]);
-      const kind = kinds[v % kinds.length] === "pulse" ? "pulse" : kinds[v % kinds.length] === "warm" ? "warm" : "sine";
-      mix += amps[v] * trem * voicePartial(t, fundamentals[v] * drift, phases[v], kind);
-    }
-    samples[i] = mix * env;
-  }
-
-  let peak = 0;
-  for (let i = 0; i < n; i++) {
-    const a = Math.abs(samples[i]);
-    if (a > peak) peak = a;
-  }
-  const scale = peak > 0 ? 0.62 / peak : 0;
-  for (let i = 0; i < n; i++) samples[i] *= scale;
-  return { samples, sampleRate: SAMPLE_RATE, seconds: dur, seed: seedHex, genre: g };
+  return rippel.renderRippelBed({
+    brief,
+    genre: g.id,
+    seconds: dur,
+    seedHex,
+    rng,
+    sampleRate: SAMPLE_RATE,
+  });
 }
 
 function writeWav16Mono(file, samples, sampleRate = SAMPLE_RATE) {
@@ -358,7 +298,9 @@ function evaluateMetrics(samples, sampleRate) {
     centroids.length > 1 && centroidMean > 0
       ? Math.sqrt(centroidVar / centroids.length) / centroidMean
       : 0;
-  const drone = sameRatio >= 0.75 && (meanShare >= 0.42 || centroidCv <= 0.03);
+  // Continuous drone: one bin owns the piece AND the centroid barely moves.
+  // Kick membranes can own a low bin without being a flat sine.
+  const drone = sameRatio >= 0.8 && meanShare >= 0.5 && centroidCv <= 0.045;
   const hum = {
     sameDominantRatio: sameRatio,
     meanDominantShare: meanShare,
@@ -400,6 +342,9 @@ function buildReceipt(input, evaled) {
     alias: genre.alias || null,
     tempo: genre.bpm,
     voices: genre.voices,
+    engine: input.engine || rippel.ENGINE,
+    topology: input.topology || "membrane+metal+mixer",
+    toneOffline: input.toneOffline || rippel.TONE_OFFLINE_BLOCKER,
     wav: input.wavRel || input.wav,
     durationSec: input.seconds,
     sampleRate: input.sampleRate || SAMPLE_RATE,
@@ -455,6 +400,9 @@ function renderBed(opts = {}) {
       brief,
       seed: rendered.seed,
       genre: rendered.genre,
+      engine: rendered.engine,
+      topology: rendered.topology,
+      toneOffline: rendered.toneOffline,
       wav,
       wavRel: path.relative(root, wav) || wav,
       seconds: rendered.seconds,
@@ -487,4 +435,9 @@ module.exports = {
   writeReceipt,
   readReceipt,
   buildReceipt,
+  TONE_OFFLINE_BLOCKER: rippel.TONE_OFFLINE_BLOCKER,
+  bandEnergy: rippel.bandEnergy,
+  highpassEnergy: rippel.highpassEnergy,
+  zeroCrossRate: rippel.zeroCrossRate,
+  crestFactor: rippel.crestFactor,
 };
