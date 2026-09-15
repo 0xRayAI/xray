@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops.
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Inspect reports the last bed receipt. Not costume.
 
 ## Wear (what a stranger gets)
 
@@ -43,7 +43,8 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 ## Agent map (exo, not dump)
 
 - **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.10.
-- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET.
+- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Sound seat: last bed PASS/FAIL.
+- **Sound** — factory-sound plant. Brief → seed → genre → headless wav → metrics gate. Not a mill copy.
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
 

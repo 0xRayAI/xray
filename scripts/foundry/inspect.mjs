@@ -82,15 +82,21 @@ function checkDiff(root) {
 }
 
 function checkPlantVsWorn(root, millRoot) {
-  const plantDir = mint.millPlantDir(millRoot);
+  const kinds = mint.loadFactoryPlantKinds(root);
+  const allow = mint.factoryPlantAllowlist(millRoot, root);
   const millPlant = {
-    skills: plantDir ? mint.listSkillNamesAt(path.join(plantDir, "skills")) : [],
-    agents: plantDir ? mint.listAgentFilesAt(path.join(plantDir, "agents")) : [],
+    skills: kinds.includes("mill") ? mint.catalogPlant("mill").skills : [],
+    agents: kinds.includes("mill") ? mint.catalogPlant("mill").agents : [],
+    sound: kinds.includes("sound") ? mint.catalogPlant("sound") : { skills: [], agents: [] },
   };
   const params = mint.loadFoundryParams(root);
   const tree = {
     skills: mint.listConsumerSkillNames(root, params.skills),
     agents: mint.listConsumerAgentFiles(root, params.agents),
+    plantKinds: kinds,
+    soundPlantSkills: millPlant.sound.skills,
+    soundPlantAgents: millPlant.sound.agents,
+    sound: millPlant.sound,
   };
   const shopPlant = mint.loadShopPlant(root);
   try {
@@ -98,10 +104,13 @@ function checkPlantVsWorn(root, millRoot) {
     return {
       id: "plant-vs-worn",
       ok: true,
+      plant: kinds,
       millPlant: millPlant.skills,
+      soundPlant: millPlant.sound.skills,
       shopPlant,
       tree: tree.skills,
       worn: mint.wornSkillNames(root),
+      allow: allow.skills,
     };
   } catch (err) {
     return {
@@ -110,6 +119,8 @@ function checkPlantVsWorn(root, millRoot) {
       detail: err instanceof Error ? err.message : String(err),
       extraSkills: err.extraSkills || [],
       extraAgents: err.extraAgents || [],
+      plant: kinds,
+      soundPlant: millPlant.sound.skills,
       shopPlant,
     };
   }
@@ -125,18 +136,61 @@ function checkReceipt(root) {
     return { id: "receipt", ok: false, detail: "missing .xray/foundry-inventory.json" };
   }
   const millPlantSkills = inventory.millPlant?.skills || [];
-  const hasMill = millPlantSkills.includes("mill");
-  const hasInspect = millPlantSkills.includes("inspect");
-  const ok = hasMill && hasInspect;
+  const soundPlantSkills = inventory.soundPlant?.skills || [];
+  const kinds = mint.inventoryPlantKinds(inventory);
+  const needMill = kinds.includes("mill");
+  const needSound = kinds.includes("sound");
+  const millOk = !needMill || (millPlantSkills.includes("mill") && millPlantSkills.includes("inspect"));
+  const soundOk =
+    !needSound || (soundPlantSkills.includes("sound") && soundPlantSkills.includes("sound-inspect"));
+  const ok = millOk && soundOk && (needMill || needSound);
+  let detail = null;
+  if (!ok && needMill && !millOk) detail = "millPlant.skills must include mill and inspect";
+  else if (!ok && needSound && !soundOk) detail = "soundPlant.skills must include sound and sound-inspect";
+  else if (!ok) detail = "inventory plant is empty";
   return {
     id: "receipt",
     ok,
     suit: inventory.suit,
     mill: inventory.mill,
+    plant: kinds,
     millPlant: millPlantSkills,
+    soundPlant: soundPlantSkills,
     dna: typeof inventory.dna === "string" ? inventory.dna : null,
     pack: "0xray-suit",
-    detail: ok ? null : "millPlant.skills must include mill and inspect",
+    detail,
+  };
+}
+
+function checkSoundBed(root) {
+  const inventory = readJson(path.join(root, ".xray", "foundry-inventory.json"));
+  const kinds = inventory ? mint.inventoryPlantKinds(inventory) : mint.loadFactoryPlantKinds(root);
+  if (!kinds.includes("sound")) return null;
+  const bed = require("./sound-bed.cjs");
+  const receipt = bed.readReceipt(root);
+  if (!receipt) {
+    return {
+      id: "sound-bed",
+      ok: true,
+      skipped: true,
+      status: "NONE",
+      plant: kinds,
+      detail: "no bed receipt yet — npx @0xray/foundry sound render",
+    };
+  }
+  const status = receipt.status === "PASS" ? "PASS" : "FAIL";
+  const unreadable = receipt.reason === "receipt-unreadable";
+  return {
+    id: "sound-bed",
+    ok: status === "PASS" && !unreadable,
+    status,
+    failClosed: true,
+    plant: kinds,
+    metrics: receipt.metrics || null,
+    gates: receipt.gates || null,
+    wav: receipt.wav || null,
+    seed: receipt.seed || null,
+    detail: status === "PASS" ? null : receipt.reason || "bed receipt FAIL",
   };
 }
 
@@ -268,6 +322,8 @@ export async function inspectSuit(root, opts = {}) {
   checks.push(checkDiff(root));
   checks.push(checkPlantVsWorn(root, millRoot));
   checks.push(checkReceipt(root));
+  const soundBed = checkSoundBed(root);
+  if (soundBed) checks.push(soundBed);
   checks.push(checkCi(root));
 
   if (skipLive) {

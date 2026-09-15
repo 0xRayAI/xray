@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Factory-sound plant** — `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` (mill optional/off). Brief → checksum seed → genre → headless wav → metrics gate → `.xray/sound-bed-receipt.json`. `npx @0xray/foundry sound render|inspect`. Foundry inspect reports sound plant + last bed PASS/FAIL. Not a mill copy. Not costume. No `@0xray/foundry` bump — dogfood from branch/pack.
 - **Cursor cloud hooks adapter** — repo `.cursor/hooks.json` (version 1) runs `preToolUse` / `preCompact` / `afterFileEdit` against 0xRay gates + Station merge. No `sessionStart` (unavailable on managed cloud). Path C seed: `examples/cursor-cloud-compact/` (COMPACT-BEN-001).
 - **Cursor cloud real-usage receipt** — `writeCursorUsageReceipt` records host `preCompact` fire from invoke-probe (Y/N, no hand-invoke) and accepts only host/MCP/dashboard usage fields. FILL / chars÷4 is `ok: false`. Station compact-row + `.xray/state/cursor-usage-receipt.json`. Killer-dual Arm S: `examples/killer-dual/`.
 - Mill inspect treats factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) as first-class with mill plant. `foundry.json` `shopPlant` names more shops. Not `"costume": true`. Nested mill **0.1.10**.

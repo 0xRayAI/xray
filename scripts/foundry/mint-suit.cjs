@@ -24,6 +24,12 @@ const DEFAULT_PARAMS = {
 /** Factory shop plant. First-class with mill plant. Not 45/42 costume. */
 const FACTORY_SHOP_SKILLS = ["shop-extract", "shop-witness", "shop-pin"];
 
+/** Factory plant kinds. Mill is default. Sound is a bed factory, not a mill copy. */
+const FACTORY_PLANT_CATALOG = {
+  mill: { skills: ["mill", "inspect"], agents: ["mill.yml", "inspect.yml"] },
+  sound: { skills: ["sound", "sound-inspect"], agents: ["sound.yml", "sound-inspect.yml"] },
+};
+
 function deepMerge(src, dest) {
   if (typeof src !== "object" || src === null) return dest !== undefined ? dest : src;
   if (Array.isArray(src)) return Array.isArray(dest) ? dest : src;
@@ -118,6 +124,86 @@ function millPlantDir(millPackageRoot) {
   return null;
 }
 
+function emptyPlantFiles() {
+  return { skills: [], agents: [] };
+}
+
+function catalogPlant(kind) {
+  const spec = FACTORY_PLANT_CATALOG[kind];
+  return spec ? { skills: [...spec.skills], agents: [...spec.agents] } : emptyPlantFiles();
+}
+
+/** foundry.json plant: "sound" | "mill" | ["mill","sound"]. millPlant:false turns mill off. */
+function loadFactoryPlantKinds(targetDir) {
+  const extra = loadFoundryExtra(targetDir);
+  const kinds = [];
+  const raw = extra.plant;
+  if (Array.isArray(raw)) {
+    for (const item of raw) {
+      if (item === "mill" || item === "sound") kinds.push(item);
+    }
+  } else if (raw === "mill" || raw === "sound") {
+    kinds.push(raw);
+  } else if (extra.soundPlant === true) {
+    if (extra.millPlant !== false) kinds.push("mill");
+    kinds.push("sound");
+  } else {
+    kinds.push("mill");
+  }
+  if (extra.millPlant === false) {
+    return [...new Set(kinds.filter((kind) => kind !== "mill"))];
+  }
+  return [...new Set(kinds)];
+}
+
+function unionPlantFiles(kinds) {
+  const skills = [];
+  const agents = [];
+  for (const kind of kinds) {
+    const spec = catalogPlant(kind);
+    for (const name of spec.skills) {
+      if (!skills.includes(name)) skills.push(name);
+    }
+    for (const file of spec.agents) {
+      if (!agents.includes(file)) agents.push(file);
+    }
+  }
+  return { skills, agents };
+}
+
+function existingPlantFiles(plantDir, spec) {
+  if (!plantDir || !spec) return emptyPlantFiles();
+  const skillsSrc = path.join(plantDir, "skills");
+  const agentsSrc = path.join(plantDir, "agents");
+  const haveSkills = new Set(listSkillNamesAt(skillsSrc));
+  const haveAgents = new Set(listAgentFilesAt(agentsSrc));
+  return {
+    skills: spec.skills.filter((name) => haveSkills.has(name)),
+    agents: spec.agents.filter((file) => haveAgents.has(file)),
+  };
+}
+
+function factoryPlantAllowlist(millPackageRoot, targetDir) {
+  const kinds = loadFactoryPlantKinds(targetDir);
+  return {
+    kinds,
+    ...existingPlantFiles(millPlantDir(millPackageRoot), unionPlantFiles(kinds)),
+  };
+}
+
+function inventoryPlantKinds(inventory) {
+  if (!inventory || typeof inventory !== "object") return ["mill"];
+  if (Array.isArray(inventory.plant) && inventory.plant.length > 0) {
+    return inventory.plant.filter((kind) => kind === "mill" || kind === "sound");
+  }
+  if (inventory.plant === "sound" || inventory.plant === "mill") return [inventory.plant];
+  const hasSound = Array.isArray(inventory.soundPlant?.skills) && inventory.soundPlant.skills.length > 0;
+  const hasMill = Array.isArray(inventory.millPlant?.skills) && inventory.millPlant.skills.length > 0;
+  if (hasSound && !hasMill) return ["sound"];
+  if (hasSound && hasMill) return ["mill", "sound"];
+  return ["mill"];
+}
+
 function listSkillNamesAt(skillsSrc) {
   if (!isDirectory(skillsSrc)) return [];
   const names = [];
@@ -141,20 +227,18 @@ function listAgentFilesAt(agentsSrc) {
     .map((entry) => entry.name);
 }
 
-/** Fasten mill plant first. Mill names they did not plant stay; same-name overlay wins. */
-function fastenMillPlant(millPackageRoot, targetDir, log) {
-  const plant = millPlantDir(millPackageRoot);
-  if (!plant) return { skills: [], agents: [] };
+function copyPlantFiles(plant, spec, targetDir) {
   const skillsSrc = path.join(plant, "skills");
   const agentsSrc = path.join(plant, "agents");
-  const skills = listSkillNamesAt(skillsSrc);
-  const agents = listAgentFilesAt(agentsSrc);
+  const skills = spec.skills || [];
+  const agents = spec.agents || [];
   const skillDirs = listProjectSkillDirs(targetDir);
   const agentsDest = path.join(targetDir, ".opencode", "agents");
   for (const dir of skillDirs) {
     for (const name of skills) {
       const src = path.join(skillsSrc, name, "SKILL.md");
       const destMd = path.join(dir, name, "SKILL.md");
+      if (!fs.existsSync(src)) continue;
       if (path.resolve(src) === path.resolve(destMd)) continue;
       if (fs.existsSync(destMd)) continue;
       fs.mkdirSync(path.dirname(destMd), { recursive: true });
@@ -164,18 +248,37 @@ function fastenMillPlant(millPackageRoot, targetDir, log) {
   for (const file of agents) {
     const src = path.join(agentsSrc, file);
     const dest = path.join(agentsDest, file);
+    if (!fs.existsSync(src)) continue;
     if (path.resolve(src) === path.resolve(dest)) continue;
     if (fs.existsSync(dest)) continue;
     fs.mkdirSync(agentsDest, { recursive: true });
     fs.copyFileSync(src, dest);
   }
-  if (log && (skills.length > 0 || agents.length > 0)) {
-    log("foundry-mint", "Fastened mill plant", "info", {
-      skills: skills.length,
-      agents: agents.length,
+  return { skills, agents };
+}
+
+/** Fasten requested factory plants. Default mill only. Sound seats skip mill. */
+function fastenMillPlant(millPackageRoot, targetDir, log) {
+  const plant = millPlantDir(millPackageRoot);
+  const kinds = loadFactoryPlantKinds(targetDir);
+  if (!plant) {
+    return { skills: [], agents: [], kinds, sound: emptyPlantFiles() };
+  }
+  const mill = kinds.includes("mill")
+    ? existingPlantFiles(plant, catalogPlant("mill"))
+    : emptyPlantFiles();
+  const sound = kinds.includes("sound")
+    ? existingPlantFiles(plant, catalogPlant("sound"))
+    : emptyPlantFiles();
+  const fastened = copyPlantFiles(plant, unionPlantFiles(kinds.filter((kind) => kind === "mill" || kind === "sound")), targetDir);
+  if (log && (fastened.skills.length > 0 || fastened.agents.length > 0)) {
+    log("foundry-mint", "Fastened factory plant", "info", {
+      plant: kinds,
+      skills: fastened.skills.length,
+      agents: fastened.agents.length,
     });
   }
-  return { skills, agents };
+  return { skills: mill.skills, agents: mill.agents, kinds, sound };
 }
 
 function isDirectory(p) {
@@ -371,30 +474,57 @@ function previousTreeAllowlist(targetDir) {
     const shopSkills = Array.isArray(shopFromInv)
       ? normalizeNameList(shopFromInv)
       : normalizeNameList(shopFromInv?.skills);
+    const soundFromInv = inventory?.soundPlant;
+    const soundSkills = Array.isArray(soundFromInv)
+      ? normalizeNameList(soundFromInv)
+      : normalizeNameList(soundFromInv?.skills);
+    const soundAgents = normalizeNameList(soundFromInv?.agents);
     return {
       skills: [
         ...(Array.isArray(inventory?.tree?.skills) ? inventory.tree.skills : []),
+        ...(Array.isArray(inventory?.millPlant?.skills) ? inventory.millPlant.skills : []),
         ...shopSkills,
+        ...soundSkills,
       ],
-      agents: Array.isArray(inventory?.tree?.agents) ? inventory.tree.agents : [],
+      agents: [
+        ...(Array.isArray(inventory?.tree?.agents) ? inventory.tree.agents : []),
+        ...(Array.isArray(inventory?.millPlant?.agents) ? inventory.millPlant.agents : []),
+        ...soundAgents,
+      ],
     };
   } catch {
     return { skills: [], agents: [] };
   }
 }
 
-/** Extra worn names that are neither mill plant, their plant, shop plant, nor a prior overlay. */
+function soundPlantFromTree(targetDir, tree) {
+  if (Array.isArray(tree?.soundPlantSkills) || Array.isArray(tree?.sound?.skills)) {
+    return {
+      skills: normalizeNameList(tree.soundPlantSkills || tree.sound?.skills),
+      agents: normalizeNameList(tree.soundPlantAgents || tree.sound?.agents),
+    };
+  }
+  const kinds = Array.isArray(tree?.plantKinds) ? tree.plantKinds : loadFactoryPlantKinds(targetDir);
+  return kinds.includes("sound") ? catalogPlant("sound") : emptyPlantFiles();
+}
+
+/** Extra worn names that are neither mill/sound plant, their plant, shop plant, nor a prior overlay. */
 function costumeDumpExtras(targetDir, millPlant, tree) {
   const prior = previousTreeAllowlist(targetDir);
   const shopPlant = loadShopPlant(targetDir);
+  const soundPlant = soundPlantFromTree(targetDir, tree);
   const allowedSkills = new Set([
     ...(Array.isArray(millPlant?.skills) ? millPlant.skills : []),
+    ...(Array.isArray(millPlant?.sound?.skills) ? millPlant.sound.skills : []),
+    ...soundPlant.skills,
     ...(Array.isArray(tree?.skills) ? tree.skills : []),
     ...prior.skills,
     ...shopPlant,
   ]);
   const allowedAgents = new Set([
     ...(Array.isArray(millPlant?.agents) ? millPlant.agents : []),
+    ...(Array.isArray(millPlant?.sound?.agents) ? millPlant.sound.agents : []),
+    ...soundPlant.agents,
     ...(Array.isArray(tree?.agents) ? tree.agents : []),
     ...prior.agents,
   ]);
@@ -482,10 +612,16 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
   const millPlanted =
     (Array.isArray(tree?.millPlantSkills) && tree.millPlantSkills.length > 0) ||
     (Array.isArray(tree?.millPlantAgents) && tree.millPlantAgents.length > 0);
+  const soundPlanted =
+    (Array.isArray(tree?.soundPlantSkills) && tree.soundPlantSkills.length > 0) ||
+    (Array.isArray(tree?.soundPlantAgents) && tree.soundPlantAgents.length > 0);
+  const plantKinds = Array.isArray(tree?.plantKinds) && tree.plantKinds.length > 0
+    ? tree.plantKinds
+    : loadFactoryPlantKinds(targetDir);
   const costume = wantsCostume(targetDir);
   const suit = overlayed
     ? "overlay"
-    : millPlanted
+    : millPlanted || soundPlanted
       ? "fastened"
       : costume
         ? "costume"
@@ -494,11 +630,16 @@ function mintConsumerFromSsot(packageRoot, targetDir, log, tree) {
     mill: { name: mill.name || "@0xray/foundry", version: mill.version },
     consumer: { name: consumer.name, version: consumer.version },
     suit,
+    plant: plantKinds,
     params: tree?.params || loadFoundryParams(targetDir),
     tree: { skills, agents },
     millPlant: {
       skills: Array.isArray(tree?.millPlantSkills) ? tree.millPlantSkills : [],
       agents: Array.isArray(tree?.millPlantAgents) ? tree.millPlantAgents : [],
+    },
+    soundPlant: {
+      skills: Array.isArray(tree?.soundPlantSkills) ? tree.soundPlantSkills : [],
+      agents: Array.isArray(tree?.soundPlantAgents) ? tree.soundPlantAgents : [],
     },
     shopPlant: {
       skills: Array.isArray(tree?.shopPlantSkills) ? tree.shopPlantSkills : loadShopPlant(targetDir),
@@ -539,8 +680,12 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
   const params = loadFoundryParams(targetDir);
   const millPlant = fastenMillPlant(millPackageRoot, targetDir, log);
   const tree = overlayConsumerTree(targetDir, log, params);
+  tree.plantKinds = millPlant.kinds || loadFactoryPlantKinds(targetDir);
   tree.millPlantSkills = millPlant.skills;
   tree.millPlantAgents = millPlant.agents;
+  tree.soundPlantSkills = millPlant.sound?.skills || [];
+  tree.soundPlantAgents = millPlant.sound?.agents || [];
+  tree.sound = millPlant.sound || emptyPlantFiles();
   tree.shopPlantSkills = loadShopPlant(targetDir);
   tree.codex = overlayJsonFacet(
     resolveInside(targetDir, params.codex),
@@ -569,6 +714,7 @@ function mintConsumerSuit(millPackageRoot, targetDir, log) {
 module.exports = {
   DEFAULT_PARAMS,
   FACTORY_SHOP_SKILLS,
+  FACTORY_PLANT_CATALOG,
   deepMerge,
   loadFoundryParams,
   loadFoundryExtra,
@@ -576,6 +722,11 @@ module.exports = {
   declaredShopPlant,
   wantsCostume,
   millPlantDir,
+  loadFactoryPlantKinds,
+  factoryPlantAllowlist,
+  inventoryPlantKinds,
+  catalogPlant,
+  unionPlantFiles,
   listSkillNamesAt,
   listAgentFilesAt,
   fastenMillPlant,

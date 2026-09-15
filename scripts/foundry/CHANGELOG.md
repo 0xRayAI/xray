@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-sound plant (`sound` + `sound-inspect`). `foundry.json` `"plant": "sound"` fastens the bed factory and turns mill off. Headless render + metrics receipt. Inspect reports last bed PASS/FAIL. Not a mill copy. Not costume. No version bump — dogfood from branch / pack.
+
 ## [0.1.10] - 2026-09-12
 
 Inspect isolated-home `dest` is `resolveGrokPluginDests` — on shared HOME that is project `.grok/plugins/0xray`, not machine `$HOME/.grok/plugins/0xray`. Published 0.1.9 still joined dest from `$HOME` (report/CLI lag after 0xray@4.0.12 / #29 wear). Shop plant is first-class with mill plant. `shop-extract`, `shop-witness`, `shop-pin` (and `foundry.json` `shopPlant`) are not a costume dump. `"costume": true` still required for 45/42. Isolated HOME must not write the passwd machine plugin. Not an 8th MCP. Not 5.0.
