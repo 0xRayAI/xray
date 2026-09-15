@@ -1,5 +1,5 @@
 /**
- * Factory-blip Rippel canvas — Phase 1 headless port of SimplifiedVisualConverter.
+ * Factory-blip Rippel canvas — Rippel v2 headless port of SimplifiedVisualConverter.
  *
  * SSOT htafolla/rippel-synapse-flow@e5014cd46fbe5f132391333d8296f4416896dbee
  *   animationIcons.ts — Animation + ANIMATION_TO_VISUALIZATION
@@ -9,12 +9,15 @@
  *
  * This file is the converter spine, not a drawbox/geq label. Brief+seed → checksum
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
+ * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
+ * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
 const soundRippel = require("./sound-rippel.cjs");
 
 const ENGINE = "rippel-headless";
+const LOOK = "rippel-v2";
 const MOTION_WIDTH = 1280;
 const MOTION_HEIGHT = 720;
 const FPS = 30;
@@ -31,7 +34,7 @@ const SSOT = {
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Phase 1 — VisualConfig.circles through SimplifiedVisualConverter viz ids. Wireframe is flag-only.",
+  note: "Rippel v2 — VisualConfig.circles through SimplifiedVisualConverter viz ids. Sharp focus + tempo/frequency animation on all five. Wireframe is flag-only.",
 };
 
 /** animationIcons.ts — names are imports into the plant registry. */
@@ -185,8 +188,8 @@ function mixPixel(buf, width, x, y, color, alpha) {
 
 /**
  * Soft falloff over the FULL radius. Confirmed CoS #67 look:
- * hardness ~1.15–2.6 → every stamp is a glow, not a disc. Keep for thin
- * strokes (sacred/neural/waves). Orb Glow uses stampFocusDisc instead.
+ * hardness ~1.15–2.6 → every stamp is a glow, not a disc. Kept as a
+ * primitive; Rippel v2 painters use stampFocusDisc / paintSharpLine.
  */
 function stampDisc(buf, width, height, cx, cy, radius, color, hardness) {
   if (radius <= 0) return;
@@ -262,6 +265,31 @@ function stampSegment(buf, width, height, x0, y0, x1, y1, radius, color, hardnes
   }
 }
 
+function stampFocusSegment(buf, width, height, x0, y0, x1, y1, radius, color, opts) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  const steps = Math.max(2, Math.ceil(len / Math.max(1.2, radius * 0.75)));
+  const focus = opts || { rim: 1, glow: 2, glowAlpha: 0.18, rimColor: THEME.ink };
+  for (let i = 0; i <= steps; i++) {
+    const u = i / steps;
+    stampFocusDisc(buf, width, height, x0 + dx * u, y0 + dy * u, radius, color, focus);
+  }
+}
+
+function paintSharpRibbon(buf, width, height, yAtX, color, half, rimColor) {
+  const rim = rimColor || THEME.ink;
+  const thick = Math.max(1, half);
+  for (let x = 0; x < width; x++) {
+    const y = yAtX(x);
+    for (let d = -thick; d <= thick; d++) {
+      mixPixel(buf, width, x, y + d, color, 1);
+    }
+    mixPixel(buf, width, x, y - thick - 1, rim, 1);
+    mixPixel(buf, width, x, y + thick + 1, rim, 1);
+  }
+}
+
 function visualizationFor(renderer) {
   return ANIMATION_TO_VISUALIZATION[renderer] || null;
 }
@@ -269,50 +297,128 @@ function visualizationFor(renderer) {
 function circlePulse(circle, t) {
   const hz = Math.max(20, circle.frequency);
   const lfo = Math.sin(2 * Math.PI * (hz / 220) * t);
-  return circle.radius * (0.72 + 0.28 * (0.5 + 0.5 * lfo));
+  const overtone = Math.sin(2 * Math.PI * (hz / 110) * t + 0.7);
+  return circle.radius * (0.7 + 0.22 * (0.5 + 0.5 * lfo) + 0.08 * overtone);
 }
 
-function layoutRing(circles, width, height, t) {
+function beatPhase(checksum, t) {
+  const bpm = (checksum.genreConfig && checksum.genreConfig.tempo) || 90;
+  return (t * bpm) / 60;
+}
+
+/** Membrane-kick envelope — same crystal-mill attack the audio bed uses. */
+function kickAccent(beat) {
+  const frac = beat - Math.floor(beat);
+  if (frac < 0.08) return 1 - frac / 0.08;
+  if (frac < 0.18) return 0.35 * (1 - (frac - 0.08) / 0.1);
+  return 0;
+}
+
+function hatAccent(beat) {
+  const eighth = beat * 2;
+  const frac = eighth - Math.floor(eighth);
+  return frac < 0.06 ? 1 - frac / 0.06 : 0;
+}
+
+function freqFlash(circle, t) {
+  return Math.sin(2 * Math.PI * (Math.max(20, circle.frequency) / 180) * t) > 0.78;
+}
+
+function paintSharpLine(buf, width, height, x0, y0, x1, y1, color, half, rimColor) {
+  const rim = rimColor || THEME.ink;
+  const thick = Math.max(1, half);
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) {
+    stampFocusDisc(buf, width, height, x0, y0, thick + 1, color, {
+      rim: 1,
+      glow: 2,
+      glowAlpha: 0.16,
+      rimColor: rim,
+    });
+    return;
+  }
+  const steps = Math.ceil(len);
+  const nx = -dy / len;
+  const ny = dx / len;
+  for (let i = 0; i <= steps; i++) {
+    const u = i / steps;
+    const x = x0 + dx * u;
+    const y = y0 + dy * u;
+    for (let d = -thick; d <= thick; d++) {
+      mixPixel(buf, width, x + nx * d, y + ny * d, color, 1);
+    }
+    mixPixel(buf, width, x + nx * (thick + 1), y + ny * (thick + 1), rim, 1);
+    mixPixel(buf, width, x - nx * (thick + 1), y - ny * (thick + 1), rim, 1);
+  }
+}
+
+function layoutRings(circles, width, height, t, checksum) {
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
+  const beat = beatPhase(checksum, t);
   return circles.map((circle, i) => {
-    const ang = (i / circles.length) * Math.PI * 2 + t * 0.35;
-    const orbit = minSide * (0.16 + (i % 3) * 0.07);
+    const inner = i % 2 === 0;
+    const spin = inner ? -t * 0.95 - beat * 0.15 : t * 0.55 + beat * 0.08;
+    const ang = (i / circles.length) * Math.PI * 2 + spin;
+    const wobble = Math.sin(beat * Math.PI * 2 + i) * minSide * 0.012;
+    const orbit = minSide * (inner ? 0.2 : 0.31) + wobble + (circle.frequency / 2000) * minSide * 0.04;
     return {
       circle,
+      inner,
       x: cx + Math.cos(ang) * orbit,
-      y: cy + Math.sin(ang) * orbit * 0.72,
+      y: cy + Math.sin(ang) * orbit * (inner ? 0.78 : 0.68),
       r: circlePulse(circle, t + i * 0.11),
       color: parseHex(circle.color),
     };
   });
 }
 
-/** orb → canvas / Orb Glow. Sharp disc body + rim + short tail — not stacked soft blobs. */
+function layoutRing(circles, width, height, t, checksum) {
+  return layoutRings(circles, width, height, t, checksum || { genreConfig: { tempo: 90 } });
+}
+
+/** orb → canvas / Orb Glow v2. Dual counter-rotating rings, beat tick, sharp discs. */
 function paintCanvas(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7));
+  const beat = beatPhase(checksum, t);
+  const kick = Math.sin(beat * Math.PI * 2);
+  const core = minSide * (0.105 + 0.016 * kick);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
-    glow: 7,
-    glowAlpha: 0.28,
+    glow: 6,
+    glowAlpha: 0.26,
     rimColor: THEME.ink,
   });
   stampFocusDisc(buf, width, height, cx, cy, core * 0.4, THEME.gold, {
     rim: 1.6,
     glow: 3,
-    glowAlpha: 0.22,
+    glowAlpha: 0.2,
     rimColor: THEME.ink,
   });
-  for (const placed of layoutRing(checksum.visualConfig.circles, width, height, t)) {
-    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.42, placed.color, {
+  const tickR = core * 1.08;
+  const tickA = beat * Math.PI * 2;
+  stampFocusDisc(
+    buf,
+    width,
+    height,
+    cx + Math.cos(tickA) * tickR,
+    cy + Math.sin(tickA) * tickR,
+    5 + (kick > 0.7 ? 2 : 0),
+    kick > 0.55 ? THEME.gold : THEME.ink,
+    { rim: 1.2, glow: 3, glowAlpha: 0.22, rimColor: THEME.ink },
+  );
+  for (const placed of layoutRings(checksum.visualConfig.circles, width, height, t, checksum)) {
+    const hot = Math.sin(2 * Math.PI * (placed.circle.frequency / 180) * t) > 0.82;
+    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.4, hot ? THEME.gold : placed.color, {
       rim: 1.6,
       glow: 4,
-      glowAlpha: 0.24,
+      glowAlpha: 0.22,
       rimColor: THEME.ink,
     });
   }
@@ -351,112 +457,220 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - peakX, drop: lo - hi };
 }
 
-/** swirl → 3d-sacred. Same CircleConfig[] seated on a merkaba / hex plate. */
+/** swirl → 3d-sacred v2. Merkaba + hex plate, counter-spin, beat vertices. */
 function paintSacred(buf, width, height, t, checksum) {
   fillVoid(buf);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  const r = minSide * 0.3;
-  stampDisc(buf, width, height, cx, cy, r * 1.5, THEME.blue, 2.5);
-  const spin = t * 0.7;
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const spin = t * 0.55 + beat * 0.12;
+  const r = minSide * (0.28 + kick * 0.018);
   const circles = checksum.visualConfig.circles;
-  function triangle(offset, color, scale) {
+  const node = { rim: 1.3, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
+  const hex = [];
+  for (let i = 0; i < 6; i++) {
+    const a = -spin * 0.35 + (i * Math.PI) / 3;
+    hex.push([cx + Math.cos(a) * r * 1.12, cy + Math.sin(a) * r * 1.12]);
+  }
+  for (let i = 0; i < 6; i++) {
+    paintSharpLine(buf, width, height, hex[i][0], hex[i][1], hex[(i + 1) % 6][0], hex[(i + 1) % 6][1], THEME.blue, 1);
+    paintSharpLine(buf, width, height, cx, cy, hex[i][0], hex[i][1], THEME.blue, 1);
+    stampFocusDisc(buf, width, height, hex[i][0], hex[i][1], 4 + kick, THEME.ink, node);
+  }
+  function triangle(offset, color, scale, half) {
     const pts = [];
     for (let i = 0; i < 3; i++) {
       const a = offset + (i * Math.PI * 2) / 3;
       pts.push([cx + Math.cos(a) * r * scale, cy + Math.sin(a) * r * scale]);
     }
     for (let i = 0; i < 3; i++) {
-      stampSegment(buf, width, height, pts[i][0], pts[i][1], pts[(i + 1) % 3][0], pts[(i + 1) % 3][1], 8, color, 1.5);
-    }
-  }
-  triangle(spin, THEME.cyan, 1);
-  triangle(-spin + Math.PI / 3, THEME.gold, 0.9);
-  for (let i = 0; i < circles.length; i++) {
-    const a = spin * 0.5 + (i / circles.length) * Math.PI * 2;
-    const rad = r * (0.55 + (i % 2) * 0.18);
-    stampDisc(
-      buf,
-      width,
-      height,
-      cx + Math.cos(a) * rad,
-      cy + Math.sin(a) * rad,
-      circlePulse(circles[i], t) * 0.35,
-      parseHex(circles[i].color),
-      1.35,
-    );
-  }
-  stampDisc(buf, width, height, cx, cy, minSide * 0.03, THEME.gold, 1.2);
-}
-
-/** snap → neural. Circles as nodes; frequency pulses travel the lattice. */
-function paintNeural(buf, width, height, t, checksum) {
-  fillVoid(buf);
-  const placed = layoutRing(checksum.visualConfig.circles, width, height, t * 0.15);
-  for (let i = 0; i < placed.length; i++) {
-    const n = placed[(i + 1) % placed.length];
-    stampSegment(buf, width, height, placed[i].x, placed[i].y, n.x, n.y, 3.4, THEME.blue, 1.8);
-    const travel = (t * (placed[i].circle.frequency / 180) + i * 0.2) % 1;
-    stampDisc(
-      buf,
-      width,
-      height,
-      placed[i].x + (n.x - placed[i].x) * travel,
-      placed[i].y + (n.y - placed[i].y) * travel,
-      7,
-      THEME.gold,
-      1.2,
-    );
-  }
-  for (const node of placed) {
-    const on = Math.sin(2 * Math.PI * node.circle.frequency * 0.01 * t) > 0;
-    stampDisc(buf, width, height, node.x, node.y, on ? 12 : 7, on ? THEME.gold : node.color, 1.25);
-  }
-}
-
-/** waves → waveform / Wave Flow. Each CircleConfig.frequency is a ribbon. */
-function paintWaveform(buf, width, height, t, checksum) {
-  fillVoid(buf);
-  const mid = (height - 1) * 0.5;
-  const circles = checksum.visualConfig.circles;
-  circles.forEach((circle, i) => {
-    const amp = height * (0.06 + (circle.radius / 400) * 0.12);
-    const freq = 0.008 + circle.frequency / 18000;
-    const color = parseHex(circle.color);
-    const thick = 6 + (i === 0 ? 8 : 0);
-    let prevY = mid;
-    const shift = t * (circle.frequency / 8);
-    for (let x = 0; x < width; x += 3) {
-      const y = mid + Math.sin((x + shift) * freq + i) * amp;
-      stampSegment(buf, width, height, x - 3, prevY, x, y, thick, color, 1.7);
-      prevY = y;
-    }
-  });
-}
-
-/** spark → particles / Spark Drift. Emit motes from each CircleConfig seat. */
-function paintParticles(buf, width, height, t, checksum) {
-  fillVoid(buf);
-  const placed = layoutRing(checksum.visualConfig.circles, width, height, t * 0.2);
-  for (let i = 0; i < placed.length; i++) {
-    const src = placed[i];
-    const color = src.color;
-    for (let k = 0; k < 8; k++) {
-      const ang = t * 1.4 + i + k * 0.7;
-      const dist = (t * 40 + k * 18 + src.circle.frequency * 0.08) % (Math.min(width, height) * 0.4);
-      stampDisc(
+      paintSharpLine(
         buf,
         width,
         height,
-        src.x + Math.cos(ang) * dist,
-        src.y + Math.sin(ang) * dist,
-        3 + (k % 3),
+        pts[i][0],
+        pts[i][1],
+        pts[(i + 1) % 3][0],
+        pts[(i + 1) % 3][1],
         color,
-        1.4,
+        half,
+      );
+      stampFocusDisc(
+        buf,
+        width,
+        height,
+        pts[i][0],
+        pts[i][1],
+        5 + kick * 2,
+        kick > 0.5 ? THEME.gold : color,
+        node,
       );
     }
-    stampDisc(buf, width, height, src.x, src.y, 8, THEME.ink, 1.2);
+  }
+  triangle(spin, THEME.cyan, 1, 2);
+  triangle(-spin + Math.PI / 3, THEME.gold, 0.88, 2);
+  triangle(spin * 1.7 + Math.PI / 6, THEME.ink, 0.52, 1);
+  for (let i = 0; i < circles.length; i++) {
+    const inner = i % 2 === 0;
+    const ang = (i / circles.length) * Math.PI * 2 + (inner ? -spin * 1.1 : spin * 0.7);
+    const rad = r * (inner ? 0.42 : 0.78);
+    const wobble = Math.sin(beat * Math.PI * 2 + i) * r * 0.04;
+    const x = cx + Math.cos(ang) * (rad + wobble);
+    const y = cy + Math.sin(ang) * (rad + wobble) * 0.86;
+    const hot = freqFlash(circles[i], t);
+    stampFocusDisc(buf, width, height, x, y, circlePulse(circles[i], t) * 0.22, hot ? THEME.gold : parseHex(circles[i].color), {
+      rim: 1.4,
+      glow: 3,
+      glowAlpha: 0.2,
+      rimColor: THEME.ink,
+    });
+  }
+  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.028 + kick * 0.01), kick > 0.4 ? THEME.gold : THEME.cyan, {
+    rim: 1.5,
+    glow: 3,
+    glowAlpha: 0.2,
+    rimColor: THEME.ink,
+  });
+}
+
+/** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
+function paintNeural(buf, width, height, t, checksum) {
+  fillVoid(buf);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const hat = hatAccent(beat);
+  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 0.35, checksum);
+  const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
+  for (let i = 0; i < placed.length; i++) {
+    const a = placed[i];
+    const b = placed[(i + 1) % placed.length];
+    const skip = placed[(i + 2) % placed.length];
+    paintSharpLine(buf, width, height, a.x, a.y, b.x, b.y, THEME.blue, 1);
+    paintSharpLine(buf, width, height, a.x, a.y, skip.x, skip.y, THEME.blue, 1);
+    paintSharpLine(buf, width, height, cx, cy, a.x, a.y, THEME.blue, 1);
+    const speed = a.circle.frequency / 160;
+    const travel = (t * speed + i * 0.17) % 1;
+    const inbound = (t * speed * 0.6 + beat * 0.1 + i * 0.41) % 1;
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      a.x + (b.x - a.x) * travel,
+      a.y + (b.y - a.y) * travel,
+      5 + hat * 2,
+      THEME.gold,
+      node,
+    );
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      a.x + (cx - a.x) * inbound,
+      a.y + (cy - a.y) * inbound,
+      4,
+      THEME.cyan,
+      node,
+    );
+  }
+  for (const seat of placed) {
+    const hot = freqFlash(seat.circle, t) || kick > 0.55;
+    stampFocusDisc(buf, width, height, seat.x, seat.y, hot ? 11 : 7, hot ? THEME.gold : seat.color, node);
+  }
+  stampFocusDisc(buf, width, height, cx, cy, 10 + kick * 6, kick > 0.35 ? THEME.gold : THEME.cyan, {
+    rim: 1.6,
+    glow: 4,
+    glowAlpha: 0.22,
+    rimColor: THEME.ink,
+  });
+}
+
+/** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
+function paintWaveform(buf, width, height, t, checksum) {
+  fillVoid(buf);
+  const mid = (height - 1) * 0.5;
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const env = 0.7 + 0.3 * Math.max(0, Math.sin(beat * Math.PI * 2));
+  const circles = checksum.visualConfig.circles;
+  paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
+  circles.forEach((circle, i) => {
+    const color = parseHex(circle.color);
+    const amp0 = height * (0.05 + (circle.radius / 420) * 0.11) * env;
+    const f0 = 0.0065 + circle.frequency / 22000;
+    const shift = t * (circle.frequency / 7);
+    const phase = i * 0.85;
+    paintSharpRibbon(
+      buf,
+      width,
+      height,
+      (x) =>
+        mid +
+        Math.sin((x + shift) * f0 + phase) * amp0 +
+        Math.sin((x + shift) * f0 * 2 + phase * 1.3) * amp0 * 0.28,
+      i === 0 ? THEME.cyan : color,
+      i === 0 ? 3 : 2,
+    );
+    paintSharpRibbon(
+      buf,
+      width,
+      height,
+      (x) => mid + Math.sin((x - shift * 0.7) * f0 * 3 + phase) * amp0 * 0.18,
+      i % 2 === 0 ? THEME.gold : THEME.blue,
+      1,
+    );
+  });
+  const tickX = ((beat % 1) * width) | 0;
+  const tickH = height * 0.22 * (0.45 + kick);
+  for (let y = mid - tickH; y <= mid + tickH; y++) {
+    mixPixel(buf, width, tickX, y, THEME.gold, 1);
+    mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
+    mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
+  }
+}
+
+/** spark → particles v2. Beat bursts, orbital + radial motes, short trails. */
+function paintParticles(buf, width, height, t, checksum) {
+  fillVoid(buf);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 0.28, checksum);
+  const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
+  stampFocusDisc(buf, width, height, cx, cy, 8 + kick * 4, kick > 0.4 ? THEME.gold : THEME.cyan, mote);
+  for (let i = 0; i < placed.length; i++) {
+    const src = placed[i];
+    const hot = freqFlash(src.circle, t);
+    const moteCount = 12 + (kick > 0.5 ? 4 : 0);
+    for (let k = 0; k < moteCount; k++) {
+      const life = (t * (0.35 + src.circle.frequency / 800) + k * 0.11 + i * 0.07) % 1;
+      const orbital = k % 3 === 0;
+      const ang = orbital ? t * (1.1 + (k % 5) * 0.15) + i + k : t * 1.6 + i * 1.3 + k * 0.62;
+      const dist = orbital
+        ? 18 + (k % 4) * 10 + Math.sin(beat * Math.PI * 2 + k) * 6
+        : life * minSide * 0.36 * (0.55 + kick * 0.25);
+      const x = src.x + Math.cos(ang) * dist;
+      const y = src.y + Math.sin(ang) * dist * (orbital ? 0.72 : 1);
+      const size = Math.max(1.6, (1 - life) * (2.4 + (k % 3)) + kick * 1.2);
+      const color = hot && k % 2 === 0 ? THEME.gold : src.color;
+      stampFocusDisc(buf, width, height, x, y, size, color, mote);
+      if (life > 0.12 && !orbital) {
+        const prev = life - 0.1;
+        const pd = prev * minSide * 0.36;
+        stampFocusDisc(buf, width, height, src.x + Math.cos(ang) * pd, src.y + Math.sin(ang) * pd, size * 0.55, color, {
+          rim: 1,
+          glow: 1,
+          glowAlpha: 0.1,
+          rimColor: THEME.ink,
+        });
+      }
+    }
+    stampFocusDisc(buf, width, height, src.x, src.y, 7 + kick * 2, hot ? THEME.gold : THEME.ink, mote);
   }
 }
 
@@ -506,8 +720,10 @@ function paintRippelFrame(opts) {
     height,
     visualization,
     engine: ENGINE,
+    look: LOOK,
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
+    tempo: checksum.genreConfig && checksum.genreConfig.tempo,
   };
 }
 
@@ -520,6 +736,33 @@ function framesDiffer(a, b) {
   return false;
 }
 
+function edgeSharpness(buf, width) {
+  const height = (buf.length / 3 / width) | 0;
+  let edges = 0;
+  let lit = 0;
+  function luma(x, y) {
+    const i = (y * width + x) * 3;
+    return buf[i] * 0.3 + buf[i + 1] * 0.59 + buf[i + 2] * 0.11;
+  }
+  for (let y = 1; y < height - 1; y += 2) {
+    for (let x = 1; x < width - 1; x += 2) {
+      const v = luma(x, y);
+      if (v < 18) continue;
+      lit += 1;
+      if (Math.abs(v - luma(x + 1, y)) > 36 || Math.abs(v - luma(x, y + 1)) > 36) edges += 1;
+    }
+  }
+  return { edges, lit, ratio: lit ? edges / lit : 0 };
+}
+
+function goldPixelCount(buf) {
+  let n = 0;
+  for (let i = 0; i < buf.length; i += 3) {
+    if (buf[i] > 200 && buf[i + 1] > 150 && buf[i + 1] < 230 && buf[i + 2] < 70) n += 1;
+  }
+  return n;
+}
+
 function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
   const a = paintRippelFrame({ renderer, t: 0, seedHex, brief, durationSec });
   const b = paintRippelFrame({
@@ -529,12 +772,34 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     brief,
     durationSec,
   });
+  const c = paintRippelFrame({
+    renderer,
+    t: (durationSec || 4.44) * 0.25,
+    seedHex,
+    brief,
+    durationSec,
+  });
+  const d = paintRippelFrame({
+    renderer,
+    t: (durationSec || 4.44) * 0.75,
+    seedHex,
+    brief,
+    durationSec,
+  });
   return {
     visualization: a.visualization,
+    look: a.look,
     width: a.width,
     height: a.height,
     differ: framesDiffer(a.buffer, b.buffer),
+    living:
+      framesDiffer(a.buffer, b.buffer) &&
+      framesDiffer(a.buffer, c.buffer) &&
+      framesDiffer(b.buffer, d.buffer) &&
+      framesDiffer(c.buffer, d.buffer),
+    sharpness: edgeSharpness(a.buffer, a.width),
     circleCount: a.visualConfig.circles.length,
+    tempo: a.tempo,
   };
 }
 
@@ -551,6 +816,7 @@ function summarizeVisual(checksum) {
 
 module.exports = {
   ENGINE,
+  LOOK,
   MOTION_WIDTH,
   MOTION_HEIGHT,
   FPS,
@@ -568,5 +834,9 @@ module.exports = {
   stampDisc,
   stampFocusDisc,
   orbFocusWidth,
+  edgeSharpness,
+  goldPixelCount,
+  kickAccent,
+  beatPhase,
   fillVoid,
 };

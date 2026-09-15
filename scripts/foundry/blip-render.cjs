@@ -2,7 +2,8 @@
  * Factory-blip plant spine — sibling to mill + sound, not a mill bolt-on.
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
- * Phase 1 (TICKET-BLIP-RENDERER-UPGRADE): Rippel VisualConfig.circles at ≥720p.
+ * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
+ * Sharp focus + tempo/frequency animation on all five viz. Same mill tempo as the bed.
  * Still stays the Power Plant plate (Phase 2). ffmpeg wireframe is --engine wireframe only.
  * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
  *
@@ -757,6 +758,7 @@ function buildReceipt(input, evaled) {
     width: evaled.width ?? input.width ?? null,
     height: evaled.height ?? input.height ?? null,
     engine: input.engine || rippel.ENGINE,
+    look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -902,10 +904,12 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       engine: "ffmpeg-wireframe-fallback",
       fallback: true,
       visualConfig: null,
+      look: null,
     };
   }
 
   let visualConfig = null;
+  let look = rippel.LOOK;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -918,9 +922,10 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       buffer: buf,
     });
     visualConfig = painted.visualConfig;
+    look = painted.look;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -943,6 +948,7 @@ function renderBlip(opts = {}) {
     bedRel: null,
     bedSource: null,
     engine: modeInfo.renderer === "still" ? "ffmpeg-headless" : rippel.ENGINE,
+    look: modeInfo.renderer === "still" ? null : rippel.LOOK,
     fallback: false,
     visualConfig: null,
     width: modeInfo.renderer === "still" ? STILL_WIDTH : MOTION_WIDTH,
@@ -976,6 +982,7 @@ function renderBlip(opts = {}) {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
       input.engine = motion.engine;
+      input.look = motion.look || (motion.fallback ? null : rippel.LOOK);
       input.fallback = motion.fallback;
       input.width = motion.width;
       input.height = motion.height;

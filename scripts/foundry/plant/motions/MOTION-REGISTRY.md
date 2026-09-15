@@ -8,9 +8,9 @@ On-disk SSOT: `registry.json` next to this file.
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-## Phase 1 — Rippel canvas (TICKET-BLIP-RENDERER-UPGRADE)
+## Rippel v2 — converter + living motions (TICKET-BLIP-RENDERER-UPGRADE)
 
-Default motion path is the Rippel converter spine, not ffmpeg geometry:
+Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is **sharp** (opaque body + crisp rim + short glow) on all five. Motion shares the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed.
 
 - **SSOT** `htafolla/rippel-synapse-flow@e5014cd`
 - `animationIcons.ts` → `ANIMATION_TO_VISUALIZATION`
@@ -20,11 +20,11 @@ Default motion path is the Rippel converter spine, not ffmpeg geometry:
 
 | id | viz id | backend |
 |----|--------|---------|
-| `orb` | `canvas` | Orb Glow — frequency circles + breathing core |
-| `swirl` | `3d-sacred` | same circles on a sacred plate |
-| `snap` | `neural` | circles as nodes, traveling pulses |
-| `waves` | `waveform` | Wave Flow — one ribbon per circle frequency |
-| `spark` | `particles` | Spark Drift — motes from each circle seat |
+| `orb` | `canvas` | Orb Glow — dual rings, beat tick, frequency flash |
+| `swirl` | `3d-sacred` | merkaba + hex plate, counter-spin, beat vertices |
+| `snap` | `neural` | dual-ring lattice, hub, skip-links, traveling pulses |
+| `waves` | `waveform` | Wave Flow — harmonic ribbons + beat envelope + gold needle |
+| `spark` | `particles` | Spark Drift — beat bursts, orbital + radial motes |
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 

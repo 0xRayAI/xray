@@ -21,8 +21,8 @@ Still wears the **Power Plant intro** plate until Phase 2: void `#08090B` · ink
 
 1. **Brief** → checksum seed → Rippel `VisualConfig` (`CircleConfig[]`).
 2. **Mode** → `still` or `motion:<id>` from the registry.
-3. **Render** → 4.44s mp4. Motions are Rippel viz at ≥720p (default). `--engine wireframe` is emergency only.
-4. **Bed** → `--bed PATH` or auto sound mill. Every mp4 muxes audio. Silent = inspect FAIL.
+3. **Render** → 4.44s mp4. Motions are Rippel v2 viz at ≥720p (sharp look + tempo/frequency animation on all five). `--engine wireframe` is emergency only.
+4. **Bed** → `--bed PATH` or auto sound mill (same genre tempo the picture uses). Every mp4 muxes audio. Silent = inspect FAIL.
 5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed.
 6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).
 

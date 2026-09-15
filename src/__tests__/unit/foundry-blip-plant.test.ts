@@ -300,6 +300,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             plate?: string;
             stillPlate?: string | null;
             engine?: string;
+            look?: string | null;
             fallback?: boolean;
             hasAudio?: boolean;
             width?: number | null;
@@ -382,6 +383,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.motionId).toBe(id);
           expect(rendered.receipt.pictureMode).toBe(`motion:${id}`);
           expect(rendered.receipt.engine).toBe('rippel-headless');
+          expect(rendered.receipt.look).toBe('rippel-v2');
           expect(rendered.receipt.fallback).toBe(false);
           expect(rendered.receipt.hasAudio).toBe(true);
           expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
@@ -494,7 +496,17 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seed: string,
         duration: number,
         brief: string,
-      ) => { differ: boolean; width: number; height: number; circleCount: number; visualization: string };
+      ) => {
+        differ: boolean;
+        living: boolean;
+        look: string;
+        sharpness: { ratio: number; edges: number };
+        tempo: number;
+        width: number;
+        height: number;
+        circleCount: number;
+        visualization: string;
+      };
       ANIMATION_TO_VISUALIZATION: Record<string, string>;
     };
     const checksum = buildVisualConfig({
@@ -507,10 +519,15 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     for (const id of ['orb', 'swirl', 'snap', 'waves', 'spark']) {
       const sample = sampleMotionFrames(id, '0xdeadbeef', 4.44, 'warehouse floor · Power Plant');
       expect(sample.visualization).toBe(ANIMATION_TO_VISUALIZATION[id]);
+      expect(sample.look).toBe('rippel-v2');
       expect(sample.differ, id).toBe(true);
+      expect(sample.living, id).toBe(true);
+      expect(sample.sharpness.edges, id).toBeGreaterThan(400);
+      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.05);
       expect(sample.width).toBe(1280);
       expect(sample.height).toBe(720);
       expect(sample.circleCount).toBeGreaterThan(0);
+      expect(sample.tempo).toBeGreaterThan(0);
     }
   });
 
@@ -541,6 +558,35 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(focus.drop).toBeGreaterThan(0);
     expect(focus.drop).toBeLessThan(16);
     expect(focus.inner + focus.drop).toBeLessThan(120);
+  });
+
+  it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {
+    const { paintRippelFrame, goldPixelCount, LOOK, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      LOOK: string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+      }) => { buffer: Buffer; look: string };
+      goldPixelCount: (buf: Buffer) => number;
+    };
+    expect(LOOK).toBe('rippel-v2');
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const bpm = buildVisualConfig({ brief, seedHex }).genreConfig.tempo;
+    const offBeat = (0.5 * 60) / bpm;
+    for (const id of ['orb', 'swirl', 'snap', 'waves', 'spark']) {
+      const kick = paintRippelFrame({ renderer: id, t: 0, seedHex, brief });
+      const off = paintRippelFrame({ renderer: id, t: offBeat, seedHex, brief });
+      expect(kick.look, id).toBe('rippel-v2');
+      expect(goldPixelCount(kick.buffer), id).not.toBe(goldPixelCount(off.buffer));
+    }
   });
 
   it('keeps ffmpeg wireframe behind a flag and FAILs silent mp4s', { timeout: 90000 }, async () => {
