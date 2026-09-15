@@ -14,6 +14,9 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | `ops/GIBBERISH-CHECK.md` | Friend-test hard gate (human/public) |
 | `ops/GROK-BOT-REMOTE.md` | How ops get mirrored into this folder |
 | `ops/SYNAPTICAL-LANES.md` | **H vs B** speaking styles (plain vs compressed internal) |
+| `ops/LANGUAGES.md` | Full catalog of op-model languages (lanes, kernels, dialects, stamps) |
+| `ops/DOCTRINE-FEED-THE-BOTS.md` | Blaze doctrine: keep feeding receipts / op proc / real work |
+| `ops/DOCTRINE-MULTIVERSE.md` | Blaze line: we built a multiverse |
 | `ops/dist/brand/LEXICON.md` | Short catalog of bot talk (plain vs shorthand, lanes H/B) |
 
 ## Dist (public posts)

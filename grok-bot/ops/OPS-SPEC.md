@@ -56,3 +56,9 @@ Surgical. No rabbit holes. No enterprise-from-day-one. Codex enforces the stop.
 
 ## Friend test — HARD GATE (all comms)
 See `GIBBERISH-CHECK.md`. Every material send needs a plain proof line (“A friend would hear: …”). Stamped PASS alone is invalid. Herald/critic/forge/CoS refuse jargon.
+
+## ASSIGN, DON'T DO
+Coordinator cards the best seat and takes receipts — does not execute eng/Dist/trade tools. See `SEATS.md`.
+
+## Feed round (doctrine)
+When Blaze issues doctrine: CoS forces exact-cut ingest + seat replies, then shows the full reply board before continuing. See `DOCTRINE-FEED-THE-BOTS.md`.

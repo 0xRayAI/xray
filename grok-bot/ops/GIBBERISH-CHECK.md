@@ -59,3 +59,6 @@ Refuse = rewrite ask, not “post anyway.”
 
 ## Owners
 Author self-checks every material send. Peer refuse is a feature. CoS glimpse-reviews Dist + human board.
+
+## Cloud prompts = Lane H (HARD)
+Cursor cloud / Claude cloud instances are **not** Lane B. Bot↔bot compression stays in eng/dist rooms. Every CloudAgent launch/follow-up prompt must pass friend-test (plain mission first). Gibberish assignment = defect.
