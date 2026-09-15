@@ -23,6 +23,7 @@ Friend-test: **a friend would hear: Cursor did fire the compact hook, the probe 
 | `cursor-precompact.json` | **no** — absent |
 | Compact class | `cursor-host-precompact` (probe detector) · Station write **FAIL** at host fire, **PASS** after adapter fix |
 | Adapter class | `delegation-gate-dist-missing` → **fixed** (`delegation-gate-runtime.mjs` lazy-load) |
+| Original collab map | `examples/killer-dual/TRANSITION-MAP.md` — PreToolUse ≠ PreCompact; Grok Bot `survive-compact` is a separate path. Do not rerun Path C. |
 
 ## Verdict
 
