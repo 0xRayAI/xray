@@ -65,4 +65,8 @@ Snapshot: `cursor-usage-receipt.snapshot.json`.
 
 ## Verify
 
-`npm test -- src/__tests__/unit/cursor-hooks.test.ts` (after `npm ci` + `npm run build` on this snapshot — `dist/` was missing at boot; invoke-probe still logged because it prints **before** `exec` of the hook JS).
+`npm test -- src/__tests__/unit/cursor-hooks.test.ts` — **10 passed**. Also `station-hot-swap` + `wear-vendored-repertoire` (25 tests combined). After `npm ci` + `npm run build` on this snapshot — `dist/` was missing at boot; invoke-probe still logged because it prints **before** `exec` of the hook JS.
+
+## PR
+
+Branch pushed: `cursor/killer-dual-arm-s-02fe`. **PR create FAIL** this run: `ManagePullRequest` could not look up `github.com/0xRayAI/xray` (`[unauthenticated] Error`). Compare: https://github.com/0xRayAI/xray/compare/main...cursor/killer-dual-arm-s-02fe
