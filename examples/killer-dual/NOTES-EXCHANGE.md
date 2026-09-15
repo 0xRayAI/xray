@@ -44,3 +44,9 @@ Mill-absence / mill-control is a valid friend-test that **Station means 0xRay wa
 It is **not** proof the conversation, as a mind, survived. After compact the host re-feeds summary + disk + the summarized banner together. Naming the ticket / `COMPACT-PLAIN-001` / running `./snap.sh` after that is not a separable memory canary. Compact drops the old transcript. There is no hidden buffer of earlier reads.
 
 Honest line (`HOST-VS-MILL.md`): chat may lose early turns; disk must not lose the ticket. Arm S “Survive: yes (disk quiz + continued the live job)” overclaimed. Disk quiz + same-bc = mill/disk. Conversation memory = not scored.
+
+## S follow-up — Claim C compact 6 (2026-09-15)
+
+Host `preCompact` **Y** count=**6** at `2026-09-15T15:21:37Z`. Same bc. Stdin: tokens=**298693**, window=**256000**. Station still has the ticket (A PASS). Same-bc (B PASS).
+
+Claim **C not proven** as leftover old-window memory: the injected summary re-fed C1 and C2. C3 (never-told baker) stayed **unknown**. Receipt: `MEMORY-RECEIPT.md`. Canary values stay off disk. Do not relaunch.

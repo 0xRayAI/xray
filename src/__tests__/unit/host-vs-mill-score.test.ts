@@ -38,4 +38,16 @@ describe('HOST vs mill scoring law', () => {
     expect(skill).toContain('Chat may lose early turns');
     expect(skill).not.toContain('keep mind and work alive');
   });
+
+  it('Arm S Claim C receipt scores summarizer keep, not leftover old-window memory', () => {
+    const receipt = readRepo('examples/killer-dual/MEMORY-RECEIPT.md');
+    expect(receipt).toContain('**NOT PROVEN** as leftover old-window memory');
+    expect(receipt).toContain('re-fed in the injected conversation summary');
+    expect(receipt).toContain('Hallucination check **PASS**');
+    expect(receipt).not.toMatch(/C1-episodic=/);
+    expect(receipt).not.toMatch(/the conversation remembered/);
+    const snap = readRepo('examples/killer-dual/cursor-usage-receipt.compact6.json');
+    expect(snap).toContain('"preCompactCount": 6');
+    expect(snap).not.toMatch(/C1-episodic=/);
+  });
 });

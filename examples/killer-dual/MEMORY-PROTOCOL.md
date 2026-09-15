@@ -48,8 +48,8 @@ Questions-only file: `MEMORY-QUIZ.md`.
 
 ## This cell (Arm S)
 
-- **A:** already scored on this mill-on cloud (host `preCompact` wrote Station). See `RECEIPT-HOST-PRECOMPACT.md`.
+- **A:** mill-on. Host `preCompact` wrote Station. Compact 1 disk: `RECEIPT-HOST-PRECOMPACT.md`. Compact 6 (Claim C cut): still present, same ticket. See `MEMORY-RECEIPT.md`.
 - **B:** same `bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe`. Never relaunch.
-- **C:** plant in chat, fill until the next compact banner, quiz-first, then `MEMORY-RECEIPT.md`. Do not write canary values into that receipt.
+- **C:** compact 6 (`2026-09-15T15:21:37Z`). **Not proven** as leftover old-window memory: C1/C2 were re-fed in the injected summary. C3 stayed unknown. Receipt: `MEMORY-RECEIPT.md`. Canary values stay off disk.
 
-Mill-control (`bc-5c1b4f51`) Compact 2: C was **not proven** as leftover old-window memory because C1/C2 were re-fed in the injected summary. C3 stayed unknown. Do not copy that cell’s canary **values** into this repo.
+Mill-control (`bc-5c1b4f51`) Compact 2: same C outcome (summarizer re-fed C1/C2; C3 unknown). Do not copy that cell’s canary **values** into this repo.
