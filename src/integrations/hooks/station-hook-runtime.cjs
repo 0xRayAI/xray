@@ -404,8 +404,11 @@ function extractPreservedStationLines(existing) {
       continue;
     }
     if (inDurable) {
-      const trimmed = line.trim();
-      if (/^##\s+\S/.test(trimmed) && !isDurableStationHeading(line)) {
+      const trimmed = String(line || "").trim();
+      const otherHeading = /^##\s+\S/.test(trimmed) && !isDurableStationHeading(line);
+      // Stock prefixes, blank lines, and stock footers close the section.
+      // Otherwise Seed swallows Compact/Usage/footers and each heat pastes another footer.
+      if (otherHeading || isStockStationLine(line)) {
         inDurable = false;
       } else {
         preserved.push(line);
