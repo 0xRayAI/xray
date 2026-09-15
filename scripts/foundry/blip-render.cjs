@@ -3,7 +3,8 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
- * Sharp focus + tempo/frequency animation on all five viz. Same mill tempo as the bed.
+ * Sharp focus + tempo/frequency animation on all five viz.
+ * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
  * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
  * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
  * ffmpeg wireframe is --engine wireframe only.
@@ -257,13 +258,17 @@ function stillPlate(seedHex, t) {
 
 function plateClock(seedHex, t) {
   const start = seedU32(seedHex, 0) % STILL_PLATES.length;
-  const span = DURATION_SEC / STILL_PLATES.length;
+  const grid = sound.motionGrid(seedHex, "ambient");
+  const beats = Math.max(STILL_PLATES.length, Math.floor(DURATION_SEC / grid.beatSec + 1e-9));
+  const every = Math.max(1, Math.floor(beats / STILL_PLATES.length));
   const n = t == null || t <= 0 ? 0 : t >= DURATION_SEC ? DURATION_SEC - 1e-6 : t;
-  const raw = n / span;
-  const step = Math.floor(raw);
+  const beatIndex = Math.floor(n / grid.beatSec);
+  const step = Math.min(STILL_PLATES.length - 1, Math.floor(beatIndex / every));
+  const span = every * grid.beatSec;
+  const cutAt = step * span;
   return {
     plate: STILL_PLATES[(start + step) % STILL_PLATES.length],
-    u: raw - step,
+    u: span > 0 ? (n - cutAt) / span : 0,
     start,
     step,
   };
@@ -815,6 +820,7 @@ function buildReceipt(input, evaled) {
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
+    grid: input.grid || null,
     ssot: SSOT,
     registry: input.registryIds || listMotionIds(),
     mp4: input.mp4Rel || input.mp4,
@@ -902,13 +908,13 @@ function failReceipt(root, input, reason, extra = {}) {
   return { receipt, mp4: input.mp4, seed: input.seed };
 }
 
-function resolveBed(opts, root, brief, work) {
+function resolveBed(opts, root, brief, work, seed) {
   if (opts.bed) {
     const bed = path.resolve(root, opts.bed);
     if (!fs.existsSync(bed)) {
       return { ok: false, reason: `bed missing: ${opts.bed}` };
     }
-    return { ok: true, bed, source: "flag" };
+    return { ok: true, bed, source: "flag", grid: null };
   }
   try {
     const out = opts.autoBedOut
@@ -918,12 +924,14 @@ function resolveBed(opts, root, brief, work) {
       brief,
       genre: opts.genre || "ambient",
       seconds: DURATION_SEC,
+      seed,
+      syncopate: true,
     });
     sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
     if (!fs.existsSync(out)) {
       return { ok: false, reason: "auto bed missing" };
     }
-    return { ok: true, bed: out, source: "auto-sound" };
+    return { ok: true, bed: out, source: "auto-sound", grid: rendered.grid || null };
   } catch (err) {
     return {
       ok: false,
@@ -1015,13 +1023,14 @@ function renderBlip(opts = {}) {
   fs.mkdirSync(path.dirname(mp4), { recursive: true });
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "xray-foundry-blip-"));
   try {
-    const bedInfo = resolveBed(opts, root, brief, work);
+    const bedInfo = resolveBed(opts, root, brief, work, seed);
     if (!bedInfo.ok) {
       return failReceipt(root, input, bedInfo.reason);
     }
     input.bed = bedInfo.bed;
     input.bedRel = path.relative(root, bedInfo.bed) || bedInfo.bed;
     input.bedSource = bedInfo.source;
+    input.grid = bedInfo.grid || null;
 
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {

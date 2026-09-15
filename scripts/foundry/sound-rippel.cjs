@@ -236,6 +236,27 @@ function tempoFromSeed(genreId, seedHex) {
   return table[idx];
 }
 
+/** Shared motion/audio grid. phase0=0 so t=0 is downbeat for both LFOs and the bed. */
+function motionGrid(seedHex, genre) {
+  const g = resolveGenre(genre);
+  const bpm = tempoFromSeed(g.id, seedHex);
+  return {
+    genre: g.id,
+    bpm,
+    beatSec: 60 / bpm,
+    phase0: 0,
+    downbeat: 0,
+    e: 0.25,
+    and: 0.5,
+    a: 0.75,
+    syncopate: true,
+  };
+}
+
+function gridTime(grid, beats) {
+  return (grid.phase0 || 0) + beats * grid.beatSec;
+}
+
 function mixInto(dest, src, start, gain) {
   const offset = Math.max(0, start | 0);
   const g = gain || 1;
@@ -703,17 +724,20 @@ function sectionGain(t, seconds) {
   return 0.55;
 }
 
-function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
+function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, syncopate }) {
   void brief;
   const g = resolveGenre(genre);
-  g.bpm = tempoFromSeed(g.id, seedHex);
+  const grid = motionGrid(seedHex, g.id);
+  g.bpm = grid.bpm;
+  const lock = Boolean(syncopate);
   const n = Math.floor(sampleRate * seconds);
   const kickBus = new Float64Array(n);
   const hatBus = new Float64Array(n);
   const colorBus = new Float64Array(n);
   const padBus = new Float64Array(n);
-  const beat = 60 / g.bpm;
+  const beat = grid.beatSec;
   const scale = SCALES[g.id] || SCALES.ambient;
+  const hatSlip = (t) => (lock ? t : t + (rng() - 0.5) * 0.003);
 
   if (g.id === "techno") {
     const kick = RIPPEL.technoKick;
@@ -747,7 +771,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
         release: hat.release,
         velocity: (off ? 0.34 : 0.2) * sectionGain(t, seconds),
       });
-      mixInto(hatBus, hit, Math.floor((t + (rng() - 0.5) * 0.003) * sampleRate), 1);
+      mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat * 2, 0.08)) {
       const at = t + beat;
@@ -808,7 +832,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
         release: 0.02,
         velocity: 0.18 * sectionGain(t, seconds),
       });
-      mixInto(hatBus, hit, Math.floor((t + (rng() - 0.5) * 0.004) * sampleRate), 1);
+      mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat, 0.08)) {
       mixInto(
@@ -890,7 +914,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
   } else {
     const padFreqs = g.id === "jazz" ? [196, 247, 311] : [196, 247, 311.13, 392];
     mixInto(padBus, renderPad(n, sampleRate, padFreqs, rng, RIPPEL.ambientPad.attack), 0, dbLin(RIPPEL.ambientPad.volDb));
-    for (const t of schedule(seconds, beat * 2, 0.2)) {
+    for (const t of schedule(seconds, lock ? beat : beat * 2, 0.2)) {
       const hit = renderMembrane({
         sampleRate,
         freq: 36.7,
@@ -905,6 +929,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat, 0.08)) {
+      const at = lock ? t + beat * grid.and : t;
+      if (at >= seconds - 0.08) continue;
       const hit = renderMetal({
         sampleRate,
         freq: 240,
@@ -914,15 +940,15 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
         attack: 0.004,
         decay: 0.18,
         release: 0.08,
-        velocity: 0.12 * sectionGain(t, seconds),
+        velocity: (lock ? 0.2 : 0.12) * sectionGain(t, seconds),
       });
-      mixInto(hatBus, hit, Math.floor(t * sampleRate), 1);
+      mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat * 2, 0.2)) {
       mixInto(
         colorBus,
         renderRhodes({ sampleRate, freq: pick(SCALES.ambient, rng), velocity: 0.28 }),
-        Math.floor((t + beat * 0.5) * sampleRate),
+        Math.floor((t + beat * (lock ? grid.a : 0.5)) * sampleRate),
         1,
       );
     }
@@ -985,6 +1011,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate }) {
     seconds,
     seed: seedHex,
     genre: g,
+    grid: { ...grid, syncopate: lock },
     engine: ENGINE,
     mix: MIX,
     ssot: SSOT,
@@ -1046,6 +1073,8 @@ module.exports = {
   GENRES,
   resolveGenre,
   tempoFromSeed,
+  motionGrid,
+  gridTime,
   renderRippelBed,
   renderMembrane,
   renderMetal,

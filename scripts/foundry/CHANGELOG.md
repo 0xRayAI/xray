@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.
+
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait + shells + faces + ghost trails) that fills the 4.44s frame. Receipt `visualConfig.mesh` is the NFT fingerprint. Worn by all five viz and the Power Plant ident.
 
 Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p. Not a frozen 320×180 poster.

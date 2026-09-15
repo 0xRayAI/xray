@@ -508,24 +508,25 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
   let pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
   let roll = t * 0.38 + mesh.twist * 0.25;
   const beat = beatPhase(checksum, t);
-  let breathe = (scaleMul || 1) * mesh.scale * (1 + 0.08 * Math.sin(beat * Math.PI * 2));
+  const kick = kickAccent(beat);
+  const and = andAccent(beat);
+  let breathe = (scaleMul || 1) * mesh.scale * (1 + 0.07 * kick + 0.045 * and);
   let ox = 0;
   let oy = 0;
   if (gait === "snap") {
-    const steps = mesh.cuts || 5;
-    const q = Math.floor((t / 4.44) * steps) / steps;
-    yaw = q * Math.PI * 2 + mesh.twist;
-    pitch = Math.sin(q * 5.2 + mesh.twist) * 0.46;
-    roll = q * 1.4 + mesh.twist * 0.3;
+    const q = Math.floor(beat);
+    yaw = q * 1.15 + mesh.twist;
+    pitch = Math.sin(q * 1.7 + mesh.twist) * 0.46;
+    roll = q * 0.55 + mesh.twist * 0.3;
   } else if (gait === "pulse") {
-    breathe *= 1 + mesh.warp * Math.sin(beat * Math.PI * 2);
+    breathe *= 1 + mesh.warp * (kick + and * 0.65);
   } else if (gait === "orbit") {
-    ox = Math.cos(t * 1.15 + mesh.twist) * mesh.warp * 0.42;
-    oy = Math.sin(t * 0.92 + mesh.twist) * mesh.warp * 0.26;
+    ox = Math.cos(beat * Math.PI * 2 + mesh.twist) * mesh.warp * 0.42;
+    oy = Math.sin(beat * Math.PI + mesh.twist) * mesh.warp * 0.26;
   } else if (gait === "tumble") {
-    yaw = t * mesh.spin * 1.38 + mesh.twist;
-    pitch = t * mesh.spin * 0.52 + Math.sin(mesh.twist) * 0.2;
-    roll = t * mesh.spin * 0.3 + mesh.twist;
+    yaw = beat * mesh.spin + mesh.twist;
+    pitch = beat * mesh.spin * 0.38 + Math.sin(mesh.twist) * 0.2;
+    roll = beat * mesh.spin * 0.22 + mesh.twist;
   }
   const minSide = Math.min(width, height);
   const cx = (width - 1) * 0.5 + ox * minSide;
@@ -535,8 +536,8 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     let r = rotate3(v, yaw, pitch, roll);
     if (shear) {
       r = [
-        r[0] + r[1] * Math.sin(t * mesh.spin + mesh.twist) * mesh.warp * 1.55,
-        r[1] + r[2] * Math.cos(t * mesh.spin * 0.7) * mesh.warp,
+        r[0] + r[1] * Math.sin(beat * Math.PI * 2 + mesh.twist) * mesh.warp * 1.55,
+        r[1] + r[2] * Math.cos(beat * Math.PI * 1.4) * mesh.warp,
         r[2],
       ];
     }
@@ -580,6 +581,7 @@ function buildVisualConfig({ brief, seedHex, genre, width, height }) {
     sequence: { notes, durations, velocities },
     genreConfig: {
       tempo: soundRippel.tempoFromSeed(g.id, seedHex),
+      phase0: 0,
       instrument: g.voices[0],
       frequencies,
       scale: g.id,
@@ -748,7 +750,8 @@ function circlePulse(circle, t) {
 
 function beatPhase(checksum, t) {
   const bpm = (checksum.genreConfig && checksum.genreConfig.tempo) || 90;
-  return (t * bpm) / 60;
+  const phase0 = (checksum.genreConfig && checksum.genreConfig.phase0) || 0;
+  return (t * bpm) / 60 + phase0;
 }
 
 /** Soft kick swell — scale only, never a full-field color gate (photosensitive). */
@@ -756,6 +759,14 @@ function kickAccent(beat) {
   const frac = beat - Math.floor(beat);
   if (frac < 0.12) return 0.55 * (1 - frac / 0.12);
   if (frac < 0.28) return 0.18 * (1 - (frac - 0.12) / 0.16);
+  return 0;
+}
+
+/** Off-beat (the AND) — same grid as the bed hat/cowbell. Scale only. */
+function andAccent(beat) {
+  const frac = beat - Math.floor(beat);
+  const d = Math.abs(frac - 0.5);
+  if (d < 0.1) return 0.45 * (1 - d / 0.1);
   return 0;
 }
 
@@ -962,7 +973,7 @@ function paintCanvas(buf, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
-  const swell = 0.5 + 0.5 * Math.sin(beat * Math.PI * 2);
+  const swell = 0.5 + 0.35 * kickAccent(beat) + 0.22 * andAccent(beat);
   const core = minSide * (0.1 + 0.012 * swell);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
@@ -1554,7 +1565,9 @@ module.exports = {
   edgeSharpness,
   goldPixelCount,
   kickAccent,
+  andAccent,
   beatPhase,
+  motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,
   paintMeshOverlay,

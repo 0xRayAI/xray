@@ -634,6 +634,70 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     }
   });
 
+  it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
+    const rippel = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number; phase0: number };
+      };
+      kickAccent: (beat: number) => number;
+      andAccent: (beat: number) => number;
+    };
+    const sound = requireCjs(path.join(root, 'scripts/foundry/sound-bed.cjs')) as {
+      renderSamples: (opts: {
+        brief: string;
+        genre: string;
+        seconds: number;
+        seed?: string;
+        syncopate?: boolean;
+      }) => {
+        samples: Float64Array;
+        sampleRate: number;
+        genre: { bpm: number };
+        grid: { phase0: number; syncopate: boolean; bpm: number; and: number };
+        seed: string;
+      };
+      highpassEnergy: (samples: Float64Array, sampleRate: number, hz: number) => number;
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = rippel.buildVisualConfig({ brief, seedHex });
+    const bed = sound.renderSamples({
+      brief,
+      genre: 'ambient',
+      seconds: 4.44,
+      seed: seedHex,
+      syncopate: true,
+    });
+    expect(bed.seed).toBe(seedHex);
+    expect(bed.genre.bpm).toBe(checksum.genreConfig.tempo);
+    expect(bed.grid.phase0).toBe(0);
+    expect(checksum.genreConfig.phase0).toBe(0);
+    expect(bed.grid.syncopate).toBe(true);
+    expect(rippel.kickAccent(0)).toBeGreaterThan(rippel.andAccent(0));
+    expect(rippel.andAccent(0.5)).toBeGreaterThan(rippel.kickAccent(0.5));
+    const beat = 60 / bed.genre.bpm;
+    function rms(t: number, dur: number): number {
+      const i0 = Math.max(0, Math.floor(t * bed.sampleRate));
+      const i1 = Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate));
+      let acc = 0;
+      let n = 0;
+      for (let i = i0; i < i1; i += 1) {
+        acc += bed.samples[i] * bed.samples[i];
+        n += 1;
+      }
+      return Math.sqrt(acc / Math.max(1, n));
+    }
+    expect(rms(0, 0.05)).toBeGreaterThan(rms(beat * 0.25, 0.05));
+    const slice = (t: number, dur: number) =>
+      bed.samples.subarray(
+        Math.max(0, Math.floor(t * bed.sampleRate)),
+        Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate)),
+      );
+    expect(sound.highpassEnergy(slice(beat * 0.5, 0.06), bed.sampleRate, 2000)).toBeGreaterThan(
+      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000) * 0.85,
+    );
+  });
+
   it('keeps ffmpeg wireframe behind a flag and FAILs silent mp4s', { timeout: 90000 }, async () => {
     const { renderBlip, evaluateMp4File, hasFfmpeg } = requireCjs(
       path.join(root, 'scripts/foundry/blip-render.cjs'),
