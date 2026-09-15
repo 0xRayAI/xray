@@ -6,7 +6,7 @@ Factory-blip orb nucleus is orb-only (disc / eclipse / pulse, color + size on th
 
 Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.
 
-Factory-blip lines: sharp 3px core, cyan/gold/blue gradient along the stroke, subtle glow. Vertex beads gone. Not CAD ticks. Not a strobe.
+Factory-blip lines: Wu hairline (solid 1px core, coverage AA as the only glow). Cyan/gold/blue along the stroke. Vertex beads gone.
 
 Factory-blip lines iridesce: cyan/gold/blue travel + glow + beat fireflies on the sparse cage. Field stars / grids / gradients / blinkers are luminous, not CAD ticks. Not more wire. Not a strobe.
 
