@@ -26,7 +26,7 @@ Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is 
 | `waves` | `waveform` | Wave Flow — harmonic ribbons + beat envelope + gold needle |
 | `spark` | `particles` | Spark Drift — beat bursts, orbital + radial motes |
 
-Every mint wears a **seed-unique mesh** (12 families · 5 gaits · shells · faces · ghost). Scale fills the 4.44s frame. Receipt `visualConfig.mesh` is the NFT fingerprint.
+Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers). Uniqueness is the field, not more wire in the middle. Receipt `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints.
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 
