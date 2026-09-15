@@ -30,4 +30,4 @@ npx grok-bot ready
 This package orchestrates. It does not vendor the whole OS.
 
 ## Fleet ops
-Coordinator procedures remain under `ops/` (review levels, clouds, friend test).
+Coordinator procedures remain under `ops/` (review levels, clouds, friend test). Compact key quiz: [`ops/COMPACT-QUIZ.md`](ops/COMPACT-QUIZ.md) (`npx grok-bot compact-snapshot` / `compact-quiz`). After a long chat: `skills/survive-compact/SKILL.md`.

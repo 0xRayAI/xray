@@ -7,6 +7,7 @@
 2. Open `SKILLS.md` and run skills in order for **each** key agent.
 3. Deeper fleet ops live under `ops/` (humans + coordinators).
 4. After a long chat or before coding: `skills/survive-compact/SKILL.md` — read disk, resume the live cloud, do not rebuild.
+5. Compact key quiz (Cursor cloud, before/after disk): `ops/COMPACT-QUIZ.md` — `npx grok-bot compact-snapshot` then `compact-quiz`. Do not FILL logs.
 
 ## Install
 ```bash

@@ -68,3 +68,11 @@ E2 (Station written by a *new* host fire after the lazy-load) is **PASS**.
 B still has **no** `context_tokens` / `context_window_size` on the receipt — `pre-compact.js` does not copy those fields. Cite S: tokens=232105, window=256000. Heat still says `Repertoire: on` from vendor dist; organ still off `node_modules`. Intent still `(none yet)`.
 
 Do not treat this as “B became S.” Do not relaunch. Do not FILL. #57 is closed; this is map evidence on the B branch.
+
+## Packet 5 — B (what caused 10:41 compact)
+
+The L801–4801 `activity.log.orig` Reads are **HOST-FIRE #3–#5 FILL**, documented **FAIL** (0 `event=preCompact`). They are not the winning trigger.
+
+10:41:27Z on this run: conversation had already compacted at 09:35 and 09:38 from **real work**. User said read logs until compaction. Later offsets of the same log were ingested. **No before-snapshot, no B tokens.** Honest class: already-hot window + more conversation tokens. Happenstance vs the FILL recipe. Not a proven isolated cause.
+
+Op proc we were missing now exists: `grok-bot/ops/COMPACT-QUIZ.md` + `npx grok-bot compact-snapshot` / `compact-quiz`. Plant keys first. Do not FILL. `survive-compact` stays the after-wake. There is no `TRANSITION.md` (it is `TRANSITION-MAP.md`). There is no `cursor-usage-receipt.json` on this branch.

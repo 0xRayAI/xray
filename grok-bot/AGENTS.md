@@ -51,6 +51,8 @@ The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) a
 
 Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done.
 
+Cursor-cloud **before/after** key quiz: `ops/COMPACT-QUIZ.md` (`npx grok-bot compact-snapshot` then `compact-quiz`). That does not cause compact. Do not FILL `activity.log.orig`.
+
 Full Repertoire MCP (optional memory router on the CLI) is an aid, not required theater in every Grok Bot chat.
 
 ## Op proc index

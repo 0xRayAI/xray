@@ -132,7 +132,9 @@ The two extra `event=preCompact` probe lines at 09:55:34Z / 09:55:48Z are this r
 
 ## Post-fix host fire (10:41:27Z)
 
-User: **read logs until compaction.** Main thread kept reading `logs/framework/activity.log.orig` (Jan 2026 processor/session noise). Did **not** hand-invoke `pre-compact.js`. Did **not** FILL. Did **not** restore `.cursor/hooks.json`. Did **not** put `@0xray/repertoire` on `node_modules`.
+User: **read logs until compaction.** Main thread kept reading `logs/framework/activity.log.orig` (Jan 2026 processor/session noise). Did **not** hand-invoke `pre-compact.js`. Did **not** restore `.cursor/hooks.json`. Did **not** put `@0xray/repertoire` on `node_modules`.
+
+Those Reads are **not** a proven compact trigger. The same file slices (L801–4801) are HOST-FIRE #3–#5 FILL (**FAIL**, 0 `preCompact`). This run had already compacted at 09:35 and 09:38 from real work. 10:41 fired during later offsets with **no before-snapshot** and **no B tokens**. Class: already-hot window + more conversation tokens. Repeatable quiz: `grok-bot/ops/COMPACT-QUIZ.md` (do not FILL).
 
 Host summarized this conversation. Probe logged `event=preCompact` at **10:41:27Z** between `preToolUse` at the same second and more `preToolUse` at 10:42:24Z.
 

@@ -9,6 +9,7 @@ Start here if you wear this kit.
 | `ops/SEATS.md` | Who does what (CoS / forge / critic / Dist) |
 | `ops/LEAN-COMPUTE.md` | Review levels · save compute |
 | `ops/CLOUD-CONTINUITY.md` | When to use heavy cloud coding jobs |
+| `ops/COMPACT-QUIZ.md` | Before/after compact snapshot + key quiz. Not FILL. Not survive-compact |
 | `ops/GIBBERISH-CHECK.md` | Friend-test hard gate (human/public) |
 | `ops/GROK-BOT-REMOTE.md` | How ops get mirrored into this folder |
 | `ops/SYNAPTICAL-LANES.md` | **H vs B** speaking styles (plain vs compressed internal) |

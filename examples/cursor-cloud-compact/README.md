@@ -12,7 +12,9 @@ Isolated Station-seed compact survival. `/workspace` live card is reference; thi
 
 Protocol: **SEED → WORK (`echo hook-probe-ben-001`) → COMPACT → QUIZ → FORWARD → RECEIPT E1–E6**.
 
-If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-compact.js` with Cursor-shaped stdin and `--event-class=cursor-precompact-synthetic`. Host fire is `cursor-host-precompact`.
+Fleet op proc for the quiz (snapshot → wait for **host** compact → snapshot → quiz keys): `grok-bot/ops/COMPACT-QUIZ.md`. Commands: `npx grok-bot compact-snapshot` / `compact-quiz`. **Do not** Read `logs/framework/activity.log.orig` L801–4801 to force compact — that FILL is HOST-FIRE #3–#5 **FAIL**.
+
+If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-compact.js` with Cursor-shaped stdin and `--event-class=cursor-precompact-synthetic`. Host fire is `cursor-host-precompact`. Label synthetic as synthetic.
 
 | Receipt | Compact class | Note |
 |---------|---------------|------|

@@ -9,7 +9,9 @@ description: >-
 
 **Job:** keep mind and work alive when the host summarizes or trims the thread. Disk truth beats chat memory.
 
-Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wait for them. This skill is the chat-seat path.
+Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wait for them. This skill is the chat-seat **after** path.
+
+Cursor-cloud **before/after** quiz (plant keys, snapshot, wait for host, snapshot, quiz): `ops/COMPACT-QUIZ.md`. That proc does not cause compact. Do not FILL `activity.log.orig`.
 
 ## When
 - After a long thread, a rolled-up history, or any “I feel blank” wake

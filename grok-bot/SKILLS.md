@@ -21,8 +21,10 @@ Prove a seat first: `npx grok-bot ready` (alias `doctor`) — mill plant on disk
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — keep mind across compaction |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
+Compact **before/after** quiz (not FILL): `ops/COMPACT-QUIZ.md` — `npx grok-bot compact-snapshot` then `compact-quiz`.
+
 ## Ops reference
-`ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md`
+`ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md` · `ops/COMPACT-QUIZ.md`
 
 Same problem or open PR? Resume that cloud (`ops/CLOUD-CONTINUITY.md`). After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.
 

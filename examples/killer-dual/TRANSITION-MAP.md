@@ -79,6 +79,7 @@ Did **not** survive as a card at those fires: `STATION.md`, `cursor-precompact.j
 | New host compact, fixed writer, still bare | **Done** — 10:41:27Z. Card yes. Tokens no. Organ still off |
 | New host compact with repertoire actually on the live `module_path` | **No on B** — that would turn B into S. S already has the suited fire |
 | Grok Bot `survive-compact` as its own wake (Read STATION / session-boot / this map, name the live track, do not rebuild) | **Yes, constrained path — later chat-seat job** |
+| Before/after key quiz | **`grok-bot/ops/COMPACT-QUIZ.md`** — snapshot, wait for host, snapshot, quiz. Do **not** FILL `activity.log.orig` |
 
 Live track to name from disk: intent = Station writer + seat `ready`/`doctor` · PR = https://github.com/0xRayAI/xray/pull/57 (closed; map evidence) · cloud = `bc-12f1ecad-bb9a-588b-9559-7e3b61e7372d` · already built = lazy-load + Path C pass + live host Station write at 10:41:27Z + `grok-bot ready` · do not rebuild.
 
