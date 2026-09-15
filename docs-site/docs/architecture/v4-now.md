@@ -10,6 +10,8 @@ Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so 
 
 Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Station**. Repertoire 0.2 is a thin routing seed, not the successor card. Split: [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md).
 
+**Score disk, not mind.** Chat may lose early turns. Disk must not lose the ticket. After compact the host re-feeds a session summary, the files on disk, and a “conversation was summarized” banner together — naming the ticket afterward is not separable memory proof. Station present means mill was on that machine. Station **absent** (host did not invent `.xray/state/STATION.md`) is still PASS for mill-control. Same-bc is not “the agent survived as a conversation.” Killer-dual law: `examples/killer-dual/HOST-VS-MILL.md`.
+
 ## Line (feat/v4-temperament)
 
 npm **4.0.0** (`https://www.npmjs.com/package/0xray`). Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`). Next 4.x fix is `npm run release:npm` — never `release:major` (that becomes 5.0.0).

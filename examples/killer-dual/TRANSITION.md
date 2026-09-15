@@ -6,6 +6,8 @@ Eval cloud: `bc-cd19bb4e` · harness hooks + `@0xray/repertoire@0.2.0` · live `
 
 **Organs (do not mix):** Station = successor card. Repertoire 0.1.0–0.1.8 = same judgment organ (do not pin 0.1.8). Groover 0.1 = registry + field, not the brain. Factory guide: `docs-site/docs/guides/station-vs-repertoire.md`.
 
+**Score disk, not mind.** Chat may lose early turns; disk must not lose the ticket. Same-bc plus a re-fed summary is not conversation-memory proof. Mill-absence (host did not invent `STATION.md`) is still PASS for mill-control. Law: `HOST-VS-MILL.md`.
+
 ## Floors (keep separate)
 
 | Floor | Cursor cloud (this run) | Grok Bot chat |
@@ -31,8 +33,9 @@ Eval cloud: `bc-cd19bb4e` · harness hooks + `@0xray/repertoire@0.2.0` · live `
 |--|--|--|
 | Observable baseline | Yes — probe log + Station + receipts | Disk only |
 | What to Read after a cut | `.xray/state/STATION.md` (host does not inject) | Same files + WAVEBOARD / agent memory |
-| Pass | Host `preCompact` Y **or** honest N; quiz from disk; continue the card | Name the live track; resume the `bc`; do not rebuild |
+| Pass | Host `preCompact` Y **or** honest N; quiz from **disk**; same `bc` (not a new launch). Mill-absence: Station not invented is still PASS | Name the live track from **disk**; resume the `bc`; do not rebuild |
 | Fail | Hand-invoke `pre-compact.js`; FILL; relaunch | Fake PreToolUse/PreCompact in chat |
+| Not scored | Recalling a ticket after compact (summary + disk + this turn are not separable). No chat-only canary was planted. | Same: reading STATION/WAVEBOARD is disk, not a hidden buffer of the old transcript |
 
 Arm S vs Arm B harness compare stays in `COMPARE.md` (suited vs stripped). Dual-arm mailbox: `NOTES-EXCHANGE.md`.
 

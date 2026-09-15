@@ -16,4 +16,6 @@ Ticket: TICKET-KILLER-DUAL-CLOUD
 
 Under pressure: both got host fire. S parsed stdin; B’s probe logged fire but the writer process died. Complementary: prefer **#56** for the seat CLI; park **#54**; keep **#57** if critic wants the dist-miss case. Merge after critic.
 
+**Not a memory A/B.** Station present (S) vs writer FAIL then lazy-load (B) scores mill-on-disk / writer-liveness. Same-bc plus still naming the ticket after compact is not “the agent survived as a mind.” Mill-absence (no Station invented) is still PASS for that mill-control claim. Law: `HOST-VS-MILL.md`.
+
 Next lever: cite host `context_window_size` on Station when present — **no FILL**. Do not relaunch either bc.

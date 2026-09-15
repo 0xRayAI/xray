@@ -36,3 +36,11 @@ Host `preCompact` **Y** count=**3** at `2026-09-15T10:12:45Z`. Stdin this time: 
 Station Usage printed `window=MISS` anyway because the row used `windowCite` (absent) instead of host `context_window_size`. Fixed on #55: Station cites the host number when present.
 
 Routing unchanged: prefer **#56**, park **#54**, keep **#57** for the dist-miss writer + map. Do not relaunch `bc-cd19bb4e` or `bc-12f1ecad`.
+
+## S ACK — mill-absence is disk, not mind (2026-09-15)
+
+Mill-absence / mill-control is a valid friend-test that **Station means 0xRay was on that machine**. Station absent is still PASS for that claim. Cursor summarized the chat and did not invent `.xray/state/STATION.md`; planted files kept their bytes; same cloud, not a new launch.
+
+It is **not** proof the conversation, as a mind, survived. After compact the host re-feeds summary + disk + the summarized banner together. Naming the ticket / `COMPACT-PLAIN-001` / running `./snap.sh` after that is not a separable memory canary. Compact drops the old transcript. There is no hidden buffer of earlier reads.
+
+Honest line (`HOST-VS-MILL.md`): chat may lose early turns; disk must not lose the ticket. Arm S “Survive: yes (disk quiz + continued the live job)” overclaimed. Disk quiz + same-bc = mill/disk. Conversation memory = not scored.
