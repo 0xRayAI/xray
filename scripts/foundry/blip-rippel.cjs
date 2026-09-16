@@ -895,6 +895,7 @@ function stampFocusDisc(buf, width, height, cx, cy, radius, color, opts) {
   const glowW = opts && opts.glow != null ? opts.glow : 5;
   const glowA = opts && opts.glowAlpha != null ? opts.glowAlpha : 0.3;
   const rimColor = (opts && opts.rimColor) || THEME.ink;
+  const clip = opts && opts.clip;
   const outer = radius + glowW;
   const x0 = Math.max(0, Math.floor(cx - outer));
   const x1 = Math.min(width - 1, Math.ceil(cx + outer));
@@ -905,6 +906,11 @@ function stampFocusDisc(buf, width, height, cx, cy, radius, color, opts) {
     const dy = y - cy;
     const dy2 = dy * dy;
     for (let x = x0; x <= x1; x++) {
+      if (clip) {
+        const hx = x - clip.cx;
+        const hy = y - clip.cy;
+        if (hx * hx + hy * hy <= clip.r * clip.r) continue;
+      }
       const dx = x - cx;
       const d = Math.sqrt(dx * dx + dy2);
       if (d <= bodyR) {
@@ -1430,16 +1436,14 @@ function paintSuitSatellites(buf, width, height, t, checksum, pred, clip) {
     const midY = (height - 1) * 0.5;
     let sy = sat.y;
     if (Math.abs(sy - midY) < 7) sy += sy >= midY ? 8 : -8;
-    if (clip && sat.depth < 0) {
-      const d = Math.hypot(sat.x - clip.cx, sy - clip.cy);
-      if (d < clip.r - sat.r * 0.15) continue;
-    }
+    const hole = clip && sat.depth < 0 ? clip : null;
     const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.55);
     stampFocusDisc(buf, width, height, sat.x, sy, sat.r * 0.42, color, {
       rim: 1.6,
       glow: 4,
       glowAlpha: 0.16 + 0.12 * Math.max(0, sat.depth),
       rimColor: THEME.ink,
+      clip: hole,
     });
   }
 }
