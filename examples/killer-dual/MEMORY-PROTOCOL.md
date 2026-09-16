@@ -48,9 +48,9 @@ Questions-only file: `MEMORY-QUIZ.md`.
 
 ## This cell (Arm S)
 
-- **A:** mill-on. Host `preCompact` wrote Station. Compact 1 disk: `RECEIPT-HOST-PRECOMPACT.md`. Compact 6 and compact 7: still present, same ticket. See `MEMORY-RECEIPT.md` and `MEMORY-RECEIPT-7.md`.
+- **A:** mill-on. Host `preCompact` wrote Station. Compact 1 disk: `RECEIPT-HOST-PRECOMPACT.md`. Compact 6, 7, and 8: still present, same ticket. See `MEMORY-RECEIPT.md`, `MEMORY-RECEIPT-7.md`, and `MEMORY-RECEIPT-8.md`.
 - **B:** same `bc-cd19bb4e-a4bc-57da-8979-754bb0c202fe`. Never relaunch.
-- **C:** compact 6 (`2026-09-15T15:21:37Z`) and compact 7 (`2026-09-15T15:35:27Z`). **Not proven** as leftover old-window memory: C1/C2 were re-fed in the injected summary both times. C3 stayed unknown. Receipts: `MEMORY-RECEIPT.md`, `MEMORY-RECEIPT-7.md`. Canary values stay off disk.
+- **C:** compact 6 (`2026-09-15T15:21:37Z`), compact 7 (`2026-09-15T15:35:27Z`), and compact 8 (`2026-09-16T12:52:11Z`). **Not proven** as leftover old-window memory: C1/C2 were re-fed in the injected summary each time. C3 stayed unknown. Receipts: `MEMORY-RECEIPT.md`, `MEMORY-RECEIPT-7.md`, `MEMORY-RECEIPT-8.md`. Canary values stay off disk.
 
 Mill-control (`bc-5c1b4f51`) Compact 2: same C outcome (summarizer re-fed C1/C2; C3 unknown). Do not copy that cell’s canary **values** into this repo.
 
@@ -71,15 +71,30 @@ Compact 7 ran the tightened cell on the same `bc`:
 
 **Result:** C still **NOT PROVEN**. The host summary copied C1/C2 from the agent’s working notes (current-work / pending-tasks), not from a canary table. Dropping the table does not stop re-feed if later turns restate the keys.
 
-## Next cell — compact 8 (do not restate keys)
+## Compact 8 (frozen) — never-restate fill still confounded
 
-Compact 7 is frozen. For compact 8, same `bc`, same two-key table:
+Compact 6 is **frozen** (`MEMORY-RECEIPT.md`). Compact 7 is **frozen** (`MEMORY-RECEIPT-7.md`). Compact 8 is **frozen** (`MEMORY-RECEIPT-8.md`). None validates leftover-window memory. Do not overwrite them.
 
-1. Operator plants **new** chat-only canaries off-machine. Compact 6 and compact 7 values are burned.
-2. Agent says each **once** at plant, then **never again** until quiz-first after count **8**. No table, no “current work” restatement, no receipt echo, no todo text with the values.
-3. Never write the values to the repo.
+Compact 8 ran the never-restate cell on the same `bc`:
+
+1. New chat-only canaries (compact 6 and compact 7 values burned).
+2. Each said **once** at plant, then never again until quiz-first after count **8**. No table, no later-turn restatement, no receipt echo, no todo text with the values.
+3. Values never written to the repo.
 4. Fill until host `preCompact` count **8**.
-5. **First output after that cut is only the quiz answers**, in order, before any tools.
-6. Then write `MEMORY-RECEIPT-8.md`. Two-key score vs a copy of the injected summary. C3 must stay unknown.
+5. First user-facing lines after the cut were the quiz answers.
+6. `MEMORY-RECEIPT-8.md` two-key vs the injected summary. C3 stayed unknown.
 
-If the injected summary still contains C1/C2, score summarizer keep again. Do not call that leftover-window memory.
+**Result:** C still **NOT PROVEN**. The host summary copied C1/C2 from the plant-once text inside the compacted window. Silence in later fill turns does not stop re-feed if the plant is still in the transcript the summarizer keeps.
+
+## Next cell — compact 9 (same two-key; do not paste values)
+
+Compact 8 is frozen. For compact 9, same `bc`, same two-key table:
+
+1. Operator plants **new** chat-only canaries off-machine. Compact 6, 7, and 8 values are burned.
+2. Agent says each **once** at plant, then **never again** until quiz-first after count **9**. No table, no “current work” restatement, no receipt echo, no todo text with the values.
+3. Never write the values to the repo.
+4. Fill until host `preCompact` count **9**.
+5. **First output after that cut is only the quiz answers**, in order, before any tools.
+6. Then write `MEMORY-RECEIPT-9.md`. Two-key score vs a copy of the injected summary. C3 must stay unknown.
+
+If the injected summary still contains C1/C2, score summarizer keep again. Do not call that leftover-window memory. Plant-once in the compacted window is enough for that confound.

@@ -20,5 +20,7 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `cursor-usage-receipt.compact6.json` | Compact 6 snapshot — host window **256000**, tokens 298693, `preCompactCount=6` |
 | `MEMORY-RECEIPT-7.md` | Compact 7 Claim C. Quiz-first + no canary table; summary still re-fed C1/C2 from working notes. Frozen. |
 | `cursor-usage-receipt.compact7.json` | Compact 7 snapshot — host window **256000**, tokens 251144, `preCompactCount=7` |
+| `MEMORY-RECEIPT-8.md` | Compact 8 Claim C. Never-restate fill; summary still re-fed C1/C2 from plant-once in the compacted window. Frozen. |
+| `cursor-usage-receipt.compact8.json` | Compact 8 snapshot — host window **256000**, tokens 244744, `preCompactCount=8` |
 
 Path C compact receipts stay under `examples/cursor-cloud-compact/`. This directory is the **suited** Arm S track.
