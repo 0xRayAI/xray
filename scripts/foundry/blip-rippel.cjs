@@ -1171,8 +1171,8 @@ function paintMeshFaces(buf, width, height, mesh, pts, color, alpha, t, checksum
     .sort((p, q) => p.z - q.z);
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   for (let i = 0; i < ranked.length; i++) {
-    const jewel = mixRgb(THEME.cyan, THEME.gold, (i / Math.max(1, ranked.length) + (beat || 0) * 0.08) % 1);
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, THEME.cyan, 0.35), alpha);
+    const jewel = mixRgb(THEME.cyan, THEME.blue, (i / Math.max(1, ranked.length) + (beat || 0) * 0.08) % 1);
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, THEME.ink, 0.08), alpha);
   }
 }
 
@@ -1594,9 +1594,11 @@ function paintFocusOrb(buf, width, height, t, checksum) {
 /** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
 function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
+  const phrase = phraseOf(checksum, t);
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.95,
     half: 1,
+    fill: phraseMix(phrase, 0.16, 0.32, 0.2),
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
