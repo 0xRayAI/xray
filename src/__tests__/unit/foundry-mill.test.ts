@@ -11,6 +11,11 @@ import { eraFromVersion, buildDocsHeader } from '../../../scripts/foundry/versio
 import { validateReleaseDocs } from '../../../scripts/foundry/validate-release-docs.mjs';
 import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
+import {
+  REQUIRED_PACK_PATHS,
+  assertPackedPaths,
+  parseNpmPackJson,
+} from '../../../scripts/foundry/assert-packed-dist-cli.mjs';
 
 const requireCjs = createRequire(import.meta.url);
 
@@ -19,6 +24,44 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 function read(rel: string): string {
   return readFileSync(path.join(root, rel), 'utf8');
 }
+
+describe('foundry mill — packed dist/cli gate', () => {
+  it('rejects a 4.0.13-shaped pack listing with no dist/cli', () => {
+    expect(() => assertPackedPaths(['src/cli/index.ts', 'scripts/foundry/mint-suit.cjs'])).toThrow(
+      /0xray@4\.0\.13/,
+    );
+    expect(() => assertPackedPaths(['src/cli/index.ts', 'scripts/foundry/mint-suit.cjs'])).toThrow(
+      /dist\/cli\/index\.js/,
+    );
+  });
+
+  it('accepts a pack listing that includes CLI, orchestrator MCP, and Grok hooks', () => {
+    expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
+    expect(() =>
+      assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),
+    ).not.toThrow();
+  });
+
+  it('parses npm pack --json arrays and objects', () => {
+    expect(
+      parseNpmPackJson(
+        JSON.stringify([{ files: REQUIRED_PACK_PATHS.map((path) => ({ path })) }]),
+      ),
+    ).toEqual(REQUIRED_PACK_PATHS);
+    expect(parseNpmPackJson(JSON.stringify({ files: REQUIRED_PACK_PATHS }))).toEqual(
+      REQUIRED_PACK_PATHS,
+    );
+  });
+
+  it('prepack and mill publish call the packed dist/cli assert', () => {
+    const pkg = JSON.parse(read('package.json')) as { scripts: Record<string, string> };
+    expect(pkg.scripts.prepack).toContain('assert-packed-dist-cli.mjs');
+    expect(read('scripts/foundry/release.mjs')).toContain('assert-packed-dist-cli.mjs');
+    expect(read('scripts/node/consumer-install-smoke.mjs')).toContain(
+      'package/dist/cli/index.js',
+    );
+  });
+});
 
 describe('foundry mill — one bumper', () => {
   it('eraFromVersion is major.minor, not patch', () => {
@@ -148,8 +191,9 @@ describe('foundry mill — exo cannot ship', () => {
 describe('foundry mill — gate and scripts', () => {
   it('full release-gate runs docs validation', () => {
     const src = read('scripts/foundry/release-gate.mjs');
-    expect(src).toContain('3/7 Release docs');
+    expect(src).toContain('4/8 Release docs');
     expect(src).toContain('validate-release-docs.mjs');
+    expect(src).toContain('assert-packed-dist-cli.mjs');
   });
 
   it('package.json version scripts do not pass a bump type', () => {
@@ -180,7 +224,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(pkg.files).toContain('scripts/foundry/');
     expect(read('scripts/node/postinstall.cjs')).toContain('../foundry/mint-suit.cjs');
     expect(read('src/cli/commands/foundry-mint-wear.ts')).toContain('scripts/foundry/mint-suit.cjs');
-    const pack = spawnSync('npm', ['pack', '--dry-run', '--json'], {
+    const pack = spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
       cwd: root,
       encoding: 'utf8',
     });
@@ -393,6 +437,7 @@ describe('foundry mill — gate and scripts', () => {
       'reconcile-version.mjs',
       'release.mjs',
       'release-gate.mjs',
+      'assert-packed-dist-cli.mjs',
     ]) {
       const mill = read(`scripts/foundry/${rel}`);
       expect(mill, rel).not.toMatch(/path\.resolve\(__dirname,\s*['"]\.\.\/\.\.['"]\)/);

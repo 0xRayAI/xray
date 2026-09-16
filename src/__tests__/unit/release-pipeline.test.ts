@@ -13,6 +13,7 @@ describe('release pipeline', () => {
     expect(pkg.scripts['release:npm']).toContain('--publish-only');
     expect(pkg.scripts['release:npm']).toContain('scripts/foundry/release.mjs');
     expect(pkg.scripts.prepublishOnly).not.toContain('release:gate');
+    expect(pkg.scripts.prepack).toContain('assert-packed-dist-cli.mjs');
   });
 
   it('pack-tmp-suit-proof is the pack → tmp mill+hangar inspect gate', () => {
