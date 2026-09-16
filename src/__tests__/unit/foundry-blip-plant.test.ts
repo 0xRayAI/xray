@@ -1278,9 +1278,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       }
       return false;
     }
-    expect(bright(mesh.buffer)).toBeGreaterThan(bright(strike.buffer));
+    expect(frameFill(mesh.buffer)).toBeGreaterThan(frameFill(strike.buffer));
+    expect(bright(mesh.buffer)).toBeGreaterThan(4000);
     expect(bright(embers.buffer)).toBeGreaterThan(2400);
     expect(frameFill(embers.buffer)).toBeGreaterThan(0.012);
+    expect(bright(strike.buffer)).toBeGreaterThan(800);
     expect(goldColumn(waves.buffer, waves.width, waves.height)).toBe(false);
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('2–3 held edges');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('coals at mesh seats');

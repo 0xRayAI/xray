@@ -1093,16 +1093,19 @@ function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
 
 function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
   if (!mesh.faces || !mesh.faces.length || alpha <= 0) return;
+  const wash = color || THEME.cyan;
   const ranked = mesh.faces
     .map((f) => {
       const a = pts[f[0]];
       const b = pts[f[1]];
       const c = pts[f[2]];
+      if (!a || !b || !c) return null;
       return { a, b, c, z: (a.z + b.z + c.z) / 3 };
     })
+    .filter(Boolean)
     .sort((p, q) => p.z - q.z);
   for (let i = 0; i < ranked.length; i++) {
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, color, alpha);
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, wash, alpha);
   }
 }
 
@@ -1501,7 +1504,7 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.92,
     half: 1,
-    fill: phraseMix(phrase, 0.05, 0.15, 0.08),
+    fill: phraseMix(phrase, 0.12, 0.28, 0.16),
   });
 }
 
@@ -1562,12 +1565,21 @@ function paintMillEmbers(buf, width, height, t, checksum) {
     const q = prev[i] || p;
     const color =
       kick > 0.2 && i === 0 ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length];
-    stampFocusSegment(buf, width, height, q.x, q.y, p.x, p.y, size * 0.38, color, {
-      rim: 1,
-      glow: 3.2,
-      glowAlpha: 0.14,
-      rimColor: THEME.ink,
-    });
+    const dx = p.x - q.x;
+    const dy = p.y - q.y;
+    for (let k = 1; k <= 4; k++) {
+      const u = k / 5;
+      stampDisc(
+        buf,
+        width,
+        height,
+        p.x - dx * u,
+        p.y - dy * u,
+        (size * 0.42) * (1 - u * 0.55),
+        color,
+        1.6,
+      );
+    }
     stampFocusDisc(buf, width, height, p.x, p.y, size + (i % 3) * 1.6 + kick * 2.4, color, {
       rim: 1.4,
       glow: 5.2,
@@ -1575,11 +1587,11 @@ function paintMillEmbers(buf, width, height, t, checksum) {
       rimColor: THEME.ink,
     });
   }
-  if (kick > 0.2 && pts[0] && pts[1]) {
-    stampFocusSegment(buf, width, height, pts[0].x, pts[0].y, pts[1].x, pts[1].y, 3.4 + kick * 1.8, THEME.gold, {
-      rim: 1,
-      glow: 3,
-      glowAlpha: 0.2,
+  if (kick > 0.2 && pts[0]) {
+    stampFocusDisc(buf, width, height, pts[0].x, pts[0].y, size * 1.18 + kick * 2.8, THEME.gold, {
+      rim: 1.4,
+      glow: 6,
+      glowAlpha: 0.28,
       rimColor: THEME.ink,
     });
   }
