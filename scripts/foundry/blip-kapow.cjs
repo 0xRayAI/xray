@@ -43,32 +43,35 @@ function mixPixel(buf, width, x, y, color, alpha) {
   buf[i + 2] = (buf[i + 2] + (color[2] - buf[i + 2]) * a + 0.5) | 0;
 }
 
-function starRadius(angle, spikes, r0, r1, rot) {
-  const turns = spikes > 2 ? spikes : 10;
+function starRadius(angle, spikes, r0, r1, rot, jag) {
+  const turns = spikes > 2 ? spikes : 12;
   const u = ((angle - rot) / (Math.PI * 2)) * turns;
-  const f = u - Math.floor(u);
+  const i = Math.floor(u);
+  const f = u - i;
   const tri = f < 0.5 ? f * 2 : (1 - f) * 2;
-  return r0 + (r1 - r0) * Math.pow(Math.max(0, tri), 0.55);
+  const bite = 1 + (((jag || 0) >> (i & 7)) & 1) * 0.1;
+  return (r0 + (r1 - r0) * Math.pow(Math.max(0, tri), 2.2)) * bite;
 }
 
-function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha) {
+function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha, jag) {
   if (r1 <= 1 || alpha <= 0) return;
-  const x0 = Math.max(0, Math.floor(cx - r1 - 1));
-  const x1 = Math.min(width - 1, Math.ceil(cx + r1 + 1));
-  const y0 = Math.max(0, Math.floor(cy - r1 - 1));
-  const y1 = Math.min(height - 1, Math.ceil(cy + r1 + 1));
+  const pad = r1 * 1.12;
+  const x0 = Math.max(0, Math.floor(cx - pad - 1));
+  const x1 = Math.min(width - 1, Math.ceil(cx + pad + 1));
+  const y0 = Math.max(0, Math.floor(cy - pad - 1));
+  const y1 = Math.min(height - 1, Math.ceil(cy + pad + 1));
   for (let y = y0; y <= y1; y++) {
     const dy = y - cy;
     for (let x = x0; x <= x1; x++) {
       const dx = x - cx;
       const d = Math.hypot(dx, dy);
-      if (d > r1 + 1.2) continue;
+      if (d > pad + 1.2) continue;
       const ang = Math.atan2(dy, dx);
-      const edge = starRadius(ang, spikes, r0, r1, rot);
+      const edge = starRadius(ang, spikes, r0, r1, rot, jag);
       if (d > edge + 0.6) continue;
       let a = alpha;
       const rim = edge - d;
-      if (rim < 1.6) a *= Math.max(0, rim / 1.6);
+      if (rim < 1.4) a *= Math.max(0, rim / 1.4);
       mixPixel(buf, width, x, y, color, a);
     }
   }
@@ -124,8 +127,8 @@ function kapowMarks(phrase, checksum) {
     peak,
     recoil,
     pose,
-    outer: (0.58 * hook + 1.08 * turn + 0.86 * tag) * pose.dolly * (1 - 0.16 * recoil),
-    inner: (0.16 * hook + 1.02 * turn + 0.7 * tag + 0.38 * hit) * pose.dolly,
+    outer: (0.84 * hook + 1.12 * turn + 0.92 * tag) * pose.dolly * (1 - 0.16 * recoil),
+    inner: (0.22 * hook + 1.04 * turn + 0.72 * tag + 0.32 * hit) * pose.dolly,
     word: clamp01(turn * 1.15 + peak * 0.85 + tag * 0.42 - hook * 0.35),
   };
 }
@@ -153,15 +156,15 @@ function paintKapowFrame(opts) {
   const phrase = rippel.phraseOf(checksum, t);
   const marks = kapowMarks(phrase, checksum);
   const gem = Number.parseInt(String(opts.seedHex || "1").replace(/^0x/, "").slice(0, 8), 16) || 1;
-  const outerSpikes = 10 + (gem % 7);
-  const innerSpikes = 8 + ((gem >>> 8) % 5);
+  const outerSpikes = 14 + (gem % 5);
+  const innerSpikes = 10 + ((gem >>> 8) % 4);
   const rot0 = ((gem >>> 16) % 360) * (Math.PI / 180);
-  const rot = rot0 + phrase.beats * 0.11 + marks.pose.roll * 0.35;
+  const rot = rot0 + phrase.beats * 0.08 + marks.pose.roll * 0.35;
   const minSide = Math.min(width, height);
   const cx = width * 0.5 + marks.pose.yaw * minSide * 0.04;
   const cy = height * 0.5 - marks.pose.pitch * minSide * 0.035;
-  const outerR = minSide * 0.42 * Math.max(0.28, marks.outer);
-  const innerR = minSide * 0.26 * Math.max(0.08, marks.inner);
+  const outerR = minSide * 0.46 * Math.max(0.42, marks.outer);
+  const innerR = minSide * 0.3 * Math.max(0.16, marks.inner);
 
   rippel.fillVoid(buf);
   paintStar(
@@ -171,11 +174,12 @@ function paintKapowFrame(opts) {
     cx,
     cy,
     outerSpikes,
-    outerR * 0.42,
+    outerR * 0.64,
     outerR,
     rot,
     rippel.THEME.cyan,
-    0.92,
+    0.96,
+    gem,
   );
   paintStar(
     buf,
@@ -184,11 +188,12 @@ function paintKapowFrame(opts) {
     cx,
     cy,
     outerSpikes,
-    outerR * 0.5,
-    outerR * 1.04,
+    outerR * 0.7,
+    outerR * 1.06,
     rot,
     rippel.THEME.blue,
-    0.28,
+    0.34,
+    gem >>> 3,
   );
   paintStar(
     buf,
@@ -197,11 +202,12 @@ function paintKapowFrame(opts) {
     cx,
     cy,
     innerSpikes,
-    innerR * 0.38,
+    innerR * 0.6,
     innerR,
-    -rot * 1.15,
+    -rot * 1.12,
     rippel.THEME.gold,
-    0.34 + 0.66 * clamp01(marks.inner),
+    0.4 + 0.6 * clamp01(marks.inner),
+    gem >>> 8,
   );
   const nounR = Math.max(10, innerR * 0.22 + minSide * 0.018);
   rippel.stampFocusDisc(buf, width, height, cx, cy, nounR, rippel.THEME.cyan, {
