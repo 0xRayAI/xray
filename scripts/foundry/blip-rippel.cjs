@@ -1437,9 +1437,10 @@ function paintEclipseMoon(buf, width, height, t, checksum, pred, clip) {
   if (pred && !pred(moon)) return moon;
   const hole = clip && moon.depth < 0 ? clip : null;
   const back = Math.max(0, -moon.depth);
+  const front = Math.max(0, moon.depth);
   const crossing = 1 - Math.min(1, Math.abs(moon.depth) / 0.28);
-  const color = mixRgb(THEME.ink, mixRgb(THEME.ink, THEME.void, 0.32), back);
-  const r = moon.r * (1 + 0.14 * crossing);
+  const color = mixRgb(THEME.ink, mixRgb(THEME.ink, THEME.cyan, 0.1), back * 0.35);
+  const r = moon.r * (1 + 0.14 * crossing) * (0.88 + 0.12 * front);
   stampFocusDisc(buf, width, height, moon.x, moon.y, r, color, {
     rim: 2.4 + 1.6 * crossing,
     glow: 7 + 4 * crossing,
@@ -1709,6 +1710,13 @@ function paintSnapRupture(buf, width, height, cx, cy, minSide, hit, peak) {
     glowAlpha: 0.28 + 0.16 * flash,
     rimColor: THEME.gold,
   });
+  if (flash > 0.35) {
+    const cross = minSide * (0.12 + 0.1 * flash);
+    paintSharpLine(buf, width, height, cx - cross * 0.18, cy + cross, cx + cross * 0.18, cy - cross, THEME.gold, 3 + Math.round(2.6 * flash));
+    paintGlowLine(buf, width, height, cx - cross * 0.18, cy + cross, cx + cross * 0.18, cy - cross, THEME.gold, {
+      glowAlpha: 0.2 + 0.3 * flash,
+    });
+  }
 }
 
 /** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
@@ -1717,7 +1725,7 @@ function paintMillCage(buf, width, height, t, checksum) {
   const phrase = phraseOf(checksum, t);
   const hit = ruptureHit(phrase);
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit,
+    scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit + 0.12 * rupturePeak(phrase),
     half: 1,
     fill: phraseMix(phrase, 0.1, 0.42, 0.18) + 0.1 * hit,
   });
@@ -1894,6 +1902,15 @@ function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checks
     glowAlpha: 0.28 + 0.12 * hit,
     rimColor: THEME.gold,
   });
+  const peak = rupturePeak(phrase);
+  if (peak > 0.35) {
+    stampFocusDisc(buf, width, height, cx, cy, core * (1.18 + 0.28 * peak), THEME.gold, {
+      rim: 1.2,
+      glow: 12,
+      glowAlpha: 0.16 + 0.22 * peak,
+      rimColor: THEME.gold,
+    });
+  }
   return { radius: core * 1.08, style };
 }
 
