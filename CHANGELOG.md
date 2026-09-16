@@ -6,6 +6,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+---
+
+## [4.0.14] - 2026-09-16
+
 ### ✨ Features
 - **Factory-blip prod-grade phrase** — hook/turn/tag now crossfade (`hookEase`/`turnEase`/`tagEase`). Still plates dissolve (~300ms) instead of hard-cutting. Focus orb wears field + mesh mass so two briefs do not clone. Ambient bed writes a 3-section score (turn crash, tag stab, walk on turn). Mill stays deterministic — no LLM in the render loop. No `@0xray/foundry` bump.
 - **Factory-blip Rippel v2** — 4.44s is a Short: hook → turn → tag on one motion grid for picture and bed. Two looks (`focus` disc-satellites | `cage` Wu+field). Stereo AAC bed with a written motif (not `pick()` soup), better voices, mix pocket. Missing stream or inaudible bed FAILs inspect. No `@0xray/foundry` bump.
