@@ -60,7 +60,25 @@ function assertPackedPackageHasNoFileDeps(tarballPath) {
       throw new Error("packed tarball missing vendor/@0xray/repertoire/package.json");
     }
   }
-  console.log("  ✅ packed package.json has no file: deps; vendor organ is in the tarball");
+  process.stdout.write("  ✅ packed package.json has no file: deps; vendor organ is in the tarball\n");
+}
+
+const REQUIRED_TARBALL_DIST = [
+  "package/dist/cli/index.js",
+  "package/dist/mcps/orchestrator.server.js",
+  "package/dist/integrations/grok/hooks/session-start.js",
+];
+
+function assertPackedDistCliInTarball(tarballPath) {
+  const listing = run(`tar -tzf ${JSON.stringify(tarballPath)}`);
+  const lines = new Set(listing.split("\n").map((l) => l.trim()).filter(Boolean));
+  const missing = REQUIRED_TARBALL_DIST.filter((p) => !lines.has(p));
+  if (missing.length > 0) {
+    throw new Error(
+      `packed tarball missing ${missing.join(", ")} (0xray@4.0.13 shipped 0 dist files)`,
+    );
+  }
+  process.stdout.write("  ✅ packed tarball includes dist/cli + MCP + Grok hooks\n");
 }
 
 function assertOrganRequire(tmpRoot) {
@@ -248,6 +266,7 @@ function main() {
     }
 
     assertPackedPackageHasNoFileDeps(tarballPath);
+    assertPackedDistCliInTarball(tarballPath);
 
     writeBareConsumerManifest(tmpRoot);
 

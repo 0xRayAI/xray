@@ -112,6 +112,9 @@ function publishIdempotent(version) {
     console.log(`ℹ️  ${packageName()}@${version} already on npm — skipping publish`);
     return;
   }
+  if (isXrayExoRepo(rootDir)) {
+    runMill("assert-packed-dist-cli.mjs", [], "packed dist/cli");
+  }
   execSync(npmPublishCmd(), { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
   console.log(`✅ Published ${packageName()}@${version}`);
 }

@@ -53,33 +53,41 @@ function main() {
     if (!isXrayExoRepo(rootDir)) {
       runLightGate();
     } else if (verifyOnly) {
-      step("1/5 Git + reconcile", "node scripts/node/pre-publish-guard.js --verify-only");
+      step("1/6 Git + reconcile", "node scripts/node/pre-publish-guard.js --verify-only");
       if (!skipDocs) {
-        step("2/5 Release docs", docsCheckCmd());
+        step("2/6 Release docs", docsCheckCmd());
       }
       step(
-        "3/5 Plugin infrastructure",
+        "3/6 Plugin infrastructure",
         "node scripts/test/validate-plugins-e2e.cjs --structural-only",
       );
+      step(
+        "4/6 Packed dist/cli",
+        `${JSON.stringify(process.execPath)} ${JSON.stringify(millScript("assert-packed-dist-cli.mjs"))}`,
+      );
       if (!skipSmoke) {
-        step("4/5 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
+        step("5/6 Consumer install smoke", "node scripts/node/consumer-install-smoke.mjs");
       }
     } else {
-      step("1/7 Build", "npm run build");
-      step("2/7 Tests", "npm run test:comprehensive");
+      step("1/8 Build", "npm run build");
+      step(
+        "2/8 Packed dist/cli",
+        `${JSON.stringify(process.execPath)} ${JSON.stringify(millScript("assert-packed-dist-cli.mjs"))}`,
+      );
+      step("3/8 Tests", "npm run test:comprehensive");
       if (!skipDocs) {
-        step("3/7 Release docs", docsCheckCmd());
+        step("4/8 Release docs", docsCheckCmd());
       }
       step(
-        "4/7 Consumer hook verifiers",
+        "5/8 Consumer hook verifiers",
         "npm run verify:pre-commit-diff && npm run verify:pre-push-diff && node scripts/mjs/verify-delegation-gate-core.mjs --host=grok && node scripts/mjs/verify-delegation-gate-core.mjs --host=hermes && node scripts/mjs/verify-delegation-gate-core.mjs --host=opencode && node scripts/mjs/verify-hermes-session-start.mjs && node scripts/mjs/verify-confer-core.mjs && npm run verify:user-aside && npm run build && node scripts/mjs/verify-pipeline-facets.mjs --package-only",
       );
       step(
-        "5/7 Plugin infrastructure",
+        "6/8 Plugin infrastructure",
         "node scripts/test/validate-plugins-e2e.cjs --structural-only",
       );
       if (!skipSmoke) {
-        step("6/7 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
+        step("7/8 Consumer install smoke (fresh + upgrade)", "node scripts/node/consumer-install-smoke.mjs");
       }
     }
 
