@@ -1026,9 +1026,23 @@ function phraseMix(phrase, hookV, turnV, tagV) {
   );
 }
 
-/** Mid-clip rupture window — holds through the turn, peaks on the cut. */
+/** Mid-clip rupture window — rises late hook, peaks on the cut, holds through the turn. */
 function ruptureHit(phrase) {
-  return Math.max(phrase && phrase.turnHit ? phrase.turnHit : 0, phraseWeight(phrase, "turn") * 0.82);
+  const beats = phrase && typeof phrase.beats === "number" ? phrase.beats : 0;
+  const at = (phrase && phrase.hookEndBeats) || 2;
+  const before = at - beats;
+  const rise = before >= 0 && before < 1.05 ? 1 - before / 1.05 : 0;
+  const held = phraseWeight(phrase, "turn") * 0.68;
+  return Math.max(phrase && phrase.turnHit ? phrase.turnHit : 0, rise * 0.88, held);
+}
+
+/** Narrow crack flash on the cut — not the whole-turn envelope. */
+function rupturePeak(phrase) {
+  const beats = phrase && typeof phrase.beats === "number" ? phrase.beats : 0;
+  const at = (phrase && phrase.hookEndBeats) || 2;
+  const d = Math.abs(beats - at);
+  const spike = d < 0.28 ? 1 - d / 0.28 : 0;
+  return Math.max(spike, phrase && phrase.turnHit ? phrase.turnHit : 0);
 }
 
 function mixRgb(a, b, amount) {
@@ -1422,12 +1436,15 @@ function paintEclipseMoon(buf, width, height, t, checksum, pred, clip) {
   const moon = eclipseOf(checksum, width, height, t);
   if (pred && !pred(moon)) return moon;
   const hole = clip && moon.depth < 0 ? clip : null;
-  const color = moon.depth < 0 ? mixRgb(THEME.ink, THEME.void, 0.22) : THEME.ink;
-  stampFocusDisc(buf, width, height, moon.x, moon.y, moon.r, color, {
-    rim: 2.4,
-    glow: 7,
-    glowAlpha: 0.18 + 0.16 * Math.max(0, moon.depth),
-    rimColor: THEME.cyan,
+  const back = Math.max(0, -moon.depth);
+  const crossing = 1 - Math.min(1, Math.abs(moon.depth) / 0.28);
+  const color = mixRgb(THEME.ink, mixRgb(THEME.ink, THEME.void, 0.32), back);
+  const r = moon.r * (1 + 0.14 * crossing);
+  stampFocusDisc(buf, width, height, moon.x, moon.y, r, color, {
+    rim: 2.4 + 1.6 * crossing,
+    glow: 7 + 4 * crossing,
+    glowAlpha: 0.18 + 0.16 * Math.max(0, moon.depth) + 0.18 * crossing,
+    rimColor: crossing > 0.35 ? THEME.gold : THEME.cyan,
     clip: hole,
   });
   return moon;
@@ -1642,10 +1659,11 @@ function paintFocusOrb(buf, width, height, t, checksum) {
   paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
 }
 
-/** Mid-clip cage rupture — gold along the lantern, not a linear spin. */
-function paintCageRupture(buf, width, height, pts, mesh, hit) {
-  if (hit < 0.3 || !pts || !mesh || !mesh.edges) return;
-  const keep = hit > 0.55 ? 3 : 2;
+/** Mid-clip cage rupture — gold scar along the lantern, flash on the cut. */
+function paintCageRupture(buf, width, height, pts, mesh, hit, peak) {
+  if (hit < 0.28 || !pts || !mesh || !mesh.edges) return;
+  const flash = peak || 0;
+  const keep = flash > 0.45 ? 3 : 2;
   const ranked = mesh.edges
     .map((e) => ({ e, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
     .sort((a, b) => a.z - b.z)
@@ -1655,37 +1673,40 @@ function paintCageRupture(buf, width, height, pts, mesh, hit) {
     const pa = pts[a];
     const pb = pts[b];
     if (!pa || !pb) continue;
-    const half = 2 + Math.round(2.6 * hit);
+    const half = 2 + Math.round(1.6 * hit + 2.2 * flash);
     paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, half);
-    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, { glowAlpha: 0.2 + 0.28 * hit });
-    stampFocusDisc(buf, width, height, pa.x, pa.y, 7 + hit * 6, THEME.gold, {
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, {
+      glowAlpha: 0.14 + 0.16 * hit + 0.22 * flash,
+    });
+    stampFocusDisc(buf, width, height, pa.x, pa.y, 6 + hit * 4 + flash * 5, THEME.gold, {
       rim: 1.2,
       glow: 4,
-      glowAlpha: 0.26,
+      glowAlpha: 0.22 + 0.12 * flash,
       rimColor: THEME.gold,
     });
-    stampFocusDisc(buf, width, height, pb.x, pb.y, 6 + hit * 5, THEME.gold, {
+    stampFocusDisc(buf, width, height, pb.x, pb.y, 5 + hit * 3 + flash * 4, THEME.gold, {
       rim: 1.1,
       glow: 3.6,
-      glowAlpha: 0.22,
+      glowAlpha: 0.2 + 0.1 * flash,
       rimColor: THEME.gold,
     });
   }
 }
 
-/** Mid-clip snap rupture — a held gold crack through the noun. */
-function paintSnapRupture(buf, width, height, cx, cy, minSide, hit) {
-  if (hit < 0.3) return;
-  const span = minSide * (0.18 + 0.12 * hit);
-  const half = 4 + Math.round(3.4 * hit);
+/** Mid-clip snap rupture — a held gold scar through the noun, flash on the cut. */
+function paintSnapRupture(buf, width, height, cx, cy, minSide, hit, peak) {
+  if (hit < 0.28) return;
+  const flash = peak || 0;
+  const span = minSide * (0.16 + 0.1 * hit + 0.06 * flash);
+  const half = 3 + Math.round(2.2 * hit + 2.8 * flash);
   paintSharpLine(buf, width, height, cx - span, cy - span * 0.16, cx + span, cy + span * 0.16, THEME.gold, half);
   paintGlowLine(buf, width, height, cx - span, cy - span * 0.16, cx + span, cy + span * 0.16, THEME.gold, {
-    glowAlpha: 0.22 + 0.32 * hit,
+    glowAlpha: 0.16 + 0.18 * hit + 0.28 * flash,
   });
-  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.022 + 0.028 * hit), THEME.gold, {
+  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.02 + 0.02 * hit + 0.02 * flash), THEME.gold, {
     rim: 1.4,
     glow: 6,
-    glowAlpha: 0.34,
+    glowAlpha: 0.28 + 0.16 * flash,
     rimColor: THEME.gold,
   });
 }
@@ -1696,16 +1717,16 @@ function paintMillCage(buf, width, height, t, checksum) {
   const phrase = phraseOf(checksum, t);
   const hit = ruptureHit(phrase);
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: phraseMix(phrase, 0.78, 1.22, 0.9) + 0.12 * hit,
+    scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit,
     half: 1,
-    fill: phraseMix(phrase, 0.1, 0.78, 0.22) + 0.18 * hit,
+    fill: phraseMix(phrase, 0.1, 0.42, 0.18) + 0.1 * hit,
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum, t);
-  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, ruptureHit(phrase));
+  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, hit, rupturePeak(phrase));
 }
 
 /** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
@@ -1731,6 +1752,7 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
   const hit = ruptureHit(phrase);
+  const peak = rupturePeak(phrase);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
@@ -1757,9 +1779,9 @@ function paintMillStrike(buf, width, height, t, checksum) {
     const pb = pts[b];
     if (!pa || !pb) continue;
     const live = i === 0;
-    const crack = live && hit > 0.3;
+    const crack = live && peak > 0.4;
     const color = crack || (kick > 0.16 && live) ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
-    const half = live ? 3 + Math.round(3.2 * hit) : 2;
+    const half = live ? 2 + Math.round(1.6 * hit + 2.4 * peak) : 2;
     paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, half);
     paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.16 + 0.28 * hit : 0.08 });
     stampFocusDisc(buf, width, height, pa.x, pa.y, (live ? 9.4 : 6.8) + kick * 2.4 + hit * 6, color, {
@@ -1775,7 +1797,7 @@ function paintMillStrike(buf, width, height, t, checksum) {
       rimColor: crack ? THEME.gold : THEME.ink,
     });
   }
-  paintSnapRupture(buf, width, height, cx, cy, minSide, hit);
+  paintSnapRupture(buf, width, height, cx, cy, minSide, hit, peak);
 }
 
 /** mill spark — coals at verts + edge midpoints, longer heat wakes. Not a cosmos web. */
@@ -2232,6 +2254,7 @@ module.exports = {
   phraseMix,
   phraseWeight,
   ruptureHit,
+  rupturePeak,
   motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,

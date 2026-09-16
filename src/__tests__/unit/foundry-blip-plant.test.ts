@@ -1486,6 +1486,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintCageRupture');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintSnapRupture');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureHit');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('rupturePeak');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('crack');
   });
 
