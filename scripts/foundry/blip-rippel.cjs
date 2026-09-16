@@ -599,24 +599,25 @@ function rotate3(v, yaw, pitch, roll) {
 
 function projectMesh(mesh, width, height, t, checksum, scaleMul) {
   const gait = mesh.gait || "tumble";
-  let yaw = t * mesh.spin + mesh.twist;
-  let pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
-  let roll = t * 0.38 + mesh.twist * 0.25;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const and = andAccent(beat);
   const phrase = phraseOf(checksum, t);
+  const spinMul = phraseMix(phrase, 0.28, 1.32 + 0.7 * (phrase.turnHit || 0), 0.16);
+  let yaw = t * mesh.spin * spinMul + mesh.twist;
+  let pitch = Math.sin(t * mesh.spin * 0.42 * spinMul + mesh.twist) * 0.52;
+  let roll = t * 0.38 * spinMul + mesh.twist * 0.25;
   let breathe =
     (scaleMul || 1) *
     mesh.scale *
     (1 + 0.07 * kick + 0.045 * and) *
-    phraseMix(phrase, 0.9, 1.1 + 0.1 * phrase.turnHit, 0.94);
-  yaw += phrase.turnHit * 0.32;
+    phraseMix(phrase, 0.88, 1.16 + 0.12 * phrase.turnHit, 0.96);
+  yaw += phrase.turnHit * 0.55;
   let ox = 0;
   let oy = 0;
   if (gait === "snap") {
-    const q = Math.floor(beat);
-    yaw = q * 1.15 + mesh.twist;
+    const q = Math.floor(beat + (phrase.turnHit || 0) * 0.8);
+    yaw = q * 1.15 + mesh.twist + (phrase.turnHit || 0) * 0.7;
     pitch = Math.sin(q * 1.7 + mesh.twist) * 0.46;
     roll = q * 0.55 + mesh.twist * 0.3;
   } else if (gait === "pulse") {
@@ -625,9 +626,9 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     ox = Math.cos(beat * Math.PI * 2 + mesh.twist) * mesh.warp * 0.42;
     oy = Math.sin(beat * Math.PI + mesh.twist) * mesh.warp * 0.26;
   } else if (gait === "tumble") {
-    yaw = beat * mesh.spin + mesh.twist;
-    pitch = beat * mesh.spin * 0.38 + Math.sin(mesh.twist) * 0.2;
-    roll = beat * mesh.spin * 0.22 + mesh.twist;
+    yaw = beat * mesh.spin * spinMul + mesh.twist;
+    pitch = beat * mesh.spin * 0.38 * spinMul + Math.sin(mesh.twist) * 0.2;
+    roll = beat * mesh.spin * 0.22 * spinMul + mesh.twist;
   }
   const minSide = Math.min(width, height);
   const cx = (width - 1) * 0.5 + ox * minSide;
@@ -1091,7 +1092,7 @@ function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
   }
 }
 
-function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
+function paintMeshFaces(buf, width, height, mesh, pts, color, alpha, t, checksum) {
   if (!mesh.faces || !mesh.faces.length || alpha <= 0) return;
   const wash = color || THEME.cyan;
   const ranked = mesh.faces
@@ -1104,8 +1105,10 @@ function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
     })
     .filter(Boolean)
     .sort((p, q) => p.z - q.z);
+  const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   for (let i = 0; i < ranked.length; i++) {
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, wash, alpha);
+    const jewel = iridesce(i / Math.max(1, ranked.length), t || 0, beat, THEME.gold);
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, wash, 0.28), alpha);
   }
 }
 
@@ -1116,7 +1119,7 @@ function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
   const kick = kickAccent(beat);
   const and = andAccent(beat);
   const fillA = opts && opts.fill != null ? opts.fill : 0;
-  if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA);
+  if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA, t, checksum);
   const ranked = mesh.edges
     .map((e, i) => ({ e, i, z: (pts[e[0]].z + pts[e[1]].z) * 0.5 }))
     .sort((a, b) => a.z - b.z);
@@ -1325,12 +1328,14 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin;
     const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
+    const depth = Math.sin(ang);
     return {
       circle,
       x: cx + Math.cos(ang) * orbit,
       y: cy + Math.sin(ang) * orbit * 0.72,
-      r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42),
+      r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
+      depth,
     };
   });
 }
@@ -1340,11 +1345,16 @@ function paintSuitSatellites(buf, width, height, t, checksum) {
   if (!checksum) return;
   const circles = checksum.visualConfig && checksum.visualConfig.circles;
   if (!circles || !circles.length) return;
-  for (const placed of layoutFocusRing(circles, width, height, t, checksum)) {
-    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.42, placed.color, {
+  const placed = layoutFocusRing(circles, width, height, t, checksum)
+    .slice()
+    .sort((a, b) => a.depth - b.depth);
+  for (let i = 0; i < placed.length; i++) {
+    const sat = placed[i];
+    const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.42);
+    stampFocusDisc(buf, width, height, sat.x, sat.y, sat.r * 0.42, color, {
       rim: 1.6,
       glow: 4,
-      glowAlpha: 0.24,
+      glowAlpha: 0.2 + 0.08 * Math.max(0, sat.depth),
       rimColor: THEME.ink,
     });
   }
@@ -1504,11 +1514,12 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.92,
     half: 1,
-    fill: phraseMix(phrase, 0.12, 0.28, 0.16),
+    fill: phraseMix(phrase, 0.18, 0.42, 0.24),
   });
+  paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
 }
 
-/** mill snap — 2–3 held edges, then a jump. Never the full swirl hull. */
+/** mill snap — ghost hull + 2–3 held strikes. Never the full swirl mass. */
 function paintMillStrike(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const mesh = checksum && checksum.mesh;
@@ -1518,6 +1529,17 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
+  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.04, 0.08, 0.05), t, checksum);
+  for (let i = 0; i < (mesh.edges || []).length; i++) {
+    const [a, b] = mesh.edges[i];
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.cyan, {
+      glowAlpha: 0.045,
+      shader: (u) => livingShade(snapped, t, u, beat, THEME.ink),
+    });
+  }
   const keep = Math.min(3, Math.max(2, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.22, 0.36, 0.18))));
   const ranked = (mesh.edges || [])
     .map((e, i) => ({ e, i, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
@@ -1530,68 +1552,63 @@ function paintMillStrike(buf, width, height, t, checksum) {
     if (!pa || !pb) continue;
     const live = i === 0;
     const color = kick > 0.16 && live ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
-    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, live ? 2 : 1);
-    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.16 : 0.08 });
-    if (live) {
-      stampFocusDisc(buf, width, height, pa.x, pa.y, 6.2 + kick * 2.2, color, {
-        rim: 1.2,
-        glow: 3.2,
-        glowAlpha: 0.2,
-        rimColor: THEME.ink,
-      });
-      stampFocusDisc(buf, width, height, pb.x, pb.y, 5.4 + kick * 1.6, color, {
-        rim: 1.1,
-        glow: 2.8,
-        glowAlpha: 0.18,
-        rimColor: THEME.ink,
-      });
-    }
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, live ? 3 : 2);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.2 : 0.1 });
+    stampFocusDisc(buf, width, height, pa.x, pa.y, (live ? 9.4 : 6.8) + kick * 2.4, color, {
+      rim: 1.3,
+      glow: 4,
+      glowAlpha: 0.22,
+      rimColor: THEME.ink,
+    });
+    stampFocusDisc(buf, width, height, pb.x, pb.y, (live ? 8.2 : 5.8) + kick * 1.8, color, {
+      rim: 1.2,
+      glow: 3.4,
+      glowAlpha: 0.2,
+      rimColor: THEME.ink,
+    });
   }
 }
 
-/** mill spark — coals at mesh seats, heat wakes. Not pinholes. Not a cosmos web. */
+/** mill spark — coals at verts + edge midpoints, longer heat wakes. Not a cosmos web. */
 function paintMillEmbers(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const mesh = checksum && checksum.mesh;
   if (!mesh) return;
   const pts = projectMesh(mesh, width, height, t, checksum, 0.85);
-  const prev = projectMesh(mesh, width, height, Math.max(0, t - 0.08), checksum, 0.85);
+  const prev = projectMesh(mesh, width, height, Math.max(0, t - 0.16), checksum, 0.85);
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
-  const size = phraseMix(phrase, 7.4, 12.8, 8.6);
+  const size = phraseMix(phrase, 8.6, 15.4, 10.2);
+  const coals = [];
   for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    const q = prev[i] || p;
-    const color =
-      kick > 0.2 && i === 0 ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length];
-    const dx = p.x - q.x;
-    const dy = p.y - q.y;
-    for (let k = 1; k <= 4; k++) {
-      const u = k / 5;
-      stampDisc(
-        buf,
-        width,
-        height,
-        p.x - dx * u,
-        p.y - dy * u,
-        (size * 0.42) * (1 - u * 0.55),
-        color,
-        1.6,
-      );
-    }
-    stampFocusDisc(buf, width, height, p.x, p.y, size + (i % 3) * 1.6 + kick * 2.4, color, {
-      rim: 1.4,
-      glow: 5.2,
-      glowAlpha: 0.26,
-      rimColor: THEME.ink,
+    coals.push({ p: pts[i], q: prev[i] || pts[i], i, mid: false });
+  }
+  for (let i = 0; i < (mesh.edges || []).length; i++) {
+    const [a, b] = mesh.edges[i];
+    if (!pts[a] || !pts[b] || !prev[a] || !prev[b]) continue;
+    coals.push({
+      p: { x: (pts[a].x + pts[b].x) * 0.5, y: (pts[a].y + pts[b].y) * 0.5 },
+      q: { x: (prev[a].x + prev[b].x) * 0.5, y: (prev[a].y + prev[b].y) * 0.5 },
+      i: pts.length + i,
+      mid: true,
     });
   }
-  if (kick > 0.2 && pts[0]) {
-    stampFocusDisc(buf, width, height, pts[0].x, pts[0].y, size * 1.18 + kick * 2.8, THEME.gold, {
+  for (let i = 0; i < coals.length; i++) {
+    const coal = coals[i];
+    const heat = coal.mid ? mixRgb(THEME.gold, THEME.cyan, 0.35) : THEME_CYCLE[((mesh.accentIndex || 0) + coal.i) % THEME_CYCLE.length];
+    const color = kick > 0.2 && coal.i === 0 ? THEME.gold : heat;
+    const dx = coal.p.x - coal.q.x;
+    const dy = coal.p.y - coal.q.y;
+    const body = (coal.mid ? size * 0.62 : size) + (coal.i % 3) * 1.4 + kick * 2.2;
+    for (let k = 1; k <= 7; k++) {
+      const u = k / 8;
+      stampDisc(buf, width, height, coal.p.x - dx * u * 1.35, coal.p.y - dy * u * 1.35, body * 0.38 * (1 - u * 0.6), color, 1.5);
+    }
+    stampFocusDisc(buf, width, height, coal.p.x, coal.p.y, body, color, {
       rim: 1.4,
       glow: 6,
-      glowAlpha: 0.28,
+      glowAlpha: 0.3,
       rimColor: THEME.ink,
     });
   }
@@ -1703,13 +1720,13 @@ function paintWaveform(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const phrase = phraseOf(checksum, t);
   const env =
-    phraseMix(phrase, 0.82, 1.22 + 0.1 * phrase.turnHit, 0.78) *
+    phraseMix(phrase, 0.74, 1.42 + 0.16 * phrase.turnHit, 0.82) *
     (0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2)));
   const circles = checksum.visualConfig.circles;
   paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
   circles.forEach((circle, i) => {
     const color = iridesce(i / Math.max(1, circles.length), t, beat, parseHex(circle.color));
-    const amp0 = height * (0.09 + (circle.radius / 420) * 0.18) * env;
+    const amp0 = height * (0.11 + (circle.radius / 420) * 0.22) * env;
     const f0 = 0.0065 + circle.frequency / 22000;
     const shift = t * (circle.frequency / 1.85);
     const gem = (checksum.gematria && checksum.gematria.checksumValue) || 1;

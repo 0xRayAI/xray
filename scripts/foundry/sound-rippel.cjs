@@ -1022,8 +1022,12 @@ function sectionGain(t, seconds, lock, grid) {
   if (lock && seconds <= 5) {
     const phrase = shortformPhrase(t, seconds, grid || { beatSec: 60 / 90 });
     return Math.max(
-      0.58,
-      0.84 * phrase.hookEase + 1 * phrase.turnEase + 0.68 * phrase.tagEase,
+      0.52,
+      0.7 * phrase.hookEase +
+        1.14 * phrase.turnEase +
+        0.56 * phrase.tagEase +
+        0.2 * (phrase.turnHit || 0) +
+        0.1 * (phrase.tagHit || 0),
     );
   }
   if (p < 0.15) return 0.62;
@@ -1626,6 +1630,7 @@ module.exports = {
   padTones,
   degreeLine,
   gridTime,
+  sectionGain,
   renderRippelBed,
   renderMembrane,
   renderMetal,

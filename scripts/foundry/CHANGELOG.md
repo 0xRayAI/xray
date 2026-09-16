@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip stellar pass: phrase eases spin (hook crawl → turn whip → tag hold). Mesh is a cyan/gold jewel with vertex beads. Strike wears a ghost hull under 2–3 thick strikes. Embers seat coals on verts and edge midpoints with longer wakes. Focus satellites occlude. Sacred-flow is one poly + nucleus + ring. Bed sectionGain is a Short (turn louder than hook, tag seals).
+
 Factory-blip metamorphosis pass: mill mesh wears a phrase-driven face wash; strike holds 2–3 edges (never the full hull); embers are coals with heat wakes, not pinholes. Cage keeps the nucleus and drops orbiting HUD ticks. Waves drop the gold playhead and gain turn amplitude. Phrase is mass, not a zoom knob.
 
 Factory-blip drops the outer-edge HUD bezel. Field grids are `floor` or `none`. Legacy receipt ids `ticks` / `meridian` no-op — no ruler ticks on the frame, no meridian box.

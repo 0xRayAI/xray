@@ -46,7 +46,7 @@ function createOrgans(kit) {
       phrase,
       kick: kickAccent(beat),
       and: andAccent(beat),
-      scale: mix(phrase, 0.86, 1.14 + 0.1 * (phrase.turnHit || 0), 0.78),
+      scale: mix(phrase, 0.82, 1.22 + 0.16 * (phrase.turnHit || 0), 0.8),
     };
   }
 
@@ -216,13 +216,12 @@ function createOrgans(kit) {
     const hash = (checksum.gematria && checksum.gematria.checksumValue) || 1;
 
     const sides = 6 + ((hash >>> 2) % 3);
-    const rotation = t * mix(phrase, 0.06, 0.13, 0.04) + beat * 0.05;
-    const outer = minSide * 0.28 * phraseScale * (1 + 0.05 * kick);
-    const inner = outer * 0.52;
+    const rotation = t * mix(phrase, 0.05, 0.26 + 0.22 * (phrase.turnHit || 0), 0.04) + beat * 0.05;
+    const outer = minSide * 0.3 * phraseScale * (1 + 0.06 * kick);
     const outerColor = iridesce(0.2, t, beat, THEME.cyan);
-    const innerColor = iridesce(0.7, t, beat, THEME.gold);
+    stampMillCore(buf, width, height, cx, cy, minSide * 0.08 * phraseScale, kick);
     paintPolygon(buf, width, height, cx, cy, outer, sides, rotation, outerColor);
-    paintPolygon(buf, width, height, cx, cy, inner, sides + 1, -rotation * 0.8, innerColor);
+    paintRing(buf, width, height, cx, cy, outer * 1.08, kick > 0.18 ? THEME.gold : THEME.cyan, 36, 0.1);
     for (let i = 0; i < sides; i++) {
       const a = rotation + (i / sides) * Math.PI * 2;
       stampFocusDisc(
@@ -235,56 +234,6 @@ function createOrgans(kit) {
         i === 0 && kick > 0.15 ? THEME.gold : outerColor,
         { rim: 1.4, glow: 3.2, glowAlpha: 0.2, rimColor: THEME.ink },
       );
-    }
-    for (let i = 0; i < sides; i += 2) {
-      const a1 = rotation + (i / sides) * Math.PI * 2;
-      const a2 = rotation + ((i + 3) / sides) * Math.PI * 2;
-      const link = kick > 0.12 ? THEME.gold : outerColor;
-      paintSharpLine(
-        buf,
-        width,
-        height,
-        cx + Math.cos(a1) * outer * 0.62,
-        cy + Math.sin(a1) * outer * 0.62,
-        cx + Math.cos(a2) * outer * 0.62,
-        cy + Math.sin(a2) * outer * 0.62,
-        link,
-        1,
-      );
-      paintGlowLine(
-        buf,
-        width,
-        height,
-        cx + Math.cos(a1) * outer * 0.62,
-        cy + Math.sin(a1) * outer * 0.62,
-        cx + Math.cos(a2) * outer * 0.62,
-        cy + Math.sin(a2) * outer * 0.62,
-        link,
-        { glowAlpha: 0.1 },
-      );
-    }
-
-    const steps = 96;
-    const turns = 1.6;
-    const rot = t * mix(phrase, 0.22, 0.42, 0.12);
-    const color = kick > 0.2 ? THEME.gold : themeFromHue(t * 32);
-    let px = null;
-    let py = null;
-    for (let i = 0; i <= steps; i++) {
-      const p = i / steps;
-      const ang = p * turns * Math.PI * 2 + rot;
-      const radius = (minSide * (0.04 + p * 0.24)) * phraseScale;
-      const x = cx + Math.cos(ang) * radius;
-      const y = cy + Math.sin(ang) * radius;
-      if (px == null) {
-        px = x;
-        py = y;
-        continue;
-      }
-      paintSharpLine(buf, width, height, px, py, x, y, color, 1);
-      paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: 0.1 });
-      px = x;
-      py = y;
     }
   }
 

@@ -423,6 +423,20 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(degreeLine('rhodes', 6)).toEqual([0, 2, 4, 4, 2, 0]);
   });
 
+  it('makes the 4.44s bed a Short — turn louder than hook, tag seals', () => {
+    const { sectionGain } = requireCjs(path.join(root, 'scripts/foundry/sound-rippel.cjs')) as {
+      sectionGain: (t: number, seconds: number, lock: boolean, grid: { beatSec: number }) => number;
+    };
+    const grid = { beatSec: 60 / 90 };
+    const hook = sectionGain(0, 4.44, true, grid);
+    const turn = sectionGain(grid.beatSec * 2, 4.44, true, grid);
+    const tag = sectionGain(4.2, 4.44, true, grid);
+    expect(turn).toBeGreaterThan(hook);
+    expect(turn).toBeGreaterThan(tag);
+    expect(hook).toBeGreaterThan(0.55);
+    expect(tag).toBeGreaterThan(0.5);
+  });
+
   it('ports FM lead, formant stabs, and the missing genre tables', () => {
     const { resolveGenre, GENRES, SCALES, GENRE_ALIASES } = requireCjs(
       path.join(root, 'scripts/foundry/sound-rippel.cjs'),
