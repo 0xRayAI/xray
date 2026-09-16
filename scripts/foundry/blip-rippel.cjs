@@ -1415,6 +1415,7 @@ const organs = createOrgans({
   kickAccent,
   andAccent,
   phraseOf,
+  phraseMix,
   iridesce,
   mulberry32,
   clamp,
@@ -1609,7 +1610,10 @@ function paintWaveform(buf, width, height, t, checksum) {
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
-  const env = 0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2));
+  const phrase = phraseOf(checksum, t);
+  const env =
+    phraseMix(phrase, 0.82, 1.08 + 0.08 * phrase.turnHit, 0.7) *
+    (0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2)));
   const circles = checksum.visualConfig.circles;
   paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
   circles.forEach((circle, i) => {

@@ -13,7 +13,7 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture **w
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports**. Two axes, seed + flags: `--look focus|cage` (orb disc vs Wu mesh) and `--body mill|rippel` (evolved mesh/ribbons vs refined drawers: mandala / sacred-flow / synapse / liquid-waves / cosmic-dance). All wear the mill stroke — Wu, Power Plant, short glow. Each mint is a **4.44s Short** — hook → turn → tag on one grid for picture and bed. Receipt `lookKind` + `bodyKind` + `organ` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
+Rippel five are **imports**. Two axes, seed + flags: `--look focus|cage` (orb disc vs Wu mesh) and `--body mill|rippel` (evolved mesh/ribbons vs refined drawers: mandala / sacred-flow / synapse / liquid-waves / cosmic-dance). **One mill suit** — Wu, Power Plant, short glow, hook → turn → tag — on every body. Variation is the silhouette, not a second look. Each mint is a **4.44s Short** on one grid for picture and bed. Receipt `lookKind` + `bodyKind` + `organ` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
 
 `still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p, not a frozen poster: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme. The mill is the renderer — no LLM in the pixel/audio loop.
 

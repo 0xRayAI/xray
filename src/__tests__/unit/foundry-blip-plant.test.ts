@@ -989,6 +989,98 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip.mjs')).toContain('--body mill|rippel');
   });
 
+  it('wears one mill suit across mill and Rippel bodies — phrase + distinct silhouettes', () => {
+    const { paintRippelFrame, framesDiffer, phraseOf, buildVisualConfig, organOf, BODY_KINDS } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+        BODY_KINDS: string[];
+        organOf: (viz: string, look: string, body: string) => string;
+        phraseOf: (
+          checksum: { genreConfig?: { tempo: number } },
+          t: number,
+        ) => { section: string };
+        buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+          genreConfig: { tempo: number };
+        };
+        paintRippelFrame: (opts: {
+          renderer: string;
+          t: number;
+          seedHex: string;
+          brief: string;
+          lookKind?: string;
+          bodyKind?: string;
+        }) => { buffer: Buffer; organ: string; bodyKind: string };
+        framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      };
+    expect(BODY_KINDS).toEqual(['mill', 'rippel']);
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('stampMillCore');
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('suitOf');
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const beat = 60 / checksum.genreConfig.tempo;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, beat * 2).section).toBe('turn');
+    expect(phraseOf(checksum, 4.2).section).toBe('tag');
+    const catalog = [
+      { renderer: 'orb', lookKind: 'cage', mill: 'cage', rippel: 'mandala' },
+      { renderer: 'swirl', mill: 'mesh', rippel: 'sacred-flow' },
+      { renderer: 'snap', mill: 'mesh', rippel: 'synapse' },
+      { renderer: 'waves', mill: 'ribbons', rippel: 'liquid-waves' },
+      { renderer: 'spark', mill: 'mesh', rippel: 'cosmic-dance' },
+    ] as const;
+    for (const row of catalog) {
+      expect(organOf(row.renderer === 'orb' ? 'canvas' : row.renderer === 'swirl' ? '3d-sacred' : row.renderer === 'snap' ? 'neural' : row.renderer === 'waves' ? 'waveform' : 'particles', 'cage', 'mill')).toBe(row.mill);
+      expect(organOf(row.renderer === 'orb' ? 'canvas' : row.renderer === 'swirl' ? '3d-sacred' : row.renderer === 'snap' ? 'neural' : row.renderer === 'waves' ? 'waveform' : 'particles', 'cage', 'rippel')).toBe(row.rippel);
+      for (const bodyKind of ['mill', 'rippel'] as const) {
+        const hook = paintRippelFrame({
+          renderer: row.renderer,
+          t: 0,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        const turn = paintRippelFrame({
+          renderer: row.renderer,
+          t: beat * 2,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        const tag = paintRippelFrame({
+          renderer: row.renderer,
+          t: 4.2,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        expect(hook.bodyKind, `${row.renderer}:${bodyKind}`).toBe(bodyKind);
+        expect(hook.organ, `${row.renderer}:${bodyKind}`).toBe(bodyKind === 'mill' ? row.mill : row.rippel);
+        expect(framesDiffer(hook.buffer, turn.buffer), `${row.renderer}:${bodyKind} hook/turn`).toBe(true);
+        expect(framesDiffer(turn.buffer, tag.buffer), `${row.renderer}:${bodyKind} turn/tag`).toBe(true);
+      }
+      const mill = paintRippelFrame({
+        renderer: row.renderer,
+        t: beat * 2,
+        seedHex,
+        brief,
+        lookKind: row.lookKind,
+        bodyKind: 'mill',
+      });
+      const rippel = paintRippelFrame({
+        renderer: row.renderer,
+        t: beat * 2,
+        seedHex,
+        brief,
+        lookKind: row.lookKind,
+        bodyKind: 'rippel',
+      });
+      expect(framesDiffer(mill.buffer, rippel.buffer), `${row.renderer} mill/rippel`).toBe(true);
+    }
+  });
+
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
     const rippel = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
       buildVisualConfig: (opts: { brief: string; seedHex: string }) => {

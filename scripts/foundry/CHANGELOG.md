@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip keeps both bodies. `--look focus|cage` and `--body mill|rippel` (seed picks). Mill keeps the evolved Wu/mesh. Rippel drawers stay and wear the mill stroke (Wu, Power Plant, short glow). Receipt `bodyKind` + `organ`.
+Factory-blip keeps both bodies and wears **one mill suit**. `--look focus|cage` and `--body mill|rippel` (seed picks). Mill keeps Wu/mesh/ribbons. Rippel drawers stay (mandala / sacred-flow / synapse / liquid-waves / cosmic-dance) and follow the evolved look — phrase scale, mill nucleus, stamp discs — not raw CAD. Receipt `bodyKind` + `organ`.
 
 Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
 
