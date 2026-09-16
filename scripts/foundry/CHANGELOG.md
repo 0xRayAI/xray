@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+Factory-blip wears the five Rippel drawers as mode bodies: mandala / sacred-flow / synapse / liquid-waves / cosmic-dance. Snap and spark no longer early-return to a cage. Orb `cage` is the InteractiveCanvas mandala; `focus` stays the cyan disc. Mesh + field stay the mint id under the drawing.
+
+Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
+
 Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~300ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
 
 Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.

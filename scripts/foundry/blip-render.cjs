@@ -3,7 +3,7 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
- * Look variants: focus (solid disc + satellites) | cage (Wu hairline + field).
+ * Look variants (orb): focus (solid disc + satellites) | cage (Rippel mandala).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
  * Power Plant (`still` id) is a living ident — plate dissolves, not a frozen poster.

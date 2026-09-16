@@ -18,15 +18,15 @@ Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is 
 - `SimplifiedVisualConverter.tsx` → Animation → viz id, canvas **1280×720** @ ~30fps
 - `MiniAnimationViewer` / `FiveDimensionalVisualizer` → viz backends
 
-| id | viz id | backend |
+| id | viz id | organ (Rippel drawer) |
 |----|--------|---------|
-| `orb` | `canvas` | Orb Glow — dual rings, beat tick, frequency flash |
-| `swirl` | `3d-sacred` | merkaba + hex plate, counter-spin, beat vertices |
-| `snap` | `neural` | dual-ring lattice, hub, skip-links, traveling pulses |
-| `waves` | `waveform` | Wave Flow — harmonic ribbons + beat envelope + gold needle |
-| `spark` | `particles` | Spark Drift — beat bursts, orbital + radial motes |
+| `orb` | `canvas` | `focus` cyan disc **or** `mandala` (`InteractiveCanvas`) |
+| `swirl` | `3d-sacred` | `sacred-flow` — N-gons + depth circles + spirals |
+| `snap` | `neural` | `synapse` — 50–73 Kuramoto nodes, no cage early-return |
+| `waves` | `waveform` | `liquid-waves` — ribbons + aurora + energy orbs |
+| `spark` | `particles` | `cosmic-dance` — 80 motes, constellations, shooting star |
 
-Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers). Uniqueness is the field, not more wire in the middle. Receipt `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints.
+Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers) **under** the drawing. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 

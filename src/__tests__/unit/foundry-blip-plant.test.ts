@@ -638,6 +638,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         t: number;
         seedHex: string;
         brief: string;
+        lookKind?: string;
       }) => { buffer: Buffer; width: number; height: number };
       orbFocusWidth: (
         buf: Buffer,
@@ -650,6 +651,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       t: 0,
       seedHex: '0xdeadbeef',
       brief: 'warehouse floor · Power Plant',
+      lookKind: 'focus',
     });
     const focus = orbFocusWidth(frame.buffer, frame.width, frame.height);
     expect(focus.peak).toBeGreaterThan(0.55);
@@ -862,6 +864,53 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(kick.look, id).toBe('rippel-v2');
       expect(goldPixelCount(kick.buffer), id).not.toBe(goldPixelCount(off.buffer));
     }
+  });
+
+  it('wears the five Rippel organs — snap and spark are not the swirl cage', () => {
+    const { paintRippelFrame, framesDiffer, ORGAN, sampleMotionFrames } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      ORGAN: Record<string, string>;
+      sampleMotionFrames: (renderer: string, seed: string, duration: number, brief: string) => {
+        organ?: string;
+        visualization: string;
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer; organ: string; visualization: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(ORGAN).toMatchObject({
+      canvas: 'mandala',
+      '3d-sacred': 'sacred-flow',
+      neural: 'synapse',
+      waveform: 'liquid-waves',
+      particles: 'cosmic-dance',
+    });
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const swirl = paintRippelFrame({ renderer: 'swirl', t: 0.4, seedHex, brief });
+    const snap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief });
+    const spark = paintRippelFrame({ renderer: 'spark', t: 0.4, seedHex, brief });
+    const cage = paintRippelFrame({ renderer: 'orb', t: 0.4, seedHex, brief, lookKind: 'cage' });
+    const focus = paintRippelFrame({ renderer: 'orb', t: 0.4, seedHex, brief, lookKind: 'focus' });
+    expect(swirl.organ).toBe('sacred-flow');
+    expect(snap.organ).toBe('synapse');
+    expect(spark.organ).toBe('cosmic-dance');
+    expect(cage.organ).toBe('mandala');
+    expect(focus.organ).toBe('focus');
+    expect(framesDiffer(swirl.buffer, snap.buffer)).toBe(true);
+    expect(framesDiffer(swirl.buffer, spark.buffer)).toBe(true);
+    expect(framesDiffer(snap.buffer, spark.buffer)).toBe(true);
+    expect(framesDiffer(cage.buffer, focus.buffer)).toBe(true);
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('InteractiveCanvas.tsx');
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('NeuralNetworkVisualizer');
+    expect(sampleMotionFrames('snap', seedHex, 4.44, brief).organ).toBe('synapse');
+    expect(sampleMotionFrames('spark', seedHex, 4.44, brief).organ).toBe('cosmic-dance');
   });
 
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {

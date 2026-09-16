@@ -9,18 +9,21 @@
  *
  * This file is the converter spine, not a drawbox/geq label. Brief+seed → checksum
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
- * v2 look variants (seed + --look): focus | cage.
+ * v2 look variants (seed + --look): focus | cage. Orb-only.
  *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
  *           Field + mesh verts (solid mass, not wire) carry the mint id under the disc.
- *   cage  — sparse Wu hairline mesh + field accents (stars, grid, gradient, blinkers).
+ *   cage  — Rippel InteractiveCanvas mandala (petals + rings + motes). Not a Wu cage.
+ * Five drawers are the mode bodies (InteractiveCanvas / ThreeJSVisualizer /
+ * NeuralNetworkVisualizer / WaveformVisualizer / ParticleAnimations). Mesh + field
+ * stay the mint fingerprint under the drawing — snap/spark do not early-return to a cage.
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * 4.44s is a Short: hook → turn → tag on the same motion grid as the bed.
  * Phrase weights (hookEase/turnEase/tagEase) crossfade; binaries stay section flags.
- * Uniqueness is look + field + mesh fingerprint — not more wire in the middle.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
 const soundRippel = require("./sound-rippel.cjs");
+const { createOrgans } = require("./blip-rippel-organs.cjs");
 
 const ENGINE = "rippel-headless";
 const LOOK = "rippel-v2";
@@ -37,10 +40,15 @@ const SSOT = {
     "animationIcons.ts",
     "types/index.ts",
     "SimplifiedVisualConverter.tsx",
+    "InteractiveCanvas.tsx",
+    "ThreeJSVisualizer.tsx",
+    "NeuralNetworkVisualizer.tsx",
+    "WaveformVisualizer.tsx",
+    "ParticleAnimations.tsx",
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — VisualConfig.circles + look variants (focus disc-satellites | cage Wu+field). Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — five drawers as mode bodies (mandala / sacred-flow / synapse / liquid-waves / cosmic-dance). focus disc is orb-only. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
 const GRID_KINDS = ["floor", "meridian", "ticks", "none"];
@@ -86,10 +94,12 @@ const LIGHT_CYCLE = [THEME.cyan, THEME.gold, THEME.blue];
 
 /** getGenreConfig.ts scale tables — same SSOT the sound mill already ported. */
 const SCALES = {
-  ambient: [261.63, 311.13, 349.23, 392.0, 466.16],
+  ambient: [261.63, 311.13, 349.23, 392.0, 466.16, 196.0, 220.0, 246.94, 293.66, 329.63, 415.3, 207.65, 196.0, 155.56],
   techno: [65.41, 87.31, 130.81, 174.61, 196.0],
   phonk: [32.7, 43.65, 55.0, 65.41, 82.41],
   jazz: [130.81, 164.81, 196.0, 220.0, 261.63],
+  rock: [329.63, 392.0, 440.0, 493.88, 587.33],
+  timeless: [261.63, 311.13, 349.23, 392.0, 466.16, 65.41],
 };
 
 const NOTE_NAMES = ["C", "D#", "F", "G", "A#"];
@@ -1368,7 +1378,23 @@ function paintFocusMeshMass(buf, width, height, t, checksum) {
   }
 }
 
-/** orb focus — cyan disc + gold pupil + satellites. Field + mesh mass carry the mint id. */
+const organs = createOrgans({
+  THEME,
+  mixPixel,
+  mixRgb,
+  paintSharpLine,
+  paintGlowLine,
+  stampFocusDisc,
+  beatPhase,
+  kickAccent,
+  andAccent,
+  phraseOf,
+  iridesce,
+  mulberry32,
+  clamp,
+});
+
+/** orb focus — cyan disc + gold pupil + satellites. Field + mesh verts carry the mint id. */
 function paintFocusOrb(buf, width, height, t, checksum) {
   fillVoid(buf);
   paintFocusField(buf, width, height, t, checksum);
@@ -1402,45 +1428,14 @@ function paintFocusOrb(buf, width, height, t, checksum) {
   paintFocusSatellites(buf, width, height, t, checksum);
 }
 
-/** orb → canvas / Orb Glow v2. Seed look: focus (disc satellites) or cage (Wu + field). */
+/** orb → canvas. focus = cyan disc. cage = Rippel mandala (InteractiveCanvas). */
 function paintCanvas(buf, width, height, t, checksum) {
   if (checksum.lookKind === "focus") {
     return paintFocusOrb(buf, width, height, t, checksum);
   }
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.95,
-    half: 1,
-    noFill: true,
-  });
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const minSide = Math.min(width, height);
-  const beat = beatPhase(checksum, t);
-  const nucleus = paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
-  const tickR = nucleus.radius;
-  const tickA = beat * Math.PI * 2;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(tickA) * tickR,
-    cy + Math.sin(tickA) * tickR,
-    5,
-    THEME.gold,
-    { rim: 1.2, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
-  );
-  const ghostA = tickA - 0.55;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(ghostA) * tickR,
-    cy + Math.sin(ghostA) * tickR,
-    3,
-    THEME.ink,
-    { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
-  );
+  paintFocusMeshMass(buf, width, height, t, checksum);
+  organs.paintMandala(buf, width, height, t, checksum);
 }
 
 /** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
@@ -1511,103 +1506,23 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - cx, drop: lo - hi };
 }
 
-/** swirl → 3d-sacred v2. Seed mesh is the sacred body — lines, not vertex beads. */
+/** swirl → ThreeJSVisualizer sacred-flow. Mesh mass is the mint id, not the silhouette. */
 function paintSacred(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.92,
-    half: 1,
-  });
-  paintFocusSatellites(buf, width, height, t, checksum);
+  paintFocusMeshMass(buf, width, height, t, checksum);
+  organs.paintSacredFlow(buf, width, height, t, checksum);
 }
 
-/** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
+/** snap → NeuralNetworkVisualizer synapse. No mesh early-return. */
 function paintNeural(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.9,
-    half: 1,
-  });
-  const pts = (worn && worn.pts) || [];
-  const mesh = checksum.mesh;
-  const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
-  if (mesh && pts.length) {
-    paintFocusSatellites(buf, width, height, t, checksum);
-    return;
-  }
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
-  for (let i = 0; i < placed.length; i++) {
-    const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
-    const a = {
-      ...placed[i],
-      x: placed[i].x + wander,
-      y: placed[i].y + Math.cos(t * 2.7 + i) * 10,
-    };
-    const rawB = placed[(i + 1) % placed.length];
-    const rawSkip = placed[(i + 2) % placed.length];
-    const b = { x: rawB.x - wander * 0.3, y: rawB.y };
-    const skip = { x: rawSkip.x, y: rawSkip.y + wander * 0.2 };
-    paintSharpLine(buf, width, height, a.x, a.y, b.x, b.y, THEME.blue, 1);
-    paintSharpLine(buf, width, height, a.x, a.y, skip.x, skip.y, THEME.blue, 1);
-    paintSharpLine(buf, width, height, cx, cy, a.x, a.y, THEME.blue, 1);
-    const speed = 1.8 + a.circle.frequency / 140;
-    const travel = (t * speed + i * 0.17) % 1;
-    const inbound = (t * speed * 1.35 + beat * 0.08 + i * 0.41) % 1;
-    const third = (t * speed * 0.55 + i * 0.63) % 1;
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (b.x - a.x) * travel,
-      a.y + (b.y - a.y) * travel,
-      5,
-      THEME.gold,
-      node,
-    );
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (cx - a.x) * inbound,
-      a.y + (cy - a.y) * inbound,
-      4,
-      THEME.cyan,
-      node,
-    );
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (skip.x - a.x) * third,
-      a.y + (skip.y - a.y) * third,
-      3,
-      THEME.ink,
-      node,
-    );
-  }
-  for (const seat of placed) {
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      seat.x,
-      seat.y,
-      7 + kick * 1.5,
-      mixRgb(seat.color, THEME.gold, freqTint(seat.circle, t)),
-      node,
-    );
-  }
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintKuramoto(buf, width, height, t, checksum);
 }
 
-/** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
+/** waves → WaveformVisualizer liquid ocean + mill ribbons + gold needle. */
 function paintWaveform(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.72, half: 1 });
+  paintFocusMeshMass(buf, width, height, t, checksum);
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
@@ -1650,79 +1565,13 @@ function paintWaveform(buf, width, height, t, checksum) {
     mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
     mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
   }
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintAuroraOrbs(buf, width, height, t, checksum);
 }
 
-/** spark → particles v2. Seed mesh is the spark — lines, not bead rain. */
+/** spark → ParticleAnimations cosmic dance. No mesh early-return. */
 function paintParticles(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const minSide = Math.min(width, height);
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.85,
-    half: 1,
-  });
-  const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
-  const mesh = checksum.mesh;
-  const pts = worn && worn.pts;
-  const circles = checksum.visualConfig.circles;
-  if (mesh && pts) {
-    paintFocusSatellites(buf, width, height, t, checksum);
-    return;
-  }
-  const placed = layoutRings(circles, width, height, t * 1.15, checksum);
-  for (let i = 0; i < placed.length; i++) {
-    const src = placed[i];
-    const tint = freqTint(src.circle, t);
-    const orbitR = 22 + (i % 3) * 11 + Math.sin(t * 1.7 + i) * 5;
-    const segs = 11;
-    for (let s = 0; s < segs; s++) {
-      if ((s + i * 3) % 4 === 0) continue;
-      const a0 = (s / segs) * Math.PI * 2 + t * 3.4 + i * 0.7;
-      const a1 = a0 + (Math.PI * 2 * 0.32) / segs;
-      paintSharpLine(
-        buf,
-        width,
-        height,
-        src.x + Math.cos(a0) * orbitR,
-        src.y + Math.sin(a0) * orbitR * 0.72,
-        src.x + Math.cos(a1) * orbitR,
-        src.y + Math.sin(a1) * orbitR * 0.72,
-        THEME.blue,
-        1,
-      );
-    }
-    const moteCount = 18;
-    for (let k = 0; k < moteCount; k++) {
-      const life = (t * (1.25 + src.circle.frequency / 420) + k * 0.11 + i * 0.07) % 1;
-      const orbital = k % 3 === 0;
-      const dart = Math.sin(t * 5.1 + k * 1.3 + i) * 0.35;
-      const ang = orbital ? t * (3.2 + (k % 5) * 0.28) + i + k + dart : t * 4.2 + i * 1.3 + k * 0.62 + dart;
-      const dist = orbital
-        ? 18 + (k % 4) * 10 + Math.sin(beat * Math.PI * 2 + k) * 4
-        : life * minSide * 0.38 * (0.7 + kick * 0.12);
-      const x = src.x + Math.cos(ang) * dist;
-      const y = src.y + Math.sin(ang) * dist * (orbital ? 0.72 : 1);
-      const size = Math.max(2.2, (1 - life) * (3.2 + (k % 3)) + kick * 0.6);
-      const color = mixRgb(src.color, THEME.gold, k % 2 === 0 ? tint : tint * 0.4);
-      stampFocusDisc(buf, width, height, x, y, size, color, mote);
-      if (life > 0.12 && !orbital) {
-        const prev = life - 0.1;
-        const pd = prev * minSide * 0.36;
-        stampFocusDisc(buf, width, height, src.x + Math.cos(ang) * pd, src.y + Math.sin(ang) * pd, size * 0.55, color, {
-          rim: 1,
-          glow: 1,
-          glowAlpha: 0.1,
-          rimColor: THEME.ink,
-        });
-      }
-    }
-    stampFocusDisc(buf, width, height, src.x, src.y, 6 + kick, mixRgb(THEME.ink, THEME.gold, tint), mote);
-  }
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintCosmos(buf, width, height, t, checksum);
 }
 
 function paintVisualization(visualization, buf, width, height, t, checksum) {
@@ -1774,6 +1623,10 @@ function paintRippelFrame(opts) {
     engine: ENGINE,
     look: LOOK,
     lookKind: checksum.lookKind,
+    organ:
+      checksum.lookKind === "focus" && visualization === "canvas"
+        ? "focus"
+        : organs.ORGAN[visualization] || visualization,
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
@@ -1858,6 +1711,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     mesh: a.mesh,
     field: a.field,
     lookKind: a.lookKind,
+    organ: a.organ,
     fill: frameFill(a.buffer),
   };
 }
@@ -1960,4 +1814,5 @@ module.exports = {
   GRID_KINDS,
   GRAD_KINDS,
   resolveLookKind,
+  ORGAN: organs.ORGAN,
 };
