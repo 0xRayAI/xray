@@ -223,6 +223,19 @@ function createOrgans(kit) {
     const innerColor = iridesce(0.7, t, beat, THEME.gold);
     paintPolygon(buf, width, height, cx, cy, outer, sides, rotation, outerColor);
     paintPolygon(buf, width, height, cx, cy, inner, sides + 1, -rotation * 0.8, innerColor);
+    for (let i = 0; i < sides; i++) {
+      const a = rotation + (i / sides) * Math.PI * 2;
+      stampFocusDisc(
+        buf,
+        width,
+        height,
+        cx + Math.cos(a) * outer,
+        cy + Math.sin(a) * outer,
+        7.2 + (i % 2) + kick * 1.4,
+        i === 0 && kick > 0.15 ? THEME.gold : outerColor,
+        { rim: 1.4, glow: 3.2, glowAlpha: 0.2, rimColor: THEME.ink },
+      );
+    }
     for (let i = 0; i < sides; i += 2) {
       const a1 = rotation + (i / sides) * Math.PI * 2;
       const a2 = rotation + ((i + 3) / sides) * Math.PI * 2;

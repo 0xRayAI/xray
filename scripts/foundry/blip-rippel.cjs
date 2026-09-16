@@ -69,6 +69,7 @@ const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
 const CORE_STYLES = ["disc", "eclipse", "pulse"];
 const LOOK_KINDS = ["focus", "cage"];
 const BODY_KINDS = ["mill", "rippel"];
+const GENRE_KINDS = ["ambient", "techno", "phonk", "jazz", "rock", "timeless"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -664,6 +665,14 @@ function resolveLookKind(opts) {
   return LOOK_KINDS[seedU32(opts && opts.seedHex, 0) % LOOK_KINDS.length];
 }
 
+function resolveGenreKind(opts) {
+  const raw = opts && opts.genre;
+  if (raw != null && String(raw).trim()) {
+    return soundRippel.resolveGenre(raw).id;
+  }
+  return GENRE_KINDS[seedU32(opts && opts.seedHex, 24) % GENRE_KINDS.length];
+}
+
 function resolveBodyKind(opts) {
   const raw = opts && opts.bodyKind;
   if (raw) {
@@ -690,7 +699,7 @@ function organOf(visualization, lookKind, bodyKind) {
 }
 
 function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bodyKind }) {
-  const g = soundRippel.resolveGenre(genre || "ambient");
+  const g = soundRippel.resolveGenre(resolveGenreKind({ seedHex, genre }));
   const scale = SCALES[g.id] || SCALES.ambient;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8));
   const text = String(brief || "factory-blip");
@@ -736,6 +745,7 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bod
     },
     lookKind: resolveLookKind({ seedHex, lookKind }),
     bodyKind: resolveBodyKind({ seedHex, bodyKind }),
+    genre: g.id,
     mesh: buildMesh(seedHex, text),
     field: buildField(seedHex, text),
   };
@@ -744,10 +754,11 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bod
 function cachedChecksum(opts) {
   const lookKind = resolveLookKind(opts);
   const bodyKind = resolveBodyKind(opts);
-  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}`;
+  const genre = resolveGenreKind(opts);
+  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${genre}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}`;
   let hit = visualCache.get(key);
   if (!hit) {
-    hit = buildVisualConfig({ ...opts, lookKind, bodyKind });
+    hit = buildVisualConfig({ ...opts, lookKind, bodyKind, genre });
     visualCache.set(key, hit);
   }
   return hit;
@@ -1336,8 +1347,9 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   });
 }
 
-function paintFocusSatellites(buf, width, height, t, checksum) {
-  if (!checksum || checksum.lookKind !== "focus") return;
+/** Power Plant satellites — same discs on every body. Phrase orbit. */
+function paintSuitSatellites(buf, width, height, t, checksum) {
+  if (!checksum) return;
   const circles = checksum.visualConfig && checksum.visualConfig.circles;
   if (!circles || !circles.length) return;
   for (const placed of layoutFocusRing(circles, width, height, t, checksum)) {
@@ -1347,6 +1359,34 @@ function paintFocusSatellites(buf, width, height, t, checksum) {
       glowAlpha: 0.24,
       rimColor: THEME.ink,
     });
+  }
+}
+
+function paintFocusSatellites(buf, width, height, t, checksum) {
+  if (!checksum || checksum.lookKind !== "focus") return;
+  paintSuitSatellites(buf, width, height, t, checksum);
+}
+
+/** Mill mesh verts as stamp discs — same presence language as synapse / cosmos. */
+function paintMeshBeads(buf, width, height, t, checksum, scale) {
+  const mesh = checksum && checksum.mesh;
+  if (!mesh || !mesh.verts || !mesh.verts.length) return;
+  const pts = projectMesh(mesh, width, height, t, checksum, scale || 0.92);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const gold = kick > 0.18 && i === 0;
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      p.x,
+      p.y,
+      6.8 + (i % 3) * 1.6 + kick * 1.2,
+      gold ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length],
+      { rim: 1.4, glow: 3.2, glowAlpha: 0.2, rimColor: THEME.ink },
+    );
   }
 }
 
@@ -1490,6 +1530,7 @@ function paintMillCage(buf, width, height, t, checksum) {
     THEME.ink,
     { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
   );
+  paintSuitSatellites(buf, width, height, t, checksum);
 }
 
 /** mill body — evolved platonic mesh as the silhouette. */
@@ -1499,7 +1540,8 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
     scale: scale || 0.92,
     half: 1,
   });
-  paintFocusSatellites(buf, width, height, t, checksum);
+  paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
+  paintSuitSatellites(buf, width, height, t, checksum);
 }
 
 /** orb → canvas. focus = cyan disc. cage+mill = Wu mesh. cage+rippel = refined mandala. */
@@ -1654,6 +1696,8 @@ function paintWaveform(buf, width, height, t, checksum) {
   }
   if (checksum.bodyKind === "rippel") {
     organs.paintAuroraOrbs(buf, width, height, t, checksum);
+  } else {
+    paintSuitSatellites(buf, width, height, t, checksum);
   }
 }
 
@@ -1717,6 +1761,7 @@ function paintRippelFrame(opts) {
     look: LOOK,
     lookKind: checksum.lookKind,
     bodyKind: checksum.bodyKind,
+    genre: checksum.genre,
     organ: organOf(visualization, checksum.lookKind, checksum.bodyKind),
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
@@ -1862,6 +1907,7 @@ function summarizeVisual(checksum) {
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
     lookKind: checksum.lookKind || null,
     bodyKind: checksum.bodyKind || null,
+    genre: checksum.genre || (checksum.genreConfig && checksum.genreConfig.scale) || null,
     mesh: fingerprintMesh(checksum.mesh),
     field: fingerprintField(checksum.field),
   };
@@ -1913,6 +1959,8 @@ module.exports = {
   GRAD_KINDS,
   resolveLookKind,
   resolveBodyKind,
+  resolveGenreKind,
+  GENRE_KINDS,
   organOf,
   ORGAN: organs.ORGAN,
 };

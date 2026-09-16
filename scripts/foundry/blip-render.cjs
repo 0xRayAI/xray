@@ -903,6 +903,7 @@ function buildReceipt(input, evaled) {
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
     bodyKind: input.bodyKind || (input.visualConfig && input.visualConfig.bodyKind) || null,
+    genre: input.genre || (input.visualConfig && input.visualConfig.genre) || null,
     organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
@@ -1012,7 +1013,7 @@ function resolveBed(opts, root, brief, work, seed) {
       : path.join(root, ".xray", "blip", "bed.wav");
     const rendered = sound.renderSamples({
       brief,
-      genre: opts.genre || "ambient",
+      genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
       seconds: DURATION_SEC,
       seed,
       syncopate: true,
@@ -1076,6 +1077,7 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       buffer: buf,
       lookKind: opts.lookKind,
       bodyKind: opts.bodyKind,
+      genre: opts.genre,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
@@ -1112,6 +1114,7 @@ function renderBlip(opts = {}) {
     visualConfig: null,
     lookKind: opts.lookKind || null,
     bodyKind: opts.bodyKind || null,
+    genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
     organ: null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
@@ -1153,6 +1156,7 @@ function renderBlip(opts = {}) {
           height: MOTION_HEIGHT,
           lookKind: opts.lookKind,
           bodyKind: opts.bodyKind,
+          genre: input.genre,
         }),
       );
       input.lookKind = input.visualConfig && input.visualConfig.lookKind;
@@ -1173,6 +1177,7 @@ function renderBlip(opts = {}) {
           height: motion.height,
           lookKind: opts.lookKind,
           bodyKind: opts.bodyKind,
+          genre: input.genre,
         }),
       );
       input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);

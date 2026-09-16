@@ -990,6 +990,66 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip.mjs')).toContain('--body mill|rippel');
   });
 
+  it('wears one mill suit — satellites, seed genre, same phrase as the bed', () => {
+    const {
+      paintRippelFrame,
+      resolveGenreKind,
+      GENRE_KINDS,
+      buildVisualConfig,
+      phraseOf,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      GENRE_KINDS: string[];
+      resolveGenreKind: (opts: { seedHex?: string; genre?: string }) => string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string; genre?: string }) => {
+        genre: string;
+        genreConfig: { tempo: number; phase0: number };
+      };
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer; genre: string; organ: string };
+    };
+    expect(GENRE_KINDS).toEqual(['ambient', 'techno', 'phonk', 'jazz', 'rock', 'timeless']);
+    expect(resolveGenreKind({ genre: 'techno' })).toBe('techno');
+    expect(resolveGenreKind({ genre: 'country' })).toBe('timeless');
+    const seedHex = '0xdeadbeef';
+    const brief = 'warehouse floor · Power Plant';
+    expect(resolveGenreKind({ seedHex })).toBe(buildVisualConfig({ brief, seedHex }).genre);
+    expect(buildVisualConfig({ brief, seedHex, genre: 'jazz' }).genre).toBe('jazz');
+    const millSwirl = paintRippelFrame({
+      renderer: 'swirl',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
+    expect(millSwirl.organ).toBe('mesh');
+    expect(millSwirl.genre).toBe(resolveGenreKind({ seedHex }));
+    function discs(buf: Buffer): number {
+      let n = 0;
+      for (let i = 0; i < buf.length; i += 3) {
+        const cyan = Math.abs(buf[i] - 61) < 12 && Math.abs(buf[i + 1] - 224) < 12 && Math.abs(buf[i + 2] - 232) < 12;
+        const gold = buf[i] > 200 && buf[i + 1] > 150 && buf[i + 2] < 80;
+        if (cyan || gold) n += 1;
+      }
+      return n;
+    }
+    expect(discs(millSwirl.buffer)).toBeGreaterThan(400);
+    const checksum = buildVisualConfig({ brief, seedHex });
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(read('scripts/foundry/blip.mjs')).toContain('--genre');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('hookEase');
+  });
+
   it('wears one mill suit across mill and Rippel bodies — phrase + distinct silhouettes', () => {
     const { paintRippelFrame, framesDiffer, phraseOf, buildVisualConfig, organOf, BODY_KINDS } =
       requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
@@ -1108,10 +1168,12 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     };
     const brief = 'warehouse floor · Power Plant';
     const seedHex = '0xdeadbeef';
+    const genre = rippel.resolveGenreKind({ seedHex });
     const checksum = rippel.buildVisualConfig({ brief, seedHex });
+    expect(checksum.genre).toBe(genre);
     const bed = sound.renderSamples({
       brief,
-      genre: 'ambient',
+      genre,
       seconds: 4.44,
       seed: seedHex,
       syncopate: true,

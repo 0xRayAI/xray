@@ -1017,11 +1017,14 @@ function pick(arr, rng) {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
 
-function sectionGain(t, seconds, lock) {
+function sectionGain(t, seconds, lock, grid) {
   const p = t / seconds;
   if (lock && seconds <= 5) {
-    if (p > 0.88) return 0.72;
-    return 1;
+    const phrase = shortformPhrase(t, seconds, grid || { beatSec: 60 / 90 });
+    return Math.max(
+      0.58,
+      0.84 * phrase.hookEase + 1 * phrase.turnEase + 0.68 * phrase.tagEase,
+    );
   }
   if (p < 0.15) return 0.62;
   if (p < 0.4) return 0.88;
@@ -1058,7 +1061,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.92 * sectionGain(t, seconds, lock),
+        velocity: 0.92 * sectionGain(t, seconds, lock, grid),
         floorHz: CRYSTAL.kickFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -1075,7 +1078,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: hat.attack,
         decay: hat.decay,
         release: hat.release,
-        velocity: (off ? 0.34 : 0.2) * sectionGain(t, seconds, lock),
+        velocity: (off ? 0.34 : 0.2) * sectionGain(t, seconds, lock, grid),
       });
       mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
@@ -1141,7 +1144,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.78 * sectionGain(t, seconds, lock),
+        velocity: 0.78 * sectionGain(t, seconds, lock, grid),
         floorHz: CRYSTAL.eightOhEightFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -1157,7 +1160,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.001,
         decay: 0.055,
         release: 0.02,
-        velocity: 0.18 * sectionGain(t, seconds, lock),
+        velocity: 0.18 * sectionGain(t, seconds, lock, grid),
       });
       mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
@@ -1209,7 +1212,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.55 * sectionGain(t, seconds, lock),
+        velocity: 0.55 * sectionGain(t, seconds, lock, grid),
         floorHz: 40,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -1226,7 +1229,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: ride.attack,
         decay: ride.decay,
         release: ride.release,
-        velocity: 0.18 * sectionGain(t, seconds, lock),
+        velocity: 0.18 * sectionGain(t, seconds, lock, grid),
       });
       mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
@@ -1276,7 +1279,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       const lastKick = phrase.tagEase > 0.55 && phrase.beats + 1 >= phrase.total;
       const vel =
         (lastKick ? 0.92 : 0.7 + 0.16 * phrase.hookEase + 0.06 * phrase.turnEase) *
-        sectionGain(t, seconds, lock);
+        sectionGain(t, seconds, lock, grid);
       const hit = renderMembrane({
         sampleRate,
         freq: 36.7,
@@ -1348,7 +1351,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.004,
         decay: 0.18,
         release: 0.08,
-        velocity: (lock ? 0.38 : 0.16) * hatW * sectionGain(t, seconds, lock),
+        velocity: (lock ? 0.38 : 0.16) * hatW * sectionGain(t, seconds, lock, grid),
       });
       mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
@@ -1401,7 +1404,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: 0.36,
         release: 0.5,
-        velocity: 0.88 * sectionGain(t, seconds, lock),
+        velocity: 0.88 * sectionGain(t, seconds, lock, grid),
         floorHz: CRYSTAL.kickFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -1420,7 +1423,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
           attack: 0.001,
           decay: 0.06,
           release: 0.03,
-          velocity: (off ? 0.3 : 0.18) * sectionGain(t, seconds, lock),
+          velocity: (off ? 0.3 : 0.18) * sectionGain(t, seconds, lock, grid),
         }),
         Math.floor(hatSlip(t) * sampleRate),
         1,

@@ -12,7 +12,7 @@ On-disk SSOT: `registry.json` next to this file.
 
 Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is **sharp** (opaque body + crisp rim + short glow) on all five. Motion is a **4.44s blip**: fast abstract travel, soft gold tints — no hard strobe. LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed.
 
-One mill suit on every body: Wu hairline, Power Plant triad, short glow, hook → turn → tag on the shared motion grid. Rippel geo stays (petals / N-gons / synapse / cosmos / aurora) and wears that suit — not a second CAD look.
+One mill suit on every body: Wu hairline, Power Plant satellites, short glow, hook → turn → tag on the shared motion grid. Picture and bed seed-pick the same genre. Rippel geo stays (petals / N-gons / synapse / cosmos / aurora) and wears that suit — not a second CAD look.
 
 - **SSOT** `htafolla/rippel-synapse-flow@e5014cd`
 - `animationIcons.ts` → `ANIMATION_TO_VISUALIZATION`
