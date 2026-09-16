@@ -1674,7 +1674,7 @@ function paintCageRupture(buf, width, height, pts, mesh, hit, peak) {
     const pa = pts[a];
     const pb = pts[b];
     if (!pa || !pb) continue;
-    const half = 2 + Math.round(1.6 * hit + 2.2 * flash);
+    const half = 1 + Math.round(1.1 * hit + 1.4 * flash);
     paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, half);
     paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, {
       glowAlpha: 0.14 + 0.16 * hit + 0.22 * flash,
@@ -1726,7 +1726,7 @@ function paintMillCage(buf, width, height, t, checksum) {
   const hit = ruptureHit(phrase);
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit + 0.12 * rupturePeak(phrase),
-    half: 1,
+    half: 1 + Math.round(hit),
     fill: phraseMix(phrase, 0.1, 0.42, 0.18) + 0.1 * hit,
   });
   const cx = (width - 1) * 0.5;
