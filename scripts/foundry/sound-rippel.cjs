@@ -430,10 +430,12 @@ function duckBus(bus, sampleRate, from, to, gain) {
   }
 }
 
-/** Keep the open downbeat and the jewel cut; pull other hits back so the cut is the loudest. */
+/** Keep the opening downbeat + first offbeat, and the jewel cut; pull other hits back. */
 function accentTurn(bus, sampleRate, turnAt, othersGain, beatSec) {
-  const openEnd = Math.floor(0.14 * sampleRate);
-  const hold = Math.min(0.34, Math.max(0.18, (beatSec || 0.5) * 0.6));
+  const beat = beatSec > 0 ? beatSec : 0.5;
+  // A 140ms shelf left 16ths inside the unducked window and ducked the and — inverted lock.
+  const openEnd = Math.floor(beat * 0.68 * sampleRate);
+  const hold = Math.min(0.34, Math.max(0.18, beat * 0.6));
   const a = Math.max(0, Math.floor((turnAt - 0.05) * sampleRate));
   const b = Math.min(bus.length, Math.floor((turnAt + hold) * sampleRate));
   const g0 = othersGain == null ? 0.66 : othersGain;

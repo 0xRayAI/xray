@@ -1687,7 +1687,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate)),
       );
     expect(sound.highpassEnergy(slice(beat * 0.5, 0.06), bed.sampleRate, 2000)).toBeGreaterThan(
-      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000) * 0.85,
+      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000),
     );
   });
 
