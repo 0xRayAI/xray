@@ -1026,6 +1026,11 @@ function phraseMix(phrase, hookV, turnV, tagV) {
   );
 }
 
+/** Mid-clip rupture window — holds through the turn, peaks on the cut. */
+function ruptureHit(phrase) {
+  return Math.max(phrase && phrase.turnHit ? phrase.turnHit : 0, phraseWeight(phrase, "turn") * 0.82);
+}
+
 function mixRgb(a, b, amount) {
   const u = clamp(amount, 0, 1);
   return [
@@ -1407,7 +1412,7 @@ function eclipseOf(checksum, width, height, t) {
   return {
     x: cx + Math.cos(ang) * orbit,
     y: cy - minSide * 0.048 + Math.sin(ang) * orbit * 0.22,
-    r: minSide * (0.096 + 0.018 * (phrase.turnHit || 0)),
+    r: minSide * (0.096 + 0.018 * ruptureHit(phrase)),
     depth,
     color: THEME.ink,
   };
@@ -1689,7 +1694,7 @@ function paintSnapRupture(buf, width, height, cx, cy, minSide, hit) {
 function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const phrase = phraseOf(checksum, t);
-  const hit = phrase.turnHit || 0;
+  const hit = ruptureHit(phrase);
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: phraseMix(phrase, 0.78, 1.22, 0.9) + 0.12 * hit,
     half: 1,
@@ -1700,7 +1705,7 @@ function paintMillCage(buf, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum, t);
-  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, hit);
+  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, ruptureHit(phrase));
 }
 
 /** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
@@ -1725,7 +1730,7 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
-  const hit = phrase.turnHit || 0;
+  const hit = ruptureHit(phrase);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
@@ -1847,7 +1852,7 @@ function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checks
   const swell = style === "pulse" ? 0.55 + 0.55 * kick + 0.35 * and : 0.5 + 0.35 * kick + 0.22 * and;
   const t = at != null ? at : checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
   const phrase = checksum ? phraseOf(checksum, t) : { turnHit: 0 };
-  const hit = phrase.turnHit || 0;
+  const hit = ruptureHit(phrase);
   const core =
     minSide *
     ((style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell) + 0.09 * hit);
@@ -2226,6 +2231,7 @@ module.exports = {
   phraseOf,
   phraseMix,
   phraseWeight,
+  ruptureHit,
   motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,

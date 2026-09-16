@@ -1451,6 +1451,25 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(goldPixelCount(turnCage.buffer)).toBeGreaterThan(goldPixelCount(hookCage.buffer));
     expect(goldPixelCount(turnSnap.buffer)).toBeGreaterThan(goldPixelCount(hookSnap.buffer));
     expect(centerBurst(turnSnap.buffer)).toBeGreaterThan(centerBurst(hookSnap.buffer));
+    const midCage = paintRippelFrame({
+      renderer: 'orb',
+      t: 2.22,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const midSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 2.22,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    expect(goldPixelCount(midCage.buffer)).toBeGreaterThan(goldPixelCount(hookCage.buffer));
+    expect(goldPixelCount(midSnap.buffer)).toBeGreaterThan(goldPixelCount(hookSnap.buffer));
     const moons = [0, 0.8, 1.6, 2.2, 3.1, 4.0].map((t) => eclipseOf(checksum, 1280, 720, t));
     expect(moons.some((m) => m.depth < 0)).toBe(true);
     expect(moons.some((m) => m.depth >= 0)).toBe(true);
@@ -1466,6 +1485,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintEclipseMoon');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintCageRupture');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintSnapRupture');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureHit');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('crack');
   });
 
