@@ -716,6 +716,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex,
       brief,
       lookKind: 'cage',
+      bodyKind: 'mill',
     });
     expect(focusFrame.lookKind).toBe('focus');
     expect(cageFrame.lookKind).toBe('cage');
