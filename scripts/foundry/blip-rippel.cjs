@@ -1107,8 +1107,8 @@ function paintMeshFaces(buf, width, height, mesh, pts, color, alpha, t, checksum
     .sort((p, q) => p.z - q.z);
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   for (let i = 0; i < ranked.length; i++) {
-    const jewel = iridesce(i / Math.max(1, ranked.length), t || 0, beat, THEME.gold);
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, wash, 0.28), alpha);
+    const jewel = mixRgb(THEME.cyan, THEME.gold, (i / Math.max(1, ranked.length) + (beat || 0) * 0.08) % 1);
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, THEME.cyan, 0.35), alpha);
   }
 }
 
@@ -1596,7 +1596,7 @@ function paintMillEmbers(buf, width, height, t, checksum) {
   }
   for (let i = 0; i < coals.length; i++) {
     const coal = coals[i];
-    const heat = coal.mid ? mixRgb(THEME.gold, THEME.cyan, 0.35) : THEME_CYCLE[((mesh.accentIndex || 0) + coal.i) % THEME_CYCLE.length];
+    const heat = THEME_CYCLE[((mesh.accentIndex || 0) + coal.i) % THEME_CYCLE.length];
     const color = kick > 0.2 && coal.i === 0 ? THEME.gold : heat;
     const dx = coal.p.x - coal.q.x;
     const dy = coal.p.y - coal.q.y;
