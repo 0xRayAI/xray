@@ -13,6 +13,8 @@
  * Tone.Offline is blocked in Node (no OfflineAudioContext). This is a lean headless
  * port of those chains, then mixed like a mill — not the Lovable volume-hack soup,
  * not the #62 three-sine bed.
+ *
+ * 4.44s is a Short, not a loop tile: hook → turn → tag on the motion grid.
  */
 
 const TONE_OFFLINE_BLOCKER =
@@ -253,6 +255,82 @@ function motionGrid(seedHex, genre) {
   };
 }
 
+function ease01(a, b, x) {
+  if (b <= a) return x >= b ? 1 : 0;
+  const t = x < a ? 0 : x > b ? 1 : (x - a) / (b - a);
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * 4.44s entertainment spine — YouTube-short form, not a pasted bar.
+ * hook (beats 0–2) → turn (2 → last ~1.1) → tag. Hits are one-shots, not strobe.
+ * hookEase/turnEase/tagEase are continuous weights (crossfade). Binary hook/turn/tag stay section flags.
+ */
+function shortformPhrase(t, seconds, grid) {
+  const dur = seconds > 0 ? seconds : 4.44;
+  const beatSec = (grid && grid.beatSec) || 60 / 90;
+  const beats = t / beatSec;
+  const total = dur / beatSec;
+  const hookEnd = 2;
+  const tagLen = Math.min(1.25, Math.max(0.85, total * 0.2));
+  const tagStart = Math.max(hookEnd + 1.6, total - tagLen);
+  let section = "tag";
+  if (beats < hookEnd) section = "hook";
+  else if (beats < tagStart) section = "turn";
+  function near(at) {
+    const d = Math.abs(beats - at);
+    return d < 0.14 ? 1 - d / 0.14 : 0;
+  }
+  const fade = 0.28;
+  const hookEase = 1 - ease01(hookEnd - fade, hookEnd + fade, beats);
+  const tagEase = ease01(tagStart - fade, tagStart + fade, beats);
+  const turnEase = Math.max(0, 1 - hookEase - tagEase);
+  return {
+    section,
+    beats,
+    total,
+    hook: section === "hook" ? 1 : 0,
+    turn: section === "turn" ? 1 : 0,
+    tag: section === "tag" ? 1 : 0,
+    hookEase,
+    turnEase,
+    tagEase,
+    turnHit: near(hookEnd),
+    tagHit: near(tagStart),
+    hookEndBeats: hookEnd,
+    tagStartBeats: tagStart,
+  };
+}
+
+function padTones(genreId, scale) {
+  const s = scale || SCALES[genreId] || SCALES.ambient;
+  if (genreId === "ambient") return [s[0] * 0.75, s[0], s[1], s[3]];
+  if (genreId === "jazz") return [s[0], s[2], s[3], s[0] * 2];
+  if (genreId === "phonk") return [s[0], s[0] * 1.5, s[3]];
+  return [s[0], s[2], s[3]];
+}
+
+function degreeLine(kind, count) {
+  if (kind === "bass") {
+    const cell = [0, 0, 3, 4];
+    return Array.from({ length: count }, (_, i) => cell[i % cell.length]);
+  }
+  if (kind === "rhodes") {
+    const cell = [0, 2, 4, 4, 2, 0];
+    return Array.from({ length: count }, (_, i) => cell[i % cell.length]);
+  }
+  const cell = [0, 0, 2, 3];
+  return Array.from({ length: count }, (_, i) => cell[i % cell.length]);
+}
+
+function walkDegree(last, len, rng) {
+  const dir = rng() < 0.5 ? -1 : 1;
+  const next = last + dir;
+  if (next < 0) return 0;
+  if (next >= len) return len - 1;
+  return next;
+}
+
 function gridTime(grid, beats) {
   return (grid.phase0 || 0) + beats * grid.beatSec;
 }
@@ -310,6 +388,105 @@ function triangle(phase) {
 
 function square(phase) {
   return Math.sin(phase) >= 0 ? 1 : -1;
+}
+
+function polyBlep(t, dt) {
+  if (dt <= 0) return 0;
+  if (t < dt) {
+    const x = t / dt;
+    return x + x - x * x - 1;
+  }
+  if (t > 1 - dt) {
+    const x = (t - 1) / dt;
+    return x * x + x + x + 1;
+  }
+  return 0;
+}
+
+function sawBlep(phase, inc) {
+  const t = ((phase / (2 * Math.PI)) % 1 + 1) % 1;
+  const dt = Math.abs(inc) / (2 * Math.PI);
+  return 2 * t - 1 - polyBlep(t, dt);
+}
+
+function squareBlep(phase, inc) {
+  const t = ((phase / (2 * Math.PI)) % 1 + 1) % 1;
+  const dt = Math.abs(inc) / (2 * Math.PI);
+  const s = t < 0.5 ? 1 : -1;
+  return s + polyBlep(t, dt) - polyBlep((t + 0.5) % 1, dt);
+}
+
+function noiseLcg(seed) {
+  let s = (seed >>> 0) || 1;
+  return function next() {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function biquadCoeffs(kind, freq, q, sampleRate, gainDb) {
+  const f = Math.max(20, Math.min((sampleRate || 44100) * 0.45, freq || 1000));
+  const sr = sampleRate || 44100;
+  const w0 = (2 * Math.PI * f) / sr;
+  const cos = Math.cos(w0);
+  const sin = Math.sin(w0);
+  const qq = Math.max(0.2, q || 0.707);
+  const alpha = sin / (2 * qq);
+  const a = Math.pow(10, (gainDb || 0) / 40);
+  let b0 = 1;
+  let b1 = 0;
+  let b2 = 0;
+  let a0 = 1;
+  let a1 = 0;
+  let a2 = 0;
+  if (kind === "highpass") {
+    b0 = (1 + cos) / 2;
+    b1 = -(1 + cos);
+    b2 = (1 + cos) / 2;
+    a0 = 1 + alpha;
+    a1 = -2 * cos;
+    a2 = 1 - alpha;
+  } else if (kind === "bandpass") {
+    b0 = alpha;
+    b1 = 0;
+    b2 = -alpha;
+    a0 = 1 + alpha;
+    a1 = -2 * cos;
+    a2 = 1 - alpha;
+  } else if (kind === "peaking") {
+    b0 = 1 + alpha * a;
+    b1 = -2 * cos;
+    b2 = 1 - alpha * a;
+    a0 = 1 + alpha / a;
+    a1 = -2 * cos;
+    a2 = 1 - alpha / a;
+  } else {
+    b0 = (1 - cos) / 2;
+    b1 = 1 - cos;
+    b2 = (1 - cos) / 2;
+    a0 = 1 + alpha;
+    a1 = -2 * cos;
+    a2 = 1 - alpha;
+  }
+  return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
+}
+
+function biquad(kind, freq, q, sampleRate, gainDb) {
+  const c = biquadCoeffs(kind, freq, q, sampleRate, gainDb);
+  let x1 = 0;
+  let x2 = 0;
+  let y1 = 0;
+  let y2 = 0;
+  return {
+    step(x) {
+      const y = c.b0 * x + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2;
+      x2 = x1;
+      x1 = x;
+      y2 = y1;
+      y1 = y;
+      return y;
+    },
+  };
 }
 
 function highpass(cutoff, sampleRate) {
@@ -475,21 +652,28 @@ function renderMembrane({
     const t = i / sampleRate;
     const f =
       t < pitchDecay ? freq * Math.pow(endFreq / freq, t / Math.max(pitchDecay, 1e-6)) : endFreq;
-    const osc = shape === "square" ? square(phase) : Math.sin(phase);
-    out[i] = velocity * oneshotAmp(t, attack, decay + rel * 0.45) * osc;
-    phase += (2 * Math.PI * f) / sampleRate;
+    const inc = (2 * Math.PI * f) / sampleRate;
+    const osc = shape === "square" ? squareBlep(phase, inc) : Math.sin(phase);
+    const harm =
+      shape === "square" ? 0 : Math.sin(phase * 2) * Math.max(0, 1 - t / Math.max(pitchDecay, 1e-6)) * 0.32;
+    out[i] = velocity * oneshotAmp(t, attack, decay + rel * 0.45) * (osc + harm);
+    phase += inc;
   }
   return out;
 }
 
 function kickClick(sampleRate, velocity) {
-  const n = Math.floor(0.006 * sampleRate);
+  const n = Math.floor(0.007 * sampleRate);
   const out = new Float64Array(n);
+  const hp = biquad("highpass", 1400, 0.7, sampleRate);
+  const noise = noiseLcg(0x51ed);
   let phase = 0;
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
-    out[i] = velocity * Math.exp(-t / 0.0018) * Math.sin(phase);
-    phase += (2 * Math.PI * 2100) / sampleRate;
+    const env = Math.exp(-t / 0.0022);
+    const click = 0.5 * Math.sin(phase) + 0.5 * (noise() * 2 - 1);
+    out[i] = velocity * env * hp.step(click);
+    phase += (2 * Math.PI * 2400) / sampleRate;
   }
   return out;
 }
@@ -512,16 +696,19 @@ function renderMetal({
   const dur = attack + decay + rel;
   const n = Math.floor(dur * sampleRate);
   const out = new Float64Array(n);
-  const hp = highpass(Math.max(600, resonance * 0.6), sampleRate);
+  const hp = biquad("highpass", Math.max(800, resonance * 0.55), 0.7, sampleRate);
+  const bp = biquad("bandpass", Math.max(900, resonance), 5.2, sampleRate);
+  const noise = noiseLcg((freq * 100) | 0);
   let carrierPhase = 0;
   let modPhase = 0;
   const modHz = freq * harmonicity;
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
-    const mod = square(modPhase);
-    const carrier = square(carrierPhase + modulationIndex * 0.12 * mod);
+    const mod = Math.sin(modPhase);
+    const carrier = Math.sin(carrierPhase + modulationIndex * 0.08 * mod);
+    const grit = noise() * 2 - 1;
     const amp = velocity * oneshotAmp(t, attack, decay + rel);
-    out[i] = hp.step(carrier * amp);
+    out[i] = hp.step(bp.step(carrier * 0.74 + grit * 0.26) * amp);
     carrierPhase += (2 * Math.PI * freq) / sampleRate;
     modPhase += (2 * Math.PI * modHz) / sampleRate;
   }
@@ -533,20 +720,23 @@ function renderDuoBass({ sampleRate, freq, velocity, hold }) {
   const dur = p.attack + p.decay + (hold || 0.18) + p.release * 0.5;
   const n = Math.floor(dur * sampleRate);
   const out = new Float64Array(n);
-  const lp0 = lowpass(400, sampleRate);
-  const lp1 = lowpass(120, sampleRate);
-  const lpMix = lowpass(p.lp, sampleRate);
+  const lp0 = biquad("lowpass", 420, 0.85, sampleRate);
+  const lp1 = biquad("lowpass", 140, 0.8, sampleRate);
+  const lpA = biquad("lowpass", p.lp, 1.1, sampleRate);
+  const lpB = biquad("lowpass", p.lp, 0.9, sampleRate);
   let ph0 = 0;
   let ph1 = 0;
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
     const env = adsr(t, p.attack, p.decay, p.sustain, p.release, hold || 0.12);
     const vib = 1 + p.vibratoAmount * 0.15 * Math.sin(2 * Math.PI * p.vibratoRate * t);
-    const v0 = lp0.step(saw(ph0));
+    const inc0 = (2 * Math.PI * freq * vib) / sampleRate;
+    const inc1 = (2 * Math.PI * freq * p.harmonicity * vib) / sampleRate;
+    const v0 = lp0.step(sawBlep(ph0, inc0));
     const v1 = lp1.step(triangle(ph1));
-    out[i] = velocity * env * lpMix.step(0.62 * v0 + 0.38 * v1);
-    ph0 += (2 * Math.PI * freq * vib) / sampleRate;
-    ph1 += (2 * Math.PI * freq * p.harmonicity * vib) / sampleRate;
+    out[i] = velocity * env * lpB.step(lpA.step(0.62 * v0 + 0.38 * v1));
+    ph0 += inc0;
+    ph1 += inc1;
   }
   return out;
 }
@@ -619,21 +809,26 @@ function renderSax({ sampleRate, freq, velocity, hold }) {
 }
 
 function renderRhodes({ sampleRate, freq, velocity }) {
-  const attack = 0.01;
-  const decay = 0.6;
-  const n = Math.floor(2.4 * sampleRate);
+  const attack = 0.008;
+  const decay = 0.55;
+  const n = Math.floor(2.2 * sampleRate);
   const out = new Float64Array(n);
-  const lp = lowpass(2400, sampleRate);
-  const eq = makeEq3(sampleRate);
+  const lp = biquad("lowpass", 2600, 0.8, sampleRate);
+  const hp = biquad("highpass", 220, 0.7, sampleRate);
+  const hammer = noiseLcg((freq * 17) | 0);
+  const tine = biquad("highpass", 1800, 0.8, sampleRate);
   let phase = 0;
   let mod = 0;
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
-    const env = adsr(t, attack, decay, 0.4, 2.0, 0.05);
-    const fm = Math.sin(mod) * 2;
-    out[i] = eq.step(lp.step(velocity * env * triangle(phase + fm)), 2, 4, -6);
+    const env = adsr(t, attack, decay, 0.38, 1.8, 0.04);
+    const index = 6.5 * Math.exp(-t / 0.22) + 0.35;
+    const fm = Math.sin(mod) * index;
+    const body = Math.sin(phase + fm);
+    const tick = tine.step((hammer() * 2 - 1) * Math.exp(-t / 0.012) * 0.22);
+    out[i] = hp.step(lp.step(velocity * env * (body + tick)));
     phase += (2 * Math.PI * freq) / sampleRate;
-    mod += (2 * Math.PI * freq * 1.01) / sampleRate;
+    mod += (2 * Math.PI * freq) / sampleRate;
   }
   return out;
 }
@@ -641,21 +836,34 @@ function renderRhodes({ sampleRate, freq, velocity }) {
 function renderPad(n, sampleRate, freqs, rng, attack) {
   const p = RIPPEL.ambientPad;
   const out = new Float64Array(n);
-  const lp = lowpass(p.lp, sampleRate);
+  const hp = biquad("highpass", 180, 0.7, sampleRate);
   const eq = makeEq3(sampleRate);
   const phases = freqs.map(() => rng() * Math.PI * 2);
-  const detune = freqs.map(() => 0.997 + rng() * 0.006);
-  const lfo = freqs.map(() => 0.11 + rng() * 0.19);
+  const detune = freqs.map(() => 0.996 + rng() * 0.008);
+  const lfo = freqs.map(() => 0.09 + rng() * 0.16);
+  const tap = new Float64Array(Math.max(8, Math.floor(0.018 * sampleRate)));
+  let tapI = 0;
+  let cutoff = p.lp;
+  let lp = biquad("lowpass", cutoff, 0.9, sampleRate);
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
+    if (i % 64 === 0) {
+      cutoff = p.lp * (0.82 + 0.18 * Math.sin(2 * Math.PI * 0.21 * t));
+      lp = biquad("lowpass", cutoff, 0.95, sampleRate);
+    }
     const env = adsr(t, attack || p.attack, p.decay, p.sustain, p.release, Math.max(0, n / sampleRate - 2));
     let mix = 0;
     for (let v = 0; v < freqs.length; v++) {
-      const f = freqs[v] * detune[v] * (1 + 0.012 * Math.sin(2 * Math.PI * lfo[v] * t + phases[v]));
-      mix += triangle(2 * Math.PI * f * t + phases[v]);
+      const f = freqs[v] * detune[v];
+      const inc = (2 * Math.PI * f) / sampleRate;
+      const ph = phases[v] + 2 * Math.PI * f * t + 0.01 * Math.sin(2 * Math.PI * lfo[v] * t);
+      mix += 0.62 * sawBlep(ph, inc) + 0.38 * triangle(ph);
     }
-    const cutoffWobble = 0.85 + 0.15 * Math.sin(2 * Math.PI * 0.23 * t);
-    out[i] = eq.step(lp.step((mix / freqs.length) * env * cutoffWobble), p.eq.low, p.eq.mid, p.eq.high);
+    const dry = hp.step(lp.step((mix / freqs.length) * env));
+    const delayed = tap[tapI];
+    tap[tapI] = dry;
+    tapI = (tapI + 1) % tap.length;
+    out[i] = eq.step(dry * 0.82 + delayed * 0.18, p.eq.low, p.eq.mid, p.eq.high);
   }
   return out;
 }
@@ -682,17 +890,20 @@ function renderAirGlue(n, sampleRate, rng, amount) {
   return out;
 }
 
-function masterEnvelope(samples, sampleRate, seconds) {
-  const introHold = 0.5;
-  const introEase = 0.35;
-  const fadeSec = 1;
-  const fadeStart = Math.max(seconds - fadeSec, 1.25);
+function masterEnvelope(samples, sampleRate, seconds, lock) {
+  const blip = Boolean(lock) && seconds <= 5;
+  const introHold = blip ? 0 : 0.5;
+  const introEase = blip ? 0.03 : 0.35;
+  const fadeSec = blip ? 0.35 : 1;
+  const fadeStart = Math.max(seconds - fadeSec, blip ? seconds * 0.88 : 1.25);
   const out = new Float64Array(samples.length);
   for (let i = 0; i < samples.length; i++) {
     const t = i / sampleRate;
     let g = 1;
-    if (t < introHold) g = 0.46;
-    else if (t < introHold + introEase) {
+    if (blip && t < introEase) {
+      g = t / introEase;
+    } else if (!blip && t < introHold) g = 0.46;
+    else if (!blip && t < introHold + introEase) {
       const u = (t - introHold) / introEase;
       g = 0.46 + 0.54 * (0.5 - 0.5 * Math.cos(Math.PI * u));
     } else if (t >= fadeStart) {
@@ -700,6 +911,28 @@ function masterEnvelope(samples, sampleRate, seconds) {
       g = 1 - (0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, u)));
     }
     out[i] = samples[i] * g;
+  }
+  return out;
+}
+
+function renderPlate(samples, sampleRate) {
+  const delays = [0.0297, 0.0371, 0.0411, 0.0437].map((s) => Math.max(2, Math.floor(s * sampleRate)));
+  const bufs = delays.map((d) => new Float64Array(d));
+  const idx = delays.map(() => 0);
+  const pre = Math.floor(0.012 * sampleRate);
+  const hp = biquad("highpass", 1500, 0.7, sampleRate);
+  const lp = biquad("lowpass", 7800, 0.8, sampleRate);
+  const out = new Float64Array(samples.length);
+  for (let i = 0; i < samples.length; i++) {
+    const x = i >= pre ? samples[i - pre] : 0;
+    let acc = 0;
+    for (let c = 0; c < bufs.length; c++) {
+      const d = bufs[c][idx[c]];
+      bufs[c][idx[c]] = x + d * 0.52;
+      idx[c] = (idx[c] + 1) % bufs[c].length;
+      acc += d;
+    }
+    out[i] = lp.step(hp.step(acc * 0.25));
   }
   return out;
 }
@@ -715,8 +948,12 @@ function pick(arr, rng) {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
 
-function sectionGain(t, seconds) {
+function sectionGain(t, seconds, lock) {
   const p = t / seconds;
+  if (lock && seconds <= 5) {
+    if (p > 0.88) return 0.72;
+    return 1;
+  }
   if (p < 0.15) return 0.62;
   if (p < 0.4) return 0.88;
   if (p < 0.75) return 1;
@@ -752,7 +989,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.92 * sectionGain(t, seconds),
+        velocity: 0.92 * sectionGain(t, seconds, lock),
         floorHz: CRYSTAL.kickFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -769,7 +1006,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: hat.attack,
         decay: hat.decay,
         release: hat.release,
-        velocity: (off ? 0.34 : 0.2) * sectionGain(t, seconds),
+        velocity: (off ? 0.34 : 0.2) * sectionGain(t, seconds, lock),
       });
       mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
@@ -792,17 +1029,19 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       for (let i = 0; i < hit.length; i++) hit[i] = bp.step(hit[i]);
       mixInto(colorBus, hit, Math.floor(at * sampleRate), 0.85);
     }
+    const technoLine = degreeLine("bass", 8);
     for (const t of schedule(seconds, beat, 0.12)) {
+      const beatIdx = Math.round(t / beat);
       const bass = renderDuoBass({
         sampleRate,
-        freq: pick(scale, rng),
+        freq: scale[technoLine[beatIdx % technoLine.length] % scale.length],
         velocity: 0.42,
         hold: beat * 0.45,
       });
       mixInto(colorBus, bass, Math.floor(t * sampleRate), 1);
     }
   } else if (g.id === "phonk") {
-    mixInto(padBus, renderPad(n, sampleRate, [49, 73.4, 98], rng, 0.35), 0, 0.22);
+    mixInto(padBus, renderPad(n, sampleRate, padTones("phonk", scale), rng, 0.35), 0, 0.22);
     const kick = RIPPEL.phonk808;
     const hat = RIPPEL.technoHat;
     for (const t of schedule(seconds, beat, 0.12)) {
@@ -814,7 +1053,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.78 * sectionGain(t, seconds),
+        velocity: 0.78 * sectionGain(t, seconds, lock),
         floorHz: CRYSTAL.eightOhEightFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -830,7 +1069,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.001,
         decay: 0.055,
         release: 0.02,
-        velocity: 0.18 * sectionGain(t, seconds),
+        velocity: 0.18 * sectionGain(t, seconds, lock),
       });
       mixInto(hatBus, hit, Math.floor(hatSlip(t) * sampleRate), 1);
     }
@@ -842,17 +1081,19 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         1,
       );
     }
+    const phonkLine = [0, 3];
     for (const t of schedule(seconds, beat * 2, 0.2)) {
+      const beatIdx = Math.round(t / beat);
       const bass = renderReese({
         sampleRate,
-        freq: pick(scale, rng) * 2,
+        freq: scale[phonkLine[beatIdx % phonkLine.length] % scale.length],
         velocity: 0.38,
         hold: beat * 0.9,
       });
       mixInto(colorBus, bass, Math.floor((t + beat * 0.5) * sampleRate), 1);
     }
   } else if (g.id === "jazz") {
-    mixInto(padBus, renderPad(n, sampleRate, [196, 247, 311], rng, 0.4), 0, 0.28);
+    mixInto(padBus, renderPad(n, sampleRate, padTones("jazz", scale), rng, 0.4), 0, 0.28);
     const kick = RIPPEL.jazzKick;
     const ride = RIPPEL.jazzRide;
     const swing = beat / 2 * 0.32;
@@ -865,7 +1106,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: kick.decay,
         release: kick.release,
-        velocity: 0.55 * sectionGain(t, seconds),
+        velocity: 0.55 * sectionGain(t, seconds, lock),
         floorHz: 40,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -882,7 +1123,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: ride.attack,
         decay: ride.decay,
         release: ride.release,
-        velocity: 0.18 * sectionGain(t, seconds),
+        velocity: 0.18 * sectionGain(t, seconds, lock),
       });
       mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
@@ -894,27 +1135,45 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         1,
       );
     }
+    let walk = 0;
     for (const t of schedule(seconds, beat, 0.12)) {
+      walk = walkDegree(walk, scale.length, rng);
       const bass = renderDuoBass({
         sampleRate,
-        freq: pick(scale, rng),
+        freq: scale[walk] / 2,
         velocity: 0.34,
         hold: beat * 0.55,
       });
       mixInto(colorBus, bass, Math.floor(t * sampleRate), 0.85);
     }
+    const saxCell = degreeLine("rhodes", 6);
+    let saxI = 0;
     for (const t of schedule(seconds, beat * 2, 0.25)) {
+      const deg = saxCell[saxI % saxCell.length];
+      saxI += 1;
       mixInto(
         colorBus,
-        renderSax({ sampleRate, freq: pick(SCALES.jazz, rng) * 2, velocity: 0.22, hold: beat * 0.8 }),
+        renderSax({ sampleRate, freq: scale[deg % scale.length] * 2, velocity: 0.22, hold: beat * 0.8 }),
         Math.floor((t + beat * 0.25) * sampleRate),
         1,
       );
     }
   } else {
-    const padFreqs = g.id === "jazz" ? [196, 247, 311] : [196, 247, 311.13, 392];
-    mixInto(padBus, renderPad(n, sampleRate, padFreqs, rng, RIPPEL.ambientPad.attack), 0, dbLin(RIPPEL.ambientPad.volDb));
-    for (const t of schedule(seconds, lock ? beat : beat * 2, 0.2)) {
+    const padFreqs = padTones("ambient", scale);
+    mixInto(padBus, renderPad(n, sampleRate, padFreqs, rng, RIPPEL.ambientPad.attack), 0, dbLin(-8));
+    const bassLine = degreeLine("bass", 8);
+    const rhodesLine = degreeLine("rhodes", 8);
+    let rhodesI = 0;
+    let bassWalk = bassLine[0] % scale.length;
+    const phrase0 = shortformPhrase(0, seconds, grid);
+    const turnAt = phrase0.hookEndBeats * beat;
+    const tagAt = phrase0.tagStartBeats * beat;
+    for (const t of schedule(seconds, beat, 0.2)) {
+      const phrase = shortformPhrase(t, seconds, grid);
+      const lastKick = phrase.tagEase > 0.55 && phrase.beats + 1 >= phrase.total;
+      const vel =
+        (lastKick ? 0.92 : 0.7 + 0.16 * phrase.hookEase + 0.06 * phrase.turnEase) *
+        sectionGain(t, seconds, lock);
       const hit = renderMembrane({
         sampleRate,
         freq: 36.7,
@@ -923,14 +1182,60 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.004,
         decay: 0.45,
         release: 0.6,
-        velocity: 0.42 * sectionGain(t, seconds),
+        velocity: vel,
         floorHz: CRYSTAL.kickFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      mixInto(kickBus, kickClick(sampleRate, lastKick ? 0.22 : 0.16), Math.floor(t * sampleRate), 1);
+    }
+    if (lock && turnAt < seconds - 0.05) {
+      mixInto(
+        hatBus,
+        renderMetal({
+          sampleRate,
+          freq: 320,
+          harmonicity: 5.1,
+          modulationIndex: 28,
+          resonance: 3200,
+          attack: 0.003,
+          decay: 0.22,
+          release: 0.1,
+          velocity: 0.48,
+        }),
+        Math.floor(turnAt * sampleRate),
+        1,
+      );
+      mixInto(kickBus, kickClick(sampleRate, 0.2), Math.floor(turnAt * sampleRate), 1);
+    }
+    if (lock && tagAt < seconds - 0.05) {
+      mixInto(
+        colorBus,
+        renderRhodes({ sampleRate, freq: scale[4 % scale.length] * 2, velocity: 0.46 }),
+        Math.floor(tagAt * sampleRate),
+        1,
+      );
+      mixInto(
+        kickBus,
+        renderMembrane({
+          sampleRate,
+          freq: 41.2,
+          octaves: 4.2,
+          pitchDecay: 0.08,
+          attack: 0.003,
+          decay: 0.38,
+          release: 0.5,
+          velocity: 0.8,
+          floorHz: CRYSTAL.kickFloorHz,
+        }),
+        Math.floor(tagAt * sampleRate),
+        1,
+      );
     }
     for (const t of schedule(seconds, beat, 0.08)) {
       const at = lock ? t + beat * grid.and : t;
       if (at >= seconds - 0.08) continue;
+      const phrase = shortformPhrase(at, seconds, grid);
+      const hatW = 1 - 0.45 * phrase.tagEase;
       const hit = renderMetal({
         sampleRate,
         freq: 240,
@@ -940,17 +1245,44 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.004,
         decay: 0.18,
         release: 0.08,
-        velocity: (lock ? 0.2 : 0.12) * sectionGain(t, seconds),
+        velocity: (lock ? 0.38 : 0.16) * hatW * sectionGain(t, seconds, lock),
       });
       mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
-    for (const t of schedule(seconds, beat * 2, 0.2)) {
+    for (const t of schedule(seconds, beat, 0.12)) {
+      const beatIdx = Math.round(t / beat);
+      const phrase = shortformPhrase(t, seconds, grid);
+      if (lock && phrase.hookEase > 0.55 && beatIdx % 4 === 1) continue;
+      if (lock && phrase.tagEase > 0.55 && beatIdx % 2 === 1) continue;
+      if (phrase.turnEase > 0.35) bassWalk = walkDegree(bassWalk, scale.length, rng);
+      else bassWalk = bassLine[beatIdx % bassLine.length] % scale.length;
+      const register = phrase.turnEase > 0.5 ? 1 : 2;
       mixInto(
         colorBus,
-        renderRhodes({ sampleRate, freq: pick(SCALES.ambient, rng), velocity: 0.28 }),
+        renderDuoBass({
+          sampleRate,
+          freq: scale[bassWalk] / register,
+          velocity: 0.36,
+          hold: beat * 0.42,
+        }),
+        Math.floor(t * sampleRate),
+        1,
+      );
+    }
+    for (const t of schedule(seconds, beat * 2, 0.2)) {
+      const beatIdx = Math.round(t / beat);
+      const phrase = shortformPhrase(t + beat * (lock ? grid.a : 0.5), seconds, grid);
+      if (lock && phrase.hookEase > 0.6) continue;
+      if (phrase.tagEase > 0.6) continue;
+      const deg = rhodesLine[rhodesI % rhodesLine.length];
+      rhodesI += 1;
+      mixInto(
+        colorBus,
+        renderRhodes({ sampleRate, freq: scale[deg % scale.length], velocity: 0.4 }),
         Math.floor((t + beat * (lock ? grid.a : 0.5)) * sampleRate),
         1,
       );
+      void beatIdx;
     }
   }
 
@@ -963,7 +1295,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     volDb: g.id === "ambient" ? -4 : g.id === "jazz" ? RIPPEL.jazzKick.volDb : g.id === "phonk" ? RIPPEL.phonk808.volDb : RIPPEL.technoKick.volDb,
   });
   const hatCh = applyBus(hatBus, sampleRate, {
-    hp: g.id === "techno" || g.id === "phonk" ? CRYSTAL.hatAirHz : 2500,
+    hp: g.id === "techno" || g.id === "phonk" ? CRYSTAL.hatAirHz : 7200,
     lp: 16000,
     eq: { low: -10, mid: -2, high: 3 },
     dist: 0.04,
@@ -971,27 +1303,38 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     volDb: RIPPEL.technoHat.volDb,
   });
   const colorCh = applyBus(colorBus, sampleRate, {
-    hp: 40,
+    hp: g.id === "ambient" ? 90 : 40,
     lp: g.id === "phonk" ? 7000 : 9000,
-    eq: g.id === "techno" ? RIPPEL.technoBass.eq : g.id === "phonk" ? RIPPEL.phonkReese.eq : { low: 1, mid: 2, high: -3 },
+    eq: g.id === "techno" ? RIPPEL.technoBass.eq : g.id === "phonk" ? RIPPEL.phonkReese.eq : { low: -2, mid: 2, high: -3 },
     dist: g.id === "techno" ? RIPPEL.technoBass.dist : g.id === "phonk" ? RIPPEL.phonkReese.dist : 0.08,
     comp: RIPPEL.technoBass.comp,
     volDb: g.id === "techno" ? RIPPEL.technoBass.volDb : g.id === "phonk" ? RIPPEL.phonkReese.volDb : -8,
   });
+  const padCh = applyBus(padBus, sampleRate, {
+    hp: lock && g.id === "ambient" ? 180 : 90,
+    lp: 6200,
+    eq: { low: lock ? -5 : -2, mid: 2, high: -2 },
+    dist: 0,
+    volDb: -2,
+  });
 
-  const kickEnv = envelopeFollow(kickCh, sampleRate, 0.003, 0.12);
-  const glue = renderAirGlue(n, sampleRate, rng, g.id === "ambient" ? 0.045 : g.id === "phonk" ? 0.04 : 0.028);
+  const kickEnv = envelopeFollow(kickCh, sampleRate, 0.003, 0.2);
+  const glue = renderAirGlue(n, sampleRate, rng, g.id === "ambient" ? (lock ? 0.03 : 0.07) : g.id === "phonk" ? 0.04 : 0.028);
+  const wetSrc = new Float64Array(n);
+  for (let i = 0; i < n; i++) wetSrc[i] = hatCh[i] * 0.62 + colorCh[i] * 0.38;
+  const plate = renderPlate(wetSrc, sampleRate);
   const mix = new Float64Array(n);
-  const kickGain = g.id === "ambient" ? 0.62 : 0.9;
-  const hatGain = g.id === "techno" || g.id === "phonk" ? 0.72 : 0.48;
-  const padGain = g.id === "ambient" ? 0.55 : g.id === "jazz" ? 0.42 : g.id === "phonk" ? 0.48 : 0.12;
+  const kickGain = g.id === "ambient" ? (lock ? 1 : 0.7) : 0.9;
+  const hatGain = g.id === "techno" || g.id === "phonk" ? 0.72 : g.id === "ambient" ? 0.58 : 0.48;
+  const padGain = g.id === "ambient" ? (lock ? 0.17 : 0.48) : g.id === "jazz" ? 0.36 : g.id === "phonk" ? 0.42 : 0.12;
   for (let i = 0; i < n; i++) {
-    const duck = 1 / (1 + CRYSTAL.sidechain * kickEnv[i] * 6);
+    const duck = 1 / (1 + CRYSTAL.sidechain * kickEnv[i] * 7);
     mix[i] =
       kickCh[i] * kickGain +
       hatCh[i] * hatGain +
-      colorCh[i] * 0.7 * duck +
-      padBus[i] * padGain * duck +
+      colorCh[i] * 0.52 * duck +
+      padCh[i] * padGain * duck +
+      plate[i] * 0.1 +
       glue[i];
   }
 
@@ -1000,8 +1343,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   for (let i = 0; i < n; i++) {
     mix[i] = masterEq.step(mix[i], mEq.low, mEq.mid, mEq.high) * RIPPEL.mixer.masterVolume;
   }
-  let glued = compress(mix, dbLin(RIPPEL.mixer.masterCompDb), g.id === "phonk" ? 6.5 : 4, sampleRate, 0.006, 0.14);
-  const shaped = masterEnvelope(glued, sampleRate, seconds);
+  let glued = compress(mix, dbLin(-16), g.id === "phonk" ? 5 : 2.6, sampleRate, 0.008, 0.16);
+  const shaped = masterEnvelope(glued, sampleRate, seconds, lock);
   const peaked = normalize(shaped, CRYSTAL.peakTarget);
   const samples = limiter(peaked, dbLin(RIPPEL.mixer.limiterDb));
 
@@ -1071,9 +1414,13 @@ module.exports = {
   CRYSTAL,
   GENRE_ALIASES,
   GENRES,
+  SCALES,
   resolveGenre,
   tempoFromSeed,
   motionGrid,
+  shortformPhrase,
+  padTones,
+  degreeLine,
   gridTime,
   renderRippelBed,
   renderMembrane,

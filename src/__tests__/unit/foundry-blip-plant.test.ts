@@ -305,9 +305,15 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             look?: string | null;
             fallback?: boolean;
             hasAudio?: boolean;
+            audioChannels?: number | null;
+            maxVolumeDb?: number | null;
             width?: number | null;
             height?: number | null;
-            visualConfig?: { circleCount?: number; mesh?: { id?: string } | null } | null;
+            visualConfig?: {
+              circleCount?: number;
+              mesh?: { id?: string } | null;
+              field?: { id?: string; grid?: string } | null;
+            } | null;
             reason?: string | null;
             ssot?: { repo: string; commit: string | null; access?: string };
           };
@@ -378,13 +384,11 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         const again = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(again.receipt.seed).toBe(still.receipt.seed);
 
-        const bed = writeSilentWav(path.join(tmp, 'shared-bed.wav'), 5);
         for (const id of V0_IDS.filter((name) => name !== 'still')) {
           const rendered = renderBlip({
             root: tmp,
             brief: `night alley ${id}`,
             pictureMode: `motion:${id}`,
-            bed,
           });
           expect(rendered.receipt.status, JSON.stringify(rendered.receipt, null, 2)).toBe('PASS');
           expect(rendered.receipt.motionId).toBe(id);
@@ -393,10 +397,13 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.look).toBe('rippel-v2');
           expect(rendered.receipt.fallback).toBe(false);
           expect(rendered.receipt.hasAudio).toBe(true);
+          expect(rendered.receipt.audioChannels).toBe(2);
+          expect(rendered.receipt.maxVolumeDb).toBeGreaterThan(-40);
           expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
           expect(rendered.receipt.height).toBeGreaterThanOrEqual(720);
           expect(rendered.receipt.visualConfig?.circleCount).toBeGreaterThan(0);
           expect(rendered.receipt.visualConfig?.mesh?.id).toBeTruthy();
+          expect(rendered.receipt.visualConfig?.field?.id).toBeTruthy();
           expect(rendered.receipt.palette?.void).toBe('#08090B');
         }
 
@@ -408,9 +415,10 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         expect(kapow.receipt.status).toBe('FAIL');
         expect(kapow.receipt.reason).toMatch(/growth\/stub/);
 
-        const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
+        const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still' });
         expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
-        expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true });
+        expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true, audioChannels: 2 });
+        expect(muxed.receipt.maxVolumeDb).toBeGreaterThan(-40);
       }
 
       const unknown = renderBlip({ root: tmp, brief: 'nope', mode: 'kenburns' });
@@ -493,43 +501,63 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
 
 describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
   it('builds VisualConfig.circles and living frames that differ', () => {
-    const { buildVisualConfig, sampleMotionFrames, ANIMATION_TO_VISUALIZATION, MESH_FAMILIES, MESH_GAITS } =
-      requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
-        buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
-          visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
-          mesh: {
-            id: string;
-            family: string;
-            gait: string;
-            verts: number[][];
-            edges: number[][];
-            faces: number[][];
-            shells: number;
-            scale: number;
-          };
+    const {
+      buildVisualConfig,
+      sampleMotionFrames,
+      ANIMATION_TO_VISUALIZATION,
+      MESH_FAMILIES,
+      MESH_GAITS,
+      LOOK_KINDS,
+      GRID_KINDS,
+      GRAD_KINDS,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        visualConfig: { circles: Array<{ note: string; frequency: number; radius: number }> };
+        mesh: {
+          id: string;
+          family: string;
+          gait: string;
+          verts: number[][];
+          edges: number[][];
+          faces: number[][];
+          shells: number;
+          scale: number;
+          coreStyle: string;
         };
-        sampleMotionFrames: (
-          renderer: string,
-          seed: string,
-          duration: number,
-          brief: string,
-        ) => {
-          differ: boolean;
-          living: boolean;
-          look: string;
-          sharpness: { ratio: number; edges: number };
-          tempo: number;
-          width: number;
-          height: number;
-          circleCount: number;
-          visualization: string;
-          mesh: { id: string; family: string; gait?: string } | null;
-          fill: number;
+        field: {
+          id: string;
+          grid: string;
+          gradient: string;
+          stars: unknown[];
+          blinkers: unknown[];
         };
-        ANIMATION_TO_VISUALIZATION: Record<string, string>;
-        MESH_FAMILIES: string[];
-        MESH_GAITS: string[];
       };
+      sampleMotionFrames: (
+        renderer: string,
+        seed: string,
+        duration: number,
+        brief: string,
+      ) => {
+        differ: boolean;
+        living: boolean;
+        look: string;
+        sharpness: { ratio: number; edges: number };
+        tempo: number;
+        width: number;
+        height: number;
+        circleCount: number;
+        visualization: string;
+        mesh: { id: string; family: string; gait?: string } | null;
+        field: { id: string; grid: string; gradient: string } | null;
+        fill: number;
+      };
+      ANIMATION_TO_VISUALIZATION: Record<string, string>;
+      MESH_FAMILIES: string[];
+      MESH_GAITS: string[];
+      LOOK_KINDS: string[];
+      GRID_KINDS: string[];
+      GRAD_KINDS: string[];
+    };
     const checksum = buildVisualConfig({
       brief: 'warehouse floor · Power Plant',
       seedHex: '0xdeadbeef',
@@ -539,6 +567,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex: '0xcafef00d',
     });
     expect(MESH_FAMILIES.length).toBeGreaterThanOrEqual(12);
+    expect(LOOK_KINDS).toEqual(['focus', 'cage']);
     expect(MESH_GAITS).toEqual(expect.arrayContaining(['tumble', 'shear', 'pulse', 'orbit', 'snap']));
     expect(checksum.mesh?.id).toBeTruthy();
     expect(checksum.mesh.id).not.toBe(other.mesh.id);
@@ -546,11 +575,23 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       /^(tetra|octa|cube|prism|star|cage|spire|icosa|helix|torus|lattice|flower)$/,
     );
     expect(checksum.mesh.gait).toMatch(/^(tumble|shear|pulse|orbit|snap)$/);
+    expect(checksum.mesh.coreStyle).toMatch(/^(disc|eclipse|pulse)$/);
     expect(checksum.mesh.verts.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeGreaterThan(3);
+    expect(checksum.mesh.edges.length).toBeLessThanOrEqual(16);
     expect(checksum.mesh.faces.length).toBeGreaterThan(0);
-    expect(checksum.mesh.scale).toBeGreaterThan(0.8);
-    expect(checksum.mesh.shells).toBeGreaterThanOrEqual(1);
+    expect(checksum.mesh.faces.length).toBeLessThanOrEqual(16);
+    expect(checksum.mesh.scale).toBeGreaterThan(0.55);
+    expect(checksum.mesh.scale).toBeLessThan(0.8);
+    expect(checksum.mesh.shells).toBe(1);
+    expect(GRID_KINDS).toEqual(expect.arrayContaining(['floor', 'meridian', 'ticks', 'none']));
+    expect(GRAD_KINDS).toEqual(expect.arrayContaining(['horizon', 'corner', 'veil']));
+    expect(checksum.field?.id).toBeTruthy();
+    expect(checksum.field.id).not.toBe(other.field.id);
+    expect(checksum.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+    expect(checksum.field.gradient).toMatch(/^(horizon|corner|veil)$/);
+    expect(checksum.field.stars.length).toBeGreaterThanOrEqual(16);
+    expect(checksum.field.blinkers.length).toBeGreaterThanOrEqual(3);
     expect(checksum.visualConfig.circles.length).toBeGreaterThan(3);
     expect(checksum.visualConfig.circles[0]?.frequency).toBeGreaterThan(0);
     expect(checksum.visualConfig.circles[0]?.radius).toBeGreaterThan(0);
@@ -561,12 +602,14 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(sample.differ, id).toBe(true);
       expect(sample.living, id).toBe(true);
       expect(sample.sharpness.edges, id).toBeGreaterThan(400);
-      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.05);
+      expect(sample.sharpness.ratio, id).toBeGreaterThan(0.006);
       expect(sample.width).toBe(1280);
       expect(sample.height).toBe(720);
       expect(sample.circleCount).toBeGreaterThan(0);
       expect(sample.tempo).toBeGreaterThan(0);
       expect(sample.mesh?.id, id).toBeTruthy();
+      expect(sample.field?.id, id).toBeTruthy();
+      expect(sample.field?.grid, id).toMatch(/^(floor|meridian|ticks|none)$/);
       expect(sample.fill, id).toBeGreaterThan(0.055);
     }
     const prints = ['warehouse floor · Power Plant', 'other mint · alley', 'neon dock · vault', 'salt mill · dusk'].map(
@@ -574,6 +617,16 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         buildVisualConfig({ brief, seedHex: `0xdeadbee${i}` }).mesh.id,
     );
     expect(new Set(prints).size).toBe(prints.length);
+    const fields = ['warehouse floor · Power Plant', 'other mint · alley', 'neon dock · vault', 'salt mill · dusk'].map(
+      (brief, i) =>
+        buildVisualConfig({ brief, seedHex: `0xdeadbee${i}` }).field.id,
+    );
+    expect(new Set(fields).size).toBe(fields.length);
+    for (let i = 0; i < 24; i++) {
+      const minted = buildVisualConfig({ brief: `mint ${i} · field`, seedHex: `0xabc${i}` });
+      expect(minted.mesh.edges.length).toBeLessThanOrEqual(16);
+      expect(minted.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+    }
   });
 
   it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {
@@ -603,6 +656,183 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(focus.drop).toBeGreaterThan(0);
     expect(focus.drop).toBeLessThan(16);
     expect(focus.inner + focus.drop).toBeLessThan(120);
+  });
+
+  it('keeps focus and cage as seed-selected look variants', () => {
+    const {
+      LOOK_KINDS,
+      buildVisualConfig,
+      paintRippelFrame,
+      summarizeVisual,
+      framesDiffer,
+      orbFocusWidth,
+      resolveLookKind,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      LOOK_KINDS: string[];
+      resolveLookKind: (opts: { seedHex?: string; lookKind?: string }) => string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string; lookKind?: string }) => {
+        lookKind: string;
+      };
+      summarizeVisual: (checksum: { lookKind?: string; visualConfig?: { circles: unknown[] } }) => {
+        lookKind: string | null;
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer; width: number; height: number; lookKind: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      orbFocusWidth: (
+        buf: Buffer,
+        width: number,
+        height: number,
+      ) => { peak: number; inner: number; drop: number };
+    };
+    expect(LOOK_KINDS).toEqual(['focus', 'cage']);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    expect(resolveLookKind({ seedHex })).toBe('cage');
+    expect(resolveLookKind({ seedHex: '0x00' })).toBe('focus');
+    expect(resolveLookKind({ seedHex: '0x01' })).toBe('cage');
+    expect(buildVisualConfig({ brief, seedHex }).lookKind).toBe('cage');
+    expect(buildVisualConfig({ brief, seedHex, lookKind: 'focus' }).lookKind).toBe('focus');
+    expect(summarizeVisual(buildVisualConfig({ brief, seedHex, lookKind: 'focus' })).lookKind).toBe(
+      'focus',
+    );
+    const focusFrame = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+    });
+    const cageFrame = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+    });
+    expect(focusFrame.lookKind).toBe('focus');
+    expect(cageFrame.lookKind).toBe('cage');
+    expect(framesDiffer(focusFrame.buffer, cageFrame.buffer)).toBe(true);
+    const focus = orbFocusWidth(focusFrame.buffer, focusFrame.width, focusFrame.height);
+    expect(focus.peak).toBeGreaterThan(0.55);
+    expect(focus.drop).toBeGreaterThan(0);
+    expect(focus.drop).toBeLessThan(16);
+    expect(focus.inner).toBeGreaterThan(50);
+    function cyanBody(buf: Buffer): number {
+      let n = 0;
+      for (let i = 0; i < buf.length; i += 3) {
+        if (Math.abs(buf[i] - 61) < 10 && Math.abs(buf[i + 1] - 224) < 10 && Math.abs(buf[i + 2] - 232) < 10) {
+          n += 1;
+        }
+      }
+      return n;
+    }
+    expect(cyanBody(focusFrame.buffer)).toBeGreaterThan(cyanBody(cageFrame.buffer) * 2);
+    expect(() => resolveLookKind({ lookKind: 'potato' })).toThrow(/unknown look/);
+  });
+
+  it('plays hook → turn → tag on the same grid as the bed', () => {
+    const { phraseOf, buildVisualConfig, paintRippelFrame, framesDiffer } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string; turnHit: number; hookEase: number; turnEase: number; tagEase: number };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const beat = 60 / checksum.genreConfig.tempo;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, 0).hookEase).toBeGreaterThan(0.9);
+    expect(phraseOf(checksum, beat * 2).section).toBe('turn');
+    expect(phraseOf(checksum, beat * 2).turnHit).toBeGreaterThan(0.7);
+    expect(phraseOf(checksum, beat * 2).turnEase).toBeGreaterThan(0.35);
+    expect(phraseOf(checksum, 4.2).section).toBe('tag');
+    expect(phraseOf(checksum, 4.2).tagEase).toBeGreaterThan(0.7);
+    const hook = paintRippelFrame({ renderer: 'orb', t: 0, seedHex, brief, lookKind: 'focus' });
+    const turn = paintRippelFrame({
+      renderer: 'orb',
+      t: beat * 2,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+    });
+    const tag = paintRippelFrame({ renderer: 'orb', t: 4.2, seedHex, brief, lookKind: 'focus' });
+    expect(framesDiffer(hook.buffer, turn.buffer)).toBe(true);
+    expect(framesDiffer(turn.buffer, tag.buffer)).toBe(true);
+  });
+
+  it('focus orb wears field + mesh mass so two briefs do not clone', () => {
+    const { paintRippelFrame, framesDiffer, orbFocusWidth } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer; width: number; height: number };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      orbFocusWidth: (buf: Buffer, width: number, height: number) => { peak: number; drop: number };
+    };
+    const a = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex: '0xaaa111',
+      brief: 'warehouse floor · Power Plant',
+      lookKind: 'focus',
+    });
+    const b = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex: '0xbbb222',
+      brief: 'other mint · alley',
+      lookKind: 'focus',
+    });
+    expect(framesDiffer(a.buffer, b.buffer)).toBe(true);
+    expect(orbFocusWidth(a.buffer, a.width, a.height).peak).toBeGreaterThan(0.55);
+    expect(orbFocusWidth(a.buffer, a.width, a.height).drop).toBeLessThan(16);
+  });
+
+  it('dissolves still plates instead of hard-cutting', () => {
+    const { plateClock } = requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+      plateClock: (
+        seed: string,
+        t?: number,
+      ) => { plate: string; prev: string | null; prevMix: number; step: number };
+    };
+    const open = plateClock('0xdeadbeef', 0);
+    expect(open.prevMix).toBe(0);
+    expect(open.prev).toBeNull();
+    let faded = false;
+    for (let t = 0.05; t < 4.4; t += 0.05) {
+      const clock = plateClock('0xdeadbeef', t);
+      if (clock.step > 0 && clock.prevMix > 0.2) {
+        expect(clock.prev).toMatch(/titlecard|corridor|rain|endcard/);
+        faded = true;
+        break;
+      }
+    }
+    expect(faded).toBe(true);
   });
 
   it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {
@@ -708,6 +938,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
           engine?: string;
           fallback?: boolean;
           hasAudio?: boolean;
+          audioChannels?: number | null;
+          maxVolumeDb?: number | null;
           reason?: string | null;
         };
         mp4: string;
@@ -721,17 +953,28 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     if (!hasFfmpeg()) return;
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-flag-'));
     try {
-      const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 5);
       const flagged = renderBlip({
         root: tmp,
         brief: 'warehouse floor · Power Plant',
         mode: 'motion:orb',
-        bed,
         engine: 'wireframe',
       });
       expect(flagged.receipt.status, JSON.stringify(flagged.receipt, null, 2)).toBe('PASS');
       expect(flagged.receipt.engine).toBe('ffmpeg-wireframe-fallback');
       expect(flagged.receipt.fallback).toBe(true);
+      expect(flagged.receipt.hasAudio).toBe(true);
+      expect(flagged.receipt.audioChannels).toBe(2);
+      expect(flagged.receipt.maxVolumeDb).toBeGreaterThan(-40);
+
+      const silentBed = writeSilentWav(path.join(tmp, 'bed.wav'), 5);
+      const muted = renderBlip({
+        root: tmp,
+        brief: 'warehouse floor · Power Plant',
+        mode: 'motion:orb',
+        bed: silentBed,
+      });
+      expect(muted.receipt.status, JSON.stringify(muted.receipt, null, 2)).toBe('FAIL');
+      expect(muted.receipt.reason).toMatch(/inaudible bed/);
 
       const picture = path.join(tmp, 'silent.mp4');
       const ffmpeg = spawnSync(

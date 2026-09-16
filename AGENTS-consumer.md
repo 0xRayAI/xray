@@ -61,7 +61,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |
 | `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
 | `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
-| `npx @0xray/foundry blip render` | Factory-blip plant: brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. Seed-unique mesh is the NFT fingerprint. `still` is the Power Plant ident (hard cuts, not a frozen poster). |
+| `npx @0xray/foundry blip render` | Factory-blip plant: brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). |
 
 ## Governance
 

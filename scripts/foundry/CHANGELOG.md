@@ -2,11 +2,29 @@
 
 ## [Unreleased]
 
+Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~300ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
+
+Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.
+
+Factory-blip look variants: seed + `--look focus|cage`. `focus` restores the sharp-dogfood solid cyan disc + gold pupil + orbiting satellites. `cage` keeps Wu hairline + field. Receipt `visualConfig.lookKind`.
+
+Factory-blip mux is stereo AAC. Inspect FAILs a missing stream or an inaudible bed (max volume ≤ −40 dB). A silent wav is no longer a PASS.
+
+Factory-blip orb nucleus is orb-only (disc / eclipse / pulse, color + size on the grid). Swirl / snap / spark no longer stamp the same double circle.
+
 Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.
 
-Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait + shells + faces + ghost trails) that fills the 4.44s frame. Receipt `visualConfig.mesh` is the NFT fingerprint. Worn by all five viz and the Power Plant ident.
+Factory-blip auto bed is the music — same seed / tempo / phase0 as the picture. 4.44s beds hit on the first downbeat (no 0.5s duck). Kick + AND hat + bass/rhodes on the grid. Pad sits under.
 
-Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p. Not a frozen 320×180 poster.
+Factory-blip lines: Wu hairline (solid 1px core, coverage AA as the only glow). Cyan/gold/blue along the stroke. Vertex beads gone.
+
+Factory-blip lines iridesce: cyan/gold/blue travel + glow + beat fireflies on the sparse cage. Field stars / grids / gradients / blinkers are luminous, not CAD ticks. Not more wire. Not a strobe.
+
+Factory-blip field accents: uniqueness is stars / grids (`floor` `meridian` `ticks`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
+
+Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait). Worn by all five viz and the Power Plant ident.
+
+Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p. Not a frozen 320×180 poster.
 
 Factory-blip Rippel v2: the sharp orb look (`stampFocusDisc` opaque body + crisp rim + short glow) is now the look on **all five** viz — swirl / snap / waves / spark were still Phase 1 bokeh strokes. Animation is the complex Rippel set, paced as a 4.44s blip (fast abstract travel, soft gold tints — no hard strobe). Video LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed. Mandatory 4.44s mux unchanged. No version bump.
 

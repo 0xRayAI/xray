@@ -3,12 +3,13 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
+ * Look variants: focus (solid disc + satellites) | cage (Wu hairline + field).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
- * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
+ * Power Plant (`still` id) is a living ident — plate dissolves, not a frozen poster.
  * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
  * ffmpeg wireframe is --engine wireframe only.
- * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
+ * HARD: every Blip muxes a 4.44s stereo AAC bed — missing stream or inaudible = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
  * Kapow is a growth stub (renderer null → FAIL). Unknown id FAIL.
@@ -41,12 +42,14 @@ const MOTION_HEIGHT = rippel.MOTION_HEIGHT;
 const RECEIPT_REL = path.join(".xray", "blip", "receipt.json");
 const MP4_REL = path.join(".xray", "blip", "blip.mp4");
 const REGISTRY_REL = path.join("plant", "motions", "registry.json");
+/** Digital silence / near-silence. Real beds peak near 0 dBFS. */
+const AUDIBLE_MAX_DB_MIN = -40;
 
 const RIPPEL_IMPORTS = ["orb", "swirl", "snap", "waves", "spark"];
 const V0_IDS = ["still", ...RIPPEL_IMPORTS];
 const STILL_PLATES = ["titlecard", "corridor", "rain", "endcard"];
 
-/** Power Plant intro plate — HARD design SSOT. Hard cuts, flat vector. */
+/** Power Plant intro plate — HARD design SSOT. Dissolves between plates, flat vector. */
 const PALETTE = {
   void: "#08090B",
   ink: "#F5F7FA",
@@ -266,11 +269,23 @@ function plateClock(seedHex, t) {
   const step = Math.min(STILL_PLATES.length - 1, Math.floor(beatIndex / every));
   const span = every * grid.beatSec;
   const cutAt = step * span;
+  const into = n - cutAt;
+  const xfade = Math.min(0.32, Math.max(0.22, span * 0.28));
+  let prevMix = 0;
+  let prev = null;
+  if (step > 0 && into < xfade) {
+    prev = STILL_PLATES[(start + step - 1 + STILL_PLATES.length) % STILL_PLATES.length];
+    const u = into / xfade;
+    prevMix = 1 - u * u * (3 - 2 * u);
+  }
   return {
     plate: STILL_PLATES[(start + step) % STILL_PLATES.length],
+    prev,
+    prevMix,
     u: span > 0 ? (n - cutAt) / span : 0,
     start,
     step,
+    xfade,
   };
 }
 
@@ -284,19 +299,13 @@ function paintChrome(x, y) {
 }
 
 /**
- * Power Plant ident — hard-cut titlecard / corridor / rain / endcard over 4.44s.
- * Seed picks the opening plate, then the other three cut in. Flat vector, five hexes.
- * u=0 of the opening plate matches the old frozen lockup so palette tests stay honest.
+ * Power Plant ident — titlecard / corridor / rain / endcard over 4.44s.
+ * Seed picks the opening plate, then the other three dissolve in (~140ms).
+ * Flat vector, five hexes. u=0 of the opening plate matches the old lockup.
  */
-function paintStill(seedHex, t) {
-  const clock = plateClock(seedHex, t || 0);
-  const plate = clock.plate;
-  const u = clock.u;
+function paintPlate(plate, u) {
   const slide = Math.floor(u * 28);
   return function paint(x, y) {
-    const chrome = paintChrome(x, y);
-    if (chrome) return chrome;
-
     if (plate === "titlecard") {
       const cards = [
         [12 - slide, 36, 84 - slide, 132],
@@ -333,6 +342,28 @@ function paintStill(seedHex, t) {
     if (inBox(x, y, 208 - slide, 64, 300 - slide, 96)) return RGB.ink;
     if (inBox(x, y, 208 - slide, 104, 248 - slide, 116)) return RGB.gold;
     return RGB.void;
+  };
+}
+
+function mixPlateRgb(a, b, amount) {
+  const w = Math.max(0, Math.min(1, amount));
+  return [
+    (a[0] + (b[0] - a[0]) * w + 0.5) | 0,
+    (a[1] + (b[1] - a[1]) * w + 0.5) | 0,
+    (a[2] + (b[2] - a[2]) * w + 0.5) | 0,
+  ];
+}
+
+function paintStill(seedHex, t) {
+  const clock = plateClock(seedHex, t || 0);
+  const current = paintPlate(clock.plate, clock.u);
+  const incoming = clock.prevMix > 0.01 && clock.prev ? paintPlate(clock.prev, 1) : null;
+  return function paint(x, y) {
+    const chrome = paintChrome(x, y);
+    if (chrome) return chrome;
+    const now = current(x, y);
+    if (!incoming) return now;
+    return mixPlateRgb(now, incoming(x, y), clock.prevMix);
   };
 }
 
@@ -629,12 +660,14 @@ function muxBed(video, bed, mp4) {
       bed,
       "-c:v",
       "copy",
+      "-af",
+      "apad,aformat=channel_layouts=stereo",
+      "-ar",
+      "44100",
       "-c:a",
       "aac",
       "-b:a",
-      "128k",
-      "-af",
-      "apad",
+      "192k",
       "-t",
       String(DURATION_SEC),
       "-movflags",
@@ -643,6 +676,43 @@ function muxBed(video, bed, mp4) {
     ],
     "ffmpeg mux",
   );
+}
+
+function probeAudio(file) {
+  const chRun = spawnSync(
+    "ffprobe",
+    [
+      "-v",
+      "error",
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "stream=channels",
+      "-of",
+      "default=nw=1:nk=1",
+      file,
+    ],
+    { encoding: "utf8" },
+  );
+  const channels = Number.parseInt(String(chRun.stdout || "").trim(), 10);
+  const levelRun = spawnSync(
+    "ffmpeg",
+    ["-hide_banner", "-nostats", "-i", file, "-af", "volumedetect", "-f", "null", "-"],
+    { encoding: "utf8" },
+  );
+  const text = `${levelRun.stdout || ""}\n${levelRun.stderr || ""}`;
+  function db(name) {
+    const matches = [...text.matchAll(new RegExp(`${name}:\\s*([-infINF+\\d.]+)`, "gi"))];
+    const last = matches[matches.length - 1];
+    if (!last) return null;
+    const value = Number(last[1]);
+    return Number.isFinite(value) || value === Number.NEGATIVE_INFINITY ? value : null;
+  }
+  return {
+    channels: Number.isFinite(channels) ? channels : null,
+    meanVolumeDb: db("mean_volume"),
+    maxVolumeDb: db("max_volume"),
+  };
 }
 
 function probeMedia(file) {
@@ -732,7 +802,12 @@ function evaluateProbe(probe, opts = {}) {
   const durationOk =
     Number.isFinite(durationSec) && Math.abs(durationSec - DURATION_SEC) <= DURATION_TOL_SEC;
   const fileOk = Boolean(probe.ok && probe.hasVideo);
-  const audioOk = !wantAudio || Boolean(probe.hasAudio);
+  const audio = opts.audio || {};
+  const maxVolumeDb = audio.maxVolumeDb;
+  const channels = audio.channels;
+  const audibleOk = Number.isFinite(maxVolumeDb) && maxVolumeDb > AUDIBLE_MAX_DB_MIN;
+  const stereoOk = channels === 2;
+  const audioOk = !wantAudio || (Boolean(probe.hasAudio) && audibleOk && stereoOk);
   const width = probe.width;
   const height = probe.height;
   const resolutionOk =
@@ -749,7 +824,9 @@ function evaluateProbe(probe, opts = {}) {
   if (!fileOk) reason = probe.reason || "mp4 missing";
   else if (!gates.mode) reason = "mode missing";
   else if (!durationOk) reason = `duration ${durationSec}s not ${DURATION_SEC}s±${DURATION_TOL_SEC}`;
-  else if (!audioOk) reason = "audio stream missing";
+  else if (wantAudio && !probe.hasAudio) reason = "audio stream missing";
+  else if (wantAudio && !audibleOk) reason = "inaudible bed";
+  else if (wantAudio && !stereoOk) reason = "audio not stereo";
   else if (!resolutionOk) reason = `motion ${width}×${height} below 720p`;
   const status = Object.values(gates).every(Boolean) ? "PASS" : "FAIL";
   return {
@@ -759,6 +836,9 @@ function evaluateProbe(probe, opts = {}) {
     durationSec,
     hasVideo: Boolean(probe.hasVideo),
     hasAudio: Boolean(probe.hasAudio),
+    audioChannels: channels ?? null,
+    meanVolumeDb: audio.meanVolumeDb ?? null,
+    maxVolumeDb: maxVolumeDb ?? null,
     width: width ?? null,
     height: height ?? null,
     reason,
@@ -766,7 +846,11 @@ function evaluateProbe(probe, opts = {}) {
 }
 
 function evaluateMp4File(file, opts = {}) {
-  return evaluateProbe(probeMedia(file), opts);
+  const probe = probeMedia(file);
+  const audio = probe.hasAudio
+    ? probeAudio(file)
+    : { channels: null, meanVolumeDb: null, maxVolumeDb: null };
+  return evaluateProbe(probe, { ...opts, audio });
 }
 
 function receiptPath(root) {
@@ -817,6 +901,7 @@ function buildReceipt(input, evaled) {
     height: evaled.height ?? input.height ?? null,
     engine: input.engine || rippel.ENGINE,
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
+    lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -827,6 +912,9 @@ function buildReceipt(input, evaled) {
     bed: input.bedRel || input.bed || null,
     hasVideo: Boolean(evaled.hasVideo),
     hasAudio: Boolean(evaled.hasAudio),
+    audioChannels: evaled.audioChannels ?? null,
+    meanVolumeDb: evaled.meanVolumeDb ?? null,
+    maxVolumeDb: evaled.maxVolumeDb ?? null,
     gates: evaled.gates || {
       file: false,
       duration: false,
@@ -971,6 +1059,7 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
 
   let visualConfig = null;
   let look = rippel.LOOK;
+  let lookKind = null;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -981,12 +1070,14 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       width,
       height,
       buffer: buf,
+      lookKind: opts.lookKind,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
+    lookKind = painted.lookKind;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, look, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -1012,6 +1103,7 @@ function renderBlip(opts = {}) {
     look: modeInfo.renderer === "still" ? POWER_PLANT_LOOK : rippel.LOOK,
     fallback: false,
     visualConfig: null,
+    lookKind: opts.lookKind || null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
   };
@@ -1045,8 +1137,15 @@ function renderBlip(opts = {}) {
       input.width = MOTION_WIDTH;
       input.height = MOTION_HEIGHT;
       input.visualConfig = rippel.summarizeVisual(
-        rippel.cachedChecksum({ brief, seedHex: seed, width: MOTION_WIDTH, height: MOTION_HEIGHT }),
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: MOTION_WIDTH,
+          height: MOTION_HEIGHT,
+          lookKind: opts.lookKind,
+        }),
       );
+      input.lookKind = input.visualConfig && input.visualConfig.lookKind;
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
@@ -1061,8 +1160,10 @@ function renderBlip(opts = {}) {
           seedHex: seed,
           width: motion.width,
           height: motion.height,
+          lookKind: opts.lookKind,
         }),
       );
+      input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {
@@ -1121,6 +1222,8 @@ module.exports = {
   hasFfmpeg,
   renderBlip,
   probeMedia,
+  probeAudio,
+  AUDIBLE_MAX_DB_MIN,
   evaluateMp4File,
   evaluateReceipt,
   receiptPath,

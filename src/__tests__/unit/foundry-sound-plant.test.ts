@@ -381,6 +381,47 @@ describe('foundry sound plant — Rippel topology', () => {
     }
     expect(crestFactor(techno.samples)).toBeGreaterThan(crestFactor(sine) * 1.15);
   });
+
+  it('writes a 4.44s shortform phrase — hook, turn, tag — not a tiled bar', () => {
+    const { shortformPhrase, padTones, degreeLine, SCALES } = requireCjs(
+      path.join(root, 'scripts/foundry/sound-rippel.cjs'),
+    ) as {
+      shortformPhrase: (
+        t: number,
+        seconds: number,
+        grid: { beatSec: number },
+      ) => {
+        section: string;
+        hook: number;
+        turn: number;
+        tag: number;
+        turnHit: number;
+        hookEase: number;
+        turnEase: number;
+        tagEase: number;
+      };
+      padTones: (genre: string, scale: number[]) => number[];
+      degreeLine: (kind: string, count: number) => number[];
+      SCALES: { ambient: number[] };
+    };
+    const grid = { beatSec: 60 / 90 };
+    expect(shortformPhrase(0, 4.44, grid).section).toBe('hook');
+    expect(shortformPhrase(grid.beatSec * 2, 4.44, grid).section).toBe('turn');
+    expect(shortformPhrase(4.2, 4.44, grid).section).toBe('tag');
+    expect(shortformPhrase(grid.beatSec * 2, 4.44, grid).turnHit).toBeGreaterThan(0.7);
+    const hook = shortformPhrase(0, 4.44, grid);
+    expect(hook.hookEase).toBeGreaterThan(0.9);
+    expect(hook.turnEase).toBeLessThan(0.15);
+    const turn = shortformPhrase(grid.beatSec * 2, 4.44, grid);
+    expect(turn.hookEase + turn.turnEase + turn.tagEase).toBeCloseTo(1, 1);
+    expect(turn.turnEase).toBeGreaterThan(0.35);
+    expect(shortformPhrase(4.2, 4.44, grid).tagEase).toBeGreaterThan(0.7);
+    const pad = padTones('ambient', SCALES.ambient);
+    expect(pad).toEqual([SCALES.ambient[0] * 0.75, SCALES.ambient[0], SCALES.ambient[1], SCALES.ambient[3]]);
+    expect(pad).not.toContain(247);
+    expect(degreeLine('bass', 4)).toEqual([0, 0, 3, 4]);
+    expect(degreeLine('rhodes', 6)).toEqual([0, 2, 4, 4, 2, 0]);
+  });
 });
 
 describe('foundry sound plant — docs and CI', () => {
