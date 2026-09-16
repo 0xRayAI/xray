@@ -584,11 +584,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(checksum.mesh.scale).toBeGreaterThan(0.55);
     expect(checksum.mesh.scale).toBeLessThan(0.8);
     expect(checksum.mesh.shells).toBe(1);
-    expect(GRID_KINDS).toEqual(expect.arrayContaining(['floor', 'meridian', 'ticks', 'none']));
+    expect(GRID_KINDS).toEqual(['floor', 'none']);
     expect(GRAD_KINDS).toEqual(expect.arrayContaining(['horizon', 'corner', 'veil']));
     expect(checksum.field?.id).toBeTruthy();
     expect(checksum.field.id).not.toBe(other.field.id);
-    expect(checksum.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+    expect(checksum.field.grid).toMatch(/^(floor|none)$/);
     expect(checksum.field.gradient).toMatch(/^(horizon|corner|veil)$/);
     expect(checksum.field.stars.length).toBeGreaterThanOrEqual(16);
     expect(checksum.field.blinkers.length).toBeGreaterThanOrEqual(3);
@@ -609,7 +609,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(sample.tempo).toBeGreaterThan(0);
       expect(sample.mesh?.id, id).toBeTruthy();
       expect(sample.field?.id, id).toBeTruthy();
-      expect(sample.field?.grid, id).toMatch(/^(floor|meridian|ticks|none)$/);
+      expect(sample.field?.grid, id).toMatch(/^(floor|none)$/);
       expect(sample.fill, id).toBeGreaterThan(0.055);
     }
     const prints = ['warehouse floor · Power Plant', 'other mint · alley', 'neon dock · vault', 'salt mill · dusk'].map(
@@ -625,8 +625,44 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     for (let i = 0; i < 24; i++) {
       const minted = buildVisualConfig({ brief: `mint ${i} · field`, seedHex: `0xabc${i}` });
       expect(minted.mesh.edges.length).toBeLessThanOrEqual(16);
-      expect(minted.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+      expect(minted.field.grid).toMatch(/^(floor|none)$/);
+      expect(minted.field.grid).not.toMatch(/ticks|meridian/);
     }
+  });
+
+  it('does not paint outer-edge ticks or a meridian box', () => {
+    const { fillVoid, paintField, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      fillVoid: (buf: Buffer) => void;
+      paintField: (
+        buf: Buffer,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { field: Record<string, unknown>; genreConfig?: { tempo: number } },
+      ) => void;
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        field: Record<string, unknown>;
+        genreConfig: { tempo: number };
+      };
+    };
+    const width = 320;
+    const height = 180;
+    const checksum = buildVisualConfig({ brief: 'bezel off · Power Plant', seedHex: '0xdeadbeef' });
+    const paint = (grid: string) => {
+      const buf = Buffer.alloc(width * height * 3);
+      fillVoid(buf);
+      paintField(buf, width, height, 1.2, {
+        ...checksum,
+        field: { ...checksum.field, grid },
+      });
+      return buf;
+    };
+    const none = paint('none');
+    expect(paint('ticks').equals(none)).toBe(true);
+    expect(paint('meridian').equals(none)).toBe(true);
+    expect(paint('floor').equals(none)).toBe(false);
   });
 
   it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {

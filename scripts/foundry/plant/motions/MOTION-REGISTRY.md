@@ -28,7 +28,7 @@ One mill suit on every body: Wu hairline, Power Plant satellites, short glow, ho
 | `waves` | `waveform` | sharp `ribbons` | `liquid-waves` |
 | `spark` | `particles` | `embers` | `cosmic-dance` |
 
-Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers) **under** the drawing. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
+Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`none` · gradients · blinkers) **under** the drawing. No outer-edge tick ruler or meridian box. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 

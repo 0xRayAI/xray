@@ -48,7 +48,7 @@ const SSOT = {
   note: "Rippel v2 — look focus|cage and body mill|rippel. Mill keeps the evolved Wu/mesh. Rippel drawers are refined to that stroke. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
-const GRID_KINDS = ["floor", "meridian", "ticks", "none"];
+const GRID_KINDS = ["floor", "none"];
 const GRAD_KINDS = ["horizon", "corner", "veil"];
 
 const MESH_FAMILIES = [
@@ -1212,7 +1212,9 @@ function paintGradient(buf, width, height, field, t) {
 }
 
 function paintGrid(buf, width, height, field, t, checksum) {
-  if (!field.grid || field.grid === "none") return;
+  if (!field.grid || field.grid === "none" || field.grid === "ticks" || field.grid === "meridian") {
+    return;
+  }
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   const accent = field.gridColor || THEME.cyan;
   const line = (x0, y0, x1, y1) =>
@@ -1221,29 +1223,6 @@ function paintGrid(buf, width, height, field, t, checksum) {
       shader: (u) => iridesce(u, t || 0, beat, accent),
     });
   const cx = (width - 1) * 0.5;
-  if (field.grid === "ticks") {
-    for (let i = 0; i < 9; i++) {
-      const x = ((i + 1) / 10) * width;
-      line(x, 8, x, 28);
-      line(x, height - 28, x, height - 8);
-    }
-    for (let i = 0; i < 5; i++) {
-      const y = ((i + 1) / 6) * height;
-      line(8, y, 28, y);
-      line(width - 28, y, width - 8, y);
-    }
-    return;
-  }
-  if (field.grid === "meridian") {
-    line(28, 28, width - 28, 28);
-    line(28, height - 28, width - 28, height - 28);
-    line(28, 28, 28, height - 28);
-    line(width - 28, 28, width - 28, height - 28);
-    const inset = width * 0.17;
-    line(inset, 40, inset * 0.82, height - 40);
-    line(width - inset, 40, width - inset * 0.82, height - 40);
-    return;
-  }
   const vanishY = height * 0.64;
   const floorY = height * 0.76;
   line(0, floorY, width, floorY);

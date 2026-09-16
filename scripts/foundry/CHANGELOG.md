@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip drops the outer-edge HUD bezel. Field grids are `floor` or `none`. Legacy receipt ids `ticks` / `meridian` no-op — no ruler ticks on the frame, no meridian box.
+
 Factory-blip course-correct: mill swirl / snap / spark are no longer one drawer (`mesh` / `strike` / `embers`). Sticker-sheet satellites stay on focus only. Unknown `--genre` fails closed. Still plate shares the seed genre. Auto bed writes imaged stereo (hats/color off-center), not L=R upmix. Receipt `stereoImage`.
 
 Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
@@ -24,7 +26,7 @@ Factory-blip lines: Wu hairline (solid 1px core, coverage AA as the only glow). 
 
 Factory-blip lines iridesce: cyan/gold/blue travel + glow + beat fireflies on the sparse cage. Field stars / grids / gradients / blinkers are luminous, not CAD ticks. Not more wire. Not a strobe.
 
-Factory-blip field accents: uniqueness is stars / grids (`floor` `meridian` `ticks`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
+Factory-blip field accents: uniqueness is stars / grids (`floor` / `none`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
 
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait). Worn by all five viz and the Power Plant ident.
 
