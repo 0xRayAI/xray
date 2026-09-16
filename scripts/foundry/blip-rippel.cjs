@@ -1407,10 +1407,10 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
-    const inner = i % 3 === 0;
+    const inner = i === 0 || i === 3;
     const orbit = inner
       ? minSide * 0.086
-      : minSide * (0.17 + (i % 3) * 0.05) * orbitMul * cam.dolly;
+      : Math.max(minSide * 0.17, minSide * (0.18 + (i % 3) * 0.05) * orbitMul * cam.dolly);
     const depth = Math.sin(ang);
     return {
       circle,
