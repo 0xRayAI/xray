@@ -92,25 +92,25 @@ function resolveCameraKind(opts) {
 
 /** Seed shot + phrase push-in. Same organ, different camera. */
 function cameraPose(kind, phrase) {
-  const turn = phraseMix(phrase || {}, 0, 1, 0.18);
+  const travel = phraseMix(phrase || {}, 0, 1, 0.14);
   const hit = (phrase && phrase.turnHit) || 0;
-  const push = 1 + 0.14 * turn + 0.08 * hit;
+  const push = 0.76 + 0.34 * travel + 0.14 * hit;
   if (kind === "top") {
-    return { yaw: 0.1 + 0.22 * turn, pitch: 1.08, roll: 0.05 * turn, flatten: 0.36, dolly: 1.06 * push };
+    return { yaw: 0.08 + 0.4 * travel, pitch: 1.18 + 0.08 * hit, roll: 0.1 * travel, flatten: 0.28, dolly: 1.08 * push };
   }
   if (kind === "low") {
-    return { yaw: 0.2 + 0.28 * turn, pitch: -0.62, roll: 0.06 * turn, flatten: 0.94, dolly: 0.95 * push };
+    return { yaw: 0.18 + 0.35 * travel, pitch: -0.78, roll: 0.1 * travel, flatten: 0.98, dolly: 0.88 * push };
   }
   if (kind === "dutch") {
-    return { yaw: 0.4 + 0.32 * turn, pitch: 0.22, roll: 0.5, flatten: 0.68, dolly: push };
+    return { yaw: 0.35 + 0.4 * travel, pitch: 0.18, roll: 0.28 + 0.42 * travel, flatten: 0.64, dolly: push };
   }
   if (kind === "side") {
-    return { yaw: 1.34 + 0.18 * turn, pitch: 0.08, roll: 0.03, flatten: 0.78, dolly: push };
+    return { yaw: 1.48 + 0.12 * travel, pitch: 0.06, roll: 0.04, flatten: 0.74, dolly: push };
   }
   if (kind === "front") {
-    return { yaw: 0.05 * turn, pitch: 0.12, roll: 0, flatten: 0.86, dolly: push };
+    return { yaw: 0.02 + 0.12 * travel, pitch: 0.08, roll: 0, flatten: 0.9, dolly: push };
   }
-  return { yaw: 0.64 + 0.3 * turn, pitch: 0.3, roll: 0.05, flatten: 0.72, dolly: push };
+  return { yaw: 0.58 + 0.38 * travel, pitch: 0.28, roll: 0.06 + 0.08 * travel, flatten: 0.7, dolly: push };
 }
 
 /** animationIcons.ts — names are imports into the plant registry. */
@@ -312,7 +312,21 @@ function platonic(family) {
         if (d === 1) edges.push([i, j]);
       }
     }
-    return { verts, edges, faces: trianglesFromEdges(verts, edges) };
+    const faces = [
+      [0, 1, 3],
+      [0, 3, 2],
+      [4, 5, 7],
+      [4, 7, 6],
+      [0, 1, 5],
+      [0, 5, 4],
+      [2, 3, 7],
+      [2, 7, 6],
+      [0, 2, 6],
+      [0, 6, 4],
+      [1, 3, 7],
+      [1, 7, 5],
+    ];
+    return { verts, edges, faces };
   }
   if (family === "prism") {
     const verts = [];
@@ -1057,7 +1071,7 @@ function fillTri(buf, width, height, a, b, c, color, alpha) {
   const maxX = Math.min(width - 1, Math.ceil(Math.max(a.x, b.x, c.x)));
   const minY = Math.max(0, Math.floor(Math.min(a.y, b.y, c.y)));
   const maxY = Math.min(height - 1, Math.ceil(Math.max(a.y, b.y, c.y)));
-  if (maxX - minX > 420 || maxY - minY > 320) return;
+  if (maxX - minX > 1280 || maxY - minY > 720) return;
   const area = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
   if (Math.abs(area) < 8) return;
   const a0 = alpha * (area > 0 ? 1 : 0.38);
@@ -1230,7 +1244,7 @@ function paintMeshOverlay(buf, width, height, opts) {
 
 function paintGradient(buf, width, height, field, t) {
   const aCol = field.gradColor || THEME.blue;
-  const bCol = mixRgb(THEME.gold, THEME.cyan, 0.45 + 0.2 * Math.sin((t || 0) * 0.7));
+  const bCol = mixRgb(THEME.cyan, THEME.blue, 0.45 + 0.2 * Math.sin((t || 0) * 0.7));
   const s = field.gradStrength || 0.2;
   if (field.gradient === "horizon") {
     const y0 = (height * 0.58) | 0;
@@ -1273,10 +1287,12 @@ function paintGrid(buf, width, height, field, t, checksum) {
     return;
   }
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const phrase = phraseOf(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const fade = phraseMix(phrase, 0.55, 0.12, 0.28);
   const accent = field.gridColor || THEME.cyan;
   const line = (x0, y0, x1, y1) =>
     paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
-      glowAlpha: 0.07,
+      glowAlpha: 0.035 * fade,
       shader: (u) => iridesce(u, t || 0, beat, accent),
     });
   const cx = (width - 1) * 0.5;
@@ -1379,12 +1395,15 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
-    const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul * cam.dolly;
+    const inner = i % 3 === 0;
+    const orbit = inner
+      ? minSide * 0.1
+      : minSide * (0.17 + (i % 3) * 0.05) * orbitMul * cam.dolly;
     const depth = Math.sin(ang);
     return {
       circle,
       x: cx + Math.cos(ang) * orbit + Math.sin(cam.yaw) * minSide * 0.04,
-      y: cy + Math.sin(ang) * orbit * cam.flatten,
+      y: cy + Math.sin(ang) * orbit * (inner ? 0.82 : cam.flatten) + (inner ? minSide * 0.05 * (i % 2 ? 1 : -1) : 0),
       r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
       depth,
@@ -1393,7 +1412,7 @@ function layoutFocusRing(circles, width, height, t, checksum) {
 }
 
 /** Power Plant satellites. pred picks behind/front so the nucleus can occlude. */
-function paintSuitSatellites(buf, width, height, t, checksum, pred) {
+function paintSuitSatellites(buf, width, height, t, checksum, pred, clip) {
   if (!checksum) return;
   const circles = checksum.visualConfig && checksum.visualConfig.circles;
   if (!circles || !circles.length) return;
@@ -1402,6 +1421,10 @@ function paintSuitSatellites(buf, width, height, t, checksum, pred) {
     .sort((a, b) => a.depth - b.depth);
   for (let i = 0; i < placed.length; i++) {
     const sat = placed[i];
+    if (clip && sat.depth < 0) {
+      const d = Math.hypot(sat.x - clip.cx, sat.y - clip.cy);
+      if (d < clip.r - sat.r * 0.15) continue;
+    }
     const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.55);
     stampFocusDisc(buf, width, height, sat.x, sat.y, sat.r * 0.42, color, {
       rim: 1.6,
@@ -1551,7 +1574,8 @@ function paintFocusOrb(buf, width, height, t, checksum) {
       0.02 * phraseWeight(phrase, "turn") +
       0.01 * phraseWeight(phrase, "tag") +
       pulse);
-  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth < 0);
+  const clip = { cx, cy, r: core * 1.08 };
+  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth < 0, clip);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
     glow: 7,
@@ -1588,7 +1612,7 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.92,
     half: 1,
-    fill: phraseMix(phrase, 0.18, 0.42, 0.24),
+    fill: phraseMix(phrase, 0.3, 0.62, 0.38),
   });
   paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
 }
@@ -1659,7 +1683,7 @@ function paintMillEmbers(buf, width, height, t, checksum) {
   const size = phraseMix(phrase, 8.6, 15.4, 10.2);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
-  const burst = phraseMix(phrase, 0.62, 1.22 + 0.2 * (phrase.turnHit || 0), 0.78);
+  const burst = phraseMix(phrase, 0.72, 1.06 + 0.08 * (phrase.turnHit || 0), 0.84);
   stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * 0.07 * phraseMix(phrase, 0.85, 1.12, 0.9), kick);
   const coals = [];
   for (let i = 0; i < pts.length; i++) {

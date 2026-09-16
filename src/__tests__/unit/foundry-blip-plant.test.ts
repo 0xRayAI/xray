@@ -1294,6 +1294,9 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('edge midpoints');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('spinMul');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('sat.depth < 0');
+    expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain(
+      'mixRgb(THEME.gold, THEME.cyan, 0.45 + 0.2 * Math.sin',
+    );
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('stampHouseNoun');
     expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain('phraseMix(phrase, 0.42, 1, 0.3)');
   });
@@ -1374,7 +1377,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seedHex: string,
         brief: string,
         camera?: string,
-      ) => { camera: string; gait: string; id: string };
+      ) => { camera: string; gait: string; id: string; family: string; faces: number[][] };
       buildVisualConfig: (opts: { brief: string; seedHex: string; camera?: string }) => {
         mesh: { camera: string };
         genreConfig: { tempo: number };
@@ -1411,12 +1414,19 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const mesh = buildMesh(seedHex, brief);
     expect(CAMERA_KINDS).toContain(mesh.camera);
     expect(mesh.id).toContain(mesh.camera);
+    const cubes = [];
+    for (let i = 0; i < 80 && cubes.length < 1; i++) {
+      const hunted = buildMesh(`0xabc${i}`, `cube hunt ${i}`);
+      if (hunted.family === 'cube') cubes.push(hunted);
+    }
+    expect(cubes[0]?.faces.length).toBeGreaterThanOrEqual(8);
     expect(fingerprintMesh(mesh)?.camera).toBe(mesh.camera);
     const forced = buildVisualConfig({ brief, seedHex, camera: 'side' });
     expect(forced.mesh.camera).toBe('side');
     const hook = cameraPose('front', { turnHit: 0 });
     const turn = cameraPose('front', { turnHit: 1 });
     expect(turn.dolly).toBeGreaterThan(hook.dolly);
+    expect(turn.dolly - hook.dolly).toBeGreaterThan(0.1);
     const top = cameraPose('top', { turnHit: 0 });
     const low = cameraPose('low', { turnHit: 0 });
     const dutch = cameraPose('dutch', { turnHit: 0 });
