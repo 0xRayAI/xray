@@ -96,21 +96,21 @@ function cameraPose(kind, phrase) {
   const hit = (phrase && phrase.turnHit) || 0;
   const push = 0.76 + 0.34 * travel + 0.14 * hit;
   if (kind === "top") {
-    return { yaw: 0.08 + 0.4 * travel, pitch: 1.18 + 0.08 * hit, roll: 0.1 * travel, flatten: 0.28, dolly: 1.08 * push };
+    return { yaw: 0.06 + 0.2 * travel, pitch: 1.32 + 0.06 * hit, roll: 0.04, flatten: 0.16, dolly: 1.12 * push };
   }
   if (kind === "low") {
-    return { yaw: 0.18 + 0.35 * travel, pitch: -0.78, roll: 0.1 * travel, flatten: 0.98, dolly: 0.88 * push };
+    return { yaw: 0.12 + 0.2 * travel, pitch: -1.04, roll: 0.04, flatten: 1.02, dolly: 0.84 * push };
   }
   if (kind === "dutch") {
-    return { yaw: 0.35 + 0.4 * travel, pitch: 0.18, roll: 0.28 + 0.42 * travel, flatten: 0.64, dolly: push };
+    return { yaw: 0.28 + 0.25 * travel, pitch: 0.12, roll: 0.52 + 0.22 * travel, flatten: 0.58, dolly: push };
   }
   if (kind === "side") {
-    return { yaw: 1.48 + 0.12 * travel, pitch: 0.06, roll: 0.04, flatten: 0.74, dolly: push };
+    return { yaw: 1.62 + 0.08 * travel, pitch: 0.04, roll: 0.02, flatten: 0.58, dolly: 0.96 * push };
   }
   if (kind === "front") {
     return { yaw: 0.02 + 0.12 * travel, pitch: 0.08, roll: 0, flatten: 0.9, dolly: push };
   }
-  return { yaw: 0.58 + 0.38 * travel, pitch: 0.28, roll: 0.06 + 0.08 * travel, flatten: 0.7, dolly: push };
+  return { yaw: 0.72 + 0.28 * travel, pitch: 0.32, roll: 0.08, flatten: 0.66, dolly: push };
 }
 
 /** animationIcons.ts — names are imports into the plant registry. */
@@ -689,13 +689,14 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     roll = beat * mesh.spin * 0.22 * spinMul + mesh.twist;
   }
   const cam = cameraPose(resolveCamera(mesh), phrase);
-  yaw += cam.yaw + phrase.turnHit * 0.55;
-  pitch += cam.pitch;
-  roll += cam.roll;
-  breathe *= cam.dolly;
+  const peak = rupturePeak(phrase);
+  yaw += cam.yaw + phrase.turnHit * 0.55 + peak * 0.95;
+  pitch += cam.pitch + peak * 0.12;
+  roll += cam.roll + peak * 0.22;
+  breathe *= cam.dolly * (1 + 0.1 * peak);
   const minSide = Math.min(width, height);
   const cx = (width - 1) * 0.5 + ox * minSide;
-  const cy = (height - 1) * 0.5 + oy * minSide;
+  const cy = (height - 1) * 0.5 + oy * minSide + cam.pitch * minSide * 0.1;
   const shear = gait === "shear";
   return mesh.verts.map((v) => {
     let r = rotate3(v, yaw, pitch, roll);
@@ -1045,6 +1046,15 @@ function rupturePeak(phrase) {
   return Math.max(spike, phrase && phrase.turnHit ? phrase.turnHit : 0);
 }
 
+/** Anticipation dip just before the cut — recoil, then the whip. */
+function ruptureRecoil(phrase) {
+  const beats = phrase && typeof phrase.beats === "number" ? phrase.beats : 0;
+  const at = (phrase && phrase.hookEndBeats) || 2;
+  const before = at - beats;
+  if (before <= 0 || before >= 0.24) return 0;
+  return before / 0.24;
+}
+
 function mixRgb(a, b, amount) {
   const u = clamp(amount, 0, 1);
   return [
@@ -1322,11 +1332,11 @@ function paintGrid(buf, width, height, field, t, checksum) {
       shader: () => THEME.cyan,
     });
   const cx = (width - 1) * 0.5;
-  const yawShift = Math.sin(cam.yaw) * width * 0.2;
+  const yawShift = Math.sin(cam.yaw) * width * 0.34;
   const roll = cam.roll;
-  const vanishY = height * (0.64 - cam.pitch * 0.14);
-  const floorY = height * (0.76 - cam.pitch * 0.1);
-  const tilt = (x) => (x - cx) * Math.tan(roll) * 0.35;
+  const vanishY = clamp(height * (0.62 - cam.pitch * 0.22), height * 0.12, height * 0.88);
+  const floorY = clamp(height * (0.78 - cam.pitch * 0.2), vanishY + 18, height * 0.96);
+  const tilt = (x) => (x - cx) * Math.tan(roll) * 0.7;
   line(0, floorY + tilt(0), width, floorY + tilt(width));
   for (let i = -4; i <= 4; i++) {
     if (i === 0) continue;
@@ -1694,6 +1704,24 @@ function paintCageRupture(buf, width, height, pts, mesh, hit, peak) {
   }
 }
 
+/** Kinetic shards — gold beads flung off the lantern on the cut. */
+function paintCageShards(buf, width, height, pts, cx, cy, peak) {
+  if (peak < 0.4 || !pts || !pts.length) return;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const dx = p.x - cx;
+    const dy = p.y - cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const fly = 14 + 22 * peak;
+    stampFocusDisc(buf, width, height, p.x + (dx / len) * fly, p.y + (dy / len) * fly, 3 + 3.6 * peak, THEME.gold, {
+      rim: 1,
+      glow: 3.2,
+      glowAlpha: 0.2 + 0.16 * peak,
+      rimColor: THEME.gold,
+    });
+  }
+}
+
 /** Mid-clip snap rupture — a held gold scar through the noun, flash on the cut. */
 function paintSnapRupture(buf, width, height, cx, cy, minSide, hit, peak) {
   if (hit < 0.28) return;
@@ -1724,8 +1752,10 @@ function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const phrase = phraseOf(checksum, t);
   const hit = ruptureHit(phrase);
+  const peak = rupturePeak(phrase);
+  const recoil = ruptureRecoil(phrase);
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit + 0.12 * rupturePeak(phrase),
+    scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit + 0.2 * peak - 0.16 * recoil,
     half: 1 + Math.round(hit),
     fill: phraseMix(phrase, 0.1, 0.42, 0.18) + 0.1 * hit,
   });
@@ -1734,7 +1764,8 @@ function paintMillCage(buf, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum, t);
-  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, hit, rupturePeak(phrase));
+  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, hit, peak);
+  paintCageShards(buf, width, height, drawn && drawn.pts, cx, cy, peak);
 }
 
 /** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
@@ -1742,9 +1773,9 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
   startFrame(buf, width, height, t, checksum);
   const phrase = phraseOf(checksum, t);
   paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: scale || 0.92,
+    scale: scale || 0.96,
     half: 1,
-    fill: phraseMix(phrase, 0.3, 0.62, 0.38),
+    fill: phraseMix(phrase, 0.36, 0.62, 0.38),
   });
   paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
 }
@@ -1966,7 +1997,7 @@ function orbFocusWidth(buf, width, height) {
 /** swirl → mill platonic mesh or refined sacred-flow. */
 function paintSacred(buf, width, height, t, checksum) {
   if (checksum.bodyKind !== "rippel") {
-    return paintMillMesh(buf, width, height, t, checksum, 0.92);
+    return paintMillMesh(buf, width, height, t, checksum, 1.02);
   }
   startFrame(buf, width, height, t, checksum);
   organs.paintSacredFlow(buf, width, height, t, checksum);
@@ -2280,6 +2311,7 @@ module.exports = {
   phraseWeight,
   ruptureHit,
   rupturePeak,
+  ruptureRecoil,
   motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,

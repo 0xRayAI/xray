@@ -1487,6 +1487,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintSnapRupture');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureHit');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('rupturePeak');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureRecoil');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintCageShards');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('crack');
   });
 
@@ -1569,7 +1571,10 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const side = cameraPose('side', { turnHit: 0 });
     expect(top.pitch).toBeGreaterThan(low.pitch);
     expect(top.flatten).toBeLessThan(low.flatten);
+    expect(top.flatten).toBeLessThan(0.2);
+    expect(low.pitch).toBeLessThan(-1);
     expect(dutch.roll).toBeGreaterThan(hook.roll);
+    expect(dutch.roll).toBeGreaterThan(0.45);
     expect(side.yaw).toBeGreaterThan(hook.yaw);
     const checksum = buildVisualConfig({ brief, seedHex, camera: 'front' });
     const turnT = (60 / checksum.genreConfig.tempo) * 2;
@@ -1584,6 +1589,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
     expect(spanY(frontPts)).toBeGreaterThan(spanY(topPts));
     expect(spanX(sidePts)).not.toBeCloseTo(spanX(frontPts), 0);
+    const lowPts = projectMesh(Object.assign({}, jewel, { camera: 'low' }), 1280, 720, turnT, checksum);
+    const dutchPts = projectMesh(Object.assign({}, jewel, { camera: 'dutch' }), 1280, 720, turnT, checksum);
+    const midY = (pts: Array<{ y: number }>) => pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    expect(midY(lowPts)).toBeLessThan(midY(topPts));
+    expect(Math.abs(dutchPts[0].y - frontPts[0].y) + Math.abs(dutchPts[1].y - frontPts[1].y)).toBeGreaterThan(8);
     const swirlFront = paintRippelFrame({
       renderer: 'swirl',
       t: turnT,
