@@ -305,6 +305,8 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
             look?: string | null;
             fallback?: boolean;
             hasAudio?: boolean;
+            audioChannels?: number | null;
+            maxVolumeDb?: number | null;
             width?: number | null;
             height?: number | null;
             visualConfig?: {
@@ -382,13 +384,11 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         const again = renderBlip({ root: tmp, brief, mode: 'still' });
         expect(again.receipt.seed).toBe(still.receipt.seed);
 
-        const bed = writeSilentWav(path.join(tmp, 'shared-bed.wav'), 5);
         for (const id of V0_IDS.filter((name) => name !== 'still')) {
           const rendered = renderBlip({
             root: tmp,
             brief: `night alley ${id}`,
             pictureMode: `motion:${id}`,
-            bed,
           });
           expect(rendered.receipt.status, JSON.stringify(rendered.receipt, null, 2)).toBe('PASS');
           expect(rendered.receipt.motionId).toBe(id);
@@ -397,6 +397,8 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           expect(rendered.receipt.look).toBe('rippel-v2');
           expect(rendered.receipt.fallback).toBe(false);
           expect(rendered.receipt.hasAudio).toBe(true);
+          expect(rendered.receipt.audioChannels).toBe(2);
+          expect(rendered.receipt.maxVolumeDb).toBeGreaterThan(-40);
           expect(rendered.receipt.width).toBeGreaterThanOrEqual(1280);
           expect(rendered.receipt.height).toBeGreaterThanOrEqual(720);
           expect(rendered.receipt.visualConfig?.circleCount).toBeGreaterThan(0);
@@ -413,9 +415,10 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
         expect(kapow.receipt.status).toBe('FAIL');
         expect(kapow.receipt.reason).toMatch(/growth\/stub/);
 
-        const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still', bed });
+        const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still' });
         expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
-        expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true });
+        expect(muxed.receipt).toMatchObject({ hasAudio: true, hasVideo: true, audioChannels: 2 });
+        expect(muxed.receipt.maxVolumeDb).toBeGreaterThan(-40);
       }
 
       const unknown = renderBlip({ root: tmp, brief: 'nope', mode: 'kenburns' });
@@ -836,6 +839,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
           engine?: string;
           fallback?: boolean;
           hasAudio?: boolean;
+          audioChannels?: number | null;
+          maxVolumeDb?: number | null;
           reason?: string | null;
         };
         mp4: string;
@@ -849,17 +854,28 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     if (!hasFfmpeg()) return;
     const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-flag-'));
     try {
-      const bed = writeSilentWav(path.join(tmp, 'bed.wav'), 5);
       const flagged = renderBlip({
         root: tmp,
         brief: 'warehouse floor · Power Plant',
         mode: 'motion:orb',
-        bed,
         engine: 'wireframe',
       });
       expect(flagged.receipt.status, JSON.stringify(flagged.receipt, null, 2)).toBe('PASS');
       expect(flagged.receipt.engine).toBe('ffmpeg-wireframe-fallback');
       expect(flagged.receipt.fallback).toBe(true);
+      expect(flagged.receipt.hasAudio).toBe(true);
+      expect(flagged.receipt.audioChannels).toBe(2);
+      expect(flagged.receipt.maxVolumeDb).toBeGreaterThan(-40);
+
+      const silentBed = writeSilentWav(path.join(tmp, 'bed.wav'), 5);
+      const muted = renderBlip({
+        root: tmp,
+        brief: 'warehouse floor · Power Plant',
+        mode: 'motion:orb',
+        bed: silentBed,
+      });
+      expect(muted.receipt.status, JSON.stringify(muted.receipt, null, 2)).toBe('FAIL');
+      expect(muted.receipt.reason).toMatch(/inaudible bed/);
 
       const picture = path.join(tmp, 'silent.mp4');
       const ffmpeg = spawnSync(

@@ -22,7 +22,7 @@ Rippel five are **imports**. Each mint wears a seed-selected look (`focus` solid
 1. **Brief** → checksum seed → Rippel `VisualConfig` (`CircleConfig[]`).
 2. **Mode** → `still` or `motion:<id>` from the registry.
 3. **Render** → 4.44s mp4. Motions are Rippel v2 viz at ≥720p (`--look focus|cage`, seed picks if omitted). `--engine wireframe` is emergency only.
-4. **Bed** → `--bed PATH` or auto sound mill. Auto bed **syncopates** to the motion grid (same seed + tempo + phase; downbeat kick / AND hat). Every mp4 muxes audio. Silent = inspect FAIL.
+4. **Bed** → `--bed PATH` or auto sound mill. Auto bed **syncopates** to the motion grid (same seed + tempo + phase; downbeat kick / AND hat). Every mp4 muxes **stereo AAC**. Missing stream or inaudible bed = inspect FAIL.
 5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed.
 6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).
 

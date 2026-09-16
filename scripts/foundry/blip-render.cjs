@@ -9,7 +9,7 @@
  * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
  * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
  * ffmpeg wireframe is --engine wireframe only.
- * HARD: every Blip muxes a 4.44s audio bed — silent (no audio stream) = inspect FAIL.
+ * HARD: every Blip muxes a 4.44s stereo AAC bed — missing stream or inaudible = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
  * Kapow is a growth stub (renderer null → FAIL). Unknown id FAIL.
@@ -42,6 +42,8 @@ const MOTION_HEIGHT = rippel.MOTION_HEIGHT;
 const RECEIPT_REL = path.join(".xray", "blip", "receipt.json");
 const MP4_REL = path.join(".xray", "blip", "blip.mp4");
 const REGISTRY_REL = path.join("plant", "motions", "registry.json");
+/** Digital silence / near-silence. Real beds peak near 0 dBFS. */
+const AUDIBLE_MAX_DB_MIN = -40;
 
 const RIPPEL_IMPORTS = ["orb", "swirl", "snap", "waves", "spark"];
 const V0_IDS = ["still", ...RIPPEL_IMPORTS];
@@ -630,12 +632,14 @@ function muxBed(video, bed, mp4) {
       bed,
       "-c:v",
       "copy",
+      "-af",
+      "apad,aformat=channel_layouts=stereo",
+      "-ar",
+      "44100",
       "-c:a",
       "aac",
       "-b:a",
-      "128k",
-      "-af",
-      "apad",
+      "192k",
       "-t",
       String(DURATION_SEC),
       "-movflags",
@@ -644,6 +648,43 @@ function muxBed(video, bed, mp4) {
     ],
     "ffmpeg mux",
   );
+}
+
+function probeAudio(file) {
+  const chRun = spawnSync(
+    "ffprobe",
+    [
+      "-v",
+      "error",
+      "-select_streams",
+      "a:0",
+      "-show_entries",
+      "stream=channels",
+      "-of",
+      "default=nw=1:nk=1",
+      file,
+    ],
+    { encoding: "utf8" },
+  );
+  const channels = Number.parseInt(String(chRun.stdout || "").trim(), 10);
+  const levelRun = spawnSync(
+    "ffmpeg",
+    ["-hide_banner", "-nostats", "-i", file, "-af", "volumedetect", "-f", "null", "-"],
+    { encoding: "utf8" },
+  );
+  const text = `${levelRun.stdout || ""}\n${levelRun.stderr || ""}`;
+  function db(name) {
+    const matches = [...text.matchAll(new RegExp(`${name}:\\s*([-infINF+\\d.]+)`, "gi"))];
+    const last = matches[matches.length - 1];
+    if (!last) return null;
+    const value = Number(last[1]);
+    return Number.isFinite(value) || value === Number.NEGATIVE_INFINITY ? value : null;
+  }
+  return {
+    channels: Number.isFinite(channels) ? channels : null,
+    meanVolumeDb: db("mean_volume"),
+    maxVolumeDb: db("max_volume"),
+  };
 }
 
 function probeMedia(file) {
@@ -733,7 +774,12 @@ function evaluateProbe(probe, opts = {}) {
   const durationOk =
     Number.isFinite(durationSec) && Math.abs(durationSec - DURATION_SEC) <= DURATION_TOL_SEC;
   const fileOk = Boolean(probe.ok && probe.hasVideo);
-  const audioOk = !wantAudio || Boolean(probe.hasAudio);
+  const audio = opts.audio || {};
+  const maxVolumeDb = audio.maxVolumeDb;
+  const channels = audio.channels;
+  const audibleOk = Number.isFinite(maxVolumeDb) && maxVolumeDb > AUDIBLE_MAX_DB_MIN;
+  const stereoOk = channels === 2;
+  const audioOk = !wantAudio || (Boolean(probe.hasAudio) && audibleOk && stereoOk);
   const width = probe.width;
   const height = probe.height;
   const resolutionOk =
@@ -750,7 +796,9 @@ function evaluateProbe(probe, opts = {}) {
   if (!fileOk) reason = probe.reason || "mp4 missing";
   else if (!gates.mode) reason = "mode missing";
   else if (!durationOk) reason = `duration ${durationSec}s not ${DURATION_SEC}s±${DURATION_TOL_SEC}`;
-  else if (!audioOk) reason = "audio stream missing";
+  else if (wantAudio && !probe.hasAudio) reason = "audio stream missing";
+  else if (wantAudio && !audibleOk) reason = "inaudible bed";
+  else if (wantAudio && !stereoOk) reason = "audio not stereo";
   else if (!resolutionOk) reason = `motion ${width}×${height} below 720p`;
   const status = Object.values(gates).every(Boolean) ? "PASS" : "FAIL";
   return {
@@ -760,6 +808,9 @@ function evaluateProbe(probe, opts = {}) {
     durationSec,
     hasVideo: Boolean(probe.hasVideo),
     hasAudio: Boolean(probe.hasAudio),
+    audioChannels: channels ?? null,
+    meanVolumeDb: audio.meanVolumeDb ?? null,
+    maxVolumeDb: maxVolumeDb ?? null,
     width: width ?? null,
     height: height ?? null,
     reason,
@@ -767,7 +818,11 @@ function evaluateProbe(probe, opts = {}) {
 }
 
 function evaluateMp4File(file, opts = {}) {
-  return evaluateProbe(probeMedia(file), opts);
+  const probe = probeMedia(file);
+  const audio = probe.hasAudio
+    ? probeAudio(file)
+    : { channels: null, meanVolumeDb: null, maxVolumeDb: null };
+  return evaluateProbe(probe, { ...opts, audio });
 }
 
 function receiptPath(root) {
@@ -829,6 +884,9 @@ function buildReceipt(input, evaled) {
     bed: input.bedRel || input.bed || null,
     hasVideo: Boolean(evaled.hasVideo),
     hasAudio: Boolean(evaled.hasAudio),
+    audioChannels: evaled.audioChannels ?? null,
+    meanVolumeDb: evaled.meanVolumeDb ?? null,
+    maxVolumeDb: evaled.maxVolumeDb ?? null,
     gates: evaled.gates || {
       file: false,
       duration: false,
@@ -1136,6 +1194,8 @@ module.exports = {
   hasFfmpeg,
   renderBlip,
   probeMedia,
+  probeAudio,
+  AUDIBLE_MAX_DB_MIN,
   evaluateMp4File,
   evaluateReceipt,
   receiptPath,
