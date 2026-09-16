@@ -18,13 +18,13 @@ Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is 
 - `SimplifiedVisualConverter.tsx` → Animation → viz id, canvas **1280×720** @ ~30fps
 - `MiniAnimationViewer` / `FiveDimensionalVisualizer` → viz backends
 
-| id | viz id | organ (Rippel drawer) |
-|----|--------|---------|
-| `orb` | `canvas` | `focus` cyan disc **or** `mandala` (`InteractiveCanvas`) |
-| `swirl` | `3d-sacred` | `sacred-flow` — N-gons + depth circles + spirals |
-| `snap` | `neural` | `synapse` — 50–73 Kuramoto nodes, no cage early-return |
-| `waves` | `waveform` | `liquid-waves` — ribbons + aurora + energy orbs |
-| `spark` | `particles` | `cosmic-dance` — 80 motes, constellations, shooting star |
+| id | viz id | mill body | rippel body (refined to mill stroke) |
+|----|--------|-----------|--------------------------------------|
+| `orb` | `canvas` | `focus` disc **or** `cage` Wu mesh | `mandala` |
+| `swirl` | `3d-sacred` | platonic `mesh` | `sacred-flow` |
+| `snap` | `neural` | platonic `mesh` | `synapse` |
+| `waves` | `waveform` | sharp `ribbons` | `liquid-waves` (ribbons + aurora) |
+| `spark` | `particles` | platonic `mesh` | `cosmic-dance` |
 
 Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers) **under** the drawing. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 

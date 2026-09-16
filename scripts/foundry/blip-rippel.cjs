@@ -9,13 +9,10 @@
  *
  * This file is the converter spine, not a drawbox/geq label. Brief+seed → checksum
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
- * v2 look variants (seed + --look): focus | cage. Orb-only.
- *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
- *           Field + mesh verts (solid mass, not wire) carry the mint id under the disc.
- *   cage  — Rippel InteractiveCanvas mandala (petals + rings + motes). Not a Wu cage.
- * Five drawers are the mode bodies (InteractiveCanvas / ThreeJSVisualizer /
- * NeuralNetworkVisualizer / WaveformVisualizer / ParticleAnimations). Mesh + field
- * stay the mint fingerprint under the drawing — snap/spark do not early-return to a cage.
+ * Two axes, seed + flags. Both stay. All wear the mill stroke (Wu + Power Plant + short glow).
+ *   --look focus|cage (orb). focus = cyan disc. cage = Wu hairline mesh + nucleus.
+ *   --body mill|rippel. mill = evolved mesh/ribbons. rippel = refined drawers
+ *     (mandala / sacred-flow / synapse / liquid-waves / cosmic-dance).
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * 4.44s is a Short: hook → turn → tag on the same motion grid as the bed.
  * Phrase weights (hookEase/turnEase/tagEase) crossfade; binaries stay section flags.
@@ -48,7 +45,7 @@ const SSOT = {
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — five drawers as mode bodies (mandala / sacred-flow / synapse / liquid-waves / cosmic-dance). focus disc is orb-only. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — look focus|cage and body mill|rippel. Mill keeps the evolved Wu/mesh. Rippel drawers are refined to that stroke. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
 const GRID_KINDS = ["floor", "meridian", "ticks", "none"];
@@ -71,6 +68,7 @@ const MESH_FAMILIES = [
 const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
 const CORE_STYLES = ["disc", "eclipse", "pulse"];
 const LOOK_KINDS = ["focus", "cage"];
+const BODY_KINDS = ["mill", "rippel"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -666,7 +664,32 @@ function resolveLookKind(opts) {
   return LOOK_KINDS[seedU32(opts && opts.seedHex, 0) % LOOK_KINDS.length];
 }
 
-function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
+function resolveBodyKind(opts) {
+  const raw = opts && opts.bodyKind;
+  if (raw) {
+    if (!BODY_KINDS.includes(raw)) {
+      const err = new Error(`unknown body "${raw}" (want ${BODY_KINDS.join("|")})`);
+      err.code = "BLIP_BODY";
+      throw err;
+    }
+    return raw;
+  }
+  return BODY_KINDS[seedU32(opts && opts.seedHex, 16) % BODY_KINDS.length];
+}
+
+function organOf(visualization, lookKind, bodyKind) {
+  if (visualization === "canvas") {
+    if (lookKind === "focus") return "focus";
+    return bodyKind === "rippel" ? "mandala" : "cage";
+  }
+  if (visualization === "3d-sacred") return bodyKind === "rippel" ? "sacred-flow" : "mesh";
+  if (visualization === "neural") return bodyKind === "rippel" ? "synapse" : "mesh";
+  if (visualization === "waveform") return bodyKind === "rippel" ? "liquid-waves" : "ribbons";
+  if (visualization === "particles") return bodyKind === "rippel" ? "cosmic-dance" : "mesh";
+  return visualization;
+}
+
+function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bodyKind }) {
   const g = soundRippel.resolveGenre(genre || "ambient");
   const scale = SCALES[g.id] || SCALES.ambient;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8));
@@ -712,6 +735,7 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
       parity: (seedU32(seedHex, 0) & 1) === 0,
     },
     lookKind: resolveLookKind({ seedHex, lookKind }),
+    bodyKind: resolveBodyKind({ seedHex, bodyKind }),
     mesh: buildMesh(seedHex, text),
     field: buildField(seedHex, text),
   };
@@ -719,10 +743,11 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
 
 function cachedChecksum(opts) {
   const lookKind = resolveLookKind(opts);
-  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}`;
+  const bodyKind = resolveBodyKind(opts);
+  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}`;
   let hit = visualCache.get(key);
   if (!hit) {
-    hit = buildVisualConfig({ ...opts, lookKind });
+    hit = buildVisualConfig({ ...opts, lookKind, bodyKind });
     visualCache.set(key, hit);
   }
   return hit;
@@ -1120,6 +1145,7 @@ function paintMeshOverlay(buf, width, height, opts) {
     width,
     height,
     lookKind: opts.lookKind,
+    bodyKind: opts.bodyKind,
   });
   paintField(buf, width, height, opts.t || 0, checksum);
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
@@ -1428,14 +1454,65 @@ function paintFocusOrb(buf, width, height, t, checksum) {
   paintFocusSatellites(buf, width, height, t, checksum);
 }
 
-/** orb → canvas. focus = cyan disc. cage = Rippel mandala (InteractiveCanvas). */
+/** orb mill cage — evolved Wu hairline + nucleus. */
+function paintMillCage(buf, width, height, t, checksum) {
+  startFrame(buf, width, height, t, checksum);
+  paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: 0.95,
+    half: 1,
+  });
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const beat = beatPhase(checksum, t);
+  const nucleus = paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
+  const tickR = nucleus.radius;
+  const tickA = beat * Math.PI * 2;
+  stampFocusDisc(
+    buf,
+    width,
+    height,
+    cx + Math.cos(tickA) * tickR,
+    cy + Math.sin(tickA) * tickR,
+    5,
+    THEME.gold,
+    { rim: 1.2, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
+  );
+  const ghostA = tickA - 0.55;
+  stampFocusDisc(
+    buf,
+    width,
+    height,
+    cx + Math.cos(ghostA) * tickR,
+    cy + Math.sin(ghostA) * tickR,
+    3,
+    THEME.ink,
+    { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
+  );
+}
+
+/** mill body — evolved platonic mesh as the silhouette. */
+function paintMillMesh(buf, width, height, t, checksum, scale) {
+  startFrame(buf, width, height, t, checksum);
+  paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: scale || 0.92,
+    half: 1,
+  });
+  paintFocusSatellites(buf, width, height, t, checksum);
+}
+
+/** orb → canvas. focus = cyan disc. cage+mill = Wu mesh. cage+rippel = refined mandala. */
 function paintCanvas(buf, width, height, t, checksum) {
   if (checksum.lookKind === "focus") {
     return paintFocusOrb(buf, width, height, t, checksum);
   }
-  startFrame(buf, width, height, t, checksum);
-  paintFocusMeshMass(buf, width, height, t, checksum);
-  organs.paintMandala(buf, width, height, t, checksum);
+  if (checksum.bodyKind === "rippel") {
+    startFrame(buf, width, height, t, checksum);
+    paintFocusMeshMass(buf, width, height, t, checksum);
+    organs.paintMandala(buf, width, height, t, checksum);
+    return;
+  }
+  paintMillCage(buf, width, height, t, checksum);
 }
 
 /** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
@@ -1506,15 +1583,21 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - cx, drop: lo - hi };
 }
 
-/** swirl → ThreeJSVisualizer sacred-flow. Mesh mass is the mint id, not the silhouette. */
+/** swirl → mill platonic mesh or refined sacred-flow. */
 function paintSacred(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillMesh(buf, width, height, t, checksum, 0.92);
+  }
   startFrame(buf, width, height, t, checksum);
   paintFocusMeshMass(buf, width, height, t, checksum);
   organs.paintSacredFlow(buf, width, height, t, checksum);
 }
 
-/** snap → NeuralNetworkVisualizer synapse. No mesh early-return. */
+/** snap → mill mesh or refined Kuramoto synapse. */
 function paintNeural(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillMesh(buf, width, height, t, checksum, 0.9);
+  }
   startFrame(buf, width, height, t, checksum);
   organs.paintKuramoto(buf, width, height, t, checksum);
 }
@@ -1565,11 +1648,16 @@ function paintWaveform(buf, width, height, t, checksum) {
     mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
     mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
   }
-  organs.paintAuroraOrbs(buf, width, height, t, checksum);
+  if (checksum.bodyKind === "rippel") {
+    organs.paintAuroraOrbs(buf, width, height, t, checksum);
+  }
 }
 
-/** spark → ParticleAnimations cosmic dance. No mesh early-return. */
+/** spark → mill mesh or refined cosmic dance. */
 function paintParticles(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillMesh(buf, width, height, t, checksum, 0.85);
+  }
   startFrame(buf, width, height, t, checksum);
   organs.paintCosmos(buf, width, height, t, checksum);
 }
@@ -1613,6 +1701,7 @@ function paintRippelFrame(opts) {
     width,
     height,
     lookKind: opts.lookKind,
+    bodyKind: opts.bodyKind,
   });
   paintVisualization(visualization, buf, width, height, opts.t || 0, checksum);
   return {
@@ -1623,10 +1712,8 @@ function paintRippelFrame(opts) {
     engine: ENGINE,
     look: LOOK,
     lookKind: checksum.lookKind,
-    organ:
-      checksum.lookKind === "focus" && visualization === "canvas"
-        ? "focus"
-        : organs.ORGAN[visualization] || visualization,
+    bodyKind: checksum.bodyKind,
+    organ: organOf(visualization, checksum.lookKind, checksum.bodyKind),
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
@@ -1671,14 +1758,16 @@ function goldPixelCount(buf) {
   return n;
 }
 
-function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
-  const a = paintRippelFrame({ renderer, t: 0, seedHex, brief, durationSec });
+function sampleMotionFrames(renderer, seedHex, durationSec, brief, extra) {
+  const more = extra || {};
+  const a = paintRippelFrame({ renderer, t: 0, seedHex, brief, durationSec, ...more });
   const b = paintRippelFrame({
     renderer,
     t: (durationSec || 4.44) * 0.5,
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   const c = paintRippelFrame({
     renderer,
@@ -1686,6 +1775,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   const d = paintRippelFrame({
     renderer,
@@ -1693,6 +1783,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   return {
     visualization: a.visualization,
@@ -1711,6 +1802,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     mesh: a.mesh,
     field: a.field,
     lookKind: a.lookKind,
+    bodyKind: a.bodyKind,
     organ: a.organ,
     fill: frameFill(a.buffer),
   };
@@ -1765,6 +1857,7 @@ function summarizeVisual(checksum) {
     notes: checksum.visualConfig.circles.map((c) => c.note),
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
     lookKind: checksum.lookKind || null,
+    bodyKind: checksum.bodyKind || null,
     mesh: fingerprintMesh(checksum.mesh),
     field: fingerprintField(checksum.field),
   };
@@ -1811,8 +1904,11 @@ module.exports = {
   MESH_GAITS,
   CORE_STYLES,
   LOOK_KINDS,
+  BODY_KINDS,
   GRID_KINDS,
   GRAD_KINDS,
   resolveLookKind,
+  resolveBodyKind,
+  organOf,
   ORGAN: organs.ORGAN,
 };

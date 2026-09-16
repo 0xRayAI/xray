@@ -13,7 +13,7 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture **w
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports** of the real drawers: orb mandala (`InteractiveCanvas`), swirl sacred-flow, snap Kuramoto synapse, waves liquid ocean, spark cosmic dance. Mesh + field stay the mint fingerprint **under** the drawing — snap/spark do not early-return to a cage. Each mint is a **4.44s Short** — hook → turn → tag on one grid for picture and bed (continuous `hookEase`/`turnEase`/`tagEase`, not gear-shift flags). Orb look (`focus` solid disc + satellites, or `cage` mandala). Receipt `visualConfig.lookKind` + `organ` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
+Rippel five are **imports**. Two axes, seed + flags: `--look focus|cage` (orb disc vs Wu mesh) and `--body mill|rippel` (evolved mesh/ribbons vs refined drawers: mandala / sacred-flow / synapse / liquid-waves / cosmic-dance). All wear the mill stroke — Wu, Power Plant, short glow. Each mint is a **4.44s Short** — hook → turn → tag on one grid for picture and bed. Receipt `lookKind` + `bodyKind` + `organ` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
 
 `still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p, not a frozen poster: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme. The mill is the renderer — no LLM in the pixel/audio loop.
 
@@ -21,7 +21,7 @@ Rippel five are **imports** of the real drawers: orb mandala (`InteractiveCanvas
 
 1. **Brief** → checksum seed → Rippel `VisualConfig` (`CircleConfig[]`).
 2. **Mode** → `still` or `motion:<id>` from the registry.
-3. **Render** → 4.44s mp4. Motions are Rippel v2 viz at ≥720p (`--look focus|cage`, seed picks if omitted). `--engine wireframe` is emergency only.
+3. **Render** → 4.44s mp4. Motions are Rippel v2 viz at ≥720p (`--look focus|cage --body mill|rippel`, seed picks if omitted). `--engine wireframe` is emergency only.
 4. **Bed** → `--bed PATH` or auto sound mill. Auto bed **syncopates** to the motion grid (same seed + tempo + phase; downbeat kick / AND hat). Every mp4 muxes **stereo AAC**. Missing stream or inaudible bed = inspect FAIL.
 5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed.
 6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).

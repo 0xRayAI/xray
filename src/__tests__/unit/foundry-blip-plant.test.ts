@@ -871,7 +871,13 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       path.join(root, 'scripts/foundry/blip-rippel.cjs'),
     ) as {
       ORGAN: Record<string, string>;
-      sampleMotionFrames: (renderer: string, seed: string, duration: number, brief: string) => {
+      sampleMotionFrames: (
+        renderer: string,
+        seed: string,
+        duration: number,
+        brief: string,
+        extra?: { bodyKind?: string },
+      ) => {
         organ?: string;
         visualization: string;
       };
@@ -881,7 +887,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seedHex: string;
         brief: string;
         lookKind?: string;
-      }) => { buffer: Buffer; organ: string; visualization: string };
+        bodyKind?: string;
+      }) => { buffer: Buffer; organ: string; visualization: string; bodyKind: string };
       framesDiffer: (a: Buffer, b: Buffer) => boolean;
     };
     expect(ORGAN).toMatchObject({
@@ -893,10 +900,17 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     });
     const brief = 'warehouse floor · Power Plant';
     const seedHex = '0xdeadbeef';
-    const swirl = paintRippelFrame({ renderer: 'swirl', t: 0.4, seedHex, brief });
-    const snap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief });
-    const spark = paintRippelFrame({ renderer: 'spark', t: 0.4, seedHex, brief });
-    const cage = paintRippelFrame({ renderer: 'orb', t: 0.4, seedHex, brief, lookKind: 'cage' });
+    const swirl = paintRippelFrame({ renderer: 'swirl', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const snap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const spark = paintRippelFrame({ renderer: 'spark', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const cage = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'rippel',
+    });
     const focus = paintRippelFrame({ renderer: 'orb', t: 0.4, seedHex, brief, lookKind: 'focus' });
     expect(swirl.organ).toBe('sacred-flow');
     expect(snap.organ).toBe('synapse');
@@ -909,8 +923,70 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(framesDiffer(cage.buffer, focus.buffer)).toBe(true);
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('InteractiveCanvas.tsx');
     expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('NeuralNetworkVisualizer');
-    expect(sampleMotionFrames('snap', seedHex, 4.44, brief).organ).toBe('synapse');
-    expect(sampleMotionFrames('spark', seedHex, 4.44, brief).organ).toBe('cosmic-dance');
+    expect(sampleMotionFrames('snap', seedHex, 4.44, brief, { bodyKind: 'rippel' }).organ).toBe(
+      'synapse',
+    );
+    expect(sampleMotionFrames('spark', seedHex, 4.44, brief, { bodyKind: 'rippel' }).organ).toBe(
+      'cosmic-dance',
+    );
+  });
+
+  it('keeps mill Wu/mesh bodies next to refined Rippel drawers', () => {
+    const { paintRippelFrame, framesDiffer, BODY_KINDS, resolveBodyKind, organOf } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      BODY_KINDS: string[];
+      resolveBodyKind: (opts: { seedHex?: string; bodyKind?: string }) => string;
+      organOf: (viz: string, look: string, body: string) => string;
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+      }) => { buffer: Buffer; organ: string; bodyKind: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(BODY_KINDS).toEqual(['mill', 'rippel']);
+    expect(organOf('canvas', 'cage', 'mill')).toBe('cage');
+    expect(organOf('canvas', 'cage', 'rippel')).toBe('mandala');
+    expect(organOf('neural', 'cage', 'mill')).toBe('mesh');
+    expect(organOf('neural', 'cage', 'rippel')).toBe('synapse');
+    expect(() => resolveBodyKind({ bodyKind: 'potato' })).toThrow(/unknown body/);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const millCage = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+    });
+    const rippelMandala = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'rippel',
+    });
+    const millSnap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief, bodyKind: 'mill' });
+    const rippelSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'rippel',
+    });
+    expect(millCage.organ).toBe('cage');
+    expect(rippelMandala.organ).toBe('mandala');
+    expect(millSnap.organ).toBe('mesh');
+    expect(rippelSnap.organ).toBe('synapse');
+    expect(framesDiffer(millCage.buffer, rippelMandala.buffer)).toBe(true);
+    expect(framesDiffer(millSnap.buffer, rippelSnap.buffer)).toBe(true);
+    expect(read('scripts/foundry/blip.mjs')).toContain('--body mill|rippel');
   });
 
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {

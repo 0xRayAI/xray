@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip wears the five Rippel drawers as mode bodies: mandala / sacred-flow / synapse / liquid-waves / cosmic-dance. Snap and spark no longer early-return to a cage. Orb `cage` is the InteractiveCanvas mandala; `focus` stays the cyan disc. Mesh + field stay the mint id under the drawing.
+Factory-blip keeps both bodies. `--look focus|cage` and `--body mill|rippel` (seed picks). Mill keeps the evolved Wu/mesh. Rippel drawers stay and wear the mill stroke (Wu, Power Plant, short glow). Receipt `bodyKind` + `organ`.
 
 Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
 

@@ -3,7 +3,7 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
- * Look variants (orb): focus (solid disc + satellites) | cage (Rippel mandala).
+ * Look (orb): focus (solid disc) | cage (Wu mesh). Body: mill (evolved) | rippel (refined drawers).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
  * Power Plant (`still` id) is a living ident — plate dissolves, not a frozen poster.
@@ -902,6 +902,8 @@ function buildReceipt(input, evaled) {
     engine: input.engine || rippel.ENGINE,
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
+    bodyKind: input.bodyKind || (input.visualConfig && input.visualConfig.bodyKind) || null,
+    organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -1060,6 +1062,8 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
   let visualConfig = null;
   let look = rippel.LOOK;
   let lookKind = null;
+  let bodyKind = null;
+  let organ = null;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -1071,13 +1075,16 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       height,
       buffer: buf,
       lookKind: opts.lookKind,
+      bodyKind: opts.bodyKind,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
     lookKind = painted.lookKind;
+    bodyKind = painted.bodyKind;
+    organ = painted.organ;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, bodyKind, organ, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -1104,6 +1111,8 @@ function renderBlip(opts = {}) {
     fallback: false,
     visualConfig: null,
     lookKind: opts.lookKind || null,
+    bodyKind: opts.bodyKind || null,
+    organ: null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
   };
@@ -1143,9 +1152,11 @@ function renderBlip(opts = {}) {
           width: MOTION_WIDTH,
           height: MOTION_HEIGHT,
           lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
         }),
       );
       input.lookKind = input.visualConfig && input.visualConfig.lookKind;
+      input.bodyKind = input.visualConfig && input.visualConfig.bodyKind;
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
@@ -1161,9 +1172,12 @@ function renderBlip(opts = {}) {
           width: motion.width,
           height: motion.height,
           lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
         }),
       );
       input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
+      input.bodyKind = motion.bodyKind || (input.visualConfig && input.visualConfig.bodyKind);
+      input.organ = motion.organ || null;
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {

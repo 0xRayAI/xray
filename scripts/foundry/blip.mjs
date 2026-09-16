@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Factory-blip CLI — sibling plant to mill + sound, not a mill bolt-on.
- *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--look focus|cage] [--bed PATH] [--engine rippel|wireframe] [--out FILE]
+ *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--look focus|cage] [--body mill|rippel] [--bed PATH] [--engine rippel|wireframe] [--out FILE]
  *   npx @0xray/foundry blip inspect
  */
 
@@ -19,7 +19,7 @@ const HELP =
   "Factory-blip plant, sibling to mill + sound. FOUNDRY_ROOT overrides cwd.\n" +
   "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 + audio bed → receipt.\n" +
   "v0 ids: still, orb, swirl, snap, waves, spark (Rippel five are imports).\n" +
-  "Motions: Rippel VisualConfig.circles at ≥720p (default). --look focus|cage (seed picks if omitted).\n" +
+  "Motions: Rippel VisualConfig.circles at ≥720p (default). --look focus|cage --body mill|rippel (seed picks if omitted).\n" +
   "--engine wireframe is emergency only.\n" +
   "Every mp4 muxes a 4.44s bed (--bed PATH or auto sound mill). Silent = inspect FAIL.\n" +
   "kapow is a growth stub (FAIL until a renderer ships). Unknown id FAIL.\n" +
@@ -88,6 +88,7 @@ function main() {
       brief: argValue(rest, "--brief", "factory-blip"),
       pictureMode: argValue(rest, "--picture-mode", argValue(rest, "--mode", "still")),
       lookKind: argValue(rest, "--look", null),
+      bodyKind: argValue(rest, "--body", null),
       bed: argValue(rest, "--bed", null),
       engine: argValue(rest, "--engine", "rippel"),
       out: argValue(rest, "--out", null),

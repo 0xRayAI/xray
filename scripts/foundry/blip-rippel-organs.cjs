@@ -6,8 +6,8 @@
  *   waves  WaveformVisualizer         — aurora ripples + energy orbs (ribbons stay in parent)
  *   spark  ParticleAnimations         — cosmic particles + constellations + shooting star
  *
- * Mesh/field stay the mint id under these drawings. These functions never early-return
- * to a platonic cage. Hue is snapped to the Power Plant triad (no rainbow strobe).
+ * Wear the mill stroke: Wu + paintSharpLine + stampFocusDisc + Power Plant triad.
+ * Mill mesh/cage bodies live in blip-rippel.cjs (--body mill). These are --body rippel.
  */
 
 function createOrgans(kit) {
@@ -43,14 +43,15 @@ function createOrgans(kit) {
   }
 
   function paintRing(buf, width, height, cx, cy, radius, color, segs, alpha) {
-    const n = Math.max(16, segs | 0);
+    const n = Math.max(20, segs | 0);
     let px = cx + radius;
     let py = cy;
     for (let i = 1; i <= n; i++) {
       const a = (i / n) * Math.PI * 2;
       const x = cx + Math.cos(a) * radius;
       const y = cy + Math.sin(a) * radius;
-      paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: alpha || 0.08 });
+      paintSharpLine(buf, width, height, px, py, x, y, color, 1);
+      paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: alpha || 0.12 });
       px = x;
       py = y;
     }
@@ -65,12 +66,13 @@ function createOrgans(kit) {
       const x = cx + Math.cos(a) * radius;
       const y = cy + Math.sin(a) * radius;
       paintSharpLine(buf, width, height, px, py, x, y, color, 1);
+      paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: 0.12 });
       px = x;
       py = y;
     }
   }
 
-  /** InteractiveCanvas — musical mandala. cage orb wears this, not a Wu cage. */
+  /** InteractiveCanvas — musical mandala, mill stroke. */
   function paintMandala(buf, width, height, t, checksum) {
     const cx = (width - 1) * 0.5;
     const cy = (height - 1) * 0.5;
@@ -89,7 +91,7 @@ function createOrgans(kit) {
       const radius = (28 + layer * 18) * scale * notePulse * beatPulse;
       const petals = 6 + layer + (hash % 3);
       const rotation = t * (0.08 + layer * 0.018) + beat * 0.07;
-      const color = themeFromHue(t * 28 + layer * 40 + (hash % 40));
+      const color = iridesce(layer / Math.max(1, layers), t, beat, themeFromHue(t * 28 + layer * 40));
       paintPolygon(buf, width, height, cx, cy, radius, petals, rotation, color);
       if (layer % 2 === 0) {
         const inner = color;
@@ -127,17 +129,17 @@ function createOrgans(kit) {
       );
     }
 
-    const motes = 22;
+    const motes = 8;
     for (let i = 0; i < motes; i++) {
-      const ang = (i / motes) * Math.PI * 2 + t * 0.28;
-      const dist = minSide * (0.18 + 0.1 * Math.sin(t * 1.6 + i));
+      const ang = (i / motes) * Math.PI * 2 + t * 0.22 + beat * 0.1;
+      const dist = minSide * (0.2 + (i % 3) * 0.05);
       const x = cx + Math.cos(ang) * dist;
-      const y = cy + Math.sin(ang) * dist * 0.78;
-      const gold = kick > 0.15 && i % 7 === 0;
-      stampFocusDisc(buf, width, height, x, y, 2.4 + (i % 3) * 0.6, gold ? THEME.gold : themeFromHue(t * 30 + i * 18), {
-        rim: 1,
-        glow: 2,
-        glowAlpha: 0.16,
+      const y = cy + Math.sin(ang) * dist * 0.72;
+      const gold = kick > 0.15 && i % 4 === 0;
+      stampFocusDisc(buf, width, height, x, y, 4.2 + (i % 2), gold ? THEME.gold : iridesce(i / motes, t, beat, THEME.cyan), {
+        rim: 1.6,
+        glow: 4,
+        glowAlpha: 0.22,
         rimColor: THEME.ink,
       });
     }
@@ -160,13 +162,14 @@ function createOrgans(kit) {
       const wave = Math.sin(t * 2.2 + layer) * 3.2 * scale;
       const radius = (base + wave) * (1 + 0.05 * kick);
       const rotation = t * (0.09 + layer * 0.025) + beat * 0.05;
-      const color = themeFromHue(t * 24 + layer * 28 + (hash % 50));
+      const color = iridesce(layer / Math.max(1, layers), t, beat, themeFromHue(t * 24 + layer * 28));
       paintPolygon(buf, width, height, cx, cy, radius, sides, rotation, color);
-      if (layer % 2 === 0 && kick > 0.12) {
+      if (layer % 2 === 0) {
         for (let i = 0; i < sides; i += 2) {
           const a1 = rotation + (i / sides) * Math.PI * 2;
           const a2 = rotation + ((i + 3) / sides) * Math.PI * 2;
-          paintGlowLine(
+          const link = kick > 0.12 ? THEME.gold : color;
+          paintSharpLine(
             buf,
             width,
             height,
@@ -174,8 +177,8 @@ function createOrgans(kit) {
             cy + Math.sin(a1) * radius * 0.6,
             cx + Math.cos(a2) * radius * 0.6,
             cy + Math.sin(a2) * radius * 0.6,
-            THEME.gold,
-            { glowAlpha: 0.12 },
+            link,
+            1,
           );
         }
       }
@@ -201,6 +204,7 @@ function createOrgans(kit) {
         const radius = (12 + p * 118) * scale + Math.sin(p * 8 + t * 3) * 3 * scale;
         const x = cx + Math.cos(ang) * radius;
         const y = cy + Math.sin(ang) * radius;
+        paintSharpLine(buf, width, height, px, py, x, y, color, 1);
         paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: 0.1 });
         px = x;
         py = y;
@@ -222,17 +226,17 @@ function createOrgans(kit) {
       const ang = (c / clusters) * Math.PI * 2;
       for (let i = 0; i < per; i++) {
         const a = rng() * Math.PI * 2;
-        const d = 24 + rng() * 56;
+        const d = 16 + rng() * 34;
         nodes.push({
           clusterId: c,
-          ox: Math.cos(ang) * (width * 0.28) + Math.cos(a) * d,
-          oy: Math.sin(ang) * (height * 0.28) + Math.sin(a) * d,
-          orbit: 6 + rng() * 14,
+          ox: Math.cos(ang) * (width * 0.2) + Math.cos(a) * d,
+          oy: Math.sin(ang) * (height * 0.2) + Math.sin(a) * d,
+          orbit: 5 + rng() * 10,
           theta0: rng() * Math.PI * 2,
           naturalFreq: 0.012 + rng() * 0.01,
           hue: (c * 52 + rng() * 28) % 360,
           hub: i === 0,
-          size: 2.2 + rng() * 1.6,
+          size: 3.4 + rng() * 1.8,
         });
       }
     }
@@ -302,8 +306,10 @@ function createOrgans(kit) {
       const pa = seats[a];
       const pb = seats[b];
       if (!pa || !pb) continue;
-      const color = themeFromHue((net.nodes[a].hue + net.nodes[b].hue) * 0.5 + t * 8);
-      paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: 0.09 });
+      const hub = net.nodes[a].hub || net.nodes[b].hub;
+      const color = iridesce((net.nodes[a].hue + net.nodes[b].hue) / 720, t, beat, THEME.cyan);
+      if (hub) paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, 1);
+      paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: hub ? 0.14 : 0.1 });
     }
 
     for (let i = 0; i < net.nodes.length; i++) {
@@ -316,9 +322,9 @@ function createOrgans(kit) {
         height,
         p.x,
         p.y,
-        node.size + (node.hub ? 1.2 : 0) + kick * 0.6,
-        gold ? THEME.gold : themeFromHue(node.hue + t * 10),
-        { rim: 1, glow: 2, glowAlpha: 0.18, rimColor: THEME.ink },
+        node.size + (node.hub ? 2.2 : 0) + kick * 0.8,
+        gold ? THEME.gold : iridesce(node.hue / 360, t, beat, THEME.cyan),
+        { rim: 1.4, glow: 3, glowAlpha: 0.22, rimColor: THEME.ink },
       );
     }
 
@@ -373,7 +379,7 @@ function createOrgans(kit) {
         y0: rng() * height,
         vx: (rng() - 0.5) * 28,
         vy: (rng() - 0.5) * 22,
-        size: 1.2 + rng() * 2.4,
+        size: 2.4 + rng() * 2.8,
         hue: rng() * 360,
         phase: rng() * Math.PI * 2,
       });
@@ -410,17 +416,9 @@ function createOrgans(kit) {
         const dy = seats[i].y - seats[j].y;
         const d2 = dx * dx + dy * dy;
         if (d2 > 110 * 110 || d2 < 36) continue;
-        paintGlowLine(
-          buf,
-          width,
-          height,
-          seats[i].x,
-          seats[i].y,
-          seats[j].x,
-          seats[j].y,
-          themeFromHue((seats[i].p.hue + seats[j].p.hue) * 0.5),
-          { glowAlpha: 0.08 },
-        );
+        const color = iridesce((seats[i].p.hue + seats[j].p.hue) / 720, t, beat, THEME.cyan);
+        paintSharpLine(buf, width, height, seats[i].x, seats[i].y, seats[j].x, seats[j].y, color, 1);
+        paintGlowLine(buf, width, height, seats[i].x, seats[i].y, seats[j].x, seats[j].y, color, { glowAlpha: 0.1 });
         links += 1;
       }
     }
@@ -433,10 +431,10 @@ function createOrgans(kit) {
         const ty = wrap(s.p.y0 + s.p.vy * u + Math.cos(u * 1.3 + s.p.phase) * 12, -20, height + 20);
         mixPixel(buf, width, tx, ty, themeFromHue(s.p.hue), 0.18 * (1 - k / 5));
       }
-      stampFocusDisc(buf, width, height, s.x, s.y, s.p.size, themeFromHue(s.p.hue + t * 12), {
-        rim: 1,
-        glow: 2,
-        glowAlpha: 0.16,
+      stampFocusDisc(buf, width, height, s.x, s.y, s.p.size, iridesce(s.p.hue / 360, t, beat, THEME.cyan), {
+        rim: 1.3,
+        glow: 3,
+        glowAlpha: 0.2,
         rimColor: THEME.ink,
       });
     }
