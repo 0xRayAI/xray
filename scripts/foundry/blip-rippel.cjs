@@ -1440,7 +1440,7 @@ function paintEclipseMoon(buf, width, height, t, checksum, pred, clip) {
   const front = Math.max(0, moon.depth);
   const crossing = 1 - Math.min(1, Math.abs(moon.depth) / 0.28);
   const color = mixRgb(THEME.ink, mixRgb(THEME.ink, THEME.cyan, 0.1), back * 0.35);
-  const r = moon.r * (1 + 0.14 * crossing) * (0.88 + 0.12 * front);
+  const r = moon.r * (1 + 0.14 * crossing) * (0.93 + 0.07 * front);
   stampFocusDisc(buf, width, height, moon.x, moon.y, r, color, {
     rim: 2.4 + 1.6 * crossing,
     glow: 7 + 4 * crossing,
@@ -1904,10 +1904,18 @@ function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checks
   });
   const peak = rupturePeak(phrase);
   if (peak > 0.35) {
-    stampFocusDisc(buf, width, height, cx, cy, core * (1.18 + 0.28 * peak), THEME.gold, {
-      rim: 1.2,
-      glow: 12,
-      glowAlpha: 0.16 + 0.22 * peak,
+    const ring = core * (1.16 + 0.1 * peak);
+    stampDisc(buf, width, height, cx, cy, ring + 6, THEME.gold, 3.8);
+    stampFocusDisc(buf, width, height, cx, cy, core * 1.08, outer, {
+      rim: 2.2,
+      glow: 4,
+      glowAlpha: 0.12,
+      rimColor: THEME.gold,
+    });
+    stampFocusDisc(buf, width, height, ix, iy, core * (style === "eclipse" ? 0.48 : 0.4), inner, {
+      rim: 1.6,
+      glow: 4,
+      glowAlpha: 0.24,
       rimColor: THEME.gold,
     });
   }
