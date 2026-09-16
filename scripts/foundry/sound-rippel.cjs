@@ -327,6 +327,58 @@ function padTones(genreId, scale) {
   return [s[0], s[2], s[3]];
 }
 
+/** Seed cell: hook statement, turn answer, tag stamps hook[0]. Not pick() soup. */
+function motifOf(seedHex, genre) {
+  const g = resolveGenre(genre);
+  const scale = SCALES[g.id] || SCALES.ambient;
+  const hex = String(seedHex || "").replace(/^0x/, "");
+  const n = Number.parseInt(hex.slice(0, 8) || "1", 16);
+  const root = Number.isFinite(n) ? n % scale.length : 0;
+  const hookDeg = [root, (root + 2) % scale.length, (root + 4) % scale.length];
+  const turnDeg = [(root + 4) % scale.length, (root + 2) % scale.length, root];
+  const hookHz = hookDeg.map((d) => scale[d]);
+  const turnHz = turnDeg.map((d) => scale[d]);
+  return {
+    genre: g.id,
+    root,
+    hookDeg,
+    turnDeg,
+    hookHz,
+    turnHz,
+    tagHz: hookHz[0],
+  };
+}
+
+/** Shared jewel cut — same beat as phraseOf / rupturePeak. */
+function phraseMarks(seconds, grid) {
+  const phrase = shortformPhrase(0, seconds, grid);
+  const beatSec = (grid && grid.beatSec) || 60 / 90;
+  return {
+    hookEndBeats: phrase.hookEndBeats,
+    tagStartBeats: phrase.tagStartBeats,
+    turnAt: phrase.hookEndBeats * beatSec,
+    tagAt: phrase.tagStartBeats * beatSec,
+    beatSec,
+  };
+}
+
+function sliceRms(samples, start, end) {
+  const a = Math.max(0, start | 0);
+  const b = Math.min(samples.length, end | 0);
+  if (b <= a) return 0;
+  let acc = 0;
+  for (let i = a; i < b; i++) acc += samples[i] * samples[i];
+  return Math.sqrt(acc / (b - a));
+}
+
+/** Centered window energy — turn vs hook, not a fader. */
+function windowRms(samples, sampleRate, at, windowSec) {
+  const win = Math.max(1, Math.floor((sampleRate || 44100) * (windowSec || 0.2)));
+  const mid = Math.floor((at || 0) * (sampleRate || 44100));
+  const start = Math.max(0, mid - Math.floor(win / 2));
+  return sliceRms(samples, start, start + win);
+}
+
 function degreeLine(kind, count) {
   if (kind === "bass") {
     const cell = [0, 0, 3, 4];
@@ -360,6 +412,51 @@ function mixInto(dest, src, start, gain) {
     if (j >= dest.length) break;
     dest[j] += src[i] * g;
   }
+}
+
+function duckBus(bus, sampleRate, from, to, gain) {
+  const a = Math.max(0, Math.floor(from * sampleRate));
+  const b = Math.min(bus.length, Math.floor(to * sampleRate));
+  if (b <= a) return;
+  const fade = Math.max(1, Math.floor(0.028 * sampleRate));
+  const g0 = gain == null ? 0.42 : gain;
+  for (let i = a; i < b; i++) {
+    let g = g0;
+    const head = i - a;
+    const tail = b - 1 - i;
+    if (head < fade) g = 1 - (1 - g0) * (head / fade);
+    else if (tail < fade) g = 1 - (1 - g0) * (tail / fade);
+    bus[i] *= g;
+  }
+}
+
+/** Keep the opening downbeat + first offbeat, and the jewel cut; pull other hits back. */
+function accentTurn(bus, sampleRate, turnAt, othersGain, beatSec) {
+  const beat = beatSec > 0 ? beatSec : 0.5;
+  // A 140ms shelf left 16ths inside the unducked window and ducked the and — inverted lock.
+  const openEnd = Math.floor(beat * 0.68 * sampleRate);
+  const hold = Math.min(0.34, Math.max(0.18, beat * 0.6));
+  const a = Math.max(0, Math.floor((turnAt - 0.05) * sampleRate));
+  const b = Math.min(bus.length, Math.floor((turnAt + hold) * sampleRate));
+  const g0 = othersGain == null ? 0.66 : othersGain;
+  const fade = Math.max(1, Math.floor(0.02 * sampleRate));
+  for (let i = 0; i < bus.length; i++) {
+    if (i < openEnd) continue;
+    if (i >= a && i < b) continue;
+    let g = g0;
+    const nearOpen = i - openEnd;
+    const nearA = a - i;
+    const nearB = i - b;
+    if (nearOpen >= 0 && nearOpen < fade) g = 1 - (1 - g0) * (nearOpen / fade);
+    else if (nearA > 0 && nearA < fade) g = 1 - (1 - g0) * (nearA / fade);
+    else if (nearB >= 0 && nearB < fade) g = 1 - (1 - g0) * (nearB / fade);
+    bus[i] *= g;
+  }
+}
+
+function duckNextHit(bus, sampleRate, turnAt, beatSec, gain) {
+  const beat = beatSec > 0 ? beatSec : 0.5;
+  duckBus(bus, sampleRate, turnAt + beat * 0.58, turnAt + beat * 1.42, gain == null ? 0.5 : gain);
 }
 
 function expDecay(t, decay) {
@@ -963,6 +1060,10 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
   const blip = Boolean(lock) && seconds <= 5;
   const introHold = blip ? 0 : 0.5;
   const introEase = blip ? 0.03 : 0.35;
+  const introShelf = 0.75;
+  const introFloor = 0.42;
+  const kickHold = 0.055;
+  const bodyLift = 1.3;
   const fadeSec = blip ? 0.35 : 1;
   const fadeStart = Math.max(seconds - fadeSec, blip ? seconds * 0.88 : 1.25);
   const out = new Float64Array(samples.length);
@@ -971,6 +1072,11 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
     let g = 1;
     if (blip && t < introEase) {
       g = t / introEase;
+    } else if (blip && t < kickHold) {
+      g = 1;
+    } else if (blip && t < introShelf) {
+      const u = (t - kickHold) / (introShelf - kickHold);
+      g = introFloor + (1 - introFloor) * (u * u * (3 - 2 * u));
     } else if (!blip && t < introHold) g = 0.46;
     else if (!blip && t < introHold + introEase) {
       const u = (t - introHold) / introEase;
@@ -978,6 +1084,8 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
     } else if (t >= fadeStart) {
       const u = (t - fadeStart) / Math.max(seconds - fadeStart, 1e-6);
       g = 1 - (0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, u)));
+    } else if (blip) {
+      g = bodyLift;
     }
     out[i] = samples[i] * g;
   }
@@ -1035,6 +1143,115 @@ function sectionGain(t, seconds, lock, grid) {
   if (p < 0.75) return 1;
   if (p < 0.9) return 0.82;
   return 0.55;
+}
+
+function motifColorVoice(genreId, hz, sampleRate, hold) {
+  const note = Math.max(32, hz || 220);
+  const held = hold || 0.18;
+  if (genreId === "techno") {
+    return renderFmLead({ sampleRate, freq: note * 2, velocity: 0.36, hold: held * 0.45 });
+  }
+  if (genreId === "phonk") {
+    return renderFormant({ sampleRate, freq: Math.max(note * 4, 160), velocity: 0.42, hold: held * 0.32 });
+  }
+  if (genreId === "jazz") {
+    return renderSax({ sampleRate, freq: note * 2, velocity: 0.34, hold: held * 0.6 });
+  }
+  if (genreId === "rock") {
+    return renderFormant({ sampleRate, freq: note, velocity: 0.28, hold: held * 0.24 });
+  }
+  return renderRhodes({ sampleRate, freq: note, velocity: 0.5 });
+}
+
+function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, genreId, seedHex, lock }) {
+  if (!lock) return { motif: motifOf(seedHex, genreId), marks: phraseMarks(seconds, grid) };
+  const marks = phraseMarks(seconds, grid);
+  const motif = motifOf(seedHex, genreId);
+  const beat = marks.beatSec;
+  mixInto(colorBus, motifColorVoice(genreId, motif.hookHz[0], sampleRate, beat * 0.45), 0, 1);
+  if (motif.hookHz[1] && beat < seconds - 0.12) {
+    mixInto(
+      colorBus,
+      motifColorVoice(genreId, motif.hookHz[1], sampleRate, beat * 0.32),
+      Math.floor(beat * sampleRate),
+      0.88,
+    );
+  }
+  if (marks.turnAt < seconds - 0.05) {
+    duckBus(kickBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.4);
+    duckBus(hatBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.34);
+    duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
+    const crashVel = genreId === "timeless" ? 0.22 : genreId === "rock" ? 0.44 : 0.64;
+    if (genreId !== "timeless") {
+      mixInto(
+        colorBus,
+        renderMetal({
+          sampleRate,
+          freq: genreId === "jazz" ? 240 : 300,
+          harmonicity: 5.4,
+          modulationIndex: 34,
+          resonance: 2400,
+          attack: 0.001,
+          decay: 0.42,
+          release: 0.16,
+          velocity: crashVel,
+        }),
+        Math.floor(marks.turnAt * sampleRate),
+        1,
+      );
+    }
+    mixInto(
+      hatBus,
+      renderMetal({
+        sampleRate,
+        freq: genreId === "timeless" ? 420 : 560,
+        harmonicity: 6.1,
+        modulationIndex: 28,
+        resonance: genreId === "timeless" ? 4800 : 7200,
+        attack: 0.001,
+        decay: genreId === "timeless" ? 0.4 : 0.26,
+        release: 0.1,
+        velocity: crashVel * (genreId === "timeless" ? 0.9 : 0.7),
+      }),
+      Math.floor(marks.turnAt * sampleRate),
+      1,
+    );
+    mixInto(kickBus, kickClick(sampleRate, genreId === "phonk" ? 0.28 : 0.18), Math.floor(marks.turnAt * sampleRate), 1);
+    if (genreId === "phonk") {
+      mixInto(
+        kickBus,
+        renderMembrane({
+          sampleRate,
+          freq: RIPPEL.phonk808.noteHz,
+          octaves: RIPPEL.phonk808.octaves,
+          pitchDecay: RIPPEL.phonk808.pitchDecay,
+          attack: RIPPEL.phonk808.attack,
+          decay: 0.7,
+          release: 1,
+          velocity: 0.7,
+          floorHz: CRYSTAL.eightOhEightFloorHz,
+        }),
+        Math.floor(marks.turnAt * sampleRate),
+        1,
+      );
+      mixInto(colorBus, renderCowbell({ sampleRate, velocity: 0.4 }), Math.floor(marks.turnAt * sampleRate), 1);
+    }
+    mixInto(
+      colorBus,
+      motifColorVoice(genreId, motif.turnHz[0], sampleRate, beat * 0.55),
+      Math.floor(marks.turnAt * sampleRate),
+      1,
+    );
+  }
+  if (marks.tagAt < seconds - 0.05) {
+    mixInto(
+      colorBus,
+      motifColorVoice(genreId, motif.tagHz, sampleRate, beat * 0.38),
+      Math.floor(marks.tagAt * sampleRate),
+      1,
+    );
+  }
+  return { motif, marks };
 }
 
 function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, syncopate }) {
@@ -1275,11 +1492,9 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     const rhodesLine = degreeLine("rhodes", 8);
     let rhodesI = 0;
     let bassWalk = bassLine[0] % scale.length;
-    const phrase0 = shortformPhrase(0, seconds, grid);
-    const turnAt = phrase0.hookEndBeats * beat;
-    const tagAt = phrase0.tagStartBeats * beat;
     for (const t of schedule(seconds, beat, 0.2)) {
       const phrase = shortformPhrase(t, seconds, grid);
+      if (lock && g.id === "timeless" && phrase.section === "hook" && Math.round(t / beat) % 2 === 1) continue;
       const lastKick = phrase.tagEase > 0.55 && phrase.beats + 1 >= phrase.total;
       const vel =
         (lastKick ? 0.92 : 0.7 + 0.16 * phrase.hookEase + 0.06 * phrase.turnEase) *
@@ -1298,54 +1513,11 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
       mixInto(kickBus, kickClick(sampleRate, lastKick ? 0.22 : 0.16), Math.floor(t * sampleRate), 1);
     }
-    if (lock && turnAt < seconds - 0.05) {
-      mixInto(
-        hatBus,
-        renderMetal({
-          sampleRate,
-          freq: 320,
-          harmonicity: 5.1,
-          modulationIndex: 28,
-          resonance: 3200,
-          attack: 0.003,
-          decay: 0.22,
-          release: 0.1,
-          velocity: 0.48,
-        }),
-        Math.floor(turnAt * sampleRate),
-        1,
-      );
-      mixInto(kickBus, kickClick(sampleRate, 0.2), Math.floor(turnAt * sampleRate), 1);
-    }
-    if (lock && tagAt < seconds - 0.05) {
-      mixInto(
-        colorBus,
-        renderRhodes({ sampleRate, freq: scale[4 % scale.length] * 2, velocity: 0.46 }),
-        Math.floor(tagAt * sampleRate),
-        1,
-      );
-      mixInto(
-        kickBus,
-        renderMembrane({
-          sampleRate,
-          freq: 41.2,
-          octaves: 4.2,
-          pitchDecay: 0.08,
-          attack: 0.003,
-          decay: 0.38,
-          release: 0.5,
-          velocity: 0.8,
-          floorHz: CRYSTAL.kickFloorHz,
-        }),
-        Math.floor(tagAt * sampleRate),
-        1,
-      );
-    }
     for (const t of schedule(seconds, beat, 0.08)) {
       const at = lock ? t + beat * grid.and : t;
       if (at >= seconds - 0.08) continue;
       const phrase = shortformPhrase(at, seconds, grid);
-      const hatW = 1 - 0.45 * phrase.tagEase;
+      const hatW = (g.id === "timeless" ? 0.32 : 1) * (1 - 0.45 * phrase.tagEase);
       const hit = renderMetal({
         sampleRate,
         freq: 240,
@@ -1397,6 +1569,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   }
 
   if (g.id === "rock") {
+    mixInto(padBus, renderPad(n, sampleRate, padTones("rock", scale), rng, 0.28), 0, 0.3);
     const kick = RIPPEL.technoKick;
     const hat = RIPPEL.technoHat;
     for (const t of schedule(seconds, beat, 0.08)) {
@@ -1433,26 +1606,6 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         1,
       );
     }
-    const phrase0 = shortformPhrase(0, seconds, grid);
-    const turnAt = phrase0.hookEndBeats * beat;
-    if (lock && turnAt < seconds - 0.05) {
-      mixInto(
-        hatBus,
-        renderMetal({
-          sampleRate,
-          freq: 280,
-          harmonicity: 5.1,
-          modulationIndex: 30,
-          resonance: 3000,
-          attack: 0.002,
-          decay: 0.28,
-          release: 0.12,
-          velocity: 0.5,
-        }),
-        Math.floor(turnAt * sampleRate),
-        1,
-      );
-    }
     const rockLine = degreeLine("bass", 8);
     for (const t of schedule(seconds, beat, 0.12)) {
       const beatIdx = Math.round(t / beat);
@@ -1481,6 +1634,32 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         Math.floor((t + beat * 0.5) * sampleRate),
         1,
       );
+    }
+  }
+
+  const phraseDrop = mixPhraseDrop({
+    kickBus,
+    hatBus,
+    colorBus,
+    sampleRate,
+    seconds,
+    grid,
+    genreId: g.id,
+    seedHex,
+    lock,
+  });
+  if (lock && phraseDrop.marks && phraseDrop.marks.turnAt < seconds) {
+    accentTurn(kickBus, sampleRate, phraseDrop.marks.turnAt, 0.64, phraseDrop.marks.beatSec);
+    accentTurn(hatBus, sampleRate, phraseDrop.marks.turnAt, 0.7, phraseDrop.marks.beatSec);
+    accentTurn(colorBus, sampleRate, phraseDrop.marks.turnAt, 0.72, phraseDrop.marks.beatSec);
+    duckNextHit(kickBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.46);
+    duckNextHit(hatBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.52);
+    duckNextHit(colorBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.58);
+    const laterBeat = phraseDrop.marks.beatSec || 0.5;
+    if (g.id !== "jazz") {
+      for (let t = phraseDrop.marks.turnAt + laterBeat * 1.9; t < seconds - 0.08; t += laterBeat) {
+        duckBus(kickBus, sampleRate, t - 0.02, t + laterBeat * 0.45, 0.52);
+      }
     }
   }
 
@@ -1517,14 +1696,43 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   });
 
   const kickEnv = envelopeFollow(kickCh, sampleRate, 0.003, 0.2);
-  const glue = renderAirGlue(n, sampleRate, rng, g.id === "ambient" || g.id === "timeless" ? (lock ? 0.03 : 0.07) : g.id === "phonk" ? 0.04 : 0.028);
+  const glue = renderAirGlue(
+    n,
+    sampleRate,
+    rng,
+    g.id === "ambient" || g.id === "timeless"
+      ? 0.07
+      : g.id === "phonk"
+        ? 0.04
+        : g.id === "jazz" || g.id === "rock"
+          ? lock
+            ? 0.06
+            : 0.028
+          : 0.028,
+  );
   const wetSrc = new Float64Array(n);
   for (let i = 0; i < n; i++) wetSrc[i] = hatCh[i] * 0.62 + colorCh[i] * 0.38;
   const plate = renderPlate(wetSrc, sampleRate);
   const mix = new Float64Array(n);
-  const kickGain = g.id === "ambient" || g.id === "timeless" ? (lock ? 1 : 0.7) : 0.9;
-  const hatGain = g.id === "techno" || g.id === "phonk" || g.id === "rock" ? 0.72 : g.id === "ambient" || g.id === "timeless" ? 0.58 : 0.48;
-  const padGain = g.id === "ambient" || g.id === "timeless" ? (lock ? 0.17 : 0.48) : g.id === "jazz" ? 0.36 : g.id === "phonk" ? 0.42 : 0.12;
+  const kickGain = g.id === "timeless" ? (lock ? 0.7 : 0.55) : g.id === "ambient" ? (lock ? 1 : 0.7) : 0.9;
+  const hatGain = g.id === "techno" || g.id === "phonk" || g.id === "rock" ? 0.78 : g.id === "ambient" ? (lock ? 0.72 : 0.58) : g.id === "timeless" ? 0.22 : 0.56;
+  const padGain = g.id === "timeless"
+    ? lock
+      ? 0.58
+      : 0.55
+    : g.id === "ambient"
+      ? lock
+        ? 0.88
+        : 0.48
+      : g.id === "jazz"
+        ? lock
+          ? 1
+          : 0.36
+        : g.id === "phonk"
+          ? 0.42
+          : g.id === "rock" && lock
+            ? 0.7
+            : 0.12;
   for (let i = 0; i < n; i++) {
     const duck = 1 / (1 + CRYSTAL.sidechain * kickEnv[i] * 7);
     mix[i] =
@@ -1563,6 +1771,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     seed: seedHex,
     genre: g,
     grid: { ...grid, syncopate: lock },
+    motif: phraseDrop.motif,
+    phraseMarks: phraseDrop.marks,
     engine: ENGINE,
     mix: MIX,
     ssot: SSOT,
@@ -1627,10 +1837,15 @@ module.exports = {
   tempoFromSeed,
   motionGrid,
   shortformPhrase,
+  motifOf,
+  phraseMarks,
   padTones,
   degreeLine,
   gridTime,
   sectionGain,
+  mixPhraseDrop,
+  windowRms,
+  sliceRms,
   renderRippelBed,
   renderMembrane,
   renderMetal,

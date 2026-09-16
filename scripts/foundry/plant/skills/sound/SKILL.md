@@ -26,4 +26,6 @@ npx @0xray/foundry inspect --skip-live
 
 Mint fastens `sound` + `sound-inspect`. It does not dump mill inspect onto a sound-only seat. Chat is not a bed receipt.
 
+A 4.44s lock is a Short: seed motif (hook cell → turn answer → tag stamps hook[0]). The crash lands on the jewel cut (`phraseMarks.turnAt`), not a sectionGain fader. Six genre bodies stay tellable.
+
 A friend would hear: the sound mill mills Dist beds like Rippel’s prototype grew up — kick membranes, metal hats, and a crystal-clear mixer, not a muddy toy and not a 3-sine pad.

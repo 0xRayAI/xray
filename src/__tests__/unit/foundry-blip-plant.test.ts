@@ -1354,6 +1354,144 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(focus.buffer.length).toBeGreaterThan(0);
   });
 
+  it('ruptures cage and snap on the turn and eclipses one moon behind the noun', () => {
+    const {
+      paintRippelFrame,
+      eclipseOf,
+      phraseOf,
+      buildVisualConfig,
+      frameFill,
+      goldPixelCount,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      eclipseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        width: number,
+        height: number,
+        t: number,
+      ) => { x: number; y: number; r: number; depth: number };
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string; turnHit: number };
+      buildVisualConfig: (opts: { brief: string; seedHex: string; genre?: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer };
+      frameFill: (buf: Buffer) => number;
+      goldPixelCount: (buf: Buffer) => number;
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex, genre: 'ambient' });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    expect(phraseOf(checksum, turnT).turnHit).toBeGreaterThan(0.7);
+    const hookCage = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const turnCage = paintRippelFrame({
+      renderer: 'orb',
+      t: turnT,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const hookSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 0,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const turnSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    function centerBurst(buf: Buffer, width = 1280, height = 720): number {
+      const x0 = (width * 0.32) | 0;
+      const x1 = (width * 0.68) | 0;
+      const y0 = (height * 0.28) | 0;
+      const y1 = (height * 0.72) | 0;
+      let n = 0;
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const i = (y * width + x) * 3;
+          const r = buf[i];
+          const g = buf[i + 1];
+          const b = buf[i + 2];
+          const jewel = r < 160 && g > 90 && b > 140;
+          const gold = r > 200 && g > 150 && g < 230 && b < 70;
+          if (jewel || gold) n += 1;
+        }
+      }
+      return n;
+    }
+    expect(centerBurst(turnCage.buffer)).toBeGreaterThan(centerBurst(hookCage.buffer));
+    expect(goldPixelCount(turnCage.buffer)).toBeGreaterThan(goldPixelCount(hookCage.buffer));
+    expect(goldPixelCount(turnSnap.buffer)).toBeGreaterThan(goldPixelCount(hookSnap.buffer));
+    expect(centerBurst(turnSnap.buffer)).toBeGreaterThan(centerBurst(hookSnap.buffer));
+    const midCage = paintRippelFrame({
+      renderer: 'orb',
+      t: 2.22,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const midSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 2.22,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    expect(goldPixelCount(midCage.buffer)).toBeGreaterThan(goldPixelCount(hookCage.buffer));
+    expect(goldPixelCount(midSnap.buffer)).toBeGreaterThan(goldPixelCount(hookSnap.buffer));
+    const moons = [0, 0.8, 1.6, 2.2, 3.1, 4.0].map((t) => eclipseOf(checksum, 1280, 720, t));
+    expect(moons.some((m) => m.depth < 0)).toBe(true);
+    expect(moons.some((m) => m.depth >= 0)).toBe(true);
+    expect(moons.every((m) => m.r > 60)).toBe(true);
+    const behind = moons.find((m) => m.depth < 0);
+    const front = moons.find((m) => m.depth >= 0);
+    expect(behind && front).toBeTruthy();
+    const cx = 639.5;
+    const cy = 359.5;
+    expect(Math.hypot((behind as { x: number; y: number }).x - cx, (behind as { y: number }).y - cy)).toBeLessThan(120);
+    expect(Math.abs((front as { y: number }).y - cy)).toBeGreaterThan(16);
+    expect((behind as { r: number }).r + (front as { r: number }).r).toBeGreaterThan(130);
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintEclipseMoon');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintCageRupture');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintSnapRupture');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureHit');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('rupturePeak');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ruptureRecoil');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('paintCageShards');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('crack');
+  });
+
   it('seed-picks a camera and turn push-in keeps the same organ', () => {
     const {
       CAMERA_KINDS,
@@ -1433,7 +1571,10 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const side = cameraPose('side', { turnHit: 0 });
     expect(top.pitch).toBeGreaterThan(low.pitch);
     expect(top.flatten).toBeLessThan(low.flatten);
+    expect(top.flatten).toBeLessThan(0.2);
+    expect(low.pitch).toBeLessThan(-1);
     expect(dutch.roll).toBeGreaterThan(hook.roll);
+    expect(dutch.roll).toBeGreaterThan(0.45);
     expect(side.yaw).toBeGreaterThan(hook.yaw);
     const checksum = buildVisualConfig({ brief, seedHex, camera: 'front' });
     const turnT = (60 / checksum.genreConfig.tempo) * 2;
@@ -1448,6 +1589,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
     expect(spanY(frontPts)).toBeGreaterThan(spanY(topPts));
     expect(spanX(sidePts)).not.toBeCloseTo(spanX(frontPts), 0);
+    const lowPts = projectMesh(Object.assign({}, jewel, { camera: 'low' }), 1280, 720, turnT, checksum);
+    const dutchPts = projectMesh(Object.assign({}, jewel, { camera: 'dutch' }), 1280, 720, turnT, checksum);
+    const midY = (pts: Array<{ y: number }>) => pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    expect(midY(lowPts)).toBeLessThan(midY(topPts));
+    expect(Math.abs(dutchPts[0].y - frontPts[0].y) + Math.abs(dutchPts[1].y - frontPts[1].y)).toBeGreaterThan(8);
     const swirlFront = paintRippelFrame({
       renderer: 'swirl',
       t: turnT,
@@ -1541,7 +1687,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         Math.min(bed.samples.length, Math.floor((t + dur) * bed.sampleRate)),
       );
     expect(sound.highpassEnergy(slice(beat * 0.5, 0.06), bed.sampleRate, 2000)).toBeGreaterThan(
-      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000) * 0.85,
+      sound.highpassEnergy(slice(beat * 0.25, 0.06), bed.sampleRate, 2000),
     );
   });
 

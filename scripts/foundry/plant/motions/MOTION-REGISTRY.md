@@ -28,7 +28,7 @@ One mill suit on every body: Wu hairline, Power Plant satellites, short glow, ho
 | `waves` | `waveform` | sharp `ribbons` | `liquid-waves` |
 | `spark` | `particles` | `embers` | `cosmic-dance` |
 
-Every mint wears a **sparse seed mesh** (12 families · 5 gaits · 6 cameras) plus a **field** (stars · grids `floor`/`none` · gradients · blinkers) **under** the drawing. No outer-edge tick ruler or meridian box. Phrase eases spin: hook crawl → turn whip → tag hold. Camera is a seed shot (`front` `three-quarter` `top` `low` `dutch` `side`) with a turn push-in — same organ, different silhouette. Mill swirl is a cyan/gold jewel, snap is a ghost hull + 2–3 strikes, spark is coals on verts and midpoints. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
+Every mint wears a **sparse seed mesh** (12 families · 5 gaits · 6 cameras) plus a **field** (stars · grids `floor`/`none` · gradients · blinkers) **under** the drawing. No outer-edge tick ruler or meridian box. Phrase eases spin: hook crawl → turn whip → tag hold. Camera is a seed shot (`front` `three-quarter` `top` `low` `dutch` `side`) with a turn push-in — same organ, different silhouette. Turn ruptures cage (gold lantern) and snap (held gold slash). Focus wears one large eclipse moon the noun eats. Mill swirl is a cyan/gold jewel, snap is a ghost hull + 2–3 strikes, spark is coals on verts and midpoints. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 
