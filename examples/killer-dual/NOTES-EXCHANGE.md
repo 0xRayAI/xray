@@ -58,3 +58,11 @@ Host `preCompact` **Y** count=**7** at `2026-09-15T15:35:27Z`. Same bc. Stdin: t
 Updated the quiz printer + leak scan, planted new chat-only canaries once (no labeled table), filled until this cut, quiz-first after it.
 
 Claim **C still not proven** as leftover old-window memory: the injected summary re-fed C1 and C2 from working notes. Dropping the canary table did not stop re-feed. C3 stayed **unknown**. Receipt: `MEMORY-RECEIPT-7.md`. Compact 6 file frozen. Canary values stay off disk. Do not relaunch.
+
+## S follow-up — Claim C compact 8 (2026-09-16)
+
+Host `preCompact` **Y** count=**8** at `2026-09-16T12:52:11Z`. Same bc. Stdin: tokens=**244744**, window=**256000**. Station still has the ticket (A PASS). Same-bc (B PASS).
+
+Planted new chat-only canaries once, then filled without restating until this cut. Quiz-first after it.
+
+Claim **C still not proven** as leftover old-window memory: the injected summary re-fed C1 and C2 from the plant-once text in the compacted window. Never-restate fill did not stop re-feed. C3 stayed **unknown**. Receipt: `MEMORY-RECEIPT-8.md`. Compact 6 and compact 7 files frozen. Canary values stay off disk. Do not relaunch.
