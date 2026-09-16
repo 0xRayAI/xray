@@ -636,8 +636,8 @@ function buildField(seedHex, brief) {
     blinkers,
     grid: GRID_KINDS[(rng() * GRID_KINDS.length) | 0],
     gradient: GRAD_KINDS[(rng() * GRAD_KINDS.length) | 0],
-    gridColor: THEME_CYCLE[(rng() * 3) | 0],
-    gradColor: THEME_CYCLE[(rng() * 3) | 0],
+    gridColor: THEME.cyan,
+    gradColor: rng() > 0.5 ? THEME.cyan : THEME.blue,
     gradStrength: 0.22 + rng() * 0.16,
   };
 }
@@ -1288,25 +1288,31 @@ function paintGrid(buf, width, height, field, t, checksum) {
   }
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   const phrase = phraseOf(checksum || { genreConfig: { tempo: 90 } }, t || 0);
-  const fade = phraseMix(phrase, 0.55, 0.12, 0.28);
-  const accent = field.gridColor || THEME.cyan;
+  const fade = phraseMix(phrase, 0.32, 0.05, 0.14);
+  const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
+  const accent = THEME.cyan;
   const line = (x0, y0, x1, y1) =>
     paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
-      glowAlpha: 0.035 * fade,
-      shader: (u) => iridesce(u, t || 0, beat, accent),
+      glowAlpha: 0.02 * fade,
+      shader: () => THEME.cyan,
     });
   const cx = (width - 1) * 0.5;
-  const vanishY = height * 0.64;
-  const floorY = height * 0.76;
-  line(0, floorY, width, floorY);
+  const yawShift = Math.sin(cam.yaw) * width * 0.2;
+  const roll = cam.roll;
+  const vanishY = height * (0.64 - cam.pitch * 0.14);
+  const floorY = height * (0.76 - cam.pitch * 0.1);
+  const tilt = (x) => (x - cx) * Math.tan(roll) * 0.35;
+  line(0, floorY + tilt(0), width, floorY + tilt(width));
   for (let i = -4; i <= 4; i++) {
     if (i === 0) continue;
-    line(cx + i * width * 0.05, vanishY, cx + i * width * 0.26, height - 6);
+    const x0 = cx + yawShift + i * width * 0.05;
+    const x1 = cx + yawShift + i * width * 0.26;
+    line(x0, vanishY + tilt(x0), x1, height - 6 + tilt(x1));
   }
   for (let k = 1; k <= 3; k++) {
     const y = floorY + (height - 8 - floorY) * (k / 4);
     const span = width * (0.24 + k * 0.14);
-    line(cx - span, y, cx + span, y);
+    line(cx + yawShift - span, y + tilt(cx - span), cx + yawShift + span, y + tilt(cx + span));
   }
 }
 
@@ -1397,13 +1403,13 @@ function layoutFocusRing(circles, width, height, t, checksum) {
     const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
     const inner = i % 3 === 0;
     const orbit = inner
-      ? minSide * 0.1
+      ? minSide * 0.086
       : minSide * (0.17 + (i % 3) * 0.05) * orbitMul * cam.dolly;
     const depth = Math.sin(ang);
     return {
       circle,
       x: cx + Math.cos(ang) * orbit + Math.sin(cam.yaw) * minSide * 0.04,
-      y: cy + Math.sin(ang) * orbit * (inner ? 0.82 : cam.flatten) + (inner ? minSide * 0.05 * (i % 2 ? 1 : -1) : 0),
+      y: cy + Math.sin(ang) * orbit * (inner ? 0.38 : cam.flatten),
       r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
       depth,
@@ -1421,12 +1427,15 @@ function paintSuitSatellites(buf, width, height, t, checksum, pred, clip) {
     .sort((a, b) => a.depth - b.depth);
   for (let i = 0; i < placed.length; i++) {
     const sat = placed[i];
+    const midY = (height - 1) * 0.5;
+    let sy = sat.y;
+    if (Math.abs(sy - midY) < 7) sy += sy >= midY ? 8 : -8;
     if (clip && sat.depth < 0) {
-      const d = Math.hypot(sat.x - clip.cx, sat.y - clip.cy);
+      const d = Math.hypot(sat.x - clip.cx, sy - clip.cy);
       if (d < clip.r - sat.r * 0.15) continue;
     }
     const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.55);
-    stampFocusDisc(buf, width, height, sat.x, sat.y, sat.r * 0.42, color, {
+    stampFocusDisc(buf, width, height, sat.x, sy, sat.r * 0.42, color, {
       rim: 1.6,
       glow: 4,
       glowAlpha: 0.16 + 0.12 * Math.max(0, sat.depth),
