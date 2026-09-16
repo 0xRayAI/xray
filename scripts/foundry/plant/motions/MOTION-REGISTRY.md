@@ -20,13 +20,13 @@ One mill suit on every body: Wu hairline, Power Plant satellites, short glow, ho
 - `SimplifiedVisualConverter.tsx` → Animation → viz id, canvas **1280×720** @ ~30fps
 - `MiniAnimationViewer` / `FiveDimensionalVisualizer` → viz backends
 
-| id | viz id | mill body | rippel body (refined to mill stroke) |
-|----|--------|-----------|--------------------------------------|
-| `orb` | `canvas` | `focus` disc **or** `cage` Wu mesh | `mandala` |
+| id | viz id | mill body | rippel body |
+|----|--------|-----------|-------------|
+| `orb` | `canvas` | `focus` disc **or** `cage` Wu + nucleus | `mandala` |
 | `swirl` | `3d-sacred` | platonic `mesh` | `sacred-flow` |
-| `snap` | `neural` | platonic `mesh` | `synapse` |
-| `waves` | `waveform` | sharp `ribbons` | `liquid-waves` (ribbons + aurora) |
-| `spark` | `particles` | platonic `mesh` | `cosmic-dance` |
+| `snap` | `neural` | `strike` (quantized) | `synapse` |
+| `waves` | `waveform` | sharp `ribbons` | `liquid-waves` |
+| `spark` | `particles` | `embers` | `cosmic-dance` |
 
 Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers) **under** the drawing. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 
