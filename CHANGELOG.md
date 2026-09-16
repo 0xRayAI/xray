@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Factory-blip music drop** — every genre bed hits on the jewel cut (shared crash + motif answer), stamps the hook cell on the tag, and keeps six tellable bodies. Not a sectionGain fader. Inspect still PASSes. No `@0xray/foundry` bump.
 - **Factory-blip drop seats** — cage recoils then whips (shards off the lantern). Cameras read as different shots (top flattens, low hero-lifts, dutch slashes the floor). Snap still cracks. Looker still eclipses. No `@0xray/foundry` bump.
 - **Factory-blip drop rupture** — orb-cage and snap crack on the turn (gold lantern / held slash through the noun), not a linear spin. Looker wears one large eclipse moon the noun eats. Floor still fades; the punch lives on the jewel. No `@0xray/foundry` bump.
 - **Factory-blip camera seats** — six seed shots (`front` `three-quarter` `top` `low` `dutch` `side`) plus a phrase travel / turn push-in. Cube jewel keeps its faces (quads → tris). Large faces actually fill. Floor fades on the turn. Horizon wash stays cyan/blue (no olive). Inner moons graze the disc so the noun can occlude. Embers stay tethered after the burst. `--camera` overrides; seed picks if omitted. Receipt `visualConfig.mesh.camera`. No `@0xray/foundry` bump.

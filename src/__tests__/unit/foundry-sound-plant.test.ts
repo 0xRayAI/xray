@@ -437,6 +437,107 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(tag).toBeGreaterThan(0.5);
   });
 
+  it('drops a hearable turn on every genre — motif returns, lock matches the jewel cut', () => {
+    const {
+      motifOf,
+      phraseMarks,
+      motionGrid,
+      windowRms,
+      bandEnergy,
+      zeroCrossRate,
+    } = requireCjs(path.join(root, 'scripts/foundry/sound-rippel.cjs')) as {
+      motifOf: (seed: string, genre: string) => { hookHz: number[]; turnHz: number[]; tagHz: number };
+      phraseMarks: (
+        seconds: number,
+        grid: { beatSec: number },
+      ) => { turnAt: number; tagAt: number; hookEndBeats: number };
+      motionGrid: (seed: string, genre: string) => { bpm: number; beatSec: number };
+      windowRms: (samples: Float64Array, sampleRate: number, at: number, windowSec?: number) => number;
+      bandEnergy: (samples: Float64Array, sampleRate: number, lo: number, hi: number) => number;
+      zeroCrossRate: (samples: Float64Array) => number;
+    };
+    const { renderSamples, SAMPLE_RATE, evaluateMetrics } = requireCjs(
+      path.join(root, 'scripts/foundry/sound-bed.cjs'),
+    ) as {
+      SAMPLE_RATE: number;
+      renderSamples: (opts: {
+        brief: string;
+        genre: string;
+        seconds: number;
+        seed: string;
+        syncopate: boolean;
+      }) => {
+        samples: Float64Array;
+        motif: { hookHz: number[]; tagHz: number };
+        phraseMarks: { turnAt: number };
+        genre: { id: string };
+      };
+      evaluateMetrics: (
+        samples: Float64Array,
+        sampleRate: number,
+      ) => { status: string; gates?: Record<string, boolean> };
+    };
+    const { phraseOf, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { hookEndBeats: number; section: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string; genre: string }) => {
+        genreConfig: { tempo: number };
+      };
+    };
+
+    const seed = '0xdeadbeefcafebabe';
+    const seconds = 4.44;
+    const genres = ['ambient', 'techno', 'phonk', 'jazz', 'rock', 'timeless'];
+    const beds: Record<string, Float64Array> = {};
+
+    for (const genre of genres) {
+      const motif = motifOf(seed, genre);
+      expect(motif.tagHz).toBe(motif.hookHz[0]);
+      expect(motif.hookHz.length).toBeGreaterThanOrEqual(2);
+      expect(motif.turnHz[0]).not.toBe(motif.hookHz[0]);
+
+      const grid = motionGrid(seed, genre);
+      const marks = phraseMarks(seconds, grid);
+      expect(marks.turnAt).toBeCloseTo(grid.beatSec * 2, 5);
+
+      const checksum = buildVisualConfig({ brief: 'music drop lock', seedHex: seed, genre });
+      const turnT = marks.hookEndBeats * (60 / checksum.genreConfig.tempo);
+      expect(marks.turnAt).toBeCloseTo(turnT, 5);
+      expect(phraseOf(checksum, turnT).section).toBe('turn');
+
+      const bed = renderSamples({
+        brief: 'music drop lock',
+        genre,
+        seconds,
+        seed,
+        syncopate: true,
+      });
+      expect(bed.genre.id).toBe(genre);
+      expect(bed.motif.tagHz).toBe(bed.motif.hookHz[0]);
+      expect(bed.phraseMarks.turnAt).toBeCloseTo(marks.turnAt, 5);
+
+      const hookE = windowRms(bed.samples, SAMPLE_RATE, grid.beatSec * 0.45, 0.2);
+      const turnE = windowRms(bed.samples, SAMPLE_RATE, marks.turnAt, 0.2);
+      expect(turnE, `${genre} turn ${turnE} vs hook ${hookE}`).toBeGreaterThan(hookE);
+
+      const evaled = evaluateMetrics(bed.samples, SAMPLE_RATE);
+      expect(evaled.status, `${genre} ${JSON.stringify(evaled.gates)}`).toBe('PASS');
+      beds[genre] = bed.samples;
+    }
+
+    expect(bandEnergy(beds.techno, SAMPLE_RATE, 2000, 9000)).toBeGreaterThan(
+      bandEnergy(beds.ambient, SAMPLE_RATE, 2000, 9000) * 1.08,
+    );
+    expect(bandEnergy(beds.phonk, SAMPLE_RATE, 20, 80)).toBeGreaterThan(
+      bandEnergy(beds.jazz, SAMPLE_RATE, 20, 80) * 1.05,
+    );
+    expect(zeroCrossRate(beds.rock)).not.toBeCloseTo(zeroCrossRate(beds.timeless), 3);
+  });
+
   it('ports FM lead, formant stabs, and the missing genre tables', () => {
     const { resolveGenre, GENRES, SCALES, GENRE_ALIASES } = requireCjs(
       path.join(root, 'scripts/foundry/sound-rippel.cjs'),
