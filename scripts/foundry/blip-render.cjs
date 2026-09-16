@@ -12,7 +12,7 @@
  * HARD: every Blip muxes a 4.44s stereo AAC bed — missing stream or inaudible = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
- * Kapow is a growth stub (renderer null → FAIL). Unknown id FAIL.
+ * Kapow is a design opt (two-tier stamp on the stanza). Unknown id FAIL.
  */
 
 const crypto = require("crypto");
@@ -21,6 +21,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const rippel = require("./blip-rippel.cjs");
+const kapow = require("./blip-kapow.cjs");
 const sound = require("./sound-bed.cjs");
 
 const SPINE = 1;
@@ -1104,6 +1105,43 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
   return { picture, width, height, engine: rippel.ENGINE, look, lookKind, bodyKind, camera, organ, fallback: false, visualConfig };
 }
 
+function renderKapowPicture(work, seed, brief, opts) {
+  const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
+  const width = MOTION_WIDTH;
+  const height = MOTION_HEIGHT;
+  const raw = path.join(work, "kapow.rgb");
+  let painted = null;
+  writeRawMotion(raw, width, height, frames, (buf, t) => {
+    painted = kapow.paintKapowFrame({
+      t,
+      seedHex: seed,
+      brief,
+      width,
+      height,
+      buffer: buf,
+      lookKind: opts.lookKind,
+      bodyKind: opts.bodyKind,
+      genre: opts.genre,
+      camera: opts.camera,
+    });
+  });
+  const picture = path.join(work, "picture.mp4");
+  encodeRaw(raw, width, height, frames, picture);
+  return {
+    picture,
+    width,
+    height,
+    engine: kapow.ENGINE,
+    look: kapow.LOOK,
+    lookKind: painted && painted.lookKind,
+    bodyKind: painted && painted.bodyKind,
+    camera: painted && painted.camera,
+    organ: kapow.ORGAN,
+    fallback: false,
+    visualConfig: painted && painted.visualConfig,
+  };
+}
+
 function renderBlip(opts = {}) {
   const root = opts.root || process.cwd();
   const brief = String(opts.brief || "factory-blip");
@@ -1123,8 +1161,18 @@ function renderBlip(opts = {}) {
     bed: null,
     bedRel: null,
     bedSource: null,
-    engine: modeInfo.renderer === "still" ? POWER_PLANT_ENGINE : rippel.ENGINE,
-    look: modeInfo.renderer === "still" ? POWER_PLANT_LOOK : rippel.LOOK,
+    engine:
+      modeInfo.renderer === "still"
+        ? POWER_PLANT_ENGINE
+        : modeInfo.renderer === "kapow"
+          ? kapow.ENGINE
+          : rippel.ENGINE,
+    look:
+      modeInfo.renderer === "still"
+        ? POWER_PLANT_LOOK
+        : modeInfo.renderer === "kapow"
+          ? kapow.LOOK
+          : rippel.LOOK,
     fallback: false,
     visualConfig: null,
     lookKind: opts.lookKind || null,
@@ -1154,7 +1202,31 @@ function renderBlip(opts = {}) {
     input.stereoImage = bedInfo.stereoImage || (opts.bed ? "external" : null);
 
     const picture = path.join(work, "picture.mp4");
-    if (modeInfo.renderer === "still") {
+    if (modeInfo.renderer === "kapow") {
+      const motion = renderKapowPicture(work, seed, brief, opts);
+      if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
+      input.engine = motion.engine;
+      input.look = motion.look;
+      input.fallback = false;
+      input.width = motion.width;
+      input.height = motion.height;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: motion.width,
+          height: motion.height,
+          lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
+          genre: input.genre,
+          camera: opts.camera,
+        }),
+      );
+      input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
+      input.bodyKind = motion.bodyKind || (input.visualConfig && input.visualConfig.bodyKind);
+      input.camera = motion.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
+      input.organ = motion.organ;
+    } else if (modeInfo.renderer === "still") {
       const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
       const raw = path.join(work, "power-plant.rgb");
       writeRawMotion(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, (buf, t) => {
@@ -1275,4 +1347,8 @@ module.exports = {
   resolveBed,
   paintWireframeFrame,
   encodeRaw,
+  KAPOW_ENGINE: kapow.ENGINE,
+  KAPOW_LOOK: kapow.LOOK,
+  paintKapowFrame: kapow.paintKapowFrame,
+  sampleKapowFrames: kapow.sampleKapowFrames,
 };

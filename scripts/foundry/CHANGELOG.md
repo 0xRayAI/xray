@@ -4,6 +4,8 @@
 
 Factory-sound mixer seat: `sound-mixer` plant agent levels every genre × tempo × motif (hats / plate / glue). `npx @0xray/foundry sound mix`. Plate send/feedback down, hot hats pulled, glue eased. Inspect stays last-bed. No version bump.
 
+Factory-blip kapow design opt: `--mode motion:kapow` paints a two-tier stamp on hook → turn → tag. Outer cyan burst winds, inner gold burst + word slam the jewel cut. One noun in the hole. Not a Rippel import and not a look. Foundry 0.1.10 — no bump.
+
 Factory-blip music drop: `motifOf` seed cell (hook statement → turn answer → tag stamps hook[0]). `mixPhraseDrop` lands a crash on `phraseMarks.turnAt` — same beat as the jewel cut — on every genre. Ambient/rock no longer keep private crashes. Six bodies stay tellable. Inspect chop/levels/peak still PASS.
 
 Factory-blip entertainment verb: focus moons paint behind the nucleus then in front (real occlusion). Strike / embers / ribbons wear the house noun (cyan disc + gold pupil). Embers erupt on the turn. Mesh stays the jewel so cage and mesh still sort. Iterate pass is every seat ≥7; drop is every seat ≥8.

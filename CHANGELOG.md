@@ -8,6 +8,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### ✨ Features
 - **Factory-sound mixer seat** — `sound-mixer` plant agent levels every genre × tempo × motif (hats, plate, glue, phrase). `npx @0xray/foundry sound mix`. Dries the plate, pulls hot hats, eases glue. Inspect stays the last-bed gate. No `@0xray/foundry` bump.
+- **Factory-blip kapow opt** — `--mode motion:kapow` is a two-tier stamp on the same stanza (outer cyan burst winds, inner gold burst + `KAPOW!` hit the jewel cut). Not a third look. v0 five stay. No `@0xray/foundry` bump.
 
 ---
 

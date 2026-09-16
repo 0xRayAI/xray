@@ -1,6 +1,6 @@
 # Motion registry (factory-blip)
 
-Law: motions are a dynamic registry (`id → renderer`). Rippel names are **imports**, not a frozen enum. Unknown id FAIL. `kapow` is a growth stub (`renderer: null`) until a renderer ships.
+Law: motions are a dynamic registry (`id → renderer`). Rippel names are **imports**, not a frozen enum. Unknown id FAIL. `kapow` is a design opt — two-tier stamp on hook → turn → tag.
 
 On-disk SSOT: `registry.json` next to this file.
 
@@ -35,3 +35,7 @@ Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wir
 Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No audio stream = inspect FAIL.
 
 `still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p. Not a frozen poster. Palette `#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`.
+
+## Design opt — `kapow`
+
+Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a bigger cyan burst with a gold inner burst. Hook winds the outer ring. The jewel cut slams the inner burst and stamps `KAPOW!`. Tag holds. One noun (cyan disc + gold pupil) sits in the hole. Same seed camera / genre grid / 4.44s bed as the five.
