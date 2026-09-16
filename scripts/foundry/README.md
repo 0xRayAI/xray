@@ -26,7 +26,7 @@ npx @0xray/foundry mint
 npx @0xray/foundry inspect [--skip-live]
 npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
 npx @0xray/foundry sound inspect
-npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--bed PATH] [--engine rippel|wireframe]
+npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--look focus|cage] [--body mill|rippel] [--genre ambient|techno|phonk|jazz|rock|timeless] [--camera front|three-quarter|top|low|dutch|side] [--bed PATH] [--engine rippel|wireframe]
 npx @0xray/foundry blip inspect
 npx @0xray/foundry ci [--commit SHA] [--report]
 npx @0xray/foundry hooks
