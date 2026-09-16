@@ -1410,7 +1410,7 @@ function layoutFocusRing(circles, width, height, t, checksum) {
     const inner = i === 0 || i === 3;
     const orbit = inner
       ? minSide * 0.086
-      : Math.max(minSide * 0.17, minSide * (0.18 + (i % 3) * 0.05) * orbitMul * cam.dolly);
+      : Math.max(minSide * 0.22, minSide * (0.22 + (i % 3) * 0.05) * orbitMul * cam.dolly);
     const depth = Math.sin(ang);
     return {
       circle,
