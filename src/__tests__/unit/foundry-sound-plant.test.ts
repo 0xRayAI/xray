@@ -475,7 +475,7 @@ describe('foundry sound plant — Rippel topology', () => {
       evaluateMetrics: (
         samples: Float64Array,
         sampleRate: number,
-      ) => { status: string; gates?: Record<string, boolean> };
+      ) => { status: string; gates?: Record<string, boolean>; metrics?: { chop?: { meanAbsDeltaRms?: number } } };
     };
     const { phraseOf, buildVisualConfig } = requireCjs(
       path.join(root, 'scripts/foundry/blip-rippel.cjs'),
@@ -530,12 +530,13 @@ describe('foundry sound plant — Rippel topology', () => {
     }
 
     expect(bandEnergy(beds.techno, SAMPLE_RATE, 2000, 9000)).toBeGreaterThan(
-      bandEnergy(beds.ambient, SAMPLE_RATE, 2000, 9000) * 1.08,
+      bandEnergy(beds.phonk, SAMPLE_RATE, 2000, 9000) * 1.12,
     );
     expect(bandEnergy(beds.phonk, SAMPLE_RATE, 20, 80)).toBeGreaterThan(
       bandEnergy(beds.jazz, SAMPLE_RATE, 20, 80) * 1.05,
     );
     expect(zeroCrossRate(beds.rock)).not.toBeCloseTo(zeroCrossRate(beds.timeless), 3);
+    expect(zeroCrossRate(beds.jazz)).toBeGreaterThan(zeroCrossRate(beds.phonk) * 1.4);
   });
 
   it('ports FM lead, formant stabs, and the missing genre tables', () => {
