@@ -1394,6 +1394,40 @@ function layoutRing(circles, width, height, t, checksum) {
   return layoutRings(circles, width, height, t, checksum || { genreConfig: { tempo: 90 } });
 }
 
+/** One large moon that threads the noun — half eaten when behind, covering when front. */
+function eclipseOf(checksum, width, height, t) {
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const phrase = phraseOf(checksum || { genreConfig: { tempo: 90 } }, t);
+  const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t);
+  const ang = t * phraseMix(phrase, 0.38, 1.12 + 0.22 * (phrase.turnHit || 0), 0.44) + 0.72 + beat * 0.05;
+  const orbit = minSide * 0.088;
+  const depth = Math.cos(ang);
+  return {
+    x: cx + Math.cos(ang) * orbit,
+    y: cy - minSide * 0.048 + Math.sin(ang) * orbit * 0.22,
+    r: minSide * (0.096 + 0.018 * (phrase.turnHit || 0)),
+    depth,
+    color: THEME.ink,
+  };
+}
+
+function paintEclipseMoon(buf, width, height, t, checksum, pred, clip) {
+  const moon = eclipseOf(checksum, width, height, t);
+  if (pred && !pred(moon)) return moon;
+  const hole = clip && moon.depth < 0 ? clip : null;
+  const color = moon.depth < 0 ? mixRgb(THEME.ink, THEME.void, 0.22) : THEME.ink;
+  stampFocusDisc(buf, width, height, moon.x, moon.y, moon.r, color, {
+    rim: 2.4,
+    glow: 7,
+    glowAlpha: 0.18 + 0.16 * Math.max(0, moon.depth),
+    rimColor: THEME.cyan,
+    clip: hole,
+  });
+  return moon;
+}
+
 /** Lost sharp-dogfood ring: two orbital bands, stampFocusDisc satellites, beat-locked spin. */
 function layoutFocusRing(circles, width, height, t, checksum) {
   const cx = (width - 1) * 0.5;
@@ -1407,15 +1441,12 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
-    const inner = i === 0 || i === 3;
-    const orbit = inner
-      ? minSide * 0.086
-      : Math.max(minSide * 0.22, minSide * (0.22 + (i % 3) * 0.05) * orbitMul * cam.dolly);
+    const orbit = Math.max(minSide * 0.22, minSide * (0.22 + (i % 3) * 0.05) * orbitMul * cam.dolly);
     const depth = Math.sin(ang);
     return {
       circle,
       x: cx + Math.cos(ang) * orbit + Math.sin(cam.yaw) * minSide * 0.04,
-      y: cy + Math.sin(ang) * orbit * (inner ? 0.38 : cam.flatten),
+      y: cy + Math.sin(ang) * orbit * cam.flatten,
       r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
       depth,
@@ -1588,6 +1619,7 @@ function paintFocusOrb(buf, width, height, t, checksum) {
       0.01 * phraseWeight(phrase, "tag") +
       pulse);
   const clip = { cx, cy, r: core * 1.08 };
+  paintEclipseMoon(buf, width, height, t, checksum, (sat) => sat.depth < 0, clip);
   paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth < 0, clip);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
@@ -1601,23 +1633,74 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     glowAlpha: 0.22,
     rimColor: THEME.gold,
   });
+  paintEclipseMoon(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
   paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
+}
+
+/** Mid-clip cage rupture — gold along the lantern, not a linear spin. */
+function paintCageRupture(buf, width, height, pts, mesh, hit) {
+  if (hit < 0.3 || !pts || !mesh || !mesh.edges) return;
+  const keep = hit > 0.55 ? 3 : 2;
+  const ranked = mesh.edges
+    .map((e) => ({ e, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
+    .sort((a, b) => a.z - b.z)
+    .slice(0, keep);
+  for (let i = 0; i < ranked.length; i++) {
+    const [a, b] = ranked[i].e;
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    const half = 2 + Math.round(2.6 * hit);
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, half);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.gold, { glowAlpha: 0.2 + 0.28 * hit });
+    stampFocusDisc(buf, width, height, pa.x, pa.y, 7 + hit * 6, THEME.gold, {
+      rim: 1.2,
+      glow: 4,
+      glowAlpha: 0.26,
+      rimColor: THEME.gold,
+    });
+    stampFocusDisc(buf, width, height, pb.x, pb.y, 6 + hit * 5, THEME.gold, {
+      rim: 1.1,
+      glow: 3.6,
+      glowAlpha: 0.22,
+      rimColor: THEME.gold,
+    });
+  }
+}
+
+/** Mid-clip snap rupture — a held gold crack through the noun. */
+function paintSnapRupture(buf, width, height, cx, cy, minSide, hit) {
+  if (hit < 0.3) return;
+  const span = minSide * (0.18 + 0.12 * hit);
+  const half = 4 + Math.round(3.4 * hit);
+  paintSharpLine(buf, width, height, cx - span, cy - span * 0.16, cx + span, cy + span * 0.16, THEME.gold, half);
+  paintGlowLine(buf, width, height, cx - span, cy - span * 0.16, cx + span, cy + span * 0.16, THEME.gold, {
+    glowAlpha: 0.22 + 0.32 * hit,
+  });
+  stampFocusDisc(buf, width, height, cx, cy, minSide * (0.022 + 0.028 * hit), THEME.gold, {
+    rim: 1.4,
+    glow: 6,
+    glowAlpha: 0.34,
+    rimColor: THEME.gold,
+  });
 }
 
 /** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
 function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const phrase = phraseOf(checksum, t);
-  paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.95,
+  const hit = phrase.turnHit || 0;
+  const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: phraseMix(phrase, 0.78, 1.22, 0.9) + 0.12 * hit,
     half: 1,
-    fill: phraseMix(phrase, 0.16, 0.32, 0.2),
+    fill: phraseMix(phrase, 0.1, 0.78, 0.22) + 0.18 * hit,
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
-  paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
+  paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum, t);
+  paintCageRupture(buf, width, height, drawn && drawn.pts, checksum.mesh, hit);
 }
 
 /** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
@@ -1642,21 +1725,23 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
+  const hit = phrase.turnHit || 0;
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
-  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.04, 0.08, 0.05), t, checksum);
-  stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * phraseMix(phrase, 0.055, 0.08, 0.06), kick);
+  const minSide = Math.min(width, height);
+  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.03, 0.07, 0.04), t, checksum);
   for (let i = 0; i < (mesh.edges || []).length; i++) {
     const [a, b] = mesh.edges[i];
     const pa = pts[a];
     const pb = pts[b];
     if (!pa || !pb) continue;
     paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.cyan, {
-      glowAlpha: 0.045,
+      glowAlpha: 0.03 + 0.08 * hit,
       shader: (u) => livingShade(snapped, t, u, beat, THEME.ink),
     });
   }
-  const keep = Math.min(3, Math.max(2, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.22, 0.36, 0.18))));
+  stampHouseNoun(buf, width, height, cx, cy, minSide * (phraseMix(phrase, 0.048, 0.12, 0.06) + 0.04 * hit), kick);
+  const keep = hit > 0.45 ? 3 : 2;
   const ranked = (mesh.edges || [])
     .map((e, i) => ({ e, i, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
     .sort((a, b) => a.z - b.z)
@@ -1667,22 +1752,25 @@ function paintMillStrike(buf, width, height, t, checksum) {
     const pb = pts[b];
     if (!pa || !pb) continue;
     const live = i === 0;
-    const color = kick > 0.16 && live ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
-    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, live ? 3 : 2);
-    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.2 : 0.1 });
-    stampFocusDisc(buf, width, height, pa.x, pa.y, (live ? 9.4 : 6.8) + kick * 2.4, color, {
+    const crack = live && hit > 0.3;
+    const color = crack || (kick > 0.16 && live) ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
+    const half = live ? 3 + Math.round(3.2 * hit) : 2;
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, half);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.16 + 0.28 * hit : 0.08 });
+    stampFocusDisc(buf, width, height, pa.x, pa.y, (live ? 9.4 : 6.8) + kick * 2.4 + hit * 6, color, {
       rim: 1.3,
       glow: 4,
       glowAlpha: 0.22,
-      rimColor: THEME.ink,
+      rimColor: crack ? THEME.gold : THEME.ink,
     });
-    stampFocusDisc(buf, width, height, pb.x, pb.y, (live ? 8.2 : 5.8) + kick * 1.8, color, {
+    stampFocusDisc(buf, width, height, pb.x, pb.y, (live ? 8.2 : 5.8) + kick * 1.8 + hit * 5, color, {
       rim: 1.2,
       glow: 3.4,
       glowAlpha: 0.2,
-      rimColor: THEME.ink,
+      rimColor: crack ? THEME.gold : THEME.ink,
     });
   }
+  paintSnapRupture(buf, width, height, cx, cy, minSide, hit);
 }
 
 /** mill spark — coals at verts + edge midpoints, longer heat wakes. Not a cosmos web. */
@@ -1752,28 +1840,32 @@ function paintCanvas(buf, width, height, t, checksum) {
 }
 
 /** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
-function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checksum) {
+function paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, mesh, checksum, at) {
   const kick = kickAccent(beat);
   const and = andAccent(beat);
   const style = (mesh && mesh.coreStyle) || "disc";
   const swell = style === "pulse" ? 0.55 + 0.55 * kick + 0.35 * and : 0.5 + 0.35 * kick + 0.22 * and;
-  const core = minSide * (style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell);
-  const t = checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
-  const outer = mixRgb(THEME.cyan, (mesh && meshAccent(mesh, t)) || THEME.gold, 0.28 + 0.45 * and);
+  const t = at != null ? at : checksum && checksum.genreConfig ? (beat * 60) / (checksum.genreConfig.tempo || 90) : beat;
+  const phrase = checksum ? phraseOf(checksum, t) : { turnHit: 0 };
+  const hit = phrase.turnHit || 0;
+  const core =
+    minSide *
+    ((style === "pulse" ? 0.092 + 0.028 * swell : 0.1 + 0.014 * swell) + 0.09 * hit);
+  const outer = mixRgb(THEME.cyan, (mesh && meshAccent(mesh, t)) || THEME.gold, 0.18 + 0.28 * and);
   const inner = mixRgb(THEME.gold, THEME.cyan, 0.18 + 0.62 * and);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, outer, {
     rim: 2.2,
-    glow: 5,
-    glowAlpha: 0.18,
+    glow: 5 + 4 * hit,
+    glowAlpha: 0.18 + 0.16 * hit,
     rimColor: THEME.ink,
   });
   const ix = style === "eclipse" ? cx + Math.cos(beat * Math.PI * 2) * core * 0.22 : cx;
   const iy = style === "eclipse" ? cy + Math.sin(beat * Math.PI) * core * 0.12 : cy;
   stampFocusDisc(buf, width, height, ix, iy, core * (style === "eclipse" ? 0.48 : 0.4), inner, {
     rim: 1.6,
-    glow: 5,
-    glowAlpha: 0.28,
-    rimColor: THEME.ink,
+    glow: 5 + 3 * hit,
+    glowAlpha: 0.28 + 0.12 * hit,
+    rimColor: THEME.gold,
   });
   return { radius: core * 1.08, style };
 }
@@ -2141,6 +2233,8 @@ module.exports = {
   paintMeshOverlay,
   paintField,
   layoutFocusRing,
+  eclipseOf,
+  paintEclipseMoon,
   fingerprintMesh,
   fingerprintField,
   frameFill,
