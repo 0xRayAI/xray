@@ -668,7 +668,13 @@ function resolveLookKind(opts) {
 function resolveGenreKind(opts) {
   const raw = opts && opts.genre;
   if (raw != null && String(raw).trim()) {
-    return soundRippel.resolveGenre(raw).id;
+    const trimmed = String(raw).trim().toLowerCase();
+    const aliased = soundRippel.GENRE_ALIASES[trimmed];
+    if (aliased) return aliased;
+    if (GENRE_KINDS.includes(trimmed)) return trimmed;
+    const err = new Error(`unknown genre "${raw}" (want ${GENRE_KINDS.join("|")})`);
+    err.code = "BLIP_GENRE";
+    throw err;
   }
   return GENRE_KINDS[seedU32(opts && opts.seedHex, 24) % GENRE_KINDS.length];
 }
@@ -692,9 +698,9 @@ function organOf(visualization, lookKind, bodyKind) {
     return bodyKind === "rippel" ? "mandala" : "cage";
   }
   if (visualization === "3d-sacred") return bodyKind === "rippel" ? "sacred-flow" : "mesh";
-  if (visualization === "neural") return bodyKind === "rippel" ? "synapse" : "mesh";
+  if (visualization === "neural") return bodyKind === "rippel" ? "synapse" : "strike";
   if (visualization === "waveform") return bodyKind === "rippel" ? "liquid-waves" : "ribbons";
-  if (visualization === "particles") return bodyKind === "rippel" ? "cosmic-dance" : "mesh";
+  if (visualization === "particles") return bodyKind === "rippel" ? "cosmic-dance" : "embers";
   return visualization;
 }
 
@@ -1274,7 +1280,7 @@ function paintField(buf, width, height, t, checksum) {
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
-    const on = b.onAnd ? and : kick;
+    const on = kick;
     if (on < 0.08) continue;
     stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
       rim: 1,
@@ -1412,7 +1418,7 @@ function paintFocusField(buf, width, height, t, checksum) {
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
-    const on = b.onAnd ? and : kick;
+    const on = kick;
     if (on < 0.08) continue;
     stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
       rim: 1,
@@ -1530,18 +1536,69 @@ function paintMillCage(buf, width, height, t, checksum) {
     THEME.ink,
     { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
   );
-  paintSuitSatellites(buf, width, height, t, checksum);
 }
 
-/** mill body — evolved platonic mesh as the silhouette. */
+/** mill swirl — platonic Wu only. No sticker moons. */
 function paintMillMesh(buf, width, height, t, checksum, scale) {
   startFrame(buf, width, height, t, checksum);
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.92,
     half: 1,
   });
-  paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
-  paintSuitSatellites(buf, width, height, t, checksum);
+}
+
+/** mill snap — quantized strike. Held edges, then a jump. Not the swirl cage. */
+function paintMillStrike(buf, width, height, t, checksum) {
+  startFrame(buf, width, height, t, checksum);
+  const mesh = checksum && checksum.mesh;
+  if (!mesh) return;
+  const snapped = Object.assign({}, mesh, { gait: "snap" });
+  const pts = projectMesh(snapped, width, height, t, checksum, 0.9);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const phrase = phraseOf(checksum, t);
+  const keep = Math.max(3, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.42, 1, 0.3)));
+  const ranked = (mesh.edges || [])
+    .map((e, i) => ({ e, i, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
+    .sort((a, b) => a.z - b.z)
+    .slice(0, keep);
+  for (let i = 0; i < ranked.length; i++) {
+    const [a, b] = ranked[i].e;
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    const color = kick > 0.16 && i === 0 ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, 1);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: kick > 0.16 ? 0.16 : 0.08 });
+  }
+}
+
+/** mill spark — verts as embers, no cage, no sticker moons. */
+function paintMillEmbers(buf, width, height, t, checksum) {
+  startFrame(buf, width, height, t, checksum);
+  const mesh = checksum && checksum.mesh;
+  if (!mesh) return;
+  const pts = projectMesh(mesh, width, height, t, checksum, 0.85);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const phrase = phraseOf(checksum, t);
+  const size = phraseMix(phrase, 2.2, 3.6, 1.8);
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      p.x,
+      p.y,
+      size + (i % 3) * 0.6 + kick * 0.8,
+      kick > 0.2 && i === 0 ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length],
+      { rim: 1.1, glow: 2.4, glowAlpha: 0.18, rimColor: THEME.ink },
+    );
+  }
+  if (kick > 0.2 && pts[0] && pts[1]) {
+    paintSharpLine(buf, width, height, pts[0].x, pts[0].y, pts[1].x, pts[1].y, THEME.gold, 1);
+  }
 }
 
 /** orb → canvas. focus = cyan disc. cage+mill = Wu mesh. cage+rippel = refined mandala. */
@@ -1551,7 +1608,6 @@ function paintCanvas(buf, width, height, t, checksum) {
   }
   if (checksum.bodyKind === "rippel") {
     startFrame(buf, width, height, t, checksum);
-    paintFocusMeshMass(buf, width, height, t, checksum);
     organs.paintMandala(buf, width, height, t, checksum);
     return;
   }
@@ -1632,14 +1688,13 @@ function paintSacred(buf, width, height, t, checksum) {
     return paintMillMesh(buf, width, height, t, checksum, 0.92);
   }
   startFrame(buf, width, height, t, checksum);
-  paintFocusMeshMass(buf, width, height, t, checksum);
   organs.paintSacredFlow(buf, width, height, t, checksum);
 }
 
 /** snap → mill mesh or refined Kuramoto synapse. */
 function paintNeural(buf, width, height, t, checksum) {
   if (checksum.bodyKind !== "rippel") {
-    return paintMillMesh(buf, width, height, t, checksum, 0.9);
+    return paintMillStrike(buf, width, height, t, checksum);
   }
   startFrame(buf, width, height, t, checksum);
   organs.paintKuramoto(buf, width, height, t, checksum);
@@ -1648,7 +1703,6 @@ function paintNeural(buf, width, height, t, checksum) {
 /** waves → WaveformVisualizer liquid ocean + mill ribbons + gold needle. */
 function paintWaveform(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  paintFocusMeshMass(buf, width, height, t, checksum);
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
@@ -1696,15 +1750,13 @@ function paintWaveform(buf, width, height, t, checksum) {
   }
   if (checksum.bodyKind === "rippel") {
     organs.paintAuroraOrbs(buf, width, height, t, checksum);
-  } else {
-    paintSuitSatellites(buf, width, height, t, checksum);
   }
 }
 
 /** spark → mill mesh or refined cosmic dance. */
 function paintParticles(buf, width, height, t, checksum) {
   if (checksum.bodyKind !== "rippel") {
-    return paintMillMesh(buf, width, height, t, checksum, 0.85);
+    return paintMillEmbers(buf, width, height, t, checksum);
   }
   startFrame(buf, width, height, t, checksum);
   organs.paintCosmos(buf, width, height, t, checksum);

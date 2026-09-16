@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip wears **one mill suit** on every variation. Look, body, and genre are seed + flags. Mill mesh/cage/ribbons and Rippel drawers share Power Plant satellites, phrase scale, and the same hook→turn→tag bed. Auto bed seed-picks genre with the picture so tempo stays locked. Receipt `lookKind` + `bodyKind` + `genre` + `organ`.
+Factory-blip course-correct: mill swirl / snap / spark are no longer one drawer (`mesh` / `strike` / `embers`). Sticker-sheet satellites stay on focus only. Unknown `--genre` fails closed. Still plate shares the seed genre. Auto bed writes imaged stereo (hats/color off-center), not L=R upmix. Receipt `stereoImage`.
 
 Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
 

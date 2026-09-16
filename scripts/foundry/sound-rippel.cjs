@@ -1541,9 +1541,19 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   const shaped = masterEnvelope(glued, sampleRate, seconds, lock);
   const peaked = normalize(shaped, CRYSTAL.peakTarget);
   const samples = limiter(peaked, dbLin(RIPPEL.mixer.limiterDb));
+  const left = new Float64Array(n);
+  const right = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const side = hatCh[i] * 0.14 - colorCh[i] * 0.09;
+    left[i] = Math.max(-1, Math.min(1, samples[i] + side));
+    right[i] = Math.max(-1, Math.min(1, samples[i] - side));
+  }
 
   return {
     samples,
+    left,
+    right,
+    stereoImage: "imaged",
     sampleRate,
     seconds,
     seed: seedHex,

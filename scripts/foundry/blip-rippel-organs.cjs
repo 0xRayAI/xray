@@ -264,18 +264,23 @@ function createOrgans(kit) {
       );
     }
 
-    const steps = 48;
-    const turns = 2.1;
+    const steps = 96;
+    const turns = 1.6;
     const rot = t * mix(phrase, 0.22, 0.42, 0.12);
     const color = kick > 0.2 ? THEME.gold : themeFromHue(t * 32);
-    let px = cx + Math.cos(rot) * (minSide * 0.04);
-    let py = cy + Math.sin(rot) * (minSide * 0.04);
-    for (let i = 1; i <= steps; i++) {
+    let px = null;
+    let py = null;
+    for (let i = 0; i <= steps; i++) {
       const p = i / steps;
       const ang = p * turns * Math.PI * 2 + rot;
-      const radius = (minSide * (0.05 + p * 0.26)) * phraseScale;
+      const radius = (minSide * (0.04 + p * 0.24)) * phraseScale;
       const x = cx + Math.cos(ang) * radius;
       const y = cy + Math.sin(ang) * radius;
+      if (px == null) {
+        px = x;
+        py = y;
+        continue;
+      }
       paintSharpLine(buf, width, height, px, py, x, y, color, 1);
       paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: 0.1 });
       px = x;
@@ -429,19 +434,19 @@ function createOrgans(kit) {
       0.1,
     );
     const circles = (checksum.visualConfig && checksum.visualConfig.circles) || [];
-    const n = Math.max(6, Math.min(circles.length, 8));
+    const n = Math.min(4, Math.max(3, circles.length));
     const orbitMul = mix(phrase, 0.86, 1.08, 0.7);
     for (let i = 0; i < n; i++) {
       const freq = (circles[i] && circles[i].frequency) || 440 + i * 40;
       const ang = (i / n) * Math.PI * 2 + t * 0.5 + freq / 2000;
-      const dist = minSide * (0.14 + (i % 3) * 0.04) * orbitMul;
+      const dist = minSide * (0.2 + (i % 2) * 0.05) * orbitMul;
       const x = cx + Math.cos(ang) * dist;
-      const y = cy + Math.sin(ang) * dist * 0.72;
-      const gold = kick > 0.2 && i % 4 === 0;
-      stampFocusDisc(buf, width, height, x, y, 10.5 + (i % 3) * 2.4, gold ? THEME.gold : themeFromHue(t * 40 + i * 48), {
-        rim: 1.6,
-        glow: 4,
-        glowAlpha: 0.22,
+      const y = cy + Math.sin(ang) * dist * 0.55;
+      const gold = kick > 0.2 && i === 0;
+      stampFocusDisc(buf, width, height, x, y, 4.8 + (i % 2), gold ? THEME.gold : themeFromHue(t * 40 + i * 48), {
+        rim: 1.2,
+        glow: 2.8,
+        glowAlpha: 0.18,
         rimColor: THEME.ink,
       });
     }

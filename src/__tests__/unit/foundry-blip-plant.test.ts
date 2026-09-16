@@ -958,8 +958,9 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(BODY_KINDS).toEqual(['mill', 'rippel']);
     expect(organOf('canvas', 'cage', 'mill')).toBe('cage');
     expect(organOf('canvas', 'cage', 'rippel')).toBe('mandala');
-    expect(organOf('neural', 'cage', 'mill')).toBe('mesh');
+    expect(organOf('neural', 'cage', 'mill')).toBe('strike');
     expect(organOf('neural', 'cage', 'rippel')).toBe('synapse');
+    expect(organOf('particles', 'cage', 'mill')).toBe('embers');
     expect(() => resolveBodyKind({ bodyKind: 'potato' })).toThrow(/unknown body/);
     const brief = 'warehouse floor · Power Plant';
     const seedHex = '0xdeadbeef';
@@ -989,7 +990,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     });
     expect(millCage.organ).toBe('cage');
     expect(rippelMandala.organ).toBe('mandala');
-    expect(millSnap.organ).toBe('mesh');
+    expect(millSnap.organ).toBe('strike');
     expect(rippelSnap.organ).toBe('synapse');
     expect(framesDiffer(millCage.buffer, rippelMandala.buffer)).toBe(true);
     expect(framesDiffer(millSnap.buffer, rippelSnap.buffer)).toBe(true);
@@ -1027,6 +1028,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(GENRE_KINDS).toEqual(['ambient', 'techno', 'phonk', 'jazz', 'rock', 'timeless']);
     expect(resolveGenreKind({ genre: 'techno' })).toBe('techno');
     expect(resolveGenreKind({ genre: 'country' })).toBe('timeless');
+    expect(() => resolveGenreKind({ genre: 'potato' })).toThrow(/unknown genre/);
     const seedHex = '0xdeadbeef';
     const brief = 'warehouse floor · Power Plant';
     expect(resolveGenreKind({ seedHex })).toBe(buildVisualConfig({ brief, seedHex }).genre);
@@ -1038,18 +1040,30 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       brief,
       bodyKind: 'mill',
     });
+    const millSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
+    const millSpark = paintRippelFrame({
+      renderer: 'spark',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
     expect(millSwirl.organ).toBe('mesh');
+    expect(millSnap.organ).toBe('strike');
+    expect(millSpark.organ).toBe('embers');
     expect(millSwirl.genre).toBe(resolveGenreKind({ seedHex }));
-    function discs(buf: Buffer): number {
-      let n = 0;
-      for (let i = 0; i < buf.length; i += 3) {
-        const cyan = Math.abs(buf[i] - 61) < 12 && Math.abs(buf[i + 1] - 224) < 12 && Math.abs(buf[i + 2] - 232) < 12;
-        const gold = buf[i] > 200 && buf[i + 1] > 150 && buf[i + 2] < 80;
-        if (cyan || gold) n += 1;
-      }
-      return n;
-    }
-    expect(discs(millSwirl.buffer)).toBeGreaterThan(400);
+    const { framesDiffer } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(framesDiffer(millSwirl.buffer, millSnap.buffer)).toBe(true);
+    expect(framesDiffer(millSwirl.buffer, millSpark.buffer)).toBe(true);
+    expect(framesDiffer(millSnap.buffer, millSpark.buffer)).toBe(true);
     const checksum = buildVisualConfig({ brief, seedHex });
     expect(phraseOf(checksum, 0).section).toBe('hook');
     expect(read('scripts/foundry/blip.mjs')).toContain('--genre');
@@ -1091,9 +1105,9 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const catalog = [
       { renderer: 'orb', lookKind: 'cage', mill: 'cage', rippel: 'mandala' },
       { renderer: 'swirl', mill: 'mesh', rippel: 'sacred-flow' },
-      { renderer: 'snap', mill: 'mesh', rippel: 'synapse' },
+      { renderer: 'snap', mill: 'strike', rippel: 'synapse' },
       { renderer: 'waves', mill: 'ribbons', rippel: 'liquid-waves' },
-      { renderer: 'spark', mill: 'mesh', rippel: 'cosmic-dance' },
+      { renderer: 'spark', mill: 'embers', rippel: 'cosmic-dance' },
     ] as const;
     for (const row of catalog) {
       expect(organOf(row.renderer === 'orb' ? 'canvas' : row.renderer === 'swirl' ? '3d-sacred' : row.renderer === 'snap' ? 'neural' : row.renderer === 'waves' ? 'waveform' : 'particles', 'cage', 'mill')).toBe(row.mill);

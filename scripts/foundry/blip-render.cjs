@@ -255,13 +255,13 @@ function onEdge(x, y, x0, y0, x1, y1) {
   return inBox(x, y, x0, y0, x1, y1) && (x === x0 || x === x1 - 1 || y === y0 || y === y1 - 1);
 }
 
-function stillPlate(seedHex, t) {
-  return plateClock(seedHex, t).plate;
+function stillPlate(seedHex, t, genre) {
+  return plateClock(seedHex, t, genre).plate;
 }
 
-function plateClock(seedHex, t) {
+function plateClock(seedHex, t, genre) {
   const start = seedU32(seedHex, 0) % STILL_PLATES.length;
-  const grid = sound.motionGrid(seedHex, "ambient");
+  const grid = sound.motionGrid(seedHex, rippel.resolveGenreKind({ seedHex, genre }));
   const beats = Math.max(STILL_PLATES.length, Math.floor(DURATION_SEC / grid.beatSec + 1e-9));
   const every = Math.max(1, Math.floor(beats / STILL_PLATES.length));
   const n = t == null || t <= 0 ? 0 : t >= DURATION_SEC ? DURATION_SEC - 1e-6 : t;
@@ -354,8 +354,8 @@ function mixPlateRgb(a, b, amount) {
   ];
 }
 
-function paintStill(seedHex, t) {
-  const clock = plateClock(seedHex, t || 0);
+function paintStill(seedHex, t, genre) {
+  const clock = plateClock(seedHex, t || 0, genre);
   const current = paintPlate(clock.plate, clock.u);
   const incoming = clock.prevMix > 0.01 && clock.prev ? paintPlate(clock.prev, 1) : null;
   return function paint(x, y) {
@@ -367,8 +367,8 @@ function paintStill(seedHex, t) {
   };
 }
 
-function paintStillFrame(buf, width, height, seedHex, t, brief) {
-  const paint = paintStill(seedHex, t);
+function paintStillFrame(buf, width, height, seedHex, t, brief, genre) {
+  const paint = paintStill(seedHex, t, genre);
   for (let y = 0; y < height; y++) {
     const ly = Math.min(PLATE_HEIGHT - 1, ((y * PLATE_HEIGHT) / height) | 0);
     for (let x = 0; x < width; x++) {
@@ -904,6 +904,7 @@ function buildReceipt(input, evaled) {
     lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
     bodyKind: input.bodyKind || (input.visualConfig && input.visualConfig.bodyKind) || null,
     genre: input.genre || (input.visualConfig && input.visualConfig.genre) || null,
+    stereoImage: input.stereoImage || null,
     organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
@@ -1018,11 +1019,21 @@ function resolveBed(opts, root, brief, work, seed) {
       seed,
       syncopate: true,
     });
-    sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
+    if (rendered.left && rendered.right) {
+      sound.writeWav16Stereo(out, rendered.left, rendered.right, rendered.sampleRate);
+    } else {
+      sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
+    }
     if (!fs.existsSync(out)) {
       return { ok: false, reason: "auto bed missing" };
     }
-    return { ok: true, bed: out, source: "auto-sound", grid: rendered.grid || null };
+    return {
+      ok: true,
+      bed: out,
+      source: "auto-sound",
+      grid: rendered.grid || null,
+      stereoImage: rendered.stereoImage || (rendered.left ? "imaged" : "dual-mono"),
+    };
   } catch (err) {
     return {
       ok: false,
@@ -1135,13 +1146,14 @@ function renderBlip(opts = {}) {
     input.bedRel = path.relative(root, bedInfo.bed) || bedInfo.bed;
     input.bedSource = bedInfo.source;
     input.grid = bedInfo.grid || null;
+    input.stereoImage = bedInfo.stereoImage || (opts.bed ? "external" : null);
 
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {
       const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
       const raw = path.join(work, "power-plant.rgb");
       writeRawMotion(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, (buf, t) => {
-        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief);
+        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief, input.genre);
       });
       encodeRaw(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, picture);
       input.engine = POWER_PLANT_ENGINE;

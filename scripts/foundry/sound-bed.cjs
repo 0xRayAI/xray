@@ -81,6 +81,34 @@ function renderSamples({ brief, genre, seconds, seed, syncopate }) {
   });
 }
 
+function writeWav16Stereo(file, left, right, sampleRate = SAMPLE_RATE) {
+  const n = Math.min(left.length, right.length);
+  const dataSize = n * 4;
+  const buf = Buffer.alloc(44 + dataSize);
+  buf.write("RIFF", 0);
+  buf.writeUInt32LE(36 + dataSize, 4);
+  buf.write("WAVE", 8);
+  buf.write("fmt ", 12);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(2, 22);
+  buf.writeUInt32LE(sampleRate, 24);
+  buf.writeUInt32LE(sampleRate * 4, 28);
+  buf.writeUInt16LE(4, 32);
+  buf.writeUInt16LE(16, 34);
+  buf.write("data", 36);
+  buf.writeUInt32LE(dataSize, 40);
+  for (let i = 0; i < n; i++) {
+    const l = Math.max(-1, Math.min(1, left[i]));
+    const r = Math.max(-1, Math.min(1, right[i]));
+    buf.writeInt16LE(Math.round(l * 32767), 44 + i * 4);
+    buf.writeInt16LE(Math.round(r * 32767), 46 + i * 4);
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, buf);
+  return file;
+}
+
 function writeWav16Mono(file, samples, sampleRate = SAMPLE_RATE) {
   const n = samples.length;
   const dataSize = n * 2;
@@ -434,6 +462,7 @@ module.exports = {
   motionGrid: rippel.motionGrid,
   renderSamples,
   writeWav16Mono,
+  writeWav16Stereo,
   readWav16,
   evaluateMetrics,
   evaluateWavFile,
