@@ -430,6 +430,28 @@ function duckBus(bus, sampleRate, from, to, gain) {
   }
 }
 
+/** Keep the open downbeat and the jewel cut; pull other hits back so the cut is the loudest. */
+function accentTurn(bus, sampleRate, turnAt, othersGain, beatSec) {
+  const openEnd = Math.floor(0.14 * sampleRate);
+  const hold = Math.min(0.34, Math.max(0.18, (beatSec || 0.5) * 0.6));
+  const a = Math.max(0, Math.floor((turnAt - 0.05) * sampleRate));
+  const b = Math.min(bus.length, Math.floor((turnAt + hold) * sampleRate));
+  const g0 = othersGain == null ? 0.66 : othersGain;
+  const fade = Math.max(1, Math.floor(0.02 * sampleRate));
+  for (let i = 0; i < bus.length; i++) {
+    if (i < openEnd) continue;
+    if (i >= a && i < b) continue;
+    let g = g0;
+    const nearOpen = i - openEnd;
+    const nearA = a - i;
+    const nearB = i - b;
+    if (nearOpen >= 0 && nearOpen < fade) g = 1 - (1 - g0) * (nearOpen / fade);
+    else if (nearA > 0 && nearA < fade) g = 1 - (1 - g0) * (nearA / fade);
+    else if (nearB >= 0 && nearB < fade) g = 1 - (1 - g0) * (nearB / fade);
+    bus[i] *= g;
+  }
+}
+
 function expDecay(t, decay) {
   if (decay <= 0) return t <= 0 ? 1 : 0;
   if (t < 0) return 0;
@@ -1032,8 +1054,8 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
   const introHold = blip ? 0 : 0.5;
   const introEase = blip ? 0.03 : 0.35;
   const introShelf = 0.75;
-  const introFloor = 0.48;
-  const bodyLift = 1.12;
+  const introFloor = 0.42;
+  const bodyLift = 1.24;
   const fadeSec = blip ? 0.35 : 1;
   const fadeStart = Math.max(seconds - fadeSec, blip ? seconds * 0.88 : 1.25);
   const out = new Float64Array(samples.length);
@@ -1041,9 +1063,11 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
     const t = i / sampleRate;
     let g = 1;
     if (blip && t < introEase) {
-      g = (t / introEase) * introFloor;
+      g = t / introEase;
+    } else if (blip && t < 0.14) {
+      g = 1;
     } else if (blip && t < introShelf) {
-      const u = (t - introEase) / (introShelf - introEase);
+      const u = (t - 0.14) / (introShelf - 0.14);
       g = introFloor + (1 - introFloor) * (u * u * (3 - 2 * u));
     } else if (!blip && t < introHold) g = 0.46;
     else if (!blip && t < introHold + introEase) {
@@ -1460,6 +1484,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     let bassWalk = bassLine[0] % scale.length;
     for (const t of schedule(seconds, beat, 0.2)) {
       const phrase = shortformPhrase(t, seconds, grid);
+      if (lock && g.id === "timeless" && phrase.section === "hook" && Math.round(t / beat) % 2 === 1) continue;
       const lastKick = phrase.tagEase > 0.55 && phrase.beats + 1 >= phrase.total;
       const vel =
         (lastKick ? 0.92 : 0.7 + 0.16 * phrase.hookEase + 0.06 * phrase.turnEase) *
@@ -1613,6 +1638,11 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     seedHex,
     lock,
   });
+  if (lock && phraseDrop.marks && phraseDrop.marks.turnAt < seconds) {
+    accentTurn(kickBus, sampleRate, phraseDrop.marks.turnAt, 0.64, phraseDrop.marks.beatSec);
+    accentTurn(hatBus, sampleRate, phraseDrop.marks.turnAt, 0.7, phraseDrop.marks.beatSec);
+    accentTurn(colorBus, sampleRate, phraseDrop.marks.turnAt, 0.72, phraseDrop.marks.beatSec);
+  }
 
   const kickCh = applyBus(kickBus, sampleRate, {
     hp: g.id === "phonk" ? RIPPEL.phonk808.hp : 30,
@@ -1677,12 +1707,12 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         : 0.48
       : g.id === "jazz"
         ? lock
-          ? 0.86
+          ? 1
           : 0.36
         : g.id === "phonk"
           ? 0.42
           : g.id === "rock" && lock
-            ? 0.52
+            ? 0.7
             : 0.12;
   for (let i = 0; i < n; i++) {
     const duck = 1 / (1 + CRYSTAL.sidechain * kickEnv[i] * 7);

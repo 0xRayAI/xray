@@ -522,7 +522,9 @@ describe('foundry sound plant — Rippel topology', () => {
 
       const hookE = windowRms(bed.samples, SAMPLE_RATE, grid.beatSec * 0.45, 0.2);
       const turnE = windowRms(bed.samples, SAMPLE_RATE, marks.turnAt, 0.2);
+      const nextE = windowRms(bed.samples, SAMPLE_RATE, marks.turnAt + grid.beatSec, 0.2);
       expect(turnE, `${genre} turn ${turnE} vs hook ${hookE}`).toBeGreaterThan(hookE);
+      expect(turnE, `${genre} turn ${turnE} vs next ${nextE}`).toBeGreaterThan(nextE);
 
       const evaled = evaluateMetrics(bed.samples, SAMPLE_RATE);
       expect(evaled.status, `${genre} ${JSON.stringify(evaled.gates)}`).toBe('PASS');
