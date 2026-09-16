@@ -639,6 +639,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seedHex: string;
         brief: string;
         lookKind?: string;
+        genre?: string;
       }) => { buffer: Buffer; width: number; height: number };
       orbFocusWidth: (
         buf: Buffer,
@@ -652,6 +653,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex: '0xdeadbeef',
       brief: 'warehouse floor · Power Plant',
       lookKind: 'focus',
+      genre: 'ambient',
     });
     const focus = orbFocusWidth(frame.buffer, frame.width, frame.height);
     expect(focus.peak).toBeGreaterThan(0.55);
@@ -684,6 +686,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seedHex: string;
         brief: string;
         lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
       }) => { buffer: Buffer; width: number; height: number; lookKind: string };
       framesDiffer: (a: Buffer, b: Buffer) => boolean;
       orbFocusWidth: (
@@ -709,6 +713,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex,
       brief,
       lookKind: 'focus',
+      genre: 'ambient',
     });
     const cageFrame = paintRippelFrame({
       renderer: 'orb',
@@ -717,6 +722,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       brief,
       lookKind: 'cage',
       bodyKind: 'mill',
+      genre: 'ambient',
     });
     expect(focusFrame.lookKind).toBe('focus');
     expect(cageFrame.lookKind).toBe('cage');
