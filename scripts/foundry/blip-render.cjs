@@ -270,7 +270,7 @@ function plateClock(seedHex, t) {
   const span = every * grid.beatSec;
   const cutAt = step * span;
   const into = n - cutAt;
-  const xfade = Math.min(0.14, Math.max(0.08, span * 0.16));
+  const xfade = Math.min(0.32, Math.max(0.22, span * 0.28));
   let prevMix = 0;
   let prev = null;
   if (step > 0 && into < xfade) {

@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~140ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
+Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~300ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
 
 Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.
 
