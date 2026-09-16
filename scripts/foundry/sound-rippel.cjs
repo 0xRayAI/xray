@@ -255,9 +255,16 @@ function motionGrid(seedHex, genre) {
   };
 }
 
+function ease01(a, b, x) {
+  if (b <= a) return x >= b ? 1 : 0;
+  const t = x < a ? 0 : x > b ? 1 : (x - a) / (b - a);
+  return t * t * (3 - 2 * t);
+}
+
 /**
  * 4.44s entertainment spine — YouTube-short form, not a pasted bar.
  * hook (beats 0–2) → turn (2 → last ~1.1) → tag. Hits are one-shots, not strobe.
+ * hookEase/turnEase/tagEase are continuous weights (crossfade). Binary hook/turn/tag stay section flags.
  */
 function shortformPhrase(t, seconds, grid) {
   const dur = seconds > 0 ? seconds : 4.44;
@@ -274,6 +281,10 @@ function shortformPhrase(t, seconds, grid) {
     const d = Math.abs(beats - at);
     return d < 0.14 ? 1 - d / 0.14 : 0;
   }
+  const fade = 0.28;
+  const hookEase = 1 - ease01(hookEnd - fade, hookEnd + fade, beats);
+  const tagEase = ease01(tagStart - fade, tagStart + fade, beats);
+  const turnEase = Math.max(0, 1 - hookEase - tagEase);
   return {
     section,
     beats,
@@ -281,6 +292,9 @@ function shortformPhrase(t, seconds, grid) {
     hook: section === "hook" ? 1 : 0,
     turn: section === "turn" ? 1 : 0,
     tag: section === "tag" ? 1 : 0,
+    hookEase,
+    turnEase,
+    tagEase,
     turnHit: near(hookEnd),
     tagHit: near(tagStart),
     hookEndBeats: hookEnd,
@@ -1150,10 +1164,16 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     const bassLine = degreeLine("bass", 8);
     const rhodesLine = degreeLine("rhodes", 8);
     let rhodesI = 0;
+    let bassWalk = bassLine[0] % scale.length;
+    const phrase0 = shortformPhrase(0, seconds, grid);
+    const turnAt = phrase0.hookEndBeats * beat;
+    const tagAt = phrase0.tagStartBeats * beat;
     for (const t of schedule(seconds, beat, 0.2)) {
       const phrase = shortformPhrase(t, seconds, grid);
-      const lastKick = phrase.tag && phrase.beats + 1 >= phrase.total;
-      const vel = (lastKick ? 0.92 : phrase.hook ? 0.86 : phrase.turn ? 0.74 : 0.7) * sectionGain(t, seconds, lock);
+      const lastKick = phrase.tagEase > 0.55 && phrase.beats + 1 >= phrase.total;
+      const vel =
+        (lastKick ? 0.92 : 0.7 + 0.16 * phrase.hookEase + 0.06 * phrase.turnEase) *
+        sectionGain(t, seconds, lock);
       const hit = renderMembrane({
         sampleRate,
         freq: 36.7,
@@ -1168,10 +1188,54 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
       mixInto(kickBus, kickClick(sampleRate, lastKick ? 0.22 : 0.16), Math.floor(t * sampleRate), 1);
     }
+    if (lock && turnAt < seconds - 0.05) {
+      mixInto(
+        hatBus,
+        renderMetal({
+          sampleRate,
+          freq: 320,
+          harmonicity: 5.1,
+          modulationIndex: 28,
+          resonance: 3200,
+          attack: 0.003,
+          decay: 0.22,
+          release: 0.1,
+          velocity: 0.48,
+        }),
+        Math.floor(turnAt * sampleRate),
+        1,
+      );
+      mixInto(kickBus, kickClick(sampleRate, 0.2), Math.floor(turnAt * sampleRate), 1);
+    }
+    if (lock && tagAt < seconds - 0.05) {
+      mixInto(
+        colorBus,
+        renderRhodes({ sampleRate, freq: scale[4 % scale.length] * 2, velocity: 0.46 }),
+        Math.floor(tagAt * sampleRate),
+        1,
+      );
+      mixInto(
+        kickBus,
+        renderMembrane({
+          sampleRate,
+          freq: 41.2,
+          octaves: 4.2,
+          pitchDecay: 0.08,
+          attack: 0.003,
+          decay: 0.38,
+          release: 0.5,
+          velocity: 0.8,
+          floorHz: CRYSTAL.kickFloorHz,
+        }),
+        Math.floor(tagAt * sampleRate),
+        1,
+      );
+    }
     for (const t of schedule(seconds, beat, 0.08)) {
       const at = lock ? t + beat * grid.and : t;
       if (at >= seconds - 0.08) continue;
       const phrase = shortformPhrase(at, seconds, grid);
+      const hatW = 1 - 0.45 * phrase.tagEase;
       const hit = renderMetal({
         sampleRate,
         freq: 240,
@@ -1181,20 +1245,23 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: 0.004,
         decay: 0.18,
         release: 0.08,
-        velocity: (lock ? 0.38 : 0.16) * (phrase.hook ? 0.85 : 1) * sectionGain(t, seconds, lock),
+        velocity: (lock ? 0.38 : 0.16) * hatW * sectionGain(t, seconds, lock),
       });
       mixInto(hatBus, hit, Math.floor(at * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat, 0.12)) {
       const beatIdx = Math.round(t / beat);
       const phrase = shortformPhrase(t, seconds, grid);
-      if (lock && phrase.hook && beatIdx % 4 === 1) continue;
-      if (lock && phrase.tag && beatIdx % 2 === 1) continue;
+      if (lock && phrase.hookEase > 0.55 && beatIdx % 4 === 1) continue;
+      if (lock && phrase.tagEase > 0.55 && beatIdx % 2 === 1) continue;
+      if (phrase.turnEase > 0.35) bassWalk = walkDegree(bassWalk, scale.length, rng);
+      else bassWalk = bassLine[beatIdx % bassLine.length] % scale.length;
+      const register = phrase.turnEase > 0.5 ? 1 : 2;
       mixInto(
         colorBus,
         renderDuoBass({
           sampleRate,
-          freq: scale[bassLine[beatIdx % bassLine.length] % scale.length] / 2,
+          freq: scale[bassWalk] / register,
           velocity: 0.36,
           hold: beat * 0.42,
         }),
@@ -1205,8 +1272,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     for (const t of schedule(seconds, beat * 2, 0.2)) {
       const beatIdx = Math.round(t / beat);
       const phrase = shortformPhrase(t + beat * (lock ? grid.a : 0.5), seconds, grid);
-      if (lock && phrase.hook) continue;
-      if (phrase.tag) continue;
+      if (lock && phrase.hookEase > 0.6) continue;
+      if (phrase.tagEase > 0.6) continue;
       const deg = rhodesLine[rhodesI % rhodesLine.length];
       rhodesI += 1;
       mixInto(

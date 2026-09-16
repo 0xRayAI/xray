@@ -743,7 +743,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       phraseOf: (
         checksum: { genreConfig?: { tempo: number } },
         t: number,
-      ) => { section: string; turnHit: number };
+      ) => { section: string; turnHit: number; hookEase: number; turnEase: number; tagEase: number };
       buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
         genreConfig: { tempo: number };
       };
@@ -761,9 +761,12 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const checksum = buildVisualConfig({ brief, seedHex });
     const beat = 60 / checksum.genreConfig.tempo;
     expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, 0).hookEase).toBeGreaterThan(0.9);
     expect(phraseOf(checksum, beat * 2).section).toBe('turn');
     expect(phraseOf(checksum, beat * 2).turnHit).toBeGreaterThan(0.7);
+    expect(phraseOf(checksum, beat * 2).turnEase).toBeGreaterThan(0.35);
     expect(phraseOf(checksum, 4.2).section).toBe('tag');
+    expect(phraseOf(checksum, 4.2).tagEase).toBeGreaterThan(0.7);
     const hook = paintRippelFrame({ renderer: 'orb', t: 0, seedHex, brief, lookKind: 'focus' });
     const turn = paintRippelFrame({
       renderer: 'orb',
@@ -775,6 +778,61 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     const tag = paintRippelFrame({ renderer: 'orb', t: 4.2, seedHex, brief, lookKind: 'focus' });
     expect(framesDiffer(hook.buffer, turn.buffer)).toBe(true);
     expect(framesDiffer(turn.buffer, tag.buffer)).toBe(true);
+  });
+
+  it('focus orb wears field + mesh mass so two briefs do not clone', () => {
+    const { paintRippelFrame, framesDiffer, orbFocusWidth } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer; width: number; height: number };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      orbFocusWidth: (buf: Buffer, width: number, height: number) => { peak: number; drop: number };
+    };
+    const a = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex: '0xaaa111',
+      brief: 'warehouse floor · Power Plant',
+      lookKind: 'focus',
+    });
+    const b = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex: '0xbbb222',
+      brief: 'other mint · alley',
+      lookKind: 'focus',
+    });
+    expect(framesDiffer(a.buffer, b.buffer)).toBe(true);
+    expect(orbFocusWidth(a.buffer, a.width, a.height).peak).toBeGreaterThan(0.55);
+    expect(orbFocusWidth(a.buffer, a.width, a.height).drop).toBeLessThan(16);
+  });
+
+  it('dissolves still plates instead of hard-cutting', () => {
+    const { plateClock } = requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+      plateClock: (
+        seed: string,
+        t?: number,
+      ) => { plate: string; prev: string | null; prevMix: number; step: number };
+    };
+    const open = plateClock('0xdeadbeef', 0);
+    expect(open.prevMix).toBe(0);
+    expect(open.prev).toBeNull();
+    let faded = false;
+    for (let t = 0.05; t < 4.4; t += 0.05) {
+      const clock = plateClock('0xdeadbeef', t);
+      if (clock.step > 0 && clock.prevMix > 0.2) {
+        expect(clock.prev).toMatch(/titlecard|corridor|rain|endcard/);
+        faded = true;
+        break;
+      }
+    }
+    expect(faded).toBe(true);
   });
 
   it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {

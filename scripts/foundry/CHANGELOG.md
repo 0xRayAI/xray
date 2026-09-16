@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~140ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
+
 Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.
 
 Factory-blip look variants: seed + `--look focus|cage`. `focus` restores the sharp-dogfood solid cyan disc + gold pupil + orbiting satellites. `cage` keeps Wu hairline + field. Receipt `visualConfig.lookKind`.
@@ -22,7 +24,7 @@ Factory-blip field accents: uniqueness is stars / grids (`floor` `meridian` `tic
 
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait). Worn by all five viz and the Power Plant ident.
 
-Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p. Not a frozen 320×180 poster.
+Factory-blip Power Plant is a living ident (`look: power-plant-blip`) — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p. Not a frozen 320×180 poster.
 
 Factory-blip Rippel v2: the sharp orb look (`stampFocusDisc` opaque body + crisp rim + short glow) is now the look on **all five** viz — swirl / snap / waves / spark were still Phase 1 bokeh strokes. Animation is the complex Rippel set, paced as a 4.44s blip (fast abstract travel, soft gold tints — no hard strobe). Video LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed. Mandatory 4.44s mux unchanged. No version bump.
 

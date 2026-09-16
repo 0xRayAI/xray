@@ -13,9 +13,9 @@ This **factory plant** fastens a tiny-video factory. 4.44 seconds of picture **w
 
 `still` · `orb` · `swirl` · `snap` · `waves` · `spark`
 
-Rippel five are **imports**. Each mint is a **4.44s Short** — hook → turn → tag on one grid for picture and bed. Seed-selected look (`focus` solid disc + satellites, or `cage` Wu hairline + field). Receipt `visualConfig.lookKind` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
+Rippel five are **imports**. Each mint is a **4.44s Short** — hook → turn → tag on one grid for picture and bed (continuous `hookEase`/`turnEase`/`tagEase`, not gear-shift flags). Seed-selected look (`focus` solid disc + satellites + field/mesh mass, or `cage` Wu hairline + field). Receipt `visualConfig.lookKind` + mesh + field are the fingerprints. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL.
 
-`still` is the **Power Plant ident** — hard-cut titlecard / corridor / rain / endcard over 4.44s at ≥720p, not a frozen poster: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme.
+`still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p, not a frozen poster: void `#08090B` · ink `#F5F7FA` · cyan `#3DE0E8` · gold `#F5C518` · agent blue `#4A7FD4`. Motions use that palette as the Rippel `VisualConfig.circles` theme. The mill is the renderer — no LLM in the pixel/audio loop.
 
 **Spine (headless, no browser):**
 

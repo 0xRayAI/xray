@@ -390,7 +390,16 @@ describe('foundry sound plant — Rippel topology', () => {
         t: number,
         seconds: number,
         grid: { beatSec: number },
-      ) => { section: string; hook: number; turn: number; tag: number; turnHit: number };
+      ) => {
+        section: string;
+        hook: number;
+        turn: number;
+        tag: number;
+        turnHit: number;
+        hookEase: number;
+        turnEase: number;
+        tagEase: number;
+      };
       padTones: (genre: string, scale: number[]) => number[];
       degreeLine: (kind: string, count: number) => number[];
       SCALES: { ambient: number[] };
@@ -400,6 +409,13 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(shortformPhrase(grid.beatSec * 2, 4.44, grid).section).toBe('turn');
     expect(shortformPhrase(4.2, 4.44, grid).section).toBe('tag');
     expect(shortformPhrase(grid.beatSec * 2, 4.44, grid).turnHit).toBeGreaterThan(0.7);
+    const hook = shortformPhrase(0, 4.44, grid);
+    expect(hook.hookEase).toBeGreaterThan(0.9);
+    expect(hook.turnEase).toBeLessThan(0.15);
+    const turn = shortformPhrase(grid.beatSec * 2, 4.44, grid);
+    expect(turn.hookEase + turn.turnEase + turn.tagEase).toBeCloseTo(1, 1);
+    expect(turn.turnEase).toBeGreaterThan(0.35);
+    expect(shortformPhrase(4.2, 4.44, grid).tagEase).toBeGreaterThan(0.7);
     const pad = padTones('ambient', SCALES.ambient);
     expect(pad).toEqual([SCALES.ambient[0] * 0.75, SCALES.ambient[0], SCALES.ambient[1], SCALES.ambient[3]]);
     expect(pad).not.toContain(247);

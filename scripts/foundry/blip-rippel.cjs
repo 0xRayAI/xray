@@ -11,9 +11,11 @@
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
  * v2 look variants (seed + --look): focus | cage.
  *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
+ *           Field + mesh verts (solid mass, not wire) carry the mint id under the disc.
  *   cage  — sparse Wu hairline mesh + field accents (stars, grid, gradient, blinkers).
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * 4.44s is a Short: hook → turn → tag on the same motion grid as the bed.
+ * Phrase weights (hookEase/turnEase/tagEase) crossfade; binaries stay section flags.
  * Uniqueness is look + field + mesh fingerprint — not more wire in the middle.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
@@ -599,7 +601,7 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     (scaleMul || 1) *
     mesh.scale *
     (1 + 0.07 * kick + 0.045 * and) *
-    (phrase.hook ? 0.92 : phrase.turn ? 1.06 + 0.08 * phrase.turnHit : 0.88);
+    phraseMix(phrase, 0.92, 1.06 + 0.08 * phrase.turnHit, 0.88);
   yaw += phrase.turnHit * 0.32;
   let ox = 0;
   let oy = 0;
@@ -885,6 +887,20 @@ function phraseOf(checksum, t) {
       checksum.visualConfig.canvas.duration) ||
     4.44;
   return soundRippel.shortformPhrase(t, seconds, { beatSec: 60 / tempo });
+}
+
+function phraseWeight(phrase, key) {
+  const ease = phrase && phrase[`${key}Ease`];
+  if (typeof ease === "number") return ease;
+  return (phrase && phrase[key]) || 0;
+}
+
+function phraseMix(phrase, hookV, turnV, tagV) {
+  return (
+    hookV * phraseWeight(phrase, "hook") +
+    turnV * phraseWeight(phrase, "turn") +
+    tagV * phraseWeight(phrase, "tag")
+  );
 }
 
 function mixRgb(a, b, amount) {
@@ -1268,9 +1284,9 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   const phrase = phraseOf(checksum, t);
-  const spin = t * (phrase.hook ? 0.22 : phrase.turn ? 0.52 : 0.16) + beat * Math.PI * 0.12;
-  const orbitMul = phrase.hook ? 0.8 : phrase.turn ? 1.08 + phrase.turnHit * 0.1 : 0.64;
-  const rMul = phrase.tag ? 0.3 : 0.42;
+  const spin = t * phraseMix(phrase, 0.22, 0.52, 0.16) + beat * Math.PI * 0.12;
+  const orbitMul = phraseMix(phrase, 0.8, 1.08 + phrase.turnHit * 0.1, 0.64);
+  const rMul = phraseMix(phrase, 0.42, 0.42, 0.3);
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin;
     const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
@@ -1298,14 +1314,79 @@ function paintFocusSatellites(buf, width, height, t, checksum) {
   }
 }
 
-/** orb focus — solid cyan disc + gold pupil + satellite discs. No mesh, no field. */
+/** Field under focus: gradient + stars + blinkers. No grid through the disc. */
+function paintFocusField(buf, width, height, t, checksum) {
+  const field = checksum && checksum.field;
+  if (!field) return;
+  paintGradient(buf, width, height, field, t);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const and = andAccent(beat);
+  const stars = field.stars || [];
+  for (let i = 0; i < stars.length; i++) {
+    const star = stars[i];
+    const twinkle = 0.42 + 0.5 * (0.5 + 0.5 * Math.sin(beat * Math.PI * 2 + star.phase));
+    const sx = star.x * width;
+    const sy = star.y * height;
+    const color = iridesce(star.phase, t, beat, star.color);
+    mixPixel(buf, width, sx, sy, color, twinkle);
+    mixPixel(buf, width, sx + 1, sy, color, twinkle * 0.35);
+    mixPixel(buf, width, sx, sy + 1, color, twinkle * 0.35);
+  }
+  const blinkers = field.blinkers || [];
+  for (let i = 0; i < blinkers.length; i++) {
+    const b = blinkers[i];
+    const on = b.onAnd ? and : kick;
+    if (on < 0.08) continue;
+    stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
+      rim: 1,
+      glow: 2,
+      glowAlpha: 0.16,
+      rimColor: THEME.ink,
+    });
+  }
+}
+
+/** Mesh fingerprint as solid mass — verts only, off the equator so orbFocusWidth stays honest. */
+function paintFocusMeshMass(buf, width, height, t, checksum) {
+  const mesh = checksum && checksum.mesh;
+  if (!mesh || !mesh.verts || !mesh.verts.length) return;
+  const pts = projectMesh(mesh, width, height, t, checksum, 0.78);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const keep = Math.min(width, height) * 0.16;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (Math.abs(p.y - cy) < keep * 0.38 && Math.abs(p.x - cx) < keep * 1.15) continue;
+    const color = THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length];
+    stampFocusDisc(buf, width, height, p.x, p.y, 3.6 + (i % 3) * 0.8, color, {
+      rim: 1.1,
+      glow: 2.6,
+      glowAlpha: 0.18,
+      rimColor: THEME.ink,
+    });
+  }
+}
+
+/** orb focus — cyan disc + gold pupil + satellites. Field + mesh mass carry the mint id. */
 function paintFocusOrb(buf, width, height, t, checksum) {
   fillVoid(buf);
+  paintFocusField(buf, width, height, t, checksum);
+  paintFocusMeshMass(buf, width, height, t, checksum);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const phrase = phraseOf(checksum, t);
-  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7) + 0.018 * phrase.turnHit + (phrase.tag ? 0.01 : 0));
+  const mesh = checksum && checksum.mesh;
+  const style = (mesh && mesh.coreStyle) || "disc";
+  const pulse = style === "pulse" ? 0.012 : 0;
+  const core =
+    minSide *
+    (0.11 +
+      0.018 * Math.sin(t * 1.7) +
+      0.018 * phrase.turnHit +
+      0.01 * phraseWeight(phrase, "tag") +
+      pulse);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
     glow: 7,
@@ -1316,7 +1397,7 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     rim: 1.6,
     glow: 3,
     glowAlpha: 0.22,
-    rimColor: THEME.ink,
+    rimColor: THEME.gold,
   });
   paintFocusSatellites(buf, width, height, t, checksum);
 }
@@ -1861,6 +1942,8 @@ module.exports = {
   andAccent,
   beatPhase,
   phraseOf,
+  phraseMix,
+  phraseWeight,
   motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,

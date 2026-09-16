@@ -6,7 +6,7 @@
  * Look variants: focus (solid disc + satellites) | cage (Wu hairline + field).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
- * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
+ * Power Plant (`still` id) is a living ident — plate dissolves, not a frozen poster.
  * Seed mesh (family + gait + shells + faces) is the NFT fingerprint on every mint.
  * ffmpeg wireframe is --engine wireframe only.
  * HARD: every Blip muxes a 4.44s stereo AAC bed — missing stream or inaudible = inspect FAIL.
@@ -49,7 +49,7 @@ const RIPPEL_IMPORTS = ["orb", "swirl", "snap", "waves", "spark"];
 const V0_IDS = ["still", ...RIPPEL_IMPORTS];
 const STILL_PLATES = ["titlecard", "corridor", "rain", "endcard"];
 
-/** Power Plant intro plate — HARD design SSOT. Hard cuts, flat vector. */
+/** Power Plant intro plate — HARD design SSOT. Dissolves between plates, flat vector. */
 const PALETTE = {
   void: "#08090B",
   ink: "#F5F7FA",
@@ -269,11 +269,23 @@ function plateClock(seedHex, t) {
   const step = Math.min(STILL_PLATES.length - 1, Math.floor(beatIndex / every));
   const span = every * grid.beatSec;
   const cutAt = step * span;
+  const into = n - cutAt;
+  const xfade = Math.min(0.14, Math.max(0.08, span * 0.16));
+  let prevMix = 0;
+  let prev = null;
+  if (step > 0 && into < xfade) {
+    prev = STILL_PLATES[(start + step - 1 + STILL_PLATES.length) % STILL_PLATES.length];
+    const u = into / xfade;
+    prevMix = 1 - u * u * (3 - 2 * u);
+  }
   return {
     plate: STILL_PLATES[(start + step) % STILL_PLATES.length],
+    prev,
+    prevMix,
     u: span > 0 ? (n - cutAt) / span : 0,
     start,
     step,
+    xfade,
   };
 }
 
@@ -287,19 +299,13 @@ function paintChrome(x, y) {
 }
 
 /**
- * Power Plant ident — hard-cut titlecard / corridor / rain / endcard over 4.44s.
- * Seed picks the opening plate, then the other three cut in. Flat vector, five hexes.
- * u=0 of the opening plate matches the old frozen lockup so palette tests stay honest.
+ * Power Plant ident — titlecard / corridor / rain / endcard over 4.44s.
+ * Seed picks the opening plate, then the other three dissolve in (~140ms).
+ * Flat vector, five hexes. u=0 of the opening plate matches the old lockup.
  */
-function paintStill(seedHex, t) {
-  const clock = plateClock(seedHex, t || 0);
-  const plate = clock.plate;
-  const u = clock.u;
+function paintPlate(plate, u) {
   const slide = Math.floor(u * 28);
   return function paint(x, y) {
-    const chrome = paintChrome(x, y);
-    if (chrome) return chrome;
-
     if (plate === "titlecard") {
       const cards = [
         [12 - slide, 36, 84 - slide, 132],
@@ -336,6 +342,28 @@ function paintStill(seedHex, t) {
     if (inBox(x, y, 208 - slide, 64, 300 - slide, 96)) return RGB.ink;
     if (inBox(x, y, 208 - slide, 104, 248 - slide, 116)) return RGB.gold;
     return RGB.void;
+  };
+}
+
+function mixPlateRgb(a, b, amount) {
+  const w = Math.max(0, Math.min(1, amount));
+  return [
+    (a[0] + (b[0] - a[0]) * w + 0.5) | 0,
+    (a[1] + (b[1] - a[1]) * w + 0.5) | 0,
+    (a[2] + (b[2] - a[2]) * w + 0.5) | 0,
+  ];
+}
+
+function paintStill(seedHex, t) {
+  const clock = plateClock(seedHex, t || 0);
+  const current = paintPlate(clock.plate, clock.u);
+  const incoming = clock.prevMix > 0.01 && clock.prev ? paintPlate(clock.prev, 1) : null;
+  return function paint(x, y) {
+    const chrome = paintChrome(x, y);
+    if (chrome) return chrome;
+    const now = current(x, y);
+    if (!incoming) return now;
+    return mixPlateRgb(now, incoming(x, y), clock.prevMix);
   };
 }
 
