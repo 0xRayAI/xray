@@ -1198,6 +1198,95 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     }
   });
 
+  it('metamorphosizes mill mesh, strike, and embers into distinct stills', () => {
+    const { paintRippelFrame, frameFill, phraseOf, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      frameFill: (buf: Buffer) => number;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        bodyKind?: string;
+        lookKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer; organ: string; width: number; height: number };
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const mesh = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const strike = paintRippelFrame({
+      renderer: 'snap',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const embers = paintRippelFrame({
+      renderer: 'spark',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const waves = paintRippelFrame({
+      renderer: 'waves',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    expect(mesh.organ).toBe('mesh');
+    expect(strike.organ).toBe('strike');
+    expect(embers.organ).toBe('embers');
+    function bright(buf: Buffer): number {
+      let n = 0;
+      for (let i = 0; i < buf.length; i += 3) {
+        if (buf[i] + buf[i + 1] + buf[i + 2] > 140) n += 1;
+      }
+      return n;
+    }
+    function goldColumn(buf: Buffer, width: number, height: number): boolean {
+      for (let x = 0; x < width; x += 2) {
+        let n = 0;
+        for (let y = 0; y < height; y += 1) {
+          const i = (y * width + x) * 3;
+          if (buf[i] > 180 && buf[i + 1] > 140 && buf[i + 2] < 110) n += 1;
+        }
+        if (n > height * 0.28) return true;
+      }
+      return false;
+    }
+    expect(bright(mesh.buffer)).toBeGreaterThan(bright(strike.buffer));
+    expect(bright(embers.buffer)).toBeGreaterThan(2400);
+    expect(frameFill(embers.buffer)).toBeGreaterThan(0.012);
+    expect(goldColumn(waves.buffer, waves.width, waves.height)).toBe(false);
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('2–3 held edges');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('coals at mesh seats');
+    expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain('phraseMix(phrase, 0.42, 1, 0.3)');
+  });
+
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
     const rippel = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
       buildVisualConfig: (opts: { brief: string; seedHex: string }) => {

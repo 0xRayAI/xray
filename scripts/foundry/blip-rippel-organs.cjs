@@ -46,7 +46,7 @@ function createOrgans(kit) {
       phrase,
       kick: kickAccent(beat),
       and: andAccent(beat),
-      scale: mix(phrase, 0.86, 1.06 + 0.08 * (phrase.turnHit || 0), 0.72),
+      scale: mix(phrase, 0.86, 1.14 + 0.1 * (phrase.turnHit || 0), 0.78),
     };
   }
 

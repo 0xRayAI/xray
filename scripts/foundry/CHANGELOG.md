@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip metamorphosis pass: mill mesh wears a phrase-driven face wash; strike holds 2–3 edges (never the full hull); embers are coals with heat wakes, not pinholes. Cage keeps the nucleus and drops orbiting HUD ticks. Waves drop the gold playhead and gain turn amplitude. Phrase is mass, not a zoom knob.
+
 Factory-blip drops the outer-edge HUD bezel. Field grids are `floor` or `none`. Legacy receipt ids `ticks` / `meridian` no-op — no ruler ticks on the frame, no meridian box.
 
 Factory-blip course-correct: mill swirl / snap / spark are no longer one drawer (`mesh` / `strike` / `embers`). Sticker-sheet satellites stay on focus only. Unknown `--genre` fails closed. Still plate shares the seed genre. Auto bed writes imaged stereo (hats/color off-center), not L=R upmix. Receipt `stereoImage`.

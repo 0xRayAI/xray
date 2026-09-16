@@ -610,7 +610,7 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     (scaleMul || 1) *
     mesh.scale *
     (1 + 0.07 * kick + 0.045 * and) *
-    phraseMix(phrase, 0.92, 1.06 + 0.08 * phrase.turnHit, 0.88);
+    phraseMix(phrase, 0.9, 1.1 + 0.1 * phrase.turnHit, 0.94);
   yaw += phrase.turnHit * 0.32;
   let ox = 0;
   let oy = 0;
@@ -1147,7 +1147,7 @@ function paintChecksumMesh(buf, width, height, t, checksum, opts) {
   const half = (opts && opts.half) || 1;
   const pts = projectMesh(mesh, width, height, t, checksum, scale);
   paintMesh(buf, width, height, mesh, pts, opts && opts.color, half, {
-    fill: 0,
+    fill: opts && opts.fill != null ? opts.fill : 0,
     t,
     checksum,
   });
@@ -1480,7 +1480,7 @@ function paintFocusOrb(buf, width, height, t, checksum) {
   paintFocusSatellites(buf, width, height, t, checksum);
 }
 
-/** orb mill cage — evolved Wu hairline + nucleus. */
+/** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
 function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   paintChecksumMesh(buf, width, height, t, checksum, {
@@ -1491,42 +1491,21 @@ function paintMillCage(buf, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
-  const nucleus = paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
-  const tickR = nucleus.radius;
-  const tickA = beat * Math.PI * 2;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(tickA) * tickR,
-    cy + Math.sin(tickA) * tickR,
-    5,
-    THEME.gold,
-    { rim: 1.2, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
-  );
-  const ghostA = tickA - 0.55;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(ghostA) * tickR,
-    cy + Math.sin(ghostA) * tickR,
-    3,
-    THEME.ink,
-    { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
-  );
+  paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
 }
 
-/** mill swirl — platonic Wu only. No sticker moons. */
+/** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
 function paintMillMesh(buf, width, height, t, checksum, scale) {
   startFrame(buf, width, height, t, checksum);
+  const phrase = phraseOf(checksum, t);
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.92,
     half: 1,
+    fill: phraseMix(phrase, 0.05, 0.15, 0.08),
   });
 }
 
-/** mill snap — quantized strike. Held edges, then a jump. Not the swirl cage. */
+/** mill snap — 2–3 held edges, then a jump. Never the full swirl hull. */
 function paintMillStrike(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const mesh = checksum && checksum.mesh;
@@ -1536,7 +1515,7 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
-  const keep = Math.max(3, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.42, 1, 0.3)));
+  const keep = Math.min(3, Math.max(2, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.22, 0.36, 0.18))));
   const ranked = (mesh.edges || [])
     .map((e, i) => ({ e, i, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
     .sort((a, b) => a.z - b.z)
@@ -1546,37 +1525,63 @@ function paintMillStrike(buf, width, height, t, checksum) {
     const pa = pts[a];
     const pb = pts[b];
     if (!pa || !pb) continue;
-    const color = kick > 0.16 && i === 0 ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
-    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, 1);
-    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: kick > 0.16 ? 0.16 : 0.08 });
+    const live = i === 0;
+    const color = kick > 0.16 && live ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, live ? 2 : 1);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.16 : 0.08 });
+    if (live) {
+      stampFocusDisc(buf, width, height, pa.x, pa.y, 6.2 + kick * 2.2, color, {
+        rim: 1.2,
+        glow: 3.2,
+        glowAlpha: 0.2,
+        rimColor: THEME.ink,
+      });
+      stampFocusDisc(buf, width, height, pb.x, pb.y, 5.4 + kick * 1.6, color, {
+        rim: 1.1,
+        glow: 2.8,
+        glowAlpha: 0.18,
+        rimColor: THEME.ink,
+      });
+    }
   }
 }
 
-/** mill spark — verts as embers, no cage, no sticker moons. */
+/** mill spark — coals at mesh seats, heat wakes. Not pinholes. Not a cosmos web. */
 function paintMillEmbers(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const mesh = checksum && checksum.mesh;
   if (!mesh) return;
   const pts = projectMesh(mesh, width, height, t, checksum, 0.85);
+  const prev = projectMesh(mesh, width, height, Math.max(0, t - 0.08), checksum, 0.85);
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
-  const size = phraseMix(phrase, 2.2, 3.6, 1.8);
+  const size = phraseMix(phrase, 7.4, 12.8, 8.6);
   for (let i = 0; i < pts.length; i++) {
     const p = pts[i];
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      p.x,
-      p.y,
-      size + (i % 3) * 0.6 + kick * 0.8,
-      kick > 0.2 && i === 0 ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length],
-      { rim: 1.1, glow: 2.4, glowAlpha: 0.18, rimColor: THEME.ink },
-    );
+    const q = prev[i] || p;
+    const color =
+      kick > 0.2 && i === 0 ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length];
+    stampFocusSegment(buf, width, height, q.x, q.y, p.x, p.y, size * 0.38, color, {
+      rim: 1,
+      glow: 3.2,
+      glowAlpha: 0.14,
+      rimColor: THEME.ink,
+    });
+    stampFocusDisc(buf, width, height, p.x, p.y, size + (i % 3) * 1.6 + kick * 2.4, color, {
+      rim: 1.4,
+      glow: 5.2,
+      glowAlpha: 0.26,
+      rimColor: THEME.ink,
+    });
   }
   if (kick > 0.2 && pts[0] && pts[1]) {
-    paintSharpLine(buf, width, height, pts[0].x, pts[0].y, pts[1].x, pts[1].y, THEME.gold, 1);
+    stampFocusSegment(buf, width, height, pts[0].x, pts[0].y, pts[1].x, pts[1].y, 3.4 + kick * 1.8, THEME.gold, {
+      rim: 1,
+      glow: 3,
+      glowAlpha: 0.2,
+      rimColor: THEME.ink,
+    });
   }
 }
 
@@ -1679,21 +1684,20 @@ function paintNeural(buf, width, height, t, checksum) {
   organs.paintKuramoto(buf, width, height, t, checksum);
 }
 
-/** waves → WaveformVisualizer liquid ocean + mill ribbons + gold needle. */
+/** waves → WaveformVisualizer liquid ocean + mill ribbons. No gold playhead. */
 function paintWaveform(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
   const env =
-    phraseMix(phrase, 0.82, 1.08 + 0.08 * phrase.turnHit, 0.7) *
+    phraseMix(phrase, 0.82, 1.22 + 0.1 * phrase.turnHit, 0.78) *
     (0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2)));
   const circles = checksum.visualConfig.circles;
   paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
   circles.forEach((circle, i) => {
     const color = iridesce(i / Math.max(1, circles.length), t, beat, parseHex(circle.color));
-    const amp0 = height * (0.05 + (circle.radius / 420) * 0.11) * env;
+    const amp0 = height * (0.09 + (circle.radius / 420) * 0.18) * env;
     const f0 = 0.0065 + circle.frequency / 22000;
     const shift = t * (circle.frequency / 1.85);
     const gem = (checksum.gematria && checksum.gematria.checksumValue) || 1;
@@ -1720,13 +1724,6 @@ function paintWaveform(buf, width, height, t, checksum) {
       1,
     );
   });
-  const tickX = ((beat % 1) * width) | 0;
-  const tickH = height * 0.22 * (0.45 + kick);
-  for (let y = mid - tickH; y <= mid + tickH; y++) {
-    mixPixel(buf, width, tickX, y, THEME.gold, 1);
-    mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
-    mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
-  }
   if (checksum.bodyKind === "rippel") {
     organs.paintAuroraOrbs(buf, width, height, t, checksum);
   }
