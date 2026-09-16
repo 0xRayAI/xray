@@ -903,6 +903,7 @@ function buildReceipt(input, evaled) {
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
     bodyKind: input.bodyKind || (input.visualConfig && input.visualConfig.bodyKind) || null,
+    camera: input.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null,
     genre: input.genre || (input.visualConfig && input.visualConfig.genre) || null,
     stereoImage: input.stereoImage || null,
     organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
@@ -1075,6 +1076,7 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
   let look = rippel.LOOK;
   let lookKind = null;
   let bodyKind = null;
+  let camera = null;
   let organ = null;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
@@ -1089,15 +1091,17 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       lookKind: opts.lookKind,
       bodyKind: opts.bodyKind,
       genre: opts.genre,
+      camera: opts.camera,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
     lookKind = painted.lookKind;
     bodyKind = painted.bodyKind;
+    camera = painted.camera;
     organ = painted.organ;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, bodyKind, organ, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, bodyKind, camera, organ, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -1125,6 +1129,7 @@ function renderBlip(opts = {}) {
     visualConfig: null,
     lookKind: opts.lookKind || null,
     bodyKind: opts.bodyKind || null,
+    camera: opts.camera || null,
     genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
     organ: null,
     width: MOTION_WIDTH,
@@ -1169,10 +1174,12 @@ function renderBlip(opts = {}) {
           lookKind: opts.lookKind,
           bodyKind: opts.bodyKind,
           genre: input.genre,
+          camera: opts.camera,
         }),
       );
       input.lookKind = input.visualConfig && input.visualConfig.lookKind;
       input.bodyKind = input.visualConfig && input.visualConfig.bodyKind;
+      input.camera = (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
@@ -1190,10 +1197,13 @@ function renderBlip(opts = {}) {
           lookKind: opts.lookKind,
           bodyKind: opts.bodyKind,
           genre: input.genre,
+          camera: opts.camera,
         }),
       );
       input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
       input.bodyKind = motion.bodyKind || (input.visualConfig && input.visualConfig.bodyKind);
+      input.camera =
+        motion.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
       input.organ = motion.organ || null;
     }
     muxBed(picture, bedInfo.bed, mp4);

@@ -508,6 +508,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       MESH_FAMILIES,
       MESH_GAITS,
       LOOK_KINDS,
+      CAMERA_KINDS,
       GRID_KINDS,
       GRAD_KINDS,
     } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
@@ -523,6 +524,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
           shells: number;
           scale: number;
           coreStyle: string;
+          camera: string;
         };
         field: {
           id: string;
@@ -555,6 +557,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       MESH_FAMILIES: string[];
       MESH_GAITS: string[];
       LOOK_KINDS: string[];
+      CAMERA_KINDS: string[];
       GRID_KINDS: string[];
       GRAD_KINDS: string[];
     };
@@ -569,6 +572,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(MESH_FAMILIES.length).toBeGreaterThanOrEqual(12);
     expect(LOOK_KINDS).toEqual(['focus', 'cage']);
     expect(MESH_GAITS).toEqual(expect.arrayContaining(['tumble', 'shear', 'pulse', 'orbit', 'snap']));
+    expect(CAMERA_KINDS).toEqual(['front', 'three-quarter', 'top', 'low', 'dutch', 'side']);
     expect(checksum.mesh?.id).toBeTruthy();
     expect(checksum.mesh.id).not.toBe(other.mesh.id);
     expect(checksum.mesh.family).toMatch(
@@ -576,6 +580,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     );
     expect(checksum.mesh.gait).toMatch(/^(tumble|shear|pulse|orbit|snap)$/);
     expect(checksum.mesh.coreStyle).toMatch(/^(disc|eclipse|pulse)$/);
+    expect(checksum.mesh.camera).toMatch(/^(front|three-quarter|top|low|dutch|side)$/);
     expect(checksum.mesh.verts.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeLessThanOrEqual(16);
@@ -1031,6 +1036,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(framesDiffer(millCage.buffer, rippelMandala.buffer)).toBe(true);
     expect(framesDiffer(millSnap.buffer, rippelSnap.buffer)).toBe(true);
     expect(read('scripts/foundry/blip.mjs')).toContain('--body mill|rippel');
+    expect(read('scripts/foundry/blip.mjs')).toContain('--camera front|three-quarter|top|low|dutch|side');
   });
 
   it('wears one mill suit — satellites, seed genre, same phrase as the bed', () => {
@@ -1343,6 +1349,124 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       genre: 'ambient',
     });
     expect(focus.buffer.length).toBeGreaterThan(0);
+  });
+
+  it('seed-picks a camera and turn push-in keeps the same organ', () => {
+    const {
+      CAMERA_KINDS,
+      cameraPose,
+      resolveCameraKind,
+      buildMesh,
+      buildVisualConfig,
+      fingerprintMesh,
+      projectMesh,
+      paintRippelFrame,
+      framesDiffer,
+      phraseOf,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      CAMERA_KINDS: string[];
+      cameraPose: (
+        kind: string,
+        phrase: { turnHit?: number },
+      ) => { yaw: number; pitch: number; roll: number; flatten: number; dolly: number };
+      resolveCameraKind: (opts: { camera?: string }) => string | null;
+      buildMesh: (
+        seedHex: string,
+        brief: string,
+        camera?: string,
+      ) => { camera: string; gait: string; id: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string; camera?: string }) => {
+        mesh: { camera: string };
+        genreConfig: { tempo: number };
+      };
+      fingerprintMesh: (mesh: { camera?: string }) => { camera: string } | null;
+      projectMesh: (
+        mesh: Record<string, unknown>,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { genreConfig?: { tempo: number } },
+      ) => Array<{ x: number; y: number }>;
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        camera?: string;
+        lookKind?: string;
+        bodyKind?: string;
+      }) => { buffer: Buffer; camera: string; mesh: { camera: string } };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string; turnHit: number };
+    };
+    expect(CAMERA_KINDS).toEqual(['front', 'three-quarter', 'top', 'low', 'dutch', 'side']);
+    expect(resolveCameraKind({})).toBeNull();
+    expect(resolveCameraKind({ camera: 'dutch' })).toBe('dutch');
+    expect(() => resolveCameraKind({ camera: 'potato' })).toThrow(/unknown camera/);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const mesh = buildMesh(seedHex, brief);
+    expect(CAMERA_KINDS).toContain(mesh.camera);
+    expect(mesh.id).toContain(mesh.camera);
+    expect(fingerprintMesh(mesh)?.camera).toBe(mesh.camera);
+    const forced = buildVisualConfig({ brief, seedHex, camera: 'side' });
+    expect(forced.mesh.camera).toBe('side');
+    const hook = cameraPose('front', { turnHit: 0 });
+    const turn = cameraPose('front', { turnHit: 1 });
+    expect(turn.dolly).toBeGreaterThan(hook.dolly);
+    const top = cameraPose('top', { turnHit: 0 });
+    const low = cameraPose('low', { turnHit: 0 });
+    const dutch = cameraPose('dutch', { turnHit: 0 });
+    const side = cameraPose('side', { turnHit: 0 });
+    expect(top.pitch).toBeGreaterThan(low.pitch);
+    expect(top.flatten).toBeLessThan(low.flatten);
+    expect(dutch.roll).toBeGreaterThan(hook.roll);
+    expect(side.yaw).toBeGreaterThan(hook.yaw);
+    const checksum = buildVisualConfig({ brief, seedHex, camera: 'front' });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const jewel = Object.assign({}, mesh, { camera: 'front' });
+    const frontPts = projectMesh(jewel, 1280, 720, turnT, checksum);
+    const topPts = projectMesh(Object.assign({}, jewel, { camera: 'top' }), 1280, 720, turnT, checksum);
+    const sidePts = projectMesh(Object.assign({}, jewel, { camera: 'side' }), 1280, 720, turnT, checksum);
+    const spanY = (pts: Array<{ y: number }>) =>
+      Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y));
+    const spanX = (pts: Array<{ x: number }>) =>
+      Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
+    expect(spanY(frontPts)).toBeGreaterThan(spanY(topPts));
+    expect(spanX(sidePts)).not.toBeCloseTo(spanX(frontPts), 0);
+    const swirlFront = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'front',
+      bodyKind: 'mill',
+    });
+    const swirlSide = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'side',
+      bodyKind: 'mill',
+    });
+    const swirlTop = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'top',
+      bodyKind: 'mill',
+    });
+    expect(swirlFront.camera).toBe('front');
+    expect(swirlFront.mesh.camera).toBe('front');
+    expect(framesDiffer(swirlFront.buffer, swirlSide.buffer)).toBe(true);
+    expect(framesDiffer(swirlFront.buffer, swirlTop.buffer)).toBe(true);
+    expect(framesDiffer(swirlSide.buffer, swirlTop.buffer)).toBe(true);
   });
 
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {

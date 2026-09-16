@@ -70,6 +70,48 @@ const CORE_STYLES = ["disc", "eclipse", "pulse"];
 const LOOK_KINDS = ["focus", "cage"];
 const BODY_KINDS = ["mill", "rippel"];
 const GENRE_KINDS = ["ambient", "techno", "phonk", "jazz", "rock", "timeless"];
+const CAMERA_KINDS = ["front", "three-quarter", "top", "low", "dutch", "side"];
+
+function resolveCamera(mesh) {
+  const kind = mesh && mesh.camera;
+  if (kind && CAMERA_KINDS.includes(kind)) return kind;
+  return "three-quarter";
+}
+
+function resolveCameraKind(opts) {
+  const raw = opts && opts.camera;
+  if (raw == null || String(raw).trim() === "") return null;
+  const kind = String(raw).trim().toLowerCase();
+  if (!CAMERA_KINDS.includes(kind)) {
+    const err = new Error(`unknown camera "${raw}" (want ${CAMERA_KINDS.join("|")})`);
+    err.code = "BLIP_CAMERA";
+    throw err;
+  }
+  return kind;
+}
+
+/** Seed shot + phrase push-in. Same organ, different camera. */
+function cameraPose(kind, phrase) {
+  const turn = phraseMix(phrase || {}, 0, 1, 0.18);
+  const hit = (phrase && phrase.turnHit) || 0;
+  const push = 1 + 0.14 * turn + 0.08 * hit;
+  if (kind === "top") {
+    return { yaw: 0.1 + 0.22 * turn, pitch: 1.08, roll: 0.05 * turn, flatten: 0.36, dolly: 1.06 * push };
+  }
+  if (kind === "low") {
+    return { yaw: 0.2 + 0.28 * turn, pitch: -0.62, roll: 0.06 * turn, flatten: 0.94, dolly: 0.95 * push };
+  }
+  if (kind === "dutch") {
+    return { yaw: 0.4 + 0.32 * turn, pitch: 0.22, roll: 0.5, flatten: 0.68, dolly: push };
+  }
+  if (kind === "side") {
+    return { yaw: 1.34 + 0.18 * turn, pitch: 0.08, roll: 0.03, flatten: 0.78, dolly: push };
+  }
+  if (kind === "front") {
+    return { yaw: 0.05 * turn, pitch: 0.12, roll: 0, flatten: 0.86, dolly: push };
+  }
+  return { yaw: 0.64 + 0.3 * turn, pitch: 0.3, roll: 0.05, flatten: 0.72, dolly: push };
+}
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -486,7 +528,7 @@ function thinConnectedEdges(edges, vertCount, keep, rng) {
   return kept;
 }
 
-function buildMesh(seedHex, brief) {
+function buildMesh(seedHex, brief, cameraKind) {
   const text = String(brief || "factory-blip");
   let mix = 0;
   for (let i = 0; i < text.length; i++) mix = (Math.imul(mix, 33) + text.charCodeAt(i)) >>> 0;
@@ -519,11 +561,14 @@ function buildMesh(seedHex, brief) {
   if (faces.length > 16) faces = faces.slice(0, 16);
   const accentIndex = (rng() * THEME_CYCLE.length) | 0;
   const coreStyle = CORE_STYLES[(rng() * CORE_STYLES.length) | 0];
+  const picked = CAMERA_KINDS[(rng() * CAMERA_KINDS.length) | 0];
+  const camera = cameraKind && CAMERA_KINDS.includes(cameraKind) ? cameraKind : picked;
   return {
     family,
     gait,
     coreStyle,
-    id: `${family}-${gait}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
+    camera,
+    id: `${family}-${gait}-${camera}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
     verts,
     edges,
     faces,
@@ -612,7 +657,6 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     mesh.scale *
     (1 + 0.07 * kick + 0.045 * and) *
     phraseMix(phrase, 0.88, 1.16 + 0.12 * phrase.turnHit, 0.96);
-  yaw += phrase.turnHit * 0.55;
   let ox = 0;
   let oy = 0;
   if (gait === "snap") {
@@ -630,6 +674,11 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     pitch = beat * mesh.spin * 0.38 * spinMul + Math.sin(mesh.twist) * 0.2;
     roll = beat * mesh.spin * 0.22 * spinMul + mesh.twist;
   }
+  const cam = cameraPose(resolveCamera(mesh), phrase);
+  yaw += cam.yaw + phrase.turnHit * 0.55;
+  pitch += cam.pitch;
+  roll += cam.roll;
+  breathe *= cam.dolly;
   const minSide = Math.min(width, height);
   const cx = (width - 1) * 0.5 + ox * minSide;
   const cy = (height - 1) * 0.5 + oy * minSide;
@@ -645,7 +694,7 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     }
     const z = r[2] + 2.35;
     const p = (breathe * minSide) / z;
-    return { x: cx + r[0] * p, y: cy + r[1] * p * 0.84, z: r[2] };
+    return { x: cx + r[0] * p, y: cy + r[1] * p * cam.flatten, z: r[2] };
   });
 }
 
@@ -705,7 +754,7 @@ function organOf(visualization, lookKind, bodyKind) {
   return visualization;
 }
 
-function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bodyKind }) {
+function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bodyKind, camera }) {
   const g = soundRippel.resolveGenre(resolveGenreKind({ seedHex, genre }));
   const scale = SCALES[g.id] || SCALES.ambient;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8));
@@ -753,7 +802,7 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bod
     lookKind: resolveLookKind({ seedHex, lookKind }),
     bodyKind: resolveBodyKind({ seedHex, bodyKind }),
     genre: g.id,
-    mesh: buildMesh(seedHex, text),
+    mesh: buildMesh(seedHex, text, resolveCameraKind({ camera })),
     field: buildField(seedHex, text),
   };
 }
@@ -762,10 +811,11 @@ function cachedChecksum(opts) {
   const lookKind = resolveLookKind(opts);
   const bodyKind = resolveBodyKind(opts);
   const genre = resolveGenreKind(opts);
-  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${genre}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}`;
+  const camera = resolveCameraKind(opts);
+  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${genre}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}::${camera || "seed"}`;
   let hit = visualCache.get(key);
   if (!hit) {
-    hit = buildVisualConfig({ ...opts, lookKind, bodyKind, genre });
+    hit = buildVisualConfig({ ...opts, lookKind, bodyKind, genre, camera });
     visualCache.set(key, hit);
   }
   return hit;
@@ -1169,6 +1219,7 @@ function paintMeshOverlay(buf, width, height, opts) {
     height,
     lookKind: opts.lookKind,
     bodyKind: opts.bodyKind,
+    camera: opts.camera,
   });
   paintField(buf, width, height, opts.t || 0, checksum);
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
@@ -1325,14 +1376,15 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const spin = t * phraseMix(phrase, 0.12, 0.72 + 0.4 * (phrase.turnHit || 0), 0.1) + beat * Math.PI * 0.12;
   const orbitMul = phraseMix(phrase, 0.58, 1.32 + 0.4 * (phrase.turnHit || 0), 0.72);
   const rMul = phraseMix(phrase, 0.34, 0.52, 0.38);
+  const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
   return circles.map((circle, i) => {
-    const ang = (i / circles.length) * Math.PI * 2 + spin;
-    const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
+    const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
+    const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul * cam.dolly;
     const depth = Math.sin(ang);
     return {
       circle,
-      x: cx + Math.cos(ang) * orbit,
-      y: cy + Math.sin(ang) * orbit * 0.72,
+      x: cx + Math.cos(ang) * orbit + Math.sin(cam.yaw) * minSide * 0.04,
+      y: cy + Math.sin(ang) * orbit * cam.flatten,
       r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
       depth,
@@ -1849,6 +1901,7 @@ function paintRippelFrame(opts) {
     height,
     lookKind: opts.lookKind,
     bodyKind: opts.bodyKind,
+    camera: opts.camera,
   });
   paintVisualization(visualization, buf, width, height, opts.t || 0, checksum);
   return {
@@ -1860,6 +1913,7 @@ function paintRippelFrame(opts) {
     look: LOOK,
     lookKind: checksum.lookKind,
     bodyKind: checksum.bodyKind,
+    camera: resolveCamera(checksum.mesh),
     genre: checksum.genre,
     organ: organOf(visualization, checksum.lookKind, checksum.bodyKind),
     visualConfig: checksum.visualConfig,
@@ -1981,6 +2035,7 @@ function fingerprintMesh(mesh) {
     fill: Boolean(mesh.fill),
     ghost: Boolean(mesh.ghost),
     coreStyle: mesh.coreStyle || "disc",
+    camera: resolveCamera(mesh),
   };
 }
 
@@ -2061,6 +2116,11 @@ module.exports = {
   resolveBodyKind,
   resolveGenreKind,
   GENRE_KINDS,
+  CAMERA_KINDS,
+  cameraPose,
+  resolveCamera,
+  resolveCameraKind,
+  projectMesh,
   organOf,
   ORGAN: organs.ORGAN,
 };
