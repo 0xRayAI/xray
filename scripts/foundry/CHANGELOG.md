@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.
+
 Factory-blip look variants: seed + `--look focus|cage`. `focus` restores the sharp-dogfood solid cyan disc + gold pupil + orbiting satellites. `cage` keeps Wu hairline + field. Receipt `visualConfig.lookKind`.
 
 Factory-blip mux is stereo AAC. Inspect FAILs a missing stream or an inaudible bed (max volume ≤ −40 dB). A silent wav is no longer a PASS.

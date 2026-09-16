@@ -13,6 +13,7 @@
  *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
  *   cage  — sparse Wu hairline mesh + field accents (stars, grid, gradient, blinkers).
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
+ * 4.44s is a Short: hook → turn → tag on the same motion grid as the bed.
  * Uniqueness is look + field + mesh fingerprint — not more wire in the middle.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
@@ -593,7 +594,13 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const and = andAccent(beat);
-  let breathe = (scaleMul || 1) * mesh.scale * (1 + 0.07 * kick + 0.045 * and);
+  const phrase = phraseOf(checksum, t);
+  let breathe =
+    (scaleMul || 1) *
+    mesh.scale *
+    (1 + 0.07 * kick + 0.045 * and) *
+    (phrase.hook ? 0.92 : phrase.turn ? 1.06 + 0.08 * phrase.turnHit : 0.88);
+  yaw += phrase.turnHit * 0.32;
   let ox = 0;
   let oy = 0;
   if (gait === "snap") {
@@ -867,6 +874,17 @@ function andAccent(beat) {
   const d = Math.abs(frac - 0.5);
   if (d < 0.1) return 0.45 * (1 - d / 0.1);
   return 0;
+}
+
+function phraseOf(checksum, t) {
+  const tempo = (checksum && checksum.genreConfig && checksum.genreConfig.tempo) || 90;
+  const seconds =
+    (checksum &&
+      checksum.visualConfig &&
+      checksum.visualConfig.canvas &&
+      checksum.visualConfig.canvas.duration) ||
+    4.44;
+  return soundRippel.shortformPhrase(t, seconds, { beatSec: 60 / tempo });
 }
 
 function mixRgb(a, b, amount) {
@@ -1249,14 +1267,18 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
+  const phrase = phraseOf(checksum, t);
+  const spin = t * (phrase.hook ? 0.22 : phrase.turn ? 0.52 : 0.16) + beat * Math.PI * 0.12;
+  const orbitMul = phrase.hook ? 0.8 : phrase.turn ? 1.08 + phrase.turnHit * 0.1 : 0.64;
+  const rMul = phrase.tag ? 0.3 : 0.42;
   return circles.map((circle, i) => {
-    const ang = (i / circles.length) * Math.PI * 2 + t * 0.35 + beat * Math.PI * 0.12;
-    const orbit = minSide * (0.16 + (i % 3) * 0.07);
+    const ang = (i / circles.length) * Math.PI * 2 + spin;
+    const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
     return {
       circle,
       x: cx + Math.cos(ang) * orbit,
       y: cy + Math.sin(ang) * orbit * 0.72,
-      r: circlePulse(circle, t + i * 0.11),
+      r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42),
       color: parseHex(circle.color),
     };
   });
@@ -1282,7 +1304,8 @@ function paintFocusOrb(buf, width, height, t, checksum) {
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7));
+  const phrase = phraseOf(checksum, t);
+  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7) + 0.018 * phrase.turnHit + (phrase.tag ? 0.01 : 0));
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
     glow: 7,
@@ -1837,6 +1860,7 @@ module.exports = {
   kickAccent,
   andAccent,
   beatPhase,
+  phraseOf,
   motionGrid: soundRippel.motionGrid,
   fillVoid,
   buildMesh,

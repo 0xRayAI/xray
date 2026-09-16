@@ -736,6 +736,47 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(() => resolveLookKind({ lookKind: 'potato' })).toThrow(/unknown look/);
   });
 
+  it('plays hook → turn → tag on the same grid as the bed', () => {
+    const { phraseOf, buildVisualConfig, paintRippelFrame, framesDiffer } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string; turnHit: number };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const beat = 60 / checksum.genreConfig.tempo;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, beat * 2).section).toBe('turn');
+    expect(phraseOf(checksum, beat * 2).turnHit).toBeGreaterThan(0.7);
+    expect(phraseOf(checksum, 4.2).section).toBe('tag');
+    const hook = paintRippelFrame({ renderer: 'orb', t: 0, seedHex, brief, lookKind: 'focus' });
+    const turn = paintRippelFrame({
+      renderer: 'orb',
+      t: beat * 2,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+    });
+    const tag = paintRippelFrame({ renderer: 'orb', t: 4.2, seedHex, brief, lookKind: 'focus' });
+    expect(framesDiffer(hook.buffer, turn.buffer)).toBe(true);
+    expect(framesDiffer(turn.buffer, tag.buffer)).toBe(true);
+  });
+
   it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {
     const { paintRippelFrame, goldPixelCount, LOOK, buildVisualConfig } = requireCjs(
       path.join(root, 'scripts/foundry/blip-rippel.cjs'),
