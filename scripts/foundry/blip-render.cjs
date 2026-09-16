@@ -3,7 +3,7 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
- * Look variants: focus (solid disc + satellites) | cage (Wu hairline + field).
+ * Look (orb): focus (solid disc) | cage (Wu mesh). Body: mill (evolved) | rippel (refined drawers).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
  * Power Plant (`still` id) is a living ident — plate dissolves, not a frozen poster.
@@ -255,13 +255,13 @@ function onEdge(x, y, x0, y0, x1, y1) {
   return inBox(x, y, x0, y0, x1, y1) && (x === x0 || x === x1 - 1 || y === y0 || y === y1 - 1);
 }
 
-function stillPlate(seedHex, t) {
-  return plateClock(seedHex, t).plate;
+function stillPlate(seedHex, t, genre) {
+  return plateClock(seedHex, t, genre).plate;
 }
 
-function plateClock(seedHex, t) {
+function plateClock(seedHex, t, genre) {
   const start = seedU32(seedHex, 0) % STILL_PLATES.length;
-  const grid = sound.motionGrid(seedHex, "ambient");
+  const grid = sound.motionGrid(seedHex, rippel.resolveGenreKind({ seedHex, genre }));
   const beats = Math.max(STILL_PLATES.length, Math.floor(DURATION_SEC / grid.beatSec + 1e-9));
   const every = Math.max(1, Math.floor(beats / STILL_PLATES.length));
   const n = t == null || t <= 0 ? 0 : t >= DURATION_SEC ? DURATION_SEC - 1e-6 : t;
@@ -354,8 +354,8 @@ function mixPlateRgb(a, b, amount) {
   ];
 }
 
-function paintStill(seedHex, t) {
-  const clock = plateClock(seedHex, t || 0);
+function paintStill(seedHex, t, genre) {
+  const clock = plateClock(seedHex, t || 0, genre);
   const current = paintPlate(clock.plate, clock.u);
   const incoming = clock.prevMix > 0.01 && clock.prev ? paintPlate(clock.prev, 1) : null;
   return function paint(x, y) {
@@ -367,8 +367,8 @@ function paintStill(seedHex, t) {
   };
 }
 
-function paintStillFrame(buf, width, height, seedHex, t, brief) {
-  const paint = paintStill(seedHex, t);
+function paintStillFrame(buf, width, height, seedHex, t, brief, genre) {
+  const paint = paintStill(seedHex, t, genre);
   for (let y = 0; y < height; y++) {
     const ly = Math.min(PLATE_HEIGHT - 1, ((y * PLATE_HEIGHT) / height) | 0);
     for (let x = 0; x < width; x++) {
@@ -902,6 +902,11 @@ function buildReceipt(input, evaled) {
     engine: input.engine || rippel.ENGINE,
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
     lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
+    bodyKind: input.bodyKind || (input.visualConfig && input.visualConfig.bodyKind) || null,
+    camera: input.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null,
+    genre: input.genre || (input.visualConfig && input.visualConfig.genre) || null,
+    stereoImage: input.stereoImage || null,
+    organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -1010,16 +1015,26 @@ function resolveBed(opts, root, brief, work, seed) {
       : path.join(root, ".xray", "blip", "bed.wav");
     const rendered = sound.renderSamples({
       brief,
-      genre: opts.genre || "ambient",
+      genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
       seconds: DURATION_SEC,
       seed,
       syncopate: true,
     });
-    sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
+    if (rendered.left && rendered.right) {
+      sound.writeWav16Stereo(out, rendered.left, rendered.right, rendered.sampleRate);
+    } else {
+      sound.writeWav16Mono(out, rendered.samples, rendered.sampleRate);
+    }
     if (!fs.existsSync(out)) {
       return { ok: false, reason: "auto bed missing" };
     }
-    return { ok: true, bed: out, source: "auto-sound", grid: rendered.grid || null };
+    return {
+      ok: true,
+      bed: out,
+      source: "auto-sound",
+      grid: rendered.grid || null,
+      stereoImage: rendered.stereoImage || (rendered.left ? "imaged" : "dual-mono"),
+    };
   } catch (err) {
     return {
       ok: false,
@@ -1060,6 +1075,9 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
   let visualConfig = null;
   let look = rippel.LOOK;
   let lookKind = null;
+  let bodyKind = null;
+  let camera = null;
+  let organ = null;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -1071,13 +1089,19 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       height,
       buffer: buf,
       lookKind: opts.lookKind,
+      bodyKind: opts.bodyKind,
+      genre: opts.genre,
+      camera: opts.camera,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
     lookKind = painted.lookKind;
+    bodyKind = painted.bodyKind;
+    camera = painted.camera;
+    organ = painted.organ;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, bodyKind, camera, organ, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -1104,6 +1128,10 @@ function renderBlip(opts = {}) {
     fallback: false,
     visualConfig: null,
     lookKind: opts.lookKind || null,
+    bodyKind: opts.bodyKind || null,
+    camera: opts.camera || null,
+    genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
+    organ: null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
   };
@@ -1123,13 +1151,14 @@ function renderBlip(opts = {}) {
     input.bedRel = path.relative(root, bedInfo.bed) || bedInfo.bed;
     input.bedSource = bedInfo.source;
     input.grid = bedInfo.grid || null;
+    input.stereoImage = bedInfo.stereoImage || (opts.bed ? "external" : null);
 
     const picture = path.join(work, "picture.mp4");
     if (modeInfo.renderer === "still") {
       const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
       const raw = path.join(work, "power-plant.rgb");
       writeRawMotion(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, (buf, t) => {
-        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief);
+        paintStillFrame(buf, MOTION_WIDTH, MOTION_HEIGHT, seed, t, brief, input.genre);
       });
       encodeRaw(raw, MOTION_WIDTH, MOTION_HEIGHT, frames, picture);
       input.engine = POWER_PLANT_ENGINE;
@@ -1143,9 +1172,14 @@ function renderBlip(opts = {}) {
           width: MOTION_WIDTH,
           height: MOTION_HEIGHT,
           lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
+          genre: input.genre,
+          camera: opts.camera,
         }),
       );
       input.lookKind = input.visualConfig && input.visualConfig.lookKind;
+      input.bodyKind = input.visualConfig && input.visualConfig.bodyKind;
+      input.camera = (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
@@ -1161,9 +1195,16 @@ function renderBlip(opts = {}) {
           width: motion.width,
           height: motion.height,
           lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
+          genre: input.genre,
+          camera: opts.camera,
         }),
       );
       input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
+      input.bodyKind = motion.bodyKind || (input.visualConfig && input.visualConfig.bodyKind);
+      input.camera =
+        motion.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
+      input.organ = motion.organ || null;
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {

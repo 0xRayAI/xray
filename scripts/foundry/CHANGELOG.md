@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+Factory-blip entertainment verb: focus moons paint behind the nucleus then in front (real occlusion). Strike / embers / ribbons wear the house noun (cyan disc + gold pupil). Embers erupt on the turn. Mesh stays the jewel so cage and mesh still sort. Iterate pass is every seat ≥7; drop is every seat ≥8.
+
+Factory-blip stellar pass: phrase eases spin (hook crawl → turn whip → tag hold). Mesh is a cyan/gold jewel with vertex beads. Strike wears a ghost hull under 2–3 thick strikes. Embers seat coals on verts and edge midpoints with longer wakes. Focus satellites occlude. Sacred-flow is one poly + nucleus + ring. Bed sectionGain is a Short (turn louder than hook, tag seals).
+
+Factory-blip metamorphosis pass: mill mesh wears a phrase-driven face wash; strike holds 2–3 edges (never the full hull); embers are coals with heat wakes, not pinholes. Cage keeps the nucleus and drops orbiting HUD ticks. Waves drop the gold playhead and gain turn amplitude. Phrase is mass, not a zoom knob.
+
+Factory-blip drops the outer-edge HUD bezel. Field grids are `floor` or `none`. Legacy receipt ids `ticks` / `meridian` no-op — no ruler ticks on the frame, no meridian box.
+
+Factory-blip course-correct: mill swirl / snap / spark are no longer one drawer (`mesh` / `strike` / `embers`). Sticker-sheet satellites stay on focus only. Unknown `--genre` fails closed. Still plate shares the seed genre. Auto bed writes imaged stereo (hats/color off-center), not L=R upmix. Receipt `stereoImage`.
+
+Sound mill ports techno FM lead, phonk formant stabs, rock + timeless tables (country→timeless, game→techno). Ambient scale is the 14-note Rippel table. Foundry 0.1.10 — no bump.
+
 Factory-blip phrase eases (hookEase/turnEase/tagEase). Still plates dissolve (~300ms). Focus orb wears field + mesh mass. Ambient bed is a 3-section score (turn crash, tag stab). Mill stays deterministic — no LLM in the render loop.
 
 Factory-blip is a 4.44s Short: hook → turn → tag on the shared motion grid (picture + bed). Motif lines, pad in-key, bass an octave down. Voices: polyBLEP + biquad, layered kick, FM hat + noise, 2-op rhodes. Mix pocket + short plate on color/hat.
@@ -20,7 +32,7 @@ Factory-blip lines: Wu hairline (solid 1px core, coverage AA as the only glow). 
 
 Factory-blip lines iridesce: cyan/gold/blue travel + glow + beat fireflies on the sparse cage. Field stars / grids / gradients / blinkers are luminous, not CAD ticks. Not more wire. Not a strobe.
 
-Factory-blip field accents: uniqueness is stars / grids (`floor` `meridian` `ticks`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
+Factory-blip field accents: uniqueness is stars / grids (`floor` / `none`) / gradients / blinkers around one sparse seed cage. Receipt `visualConfig.mesh` + `visualConfig.field`. Not more wire in the middle.
 
 Factory-blip meshes: every mint gets a seed-unique polyhedron (12 families + gait). Worn by all five viz and the Power Plant ident.
 

@@ -9,18 +9,18 @@
  *
  * This file is the converter spine, not a drawbox/geq label. Brief+seed → checksum
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
- * v2 look variants (seed + --look): focus | cage.
- *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
- *           Field + mesh verts (solid mass, not wire) carry the mint id under the disc.
- *   cage  — sparse Wu hairline mesh + field accents (stars, grid, gradient, blinkers).
+ * Two axes, seed + flags. Both stay. All wear the mill stroke (Wu + Power Plant + short glow).
+ *   --look focus|cage (orb). focus = cyan disc. cage = Wu hairline mesh + nucleus.
+ *   --body mill|rippel. mill = evolved mesh/ribbons. rippel = refined drawers
+ *     (mandala / sacred-flow / synapse / liquid-waves / cosmic-dance).
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
  * 4.44s is a Short: hook → turn → tag on the same motion grid as the bed.
  * Phrase weights (hookEase/turnEase/tagEase) crossfade; binaries stay section flags.
- * Uniqueness is look + field + mesh fingerprint — not more wire in the middle.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
 const soundRippel = require("./sound-rippel.cjs");
+const { createOrgans } = require("./blip-rippel-organs.cjs");
 
 const ENGINE = "rippel-headless";
 const LOOK = "rippel-v2";
@@ -37,13 +37,18 @@ const SSOT = {
     "animationIcons.ts",
     "types/index.ts",
     "SimplifiedVisualConverter.tsx",
+    "InteractiveCanvas.tsx",
+    "ThreeJSVisualizer.tsx",
+    "NeuralNetworkVisualizer.tsx",
+    "WaveformVisualizer.tsx",
+    "ParticleAnimations.tsx",
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — VisualConfig.circles + look variants (focus disc-satellites | cage Wu+field). Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — look focus|cage and body mill|rippel. Mill keeps the evolved Wu/mesh. Rippel drawers are refined to that stroke. Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
-const GRID_KINDS = ["floor", "meridian", "ticks", "none"];
+const GRID_KINDS = ["floor", "none"];
 const GRAD_KINDS = ["horizon", "corner", "veil"];
 
 const MESH_FAMILIES = [
@@ -63,6 +68,50 @@ const MESH_FAMILIES = [
 const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
 const CORE_STYLES = ["disc", "eclipse", "pulse"];
 const LOOK_KINDS = ["focus", "cage"];
+const BODY_KINDS = ["mill", "rippel"];
+const GENRE_KINDS = ["ambient", "techno", "phonk", "jazz", "rock", "timeless"];
+const CAMERA_KINDS = ["front", "three-quarter", "top", "low", "dutch", "side"];
+
+function resolveCamera(mesh) {
+  const kind = mesh && mesh.camera;
+  if (kind && CAMERA_KINDS.includes(kind)) return kind;
+  return "three-quarter";
+}
+
+function resolveCameraKind(opts) {
+  const raw = opts && opts.camera;
+  if (raw == null || String(raw).trim() === "") return null;
+  const kind = String(raw).trim().toLowerCase();
+  if (!CAMERA_KINDS.includes(kind)) {
+    const err = new Error(`unknown camera "${raw}" (want ${CAMERA_KINDS.join("|")})`);
+    err.code = "BLIP_CAMERA";
+    throw err;
+  }
+  return kind;
+}
+
+/** Seed shot + phrase push-in. Same organ, different camera. */
+function cameraPose(kind, phrase) {
+  const travel = phraseMix(phrase || {}, 0, 1, 0.14);
+  const hit = (phrase && phrase.turnHit) || 0;
+  const push = 0.76 + 0.34 * travel + 0.14 * hit;
+  if (kind === "top") {
+    return { yaw: 0.08 + 0.4 * travel, pitch: 1.18 + 0.08 * hit, roll: 0.1 * travel, flatten: 0.28, dolly: 1.08 * push };
+  }
+  if (kind === "low") {
+    return { yaw: 0.18 + 0.35 * travel, pitch: -0.78, roll: 0.1 * travel, flatten: 0.98, dolly: 0.88 * push };
+  }
+  if (kind === "dutch") {
+    return { yaw: 0.35 + 0.4 * travel, pitch: 0.18, roll: 0.28 + 0.42 * travel, flatten: 0.64, dolly: push };
+  }
+  if (kind === "side") {
+    return { yaw: 1.48 + 0.12 * travel, pitch: 0.06, roll: 0.04, flatten: 0.74, dolly: push };
+  }
+  if (kind === "front") {
+    return { yaw: 0.02 + 0.12 * travel, pitch: 0.08, roll: 0, flatten: 0.9, dolly: push };
+  }
+  return { yaw: 0.58 + 0.38 * travel, pitch: 0.28, roll: 0.06 + 0.08 * travel, flatten: 0.7, dolly: push };
+}
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -86,10 +135,12 @@ const LIGHT_CYCLE = [THEME.cyan, THEME.gold, THEME.blue];
 
 /** getGenreConfig.ts scale tables — same SSOT the sound mill already ported. */
 const SCALES = {
-  ambient: [261.63, 311.13, 349.23, 392.0, 466.16],
+  ambient: [261.63, 311.13, 349.23, 392.0, 466.16, 196.0, 220.0, 246.94, 293.66, 329.63, 415.3, 207.65, 196.0, 155.56],
   techno: [65.41, 87.31, 130.81, 174.61, 196.0],
   phonk: [32.7, 43.65, 55.0, 65.41, 82.41],
   jazz: [130.81, 164.81, 196.0, 220.0, 261.63],
+  rock: [329.63, 392.0, 440.0, 493.88, 587.33],
+  timeless: [261.63, 311.13, 349.23, 392.0, 466.16, 65.41],
 };
 
 const NOTE_NAMES = ["C", "D#", "F", "G", "A#"];
@@ -261,7 +312,21 @@ function platonic(family) {
         if (d === 1) edges.push([i, j]);
       }
     }
-    return { verts, edges, faces: trianglesFromEdges(verts, edges) };
+    const faces = [
+      [0, 1, 3],
+      [0, 3, 2],
+      [4, 5, 7],
+      [4, 7, 6],
+      [0, 1, 5],
+      [0, 5, 4],
+      [2, 3, 7],
+      [2, 7, 6],
+      [0, 2, 6],
+      [0, 6, 4],
+      [1, 3, 7],
+      [1, 7, 5],
+    ];
+    return { verts, edges, faces };
   }
   if (family === "prism") {
     const verts = [];
@@ -477,7 +542,7 @@ function thinConnectedEdges(edges, vertCount, keep, rng) {
   return kept;
 }
 
-function buildMesh(seedHex, brief) {
+function buildMesh(seedHex, brief, cameraKind) {
   const text = String(brief || "factory-blip");
   let mix = 0;
   for (let i = 0; i < text.length; i++) mix = (Math.imul(mix, 33) + text.charCodeAt(i)) >>> 0;
@@ -510,11 +575,14 @@ function buildMesh(seedHex, brief) {
   if (faces.length > 16) faces = faces.slice(0, 16);
   const accentIndex = (rng() * THEME_CYCLE.length) | 0;
   const coreStyle = CORE_STYLES[(rng() * CORE_STYLES.length) | 0];
+  const picked = CAMERA_KINDS[(rng() * CAMERA_KINDS.length) | 0];
+  const camera = cameraKind && CAMERA_KINDS.includes(cameraKind) ? cameraKind : picked;
   return {
     family,
     gait,
     coreStyle,
-    id: `${family}-${gait}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
+    camera,
+    id: `${family}-${gait}-${camera}-${verts.length}v${edges.length}e${faces.length}f-${((rng() * 0xfffffff) | 0).toString(16)}`,
     verts,
     edges,
     faces,
@@ -590,24 +658,24 @@ function rotate3(v, yaw, pitch, roll) {
 
 function projectMesh(mesh, width, height, t, checksum, scaleMul) {
   const gait = mesh.gait || "tumble";
-  let yaw = t * mesh.spin + mesh.twist;
-  let pitch = Math.sin(t * mesh.spin * 0.42 + mesh.twist) * 0.52;
-  let roll = t * 0.38 + mesh.twist * 0.25;
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const and = andAccent(beat);
   const phrase = phraseOf(checksum, t);
+  const spinMul = phraseMix(phrase, 0.28, 1.32 + 0.7 * (phrase.turnHit || 0), 0.16);
+  let yaw = t * mesh.spin * spinMul + mesh.twist;
+  let pitch = Math.sin(t * mesh.spin * 0.42 * spinMul + mesh.twist) * 0.52;
+  let roll = t * 0.38 * spinMul + mesh.twist * 0.25;
   let breathe =
     (scaleMul || 1) *
     mesh.scale *
     (1 + 0.07 * kick + 0.045 * and) *
-    phraseMix(phrase, 0.92, 1.06 + 0.08 * phrase.turnHit, 0.88);
-  yaw += phrase.turnHit * 0.32;
+    phraseMix(phrase, 0.88, 1.16 + 0.12 * phrase.turnHit, 0.96);
   let ox = 0;
   let oy = 0;
   if (gait === "snap") {
-    const q = Math.floor(beat);
-    yaw = q * 1.15 + mesh.twist;
+    const q = Math.floor(beat + (phrase.turnHit || 0) * 0.8);
+    yaw = q * 1.15 + mesh.twist + (phrase.turnHit || 0) * 0.7;
     pitch = Math.sin(q * 1.7 + mesh.twist) * 0.46;
     roll = q * 0.55 + mesh.twist * 0.3;
   } else if (gait === "pulse") {
@@ -616,10 +684,15 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     ox = Math.cos(beat * Math.PI * 2 + mesh.twist) * mesh.warp * 0.42;
     oy = Math.sin(beat * Math.PI + mesh.twist) * mesh.warp * 0.26;
   } else if (gait === "tumble") {
-    yaw = beat * mesh.spin + mesh.twist;
-    pitch = beat * mesh.spin * 0.38 + Math.sin(mesh.twist) * 0.2;
-    roll = beat * mesh.spin * 0.22 + mesh.twist;
+    yaw = beat * mesh.spin * spinMul + mesh.twist;
+    pitch = beat * mesh.spin * 0.38 * spinMul + Math.sin(mesh.twist) * 0.2;
+    roll = beat * mesh.spin * 0.22 * spinMul + mesh.twist;
   }
+  const cam = cameraPose(resolveCamera(mesh), phrase);
+  yaw += cam.yaw + phrase.turnHit * 0.55;
+  pitch += cam.pitch;
+  roll += cam.roll;
+  breathe *= cam.dolly;
   const minSide = Math.min(width, height);
   const cx = (width - 1) * 0.5 + ox * minSide;
   const cy = (height - 1) * 0.5 + oy * minSide;
@@ -635,7 +708,7 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
     }
     const z = r[2] + 2.35;
     const p = (breathe * minSide) / z;
-    return { x: cx + r[0] * p, y: cy + r[1] * p * 0.84, z: r[2] };
+    return { x: cx + r[0] * p, y: cy + r[1] * p * cam.flatten, z: r[2] };
   });
 }
 
@@ -656,8 +729,47 @@ function resolveLookKind(opts) {
   return LOOK_KINDS[seedU32(opts && opts.seedHex, 0) % LOOK_KINDS.length];
 }
 
-function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
-  const g = soundRippel.resolveGenre(genre || "ambient");
+function resolveGenreKind(opts) {
+  const raw = opts && opts.genre;
+  if (raw != null && String(raw).trim()) {
+    const trimmed = String(raw).trim().toLowerCase();
+    const aliased = soundRippel.GENRE_ALIASES[trimmed];
+    if (aliased) return aliased;
+    if (GENRE_KINDS.includes(trimmed)) return trimmed;
+    const err = new Error(`unknown genre "${raw}" (want ${GENRE_KINDS.join("|")})`);
+    err.code = "BLIP_GENRE";
+    throw err;
+  }
+  return GENRE_KINDS[seedU32(opts && opts.seedHex, 24) % GENRE_KINDS.length];
+}
+
+function resolveBodyKind(opts) {
+  const raw = opts && opts.bodyKind;
+  if (raw) {
+    if (!BODY_KINDS.includes(raw)) {
+      const err = new Error(`unknown body "${raw}" (want ${BODY_KINDS.join("|")})`);
+      err.code = "BLIP_BODY";
+      throw err;
+    }
+    return raw;
+  }
+  return BODY_KINDS[seedU32(opts && opts.seedHex, 16) % BODY_KINDS.length];
+}
+
+function organOf(visualization, lookKind, bodyKind) {
+  if (visualization === "canvas") {
+    if (lookKind === "focus") return "focus";
+    return bodyKind === "rippel" ? "mandala" : "cage";
+  }
+  if (visualization === "3d-sacred") return bodyKind === "rippel" ? "sacred-flow" : "mesh";
+  if (visualization === "neural") return bodyKind === "rippel" ? "synapse" : "strike";
+  if (visualization === "waveform") return bodyKind === "rippel" ? "liquid-waves" : "ribbons";
+  if (visualization === "particles") return bodyKind === "rippel" ? "cosmic-dance" : "embers";
+  return visualization;
+}
+
+function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind, bodyKind, camera }) {
+  const g = soundRippel.resolveGenre(resolveGenreKind({ seedHex, genre }));
   const scale = SCALES[g.id] || SCALES.ambient;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8));
   const text = String(brief || "factory-blip");
@@ -702,17 +814,22 @@ function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
       parity: (seedU32(seedHex, 0) & 1) === 0,
     },
     lookKind: resolveLookKind({ seedHex, lookKind }),
-    mesh: buildMesh(seedHex, text),
+    bodyKind: resolveBodyKind({ seedHex, bodyKind }),
+    genre: g.id,
+    mesh: buildMesh(seedHex, text, resolveCameraKind({ camera })),
     field: buildField(seedHex, text),
   };
 }
 
 function cachedChecksum(opts) {
   const lookKind = resolveLookKind(opts);
-  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}`;
+  const bodyKind = resolveBodyKind(opts);
+  const genre = resolveGenreKind(opts);
+  const camera = resolveCameraKind(opts);
+  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${genre}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}::${bodyKind}::${camera || "seed"}`;
   let hit = visualCache.get(key);
   if (!hit) {
-    hit = buildVisualConfig({ ...opts, lookKind });
+    hit = buildVisualConfig({ ...opts, lookKind, bodyKind, genre, camera });
     visualCache.set(key, hit);
   }
   return hit;
@@ -954,7 +1071,7 @@ function fillTri(buf, width, height, a, b, c, color, alpha) {
   const maxX = Math.min(width - 1, Math.ceil(Math.max(a.x, b.x, c.x)));
   const minY = Math.max(0, Math.floor(Math.min(a.y, b.y, c.y)));
   const maxY = Math.min(height - 1, Math.ceil(Math.max(a.y, b.y, c.y)));
-  if (maxX - minX > 420 || maxY - minY > 320) return;
+  if (maxX - minX > 1280 || maxY - minY > 720) return;
   const area = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
   if (Math.abs(area) < 8) return;
   const a0 = alpha * (area > 0 ? 1 : 0.38);
@@ -1039,18 +1156,23 @@ function paintGlowLine(buf, width, height, x0, y0, x1, y1, color, opts) {
   }
 }
 
-function paintMeshFaces(buf, width, height, mesh, pts, color, alpha) {
+function paintMeshFaces(buf, width, height, mesh, pts, color, alpha, t, checksum) {
   if (!mesh.faces || !mesh.faces.length || alpha <= 0) return;
+  const wash = color || THEME.cyan;
   const ranked = mesh.faces
     .map((f) => {
       const a = pts[f[0]];
       const b = pts[f[1]];
       const c = pts[f[2]];
+      if (!a || !b || !c) return null;
       return { a, b, c, z: (a.z + b.z + c.z) / 3 };
     })
+    .filter(Boolean)
     .sort((p, q) => p.z - q.z);
+  const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   for (let i = 0; i < ranked.length; i++) {
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, color, alpha);
+    const jewel = mixRgb(THEME.cyan, THEME.blue, (i / Math.max(1, ranked.length) + (beat || 0) * 0.08) % 1);
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, THEME.ink, 0.08), alpha);
   }
 }
 
@@ -1061,7 +1183,7 @@ function paintMesh(buf, width, height, mesh, pts, color, half, opts) {
   const kick = kickAccent(beat);
   const and = andAccent(beat);
   const fillA = opts && opts.fill != null ? opts.fill : 0;
-  if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA);
+  if (fillA > 0) paintMeshFaces(buf, width, height, mesh, pts, color, fillA, t, checksum);
   const ranked = mesh.edges
     .map((e, i) => ({ e, i, z: (pts[e[0]].z + pts[e[1]].z) * 0.5 }))
     .sort((a, b) => a.z - b.z);
@@ -1095,7 +1217,7 @@ function paintChecksumMesh(buf, width, height, t, checksum, opts) {
   const half = (opts && opts.half) || 1;
   const pts = projectMesh(mesh, width, height, t, checksum, scale);
   paintMesh(buf, width, height, mesh, pts, opts && opts.color, half, {
-    fill: 0,
+    fill: opts && opts.fill != null ? opts.fill : 0,
     t,
     checksum,
   });
@@ -1110,6 +1232,8 @@ function paintMeshOverlay(buf, width, height, opts) {
     width,
     height,
     lookKind: opts.lookKind,
+    bodyKind: opts.bodyKind,
+    camera: opts.camera,
   });
   paintField(buf, width, height, opts.t || 0, checksum);
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
@@ -1120,7 +1244,7 @@ function paintMeshOverlay(buf, width, height, opts) {
 
 function paintGradient(buf, width, height, field, t) {
   const aCol = field.gradColor || THEME.blue;
-  const bCol = mixRgb(THEME.gold, THEME.cyan, 0.45 + 0.2 * Math.sin((t || 0) * 0.7));
+  const bCol = mixRgb(THEME.cyan, THEME.blue, 0.45 + 0.2 * Math.sin((t || 0) * 0.7));
   const s = field.gradStrength || 0.2;
   if (field.gradient === "horizon") {
     const y0 = (height * 0.58) | 0;
@@ -1159,38 +1283,19 @@ function paintGradient(buf, width, height, field, t) {
 }
 
 function paintGrid(buf, width, height, field, t, checksum) {
-  if (!field.grid || field.grid === "none") return;
+  if (!field.grid || field.grid === "none" || field.grid === "ticks" || field.grid === "meridian") {
+    return;
+  }
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const phrase = phraseOf(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const fade = phraseMix(phrase, 0.55, 0.12, 0.28);
   const accent = field.gridColor || THEME.cyan;
   const line = (x0, y0, x1, y1) =>
     paintGlowLine(buf, width, height, x0, y0, x1, y1, accent, {
-      glowAlpha: 0.07,
+      glowAlpha: 0.035 * fade,
       shader: (u) => iridesce(u, t || 0, beat, accent),
     });
   const cx = (width - 1) * 0.5;
-  if (field.grid === "ticks") {
-    for (let i = 0; i < 9; i++) {
-      const x = ((i + 1) / 10) * width;
-      line(x, 8, x, 28);
-      line(x, height - 28, x, height - 8);
-    }
-    for (let i = 0; i < 5; i++) {
-      const y = ((i + 1) / 6) * height;
-      line(8, y, 28, y);
-      line(width - 28, y, width - 8, y);
-    }
-    return;
-  }
-  if (field.grid === "meridian") {
-    line(28, 28, width - 28, 28);
-    line(28, height - 28, width - 28, height - 28);
-    line(28, 28, 28, height - 28);
-    line(width - 28, 28, width - 28, height - 28);
-    const inset = width * 0.17;
-    line(inset, 40, inset * 0.82, height - 40);
-    line(width - inset, 40, width - inset * 0.82, height - 40);
-    return;
-  }
   const vanishY = height * 0.64;
   const floorY = height * 0.76;
   line(0, floorY, width, floorY);
@@ -1227,7 +1332,7 @@ function paintField(buf, width, height, t, checksum) {
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
-    const on = b.onAnd ? and : kick;
+    const on = kick;
     if (on < 0.08) continue;
     stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
       rim: 1,
@@ -1284,33 +1389,97 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   const phrase = phraseOf(checksum, t);
-  const spin = t * phraseMix(phrase, 0.22, 0.52, 0.16) + beat * Math.PI * 0.12;
-  const orbitMul = phraseMix(phrase, 0.8, 1.08 + phrase.turnHit * 0.1, 0.64);
-  const rMul = phraseMix(phrase, 0.42, 0.42, 0.3);
+  const spin = t * phraseMix(phrase, 0.12, 0.72 + 0.4 * (phrase.turnHit || 0), 0.1) + beat * Math.PI * 0.12;
+  const orbitMul = phraseMix(phrase, 0.58, 1.32 + 0.4 * (phrase.turnHit || 0), 0.72);
+  const rMul = phraseMix(phrase, 0.34, 0.52, 0.38);
+  const cam = cameraPose(resolveCamera(checksum && checksum.mesh), phrase);
   return circles.map((circle, i) => {
-    const ang = (i / circles.length) * Math.PI * 2 + spin;
-    const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
+    const ang = (i / circles.length) * Math.PI * 2 + spin + cam.yaw * 0.35;
+    const inner = i % 3 === 0;
+    const orbit = inner
+      ? minSide * 0.1
+      : minSide * (0.17 + (i % 3) * 0.05) * orbitMul * cam.dolly;
+    const depth = Math.sin(ang);
     return {
       circle,
-      x: cx + Math.cos(ang) * orbit,
-      y: cy + Math.sin(ang) * orbit * 0.72,
-      r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42),
+      x: cx + Math.cos(ang) * orbit + Math.sin(cam.yaw) * minSide * 0.04,
+      y: cy + Math.sin(ang) * orbit * (inner ? 0.82 : cam.flatten) + (inner ? minSide * 0.05 * (i % 2 ? 1 : -1) : 0),
+      r: circlePulse(circle, t + i * 0.11) * (rMul / 0.42) * (0.68 + 0.32 * (0.5 + 0.5 * depth)),
       color: parseHex(circle.color),
+      depth,
     };
   });
 }
 
-function paintFocusSatellites(buf, width, height, t, checksum) {
-  if (!checksum || checksum.lookKind !== "focus") return;
+/** Power Plant satellites. pred picks behind/front so the nucleus can occlude. */
+function paintSuitSatellites(buf, width, height, t, checksum, pred, clip) {
+  if (!checksum) return;
   const circles = checksum.visualConfig && checksum.visualConfig.circles;
   if (!circles || !circles.length) return;
-  for (const placed of layoutFocusRing(circles, width, height, t, checksum)) {
-    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.42, placed.color, {
+  const placed = layoutFocusRing(circles, width, height, t, checksum)
+    .filter((sat) => (pred ? pred(sat) : true))
+    .sort((a, b) => a.depth - b.depth);
+  for (let i = 0; i < placed.length; i++) {
+    const sat = placed[i];
+    if (clip && sat.depth < 0) {
+      const d = Math.hypot(sat.x - clip.cx, sat.y - clip.cy);
+      if (d < clip.r - sat.r * 0.15) continue;
+    }
+    const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.55);
+    stampFocusDisc(buf, width, height, sat.x, sat.y, sat.r * 0.42, color, {
       rim: 1.6,
       glow: 4,
-      glowAlpha: 0.24,
+      glowAlpha: 0.16 + 0.12 * Math.max(0, sat.depth),
       rimColor: THEME.ink,
     });
+  }
+}
+
+function paintFocusSatellites(buf, width, height, t, checksum) {
+  if (!checksum || checksum.lookKind !== "focus") return;
+  paintSuitSatellites(buf, width, height, t, checksum);
+}
+
+/** House noun — cyan disc + gold pupil. Verb organs wear this; mesh stays the jewel. */
+function stampHouseNoun(buf, width, height, cx, cy, radius, kick) {
+  stampFocusDisc(buf, width, height, cx, cy, radius, THEME.cyan, {
+    rim: 2,
+    glow: 6,
+    glowAlpha: 0.24,
+    rimColor: THEME.ink,
+  });
+  stampFocusDisc(
+    buf,
+    width,
+    height,
+    cx,
+    cy,
+    radius * 0.4,
+    kick > 0.15 ? THEME.gold : mixRgb(THEME.gold, THEME.cyan, 0.28),
+    { rim: 1.4, glow: 3, glowAlpha: 0.22, rimColor: THEME.gold },
+  );
+}
+
+/** Mill mesh verts as stamp discs — same presence language as synapse / cosmos. */
+function paintMeshBeads(buf, width, height, t, checksum, scale) {
+  const mesh = checksum && checksum.mesh;
+  if (!mesh || !mesh.verts || !mesh.verts.length) return;
+  const pts = projectMesh(mesh, width, height, t, checksum, scale || 0.92);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const gold = kick > 0.18 && i === 0;
+    stampFocusDisc(
+      buf,
+      width,
+      height,
+      p.x,
+      p.y,
+      6.8 + (i % 3) * 1.6 + kick * 1.2,
+      gold ? THEME.gold : THEME_CYCLE[((mesh.accentIndex || 0) + i) % THEME_CYCLE.length],
+      { rim: 1.4, glow: 3.2, glowAlpha: 0.2, rimColor: THEME.ink },
+    );
   }
 }
 
@@ -1336,7 +1505,7 @@ function paintFocusField(buf, width, height, t, checksum) {
   const blinkers = field.blinkers || [];
   for (let i = 0; i < blinkers.length; i++) {
     const b = blinkers[i];
-    const on = b.onAnd ? and : kick;
+    const on = kick;
     if (on < 0.08) continue;
     stampFocusDisc(buf, width, height, b.x * width, b.y * height, 1.8 + on * 1.4, b.color, {
       rim: 1,
@@ -1368,7 +1537,24 @@ function paintFocusMeshMass(buf, width, height, t, checksum) {
   }
 }
 
-/** orb focus — cyan disc + gold pupil + satellites. Field + mesh mass carry the mint id. */
+const organs = createOrgans({
+  THEME,
+  mixPixel,
+  mixRgb,
+  paintSharpLine,
+  paintGlowLine,
+  stampFocusDisc,
+  beatPhase,
+  kickAccent,
+  andAccent,
+  phraseOf,
+  phraseMix,
+  iridesce,
+  mulberry32,
+  clamp,
+});
+
+/** orb focus — cyan disc + gold pupil + satellites. Field + mesh verts carry the mint id. */
 function paintFocusOrb(buf, width, height, t, checksum) {
   fillVoid(buf);
   paintFocusField(buf, width, height, t, checksum);
@@ -1384,9 +1570,12 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     minSide *
     (0.11 +
       0.018 * Math.sin(t * 1.7) +
-      0.018 * phrase.turnHit +
+      0.055 * phrase.turnHit +
+      0.02 * phraseWeight(phrase, "turn") +
       0.01 * phraseWeight(phrase, "tag") +
       pulse);
+  const clip = { cx, cy, r: core * 1.08 };
+  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth < 0, clip);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
     glow: 7,
@@ -1399,48 +1588,154 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     glowAlpha: 0.22,
     rimColor: THEME.gold,
   });
-  paintFocusSatellites(buf, width, height, t, checksum);
+  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
 }
 
-/** orb → canvas / Orb Glow v2. Seed look: focus (disc satellites) or cage (Wu + field). */
-function paintCanvas(buf, width, height, t, checksum) {
-  if (checksum.lookKind === "focus") {
-    return paintFocusOrb(buf, width, height, t, checksum);
-  }
+/** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
+function paintMillCage(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
+  const phrase = phraseOf(checksum, t);
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.95,
     half: 1,
-    noFill: true,
+    fill: phraseMix(phrase, 0.16, 0.32, 0.2),
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
-  const nucleus = paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
-  const tickR = nucleus.radius;
-  const tickA = beat * Math.PI * 2;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(tickA) * tickR,
-    cy + Math.sin(tickA) * tickR,
-    5,
-    THEME.gold,
-    { rim: 1.2, glow: 3, glowAlpha: 0.2, rimColor: THEME.ink },
-  );
-  const ghostA = tickA - 0.55;
-  stampFocusDisc(
-    buf,
-    width,
-    height,
-    cx + Math.cos(ghostA) * tickR,
-    cy + Math.sin(ghostA) * tickR,
-    3,
-    THEME.ink,
-    { rim: 1, glow: 2, glowAlpha: 0.12, rimColor: THEME.ink },
-  );
+  paintOrbNucleus(buf, width, height, cx, cy, minSide, beat, checksum.mesh, checksum);
+}
+
+/** mill swirl — platonic mass. Faces wash + Wu hairline. No nucleus. */
+function paintMillMesh(buf, width, height, t, checksum, scale) {
+  startFrame(buf, width, height, t, checksum);
+  const phrase = phraseOf(checksum, t);
+  paintChecksumMesh(buf, width, height, t, checksum, {
+    scale: scale || 0.92,
+    half: 1,
+    fill: phraseMix(phrase, 0.3, 0.62, 0.38),
+  });
+  paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
+}
+
+/** mill snap — ghost hull + 2–3 held strikes. Never the full swirl mass. */
+function paintMillStrike(buf, width, height, t, checksum) {
+  startFrame(buf, width, height, t, checksum);
+  const mesh = checksum && checksum.mesh;
+  if (!mesh) return;
+  const snapped = Object.assign({}, mesh, { gait: "snap" });
+  const pts = projectMesh(snapped, width, height, t, checksum, 0.9);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const phrase = phraseOf(checksum, t);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.04, 0.08, 0.05), t, checksum);
+  stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * phraseMix(phrase, 0.055, 0.08, 0.06), kick);
+  for (let i = 0; i < (mesh.edges || []).length; i++) {
+    const [a, b] = mesh.edges[i];
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, THEME.cyan, {
+      glowAlpha: 0.045,
+      shader: (u) => livingShade(snapped, t, u, beat, THEME.ink),
+    });
+  }
+  const keep = Math.min(3, Math.max(2, Math.ceil((mesh.edges.length || 0) * phraseMix(phrase, 0.22, 0.36, 0.18))));
+  const ranked = (mesh.edges || [])
+    .map((e, i) => ({ e, i, z: pts[e[0]] && pts[e[1]] ? pts[e[0]].z + pts[e[1]].z : 0 }))
+    .sort((a, b) => a.z - b.z)
+    .slice(0, keep);
+  for (let i = 0; i < ranked.length; i++) {
+    const [a, b] = ranked[i].e;
+    const pa = pts[a];
+    const pb = pts[b];
+    if (!pa || !pb) continue;
+    const live = i === 0;
+    const color = kick > 0.16 && live ? THEME.gold : livingShade(snapped, t, i / Math.max(1, ranked.length), beat, null);
+    paintSharpLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, live ? 3 : 2);
+    paintGlowLine(buf, width, height, pa.x, pa.y, pb.x, pb.y, color, { glowAlpha: live ? 0.2 : 0.1 });
+    stampFocusDisc(buf, width, height, pa.x, pa.y, (live ? 9.4 : 6.8) + kick * 2.4, color, {
+      rim: 1.3,
+      glow: 4,
+      glowAlpha: 0.22,
+      rimColor: THEME.ink,
+    });
+    stampFocusDisc(buf, width, height, pb.x, pb.y, (live ? 8.2 : 5.8) + kick * 1.8, color, {
+      rim: 1.2,
+      glow: 3.4,
+      glowAlpha: 0.2,
+      rimColor: THEME.ink,
+    });
+  }
+}
+
+/** mill spark — coals at verts + edge midpoints, longer heat wakes. Not a cosmos web. */
+function paintMillEmbers(buf, width, height, t, checksum) {
+  startFrame(buf, width, height, t, checksum);
+  const mesh = checksum && checksum.mesh;
+  if (!mesh) return;
+  const pts = projectMesh(mesh, width, height, t, checksum, 0.85);
+  const prev = projectMesh(mesh, width, height, Math.max(0, t - 0.16), checksum, 0.85);
+  const beat = beatPhase(checksum, t);
+  const kick = kickAccent(beat);
+  const phrase = phraseOf(checksum, t);
+  const size = phraseMix(phrase, 8.6, 15.4, 10.2);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const burst = phraseMix(phrase, 0.72, 1.06 + 0.08 * (phrase.turnHit || 0), 0.84);
+  stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * 0.07 * phraseMix(phrase, 0.85, 1.12, 0.9), kick);
+  const coals = [];
+  for (let i = 0; i < pts.length; i++) {
+    coals.push({ p: pts[i], q: prev[i] || pts[i], i, mid: false });
+  }
+  for (let i = 0; i < (mesh.edges || []).length; i++) {
+    const [a, b] = mesh.edges[i];
+    if (!pts[a] || !pts[b] || !prev[a] || !prev[b]) continue;
+    coals.push({
+      p: { x: (pts[a].x + pts[b].x) * 0.5, y: (pts[a].y + pts[b].y) * 0.5 },
+      q: { x: (prev[a].x + prev[b].x) * 0.5, y: (prev[a].y + prev[b].y) * 0.5 },
+      i: pts.length + i,
+      mid: true,
+    });
+  }
+  for (let i = 0; i < coals.length; i++) {
+    const coal = coals[i];
+    const heat = THEME_CYCLE[((mesh.accentIndex || 0) + coal.i) % THEME_CYCLE.length];
+    const color = kick > 0.2 && coal.i === 0 ? THEME.gold : heat;
+    const px = cx + (coal.p.x - cx) * burst;
+    const py = cy + (coal.p.y - cy) * burst;
+    const qx = cx + (coal.q.x - cx) * burst;
+    const qy = cy + (coal.q.y - cy) * burst;
+    const dx = px - qx;
+    const dy = py - qy;
+    const body = (coal.mid ? size * 0.62 : size) + (coal.i % 3) * 1.4 + kick * 2.2;
+    for (let k = 1; k <= 7; k++) {
+      const u = k / 8;
+      stampDisc(buf, width, height, px - dx * u * 1.35, py - dy * u * 1.35, body * 0.38 * (1 - u * 0.6), color, 1.5);
+    }
+    stampFocusDisc(buf, width, height, px, py, body, color, {
+      rim: 1.4,
+      glow: 6,
+      glowAlpha: 0.3,
+      rimColor: THEME.ink,
+    });
+  }
+}
+
+/** orb → canvas. focus = cyan disc. cage+mill = Wu mesh. cage+rippel = refined mandala. */
+function paintCanvas(buf, width, height, t, checksum) {
+  if (checksum.lookKind === "focus") {
+    return paintFocusOrb(buf, width, height, t, checksum);
+  }
+  if (checksum.bodyKind === "rippel") {
+    startFrame(buf, width, height, t, checksum);
+    organs.paintMandala(buf, width, height, t, checksum);
+    return;
+  }
+  paintMillCage(buf, width, height, t, checksum);
 }
 
 /** Orb-only nucleus. Other viz do not wear this bullseye. Color cuts + size on the grid; seed picks disc/eclipse/pulse. */
@@ -1511,112 +1806,38 @@ function orbFocusWidth(buf, width, height) {
   return { peak, inner: hi - cx, drop: lo - hi };
 }
 
-/** swirl → 3d-sacred v2. Seed mesh is the sacred body — lines, not vertex beads. */
+/** swirl → mill platonic mesh or refined sacred-flow. */
 function paintSacred(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillMesh(buf, width, height, t, checksum, 0.92);
+  }
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.92,
-    half: 1,
-  });
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintSacredFlow(buf, width, height, t, checksum);
 }
 
-/** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
+/** snap → mill mesh or refined Kuramoto synapse. */
 function paintNeural(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillStrike(buf, width, height, t, checksum);
+  }
   startFrame(buf, width, height, t, checksum);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.9,
-    half: 1,
-  });
-  const pts = (worn && worn.pts) || [];
-  const mesh = checksum.mesh;
-  const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
-  if (mesh && pts.length) {
-    paintFocusSatellites(buf, width, height, t, checksum);
-    return;
-  }
-  const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
-  for (let i = 0; i < placed.length; i++) {
-    const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
-    const a = {
-      ...placed[i],
-      x: placed[i].x + wander,
-      y: placed[i].y + Math.cos(t * 2.7 + i) * 10,
-    };
-    const rawB = placed[(i + 1) % placed.length];
-    const rawSkip = placed[(i + 2) % placed.length];
-    const b = { x: rawB.x - wander * 0.3, y: rawB.y };
-    const skip = { x: rawSkip.x, y: rawSkip.y + wander * 0.2 };
-    paintSharpLine(buf, width, height, a.x, a.y, b.x, b.y, THEME.blue, 1);
-    paintSharpLine(buf, width, height, a.x, a.y, skip.x, skip.y, THEME.blue, 1);
-    paintSharpLine(buf, width, height, cx, cy, a.x, a.y, THEME.blue, 1);
-    const speed = 1.8 + a.circle.frequency / 140;
-    const travel = (t * speed + i * 0.17) % 1;
-    const inbound = (t * speed * 1.35 + beat * 0.08 + i * 0.41) % 1;
-    const third = (t * speed * 0.55 + i * 0.63) % 1;
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (b.x - a.x) * travel,
-      a.y + (b.y - a.y) * travel,
-      5,
-      THEME.gold,
-      node,
-    );
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (cx - a.x) * inbound,
-      a.y + (cy - a.y) * inbound,
-      4,
-      THEME.cyan,
-      node,
-    );
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      a.x + (skip.x - a.x) * third,
-      a.y + (skip.y - a.y) * third,
-      3,
-      THEME.ink,
-      node,
-    );
-  }
-  for (const seat of placed) {
-    stampFocusDisc(
-      buf,
-      width,
-      height,
-      seat.x,
-      seat.y,
-      7 + kick * 1.5,
-      mixRgb(seat.color, THEME.gold, freqTint(seat.circle, t)),
-      node,
-    );
-  }
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintKuramoto(buf, width, height, t, checksum);
 }
 
-/** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
+/** waves → WaveformVisualizer liquid ocean + mill ribbons. No gold playhead. */
 function paintWaveform(buf, width, height, t, checksum) {
   startFrame(buf, width, height, t, checksum);
-  paintChecksumMesh(buf, width, height, t, checksum, { scale: 0.72, half: 1 });
   const mid = (height - 1) * 0.5;
   const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const env = 0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2));
+  const phrase = phraseOf(checksum, t);
+  const env =
+    phraseMix(phrase, 0.74, 1.42 + 0.16 * phrase.turnHit, 0.82) *
+    (0.88 + 0.12 * Math.max(0, Math.sin(beat * Math.PI * 2)));
   const circles = checksum.visualConfig.circles;
   paintSharpRibbon(buf, width, height, () => mid, THEME.ink, 1, THEME.void);
   circles.forEach((circle, i) => {
     const color = iridesce(i / Math.max(1, circles.length), t, beat, parseHex(circle.color));
-    const amp0 = height * (0.05 + (circle.radius / 420) * 0.11) * env;
+    const amp0 = height * (0.11 + (circle.radius / 420) * 0.22) * env;
     const f0 = 0.0065 + circle.frequency / 22000;
     const shift = t * (circle.frequency / 1.85);
     const gem = (checksum.gematria && checksum.gematria.checksumValue) || 1;
@@ -1643,86 +1864,27 @@ function paintWaveform(buf, width, height, t, checksum) {
       1,
     );
   });
-  const tickX = ((beat % 1) * width) | 0;
-  const tickH = height * 0.22 * (0.45 + kick);
-  for (let y = mid - tickH; y <= mid + tickH; y++) {
-    mixPixel(buf, width, tickX, y, THEME.gold, 1);
-    mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
-    mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
+  stampHouseNoun(
+    buf,
+    width,
+    height,
+    (width - 1) * 0.5,
+    mid,
+    Math.min(width, height) * 0.075 * phraseMix(phrase, 0.8, 1.15, 0.88),
+    kickAccent(beat),
+  );
+  if (checksum.bodyKind === "rippel") {
+    organs.paintAuroraOrbs(buf, width, height, t, checksum);
   }
-  paintFocusSatellites(buf, width, height, t, checksum);
 }
 
-/** spark → particles v2. Seed mesh is the spark — lines, not bead rain. */
+/** spark → mill mesh or refined cosmic dance. */
 function paintParticles(buf, width, height, t, checksum) {
+  if (checksum.bodyKind !== "rippel") {
+    return paintMillEmbers(buf, width, height, t, checksum);
+  }
   startFrame(buf, width, height, t, checksum);
-  const cx = (width - 1) * 0.5;
-  const cy = (height - 1) * 0.5;
-  const minSide = Math.min(width, height);
-  const beat = beatPhase(checksum, t);
-  const kick = kickAccent(beat);
-  const worn = paintChecksumMesh(buf, width, height, t, checksum, {
-    scale: 0.85,
-    half: 1,
-  });
-  const mote = { rim: 1, glow: 2, glowAlpha: 0.16, rimColor: THEME.ink };
-  const mesh = checksum.mesh;
-  const pts = worn && worn.pts;
-  const circles = checksum.visualConfig.circles;
-  if (mesh && pts) {
-    paintFocusSatellites(buf, width, height, t, checksum);
-    return;
-  }
-  const placed = layoutRings(circles, width, height, t * 1.15, checksum);
-  for (let i = 0; i < placed.length; i++) {
-    const src = placed[i];
-    const tint = freqTint(src.circle, t);
-    const orbitR = 22 + (i % 3) * 11 + Math.sin(t * 1.7 + i) * 5;
-    const segs = 11;
-    for (let s = 0; s < segs; s++) {
-      if ((s + i * 3) % 4 === 0) continue;
-      const a0 = (s / segs) * Math.PI * 2 + t * 3.4 + i * 0.7;
-      const a1 = a0 + (Math.PI * 2 * 0.32) / segs;
-      paintSharpLine(
-        buf,
-        width,
-        height,
-        src.x + Math.cos(a0) * orbitR,
-        src.y + Math.sin(a0) * orbitR * 0.72,
-        src.x + Math.cos(a1) * orbitR,
-        src.y + Math.sin(a1) * orbitR * 0.72,
-        THEME.blue,
-        1,
-      );
-    }
-    const moteCount = 18;
-    for (let k = 0; k < moteCount; k++) {
-      const life = (t * (1.25 + src.circle.frequency / 420) + k * 0.11 + i * 0.07) % 1;
-      const orbital = k % 3 === 0;
-      const dart = Math.sin(t * 5.1 + k * 1.3 + i) * 0.35;
-      const ang = orbital ? t * (3.2 + (k % 5) * 0.28) + i + k + dart : t * 4.2 + i * 1.3 + k * 0.62 + dart;
-      const dist = orbital
-        ? 18 + (k % 4) * 10 + Math.sin(beat * Math.PI * 2 + k) * 4
-        : life * minSide * 0.38 * (0.7 + kick * 0.12);
-      const x = src.x + Math.cos(ang) * dist;
-      const y = src.y + Math.sin(ang) * dist * (orbital ? 0.72 : 1);
-      const size = Math.max(2.2, (1 - life) * (3.2 + (k % 3)) + kick * 0.6);
-      const color = mixRgb(src.color, THEME.gold, k % 2 === 0 ? tint : tint * 0.4);
-      stampFocusDisc(buf, width, height, x, y, size, color, mote);
-      if (life > 0.12 && !orbital) {
-        const prev = life - 0.1;
-        const pd = prev * minSide * 0.36;
-        stampFocusDisc(buf, width, height, src.x + Math.cos(ang) * pd, src.y + Math.sin(ang) * pd, size * 0.55, color, {
-          rim: 1,
-          glow: 1,
-          glowAlpha: 0.1,
-          rimColor: THEME.ink,
-        });
-      }
-    }
-    stampFocusDisc(buf, width, height, src.x, src.y, 6 + kick, mixRgb(THEME.ink, THEME.gold, tint), mote);
-  }
-  paintFocusSatellites(buf, width, height, t, checksum);
+  organs.paintCosmos(buf, width, height, t, checksum);
 }
 
 function paintVisualization(visualization, buf, width, height, t, checksum) {
@@ -1764,6 +1926,8 @@ function paintRippelFrame(opts) {
     width,
     height,
     lookKind: opts.lookKind,
+    bodyKind: opts.bodyKind,
+    camera: opts.camera,
   });
   paintVisualization(visualization, buf, width, height, opts.t || 0, checksum);
   return {
@@ -1774,6 +1938,10 @@ function paintRippelFrame(opts) {
     engine: ENGINE,
     look: LOOK,
     lookKind: checksum.lookKind,
+    bodyKind: checksum.bodyKind,
+    camera: resolveCamera(checksum.mesh),
+    genre: checksum.genre,
+    organ: organOf(visualization, checksum.lookKind, checksum.bodyKind),
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
@@ -1818,14 +1986,16 @@ function goldPixelCount(buf) {
   return n;
 }
 
-function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
-  const a = paintRippelFrame({ renderer, t: 0, seedHex, brief, durationSec });
+function sampleMotionFrames(renderer, seedHex, durationSec, brief, extra) {
+  const more = extra || {};
+  const a = paintRippelFrame({ renderer, t: 0, seedHex, brief, durationSec, ...more });
   const b = paintRippelFrame({
     renderer,
     t: (durationSec || 4.44) * 0.5,
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   const c = paintRippelFrame({
     renderer,
@@ -1833,6 +2003,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   const d = paintRippelFrame({
     renderer,
@@ -1840,6 +2011,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     seedHex,
     brief,
     durationSec,
+    ...more,
   });
   return {
     visualization: a.visualization,
@@ -1858,6 +2030,8 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     mesh: a.mesh,
     field: a.field,
     lookKind: a.lookKind,
+    bodyKind: a.bodyKind,
+    organ: a.organ,
     fill: frameFill(a.buffer),
   };
 }
@@ -1887,6 +2061,7 @@ function fingerprintMesh(mesh) {
     fill: Boolean(mesh.fill),
     ghost: Boolean(mesh.ghost),
     coreStyle: mesh.coreStyle || "disc",
+    camera: resolveCamera(mesh),
   };
 }
 
@@ -1911,6 +2086,8 @@ function summarizeVisual(checksum) {
     notes: checksum.visualConfig.circles.map((c) => c.note),
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
     lookKind: checksum.lookKind || null,
+    bodyKind: checksum.bodyKind || null,
+    genre: checksum.genre || (checksum.genreConfig && checksum.genreConfig.scale) || null,
     mesh: fingerprintMesh(checksum.mesh),
     field: fingerprintField(checksum.field),
   };
@@ -1950,6 +2127,7 @@ module.exports = {
   buildField,
   paintMeshOverlay,
   paintField,
+  layoutFocusRing,
   fingerprintMesh,
   fingerprintField,
   frameFill,
@@ -1957,7 +2135,18 @@ module.exports = {
   MESH_GAITS,
   CORE_STYLES,
   LOOK_KINDS,
+  BODY_KINDS,
   GRID_KINDS,
   GRAD_KINDS,
   resolveLookKind,
+  resolveBodyKind,
+  resolveGenreKind,
+  GENRE_KINDS,
+  CAMERA_KINDS,
+  cameraPose,
+  resolveCamera,
+  resolveCameraKind,
+  projectMesh,
+  organOf,
+  ORGAN: organs.ORGAN,
 };

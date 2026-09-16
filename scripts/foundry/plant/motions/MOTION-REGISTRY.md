@@ -12,21 +12,23 @@ On-disk SSOT: `registry.json` next to this file.
 
 Default motion path is the Rippel converter spine, not ffmpeg geometry. Look is **sharp** (opaque body + crisp rim + short glow) on all five. Motion is a **4.44s blip**: fast abstract travel, soft gold tints — no hard strobe. LFOs share the crystal-mill genre tempo + `CircleConfig.frequency` with the audio bed.
 
+One mill suit on every body: Wu hairline, Power Plant satellites, short glow, hook → turn → tag on the shared motion grid. Picture and bed seed-pick the same genre. Rippel geo stays (petals / N-gons / synapse / cosmos / aurora) and wears that suit — not a second CAD look.
+
 - **SSOT** `htafolla/rippel-synapse-flow@e5014cd`
 - `animationIcons.ts` → `ANIMATION_TO_VISUALIZATION`
 - `types/index.ts` → `ChecksumResponse.visualConfig` (`CircleConfig[]`, `CanvasConfig`, `tlmCommand`)
 - `SimplifiedVisualConverter.tsx` → Animation → viz id, canvas **1280×720** @ ~30fps
 - `MiniAnimationViewer` / `FiveDimensionalVisualizer` → viz backends
 
-| id | viz id | backend |
-|----|--------|---------|
-| `orb` | `canvas` | Orb Glow — dual rings, beat tick, frequency flash |
-| `swirl` | `3d-sacred` | merkaba + hex plate, counter-spin, beat vertices |
-| `snap` | `neural` | dual-ring lattice, hub, skip-links, traveling pulses |
-| `waves` | `waveform` | Wave Flow — harmonic ribbons + beat envelope + gold needle |
-| `spark` | `particles` | Spark Drift — beat bursts, orbital + radial motes |
+| id | viz id | mill body | rippel body |
+|----|--------|-----------|-------------|
+| `orb` | `canvas` | `focus` disc **or** `cage` Wu + nucleus | `mandala` |
+| `swirl` | `3d-sacred` | platonic `mesh` | `sacred-flow` |
+| `snap` | `neural` | `strike` (quantized) | `synapse` |
+| `waves` | `waveform` | sharp `ribbons` | `liquid-waves` |
+| `spark` | `particles` | `embers` | `cosmic-dance` |
 
-Every mint wears a **sparse seed mesh** (12 families · 5 gaits) plus a **field** (stars · grids `floor`/`meridian`/`ticks` · gradients · blinkers). Uniqueness is the field, not more wire in the middle. Receipt `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints.
+Every mint wears a **sparse seed mesh** (12 families · 5 gaits · 6 cameras) plus a **field** (stars · grids `floor`/`none` · gradients · blinkers) **under** the drawing. No outer-edge tick ruler or meridian box. Phrase eases spin: hook crawl → turn whip → tag hold. Camera is a seed shot (`front` `three-quarter` `top` `low` `dutch` `side`) with a turn push-in — same organ, different silhouette. Mill swirl is a cyan/gold jewel, snap is a ghost hull + 2–3 strikes, spark is coals on verts and midpoints. Receipt `visualConfig.mesh` + `visualConfig.field` + `organ` are the NFT fingerprints.
 
 Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wireframe` only**.
 

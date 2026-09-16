@@ -372,7 +372,7 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(techno.mix).toBe('crystal');
     expect(techno.topology).toBe('membrane+metal+mixer');
     expect(techno.genre.voices).toEqual(
-      expect.arrayContaining(['membrane-kick', 'metal-hat', 'snare-clap', 'duo-bass', 'mixer']),
+      expect.arrayContaining(['membrane-kick', 'metal-hat', 'snare-clap', 'duo-bass', 'fm-lead', 'mixer']),
     );
     const sine = new Float64Array(SAMPLE_RATE * 4);
     for (let i = 0; i < sine.length; i++) {
@@ -421,6 +421,53 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(pad).not.toContain(247);
     expect(degreeLine('bass', 4)).toEqual([0, 0, 3, 4]);
     expect(degreeLine('rhodes', 6)).toEqual([0, 2, 4, 4, 2, 0]);
+  });
+
+  it('makes the 4.44s bed a Short — turn louder than hook, tag seals', () => {
+    const { sectionGain } = requireCjs(path.join(root, 'scripts/foundry/sound-rippel.cjs')) as {
+      sectionGain: (t: number, seconds: number, lock: boolean, grid: { beatSec: number }) => number;
+    };
+    const grid = { beatSec: 60 / 90 };
+    const hook = sectionGain(0, 4.44, true, grid);
+    const turn = sectionGain(grid.beatSec * 2, 4.44, true, grid);
+    const tag = sectionGain(4.2, 4.44, true, grid);
+    expect(turn).toBeGreaterThan(hook);
+    expect(turn).toBeGreaterThan(tag);
+    expect(hook).toBeGreaterThan(0.55);
+    expect(tag).toBeGreaterThan(0.5);
+  });
+
+  it('ports FM lead, formant stabs, and the missing genre tables', () => {
+    const { resolveGenre, GENRES, SCALES, GENRE_ALIASES } = requireCjs(
+      path.join(root, 'scripts/foundry/sound-rippel.cjs'),
+    ) as {
+      resolveGenre: (name: string) => { id: string; voices: string[] };
+      GENRES: Record<string, { voices: string[] }>;
+      SCALES: { ambient: number[] };
+      GENRE_ALIASES: Record<string, string>;
+      renderSamples?: unknown;
+    };
+    const sound = requireCjs(path.join(root, 'scripts/foundry/sound-bed.cjs')) as {
+      renderSamples: (opts: { brief: string; genre: string; seconds: number }) => {
+        genre: { id: string; voices: string[] };
+        samples: Float64Array;
+      };
+    };
+    expect(SCALES.ambient.length).toBe(14);
+    expect(GENRE_ALIASES.country).toBe('timeless');
+    expect(GENRE_ALIASES.game).toBe('techno');
+    expect(GENRES.rock.voices).toEqual(
+      expect.arrayContaining(['duo-guitar', 'formant-vox', 'mixer']),
+    );
+    expect(GENRES.timeless.voices).toEqual(expect.arrayContaining(['triangle-pad', 'mixer']));
+    expect(resolveGenre('country').id).toBe('timeless');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderFmLead');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderFormant');
+    const phonk = sound.renderSamples({ brief: 'trunk bounce', genre: 'phonk', seconds: 4 });
+    expect(phonk.genre.voices).toEqual(expect.arrayContaining(['formant-stab', 'membrane-808']));
+    const rock = sound.renderSamples({ brief: 'stage left stack', genre: 'rock', seconds: 4 });
+    expect(rock.genre.id).toBe('rock');
+    expect(rock.samples.length).toBeGreaterThan(1000);
   });
 });
 

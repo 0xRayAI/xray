@@ -508,6 +508,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       MESH_FAMILIES,
       MESH_GAITS,
       LOOK_KINDS,
+      CAMERA_KINDS,
       GRID_KINDS,
       GRAD_KINDS,
     } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
@@ -523,6 +524,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
           shells: number;
           scale: number;
           coreStyle: string;
+          camera: string;
         };
         field: {
           id: string;
@@ -555,6 +557,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       MESH_FAMILIES: string[];
       MESH_GAITS: string[];
       LOOK_KINDS: string[];
+      CAMERA_KINDS: string[];
       GRID_KINDS: string[];
       GRAD_KINDS: string[];
     };
@@ -569,6 +572,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(MESH_FAMILIES.length).toBeGreaterThanOrEqual(12);
     expect(LOOK_KINDS).toEqual(['focus', 'cage']);
     expect(MESH_GAITS).toEqual(expect.arrayContaining(['tumble', 'shear', 'pulse', 'orbit', 'snap']));
+    expect(CAMERA_KINDS).toEqual(['front', 'three-quarter', 'top', 'low', 'dutch', 'side']);
     expect(checksum.mesh?.id).toBeTruthy();
     expect(checksum.mesh.id).not.toBe(other.mesh.id);
     expect(checksum.mesh.family).toMatch(
@@ -576,6 +580,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     );
     expect(checksum.mesh.gait).toMatch(/^(tumble|shear|pulse|orbit|snap)$/);
     expect(checksum.mesh.coreStyle).toMatch(/^(disc|eclipse|pulse)$/);
+    expect(checksum.mesh.camera).toMatch(/^(front|three-quarter|top|low|dutch|side)$/);
     expect(checksum.mesh.verts.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeGreaterThan(3);
     expect(checksum.mesh.edges.length).toBeLessThanOrEqual(16);
@@ -584,11 +589,11 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(checksum.mesh.scale).toBeGreaterThan(0.55);
     expect(checksum.mesh.scale).toBeLessThan(0.8);
     expect(checksum.mesh.shells).toBe(1);
-    expect(GRID_KINDS).toEqual(expect.arrayContaining(['floor', 'meridian', 'ticks', 'none']));
+    expect(GRID_KINDS).toEqual(['floor', 'none']);
     expect(GRAD_KINDS).toEqual(expect.arrayContaining(['horizon', 'corner', 'veil']));
     expect(checksum.field?.id).toBeTruthy();
     expect(checksum.field.id).not.toBe(other.field.id);
-    expect(checksum.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+    expect(checksum.field.grid).toMatch(/^(floor|none)$/);
     expect(checksum.field.gradient).toMatch(/^(horizon|corner|veil)$/);
     expect(checksum.field.stars.length).toBeGreaterThanOrEqual(16);
     expect(checksum.field.blinkers.length).toBeGreaterThanOrEqual(3);
@@ -609,7 +614,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       expect(sample.tempo).toBeGreaterThan(0);
       expect(sample.mesh?.id, id).toBeTruthy();
       expect(sample.field?.id, id).toBeTruthy();
-      expect(sample.field?.grid, id).toMatch(/^(floor|meridian|ticks|none)$/);
+      expect(sample.field?.grid, id).toMatch(/^(floor|none)$/);
       expect(sample.fill, id).toBeGreaterThan(0.055);
     }
     const prints = ['warehouse floor · Power Plant', 'other mint · alley', 'neon dock · vault', 'salt mill · dusk'].map(
@@ -625,8 +630,44 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     for (let i = 0; i < 24; i++) {
       const minted = buildVisualConfig({ brief: `mint ${i} · field`, seedHex: `0xabc${i}` });
       expect(minted.mesh.edges.length).toBeLessThanOrEqual(16);
-      expect(minted.field.grid).toMatch(/^(floor|meridian|ticks|none)$/);
+      expect(minted.field.grid).toMatch(/^(floor|none)$/);
+      expect(minted.field.grid).not.toMatch(/ticks|meridian/);
     }
+  });
+
+  it('does not paint outer-edge ticks or a meridian box', () => {
+    const { fillVoid, paintField, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      fillVoid: (buf: Buffer) => void;
+      paintField: (
+        buf: Buffer,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { field: Record<string, unknown>; genreConfig?: { tempo: number } },
+      ) => void;
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        field: Record<string, unknown>;
+        genreConfig: { tempo: number };
+      };
+    };
+    const width = 320;
+    const height = 180;
+    const checksum = buildVisualConfig({ brief: 'bezel off · Power Plant', seedHex: '0xdeadbeef' });
+    const paint = (grid: string) => {
+      const buf = Buffer.alloc(width * height * 3);
+      fillVoid(buf);
+      paintField(buf, width, height, 1.2, {
+        ...checksum,
+        field: { ...checksum.field, grid },
+      });
+      return buf;
+    };
+    const none = paint('none');
+    expect(paint('ticks').equals(none)).toBe(true);
+    expect(paint('meridian').equals(none)).toBe(true);
+    expect(paint('floor').equals(none)).toBe(false);
   });
 
   it('keeps orb in focus — short rim drop, not full-radius bokeh', () => {
@@ -638,6 +679,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         t: number;
         seedHex: string;
         brief: string;
+        lookKind?: string;
+        genre?: string;
       }) => { buffer: Buffer; width: number; height: number };
       orbFocusWidth: (
         buf: Buffer,
@@ -650,6 +693,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       t: 0,
       seedHex: '0xdeadbeef',
       brief: 'warehouse floor · Power Plant',
+      lookKind: 'focus',
+      genre: 'ambient',
     });
     const focus = orbFocusWidth(frame.buffer, frame.width, frame.height);
     expect(focus.peak).toBeGreaterThan(0.55);
@@ -682,6 +727,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
         seedHex: string;
         brief: string;
         lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
       }) => { buffer: Buffer; width: number; height: number; lookKind: string };
       framesDiffer: (a: Buffer, b: Buffer) => boolean;
       orbFocusWidth: (
@@ -707,6 +754,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex,
       brief,
       lookKind: 'focus',
+      genre: 'ambient',
     });
     const cageFrame = paintRippelFrame({
       renderer: 'orb',
@@ -714,6 +762,8 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex,
       brief,
       lookKind: 'cage',
+      bodyKind: 'mill',
+      genre: 'ambient',
     });
     expect(focusFrame.lookKind).toBe('focus');
     expect(cageFrame.lookKind).toBe('cage');
@@ -864,6 +914,571 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     }
   });
 
+  it('wears the five Rippel organs — snap and spark are not the swirl cage', () => {
+    const { paintRippelFrame, framesDiffer, ORGAN, sampleMotionFrames } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      ORGAN: Record<string, string>;
+      sampleMotionFrames: (
+        renderer: string,
+        seed: string,
+        duration: number,
+        brief: string,
+        extra?: { bodyKind?: string },
+      ) => {
+        organ?: string;
+        visualization: string;
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+      }) => { buffer: Buffer; organ: string; visualization: string; bodyKind: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(ORGAN).toMatchObject({
+      canvas: 'mandala',
+      '3d-sacred': 'sacred-flow',
+      neural: 'synapse',
+      waveform: 'liquid-waves',
+      particles: 'cosmic-dance',
+    });
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const swirl = paintRippelFrame({ renderer: 'swirl', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const snap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const spark = paintRippelFrame({ renderer: 'spark', t: 0.4, seedHex, brief, bodyKind: 'rippel' });
+    const cage = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'rippel',
+    });
+    const focus = paintRippelFrame({ renderer: 'orb', t: 0.4, seedHex, brief, lookKind: 'focus' });
+    expect(swirl.organ).toBe('sacred-flow');
+    expect(snap.organ).toBe('synapse');
+    expect(spark.organ).toBe('cosmic-dance');
+    expect(cage.organ).toBe('mandala');
+    expect(focus.organ).toBe('focus');
+    expect(framesDiffer(swirl.buffer, snap.buffer)).toBe(true);
+    expect(framesDiffer(swirl.buffer, spark.buffer)).toBe(true);
+    expect(framesDiffer(snap.buffer, spark.buffer)).toBe(true);
+    expect(framesDiffer(cage.buffer, focus.buffer)).toBe(true);
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('InteractiveCanvas.tsx');
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('NeuralNetworkVisualizer');
+    expect(sampleMotionFrames('snap', seedHex, 4.44, brief, { bodyKind: 'rippel' }).organ).toBe(
+      'synapse',
+    );
+    expect(sampleMotionFrames('spark', seedHex, 4.44, brief, { bodyKind: 'rippel' }).organ).toBe(
+      'cosmic-dance',
+    );
+  });
+
+  it('keeps mill Wu/mesh bodies next to refined Rippel drawers', () => {
+    const { paintRippelFrame, framesDiffer, BODY_KINDS, resolveBodyKind, organOf } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      BODY_KINDS: string[];
+      resolveBodyKind: (opts: { seedHex?: string; bodyKind?: string }) => string;
+      organOf: (viz: string, look: string, body: string) => string;
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+      }) => { buffer: Buffer; organ: string; bodyKind: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(BODY_KINDS).toEqual(['mill', 'rippel']);
+    expect(organOf('canvas', 'cage', 'mill')).toBe('cage');
+    expect(organOf('canvas', 'cage', 'rippel')).toBe('mandala');
+    expect(organOf('neural', 'cage', 'mill')).toBe('strike');
+    expect(organOf('neural', 'cage', 'rippel')).toBe('synapse');
+    expect(organOf('particles', 'cage', 'mill')).toBe('embers');
+    expect(() => resolveBodyKind({ bodyKind: 'potato' })).toThrow(/unknown body/);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const millCage = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'mill',
+    });
+    const rippelMandala = paintRippelFrame({
+      renderer: 'orb',
+      t: 0.4,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+      bodyKind: 'rippel',
+    });
+    const millSnap = paintRippelFrame({ renderer: 'snap', t: 0.4, seedHex, brief, bodyKind: 'mill' });
+    const rippelSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'rippel',
+    });
+    expect(millCage.organ).toBe('cage');
+    expect(rippelMandala.organ).toBe('mandala');
+    expect(millSnap.organ).toBe('strike');
+    expect(rippelSnap.organ).toBe('synapse');
+    expect(framesDiffer(millCage.buffer, rippelMandala.buffer)).toBe(true);
+    expect(framesDiffer(millSnap.buffer, rippelSnap.buffer)).toBe(true);
+    expect(read('scripts/foundry/blip.mjs')).toContain('--body mill|rippel');
+    expect(read('scripts/foundry/blip.mjs')).toContain('--camera front|three-quarter|top|low|dutch|side');
+  });
+
+  it('wears one mill suit — satellites, seed genre, same phrase as the bed', () => {
+    const {
+      paintRippelFrame,
+      resolveGenreKind,
+      GENRE_KINDS,
+      buildVisualConfig,
+      phraseOf,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      GENRE_KINDS: string[];
+      resolveGenreKind: (opts: { seedHex?: string; genre?: string }) => string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string; genre?: string }) => {
+        genre: string;
+        genreConfig: { tempo: number; phase0: number };
+      };
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer; genre: string; organ: string };
+    };
+    expect(GENRE_KINDS).toEqual(['ambient', 'techno', 'phonk', 'jazz', 'rock', 'timeless']);
+    expect(resolveGenreKind({ genre: 'techno' })).toBe('techno');
+    expect(resolveGenreKind({ genre: 'country' })).toBe('timeless');
+    expect(() => resolveGenreKind({ genre: 'potato' })).toThrow(/unknown genre/);
+    const seedHex = '0xdeadbeef';
+    const brief = 'warehouse floor · Power Plant';
+    expect(resolveGenreKind({ seedHex })).toBe(buildVisualConfig({ brief, seedHex }).genre);
+    expect(buildVisualConfig({ brief, seedHex, genre: 'jazz' }).genre).toBe('jazz');
+    const millSwirl = paintRippelFrame({
+      renderer: 'swirl',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
+    const millSnap = paintRippelFrame({
+      renderer: 'snap',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
+    const millSpark = paintRippelFrame({
+      renderer: 'spark',
+      t: 0.4,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+    });
+    expect(millSwirl.organ).toBe('mesh');
+    expect(millSnap.organ).toBe('strike');
+    expect(millSpark.organ).toBe('embers');
+    expect(millSwirl.genre).toBe(resolveGenreKind({ seedHex }));
+    const { framesDiffer } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+    };
+    expect(framesDiffer(millSwirl.buffer, millSnap.buffer)).toBe(true);
+    expect(framesDiffer(millSwirl.buffer, millSpark.buffer)).toBe(true);
+    expect(framesDiffer(millSnap.buffer, millSpark.buffer)).toBe(true);
+    const checksum = buildVisualConfig({ brief, seedHex });
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(read('scripts/foundry/blip.mjs')).toContain('--genre');
+    expect(read('scripts/foundry/sound-rippel.cjs')).toContain('hookEase');
+  });
+
+  it('wears one mill suit across mill and Rippel bodies — phrase + distinct silhouettes', () => {
+    const { paintRippelFrame, framesDiffer, phraseOf, buildVisualConfig, organOf, BODY_KINDS } =
+      requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+        BODY_KINDS: string[];
+        organOf: (viz: string, look: string, body: string) => string;
+        phraseOf: (
+          checksum: { genreConfig?: { tempo: number } },
+          t: number,
+        ) => { section: string };
+        buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+          genreConfig: { tempo: number };
+        };
+        paintRippelFrame: (opts: {
+          renderer: string;
+          t: number;
+          seedHex: string;
+          brief: string;
+          lookKind?: string;
+          bodyKind?: string;
+        }) => { buffer: Buffer; organ: string; bodyKind: string };
+        framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      };
+    expect(BODY_KINDS).toEqual(['mill', 'rippel']);
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('stampMillCore');
+    expect(read('scripts/foundry/blip-rippel-organs.cjs')).toContain('suitOf');
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const beat = 60 / checksum.genreConfig.tempo;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, beat * 2).section).toBe('turn');
+    expect(phraseOf(checksum, 4.2).section).toBe('tag');
+    const catalog = [
+      { renderer: 'orb', lookKind: 'cage', mill: 'cage', rippel: 'mandala' },
+      { renderer: 'swirl', mill: 'mesh', rippel: 'sacred-flow' },
+      { renderer: 'snap', mill: 'strike', rippel: 'synapse' },
+      { renderer: 'waves', mill: 'ribbons', rippel: 'liquid-waves' },
+      { renderer: 'spark', mill: 'embers', rippel: 'cosmic-dance' },
+    ] as const;
+    for (const row of catalog) {
+      expect(organOf(row.renderer === 'orb' ? 'canvas' : row.renderer === 'swirl' ? '3d-sacred' : row.renderer === 'snap' ? 'neural' : row.renderer === 'waves' ? 'waveform' : 'particles', 'cage', 'mill')).toBe(row.mill);
+      expect(organOf(row.renderer === 'orb' ? 'canvas' : row.renderer === 'swirl' ? '3d-sacred' : row.renderer === 'snap' ? 'neural' : row.renderer === 'waves' ? 'waveform' : 'particles', 'cage', 'rippel')).toBe(row.rippel);
+      for (const bodyKind of ['mill', 'rippel'] as const) {
+        const hook = paintRippelFrame({
+          renderer: row.renderer,
+          t: 0,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        const turn = paintRippelFrame({
+          renderer: row.renderer,
+          t: beat * 2,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        const tag = paintRippelFrame({
+          renderer: row.renderer,
+          t: 4.2,
+          seedHex,
+          brief,
+          lookKind: row.lookKind,
+          bodyKind,
+        });
+        expect(hook.bodyKind, `${row.renderer}:${bodyKind}`).toBe(bodyKind);
+        expect(hook.organ, `${row.renderer}:${bodyKind}`).toBe(bodyKind === 'mill' ? row.mill : row.rippel);
+        expect(framesDiffer(hook.buffer, turn.buffer), `${row.renderer}:${bodyKind} hook/turn`).toBe(true);
+        expect(framesDiffer(turn.buffer, tag.buffer), `${row.renderer}:${bodyKind} turn/tag`).toBe(true);
+      }
+      const mill = paintRippelFrame({
+        renderer: row.renderer,
+        t: beat * 2,
+        seedHex,
+        brief,
+        lookKind: row.lookKind,
+        bodyKind: 'mill',
+      });
+      const rippel = paintRippelFrame({
+        renderer: row.renderer,
+        t: beat * 2,
+        seedHex,
+        brief,
+        lookKind: row.lookKind,
+        bodyKind: 'rippel',
+      });
+      expect(framesDiffer(mill.buffer, rippel.buffer), `${row.renderer} mill/rippel`).toBe(true);
+    }
+  });
+
+  it('metamorphosizes mill mesh, strike, and embers into distinct stills', () => {
+    const { paintRippelFrame, frameFill, phraseOf, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      frameFill: (buf: Buffer) => number;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        bodyKind?: string;
+        lookKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer; organ: string; width: number; height: number };
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const mesh = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const strike = paintRippelFrame({
+      renderer: 'snap',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const embers = paintRippelFrame({
+      renderer: 'spark',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    const waves = paintRippelFrame({
+      renderer: 'waves',
+      t: turnT,
+      seedHex,
+      brief,
+      bodyKind: 'mill',
+      genre: 'ambient',
+    });
+    expect(mesh.organ).toBe('mesh');
+    expect(strike.organ).toBe('strike');
+    expect(embers.organ).toBe('embers');
+    function bright(buf: Buffer): number {
+      let n = 0;
+      for (let i = 0; i < buf.length; i += 3) {
+        if (buf[i] + buf[i + 1] + buf[i + 2] > 140) n += 1;
+      }
+      return n;
+    }
+    function goldColumn(buf: Buffer, width: number, height: number): boolean {
+      for (let x = 0; x < width; x += 2) {
+        let n = 0;
+        for (let y = 0; y < height; y += 1) {
+          const i = (y * width + x) * 3;
+          if (buf[i] > 180 && buf[i + 1] > 140 && buf[i + 2] < 110) n += 1;
+        }
+        if (n > height * 0.28) return true;
+      }
+      return false;
+    }
+    expect(frameFill(mesh.buffer)).toBeGreaterThan(frameFill(strike.buffer));
+    expect(bright(mesh.buffer)).toBeGreaterThan(4000);
+    expect(bright(embers.buffer)).toBeGreaterThan(4000);
+    expect(frameFill(embers.buffer)).toBeGreaterThan(0.018);
+    expect(bright(strike.buffer)).toBeGreaterThan(1200);
+    expect(goldColumn(waves.buffer, waves.width, waves.height)).toBe(false);
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ghost hull + 2–3 held strikes');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('edge midpoints');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('spinMul');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('sat.depth < 0');
+    expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain(
+      'mixRgb(THEME.gold, THEME.cyan, 0.45 + 0.2 * Math.sin',
+    );
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('stampHouseNoun');
+    expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain('phraseMix(phrase, 0.42, 1, 0.3)');
+  });
+
+  it('plays the entertainment verb — focus moons pass behind the noun, turn ruptures', () => {
+    const { paintRippelFrame, layoutFocusRing, phraseOf, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      layoutFocusRing: (
+        circles: Array<{ color: string; frequency: number; radius: number }>,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { genreConfig?: { tempo: number } },
+      ) => Array<{ depth: number; r: number }>;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+        visualConfig: { circles: Array<{ color: string; frequency: number; radius: number }> };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer };
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const hookRing = layoutFocusRing(checksum.visualConfig.circles, 1280, 720, 0, checksum);
+    const turnRing = layoutFocusRing(checksum.visualConfig.circles, 1280, 720, turnT, checksum);
+    const hookR = hookRing.reduce((s, p) => s + p.r, 0);
+    const turnR = turnRing.reduce((s, p) => s + p.r, 0);
+    expect(turnR).toBeGreaterThan(hookR);
+    expect(hookRing.some((p) => p.depth < 0)).toBe(true);
+    expect(hookRing.some((p) => p.depth >= 0)).toBe(true);
+    const focus = paintRippelFrame({
+      renderer: 'orb',
+      t: turnT,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+      genre: 'ambient',
+    });
+    expect(focus.buffer.length).toBeGreaterThan(0);
+  });
+
+  it('seed-picks a camera and turn push-in keeps the same organ', () => {
+    const {
+      CAMERA_KINDS,
+      cameraPose,
+      resolveCameraKind,
+      buildMesh,
+      buildVisualConfig,
+      fingerprintMesh,
+      projectMesh,
+      paintRippelFrame,
+      framesDiffer,
+      phraseOf,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      CAMERA_KINDS: string[];
+      cameraPose: (
+        kind: string,
+        phrase: { turnHit?: number },
+      ) => { yaw: number; pitch: number; roll: number; flatten: number; dolly: number };
+      resolveCameraKind: (opts: { camera?: string }) => string | null;
+      buildMesh: (
+        seedHex: string,
+        brief: string,
+        camera?: string,
+      ) => { camera: string; gait: string; id: string; family: string; faces: number[][] };
+      buildVisualConfig: (opts: { brief: string; seedHex: string; camera?: string }) => {
+        mesh: { camera: string };
+        genreConfig: { tempo: number };
+      };
+      fingerprintMesh: (mesh: { camera?: string }) => { camera: string } | null;
+      projectMesh: (
+        mesh: Record<string, unknown>,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { genreConfig?: { tempo: number } },
+      ) => Array<{ x: number; y: number }>;
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        camera?: string;
+        lookKind?: string;
+        bodyKind?: string;
+      }) => { buffer: Buffer; camera: string; mesh: { camera: string } };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string; turnHit: number };
+    };
+    expect(CAMERA_KINDS).toEqual(['front', 'three-quarter', 'top', 'low', 'dutch', 'side']);
+    expect(resolveCameraKind({})).toBeNull();
+    expect(resolveCameraKind({ camera: 'dutch' })).toBe('dutch');
+    expect(() => resolveCameraKind({ camera: 'potato' })).toThrow(/unknown camera/);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const mesh = buildMesh(seedHex, brief);
+    expect(CAMERA_KINDS).toContain(mesh.camera);
+    expect(mesh.id).toContain(mesh.camera);
+    const cubes = [];
+    for (let i = 0; i < 80 && cubes.length < 1; i++) {
+      const hunted = buildMesh(`0xabc${i}`, `cube hunt ${i}`);
+      if (hunted.family === 'cube') cubes.push(hunted);
+    }
+    expect(cubes[0]?.faces.length).toBeGreaterThanOrEqual(8);
+    expect(fingerprintMesh(mesh)?.camera).toBe(mesh.camera);
+    const forced = buildVisualConfig({ brief, seedHex, camera: 'side' });
+    expect(forced.mesh.camera).toBe('side');
+    const hook = cameraPose('front', { turnHit: 0 });
+    const turn = cameraPose('front', { turnHit: 1 });
+    expect(turn.dolly).toBeGreaterThan(hook.dolly);
+    expect(turn.dolly - hook.dolly).toBeGreaterThan(0.1);
+    const top = cameraPose('top', { turnHit: 0 });
+    const low = cameraPose('low', { turnHit: 0 });
+    const dutch = cameraPose('dutch', { turnHit: 0 });
+    const side = cameraPose('side', { turnHit: 0 });
+    expect(top.pitch).toBeGreaterThan(low.pitch);
+    expect(top.flatten).toBeLessThan(low.flatten);
+    expect(dutch.roll).toBeGreaterThan(hook.roll);
+    expect(side.yaw).toBeGreaterThan(hook.yaw);
+    const checksum = buildVisualConfig({ brief, seedHex, camera: 'front' });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const jewel = Object.assign({}, mesh, { camera: 'front' });
+    const frontPts = projectMesh(jewel, 1280, 720, turnT, checksum);
+    const topPts = projectMesh(Object.assign({}, jewel, { camera: 'top' }), 1280, 720, turnT, checksum);
+    const sidePts = projectMesh(Object.assign({}, jewel, { camera: 'side' }), 1280, 720, turnT, checksum);
+    const spanY = (pts: Array<{ y: number }>) =>
+      Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y));
+    const spanX = (pts: Array<{ x: number }>) =>
+      Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
+    expect(spanY(frontPts)).toBeGreaterThan(spanY(topPts));
+    expect(spanX(sidePts)).not.toBeCloseTo(spanX(frontPts), 0);
+    const swirlFront = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'front',
+      bodyKind: 'mill',
+    });
+    const swirlSide = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'side',
+      bodyKind: 'mill',
+    });
+    const swirlTop = paintRippelFrame({
+      renderer: 'swirl',
+      t: turnT,
+      seedHex,
+      brief,
+      camera: 'top',
+      bodyKind: 'mill',
+    });
+    expect(swirlFront.camera).toBe('front');
+    expect(swirlFront.mesh.camera).toBe('front');
+    expect(framesDiffer(swirlFront.buffer, swirlSide.buffer)).toBe(true);
+    expect(framesDiffer(swirlFront.buffer, swirlTop.buffer)).toBe(true);
+    expect(framesDiffer(swirlSide.buffer, swirlTop.buffer)).toBe(true);
+  });
+
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
     const rippel = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
       buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
@@ -890,10 +1505,12 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     };
     const brief = 'warehouse floor · Power Plant';
     const seedHex = '0xdeadbeef';
+    const genre = rippel.resolveGenreKind({ seedHex });
     const checksum = rippel.buildVisualConfig({ brief, seedHex });
+    expect(checksum.genre).toBe(genre);
     const bed = sound.renderSamples({
       brief,
-      genre: 'ambient',
+      genre,
       seconds: 4.44,
       seed: seedHex,
       syncopate: true,
