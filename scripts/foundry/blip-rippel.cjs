@@ -1322,9 +1322,9 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   const minSide = Math.min(width, height);
   const beat = beatPhase(checksum, t);
   const phrase = phraseOf(checksum, t);
-  const spin = t * phraseMix(phrase, 0.22, 0.52, 0.16) + beat * Math.PI * 0.12;
-  const orbitMul = phraseMix(phrase, 0.8, 1.08 + phrase.turnHit * 0.1, 0.64);
-  const rMul = phraseMix(phrase, 0.42, 0.42, 0.3);
+  const spin = t * phraseMix(phrase, 0.12, 0.72 + 0.4 * (phrase.turnHit || 0), 0.1) + beat * Math.PI * 0.12;
+  const orbitMul = phraseMix(phrase, 0.58, 1.32 + 0.4 * (phrase.turnHit || 0), 0.72);
+  const rMul = phraseMix(phrase, 0.34, 0.52, 0.38);
   return circles.map((circle, i) => {
     const ang = (i / circles.length) * Math.PI * 2 + spin;
     const orbit = minSide * (0.16 + (i % 3) * 0.07) * orbitMul;
@@ -1340,21 +1340,21 @@ function layoutFocusRing(circles, width, height, t, checksum) {
   });
 }
 
-/** Power Plant satellites — same discs on every body. Phrase orbit. */
-function paintSuitSatellites(buf, width, height, t, checksum) {
+/** Power Plant satellites. pred picks behind/front so the nucleus can occlude. */
+function paintSuitSatellites(buf, width, height, t, checksum, pred) {
   if (!checksum) return;
   const circles = checksum.visualConfig && checksum.visualConfig.circles;
   if (!circles || !circles.length) return;
   const placed = layoutFocusRing(circles, width, height, t, checksum)
-    .slice()
+    .filter((sat) => (pred ? pred(sat) : true))
     .sort((a, b) => a.depth - b.depth);
   for (let i = 0; i < placed.length; i++) {
     const sat = placed[i];
-    const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.42);
+    const color = mixRgb(sat.color, THEME.void, Math.max(0, -sat.depth) * 0.55);
     stampFocusDisc(buf, width, height, sat.x, sat.y, sat.r * 0.42, color, {
       rim: 1.6,
       glow: 4,
-      glowAlpha: 0.2 + 0.08 * Math.max(0, sat.depth),
+      glowAlpha: 0.16 + 0.12 * Math.max(0, sat.depth),
       rimColor: THEME.ink,
     });
   }
@@ -1363,6 +1363,26 @@ function paintSuitSatellites(buf, width, height, t, checksum) {
 function paintFocusSatellites(buf, width, height, t, checksum) {
   if (!checksum || checksum.lookKind !== "focus") return;
   paintSuitSatellites(buf, width, height, t, checksum);
+}
+
+/** House noun — cyan disc + gold pupil. Verb organs wear this; mesh stays the jewel. */
+function stampHouseNoun(buf, width, height, cx, cy, radius, kick) {
+  stampFocusDisc(buf, width, height, cx, cy, radius, THEME.cyan, {
+    rim: 2,
+    glow: 6,
+    glowAlpha: 0.24,
+    rimColor: THEME.ink,
+  });
+  stampFocusDisc(
+    buf,
+    width,
+    height,
+    cx,
+    cy,
+    radius * 0.4,
+    kick > 0.15 ? THEME.gold : mixRgb(THEME.gold, THEME.cyan, 0.28),
+    { rim: 1.4, glow: 3, glowAlpha: 0.22, rimColor: THEME.gold },
+  );
 }
 
 /** Mill mesh verts as stamp discs — same presence language as synapse / cosmos. */
@@ -1475,9 +1495,11 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     minSide *
     (0.11 +
       0.018 * Math.sin(t * 1.7) +
-      0.018 * phrase.turnHit +
+      0.055 * phrase.turnHit +
+      0.02 * phraseWeight(phrase, "turn") +
       0.01 * phraseWeight(phrase, "tag") +
       pulse);
+  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth < 0);
   stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
     rim: 2.2,
     glow: 7,
@@ -1490,7 +1512,7 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     glowAlpha: 0.22,
     rimColor: THEME.gold,
   });
-  paintFocusSatellites(buf, width, height, t, checksum);
+  paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
 }
 
 /** orb mill cage — Wu lantern + nucleus. No orbiting HUD ticks. */
@@ -1529,7 +1551,10 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
   paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.04, 0.08, 0.05), t, checksum);
+  stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * phraseMix(phrase, 0.055, 0.08, 0.06), kick);
   for (let i = 0; i < (mesh.edges || []).length; i++) {
     const [a, b] = mesh.edges[i];
     const pa = pts[a];
@@ -1580,6 +1605,10 @@ function paintMillEmbers(buf, width, height, t, checksum) {
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
   const size = phraseMix(phrase, 8.6, 15.4, 10.2);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const burst = phraseMix(phrase, 0.62, 1.22 + 0.2 * (phrase.turnHit || 0), 0.78);
+  stampHouseNoun(buf, width, height, cx, cy, Math.min(width, height) * 0.07 * phraseMix(phrase, 0.85, 1.12, 0.9), kick);
   const coals = [];
   for (let i = 0; i < pts.length; i++) {
     coals.push({ p: pts[i], q: prev[i] || pts[i], i, mid: false });
@@ -1598,14 +1627,18 @@ function paintMillEmbers(buf, width, height, t, checksum) {
     const coal = coals[i];
     const heat = THEME_CYCLE[((mesh.accentIndex || 0) + coal.i) % THEME_CYCLE.length];
     const color = kick > 0.2 && coal.i === 0 ? THEME.gold : heat;
-    const dx = coal.p.x - coal.q.x;
-    const dy = coal.p.y - coal.q.y;
+    const px = cx + (coal.p.x - cx) * burst;
+    const py = cy + (coal.p.y - cy) * burst;
+    const qx = cx + (coal.q.x - cx) * burst;
+    const qy = cy + (coal.q.y - cy) * burst;
+    const dx = px - qx;
+    const dy = py - qy;
     const body = (coal.mid ? size * 0.62 : size) + (coal.i % 3) * 1.4 + kick * 2.2;
     for (let k = 1; k <= 7; k++) {
       const u = k / 8;
-      stampDisc(buf, width, height, coal.p.x - dx * u * 1.35, coal.p.y - dy * u * 1.35, body * 0.38 * (1 - u * 0.6), color, 1.5);
+      stampDisc(buf, width, height, px - dx * u * 1.35, py - dy * u * 1.35, body * 0.38 * (1 - u * 0.6), color, 1.5);
     }
-    stampFocusDisc(buf, width, height, coal.p.x, coal.p.y, body, color, {
+    stampFocusDisc(buf, width, height, px, py, body, color, {
       rim: 1.4,
       glow: 6,
       glowAlpha: 0.3,
@@ -1753,6 +1786,15 @@ function paintWaveform(buf, width, height, t, checksum) {
       1,
     );
   });
+  stampHouseNoun(
+    buf,
+    width,
+    height,
+    (width - 1) * 0.5,
+    mid,
+    Math.min(width, height) * 0.075 * phraseMix(phrase, 0.8, 1.15, 0.88),
+    kickAccent(beat),
+  );
   if (checksum.bodyKind === "rippel") {
     organs.paintAuroraOrbs(buf, width, height, t, checksum);
   }
@@ -2004,6 +2046,7 @@ module.exports = {
   buildField,
   paintMeshOverlay,
   paintField,
+  layoutFocusRing,
   fingerprintMesh,
   fingerprintField,
   frameFill,

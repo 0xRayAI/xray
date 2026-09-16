@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip entertainment verb: focus moons paint behind the nucleus then in front (real occlusion). Strike / embers / ribbons wear the house noun (cyan disc + gold pupil). Embers erupt on the turn. Mesh stays the jewel so cage and mesh still sort. Iterate pass is every seat ≥7; drop is every seat ≥8.
+
 Factory-blip stellar pass: phrase eases spin (hook crawl → turn whip → tag hold). Mesh is a cyan/gold jewel with vertex beads. Strike wears a ghost hull under 2–3 thick strikes. Embers seat coals on verts and edge midpoints with longer wakes. Focus satellites occlude. Sacred-flow is one poly + nucleus + ring. Bed sectionGain is a Short (turn louder than hook, tag seals).
 
 Factory-blip metamorphosis pass: mill mesh wears a phrase-driven face wash; strike holds 2–3 edges (never the full hull); embers are coals with heat wakes, not pinholes. Cage keeps the nucleus and drops orbiting HUD ticks. Waves drop the gold playhead and gain turn amplitude. Phrase is mass, not a zoom knob.

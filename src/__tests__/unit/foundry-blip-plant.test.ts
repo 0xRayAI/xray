@@ -1287,7 +1287,62 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('ghost hull + 2–3 held strikes');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('edge midpoints');
     expect(read('scripts/foundry/blip-rippel.cjs')).toContain('spinMul');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('sat.depth < 0');
+    expect(read('scripts/foundry/blip-rippel.cjs')).toContain('stampHouseNoun');
     expect(read('scripts/foundry/blip-rippel.cjs')).not.toContain('phraseMix(phrase, 0.42, 1, 0.3)');
+  });
+
+  it('plays the entertainment verb — focus moons pass behind the noun, turn ruptures', () => {
+    const { paintRippelFrame, layoutFocusRing, phraseOf, buildVisualConfig } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-rippel.cjs'),
+    ) as {
+      layoutFocusRing: (
+        circles: Array<{ color: string; frequency: number; radius: number }>,
+        width: number,
+        height: number,
+        t: number,
+        checksum: { genreConfig?: { tempo: number } },
+      ) => Array<{ depth: number; r: number }>;
+      phraseOf: (
+        checksum: { genreConfig?: { tempo: number } },
+        t: number,
+      ) => { section: string };
+      buildVisualConfig: (opts: { brief: string; seedHex: string }) => {
+        genreConfig: { tempo: number };
+        visualConfig: { circles: Array<{ color: string; frequency: number; radius: number }> };
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+        bodyKind?: string;
+        genre?: string;
+      }) => { buffer: Buffer };
+    };
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    const checksum = buildVisualConfig({ brief, seedHex });
+    const turnT = (60 / checksum.genreConfig.tempo) * 2;
+    expect(phraseOf(checksum, 0).section).toBe('hook');
+    expect(phraseOf(checksum, turnT).section).toBe('turn');
+    const hookRing = layoutFocusRing(checksum.visualConfig.circles, 1280, 720, 0, checksum);
+    const turnRing = layoutFocusRing(checksum.visualConfig.circles, 1280, 720, turnT, checksum);
+    const hookR = hookRing.reduce((s, p) => s + p.r, 0);
+    const turnR = turnRing.reduce((s, p) => s + p.r, 0);
+    expect(turnR).toBeGreaterThan(hookR);
+    expect(hookRing.some((p) => p.depth < 0)).toBe(true);
+    expect(hookRing.some((p) => p.depth >= 0)).toBe(true);
+    const focus = paintRippelFrame({
+      renderer: 'orb',
+      t: turnT,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+      genre: 'ambient',
+    });
+    expect(focus.buffer.length).toBeGreaterThan(0);
   });
 
   it('locks auto-bed kicks and offbeats to the visual motion grid', () => {
