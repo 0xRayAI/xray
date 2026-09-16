@@ -1062,6 +1062,7 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
   const introEase = blip ? 0.03 : 0.35;
   const introShelf = 0.75;
   const introFloor = 0.42;
+  const kickHold = 0.055;
   const bodyLift = 1.3;
   const fadeSec = blip ? 0.35 : 1;
   const fadeStart = Math.max(seconds - fadeSec, blip ? seconds * 0.88 : 1.25);
@@ -1071,10 +1072,10 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
     let g = 1;
     if (blip && t < introEase) {
       g = t / introEase;
-    } else if (blip && t < 0.14) {
+    } else if (blip && t < kickHold) {
       g = 1;
     } else if (blip && t < introShelf) {
-      const u = (t - 0.14) / (introShelf - 0.14);
+      const u = (t - kickHold) / (introShelf - kickHold);
       g = introFloor + (1 - introFloor) * (u * u * (3 - 2 * u));
     } else if (!blip && t < introHold) g = 0.46;
     else if (!blip && t < introHold + introEase) {
