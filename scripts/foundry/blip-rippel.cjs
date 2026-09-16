@@ -9,11 +9,11 @@
  *
  * This file is the converter spine, not a drawbox/geq label. Brief+seed → checksum
  * visualConfig (CircleConfig[]) → viz backend. Power Plant palette is the Blip theme.
- * v2 look: stampFocusDisc (opaque body + crisp rim + short glow) on all five viz.
+ * v2 look variants (seed + --look): focus | cage.
+ *   focus — lost sharp-dogfood: solid cyan disc + gold pupil + orbiting stampFocusDisc satellites.
+ *   cage  — sparse Wu hairline mesh + field accents (stars, grid, gradient, blinkers).
  * v2 motion: genre tempo + CircleConfig.frequency LFOs (same mill the audio bed uses).
- * Mesh: one sparse seed polyhedron. Field accents (stars, grid, gradient, blinkers)
- * carry uniqueness — not more wire in the middle. Lines: Wu hairline, cyan/gold/blue
- * gradient along the stroke, coverage AA as the only glow. No vertex beads.
+ * Uniqueness is look + field + mesh fingerprint — not more wire in the middle.
  * Wireframe ffmpeg geometry lives in blip-render.cjs and is flag-only.
  */
 
@@ -37,7 +37,7 @@ const SSOT = {
     "MiniAnimationViewer",
     "FiveDimensionalVisualizer",
   ],
-  note: "Rippel v2 — VisualConfig.circles + sparse seed mesh + field accents (stars / grid / gradient / blinkers). Soft tints, no photosensitive strobe. Wireframe is flag-only.",
+  note: "Rippel v2 — VisualConfig.circles + look variants (focus disc-satellites | cage Wu+field). Soft tints, no photosensitive strobe. Wireframe is flag-only.",
 };
 
 const GRID_KINDS = ["floor", "meridian", "ticks", "none"];
@@ -59,6 +59,7 @@ const MESH_FAMILIES = [
 ];
 const MESH_GAITS = ["tumble", "shear", "pulse", "orbit", "snap"];
 const CORE_STYLES = ["disc", "eclipse", "pulse"];
+const LOOK_KINDS = ["focus", "cage"];
 
 /** animationIcons.ts — names are imports into the plant registry. */
 const ANIMATION_TO_VISUALIZATION = {
@@ -633,7 +634,20 @@ function projectMesh(mesh, width, height, t, checksum, scaleMul) {
  * Checksum TLM → VisualConfig. Mirrors types/index.ts ChecksumResponse.visualConfig.
  * Sequence notes + genre frequencies become CircleConfig[] (note, frequency, radius, color).
  */
-function buildVisualConfig({ brief, seedHex, genre, width, height }) {
+function resolveLookKind(opts) {
+  const raw = opts && opts.lookKind;
+  if (raw) {
+    if (!LOOK_KINDS.includes(raw)) {
+      const err = new Error(`unknown look "${raw}" (want ${LOOK_KINDS.join("|")})`);
+      err.code = "BLIP_LOOK";
+      throw err;
+    }
+    return raw;
+  }
+  return LOOK_KINDS[seedU32(opts && opts.seedHex, 0) % LOOK_KINDS.length];
+}
+
+function buildVisualConfig({ brief, seedHex, genre, width, height, lookKind }) {
   const g = soundRippel.resolveGenre(genre || "ambient");
   const scale = SCALES[g.id] || SCALES.ambient;
   const rng = mulberry32(seedU32(seedHex, 0) ^ seedU32(seedHex, 8));
@@ -678,16 +692,18 @@ function buildVisualConfig({ brief, seedHex, genre, width, height }) {
       checksumValue: seedU32(seedHex, 8),
       parity: (seedU32(seedHex, 0) & 1) === 0,
     },
+    lookKind: resolveLookKind({ seedHex, lookKind }),
     mesh: buildMesh(seedHex, text),
     field: buildField(seedHex, text),
   };
 }
 
 function cachedChecksum(opts) {
-  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}`;
+  const lookKind = resolveLookKind(opts);
+  const key = `${opts.seedHex || ""}::${opts.brief || ""}::${opts.genre || "ambient"}::${opts.width || MOTION_WIDTH}x${opts.height || MOTION_HEIGHT}::${lookKind}`;
   let hit = visualCache.get(key);
   if (!hit) {
-    hit = buildVisualConfig(opts);
+    hit = buildVisualConfig({ ...opts, lookKind });
     visualCache.set(key, hit);
   }
   return hit;
@@ -1059,6 +1075,7 @@ function paintMeshOverlay(buf, width, height, opts) {
     genre: opts.genre,
     width,
     height,
+    lookKind: opts.lookKind,
   });
   paintField(buf, width, height, opts.t || 0, checksum);
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
@@ -1226,8 +1243,66 @@ function layoutRing(circles, width, height, t, checksum) {
   return layoutRings(circles, width, height, t, checksum || { genreConfig: { tempo: 90 } });
 }
 
-/** orb → canvas / Orb Glow v2. Seed mesh cage + sharp core. Lines, not vertex beads. */
+/** Lost sharp-dogfood ring: two orbital bands, stampFocusDisc satellites, beat-locked spin. */
+function layoutFocusRing(circles, width, height, t, checksum) {
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const beat = beatPhase(checksum, t);
+  return circles.map((circle, i) => {
+    const ang = (i / circles.length) * Math.PI * 2 + t * 0.35 + beat * Math.PI * 0.12;
+    const orbit = minSide * (0.16 + (i % 3) * 0.07);
+    return {
+      circle,
+      x: cx + Math.cos(ang) * orbit,
+      y: cy + Math.sin(ang) * orbit * 0.72,
+      r: circlePulse(circle, t + i * 0.11),
+      color: parseHex(circle.color),
+    };
+  });
+}
+
+function paintFocusSatellites(buf, width, height, t, checksum) {
+  if (!checksum || checksum.lookKind !== "focus") return;
+  const circles = checksum.visualConfig && checksum.visualConfig.circles;
+  if (!circles || !circles.length) return;
+  for (const placed of layoutFocusRing(circles, width, height, t, checksum)) {
+    stampFocusDisc(buf, width, height, placed.x, placed.y, placed.r * 0.42, placed.color, {
+      rim: 1.6,
+      glow: 4,
+      glowAlpha: 0.24,
+      rimColor: THEME.ink,
+    });
+  }
+}
+
+/** orb focus — solid cyan disc + gold pupil + satellite discs. No mesh, no field. */
+function paintFocusOrb(buf, width, height, t, checksum) {
+  fillVoid(buf);
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const core = minSide * (0.11 + 0.018 * Math.sin(t * 1.7));
+  stampFocusDisc(buf, width, height, cx, cy, core * 1.08, THEME.cyan, {
+    rim: 2.2,
+    glow: 7,
+    glowAlpha: 0.28,
+    rimColor: THEME.ink,
+  });
+  stampFocusDisc(buf, width, height, cx, cy, core * 0.4, THEME.gold, {
+    rim: 1.6,
+    glow: 3,
+    glowAlpha: 0.22,
+    rimColor: THEME.ink,
+  });
+  paintFocusSatellites(buf, width, height, t, checksum);
+}
+
+/** orb → canvas / Orb Glow v2. Seed look: focus (disc satellites) or cage (Wu + field). */
 function paintCanvas(buf, width, height, t, checksum) {
+  if (checksum.lookKind === "focus") {
+    return paintFocusOrb(buf, width, height, t, checksum);
+  }
   startFrame(buf, width, height, t, checksum);
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: 0.95,
@@ -1339,6 +1414,7 @@ function paintSacred(buf, width, height, t, checksum) {
     scale: 0.92,
     half: 1,
   });
+  paintFocusSatellites(buf, width, height, t, checksum);
 }
 
 /** snap → neural v2. Dual-ring lattice, hub, skip-links, frequency + beat pulses. */
@@ -1355,7 +1431,10 @@ function paintNeural(buf, width, height, t, checksum) {
   const pts = (worn && worn.pts) || [];
   const mesh = checksum.mesh;
   const node = { rim: 1.4, glow: 3, glowAlpha: 0.18, rimColor: THEME.ink };
-  if (mesh && pts.length) return;
+  if (mesh && pts.length) {
+    paintFocusSatellites(buf, width, height, t, checksum);
+    return;
+  }
   const placed = layoutRings(checksum.visualConfig.circles, width, height, t * 1.55, checksum);
   for (let i = 0; i < placed.length; i++) {
     const wander = Math.sin(t * 3.4 + i * 2.1) * 16;
@@ -1418,6 +1497,7 @@ function paintNeural(buf, width, height, t, checksum) {
       node,
     );
   }
+  paintFocusSatellites(buf, width, height, t, checksum);
 }
 
 /** waves → waveform v2. Harmonic ribbons + beat envelope + traveling gold needle. */
@@ -1466,6 +1546,7 @@ function paintWaveform(buf, width, height, t, checksum) {
     mixPixel(buf, width, tickX - 1, y, THEME.ink, 1);
     mixPixel(buf, width, tickX + 1, y, THEME.ink, 1);
   }
+  paintFocusSatellites(buf, width, height, t, checksum);
 }
 
 /** spark → particles v2. Seed mesh is the spark — lines, not bead rain. */
@@ -1484,7 +1565,10 @@ function paintParticles(buf, width, height, t, checksum) {
   const mesh = checksum.mesh;
   const pts = worn && worn.pts;
   const circles = checksum.visualConfig.circles;
-  if (mesh && pts) return;
+  if (mesh && pts) {
+    paintFocusSatellites(buf, width, height, t, checksum);
+    return;
+  }
   const placed = layoutRings(circles, width, height, t * 1.15, checksum);
   for (let i = 0; i < placed.length; i++) {
     const src = placed[i];
@@ -1534,6 +1618,7 @@ function paintParticles(buf, width, height, t, checksum) {
     }
     stampFocusDisc(buf, width, height, src.x, src.y, 6 + kick, mixRgb(THEME.ink, THEME.gold, tint), mote);
   }
+  paintFocusSatellites(buf, width, height, t, checksum);
 }
 
 function paintVisualization(visualization, buf, width, height, t, checksum) {
@@ -1574,6 +1659,7 @@ function paintRippelFrame(opts) {
     genre: opts.genre,
     width,
     height,
+    lookKind: opts.lookKind,
   });
   paintVisualization(visualization, buf, width, height, opts.t || 0, checksum);
   return {
@@ -1583,6 +1669,7 @@ function paintRippelFrame(opts) {
     visualization,
     engine: ENGINE,
     look: LOOK,
+    lookKind: checksum.lookKind,
     visualConfig: checksum.visualConfig,
     tlmCommand: checksum.tlmCommand,
     tempo: checksum.genreConfig && checksum.genreConfig.tempo,
@@ -1666,6 +1753,7 @@ function sampleMotionFrames(renderer, seedHex, durationSec, brief) {
     tempo: a.tempo,
     mesh: a.mesh,
     field: a.field,
+    lookKind: a.lookKind,
     fill: frameFill(a.buffer),
   };
 }
@@ -1718,6 +1806,7 @@ function summarizeVisual(checksum) {
     circleCount: checksum.visualConfig.circles.length,
     notes: checksum.visualConfig.circles.map((c) => c.note),
     frequencies: checksum.visualConfig.circles.map((c) => c.frequency),
+    lookKind: checksum.lookKind || null,
     mesh: fingerprintMesh(checksum.mesh),
     field: fingerprintField(checksum.field),
   };
@@ -1760,6 +1849,8 @@ module.exports = {
   MESH_FAMILIES,
   MESH_GAITS,
   CORE_STYLES,
+  LOOK_KINDS,
   GRID_KINDS,
   GRAD_KINDS,
+  resolveLookKind,
 };

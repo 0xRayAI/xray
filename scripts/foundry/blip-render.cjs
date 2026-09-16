@@ -3,6 +3,7 @@
  * Brief → checksum seed → registry picture mode → 4.44s mp4 + audio bed → inspect gate.
  *
  * Rippel v2 (TICKET-BLIP-RENDERER-UPGRADE): VisualConfig.circles at ≥720p.
+ * Look variants: focus (solid disc + satellites) | cage (Wu hairline + field).
  * Sharp focus + tempo/frequency animation on all five viz.
  * Audio syncopates to the motion grid — same seed, tempo, and phase0=0.
  * Power Plant (`still` id) is a living ident — hard-cut plates, not a frozen poster.
@@ -817,6 +818,7 @@ function buildReceipt(input, evaled) {
     height: evaled.height ?? input.height ?? null,
     engine: input.engine || rippel.ENGINE,
     look: input.look || (input.engine === rippel.ENGINE ? rippel.LOOK : null),
+    lookKind: input.lookKind || (input.visualConfig && input.visualConfig.lookKind) || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -971,6 +973,7 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
 
   let visualConfig = null;
   let look = rippel.LOOK;
+  let lookKind = null;
   writeRawMotion(raw, width, height, frames, (buf, t) => {
     const painted = rippel.paintRippelFrame({
       renderer: modeInfo.renderer,
@@ -981,12 +984,14 @@ function renderMotionPicture(work, modeInfo, seed, brief, opts) {
       width,
       height,
       buffer: buf,
+      lookKind: opts.lookKind,
     });
     visualConfig = painted.visualConfig;
     look = painted.look;
+    lookKind = painted.lookKind;
   });
   encodeRaw(raw, width, height, frames, picture);
-  return { picture, width, height, engine: rippel.ENGINE, look, fallback: false, visualConfig };
+  return { picture, width, height, engine: rippel.ENGINE, look, lookKind, fallback: false, visualConfig };
 }
 
 function renderBlip(opts = {}) {
@@ -1012,6 +1017,7 @@ function renderBlip(opts = {}) {
     look: modeInfo.renderer === "still" ? POWER_PLANT_LOOK : rippel.LOOK,
     fallback: false,
     visualConfig: null,
+    lookKind: opts.lookKind || null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
   };
@@ -1045,8 +1051,15 @@ function renderBlip(opts = {}) {
       input.width = MOTION_WIDTH;
       input.height = MOTION_HEIGHT;
       input.visualConfig = rippel.summarizeVisual(
-        rippel.cachedChecksum({ brief, seedHex: seed, width: MOTION_WIDTH, height: MOTION_HEIGHT }),
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: MOTION_WIDTH,
+          height: MOTION_HEIGHT,
+          lookKind: opts.lookKind,
+        }),
       );
+      input.lookKind = input.visualConfig && input.visualConfig.lookKind;
     } else {
       const motion = renderMotionPicture(work, modeInfo, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
@@ -1061,8 +1074,10 @@ function renderBlip(opts = {}) {
           seedHex: seed,
           width: motion.width,
           height: motion.height,
+          lookKind: opts.lookKind,
         }),
       );
+      input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
     }
     muxBed(picture, bedInfo.bed, mp4);
     const evaled = evaluateMp4File(mp4, {

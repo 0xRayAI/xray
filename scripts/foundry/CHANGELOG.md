@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip look variants: seed + `--look focus|cage`. `focus` restores the sharp-dogfood solid cyan disc + gold pupil + orbiting satellites. `cage` keeps Wu hairline + field. Receipt `visualConfig.lookKind`.
+
 Factory-blip orb nucleus is orb-only (disc / eclipse / pulse, color + size on the grid). Swirl / snap / spark no longer stamp the same double circle.
 
 Factory-blip audio syncopates to the motion grid: same seed + tempo + phase0=0. Downbeat kick locks to `kickAccent`; AND hat locks to `andAccent`. Not a flat bed under unrelated LFOs.

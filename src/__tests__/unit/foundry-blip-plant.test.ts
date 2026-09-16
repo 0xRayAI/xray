@@ -504,6 +504,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       ANIMATION_TO_VISUALIZATION,
       MESH_FAMILIES,
       MESH_GAITS,
+      LOOK_KINDS,
       GRID_KINDS,
       GRAD_KINDS,
     } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
@@ -550,6 +551,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       ANIMATION_TO_VISUALIZATION: Record<string, string>;
       MESH_FAMILIES: string[];
       MESH_GAITS: string[];
+      LOOK_KINDS: string[];
       GRID_KINDS: string[];
       GRAD_KINDS: string[];
     };
@@ -562,6 +564,7 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
       seedHex: '0xcafef00d',
     });
     expect(MESH_FAMILIES.length).toBeGreaterThanOrEqual(12);
+    expect(LOOK_KINDS).toEqual(['focus', 'cage']);
     expect(MESH_GAITS).toEqual(expect.arrayContaining(['tumble', 'shear', 'pulse', 'orbit', 'snap']));
     expect(checksum.mesh?.id).toBeTruthy();
     expect(checksum.mesh.id).not.toBe(other.mesh.id);
@@ -650,6 +653,84 @@ describe('foundry blip plant — Rippel converter vs wireframe flag', () => {
     expect(focus.drop).toBeGreaterThan(0);
     expect(focus.drop).toBeLessThan(16);
     expect(focus.inner + focus.drop).toBeLessThan(120);
+  });
+
+  it('keeps focus and cage as seed-selected look variants', () => {
+    const {
+      LOOK_KINDS,
+      buildVisualConfig,
+      paintRippelFrame,
+      summarizeVisual,
+      framesDiffer,
+      orbFocusWidth,
+      resolveLookKind,
+    } = requireCjs(path.join(root, 'scripts/foundry/blip-rippel.cjs')) as {
+      LOOK_KINDS: string[];
+      resolveLookKind: (opts: { seedHex?: string; lookKind?: string }) => string;
+      buildVisualConfig: (opts: { brief: string; seedHex: string; lookKind?: string }) => {
+        lookKind: string;
+      };
+      summarizeVisual: (checksum: { lookKind?: string; visualConfig?: { circles: unknown[] } }) => {
+        lookKind: string | null;
+      };
+      paintRippelFrame: (opts: {
+        renderer: string;
+        t: number;
+        seedHex: string;
+        brief: string;
+        lookKind?: string;
+      }) => { buffer: Buffer; width: number; height: number; lookKind: string };
+      framesDiffer: (a: Buffer, b: Buffer) => boolean;
+      orbFocusWidth: (
+        buf: Buffer,
+        width: number,
+        height: number,
+      ) => { peak: number; inner: number; drop: number };
+    };
+    expect(LOOK_KINDS).toEqual(['focus', 'cage']);
+    const brief = 'warehouse floor · Power Plant';
+    const seedHex = '0xdeadbeef';
+    expect(resolveLookKind({ seedHex })).toBe('cage');
+    expect(resolveLookKind({ seedHex: '0x00' })).toBe('focus');
+    expect(resolveLookKind({ seedHex: '0x01' })).toBe('cage');
+    expect(buildVisualConfig({ brief, seedHex }).lookKind).toBe('cage');
+    expect(buildVisualConfig({ brief, seedHex, lookKind: 'focus' }).lookKind).toBe('focus');
+    expect(summarizeVisual(buildVisualConfig({ brief, seedHex, lookKind: 'focus' })).lookKind).toBe(
+      'focus',
+    );
+    const focusFrame = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex,
+      brief,
+      lookKind: 'focus',
+    });
+    const cageFrame = paintRippelFrame({
+      renderer: 'orb',
+      t: 0,
+      seedHex,
+      brief,
+      lookKind: 'cage',
+    });
+    expect(focusFrame.lookKind).toBe('focus');
+    expect(cageFrame.lookKind).toBe('cage');
+    expect(framesDiffer(focusFrame.buffer, cageFrame.buffer)).toBe(true);
+    const focus = orbFocusWidth(focusFrame.buffer, focusFrame.width, focusFrame.height);
+    expect(focus.peak).toBeGreaterThan(0.55);
+    expect(focus.drop).toBeGreaterThan(0);
+    expect(focus.drop).toBeLessThan(16);
+    expect(focus.inner).toBeGreaterThan(50);
+    function cyanBody(buf: Buffer): number {
+      let n = 0;
+      for (let i = 0; i < buf.length; i += 3) {
+        if (Math.abs(buf[i] - 61) < 10 && Math.abs(buf[i + 1] - 224) < 10 && Math.abs(buf[i + 2] - 232) < 10) {
+          n += 1;
+        }
+      }
+      return n;
+    }
+    expect(cyanBody(focusFrame.buffer)).toBeGreaterThan(cyanBody(cageFrame.buffer) * 2);
+    expect(() => resolveLookKind({ lookKind: 'potato' })).toThrow(/unknown look/);
   });
 
   it('keeps Rippel v2 sharp and beat-coupled on all five viz', () => {
