@@ -15,7 +15,7 @@ Board noise, one-off receipts, product-only docs, tiny typos you will batch late
 1. Diff working copy vs `grok-bot/` on main.
 2. Copy only the SSOT ops + skill files.
 3. **Friend test** every changed file (`GIBBERISH-CHECK.md`) before open.
-4. PR — usually Normal (CI + short note). Strict only if ship/security/live-agent rules change.
+4. PR — **Normal** (implementer + CI; **no Reviewer card**). Strict only if ship / live / security / identity rules change.
 5. Merge when green.
 
 Seats first. Cloud only if the diff is heavy.

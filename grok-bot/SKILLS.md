@@ -20,7 +20,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Ops reference
-`ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/CLOUD-CONTINUITY.md`
+`ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/PROCESSORS-MAP-GROK.md` · `ops/CLOUD-CONTINUITY.md`
 
 Same problem or open PR? Resume that cloud (`ops/CLOUD-CONTINUITY.md`). After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.
 

@@ -18,6 +18,8 @@ A skill can describe a loop no tool exposes. A suit hook can run with no skill o
 5. Wear check — `foundry inspect`  
 6. Docs — `foundry docs-check` (+ live URL checks when agents must read the site)
 
+Named calls + skip list: `PROCESSORS-MAP-GROK.md`.
+
 ## Grok Bot note
 This host is not a fake “deny every bad tool” floor. Skills + reviewer proof carry the rules; suit hooks help when worn.
 

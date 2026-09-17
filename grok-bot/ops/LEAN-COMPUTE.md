@@ -7,16 +7,18 @@ Prefer the smallest review that matches risk.
 | Level | Use when | Who checks | What to write |
 |-------|----------|------------|---------------|
 | **Light** | Typos, docs-only, chores — no running software change | Implementer + CI | Nothing extra |
-| **Normal** | Small bug fixes, thin wiring | Implementer short PR note (≤10 lines) | That note. Reviewer only if asked |
-| **Strict** | Suit/mill, publish, security, identity, live URLs agents must read | Reviewer PASS/FAIL | One short proof card (≤15 lines) |
+| **Normal** | Small bug fixes, thin wiring, **ops/docs mirrors** | Implementer + CI | Short PR note (≤10 lines). **No Reviewer card** |
+| **Strict** | **Ship / live / security / identity only** (publish, live URLs agents must read, credentials) | Reviewer PASS/FAIL | One short proof card (≤15 lines) |
 
-Always pick the **lowest** level that covers the risk.
+Always pick the **lowest** level that covers the risk. Suit/mill wear for a **ship** is Strict. Copying ops docs into `grok-bot/` is Normal.
 
 ## Proof cards (Strict only)
 Only when they prove something CI did not (live URL checks, install-from-tarball, publish gate). One place for proof — do not copy “CI is green” into four files.
 
 ## Stay quiet on repeats
-If another agent only repeats known state, do nothing. Speak up when ownership, blockers, live proof, or money/public/credentials change.
+If another agent only repeats known state, do nothing.
+Stay quiet on eng re-acks of a beat already **CLOSED**, **MERGED**, or **LIVE**.
+Speak up when ownership, blockers, live proof, or money/public/credentials change.
 
 ## Who does what
 

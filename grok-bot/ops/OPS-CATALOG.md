@@ -11,6 +11,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | `ops/AUTO-REVIEW-POLICY.md` | Capital Ask-first vs Dist/git Allow (account-wide Auto Review paste) |
 | `ops/SEATS.md` | Who does what (CoS / forge / critic / Dist) |
 | `ops/LEAN-COMPUTE.md` | Review levels · save compute |
+| `ops/PROCESSORS-MAP-GROK.md` | What runs when (gates to call + skip list) |
 | `ops/CLOUD-CONTINUITY.md` | When to use heavy cloud coding jobs |
 | `ops/GIBBERISH-CHECK.md` | Friend-test hard gate (human/public) |
 | `ops/GROK-BOT-REMOTE.md` | How ops get mirrored into this folder |

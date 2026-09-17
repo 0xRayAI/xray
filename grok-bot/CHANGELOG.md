@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- Clear “what runs when” map for bot gates (live hooks + mill/git/release only; skip list). Strict review is ship/live/security/identity only. Everyday ops-doc copies: implementer + CI, no extra reviewer.
+
 ## 0.1.4
 
 - Fleet ops: Auto Review Ask-first on npm publish, Railway deploy, hangar/USDC pay, secret gists, and A2A spend (`ops/AUTO-REVIEW-POLICY.md` + `OPS-SPEC.md` capital section).
