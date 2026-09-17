@@ -650,6 +650,30 @@ function writeRawMotion(rawFile, width, height, frameCount, paintInto) {
   return rawFile;
 }
 
+/** Comic stamp: 8 unique paints, hold the rest. 133 full rasters is why kapow hung the hangar. */
+const KAPOW_UNIQUE_KEYS = 8;
+
+function writeRawKapow(rawFile, width, height, frameCount, paintInto) {
+  const frameSize = width * height * 3;
+  const buf = Buffer.alloc(frameSize);
+  const fd = fs.openSync(rawFile, "w");
+  const keys = Math.min(KAPOW_UNIQUE_KEYS, Math.max(2, frameCount));
+  let lastKey = -1;
+  try {
+    for (let i = 0; i < frameCount; i++) {
+      const key = Math.min(keys - 1, Math.floor((i * keys) / frameCount));
+      if (key !== lastKey) {
+        paintInto(buf, i / FPS);
+        lastKey = key;
+      }
+      fs.writeSync(fd, buf);
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+  return rawFile;
+}
+
 function muxBed(video, bed, mp4) {
   runTool(
     "ffmpeg",
@@ -1111,7 +1135,7 @@ function renderKapowPicture(work, seed, brief, opts) {
   const height = MOTION_HEIGHT;
   const raw = path.join(work, "kapow.rgb");
   let painted = null;
-  writeRawMotion(raw, width, height, frames, (buf, t) => {
+  writeRawKapow(raw, width, height, frames, (buf, t) => {
     painted = kapow.paintKapowFrame({
       t,
       seedHex: seed,
@@ -1347,6 +1371,9 @@ module.exports = {
   resolveBed,
   paintWireframeFrame,
   encodeRaw,
+  writeRawMotion,
+  writeRawKapow,
+  KAPOW_UNIQUE_KEYS,
   KAPOW_ENGINE: kapow.ENGINE,
   KAPOW_LOOK: kapow.LOOK,
   paintKapowFrame: kapow.paintKapowFrame,

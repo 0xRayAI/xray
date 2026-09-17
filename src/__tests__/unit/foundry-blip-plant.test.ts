@@ -246,6 +246,30 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     expect(frames.turn.marks.word).toBeGreaterThan(0.55);
   });
 
+  it('kapow holds unique paints — does not raster every 30fps tick', () => {
+    const { writeRawKapow, KAPOW_UNIQUE_KEYS, FPS } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-render.cjs'),
+    ) as {
+      writeRawKapow: (
+        file: string,
+        width: number,
+        height: number,
+        frameCount: number,
+        paintInto: (buf: Buffer, t: number) => void,
+      ) => string;
+      KAPOW_UNIQUE_KEYS: number;
+      FPS: number;
+    };
+    const tmp = path.join(os.tmpdir(), `kapow-hold-${Date.now()}.rgb`);
+    let paints = 0;
+    writeRawKapow(tmp, 4, 4, Math.round(4.44 * FPS), () => {
+      paints += 1;
+    });
+    expect(paints).toBe(KAPOW_UNIQUE_KEYS);
+    expect(paints).toBeLessThan(20);
+    rmSync(tmp, { force: true });
+  });
+
   it('still generator paints only the Power Plant palette', () => {
     const { PALETTE, RGB, paintStill, writePpm, WIDTH, HEIGHT, stillPlate, STILL_PLATES, sampleStillFrames } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {

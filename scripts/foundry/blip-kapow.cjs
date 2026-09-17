@@ -90,10 +90,10 @@ function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha
 
 function paintBurst(buf, width, height, cx, cy, spikes, r0, r1, rot, fill, alpha, jag, rim) {
   if (r1 <= 1 || alpha <= 0) return;
-  if (rim) {
-    paintStar(buf, width, height, cx, cy, spikes, Math.max(2, r0 * 0.88), r1 * 1.16, rot, rim, 1, jag);
-  }
   paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, fill, alpha, jag);
+  if (rim) {
+    paintRing(buf, width, height, cx, cy, r1, 2.4, rim, 0.92);
+  }
 }
 
 function paintRing(buf, width, height, cx, cy, radius, thick, color, alpha) {
