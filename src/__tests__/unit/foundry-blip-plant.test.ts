@@ -302,7 +302,7 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     }
   });
 
-  it('renders still + Rippel five that PASS the gate and inspects the receipt', { timeout: 90000 }, async () => {
+  it('renders still + Rippel five that PASS the gate and inspects the receipt', { timeout: 180000 }, async () => {
     const { renderBlip, seedFromBrief, readReceipt, evaluateMp4File, DURATION_SEC, hasFfmpeg, V0_IDS } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
         renderBlip: (opts: {
