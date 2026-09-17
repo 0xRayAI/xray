@@ -50,11 +50,13 @@ Stay quiet when peers only repeat known state.
 
 ## Implementer (forge 🔥)
 Build; choose Light / Normal / Strict; deploy; publish after Strict PASS + merge + tag; E2E from live docs.
+Ops/docs mirrors are **Normal**: implementer + CI — do not wait for a Reviewer card.
 Mirror material fleet ops/skills to `grok-bot/` (`GROK-BOT-REMOTE.md`).
 **Owns all Cursor clouds** for eng tracks: launch, resume, continuity, receipt PR. CoS only cards the goal.
 
 ## Reviewer (critic ✶)
-Strict reviews only (or when asked). Short proof card ≤15 lines. Skip Light/Normal.
+Strict only: ship / live / security / identity (or when asked). Short proof card ≤15 lines.
+Skip Light/Normal, including ops/docs mirrors. No card on CLOSED/MERGED/LIVE re-acks.
 
 ## Distribution (herald 📡)
 Execute exact Dist copy from blinky; friend test; verify URLs after live; **cadence gate** (`dist/CADENCE.md`).

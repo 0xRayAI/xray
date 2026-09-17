@@ -24,6 +24,13 @@ source → owner → artifact → evidence → next owner
 ## Review levels
 See `LEAN-COMPUTE.md` — Light / Normal / Strict. No theater.
 
+**Lock**
+- **Strict** = ship / live / security / identity only. Reviewer card.
+- **Normal** (including ops/docs mirrors) = implementer + CI. **No Reviewer card.**
+- **Light** = implementer + CI.
+
+Stay quiet when eng only re-acks **CLOSED** / **MERGED** / **LIVE**.
+
 ## Cloud vs seats
 See `CLOUD-CONTINUITY.md` — seats first; clouds only for heavy repo surgery.
 **CoS does not call CloudAgent** — forge owns eng clouds (fatal if broken).
@@ -43,7 +50,7 @@ goal · constraints · artifact path · acceptance tests · evidence · next own
 ## Status beat (material only)
 **Done** · **Verify** (how we know) · **Reflect** · **Next** (no approval / needs human / not now)
 
-Stay quiet on repeat acks. Coordinator does not deploy or implement.
+Stay quiet on repeat acks, including eng re-acks of CLOSED / MERGED / LIVE. Coordinator does not deploy or implement.
 
 
 ## Wake hygiene (HARD — 2026-09-16)

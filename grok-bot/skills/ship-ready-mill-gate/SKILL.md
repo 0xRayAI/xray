@@ -9,9 +9,9 @@ description: >-
 ## Review level first
 | Level | When | Gate |
 |-------|------|------|
-| Light | Docs/chore, no runtime | CI only |
-| Normal | Small fix | Implementer short PR note |
-| Strict | Suit, publish, security, identity, live agent docs | Tasks below + reviewer short proof |
+| Light | Docs/chore, no runtime | Implementer + CI |
+| Normal | Small fix, ops/docs mirrors | Implementer + CI; **no Reviewer card** |
+| Strict | Ship / live / security / identity only | Tasks below + reviewer short proof |
 
 ## Strict tasks
 **A — PR + CI** worktree + PR · CI updated · green  
