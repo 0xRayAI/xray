@@ -12,6 +12,25 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.15] - 2026-09-17
+
+### 🔄 Changes
+
+### 📚 Documentation
+- docs: Claim C compact 8 — quiz-first no restates (e66ffe11f)
+- docs: mention blip render on the consumer agents card (9cd6662bc)
+- docs: Claim C compact 7 — quiz-first still summarizer keep (931547be6)
+- docs: Claim C compact 6 — summarizer kept canaries, not the old window (a3a6a83a8)
+- docs: Claim C memory protocol — quiz-first, no canary values (b38dcd5d4)
+- docs: Station guide also denies mind-survival overclaim (af7b686ca)
+- docs: compact scores disk, not conversation memory (6cf1d5d2f)
+- docs: Station is survive-the-cut; Repertoire 0.1 is judgment (d87a39d37)
+
+### 🧪 Tests
+- test: Claim C quiz printer and canary leak scan for compact 7 (d1cff2de4)
+
+---
+
 ## [4.0.14] - 2026-09-16
 
 ### ✨ Features
