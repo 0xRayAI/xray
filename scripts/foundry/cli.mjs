@@ -31,7 +31,7 @@ const HELP =
   "Mint fastens the requested factory plant (default mill; foundry.json plant: sound|blip turns mill off), then inspect.\n" +
   "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL; on a blip seat, last blip receipt.\n" +
   "sound render|inspect|mix is the factory-sound plant (brief → seed → genre → wav → metrics; mix levels every variation). Sibling to mill, not a mill copy.\n" +
-  "blip render|inspect is the factory-blip plant (brief → seed → still|motion:<id> → 4.44s mp4). Sibling to mill + sound.\n" +
+  "blip render|inspect|vibe is the factory-blip plant (brief → seed → still|motion:<id> → 4.44s mp4; vibe scores appeal, ship bar 8). Sibling to mill + sound.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";
 
 const cmd = process.argv[2];

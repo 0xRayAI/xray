@@ -3,6 +3,7 @@
  * Factory-blip CLI — sibling plant to mill + sound, not a mill bolt-on.
  *   npx @0xray/foundry blip render --brief TEXT --mode still|motion:<id> [--look focus|cage] [--body mill|rippel] [--genre ambient|techno|phonk|jazz|rock|timeless] [--camera front|three-quarter|top|low|dutch|side] [--bed PATH] [--engine rippel|wireframe] [--out FILE]
  *   npx @0xray/foundry blip inspect
+ *   npx @0xray/foundry blip vibe
  */
 
 import { createRequire } from "node:module";
@@ -12,9 +13,10 @@ import { resolveMillRoot } from "./mill-root.mjs";
 
 const require = createRequire(import.meta.url);
 const blip = require("./blip-render.cjs");
+const vibe = require("./blip-vibe.cjs");
 
 const HELP =
-  "Usage: npx @0xray/foundry blip <render|inspect> [...args]\n" +
+  "Usage: npx @0xray/foundry blip <render|inspect|vibe> [...args]\n" +
   "\n" +
   "Factory-blip plant, sibling to mill + sound. FOUNDRY_ROOT overrides cwd.\n" +
   "render: brief → checksum seed → still|motion:<id> → 4.44s mp4 + audio bed → receipt.\n" +
@@ -24,7 +26,8 @@ const HELP =
   "Every mp4 muxes a 4.44s bed (--bed PATH or auto sound mill). Silent = inspect FAIL.\n" +
   "kapow is a design opt (two-tier stamp on the stanza). Unknown id FAIL.\n" +
   "still: Power Plant ident — plate dissolves over 4.44s at ≥720p, not a frozen poster.\n" +
-  "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n";
+  "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n" +
+  "vibe: blip-vibe scores appeal 0-10. Ship bar is 8. Not last-blip inspect.\n";
 
 function argValue(argv, name, fallback) {
   const i = argv.indexOf(name);
@@ -74,6 +77,12 @@ function main() {
   if (!cmd || cmd === "--help" || cmd === "-h" || cmd === "help") {
     process.stdout.write(HELP);
     process.exit(cmd ? 0 : 1);
+  }
+
+  if (cmd === "vibe" || cmd === "appeal") {
+    const report = vibe.vibeProject(root);
+    writeJson(report);
+    process.exit(report.status === "PASS" ? 0 : 1);
   }
 
   if (cmd === "inspect") {

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip vibe seat: `blip-vibe` scores aesthetic / cool factor 0–10. Ship bar is 8. `npx @0xray/foundry blip vibe`. Kapow is a comic two-tier stamp (long spikes, ink outline, readable word). Inspect stays last-blip. No version bump.
+
 Factory-sound mixer seat: `sound-mixer` plant agent levels every genre × tempo × motif (hats / plate / glue). `npx @0xray/foundry sound mix`. Plate send/feedback down, hot hats pulled, glue eased. Inspect stays last-bed. No version bump.
 
 Factory-blip kapow design opt: `--mode motion:kapow` paints a two-tier stamp on hook → turn → tag. Outer cyan burst winds, inner gold burst + word slam the jewel cut. One noun in the hole. Not a Rippel import and not a look. Foundry 0.1.10 — no bump.

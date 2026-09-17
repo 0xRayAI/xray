@@ -31,7 +31,7 @@ const FACTORY_PLANT_CATALOG = {
     skills: ["sound", "sound-inspect", "sound-mixer"],
     agents: ["sound.yml", "sound-inspect.yml", "sound-mixer.yml"],
   },
-  blip: { skills: ["blip", "blip-inspect"], agents: ["blip.yml", "blip-inspect.yml"] },
+  blip: { skills: ["blip", "blip-inspect", "blip-vibe"], agents: ["blip.yml", "blip-inspect.yml", "blip-vibe.yml"] },
 };
 
 function isFactoryPlantKind(kind) {

@@ -29,4 +29,4 @@ npx @0xray/foundry blip render --brief "warm basement swirl" --mode motion:swirl
 npx @0xray/foundry blip inspect
 ```
 
-Plant-vs-worn allowlists `blip` + `blip-inspect` when `"plant": "blip"`. They are not a costume dump. Mill may be off on this seat.
+Plant-vs-worn allowlists `blip` + `blip-inspect` + `blip-vibe` when `"plant": "blip"`. They are not a costume dump. Mill may be off on this seat.

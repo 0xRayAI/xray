@@ -2,7 +2,7 @@
  * Factory-blip kapow — design opt, not a Rippel import and not a look.
  *
  * Two-tier stamp on the shared stanza: outer burst winds, inner burst +
- * KAPOW! land on the jewel cut, tag holds. One noun in the hole.
+ * KAPOW! slam the jewel cut, tag holds. Ink outline. One noun under the word.
  * Power Plant palette. ≥720p. Same seed camera / genre grid as the five.
  */
 
@@ -12,6 +12,9 @@ const ENGINE = "kapow-headless";
 const LOOK = "kapow-blip";
 const ORGAN = "kapow";
 const WORD = "KAPOW!";
+const SPIKE_POW = 3.6;
+const OUTER_FAT = 0.28;
+const INNER_FAT = 0.32;
 
 /** 5×7 caps — KAPOW! only. */
 const GLYPHS = {
@@ -49,13 +52,13 @@ function starRadius(angle, spikes, r0, r1, rot, jag) {
   const i = Math.floor(u);
   const f = u - i;
   const tri = f < 0.5 ? f * 2 : (1 - f) * 2;
-  const bite = 1 + (((jag || 0) >> (i & 7)) & 1) * 0.1;
-  return (r0 + (r1 - r0) * Math.pow(Math.max(0, tri), 2.2)) * bite;
+  const bite = 1 + (((jag || 0) >> (i & 7)) & 1) * 0.22;
+  return (r0 + (r1 - r0) * Math.pow(Math.max(0, tri), SPIKE_POW)) * bite;
 }
 
 function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha, jag) {
   if (r1 <= 1 || alpha <= 0) return;
-  const pad = r1 * 1.12;
+  const pad = r1 * 1.16;
   const x0 = Math.max(0, Math.floor(cx - pad - 1));
   const x1 = Math.min(width - 1, Math.ceil(cx + pad + 1));
   const y0 = Math.max(0, Math.floor(cy - pad - 1));
@@ -71,8 +74,56 @@ function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha
       if (d > edge + 0.6) continue;
       let a = alpha;
       const rim = edge - d;
-      if (rim < 1.4) a *= Math.max(0, rim / 1.4);
+      if (rim < 1.1) a *= Math.max(0, rim / 1.1);
       mixPixel(buf, width, x, y, color, a);
+    }
+  }
+}
+
+function paintBurst(buf, width, height, cx, cy, spikes, r0, r1, rot, fill, alpha, jag, rim) {
+  if (r1 <= 1 || alpha <= 0) return;
+  if (rim) {
+    paintStar(buf, width, height, cx, cy, spikes, Math.max(2, r0 * 0.88), r1 * 1.16, rot, rim, 1, jag);
+  }
+  paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, fill, alpha, jag);
+}
+
+function paintRing(buf, width, height, cx, cy, radius, thick, color, alpha) {
+  if (radius < 4 || alpha <= 0) return;
+  const pad = radius + thick + 1;
+  const x0 = Math.max(0, Math.floor(cx - pad));
+  const x1 = Math.min(width - 1, Math.ceil(cx + pad));
+  const y0 = Math.max(0, Math.floor(cy - pad));
+  const y1 = Math.min(height - 1, Math.ceil(cy + pad));
+  const inner = radius - thick;
+  const outer = radius + thick;
+  for (let y = y0; y <= y1; y++) {
+    const dy = y - cy;
+    for (let x = x0; x <= x1; x++) {
+      const d = Math.hypot(x - cx, dy);
+      if (d < inner || d > outer) continue;
+      const edge = Math.min(d - inner, outer - d);
+      mixPixel(buf, width, x, y, color, alpha * Math.min(1, edge / Math.max(0.6, thick * 0.45)));
+    }
+  }
+}
+
+function paintSpeedLines(buf, width, height, cx, cy, count, reach, color, alpha, rot) {
+  if (alpha <= 0.04 || reach < 8) return;
+  for (let i = 0; i < count; i++) {
+    const ang = rot + (i * Math.PI * 2) / count + ((i * 17) % 7) * 0.04;
+    const cos = Math.cos(ang);
+    const sin = Math.sin(ang);
+    const inner = reach * 0.42;
+    const steps = Math.max(12, Math.round(reach * 0.55));
+    for (let s = 0; s < steps; s++) {
+      const u = s / steps;
+      const d = inner + (reach - inner) * u;
+      const fade = alpha * (1 - u) * (1 - u);
+      const x = cx + cos * d;
+      const y = cy + sin * d;
+      mixPixel(buf, width, x, y, color, fade);
+      mixPixel(buf, width, x + cos, y + sin, color, fade * 0.7);
     }
   }
 }
@@ -95,18 +146,25 @@ function paintGlyph(buf, width, height, ch, x0, y0, cell, color, alpha) {
   }
 }
 
-function paintWord(buf, width, height, cx, cy, cell, color, alpha) {
+function paintWord(buf, width, height, cx, cy, cell, fill, alpha) {
   if (alpha <= 0.02 || cell < 2) return;
-  const gap = Math.max(1, Math.round(cell * 0.35));
+  const gap = Math.max(2, Math.round(cell * 0.28));
   const letterW = 5 * cell;
   const letterH = 7 * cell;
   const total = WORD.length * letterW + (WORD.length - 1) * gap;
   let x = Math.round(cx - total / 2);
   const y = Math.round(cy - letterH / 2);
-  const ink = rippel.THEME.ink;
+  const stroke = rippel.THEME.void;
+  const outline = Math.max(2, Math.round(cell * 0.28));
   for (let i = 0; i < WORD.length; i++) {
-    paintGlyph(buf, width, height, WORD[i], x + 1, y + 1, cell, ink, alpha * 0.55);
-    paintGlyph(buf, width, height, WORD[i], x, y, cell, color, alpha);
+    const gx = x;
+    for (let oy = -outline; oy <= outline; oy++) {
+      for (let ox = -outline; ox <= outline; ox++) {
+        if (ox === 0 && oy === 0) continue;
+        paintGlyph(buf, width, height, WORD[i], gx + ox, y + oy, cell, stroke, alpha);
+      }
+    }
+    paintGlyph(buf, width, height, WORD[i], gx, y, cell, fill, alpha);
     x += letterW + gap;
   }
 }
@@ -127,9 +185,9 @@ function kapowMarks(phrase, checksum) {
     peak,
     recoil,
     pose,
-    outer: (0.84 * hook + 1.12 * turn + 0.92 * tag) * pose.dolly * (1 - 0.16 * recoil),
-    inner: (0.22 * hook + 1.04 * turn + 0.72 * tag + 0.32 * hit) * pose.dolly,
-    word: clamp01(turn * 1.15 + peak * 0.85 + tag * 0.42 - hook * 0.35),
+    outer: (0.62 * hook + 1.28 * turn + 1.02 * tag) * pose.dolly * (1 - 0.1 * recoil),
+    inner: (0.06 * hook + 1.22 * turn + 0.82 * tag + 0.38 * hit) * pose.dolly,
+    word: clamp01(turn * 1.45 + peak * 1.05 + tag * 0.55 - hook * 0.85),
   };
 }
 
@@ -156,74 +214,95 @@ function paintKapowFrame(opts) {
   const phrase = rippel.phraseOf(checksum, t);
   const marks = kapowMarks(phrase, checksum);
   const gem = Number.parseInt(String(opts.seedHex || "1").replace(/^0x/, "").slice(0, 8), 16) || 1;
-  const outerSpikes = 14 + (gem % 5);
-  const innerSpikes = 10 + ((gem >>> 8) % 4);
+  const outerSpikes = 16 + (gem % 5);
+  const innerSpikes = 11 + ((gem >>> 8) % 4);
   const rot0 = ((gem >>> 16) % 360) * (Math.PI / 180);
-  const rot = rot0 + phrase.beats * 0.08 + marks.pose.roll * 0.35;
+  const rot = rot0 + phrase.beats * 0.11 + marks.pose.roll * 0.35;
   const minSide = Math.min(width, height);
-  const cx = width * 0.5 + marks.pose.yaw * minSide * 0.04;
-  const cy = height * 0.5 - marks.pose.pitch * minSide * 0.035;
-  const outerR = minSide * 0.46 * Math.max(0.42, marks.outer);
-  const innerR = minSide * 0.3 * Math.max(0.16, marks.inner);
+  const cx = width * 0.5 + marks.pose.yaw * minSide * 0.03;
+  const cy = height * 0.5 - marks.pose.pitch * minSide * 0.028;
+  const outerR = minSide * 0.52 * Math.max(0.58, marks.outer);
+  const innerR = minSide * 0.4 * Math.max(0.1, marks.inner);
 
   rippel.fillVoid(buf);
-  paintStar(
+  paintSpeedLines(
+    buf,
+    width,
+    height,
+    cx,
+    cy,
+    22,
+    outerR * 1.18,
+    rippel.THEME.ink,
+    0.22 + 0.62 * clamp01(marks.turn + marks.peak),
+    rot,
+  );
+  paintBurst(
     buf,
     width,
     height,
     cx,
     cy,
     outerSpikes,
-    outerR * 0.64,
+    outerR * OUTER_FAT,
     outerR,
     rot,
     rippel.THEME.cyan,
-    0.96,
+    0.98,
     gem,
+    rippel.THEME.ink,
   );
-  paintStar(
+  paintBurst(
     buf,
     width,
     height,
     cx,
     cy,
     outerSpikes,
-    outerR * 0.7,
-    outerR * 1.06,
-    rot,
+    outerR * 0.34,
+    outerR * 1.04,
+    rot + 0.08,
     rippel.THEME.blue,
-    0.34,
+    0.28 + 0.22 * clamp01(marks.turn),
     gem >>> 3,
+    null,
   );
-  paintStar(
+  if (marks.turn > 0.28 || marks.peak > 0.2) {
+    const ringA = 0.35 + 0.55 * clamp01(marks.peak + marks.turn);
+    paintRing(buf, width, height, cx, cy, outerR * 0.58, 3.2, rippel.THEME.ink, ringA * 0.7);
+    paintRing(buf, width, height, cx, cy, outerR * 0.78, 2.6, rippel.THEME.gold, ringA * 0.85);
+    paintRing(buf, width, height, cx, cy, outerR * 0.96, 2.2, rippel.THEME.ink, ringA);
+  }
+  paintBurst(
     buf,
     width,
     height,
     cx,
     cy,
     innerSpikes,
-    innerR * 0.6,
+    innerR * INNER_FAT,
     innerR,
-    -rot * 1.12,
+    -rot * 1.18,
     rippel.THEME.gold,
-    0.4 + 0.6 * clamp01(marks.inner),
+    0.12 + 0.88 * clamp01(marks.inner),
     gem >>> 8,
+    rippel.THEME.void,
   );
-  const nounR = Math.max(10, innerR * 0.22 + minSide * 0.018);
+  const nounR = Math.max(8, innerR * 0.14 + minSide * 0.01);
   rippel.stampFocusDisc(buf, width, height, cx, cy, nounR, rippel.THEME.cyan, {
     rim: 2,
-    glow: 4,
-    glowAlpha: 0.22 + 0.28 * marks.hit,
+    glow: 3,
+    glowAlpha: 0.16 + 0.2 * marks.hit,
     rimColor: rippel.THEME.ink,
   });
-  rippel.stampFocusDisc(buf, width, height, cx, cy, nounR * 0.34, rippel.THEME.gold, {
+  rippel.stampFocusDisc(buf, width, height, cx, cy, nounR * 0.32, rippel.THEME.gold, {
     rim: 1,
-    glow: 2,
-    glowAlpha: 0.18,
-    rimColor: rippel.THEME.ink,
+    glow: 1,
+    glowAlpha: 0.14,
+    rimColor: rippel.THEME.void,
   });
-  const cell = Math.max(3, Math.round(innerR * 0.048 + marks.word * 3.2));
-  paintWord(buf, width, height, cx, cy - innerR * 0.02, cell, rippel.THEME.void, marks.word);
+  const cell = Math.max(16, Math.round(minSide * 0.024 + marks.word * 6.5));
+  paintWord(buf, width, height, cx, cy, cell, rippel.THEME.ink, marks.word);
 
   return {
     buffer: buf,
@@ -275,6 +354,9 @@ module.exports = {
   ORGAN,
   WORD,
   GLYPHS,
+  SPIKE_POW,
+  OUTER_FAT,
+  INNER_FAT,
   starRadius,
   paintStar,
   paintWord,
