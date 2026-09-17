@@ -172,8 +172,20 @@ const CRYSTAL = {
   mudDb: -3.5,
   distScale: 0.55,
   hatAirHz: 9000,
-  sidechain: 0.55,
+  sidechain: 0.46,
   peakTarget: 0.82,
+};
+
+/** sound-mixer seats — hats, plate, glue. Inspect stays the last-bed gate. */
+const MIXER = {
+  plateFeedback: 0.24,
+  plateSend: 0.028,
+  hatGainHot: 0.54,
+  hatGainAmbientLock: 0.5,
+  glueThresholdDb: -18,
+  glueRatio: 2.15,
+  crashVel: 0.5,
+  introFloor: 0.36,
 };
 
 const GENRE_ALIASES = {
@@ -1061,7 +1073,7 @@ function masterEnvelope(samples, sampleRate, seconds, lock) {
   const introHold = blip ? 0 : 0.5;
   const introEase = blip ? 0.03 : 0.35;
   const introShelf = 0.75;
-  const introFloor = 0.42;
+  const introFloor = MIXER.introFloor;
   const kickHold = 0.055;
   const bodyLift = 1.3;
   const fadeSec = blip ? 0.35 : 1;
@@ -1105,7 +1117,7 @@ function renderPlate(samples, sampleRate) {
     let acc = 0;
     for (let c = 0; c < bufs.length; c++) {
       const d = bufs[c][idx[c]];
-      bufs[c][idx[c]] = x + d * 0.52;
+      bufs[c][idx[c]] = x + d * MIXER.plateFeedback;
       idx[c] = (idx[c] + 1) % bufs[c].length;
       acc += d;
     }
@@ -1181,7 +1193,7 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     duckBus(kickBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.4);
     duckBus(hatBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.34);
     duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
-    const crashVel = genreId === "timeless" ? 0.22 : genreId === "rock" ? 0.44 : 0.64;
+    const crashVel = genreId === "timeless" ? 0.22 : genreId === "rock" ? 0.44 : MIXER.crashVel;
     if (genreId !== "timeless") {
       mixInto(
         colorBus,
@@ -1711,23 +1723,34 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
           : 0.028,
   );
   const wetSrc = new Float64Array(n);
-  for (let i = 0; i < n; i++) wetSrc[i] = hatCh[i] * 0.62 + colorCh[i] * 0.38;
+  const colorWet = g.id === "timeless" || g.id === "ambient" || g.id === "jazz" ? 0.16 : 0.38;
+  for (let i = 0; i < n; i++) wetSrc[i] = hatCh[i] * 0.62 + colorCh[i] * colorWet;
   const plate = renderPlate(wetSrc, sampleRate);
   const mix = new Float64Array(n);
-  const kickGain = g.id === "timeless" ? (lock ? 0.7 : 0.55) : g.id === "ambient" ? (lock ? 1 : 0.7) : 0.9;
-  const hatGain = g.id === "techno" || g.id === "phonk" || g.id === "rock" ? 0.78 : g.id === "ambient" ? (lock ? 0.72 : 0.58) : g.id === "timeless" ? 0.22 : 0.56;
+  const kickGain =
+    g.id === "timeless" ? (lock ? 0.7 : 0.55) : g.id === "ambient" ? (lock ? 1 : 0.7) : g.id === "phonk" && !lock ? 0.58 : 0.9;
+  const hatGain =
+    g.id === "techno" || g.id === "phonk" || g.id === "rock"
+      ? MIXER.hatGainHot
+      : g.id === "ambient"
+        ? lock
+          ? MIXER.hatGainAmbientLock
+          : 0.58
+        : g.id === "timeless"
+          ? 0.22
+          : 0.56;
   const padGain = g.id === "timeless"
     ? lock
       ? 0.58
       : 0.55
     : g.id === "ambient"
       ? lock
-        ? 0.88
+        ? 0.96
         : 0.48
       : g.id === "jazz"
         ? lock
           ? 1
-          : 0.36
+          : 0.72
         : g.id === "phonk"
           ? 0.42
           : g.id === "rock" && lock
@@ -1740,7 +1763,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       hatCh[i] * hatGain +
       colorCh[i] * 0.52 * duck +
       padCh[i] * padGain * duck +
-      plate[i] * 0.1 +
+      plate[i] * MIXER.plateSend * (0.4 + 0.6 * duck) +
       glue[i];
   }
 
@@ -1749,7 +1772,14 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   for (let i = 0; i < n; i++) {
     mix[i] = masterEq.step(mix[i], mEq.low, mEq.mid, mEq.high) * RIPPEL.mixer.masterVolume;
   }
-  let glued = compress(mix, dbLin(-16), g.id === "phonk" ? 5 : 2.6, sampleRate, 0.008, 0.16);
+  let glued = compress(
+    mix,
+    dbLin(MIXER.glueThresholdDb),
+    g.id === "phonk" ? 3.6 : MIXER.glueRatio,
+    sampleRate,
+    0.008,
+    0.16,
+  );
   const shaped = masterEnvelope(glued, sampleRate, seconds, lock);
   const peaked = normalize(shaped, CRYSTAL.peakTarget);
   const samples = limiter(peaked, dbLin(RIPPEL.mixer.limiterDb));
@@ -1830,6 +1860,8 @@ module.exports = {
   SSOT,
   RIPPEL,
   CRYSTAL,
+  MIXER,
+  TEMPO_TABLES,
   GENRE_ALIASES,
   GENRES,
   SCALES,

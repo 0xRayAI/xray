@@ -59,7 +59,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Default mill plant:** `mill` + `inspect` (inspect AI work). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
 
-**Sound plant (factory-sound):** `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz` | `phonk`) → crystal-clear headless wav (Rippel membrane + metal + mixer, not a 3-sine toy) → metrics gate → `.xray/sound-bed-receipt.json`. Tone.Offline is blocked in Node (no `OfflineAudioContext`); `sound-rippel.cjs` is the lean mill port of `htafolla/rippel-synapse-flow`. Inspect reports the plant plus last bed `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
+**Sound plant (factory-sound):** `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` and turns mill off. Spine: brief → checksum seed → genre (`ambient` | `techno` | `jazz` | `phonk`) → crystal-clear headless wav (Rippel membrane + metal + mixer, not a 3-sine toy) → metrics gate → `.xray/sound-bed-receipt.json`. `npx @0xray/foundry sound mix` levels every genre × tempo × motif (hats / plate / glue). Tone.Offline is blocked in Node (no `OfflineAudioContext`); `sound-rippel.cjs` is the lean mill port of `htafolla/rippel-synapse-flow`. Inspect reports the plant plus last bed `PASS`/`FAIL`. Not costume. No `@0xray/foundry` bump.
 
 A 4.44s lock is a Short: seed motif (hook cell → turn answer → tag stamps hook[0]). The crash lands on the jewel cut.
 

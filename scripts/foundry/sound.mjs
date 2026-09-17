@@ -3,6 +3,7 @@
  * Factory-sound CLI. Render a bed or inspect the last receipt.
  *   npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz] [--seconds N] [--out FILE]
  *   npx @0xray/foundry sound inspect
+ *   npx @0xray/foundry sound mix
  */
 
 import { createRequire } from "node:module";
@@ -12,13 +13,15 @@ import { resolveMillRoot } from "./mill-root.mjs";
 
 const require = createRequire(import.meta.url);
 const bed = require("./sound-bed.cjs");
+const mixer = require("./sound-mixer.cjs");
 
 const HELP =
-  "Usage: npx @0xray/foundry sound <render|inspect> [...args]\n" +
+  "Usage: npx @0xray/foundry sound <render|inspect|mix> [...args]\n" +
   "\n" +
   "Sound plant, not mill. FOUNDRY_ROOT overrides cwd.\n" +
   "render: brief → checksum seed → genre → wav → metrics receipt.\n" +
-  "inspect: last .xray/sound-bed-receipt.json PASS/FAIL (missing is FAIL).\n";
+  "inspect: last .xray/sound-bed-receipt.json PASS/FAIL (missing is FAIL).\n" +
+  "mix: sound-mixer levels every genre × tempo × motif (hats / plate / glue).\n";
 
 function argValue(argv, name, fallback) {
   const i = argv.indexOf(name);
@@ -60,6 +63,12 @@ function main() {
   if (!cmd || cmd === "--help" || cmd === "-h" || cmd === "help") {
     process.stdout.write(HELP);
     process.exit(cmd ? 0 : 1);
+  }
+
+  if (cmd === "mix" || cmd === "mixer") {
+    const report = mixer.mixProject(root);
+    writeJson(report);
+    process.exit(report.status === "PASS" ? 0 : 1);
   }
 
   if (cmd === "inspect") {

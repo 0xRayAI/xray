@@ -43,7 +43,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 `postinstall.cjs` → `installAllBridges()`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
-2. Fasten mill plant (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+2. Fasten mill plant (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` and turns mill off. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
@@ -52,7 +52,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
-**Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
+**Sound plant:** Dist audio beds get a real plant like mill. `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. `sound-mixer` (`npx @0xray/foundry sound mix`) levels every genre × tempo × motif — hats, plate, glue — not just the last bed. Inspect checks loudness/smoothness gates — not fake code-mill skills on a sound seat.
 
 **Blip plant:** New factory plant sibling to mill + sound (not a mill copy). Hangar shop pair later. `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|motion:orb` writes a 4.44s mp4 **with an audio bed**. Registry v0: still + Rippel five (`orb` `swirl` `snap` `waves` `spark`). Motions are Rippel v2 `VisualConfig.circles` at ≥720p — sharp look + tempo/frequency animation on all five (wireframe is `--engine wireframe` only). Auto bed syncopates to the motion grid. Each mint wears a sparse seed mesh plus field accents (stars, grids, gradients, blinkers); receipt `visualConfig.mesh` + `visualConfig.field` are the fingerprints. `kapow` is a growth stub. `still` is the Power Plant ident — plate dissolves over 4.44s at ≥720p (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`), not a frozen poster. Inspect checks duration / mode id / file / audio.
 

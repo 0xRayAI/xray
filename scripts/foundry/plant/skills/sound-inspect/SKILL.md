@@ -25,4 +25,4 @@ npx @0xray/foundry sound render --brief "warm basement pad" --genre jazz
 npx @0xray/foundry sound inspect
 ```
 
-Plant-vs-worn allowlists `sound` + `sound-inspect` when `"plant": "sound"`. They are not a costume dump. Mill may be off on this seat.
+Plant-vs-worn allowlists `sound` + `sound-inspect` + `sound-mixer` when `"plant": "sound"`. They are not a costume dump. Mill may be off on this seat. Mixer is the variation tuner (`sound mix`); this skill still quotes the last bed.
