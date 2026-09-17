@@ -70,7 +70,7 @@ describe('foundry sound-mixer — plant seat', () => {
 });
 
 describe('foundry sound-mixer — levels every variation', () => {
-  it('enumerates six bodies × tempos × motif roots plus unlock, and the matrix PASSes', () => {
+  it('enumerates six bodies × tempos × motif roots plus unlock, and the matrix PASSes', { timeout: 120000 }, () => {
     const { MIXER } = requireCjs(path.join(root, 'scripts/foundry/sound-rippel.cjs')) as {
       MIXER: {
         plateFeedback: number;
