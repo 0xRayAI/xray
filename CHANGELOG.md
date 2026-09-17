@@ -6,14 +6,12 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
-### ✨ Features
-- **Factory-blip vibe seat** — `blip-vibe` plant agent scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is **8**. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. `npx @0xray/foundry blip vibe`. Inspect stays duration / mode / file. No `@0xray/foundry` bump.
-
 ---
 
 ## [4.0.15] - 2026-09-17
 
 ### ✨ Features
+- **Factory-blip vibe seat** — `blip-vibe` plant agent scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is **8**. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. `npx @0xray/foundry blip vibe`. Inspect stays duration / mode / file. No `@0xray/foundry` bump.
 - **Factory-sound mixer seat** — `sound-mixer` plant agent levels every genre × tempo × motif (hats, plate, glue, phrase). `npx @0xray/foundry sound mix`. Dries the plate, pulls hot hats, eases glue. Inspect stays the last-bed gate. No `@0xray/foundry` bump.
 - **Factory-blip kapow opt** — `--mode motion:kapow` is a two-tier stamp on the same stanza (outer cyan burst winds, inner gold burst + `KAPOW!` hit the jewel cut). Not a third look. v0 five stay. No `@0xray/foundry` bump.
 
