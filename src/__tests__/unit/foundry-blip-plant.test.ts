@@ -227,6 +227,19 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     expect(unknown.reason).toMatch(/unknown motion id/);
   });
 
+  it('salts the mill seed so the same brief is unique per mint', () => {
+    const { seedFromBrief } = requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
+      seedFromBrief: (brief: string, mode: string, salt?: string | number) => string;
+    };
+    const brief = 'Cyan arc over a gold nameplate. Factory floor at shift change.';
+    const a = seedFromBrief(brief, 'kapow', 17);
+    const b = seedFromBrief(brief, 'kapow', 19);
+    const bare = seedFromBrief(brief, 'kapow');
+    expect(a).not.toBe(b);
+    expect(a).not.toBe(bare);
+    expect(seedFromBrief(brief, 'kapow', 17)).toBe(a);
+  });
+
   it('stamps a two-tier KAPOW — outer winds, inner + word hit the jewel cut', () => {
     const { sampleKapowFrames } = requireCjs(path.join(root, 'scripts/foundry/blip-kapow.cjs')) as {
       sampleKapowFrames: (

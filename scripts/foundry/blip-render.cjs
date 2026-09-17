@@ -194,13 +194,14 @@ function resolveMode(name, registryPath) {
   };
 }
 
-function seedFromBrief(brief, mode) {
+function seedFromBrief(brief, mode, salt) {
   const parsed = parsePictureMode(mode);
   const payload = canonicalJson({
     brief: String(brief || "").trim(),
     motionId: parsed.motionId,
     durationSec: DURATION_SEC,
     spine: SPINE,
+    ...(salt != null && String(salt) !== "" ? { salt: String(salt) } : {}),
   });
   return `0x${crypto.createHash("sha256").update(payload, "utf8").digest("hex")}`;
 }
@@ -1170,7 +1171,9 @@ function renderBlip(opts = {}) {
   const root = opts.root || process.cwd();
   const brief = String(opts.brief || "factory-blip");
   const modeInfo = resolveMode(opts.pictureMode || opts.mode, opts.registryPath);
-  const seed = opts.seed || seedFromBrief(brief, modeInfo.motionId || modeInfo.id);
+  const seed =
+    opts.seed ||
+    seedFromBrief(brief, modeInfo.motionId || modeInfo.id, opts.salt ?? opts.mintIndex);
   const mp4 = opts.out ? path.resolve(root, opts.out) : defaultMp4Path(root);
   const input = {
     brief,

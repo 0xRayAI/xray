@@ -102,6 +102,7 @@ function main() {
       camera: argValue(rest, "--camera", null),
       bed: argValue(rest, "--bed", null),
       engine: argValue(rest, "--engine", "rippel"),
+      salt: argValue(rest, "--salt", null),
       out: argValue(rest, "--out", null),
     });
     writeJson(result.receipt);
