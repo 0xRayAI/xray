@@ -53,7 +53,7 @@ jobs:
         # Includes inspect shop-plant allowlist (factory shops + shopPlant, not costume:true)
         # plus llms.txt / mill-law docs + pack-tmp-suit-proof contract.
         # plus two-seat Grok wear (project dest, no last-wins machine plugin clobber).
-        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/foundry-sound-plant.test.ts src/__tests__/unit/foundry-sound-mixer.test.ts src/__tests__/unit/foundry-blip-plant.test.ts src/__tests__/unit/release-pipeline.test.ts src/__tests__/unit/grok-multi-seat-wear.test.ts src/__tests__/unit/host-vs-mill-score.test.ts
+        run: npx vitest run src/__tests__/unit/foundry-mill.test.ts src/__tests__/unit/foundry-sound-plant.test.ts src/__tests__/unit/foundry-sound-mixer.test.ts src/__tests__/unit/foundry-blip-plant.test.ts src/__tests__/unit/foundry-blip-vibe.test.ts src/__tests__/unit/release-pipeline.test.ts src/__tests__/unit/grok-multi-seat-wear.test.ts src/__tests__/unit/host-vs-mill-score.test.ts
 
   build:
     name: Build
