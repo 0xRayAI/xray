@@ -58,12 +58,21 @@ describe('foundry blip-vibe — plant seat', () => {
 
 describe('foundry blip-vibe — still + five + kapow must hit 8', () => {
   it('scores every type at or above the ship bar', { timeout: 180000 }, () => {
-    const { SPIKE_POW, OUTER_FAT, WORD } = requireCjs(
+    const { SPIKE_POW, OUTER_FAT, WORD, OUTER_SPIKES_MIN, INNER_SPIKES_MIN } = requireCjs(
       path.join(root, 'scripts/foundry/blip-kapow.cjs'),
-    ) as { SPIKE_POW: number; OUTER_FAT: number; WORD: string };
+    ) as {
+      SPIKE_POW: number;
+      OUTER_FAT: number;
+      WORD: string;
+      OUTER_SPIKES_MIN: number;
+      INNER_SPIKES_MIN: number;
+    };
     expect(WORD).toBe('KAPOW!');
     expect(SPIKE_POW).toBeGreaterThanOrEqual(3.2);
     expect(OUTER_FAT).toBeLessThanOrEqual(0.38);
+    expect(OUTER_SPIKES_MIN).toBeLessThanOrEqual(10);
+    expect(INNER_SPIKES_MIN).toBeLessThanOrEqual(8);
+    expect(OUTER_SPIKES_MIN).toBeGreaterThanOrEqual(6);
 
     const { vibeMatrix, SHIP_BAR, TYPES } = requireCjs(
       path.join(root, 'scripts/foundry/blip-vibe.cjs'),

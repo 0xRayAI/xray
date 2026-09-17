@@ -13,8 +13,10 @@ const LOOK = "kapow-blip";
 const ORGAN = "kapow";
 const WORD = "KAPOW!";
 const SPIKE_POW = 4.2;
-const OUTER_FAT = 0.22;
-const INNER_FAT = 0.38;
+const OUTER_FAT = 0.3;
+const INNER_FAT = 0.4;
+const OUTER_SPIKES_MIN = 8;
+const INNER_SPIKES_MIN = 6;
 
 /** 5×7 caps — KAPOW! only. */
 const GLYPHS = {
@@ -46,19 +48,25 @@ function mixPixel(buf, width, x, y, color, alpha) {
   buf[i + 2] = (buf[i + 2] + (color[2] - buf[i + 2]) * a + 0.5) | 0;
 }
 
+function spikeStretch(index, jag) {
+  const nibble = ((jag || 0x9e3779b9) >>> ((index & 7) * 3)) & 7;
+  const alt = index & 1 ? 0.74 : 1.12;
+  return alt * (0.7 + (nibble / 7) * 0.64);
+}
+
 function starRadius(angle, spikes, r0, r1, rot, jag) {
-  const turns = spikes > 2 ? spikes : 12;
+  const turns = spikes > 2 ? spikes : OUTER_SPIKES_MIN;
   const u = ((angle - rot) / (Math.PI * 2)) * turns;
   const i = Math.floor(u);
   const f = u - i;
   const tri = f < 0.5 ? f * 2 : (1 - f) * 2;
-  const bite = 1 + (((jag || 0) >> (i & 7)) & 1) * 0.3;
-  return (r0 + (r1 - r0) * Math.pow(Math.max(0, tri), SPIKE_POW)) * bite;
+  const stretch = spikeStretch(i, jag);
+  return (r0 + (r1 - r0) * Math.pow(Math.max(0, tri), SPIKE_POW)) * stretch;
 }
 
 function paintStar(buf, width, height, cx, cy, spikes, r0, r1, rot, color, alpha, jag) {
   if (r1 <= 1 || alpha <= 0) return;
-  const pad = r1 * 1.16;
+  const pad = r1 * 1.48;
   const x0 = Math.max(0, Math.floor(cx - pad - 1));
   const x1 = Math.min(width - 1, Math.ceil(cx + pad + 1));
   const y0 = Math.max(0, Math.floor(cy - pad - 1));
@@ -214,8 +222,8 @@ function paintKapowFrame(opts) {
   const phrase = rippel.phraseOf(checksum, t);
   const marks = kapowMarks(phrase, checksum);
   const gem = Number.parseInt(String(opts.seedHex || "1").replace(/^0x/, "").slice(0, 8), 16) || 1;
-  const outerSpikes = 16 + (gem % 5);
-  const innerSpikes = 11 + ((gem >>> 8) % 4);
+  const outerSpikes = OUTER_SPIKES_MIN + (gem % 3);
+  const innerSpikes = INNER_SPIKES_MIN + ((gem >>> 8) % 3);
   const rot0 = ((gem >>> 16) % 360) * (Math.PI / 180);
   const rot = rot0 + phrase.beats * 0.11 + marks.pose.roll * 0.35;
   const minSide = Math.min(width, height);
@@ -231,10 +239,10 @@ function paintKapowFrame(opts) {
     height,
     cx,
     cy,
-    28,
-    outerR * 1.26,
+    10,
+    outerR * 1.18,
     rippel.THEME.ink,
-    0.26 + 0.68 * clamp01(marks.turn + marks.peak),
+    0.18 + 0.48 * clamp01(marks.turn + marks.peak),
     rot,
   );
   paintSpeedLines(
@@ -243,7 +251,7 @@ function paintKapowFrame(opts) {
     height,
     cx,
     cy,
-    14,
+    6,
     outerR * 1.08,
     rippel.THEME.gold,
     0.08 + 0.42 * clamp01(marks.turn + marks.peak),
@@ -369,6 +377,9 @@ module.exports = {
   SPIKE_POW,
   OUTER_FAT,
   INNER_FAT,
+  OUTER_SPIKES_MIN,
+  INNER_SPIKES_MIN,
+  spikeStretch,
   starRadius,
   paintStar,
   paintWord,
