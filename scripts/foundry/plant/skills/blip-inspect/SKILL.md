@@ -20,7 +20,7 @@ Missing mp4, unreadable mp4, or a thrown probe is **FAIL**. Never pass on a miss
 5. **Audio.** Stream present. Silent mp4 = FAIL. `--bed` or auto sound mill.
 6. **Resolution.** Every live blip ≥720p (`1280×720`), including the Power Plant ident (`still`).
 
-v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. `kapow` is a growth stub (FAIL until a renderer ships). Unknown id FAIL. Receipt records the Power Plant palette.
+v0 ids: `still` · `orb` · `swirl` · `snap` · `waves` · `spark`. `kapow` is a design opt (two-tier stamp on the stanza). Unknown id FAIL. Receipt records the Power Plant palette.
 
 Receipt: `.xray/blip/receipt.json`. Mp4 default: `.xray/blip/blip.mp4`.
 

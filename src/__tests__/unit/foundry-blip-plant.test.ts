@@ -65,7 +65,8 @@ describe('foundry blip plant — files and mint', () => {
     expect(read('scripts/foundry/blip-render.cjs')).toContain('#08090B');
     expect(read('scripts/foundry/blip-render.cjs')).toContain('#3DE0E8');
     expect(read('scripts/foundry/blip-render.cjs')).toContain('power-plant-intro');
-    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"status": "growth"/);
+    expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/"status": "opt"/);
+    expect(read('scripts/foundry/blip-kapow.cjs')).toContain('Two-tier stamp');
   });
 
   it('mints a blip seat without mill skills and allowlists them', async () => {
@@ -171,7 +172,7 @@ describe('foundry blip plant — files and mint', () => {
 });
 
 describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
-  it('loads the on-disk registry, implements v0 six, and FAILs unknown/kapow', () => {
+  it('loads the on-disk registry, implements v0 six, and FAILs unknown — kapow is a design opt', () => {
     const { resolveMode, listMotionIds, listV0Ids, parsePictureMode, SSOT, ANIMATION_TO_VISUALIZATION } =
       requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
         resolveMode: (name: string) => {
@@ -217,11 +218,30 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       expect(resolved.motionId).toBe(id);
     }
     const kapow = resolveMode('motion:kapow');
-    expect(kapow.ok).toBe(false);
-    expect(kapow.reason).toMatch(/growth\/stub/);
+    expect(kapow.ok).toBe(true);
+    expect(kapow.renderer).toBe('kapow');
     const unknown = resolveMode('kenburns');
     expect(unknown.ok).toBe(false);
     expect(unknown.reason).toMatch(/unknown motion id/);
+  });
+
+  it('stamps a two-tier KAPOW — outer winds, inner + word hit the jewel cut', () => {
+    const { sampleKapowFrames } = requireCjs(path.join(root, 'scripts/foundry/blip-kapow.cjs')) as {
+      sampleKapowFrames: (
+        seed: string,
+        brief?: string,
+      ) => {
+        differ: boolean;
+        hook: { marks: { outer: number; inner: number; word: number } };
+        turn: { marks: { outer: number; inner: number; word: number } };
+      };
+    };
+    const frames = sampleKapowFrames('0xdeadbeef', 'broken angel kapow');
+    expect(frames.differ).toBe(true);
+    expect(frames.hook.marks.outer).toBeGreaterThan(frames.hook.marks.inner);
+    expect(frames.turn.marks.inner).toBeGreaterThan(frames.hook.marks.inner);
+    expect(frames.turn.marks.word).toBeGreaterThan(frames.hook.marks.word);
+    expect(frames.turn.marks.word).toBeGreaterThan(0.55);
   });
 
   it('still generator paints only the Power Plant palette', () => {
@@ -412,8 +432,14 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
           brief: 'night alley kapow',
           pictureMode: 'motion:kapow',
         });
-        expect(kapow.receipt.status).toBe('FAIL');
-        expect(kapow.receipt.reason).toMatch(/growth\/stub/);
+        expect(kapow.receipt.status, JSON.stringify(kapow.receipt, null, 2)).toBe('PASS');
+        expect(kapow.receipt.motionId).toBe('kapow');
+        expect(kapow.receipt.engine).toBe('kapow-headless');
+        expect(kapow.receipt.look).toBe('kapow-blip');
+        expect(kapow.receipt.organ).toBe('kapow');
+        expect(kapow.receipt.hasAudio).toBe(true);
+        expect(kapow.receipt.width).toBeGreaterThanOrEqual(1280);
+        expect(kapow.receipt.height).toBeGreaterThanOrEqual(720);
 
         const muxed = renderBlip({ root: tmp, brief: 'still with bed', mode: 'still' });
         expect(muxed.receipt.status, JSON.stringify(muxed.receipt, null, 2)).toBe('PASS');
@@ -1776,7 +1802,7 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/Rippel five/);
     expect(read('scripts/foundry/README.md')).toMatch(/Power Plant/);
     expect(read('scripts/foundry/README.md')).toMatch(/#08090B/);
-    expect(read('scripts/foundry/README.md')).toMatch(/growth stub/);
+    expect(read('scripts/foundry/README.md')).toMatch(/design opt/);
     expect(read('scripts/foundry/README.md')).not.toMatch(/day-2/i);
     expect(read('.github/workflows/mill-ci.yml')).toContain('ffmpeg');
     expect(read('AGENTS.md')).toMatch(/blip-inspect/);
