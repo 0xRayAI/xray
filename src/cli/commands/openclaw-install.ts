@@ -2,13 +2,14 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'node:url';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
 import { mintAfterWear } from './foundry-mint-wear.js';
 import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const millSuit = require(path.join(__dirname, '..', '..', '..', 'scripts', 'foundry', 'mint-suit.cjs')) as {
   isIsolatedHome: () => boolean;

@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "node:url";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { type ParsedLogEntry, type ReportConfig } from "./types.js";
 
@@ -120,8 +121,7 @@ export async function readCurrentLogFile(
 ): Promise<ParsedLogEntry[]> {
   const logs: ParsedLogEntry[] = [];
 
-  const currentFileUrl = import.meta.url;
-  const currentFilePath = new URL(currentFileUrl).pathname;
+  const currentFilePath = fileURLToPath(import.meta.url);
   const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
   const logDir = path.join(projectRoot, "logs", "framework");
   const logFile = path.join(logDir, "activity.log");

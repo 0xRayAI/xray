@@ -2,11 +2,12 @@ import { Command } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'node:url';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { syncBuiltinSkills } from './skill-install.js';
 import { mintAfterWear } from './foundry-mint-wear.js';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const packageRoot = path.join(__dirname, '..', '..', '..');
 const millSuit = require(path.join(packageRoot, 'scripts', 'foundry', 'mint-suit.cjs')) as {
