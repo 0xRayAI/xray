@@ -9,13 +9,14 @@
 import { Command } from "commander";
 import { execSync, spawn } from "child_process";
 import { join, resolve } from "path";
+import { fileURLToPath } from "node:url";
 
 import { readFileSync, existsSync } from "fs";
 import { getConfigDir } from "../core/config-paths.js";
 import { frameworkLogger } from "../core/framework-logger.js";
 
 // Get package root relative to this script location
-const packageRoot = resolve(join(new URL(".", import.meta.url).pathname, "..", ".."));
+const packageRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 
 // Read version dynamically from package.json
 const packageJsonPath = join(packageRoot, "package.json");

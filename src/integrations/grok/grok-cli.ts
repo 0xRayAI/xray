@@ -20,11 +20,12 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'node:url';
 import { syncBuiltinSkills } from '../../cli/commands/skill-install.js';
 import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 
 // ESM-compatible __dirname (this file is compiled to ESM)
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, '..', '..', '..');
 const requireCjs = createRequire(import.meta.url);
 const { resolveConsumerTargetDir, patchGrokHooks } = requireCjs(
