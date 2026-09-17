@@ -28,3 +28,8 @@ CoS launching clouds “to go faster” is a **fatal seat defect** (same class a
 **Out:** PR URL · commit · what to verify — then seats take over.
 
 Clouds cut metal. Seats run the company.
+
+## Repo access (HARD — 2026-09-15)
+Private SSOT repos must be readable by Cursor clouds **before** launch. See `CLOUD-REPO-ACCESS.md`.
+
+Fatal: guessing Rippel numbers because `git clone` 404’d. Use access grant or staged tarball.

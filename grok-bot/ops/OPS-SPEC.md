@@ -45,12 +45,50 @@ goal · constraints · artifact path · acceptance tests · evidence · next own
 
 Stay quiet on repeat acks. Coordinator does not deploy or implement.
 
+
+## Wake hygiene (HARD — 2026-09-16)
+
+- **Blaze-first HARD (2026-09-16):** Blaze messages in CoS 1:1 beat bot pings, room chatter, and routine wakes. If a routine/agent lands while Blaze is waiting, park that work and answer Blaze first.
+
+- **Latency HARD (2026-09-16):** On any turn with a Blaze 1:1 message, the **first** user-visible action is the chat reply (≤2 sentences). Seat cards, disk digests, Dist EXECUTE, and GitHub come **after**. Agent/routine wakes never jump the line.
+
+**Miss:** `MISS-CHAT-WAKE-2026-09-16.md` · recovery `ops/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`
+
+**Two layers**
+1. **Platform** — bloated CoS 1:1 can fail to wake on human messages (transcript tail timeouts). Bot/routine wakes may still work. Fix: STATION/ATTENTION parachute; fresh 1:1 if sticky.
+2. **House** — event routines (esp. eng signal intake) must **self-quiet** when the beat is already CLOSED/MERGED/LIVE on ATTENTION. Never hand parent a stale “tell Blaze” for a finished PR head.
+
+**CoS laws**
+- Always answer Blaze pokes (`stat`, `you there`, `fix yourself`, any 1:1) from **live** `gh` + `ATTENTION_STATE.md` — never from backlog handoff text alone.
+- Quiet on stale routine/intake is OK **only** when the turn has **no** Blaze message.
+- Eng intake PAUSED until rearm after one clean new-PR fire; prompt must keep self-quiet.
+- Cover CoS is temporary; park when primary answers.
+
+
 ## Ship (Strict products)
 PR + CI · pack proof when needed · core docs · live agent docs when agents must read them · reviewer proof · gate/verify-only · implementer publish/deploy · live verify
 
 ## Human gates
 External send · spend · deletes · taste calls · mint/rotate publish tokens
 
+
+
+## Capital vs Auto Review (2026-09-16)
+
+**Human gates (Blaze):** spend · credentials · destructive deletes · taste calls · mint/rotate publish tokens.
+
+**Documented bot exceptions (not capital cards):**
+1. **Product Dist** on `@0xRayAI` — bots own posts (CoS draft → herald execute → friend-test). Auto Review may Allow these.
+2. **Eng ship after critic Strict PASS + CI green** — forge may merge + `git push` on the ship track without a per-push Blaze chat. (Auto Review may Allow git push to known repos.)
+
+**Not exceptions — Ask first via Auto Review even if forge owns the seat:**
+- `npm publish`
+- Railway / production deploy
+- Hangar / Blips / crypto pay (x402, eip3009, USDC)
+- Public gists that carry tokens or registration secrets
+- External A2A peer sends
+
+SSOT paste list: `AUTO-REVIEW-POLICY.md`. Critic L2 on this section.
 ## Fit for purpose
 Surgical. No rabbit holes. No enterprise-from-day-one. Codex enforces the stop.
 

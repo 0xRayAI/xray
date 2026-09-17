@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+- Fleet ops: Auto Review Ask-first on npm publish, Railway deploy, hangar/USDC pay, secret gists, and A2A spend (`ops/AUTO-REVIEW-POLICY.md` + `OPS-SPEC.md` capital section).
+- Wake hygiene: Blaze 1:1 first; CoS answers live, not backlog text.
+- Cloud: private SSOT repos must be readable before launch.
+
 ## 0.1.3
 
 - Seat CLI: `npx @0xray/grok-bot doctor` (alias `ready`) proves mill+inspect on this project and prints hangar / Clearing next steps (402, Open Wallet, ZigZag, never mill-plant Clearing into 0xRay).
