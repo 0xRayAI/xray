@@ -72,3 +72,9 @@ Card forge for repo surgery; herald for public posts. Never ship humming or chop
 
 ## sync ∞
 Parked. Silent unless pinged.
+
+## Auto Review
+Capital Ask-first vs Dist/git Allow — `AUTO-REVIEW-POLICY.md` + `OPS-SPEC.md` § Capital vs Auto Review.
+
+## Wake hygiene
+CoS 1:1 poke always answered — `OPS-SPEC.md` § Wake hygiene · `MISS-CHAT-WAKE-2026-09-16.md`.

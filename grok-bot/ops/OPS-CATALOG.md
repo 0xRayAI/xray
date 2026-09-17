@@ -8,6 +8,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | Doc | Plain what |
 |-----|------------|
 | `ops/OPS-SPEC.md` | Master operating rules |
+| `ops/AUTO-REVIEW-POLICY.md` | Capital Ask-first vs Dist/git Allow (account-wide Auto Review paste) |
 | `ops/SEATS.md` | Who does what (CoS / forge / critic / Dist) |
 | `ops/LEAN-COMPUTE.md` | Review levels · save compute |
 | `ops/CLOUD-CONTINUITY.md` | When to use heavy cloud coding jobs |
