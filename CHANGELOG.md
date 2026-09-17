@@ -6,6 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### ✨ Features
+- **Factory-sound mixer seat** — `sound-mixer` plant agent levels every genre × tempo × motif (hats, plate, glue, phrase). `npx @0xray/foundry sound mix`. Dries the plate, pulls hot hats, eases glue. Inspect stays the last-bed gate. No `@0xray/foundry` bump.
+
 ---
 
 ## [4.0.14] - 2026-09-16

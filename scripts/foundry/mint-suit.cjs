@@ -27,7 +27,10 @@ const FACTORY_SHOP_SKILLS = ["shop-extract", "shop-witness", "shop-pin"];
 /** Factory plant kinds. Mill is default. Sound is a bed factory. Blip is a tiny-video factory. */
 const FACTORY_PLANT_CATALOG = {
   mill: { skills: ["mill", "inspect"], agents: ["mill.yml", "inspect.yml"] },
-  sound: { skills: ["sound", "sound-inspect"], agents: ["sound.yml", "sound-inspect.yml"] },
+  sound: {
+    skills: ["sound", "sound-inspect", "sound-mixer"],
+    agents: ["sound.yml", "sound-inspect.yml", "sound-mixer.yml"],
+  },
   blip: { skills: ["blip", "blip-inspect"], agents: ["blip.yml", "blip-inspect.yml"] },
 };
 

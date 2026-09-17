@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` (mill off). Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` (mill off). Inspect reports the last bed or blip receipt. Not costume.
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` (mill off). Inspect reports the last bed or blip receipt. Not costume.
 
 ## Wear (what a stranger gets)
 
@@ -44,7 +44,7 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 
 - **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.10.
 - **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Sound seat: last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL.
-- **Sound** — factory-sound plant. Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. Not a mill copy. Not a 3-sine toy.
+- **Sound** — factory-sound plant. Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. `sound-mixer` levels every genre × tempo × motif (hats / plate / glue). Not a mill copy. Not a 3-sine toy.
 - **Blip** — factory-blip plant (sibling to mill + sound, not a mill copy). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a growth stub. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Hangar shop pair later.
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.

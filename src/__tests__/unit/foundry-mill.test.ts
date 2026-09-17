@@ -246,10 +246,12 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/plant/skills/inspect/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/sound/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/sound-inspect/SKILL.md');
+    expect(paths).toContain('scripts/foundry/plant/skills/sound-mixer/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/blip/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/skills/blip-inspect/SKILL.md');
     expect(paths).toContain('scripts/foundry/plant/motions/registry.json');
     expect(paths).toContain('scripts/foundry/sound-rippel.cjs');
+    expect(paths).toContain('scripts/foundry/sound-mixer.cjs');
     expect(paths).toContain('llms.txt');
     expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
     expect(paths).toContain('.grok-plugin/plugin.json');
@@ -284,21 +286,25 @@ describe('foundry mill — gate and scripts', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/inspect/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-inspect/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-mixer/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip-inspect/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/mill.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/inspect.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-inspect.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-mixer.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-inspect.yml'))).toBe(true);
     expect(read('scripts/foundry/plant/agents/sound.yml')).toContain(`version: "${mill.version}"`);
+    expect(read('scripts/foundry/plant/agents/sound-mixer.yml')).toContain(`version: "${mill.version}"`);
     expect(read('scripts/foundry/plant/agents/blip.yml')).toContain(`version: "${mill.version}"`);
     const millPlantCopy = [
       'scripts/foundry/plant/skills/inspect/SKILL.md',
       'scripts/foundry/plant/skills/mill/SKILL.md',
       'scripts/foundry/plant/skills/sound/SKILL.md',
       'scripts/foundry/plant/skills/sound-inspect/SKILL.md',
+      'scripts/foundry/plant/skills/sound-mixer/SKILL.md',
       'scripts/foundry/plant/skills/blip/SKILL.md',
       'scripts/foundry/plant/skills/blip-inspect/SKILL.md',
       'scripts/foundry/plant/motions/registry.json',
@@ -306,6 +312,7 @@ describe('foundry mill — gate and scripts', () => {
       'scripts/foundry/plant/agents/inspect.yml',
       'scripts/foundry/plant/agents/sound.yml',
       'scripts/foundry/plant/agents/sound-inspect.yml',
+      'scripts/foundry/plant/agents/sound-mixer.yml',
       'scripts/foundry/plant/agents/blip.yml',
       'scripts/foundry/plant/agents/blip-inspect.yml',
       'scripts/foundry/README.md',

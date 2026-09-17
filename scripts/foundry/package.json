@@ -40,6 +40,7 @@
     "./inspect": "./inspect.mjs",
     "./sound": "./sound.mjs",
     "./sound-bed": "./sound-bed.cjs",
+    "./sound-mixer": "./sound-mixer.cjs",
     "./blip": "./blip.mjs",
     "./blip-render": "./blip-render.cjs",
     "./ci-monitor": "./ci-monitor.mjs",

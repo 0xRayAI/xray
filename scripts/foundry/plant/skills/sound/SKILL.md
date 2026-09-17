@@ -24,7 +24,7 @@ npx @0xray/foundry sound inspect
 npx @0xray/foundry inspect --skip-live
 ```
 
-Mint fastens `sound` + `sound-inspect`. It does not dump mill inspect onto a sound-only seat. Chat is not a bed receipt.
+Mint fastens `sound` + `sound-inspect` + `sound-mixer`. It does not dump mill inspect onto a sound-only seat. Chat is not a bed receipt. `sound mix` levels every genre × tempo × motif (hats / plate / glue). Inspect still quotes the last bed.
 
 A 4.44s lock is a Short: seed motif (hook cell → turn answer → tag stamps hook[0]). The crash lands on the jewel cut (`phraseMarks.turnAt`), not a sectionGain fader. Six genre bodies stay tellable.
 

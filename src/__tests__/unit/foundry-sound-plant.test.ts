@@ -37,13 +37,17 @@ function introBodyFade(t: number, seconds: number): number {
 }
 
 describe('foundry sound plant — files and mint', () => {
-  it('ships sound + sound-inspect plant next to mill (not a mill copy)', () => {
+  it('ships sound + sound-inspect + sound-mixer plant next to mill (not a mill copy)', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound/SKILL.md'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-inspect/SKILL.md'))).toBe(
       true,
     );
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-mixer/SKILL.md'))).toBe(
+      true,
+    );
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-inspect.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-mixer.yml'))).toBe(true);
     expect(read('scripts/foundry/plant/skills/sound/SKILL.md')).toMatch(/brief/i);
     expect(read('scripts/foundry/plant/skills/sound/SKILL.md')).toMatch(/checksum seed/i);
     expect(read('scripts/foundry/plant/skills/sound-inspect/SKILL.md')).toMatch(/chop/i);
@@ -73,7 +77,7 @@ describe('foundry sound plant — files and mint', () => {
       FACTORY_PLANT_CATALOG: { sound: { skills: string[] } };
     };
     const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
-    expect(FACTORY_PLANT_CATALOG.sound.skills).toEqual(['sound', 'sound-inspect']);
+    expect(FACTORY_PLANT_CATALOG.sound.skills).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
 
     const millSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-mill-seat-'));
     const soundSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-sound-seat-'));
@@ -103,9 +107,10 @@ describe('foundry sound plant — files and mint', () => {
       expect(soundInv.suit).toBe('fastened');
       expect(soundInv.plant).toEqual(['sound']);
       expect(soundInv.millPlant?.skills).toEqual([]);
-      expect(soundInv.soundPlant?.skills).toEqual(['sound', 'sound-inspect']);
+      expect(soundInv.soundPlant?.skills).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/sound/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/sound-inspect/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(soundSeat, '.opencode/skills/sound-mixer/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/agents/sound.yml'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/mill/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/inspect/SKILL.md'))).toBe(false);
@@ -121,7 +126,7 @@ describe('foundry sound plant — files and mint', () => {
         millPlant?: string[];
       };
       expect(receipt.plant).toEqual(['sound']);
-      expect(receipt.soundPlant).toEqual(['sound', 'sound-inspect']);
+      expect(receipt.soundPlant).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
       expect(receipt.millPlant).toEqual([]);
       const bed = report.checks.find((c) => c.id === 'sound-bed') as {
         status?: string;
@@ -581,6 +586,7 @@ describe('foundry sound plant — docs and CI', () => {
     expect(read('scripts/foundry/README.md')).toMatch(/crystal/i);
     expect(read('scripts/foundry/README.md')).toMatch(/A friend would hear/);
     expect(read('AGENTS.md')).toMatch(/sound-inspect/);
+    expect(read('AGENTS.md')).toMatch(/sound-mixer/);
     expect(read('AGENTS-consumer.md')).toMatch(/sound render/);
     expect(read('README.md')).toMatch(/plant": "sound"/);
     expect(read('llms.txt')).toMatch(/factory-sound/);
