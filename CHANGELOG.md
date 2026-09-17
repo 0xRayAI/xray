@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
-- **Factory-blip vibe seat** — `blip-vibe` plant agent scores aesthetic / cool factor 0–10. Ship bar is **8**. `npx @0xray/foundry blip vibe`. Kapow stamp now has long spikes, ink outline, speed lines, shock rings, and a readable `KAPOW!`. Inspect stays duration / mode / file. No `@0xray/foundry` bump.
+- **Factory-blip vibe seat** — `blip-vibe` plant agent scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is **8**. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow stamp is sharper (pow 4.2, gold speed lines, bigger word). `npx @0xray/foundry blip vibe`. Inspect stays duration / mode / file. No `@0xray/foundry` bump.
 
 ---
 

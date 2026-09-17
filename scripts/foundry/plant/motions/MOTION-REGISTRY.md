@@ -38,4 +38,4 @@ Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No aud
 
 ## Design opt — `kapow`
 
-Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a bigger cyan burst with a gold inner burst, ink outline, speed lines, and a readable `KAPOW!`. Hook winds the outer ring. The jewel cut slams the inner burst and the word. Tag holds. One noun sits under the word. `blip-vibe` must score ≥8 to ship. Same seed camera / genre grid / 4.44s bed as the five.
+Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a bigger cyan burst with a gold inner burst, ink outline, gold speed lines, and a readable `KAPOW!`. Hook winds the outer ring. The jewel cut slams the inner burst and the word. Tag holds. One noun sits under the word. `blip-vibe` scores still + Rippel five + kapow on the same organ — every type must hit **8** to ship. Same seed camera / genre grid / 4.44s bed as the five.

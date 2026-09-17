@@ -27,7 +27,7 @@ const HELP =
   "kapow is a design opt (two-tier stamp on the stanza). Unknown id FAIL.\n" +
   "still: Power Plant ident — plate dissolves over 4.44s at ≥720p, not a frozen poster.\n" +
   "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n" +
-  "vibe: blip-vibe scores appeal 0-10. Ship bar is 8. Not last-blip inspect.\n";
+  "vibe: blip-vibe scores still + Rippel five + kapow. Appeal 0-10. Ship bar is 8. Not last-blip inspect.\n";
 
 function argValue(argv, name, fallback) {
   const i = argv.indexOf(name);

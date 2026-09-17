@@ -56,8 +56,8 @@ describe('foundry blip-vibe — plant seat', () => {
   });
 });
 
-describe('foundry blip-vibe — kapow must hit 8', () => {
-  it('scores the two-tier stamp at or above the ship bar', { timeout: 60000 }, () => {
+describe('foundry blip-vibe — still + five + kapow must hit 8', () => {
+  it('scores every type at or above the ship bar', { timeout: 180000 }, () => {
     const { SPIKE_POW, OUTER_FAT, WORD } = requireCjs(
       path.join(root, 'scripts/foundry/blip-kapow.cjs'),
     ) as { SPIKE_POW: number; OUTER_FAT: number; WORD: string };
@@ -65,21 +65,31 @@ describe('foundry blip-vibe — kapow must hit 8', () => {
     expect(SPIKE_POW).toBeGreaterThanOrEqual(3.2);
     expect(OUTER_FAT).toBeLessThanOrEqual(0.38);
 
-    const { vibeMatrix, SHIP_BAR } = requireCjs(path.join(root, 'scripts/foundry/blip-vibe.cjs')) as {
+    const { vibeMatrix, SHIP_BAR, TYPES } = requireCjs(
+      path.join(root, 'scripts/foundry/blip-vibe.cjs'),
+    ) as {
       vibeMatrix: () => {
         status: string;
         score: number;
         failed: number;
-        seats: Array<{ status: string; score: number; fails: string[] }>;
+        types: string[];
+        byType: Record<string, { status: string; score: number }>;
+        seats: Array<{ type: string; status: string; score: number; fails: string[] }>;
       };
       SHIP_BAR: number;
+      TYPES: string[];
     };
     expect(SHIP_BAR).toBe(8);
+    expect(TYPES).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']);
     const report = vibeMatrix();
+    expect(report.types).toEqual(TYPES);
     expect(report.failed, JSON.stringify(report.seats)).toBe(0);
     expect(report.status).toBe('PASS');
     expect(report.score).toBeGreaterThanOrEqual(8);
     expect(report.seats.every((s) => s.status === 'PASS' && s.score >= 8)).toBe(true);
+    expect(TYPES.every((type) => report.byType[type]?.status === 'PASS' && report.byType[type].score >= 8)).toBe(
+      true,
+    );
   });
 
   it('writes a vibe receipt and the CLI advertises vibe', () => {

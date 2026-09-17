@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Factory-blip vibe seat: `blip-vibe` scores aesthetic / cool factor 0–10. Ship bar is 8. `npx @0xray/foundry blip vibe`. Kapow is a comic two-tier stamp (long spikes, ink outline, readable word). Inspect stays last-blip. No version bump.
+Factory-blip vibe seat: `blip-vibe` scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is 8. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow stamp is sharper (pow 4.2, gold speed lines, bigger word). Inspect stays last-blip. No version bump.
 
 Factory-sound mixer seat: `sound-mixer` plant agent levels every genre × tempo × motif (hats / plate / glue). `npx @0xray/foundry sound mix`. Plate send/feedback down, hot hats pulled, glue eased. Inspect stays last-bed. No version bump.
 
