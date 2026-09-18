@@ -2,11 +2,11 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
-## Unreleased — Factory-blip plant + factory-sound plant + shop plant first-class
+## Unreleased — foundry-plant/0 fasten protocol
 
-- `@0xray/foundry@0.1.11` shims `foundry blip` / `foundry sound` to **`@0xray/blip@0.1.0`**. Fasten + inspect stay in foundry. 0xray stays 4.0.15.
-- Factory-blip plant: sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` + `blip-looker`. `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Dynamic registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2: converter motions at ≥720p with seed-selected looks (`focus` disc-satellites | `cage` Wu+field) + tempo/frequency animation on all five + mandatory 4.44s bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves over 4.44s at ≥720p, not a frozen poster) (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`). Unknown id FAIL.
-- Factory-sound plant: `foundry.json` `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). Brief → seed → genre → wav → metrics receipt. `sound mix` levels every genre × tempo × motif. Inspect reports last bed PASS/FAIL. Not costume.
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill **`@0xray/foundry@0.1.12`**. CLI shims `foundry blip` / `foundry sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.
+- Factory-blip mill (`@0xray/blip`): sibling to mill + sound (not a mill copy). Hangar shop pair later. Alias `"plant": "blip"` fastens what `@0xray/blip` declares (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker` today). `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Dynamic registry (not a frozen Rippel enum). v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2: converter motions at ≥720p with seed-selected looks (`focus` disc-satellites | `cage` Wu+field) + tempo/frequency animation on all five + mandatory 4.44s bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + `visualConfig.mesh` + `visualConfig.field` are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves over 4.44s at ≥720p, not a frozen poster) (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`). Unknown id FAIL.
+- Factory-sound mill (`@0xray/blip`): alias `"plant": "sound"` fastens what the mill declares (`sound` + `sound-inspect` + `sound-mixer` today; mill off). Brief → seed → genre → wav → metrics receipt. `sound mix` levels every genre × tempo × motif. Inspect reports last bed PASS/FAIL. Not costume.
 - Sound render is a crystal-clear mill of Rippel SSOT topology (membrane kick / metal hat / duo bass / mixer). Prototype is lineage, not the quality bar. Tone.Offline blocked in Node. `phonk` first-class.
 
 - Inspect / mint plant-vs-worn allow factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) alongside mill plant
@@ -14,7 +14,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - Field is `shopPlant` (mill plant copy cannot say hangar). Costume dump of leftovers still fails
 - Default consumer plant is mill+inspect, not 45-skill sync. Root `llms.txt` is the exo agent map
 - `npm run pack:tmp-proof` — pack tgz → tmp install → `foundry mint --skip-live` → hangar factory shops → inspect (no costume dump). Playwright n/a (CLI)
-- Nested mill **0.1.11**. Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). Blip/sound mill is `@0xray/blip`.
+- Nested mill **0.1.12** (foundry-plant/0). Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). Blip/sound mill is `@0xray/blip`. CLI shims remain from 0.1.11.
 - **Station vs Repertoire 0.1** — Station is survive-the-cut; 0.1.0–0.1.8 are the same judgment organ; do not pin 0.1.8. Guide: [station-vs-repertoire](./station-vs-repertoire.md)
 
 ## 4.0.9 — Mill target (global prefix / npx cache)

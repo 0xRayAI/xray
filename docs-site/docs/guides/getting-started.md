@@ -15,7 +15,7 @@ npm install 0xray
 Postinstall **automatically** (via `install-bridges.cjs`):
 
 - Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
-- Fastens **mill plant** (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` (`sound` + `sound-inspect` + `sound-mixer`). Blip seats: `"plant": "blip"` (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker`). Nested mill `@0xray/foundry@0.1.11` shims `foundry blip|sound` to `@0xray/blip`. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
 - Seeds **`.gitignore`** (if absent)
 - Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)

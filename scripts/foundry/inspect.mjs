@@ -14,6 +14,7 @@ import { millPackageDir, resolveMillRoot } from "./mill-root.mjs";
 
 const require = createRequire(import.meta.url);
 const mint = require("./mint-suit.cjs");
+const millProtocol = require("./mill-plant.cjs");
 
 export function npmTarballUrl(name, version) {
   if (typeof name !== "string" || !name || typeof version !== "string" || !version) return null;
@@ -81,20 +82,45 @@ function checkDiff(root) {
   };
 }
 
+function emptyPlantFiles() {
+  return { skills: [], agents: [] };
+}
+
 function checkPlantVsWorn(root, millRoot) {
-  const kinds = mint.loadFactoryPlantKinds(root);
-  const allow = mint.factoryPlantAllowlist(millRoot, root);
+  let seats;
+  try {
+    seats = millProtocol.resolvePlantSeats(root, millRoot);
+  } catch (err) {
+    return {
+      id: "plant-vs-worn",
+      ok: false,
+      detail: err instanceof Error ? err.message : String(err),
+    };
+  }
+  const kinds = millProtocol.plantKindsFromSeats(seats);
+  const millSeat = seats.find((seat) => seat.kind === "mill");
+  const soundSeat = seats.find((seat) => seat.kind === "sound");
+  const blipSeat = seats.find((seat) => seat.kind === "blip");
   const millPlant = {
-    skills: kinds.includes("mill") ? mint.catalogPlant("mill").skills : [],
-    agents: kinds.includes("mill") ? mint.catalogPlant("mill").agents : [],
-    sound: kinds.includes("sound") ? mint.catalogPlant("sound") : { skills: [], agents: [] },
-    blip: kinds.includes("blip") ? mint.catalogPlant("blip") : { skills: [], agents: [] },
+    skills: millSeat ? millSeat.skills : [],
+    agents: millSeat ? millSeat.agents : [],
+    sound: soundSeat
+      ? { skills: soundSeat.skills, agents: soundSeat.agents }
+      : emptyPlantFiles(),
+    blip: blipSeat ? { skills: blipSeat.skills, agents: blipSeat.agents } : emptyPlantFiles(),
+    plants: Object.fromEntries(
+      seats
+        .filter((seat) => !seat.builtin)
+        .map((seat) => [seat.kind, { skills: seat.skills, agents: seat.agents }]),
+    ),
   };
   const params = mint.loadFoundryParams(root);
   const tree = {
     skills: mint.listConsumerSkillNames(root, params.skills),
     agents: mint.listConsumerAgentFiles(root, params.agents),
     plantKinds: kinds,
+    seats,
+    millPackageRoot: millRoot,
     soundPlantSkills: millPlant.sound.skills,
     soundPlantAgents: millPlant.sound.agents,
     sound: millPlant.sound,
@@ -103,6 +129,7 @@ function checkPlantVsWorn(root, millRoot) {
     blip: millPlant.blip,
   };
   const shopPlant = mint.loadShopPlant(root);
+  const allow = mint.factoryPlantAllowlist(millRoot, root);
   try {
     mint.assertNoCostumeDump(root, millPlant, tree);
     return {
@@ -132,7 +159,7 @@ function checkPlantVsWorn(root, millRoot) {
   }
 }
 
-function checkReceipt(root) {
+function checkReceipt(root, millRoot) {
   const file = path.join(root, ".xray", "foundry-inventory.json");
   if (mint.isDogfood(millPackageDir(), root)) {
     return { id: "receipt", ok: true, skipped: true, detail: "dogfood / exo — no consumer inventory" };
@@ -146,33 +173,40 @@ function checkReceipt(root) {
   const blipPlantSkills = inventory.blipPlant?.skills || [];
   const kinds = mint.inventoryPlantKinds(inventory);
   const needMill = kinds.includes("mill");
-  const needSound = kinds.includes("sound");
-  const needBlip = kinds.includes("blip");
   const millOk = !needMill || (millPlantSkills.includes("mill") && millPlantSkills.includes("inspect"));
-  const soundOk =
-    !needSound ||
-    (soundPlantSkills.includes("sound") &&
-      soundPlantSkills.includes("sound-inspect") &&
-      soundPlantSkills.includes("sound-mixer"));
-  const blipOk =
-    !needBlip ||
-    (blipPlantSkills.includes("blip") &&
-      blipPlantSkills.includes("blip-inspect") &&
-      blipPlantSkills.includes("blip-vibe") &&
-      blipPlantSkills.includes("blip-looker"));
-  const ok = millOk && soundOk && blipOk && (needMill || needSound || needBlip);
   let detail = null;
-  if (!ok && needMill && !millOk) detail = "millPlant.skills must include mill and inspect";
-  else if (!ok && needSound && !soundOk)
-    detail = "soundPlant.skills must include sound, sound-inspect, and sound-mixer";
-  else if (!ok && needBlip && !blipOk)
-    detail = "blipPlant.skills must include blip, blip-inspect, blip-vibe, and blip-looker";
-  else if (!ok) detail = "inventory plant is empty";
+  if (needMill && !millOk) detail = "millPlant.skills must include mill and inspect";
+  const packageKinds = kinds.filter((kind) => kind !== "mill");
+  if (!detail && packageKinds.length > 0) {
+    try {
+      const declared = millProtocol.declaredReceiptSeats(inventory, root, millRoot);
+      for (const seat of declared) {
+        if (seat.builtin) continue;
+        const have = millProtocol.inventoryFilesForKind(inventory, seat.kind);
+        const haveSkills = Array.isArray(have?.skills) ? have.skills : [];
+        if (!seat.skills || seat.skills.length === 0) {
+          detail = `${seat.kind} plant declared no skills`;
+          break;
+        }
+        const missing = seat.skills.filter((name) => !haveSkills.includes(name));
+        if (missing.length > 0) {
+          detail = `${seat.kind}Plant.skills must include protocol skills (${missing.join(", ")})`;
+          break;
+        }
+      }
+    } catch (err) {
+      detail = err instanceof Error ? err.message : String(err);
+    }
+  }
+  const ok = !detail && (needMill || packageKinds.length > 0);
+  if (!ok && !detail) detail = "inventory plant is empty";
   return {
     id: "receipt",
     ok,
     suit: inventory.suit,
     mill: inventory.mill,
+    millPackage: inventory.millPackage || null,
+    millProtocol: inventory.millProtocol || null,
     plant: kinds,
     millPlant: millPlantSkills,
     soundPlant: soundPlantSkills,
@@ -382,7 +416,7 @@ export async function inspectSuit(root, opts = {}) {
   const checks = [];
   checks.push(checkDiff(root));
   checks.push(checkPlantVsWorn(root, millRoot));
-  checks.push(checkReceipt(root));
+  checks.push(checkReceipt(root, millRoot));
   const soundBed = checkSoundBed(root);
   if (soundBed) checks.push(soundBed);
   const blip = checkBlip(root);

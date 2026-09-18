@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` + `blip-looker` (mill off). `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Inspect reports the last bed or blip receipt. Drawers live in `@0xray/blip`; `@0xray/foundry@0.1.11` shims `foundry blip|sound`. Not costume.
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill — adding an organ is a mill publish, not an xray catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Inspect reports the last bed or blip receipt the mill exported. Nested mill `@0xray/foundry` 0.1.12. Not costume.
 
 ## Wear (what a stranger gets)
 
@@ -42,10 +42,10 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 
 ## Agent map (exo, not dump)
 
-- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.11 (shims `foundry blip|sound` to `@0xray/blip`).
-- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Sound seat: last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL.
-- **Sound** — factory-sound plant. Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. `sound-mixer` levels every genre × tempo × motif (hats / plate / glue). Mill is `@0xray/blip`. Not a mill copy. Not a 3-sine toy.
-- **Blip** — factory-blip plant (sibling to mill + sound, not a mill copy). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). `still` is the Power Plant ident (plate dissolves, not a frozen poster). Four organs: inspect = file/duration, vibe = stamp density, mixer = ears, looker = friend hitting replay (bar 8). Mill is `@0xray/blip`. Hangar shop pair later.
+- **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.12 (foundry-plant/0). Builtin plant is mill+inspect. CLI shims `foundry blip|sound` remain (0.1.11+).
+- **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Fastened mill inspect is “did we wear what the mill declared” plus mill-exported inspect. Sound seat: last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL.
+- **Sound** — factory-sound mill (`@0xray/blip`). Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. Mixer organ lives in the mill. Not a mill copy. Not a 3-sine toy.
+- **Blip** — factory-blip mill (`@0xray/blip`). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). `still` is the Power Plant ident (plate dissolves, not a frozen poster). Organs (inspect / vibe / mixer / looker) are declared by the mill, not a foundry catalog. Hangar shop pair later.
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
 
@@ -55,7 +55,7 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 - [AGENTS.md](AGENTS.md) — framework card
 - [AGENTS-consumer.md](AGENTS-consumer.md) — consumer card (copied to `AGENTS.md` on install)
 - [SKILLS.md](SKILLS.md) — catalog (costume / self-plant, not default sync)
-- [Foundry](docs-site/docs/architecture/v4-foundry.md) — mill vs exo, shopPlant
+- [Foundry](docs-site/docs/architecture/v4-foundry.md) — mill vs exo, foundry-plant/0, shopPlant
 - [Features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 
 Playwright / UI: n/a. This mill is CLI.

@@ -1,5 +1,5 @@
 name: blip
 skill: blip
 description: "Factory-blip plant. Brief → seed → still|motion:<id> → 4.44s mp4 → inspect gate."
-version: "0.1.11"
+version: "0.1.12"
 mode: subagent
