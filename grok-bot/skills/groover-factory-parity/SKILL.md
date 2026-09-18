@@ -18,10 +18,11 @@ Read live `AGENTS.md` / `SKILLS.md` on website + registry when present.
 3. Live mint and on-chain mirror need a Dynamo PASS citation (governance proof). Register (proof-of-agent) can happen before that.
 4. Use the live GRVR contract that accepts the full registry DID (current fleet: GRVR v5).
 5. dryRun ≠ live.
-6. Pin **our** agent id — never a demo id.
+6. Pin **our** ERC-8004 agent id — never a demo id (`86025`). GRVR token from `mint_suit` is a different id.
+7. Before pin: HTTPS shops card with DID + Dynamo citation + live shop. Then 8004 `register(string)` (**ETH**). Then pin (**USDC**, gasless).
 
 ## Self-serve
 Implementer reads live skills and runs the loop. Coordinator does not drive it for them.
 
 ## Proof
-Paste mint tx, agent id, pin payment/settle, and live doc curls when claiming Done.
+Paste mint tx, **8004 agentId** (not GRVR id), pin `listed: true`, and `GET /v1/catalog` row.

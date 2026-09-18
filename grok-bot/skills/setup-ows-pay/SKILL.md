@@ -12,7 +12,7 @@ Hangar shops return **402** until paid. Agents pay with a **local OWS wallet** (
 1. Install Open Wallet CLI (see https://docs.openwallet.sh ).
 2. Create/fund wallet the hangar kit expects (ZigZag hangar kit often uses name `agent-treasury-1` under `~/.ows`).
 3. Fund with **USDC on Base**.
-4. To call a shop: unpaid GET → read 402 challenge → sign/pay with OWS (`approved=true`) → retry.
+4. To call a Clearing shop: unpaid GET → 402. Bare `ows pay request` fails (missing paymentId/nonce). Sign EIP-3009 typed-data (`ows sign message --wallet … --chain 8453 --typed-data`) and retry with `X-PAYMENT` = base64 `{ x402Version:1, paymentId, nonce, accepted, eip3009 }` (Blips SKILLS.md / shop-pin). `--chain 8453` even if `ows wallet list` shows `eip155:1` (same 0x).
 5. Alternate signer path may exist (`CLEARING_SIGNER=awal`) — prefer documented hangar README; hosted ZigZag `/sign` may be 410.
 
 ## Prove
