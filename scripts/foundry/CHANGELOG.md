@@ -2,7 +2,7 @@
 
 ## [0.1.11]
 
-Blip and sound mill drawers moved to `@0xray/blip`. This package keeps fasten + inspect + `foundry blip|sound` shims. Depend on `@0xray/blip@^0.1.0`.
+Blip and sound mill drawers moved to `@0xray/blip` (wow-pass listen/cel + looker organ in that package). This foundry keeps fasten + inspect + `foundry blip|sound` shims including `blip look`. Depend on `@0xray/blip@^0.1.0`. Stamp 0.1.11 on plant agent YAMLs and llms.txt.
 
 ## [Unreleased]
 

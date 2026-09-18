@@ -8,6 +8,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+export { inspectBed } from "@0xray/blip/sound";
+
 const require = createRequire(import.meta.url);
 
 function runCli(args) {

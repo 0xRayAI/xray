@@ -1,0 +1,5 @@
+name: blip-looker
+skill: blip-looker
+description: "Friend hitting replay. Scores hook → turn → tag as a Short. Appeal 0–10. Ship bar is 8. Not stamp density. Not last-blip inspect."
+version: "0.1.11"
+mode: subagent

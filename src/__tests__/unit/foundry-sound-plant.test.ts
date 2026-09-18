@@ -8,8 +8,19 @@ import { describe, expect, it } from 'vitest';
 
 const requireCjs = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const millDir = path.dirname(requireCjs.resolve('@0xray/blip/sound-rippel'));
 
 function read(rel: string): string {
+  const millNames = [
+    'sound-bed.cjs',
+    'sound-rippel.cjs',
+    'sound-mixer.cjs',
+    'sound.mjs',
+  ];
+  const base = path.basename(rel);
+  if (rel.startsWith('scripts/foundry/') && millNames.includes(base)) {
+    return readFileSync(path.join(millDir, base), 'utf8');
+  }
   return readFileSync(path.join(root, rel), 'utf8');
 }
 

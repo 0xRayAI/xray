@@ -1,5 +1,5 @@
 name: sound-mixer
 skill: sound-mixer
 description: "Tuner for hats, plate, glue, and phrase levels. Levels every genre × tempo × motif. Not last-bed inspect."
-version: "0.1.10"
+version: "0.1.11"
 mode: subagent

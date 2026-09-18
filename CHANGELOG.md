@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### 🔄 Changes
-- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, sound bed/mixer) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` and inspect still fastens plant law here. Railway plant consumes the product mill, not a hand-vendored copy.
+- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look` and inspect still fastens plant law here (four organs: inspect / vibe / mixer / looker). Railway plant consumes the product mill, not a hand-vendored copy. 0xray stays 4.0.15.
 
 ---
 

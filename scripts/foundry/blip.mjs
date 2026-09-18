@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Shim: product mill lives in @0xray/blip.
- *   npx @0xray/foundry blip render|inspect|vibe [...]
+ *   npx @0xray/foundry blip render|inspect|vibe|look [...]
  */
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
