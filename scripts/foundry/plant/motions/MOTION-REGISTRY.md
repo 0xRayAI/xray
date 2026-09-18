@@ -38,4 +38,4 @@ Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No aud
 
 ## Design opt — `kapow`
 
-Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a comic two-tier burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Ink outline, sparse speed lines, readable `KAPOW!`. Hook winds the outer ring. The jewel cut slams the inner burst and the word. Tag holds. One noun sits under the word. `blip-vibe` scores still + Rippel five + kapow on the same organ — every type must hit **8** to ship. Same seed camera / genre grid / 4.44s bed as the five.
+Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a comic two-tier burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Ink outline, sparse speed lines, readable `KAPOW!`. Hook winds the outer ring. The jewel cut slams the inner burst and the word. Tag holds. One noun sits under the word. `blip-vibe` is stamp density. `blip-looker` is the friend hitting replay (hook → jewel → hold). Every type must hit **8** on both to ship. Same seed camera / genre grid / 4.44s bed as the five.

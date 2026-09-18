@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` listens to the whole 4.44s and levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` (mill off). `blip vibe` scores still + Rippel five + kapow (ship bar 8). Inspect reports the last bed or blip receipt. Not costume.
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` listens to the whole 4.44s and levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` + `blip-looker` (mill off). `blip vibe` is stamp density. `blip look` is the friend hitting replay (ship bar 8). Inspect reports the last bed or blip receipt. Not costume.
 
 ## Wear (what a stranger gets)
 
@@ -45,7 +45,7 @@ Not an 8th `xray-*` server. Repertoire is a vendored organ (`npx @0xray/repertoi
 - **Mill** — fasten their plant; factory discipline. Nested mill `@0xray/foundry` 0.1.10.
 - **Inspect** — diffs, plant-vs-worn, mill receipt, CI, live tarball GET. Sound seat: last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL.
 - **Sound** — factory-sound plant. Brief → seed → genre → crystal mill wav (Rippel membrane/metal/mixer) → metrics gate. `sound-mixer` listens to the whole 4.44s and levels every genre × tempo × motif (hats / plate / glue). Not a mill copy. Not a 3-sine toy.
-- **Blip** — factory-blip plant (sibling to mill + sound, not a mill copy). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Picture wears comic/anime cel + a jewel-cut speed burst. Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). `blip-vibe` ship bar is 8. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Hangar shop pair later.
+- **Blip** — factory-blip plant (sibling to mill + sound, not a mill copy). Brief → seed → still|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p (sharp look + tempo/frequency animation on all five). Picture wears comic/anime cel + a jewel-cut speed burst. Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). `blip-vibe` is stamp density. `blip-looker` is the friend hitting replay. Ship bar is 8. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Hangar shop pair later.
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
 

@@ -5,7 +5,7 @@ description: Inspect the last factory-blip — duration 4.44s, registry mode id,
 
 # Blip inspect
 
-This is the **factory-blip** inspect, not mill inspect. Open the receipt. Quote the numbers. Do not invent a pass.
+This is the **factory-blip** inspect, not mill inspect. Open the receipt. Quote the numbers. Do not invent a pass. File / duration / mode / streams. Not vibe density. Not the friend hitting replay.
 
 `npx @0xray/foundry inspect` reports blip plant present, live registry ids, plus last blip `PASS`/`FAIL`. `npx @0xray/foundry blip inspect` is the same check.
 
@@ -29,4 +29,4 @@ npx @0xray/foundry blip render --brief "warm basement swirl" --mode motion:swirl
 npx @0xray/foundry blip inspect
 ```
 
-Plant-vs-worn allowlists `blip` + `blip-inspect` + `blip-vibe` when `"plant": "blip"`. They are not a costume dump. Mill may be off on this seat.
+Plant-vs-worn allowlists `blip` + `blip-inspect` + `blip-vibe` + `blip-looker` when `"plant": "blip"`. They are not a costume dump. Mill may be off on this seat.

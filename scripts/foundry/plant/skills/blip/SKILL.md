@@ -23,17 +23,21 @@ Rippel five are **imports**. Four seed + flag axes: `--look focus|cage`, `--body
 2. **Mode** → `still` or `motion:<id>` from the registry.
 3. **Render** → 4.44s mp4. Motions are Rippel v2 viz at ≥720p (`--look focus|cage --body mill|rippel`, seed picks if omitted). `--engine wireframe` is emergency only.
 4. **Bed** → `--bed PATH` or auto sound mill. Auto bed **syncopates** to the motion grid (same seed + tempo + phase; downbeat kick / AND hat). The crash + motif answer land on the jewel cut. Every mp4 muxes **stereo AAC**. Missing stream or inaudible bed = inspect FAIL.
-5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed.
-6. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig).
+5. **Inspect gate** → file, duration 4.44s±tol, mode id, **audio stream**, motion ≥720p. Fail-closed. Not a looker.
+6. **Vibe** → stamp density. Ship bar 8. Not replay.
+7. **Looker** → friend hitting replay. Hook → jewel → hold. Ship bar 8. Not density. Not a model.
+8. **Receipt** → `.xray/blip/receipt.json` (`PASS` / `FAIL` + pictureMode + motionId + visualConfig). Looker writes `.xray/blip-looker-receipt.json`.
 
 ```bash
 npx @0xray/foundry mint --skip-live
 npx @0xray/foundry blip render --brief "night alley still" --mode still
 npx @0xray/foundry blip render --brief "warehouse floor · Power Plant" --mode motion:orb --look focus
 npx @0xray/foundry blip inspect
+npx @0xray/foundry blip vibe
+npx @0xray/foundry blip look
 npx @0xray/foundry inspect --skip-live
 ```
 
-Mint fastens `blip` + `blip-inspect` + `blip-vibe`. Chat is not a receipt.
+Mint fastens `blip` + `blip-inspect` + `blip-vibe` + `blip-looker`. Inspect = file / duration. Vibe = density. Looker = replay. Mixer = ears. None of them is a friend hitting replay except looker. Chat is not a receipt.
 
 A friend would hear: Blips should look like comic/anime cel shorts with sound — kapow energy, not a silent wireframe box.

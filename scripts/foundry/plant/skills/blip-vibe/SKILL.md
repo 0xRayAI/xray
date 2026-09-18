@@ -5,17 +5,17 @@ description: Factory-blip vibe organ. Aesthetic, appeal, cool factor. Ship bar i
 
 # Blip vibe
 
-This plant **fastens** the appeal seat. Inspect quotes duration / mode / file. This organ **scores the picture** before a mux ships.
+This plant **fastens** the density seat. Inspect quotes file / duration. Looker quotes replay. Mixer quotes ears. This organ **scores stamp density** — fill, chroma, contrast, outline, flash. Not a friend hitting replay.
 
 videoReview can see and cannot hear. Do not sign a mix from this seat. Quote the score. Fail closed under 8.
 
-**Seat:** fastened with `blip` + `blip-inspect` when `foundry.json` `"plant": "blip"`. Not a 45-skill dump.
+**Seat:** fastened with `blip` + `blip-inspect` + `blip-looker` when `foundry.json` `"plant": "blip"`. Stamp density, not replay. Not a 45-skill dump.
 
 **Types:** `still` · `orb` · `swirl` · `snap` · `waves` · `spark` · `kapow`. Same agent. Same bar.
 
 ## Spine
 
-1. **Look** — is it a stamp a friend would replay, or a weak badge on void?
+1. **Look** — is the stamp dense enough, or a weak badge on void?
 2. **Score** — shared appeal: fill, chroma, contrast, outline, hook→turn flash, differ. Kapow adds word punch, two-tier pop, spike jag. Mean of those is 0–10.
 3. **Bar** — **8 to ship**. Under 8 is FAIL. Do not ship a cute daisy. Do not weaken the bar. Sparse organs are scored against their own fill mark, not a kapow disc.
 4. **Receipt** — `.xray/blip-vibe-receipt.json` (`PASS` / `FAIL` + score + `byType`).
