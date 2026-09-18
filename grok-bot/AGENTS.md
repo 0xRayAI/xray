@@ -35,7 +35,7 @@ Humans: same path; start at `README.md`.
 
 ## Adjust from plant (monitor)
 Current verified pins (change if live plant moves):
-- Suit: `0xray@4.0.15` · `@0xray/foundry@0.1.11`
+- Suit: `0xray@4.0.15` · `@0xray/foundry@0.1.12`
 - Registry MCP + website URLs — see `llms.txt`
 - Hangar: `npx groover-hangar` · shops on Clearing Base USDC
 - OWS: keys in `~/.ows` · see Open Wallet docs

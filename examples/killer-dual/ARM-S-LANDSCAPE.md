@@ -52,7 +52,7 @@ In-repo kit **0.1.2** (`grok-bot/package.json`). Orchestrates; does not vendor t
 
 Path per agent (skills): fasten mill+inspect → Groover register/mint/pin → OWS pay → plant hangar shops. Ops catalog: `ops/OPS-CATALOG.md`. Cloud continuity: implementer (forge) owns eng clouds; coordinator does not launch them. Survive-compact skill: disk STATION beats chat; Grok Bot **chat** does not fire PreCompact/Repertoire — do not invent a fake PPE floor there.
 
-Plant pins in kit (monitor): `0xray@4.0.15` · `@0xray/foundry@0.1.11`.
+Plant pins in kit (monitor): `0xray@4.0.15` · `@0xray/foundry@0.1.12`.
 
 ## 5. ZigZag / Dynamo / Chrono
 
