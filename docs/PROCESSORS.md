@@ -185,7 +185,7 @@ Verify scripts (used by release gate): `verify:pre-commit-diff`, `verify:pre-pus
 
 ## 5. Mill / foundry / pack / publish
 
-Package: `@0xray/foundry` `0.1.10` (`scripts/foundry/`). Shipped separately from exo `0xray`.
+Package: `@0xray/foundry` `0.1.11` (`scripts/foundry/`). Shipped separately from exo `0xray`. Blip/sound mill drawers live in `@0xray/blip`; this mill shims `foundry blip|sound`.
 
 | id | Pre/post | Phase | What | Path | Active |
 |----|----------|-------|------|------|--------|

@@ -1,10 +1,12 @@
 # Changelog
 
-## [0.1.11]
-
-Blip and sound mill drawers moved to `@0xray/blip` (wow-pass listen/cel + looker organ in that package). This foundry keeps fasten + inspect + `foundry blip|sound` shims including `blip look`. Depend on `@0xray/blip@^0.1.0`. Stamp 0.1.11 on plant agent YAMLs and llms.txt.
-
 ## [Unreleased]
+
+## [0.1.11] - 2026-09-18
+
+Blip and sound mill drawers moved to `@0xray/blip` (wow-pass listen/cel + looker organ in that package). This foundry keeps fasten + inspect + `foundry blip|sound` shims including `blip look` / `blip replay`. Depend on `@0xray/blip@^0.1.0`. Stamp 0.1.11 on plant agent YAMLs and llms.txt. Four organs: inspect = file/duration, vibe = stamp density, mixer = ears, looker = friend hitting replay (bar 8).
+
+### During 0.1.10 (no mill bump)
 
 Factory-blip vibe seat: `blip-vibe` scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is 8. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Inspect stays last-blip. No version bump.
 

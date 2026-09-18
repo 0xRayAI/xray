@@ -62,7 +62,9 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx @0xray/foundry inspect` | Mill inspect (nested mill). Sound seat: plant + last bed PASS/FAIL. Blip seat: last 4.44s PASS/FAIL. Chat is not a receipt. |
 | `npx @0xray/foundry sound render` | Factory-sound bed: brief → seed → genre → crystal mill wav → metrics receipt. |
 | `npx @0xray/foundry sound mix` | sound-mixer: level every genre × tempo × motif (hats / plate / glue). |
-| `npx @0xray/foundry blip render` | Factory-blip plant: brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. `kapow` is a design opt (two-tier comic stamp). `blip-vibe` scores still + Rippel five + kapow; ship bar is 8. Sparse seed mesh plus field accents (stars, grids, gradients, blinkers) are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). |
+| `npx @0xray/foundry blip render` | Factory-blip plant: brief → seed → still\|motion:<id> → 4.44s mp4 + audio bed. Motions are Rippel v2 VisualConfig at ≥720p. `kapow` is a design opt (two-tier comic stamp). Sparse seed mesh plus field accents are the NFT fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Mill is `@0xray/blip`; foundry 0.1.11 shims. |
+| `npx @0xray/foundry blip vibe` | Stamp density. Appeal 0–10. Ship bar is 8. |
+| `npx @0xray/foundry blip look` | Friend hitting replay (looker). Appeal 0–10. Ship bar is 8. |
 
 ## Governance
 

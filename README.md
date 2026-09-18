@@ -51,7 +51,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **Unreleased** | Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). Not `"costume": true`. Root `llms.txt`. Pack→tmp fasten proof. |
+| **Unreleased** | `@0xray/foundry@0.1.11` shims `foundry blip\|sound` to `@0xray/blip`. Blip seat fastens looker (friend hitting replay, bar 8). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). 0xray stays 4.0.15. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
 | **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
@@ -103,7 +103,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 On `npm install 0xray` in a consumer project, postinstall automatically:
 
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
-2. Fastens **mill plant** (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens the bed factory (`sound` + `sound-inspect` + `sound-mixer`) and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens the tiny-video factory (`blip` + `blip-inspect` + `blip-vibe`) and turns mill off. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
+2. Fastens **mill plant** (`mill` + `inspect`). Sound seats: `foundry.json` `"plant": "sound"` fastens the bed factory (`sound` + `sound-inspect` + `sound-mixer`) and turns mill off. Blip seats: `foundry.json` `"plant": "blip"` fastens the tiny-video factory (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker`) and turns mill off. Nested mill `@0xray/foundry@0.1.11` shims `foundry blip|sound` to `@0xray/blip`. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
 3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
