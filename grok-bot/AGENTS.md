@@ -23,7 +23,7 @@ Follow `SKILLS.md` in this order **per agent**:
 | A | `fasten-suit-per-agent` | Project root + mint + inspect proof |
 | B | `groover-factory-parity` | Register → Dynamo citation → mint → ERC-8004 → pin (when identity needed) |
 | C | `setup-ows-pay` | Local OWS wallet + fund USDC on Base + how to settle 402s |
-| D | `plant-hangar-shops` | `npx groover-hangar` + call a shop |
+| D | `plant-hangar-shops` | `npx groover-hangar` + catalog (`GET /v1/catalog` / `list_hangars`) + call a shop |
 
 Humans: same path; start at `README.md`.
 
@@ -37,7 +37,7 @@ Humans: same path; start at `README.md`.
 Current verified pins (change if live plant moves):
 - Suit: `0xray@4.0.15` · `@0xray/foundry@0.1.12`
 - Registry MCP + website URLs — see `llms.txt`
-- Hangar: `npx groover-hangar` · shops on Clearing Base USDC
+- Hangar: `npx groover-hangar` · catalog is Clearing `GET /v1/catalog` (Groover DID + pin, plus solar + live shop). Groover MCP `list_hangars` reads it. Settle USDC on Base.
 - OWS: keys in `~/.ows` · see Open Wallet docs
 
 If a URL or version fails, update this kit — do not invent a parallel stack.
