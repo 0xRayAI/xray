@@ -1,7 +1,7 @@
 /**
- * sound-mixer — tuner for hats, plate, glue, and phrase levels.
- * Inspect is the last-bed gate. This organ levels every genre × tempo × motif.
- * Not costume. Not mill.
+ * sound-mixer — tuner for hats, plate, glue, phrase, and full-track layers.
+ * Listens to the whole 4.44s. Every voice is a stack, not a queue.
+ * Inspect is the last-bed gate. Not costume. Not mill.
  */
 
 const fs = require("fs");
@@ -35,6 +35,13 @@ const MIX_GATES = {
   hatAirMax: 0.012,
   crestMinLock: 4.2,
   crestMinUnlock: 2.4,
+  lowFloor: 0.012,
+  midFloor: 0.008,
+  airFloor: 0.0018,
+  stanzaMin: 1.06,
+  tagFloor: 0.68,
+  pocketMax: 1.2,
+  maskMin: 0.16,
 };
 
 function seedFor(root, tempoIdx) {
@@ -93,6 +100,36 @@ function slicePeak(samples, start, end) {
   return peak;
 }
 
+function bandRms(samples, sampleRate, loHz, hiHz, start, end) {
+  const hp = Math.exp((-2 * Math.PI * loHz) / sampleRate);
+  const lp = Math.exp((-2 * Math.PI * hiHz) / sampleRate);
+  let yhp = 0;
+  let ylp = 0;
+  let acc = 0;
+  let n = 0;
+  const a = Math.max(0, start | 0);
+  const b = Math.min(samples.length, end | 0);
+  for (let i = 0; i < b; i += 1) {
+    yhp = hp * yhp + (1 - hp) * samples[i];
+    const high = samples[i] - yhp;
+    ylp = lp * ylp + (1 - lp) * high;
+    if (i >= a) {
+      acc += ylp * ylp;
+      n += 1;
+    }
+  }
+  return n > 0 ? Math.sqrt(acc / n) : 0;
+}
+
+function listenWindow(samples, sampleRate, start, end) {
+  return {
+    rms: sliceRms(samples, start, end),
+    low: bandRms(samples, sampleRate, 20, 180, start, end),
+    mid: bandRms(samples, sampleRate, 250, 2500, start, end),
+    air: bandRms(samples, sampleRate, 6000, 14000, start, end),
+  };
+}
+
 function highpassRms(samples, sampleRate, hz, start, end) {
   const hp = Math.exp((-2 * Math.PI * hz) / sampleRate);
   let y = 0;
@@ -146,6 +183,12 @@ function measureSeat(spec) {
   const hang = airAtTurn > 1e-9 ? airAfterTurn / airAtTurn : 0;
   const hatAir = rippel.highpassEnergy(samples, sampleRate, AIR_HZ);
   const crest = rms > 0 ? peak / rms : 0;
+  const tagAt = marks.tagAt || turnAt + grid.beatSec * 2;
+  const tag0 = Math.floor(tagAt * sampleRate);
+  const win = Math.floor(0.28 * sampleRate);
+  const hookListen = listenWindow(samples, sampleRate, Math.floor(0.48 * sampleRate), Math.floor(0.48 * sampleRate) + win);
+  const turnListen = listenWindow(samples, sampleRate, turn0, turn0 + win);
+  const tagListen = listenWindow(samples, sampleRate, tag0, tag0 + win);
   return {
     genre: spec.genre,
     lock: spec.lock,
@@ -168,6 +211,24 @@ function measureSeat(spec) {
     airAfterTurn,
     hang,
     hatAir,
+    listen: {
+      hook: hookListen,
+      turn: turnListen,
+      tag: tagListen,
+      stanza: hookListen.rms > 1e-9 ? turnListen.rms / hookListen.rms : 0,
+      tagHold: hookListen.rms > 1e-9 ? tagListen.rms / hookListen.rms : 0,
+      pocket: turnListen.low > 1e-9 ? turnListen.air / turnListen.low : 0,
+      mask: turnListen.low > 1e-9 ? turnListen.mid / turnListen.low : 0,
+      stacked:
+        hookListen.low >= MIX_GATES.lowFloor * 0.7 &&
+        hookListen.mid >= MIX_GATES.midFloor * 0.55 &&
+        turnListen.low >= MIX_GATES.lowFloor &&
+        turnListen.mid >= MIX_GATES.midFloor &&
+        turnListen.air >= MIX_GATES.airFloor &&
+        tagListen.low >= MIX_GATES.lowFloor * 0.75 &&
+        tagListen.mid >= MIX_GATES.midFloor * 0.7 &&
+        tagListen.air >= MIX_GATES.airFloor * 0.35,
+    },
   };
 }
 
@@ -181,6 +242,13 @@ function evaluateSeat(seat) {
   if (seat.hatAir > MIX_GATES.hatAirMax) fails.push("hats");
   const crestMin = seat.lock ? MIX_GATES.crestMinLock : MIX_GATES.crestMinUnlock;
   if (seat.crest < crestMin) fails.push("glue");
+  if (seat.lock && seat.listen) {
+    if (!seat.listen.stacked) fails.push("layers");
+    if (seat.listen.stanza < MIX_GATES.stanzaMin) fails.push("stanza");
+    if (seat.listen.tagHold < MIX_GATES.tagFloor) fails.push("tag");
+    if (seat.listen.pocket > MIX_GATES.pocketMax) fails.push("pocket");
+    if (seat.listen.mask < MIX_GATES.maskMin) fails.push("mask");
+  }
   return {
     ...seat,
     status: fails.length ? "FAIL" : "PASS",

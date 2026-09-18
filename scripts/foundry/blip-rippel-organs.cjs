@@ -20,6 +20,7 @@ function createOrgans(kit) {
     paintSharpLine,
     paintGlowLine,
     stampFocusDisc,
+    fillTri,
     beatPhase,
     kickAccent,
     andAccent,
@@ -105,18 +106,26 @@ function createOrgans(kit) {
     }
   }
 
-  function paintPolygon(buf, width, height, cx, cy, radius, sides, rotation, color) {
+  function paintPolygon(buf, width, height, cx, cy, radius, sides, rotation, color, fillA) {
     const n = Math.max(3, sides | 0);
-    let px = cx + Math.cos(rotation) * radius;
-    let py = cy + Math.sin(rotation) * radius;
-    for (let i = 1; i <= n; i++) {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
       const a = rotation + (i / n) * Math.PI * 2;
-      const x = cx + Math.cos(a) * radius;
-      const y = cy + Math.sin(a) * radius;
-      paintSharpLine(buf, width, height, px, py, x, y, color, 1);
-      paintGlowLine(buf, width, height, px, py, x, y, color, { glowAlpha: 0.12 });
-      px = x;
-      py = y;
+      pts.push({ x: cx + Math.cos(a) * radius, y: cy + Math.sin(a) * radius });
+    }
+    if (fillTri && fillA > 0) {
+      const origin = { x: cx, y: cy };
+      for (let i = 0; i < n; i++) {
+        fillTri(buf, width, height, origin, pts[i], pts[(i + 1) % n], color, fillA);
+      }
+    }
+    let px = pts[n - 1].x;
+    let py = pts[n - 1].y;
+    for (let i = 0; i < n; i++) {
+      paintSharpLine(buf, width, height, px, py, pts[i].x, pts[i].y, THEME.ink, 2);
+      paintGlowLine(buf, width, height, px, py, pts[i].x, pts[i].y, color, { glowAlpha: 0.16 });
+      px = pts[i].x;
+      py = pts[i].y;
     }
   }
 
@@ -138,7 +147,19 @@ function createOrgans(kit) {
       const petals = 6 + layer + (hash % 3);
       const rotation = spin + layer * 0.18;
       const color = iridesce(layer / Math.max(1, layers), t, beat, themeFromHue(t * 28 + layer * 40));
-      paintPolygon(buf, width, height, cx, cy, radius, petals, rotation, color);
+      const cel = layer % 3 === 0 ? THEME.gold : layer % 3 === 1 ? THEME.cyan : THEME.blue;
+      paintPolygon(
+        buf,
+        width,
+        height,
+        cx,
+        cy,
+        radius,
+        petals,
+        rotation,
+        mixRgb(color, cel, 0.82),
+        mix(phrase, 0.72, 0.94, 0.8) * (1 - layer * 0.08),
+      );
       if (layer === 1) {
         for (let i = 0; i < petals; i++) {
           const a0 = rotation + (i / petals) * Math.PI * 2;
@@ -220,7 +241,18 @@ function createOrgans(kit) {
     const outer = minSide * 0.3 * phraseScale * (1 + 0.06 * kick);
     const outerColor = iridesce(0.2, t, beat, THEME.cyan);
     stampMillCore(buf, width, height, cx, cy, minSide * 0.08 * phraseScale, kick);
-    paintPolygon(buf, width, height, cx, cy, outer, sides, rotation, outerColor);
+    paintPolygon(
+      buf,
+      width,
+      height,
+      cx,
+      cy,
+      outer,
+      sides,
+      rotation,
+      mixRgb(outerColor, THEME.cyan, 0.72),
+      mix(phrase, 0.78, 0.94, 0.84),
+    );
     paintRing(buf, width, height, cx, cy, outer * 1.08, kick > 0.18 ? THEME.gold : THEME.cyan, 36, 0.1);
     for (let i = 0; i < sides; i++) {
       const a = rotation + (i / sides) * Math.PI * 2;
@@ -327,6 +359,18 @@ function createOrgans(kit) {
     const { beat, kick, phrase } = suit;
     const tempo = (checksum.genreConfig && checksum.genreConfig.tempo) || 90;
     const seats = net.nodes.map((node) => seatSynapse(node, width, height, t, tempo, phrase));
+    const wash = mix(phrase, 0.55, 0.82, 0.64);
+    if (fillTri && wash > 0) {
+      for (let c = 0; c < 6; c++) {
+        const members = [];
+        for (let i = 0; i < net.nodes.length; i++) {
+          if (net.nodes[i].clusterId === c) members.push(seats[i]);
+        }
+        if (members.length < 3) continue;
+        const cel = c % 3 === 0 ? THEME.gold : c % 3 === 1 ? THEME.cyan : THEME.blue;
+        fillTri(buf, width, height, members[0], members[1], members[2], cel, wash);
+      }
+    }
 
     for (let i = 0; i < net.links.length; i++) {
       const [a, b] = net.links[i];
@@ -456,6 +500,10 @@ function createOrgans(kit) {
         const color = iridesce((seats[i].p.hue + seats[j].p.hue) / 720, t, beat, THEME.cyan);
         paintSharpLine(buf, width, height, seats[i].x, seats[i].y, seats[j].x, seats[j].y, color, 1);
         paintGlowLine(buf, width, height, seats[i].x, seats[i].y, seats[j].x, seats[j].y, color, { glowAlpha: 0.1 });
+        if (fillTri && links % 5 === 0 && j + 1 < seats.length) {
+          const cel = links % 3 === 0 ? THEME.gold : links % 3 === 1 ? THEME.cyan : THEME.blue;
+          fillTri(buf, width, height, seats[i], seats[j], seats[j + 1], cel, mix(phrase, 0.42, 0.7, 0.5));
+        }
         links += 1;
       }
     }

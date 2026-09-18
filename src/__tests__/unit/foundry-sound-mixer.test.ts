@@ -100,7 +100,7 @@ describe('foundry sound-mixer — levels every variation', () => {
       };
       GENRE_IDS: string[];
       ROOTS: number[];
-      MIX_GATES: { peakMax: number; hatAirMax: number };
+      MIX_GATES: { peakMax: number; hatAirMax: number; stanzaMin: number; maskMin: number };
     };
     expect(GENRE_IDS).toEqual(['ambient', 'techno', 'jazz', 'phonk', 'rock', 'timeless']);
     expect(ROOTS).toEqual([0, 2, 4]);
@@ -109,6 +109,8 @@ describe('foundry sound-mixer — levels every variation', () => {
     expect(seats.filter((s) => s.lock)).toHaveLength(54);
     expect(MIX_GATES.peakMax).toBeLessThan(0.95);
     expect(MIX_GATES.hatAirMax).toBeLessThan(0.02);
+    expect(MIX_GATES.stanzaMin).toBeGreaterThan(1);
+    expect(MIX_GATES.maskMin).toBeGreaterThan(0.1);
 
     const report = mixMatrix();
     expect(report.counted).toBe(60);

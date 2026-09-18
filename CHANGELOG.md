@@ -6,6 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### ✨ Features
+- **Factory wow pass** — sound-mixer listens to the whole 4.44s (hook/turn/tag × kick/color/air). Layers, stanza, tag hold, pocket, mask. Rock crash is dry (short tail, quieter plate) so hang stays under the gate; intro shelf pulls the body/intro ratio without starving the body. Still plates are comic panels (ink frames, cel fills). Rippel five take saturated jewels, ink outlines, and a jewel-cut speed burst. Kapow stays the energy law. Ship bars stay 8. No `@0xray/foundry` bump.
+
 ---
 
 ## [4.0.15] - 2026-09-17

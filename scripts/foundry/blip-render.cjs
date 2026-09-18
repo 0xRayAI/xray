@@ -317,11 +317,16 @@ function paintPlate(plate, u) {
       ];
       for (let i = 0; i < cards.length; i++) {
         const [x0, y0, x1, y1] = cards[i];
-        if (onEdge(x, y, x0, y0, x1, y1)) return i % 2 === 0 ? RGB.cyan : RGB.gold;
+        if (onEdge(x, y, x0, y0, x1, y1)) return RGB.ink;
         if (inBox(x, y, x0 + 1, y0 + 1, x1 - 1, y1 - 1)) {
-          if (i === 1 && inBox(x, y, 118 - slide, 64, 130 - slide, 120)) return RGB.blue;
-          if (i === 2 && (x + y) % 8 === 0) return RGB.cyan;
-          return RGB.void;
+          if (i === 0) return y > y0 + 48 ? RGB.gold : RGB.cyan;
+          if (i === 1) {
+            if (inBox(x, y, 118 - slide, 52, 136 - slide, 116)) return RGB.blue;
+            if ((x + y) % 9 === 0) return RGB.ink;
+            return RGB.cyan;
+          }
+          if (i === 2) return y < y0 + 36 ? RGB.gold : RGB.blue;
+          return x < x0 + 28 ? RGB.gold : RGB.cyan;
         }
       }
       return RGB.void;
@@ -329,20 +334,35 @@ function paintPlate(plate, u) {
 
     if (plate === "corridor") {
       const slit = 156 + slide;
-      if (x >= slit && x < slit + 8) return RGB.cyan;
-      if (inBox(x, y, 148, 72 - Math.floor(u * 16), 172, 148 - Math.floor(u * 16))) return RGB.blue;
+      if (x >= slit && x < slit + 14) return RGB.cyan;
+      if (inBox(x, y, 36, 40, 118, 142)) {
+        if (onEdge(x, y, 36, 40, 118, 142)) return RGB.ink;
+        return RGB.blue;
+      }
+      if (y > 150 && x > 40 && x < 280) {
+        if ((x + y) % 5 === 0) return RGB.gold;
+        if ((x + y) % 5 === 1) return RGB.ink;
+      }
+      if (inBox(x, y, 148, 72 - Math.floor(u * 16), 172, 148 - Math.floor(u * 16))) return RGB.gold;
       return RGB.void;
     }
 
     if (plate === "rain") {
       const fall = Math.floor(u * 36);
-      if (x > 188 && y > 28 && y < 150 && (x + 3 * (y + fall)) % 9 === 0) return RGB.cyan;
-      if (inBox(x, y, 208 + Math.floor(u * 12), 52, 268 + Math.floor(u * 12), 124)) return RGB.blue;
+      if (inBox(x, y, 36, 28, 140, 152)) {
+        if (onEdge(x, y, 36, 28, 140, 152)) return RGB.ink;
+        return RGB.blue;
+      }
+      if (x > 168 && y > 20 && y < 156 && (x + 3 * (y + fall)) % 5 === 0) return RGB.cyan;
+      if (x > 168 && y > 20 && y < 156 && (x + 3 * (y + fall)) % 11 === 0) return RGB.ink;
+      if (inBox(x, y, 200 + Math.floor(u * 12), 48, 276 + Math.floor(u * 12), 128)) return RGB.gold;
       return RGB.void;
     }
 
     if (inBox(x, y, 208 - slide, 64, 300 - slide, 96)) return RGB.ink;
     if (inBox(x, y, 208 - slide, 104, 248 - slide, 116)) return RGB.gold;
+    if (inBox(x, y, 208 - slide, 120, 280 - slide, 128)) return RGB.cyan;
+    if (inBox(x, y, 40, 48, 88, 132)) return RGB.blue;
     return RGB.void;
   };
 }

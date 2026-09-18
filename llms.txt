@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` (mill off). `blip vibe` scores still + Rippel five + kapow (ship bar 8). Inspect reports the last bed or blip receipt. Not costume.
+Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Sound seats: `"plant": "sound"` fastens `sound` + `sound-inspect` + `sound-mixer` (mill off). `sound mix` listens to the whole 4.44s and levels every genre × tempo × motif. Blip seats: `"plant": "blip"` fastens `blip` + `blip-inspect` + `blip-vibe` (mill off). `blip vibe` scores still + Rippel five + kapow (ship bar 8). Inspect reports the last bed or blip receipt. Not costume.
 
 ## Wear (what a stranger gets)
 

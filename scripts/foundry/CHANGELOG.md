@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory wow pass: sound-mixer listens to the whole 4.44s — layers, stanza, tag, pocket, mask. Rock crash is dry. Still plates are comic panels. Rippel five take cel jewels, ink outlines, and a jewel-cut speed burst. Kapow stays the energy law. No version bump.
+
 Factory-blip vibe seat: `blip-vibe` scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is 8. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Inspect stays last-blip. No version bump.
 
 Factory-sound mixer seat: `sound-mixer` plant agent levels every genre × tempo × motif (hats / plate / glue). `npx @0xray/foundry sound mix`. Plate send/feedback down, hot hats pulled, glue eased. Inspect stays last-bed. No version bump.

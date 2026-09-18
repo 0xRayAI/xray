@@ -172,7 +172,7 @@ const CRYSTAL = {
   mudDb: -3.5,
   distScale: 0.55,
   hatAirHz: 9000,
-  sidechain: 0.46,
+  sidechain: 0.54,
   peakTarget: 0.82,
 };
 
@@ -180,12 +180,12 @@ const CRYSTAL = {
 const MIXER = {
   plateFeedback: 0.24,
   plateSend: 0.028,
-  hatGainHot: 0.54,
-  hatGainAmbientLock: 0.5,
+  hatGainHot: 0.46,
+  hatGainAmbientLock: 0.42,
   glueThresholdDb: -18,
   glueRatio: 2.15,
   crashVel: 0.5,
-  introFloor: 0.36,
+  introFloor: 0.42,
 };
 
 const GENRE_ALIASES = {
@@ -1068,12 +1068,12 @@ function renderAirGlue(n, sampleRate, rng, amount) {
   return out;
 }
 
-function masterEnvelope(samples, sampleRate, seconds, lock) {
+function masterEnvelope(samples, sampleRate, seconds, lock, genreId) {
   const blip = Boolean(lock) && seconds <= 5;
   const introHold = blip ? 0 : 0.5;
   const introEase = blip ? 0.03 : 0.35;
   const introShelf = 0.75;
-  const introFloor = MIXER.introFloor;
+  const introFloor = genreId === "rock" ? 0.3 : MIXER.introFloor;
   const kickHold = 0.055;
   const bodyLift = 1.3;
   const fadeSec = blip ? 0.35 : 1;
@@ -1142,12 +1142,12 @@ function sectionGain(t, seconds, lock, grid) {
   if (lock && seconds <= 5) {
     const phrase = shortformPhrase(t, seconds, grid || { beatSec: 60 / 90 });
     return Math.max(
-      0.52,
-      0.7 * phrase.hookEase +
-        1.14 * phrase.turnEase +
-        0.56 * phrase.tagEase +
+      0.62,
+      0.74 * phrase.hookEase +
+        1.16 * phrase.turnEase +
+        0.82 * phrase.tagEase +
         0.2 * (phrase.turnHit || 0) +
-        0.1 * (phrase.tagHit || 0),
+        0.12 * (phrase.tagHit || 0),
     );
   }
   if (p < 0.15) return 0.62;
@@ -1170,7 +1170,7 @@ function motifColorVoice(genreId, hz, sampleRate, hold) {
     return renderSax({ sampleRate, freq: note * 2, velocity: 0.34, hold: held * 0.6 });
   }
   if (genreId === "rock") {
-    return renderFormant({ sampleRate, freq: note, velocity: 0.28, hold: held * 0.24 });
+    return renderFormant({ sampleRate, freq: note, velocity: 0.24, hold: held * 0.24 });
   }
   return renderRhodes({ sampleRate, freq: note, velocity: 0.5 });
 }
@@ -1193,7 +1193,8 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     duckBus(kickBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.4);
     duckBus(hatBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.34);
     duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
-    const crashVel = genreId === "timeless" ? 0.22 : genreId === "rock" ? 0.44 : MIXER.crashVel;
+    const rockCrash = genreId === "rock";
+    const crashVel = genreId === "timeless" ? 0.22 : rockCrash ? 0.36 : MIXER.crashVel;
     if (genreId !== "timeless") {
       mixInto(
         colorBus,
@@ -1204,8 +1205,8 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
           modulationIndex: 34,
           resonance: 2400,
           attack: 0.001,
-          decay: 0.42,
-          release: 0.16,
+          decay: rockCrash ? 0.16 : 0.42,
+          release: rockCrash ? 0.06 : 0.16,
           velocity: crashVel,
         }),
         Math.floor(marks.turnAt * sampleRate),
@@ -1221,9 +1222,9 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
         modulationIndex: 28,
         resonance: genreId === "timeless" ? 4800 : 7200,
         attack: 0.001,
-        decay: genreId === "timeless" ? 0.4 : 0.26,
-        release: 0.1,
-        velocity: crashVel * (genreId === "timeless" ? 0.9 : 0.7),
+        decay: genreId === "timeless" ? 0.4 : rockCrash ? 0.1 : 0.26,
+        release: rockCrash ? 0.05 : 0.1,
+        velocity: crashVel * (genreId === "timeless" ? 0.9 : rockCrash ? 0.48 : 0.7),
       }),
       Math.floor(marks.turnAt * sampleRate),
       1,
@@ -1432,7 +1433,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       );
     }
   } else if (g.id === "jazz") {
-    mixInto(padBus, renderPad(n, sampleRate, padTones("jazz", scale), rng, 0.4), 0, 0.28);
+    mixInto(padBus, renderPad(n, sampleRate, padTones("jazz", scale), rng, 0.4), 0, 0.4);
     const kick = RIPPEL.jazzKick;
     const ride = RIPPEL.jazzRide;
     const swing = beat / 2 * 0.32;
@@ -1593,7 +1594,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         attack: kick.attack,
         decay: 0.36,
         release: 0.5,
-        velocity: 0.88 * sectionGain(t, seconds, lock, grid),
+        velocity: 0.94 * sectionGain(t, seconds, lock, grid),
         floorHz: CRYSTAL.kickFloorHz,
       });
       mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
@@ -1673,6 +1674,10 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         duckBus(kickBus, sampleRate, t - 0.02, t + laterBeat * 0.45, 0.52);
       }
     }
+    if (g.id === "rock") {
+      duckBus(hatBus, sampleRate, phraseDrop.marks.turnAt + 0.1, phraseDrop.marks.turnAt + 0.34, 0.38);
+      duckBus(colorBus, sampleRate, phraseDrop.marks.turnAt + 0.12, phraseDrop.marks.turnAt + 0.3, 0.55);
+    }
   }
 
   const kickCh = applyBus(kickBus, sampleRate, {
@@ -1730,8 +1735,10 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   const kickGain =
     g.id === "timeless" ? (lock ? 0.7 : 0.55) : g.id === "ambient" ? (lock ? 1 : 0.7) : g.id === "phonk" && !lock ? 0.58 : 0.9;
   const hatGain =
-    g.id === "techno" || g.id === "phonk" || g.id === "rock"
+    g.id === "techno" || g.id === "phonk"
       ? MIXER.hatGainHot
+      : g.id === "rock"
+        ? 0.36
       : g.id === "ambient"
         ? lock
           ? MIXER.hatGainAmbientLock
@@ -1749,21 +1756,23 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         : 0.48
       : g.id === "jazz"
         ? lock
-          ? 1
-          : 0.72
+          ? 0.92
+          : 0.68
         : g.id === "phonk"
           ? 0.42
-          : g.id === "rock" && lock
-            ? 0.7
-            : 0.12;
+          : g.id === "rock"
+            ? lock
+              ? 0.62
+              : 0.44
+            : 0.38;
   for (let i = 0; i < n; i++) {
     const duck = 1 / (1 + CRYSTAL.sidechain * kickEnv[i] * 7);
     mix[i] =
       kickCh[i] * kickGain +
       hatCh[i] * hatGain +
-      colorCh[i] * 0.52 * duck +
+      colorCh[i] * 0.62 * duck +
       padCh[i] * padGain * duck +
-      plate[i] * MIXER.plateSend * (0.4 + 0.6 * duck) +
+      plate[i] * MIXER.plateSend * (g.id === "rock" ? 0.55 : 1) * (0.4 + 0.6 * duck) +
       glue[i];
   }
 
@@ -1780,7 +1789,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     0.008,
     0.16,
   );
-  const shaped = masterEnvelope(glued, sampleRate, seconds, lock);
+  const shaped = masterEnvelope(glued, sampleRate, seconds, lock, g.id);
   const peaked = normalize(shaped, CRYSTAL.peakTarget);
   const samples = limiter(peaked, dbLin(RIPPEL.mixer.limiterDb));
   const left = new Float64Array(n);

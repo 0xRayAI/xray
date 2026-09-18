@@ -1207,7 +1207,11 @@ function paintMeshFaces(buf, width, height, mesh, pts, color, alpha, t, checksum
   const beat = beatPhase(checksum || { genreConfig: { tempo: 90 } }, t || 0);
   for (let i = 0; i < ranked.length; i++) {
     const jewel = mixRgb(THEME.cyan, THEME.blue, (i / Math.max(1, ranked.length) + (beat || 0) * 0.08) % 1);
-    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, THEME.ink, 0.08), alpha);
+    const cel = i % 3 === 0 ? THEME.gold : i % 3 === 1 ? THEME.cyan : THEME.blue;
+    fillTri(buf, width, height, ranked[i].a, ranked[i].b, ranked[i].c, mixRgb(jewel, cel, 0.72), alpha);
+    paintSharpLine(buf, width, height, ranked[i].a.x, ranked[i].a.y, ranked[i].b.x, ranked[i].b.y, THEME.ink, 1);
+    paintSharpLine(buf, width, height, ranked[i].b.x, ranked[i].b.y, ranked[i].c.x, ranked[i].c.y, THEME.ink, 1);
+    paintSharpLine(buf, width, height, ranked[i].c.x, ranked[i].c.y, ranked[i].a.x, ranked[i].a.y, THEME.ink, 1);
   }
 }
 
@@ -1271,9 +1275,11 @@ function paintMeshOverlay(buf, width, height, opts) {
     camera: opts.camera,
   });
   paintField(buf, width, height, opts.t || 0, checksum);
+  const phrase = phraseOf(checksum, opts.t || 0);
   return paintChecksumMesh(buf, width, height, opts.t || 0, checksum, {
-    scale: 0.72,
+    scale: 0.78,
     half: 1,
+    fill: phraseMix(phrase, 0.32, 0.62, 0.4),
   });
 }
 
@@ -1384,9 +1390,37 @@ function paintField(buf, width, height, t, checksum) {
   }
 }
 
+function paintSpeedBurst(buf, width, height, t, checksum) {
+  const phrase = phraseOf(checksum || { genreConfig: { tempo: 90 } }, t || 0);
+  const hit = ruptureHit(phrase);
+  if (hit < 0.28) return;
+  const cx = (width - 1) * 0.5;
+  const cy = (height - 1) * 0.5;
+  const minSide = Math.min(width, height);
+  const n = 10 + Math.round(8 * hit);
+  for (let i = 0; i < n; i++) {
+    const ang = (i / n) * Math.PI * 2 + hit * 0.2;
+    const inner = minSide * (0.2 + 0.07 * (i % 3));
+    const outer = minSide * (0.48 + 0.12 * hit + 0.05 * (i % 2));
+    const color = i % 3 === 0 ? THEME.gold : i % 3 === 1 ? THEME.cyan : THEME.ink;
+    paintSharpLine(
+      buf,
+      width,
+      height,
+      cx + Math.cos(ang) * inner,
+      cy + Math.sin(ang) * inner,
+      cx + Math.cos(ang) * outer,
+      cy + Math.sin(ang) * outer,
+      color,
+      i % 4 === 0 ? 2 : 1,
+    );
+  }
+}
+
 function startFrame(buf, width, height, t, checksum) {
   fillVoid(buf);
   paintField(buf, width, height, t, checksum);
+  paintSpeedBurst(buf, width, height, t, checksum);
 }
 
 function layoutRings(circles, width, height, t, checksum) {
@@ -1621,6 +1655,7 @@ const organs = createOrgans({
   paintSharpLine,
   paintGlowLine,
   stampFocusDisc,
+  fillTri,
   beatPhase,
   kickAccent,
   andAccent,
@@ -1666,6 +1701,10 @@ function paintFocusOrb(buf, width, height, t, checksum) {
     glowAlpha: 0.22,
     rimColor: THEME.gold,
   });
+  if (phrase.turnHit > 0.28 || phraseWeight(phrase, "turn") > 0.45) {
+    stampDisc(buf, width, height, cx, cy, core * 1.22, THEME.gold, 3.4);
+    stampDisc(buf, width, height, cx, cy, core * 1.34, THEME.ink, 2.2);
+  }
   paintEclipseMoon(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
   paintSuitSatellites(buf, width, height, t, checksum, (sat) => sat.depth >= 0);
 }
@@ -1757,7 +1796,7 @@ function paintMillCage(buf, width, height, t, checksum) {
   const drawn = paintChecksumMesh(buf, width, height, t, checksum, {
     scale: phraseMix(phrase, 0.78, 1.08, 0.9) + 0.08 * hit + 0.2 * peak - 0.16 * recoil,
     half: 1 + Math.round(hit),
-    fill: phraseMix(phrase, 0.1, 0.42, 0.18) + 0.1 * hit,
+    fill: phraseMix(phrase, 0.28, 0.72, 0.38) + 0.14 * hit,
   });
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
@@ -1775,7 +1814,7 @@ function paintMillMesh(buf, width, height, t, checksum, scale) {
   paintChecksumMesh(buf, width, height, t, checksum, {
     scale: scale || 0.96,
     half: 1,
-    fill: phraseMix(phrase, 0.36, 0.62, 0.38),
+    fill: phraseMix(phrase, 0.55, 0.88, 0.62),
   });
   paintMeshBeads(buf, width, height, t, checksum, scale || 0.92);
 }
@@ -1795,7 +1834,7 @@ function paintMillStrike(buf, width, height, t, checksum) {
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const minSide = Math.min(width, height);
-  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.03, 0.07, 0.04), t, checksum);
+  paintMeshFaces(buf, width, height, snapped, pts, THEME.cyan, phraseMix(phrase, 0.16, 0.38, 0.2), t, checksum);
   for (let i = 0; i < (mesh.edges || []).length; i++) {
     const [a, b] = mesh.edges[i];
     const pa = pts[a];
@@ -1849,7 +1888,7 @@ function paintMillEmbers(buf, width, height, t, checksum) {
   const beat = beatPhase(checksum, t);
   const kick = kickAccent(beat);
   const phrase = phraseOf(checksum, t);
-  const size = phraseMix(phrase, 8.6, 15.4, 10.2);
+  const size = phraseMix(phrase, 11.2, 19.4, 13.4);
   const cx = (width - 1) * 0.5;
   const cy = (height - 1) * 0.5;
   const burst = phraseMix(phrase, 0.72, 1.06 + 0.08 * (phrase.turnHit || 0), 0.84);
