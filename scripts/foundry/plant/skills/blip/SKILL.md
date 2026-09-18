@@ -36,4 +36,4 @@ npx @0xray/foundry inspect --skip-live
 
 Mint fastens `blip` + `blip-inspect` + `blip-vibe`. Chat is not a receipt.
 
-A friend would hear: Blips should look like Rippel living motions with sound, not a silent wireframe box.
+A friend would hear: Blips should look like comic/anime cel shorts with sound — kapow energy, not a silent wireframe box.
