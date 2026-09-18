@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.11]
+
+Blip and sound mill drawers moved to `@0xray/blip`. This package keeps fasten + inspect + `foundry blip|sound` shims. Depend on `@0xray/blip@^0.1.0`.
+
 ## [Unreleased]
 
 Factory-blip vibe seat: `blip-vibe` scores still + Rippel five + kapow on the same aesthetic organ. Appeal 0–10. Ship bar is 8. Shared fill / tint / contrast / outline / flash / differ; kapow extras stay kapow-only. Kapow is a comic burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Inspect stays last-blip. No version bump.

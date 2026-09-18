@@ -8,8 +8,25 @@ import { describe, expect, it } from 'vitest';
 
 const requireCjs = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const millDir = path.dirname(requireCjs.resolve('@0xray/blip/blip-render'));
 
 function read(rel: string): string {
+  const millNames = [
+    'blip-render.cjs',
+    'blip-rippel.cjs',
+    'blip-rippel-organs.cjs',
+    'blip-kapow.cjs',
+    'blip-vibe.cjs',
+    'blip.mjs',
+    'sound-bed.cjs',
+    'sound-rippel.cjs',
+    'sound-mixer.cjs',
+    'sound.mjs',
+  ];
+  const base = path.basename(rel);
+  if (rel.startsWith('scripts/foundry/') && millNames.includes(base)) {
+    return readFileSync(path.join(millDir, base), 'utf8');
+  }
   return readFileSync(path.join(root, rel), 'utf8');
 }
 
@@ -1852,6 +1869,7 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('.github/workflows/enforce-version-compliance.yml')).toContain(
       'foundry-blip-plant.test.ts',
     );
-    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.10"/);
+    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.11"/);
+    expect(read('scripts/foundry/package.json')).toMatch(/"@0xray\/blip"/);
   });
 });
