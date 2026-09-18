@@ -158,14 +158,15 @@ function checkReceipt(root) {
     !needBlip ||
     (blipPlantSkills.includes("blip") &&
       blipPlantSkills.includes("blip-inspect") &&
-      blipPlantSkills.includes("blip-vibe"));
+      blipPlantSkills.includes("blip-vibe") &&
+      blipPlantSkills.includes("blip-looker"));
   const ok = millOk && soundOk && blipOk && (needMill || needSound || needBlip);
   let detail = null;
   if (!ok && needMill && !millOk) detail = "millPlant.skills must include mill and inspect";
   else if (!ok && needSound && !soundOk)
     detail = "soundPlant.skills must include sound, sound-inspect, and sound-mixer";
   else if (!ok && needBlip && !blipOk)
-    detail = "blipPlant.skills must include blip, blip-inspect, and blip-vibe";
+    detail = "blipPlant.skills must include blip, blip-inspect, blip-vibe, and blip-looker";
   else if (!ok) detail = "inventory plant is empty";
   return {
     id: "receipt",

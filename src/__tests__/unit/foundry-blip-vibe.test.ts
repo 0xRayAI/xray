@@ -27,8 +27,18 @@ describe('foundry blip-vibe — plant seat', () => {
     const { FACTORY_PLANT_CATALOG } = requireCjs(
       path.join(root, 'scripts/foundry/mint-suit.cjs'),
     ) as { FACTORY_PLANT_CATALOG: { blip: { skills: string[]; agents: string[] } } };
-    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe']);
-    expect(FACTORY_PLANT_CATALOG.blip.agents).toEqual(['blip.yml', 'blip-inspect.yml', 'blip-vibe.yml']);
+    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual([
+      'blip',
+      'blip-inspect',
+      'blip-vibe',
+      'blip-looker',
+    ]);
+    expect(FACTORY_PLANT_CATALOG.blip.agents).toEqual([
+      'blip.yml',
+      'blip-inspect.yml',
+      'blip-vibe.yml',
+      'blip-looker.yml',
+    ]);
   });
 
   it('mints the vibe agent on a blip seat', () => {
@@ -47,7 +57,7 @@ describe('foundry blip-vibe — plant seat', () => {
       );
       writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ plant: 'blip' }, null, 2)}\n`);
       const inv = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inv.blipPlant?.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe']);
+      expect(inv.blipPlant?.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe', 'blip-looker']);
       expect(existsSync(path.join(tmp, '.opencode/skills/blip-vibe/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/blip-vibe.yml'))).toBe(true);
     } finally {

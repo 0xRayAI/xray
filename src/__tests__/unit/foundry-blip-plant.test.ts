@@ -8,8 +8,26 @@ import { describe, expect, it } from 'vitest';
 
 const requireCjs = createRequire(import.meta.url);
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const millDir = path.dirname(requireCjs.resolve('@0xray/blip/blip-render'));
 
 function read(rel: string): string {
+  const millNames = [
+    'blip-render.cjs',
+    'blip-rippel.cjs',
+    'blip-rippel-organs.cjs',
+    'blip-kapow.cjs',
+    'blip-vibe.cjs',
+    'blip-looker.cjs',
+    'blip.mjs',
+    'sound-bed.cjs',
+    'sound-rippel.cjs',
+    'sound-mixer.cjs',
+    'sound.mjs',
+  ];
+  const base = path.basename(rel);
+  if (rel.startsWith('scripts/foundry/') && millNames.includes(base)) {
+    return readFileSync(path.join(millDir, base), 'utf8');
+  }
   return readFileSync(path.join(root, rel), 'utf8');
 }
 
@@ -41,8 +59,12 @@ describe('foundry blip plant — files and mint', () => {
     expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip-inspect/SKILL.md'))).toBe(
       true,
     );
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip-looker/SKILL.md'))).toBe(
+      true,
+    );
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip.yml'))).toBe(true);
     expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-inspect.yml'))).toBe(true);
+    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-looker.yml'))).toBe(true);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/4\.44/);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/factory plant/i);
     expect(read('scripts/foundry/plant/skills/blip/SKILL.md')).toMatch(/still/);
@@ -88,7 +110,12 @@ describe('foundry blip plant — files and mint', () => {
       FACTORY_PLANT_CATALOG: { blip: { skills: string[] } };
     };
     const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
-    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe']);
+    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual([
+      'blip',
+      'blip-inspect',
+      'blip-vibe',
+      'blip-looker',
+    ]);
 
     const millSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-mill-seat-'));
     const blipSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-blip-seat-'));
@@ -118,12 +145,19 @@ describe('foundry blip plant — files and mint', () => {
       expect(blipInv.suit).toBe('fastened');
       expect(blipInv.plant).toEqual(['blip']);
       expect(blipInv.millPlant?.skills).toEqual([]);
-      expect(blipInv.blipPlant?.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe']);
+      expect(blipInv.blipPlant?.skills).toEqual([
+        'blip',
+        'blip-inspect',
+        'blip-vibe',
+        'blip-looker',
+      ]);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/blip/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/blip-inspect/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/blip-vibe/SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(blipSeat, '.opencode/skills/blip-looker/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/agents/blip.yml'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/agents/blip-vibe.yml'))).toBe(true);
+      expect(existsSync(path.join(blipSeat, '.opencode/agents/blip-looker.yml'))).toBe(true);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/mill/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(blipSeat, '.opencode/skills/inspect/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(blipSeat, '.grok/plugins/0xray/skills/blip/SKILL.md'))).toBe(true);
@@ -136,7 +170,7 @@ describe('foundry blip plant — files and mint', () => {
         millPlant?: string[];
       };
       expect(receipt.plant).toEqual(['blip']);
-      expect(receipt.blipPlant).toEqual(['blip', 'blip-inspect', 'blip-vibe']);
+      expect(receipt.blipPlant).toEqual(['blip', 'blip-inspect', 'blip-vibe', 'blip-looker']);
       expect(receipt.millPlant).toEqual([]);
       const blipCheck = report.checks.find((c) => c.id === 'blip') as {
         status?: string;
@@ -1852,6 +1886,7 @@ describe('foundry blip plant — docs and CI', () => {
     expect(read('.github/workflows/enforce-version-compliance.yml')).toContain(
       'foundry-blip-plant.test.ts',
     );
-    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.10"/);
+    expect(read('scripts/foundry/package.json')).toMatch(/"version": "0\.1\.11"/);
+    expect(read('scripts/foundry/package.json')).toMatch(/"@0xray\/blip"/);
   });
 });
