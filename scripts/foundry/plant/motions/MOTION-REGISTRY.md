@@ -34,7 +34,7 @@ Motions encode **≥720p**. The old 320×180 ffmpeg wireframe is **`--engine wir
 
 Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No audio stream = inspect FAIL.
 
-`still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p. Not a frozen poster. Palette `#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`.
+`still` is the **Power Plant ident** — titlecard / corridor / rain / endcard dissolve over 4.44s at ≥720p. Comic panels (ink frames, cel fills), not a frozen poster. Palette `#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`. Rippel five wear saturated cel jewels, ink outlines, and a jewel-cut speed burst.
 
 ## Design opt — `kapow`
 

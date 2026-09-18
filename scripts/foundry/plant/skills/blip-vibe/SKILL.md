@@ -27,4 +27,4 @@ npx @0xray/foundry blip appeal
 
 A FAIL score is a picture bug. Sharpen the stamp. Do not weaken the bar.
 
-A friend would see: Power Plant plates that live, Rippel five that hit the jewel cut, a comic two-tier burst (few irregular points, not a 20-needle firework) with `KAPOW!` you can read across the room.
+A friend would see: Power Plant comic panels, Rippel five as saturated cel jewels with ink outlines and a jewel-cut speed burst, a two-tier `KAPOW!` you can read across the room. Same bar on every type.
