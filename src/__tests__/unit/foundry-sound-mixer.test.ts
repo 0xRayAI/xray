@@ -15,30 +15,37 @@ function read(rel: string): string {
 
 describe('foundry sound-mixer — plant seat', () => {
   it('fastens sound-mixer next to sound + sound-inspect (not costume)', () => {
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-mixer/SKILL.md'))).toBe(
-      true,
+    const millDir = path.dirname(requireCjs.resolve('@0xray/blip/sound-mixer'));
+    expect(existsSync(path.join(millDir, 'plant/skills/sound-mixer/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/sound-mixer.yml'))).toBe(true);
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound-mixer/SKILL.md'), 'utf8')).toMatch(
+      /every genre/i,
     );
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-mixer.yml'))).toBe(true);
-    expect(read('scripts/foundry/plant/skills/sound-mixer/SKILL.md')).toMatch(/every genre/i);
-    expect(read('scripts/foundry/plant/skills/sound-mixer/SKILL.md')).toMatch(/plate/);
-    expect(read('scripts/foundry/plant/skills/sound-mixer/SKILL.md')).not.toMatch(/\bhangar\b/i);
-    expect(read('scripts/foundry/plant/agents/sound-mixer.yml')).toMatch(/mode: subagent/);
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound-mixer/SKILL.md'), 'utf8')).toMatch(
+      /plate/,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound-mixer/SKILL.md'), 'utf8')).not.toMatch(
+      /\bhangar\b/i,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/agents/sound-mixer.yml'), 'utf8')).toMatch(
+      /mode: subagent/,
+    );
     expect(read('scripts/foundry/sound.mjs')).toMatch(/mix/);
     expect(read('scripts/foundry/cli.mjs')).toMatch(/sound render\|inspect\|mix/);
 
-    const { FACTORY_PLANT_CATALOG } = requireCjs(
-      path.join(root, 'scripts/foundry/mint-suit.cjs'),
-    ) as { FACTORY_PLANT_CATALOG: { sound: { skills: string[]; agents: string[] } } };
-    expect(FACTORY_PLANT_CATALOG.sound.skills).toEqual([
-      'sound',
-      'sound-inspect',
-      'sound-mixer',
-    ]);
-    expect(FACTORY_PLANT_CATALOG.sound.agents).toEqual([
-      'sound.yml',
-      'sound-inspect.yml',
-      'sound-mixer.yml',
-    ]);
+    const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+      path.join(root, 'scripts/foundry/mill-plant.cjs'),
+    ) as {
+      selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[]; agents: string[] };
+      resolvePackageRoot: (name: string, fromDir: string) => string;
+    };
+    const soundFiles = selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'sound');
+    expect(soundFiles.skills).toEqual(
+      expect.arrayContaining(['sound', 'sound-inspect', 'sound-mixer']),
+    );
+    expect(soundFiles.agents).toEqual(
+      expect.arrayContaining(['sound.yml', 'sound-inspect.yml', 'sound-mixer.yml']),
+    );
   });
 
   it('mints the mixer agent on a sound seat', () => {
@@ -59,8 +66,16 @@ describe('foundry sound-mixer — plant seat', () => {
         path.join(tmp, 'foundry.json'),
         `${JSON.stringify({ plant: 'sound' }, null, 2)}\n`,
       );
+      const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+        path.join(root, 'scripts/foundry/mill-plant.cjs'),
+      ) as {
+        selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[] };
+        resolvePackageRoot: (name: string, fromDir: string) => string;
+      };
       const inv = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inv.soundPlant?.skills).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
+      expect([...(inv.soundPlant?.skills || [])].sort()).toEqual(
+        [...selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'sound').skills].sort(),
+      );
       expect(existsSync(path.join(tmp, '.opencode/skills/sound-mixer/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/sound-mixer.yml'))).toBe(true);
     } finally {

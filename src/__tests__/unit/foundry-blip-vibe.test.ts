@@ -15,30 +15,37 @@ function read(rel: string): string {
 
 describe('foundry blip-vibe — plant seat', () => {
   it('fastens blip-vibe next to blip + blip-inspect (not costume)', () => {
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip-vibe/SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-vibe.yml'))).toBe(true);
-    expect(read('scripts/foundry/plant/skills/blip-vibe/SKILL.md')).toMatch(/Ship bar is 8/);
-    expect(read('scripts/foundry/plant/skills/blip-vibe/SKILL.md')).toMatch(/cool factor/i);
-    expect(read('scripts/foundry/plant/skills/blip-vibe/SKILL.md')).not.toMatch(/\bhangar\b/i);
-    expect(read('scripts/foundry/plant/agents/blip-vibe.yml')).toMatch(/mode: subagent/);
+    const millDir = path.dirname(requireCjs.resolve('@0xray/blip/blip-vibe'));
+    expect(existsSync(path.join(millDir, 'plant/skills/blip-vibe/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/blip-vibe.yml'))).toBe(true);
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-vibe/SKILL.md'), 'utf8')).toMatch(
+      /Ship bar is 8/,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-vibe/SKILL.md'), 'utf8')).toMatch(
+      /cool factor/i,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-vibe/SKILL.md'), 'utf8')).not.toMatch(
+      /\bhangar\b/i,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/agents/blip-vibe.yml'), 'utf8')).toMatch(
+      /mode: subagent/,
+    );
     expect(read('scripts/foundry/blip.mjs')).toMatch(/vibe/);
     expect(read('scripts/foundry/cli.mjs')).toMatch(/blip render\|inspect\|vibe/);
 
-    const { FACTORY_PLANT_CATALOG } = requireCjs(
-      path.join(root, 'scripts/foundry/mint-suit.cjs'),
-    ) as { FACTORY_PLANT_CATALOG: { blip: { skills: string[]; agents: string[] } } };
-    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual([
-      'blip',
-      'blip-inspect',
-      'blip-vibe',
-      'blip-looker',
-    ]);
-    expect(FACTORY_PLANT_CATALOG.blip.agents).toEqual([
-      'blip.yml',
-      'blip-inspect.yml',
-      'blip-vibe.yml',
-      'blip-looker.yml',
-    ]);
+    const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+      path.join(root, 'scripts/foundry/mill-plant.cjs'),
+    ) as {
+      selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[]; agents: string[] };
+      resolvePackageRoot: (name: string, fromDir: string) => string;
+    };
+    const blipFiles = selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'blip');
+    expect(blipFiles.skills).toEqual(
+      expect.arrayContaining(['blip', 'blip-inspect', 'blip-vibe', 'blip-looker']),
+    );
+    expect(blipFiles.agents).toEqual(
+      expect.arrayContaining(['blip.yml', 'blip-inspect.yml', 'blip-vibe.yml', 'blip-looker.yml']),
+    );
   });
 
   it('mints the vibe agent on a blip seat', () => {
@@ -56,8 +63,16 @@ describe('foundry blip-vibe — plant seat', () => {
         `${JSON.stringify({ name: 'tiny-video', version: '0.0.1' }, null, 2)}\n`,
       );
       writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ plant: 'blip' }, null, 2)}\n`);
+      const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+        path.join(root, 'scripts/foundry/mill-plant.cjs'),
+      ) as {
+        selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[] };
+        resolvePackageRoot: (name: string, fromDir: string) => string;
+      };
       const inv = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inv.blipPlant?.skills).toEqual(['blip', 'blip-inspect', 'blip-vibe', 'blip-looker']);
+      expect([...(inv.blipPlant?.skills || [])].sort()).toEqual(
+        [...selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'blip').skills].sort(),
+      );
       expect(existsSync(path.join(tmp, '.opencode/skills/blip-vibe/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/blip-vibe.yml'))).toBe(true);
     } finally {

@@ -1,6 +1,6 @@
 {
   "name": "@0xray/foundry",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "private": false,
   "type": "module",
   "description": "0xRay mill: mint their suit params, stamp, gate, publish, CI report, git hooks. Not the worn exo.",
@@ -37,6 +37,7 @@
     "./release-gate": "./release-gate.mjs",
     "./mill-root": "./mill-root.mjs",
     "./mint-suit": "./mint-suit.cjs",
+    "./mill-plant": "./mill-plant.cjs",
     "./inspect": "./inspect.mjs",
     "./sound": "./sound.mjs",
     "./sound-bed": "./sound-bed.cjs",

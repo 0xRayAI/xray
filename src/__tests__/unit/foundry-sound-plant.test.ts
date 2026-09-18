@@ -49,28 +49,33 @@ function introBodyFade(t: number, seconds: number): number {
 
 describe('foundry sound plant — files and mint', () => {
   it('ships sound + sound-inspect + sound-mixer plant next to mill (not a mill copy)', () => {
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound/SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-inspect/SKILL.md'))).toBe(
-      true,
+    expect(existsSync(path.join(millDir, 'plant/skills/sound/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/skills/sound-inspect/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/skills/sound-mixer/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/sound.yml'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/sound-inspect.yml'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/sound-mixer.yml'))).toBe(true);
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound/SKILL.md'), 'utf8')).toMatch(/brief/i);
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound/SKILL.md'), 'utf8')).toMatch(
+      /checksum seed/i,
     );
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/sound-mixer/SKILL.md'))).toBe(
-      true,
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound-inspect/SKILL.md'), 'utf8')).toMatch(
+      /chop/i,
     );
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound.yml'))).toBe(true);
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-inspect.yml'))).toBe(true);
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/sound-mixer.yml'))).toBe(true);
-    expect(read('scripts/foundry/plant/skills/sound/SKILL.md')).toMatch(/brief/i);
-    expect(read('scripts/foundry/plant/skills/sound/SKILL.md')).toMatch(/checksum seed/i);
-    expect(read('scripts/foundry/plant/skills/sound-inspect/SKILL.md')).toMatch(/chop/i);
-    expect(read('scripts/foundry/plant/skills/sound-inspect/SKILL.md')).not.toMatch(/Inspect AI work/);
-    expect(read('scripts/foundry/plant/skills/sound/SKILL.md')).not.toMatch(/\bhangar\b/i);
+    expect(
+      readFileSync(path.join(millDir, 'plant/skills/sound-inspect/SKILL.md'), 'utf8'),
+    ).not.toMatch(/Inspect AI work/);
+    expect(readFileSync(path.join(millDir, 'plant/skills/sound/SKILL.md'), 'utf8')).not.toMatch(
+      /\bhangar\b/i,
+    );
     expect(read('scripts/foundry/cli.mjs')).toContain('sound: { script: "sound.mjs"');
-    expect(read('scripts/foundry/mint-suit.cjs')).toContain('FACTORY_PLANT_CATALOG');
+    expect(existsSync(path.join(root, 'scripts/foundry/mill-plant.cjs'))).toBe(true);
+    expect(read('scripts/foundry/mill-plant.cjs')).toContain('foundry-plant/0');
     expect(read('scripts/foundry/inspect.mjs')).toContain('sound-bed');
   });
 
   it('mints a sound seat without mill skills and allowlists them', async () => {
-    const { mintConsumerSuit, loadFactoryPlantKinds, FACTORY_PLANT_CATALOG } = requireCjs(
+    const { mintConsumerSuit, loadFactoryPlantKinds } = requireCjs(
       path.join(root, 'scripts/foundry/mint-suit.cjs'),
     ) as {
       mintConsumerSuit: (
@@ -85,10 +90,20 @@ describe('foundry sound plant — files and mint', () => {
         costume?: boolean;
       };
       loadFactoryPlantKinds: (dir: string) => string[];
-      FACTORY_PLANT_CATALOG: { sound: { skills: string[] } };
+    };
+    const { selectPlantFiles, resolvePackageRoot, parsePlantRef } = requireCjs(
+      path.join(root, 'scripts/foundry/mill-plant.cjs'),
+    ) as {
+      selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[] };
+      resolvePackageRoot: (name: string, fromDir: string) => string;
+      parsePlantRef: (raw: string) => { packageName?: string | null; plantId?: string };
     };
     const { inspectSuit } = await import('../../../scripts/foundry/inspect.mjs');
-    expect(FACTORY_PLANT_CATALOG.sound.skills).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
+    expect(parsePlantRef('@0xray/blip/sound').plantId).toBe('sound');
+    const soundFiles = selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'sound');
+    expect(soundFiles.skills).toEqual(
+      expect.arrayContaining(['sound', 'sound-inspect', 'sound-mixer']),
+    );
 
     const millSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-mill-seat-'));
     const soundSeat = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-sound-seat-'));
@@ -118,7 +133,7 @@ describe('foundry sound plant — files and mint', () => {
       expect(soundInv.suit).toBe('fastened');
       expect(soundInv.plant).toEqual(['sound']);
       expect(soundInv.millPlant?.skills).toEqual([]);
-      expect(soundInv.soundPlant?.skills).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
+      expect([...(soundInv.soundPlant?.skills || [])].sort()).toEqual([...soundFiles.skills].sort());
       expect(existsSync(path.join(soundSeat, '.opencode/skills/sound/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/sound-inspect/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(soundSeat, '.opencode/skills/sound-mixer/SKILL.md'))).toBe(true);
@@ -137,7 +152,7 @@ describe('foundry sound plant — files and mint', () => {
         millPlant?: string[];
       };
       expect(receipt.plant).toEqual(['sound']);
-      expect(receipt.soundPlant).toEqual(['sound', 'sound-inspect', 'sound-mixer']);
+      expect([...(receipt.soundPlant || [])].sort()).toEqual([...soundFiles.skills].sort());
       expect(receipt.millPlant).toEqual([]);
       const bed = report.checks.find((c) => c.id === 'sound-bed') as {
         status?: string;

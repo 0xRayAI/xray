@@ -18,20 +18,34 @@ const BLIP_AGENTS = ['blip.yml', 'blip-inspect.yml', 'blip-vibe.yml', 'blip-look
 
 describe('foundry blip-looker — plant seat', () => {
   it('fastens blip-looker next to blip + inspect + vibe (not costume)', () => {
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/skills/blip-looker/SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(root, 'scripts/foundry/plant/agents/blip-looker.yml'))).toBe(true);
-    expect(read('scripts/foundry/plant/skills/blip-looker/SKILL.md')).toMatch(/Ship bar is 8/);
-    expect(read('scripts/foundry/plant/skills/blip-looker/SKILL.md')).toMatch(/replay/i);
-    expect(read('scripts/foundry/plant/skills/blip-looker/SKILL.md')).not.toMatch(/\bhangar\b/i);
-    expect(read('scripts/foundry/plant/agents/blip-looker.yml')).toMatch(/mode: subagent/);
+    const millDir = path.dirname(requireCjs.resolve('@0xray/blip/blip-looker'));
+    expect(existsSync(path.join(millDir, 'plant/skills/blip-looker/SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(millDir, 'plant/agents/blip-looker.yml'))).toBe(true);
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-looker/SKILL.md'), 'utf8')).toMatch(
+      /Ship bar is 8/,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-looker/SKILL.md'), 'utf8')).toMatch(
+      /replay/i,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/skills/blip-looker/SKILL.md'), 'utf8')).not.toMatch(
+      /\bhangar\b/i,
+    );
+    expect(readFileSync(path.join(millDir, 'plant/agents/blip-looker.yml'), 'utf8')).toMatch(
+      /mode: subagent/,
+    );
     expect(read('scripts/foundry/blip.mjs')).toMatch(/look/);
     expect(read('scripts/foundry/cli.mjs')).toMatch(/blip render\|inspect\|vibe\|look/);
 
-    const { FACTORY_PLANT_CATALOG } = requireCjs(
-      path.join(root, 'scripts/foundry/mint-suit.cjs'),
-    ) as { FACTORY_PLANT_CATALOG: { blip: { skills: string[]; agents: string[] } } };
-    expect(FACTORY_PLANT_CATALOG.blip.skills).toEqual(BLIP_SKILLS);
-    expect(FACTORY_PLANT_CATALOG.blip.agents).toEqual(BLIP_AGENTS);
+    const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+      path.join(root, 'scripts/foundry/mill-plant.cjs'),
+    ) as {
+      selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[]; agents: string[] };
+      resolvePackageRoot: (name: string, fromDir: string) => string;
+    };
+    const blipFiles = selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'blip');
+    expect(blipFiles.skills).toEqual(expect.arrayContaining(BLIP_SKILLS));
+    expect(blipFiles.agents).toEqual(expect.arrayContaining(BLIP_AGENTS));
+    expect(blipFiles.skills).toContain('blip-looker');
   });
 
   it('mints the looker agent on a blip seat', () => {
@@ -49,8 +63,16 @@ describe('foundry blip-looker — plant seat', () => {
         `${JSON.stringify({ name: 'tiny-video', version: '0.0.1' }, null, 2)}\n`,
       );
       writeFileSync(path.join(tmp, 'foundry.json'), `${JSON.stringify({ plant: 'blip' }, null, 2)}\n`);
+      const { selectPlantFiles, resolvePackageRoot } = requireCjs(
+        path.join(root, 'scripts/foundry/mill-plant.cjs'),
+      ) as {
+        selectPlantFiles: (pkgRoot: string, plantId: string) => { skills: string[] };
+        resolvePackageRoot: (name: string, fromDir: string) => string;
+      };
       const inv = mintConsumerSuit(root, tmp, () => undefined);
-      expect(inv.blipPlant?.skills).toEqual(BLIP_SKILLS);
+      expect([...(inv.blipPlant?.skills || [])].sort()).toEqual(
+        [...selectPlantFiles(resolvePackageRoot('@0xray/blip', root), 'blip').skills].sort(),
+      );
       expect(existsSync(path.join(tmp, '.opencode/skills/blip-looker/SKILL.md'))).toBe(true);
       expect(existsSync(path.join(tmp, '.opencode/agents/blip-looker.yml'))).toBe(true);
     } finally {

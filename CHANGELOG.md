@@ -7,7 +7,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### 🔄 Changes
-- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look` and inspect still fastens plant law here (four organs: inspect / vibe / mixer / looker). Railway plant consumes the product mill, not a hand-vendored copy. 0xray stays 4.0.15.
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.
+- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy. 0xray stays 4.0.15.
 
 ---
 

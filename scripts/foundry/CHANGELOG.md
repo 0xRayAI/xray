@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-09-18
+
+Fasten is foundry-plant/0: mill packages declare plants in package.json (`mill.protocol`, prefix selection when skills/agents are omitted) and foundry copies organs from that package. Builtin catalog is mill+inspect only; foundry does not catalog mill organs. `foundry.json` `"plant": "blip"|"sound"` are package aliases for `@0xray/blip`, not skill lists. Unknown mill packages fail closed (`npm i`). Inventory records `millPackage` and `millProtocol` when a mill package was used.
+
 ## [0.1.11] - 2026-09-18
 
 Blip and sound mill drawers moved to `@0xray/blip` (wow-pass listen/cel + looker organ in that package). This foundry keeps fasten + inspect + `foundry blip|sound` shims including `blip look` / `blip replay`. Depend on `@0xray/blip@^0.1.0`. Stamp 0.1.11 on plant agent YAMLs and llms.txt. Four organs: inspect = file/duration, vibe = stamp density, mixer = ears, looker = friend hitting replay (bar 8).
