@@ -28,11 +28,11 @@ const SCENE_PAIRS = [
   {
     id: "legacy",
     hex: TRON.legacy.hex,
-    bed: [6, 8, 22],
-    ground: [4, 5, 14],
+    bed: [4, 8, 28],
+    ground: [4, 5, 16],
     jewel: TRON.legacy.rgb,
     rim: HOUSE.cyan,
-    haze: [52, 22, 6],
+    haze: [48, 20, 8],
   },
   {
     id: "guard",
@@ -49,7 +49,7 @@ const SCENE_PAIRS = [
     bed: [8, 7, 16],
     ground: [6, 5, 12],
     jewel: TRON.clu.rgb,
-    rim: HOUSE.gold,
+    rim: HOUSE.cyan,
     haze: [54, 28, 8],
   },
   {
@@ -64,11 +64,11 @@ const SCENE_PAIRS = [
   {
     id: "ember",
     hex: TRON.ember.hex,
-    bed: [8, 6, 12],
-    ground: [6, 4, 9],
+    bed: [18, 6, 6],
+    ground: [10, 4, 5],
     jewel: TRON.ember.rgb,
-    rim: HOUSE.ink,
-    haze: [48, 18, 8],
+    rim: HOUSE.cyan,
+    haze: [68, 24, 8],
   },
 ];
 
@@ -101,14 +101,14 @@ function destinationMarks(phrase) {
   const turn = rippel.phraseWeight(phrase, "turn");
   const tag = rippel.phraseWeight(phrase, "tag");
   const peak = rippel.rupturePeak(phrase);
-  const bloom = clamp01(0.18 * hook + 1.12 * turn + 0.72 * tag + 0.38 * peak);
+  const bloom = clamp01(0.1 * hook + 1.24 * turn + 0.62 * tag + 0.28 * peak);
   return {
     hook,
     turn,
     tag,
     peak,
     bloom,
-    hold: clamp01(0.22 * hook + 0.64 * turn + 0.92 * tag),
+    hold: clamp01(0.16 * hook + 0.58 * turn + 0.96 * tag),
   };
 }
 
@@ -132,6 +132,28 @@ function mixPixel(buf, width, height, x, y, color, alpha) {
   buf[i] = (buf[i] + (color[0] - buf[i]) * a + 0.5) | 0;
   buf[i + 1] = (buf[i + 1] + (color[1] - buf[i + 1]) * a + 0.5) | 0;
   buf[i + 2] = (buf[i + 2] + (color[2] - buf[i + 2]) * a + 0.5) | 0;
+}
+
+function strokeSeg(buf, width, height, x0, y0, x1, y1, color, alpha, half) {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.5) {
+    mixPixel(buf, width, height, x0, y0, color, alpha);
+    return;
+  }
+  const steps = Math.max(2, (len / 0.65) | 0);
+  const r = half > 0.6 ? half : 0.6;
+  const nx = -dy / len;
+  const ny = dx / len;
+  for (let s = 0; s <= steps; s++) {
+    const u = s / steps;
+    const x = x0 + dx * u;
+    const y = y0 + dy * u;
+    for (let d = -r; d <= r; d += 0.7) {
+      mixPixel(buf, width, height, x + nx * d, y + ny * d, color, alpha);
+    }
+  }
 }
 
 function paintDestinationFrame(opts) {
@@ -159,10 +181,12 @@ function paintDestinationFrame(opts) {
   });
   const phrase = rippel.phraseOf(checksum, t);
   const marks = destinationMarks(phrase);
-  const horizonY = Math.round(height * (0.42 - 0.02 * marks.bloom));
+  const horizonY = Math.round(height * (0.4 - 0.03 * marks.bloom));
   const cx = (width - 1) * 0.5;
-  const roadHalf = width * 0.4;
-  const sunR = 28 + 26 * marks.bloom;
+  const roadHalf = width * 0.42;
+  const sunR = 38 + 52 * marks.bloom;
+  const bandH = 88 + 120 * marks.bloom;
+  const scroll = t * 18;
 
   for (let y = 0; y < height; y++) {
     const skyU = y < horizonY ? 1 - y / Math.max(1, horizonY) : 0;
@@ -170,65 +194,80 @@ function paintDestinationFrame(opts) {
     for (let x = 0; x < width; x++) {
       let color;
       if (y <= horizonY) {
-        const wash = mixRgb(pair.bed, pair.haze, 0.18 + skyU * (0.42 + 0.5 * marks.bloom));
-        const band = clamp01(1 - Math.abs(y - horizonY) / (28 + 48 * marks.bloom));
-        color = mixRgb(wash, pair.jewel, band * (0.42 + 0.58 * marks.bloom));
+        const lift = (1 - skyU) * (0.38 + 0.58 * marks.bloom);
+        const wash = mixRgb(pair.bed, pair.haze, 0.12 + skyU * 0.2 + lift);
+        const band = clamp01(1 - (horizonY - y) / bandH);
+        color = mixRgb(wash, pair.jewel, band * (0.44 + 0.52 * marks.bloom));
+        if (Math.abs(y - horizonY) < 3 + 7 * marks.bloom) {
+          color = mixRgb(color, pair.jewel, 0.82);
+        }
       } else {
-        color = mixRgb(pair.ground, pair.haze, 0.12 + 0.18 * groundU);
-        const half = 3.2 + groundU * roadHalf;
+        const reflect = clamp01(1 - groundU * 3.2) * (0.16 + 0.38 * marks.bloom);
+        color = mixRgb(mixRgb(pair.ground, pair.haze, 0.1 + 0.16 * groundU), pair.jewel, reflect);
+        const roadStart = horizonY + Math.max(10, sunR * 0.55);
+        const half = 8 + groundU * roadHalf;
         const dx = Math.abs(x - cx);
-        if (dx <= half) {
-          const asphalt = mixRgb([18, 18, 24], pair.haze, 0.16 + 0.2 * marks.hold);
-          color = asphalt;
+        if (y > roadStart && dx <= half) {
+          color = mixRgb([34, 26, 30], pair.jewel, 0.1 + 0.16 * marks.hold);
           const edge = Math.abs(dx - half);
-          if (edge < 4.6) color = pair.rim;
-          const dash = ((y * 0.07 + t * 22) | 0) % 6 < 3;
-          if (dx < 3.4 && dash) color = mixRgb(color, pair.jewel, 0.72 + 0.28 * marks.bloom);
+          if (edge < 5.4 + 6 * groundU) color = pair.rim;
+          const dash = ((y * 0.085 + scroll) | 0) % 7 < 3;
+          if (dx < 4.2 && dash) color = mixRgb(color, pair.jewel, 0.78 + 0.22 * marks.bloom);
         }
       }
       putPixel(buf, width, height, x, y, color);
     }
   }
 
-  const gridA = 0.22 + 0.38 * marks.hold;
-  for (let i = 1; i <= 10; i++) {
-    const u = (i / 10) * (i / 10);
-    const gy = horizonY + 2 + Math.round((height - 1 - horizonY) * u);
-    for (let x = 0; x < width; x++) mixPixel(buf, width, height, x, gy, pair.rim, gridA);
+  const gridA = 0.48 + 0.42 * marks.hold;
+  const floorH = Math.max(1, height - 1 - horizonY);
+  for (let i = 1; i <= 12; i++) {
+    const u = (i / 12) * (i / 12);
+    const gy = horizonY + 2 + Math.round(floorH * u + ((scroll * 0.35) % 10));
+    strokeSeg(buf, width, height, 0, gy, width - 1, gy, pair.rim, gridA, 1.15);
   }
-  for (let i = -8; i <= 8; i++) {
+  const sunY = horizonY - Math.max(12, sunR * 0.22);
+  const gridStart = horizonY + Math.max(10, sunR * 0.55);
+  for (let i = -7; i <= 7; i++) {
     if (i === 0) continue;
-    const x1 = cx + i * (width * 0.085);
-    const steps = 48;
-    for (let s = 0; s <= steps; s++) {
-      const u = s / steps;
-      mixPixel(buf, width, height, cx + (x1 - cx) * u, horizonY + (height - 1 - horizonY) * u, pair.rim, gridA);
-    }
+    const x1 = cx + i * (width * 0.092);
+    const u0 = (gridStart - horizonY) / Math.max(1, height - 1 - horizonY);
+    strokeSeg(
+      buf,
+      width,
+      height,
+      cx + (x1 - cx) * u0,
+      gridStart,
+      x1,
+      height - 1,
+      pair.rim,
+      gridA,
+      1.05,
+    );
   }
 
-  const sunY = horizonY - 6;
   rippel.stampFocusDisc(buf, width, height, cx, sunY, sunR, pair.jewel, {
     rim: 2,
-    glow: 10 + 14 * marks.bloom,
-    glowAlpha: 0.28 + 0.48 * marks.bloom,
+    glow: 22 + 38 * marks.bloom,
+    glowAlpha: 0.36 + 0.52 * marks.bloom,
     rimColor: pair.rim,
   });
-  for (let i = 0; i < 7; i++) {
-    const ang = -Math.PI + (i / 6) * Math.PI;
-    const reach = 28 + 70 * marks.bloom;
-    const steps = Math.max(8, (reach / 3) | 0);
-    for (let s = 1; s <= steps; s++) {
-      const u = s / steps;
-      mixPixel(
-        buf,
-        width,
-        height,
-        cx + Math.cos(ang) * reach * u,
-        sunY + Math.sin(ang) * reach * 0.42 * u,
-        pair.jewel,
-        0.28 + 0.42 * marks.bloom * (1 - u),
-      );
-    }
+  const rayN = 9;
+  for (let i = 0; i < rayN; i++) {
+    const ang = -Math.PI + (i / (rayN - 1)) * Math.PI;
+    const reach = 36 + 150 * marks.bloom;
+    strokeSeg(
+      buf,
+      width,
+      height,
+      cx,
+      sunY,
+      cx + Math.cos(ang) * reach,
+      sunY + Math.sin(ang) * reach * 0.38,
+      pair.jewel,
+      0.22 + 0.55 * marks.bloom,
+      1.1 + 1.6 * marks.bloom,
+    );
   }
 
   return {

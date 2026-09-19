@@ -29,6 +29,9 @@ describe('foundry blip-scene — Tron destination, not a foundry', () => {
     expect(TRON.ember.hex).toBe('#ED681F');
     expect(SCENE_PAIRS.map((p) => p.id)).toEqual(['legacy', 'guard', 'clu', 'poster', 'ember']);
     expect(SCENE_PAIRS.every((p) => p.hex.startsWith('#'))).toBe(true);
+    expect(SCENE_PAIRS.every((p) => p.rim[0] === 61 && p.rim[1] === 224 && p.rim[2] === 232)).toBe(
+      true,
+    );
     expect(pickPair('0xdeadbeef').id).toBeTruthy();
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/destination/);
     expect(read('scripts/foundry/plant/motions/registry.json')).toMatch(/#DF740C/);

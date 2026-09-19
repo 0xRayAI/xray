@@ -42,4 +42,4 @@ Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a comic two
 
 ## Design opt — `destination`
 
-Not a Rippel import, not a `--look`, and **not a foundry**. Scene mixer: a dark bed paired with a Tron orange jewel. `--mode motion:destination` paints a road into a colored horizon. House void / cyan stay (program line). Jewels are `#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`. Hook sets the road. The jewel cut blooms the horizon. Tag holds. Same 4.44s bed / vibe / looker bar 8.
+Not a Rippel import, not a `--look`, and **not a foundry**. Scene mixer: a dark bed paired with a Tron orange jewel. `--mode motion:destination` paints a road into a colored horizon. House cyan is the program rim on every pair. Jewels are `#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`. Hook sets the road. The jewel cut blooms the horizon. Tag holds. Same 4.44s bed / vibe / looker bar 8.
