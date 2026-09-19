@@ -101,8 +101,11 @@ function destinationMarks(phrase) {
   const turn = rippel.phraseWeight(phrase, "turn");
   const tag = rippel.phraseWeight(phrase, "tag");
   const peak = rippel.rupturePeak(phrase);
+  const section = phrase && phrase.section;
   let bloom = clamp01(0.08 * hook + 1.22 * turn + 0.88 * tag + 0.24 * peak);
-  if (tag > 0.45) bloom = clamp01(Math.max(bloom, 0.9));
+  if (section === "hook") bloom = 0.1;
+  else if (section === "turn") bloom = clamp01(0.62 + 0.38 * Math.max(turn, peak));
+  else if (section === "tag" || tag > 0.45) bloom = 0.92;
   return {
     hook,
     turn,
@@ -187,7 +190,7 @@ function paintDestinationFrame(opts) {
   const roadHalf = width * 0.42;
   const sunR = 38 + 52 * marks.bloom;
   const bandH = 88 + 120 * marks.bloom;
-  const scroll = t * 18;
+  const scroll = t * 72;
 
   for (let y = 0; y < height; y++) {
     const skyU = y < horizonY ? 1 - y / Math.max(1, horizonY) : 0;
@@ -224,7 +227,7 @@ function paintDestinationFrame(opts) {
   const floorH = Math.max(1, height - 1 - horizonY);
   for (let i = 1; i <= 12; i++) {
     const u = (i / 12) * (i / 12);
-    const gy = horizonY + 2 + Math.round(floorH * u + ((scroll * 0.35) % 10));
+    const gy = horizonY + 2 + Math.round(floorH * u + (scroll % 36));
     strokeSeg(buf, width, height, 0, gy, width - 1, gy, pair.rim, gridA, 1.15);
   }
   const sunY = horizonY - Math.max(12, sunR * 0.22);
