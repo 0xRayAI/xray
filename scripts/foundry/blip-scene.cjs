@@ -187,9 +187,10 @@ function strokeSeg(buf, width, height, x0, y0, x1, y1, color, alpha, half) {
 }
 
 function paintFloor(buf, width, height, cx, horizonY, pair, marks, t) {
+  if (pair.motif === "sparks") return;
   const floorH = Math.max(1, height - 1 - horizonY);
-  const gridN = pair.motif === "sparks" ? 3 : 12;
-  const gridA = pair.motif === "sparks" ? 0.22 + 0.28 * marks.hold : 0.42 + 0.5 * marks.hold;
+  const gridN = 12;
+  const gridA = 0.42 + 0.5 * marks.hold;
   const phase = t * marks.speed;
   for (let i = 0; i < gridN; i++) {
     const z = (i / gridN + phase) % 1;
@@ -197,11 +198,10 @@ function paintFloor(buf, width, height, cx, horizonY, pair, marks, t) {
     const gy = horizonY + 2 + Math.round(floorH * z * z);
     strokeSeg(buf, width, height, 0, gy, width - 1, gy, pair.rim, gridA * (0.45 + 0.55 * z), 1.2);
   }
-  const rays = pair.motif === "sparks" ? 2 : 8;
   const start = horizonY + 14;
-  for (let i = -rays; i <= rays; i++) {
+  for (let i = -8; i <= 8; i++) {
     if (i === 0) continue;
-    const x1 = cx + i * (width * (pair.motif === "sparks" ? 0.16 : 0.09));
+    const x1 = cx + i * (width * 0.09);
     const u0 = (start - horizonY) / floorH;
     strokeSeg(buf, width, height, cx + (x1 - cx) * u0, start, x1, height - 1, pair.rim, gridA, 1.05);
   }
@@ -249,9 +249,10 @@ function paintSun(buf, width, height, cx, sunY, sunR, pair, marks) {
 }
 
 function paintGate(buf, width, height, cx, sunY, pair, marks) {
-  const z = 0.12 + 0.88 * marks.approach;
-  const rx = 22 + width * 0.4 * z;
-  const ry = 20 + height * 0.36 * z;
+  const grow = marks.clock === "hook" ? 0.055 + 0.04 * marks.approach : marks.approach;
+  const z = 0.08 + 0.92 * grow;
+  const rx = 16 + width * 0.42 * z;
+  const ry = 14 + height * 0.34 * z;
   const thick = Math.max(10, rx * 0.1 + 8 * marks.bloom);
   const inner = 1 - thick / Math.max(rx, ry);
   const y0 = Math.max(0, (sunY - ry - thick) | 0);
@@ -273,14 +274,16 @@ function paintGate(buf, width, height, cx, sunY, pair, marks) {
       if (Math.abs(d - mid) < 0.02) mixPixel(buf, width, height, x, y, pair.jewel, 0.28 * marks.bloom);
     }
   }
-  const groundY = Math.min(height - 1, sunY + ry + 18 + 40 * z);
-  const postW = Math.max(6, thick * 0.55);
-  for (const side of [-1, 1]) {
-    const fx = cx + side * rx * 0.62;
-    const top = sunY + ry * 0.15;
-    for (let y = Math.round(top); y <= Math.round(groundY); y++) {
-      for (let x = Math.round(fx - postW); x <= Math.round(fx + postW); x++) {
-        putPixel(buf, width, height, x, y, pair.rim);
+  if (marks.clock !== "hook") {
+    const groundY = Math.min(height - 1, sunY + ry + 18 + 40 * z);
+    const postW = Math.max(6, thick * 0.55);
+    for (const side of [-1, 1]) {
+      const fx = cx + side * rx * 0.62;
+      const top = sunY + ry * 0.15;
+      for (let y = Math.round(top); y <= Math.round(groundY); y++) {
+        for (let x = Math.round(fx - postW); x <= Math.round(fx + postW); x++) {
+          putPixel(buf, width, height, x, y, pair.rim);
+        }
       }
     }
   }
@@ -293,45 +296,47 @@ function paintGate(buf, width, height, cx, sunY, pair, marks) {
 }
 
 function paintFireBed(buf, width, height, cx, horizonY, pair, marks) {
-  const h = 52 + 150 * marks.bloom;
-  const w = 90 + 260 * marks.bloom;
-  const y0 = Math.max(0, (horizonY - h) | 0);
-  const y1 = Math.min(height - 1, (horizonY + 36) | 0);
-  const x0 = Math.max(0, (cx - w) | 0);
-  const x1 = Math.min(width - 1, (cx + w) | 0);
-  for (let y = y0; y <= y1; y++) {
-    for (let x = x0; x <= x1; x++) {
-      const dx = (x - cx) / w;
-      const dy = (horizonY - y) / h;
-      const d = dx * dx + dy * dy * 0.48;
-      if (d > 1) continue;
-      mixPixel(buf, width, height, x, y, pair.jewel, (1 - d) * (0.22 + 0.58 * marks.bloom));
+  const tongues = 9 + ((8 * marks.bloom) | 0);
+  const core = mixRgb(pair.jewel, [255, 220, 120], 0.45);
+  for (let i = 0; i < tongues; i++) {
+    const u = tongues === 1 ? 0 : i / (tongues - 1) - 0.5;
+    const jag = 0.62 + 0.38 * Math.abs(Math.sin(u * 11.3 + i * 1.7));
+    const h = (42 + 230 * marks.bloom) * jag * (0.7 + 0.3 * (1 - Math.abs(u)));
+    const w = 14 + 36 * marks.bloom + 22 * (1 - Math.abs(u));
+    const px = cx + u * (80 + 360 * marks.bloom);
+    const y0 = Math.max(0, (horizonY - h) | 0);
+    const y1 = Math.min(height - 1, (horizonY + 20) | 0);
+    for (let y = y0; y <= y1; y++) {
+      const rise = clamp01((horizonY - y) / Math.max(1, h));
+      const half = w * Math.pow(Math.max(0, 1 - rise), 0.55);
+      if (half <= 0.8) continue;
+      for (let x = Math.round(px - half); x <= Math.round(px + half); x++) {
+        const edge = Math.abs(x - px) / half;
+        const heat = clamp01((1 - edge * edge) * (0.28 + 0.72 * (1 - rise)) * (0.45 + 0.55 * marks.bloom));
+        mixPixel(buf, width, height, x, y, pair.jewel, heat);
+        if (edge < 0.35 && rise < 0.72) mixPixel(buf, width, height, x, y, core, heat * 0.55);
+      }
     }
   }
 }
 
 function paintSparks(buf, width, height, cx, horizonY, pair, marks, t, seed) {
-  const n = 16 + ((20 * marks.bloom) | 0);
-  const floorH = Math.max(1, height - 1 - horizonY);
+  const n = 20 + ((36 * marks.bloom) | 0);
   const jag = seedInt(seed);
+  const liftH = 70 + 260 * marks.bloom;
+  const span = 40 + 280 * marks.bloom;
   for (let i = 0; i < n; i++) {
-    const z = (0.12 + ((jag >>> (i % 24)) & 15) / 22 + t * marks.speed * 0.65 + i * 0.07) % 1;
-    const gy = horizonY + 10 + Math.round(floorH * z * z);
+    const rise = (0.08 + ((jag >>> (i % 24)) & 15) / 18 + t * marks.speed * 0.55 + i * 0.05) % 1;
     const side = i % 2 ? 1 : -1;
-    const spread = (12 + z * width * 0.4) * side;
-    const gx = cx + spread * (0.22 + ((jag >>> ((i + 3) % 20)) & 7) / 10);
-    const r = 4.2 + 8.4 * z + 5.2 * marks.bloom;
+    const drift = ((jag >>> ((i + 5) % 20)) & 7) / 10;
+    const gx = cx + side * span * (0.12 + drift) * (0.35 + 0.65 * rise);
+    const gy = horizonY - 6 - rise * liftH;
+    const r = 2.4 + 3.2 * (1 - rise) + 4.8 * marks.bloom;
     rippel.stampFocusDisc(buf, width, height, gx, gy, r, pair.jewel, {
-      rim: 1,
-      glow: 8 + 14 * marks.bloom,
-      glowAlpha: 0.55,
-      rimColor: pair.rim,
-    });
-    rippel.stampFocusDisc(buf, width, height, gx, gy - r * 0.7, r * 0.45, mixRgb(pair.jewel, HOUSE.ink, 0.15), {
       rim: 0,
-      glow: 4 + 6 * marks.bloom,
-      glowAlpha: 0.4,
-      rimColor: pair.rim,
+      glow: 7 + 16 * marks.bloom,
+      glowAlpha: 0.62,
+      rimColor: pair.jewel,
     });
   }
 }
@@ -388,10 +393,12 @@ function paintDestinationFrame(opts) {
         const roadStart = horizonY + Math.max(12, sunR * 0.5);
         const half = 10 + groundU * roadHalf;
         const dx = Math.abs(x - cx);
-        if (y > roadStart && dx <= half) {
+          if (y > roadStart && dx <= half) {
           color = mixRgb([36, 28, 32], pair.jewel, 0.12 + 0.18 * marks.hold);
           const edge = Math.abs(dx - half);
-          if (edge < 6 + 7 * groundU) color = pair.rim;
+          if (edge < 6 + 7 * groundU) {
+            color = pair.motif === "sparks" ? mixRgb(color, pair.jewel, 0.62) : pair.rim;
+          }
           const dash = ((y * 0.05 + scroll) | 0) % 9 < 4;
           if (dx < 5.2 && dash) color = mixRgb(color, pair.jewel, 0.8 + 0.2 * marks.bloom);
         }
