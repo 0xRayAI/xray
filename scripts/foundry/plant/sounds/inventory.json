@@ -26,11 +26,11 @@
       "id": "ambient",
       "status": "live",
       "bpm": [70, 80, 90],
-      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "metal-air", "mixer"],
+      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "metal-air", "vinyl-dust", "static-drop", "mixer"],
       "mill": "PASS",
       "mix": 10,
-      "taste": 6,
-      "notes": "Easy-listening pad. Missing vinyl/static drop. Destination used to alias here — wrong."
+      "taste": 7,
+      "notes": "Easy-listening pad plus vinyl dust and a static jewel. Destination no longer aliases here."
     },
     {
       "id": "techno",
@@ -46,21 +46,21 @@
       "id": "phonk",
       "status": "live",
       "bpm": [130, 140, 150],
-      "voices": ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "mixer"],
+      "voices": ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "mixer"],
       "mill": "PASS",
       "mix": 10,
-      "taste": 6,
-      "notes": "808 is a pitch-drop membrane. Reese is two detuned saws. Not Piddy drift / slide / chopped vocal."
+      "taste": 7,
+      "notes": "808-slide on even beats + jewel. Reese has growl. Chopped vocal still a stab."
     },
     {
       "id": "jazz",
       "status": "live",
       "bpm": [100, 110, 120],
-      "voices": ["membrane-kick", "metal-ride", "brush-snare", "upright-bass", "sax-lead", "mixer"],
+      "voices": ["membrane-kick", "metal-ride", "brush-snare", "upright-bass", "sax-lead", "vinyl-dust", "mixer"],
       "mill": "PASS",
       "mix": 10,
-      "taste": 6,
-      "notes": "Synthetic sax + brush. No vinyl dust."
+      "taste": 7,
+      "notes": "Synthetic sax + brush + light vinyl."
     },
     {
       "id": "rock",
@@ -69,38 +69,38 @@
       "voices": ["membrane-kick", "metal-hat", "metal-crash", "duo-guitar", "formant-vox", "mixer"],
       "mill": "PASS",
       "mix": 10,
-      "taste": 5,
-      "notes": "Guitar is duo-bass. Vox is a formant. Thin stack."
+      "taste": 7,
+      "notes": "Distorted mid guitar stack, not duo-bass."
     },
     {
       "id": "timeless",
       "status": "live",
       "bpm": [70, 80, 90],
-      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "mixer"],
+      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "vinyl-dust", "static-drop", "mixer"],
       "mill": "PASS",
       "mix": 10,
-      "taste": 6,
-      "notes": "Country alias. Easy listening without static drop."
+      "taste": 7,
+      "notes": "Country alias. Vinyl + static jewel on the turn."
     },
     {
       "id": "destination",
       "status": "live",
       "bpm": [90, 100, 110],
-      "voices": ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "mixer"],
-      "mill": "WIP",
+      "voices": ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "808-slide", "mixer"],
+      "mill": "PASS",
       "mix": null,
-      "taste": 5,
-      "notes": "Night-drive lock for destination art. Not ambient. 808 + reese + vinyl + static jewel."
+      "taste": 7,
+      "notes": "Night-drive lock. 808-slide + vinyl + static jewel."
     },
     {
       "id": "dubstep",
-      "status": "need",
+      "status": "live",
       "bpm": [70, 140, 150],
       "voices": ["wobble-bass", "membrane-kick", "snare-clap", "metal-hat", "drop-impact", "mixer"],
-      "mill": "NEED",
+      "mill": "PASS",
       "mix": null,
-      "taste": 0,
-      "notes": "Half-time kick. Wobble LFO. Turn is the drop. Not a techno alias."
+      "taste": 7,
+      "notes": "Half-time kick. Wobble LFO. Turn is the drop. Not a techno alias. Mixer matrix still six."
     }
   ],
   "voices": [
@@ -186,34 +186,34 @@
       "status": "live",
       "lineage": "mill",
       "taste": 6,
-      "notes": "Crackle bed for destination night-drive. Need on ambient/jazz/timeless."
+      "notes": "Crackle bed on destination, ambient, jazz, timeless."
     },
     {
       "id": "static-drop",
       "status": "live",
       "lineage": "mill",
       "taste": 6,
-      "notes": "Band-limited noise jewel on the turn. Easy-listening / night-drive drop. Need on ambient/timeless."
+      "notes": "Band-limited noise jewel on destination, ambient, timeless."
     },
     {
       "id": "wobble-bass",
-      "status": "need",
+      "status": "live",
       "lineage": "piddy / dubstep",
-      "taste": 0,
+      "taste": 7,
       "notes": "LFO-cutoff bass. Dubstep body."
     },
     {
       "id": "drop-impact",
-      "status": "need",
+      "status": "live",
       "lineage": "piddy / dubstep",
-      "taste": 0,
+      "taste": 7,
       "notes": "Half-time snare + sub hit on the jewel."
     },
     {
       "id": "808-slide",
-      "status": "need",
+      "status": "live",
       "lineage": "piddy phonk",
-      "taste": 0,
+      "taste": 7,
       "notes": "Portamento 808, not a one-shot membrane."
     },
     {

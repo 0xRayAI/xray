@@ -36,8 +36,9 @@ describe('foundry sound inventory — art locks a genre', () => {
     expect(dest?.voices).toEqual(
       expect.arrayContaining(['membrane-808', 'reese-bass', 'vinyl-dust', 'static-drop']),
     );
-    expect(inv.genres.find((g) => g.id === 'dubstep')?.status).toBe('need');
-    expect(inv.voices.some((v) => v.id === '808-slide' && v.status === 'need')).toBe(true);
+    expect(inv.genres.find((g) => g.id === 'dubstep')?.status).toBe('live');
+    expect(inv.voices.some((v) => v.id === '808-slide' && v.status === 'live')).toBe(true);
+    expect(inv.voices.some((v) => v.id === 'wobble-bass' && v.status === 'live')).toBe(true);
     expect(read('scripts/foundry/plant/sounds/SOUND-INVENTORY.md')).toMatch(/night-drive/);
     expect(read('scripts/foundry/sound-rippel.cjs')).not.toMatch(/destination:\s*"ambient"/);
   });
@@ -89,5 +90,42 @@ describe('foundry sound inventory — art locks a genre', () => {
     });
     expect(bed.genre.id).toBe('destination');
     expect(sound.evaluateMetrics(bed.samples, 44100).status).toBe('PASS');
+  });
+
+  it('tastes every live body at ship bar 8 and inspects dubstep', { timeout: 40000 }, () => {
+    const { tasteMatrix, SHIP_BAR } = requireCjs(path.join(root, 'scripts/foundry/sound-taste.cjs')) as {
+      tasteMatrix: () => {
+        status: string;
+        shipBar: number;
+        seats: Array<{ genre: string; score: number; status: string; fails: string[] }>;
+      };
+      SHIP_BAR: number;
+    };
+    const sound = requireCjs(path.join(root, 'scripts/foundry/sound-bed.cjs')) as {
+      renderSamples: (opts: { brief: string; genre: string; seconds: number; syncopate?: boolean }) => {
+        genre: { id: string; voices: string[] };
+        samples: Float64Array;
+      };
+      evaluateMetrics: (samples: Float64Array, sampleRate: number) => { status: string };
+    };
+    expect(SHIP_BAR).toBe(8);
+    const report = tasteMatrix();
+    expect(report.shipBar).toBe(8);
+    expect(report.seats.map((s) => s.genre)).toEqual(
+      expect.arrayContaining(['destination', 'phonk', 'dubstep', 'ambient']),
+    );
+    expect(report.status, JSON.stringify(report.seats.filter((s) => s.status === 'FAIL'))).toBe(
+      'PASS',
+    );
+    expect(report.seats.every((s) => s.score + 1e-9 >= 8)).toBe(true);
+    const step = sound.renderSamples({
+      brief: 'half time drop',
+      genre: 'dubstep',
+      seconds: 4.44,
+      syncopate: true,
+    });
+    expect(step.genre.id).toBe('dubstep');
+    expect(step.genre.voices).toEqual(expect.arrayContaining(['wobble-bass', 'drop-impact']));
+    expect(sound.evaluateMetrics(step.samples, 44100).status).toBe('PASS');
   });
 });

@@ -210,12 +210,13 @@ const TEMPO_TABLES = {
   rock: [110, 120, 130],
   timeless: [70, 80, 90],
   destination: [90, 100, 110],
+  dubstep: [70, 140, 150],
 };
 
 const GENRES = {
   ambient: {
     bpm: 90,
-    voices: ["triangle-pad", "rhodes-keys", "membrane-sub", "metal-air", "mixer"],
+    voices: ["triangle-pad", "rhodes-keys", "membrane-sub", "metal-air", "vinyl-dust", "static-drop", "mixer"],
   },
   techno: {
     bpm: 128,
@@ -223,11 +224,11 @@ const GENRES = {
   },
   phonk: {
     bpm: 150,
-    voices: ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "mixer"],
+    voices: ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "mixer"],
   },
   jazz: {
     bpm: 120,
-    voices: ["membrane-kick", "metal-ride", "brush-snare", "upright-bass", "sax-lead", "mixer"],
+    voices: ["membrane-kick", "metal-ride", "brush-snare", "upright-bass", "sax-lead", "vinyl-dust", "mixer"],
   },
   rock: {
     bpm: 140,
@@ -235,11 +236,15 @@ const GENRES = {
   },
   timeless: {
     bpm: 90,
-    voices: ["triangle-pad", "rhodes-keys", "membrane-sub", "mixer"],
+    voices: ["triangle-pad", "rhodes-keys", "membrane-sub", "vinyl-dust", "static-drop", "mixer"],
   },
   destination: {
     bpm: 100,
-    voices: ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "mixer"],
+    voices: ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "808-slide", "mixer"],
+  },
+  dubstep: {
+    bpm: 140,
+    voices: ["wobble-bass", "membrane-kick", "snare-clap", "metal-hat", "drop-impact", "mixer"],
   },
 };
 
@@ -251,6 +256,7 @@ const SCALES = {
   rock: [329.63, 392.0, 440.0, 493.88, 587.33],
   timeless: [261.63, 311.13, 349.23, 392.0, 466.16, 65.41],
   destination: [32.7, 43.65, 55.0, 65.41, 82.41],
+  dubstep: [55.0, 73.42, 82.41, 110.0, 146.83],
 };
 
 function dbLin(db) {
@@ -343,6 +349,7 @@ function padTones(genreId, scale) {
   if (genreId === "ambient" || genreId === "timeless") return [s[0] * 0.75, s[0], s[1], s[3]];
   if (genreId === "jazz") return [s[0], s[2], s[3], s[0] * 2];
   if (genreId === "phonk" || genreId === "destination") return [s[0], s[0] * 1.5, s[3]];
+  if (genreId === "dubstep") return [s[0], s[1], s[3]];
   if (genreId === "rock") return [s[0] * 0.5, s[0], s[2]];
   return [s[0], s[2], s[3]];
 }
@@ -944,6 +951,86 @@ function renderStaticDrop({ sampleRate, velocity }) {
   return out;
 }
 
+function render808Slide({ sampleRate, fromHz, toHz, velocity, hold }) {
+  const start = Math.max(28, fromHz || 55);
+  const end = Math.max(24, toHz || RIPPEL.phonk808.noteHz);
+  const glide = 0.1;
+  const held = hold || 0.28;
+  const n = Math.floor((glide + held + 0.52) * sampleRate);
+  const out = new Float64Array(n);
+  const floor = CRYSTAL.eightOhEightFloorHz;
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const u = t < glide ? t / glide : 1;
+    const f = Math.max(floor, start * Math.pow(end / start, u));
+    const env = adsr(t, 0.002, 0.22, 0.48, 0.42, held);
+    out[i] = (velocity || 0.7) * env * Math.sin(phase);
+    phase += (2 * Math.PI * f) / sampleRate;
+  }
+  return out;
+}
+
+function renderWobble({ sampleRate, freq, velocity, hold, rate }) {
+  const hz = Math.max(40, freq || 55);
+  const lfo = rate || 6.5;
+  const dur = (hold || 0.42) + 0.28;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  let ph = 0;
+  let y = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const env = adsr(t, 0.01, 0.12, 0.8, 0.18, hold || 0.3);
+    const sweep = 0.5 + 0.5 * Math.sin(2 * Math.PI * lfo * t);
+    const cut = 90 + 1600 * sweep * sweep;
+    const rc = 1 / (2 * Math.PI * cut);
+    const a = 1 / (rc * sampleRate + 1);
+    const raw = sawBlep(ph, (2 * Math.PI * hz) / sampleRate);
+    y += a * (raw - y);
+    out[i] = (velocity || 0.4) * env * y;
+    ph += (2 * Math.PI * hz) / sampleRate;
+  }
+  return out;
+}
+
+function renderDropImpact({ sampleRate, velocity }) {
+  const n = Math.floor(0.55 * sampleRate);
+  const out = new Float64Array(n);
+  const noise = noiseLcg(0xd05);
+  const hp = highpass(180, sampleRate);
+  const lp = lowpass(1800, sampleRate);
+  let phase = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const env = Math.exp(-t / 0.09);
+    const body = Math.sin(phase) * Math.exp(-t / 0.07);
+    const clap = (noise() * 2 - 1) * Math.exp(-t / 0.04);
+    out[i] = (velocity || 0.7) * env * lp.step(hp.step(body * 0.7 + clap * 0.3));
+    phase += (2 * Math.PI * 55) / sampleRate;
+  }
+  return out;
+}
+
+function renderRockGuitar({ sampleRate, freq, velocity, hold }) {
+  const hz = Math.max(80, freq || 220);
+  const dur = 0.02 + (hold || 0.16) + 0.1;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  const mid = bandpass(980, sampleRate);
+  const lp = lowpass(2800, sampleRate);
+  let ph = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const env = adsr(t, 0.006, 0.08, 0.42, 0.09, hold || 0.14);
+    const raw = sawBlep(ph, (2 * Math.PI * hz) / sampleRate);
+    const grit = Math.max(-1, Math.min(1, raw * 2.8));
+    out[i] = (velocity || 0.4) * env * lp.step(mid.step(grit) * 0.78 + grit * 0.22);
+    ph += (2 * Math.PI * hz) / sampleRate;
+  }
+  return out;
+}
+
 function renderBrush({ sampleRate, velocity, rng }) {
   const p = RIPPEL.jazzBrush;
   const n = Math.floor((p.attack + p.decay + p.release + 0.04) * sampleRate);
@@ -1213,7 +1300,10 @@ function motifColorVoice(genreId, hz, sampleRate, hold) {
     return renderSax({ sampleRate, freq: note * 2, velocity: 0.34, hold: held * 0.6 });
   }
   if (genreId === "rock") {
-    return renderFormant({ sampleRate, freq: note, velocity: 0.24, hold: held * 0.24 });
+    return renderRockGuitar({ sampleRate, freq: note, velocity: 0.28, hold: held * 0.28 });
+  }
+  if (genreId === "dubstep") {
+    return renderWobble({ sampleRate, freq: Math.max(note * 0.5, 50), velocity: 0.4, hold: held * 0.7, rate: 7.2 });
   }
   return renderRhodes({ sampleRate, freq: note, velocity: 0.5 });
 }
@@ -1238,9 +1328,29 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
     const rockCrash = genreId === "rock";
     const crashVel = genreId === "timeless" ? 0.22 : rockCrash ? 0.36 : MIXER.crashVel;
-    if (genreId === "destination") {
-      mixInto(colorBus, renderStaticDrop({ sampleRate, velocity: 0.58 }), Math.floor(marks.turnAt * sampleRate), 1);
-    } else if (genreId !== "timeless") {
+    if (genreId === "destination" || genreId === "ambient" || genreId === "timeless") {
+      mixInto(
+        colorBus,
+        renderStaticDrop({ sampleRate, velocity: genreId === "destination" ? 0.48 : 0.2 }),
+        Math.floor(marks.turnAt * sampleRate),
+        1,
+      );
+    }
+    if (genreId === "dubstep") {
+      mixInto(colorBus, renderDropImpact({ sampleRate, velocity: 0.58 }), Math.floor(marks.turnAt * sampleRate), 1);
+      mixInto(
+        colorBus,
+        renderWobble({
+          sampleRate,
+          freq: Math.max(motif.turnHz[0] * 0.5, 48),
+          velocity: 0.46,
+          hold: beat * 1.6,
+          rate: 8.5,
+        }),
+        Math.floor(marks.turnAt * sampleRate),
+        1,
+      );
+    } else if (genreId !== "timeless" && genreId !== "destination" && genreId !== "ambient") {
       mixInto(
         colorBus,
         renderMetal({
@@ -1278,16 +1388,12 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     if (genreId === "phonk" || genreId === "destination") {
       mixInto(
         kickBus,
-        renderMembrane({
+        render808Slide({
           sampleRate,
-          freq: RIPPEL.phonk808.noteHz,
-          octaves: RIPPEL.phonk808.octaves,
-          pitchDecay: RIPPEL.phonk808.pitchDecay,
-          attack: RIPPEL.phonk808.attack,
-          decay: 0.7,
-          release: 1,
-          velocity: 0.7,
-          floorHz: CRYSTAL.eightOhEightFloorHz,
+          fromHz: 55,
+          toHz: RIPPEL.phonk808.noteHz,
+          velocity: 0.74,
+          hold: 0.42,
         }),
         Math.floor(marks.turnAt * sampleRate),
         1,
@@ -1304,10 +1410,24 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
   if (marks.tagAt < seconds - 0.05) {
     mixInto(
       colorBus,
-      motifColorVoice(genreId, motif.tagHz, sampleRate, beat * 0.38),
+      motifColorVoice(genreId, motif.tagHz, sampleRate, beat * (genreId === "dubstep" ? 0.7 : 0.38)),
       Math.floor(marks.tagAt * sampleRate),
       1,
     );
+    if (genreId === "dubstep") {
+      mixInto(
+        colorBus,
+        renderWobble({
+          sampleRate,
+          freq: Math.max(motif.tagHz * 0.5, 48),
+          velocity: 0.4,
+          hold: beat * 1.2,
+          rate: 5.2,
+        }),
+        Math.floor(marks.tagAt * sampleRate),
+        1,
+      );
+    }
   }
   return { motif, marks };
 }
@@ -1415,18 +1535,34 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     const kick = RIPPEL.phonk808;
     const hat = RIPPEL.technoHat;
     for (const t of schedule(seconds, beat, 0.12)) {
-      const hit = renderMembrane({
-        sampleRate,
-        freq: kick.noteHz,
-        octaves: kick.octaves,
-        pitchDecay: kick.pitchDecay,
-        attack: kick.attack,
-        decay: kick.decay,
-        release: kick.release,
-        velocity: 0.78 * sectionGain(t, seconds, lock, grid),
-        floorHz: CRYSTAL.eightOhEightFloorHz,
-      });
-      mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      const beatIdx = Math.round(t / beat);
+      if (beatIdx % 2 === 0) {
+        mixInto(
+          kickBus,
+          render808Slide({
+            sampleRate,
+            fromHz: 49,
+            toHz: kick.noteHz,
+            velocity: 0.76 * sectionGain(t, seconds, lock, grid),
+            hold: beat * 0.34,
+          }),
+          Math.floor(t * sampleRate),
+          1,
+        );
+      } else {
+        const hit = renderMembrane({
+          sampleRate,
+          freq: kick.noteHz,
+          octaves: kick.octaves,
+          pitchDecay: kick.pitchDecay,
+          attack: kick.attack,
+          decay: kick.decay,
+          release: kick.release,
+          velocity: 0.78 * sectionGain(t, seconds, lock, grid),
+          floorHz: CRYSTAL.eightOhEightFloorHz,
+        });
+        mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      }
       mixInto(kickBus, kickClick(sampleRate, 0.1), Math.floor(t * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat / 2, 0.04)) {
@@ -1482,18 +1618,34 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: 0.13 }), 0, 1);
     const kick = RIPPEL.phonk808;
     for (const t of schedule(seconds, beat, 0.12)) {
-      const hit = renderMembrane({
-        sampleRate,
-        freq: kick.noteHz,
-        octaves: kick.octaves,
-        pitchDecay: kick.pitchDecay,
-        attack: kick.attack,
-        decay: 1.35,
-        release: 1.6,
-        velocity: 0.74 * sectionGain(t, seconds, lock, grid),
-        floorHz: CRYSTAL.eightOhEightFloorHz,
-      });
-      mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      const beatIdx = Math.round(t / beat);
+      if (beatIdx % 2 === 0) {
+        mixInto(
+          kickBus,
+          render808Slide({
+            sampleRate,
+            fromHz: 46,
+            toHz: kick.noteHz,
+            velocity: (t < 0.8 ? 0.48 : 0.72) * sectionGain(t, seconds, lock, grid),
+            hold: beat * 0.7,
+          }),
+          Math.floor(t * sampleRate),
+          1,
+        );
+      } else {
+        const hit = renderMembrane({
+          sampleRate,
+          freq: kick.noteHz,
+          octaves: kick.octaves,
+          pitchDecay: kick.pitchDecay,
+          attack: kick.attack,
+          decay: 1.35,
+          release: 1.6,
+          velocity: (t < 0.8 ? 0.5 : 0.74) * sectionGain(t, seconds, lock, grid),
+          floorHz: CRYSTAL.eightOhEightFloorHz,
+        });
+        mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      }
       mixInto(kickBus, kickClick(sampleRate, 0.08), Math.floor(t * sampleRate), 1);
     }
     for (const t of schedule(seconds, beat * 2, 0.18)) {
@@ -1518,8 +1670,89 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         1,
       );
     }
+  } else if (g.id === "dubstep") {
+    mixInto(padBus, renderPad(n, sampleRate, padTones("dubstep", scale), rng, 0.18), 0, 0.38);
+    const kick = RIPPEL.technoKick;
+    const hat = RIPPEL.technoHat;
+    const snare = RIPPEL.technoSnare;
+    for (const t of schedule(seconds, beat * 2, 0.1)) {
+      mixInto(
+        kickBus,
+        renderMembrane({
+          sampleRate,
+          freq: 49,
+          octaves: 8,
+          pitchDecay: 0.07,
+          attack: kick.attack,
+          decay: 0.42,
+          release: 0.55,
+          velocity: 0.96 * sectionGain(t, seconds, lock, grid),
+          floorHz: CRYSTAL.kickFloorHz,
+        }),
+        Math.floor(t * sampleRate),
+        1,
+      );
+      mixInto(kickBus, kickClick(sampleRate, 0.2), Math.floor(t * sampleRate), 1);
+    }
+    for (const t of schedule(seconds, beat / 2, 0.04)) {
+      mixInto(
+        hatBus,
+        renderMetal({
+          sampleRate,
+          freq: 400,
+          harmonicity: hat.harmonicity,
+          modulationIndex: 30,
+          resonance: 4200,
+          attack: 0.001,
+          decay: 0.045,
+          release: 0.02,
+          velocity: 0.16 * sectionGain(t, seconds, lock, grid),
+        }),
+        Math.floor(hatSlip(t) * sampleRate),
+        1,
+      );
+    }
+    for (const t of schedule(seconds, beat * 2, 0.12)) {
+      const at = t + beat;
+      if (at >= seconds - 0.1) continue;
+      const hit = renderMembrane({
+        sampleRate,
+        freq: 196,
+        octaves: snare.octaves,
+        pitchDecay: snare.pitchDecay,
+        attack: snare.attack,
+        decay: snare.decay,
+        release: snare.release,
+        velocity: 0.4,
+        floorHz: 120,
+        shape: "square",
+      });
+      const bp = bandpass(snare.bandpass, sampleRate);
+      for (let i = 0; i < hit.length; i++) hit[i] = bp.step(hit[i]);
+      mixInto(colorBus, hit, Math.floor(at * sampleRate), 0.8);
+    }
+    const wobbleLine = [0, 2, 0, 3];
+    let wi = 0;
+    for (const t of schedule(seconds, beat, 0.14)) {
+      const phrase = shortformPhrase(t, seconds, grid);
+      const rate = 4.2 + 6.5 * phrase.turnEase;
+      mixInto(
+        colorBus,
+        renderWobble({
+          sampleRate,
+          freq: scale[wobbleLine[wi % wobbleLine.length] % scale.length],
+          velocity: 0.4 + 0.14 * phrase.turnEase,
+          hold: beat * 0.98,
+          rate,
+        }),
+        Math.floor(t * sampleRate),
+        1,
+      );
+      wi += 1;
+    }
   } else if (g.id === "jazz") {
     mixInto(padBus, renderPad(n, sampleRate, padTones("jazz", scale), rng, 0.4), 0, 0.4);
+    mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: 0.06 }), 0, 1);
     const kick = RIPPEL.jazzKick;
     const ride = RIPPEL.jazzRide;
     const swing = beat / 2 * 0.32;
@@ -1587,6 +1820,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   } else if (g.id !== "rock") {
     const padFreqs = padTones(g.id === "timeless" ? "timeless" : "ambient", scale);
     mixInto(padBus, renderPad(n, sampleRate, padFreqs, rng, RIPPEL.ambientPad.attack), 0, dbLin(-8));
+    mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: g.id === "timeless" ? 0.07 : 0.09 }), 0, 1);
     const bassLine = degreeLine("bass", 8);
     const rhodesLine = degreeLine("rhodes", 8);
     let rhodesI = 0;
@@ -1710,11 +1944,11 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       const beatIdx = Math.round(t / beat);
       mixInto(
         colorBus,
-        renderDuoBass({
+        renderRockGuitar({
           sampleRate,
           freq: scale[rockLine[beatIdx % rockLine.length] % scale.length],
           velocity: 0.4,
-          hold: beat * 0.4,
+          hold: beat * 0.26,
         }),
         Math.floor(t * sampleRate),
         1,
@@ -1761,8 +1995,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       }
     }
     if (g.id === "rock") {
-      duckBus(hatBus, sampleRate, phraseDrop.marks.turnAt + 0.1, phraseDrop.marks.turnAt + 0.34, 0.38);
-      duckBus(colorBus, sampleRate, phraseDrop.marks.turnAt + 0.12, phraseDrop.marks.turnAt + 0.3, 0.55);
+      duckBus(hatBus, sampleRate, phraseDrop.marks.turnAt + 0.08, phraseDrop.marks.turnAt + 0.4, 0.2);
+      duckBus(colorBus, sampleRate, phraseDrop.marks.turnAt + 0.1, phraseDrop.marks.turnAt + 0.36, 0.42);
     }
   }
 
@@ -1821,7 +2055,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   const kickGain =
     g.id === "timeless" ? (lock ? 0.7 : 0.55) : g.id === "ambient" ? (lock ? 1 : 0.7) : g.id === "phonk" && !lock ? 0.58 : 0.9;
   const hatGain =
-    g.id === "techno" || g.id === "phonk"
+    g.id === "techno" || g.id === "phonk" || g.id === "dubstep"
       ? MIXER.hatGainHot
       : g.id === "rock"
         ? 0.36
@@ -1846,6 +2080,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
           : 0.68
         : g.id === "phonk" || g.id === "destination"
           ? 0.42
+          : g.id === "dubstep"
+            ? 0.64
           : g.id === "rock"
             ? lock
               ? 0.62
@@ -1858,7 +2094,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       hatCh[i] * hatGain +
       colorCh[i] * 0.62 * duck +
       padCh[i] * padGain * duck +
-      plate[i] * MIXER.plateSend * (g.id === "rock" ? 0.55 : 1) * (0.4 + 0.6 * duck) +
+      plate[i] * MIXER.plateSend * (g.id === "rock" ? 0.32 : 1) * (0.4 + 0.6 * duck) +
       glue[i];
   }
 
@@ -1870,7 +2106,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   let glued = compress(
     mix,
     dbLin(MIXER.glueThresholdDb),
-    g.id === "phonk" || g.id === "destination" ? 3.6 : MIXER.glueRatio,
+    g.id === "phonk" || g.id === "destination" ? 2.8 : MIXER.glueRatio,
     sampleRate,
     0.008,
     0.16,
@@ -1982,6 +2218,10 @@ module.exports = {
   renderCowbell,
   renderVinylDust,
   renderStaticDrop,
+  render808Slide,
+  renderWobble,
+  renderDropImpact,
+  renderRockGuitar,
   bandEnergy,
   highpassEnergy,
   zeroCrossRate,

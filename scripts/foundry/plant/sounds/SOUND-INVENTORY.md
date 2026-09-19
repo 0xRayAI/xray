@@ -16,25 +16,14 @@ Piddy (Ditty Drop) and Rippel prototype are the specific-sound bar. Mill gates (
 | jazz | 100 110 120 | kick · ride · brush · walk · sax · mixer | PASS | 10 | 6 | Synthetic sax. No dust. |
 | rock | 110 120 130 | kick · hat · crash · duo-guitar · formant-vox · mixer | PASS | 10 | 5 | Guitar is duo-bass. |
 | timeless | 70 80 90 | pad · rhodes · sub · mixer | PASS | 10 | 6 | Country alias. No static drop. |
-| destination | 90 100 110 | 808 · reese · vinyl-dust · static-drop · cowbell · mixer | live | — | 5 | **Art lock** for destination. Night-drive. Not ambient. |
-
-## Needed bodies
-
-| Genre | BPM | Voices | Why |
-|---|---|---|---|
-| dubstep | 70 140 150 | wobble-bass · kick · clap · hat · drop-impact · mixer | Half-time. Turn is the drop. Not a techno alias. |
+| destination | 90 100 110 | 808 · reese · vinyl-dust · static-drop · cowbell · 808-slide · mixer | live | — | 7 | **Art lock** for destination. Night-drive. Not ambient. |
+| dubstep | 70 140 150 | wobble · kick · clap · hat · drop-impact · mixer | live | — | 7 | Half-time. Turn is the drop. Mixer still six. |
 
 ## Needed voices (specific sounds)
 
 | Voice | For | Bar |
 |---|---|---|
-| 808-slide | phonk · destination | Piddy portamento, not one-shot membrane |
-| reese growl | phonk · destination | More detune / grit than two saws |
-| chopped-vocal | phonk | And-of-the-beat formant chops |
-| vinyl-dust | ambient · jazz · timeless | Easy-listening bed (destination already has it) |
-| static-drop | ambient · timeless | Soft noise jewel (destination already has it) |
-| wobble-bass | dubstep | LFO cutoff |
-| drop-impact | dubstep | Half-time snare + sub |
+| chopped-vocal | phonk | And-of-the-beat formant chops — still a single stab |
 
 ## Art → genre
 
