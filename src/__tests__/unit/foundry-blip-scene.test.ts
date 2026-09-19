@@ -40,7 +40,7 @@ describe('foundry blip-scene — Tron destination, not a foundry', () => {
   });
 
   it('paints a road into a colored horizon that changes on the jewel cut', () => {
-    const { sampleDestinationFrames, ENGINE, LOOK, ORGAN } = requireCjs(
+    const { sampleDestinationFrames, ENGINE, LOOK, ORGAN, pickPair } = requireCjs(
       path.join(root, 'scripts/foundry/blip-scene.cjs'),
     ) as {
       sampleDestinationFrames: (
@@ -50,6 +50,7 @@ describe('foundry blip-scene — Tron destination, not a foundry', () => {
       ENGINE: string;
       LOOK: string;
       ORGAN: string;
+      pickPair: (seed: string) => { motif: string };
     };
     expect(ENGINE).toBe('scene-headless');
     expect(LOOK).toBe('destination-blip');
@@ -58,6 +59,7 @@ describe('foundry blip-scene — Tron destination, not a foundry', () => {
     expect(frames.differ).toBe(true);
     expect(frames.hook.pair).toBe(frames.turn.pair);
     expect(frames.turn.marks.bloom).toBeGreaterThan(0.4);
+    expect(pickPair('0xdeadbeef').motif).not.toBe(pickPair('0x9f76dd89').motif);
   });
 
   it('renders destination that PASS inspect with a Tron scene pair', { timeout: 60000 }, () => {
