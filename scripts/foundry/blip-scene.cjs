@@ -101,25 +101,44 @@ function pickPair(seedHex) {
   return SCENE_PAIRS[seedInt(seedHex) % SCENE_PAIRS.length];
 }
 
-function destinationMarks(phrase) {
+function destinationClock(t) {
+  if (t < 0.72) return { section: "hook", u: t / 0.72 };
+  if (t < 3.05) return { section: "turn", u: (t - 0.72) / 2.33 };
+  return { section: "tag", u: clamp01((t - 3.05) / 1.39) };
+}
+
+function destinationMarks(phrase, t) {
   const hook = rippel.phraseWeight(phrase, "hook");
   const turn = rippel.phraseWeight(phrase, "turn");
   const tag = rippel.phraseWeight(phrase, "tag");
   const peak = rippel.rupturePeak(phrase);
-  const section = phrase && phrase.section;
-  let bloom = clamp01(0.08 * hook + 1.22 * turn + 0.88 * tag + 0.24 * peak);
-  if (section === "hook") bloom = 0.1;
-  else if (section === "turn") bloom = clamp01(0.62 + 0.38 * Math.max(turn, peak));
-  else if (section === "tag" || tag > 0.45) bloom = 0.92;
+  const clock = destinationClock(typeof t === "number" ? t : 0);
+  let bloom;
+  let approach;
+  let speed;
+  if (clock.section === "hook") {
+    bloom = 0.08 + 0.07 * clock.u;
+    approach = 0.1 + 0.08 * clock.u;
+    speed = 0.2 + 0.12 * clock.u;
+  } else if (clock.section === "turn") {
+    bloom = 0.22 + 0.78 * clock.u;
+    approach = 0.22 + 0.5 * clock.u;
+    speed = 0.55 + 1.35 * clock.u;
+  } else {
+    bloom = 0.94;
+    approach = 0.74 + 0.24 * clock.u;
+    speed = 0.68;
+  }
   return {
     hook,
     turn,
     tag,
     peak,
     bloom,
-    hold: clamp01(0.16 * hook + 0.58 * turn + 0.96 * tag),
-    approach: clamp01(0.18 * hook + 0.48 * turn + 0.96 * tag),
-    speed: 0.28 + 1.35 * (section === "hook" ? 0.12 : section === "tag" ? 0.72 : 1),
+    hold: clock.section === "tag" ? 0.96 : clamp01(0.16 * hook + 0.58 * turn + 0.96 * tag),
+    approach,
+    speed,
+    clock: clock.section,
   };
 }
 
@@ -231,25 +250,32 @@ function paintSun(buf, width, height, cx, sunY, sunR, pair, marks) {
 
 function paintGate(buf, width, height, cx, horizonY, pair, marks) {
   const floorH = Math.max(1, height - 1 - horizonY);
-  const z = 0.16 + 0.62 * marks.approach;
+  const z = 0.12 + 0.78 * marks.approach;
   const baseY = horizonY + Math.round(floorH * z * z);
-  const half = 28 + width * 0.22 * z;
-  const tall = 70 + 260 * z;
-  const thick = 2.6 + 7 * z;
-  const glow = 0.42 + 0.5 * marks.bloom;
+  const half = 22 + width * 0.28 * z;
+  const tall = 90 + 340 * z;
+  const thick = 4 + 11 * z;
+  const glow = 0.55 + 0.4 * marks.bloom;
   const left = cx - half;
   const right = cx + half;
   const top = baseY - tall;
+  const peakY = top - 18 * z;
   strokeSeg(buf, width, height, left, baseY, left, top, pair.rim, glow, thick);
   strokeSeg(buf, width, height, right, baseY, right, top, pair.rim, glow, thick);
-  strokeSeg(buf, width, height, left, top, right, top, pair.rim, glow, thick * 0.8);
-  if (marks.bloom > 0.4) {
-    strokeSeg(buf, width, height, left, top + 10, right, top + 10, pair.jewel, 0.28 + 0.42 * marks.bloom, 1.6);
-  }
+  strokeSeg(buf, width, height, left, top, cx, peakY, pair.rim, glow, thick * 0.8);
+  strokeSeg(buf, width, height, right, top, cx, peakY, pair.rim, glow, thick * 0.8);
+  strokeSeg(buf, width, height, left, baseY, left, top, pair.jewel, 0.2 + 0.35 * marks.bloom, Math.max(1.2, thick * 0.35));
+  strokeSeg(buf, width, height, right, baseY, right, top, pair.jewel, 0.2 + 0.35 * marks.bloom, Math.max(1.2, thick * 0.35));
+  rippel.stampFocusDisc(buf, width, height, cx, peakY, 4 + 7 * z, pair.jewel, {
+    rim: 1,
+    glow: 8 + 10 * marks.bloom,
+    glowAlpha: 0.45,
+    rimColor: pair.rim,
+  });
 }
 
 function paintSparks(buf, width, height, cx, horizonY, pair, marks, t, seed) {
-  const n = 16 + ((20 * marks.bloom) | 0);
+  const n = 22 + ((28 * marks.bloom) | 0);
   const floorH = Math.max(1, height - 1 - horizonY);
   const jag = seedInt(seed);
   for (let i = 0; i < n; i++) {
@@ -291,7 +317,7 @@ function paintDestinationFrame(opts) {
     camera: opts.camera,
   });
   const phrase = rippel.phraseOf(checksum, t);
-  const marks = destinationMarks(phrase);
+  const marks = destinationMarks(phrase, t);
   const horizonY = Math.round(height * (0.41 - 0.05 * marks.bloom - 0.04 * marks.approach));
   const cx = (width - 1) * 0.5;
   const roadHalf = width * 0.42;
@@ -305,10 +331,11 @@ function paintDestinationFrame(opts) {
     for (let x = 0; x < width; x++) {
       let color;
       if (y <= horizonY) {
-        const lift = (1 - skyU) * (0.34 + 0.62 * marks.bloom);
+        const fire = pair.motif === "sparks" ? 0.22 : 0;
+        const lift = (1 - skyU) * (0.34 + 0.62 * marks.bloom) + fire * (1 - skyU);
         const wash = mixRgb(pair.bed, pair.haze, 0.1 + skyU * 0.18 + lift);
         const band = clamp01(1 - (horizonY - y) / bandH);
-        color = mixRgb(wash, pair.jewel, band * (0.4 + 0.56 * marks.bloom));
+        color = mixRgb(wash, pair.jewel, band * (0.4 + 0.56 * marks.bloom) + fire * 0.18);
         if (Math.abs(y - horizonY) < 3 + 8 * marks.bloom) {
           color = mixRgb(color, pair.jewel, 0.84);
         }
@@ -385,14 +412,14 @@ function sampleDestinationFrames(seedHex, brief) {
   const hook = paintDestinationFrame({
     seedHex,
     brief,
-    t: Math.max(0.12, cut * 0.28),
+    t: Math.max(0.1, Math.min(0.55, cut * 0.22)),
     width: rippel.MOTION_WIDTH,
     height: rippel.MOTION_HEIGHT,
   });
   const turn = paintDestinationFrame({
     seedHex,
     brief,
-    t: cut,
+    t: Math.max(cut + 0.4, 1.8),
     width: rippel.MOTION_WIDTH,
     height: rippel.MOTION_HEIGHT,
   });
