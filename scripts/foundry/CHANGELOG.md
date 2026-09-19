@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Shim `sound-voice.cjs` → `@0xray/blip/sound-voice`. Depend on published `@0xray/blip@^0.1.2`. Foundry stamp stays 0.1.12. Do not vendor mill drawers.
+
 ## [0.1.12] - 2026-09-18
 
 Fasten is foundry-plant/0: mill packages declare plants in package.json (`mill.protocol`, prefix selection when skills/agents are omitted) and foundry copies organs from that package. Builtin catalog is mill+inspect only; foundry does not catalog mill organs. `foundry.json` `"plant": "blip"|"sound"` are package aliases for `@0xray/blip`, not skill lists. Unknown mill packages fail closed (`npm i`). Inventory records `millPackage` and `millProtocol` when a mill package was used.
