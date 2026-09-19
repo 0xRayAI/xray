@@ -49,12 +49,13 @@
     "./blip-scene": "./blip-scene.cjs",
     "./sound-taste": "./sound-taste.cjs",
     "./sound-voice": "./sound-voice.cjs",
+    "./blip-stroke": "./blip-stroke.cjs",
     "./ci-monitor": "./ci-monitor.mjs",
     "./hooks": "./hooks.mjs",
     "./docs-build": "./docs-build.mjs"
   },
   "dependencies": {
-    "@0xray/blip": "^0.1.2"
+    "@0xray/blip": "^0.1.3"
   },
   "engines": {
     "node": ">=18"
