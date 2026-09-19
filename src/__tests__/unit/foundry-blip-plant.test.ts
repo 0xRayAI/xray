@@ -18,6 +18,7 @@ function read(rel: string): string {
     'blip-kapow.cjs',
     'blip-vibe.cjs',
     'blip-looker.cjs',
+    'blip-scene.cjs',
     'blip.mjs',
     'sound-bed.cjs',
     'sound-rippel.cjs',
@@ -26,7 +27,8 @@ function read(rel: string): string {
   ];
   const base = path.basename(rel);
   if (rel.startsWith('scripts/foundry/') && millNames.includes(base)) {
-    return readFileSync(path.join(millDir, base), 'utf8');
+    const millFile = path.join(millDir, base);
+    if (existsSync(millFile)) return readFileSync(millFile, 'utf8');
   }
   return readFileSync(path.join(root, rel), 'utf8');
 }

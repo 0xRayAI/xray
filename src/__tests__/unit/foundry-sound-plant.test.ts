@@ -15,11 +15,13 @@ function read(rel: string): string {
     'sound-bed.cjs',
     'sound-rippel.cjs',
     'sound-mixer.cjs',
+    'sound-taste.cjs',
     'sound.mjs',
   ];
   const base = path.basename(rel);
   if (rel.startsWith('scripts/foundry/') && millNames.includes(base)) {
-    return readFileSync(path.join(millDir, base), 'utf8');
+    const millFile = path.join(millDir, base);
+    if (existsSync(millFile)) return readFileSync(millFile, 'utf8');
   }
   return readFileSync(path.join(root, rel), 'utf8');
 }
