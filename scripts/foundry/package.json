@@ -45,6 +45,7 @@
     "./blip-render": "./blip-render.cjs",
     "./blip-vibe": "./blip-vibe.cjs",
     "./blip-looker": "./blip-looker.cjs",
+    "./blip-scene": "./blip-scene.cjs",
     "./ci-monitor": "./ci-monitor.mjs",
     "./hooks": "./hooks.mjs",
     "./docs-build": "./docs-build.mjs"

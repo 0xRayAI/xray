@@ -26,7 +26,7 @@ const HELP =
   "Motions: Rippel VisualConfig.circles at ≥720p (default). --look focus|cage --body mill|rippel --genre ambient|techno|phonk|jazz|rock|timeless --camera front|three-quarter|top|low|dutch|side (seed picks if omitted).\n" +
   "--engine wireframe is emergency only.\n" +
   "Every mp4 muxes a 4.44s bed (--bed PATH or auto sound mill). Silent = inspect FAIL.\n" +
-  "kapow is a design opt (two-tier stamp on the stanza). Unknown id FAIL.\n" +
+  "kapow is a design opt (two-tier stamp on the stanza). destination is a scene-mixer opt (road into a Tron-orange horizon). Unknown id FAIL.\n" +
   "still: Power Plant ident — plate dissolves over 4.44s at ≥720p, not a frozen poster.\n" +
   "inspect: last .xray/blip/receipt.json PASS/FAIL (missing is FAIL). Lists live registry ids.\n" +
   "vibe: blip-vibe scores stamp density. Appeal 0-10. Ship bar is 8. Not last-blip inspect.\n" +

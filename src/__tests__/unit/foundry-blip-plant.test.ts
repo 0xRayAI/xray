@@ -193,7 +193,16 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
       };
     expect(listV0Ids()).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark']);
     expect(listMotionIds()).toEqual(
-      expect.arrayContaining(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']),
+      expect.arrayContaining([
+        'still',
+        'orb',
+        'swirl',
+        'snap',
+        'waves',
+        'spark',
+        'kapow',
+        'destination',
+      ]),
     );
     expect(SSOT.commit).toMatch(/^e5014cd/);
     expect(SSOT.paths).toEqual(
@@ -224,6 +233,9 @@ describe('foundry blip plant — registry + fail-closed + PASS mp4', () => {
     const kapow = resolveMode('motion:kapow');
     expect(kapow.ok).toBe(true);
     expect(kapow.renderer).toBe('kapow');
+    const destination = resolveMode('motion:destination');
+    expect(destination.ok).toBe(true);
+    expect(destination.renderer).toBe('destination');
     const unknown = resolveMode('kenburns');
     expect(unknown.ok).toBe(false);
     expect(unknown.reason).toMatch(/unknown motion id/);

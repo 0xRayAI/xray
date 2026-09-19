@@ -12,7 +12,8 @@
  * HARD: every Blip muxes a 4.44s stereo AAC bed — missing stream or inaudible = inspect FAIL.
  *
  * Motions live in plant/motions/registry.json (dynamic). v0 = still + Rippel five.
- * Kapow is a design opt (two-tier stamp on the stanza). Unknown id FAIL.
+ * Kapow is a design opt (two-tier stamp on the stanza). Destination is a
+ * scene-mixer opt (road into a colored horizon). Unknown id FAIL.
  */
 
 const crypto = require("crypto");
@@ -22,6 +23,7 @@ const os = require("os");
 const path = require("path");
 const rippel = require("./blip-rippel.cjs");
 const kapow = require("./blip-kapow.cjs");
+const scene = require("./blip-scene.cjs");
 const sound = require("./sound-bed.cjs");
 
 const SPINE = 1;
@@ -57,6 +59,11 @@ const PALETTE = {
   cyan: "#3DE0E8",
   gold: "#F5C518",
   blue: "#4A7FD4",
+  legacy: "#DF740C",
+  guard: "#FF410D",
+  clu: "#F79D1E",
+  poster: "#F2A007",
+  ember: "#ED681F",
 };
 const PLATE = "power-plant-intro";
 
@@ -953,6 +960,8 @@ function buildReceipt(input, evaled) {
     genre: input.genre || (input.visualConfig && input.visualConfig.genre) || null,
     stereoImage: input.stereoImage || null,
     organ: input.organ || (input.visualConfig && input.visualConfig.organ) || null,
+    scenePair: input.scenePair || null,
+    sceneHex: input.sceneHex || null,
     fallback: input.fallback || false,
     bedSource: input.bedSource || null,
     visualConfig: input.visualConfig || null,
@@ -1187,6 +1196,45 @@ function renderKapowPicture(work, seed, brief, opts) {
   };
 }
 
+function renderDestinationPicture(work, seed, brief, opts) {
+  const frames = Math.max(1, Math.round(DURATION_SEC * FPS));
+  const width = MOTION_WIDTH;
+  const height = MOTION_HEIGHT;
+  const raw = path.join(work, "destination.rgb");
+  let painted = null;
+  writeRawKapow(raw, width, height, frames, (buf, t) => {
+    painted = scene.paintDestinationFrame({
+      t,
+      seedHex: seed,
+      brief,
+      width,
+      height,
+      buffer: buf,
+      lookKind: opts.lookKind,
+      bodyKind: opts.bodyKind,
+      genre: opts.genre,
+      camera: opts.camera,
+    });
+  });
+  const picture = path.join(work, "picture.mp4");
+  encodeRaw(raw, width, height, frames, picture);
+  return {
+    picture,
+    width,
+    height,
+    engine: scene.ENGINE,
+    look: scene.LOOK,
+    lookKind: painted && painted.lookKind,
+    bodyKind: painted && painted.bodyKind,
+    camera: painted && painted.camera,
+    organ: scene.ORGAN,
+    pair: painted && painted.pair,
+    hex: painted && painted.hex,
+    fallback: false,
+    visualConfig: painted && painted.visualConfig,
+  };
+}
+
 function renderBlip(opts = {}) {
   const root = opts.root || process.cwd();
   const brief = String(opts.brief || "factory-blip");
@@ -1213,13 +1261,17 @@ function renderBlip(opts = {}) {
         ? POWER_PLANT_ENGINE
         : modeInfo.renderer === "kapow"
           ? kapow.ENGINE
-          : rippel.ENGINE,
+          : modeInfo.renderer === "destination"
+            ? scene.ENGINE
+            : rippel.ENGINE,
     look:
       modeInfo.renderer === "still"
         ? POWER_PLANT_LOOK
         : modeInfo.renderer === "kapow"
           ? kapow.LOOK
-          : rippel.LOOK,
+          : modeInfo.renderer === "destination"
+            ? scene.LOOK
+            : rippel.LOOK,
     fallback: false,
     visualConfig: null,
     lookKind: opts.lookKind || null,
@@ -1249,7 +1301,33 @@ function renderBlip(opts = {}) {
     input.stereoImage = bedInfo.stereoImage || (opts.bed ? "external" : null);
 
     const picture = path.join(work, "picture.mp4");
-    if (modeInfo.renderer === "kapow") {
+    if (modeInfo.renderer === "destination") {
+      const motion = renderDestinationPicture(work, seed, brief, opts);
+      if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
+      input.engine = motion.engine;
+      input.look = motion.look;
+      input.fallback = false;
+      input.width = motion.width;
+      input.height = motion.height;
+      input.visualConfig = rippel.summarizeVisual(
+        rippel.cachedChecksum({
+          brief,
+          seedHex: seed,
+          width: motion.width,
+          height: motion.height,
+          lookKind: opts.lookKind,
+          bodyKind: opts.bodyKind,
+          genre: input.genre,
+          camera: opts.camera,
+        }),
+      );
+      input.lookKind = motion.lookKind || (input.visualConfig && input.visualConfig.lookKind);
+      input.bodyKind = motion.bodyKind || (input.visualConfig && input.visualConfig.bodyKind);
+      input.camera = motion.camera || (input.visualConfig && input.visualConfig.mesh && input.visualConfig.mesh.camera) || null;
+      input.organ = motion.organ;
+      input.scenePair = motion.pair || null;
+      input.sceneHex = motion.hex || null;
+    } else if (modeInfo.renderer === "kapow") {
       const motion = renderKapowPicture(work, seed, brief, opts);
       if (motion.picture !== picture) fs.copyFileSync(motion.picture, picture);
       input.engine = motion.engine;
@@ -1401,4 +1479,8 @@ module.exports = {
   KAPOW_LOOK: kapow.LOOK,
   paintKapowFrame: kapow.paintKapowFrame,
   sampleKapowFrames: kapow.sampleKapowFrames,
+  SCENE_ENGINE: scene.ENGINE,
+  SCENE_LOOK: scene.LOOK,
+  paintDestinationFrame: scene.paintDestinationFrame,
+  sampleDestinationFrames: scene.sampleDestinationFrames,
 };

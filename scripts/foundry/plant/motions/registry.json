@@ -1,14 +1,19 @@
 {
   "version": 1,
-  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a design opt — two-tier stamp on the stanza.",
+  "law": "Motions are a dynamic registry (id → renderer). Rippel names are imports. Kapow is a two-tier stamp. Destination is a scene-mixer opt — road into a colored horizon. Not a foundry.",
   "v0": ["still", "orb", "swirl", "snap", "waves", "spark"],
-  "opt": ["kapow"],
+  "opt": ["kapow", "destination"],
   "palette": {
     "void": "#08090B",
     "ink": "#F5F7FA",
     "cyan": "#3DE0E8",
     "gold": "#F5C518",
     "blue": "#4A7FD4",
+    "legacy": "#DF740C",
+    "guard": "#FF410D",
+    "clu": "#F79D1E",
+    "poster": "#F2A007",
+    "ember": "#ED681F",
     "plate": "power-plant-intro"
   },
   "motions": [
@@ -77,6 +82,14 @@
       "renderer": "kapow",
       "status": "opt",
       "notes": "Two-tier KAPOW on hook → turn → tag. Outer burst winds, inner burst + word stamp the jewel cut. Not a look. ≥720p + 4.44s bed."
+    },
+    {
+      "id": "destination",
+      "kind": "motion",
+      "source": "blips",
+      "renderer": "destination",
+      "status": "opt",
+      "notes": "Scene mixer: dark bed + Tron orange jewel. Road into a colored horizon. #DF740C #FF410D #F79D1E #F2A007 #ED681F pair with night grounds. Cyan rim is the program line. Jewel bloom on the turn. Not a foundry. ≥720p + 4.44s bed."
     }
   ]
 }

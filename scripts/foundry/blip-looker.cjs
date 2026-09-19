@@ -9,13 +9,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 const rippel = require("./blip-rippel.cjs");
 const kapow = require("./blip-kapow.cjs");
+const scene = require("./blip-scene.cjs");
 const render = require("./blip-render.cjs");
 const vibe = require("./blip-vibe.cjs");
 
 const AGENT = "blip-looker";
 const RECEIPT_REL = path.join(".xray", "blip-looker-receipt.json");
 const SHIP_BAR = 8;
-const TYPES = ["still", "orb", "swirl", "snap", "waves", "spark", "kapow"];
+const TYPES = ["still", "orb", "swirl", "snap", "waves", "spark", "kapow", "destination"];
 const SEEDS = ["0xdeadbeef", "0x9f76dd89"];
 
 const LOOK_GATES = {
@@ -49,6 +50,15 @@ function lookerTimes(seedHex, brief) {
 }
 
 function paintTypeFrame(type, seedHex, brief, t) {
+  if (type === "destination") {
+    return scene.paintDestinationFrame({
+      seedHex,
+      brief,
+      t,
+      width: rippel.MOTION_WIDTH,
+      height: rippel.MOTION_HEIGHT,
+    });
+  }
   if (type === "kapow") {
     return kapow.paintKapowFrame({
       seedHex,
@@ -99,7 +109,7 @@ function scoreReplay(type, frames) {
   const punch = Math.max(b.mean / Math.max(8, a.mean), b.live / Math.max(0.01, a.live));
   const hold = b.live > 1e-6 ? c.live / b.live : 0;
   const jewel =
-    type === "still"
+    type === "still" || type === "destination"
       ? frames.differHookTurn && frames.differTurnTag && punch >= LOOK_GATES.punchMin
       : peakKey(a, b, c, "mean") ||
         peakKey(a, b, c, "live") ||
@@ -150,7 +160,12 @@ function seatSpec(type, seed) {
   return {
     type,
     seed,
-    brief: type === "kapow" ? "broken angel kapow" : `${type} power plant looker`,
+    brief:
+      type === "kapow"
+        ? "broken angel kapow"
+        : type === "destination"
+          ? "road to the grid destination"
+          : `${type} power plant looker`,
   };
 }
 

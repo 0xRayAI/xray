@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-blip destination scene: scene mixer on this mill, not a foundry. Road into a Tron-orange horizon (`#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`) on dark beds. House cyan is the program rim. No version bump.
+
 Factory-blip looker seat: `blip-looker` is the friend hitting replay (hook → jewel → hold). Inspect = file. Vibe = density. Mixer = ears. Ship bar is 8. No version bump.
 
 Factory wow pass: sound-mixer listens to the whole 4.44s — layers, stanza, tag, pocket, mask. Rock crash is dry. Still plates are comic panels. Rippel five take cel jewels, ink outlines, and a jewel-cut speed burst. Kapow stays the energy law. No version bump.

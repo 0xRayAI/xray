@@ -9,12 +9,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const rippel = require("./blip-rippel.cjs");
 const kapow = require("./blip-kapow.cjs");
+const scene = require("./blip-scene.cjs");
 const render = require("./blip-render.cjs");
 
 const AGENT = "blip-vibe";
 const RECEIPT_REL = path.join(".xray", "blip-vibe-receipt.json");
 const SHIP_BAR = 8;
-const TYPES = ["still", "orb", "swirl", "snap", "waves", "spark", "kapow"];
+const TYPES = ["still", "orb", "swirl", "snap", "waves", "spark", "kapow", "destination"];
 const SEEDS = ["0xdeadbeef", "0x9f76dd89"];
 
 /** Excellent-fill marks. Sparse organs are not scored against a kapow disc. */
@@ -26,6 +27,7 @@ const FILL_MARK = {
   waves: 0.2,
   spark: 0.18,
   kapow: 0.32,
+  destination: 0.12,
 };
 
 const TINT_MARK = {
@@ -36,6 +38,7 @@ const TINT_MARK = {
   waves: 0.08,
   spark: 0.08,
   kapow: 0.18,
+  destination: 0.12,
 };
 
 function luma(r, g, b) {
@@ -65,6 +68,7 @@ function scanFrame(buf, width, height) {
       if (yv > 28) live += 1;
       if (r > 200 && g > 200 && b > 200) ink += 1;
       if (r > 180 && g > 130 && b < 90) gold += 1;
+      if (r > 190 && g > 50 && g < 175 && b < 80) gold += 1;
       if (b > 150 && g > 140 && r < 130) cyan += 1;
       if (b > 150 && r < 110 && g < 160) blue += 1;
       const maxc = r > g ? (r > b ? r : b) : g > b ? g : b;
@@ -111,6 +115,7 @@ function phraseTimes(seedHex, brief) {
 }
 
 function sampleTypeFrames(type, seedHex, brief) {
+  if (type === "destination") return scene.sampleDestinationFrames(seedHex, brief);
   if (type === "kapow") return kapow.sampleKapowFrames(seedHex, brief);
   const times = phraseTimes(seedHex, brief);
   if (type === "still") {
@@ -218,7 +223,12 @@ function seatSpec(type, seed) {
   return {
     type,
     seed,
-    brief: type === "kapow" ? "broken angel kapow" : `${type} power plant vibe`,
+    brief:
+      type === "kapow"
+        ? "broken angel kapow"
+        : type === "destination"
+          ? "road to the grid destination"
+          : `${type} power plant vibe`,
   };
 }
 

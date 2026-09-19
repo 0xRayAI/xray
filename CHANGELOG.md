@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Factory-blip destination scene** — scene mixer on the blip mill, not a foundry. `--mode motion:destination` paints a road into a colored horizon. Dark beds pair with Tron oranges `#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`. House cyan stays the program rim. Vibe + looker bar 8. No `@0xray/foundry` bump.
 - **Factory-blip looker seat** — `blip-looker` is the friend hitting replay. Inspect = file / duration. Vibe = stamp density. Mixer = ears. Looker scores hook → jewel → hold on still + Rippel five + kapow. Ship bar is **8**. `npx @0xray/foundry blip look`. Not a model. No `@0xray/foundry` bump.
 - **Factory wow pass** — sound-mixer listens to the whole 4.44s (hook/turn/tag × kick/color/air). Layers, stanza, tag hold, pocket, mask. Rock crash is dry (short tail, quieter plate) so hang stays under the gate; intro shelf pulls the body/intro ratio without starving the body. Still plates are comic panels (ink frames, cel fills). Rippel five take saturated jewels, ink outlines, and a jewel-cut speed burst. Kapow stays the energy law. Ship bars stay 8. No `@0xray/foundry` bump.
 

@@ -1,6 +1,6 @@
 # Motion registry (factory-blip)
 
-Law: motions are a dynamic registry (`id → renderer`). Rippel names are **imports**, not a frozen enum. Unknown id FAIL. `kapow` is a design opt — two-tier stamp on hook → turn → tag.
+Law: motions are a dynamic registry (`id → renderer`). Rippel names are **imports**, not a frozen enum. Unknown id FAIL. `kapow` is a design opt — two-tier stamp on hook → turn → tag. `destination` is a scene-mixer opt — road into a colored horizon. Not a foundry.
 
 On-disk SSOT: `registry.json` next to this file.
 
@@ -39,3 +39,7 @@ Every Blip muxes a **4.44s audio bed** (`--bed PATH` or auto sound mill). No aud
 ## Design opt — `kapow`
 
 Not a Rippel import and not a `--look`. `--mode motion:kapow` paints a comic two-tier burst: 8–10 outer points, 6–8 inner, some spikes longer than others. Ink outline, sparse speed lines, readable `KAPOW!`. Hook winds the outer ring. The jewel cut slams the inner burst and the word. Tag holds. One noun sits under the word. `blip-vibe` is stamp density. `blip-looker` is the friend hitting replay (hook → jewel → hold). Every type must hit **8** on both to ship. Same seed camera / genre grid / 4.44s bed as the five.
+
+## Design opt — `destination`
+
+Not a Rippel import, not a `--look`, and **not a foundry**. Scene mixer: a dark bed paired with a Tron orange jewel. `--mode motion:destination` paints a road into a colored horizon. House void / cyan stay (program line). Jewels are `#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`. Hook sets the road. The jewel cut blooms the horizon. Tag holds. Same 4.44s bed / vibe / looker bar 8.

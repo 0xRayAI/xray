@@ -256,6 +256,7 @@ describe('foundry mill — gate and scripts', () => {
     expect(paths).toContain('scripts/foundry/sound-mixer.cjs');
     expect(paths).toContain('scripts/foundry/blip-vibe.cjs');
     expect(paths).toContain('scripts/foundry/blip-looker.cjs');
+    expect(paths).toContain('scripts/foundry/blip-scene.cjs');
     expect(paths).toContain('llms.txt');
     expect(paths).toContain('scripts/node/pack-tmp-suit-proof.mjs');
     expect(paths).toContain('.grok-plugin/plugin.json');

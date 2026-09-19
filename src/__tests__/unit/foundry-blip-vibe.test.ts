@@ -94,7 +94,7 @@ describe('foundry blip-vibe — still + five + kapow must hit 8', () => {
       TYPES: string[];
     };
     expect(SHIP_BAR).toBe(8);
-    expect(TYPES).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']);
+    expect(TYPES).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow', 'destination']);
     const report = vibeMatrix();
     expect(report.types).toEqual(TYPES);
     expect(report.failed, JSON.stringify(report.seats)).toBe(0);
