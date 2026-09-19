@@ -260,6 +260,7 @@ describe('foundry mill — gate and scripts', () => {
       'scripts/foundry/blip-looker.cjs',
       'scripts/foundry/blip-scene.cjs',
       'scripts/foundry/sound-taste.cjs',
+      'scripts/foundry/sound-voice.cjs',
     ];
     for (const rel of leftoverPacked) {
       if (existsSync(path.join(root, rel))) expect(paths).toContain(rel);

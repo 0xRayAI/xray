@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "law": "A piece of art selects a genre. Picture seats share vibe (density) and looker (replay). Ship bar is 8. Inspect is file only.",
+  "bar": 8,
+  "ssot": "htafolla/rippel-synapse-flow@e5014cd",
+  "palette": {
+    "void": "#08090B",
+    "ink": "#F5F7FA",
+    "cyan": "#3DE0E8",
+    "gold": "#F5C518",
+    "blue": "#4A7FD4",
+    "ember": ["#DF740C", "#FF410D", "#F79D1E", "#F2A007", "#ED681F"]
+  },
+  "strokes": [
+    { "id": "wu-hairline", "status": "live", "vibe": 9, "looker": 9, "notes": "Ink outline on every body." },
+    { "id": "power-plant-satellites", "status": "live", "vibe": 9, "looker": 9, "notes": "Cyan/gold/blue jewels. Ident plate." },
+    { "id": "cel-fill", "status": "live", "vibe": 9, "looker": 8, "notes": "Comic panels, not a frozen poster." },
+    { "id": "ember-horizon", "status": "live", "vibe": 8, "looker": 10, "notes": "Destination Tron oranges. Fire fountain vs cyan torus." },
+    { "id": "kapow-burst", "status": "live", "vibe": 9, "looker": 9, "notes": "Two-tier stamp. Hook winds, turn slams, tag holds." }
+  ],
+  "motions": [
+    { "id": "still", "status": "live", "vibe": 9.36, "looker": 9.32, "genre": "seed", "notes": "Power Plant ident. Titlecard / corridor / rain / endcard." },
+    { "id": "orb", "status": "live", "vibe": 10, "looker": 9.95, "genre": "seed", "notes": "Sharp disc + rim. Focus eclipse moon." },
+    { "id": "swirl", "status": "live", "vibe": 10, "looker": 9.97, "genre": "seed", "notes": "Cyan/gold jewel mesh." },
+    { "id": "snap", "status": "live", "vibe": 9.83, "looker": 9.97, "genre": "seed", "notes": "Ghost hull + 2–3 strikes." },
+    { "id": "waves", "status": "live", "vibe": 9.93, "looker": 9.98, "genre": "seed", "notes": "Harmonic ribbons + gold needle." },
+    { "id": "spark", "status": "live", "vibe": 9.96, "looker": 10, "genre": "seed", "notes": "Coals on verts and midpoints." },
+    { "id": "kapow", "status": "live", "vibe": 9.59, "looker": 9.36, "genre": "seed", "notes": "Design opt. KAPOW! jewel cut." },
+    { "id": "destination", "status": "live", "vibe": 9.15, "looker": 9.99, "genre": "destination", "notes": "Art-locks night-drive. Lowest vibe seat 8.47 on 0xdeadbeef." }
+  ]
+}

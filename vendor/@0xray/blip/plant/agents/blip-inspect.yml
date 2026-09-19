@@ -1,0 +1,5 @@
+name: blip-inspect
+skill: blip-inspect
+description: "Inspect the last factory-blip: 4.44s duration, mode, file present. Fail-closed."
+version: "0.1.0"
+mode: subagent

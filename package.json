@@ -209,10 +209,11 @@
     ".xray/config.json",
     ".gitignore.default",
     "LICENSE",
-    "vendor/@0xray/repertoire/"
+    "vendor/@0xray/repertoire/",
+    "vendor/@0xray/blip/"
   ],
   "dependencies": {
-    "@0xray/blip": "^0.1.2",
+    "@0xray/blip": "file:vendor/@0xray/blip",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "commander": "^11.1.0",
     "express": "^5.2.1",

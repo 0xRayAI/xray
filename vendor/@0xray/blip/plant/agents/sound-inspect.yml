@@ -1,0 +1,5 @@
+name: sound-inspect
+skill: sound-inspect
+description: "Inspect the last factory-sound bed: chop, levels, peak, hum. Fail-closed."
+version: "0.1.0"
+mode: subagent

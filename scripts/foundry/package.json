@@ -48,6 +48,7 @@
     "./blip-looker": "./blip-looker.cjs",
     "./blip-scene": "./blip-scene.cjs",
     "./sound-taste": "./sound-taste.cjs",
+    "./sound-voice": "./sound-voice.cjs",
     "./ci-monitor": "./ci-monitor.mjs",
     "./hooks": "./hooks.mjs",
     "./docs-build": "./docs-build.mjs"

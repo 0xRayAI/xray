@@ -1,0 +1,69 @@
+{
+  "name": "@0xray/blip",
+  "version": "0.1.2",
+  "private": false,
+  "type": "module",
+  "description": "0xRay blip foundry: 4.44s shorties (picture + bed). Product mill, not the OS suit.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/htafolla/blips.git",
+    "directory": "plant"
+  },
+  "homepage": "https://blips.rippel.ai",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "0xray-blip": "cli.mjs"
+  },
+  "files": [
+    "*.mjs",
+    "*.cjs",
+    "cli.mjs",
+    "README.md",
+    "plant"
+  ],
+  "exports": {
+    ".": "./blip.mjs",
+    "./cli": "./cli.mjs",
+    "./blip-render": "./blip-render.cjs",
+    "./blip-vibe": "./blip-vibe.cjs",
+    "./blip-looker": "./blip-looker.cjs",
+    "./blip-kapow": "./blip-kapow.cjs",
+    "./blip-scene": "./blip-scene.cjs",
+    "./blip-rippel": "./blip-rippel.cjs",
+    "./sound": "./sound.mjs",
+    "./sound-taste": "./sound-taste.cjs",
+    "./sound-voice": "./sound-voice.cjs",
+    "./sound-bed": "./sound-bed.cjs",
+    "./sound-mixer": "./sound-mixer.cjs",
+    "./sound-rippel": "./sound-rippel.cjs",
+    "./mill-root": "./mill-root.mjs"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "0xray",
+    "blip",
+    "foundry",
+    "4.44s",
+    "shorties"
+  ],
+  "mill": {
+    "protocol": "foundry-plant/0",
+    "default": "blip",
+    "paths": { "skills": "plant/skills", "agents": "plant/agents" },
+    "plants": {
+      "blip": { "millOff": true },
+      "sound": { "millOff": true }
+    }
+  }
+}

@@ -16,6 +16,7 @@ function read(rel: string): string {
     'sound-rippel.cjs',
     'sound-mixer.cjs',
     'sound-taste.cjs',
+    'sound-voice.cjs',
     'sound.mjs',
   ];
   const base = path.basename(rel);
