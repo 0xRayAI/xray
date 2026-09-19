@@ -101,7 +101,8 @@ function destinationMarks(phrase) {
   const turn = rippel.phraseWeight(phrase, "turn");
   const tag = rippel.phraseWeight(phrase, "tag");
   const peak = rippel.rupturePeak(phrase);
-  const bloom = clamp01(0.1 * hook + 1.24 * turn + 0.62 * tag + 0.28 * peak);
+  let bloom = clamp01(0.08 * hook + 1.22 * turn + 0.88 * tag + 0.24 * peak);
+  if (tag > 0.45) bloom = clamp01(Math.max(bloom, 0.9));
   return {
     hook,
     turn,
@@ -248,10 +249,28 @@ function paintDestinationFrame(opts) {
 
   rippel.stampFocusDisc(buf, width, height, cx, sunY, sunR, pair.jewel, {
     rim: 2,
-    glow: 22 + 38 * marks.bloom,
-    glowAlpha: 0.36 + 0.52 * marks.bloom,
+    glow: 26 + 44 * marks.bloom,
+    glowAlpha: 0.4 + 0.55 * marks.bloom,
     rimColor: pair.rim,
   });
+  const core = mixRgb(pair.jewel, HOUSE.ink, 0.2);
+  const shade = mixRgb(pair.jewel, pair.bed, 0.32);
+  const discR = Math.max(4, sunR - 1);
+  const x0 = Math.max(0, (cx - discR) | 0);
+  const x1 = Math.min(width - 1, (cx + discR) | 0);
+  const y0 = Math.max(0, (sunY - discR) | 0);
+  const y1 = Math.min(height - 1, (sunY + discR) | 0);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const dx = x - cx;
+      const dy = y - sunY;
+      const d = Math.hypot(dx, dy);
+      if (d > discR) continue;
+      const u = d / discR;
+      const lit = clamp01(0.58 - 0.5 * u + 0.2 * (-dx / discR - dy / discR));
+      mixPixel(buf, width, height, x, y, mixRgb(shade, core, lit), 0.88);
+    }
+  }
   const rayN = 9;
   for (let i = 0; i < rayN; i++) {
     const ang = -Math.PI + (i / (rayN - 1)) * Math.PI;
