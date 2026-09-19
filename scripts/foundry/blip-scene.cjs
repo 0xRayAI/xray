@@ -117,7 +117,7 @@ function destinationMarks(phrase, t) {
   let approach;
   let speed;
   if (clock.section === "hook") {
-    bloom = 0.04 + 0.08 * clock.u;
+    bloom = 0.07 + 0.09 * clock.u;
     approach = 0.04 + 0.07 * clock.u;
     speed = 0.14 + 0.1 * clock.u;
   } else if (clock.section === "turn") {
@@ -301,9 +301,9 @@ function paintFireBed(buf, width, height, cx, horizonY, pair, marks) {
   for (let i = 0; i < tongues; i++) {
     const u = tongues === 1 ? 0 : i / (tongues - 1) - 0.5;
     const jag = 0.62 + 0.38 * Math.abs(Math.sin(u * 11.3 + i * 1.7));
-    const h = (42 + 230 * marks.bloom) * jag * (0.7 + 0.3 * (1 - Math.abs(u)));
-    const w = 14 + 36 * marks.bloom + 22 * (1 - Math.abs(u));
-    const px = cx + u * (80 + 360 * marks.bloom);
+    const h = Math.max(34, (78 + 280 * marks.bloom) * jag * (0.7 + 0.3 * (1 - Math.abs(u))));
+    const w = 16 + 42 * marks.bloom + 24 * (1 - Math.abs(u));
+    const px = cx + u * (90 + 400 * marks.bloom);
     const y0 = Math.max(0, (horizonY - h) | 0);
     const y1 = Math.min(height - 1, (horizonY + 20) | 0);
     for (let y = y0; y <= y1; y++) {
@@ -321,10 +321,10 @@ function paintFireBed(buf, width, height, cx, horizonY, pair, marks) {
 }
 
 function paintSparks(buf, width, height, cx, horizonY, pair, marks, t, seed) {
-  const n = 20 + ((36 * marks.bloom) | 0);
+  const n = 26 + ((52 * marks.bloom) | 0);
   const jag = seedInt(seed);
-  const liftH = 70 + 260 * marks.bloom;
-  const span = 40 + 280 * marks.bloom;
+  const liftH = 90 + 320 * marks.bloom;
+  const span = 48 + 340 * marks.bloom;
   for (let i = 0; i < n; i++) {
     const rise = (0.08 + ((jag >>> (i % 24)) & 15) / 18 + t * marks.speed * 0.55 + i * 0.05) % 1;
     const side = i % 2 ? 1 : -1;
@@ -388,7 +388,8 @@ function paintDestinationFrame(opts) {
           color = mixRgb(color, pair.jewel, 0.84);
         }
       } else {
-        const reflect = clamp01(1 - groundU * 3.1) * (0.14 + 0.4 * marks.bloom);
+        const fireFloor = pair.motif === "sparks" ? 0.16 + 0.5 * marks.bloom : 0;
+        const reflect = clamp01(1 - groundU * 3.1) * (0.14 + 0.4 * marks.bloom) + fireFloor * (1 - groundU);
         color = mixRgb(mixRgb(pair.ground, pair.haze, 0.1 + 0.16 * groundU), pair.jewel, reflect);
         const roadStart = horizonY + Math.max(12, sunR * 0.5);
         const half = 10 + groundU * roadHalf;
