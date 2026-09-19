@@ -39,19 +39,29 @@ describe('foundry sound inventory — art locks a genre', () => {
     expect(inv.genres.find((g) => g.id === 'dubstep')?.status).toBe('live');
     expect(inv.voices.some((v) => v.id === '808-slide' && v.status === 'live')).toBe(true);
     expect(inv.voices.some((v) => v.id === 'wobble-bass' && v.status === 'live')).toBe(true);
+    expect(inv.voices.some((v) => v.id === 'chopped-vocal' && v.status === 'live')).toBe(true);
+    expect(inv.genres.find((g) => g.id === 'phonk')?.voices).toEqual(
+      expect.arrayContaining(['chopped-vocal', '808-slide']),
+    );
     expect(read('scripts/foundry/plant/sounds/SOUND-INVENTORY.md')).toMatch(/night-drive/);
     expect(read('scripts/foundry/sound-rippel.cjs')).not.toMatch(/destination:\s*"ambient"/);
   });
 
   it('locks destination art to night-drive and inspects that bed', { timeout: 20000 }, () => {
-    const { resolveGenre, GENRE_ALIASES, renderVinylDust, renderStaticDrop } = requireCjs(
-      path.join(root, 'scripts/foundry/sound-rippel.cjs'),
-    ) as {
-      resolveGenre: (name: string) => { id: string; voices: string[] };
-      GENRE_ALIASES: Record<string, string>;
-      renderVinylDust: (opts: { sampleRate: number; seconds: number; velocity: number }) => Float64Array;
-      renderStaticDrop: (opts: { sampleRate: number; velocity: number }) => Float64Array;
-    };
+    const { resolveGenre, GENRE_ALIASES, renderVinylDust, renderStaticDrop, renderChoppedVocal } =
+      requireCjs(path.join(root, 'scripts/foundry/sound-rippel.cjs')) as {
+        resolveGenre: (name: string) => { id: string; voices: string[] };
+        GENRE_ALIASES: Record<string, string>;
+        renderVinylDust: (opts: { sampleRate: number; seconds: number; velocity: number }) => Float64Array;
+        renderStaticDrop: (opts: { sampleRate: number; velocity: number }) => Float64Array;
+        renderChoppedVocal: (opts: {
+          sampleRate: number;
+          freq: number;
+          velocity: number;
+          chops: number;
+          grain: number;
+        }) => Float64Array;
+      };
     const { resolveArtGenre, resolveGenreKind } = requireCjs(
       path.join(root, 'scripts/foundry/blip-rippel.cjs'),
     ) as {
@@ -81,8 +91,29 @@ describe('foundry sound inventory — art locks a genre', () => {
     );
     const dust = renderVinylDust({ sampleRate: 44100, seconds: 0.2, velocity: 0.2 });
     const drop = renderStaticDrop({ sampleRate: 44100, velocity: 0.5 });
+    const chop = renderChoppedVocal({
+      sampleRate: 44100,
+      freq: 220,
+      velocity: 0.3,
+      chops: 3,
+      grain: 0.05,
+    });
     expect(dust.some((n) => n !== 0)).toBe(true);
     expect(drop.some((n) => n !== 0)).toBe(true);
+    let chopOnsets = 0;
+    let armed = true;
+    for (let i = 0; i < chop.length; i += 64) {
+      let acc = 0;
+      for (let j = i; j < i + 64 && j < chop.length; j++) acc += chop[j] * chop[j];
+      const rms = Math.sqrt(acc / 64);
+      if (armed && rms > 0.01) {
+        chopOnsets += 1;
+        armed = false;
+      } else if (rms < 0.002) {
+        armed = true;
+      }
+    }
+    expect(chopOnsets).toBeGreaterThanOrEqual(3);
     const bed = sound.renderSamples({
       brief: 'road to the grid destination',
       genre: 'destination',

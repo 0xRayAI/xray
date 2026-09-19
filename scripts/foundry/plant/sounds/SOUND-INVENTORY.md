@@ -12,7 +12,7 @@ Piddy (Ditty Drop) and Rippel prototype are the specific-sound bar. Mill gates (
 |---|---|---|---|---|---|---|
 | ambient | 70 80 90 | pad · rhodes · sub · air · vinyl · static · mixer | PASS | 10 | 10 | Easy listening. Vinyl dust + static jewel. |
 | techno | 120 128 140 | kick · hat · clap · duo-bass · FM · mixer | PASS | 10 | 9 | Rippel membrane/metal. No wobble. |
-| phonk | 130 140 150 | 808-slide · hat · cowbell · reese · formant · mixer | PASS | 10 | 10 | 808-slide on even beats + jewel. Chop still a stab. |
+| phonk | 130 140 150 | 808-slide · hat · cowbell · reese · chopped-vocal · mixer | PASS | 10 | 10 | 808-slide on even beats + and-chops. |
 | jazz | 100 110 120 | kick · ride · brush · walk · sax · vinyl · mixer | PASS | 10 | 9 | Synthetic sax + vinyl. |
 | rock | 110 120 130 | kick · hat · crash · duo-guitar · formant-vox · mixer | PASS | 10 | 9 | Distorted mid guitar. Dry plate. |
 | timeless | 70 80 90 | pad · rhodes · sub · vinyl · static · mixer | PASS | 10 | 10 | Country alias. Vinyl + static jewel. |
@@ -23,7 +23,7 @@ Piddy (Ditty Drop) and Rippel prototype are the specific-sound bar. Mill gates (
 
 | Voice | For | Bar |
 |---|---|---|
-| chopped-vocal | phonk | And-of-the-beat formant chops — still a single stab |
+| — | — | Chopped-vocal shipped. Next voices wait on a new bar, not this mill. |
 
 ## Art → genre
 

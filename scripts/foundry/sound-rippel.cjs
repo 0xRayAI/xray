@@ -224,7 +224,7 @@ const GENRES = {
   },
   phonk: {
     bpm: 150,
-    voices: ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "mixer"],
+    voices: ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "chopped-vocal", "mixer"],
   },
   jazz: {
     bpm: 120,
@@ -1092,6 +1092,43 @@ function renderFmLead({ sampleRate, freq, velocity, hold }) {
   return out;
 }
 
+const CHOP_VOWELS = [
+  [700, 1220, 2600],
+  [480, 1900, 2550],
+  [400, 800, 2500],
+  [320, 720, 2300],
+];
+
+/** And-of-the-beat phonk chops — short vowel grains, not one stab. */
+function renderChoppedVocal({ sampleRate, freq, velocity, chops, grain }) {
+  const count = Math.max(2, Math.min(4, chops || 3));
+  const grainSec = grain || 0.048;
+  const gap = 0.026;
+  const n = Math.floor((count * (grainSec + gap) + 0.03) * sampleRate);
+  const out = new Float64Array(n);
+  const base = Math.max(140, freq || 220);
+  for (let c = 0; c < count; c++) {
+    const vowel = CHOP_VOWELS[c % CHOP_VOWELS.length];
+    const start = Math.floor(c * (grainSec + gap) * sampleRate);
+    const gn = Math.floor(grainSec * sampleRate);
+    const f1 = bandpass(vowel[0], sampleRate);
+    const f2 = bandpass(vowel[1], sampleRate);
+    const f3 = bandpass(vowel[2], sampleRate);
+    const lp = lowpass(2400, sampleRate);
+    const pitch = base * (1 + (c % 2 === 0 ? 0 : 0.08) - c * 0.015);
+    let phase = 0;
+    for (let i = 0; i < gn && start + i < n; i++) {
+      const t = i / sampleRate;
+      const env = oneshotAmp(t, 0.002, grainSec * 0.7) * (velocity || 0.18) * (c === 0 ? 1 : 0.76);
+      const raw = squareBlep(phase, (2 * Math.PI * pitch) / sampleRate);
+      const voice = f1.step(raw) * 0.42 + f2.step(raw) * 0.36 + f3.step(raw) * 0.22;
+      out[start + i] += lp.step(voice * env);
+      phase += (2 * Math.PI * pitch) / sampleRate;
+    }
+  }
+  return out;
+}
+
 /** Phonk/rock vocal stab — square through 300/800/1500 formants. */
 function renderFormant({ sampleRate, freq, velocity, hold }) {
   const attack = 0.001;
@@ -1602,13 +1639,15 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     for (const t of schedule(seconds, beat, 0.1)) {
       const phrase = shortformPhrase(t, seconds, grid);
       if (lock && phrase.tagEase > 0.6) continue;
+      if (lock && phrase.turnHit > 0) continue;
       mixInto(
         colorBus,
-        renderFormant({
+        renderChoppedVocal({
           sampleRate,
           freq: scale[2 % scale.length] * 4,
-          velocity: 0.16 + 0.1 * phrase.turnEase,
-          hold: beat * 0.18,
+          velocity: 0.14 + 0.07 * phrase.turnEase,
+          chops: 3,
+          grain: 0.044,
         }),
         Math.floor((t + beat * grid.and) * sampleRate),
         1,
@@ -2220,6 +2259,7 @@ module.exports = {
   renderDuoBass,
   renderFmLead,
   renderFormant,
+  renderChoppedVocal,
   renderCowbell,
   renderVinylDust,
   renderStaticDrop,

@@ -46,11 +46,11 @@
       "id": "phonk",
       "status": "live",
       "bpm": [130, 140, 150],
-      "voices": ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "mixer"],
+      "voices": ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "808-slide", "chopped-vocal", "mixer"],
       "mill": "PASS",
       "mix": 10,
       "taste": 10,
-      "notes": "808-slide on even beats + jewel. Reese has growl. Chopped vocal still a stab."
+      "notes": "808-slide on even beats + jewel. And-of-the-beat chopped vocal. Reese has growl."
     },
     {
       "id": "jazz",
@@ -165,7 +165,7 @@
       "status": "live",
       "lineage": "mill port",
       "taste": 5,
-      "notes": "Phonk stab. Not a chopped vocal."
+      "notes": "Jewel/motif stab. And-pattern is chopped-vocal."
     },
     {
       "id": "triangle-pad",
@@ -218,10 +218,10 @@
     },
     {
       "id": "chopped-vocal",
-      "status": "need",
+      "status": "live",
       "lineage": "piddy phonk",
-      "taste": 0,
-      "notes": "Formant chops on the and. Not a single stab."
+      "taste": 8,
+      "notes": "Three short vowel grains on the and. Not a single stab."
     }
   ]
 }

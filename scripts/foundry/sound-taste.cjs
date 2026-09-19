@@ -66,6 +66,7 @@ function scoreSeat(genre) {
   }
   if (genre === "dubstep" && crest < 3.2) fails.push("wobble");
   if (genre === "rock" && mid < sub * 0.8) fails.push("stack");
+  if (genre === "phonk" && mid < 0.012) fails.push("chop");
   let score = 6.2 + Math.min(2.1, (punch - 1) * 3.4) + Math.min(1.2, hold * 0.9);
   if (genre === "phonk" || genre === "destination") score += Math.min(0.8, sub * 40);
   if (genre === "dubstep") score += Math.min(0.7, (crest - 3) * 0.35);

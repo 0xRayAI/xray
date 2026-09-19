@@ -573,7 +573,9 @@ describe('foundry sound plant — Rippel topology', () => {
     expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderFmLead');
     expect(read('scripts/foundry/sound-rippel.cjs')).toContain('renderFormant');
     const phonk = sound.renderSamples({ brief: 'trunk bounce', genre: 'phonk', seconds: 4 });
-    expect(phonk.genre.voices).toEqual(expect.arrayContaining(['formant-stab', 'membrane-808']));
+    expect(phonk.genre.voices).toEqual(
+      expect.arrayContaining(['formant-stab', 'membrane-808', 'chopped-vocal']),
+    );
     const rock = sound.renderSamples({ brief: 'stage left stack', genre: 'rock', seconds: 4 });
     expect(rock.genre.id).toBe('rock');
     expect(rock.samples.length).toBeGreaterThan(1000);
