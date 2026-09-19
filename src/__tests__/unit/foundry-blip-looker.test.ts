@@ -101,7 +101,7 @@ describe('foundry blip-looker — friend hitting replay must hit 8', () => {
     expect(SHIP_BAR).toBe(8);
     expect(LOOK_GATES.punchMin).toBeGreaterThan(1);
     expect(LOOK_GATES.holdMin).toBeGreaterThan(0.4);
-    expect(TYPES).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow']);
+    expect(TYPES).toEqual(['still', 'orb', 'swirl', 'snap', 'waves', 'spark', 'kapow', 'destination']);
     const report = lookerMatrix();
     expect(report.types).toEqual(TYPES);
     expect(report.failed, JSON.stringify(report.seats.filter((s) => s.status === 'FAIL'))).toBe(0);
