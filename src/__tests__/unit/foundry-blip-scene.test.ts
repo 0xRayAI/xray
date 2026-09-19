@@ -62,6 +62,28 @@ describe('foundry blip-scene — Tron destination, not a foundry', () => {
     expect(pickPair('0xdeadbeef').motif).not.toBe(pickPair('0x9f76dd89').motif);
   });
 
+  it('clocks hook slit, turn bloom, and tag hold on the picture phrase', () => {
+    const { paintDestinationFrame } = requireCjs(path.join(root, 'scripts/foundry/blip-scene.cjs')) as {
+      paintDestinationFrame: (opts: Record<string, unknown>) => {
+        marks: { clock: string; bloom: number; approach: number };
+        motif: string;
+      };
+    };
+    const size = { width: 1280, height: 720, brief: 'road to the grid destination' };
+    const hook = paintDestinationFrame({ ...size, seedHex: '0x9f76dd89', t: 0.3 });
+    const turn = paintDestinationFrame({ ...size, seedHex: '0x9f76dd89', t: 1.9 });
+    const tag = paintDestinationFrame({ ...size, seedHex: '0x9f76dd89', t: 3.4 });
+    expect(hook.marks.clock).toBe('hook');
+    expect(turn.marks.clock).toBe('turn');
+    expect(tag.marks.clock).toBe('tag');
+    expect(hook.marks.bloom).toBeLessThan(0.16);
+    expect(turn.marks.bloom).toBeGreaterThan(0.4);
+    expect(tag.marks.bloom).toBeGreaterThan(0.9);
+    expect(hook.marks.approach).toBeLessThan(turn.marks.approach);
+    expect(tag.marks.approach).toBeGreaterThan(0.9);
+    expect(hook.motif).toBe('gate');
+  });
+
   it('renders destination that PASS inspect with a Tron scene pair', { timeout: 60000 }, () => {
     const { renderBlip, hasFfmpeg } = requireCjs(path.join(root, 'scripts/foundry/blip-render.cjs')) as {
       hasFfmpeg: () => boolean;
