@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "law": "A piece of art selects a genre. Destination locks night-drive. Rippel five + still seed-pick the six mill bodies. Mixer levels live bodies. Needed voices are first-class, not aliases.",
+  "bar": 8,
+  "ssot": "htafolla/rippel-synapse-flow@e5014cd",
+  "piddy": "piddy-sequencer / Ditty Drop — specific-sound bar, not in this mill yet",
+  "seedPick": ["ambient", "techno", "phonk", "jazz", "rock", "timeless"],
+  "artLock": {
+    "destination": "destination",
+    "still": "seed",
+    "orb": "seed",
+    "swirl": "seed",
+    "snap": "seed",
+    "waves": "seed",
+    "spark": "seed",
+    "kapow": "seed"
+  },
+  "aliases": {
+    "nightdrive": "destination",
+    "night-drive": "destination",
+    "country": "timeless",
+    "game": "techno"
+  },
+  "genres": [
+    {
+      "id": "ambient",
+      "status": "live",
+      "bpm": [70, 80, 90],
+      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "metal-air", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 6,
+      "notes": "Easy-listening pad. Missing vinyl/static drop. Destination used to alias here — wrong."
+    },
+    {
+      "id": "techno",
+      "status": "live",
+      "bpm": [120, 128, 140],
+      "voices": ["membrane-kick", "metal-hat", "snare-clap", "duo-bass", "fm-lead", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 7,
+      "notes": "Rippel membrane/metal port. No dubstep wobble or half-time drop."
+    },
+    {
+      "id": "phonk",
+      "status": "live",
+      "bpm": [130, 140, 150],
+      "voices": ["membrane-808", "metal-hat", "metal-cowbell", "reese-bass", "formant-stab", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 6,
+      "notes": "808 is a pitch-drop membrane. Reese is two detuned saws. Not Piddy drift / slide / chopped vocal."
+    },
+    {
+      "id": "jazz",
+      "status": "live",
+      "bpm": [100, 110, 120],
+      "voices": ["membrane-kick", "metal-ride", "brush-snare", "upright-bass", "sax-lead", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 6,
+      "notes": "Synthetic sax + brush. No vinyl dust."
+    },
+    {
+      "id": "rock",
+      "status": "live",
+      "bpm": [110, 120, 130],
+      "voices": ["membrane-kick", "metal-hat", "metal-crash", "duo-guitar", "formant-vox", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 5,
+      "notes": "Guitar is duo-bass. Vox is a formant. Thin stack."
+    },
+    {
+      "id": "timeless",
+      "status": "live",
+      "bpm": [70, 80, 90],
+      "voices": ["triangle-pad", "rhodes-keys", "membrane-sub", "mixer"],
+      "mill": "PASS",
+      "mix": 10,
+      "taste": 6,
+      "notes": "Country alias. Easy listening without static drop."
+    },
+    {
+      "id": "destination",
+      "status": "live",
+      "bpm": [90, 100, 110],
+      "voices": ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "mixer"],
+      "mill": "WIP",
+      "mix": null,
+      "taste": 5,
+      "notes": "Night-drive lock for destination art. Not ambient. 808 + reese + vinyl + static jewel."
+    },
+    {
+      "id": "dubstep",
+      "status": "need",
+      "bpm": [70, 140, 150],
+      "voices": ["wobble-bass", "membrane-kick", "snare-clap", "metal-hat", "drop-impact", "mixer"],
+      "mill": "NEED",
+      "mix": null,
+      "taste": 0,
+      "notes": "Half-time kick. Wobble LFO. Turn is the drop. Not a techno alias."
+    }
+  ],
+  "voices": [
+    {
+      "id": "membrane-kick",
+      "status": "live",
+      "lineage": "rippel MembraneSynth",
+      "taste": 7,
+      "notes": "Sine + expo pitch drop. Techno/rock/jazz."
+    },
+    {
+      "id": "membrane-808",
+      "status": "live",
+      "lineage": "rippel phonk 808",
+      "taste": 6,
+      "notes": "C1, 16 octaves, long decay. Needs a real slide and sub hold like Piddy."
+    },
+    {
+      "id": "membrane-sub",
+      "status": "live",
+      "lineage": "rippel",
+      "taste": 6,
+      "notes": "Ambient/timeless floor."
+    },
+    {
+      "id": "reese-bass",
+      "status": "live",
+      "lineage": "rippel phonk reese",
+      "taste": 5,
+      "notes": "Two detuned saws into 200Hz. Phonk + destination. Needs more growl."
+    },
+    {
+      "id": "duo-bass",
+      "status": "live",
+      "lineage": "rippel DuoSynth",
+      "taste": 6,
+      "notes": "Techno bass. Rock guitar currently reuses this."
+    },
+    {
+      "id": "metal-hat",
+      "status": "live",
+      "lineage": "rippel MetalSynth",
+      "taste": 7,
+      "notes": "FM grit hats. Mixer still pulls hot air."
+    },
+    {
+      "id": "metal-cowbell",
+      "status": "live",
+      "lineage": "rippel phonk cowbell",
+      "taste": 5,
+      "notes": "Metal at 845Hz. Not a swung cowbell."
+    },
+    {
+      "id": "fm-lead",
+      "status": "live",
+      "lineage": "rippel techno",
+      "taste": 6,
+      "notes": "Techno color on the motif cell."
+    },
+    {
+      "id": "formant-stab",
+      "status": "live",
+      "lineage": "mill port",
+      "taste": 5,
+      "notes": "Phonk stab. Not a chopped vocal."
+    },
+    {
+      "id": "triangle-pad",
+      "status": "live",
+      "lineage": "rippel ambient",
+      "taste": 6,
+      "notes": "Shortened attack so a 4.44s bed has a body."
+    },
+    {
+      "id": "rhodes-keys",
+      "status": "live",
+      "lineage": "rippel ambient",
+      "taste": 6,
+      "notes": "Motif color for ambient/timeless."
+    },
+    {
+      "id": "vinyl-dust",
+      "status": "live",
+      "lineage": "mill",
+      "taste": 6,
+      "notes": "Crackle bed for destination night-drive. Need on ambient/jazz/timeless."
+    },
+    {
+      "id": "static-drop",
+      "status": "live",
+      "lineage": "mill",
+      "taste": 6,
+      "notes": "Band-limited noise jewel on the turn. Easy-listening / night-drive drop. Need on ambient/timeless."
+    },
+    {
+      "id": "wobble-bass",
+      "status": "need",
+      "lineage": "piddy / dubstep",
+      "taste": 0,
+      "notes": "LFO-cutoff bass. Dubstep body."
+    },
+    {
+      "id": "drop-impact",
+      "status": "need",
+      "lineage": "piddy / dubstep",
+      "taste": 0,
+      "notes": "Half-time snare + sub hit on the jewel."
+    },
+    {
+      "id": "808-slide",
+      "status": "need",
+      "lineage": "piddy phonk",
+      "taste": 0,
+      "notes": "Portamento 808, not a one-shot membrane."
+    },
+    {
+      "id": "chopped-vocal",
+      "status": "need",
+      "lineage": "piddy phonk",
+      "taste": 0,
+      "notes": "Formant chops on the and. Not a single stab."
+    }
+  ]
+}

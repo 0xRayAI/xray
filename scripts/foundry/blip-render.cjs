@@ -1056,7 +1056,7 @@ function failReceipt(root, input, reason, extra = {}) {
   return { receipt, mp4: input.mp4, seed: input.seed };
 }
 
-function resolveBed(opts, root, brief, work, seed) {
+function resolveBed(opts, root, brief, work, seed, motionId) {
   if (opts.bed) {
     const bed = path.resolve(root, opts.bed);
     if (!fs.existsSync(bed)) {
@@ -1070,7 +1070,7 @@ function resolveBed(opts, root, brief, work, seed) {
       : path.join(root, ".xray", "blip", "bed.wav");
     const rendered = sound.renderSamples({
       brief,
-      genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
+      genre: rippel.resolveArtGenre(motionId, { seedHex: seed, genre: opts.genre }),
       seconds: DURATION_SEC,
       seed,
       syncopate: true,
@@ -1277,7 +1277,7 @@ function renderBlip(opts = {}) {
     lookKind: opts.lookKind || null,
     bodyKind: opts.bodyKind || null,
     camera: opts.camera || null,
-    genre: rippel.resolveGenreKind({ seedHex: seed, genre: opts.genre }),
+    genre: rippel.resolveArtGenre(modeInfo.motionId || modeInfo.id, { seedHex: seed, genre: opts.genre }),
     organ: null,
     width: MOTION_WIDTH,
     height: MOTION_HEIGHT,
@@ -1290,7 +1290,7 @@ function renderBlip(opts = {}) {
   fs.mkdirSync(path.dirname(mp4), { recursive: true });
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "xray-foundry-blip-"));
   try {
-    const bedInfo = resolveBed(opts, root, brief, work, seed);
+    const bedInfo = resolveBed(opts, root, brief, work, seed, modeInfo.motionId || modeInfo.id);
     if (!bedInfo.ok) {
       return failReceipt(root, input, bedInfo.reason);
     }

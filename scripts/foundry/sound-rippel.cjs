@@ -195,7 +195,9 @@ const GENRE_ALIASES = {
   phonk: "phonk",
   rock: "rock",
   timeless: "timeless",
-  destination: "ambient",
+  destination: "destination",
+  nightdrive: "destination",
+  "night-drive": "destination",
   country: "timeless",
   game: "techno",
 };
@@ -207,6 +209,7 @@ const TEMPO_TABLES = {
   phonk: [130, 140, 150],
   rock: [110, 120, 130],
   timeless: [70, 80, 90],
+  destination: [90, 100, 110],
 };
 
 const GENRES = {
@@ -234,6 +237,10 @@ const GENRES = {
     bpm: 90,
     voices: ["triangle-pad", "rhodes-keys", "membrane-sub", "mixer"],
   },
+  destination: {
+    bpm: 100,
+    voices: ["membrane-808", "reese-bass", "vinyl-dust", "static-drop", "metal-cowbell", "mixer"],
+  },
 };
 
 const SCALES = {
@@ -243,6 +250,7 @@ const SCALES = {
   jazz: [130.81, 164.81, 196.0, 220.0, 261.63],
   rock: [329.63, 392.0, 440.0, 493.88, 587.33],
   timeless: [261.63, 311.13, 349.23, 392.0, 466.16, 65.41],
+  destination: [32.7, 43.65, 55.0, 65.41, 82.41],
 };
 
 function dbLin(db) {
@@ -334,7 +342,7 @@ function padTones(genreId, scale) {
   const s = scale || SCALES[genreId] || SCALES.ambient;
   if (genreId === "ambient" || genreId === "timeless") return [s[0] * 0.75, s[0], s[1], s[3]];
   if (genreId === "jazz") return [s[0], s[2], s[3], s[0] * 2];
-  if (genreId === "phonk") return [s[0], s[0] * 1.5, s[3]];
+  if (genreId === "phonk" || genreId === "destination") return [s[0], s[0] * 1.5, s[3]];
   if (genreId === "rock") return [s[0] * 0.5, s[0], s[2]];
   return [s[0], s[2], s[3]];
 }
@@ -878,10 +886,12 @@ function renderReese({ sampleRate, freq, velocity, hold }) {
   for (let i = 0; i < n; i++) {
     const t = i / sampleRate;
     const env = adsr(t, p.attack, p.decay, p.sustain, p.release, hold || 0.2);
-    const mix = 0.5 * saw(ph0) + 0.5 * saw(ph1);
+    const detune = 1.018 + 0.004 * Math.sin(2 * Math.PI * 0.37 * t);
+    const growl = 0.08 * Math.sin(2 * Math.PI * 48 * t);
+    const mix = 0.48 * saw(ph0) + 0.44 * saw(ph1) + growl;
     out[i] = velocity * env * lp.step(mix);
     ph0 += (2 * Math.PI * freq) / sampleRate;
-    ph1 += (2 * Math.PI * freq * 1.01) / sampleRate;
+    ph1 += (2 * Math.PI * freq * detune) / sampleRate;
   }
   return out;
 }
@@ -899,6 +909,39 @@ function renderCowbell({ sampleRate, velocity }) {
     release: p.release,
     velocity,
   });
+}
+
+function renderVinylDust({ sampleRate, seconds, velocity }) {
+  const n = Math.max(1, Math.floor((seconds || 4.44) * sampleRate));
+  const out = new Float64Array(n);
+  const noise = noiseLcg(0x51c10ad);
+  const hp = highpass(1600, sampleRate);
+  const lp = lowpass(6400, sampleRate);
+  const vel = velocity || 0.12;
+  for (let i = 0; i < n; i++) {
+    const raw = noise() * 2 - 1;
+    const pop = noise() > 0.993 ? raw * 0.65 : raw * 0.035;
+    out[i] = lp.step(hp.step(pop)) * vel;
+  }
+  return out;
+}
+
+function renderStaticDrop({ sampleRate, velocity }) {
+  const dur = 0.62;
+  const n = Math.floor(dur * sampleRate);
+  const out = new Float64Array(n);
+  const noise = noiseLcg(0x57a71c);
+  const hp = highpass(900, sampleRate);
+  const lp = lowpass(5200, sampleRate);
+  const vel = velocity || 0.5;
+  for (let i = 0; i < n; i++) {
+    const t = i / sampleRate;
+    const rise = t < 0.08 ? t / 0.08 : 1;
+    const fall = t > 0.22 ? Math.max(0, 1 - (t - 0.22) / 0.4) : 1;
+    const grit = noise() * 2 - 1;
+    out[i] = lp.step(hp.step(grit)) * vel * rise * fall;
+  }
+  return out;
 }
 
 function renderBrush({ sampleRate, velocity, rng }) {
@@ -1163,7 +1206,7 @@ function motifColorVoice(genreId, hz, sampleRate, hold) {
   if (genreId === "techno") {
     return renderFmLead({ sampleRate, freq: note * 2, velocity: 0.36, hold: held * 0.45 });
   }
-  if (genreId === "phonk") {
+  if (genreId === "phonk" || genreId === "destination") {
     return renderFormant({ sampleRate, freq: Math.max(note * 4, 160), velocity: 0.42, hold: held * 0.32 });
   }
   if (genreId === "jazz") {
@@ -1195,7 +1238,9 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
     const rockCrash = genreId === "rock";
     const crashVel = genreId === "timeless" ? 0.22 : rockCrash ? 0.36 : MIXER.crashVel;
-    if (genreId !== "timeless") {
+    if (genreId === "destination") {
+      mixInto(colorBus, renderStaticDrop({ sampleRate, velocity: 0.58 }), Math.floor(marks.turnAt * sampleRate), 1);
+    } else if (genreId !== "timeless") {
       mixInto(
         colorBus,
         renderMetal({
@@ -1229,8 +1274,8 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
       Math.floor(marks.turnAt * sampleRate),
       1,
     );
-    mixInto(kickBus, kickClick(sampleRate, genreId === "phonk" ? 0.28 : 0.18), Math.floor(marks.turnAt * sampleRate), 1);
-    if (genreId === "phonk") {
+    mixInto(kickBus, kickClick(sampleRate, genreId === "phonk" || genreId === "destination" ? 0.28 : 0.18), Math.floor(marks.turnAt * sampleRate), 1);
+    if (genreId === "phonk" || genreId === "destination") {
       mixInto(
         kickBus,
         renderMembrane({
@@ -1429,6 +1474,47 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
           hold: beat * 0.18,
         }),
         Math.floor((t + beat * grid.and) * sampleRate),
+        1,
+      );
+    }
+  } else if (g.id === "destination") {
+    mixInto(padBus, renderPad(n, sampleRate, padTones("destination", scale), rng, 0.48), 0, 0.26);
+    mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: 0.13 }), 0, 1);
+    const kick = RIPPEL.phonk808;
+    for (const t of schedule(seconds, beat, 0.12)) {
+      const hit = renderMembrane({
+        sampleRate,
+        freq: kick.noteHz,
+        octaves: kick.octaves,
+        pitchDecay: kick.pitchDecay,
+        attack: kick.attack,
+        decay: 1.35,
+        release: 1.6,
+        velocity: 0.74 * sectionGain(t, seconds, lock, grid),
+        floorHz: CRYSTAL.eightOhEightFloorHz,
+      });
+      mixInto(kickBus, hit, Math.floor(t * sampleRate), 1);
+      mixInto(kickBus, kickClick(sampleRate, 0.08), Math.floor(t * sampleRate), 1);
+    }
+    for (const t of schedule(seconds, beat * 2, 0.18)) {
+      const beatIdx = Math.round(t / beat);
+      mixInto(
+        colorBus,
+        renderReese({
+          sampleRate,
+          freq: scale[(beatIdx % 2 === 0 ? 0 : 3) % scale.length],
+          velocity: 0.4,
+          hold: beat * 1.15,
+        }),
+        Math.floor((t + beat * 0.5) * sampleRate),
+        1,
+      );
+    }
+    for (const t of schedule(seconds, beat * 2, 0.12)) {
+      mixInto(
+        colorBus,
+        renderCowbell({ sampleRate, velocity: 0.14 }),
+        Math.floor((t + beat * 1.5) * sampleRate),
         1,
       );
     }
@@ -1681,15 +1767,15 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   }
 
   const kickCh = applyBus(kickBus, sampleRate, {
-    hp: g.id === "phonk" ? RIPPEL.phonk808.hp : 30,
-    lp: g.id === "phonk" ? RIPPEL.phonk808.lp : 9000,
-    eq: g.id === "phonk" ? RIPPEL.phonk808.eq : RIPPEL.technoKick.eq,
-    dist: g.id === "phonk" ? RIPPEL.phonk808.dist : RIPPEL.technoKick.dist,
-    comp: g.id === "phonk" ? RIPPEL.phonk808.comp : RIPPEL.technoKick.comp,
-    volDb: g.id === "ambient" || g.id === "timeless" ? -4 : g.id === "jazz" ? RIPPEL.jazzKick.volDb : g.id === "phonk" ? RIPPEL.phonk808.volDb : RIPPEL.technoKick.volDb,
+    hp: g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.hp : 30,
+    lp: g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.lp : 9000,
+    eq: g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.eq : RIPPEL.technoKick.eq,
+    dist: g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.dist : RIPPEL.technoKick.dist,
+    comp: g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.comp : RIPPEL.technoKick.comp,
+    volDb: g.id === "ambient" || g.id === "timeless" ? -4 : g.id === "jazz" ? RIPPEL.jazzKick.volDb : g.id === "phonk" || g.id === "destination" ? RIPPEL.phonk808.volDb : RIPPEL.technoKick.volDb,
   });
   const hatCh = applyBus(hatBus, sampleRate, {
-    hp: g.id === "techno" || g.id === "phonk" || g.id === "rock" ? CRYSTAL.hatAirHz : 7200,
+    hp: g.id === "techno" || g.id === "phonk" || g.id === "rock" || g.id === "destination" ? CRYSTAL.hatAirHz : 7200,
     lp: 16000,
     eq: { low: -10, mid: -2, high: 3 },
     dist: 0.04,
@@ -1698,11 +1784,11 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   });
   const colorCh = applyBus(colorBus, sampleRate, {
     hp: g.id === "ambient" || g.id === "timeless" ? 90 : 40,
-    lp: g.id === "phonk" ? 7000 : 9000,
-    eq: g.id === "techno" || g.id === "rock" ? RIPPEL.technoBass.eq : g.id === "phonk" ? RIPPEL.phonkReese.eq : { low: -2, mid: 2, high: -3 },
-    dist: g.id === "techno" || g.id === "rock" ? RIPPEL.technoBass.dist : g.id === "phonk" ? RIPPEL.phonkReese.dist : 0.08,
+    lp: g.id === "phonk" || g.id === "destination" ? 7000 : 9000,
+    eq: g.id === "techno" || g.id === "rock" ? RIPPEL.technoBass.eq : g.id === "phonk" || g.id === "destination" ? RIPPEL.phonkReese.eq : { low: -2, mid: 2, high: -3 },
+    dist: g.id === "techno" || g.id === "rock" ? RIPPEL.technoBass.dist : g.id === "phonk" || g.id === "destination" ? RIPPEL.phonkReese.dist : 0.08,
     comp: RIPPEL.technoBass.comp,
-    volDb: g.id === "techno" ? RIPPEL.technoBass.volDb : g.id === "phonk" ? RIPPEL.phonkReese.volDb : -8,
+    volDb: g.id === "techno" ? RIPPEL.technoBass.volDb : g.id === "phonk" || g.id === "destination" ? RIPPEL.phonkReese.volDb : -8,
   });
   const padCh = applyBus(padBus, sampleRate, {
     hp: lock && (g.id === "ambient" || g.id === "timeless") ? 180 : 90,
@@ -1719,7 +1805,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     rng,
     g.id === "ambient" || g.id === "timeless"
       ? 0.07
-      : g.id === "phonk"
+      : g.id === "phonk" || g.id === "destination"
         ? 0.04
         : g.id === "jazz" || g.id === "rock"
           ? lock
@@ -1758,7 +1844,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         ? lock
           ? 0.92
           : 0.68
-        : g.id === "phonk"
+        : g.id === "phonk" || g.id === "destination"
           ? 0.42
           : g.id === "rock"
             ? lock
@@ -1784,7 +1870,7 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
   let glued = compress(
     mix,
     dbLin(MIXER.glueThresholdDb),
-    g.id === "phonk" ? 3.6 : MIXER.glueRatio,
+    g.id === "phonk" || g.id === "destination" ? 3.6 : MIXER.glueRatio,
     sampleRate,
     0.008,
     0.16,
@@ -1894,6 +1980,8 @@ module.exports = {
   renderFmLead,
   renderFormant,
   renderCowbell,
+  renderVinylDust,
+  renderStaticDrop,
   bandEnergy,
   highpassEnergy,
   zeroCrossRate,

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+Factory-sound inventory: live bodies + needed voices in `plant/sounds/inventory.json`. Destination is night-drive (808 / reese / vinyl / static drop), not an ambient alias. Destination art locks that genre. Dubstep and Piddy-grade 808-slide stay needed. Mixer still enumerates the original six. No version bump.
+
 Factory-blip destination scene: scene mixer on this mill, not a foundry. Road into a Tron-orange horizon (`#DF740C` `#FF410D` `#F79D1E` `#F2A007` `#ED681F`) on dark beds. House cyan is the program rim. No version bump.
 
 Factory-blip looker seat: `blip-looker` is the friend hitting replay (hook → jewel → hold). Inspect = file. Vibe = density. Mixer = ears. Ship bar is 8. No version bump.

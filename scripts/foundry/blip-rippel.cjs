@@ -70,6 +70,7 @@ const CORE_STYLES = ["disc", "eclipse", "pulse"];
 const LOOK_KINDS = ["focus", "cage"];
 const BODY_KINDS = ["mill", "rippel"];
 const GENRE_KINDS = ["ambient", "techno", "phonk", "jazz", "rock", "timeless"];
+const ART_GENRE = { destination: "destination" };
 const CAMERA_KINDS = ["front", "three-quarter", "top", "low", "dutch", "side"];
 
 function resolveCamera(mesh) {
@@ -737,11 +738,18 @@ function resolveGenreKind(opts) {
     const aliased = soundRippel.GENRE_ALIASES[trimmed];
     if (aliased) return aliased;
     if (GENRE_KINDS.includes(trimmed)) return trimmed;
-    const err = new Error(`unknown genre "${raw}" (want ${GENRE_KINDS.join("|")})`);
+    if (soundRippel.GENRES[trimmed]) return trimmed;
+    const err = new Error(`unknown genre "${raw}" (want ${GENRE_KINDS.join("|")}|destination)`);
     err.code = "BLIP_GENRE";
     throw err;
   }
   return GENRE_KINDS[seedU32(opts && opts.seedHex, 24) % GENRE_KINDS.length];
+}
+
+function resolveArtGenre(motionId, opts) {
+  const locked = ART_GENRE[motionId];
+  if (locked) return locked;
+  return resolveGenreKind(opts);
 }
 
 function resolveBodyKind(opts) {
@@ -2373,6 +2381,8 @@ module.exports = {
   resolveLookKind,
   resolveBodyKind,
   resolveGenreKind,
+  resolveArtGenre,
+  ART_GENRE,
   GENRE_KINDS,
   CAMERA_KINDS,
   cameraPose,
