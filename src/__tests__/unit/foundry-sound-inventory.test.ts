@@ -62,6 +62,7 @@ describe('foundry sound inventory — art locks a genre', () => {
       renderSamples: (opts: { brief: string; genre: string; seconds: number; syncopate?: boolean }) => {
         genre: { id: string; voices: string[] };
         samples: Float64Array;
+        grid?: { bpm: number };
       };
       evaluateMetrics: (samples: Float64Array, sampleRate: number) => { status: string };
     };
@@ -90,6 +91,14 @@ describe('foundry sound inventory — art locks a genre', () => {
     });
     expect(bed.genre.id).toBe('destination');
     expect(sound.evaluateMetrics(bed.samples, 44100).status).toBe('PASS');
+    const slow = sound.renderSamples({
+      brief: 'destination lock',
+      genre: 'destination',
+      seconds: 4.44,
+      syncopate: true,
+    });
+    expect(slow.grid?.bpm ?? 90).toBe(90);
+    expect(sound.evaluateMetrics(slow.samples, 44100).status).toBe('PASS');
   });
 
   it('tastes every live body at ship bar 8 and inspects dubstep', { timeout: 40000 }, () => {

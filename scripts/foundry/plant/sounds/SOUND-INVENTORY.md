@@ -10,14 +10,14 @@ Piddy (Ditty Drop) and Rippel prototype are the specific-sound bar. Mill gates (
 
 | Genre | BPM | Voices | Mill | Mix | Taste | Notes |
 |---|---|---|---|---|---|---|
-| ambient | 70 80 90 | pad · rhodes · sub · air · mixer | PASS | 10 | 6 | Easy listening. No vinyl/static drop. Destination used to alias here. |
-| techno | 120 128 140 | kick · hat · clap · duo-bass · FM · mixer | PASS | 10 | 7 | Rippel membrane/metal. No wobble. |
-| phonk | 130 140 150 | 808 · hat · cowbell · reese · formant · mixer | PASS | 10 | 6 | Membrane 808 + thin reese. Not Piddy slide/chop. |
-| jazz | 100 110 120 | kick · ride · brush · walk · sax · mixer | PASS | 10 | 6 | Synthetic sax. No dust. |
-| rock | 110 120 130 | kick · hat · crash · duo-guitar · formant-vox · mixer | PASS | 10 | 5 | Guitar is duo-bass. |
-| timeless | 70 80 90 | pad · rhodes · sub · mixer | PASS | 10 | 6 | Country alias. No static drop. |
-| destination | 90 100 110 | 808 · reese · vinyl-dust · static-drop · cowbell · 808-slide · mixer | live | — | 7 | **Art lock** for destination. Night-drive. Not ambient. |
-| dubstep | 70 140 150 | wobble · kick · clap · hat · drop-impact · mixer | live | — | 7 | Half-time. Turn is the drop. Mixer still six. |
+| ambient | 70 80 90 | pad · rhodes · sub · air · vinyl · static · mixer | PASS | 10 | 10 | Easy listening. Vinyl dust + static jewel. |
+| techno | 120 128 140 | kick · hat · clap · duo-bass · FM · mixer | PASS | 10 | 9 | Rippel membrane/metal. No wobble. |
+| phonk | 130 140 150 | 808-slide · hat · cowbell · reese · formant · mixer | PASS | 10 | 10 | 808-slide on even beats + jewel. Chop still a stab. |
+| jazz | 100 110 120 | kick · ride · brush · walk · sax · vinyl · mixer | PASS | 10 | 9 | Synthetic sax + vinyl. |
+| rock | 110 120 130 | kick · hat · crash · duo-guitar · formant-vox · mixer | PASS | 10 | 9 | Distorted mid guitar. Dry plate. |
+| timeless | 70 80 90 | pad · rhodes · sub · vinyl · static · mixer | PASS | 10 | 10 | Country alias. Vinyl + static jewel. |
+| destination | 90 100 110 | 808-slide · reese · vinyl · static · cowbell · mixer | PASS | — | 10 | **Art lock.** Night-drive. Not ambient. |
+| dubstep | 70 140 150 | wobble · kick · clap · hat · drop-impact · mixer | PASS | — | 10 | Half-time. Turn is the drop. Mixer still six. |
 
 ## Needed voices (specific sounds)
 

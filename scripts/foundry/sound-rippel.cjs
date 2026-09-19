@@ -1323,9 +1323,10 @@ function mixPhraseDrop({ kickBus, hatBus, colorBus, sampleRate, seconds, grid, g
     );
   }
   if (marks.turnAt < seconds - 0.05) {
-    duckBus(kickBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.4);
-    duckBus(hatBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.34);
-    duckBus(colorBus, sampleRate, marks.turnAt - 0.22, marks.turnAt, 0.48);
+    const destNight = genreId === "destination";
+    duckBus(kickBus, sampleRate, marks.turnAt - (destNight ? 0.08 : 0.22), marks.turnAt, destNight ? 0.72 : 0.4);
+    duckBus(hatBus, sampleRate, marks.turnAt - (destNight ? 0.08 : 0.22), marks.turnAt, destNight ? 0.7 : 0.34);
+    duckBus(colorBus, sampleRate, marks.turnAt - (destNight ? 0.08 : 0.22), marks.turnAt, destNight ? 0.78 : 0.48);
     const rockCrash = genreId === "rock";
     const crashVel = genreId === "timeless" ? 0.22 : rockCrash ? 0.36 : MIXER.crashVel;
     if (genreId === "destination" || genreId === "ambient" || genreId === "timeless") {
@@ -1614,8 +1615,8 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
       );
     }
   } else if (g.id === "destination") {
-    mixInto(padBus, renderPad(n, sampleRate, padTones("destination", scale), rng, 0.48), 0, 0.26);
-    mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: 0.13 }), 0, 1);
+    mixInto(padBus, renderPad(n, sampleRate, padTones("destination", scale), rng, 0.32), 0, 0.36);
+    mixInto(padBus, renderVinylDust({ sampleRate, seconds, velocity: 0.16 }), 0, 1);
     const kick = RIPPEL.phonk808;
     for (const t of schedule(seconds, beat, 0.12)) {
       const beatIdx = Math.round(t / beat);
@@ -1985,9 +1986,11 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
     accentTurn(kickBus, sampleRate, phraseDrop.marks.turnAt, 0.64, phraseDrop.marks.beatSec);
     accentTurn(hatBus, sampleRate, phraseDrop.marks.turnAt, 0.7, phraseDrop.marks.beatSec);
     accentTurn(colorBus, sampleRate, phraseDrop.marks.turnAt, 0.72, phraseDrop.marks.beatSec);
-    duckNextHit(kickBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.46);
-    duckNextHit(hatBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.52);
-    duckNextHit(colorBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.58);
+    if (g.id !== "destination") {
+      duckNextHit(kickBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.46);
+      duckNextHit(hatBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.52);
+      duckNextHit(colorBus, sampleRate, phraseDrop.marks.turnAt, phraseDrop.marks.beatSec, 0.58);
+    }
     const laterBeat = phraseDrop.marks.beatSec || 0.5;
     if (g.id !== "jazz") {
       for (let t = phraseDrop.marks.turnAt + laterBeat * 1.9; t < seconds - 0.08; t += laterBeat) {
@@ -2078,7 +2081,9 @@ function renderRippelBed({ brief, genre, seconds, seedHex, rng, sampleRate, sync
         ? lock
           ? 0.92
           : 0.68
-        : g.id === "phonk" || g.id === "destination"
+        : g.id === "destination"
+          ? 0.56
+        : g.id === "phonk"
           ? 0.42
           : g.id === "dubstep"
             ? 0.64
