@@ -17,7 +17,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
 - **Ship decision matrix** — lead-owned. A PR+CI · B pack (`assert-packed-dist-cli` + consumer smoke) · C `npm run release:docs-check` · D `npx @0xray/foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Host Auto Review may still card npm/Railway; that is not the OS decision.
 - **Metamorphosis** — an LLM becomes OP-PROC through in-context worn seats (same critic, same dummy, four-line dispatch). Spawning more bots is the old skin.
-- **Publish OTP latch** — lead runs `npm publish --access public` (no `--auth-type=web`). Paste the CLI `https://www.npmjs.com/auth/cli/…` URL. Do not press Enter. Do not hand publish to a browser subagent. Poll `npm view` until the version is live.
+- **Publish OTP latch** — lead runs `npm publish --access public` (no `--auth-type=web`). Paste the CLI `https://www.npmjs.com/auth/cli/…` URL. Do not press Enter. Do not hand publish to a browser subagent. Poll `npm view` until the version is live. Then clean-room `npm install <pkg>@<version>` from the registry and prove wear. `npm view` is not an install.
 
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.

@@ -124,8 +124,9 @@ Lead publishes. Do not hand this to a browser subagent.
 
 1. **npm CLI:** after gate PASS, `npm whoami` then `npm publish --access public` (no `--auth-type=web`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. The human approves OTP in their own session.
 2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
-3. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
-4. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
+3. **Registry install (live verify):** `npm view` is not an install. In a clean temp dir: `npm init -y` then `npm install <pkg>@<version>` from the registry (not a local tgz). Assert `require('<pkg>/package.json').version`, `_resolved` is `registry.npmjs.org`, and `REQUIRED_PACK_PATHS` exist on disk. Run `npx <pkg> status` and `npx <pkg> health`. `npx 0xray validate` currently shells leftover `init.sh` (`md5` + `.opencode/enforcer-config.json`) — a fail there is not a pack miss. Do not move on until the clean-room wear is proven.
+4. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
+5. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
 
 ### Close condition
 

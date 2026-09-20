@@ -23,6 +23,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/npm publish --access public/);
     expect(text).toMatch(/Do \*\*not\*\* press Enter/);
     expect(text).toMatch(/Do not move on until the new version is polled live/);
+    expect(text).toMatch(/Registry install \(live verify\)/);
+    expect(text).toMatch(/npm view` is not an install/);
+    expect(text).toMatch(/REQUIRED_PACK_PATHS/);
     expect(text).toMatch(/Always a branch/);
     expect(text).toMatch(/Always a PR/);
     expect(text).toMatch(/Loop until `\.xray\/state\/STATION\.md` is done/);
