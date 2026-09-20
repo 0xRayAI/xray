@@ -126,7 +126,7 @@ Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`
 
 Lead publishes. Do not hand this to a browser subagent.
 
-1. **npm CLI:** after gate PASS, every time run `npm publish --access public` (no `--auth-type=web`, no `--otp=` from chat). Paste the clickable `https://www.npmjs.com/auth/cli/…` URL (or `login/cli` if that is what printed). Do **not** press Enter. Do **not** open a VM browser. Do **not** ask the human to type a 6-digit authenticator code into chat. If the CLI returns `EOTP` / `ENEEDAUTH` with no URL, `npm logout` and run `npm publish --access public` (or `npm login` then publish) until the URL prints. The human approves OTP at that URL in their own session.
+1. **npm CLI:** after gate PASS, every time run `npm publish --access public` (no `--auth-type=web`, no `--otp=` from chat). Stay logged in — do **not** `npm logout`. Run it in the live TTY (do not pipe through `tee`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. Do **not** ask the human to type a 6-digit authenticator code into chat. The human approves OTP at that URL in their own session.
 2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
 3. **Registry install (live verify):** `npm view` is not an install. Prove **both** paths before moving on:
    - **Fresh:** empty temp dir → `npm init -y` → `npm install <pkg>@<version>` from the registry (not a local tgz).

@@ -24,7 +24,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Do \*\*not\*\* press Enter/);
     expect(text).toMatch(/every time run `npm publish --access public`/);
     expect(text).toMatch(/Do \*\*not\*\* ask the human to type a 6-digit authenticator code/);
-    expect(text).toMatch(/npm logout/);
+    expect(text).toMatch(/do \*\*not\*\* `npm logout`/);
+    expect(text).not.toMatch(/If the CLI returns `EOTP`.*`npm logout`/);
     expect(text).toMatch(/Do not move on until the new version is polled live/);
     expect(text).toMatch(/Registry install \(live verify\)/);
     expect(text).toMatch(/npm view` is not an install/);
