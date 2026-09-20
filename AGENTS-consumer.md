@@ -14,7 +14,7 @@ Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomou
 
 Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
-A peer lead continues from this card + Repertoire + the `orchestrator` skill. Live work ticks, not idle pacers. Same critic seat (resume only). Human gates (npm, Railway, spend) stay Ask-first.
+A peer lead continues from this card + Repertoire + the `orchestrator` skill. Dummy tests `SKILLS.md`. Same-sess bodies wear the suit. Branch + worktree + PR. Loop until Station is done. Live work ticks, not idle pacers. Same critic seat (resume only). Human gates (npm, Railway, spend) stay Ask-first — OTP in a browser, poll the new version before the next cut.
 
 ## Postinstall (automatic)
 

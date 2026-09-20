@@ -18,6 +18,14 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Live tick/);
     expect(text).toMatch(/A friend would hear:/);
     expect(text).toMatch(/Codex 69/);
+    expect(text).toMatch(/Dummy exists to \*\*test `SKILLS\.md`\*\*/);
+    expect(text).toMatch(/Same-sess bodies exist to \*\*keep context\*\*/);
+    expect(text).toMatch(/spawn the browser for OTP/);
+    expect(text).toMatch(/Do not move on until the new version is polled live/);
+    expect(text).toMatch(/Always a branch/);
+    expect(text).toMatch(/Always a PR/);
+    expect(text).toMatch(/Loop until `\.xray\/state\/STATION\.md` is done/);
+    expect(text).toMatch(/Do not use pacer timeouts as the work clock/);
     expect(readFileSync(catalog, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
   });
 

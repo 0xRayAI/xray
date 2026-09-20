@@ -8,7 +8,7 @@ Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 4
 
 ## Wear (what a stranger gets)
 
-- `npm install 0xray` — postinstall fastens mill+inspect, writes 7 MCP `.mcp.json`, four host bridges (OpenCode, Grok, Hermes, OpenClaw) plus Cursor `.cursor/hooks.json`, overlays their plant. Grok last-mile dest is project `.grok/plugins/0xray`. Shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`. Isolated HOME must not write the machine plugin. Does **not** write consumer-root `SKILLS.md`. Lead cadence: `grok-bot/ops/LEAD-CADENCE.md` — a peer continues from Station + Repertoire; live ticks, not idle pacers.
+- `npm install 0xray` — postinstall fastens mill+inspect, writes 7 MCP `.mcp.json`, four host bridges (OpenCode, Grok, Hermes, OpenClaw) plus Cursor `.cursor/hooks.json`, overlays their plant. Grok last-mile dest is project `.grok/plugins/0xray`. Shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`. Isolated HOME must not write the machine plugin. Does **not** write consumer-root `SKILLS.md`. Lead cadence: `grok-bot/ops/LEAD-CADENCE.md` — a peer continues from Station + Repertoire; dummy tests `SKILLS.md`; same-sess wear; branch/PR; OTP then poll; loop until Station; live ticks, not idle pacers.
 
 - `npx @0xray/foundry mint --skip-live` — re-fasten mill plant, then inspect.
 - `npx @0xray/foundry inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.

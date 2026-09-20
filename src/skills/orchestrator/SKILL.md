@@ -66,8 +66,11 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 
 - **Peer test:** another instance with only worn 0xRay continues the ticket. No command stream.
 - **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
-- **Live tick, not pacer:** `/loop` runs work now, then a short timer. Do not idle-wait 12 minutes.
-- **Compact:** Station survives the cut. Repertoire keeps names. Do not paste the KB onto the card.
+- **Dummy tests `SKILLS.md`:** a suited dummy proves the worn catalog. Same-sess bodies keep context and hold a Station card.
+- **Ship track:** always branch + worktree/aside + PR. Docs as you go. Builds. Rollback = close the PR.
+- **Publish:** spawn the OTP browser, watch success, poll `npm view` until the new version is live. Do not move on early. Railway same law.
+- **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes.
+- **Close:** loop until Station is done. Compact: Station survives the cut. Repertoire keeps names.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
 - **Human gates:** npm / Railway / spend stay Ask-first.
