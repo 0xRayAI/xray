@@ -11,6 +11,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 📚 Documentation
 - Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
+- **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC (live ticks, not idle pacers). Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
 
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.

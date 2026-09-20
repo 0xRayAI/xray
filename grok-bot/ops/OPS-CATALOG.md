@@ -19,6 +19,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | `ops/LANGUAGES.md` | Full catalog of op-model languages (lanes, kernels, dialects, stamps) |
 | `ops/DOCTRINE-FEED-THE-BOTS.md` | Blaze doctrine: keep feeding receipts / op proc / real work |
 | `ops/DOCTRINE-MULTIVERSE.md` | Blaze line: we built a multiverse |
+| `ops/LEAD-CADENCE.md` | Lead syncopation — peer continues from disk; live ticks not pacers |
 | `ops/dist/brand/LEXICON.md` | Short catalog of bot talk (plain vs shorthand, lanes H/B) |
 
 ## Dist (public posts)

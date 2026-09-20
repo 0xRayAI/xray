@@ -76,7 +76,7 @@ xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume /
 
 | Skill | Agent | Description |
 |-------|-------|-------------|
-| `orchestrator` | @orchestrator | Multi-agent coordination + **lead-dev mode** (codex 67–68) |
+| `orchestrator` | @orchestrator | Multi-agent coordination + **lead-dev mode** (codex 67–68) + lead cadence (syncopation) |
 | `xray-orchestrator` | — | xray orchestration skill (MCP orchestrator surface) |
 | `processor-pipeline` | — | Data processing pipeline management |
 | `boot-orchestrator` | — | Framework boot orchestration |

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — peer continues from disk; live ticks not idle pacers. Cataloged. Dist clock stays `dist/CADENCE.md`.
+
 ## 0.1.5
 
 - Clear “what runs when” map for bot gates (live hooks + mill/git/release only; skip list). Strict review is ship/live/security/identity only. Everyday ops-doc copies: implementer + CI, no extra reviewer.

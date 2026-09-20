@@ -12,6 +12,8 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
+**Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Live ticks, not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook: `orchestrator` skill.
+
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:

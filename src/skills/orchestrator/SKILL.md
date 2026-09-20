@@ -59,3 +59,15 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 - **PreToolUse** → hints `per_suite_triage_required` on full `npm test`
 
 Config: `features.json` → `multi_agent_orchestration.lead_dev_mode`
+
+## Lead cadence (syncopation)
+
+The seven rules are the engine. The cadence is the time signature. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`.
+
+- **Peer test:** another instance with only worn 0xRay continues the ticket. No command stream.
+- **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
+- **Live tick, not pacer:** `/loop` runs work now, then a short timer. Do not idle-wait 12 minutes.
+- **Compact:** Station survives the cut. Repertoire keeps names. Do not paste the KB onto the card.
+- **Board:** critic Strict comments; forge implements; lead stays main thread.
+- **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
+- **Human gates:** npm / Railway / spend stay Ask-first.
