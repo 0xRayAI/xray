@@ -64,7 +64,7 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 |------|-----|--------------|
 | **Lead** | Main thread. Plan, dispatch, read all output, loop until Station is done. | Same cloud `bc-…`. Never relaunch. |
 | **Dummy** | Prove worn `SKILLS.md` / mill catalog. Friend-test the playbook. No product side effects. | Resume the dummy id when it exists. Read Station. Wear the suit. |
-| **Peer boot** | Fresh body proves they can wear + install without a command novel. Two paths: brand-new consumer **and** upgrade of an existing install. Cursor wear. | New id once; then resume. Not a second critic. Not the dummy. |
+| **Peer boot** | Fresh body proves they can wear + install without a command novel. Two paths: brand-new consumer **and** upgrade of an existing install. Cursor wear. | Resume `bc-49e17122-b167-5204-a36f-e62a6e2aba00` only. Not a second critic. Not the dummy. |
 | **Standing critic** | Board review with memory. Strict on ship. | Resume `bc-dd800001-2652-5e3e-b8d2-eac05b29ee86` only. Never spawn a twin. |
 | **Same-sess implementer** | Context-aware surgery that must remember the ticket. | Same parent sess / `bc-` as the lead. Station card on disk. Wear first. |
 

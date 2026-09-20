@@ -27,6 +27,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/npm view` is not an install/);
     expect(text).toMatch(/REQUIRED_PACK_PATHS/);
     expect(text).toMatch(/Peer boot/);
+    expect(text).toMatch(/bc-49e17122-b167-5204-a36f-e62a6e2aba00/);
     expect(text).toMatch(/Fresh \+ upgrade live-verify/);
     expect(text).toMatch(/leftover `\.opencode\/init\.sh`/);
     expect(text).toMatch(/Always a branch/);
