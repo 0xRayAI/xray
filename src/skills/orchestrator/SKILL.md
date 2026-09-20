@@ -70,6 +70,7 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 - **Ship track:** always branch + worktree/aside + PR. Docs as you go. Builds. Rollback = close the PR.
 - **Publish:** spawn the OTP browser, watch success, poll `npm view` until the new version is live. Do not move on early. Railway same law.
 - **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes.
+- **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI. Deploy Ask-first.
 - **Close:** loop until Station is done. Compact: Station survives the cut. Repertoire keeps names.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.

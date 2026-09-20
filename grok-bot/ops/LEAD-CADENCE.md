@@ -93,6 +93,18 @@ Ask-first. Critic PASS + CI green is not publish.
 
 Do not use pacer timeouts as the work clock. A 12-minute idle timer is theater. Keep every open workstream moving: encode, CI, board, dummy SKILLS proof, organ names. `/loop` fires a **live tick** after a real close. If a stream is blocked on a human gate, say so and work a different stream. Unsubscribe before changing delay.
 
+### Board clock (honest design)
+
+Two idle pacers — one for reviewing subagents, one for the lead to read them — is the **wrong** clock. Dual idle wakes fight each other, inflate the thread, and cause the next compact. That is how this OP env was lost when the organ was off.
+
+| Wake | Use | Do not |
+|------|-----|--------|
+| **PR event** | `subscribe_github_pr` on the open ship PRs. Critic comments wake the lead. | A timer that re-reads a quiet PR |
+| **In-context seats** | Resume the same critic. Dummy tests `SKILLS.md`. Lead stays the main thread and replies. | Twin critics. Clouds to re-review a PR (`CLOUD-CONTINUITY.md`) |
+| **One live tick** | Only after a real close, if Station is still open and no PR event fired | Two competing pacers. Auto-merge. Auto-deploy |
+
+Merge after critic PASS + CI. Deploy stays Ask-first (OTP then poll). A pacer never publishes.
+
 ### Heads from tails
 
 Station = cascade / multi-phase card. Repertoire = long-running names. Hangar = end product (usually no AI). Jelly = dormant. Suit = mill + inspect + Codex + Station + optional organ. Sort before acting. Copious notes go to `.xray/state/NOTES.md`, not onto Station.
@@ -110,7 +122,7 @@ Quiet on repeat CLOSED / MERGED / LIVE.
 | This file | Fleet disk truth |
 | `src/skills/orchestrator/SKILL.md` | Worn lead OS (no new skill) |
 | `AGENTS.md` Hot-swap | First Read after compact |
-| Repertoire names | `lead-cadence-syncopation` · `live-loop-not-pacer` · `peer-wears-without-commands` · `dummy-tests-skills-md` · `same-sess-wear-station` · `npm-otp-then-poll` · `branch-worktree-pr` · `loop-until-station-done` · `workstreams-keep-moving` |
+| Repertoire names | cadence names plus `board-is-seats-not-clocks` · `event-wake-not-dual-pacer` · `compact-rekey-from-disk` · `hangar-is-not-suit` · `cursor-host-no-inject` |
 
 ## Link
 
