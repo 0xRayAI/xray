@@ -24,7 +24,7 @@ Shipped `xray/features.json`:
   "provider": "repertoire",
   "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "signalsPath": ".xray/state/repertoire/curated_signals.json",
     "statePath": ".xray/state/repertoire/inference-state.json",
     "feedbackDir": ".xray/state/repertoire/feedback"
   }
@@ -56,7 +56,7 @@ Validated by `xray/features.schema.json` at load time:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `dataDir` | package `data/` (vendored 0.2) | Registry + inference state root |
-| `signalsPath` | `data/curated_signals.json` | Primitive registry file |
+| `signalsPath` | `.xray/state/repertoire/curated_signals.json` | Project-local registry (factory seed hydrates here; never the tarball) |
 | `statePath` | `data/inference-state.json` | Idempotent ingest cursor |
 | `logDir` | `logs/groover-inference` | Enriched JSONL log directory |
 

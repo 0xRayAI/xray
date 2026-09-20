@@ -5,6 +5,8 @@ How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`.
 ## North star
 Wear a thin mill suit. Agents execute and prove. Humans approve money, public posts, and credentials.
 
+**Lead layer** (higher than seats): `LEAD-CADENCE.md`. A peer wearing 0xRay continues from Station + Repertoire + this spec. Dummy tests `SKILLS.md`. Same-sess wear. Branch/worktree/PR. OTP then poll. Loop until Station is done. Live ticks, not idle pacers. Dist clock stays in `dist/CADENCE.md`.
+
 ## Who decides what
 
 | Decision | Owner |

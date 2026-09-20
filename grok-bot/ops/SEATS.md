@@ -58,6 +58,30 @@ Mirror material fleet ops/skills to `grok-bot/` (`GROK-BOT-REMOTE.md`).
 Strict only: ship / live / security / identity (or when asked). Short proof card ≤15 lines.
 Skip Light/Normal, including ops/docs mirrors. No card on CLOSED/MERGED/LIVE re-acks.
 
+**Wear, then work.** The lead cards ticket + PR URLs. This seat Reads disk. Do not wait for a command novel.
+
+1. Read `.xray/state/STATION.md` (Cursor does not inject it). Resume the same critic id on the card. Never spawn a twin.
+2. Read this file · `LEAN-COMPUTE.md` · `GIBBERISH-CHECK.md` · `AUTO-REVIEW-POLICY.md` · `LEAD-CADENCE.md` Board clock.
+3. **When asked** (Blaze or lead: “board, review”) = Strict even if lean-compute would skip Normal. Identity / factory seed / routing organ / Cursor wear = Strict-when-asked.
+4. Verify the diff and the tests yourself. Do not trust the PR body. Hunt merge collisions on shared files. Confirm `save()` / seed-safety on temp paths, not the tarball.
+5. Post a COMMENT review (this GitHub user is often the PR author — **do not APPROVE your own PR**). If `pull_request_review_write` is 403, post via the lead’s `ManagePullRequest` path and say so. Label the body `critic ✶`.
+6. Do not merge. Do not npm publish. Do not Railway. Prefer a comment over a new PR.
+
+**Proof card (Lane H — public comments):**
+
+```
+critic ✶
+Level: Strict-when-asked
+Verdict: PASS | FAIL | HOLD
+What I checked:
+What CI did not prove:
+Collision / leftover:
+Next owner:
+A friend would hear: …
+```
+
+Friend test HARD. No fleet slang without a gloss. Stamped PASS alone is invalid.
+
 ## Distribution (herald 📡)
 Execute exact Dist copy from blinky; friend test; verify URLs after live; **cadence gate** (`dist/CADENCE.md`).
 Product Dist (@0xRayAI) owned by bots — no per-post human approval.

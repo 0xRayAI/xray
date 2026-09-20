@@ -22,6 +22,10 @@ import {
   loadDelegationGateFeatures,
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { appendHookActivity } from '../../grok/hooks/grok-hook-activity.js';
+import {
+  buildRepertoireResume,
+  readGitBrief,
+} from '../../hooks/station-hook-runtime.mjs';
 
 export const CURSOR_HOST = 'cursor';
 export const EVENT_CLASS_HOST = 'cursor-host-precompact';
@@ -138,6 +142,11 @@ export function cursorBootNeedsRefresh(existing, root) {
   if (!existing.suit_profile) return true;
   if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
   if (!existing.stationLine) return true;
+  const liveGit = readGitBrief(root);
+  const bootHead = existing.git && existing.git.head ? String(existing.git.head) : '';
+  if (liveGit && liveGit.head && bootHead !== liveGit.head) return true;
+  const liveResume = buildRepertoireResume(root);
+  if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
   return false;
 }
 

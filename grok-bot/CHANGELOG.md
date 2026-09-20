@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, same-sess wear, npm OTP+poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. Board clock is PR events + same critic, not two idle pacers. Dispatch is four lines; critic Reads `SEATS.md` Reviewer. Ship matrix A–D is lead-owned (`foundry release --i-mean-it`); green CI is not ship. Cataloged. Dist clock stays `dist/CADENCE.md`.
+
 ## 0.1.5
 
 - Clear “what runs when” map for bot gates (live hooks + mill/git/release only; skip list). Strict review is ship/live/security/identity only. Everyday ops-doc copies: implementer + CI, no extra reviewer.

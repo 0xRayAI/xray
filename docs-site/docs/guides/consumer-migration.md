@@ -22,7 +22,7 @@ Postinstall **automatically** runs `install-bridges.cjs` (consumer projects only
 | 2 | `.gitignore.default` → `.gitignore` (if absent) |
 | 3 | Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) |
 | 4 | Write project `.mcp.json` with **7 MCP servers** |
-| 5 | Install **4 bridges**: OpenCode, Grok, Hermes, OpenClaw |
+| 5 | Install **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` |
 | 6 | Fasten mill plant (`mill` + `inspect`). Fasten is foundry-plant/0. `"plant": "@0xray/blip"` (aliases blip/sound) fastens whatever that mill declares. Nested mill `@0xray/foundry@0.1.12`. Not a 45-skill costume dump unless `foundry.json` `"costume": true` |
 | 7 | Optional git pre-commit hook. Factory hangar shops coexist via `shopPlant` |
 

@@ -10,6 +10,8 @@ The **autonomy command** is the default operating model when the 0xRay suit is w
 
 **Problem it solves:** keyword-gated skills, unused todo lists, buck-passing, skipped researcher/architect/code-reviewer on major work, and "not my job" syndrome.
 
+**Lead cadence:** a peer wearing the suit continues from Station + Repertoire without a command stream. Dummy tests `SKILLS.md`. Same-sess bodies keep a Station card. Branch + worktree + PR. Ship when mill-gate D + `foundry gate` PASS — green CI is not ship. OTP then poll the published version. Loop until Station is done. Live ticks, not idle pacers. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook stays the `orchestrator` skill (Codex 69 — no new skill).
+
 ---
 
 On **guided/strict** hosts, intake (`analyze-complexity`) is **required** before spawn. On **frontier**, the engine is available but spawn **warns** instead of denying. Governance (Codex 11/29/69) is always on.

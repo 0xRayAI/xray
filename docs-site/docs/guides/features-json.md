@@ -36,7 +36,7 @@ See [Suit temperament](./v3-temperament.md). Missing key = **guided** (existing 
     "provider": "repertoire",
     "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
     "config": {
-      "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+      "signalsPath": ".xray/state/repertoire/curated_signals.json",
       "statePath": ".xray/state/repertoire/inference-state.json",
       "feedbackDir": ".xray/state/repertoire/feedback"
     }

@@ -59,3 +59,21 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 - **PreToolUse** → hints `per_suite_triage_required` on full `npm test`
 
 Config: `features.json` → `multi_agent_orchestration.lead_dev_mode`
+
+## Lead cadence (syncopation)
+
+The seven rules are the engine. The cadence is the time signature. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`.
+
+- **Peer test:** another instance with only worn 0xRay continues the ticket. No command stream.
+- **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
+- **Dummy tests `SKILLS.md`:** a suited dummy proves the worn catalog. Same-sess bodies keep context and hold a Station card.
+- **Ship track:** always branch + worktree/aside + PR. Docs as you go. Builds. Rollback = close the PR.
+- **Publish:** spawn the OTP browser, watch success, poll `npm view` until the new version is live. Do not move on early. Railway same law.
+- **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes.
+- **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
+- **Dispatch:** ticket + PR URLs + “Wear, then review.” The critic Reads `SEATS.md` Reviewer. Do not paste a command novel. When a law is spoken twice, encode it this wake.
+- **Close:** loop until Station is done. Compact: Station survives the cut. Repertoire keeps names.
+- **Board:** critic Strict comments; forge implements; lead stays main thread.
+- **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
+- **Ship matrix:** `LEAD-CADENCE.md` Decision matrix — A PR+CI · B pack · C `release:docs-check` · D `foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first.
+- **Metamorphosis:** LLM → OP-PROC is in-context worn seats (same critic, same dummy, resume only). Not more bots.

@@ -6,13 +6,15 @@ Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NA
 
 **4.0** — a suit that survives the context window
 
-Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
+Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 
 ## Hot-swap
 
 Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
+
+A peer lead continues from this card + Repertoire + the `orchestrator` skill. Dummy tests `SKILLS.md`. Same-sess bodies wear the suit. Branch + worktree + PR. Loop until Station is done. Live work ticks, not idle pacers. Same critic seat (resume only). Ship when mill-gate D + `foundry gate` PASS — green CI is not ship. Spend / credentials stay Ask-first. OTP in a browser, poll the new version before the next cut.
 
 ## Postinstall (automatic)
 
@@ -24,7 +26,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
+- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`
 
 Optional extras: `npx 0xray setup`
 
@@ -93,7 +95,7 @@ Configure in `.xray/features.json`:
   "provider": "repertoire",
   "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "signalsPath": ".xray/state/repertoire/curated_signals.json",
     "statePath": ".xray/state/repertoire/inference-state.json",
     "feedbackDir": ".xray/state/repertoire/feedback"
   }

@@ -12,6 +12,8 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
+**Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. Ship when mill-gate D + `foundry gate` PASS (`LEAD-CADENCE.md` Decision matrix) — green CI is not ship. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook: `orchestrator` skill.
+
 ## What is xray?
 
 xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
@@ -47,8 +49,9 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
-6. Four bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
-7. Optional git hooks
+6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
+7. Cursor fifth wear: fasten `.cursor/hooks.json` when absent (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI.
+8. Optional git hooks
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
@@ -58,7 +61,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Memory routing + Repertoire (v3.3+)
 
-**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
+**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
 
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 
@@ -68,7 +71,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
   "provider": "repertoire",
   "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "signalsPath": ".xray/state/repertoire/curated_signals.json",
     "statePath": ".xray/state/repertoire/inference-state.json",
     "feedbackDir": ".xray/state/repertoire/feedback"
   }

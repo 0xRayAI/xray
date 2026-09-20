@@ -8,7 +8,7 @@ Not a catalog of 42 agents. The product is the skeleton you wear.
 
 4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
-- **Bone:** three subsystems, Codex PreToolUse, four host adapters  
+- **Bone:** three subsystems, Codex PreToolUse, four chat adapters plus Cursor hooks  
 - **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface  
 - **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  
 - **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume  
@@ -17,7 +17,7 @@ Not a catalog of 42 agents. The product is the skeleton you wear.
 ## Quick Start
 
 ```bash
-npm install 0xray          # auto: mill+inspect plant + 4 bridges + 7 MCP + AGENTS.md + .mcp.json
+npm install 0xray          # auto: mill+inspect plant + 4 chat bridges + Cursor hooks + 7 MCP + AGENTS.md + .mcp.json
 
 npx 0xray status           # verify
 npx 0xray setup            # optional extras

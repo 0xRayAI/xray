@@ -9,7 +9,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 |-----|------------|
 | `ops/OPS-SPEC.md` | Master operating rules |
 | `ops/AUTO-REVIEW-POLICY.md` | Capital Ask-first vs Dist/git Allow (account-wide Auto Review paste) |
-| `ops/SEATS.md` | Who does what (CoS / forge / critic / Dist) |
+| `ops/SEATS.md` | Who does what (CoS / forge / critic / Dist). Critic Reads this — lead does not re-teach the review |
 | `ops/LEAN-COMPUTE.md` | Review levels · save compute |
 | `ops/PROCESSORS-MAP-GROK.md` | What runs when (gates to call + skip list) |
 | `ops/CLOUD-CONTINUITY.md` | When to use heavy cloud coding jobs |
@@ -19,6 +19,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | `ops/LANGUAGES.md` | Full catalog of op-model languages (lanes, kernels, dialects, stamps) |
 | `ops/DOCTRINE-FEED-THE-BOTS.md` | Blaze doctrine: keep feeding receipts / op proc / real work |
 | `ops/DOCTRINE-MULTIVERSE.md` | Blaze line: we built a multiverse |
+| `ops/LEAD-CADENCE.md` | Lead syncopation — dummy SKILLS tests, same-sess wear, OTP+poll, branch/PR, loop until Station, workstreams not pacers |
 | `ops/dist/brand/LEXICON.md` | Short catalog of bot talk (plain vs shorthand, lanes H/B) |
 
 ## Dist (public posts)

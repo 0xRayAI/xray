@@ -17,7 +17,7 @@ npm install 0xray
 ## Wear
 
 - [Introduction](./introduction) — what the suit is
-- [Getting started](./guides/getting-started) — postinstall, four bridges, seven MCP
+- [Getting started](./guides/getting-started) — postinstall, four chat bridges + Cursor hooks, seven MCP
 - [Integrations](./guides/integrations) — Grok, OpenCode, Hermes, OpenClaw
 - [Grok floor](./architecture/GROK_GUIDE) — Read the station card; do not thicken the exo
 - [Consumer migration](./guides/consumer-migration) — upgrade from 3.x

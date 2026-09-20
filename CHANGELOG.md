@@ -6,6 +6,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### ✨ Features
+- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
+
+### 📚 Documentation
+- Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
+- **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC: dummy `SKILLS.md` tests, same-sess wear + Station card, npm OTP+poll, always branch/worktree/PR, loop until Station is done, workstreams not idle pacers. Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
+- **Repertoire project copy** — shipped `memory_routing.config.signalsPath` is `.xray/state/repertoire/curated_signals.json`. The factory tarball stays read-only. After compact the suit routes the living project names, not the 8-name seed.
+- **Board clock** — critique board wakes on PR events and resumes the same critic. Two idle pacers (reviewer + lead-reader) are forbidden; they inflate context and cause compact. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
+- **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
+- **Ship decision matrix** — lead-owned. A PR+CI · B pack (`assert-packed-dist-cli` + consumer smoke) · C `npm run release:docs-check` · D `npx @0xray/foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Host Auto Review may still card npm/Railway; that is not the OS decision.
+- **Metamorphosis** — an LLM becomes OP-PROC through in-context worn seats (same critic, same dummy, four-line dispatch). Spawning more bots is the old skin.
+
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.
 - **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.

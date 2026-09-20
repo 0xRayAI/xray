@@ -12,7 +12,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 ## Fleet / OS skills (reference)
 | Skill | When |
 |-------|------|
-| [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist |
+| [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Critic proof card: `ops/SEATS.md` Reviewer |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [enterprise-cos-wave-loop](skills/enterprise-cos-wave-loop/SKILL.md) | Coordinator wave loop |
 | [synaptical-comms](skills/synaptical-comms/SKILL.md) | Friend-test house comms |

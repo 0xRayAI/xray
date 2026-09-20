@@ -13,14 +13,14 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 - **Bone** — three-subsystem OS: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch)
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
-- **Wear** — Grok, OpenCode, Hermes, OpenClaw. One SSOT gate
+- **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
 - **Muscle** — Repertoire: auto-enables when the module resolves; session-start writes a one-line resume so the next station is not born amnesiac
 
 ```bash
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four platform bridges and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
+Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
 
 ## Quick Start
 
@@ -107,7 +107,7 @@ On `npm install 0xray` in a consumer project, postinstall automatically:
 3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-6. Installs **4 bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring; mill plant, not costume)
+6. Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw, plus **Cursor** `.cursor/hooks.json` (PPE + wiring; mill plant, not costume)
 7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
 8. Installs git pre-commit hook (non-blocking if not a git repo)
 
@@ -159,7 +159,7 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
   "provider": "repertoire",
   "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "signalsPath": ".xray/state/repertoire/curated_signals.json",
     "statePath": ".xray/state/repertoire/inference-state.json",
     "feedbackDir": ".xray/state/repertoire/feedback"
   }
@@ -188,6 +188,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | **Grok CLI / Build** | `npx 0xray grok install` | Project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin), 7 MCPs servers |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
+| **Cursor** | postinstall (`installCursorBridge`) | Fastens `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI. |
 
 ## Governance & Codex
 
@@ -202,7 +203,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | Suite | Status (v4.0.1) |
 |-------|-----------------|
 | Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 (npm 4.0.0 pack) |
-| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 bridges + organ on |
+| Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 chat bridges + Cursor hooks + organ on |
 | Pack → tmp proof | `npm run pack:tmp-proof` — tgz install + `foundry mint --skip-live` + hangar shops + inspect (no costume dump). Playwright n/a (CLI). |
 
 ```bash
