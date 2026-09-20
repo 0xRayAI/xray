@@ -28,6 +28,25 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.16] - 2026-09-20
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: type validate pack paths — no untyped mjs import in src/cli (ff936b276)
+- fix: cleanse npx 0xray validate — wear check, not leftover init.sh (741cca410)
+
+### 📚 Documentation
+- docs: new-arch reflection after wading part of the swamp (12d1fff69)
+- docs: persist peer-boot seat bc-49e17122 after four-line wear (5c8be98bb)
+- docs: encode registry install as live-verify after npm view (bd32bd1c4)
+- docs: encode npm CLI OTP latch — lead publishes, no subagent (d600d12a2)
+
+### 🔎 Other Changes
+- Merge branch 'cursor/npm-cli-otp-fbe0' — OTP latch, two-path live-verify, cleanse leftover validate (568797952)
+
+---
+
 ## [4.0.15] - 2026-09-17
 
 ### ✨ Features
