@@ -8,7 +8,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { stationDurableHoldsNpm } from "../../integrations/hooks/station-hook-runtime.mjs";
 
 /** Same paths as `REQUIRED_PACK_PATHS` in assert-packed-dist-cli.mjs — typed here so src/cli does not import untyped .mjs. */
 export const VALIDATE_PACK_PATHS: readonly string[] = [
@@ -72,6 +71,16 @@ export function isConsumerInstall(cwd: string, packageRoot: string): boolean {
 
 function checkPath(root: string, rel: string): boolean {
   return existsSync(join(root, rel));
+}
+
+function stationDurableHoldsNpm(cwd: string): boolean {
+  const dest = join(cwd, ".xray", "state", "STATION.md");
+  if (!existsSync(dest)) return false;
+  try {
+    return /\bhold\s+npm\b/i.test(readFileSync(dest, "utf8"));
+  } catch {
+    return false;
+  }
 }
 
 export function collectValidateReport(cwd: string): ValidateReport {
