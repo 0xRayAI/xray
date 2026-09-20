@@ -120,30 +120,16 @@ program
 
 program
   .command("validate")
-  .description("Validate xray framework installation")
+  .description("Validate consumer wear (pack paths, Cursor hooks, mill plant) — not leftover init.sh")
   .action(async () => {
     console.log("🔬 xray CLI: Validating installation...");
 
     try {
-      // Run the init.sh script to validate
-      const initScript = join(packageRoot, ".opencode", "init.sh");
-      const fs = await import("fs");
-
-      if (!fs.existsSync(initScript)) {
-        console.error(
-          "❌ Validation failed: init script not found:",
-          initScript,
-        );
+      const { validateCommand } = await import("./commands/validate.js");
+      const report = await validateCommand(process.cwd());
+      if (!report.ok) {
         process.exit(1);
       }
-
-      // SECURITY: Validate script path before execution
-      validateScriptPath(initScript, "init script");
-
-      execSync(`bash "${initScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
     } catch (error) {
       console.error(
         "❌ Validation failed:",

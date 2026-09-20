@@ -68,7 +68,8 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 - **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
 - **Dummy tests `SKILLS.md`:** a suited dummy proves the worn catalog. Same-sess bodies keep context and hold a Station card.
 - **Ship track:** always branch + worktree/aside + PR. Docs as you go. Builds. Rollback = close the PR.
-- **Publish:** lead runs `npm publish --access public`. Paste the CLI `auth/cli` URL. No Enter, no VM browser, no subagent. Poll `npm view` until live. Then clean-room `npm install <pkg>@<version>` from the registry and prove wear (`status` + `health` + `REQUIRED_PACK_PATHS`). `npm view` is not an install.
+- **Publish:** lead runs `npm publish --access public`. Paste the CLI `auth/cli` URL. No Enter, no VM browser, no subagent. Poll `npm view` until live. Then prove **fresh** and **upgrade** registry installs. `npx 0xray validate` is the wear check (not leftover init.sh). `npm view` is not an install.
+- **Peer boot:** four-line dispatch. They Read Station + this cadence and install without a command novel. Not a twin critic.
 - **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes.
 - **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch:** ticket + PR URLs + “Wear, then review.” The critic Reads `SEATS.md` Reviewer. Do not paste a command novel. When a law is spoken twice, encode it this wake.

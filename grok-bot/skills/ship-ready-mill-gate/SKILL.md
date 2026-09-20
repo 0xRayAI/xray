@@ -30,8 +30,10 @@ The lead runs the CLI. A browser subagent is the wrong seat.
 4. Wait on the same CLI for `+ <name>@<version>`.
 5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes.
 6. Then tag `v<version>` if missing. Do not start the next cut on a stale `npm view`.
-7. **Registry install:** `npm view` is not an install. Clean temp dir: `npm init -y` then `npm install <name>@<version>` from the registry (not a local tgz). Assert version, `_resolved` is `registry.npmjs.org`, and `REQUIRED_PACK_PATHS` on disk. Then `npx <name> status` and `npx <name> health`.
-8. `npx 0xray validate` leftover (`init.sh` macOS `md5` + missing `.opencode/enforcer-config.json`) is not a pack miss. Do not move on until the clean-room wear is proven.  
+7. **Registry install — both paths:** `npm view` is not an install.
+   - Fresh: empty temp dir → `npm init -y` → `npm install <name>@<version>` from the registry.
+   - Upgrade: existing consumer on the prior live version → `npm install <name>@<version>`. Hooks leave; wear stays.
+8. Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS`, then `npx <name> status`, `health`, and `validate`. `validate` is the wear check — not leftover `init.sh`. Do not move on until both paths are proven.  
 
 Do not rebuild old processor-manager loops as bot gates.
 
