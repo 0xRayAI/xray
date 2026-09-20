@@ -24,3 +24,5 @@ export const extractPreservedStationLines = impl.extractPreservedStationLines;
 export const mergeStationMarkdown = impl.mergeStationMarkdown;
 export const formatStationMarkdown = impl.formatStationMarkdown;
 export const writeStationMarkdown = impl.writeStationMarkdown;
+export const isHoldNpmLine = impl.isHoldNpmLine;
+export const stationDurableHoldsNpm = impl.stationDurableHoldsNpm;

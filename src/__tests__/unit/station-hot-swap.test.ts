@@ -307,7 +307,7 @@ describe('station hot-swap', () => {
       ...SEEDED_CUSTOM_KEYS,
       '',
       '## Durable',
-      'Keep this seed block across compact.',
+      'Keep this seed block across compact. Hold npm.',
       '',
       'Continue this card. Compaction and host change are the same cut. Do not cold-start.',
       '',
@@ -327,6 +327,7 @@ describe('station hot-swap', () => {
     expect(merged).toContain('Repertoire: on — 8 signals');
     expect(merged).toContain('Working: station-merge');
     expect(merged).not.toContain('Intent: old intent');
+    expect(merged).not.toMatch(/hold\s+npm/i);
     expectCustomStationKeys(merged);
     expect(countStationFooters(merged)).toEqual({ continueCount: 1, grokCount: 1 });
   });
