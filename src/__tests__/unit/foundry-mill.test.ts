@@ -37,6 +37,8 @@ describe('foundry mill — packed dist/cli gate', () => {
 
   it('accepts a pack listing that includes CLI, orchestrator MCP, Grok hooks, and Cursor hooks', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.js');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-hook-utils.js');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-usage-receipt.js');
     expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
     expect(() =>
       assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),
