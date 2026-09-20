@@ -18,6 +18,10 @@ export const REQUIRED_PACK_PATHS = [
   "dist/cli/index.js",
   "dist/mcps/orchestrator.server.js",
   "dist/integrations/grok/hooks/session-start.js",
+  "dist/integrations/cursor/hooks/hooks.json",
+  "dist/integrations/cursor/hooks/pre-tool-use.js",
+  "dist/integrations/cursor/hooks/pre-compact.js",
+  "dist/integrations/cursor/hooks/after-file-edit.js",
 ];
 
 export function packedFilePaths(files) {

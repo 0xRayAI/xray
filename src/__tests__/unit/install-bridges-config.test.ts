@@ -344,4 +344,26 @@ describe("install-bridges cursor wear", () => {
     expect(real).toBeTruthy();
     expect(fs.existsSync(real as string)).toBe(true);
   });
+
+  it("consumer template commands point at packed dist hook JS that exists as src build input", () => {
+    const real = resolveCursorHooksTemplate(process.cwd());
+    const hooks = JSON.parse(fs.readFileSync(real as string, "utf-8")) as {
+      hooks: Record<string, Array<{ command: string }>>;
+    };
+    for (const cmd of Object.values(hooks.hooks).flat().map((h) => h.command)) {
+      expect(cmd).toContain("dist/integrations/cursor/hooks/");
+    }
+    for (const name of [
+      "hooks.json",
+      "pre-tool-use.js",
+      "pre-compact.js",
+      "after-file-edit.js",
+      "cursor-hook-utils.js",
+      "cursor-usage-receipt.js",
+    ]) {
+      expect(fs.existsSync(path.join(process.cwd(), "src", "integrations", "cursor", "hooks", name))).toBe(
+        true,
+      );
+    }
+  });
 });
