@@ -18,7 +18,22 @@ description: >-
 **B — Pack proof** when releasing a package: pack · temp install · tests pass  
 **C — Docs** core first: README · CHANGELOG · llms.txt · AGENTS.md · SKILLS.md · package.json · docs site — then project-specific. Friend test.  
 **C2 — Live agent docs** when agents must read them: HTTP 200 real content (not error page / banner). Paste curls.  
-**D — Release** reviewer PASS · merge · `foundry gate` + `gate --verify-only` · implementer deploy/publish · live verify. Exact ship script: `npx @0xray/foundry release [patch|minor|major] --i-mean-it` (`scripts/foundry/release.mjs`). Docs freshness: `npm run release:docs-check`. Green CI is gate A only.  
+**D — Release** reviewer PASS · merge · `foundry gate` + `gate --verify-only` · implementer deploy/publish · live verify. Exact ship script: `npx @0xray/foundry release [patch|minor|major] --i-mean-it` (`scripts/foundry/release.mjs`). Docs freshness: `npm run release:docs-check`. Green CI is gate A only.
+
+### Publish OTP (lead only — not a subagent)
+
+The lead runs the CLI. A browser subagent is the wrong seat.
+
+1. `npm whoami` must be the publisher.
+2. `npm publish --access public` — **no** `--auth-type=web`.
+3. CLI prints `Authenticate your account at:` + `https://www.npmjs.com/auth/cli/<id>`. Give the human that URL clickable. Do not press Enter. Do not open a VM browser.
+4. Wait on the same CLI for `+ <name>@<version>`.
+5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes.
+6. Then tag `v<version>` if missing. Do not start the next cut on a stale `npm view`.
+7. **Registry install — both paths:** `npm view` is not an install.
+   - Fresh: empty temp dir → `npm init -y` → `npm install <name>@<version>` from the registry.
+   - Upgrade: existing consumer on the prior live version → `npm install <name>@<version>`. Hooks leave; wear stays.
+8. Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS`, then `npx <name> status`, `health`, and `validate`. `validate` is the wear check — not leftover `init.sh`. Do not move on until both paths are proven.  
 
 Do not rebuild old processor-manager loops as bot gates.
 

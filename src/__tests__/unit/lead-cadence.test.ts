@@ -20,8 +20,16 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Codex 69/);
     expect(text).toMatch(/Dummy exists to \*\*test `SKILLS\.md`\*\*/);
     expect(text).toMatch(/Same-sess bodies exist to \*\*keep context\*\*/);
-    expect(text).toMatch(/[Ss]pawn the browser for OTP/);
+    expect(text).toMatch(/npm publish --access public/);
+    expect(text).toMatch(/Do \*\*not\*\* press Enter/);
     expect(text).toMatch(/Do not move on until the new version is polled live/);
+    expect(text).toMatch(/Registry install \(live verify\)/);
+    expect(text).toMatch(/npm view` is not an install/);
+    expect(text).toMatch(/REQUIRED_PACK_PATHS/);
+    expect(text).toMatch(/Peer boot/);
+    expect(text).toMatch(/bc-49e17122-b167-5204-a36f-e62a6e2aba00/);
+    expect(text).toMatch(/Fresh \+ upgrade live-verify/);
+    expect(text).toMatch(/leftover `\.opencode\/init\.sh`/);
     expect(text).toMatch(/Always a branch/);
     expect(text).toMatch(/Always a PR/);
     expect(text).toMatch(/Loop until `\.xray\/state\/STATION\.md` is done/);

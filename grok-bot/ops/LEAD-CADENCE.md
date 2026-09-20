@@ -22,9 +22,12 @@ If they wait for the human to restate the rules, the encode failed.
 | Codex 69 rewire | New `SKILL.md` / MCP to “save” the cadence |
 | Hangar as product | Hangar pretending to be the suit |
 | Dummy tests `SKILLS.md` | Dummy that skips the worn catalog |
+| Peer boot (four lines) | Command novel that lists install steps |
+| Fresh + upgrade live-verify | Only `npm view` or only one path |
+| `npx 0xray validate` wear check | Leftover `.opencode/init.sh` (`md5` / enforcer-config) |
 | Same `bc-` / sess id | Twin critic or cold-start body |
 | Branch + worktree + PR | Direct `main` / wreck production |
-| OTP browser + poll version | Publish and move on |
+| CLI auth URL + poll version | `--auth-type=web`, VM browser, or a publish subagent |
 
 Bots started the OP-PROC. The lead is the learned layer above them.
 
@@ -61,6 +64,7 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 |------|-----|--------------|
 | **Lead** | Main thread. Plan, dispatch, read all output, loop until Station is done. | Same cloud `bc-…`. Never relaunch. |
 | **Dummy** | Prove worn `SKILLS.md` / mill catalog. Friend-test the playbook. No product side effects. | Resume the dummy id when it exists. Read Station. Wear the suit. |
+| **Peer boot** | Fresh body proves they can wear + install without a command novel. Two paths: brand-new consumer **and** upgrade of an existing install. Cursor wear. | Resume `bc-49e17122-b167-5204-a36f-e62a6e2aba00` only. Not a second critic. Not the dummy. |
 | **Standing critic** | Board review with memory. Strict on ship. | Resume `bc-dd800001-2652-5e3e-b8d2-eac05b29ee86` only. Never spawn a twin. |
 | **Same-sess implementer** | Context-aware surgery that must remember the ticket. | Same parent sess / `bc-` as the lead. Station card on disk. Wear first. |
 
@@ -120,9 +124,16 @@ Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`
 
 ### Publish track (when D opens)
 
-1. **npm:** `foundry release` (or `--publish-only` after a passed gate). Spawn the browser for OTP. Watch the auth window succeed. Then `npm view <pkg> version` (and the tagged version) in a loop. **Do not move on until the new version is polled live.**
-2. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
-3. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
+Lead publishes. Do not hand this to a browser subagent.
+
+1. **npm CLI:** after gate PASS, `npm whoami` then `npm publish --access public` (no `--auth-type=web`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. The human approves OTP in their own session.
+2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
+3. **Registry install (live verify):** `npm view` is not an install. Prove **both** paths before moving on:
+   - **Fresh:** empty temp dir → `npm init -y` → `npm install <pkg>@<version>` from the registry (not a local tgz).
+   - **Upgrade:** existing consumer on the prior live version → `npm install <pkg>@<version>`. Existing `.cursor/hooks.json` stays (leave). Wear and mill plant still present.
+   Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS` on disk, then `npx <pkg> status`, `npx <pkg> health`, and `npx <pkg> validate`. `validate` is the wear check (pack paths, Cursor hooks, mill, repertoire) — **not** leftover `.opencode/init.sh`.
+4. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
+5. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
 
 ### Close condition
 
