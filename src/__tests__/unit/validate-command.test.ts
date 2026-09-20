@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { REQUIRED_PACK_PATHS } from '../../../scripts/foundry/assert-packed-dist-cli.mjs';
 import {
   CONSUMER_WEAR_PATHS,
+  VALIDATE_PACK_PATHS,
   collectValidateReport,
 } from '../../cli/commands/validate.js';
 
@@ -14,6 +15,10 @@ function touch(filePath: string): void {
 }
 
 describe('validate command — consumer wear, not leftover init.sh', () => {
+  it('keeps VALIDATE_PACK_PATHS in lockstep with the pack gate', () => {
+    expect([...VALIDATE_PACK_PATHS].sort()).toEqual([...REQUIRED_PACK_PATHS].sort());
+  });
+
   it('fails a bare directory with no 0xray package', () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), '0xray-validate-empty-'));
     const report = collectValidateReport(dir);
@@ -27,7 +32,7 @@ describe('validate command — consumer wear, not leftover init.sh', () => {
     writeFileSync(path.join(dir, 'package.json'), '{"name":"consumer"}\n');
     mkdirSync(pkg, { recursive: true });
     writeFileSync(path.join(pkg, 'package.json'), '{"name":"0xray","version":"4.0.15"}\n');
-    for (const rel of REQUIRED_PACK_PATHS) {
+    for (const rel of VALIDATE_PACK_PATHS) {
       touch(path.join(pkg, rel));
     }
     const report = collectValidateReport(dir);
@@ -43,7 +48,7 @@ describe('validate command — consumer wear, not leftover init.sh', () => {
     writeFileSync(path.join(dir, 'package.json'), '{"name":"consumer"}\n');
     mkdirSync(pkg, { recursive: true });
     writeFileSync(path.join(pkg, 'package.json'), '{"name":"0xray","version":"4.0.15"}\n');
-    for (const rel of REQUIRED_PACK_PATHS) {
+    for (const rel of VALIDATE_PACK_PATHS) {
       touch(path.join(pkg, rel));
     }
     for (const rel of CONSUMER_WEAR_PATHS) {

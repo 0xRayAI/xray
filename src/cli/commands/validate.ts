@@ -7,8 +7,20 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { REQUIRED_PACK_PATHS } from "../../../scripts/foundry/assert-packed-dist-cli.mjs";
 import { frameworkLogger } from "../../core/framework-logger.js";
+
+/** Same paths as `REQUIRED_PACK_PATHS` in assert-packed-dist-cli.mjs — typed here so src/cli does not import untyped .mjs. */
+export const VALIDATE_PACK_PATHS: readonly string[] = [
+  "dist/cli/index.js",
+  "dist/mcps/orchestrator.server.js",
+  "dist/integrations/grok/hooks/session-start.js",
+  "dist/integrations/cursor/hooks/hooks.json",
+  "dist/integrations/cursor/hooks/pre-tool-use.js",
+  "dist/integrations/cursor/hooks/pre-compact.js",
+  "dist/integrations/cursor/hooks/after-file-edit.js",
+  "dist/integrations/cursor/hooks/cursor-hook-utils.js",
+  "dist/integrations/cursor/hooks/cursor-usage-receipt.js",
+];
 
 export const CONSUMER_WEAR_PATHS = [
   "AGENTS.md",
@@ -87,13 +99,13 @@ export function collectValidateReport(cwd: string): ValidateReport {
     detail: consumer ? `consumer node_modules/0xray at ${packageRoot}` : `exo dogfood at ${packageRoot}`,
   });
 
-  const missingPack = REQUIRED_PACK_PATHS.filter((p) => !checkPath(packageRoot, p));
+  const missingPack = VALIDATE_PACK_PATHS.filter((p) => !checkPath(packageRoot, p));
   checks.push({
     id: "pack-paths",
     ok: missingPack.length === 0,
     detail:
       missingPack.length === 0
-        ? `REQUIRED_PACK_PATHS ${REQUIRED_PACK_PATHS.length}/${REQUIRED_PACK_PATHS.length}`
+        ? `REQUIRED_PACK_PATHS ${VALIDATE_PACK_PATHS.length}/${VALIDATE_PACK_PATHS.length}`
         : `missing ${missingPack.join(", ")}`,
   });
 
