@@ -33,7 +33,8 @@ The lead runs the CLI. A browser subagent is the wrong seat.
 7. **Registry install — both paths:** `npm view` is not an install.
    - Fresh: empty temp dir → `npm init -y` → `npm install <name>@<version>` from the registry.
    - Upgrade: existing consumer on the prior live version → `npm install <name>@<version>`. Hooks leave; wear stays.
-8. Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS`, then `npx <name> status`, `health`, and `validate`. `validate` is the wear check — not leftover `init.sh`. Do not move on until both paths are proven.  
+8. Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS`, then `npx <name> status`, `health`, and `validate`. `validate` is the wear check — not leftover `init.sh`. Do not move on until both paths are proven.
+9. After the version is live, clean the `/loop` prompt this cycle (unsubscribe then resubscribe). Do not leave a tick waiting on the auth URL.  
 
 Do not rebuild old processor-manager loops as bot gates.
 

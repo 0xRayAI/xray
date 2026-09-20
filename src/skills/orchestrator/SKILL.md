@@ -70,7 +70,7 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 - **Ship track:** always branch + worktree/aside + PR. Docs as you go. Builds. Rollback = close the PR.
 - **Publish:** stay logged in (do not `npm logout`). Every time run `npm publish --access public` in the live TTY. Paste the clickable `auth/cli` URL. No Enter, no VM browser, no subagent, no 6-digit code in chat. Poll `npm view` until live. Then prove **fresh** and **upgrade** registry installs. `npx 0xray validate` is the wear check (not leftover init.sh). `npm view` is not an install.
 - **Peer boot:** four-line dispatch. They Read Station + this cadence and install without a command novel. Not a twin critic.
-- **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes.
+- **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes. **Clean ticks every cycle** — unsubscribe then resubscribe so the prompt matches metal. Name-dedupe does not rewrite. A stale prompt (waiting URL after live, Hold after strip) is dirty: rewrite, do not act.
 - **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch:** ticket + PR URLs + “Wear, then review.” The critic Reads `SEATS.md` Reviewer. Do not paste a command novel. When a law is spoken twice, encode it this wake.
 - **Close:** loop until Station is done. Compact: Station survives the cut. Repertoire keeps names.

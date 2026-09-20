@@ -38,6 +38,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Always a PR/);
     expect(text).toMatch(/Loop until `\.xray\/state\/STATION\.md` is done/);
     expect(text).toMatch(/Do not use pacer timeouts as the work clock/);
+    expect(text).toMatch(/Clean ticks \(every cycle\)/);
+    expect(text).toMatch(/Name-dedupe is not a rewrite/);
+    expect(text).toMatch(/Do not act on the stale prompt/);
     expect(text).toMatch(/Board clock \(honest design\)/);
     expect(text).toMatch(/Two idle pacers/);
     expect(text).toMatch(/subscribe_github_pr/);
@@ -57,6 +60,7 @@ describe('lead cadence encode — peer can find the beat', () => {
 
   it('rewires worn lead surfaces — no new skill file', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Lead cadence \(syncopation\)/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Clean ticks every cycle/);
     expect(readFileSync(agents, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
     expect(existsSync(path.join(root, 'src', 'skills', 'lead-cadence', 'SKILL.md'))).toBe(false);
   });
