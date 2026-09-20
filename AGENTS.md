@@ -12,7 +12,7 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 Before other work, Read `.xray/state/STATION.md`. Compaction and host change are the same cut. Continue the card. Do not restart the job. Grok does not inject the card (OpenCode does) — this Read is the Grok contract. Do not thicken the Grok exo.
 
-**Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook: `orchestrator` skill.
+**Lead cadence:** a peer wearing this file + Station + Repertoire continues without a command stream. Dummy bodies test `SKILLS.md`. Same-sess bodies wear the suit and keep a Station card. Always branch + worktree + PR. npm OTP in a browser, then poll the new version before moving on. Loop until Station is done. Live ticks and moving workstreams — not idle pacers. Same critic (resume only). After compact: refresh Station this wake — a stale card is a failed encode. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook: `orchestrator` skill.
 
 ## What is xray?
 

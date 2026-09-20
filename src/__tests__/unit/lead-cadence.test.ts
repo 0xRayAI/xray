@@ -32,6 +32,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Dispatch \(not a script\)/);
     expect(text).toMatch(/When knowledge grows/);
     expect(text).toMatch(/Wear, then review/);
+    expect(text).toMatch(/Refresh Station Working \/ Git \/ count this wake/);
     expect(readFileSync(catalog, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
   });
 
