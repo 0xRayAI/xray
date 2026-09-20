@@ -24,7 +24,7 @@ If they wait for the human to restate the rules, the encode failed.
 | Dummy tests `SKILLS.md` | Dummy that skips the worn catalog |
 | Same `bc-` / sess id | Twin critic or cold-start body |
 | Branch + worktree + PR | Direct `main` / wreck production |
-| OTP browser + poll version | Publish and move on |
+| CLI auth URL + poll version | `--auth-type=web`, VM browser, or a publish subagent |
 
 Bots started the OP-PROC. The lead is the learned layer above them.
 
@@ -120,9 +120,12 @@ Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`
 
 ### Publish track (when D opens)
 
-1. **npm:** `foundry release` (or `--publish-only` after a passed gate). Spawn the browser for OTP. Watch the auth window succeed. Then `npm view <pkg> version` (and the tagged version) in a loop. **Do not move on until the new version is polled live.**
-2. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
-3. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
+Lead publishes. Do not hand this to a browser subagent.
+
+1. **npm CLI:** after gate PASS, `npm whoami` then `npm publish --access public` (no `--auth-type=web`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. The human approves OTP in their own session.
+2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
+3. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
+4. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
 
 ### Close condition
 

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, same-sess wear, npm OTP+poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. Board clock is PR events + same critic, not two idle pacers. Dispatch is four lines; critic Reads `SEATS.md` Reviewer. Ship matrix A–D is lead-owned (`foundry release --i-mean-it`); green CI is not ship. Cataloged. Dist clock stays `dist/CADENCE.md`.
+- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, same-sess wear, CLI auth URL + poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. Board clock is PR events + same critic, not two idle pacers. Dispatch is four lines; critic Reads `SEATS.md` Reviewer. Ship matrix A–D is lead-owned (`foundry release --i-mean-it`); green CI is not ship. Publish OTP lives in `ship-ready-mill-gate` (lead CLI, no subagent). Cataloged. Dist clock stays `dist/CADENCE.md`.
 
 ## 0.1.5
 
