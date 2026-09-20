@@ -25,5 +25,7 @@ Do not rebuild old processor-manager loops as bot gates.
 ## Who
 Implementer builds · reviewer Strict only · coordinator routes · human for capital
 
+Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR URLs only. Critic Reads Station, verifies the diff, posts COMMENT (not self-APPROVE), proof card ≤15 lines + friend-test line. Does not merge or publish.
+
 ## Fail closed
 Red CI, missing proof, docs lag, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.

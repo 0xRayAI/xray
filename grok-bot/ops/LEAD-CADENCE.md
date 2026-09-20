@@ -66,6 +66,23 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 
 Dummy exists to **test `SKILLS.md`**. If a dummy cannot run the worn catalog from disk, the encode failed. Same-sess bodies exist to **keep context** across compact — they wear the suit and hold a Station card. Do not invent a new critic to “get a fresh look.”
 
+### Dispatch (not a script)
+
+The lead does **not** paste a command novel each wake. A peer critic who only has worn disk must already know the job (`SEATS.md` Reviewer).
+
+Lead packet is four lines:
+
+1. Seat + resume id (from Station)
+2. Ticket
+3. PR URLs
+4. “Wear, then review.”
+
+If you need a fifth line, the encode failed — update `SEATS.md` / this file / the worn skill, then grow a Repertoire name. Do not thicken Station with the procedure.
+
+### When knowledge grows
+
+Monitor the lead. New law that had to be spoken twice goes to disk this wake: `SEATS.md` or this file or the existing `orchestrator` / `ship-ready-mill-gate` skill. Codex 69: rewire. Do not add `src/skills/critic/SKILL.md`. Project-local Repertoire gets the name. NOTES get the leftover. Station stays thin.
+
 ### Ship track (always)
 
 1. **One thing at a time.** Brain (Cursor wear + Repertoire) before swarm. Swarm after the organ routes stack names.
