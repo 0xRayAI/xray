@@ -20,7 +20,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Codex 69/);
     expect(text).toMatch(/Dummy exists to \*\*test `SKILLS\.md`\*\*/);
     expect(text).toMatch(/Same-sess bodies exist to \*\*keep context\*\*/);
-    expect(text).toMatch(/spawn the browser for OTP/);
+    expect(text).toMatch(/[Ss]pawn the browser for OTP/);
     expect(text).toMatch(/Do not move on until the new version is polled live/);
     expect(text).toMatch(/Always a branch/);
     expect(text).toMatch(/Always a PR/);
@@ -32,6 +32,12 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Dispatch \(not a script\)/);
     expect(text).toMatch(/When knowledge grows/);
     expect(text).toMatch(/Wear, then review/);
+    expect(text).toMatch(/Decision matrix to ship \(lead-owned\)/);
+    expect(text).toMatch(/A — PR \+ CI/);
+    expect(text).toMatch(/release:docs-check/);
+    expect(text).toMatch(/foundry release/);
+    expect(text).toMatch(/Green CI is not publish/);
+    expect(text).not.toMatch(/npm, Railway, spend, credentials — Ask-first/);
     expect(readFileSync(catalog, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
   });
 

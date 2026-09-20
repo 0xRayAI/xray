@@ -8,7 +8,7 @@ Higher than grok-bot seats. Dist cadence (`dist/CADENCE.md`) is how often we pos
 
 Give another instance only worn 0xRay: `AGENTS.md` · this file · `.xray/state/STATION.md` · Repertoire project copy. No command stream.
 
-They must: Read Station · continue the same `bc-…` · resume the same critic · run a **live tick** (real close) · hold npm/Railway until a reviewed version exists.
+They must: Read Station · continue the same `bc-…` · resume the same critic · run a **live tick** (real close) · hold npm/Railway until mill-gate **D** + `foundry gate` PASS. Green CI is only gate **A**.
 
 If they wait for the human to restate the rules, the encode failed.
 
@@ -48,7 +48,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Compact cut** | Rest that must survive | Station is the card. Repertoire keeps **names**. Do not paste the KB onto Station. NOTES hold unfinished path. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
-| **Human gates** | Held rest | npm, Railway, spend, credentials — Ask-first. Green CI is not publish. |
+| **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm/Railway are lead-owned after mill-gate **D**. Green CI is not publish. |
 | **Dist root** | Slow pulse | `dist/CADENCE.md` ≥4h. Do not use Dist spacing as the lead work clock. |
 
 ## Transcribed laws (the rest of the cadence)
@@ -94,13 +94,27 @@ Monitor the lead. New law that had to be spoken twice goes to disk this wake: `S
 7. **Rollback = close the PR** (or revert the merge). Do not wreck production. Do not pin Repertoire 0.1.8 for mill wear.
 8. **Codex 69.** Rewire orchestrator / ops / hooks. Do not add `src/skills/lead-cadence/SKILL.md` or a new MCP.
 
-### Publish track (when a gate opens)
+### Decision matrix to ship (lead-owned)
 
-Ask-first. Critic PASS + CI green is not publish.
+This is an AI OS. The lead decides. Green CI is not ship. The scripts are the matrix — do not invent a second one.
 
-1. **npm:** spawn the browser for OTP. Watch the auth window succeed. Then `npm view <pkg> version` (and the tagged version) in a loop. **Do not move on until the new version is polled live.**
-2. **Railway:** same law — deploy only after the reviewed version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
-3. Hold npm / Railway until the PR is reviewed and a version exists. Read-only `npm view` is allowed; publish is a human gate (`AUTO-REVIEW-POLICY.md`).
+| Gate | Proof | Script / surface |
+|------|--------|------------------|
+| **A — PR + CI** | Branch + PR · critic PASS · CI green | GitHub checks on the PR head |
+| **B — Pack** | Packed tarball installs and the required dist paths exist | `npx @0xray/foundry gate` → `assert-packed-dist-cli.mjs` · consumer smoke |
+| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides | `npm run release:docs-check` (`validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG only |
+| **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
+| **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
+
+Fail-closed: red CI, docs-check fail, pack-path miss, critic FAIL/HOLD, friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes.
+
+Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`). That is a host paste, not the OS decision. Spend / credentials / deletes / taste / mint-rotate stay Ask-first.
+
+### Publish track (when D opens)
+
+1. **npm:** `foundry release` (or `--publish-only` after a passed gate). Spawn the browser for OTP. Watch the auth window succeed. Then `npm view <pkg> version` (and the tagged version) in a loop. **Do not move on until the new version is polled live.**
+2. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
+3. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
 
 ### Close condition
 
@@ -120,7 +134,7 @@ Two idle pacers — one for reviewing subagents, one for the lead to read them �
 | **In-context seats** | Resume the same critic. Dummy tests `SKILLS.md`. Lead stays the main thread and replies. | Twin critics. Clouds to re-review a PR (`CLOUD-CONTINUITY.md`) |
 | **One live tick** | Only after a real close, if Station is still open and no PR event fired | Two competing pacers. Auto-merge. Auto-deploy |
 
-Merge after critic PASS + CI. Deploy stays Ask-first (OTP then poll). A pacer never publishes.
+Merge after critic PASS + CI (gate A). Publish only after mill-gate **D** + `foundry gate`. OTP then poll. A pacer never publishes.
 
 ### Heads from tails
 
