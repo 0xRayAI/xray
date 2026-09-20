@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, same-sess wear, npm OTP+poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. Board clock is PR events + same critic, not two idle pacers. Dispatch is four lines; critic Reads `SEATS.md` Reviewer. After compact: refresh Station this wake. Cataloged. Dist clock stays `dist/CADENCE.md`.
+- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, same-sess wear, npm OTP+poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. Board clock is PR events + same critic, not two idle pacers. Dispatch is four lines; critic Reads `SEATS.md` Reviewer. Cataloged. Dist clock stays `dist/CADENCE.md`.
 
 ## 0.1.5
 

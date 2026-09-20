@@ -45,7 +45,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Human cut** | Downbeat | Blaze 1:1 jumps the line (`OPS-SPEC.md` wake hygiene). |
 | **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. Unsubscribe before changing delay. Name stays `loop-<purpose>`. |
 | **Workstream** | Ostinato | Keep every open stream moving. No idle wait for a pacer. Park only on a human gate or a finished close. |
-| **Compact cut** | Rest that must survive | Station is the card. Repertoire keeps **names**. Do not paste the KB onto Station. NOTES hold unfinished path. After the cut: Read Station, then `COMPACT-SURVIVAL.md`, then probe the project copy. **Refresh Station Working / Git / count this wake** so the next cut is not stale. Chat summary is host memory, not the organ. |
+| **Compact cut** | Rest that must survive | Station is the card. Repertoire keeps **names**. Do not paste the KB onto Station. NOTES hold unfinished path. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
 | **Human gates** | Held rest | npm, Railway, spend, credentials — Ask-first. Green CI is not publish. |
@@ -139,7 +139,7 @@ Quiet on repeat CLOSED / MERGED / LIVE.
 | This file | Fleet disk truth |
 | `src/skills/orchestrator/SKILL.md` | Worn lead OS (no new skill) |
 | `AGENTS.md` Hot-swap | First Read after compact |
-| Repertoire names | cadence names plus `board-is-seats-not-clocks` · `event-wake-not-dual-pacer` · `compact-rekey-from-disk` · `station-refresh-this-wake` · `hangar-is-not-suit` · `cursor-host-no-inject` |
+| Repertoire names | cadence names plus `board-is-seats-not-clocks` · `event-wake-not-dual-pacer` · `compact-rekey-from-disk` · `hangar-is-not-suit` · `cursor-host-no-inject` |
 
 ## Link
 

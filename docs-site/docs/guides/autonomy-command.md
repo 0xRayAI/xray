@@ -10,7 +10,7 @@ The **autonomy command** is the default operating model when the 0xRay suit is w
 
 **Problem it solves:** keyword-gated skills, unused todo lists, buck-passing, skipped researcher/architect/code-reviewer on major work, and "not my job" syndrome.
 
-**Lead cadence:** a peer wearing the suit continues from Station + Repertoire without a command stream. Dummy tests `SKILLS.md`. Same-sess bodies keep a Station card. Branch + worktree + PR. OTP then poll the published version. Loop until Station is done. Live ticks, not idle pacers. After compact: refresh Station this wake. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook stays the `orchestrator` skill (Codex 69 — no new skill).
+**Lead cadence:** a peer wearing the suit continues from Station + Repertoire without a command stream. Dummy tests `SKILLS.md`. Same-sess bodies keep a Station card. Branch + worktree + PR. OTP then poll the published version. Loop until Station is done. Live ticks, not idle pacers. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`. Playbook stays the `orchestrator` skill (Codex 69 — no new skill).
 
 ---
 

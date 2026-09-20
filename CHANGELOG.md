@@ -11,7 +11,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 📚 Documentation
 - Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
-- **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC: dummy `SKILLS.md` tests, same-sess wear + Station card, npm OTP+poll, always branch/worktree/PR, loop until Station is done, workstreams not idle pacers. After compact: refresh Station this wake. Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
+- **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC: dummy `SKILLS.md` tests, same-sess wear + Station card, npm OTP+poll, always branch/worktree/PR, loop until Station is done, workstreams not idle pacers. Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
 - **Repertoire project copy** — shipped `memory_routing.config.signalsPath` is `.xray/state/repertoire/curated_signals.json`. The factory tarball stays read-only. After compact the suit routes the living project names, not the 8-name seed.
 - **Board clock** — critique board wakes on PR events and resumes the same critic. Two idle pacers (reviewer + lead-reader) are forbidden; they inflate context and cause compact. Merge after PASS+CI. Deploy stays Ask-first.
 - **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
