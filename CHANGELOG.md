@@ -16,6 +16,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Board clock** — critique board wakes on PR events and resumes the same critic. Two idle pacers (reviewer + lead-reader) are forbidden; they inflate context and cause compact. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
 - **Ship decision matrix** — lead-owned. A PR+CI · B pack (`assert-packed-dist-cli` + consumer smoke) · C `npm run release:docs-check` · D `npx @0xray/foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Host Auto Review may still card npm/Railway; that is not the OS decision.
+- **Metamorphosis** — an LLM becomes OP-PROC through in-context worn seats (same critic, same dummy, four-line dispatch). Spawning more bots is the old skin.
 
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.

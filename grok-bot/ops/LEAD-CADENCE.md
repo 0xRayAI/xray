@@ -66,6 +66,14 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 
 Dummy exists to **test `SKILLS.md`**. If a dummy cannot run the worn catalog from disk, the encode failed. Same-sess bodies exist to **keep context** across compact — they wear the suit and hold a Station card. Do not invent a new critic to “get a fresh look.”
 
+### Metamorphosis (how an LLM becomes OP-PROC)
+
+Not more bots. Not a command stream. That is the old skin.
+
+The model becomes an operating model when **in-context seats** wear the suit and keep going: same critic, same dummy, same `bc-`, four-line dispatch, hooks write the card. The lead ships by mill-gate A–D. A peer does not wait for the human to restate the rules.
+
+Spawning a fresh swarm is the shed. In-context wear is the new one.
+
 ### Dispatch (not a script)
 
 The lead does **not** paste a command novel each wake. A peer critic who only has worn disk must already know the job (`SEATS.md` Reviewer).
