@@ -2,12 +2,12 @@
 
 Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` is `auto` (new installs). **Hermes / OpenCode / OpenClaw** stay **guided** (full engine ceremony). Existing consumers without the key stay guided on upgrade. See [Suit temperament](./v3-temperament.md).
 
-0xRay integrates with four AI coding platforms. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
+0xRay integrates with four chat platforms plus Cursor project hooks. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
 
-**Repertoire consumer** (full 4-bridge wear matrix):
+**Repertoire consumer** (full 4-chat-bridge wear matrix):
 
 ```bash
-npm run install:bridges       # all four bridges
+npm run install:bridges       # all four chat bridges
 npm run verify:suit:all       # verify Grok + OpenCode + OpenClaw + Hermes
 npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e2e
 ```
@@ -20,6 +20,7 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 | **Grok CLI / Build** | `npx 0xray grok install` | project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin) | 7 servers in plugin MCP config |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes` | Via plugin `.mcp.json` |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json` + `~/.openclaw/skills/` | Via project `.mcp.json` |
+| **Cursor** | postinstall (`installCursorBridge`) | Project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) | Via project `.mcp.json` |
 
 ## Postinstall sequence
 
@@ -31,7 +32,8 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
 6. Create OpenClaw config (mill plant)
-7. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
+7. Fasten Cursor `.cursor/hooks.json` when absent (leaves an existing file alone)
+8. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
 
 **4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
 
@@ -104,6 +106,16 @@ Verify: `npm run verify:hermes` (Repertoire consumer) or `node bridge.mjs health
 ```bash
 npx 0xray openclaw install
 ```
+
+## Cursor (fifth wear)
+
+- Fastens project `.cursor/hooks.json` from `src/integrations/cursor/hooks/hooks.json` (dist path after publish)
+- Hooks: `preToolUse` (Codex gate + Station heat), `preCompact` (Station merge), `afterFileEdit` (Station boot)
+- Leaves an existing consumer `.cursor/hooks.json` alone (this exo wears `src/` via invoke-probe)
+- Not a fifth chat TUI. No new MCP/skill surface (Codex 69)
+- Cursor host does not inject Station — Read `.xray/state/STATION.md` after compact
+
+Exo adapter notes: `src/integrations/cursor/README.md`.
 
 ## Memory routing
 

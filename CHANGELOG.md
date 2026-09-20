@@ -6,6 +6,12 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### ✨ Features
+- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface.
+
+### 📚 Documentation
+- Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
+
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.
 - **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.

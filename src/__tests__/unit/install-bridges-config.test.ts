@@ -9,6 +9,8 @@ const {
   deployXrayConfig,
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
+  installCursorBridge,
+  resolveCursorHooksTemplate,
 } = require("../../../scripts/node/install-bridges.cjs");
 
 describe("install-bridges xray config deploy", () => {
@@ -292,5 +294,54 @@ describe("install-bridges xray config deploy", () => {
     }
     expect(XRAY_CONFIG_FILES).toContain("features.json");
     expect(XRAY_CONFIG_FILES).toContain("features.schema.json");
+  });
+});
+
+describe("install-bridges cursor wear", () => {
+  let tmpRoot: string;
+  let packageRoot: string;
+  let consumerRoot: string;
+
+  beforeEach(() => {
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-cursor-wear-"));
+    packageRoot = path.join(tmpRoot, "package");
+    consumerRoot = path.join(tmpRoot, "consumer");
+    fs.mkdirSync(packageRoot, { recursive: true });
+    fs.mkdirSync(consumerRoot, { recursive: true });
+    const hooksDir = path.join(packageRoot, "src", "integrations", "cursor", "hooks");
+    fs.mkdirSync(hooksDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(hooksDir, "hooks.json"),
+      JSON.stringify({ version: 1, hooks: { preToolUse: [{ command: "node pre-tool-use.js" }] } }),
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  });
+
+  it("fastens .cursor/hooks.json from the package template", () => {
+    const dest = installCursorBridge(consumerRoot, packageRoot, () => {});
+    expect(dest).toBe(path.join(consumerRoot, ".cursor", "hooks.json"));
+    expect(fs.existsSync(dest)).toBe(true);
+    const fastened = JSON.parse(fs.readFileSync(dest, "utf-8"));
+    expect(fastened.version).toBe(1);
+    expect(fastened.hooks.preToolUse).toHaveLength(1);
+  });
+
+  it("leaves an existing consumer hooks.json alone", () => {
+    const destDir = path.join(consumerRoot, ".cursor");
+    fs.mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, "hooks.json");
+    fs.writeFileSync(dest, JSON.stringify({ version: 1, hooks: { keep: true } }));
+    installCursorBridge(consumerRoot, packageRoot, () => {});
+    const kept = JSON.parse(fs.readFileSync(dest, "utf-8"));
+    expect(kept.hooks.keep).toBe(true);
+  });
+
+  it("resolves the shipped cursor hooks template from this package", () => {
+    const real = resolveCursorHooksTemplate(process.cwd());
+    expect(real).toBeTruthy();
+    expect(fs.existsSync(real as string)).toBe(true);
   });
 });

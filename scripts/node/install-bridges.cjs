@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * install-bridges.cjs — Unified 4-platform bridge installer for consumer postinstall.
- * Mirrors npx 0xray {opencode,grok,hermes,openclaw} install in one synchronous pass.
+ * Mirrors npx 0xray {opencode,grok,hermes,openclaw} install in one synchronous pass
+ * plus Cursor project hooks (fifth wear — not a fifth chat TUI).
  */
 
 const fs = require("fs");
@@ -709,6 +710,35 @@ function deployXrayConfig(targetDir, packageRoot, log) {
   return copied;
 }
 
+function resolveCursorHooksTemplate(packageRoot) {
+  const src = path.join(packageRoot, "src", "integrations", "cursor", "hooks", "hooks.json");
+  if (fs.existsSync(src)) return src;
+  const dist = path.join(packageRoot, "dist", "integrations", "cursor", "hooks", "hooks.json");
+  if (fs.existsSync(dist)) return dist;
+  return null;
+}
+
+/**
+ * Fifth wear: project `.cursor/hooks.json` so Cursor Cloud heats Station and gates tools.
+ * Leave an existing file alone (this exo already wears src/ via invoke-probe).
+ */
+function installCursorBridge(targetDir, packageRoot, log) {
+  const dest = path.join(targetDir, ".cursor", "hooks.json");
+  if (fs.existsSync(dest)) {
+    log("cursor-bridge", ".cursor/hooks.json exists — leave", "info");
+    return dest;
+  }
+  const template = resolveCursorHooksTemplate(packageRoot);
+  if (!template) {
+    log("cursor-bridge", "skipped", "warn", { reason: "cursor hooks template missing" });
+    return null;
+  }
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(template, dest);
+  log("cursor-bridge", "hooks.json fastened", "info", { path: ".cursor/hooks.json" });
+  return dest;
+}
+
 function installGitHooks(packageRoot, log) {
   const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
   if (!fs.existsSync(installHooks)) return;
@@ -730,6 +760,8 @@ function installFrameworkDogfoodWear(packageRoot, log) {
     applyResolvedMemoryRouting(featuresPath, packageRoot);
   }
 
+  installCursorBridge(packageRoot, packageRoot, log);
+
   const sourceDir = findGrokPluginSource(packageRoot);
   const pluginDest = path.join(packageRoot, ".grok", "plugins", "0xray");
   if (!sourceDir) {
@@ -744,7 +776,7 @@ function installFrameworkDogfoodWear(packageRoot, log) {
 }
 
 /**
- * Install all 4 platform bridges for a consumer project.
+ * Install 4 chat bridges plus Cursor project hooks for a consumer project.
  * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
  */
 function installAllBridges(opts) {
@@ -764,7 +796,7 @@ function installAllBridges(opts) {
     return;
   }
 
-  log("install-bridges", "starting 4-platform install", "info");
+  log("install-bridges", "starting 4-platform + cursor wear", "info");
 
   deployXrayConfig(targetDir, packageRoot, log);
   deployProjectMcpJson(targetDir, log);
@@ -773,9 +805,10 @@ function installAllBridges(opts) {
   installGrokBridge(targetDir, packageRoot, log);
   installHermesBridge(targetDir, packageRoot, log);
   installOpenclawBridge(targetDir, packageRoot, log);
+  installCursorBridge(targetDir, packageRoot, log);
   installGitHooks(packageRoot, log);
 
-  log("install-bridges", "4-platform install complete", "success");
+  log("install-bridges", "4-platform + cursor wear complete", "success");
 }
 
 module.exports = {
@@ -798,4 +831,6 @@ module.exports = {
   isIsolatedHome,
   installFrameworkDogfoodWear,
   wearVendoredRepertoire,
+  installCursorBridge,
+  resolveCursorHooksTemplate,
 };

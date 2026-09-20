@@ -11,7 +11,7 @@ CLI, bridges, seven MCP servers, Codex. Product thesis: [4.0 vision](./architect
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 bridges + 7 MCP servers + AGENTS.md + .mcp.json
+npm install 0xray          # postinstall: 4 chat bridges + Cursor hooks + 7 MCP servers + AGENTS.md + .mcp.json
 
 npx 0xray status           # verify
 npx 0xray setup            # optional extras
@@ -249,7 +249,7 @@ Four-floor consumer e2e against **0xray@4.0.0**:
 | Grok CLI E2E | 63/0 |
 | Hermes E2E | 39/0/2 (npm 4.0.0 pack) |
 | OpenClaw E2E | 96/0/1 (npm 4.0.0 pack) |
-| Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 bridges + organ on |
+| Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 chat bridges + Cursor hooks + organ on |
 
 ---
 

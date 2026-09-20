@@ -150,6 +150,7 @@ npx 0xray skill:install <source>
 | OpenCode (after setup) | `.opencode/skills/<name>/SKILL.md` |
 | Grok | project `.grok/plugins/0xray/skills/<name>/SKILL.md` (machine `~/.grok/plugins/0xray` is not last-wins) |
 | Hermes / OpenClaw | Platform skill dirs (postinstall sync) |
+| Cursor | Project `.cursor/hooks.json` (PPE + Station heat). Not a skill dump. |
 
 ## Related features (since 3.1)
 

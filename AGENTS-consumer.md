@@ -6,7 +6,7 @@ Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NA
 
 **4.0** — a suit that survives the context window
 
-Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four platform bridges. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
+Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. Repertoire organ ships **on** (vendored 0.2); opt out with `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 
@@ -24,7 +24,7 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
 - Writes **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
-- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**
+- Installs bridges: **OpenCode**, **Grok**, **Hermes**, **OpenClaw**, plus **Cursor** `.cursor/hooks.json`
 
 Optional extras: `npx 0xray setup`
 
