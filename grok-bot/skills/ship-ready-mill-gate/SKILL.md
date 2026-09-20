@@ -24,9 +24,9 @@ description: >-
 
 The lead runs the CLI. A browser subagent is the wrong seat.
 
-1. `npm whoami` must be the publisher.
-2. `npm publish --access public` — **no** `--auth-type=web`.
-3. CLI prints `Authenticate your account at:` + `https://www.npmjs.com/auth/cli/<id>`. Give the human that URL clickable. Do not press Enter. Do not open a VM browser.
+1. Stay logged in. Do **not** `npm logout`.
+2. Every time run `npm publish --access public` in the live TTY — **no** `--auth-type=web`, **no** `--otp=` from chat, no `tee`.
+3. Give the human the clickable `https://www.npmjs.com/auth/cli/<id>` URL. Do not press Enter. Do not open a VM browser. Do not ask for a 6-digit authenticator code in chat.
 4. Wait on the same CLI for `+ <name>@<version>`.
 5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes.
 6. Then tag `v<version>` if missing. Do not start the next cut on a stale `npm view`.
