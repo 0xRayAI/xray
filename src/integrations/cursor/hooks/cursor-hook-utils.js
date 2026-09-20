@@ -25,6 +25,7 @@ import { appendHookActivity } from '../../grok/hooks/grok-hook-activity.js';
 import {
   buildRepertoireResume,
   readGitBrief,
+  stationDurableHoldsNpm,
 } from '../../hooks/station-hook-runtime.mjs';
 
 export const CURSOR_HOST = 'cursor';
@@ -147,6 +148,7 @@ export function cursorBootNeedsRefresh(existing, root) {
   if (liveGit && liveGit.head && bootHead !== liveGit.head) return true;
   const liveResume = buildRepertoireResume(root);
   if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
+  if (stationDurableHoldsNpm(root)) return true;
   return false;
 }
 

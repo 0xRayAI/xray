@@ -8,6 +8,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { frameworkLogger } from "../../core/framework-logger.js";
+import { stationDurableHoldsNpm } from "../../integrations/hooks/station-hook-runtime.mjs";
 
 /** Same paths as `REQUIRED_PACK_PATHS` in assert-packed-dist-cli.mjs — typed here so src/cli does not import untyped .mjs. */
 export const VALIDATE_PACK_PATHS: readonly string[] = [
@@ -138,6 +139,18 @@ export function collectValidateReport(cwd: string): ValidateReport {
       id: "repertoire",
       ok: repertoire,
       detail: repertoire ? "repertoire organ on disk" : "missing @0xray/repertoire",
+    });
+  }
+
+  const stationPath = join(cwd, ".xray", "state", "STATION.md");
+  if (existsSync(stationPath)) {
+    const staleHold = stationDurableHoldsNpm(cwd);
+    checks.push({
+      id: "durable-hold",
+      ok: !staleHold,
+      detail: staleHold
+        ? "STATION Durable still says Hold npm — heat should have stripped it"
+        : "Durable has no Hold npm",
     });
   }
 
