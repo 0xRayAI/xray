@@ -61,7 +61,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Memory routing + Repertoire (v3.3+)
 
-**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
+**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
 
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 
@@ -71,7 +71,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
   "provider": "repertoire",
   "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
   "config": {
-    "signalsPath": "node_modules/@0xray/repertoire/data/curated_signals.json",
+    "signalsPath": ".xray/state/repertoire/curated_signals.json",
     "statePath": ".xray/state/repertoire/inference-state.json",
     "feedbackDir": ".xray/state/repertoire/feedback"
   }

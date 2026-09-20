@@ -31,7 +31,7 @@ Do not put the 145/188 dump back in the factory seed. Do not paste it onto `STAT
 ## What 4.0 wears
 
 - **Continuity:** Station. Grok **Reads** the card (does not inject). Compact heat rewrites stock fields and keeps unknown keys + `## Durable` / `## Seed`.
-- **Routing seed:** vendored `@0xray/repertoire@0.2.0` (8 names). `memory_routing` on. Compact `ingestFeedback` only if intent matches those names — not a substitute for the card.
+- **Routing seed:** vendored `@0xray/repertoire@0.2.0` (8 factory names). Worn mill reads `.xray/state/repertoire/curated_signals.json`, not the tarball. Compact `ingestFeedback` grows the project copy — not a substitute for the card.
 - **Do not pin 0.1.8** for a normal mill install. The 0.1 *job* (judgment) is still real when a field emits enriched JSONL (`matched_primitives` + `match_confidence`) **and** 0xRay actually routes (`analyze-complexity` / thinDispatch / researcher). Then grow the **project-local** copy. That is not Station.
 
 Frontier hosts often skip intake (spawn **warns**, does not deny). Then the judgment loop stays idle even if Repertoire is fastened. That is expected, not a missing Station plant.
