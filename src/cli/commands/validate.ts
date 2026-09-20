@@ -73,6 +73,16 @@ function checkPath(root: string, rel: string): boolean {
   return existsSync(join(root, rel));
 }
 
+function stationDurableHoldsNpm(cwd: string): boolean {
+  const dest = join(cwd, ".xray", "state", "STATION.md");
+  if (!existsSync(dest)) return false;
+  try {
+    return /\bhold\s+npm\b/i.test(readFileSync(dest, "utf8"));
+  } catch {
+    return false;
+  }
+}
+
 export function collectValidateReport(cwd: string): ValidateReport {
   const packageRoot = resolveInstalledPackageRoot(cwd);
   const checks: ValidateCheck[] = [];
@@ -138,6 +148,18 @@ export function collectValidateReport(cwd: string): ValidateReport {
       id: "repertoire",
       ok: repertoire,
       detail: repertoire ? "repertoire organ on disk" : "missing @0xray/repertoire",
+    });
+  }
+
+  const stationPath = join(cwd, ".xray", "state", "STATION.md");
+  if (existsSync(stationPath)) {
+    const staleHold = stationDurableHoldsNpm(cwd);
+    checks.push({
+      id: "durable-hold",
+      ok: !staleHold,
+      detail: staleHold
+        ? "STATION Durable still says Hold npm — heat should have stripped it"
+        : "Durable has no Hold npm",
     });
   }
 

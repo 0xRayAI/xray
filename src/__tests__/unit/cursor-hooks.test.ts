@@ -129,6 +129,28 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
+  it('preToolUse strips Hold npm from Durable and keeps the rest of the card', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-hold-'));
+    try {
+      plantFeatures(tmp);
+      gitInit(tmp);
+      const dest = seedBenStation(tmp);
+      writeFileSync(
+        dest,
+        readFileSync(dest, 'utf8').replace('keep-me-ben-001', 'Same cloud. Same critic. Hold npm.\nkeep-me-ben-001'),
+      );
+      expect(cursorBootNeedsRefresh({ host: 'cursor', suit_profile: 'auto', stationLine: 'x' }, tmp)).toBe(true);
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'README.md' }, cwd: tmp }, tmp);
+      const card = readFileSync(dest, 'utf8');
+      expect(card).not.toMatch(/hold\s+npm/i);
+      expect(card).toContain('Same cloud. Same critic.');
+      expect(card).toContain('keep-me-ben-001');
+      expect(card).toContain('Ticket: COMPACT-BEN-001');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('preToolUse rewrites Git when HEAD moves and keeps Ticket / Durable', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-metal-'));
     try {

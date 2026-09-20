@@ -383,6 +383,23 @@ function isDurableStationHeading(line) {
   return /^##\s+(durable|seed)\b/i.test(String(line || "").trim());
 }
 
+/** Durable is identity. Hold/ship lives in mill-gate — not on the card. */
+function isHoldNpmLine(line) {
+  return /\bhold\s+npm\b/i.test(String(line || "").trim());
+}
+
+function stripHoldNpm(line) {
+  return String(line || "")
+    .replace(/\s*hold\s+npm\.?/gi, "")
+    .replace(/[ \t]+$/g, "");
+}
+
+function stationDurableHoldsNpm(root) {
+  return readExistingStationMarkdown(root)
+    .split(/\r?\n/)
+    .some((line) => isHoldNpmLine(line));
+}
+
 function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
@@ -411,12 +428,14 @@ function extractPreservedStationLines(existing) {
       if (otherHeading || isStockStationLine(line)) {
         inDurable = false;
       } else {
-        preserved.push(line);
+        const durableLine = stripHoldNpm(line);
+        if (durableLine.trim()) preserved.push(durableLine);
         continue;
       }
     }
     if (isStockStationLine(line)) continue;
-    preserved.push(line);
+    const kept = stripHoldNpm(line);
+    if (kept.trim()) preserved.push(kept);
   }
   while (preserved.length && !preserved[0].trim()) preserved.shift();
   while (preserved.length && !preserved[preserved.length - 1].trim()) preserved.pop();
@@ -506,4 +525,6 @@ module.exports = {
   mergeStationMarkdown,
   formatStationMarkdown,
   writeStationMarkdown,
+  isHoldNpmLine,
+  stationDurableHoldsNpm,
 };

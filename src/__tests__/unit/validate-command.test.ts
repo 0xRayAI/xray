@@ -61,4 +61,29 @@ describe('validate command — consumer wear, not leftover init.sh', () => {
     expect(report.ok).toBe(true);
     expect(report.checks.every((c) => c.ok)).toBe(true);
   });
+
+  it('fails wear when Station Durable still says Hold npm', () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), '0xray-validate-hold-'));
+    const pkg = path.join(dir, 'node_modules', '0xray');
+    writeFileSync(path.join(dir, 'package.json'), '{"name":"consumer"}\n');
+    mkdirSync(pkg, { recursive: true });
+    writeFileSync(path.join(pkg, 'package.json'), '{"name":"0xray","version":"4.0.15"}\n');
+    for (const rel of VALIDATE_PACK_PATHS) {
+      touch(path.join(pkg, rel));
+    }
+    for (const rel of CONSUMER_WEAR_PATHS) {
+      touch(path.join(dir, rel));
+    }
+    touch(path.join(dir, '.opencode', 'skills', 'mill', 'SKILL.md'));
+    touch(path.join(dir, '.opencode', 'skills', 'inspect', 'SKILL.md'));
+    touch(path.join(pkg, 'vendor', '@0xray', 'repertoire', 'package.json'));
+    mkdirSync(path.join(dir, '.xray', 'state'), { recursive: true });
+    writeFileSync(
+      path.join(dir, '.xray', 'state', 'STATION.md'),
+      ['# Station', '', '## Durable', 'Same cloud. Same critic. Hold npm.', ''].join('\n'),
+    );
+    const report = collectValidateReport(dir);
+    expect(report.ok).toBe(false);
+    expect(report.checks.find((c) => c.id === 'durable-hold')?.ok).toBe(false);
+  });
 });
