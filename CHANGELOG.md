@@ -20,6 +20,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Publish OTP latch** — stay logged in (do not `npm logout`). Every time run `npm publish --access public` in the live TTY (no `--auth-type=web`, no `--otp=` from chat, no `tee`). Paste the clickable `auth/cli` URL. Do not ask for a 6-digit authenticator code in chat. Do not press Enter. Do not hand publish to a browser subagent. Poll `npm view` until the version is live. Then prove **fresh** and **upgrade** registry installs. `npm view` is not an install.
 - **`npx 0xray validate` cleansed** — no longer shells leftover `.opencode/init.sh` (macOS `md5` + `enforcer-config.json`). Wear check: `REQUIRED_PACK_PATHS`, Cursor hooks, mill+inspect, repertoire. `init.sh` still boots OpenCode but accepts Linux `md5sum` and consumer `.xray/codex.json`.
 - **Swamp reflection (new arch)** — `docs/reflections/swamp-new-arch-reflection-2026-09-20.md`. Card, organ, hook. Lying metal. Live tarball lag.
+- **Clean ticks every cycle** — `/loop` prompt is rewritten at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt. Unsubscribe then resubscribe. A tick that contradicts metal is dirty: rewrite, do not act. Not on Station.
 
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.

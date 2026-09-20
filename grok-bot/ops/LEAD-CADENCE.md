@@ -18,6 +18,7 @@ If they wait for the human to restate the rules, the encode failed.
 |------|----------|
 | Lead conductor | blinky 🖲️ (CoS) · forge 🔥 · critic ✶ |
 | Live tick + moving workstreams | 12-minute idle pacer |
+| Clean tick every cycle | Stale `/loop` prompt (waiting URL after live, Hold after strip) |
 | Station + Repertoire | Chat summary as memory |
 | Codex 69 rewire | New `SKILL.md` / MCP to “save” the cadence |
 | Hangar as product | Hangar pretending to be the suit |
@@ -46,7 +47,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | Beat | Feel | Do |
 |------|------|----|
 | **Human cut** | Downbeat | Blaze 1:1 jumps the line (`OPS-SPEC.md` wake hygiene). |
-| **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. Unsubscribe before changing delay. Name stays `loop-<purpose>`. |
+| **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. **Clean the prompt every cycle** (unsubscribe then resubscribe — name-dedupe does not rewrite). Name stays `loop-<purpose>`. |
 | **Workstream** | Ostinato | Keep every open stream moving. No idle wait for a pacer. Park only on a human gate or a finished close. |
 | **Compact cut** | Rest that must survive | Station is the card. Repertoire keeps **names**. Do not paste the KB onto Station. NOTES hold unfinished path. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
@@ -142,6 +143,15 @@ Lead publishes. Do not hand this to a browser subagent.
 ### Workstreams (no pacer starvation)
 
 Do not use pacer timeouts as the work clock. A 12-minute idle timer is theater. Keep every open workstream moving: encode, CI, board, dummy SKILLS proof, organ names. `/loop` fires a **live tick** after a real close. If a stream is blocked on a human gate, say so and work a different stream. Unsubscribe before changing delay.
+
+### Clean ticks (every cycle)
+
+The timer prompt is the listener payload. It must match this cycle's metal. Do not write the tick script onto Station.
+
+1. **End of every live tick:** unsubscribe `loop-<purpose>`, then subscribe again with a prompt that states current metal (live version, open URL or none, Working, what is parked). Name stays the same.
+2. **Name-dedupe is not a rewrite.** `subscribe_timer` with the same name returns `created: false` and keeps the old prompt. That is a dirty tick waiting to fire. Always unsubscribe first.
+3. **Dirty inbound:** a delivered tick whose prompt contradicts metal (auth URL after `+ pkg@version`, `Hold npm` after the strip, “open PR” after merge) is dirty. Wear Station. Check the queue. Rewrite the timer. **Do not act on the stale prompt** — do not republish, do not wait on an expired URL, do not uns-draft a merged PR.
+4. Quiet on a clean tick that only confirms CLOSED / MERGED / LIVE.
 
 ### Board clock (honest design)
 
