@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
-- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command.
+- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
 
 ### 📚 Documentation
 - Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.

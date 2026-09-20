@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
+  cursorBootNeedsRefresh,
 } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
 import {
   classifyUsageCite,
@@ -55,6 +56,15 @@ function seedBenStation(root: string) {
     ].join('\n'),
   );
   return dest;
+}
+
+function gitInit(root: string) {
+  execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.email', 'cursor-hook@test'], { cwd: root, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.name', 'cursor-hook'], { cwd: root, stdio: 'ignore' });
+  writeFileSync(path.join(root, 'README.md'), 'cursor-hook\n');
+  execFileSync('git', ['add', 'README.md'], { cwd: root, stdio: 'ignore' });
+  execFileSync('git', ['commit', '-m', 'init hook metal'], { cwd: root, stdio: 'ignore' });
 }
 
 function plantFeatures(root: string) {
@@ -116,6 +126,42 @@ describe('Cursor cloud hooks adapter', () => {
       expect(hooks.preToolUse?.[0]?.command).toContain('pre-tool-use.js');
       expect(hooks.preCompact?.[0]?.command).toContain('pre-compact.js');
       expect(hooks.afterFileEdit?.[0]?.command).toContain('after-file-edit.js');
+    }
+  });
+
+  it('preToolUse rewrites Git when HEAD moves and keeps Ticket / Durable', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-metal-'));
+    try {
+      plantFeatures(tmp);
+      gitInit(tmp);
+      const dest = seedBenStation(tmp);
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'README.md' }, cwd: tmp }, tmp);
+      const firstHead = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: tmp,
+        encoding: 'utf8',
+      }).trim();
+      expect(readFileSync(dest, 'utf8')).toContain(`@${firstHead}`);
+      writeFileSync(path.join(tmp, 'MORE.md'), 'metal\n');
+      execFileSync('git', ['add', 'MORE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'move HEAD'], { cwd: tmp, stdio: 'ignore' });
+      const nextHead = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: tmp,
+        encoding: 'utf8',
+      }).trim();
+      expect(nextHead).not.toBe(firstHead);
+      expect(
+        cursorBootNeedsRefresh(
+          JSON.parse(readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8')),
+          tmp,
+        ),
+      ).toBe(true);
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'MORE.md' }, cwd: tmp }, tmp);
+      const card = readFileSync(dest, 'utf8');
+      expect(card).toContain(`@${nextHead}`);
+      expect(card).toContain('Ticket: COMPACT-BEN-001');
+      expect(card).toContain('keep-me-ben-001');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
     }
   });
 
