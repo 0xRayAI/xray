@@ -19,6 +19,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Metamorphosis** — an LLM becomes OP-PROC through in-context worn seats (same critic, same dummy, four-line dispatch). Spawning more bots is the old skin.
 - **Publish OTP latch** — lead runs `npm publish --access public` (no `--auth-type=web`). Paste the CLI `https://www.npmjs.com/auth/cli/…` URL. Do not press Enter. Do not hand publish to a browser subagent. Poll `npm view` until the version is live. Then prove **fresh** and **upgrade** registry installs. `npm view` is not an install.
 - **`npx 0xray validate` cleansed** — no longer shells leftover `.opencode/init.sh` (macOS `md5` + `enforcer-config.json`). Wear check: `REQUIRED_PACK_PATHS`, Cursor hooks, mill+inspect, repertoire. `init.sh` still boots OpenCode but accepts Linux `md5sum` and consumer `.xray/codex.json`.
+- **Swamp reflection (new arch)** — `docs/reflections/swamp-new-arch-reflection-2026-09-20.md`. Card, organ, hook. Lying metal. Live tarball lag.
 
 ### 🔄 Changes
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.
