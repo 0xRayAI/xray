@@ -21,6 +21,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **`npx 0xray validate` cleansed** — no longer shells leftover `.opencode/init.sh` (macOS `md5` + `enforcer-config.json`). Wear check: `REQUIRED_PACK_PATHS`, Cursor hooks, mill+inspect, repertoire. `init.sh` still boots OpenCode but accepts Linux `md5sum` and consumer `.xray/codex.json`.
 - **Swamp reflection (new arch)** — `docs/reflections/swamp-new-arch-reflection-2026-09-20.md`. Card, organ, hook. Lying metal. Live tarball lag.
 - **Clean ticks every cycle** — `/loop` prompt is rewritten at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt. Unsubscribe then resubscribe. A tick that contradicts metal is dirty: rewrite, do not act. Not on Station.
+- **Idle `/loop` stop** — if Station `Working` and the WAVEBOARD (open ship PR, live OTP, unfinished close) are idle, unsubscribe and do not resubscribe. A parked mill is not an active wave.
 
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.

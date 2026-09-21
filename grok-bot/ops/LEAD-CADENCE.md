@@ -19,6 +19,7 @@ If they wait for the human to restate the rules, the encode failed.
 | Lead conductor | blinky 🖲️ (CoS) · forge 🔥 · critic ✶ |
 | Live tick + moving workstreams | 12-minute idle pacer |
 | Clean tick every cycle | Stale `/loop` prompt (waiting URL after live, Hold after strip) |
+| Stop `/loop` when the card and WAVEBOARD are idle | Rewriting a parked mill every 10 minutes |
 | Station + Repertoire | Chat summary as memory |
 | Codex 69 rewire | New `SKILL.md` / MCP to “save” the cadence |
 | Hangar as product | Hangar pretending to be the suit |
@@ -140,6 +141,8 @@ Lead publishes. Do not hand this to a browser subagent.
 
 **Loop until `.xray/state/STATION.md` is done** — ticket closed, working line empty, unfinished path cleared or filed. Compact and host-swap are the same cut: continue the card. Do not cold-start. Do not declare done from a chat summary.
 
+**Monitor the loop.** The card is Station `Working`. The WAVEBOARD is open ship PRs + a live OTP/human gate + an unfinished close. If both are idle (Working is empty or `station snapshot`, no open ship PR, no live URL, mill parked), **unsubscribe `/loop` and do not resubscribe**. PR events still wake a real close. A parked mill is not an active wave.
+
 ### Workstreams (no pacer starvation)
 
 Do not use pacer timeouts as the work clock. A 12-minute idle timer is theater. Keep every open workstream moving: encode, CI, board, dummy SKILLS proof, organ names. `/loop` fires a **live tick** after a real close. If a stream is blocked on a human gate, say so and work a different stream. Unsubscribe before changing delay.
@@ -152,6 +155,7 @@ The timer prompt is the listener payload. It must match this cycle's metal. Do n
 2. **Name-dedupe is not a rewrite.** `subscribe_timer` with the same name returns `created: false` and keeps the old prompt. That is a dirty tick waiting to fire. Always unsubscribe first.
 3. **Dirty inbound:** a delivered tick whose prompt contradicts metal (auth URL after `+ pkg@version`, `Hold npm` after the strip, “open PR” after merge) is dirty. Wear Station. Check the queue. Rewrite the timer. **Do not act on the stale prompt** — do not republish, do not wait on an expired URL, do not uns-draft a merged PR.
 4. Quiet on a clean tick that only confirms CLOSED / MERGED / LIVE.
+5. **Idle stop.** After the rewrite (or instead of it): if the card and WAVEBOARD are not active, unsubscribe and **do not** subscribe again. Clean ticks are for a live wave. They are not a heartbeat on a parked mill.
 
 ### Board clock (honest design)
 
