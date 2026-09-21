@@ -50,7 +50,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Human cut** | Downbeat | Blaze 1:1 jumps the line (`OPS-SPEC.md` wake hygiene). |
 | **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. **Clean the prompt every cycle** (unsubscribe then resubscribe — name-dedupe does not rewrite). Name stays `loop-<purpose>`. |
 | **Workstream** | Ostinato | Keep every open stream moving. No idle wait for a pacer. Park only on a human gate or a finished close. |
-| **Compact cut** | Rest that must survive | Station is the ticket. Overlay names on dest **are** OP-PROC. Reload from `.xray/state/repertoire-working.json` `opProcNames` (hydrate dest). Do not paste OP-PROC onto Station. NOTES hold unfinished path. |
+| **Compact cut** | Rest that must survive | Station is always the pickup memory — heat it this wake. If Repertoire is off, Station + NOTES **are** the mind. Dest names are OP-PROC when worn (`repertoire-working.json` `opProcNames`). Do not paste OP-PROC onto Station. NOTES hold the deep cut. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
 | **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm/Railway are lead-owned after mill-gate **D**. Green CI is not publish. |
