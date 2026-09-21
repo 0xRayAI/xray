@@ -4,6 +4,7 @@
  * sessionStart is unavailable on managed cloud; first preToolUse / afterFileEdit boots.
  */
 
+import { execFileSync } from 'node:child_process';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -152,12 +153,114 @@ export function cursorBootNeedsRefresh(existing, root) {
   return false;
 }
 
+function sessionCaptureStampPath(root) {
+  return path.join(root, '.xray', 'state', 'session-capture-stamp.json');
+}
+
+function readSessionCaptureConfig(root) {
+  let cfg = {};
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(root, '.xray', 'features.json'), 'utf8'));
+    cfg = raw.inference_session_capture || {};
+  } catch {
+    cfg = {};
+  }
+  return {
+    enabled: cfg.enabled === true,
+    minCommits: typeof cfg.min_commits === 'number' && cfg.min_commits > 0 ? cfg.min_commits : 3,
+    lookback: typeof cfg.lookback_commits === 'number' && cfg.lookback_commits > 0 ? cfg.lookback_commits : 20,
+  };
+}
+
+function readSessionCaptureStamp(root) {
+  try {
+    return JSON.parse(fs.readFileSync(sessionCaptureStampPath(root), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function gitCommitSubjects(root, args) {
+  try {
+    const out = execFileSync('git', ['log', '--format=%h||%s', '--no-merges', ...args], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 5000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return String(out)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const idx = line.indexOf('||');
+        return {
+          hash: idx === -1 ? line : line.slice(0, idx),
+          message: idx === -1 ? '' : line.slice(idx + 2),
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Cursor never runs the git post-commit hook. When HEAD moves, write the same
+ * session-*.json the kernel already knows how to ingest. Dedup per HEAD.
+ */
+export function maybeCaptureSessionOnHeadMove(root) {
+  const cfg = readSessionCaptureConfig(root);
+  if (!cfg.enabled) return null;
+  const git = readGitBrief(root);
+  if (!git || !git.head) return null;
+  const stamp = readSessionCaptureStamp(root);
+  if (stamp && stamp.head === git.head) return null;
+
+  const commits = stamp && stamp.head
+    ? gitCommitSubjects(root, [`${stamp.head}..HEAD`])
+    : gitCommitSubjects(root, ['-n', String(cfg.lookback)]);
+  if (commits.length < cfg.minCommits) return null;
+
+  const sessionId = `session-${new Date().toISOString().slice(0, 10)}-${git.head}`;
+  const approaches = commits.map((c) => c.message).filter(Boolean);
+  const session = {
+    sessionId,
+    timestamp: new Date().toISOString(),
+    span: {
+      from: stamp && stamp.head ? stamp.head : `HEAD~${cfg.lookback}`,
+      to: git.head,
+    },
+    problems: [],
+    approaches,
+    wrongTurns: [],
+    solutions: [],
+    patterns: [],
+    matched_primitives: [],
+    metrics: { commits: commits.length },
+  };
+
+  const outDir = path.join(root, 'docs', 'inference');
+  fs.mkdirSync(outDir, { recursive: true });
+  const filePath = path.join(outDir, `session-${sessionId.replace(/^session-/, '')}.json`);
+  fs.writeFileSync(filePath, `${JSON.stringify(session, null, 2)}\n`);
+  fs.writeFileSync(path.join(outDir, 'latest-session.json'), `${JSON.stringify(session, null, 2)}\n`);
+  fs.mkdirSync(path.dirname(sessionCaptureStampPath(root)), { recursive: true });
+  fs.writeFileSync(
+    sessionCaptureStampPath(root),
+    `${JSON.stringify({ head: git.head, sessionId, path: filePath, updatedAt: session.timestamp }, null, 2)}\n`,
+  );
+  return filePath;
+}
+
 export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-use-boot', extra = {}) {
   const bootPath = sessionBootPath(root);
   if (fs.existsSync(bootPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(bootPath, 'utf8'));
-      if (!cursorBootNeedsRefresh(existing, root)) return bootPath;
+      if (!cursorBootNeedsRefresh(existing, root)) {
+        maybeCaptureSessionOnHeadMove(root);
+        return bootPath;
+      }
     } catch {
       /* rewrite corrupt or host-mismatched boot */
     }
@@ -166,7 +269,9 @@ export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-us
     host: CURSOR_HOST,
     ...extra,
   });
-  return writeSessionBoot(root, payload) || bootPath;
+  const written = writeSessionBoot(root, payload) || bootPath;
+  maybeCaptureSessionOnHeadMove(root);
+  return written;
 }
 
 export function writeCursorPrecompactReceipt(root, fields) {

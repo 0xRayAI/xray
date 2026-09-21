@@ -35,6 +35,7 @@ xray/inference/
 .xray/state/cursor-precompact.json
 .xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
+.xray/state/session-capture-stamp.json
 
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts

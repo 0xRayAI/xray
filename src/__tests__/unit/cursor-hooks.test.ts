@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -500,6 +500,38 @@ describe('Cursor cloud hooks adapter', () => {
       const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
       expect(card).toContain('Usage: source=precompact-stdin model=cursor-grok-4.6-high window=256000 tokens=232105');
       expect(card).toContain('Compact: preCompact Y (count=1) · usage host-field');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('afterFileEdit writes session-*.json when HEAD moved and capture is on', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-session-'));
+    try {
+      plantFeatures(tmp);
+      const featuresPath = path.join(tmp, '.xray', 'features.json');
+      const features = JSON.parse(readFileSync(featuresPath, 'utf8'));
+      features.inference_session_capture = { enabled: true, min_commits: 3, lookback_commits: 20 };
+      writeFileSync(featuresPath, JSON.stringify(features));
+      gitInit(tmp);
+      writeFileSync(path.join(tmp, 'ONE.md'), 'one\n');
+      execFileSync('git', ['add', 'ONE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'station-survives-the-cut heat'], { cwd: tmp, stdio: 'ignore' });
+      writeFileSync(path.join(tmp, 'TWO.md'), 'two\n');
+      execFileSync('git', ['add', 'TWO.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'compact-rekey-from-disk'], { cwd: tmp, stdio: 'ignore' });
+      runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
+      const inferenceDir = path.join(tmp, 'docs', 'inference');
+      const files = existsSync(inferenceDir)
+        ? readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'))
+        : [];
+      expect(files.length).toBeGreaterThan(0);
+      const latest = JSON.parse(readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8'));
+      expect(latest.approaches.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
+      const firstCount = files.length;
+      runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
+      const again = readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));
+      expect(again.length).toBe(firstCount);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

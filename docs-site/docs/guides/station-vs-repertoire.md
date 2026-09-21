@@ -198,7 +198,7 @@ UPGRADE of an existing mill
 
 ```
 KERNEL DIARY                         WHO WRITES                         DEST READS?
-docs/inference/session-*.json        storytelling-trigger + capture     YES (XraySessionIngester, #11)
+docs/inference/session-*.json        Cursor heat on HEAD move + capture YES (XraySessionIngester)
 .xray/inference/workflow-*.json      inference workflow                 discover dir; needs session-*
 logs/framework/activity.log          frameworkLogger                    not dest (diary only)
 logs/framework/routing-outcomes.json orchestrator                       not dest
