@@ -53,7 +53,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Wear, then review/);
     expect(text).toMatch(/Metamorphosis \(how an LLM becomes OP-PROC\)/);
     expect(text).toMatch(/opProcNames/);
-    expect(text).toMatch(/overlay names on dest \*\*are\*\* OP-PROC/i);
+    expect(text).toMatch(/Dest names are OP-PROC when worn/i);
     expect(text).toMatch(/in-context seats/);
     expect(text).toMatch(/Decision matrix to ship \(lead-owned\)/);
     expect(text).toMatch(/A — PR \+ CI/);
