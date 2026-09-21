@@ -6,6 +6,7 @@
 - **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts metal is dirty: wear, rewrite, do not act.
 - **Idle `/loop` stop** — card + WAVEBOARD idle → unsubscribe, do not resubscribe. Not a heartbeat on a parked mill.
 - **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship.
+- **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field.
 
 ## 0.1.5
 

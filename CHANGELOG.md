@@ -23,6 +23,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Clean ticks every cycle** — `/loop` prompt is rewritten at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt. Unsubscribe then resubscribe. A tick that contradicts metal is dirty: rewrite, do not act. Not on Station.
 - **Idle `/loop` stop** — if Station `Working` and the WAVEBOARD (open ship PR, live OTP, unfinished close) are idle, unsubscribe and do not resubscribe. A parked mill is not an active wave.
 - **Subject review. Fix n ship.** After board PASS, review the worn dest / domain (not only CI), close leftovers, then mill-gate D. PASS is not ship. On `LEAD-CADENCE.md` Ship track + `SEATS.md` Reviewer. Not on Station.
+- **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field as if that is the KB. On `LEAD-CADENCE.md` Heads from tails. Not on Station.
 
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.

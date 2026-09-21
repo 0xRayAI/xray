@@ -172,7 +172,7 @@ Merge after critic PASS + CI (gate A). Publish only after mill-gate **D** + `fou
 
 ### Heads from tails
 
-Station = cascade / multi-phase card. Repertoire = long-running names. Hangar = end product (usually no AI). Jelly = dormant. Suit = mill + inspect + Codex + Station + optional organ. Sort before acting. Copious notes go to `.xray/state/NOTES.md`, not onto Station.
+Station = cascade / multi-phase card. Repertoire = long-running names. Hangar = end product (usually no AI). Jelly = dormant. Suit = mill + inspect + Codex + Station + optional organ. **Groover ≠ Repertoire.** Groover was a broken experiment of how the organ was supposed to work — identity hangar / field producer, not the KB. Do not grow dest from Groover field (`repertoire-brain` 145, sibling `groover-inference-logs`) as if that is Repertoire becoming real. Sort before acting. Copious notes go to `.xray/state/NOTES.md`, not onto Station.
 
 ## Status beat (material only)
 
