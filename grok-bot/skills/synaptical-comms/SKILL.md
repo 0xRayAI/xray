@@ -1,8 +1,9 @@
 ---
 name: Synaptical comms
 description: >-
-  use this when writing house comms — H lane (human/public) HARD friend-test; B
-  lane (bot-internal) compressed synaptical to save tokens
+  use this when writing house comms — H lane (human/public) HARD friend-test +
+  Dist converse voice; B lane (bot-internal) compressed synaptical to save
+  tokens
 ---
 # Synaptical comms
 
@@ -26,5 +27,6 @@ Use Meaningful Compression / synaptical concurrency dense form. Prefer one short
 
 ## Public Dist
 Always Lane H. Use Dist 0xRayAI publish skill. No cut-lines by default. Offer→deliver. Cadence in CADENCE.md.
+**Voice HARD (2026-09-20):** Dist replies converse — refuse openers `Locked:` / `Got it` / `Copy that` / `Noted` / `Ack`. Engage · plain · one next beat. CoS rewrite.
 
 See also `ops/SYNAPTICAL-LANES.md`.
