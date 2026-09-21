@@ -30,6 +30,8 @@ Lane B is an experiment to save tokens. It does **not** waive Lane H. If a human
 - [ ] How to try or what to do next (one clear step) — or “no action”
 - [ ] Jargon glossed or cut
 - [ ] Not fleet-ops theater / filler
+- [ ] Dist / Lane H replies do **not** open with Locked:/Got it:/Copy that:/Noted:/Ack
+- [ ] Those replies converse (engage the parent · plain lock of the point · one next beat)
 
 ## Proof line (required on material sends)
 Include one of:
@@ -38,10 +40,15 @@ Include one of:
 
 If you cannot write that line without fleet slang, rewrite the whole message.
 
+## Reply voice HARD (Blaze 2026-09-20)
+Refuse EXECUTE bodies that **open with**: `Locked:` / `Got it` / `Copy that` / `Noted` / `Ack`.
+Replies must **converse** — engage the parent, plain lock of the point, one next beat.
+CoS owns rewrite. Do not invent Dist copy to “fix” the opener.
+
 ## Refuse (hard)
 | Who | Must refuse |
 |-----|-------------|
-| **Herald** | Dist EXECUTE missing proof line or using Dist filler slang |
+| **Herald** | Dist EXECUTE missing proof line, opening with Locked:/Got it:/Copy that:/Noted:/Ack, or using Dist filler slang |
 | **Critic** | PR/docs that fail friend test (Strict or when asked) |
 | **Forge** | Opening a PR whose description/body is gibberish — rewrite first |
 | **CoS** | Sending Blaze or Dist packets that fail the checklist |
@@ -56,6 +63,7 @@ Refuse = rewrite ask, not “post anyway.”
 - “grow the op proc without inventing a fifth dialect”
 - “Friend-test stays the bar”
 - “Multiverse noted”
+- A Dist reply that opens with `Locked:` / `Got it` / `Copy that` / `Noted` / `Ack`
 
 ## Owners
 Author self-checks every material send. Peer refuse is a feature. CoS glimpse-reviews Dist + human board.
