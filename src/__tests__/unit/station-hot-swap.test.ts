@@ -9,6 +9,7 @@ import {
   extractPreservedStationLines,
   formatStationMarkdown,
   mergeStationMarkdown,
+  readRepertoireWorking,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
@@ -279,6 +280,36 @@ describe('station hot-swap', () => {
       expect(opted.repertoireResume).toMatch(/memory_routing off/);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('reloads overlay OP-PROC onto repertoire-working, not Station', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-op-proc-reload-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      const opProc = [
+        'station-survives-the-cut',
+        'repertoire-is-long-running-kb',
+        'compact-rekey-from-disk',
+        'factory-seed-is-not-the-brain',
+      ];
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: opProc.map((name) => ({ name })),
+        }),
+      );
+      const heat = applyStationHeat(tmp, 'cursor', { intent: 'survive compact after swap' }, {});
+      const working = readRepertoireWorking(tmp);
+      expect(working?.opProcNames).toEqual(expect.arrayContaining(opProc));
+      const card = writeStationMarkdown(tmp, { ...heat, host: 'cursor', suit_profile: 'frontier' });
+      const md = fs.readFileSync(card || '', 'utf8');
+      expect(md).toMatch(/Repertoire:/);
+      expect(md).not.toContain('factory-seed-is-not-the-brain');
+      expect(md).not.toContain('compact-rekey-from-disk');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
 

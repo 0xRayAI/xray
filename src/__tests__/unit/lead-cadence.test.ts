@@ -52,6 +52,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/When knowledge grows/);
     expect(text).toMatch(/Wear, then review/);
     expect(text).toMatch(/Metamorphosis \(how an LLM becomes OP-PROC\)/);
+    expect(text).toMatch(/opProcNames/);
+    expect(text).toMatch(/overlay names on dest \*\*are\*\* OP-PROC/i);
     expect(text).toMatch(/in-context seats/);
     expect(text).toMatch(/Decision matrix to ship \(lead-owned\)/);
     expect(text).toMatch(/A — PR \+ CI/);
@@ -68,6 +70,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/WAVEBOARD are idle/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Subject review\. Fix n ship/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Groover is not Repertoire/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/opProcNames/);
     expect(readFileSync(agents, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
     expect(existsSync(path.join(root, 'src', 'skills', 'lead-cadence', 'SKILL.md'))).toBe(false);
   });

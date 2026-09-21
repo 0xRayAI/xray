@@ -18,7 +18,7 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 
 ## Steps (every material wake)
 1. **Read durable state** (whichever exists for this seat):
-   - Project: `.xray/state/STATION.md`, `.xray/state/session-boot.json`, `.xray/state/repertoire-working.json`
+   - Project: `.xray/state/STATION.md` (ticket), `.xray/state/session-boot.json`, `.xray/state/repertoire-working.json` (`opProcNames` = overlay OP-PROC). Do not look for OP-PROC on Station.
    - Fleet: `ops/WAVEBOARD.md`, `ops/ATTENTION_STATE.md`
    - Agent memory (profile + recent log) — do not re-ask what is already stored
 2. **Name the live track** in one line: intent · open PR/cloud id · next beat · “already built / do not rebuild”

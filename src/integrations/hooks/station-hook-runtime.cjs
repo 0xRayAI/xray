@@ -203,6 +203,25 @@ function stationSafeSignals(names) {
   return out;
 }
 
+/** Overlay + factory names on dest. OP-PROC lives here — not on Station.md. */
+function readOpProcNames(root) {
+  const dest = join(root, ".xray", "state", "repertoire", "curated_signals.json");
+  if (!existsSync(dest)) return [];
+  try {
+    const data = JSON.parse(readFileSync(dest, "utf8"));
+    if (!Array.isArray(data.signals)) return [];
+    const names = [];
+    for (const signal of data.signals) {
+      const name = String(signal && signal.name ? signal.name : "").trim();
+      if (!name || name.toLowerCase().startsWith("bedrock-")) continue;
+      names.push(name);
+    }
+    return names;
+  } catch {
+    return [];
+  }
+}
+
 function persistRepertoireWorking(root, snapshot) {
   try {
     mkdirSync(join(root, ".xray", "state"), { recursive: true });
@@ -340,6 +359,8 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     repertoireResume,
   };
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals;
+  const opProcNames = readOpProcNames(root);
+  if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const working = persistRepertoireWorking(root, workingSnapshot);
   if (isCompactHook(extra) && matchedSignals.length) {
     ingestCompactFeedbackSync(
@@ -519,6 +540,7 @@ module.exports = {
   isLeftoverMemoryRoutingOff,
   persistRepertoireWorking,
   readRepertoireWorking,
+  readOpProcNames,
   formatWorkingLine,
   applyStationHeat,
   extractPreservedStationLines,

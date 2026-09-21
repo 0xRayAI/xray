@@ -18,6 +18,7 @@ export const readPlanLine = impl.readPlanLine;
 export const buildRepertoireResume = impl.buildRepertoireResume;
 export const persistRepertoireWorking = impl.persistRepertoireWorking;
 export const readRepertoireWorking = impl.readRepertoireWorking;
+export const readOpProcNames = impl.readOpProcNames;
 export const formatWorkingLine = impl.formatWorkingLine;
 export const applyStationHeat = impl.applyStationHeat;
 export const extractPreservedStationLines = impl.extractPreservedStationLines;
