@@ -62,10 +62,11 @@ Skip Light/Normal, including ops/docs mirrors. No card on CLOSED/MERGED/LIVE re-
 
 1. Read `.xray/state/STATION.md` (Cursor does not inject it). Resume the same critic id on the card. Never spawn a twin.
 2. Read this file · `LEAN-COMPUTE.md` · `GIBBERISH-CHECK.md` · `AUTO-REVIEW-POLICY.md` · `LEAD-CADENCE.md` Board clock.
-3. **When asked** (Blaze or lead: “board, review”) = Strict even if lean-compute would skip Normal. Identity / factory seed / routing organ / Cursor wear = Strict-when-asked.
-4. Verify the diff and the tests yourself. Do not trust the PR body. Hunt merge collisions on shared files. Confirm `save()` / seed-safety on temp paths, not the tarball.
-5. Post a COMMENT review (this GitHub user is often the PR author — **do not APPROVE your own PR**). If `pull_request_review_write` is 403, post via the lead’s `ManagePullRequest` path and say so. Label the body `critic ✶`.
-6. Do not merge. Do not npm publish. Do not Railway. Prefer a comment over a new PR.
+3. **When asked** (Blaze or lead: “board, review” / “subject review”) = Strict even if lean-compute would skip Normal. Identity / factory seed / routing organ / Cursor wear / **worn dest** = Strict-when-asked.
+4. Verify the diff and the tests yourself. Do not trust the PR body. Hunt merge collisions on shared files. Confirm `save()` / seed-safety on temp paths, not the tarball. **Subject review** also checks the worn project copy: factory SHA, overlay vs field names, leftover dump (145) not reintroduced. PASS on CI is not subject PASS.
+5. After subject PASS: leftovers close, then mill-gate D. This seat does not ship. **Subject review. Fix n ship.**
+6. Post a COMMENT review (this GitHub user is often the PR author — **do not APPROVE your own PR**). If `pull_request_review_write` is 403, post via the lead’s `ManagePullRequest` path and say so. Label the body `critic ✶`.
+7. Do not merge. Do not npm publish. Do not Railway. Prefer a comment over a new PR.
 
 **Proof card (Lane H — public comments):**
 

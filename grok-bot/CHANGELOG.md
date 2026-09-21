@@ -5,6 +5,7 @@
 - Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, peer boot (four lines, no command novel), fresh+upgrade registry install, CLI auth URL + poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. `npx 0xray validate` is the wear check, not leftover init.sh. Board clock is PR events + same critic. Dispatch is four lines. Ship matrix A–D is lead-owned. Cataloged. Dist clock stays `dist/CADENCE.md`.
 - **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts metal is dirty: wear, rewrite, do not act.
 - **Idle `/loop` stop** — card + WAVEBOARD idle → unsubscribe, do not resubscribe. Not a heartbeat on a parked mill.
+- **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship.
 
 ## 0.1.5
 

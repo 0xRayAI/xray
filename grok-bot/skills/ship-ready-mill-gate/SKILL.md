@@ -18,7 +18,7 @@ description: >-
 **B — Pack proof** when releasing a package: pack · temp install · tests pass  
 **C — Docs** core first: README · CHANGELOG · llms.txt · AGENTS.md · SKILLS.md · package.json · docs site — then project-specific. Friend test.  
 **C2 — Live agent docs** when agents must read them: HTTP 200 real content (not error page / banner). Paste curls.  
-**D — Release** reviewer PASS · merge · `foundry gate` + `gate --verify-only` · implementer deploy/publish · live verify. Exact ship script: `npx @0xray/foundry release [patch|minor|major] --i-mean-it` (`scripts/foundry/release.mjs`). Docs freshness: `npm run release:docs-check`. Green CI is gate A only.
+**D — Release** reviewer PASS · merge · `foundry gate` + `gate --verify-only` · implementer deploy/publish · live verify. Exact ship script: `npx @0xray/foundry release [patch|minor|major] --i-mean-it` (`scripts/foundry/release.mjs`). Docs freshness: `npm run release:docs-check`. Green CI is gate A only. **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship.
 
 ### Publish OTP (lead only — not a subagent)
 

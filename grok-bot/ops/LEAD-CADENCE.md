@@ -105,8 +105,9 @@ Monitor the lead. New law that had to be spoken twice goes to disk this wake: `S
 4. **Always a PR.** Docs as you go on that repo: README · CHANGELOG · `llms.txt` · `AGENTS.md` · `SKILLS.md` · Docusaurus when the repo has them. Friend-test the public/OS line.
 5. **Builds.** Use the environment / pack / CI build. Chat is not a receipt (`foundry inspect`, pack gate, CI).
 6. **Board.** Same critic comments. Forge replies. Dialog until PASS or HOLD. Then merge or park.
-7. **Rollback = close the PR** (or revert the merge). Do not wreck production. Do not pin Repertoire 0.1.8 for mill wear.
-8. **Codex 69.** Rewire orchestrator / ops / hooks. Do not add `src/skills/lead-cadence/SKILL.md` or a new MCP.
+7. **Subject review. Fix n ship.** After board PASS, the lead + same critic review the *subject* (worn dest / domain names, not only CI). Close leftovers. Then mill-gate **D**. PASS is not ship. Green CI is not ship.
+8. **Rollback = close the PR** (or revert the merge). Do not wreck production. Do not pin Repertoire 0.1.8 for mill wear.
+9. **Codex 69.** Rewire orchestrator / ops / hooks. Do not add `src/skills/lead-cadence/SKILL.md` or a new MCP.
 
 ### Decision matrix to ship (lead-owned)
 
@@ -120,7 +121,7 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
 | **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
 
-Fail-closed: red CI, docs-check fail, pack-path miss, critic FAIL/HOLD, friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes.
+Fail-closed: red CI, docs-check fail, pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
 
 Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`). That is a host paste, not the OS decision. Spend / credentials / deletes / taste / mint-rotate stay Ask-first.
 
