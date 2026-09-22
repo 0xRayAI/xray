@@ -9,8 +9,7 @@ Dummy: `bc-e5e5c445-3053-5247-bd7d-207915249e2f` — iron-card watcher; resume
 
 ## Cut
 
-Wave 1 pins/validate done. Wave 2: old docs to archive or update, leftover reports, shipped template still v16/60.
-List → board → surgical cut. Compact expected. After cut: Station → NOTES → WATCHER.md.
+Wave 1 pins/validate done. Wave 2 archive/update done. Wave 3: unused `scripts/v2-refactor/` + migrate leftover `stringray.dev`. Compact scored PASS this wake. Subscription monitor next. After cut: Station → NOTES → WATCHER.md.
 
 Prior ship: `0xray@4.0.18` live. Do not republish.
 
