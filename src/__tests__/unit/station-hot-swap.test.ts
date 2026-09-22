@@ -283,6 +283,58 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('heat grows the project copy from a kernel session when the organ is worn', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-grow-'));
+    const tmp = path.join(parent, 'xray');
+    const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
+    const millOrgan = path.resolve(process.cwd(), 'vendor', '@0xray', 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.dirname(vendor), { recursive: true });
+      fs.symlinkSync(millOrgan, vendor);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: true, provider: 'repertoire' },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'three-subsystem-verifiable-os', tags: ['os'] }],
+        }),
+      );
+      fs.mkdirSync(path.join(tmp, 'docs', 'inference'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, 'docs', 'inference', 'session-cleanup.json'),
+        JSON.stringify({
+          sessionId: 'cleanup-is-memory-1',
+          timestamp: '2026-09-22T18:00:00.000Z',
+          patterns: [{ name: 'cleanup-is-memory', confidence: 0.55 }],
+        }),
+      );
+      applyStationHeat(tmp, 'cursor', { intent: 'cleanup is memory' }, {});
+      const dest = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'), 'utf8'),
+      );
+      const names = dest.signals.map((signal: { name: string }) => signal.name);
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).toContain('cleanup-is-memory');
+      expect(names.length).toBeGreaterThan(1);
+      const working = readRepertoireWorking(tmp);
+      expect(working?.grow).toEqual(
+        expect.objectContaining({
+          after: expect.any(Number),
+        }),
+      );
+      expect(Number(working?.grow && 'after' in working.grow ? working.grow.after : 0)).toBeGreaterThan(1);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('reloads overlay OP-PROC onto repertoire-working, not Station', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-op-proc-reload-'));
     try {

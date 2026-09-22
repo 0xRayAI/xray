@@ -20,6 +20,7 @@ export const persistRepertoireWorking = impl.persistRepertoireWorking;
 export const readRepertoireWorking = impl.readRepertoireWorking;
 export const readOpProcNames = impl.readOpProcNames;
 export const hydrateDestOnWake = impl.hydrateDestOnWake;
+export const growDestOnWake = impl.growDestOnWake;
 export const readNotesPickup = impl.readNotesPickup;
 export const maybeCaptureSessionOnHeadMove = impl.maybeCaptureSessionOnHeadMove;
 export const formatWorkingLine = impl.formatWorkingLine;

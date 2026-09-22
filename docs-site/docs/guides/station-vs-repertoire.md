@@ -93,6 +93,12 @@ USER / TOOL
     │                       ├─ STATION.md                 (projection)
     │                       └─ repertoire-working.json    (opProcNames if dest)
     │
+    ├─[t0b] heat grow (dest ON) ──► RepertoireService
+    │                 ├─ syncXrayMemory (session-*.json)
+    │                 ├─ syncWorkspaceRepos (sibling repo-* names)
+    │                 ├─ heatKernelDiary + NOTES / CLEANSE list
+    │                 └─ Groover field stays off
+    │
     ├─[t1] work ──► kernel gather (best-effort, often COLD)
     │                 ├─ session-capture → docs/inference/session-*.json
     │                 ├─ activity.log / routing-outcomes / pattern-metrics

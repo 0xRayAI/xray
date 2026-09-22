@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Cleanup is memory** — `applyStationHeat` grows the project copy when Repertoire is on: kernel sessions, sibling `repo-*` names, and NOTES/CLEANSE diary heat. Groover field stays off. Opt-out still skips seed and grow. Station stays the pickup card. Not a new MCP/skill.
 - **Vendored Repertoire 0.2.5** — `vendor/@0xray/repertoire` is the published 0.2.5 package (overlays included). Wear replaces an older leftover in `node_modules`. A newer user-installed copy is left alone. Boot reads worn `node_modules`, then vendor, then a sibling checkout last. Repertoire stays optional (`enabled: false` + `provider: repertoire`); Station is the memory when it is off.
 - **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
 

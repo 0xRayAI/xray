@@ -285,7 +285,12 @@ function mergeMissingSignals(destPath, incoming) {
   for (const signal of incoming) {
     const name = String(signal.name).trim();
     if (!name || have.has(name)) continue;
-    data.signals.push(signal);
+    data.signals.push({
+      ...signal,
+      name,
+      tags: Array.isArray(signal.tags) ? signal.tags : [],
+      definition: typeof signal.definition === "string" ? signal.definition : name,
+    });
     have.add(name);
     added += 1;
   }
@@ -476,6 +481,24 @@ function matchStationSignalsSync(root, intent) {
   }
 }
 
+function growDestOnWake(root) {
+  const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
+  if (!existsSync(helper)) return null;
+  try {
+    const out = execFileSync(process.execPath, [helper, root, "--grow"], {
+      encoding: "utf8",
+      timeout: 45000,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0" },
+    });
+    const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
+    const parsed = JSON.parse(line);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 function ingestCompactFeedbackSync(root, sessionId, hookEvent, signals) {
   if (!signals.length) return;
   const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
@@ -538,6 +561,13 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const mr = readMemoryRoutingConfig(root);
   const memoryOff = isExplicitMemoryRoutingOptOut(mr);
   const hydrate = memoryOff ? { dest: null, added: 0, destCount: 0 } : hydrateDestOnWake(root);
+  const grow = memoryOff ? null : growDestOnWake(root);
+  const destCountAfterGrow =
+    grow && typeof grow.after === "number"
+      ? grow.after
+      : existsSync(destSignalsPath(root))
+        ? countCuratedSignals(destSignalsPath(root)) || 0
+        : hydrate.destCount;
   const captured = maybeCaptureSessionOnHeadMove(root);
   const pickup = readNotesPickup(root);
   const approaches = readLatestSessionApproaches(root);
@@ -570,7 +600,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     matchedSignals = preferSubjectHits(extra.matchedSignals, 8);
   }
   const priorWorking = readRepertoireWorking(root);
-  const destCount = hydrate.destCount || (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
+  const destCount =
+    destCountAfterGrow ||
+    hydrate.destCount ||
+    (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
   if (!memoryOff && !matchedSignals.length && matchText) {
     if (
       !rematch &&
@@ -604,6 +637,15 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (pickup) workingSnapshot.pickup = pickup;
   if (matchText) workingSnapshot.matchText = matchText;
   if (captured) workingSnapshot.sessionCapture = captured;
+  if (grow && grow.skipped) workingSnapshot.grow = grow.skipped;
+  if (grow && typeof grow.after === "number") {
+    workingSnapshot.grow = {
+      before: grow.before,
+      after: grow.after,
+      imported: grow.imported,
+      observed: Array.isArray(grow.observed) ? grow.observed.length : 0,
+    };
+  }
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
@@ -793,6 +835,7 @@ module.exports = {
   readRepertoireWorking,
   readOpProcNames,
   hydrateDestOnWake,
+  growDestOnWake,
   readNotesPickup,
   maybeCaptureSessionOnHeadMove,
   formatWorkingLine,
