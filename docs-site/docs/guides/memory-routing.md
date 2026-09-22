@@ -2,7 +2,7 @@
 
 Pluggable **judgment** enrichment for orchestrator agent selection, thinDispatch scoring, researcher votes, and per-task feedback. Not session continuity — that is [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
-**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.5` vendored). Shipped on; optional. Turn off with `"enabled": false, "provider": "repertoire"`.
+**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.5` vendored). Shipped on; optional. Turn off with `"enabled": false, "provider": "repertoire"`. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs.
 
 ## Overview
 
