@@ -6,20 +6,15 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, } from '@modelcontextprotocol/sdk/types.js';
 import { RepertoireService } from '../RepertoireService.js';
-import { DEFAULT_SIGNALS_PATH, defaultProjectStateDir, isRepertoirePackageCwd, } from '../paths.js';
-import { join } from 'node:path';
+import { DEFAULT_SIGNALS_PATH, defaultWritablePaths } from '../paths.js';
 function serviceOptionsFromEnv() {
-    const cwd = process.cwd();
-    const projectState = defaultProjectStateDir(cwd);
-    const inOrganRepo = isRepertoirePackageCwd(cwd);
+    const writable = defaultWritablePaths(process.cwd());
     return {
-        dataDir: process.env.REPERTOIRE_DATA_DIR ?? (inOrganRepo ? undefined : projectState),
+        dataDir: process.env.REPERTOIRE_DATA_DIR ?? writable.dataDir,
         signalsPath: process.env.CURATED_SIGNALS_PATH ?? DEFAULT_SIGNALS_PATH,
-        statePath: process.env.REPERTOIRE_STATE_PATH ??
-            (inOrganRepo ? undefined : join(projectState, 'inference-state.json')),
-        logDir: process.env.REPERTOIRE_LOG_DIR ?? (inOrganRepo ? undefined : join(projectState, 'logs')),
-        feedbackDir: process.env.REPERTOIRE_FEEDBACK_DIR ??
-            (inOrganRepo ? undefined : join(projectState, 'feedback')),
+        statePath: process.env.REPERTOIRE_STATE_PATH ?? writable.statePath,
+        logDir: process.env.REPERTOIRE_LOG_DIR ?? writable.logDir,
+        feedbackDir: process.env.REPERTOIRE_FEEDBACK_DIR ?? writable.feedbackDir,
     };
 }
 const service = new RepertoireService(serviceOptionsFromEnv());
@@ -35,7 +30,7 @@ const TOOLS = [
                     type: 'number',
                     minimum: 0,
                     maximum: 1,
-                    description: 'Minimum avg_confidence from observation_stats (default 0.55)',
+                    description: 'Minimum effective confidence (decayed excess-above-gate; default 0.55)',
                 },
                 tags: {
                     type: 'array',
@@ -95,7 +90,7 @@ const TOOLS = [
         },
     },
 ];
-const server = new Server({ name: 'repertoire', version: '0.2.0' }, { capabilities: { tools: {} } });
+const server = new Server({ name: 'repertoire', version: '0.2.5' }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS.map((tool) => ({
         name: tool.name,

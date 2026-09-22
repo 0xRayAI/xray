@@ -37,6 +37,41 @@ function destIsUsableRepertoire(dest) {
   return repertoirePackageName(dest) === "@0xray/repertoire";
 }
 
+function packageVersion(dir) {
+  try {
+    const version = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")).version;
+    return typeof version === "string" ? version : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
+function versionLessThan(left, right) {
+  const a = String(left || "0").split(".").map((n) => Number.parseInt(n, 10) || 0);
+  const b = String(right || "0").split(".").map((n) => Number.parseInt(n, 10) || 0);
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i += 1) {
+    const av = a[i] || 0;
+    const bv = b[i] || 0;
+    if (av < bv) return true;
+    if (av > bv) return false;
+  }
+  return false;
+}
+
+function removeDestTree(dest) {
+  try {
+    const st = fs.lstatSync(dest);
+    if (st.isSymbolicLink()) {
+      fs.unlinkSync(dest);
+      return;
+    }
+  } catch {
+    return;
+  }
+  fs.rmSync(dest, { recursive: true, force: true });
+}
+
 function removeBrokenDest(dest) {
   try {
     const st = fs.lstatSync(dest);
@@ -51,7 +86,10 @@ function removeBrokenDest(dest) {
 function wearOne(vendor, dest, log) {
   removeBrokenDest(dest);
   if (destAlreadyWorn(dest, vendor)) return true;
-  if (fs.existsSync(dest) && destIsUsableRepertoire(dest)) return true;
+  if (fs.existsSync(dest) && destIsUsableRepertoire(dest)) {
+    if (!versionLessThan(packageVersion(dest), packageVersion(vendor))) return true;
+    removeDestTree(dest);
+  }
 
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   const rel = path.relative(path.dirname(dest), vendor);

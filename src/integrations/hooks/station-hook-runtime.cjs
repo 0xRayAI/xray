@@ -229,8 +229,8 @@ function notesPath(root) {
 function repertoirePackageRoots(root) {
   const candidates = [
     join(root, "node_modules", "@0xray", "repertoire"),
-    join(root, "..", "repertoire"),
     join(root, "vendor", "@0xray", "repertoire"),
+    join(root, "..", "repertoire"),
   ];
   const out = [];
   for (const pkgRoot of candidates) {
@@ -535,7 +535,9 @@ function buildRepertoireResume(root) {
 }
 
 function applyStationHeat(root, host, extra = {}, existing = {}) {
-  const hydrate = hydrateDestOnWake(root);
+  const mr = readMemoryRoutingConfig(root);
+  const memoryOff = isExplicitMemoryRoutingOptOut(mr);
+  const hydrate = memoryOff ? { dest: null, added: 0, destCount: 0 } : hydrateDestOnWake(root);
   const captured = maybeCaptureSessionOnHeadMove(root);
   const pickup = readNotesPickup(root);
   const approaches = readLatestSessionApproaches(root);
@@ -569,7 +571,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   }
   const priorWorking = readRepertoireWorking(root);
   const destCount = hydrate.destCount || (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
-  if (!matchedSignals.length && matchText) {
+  if (!memoryOff && !matchedSignals.length && matchText) {
     if (
       !rematch &&
       priorWorking &&
@@ -608,6 +610,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const working = persistRepertoireWorking(root, workingSnapshot);
   const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
   if (
+    !memoryOff &&
     matchedSignals.length &&
     (isCompactHook(extra) || hydrate.added > 0 || pickupChanged)
   ) {

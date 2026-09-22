@@ -1,6 +1,6 @@
 {
   "name": "@0xray/repertoire",
-  "version": "0.2.0",
+  "version": "0.2.5",
   "description": "Factory memory organ for 0xRay — seed primitives, memory routing, extra MCP",
   "type": "module",
   "license": "MIT",
@@ -58,6 +58,8 @@
     "scripts/verify-opencode-suit.mjs",
     "scripts/verify-openclaw-suit.mjs",
     "data/curated_signals.json",
+    "data/stack-overlay.json",
+    "data/subject-overlay.json",
     "schemas/",
     "skills/repertoire-trap-handling/",
     "docs/MEMORY-ROUTING-PROVIDER.md",
@@ -115,7 +117,7 @@
     }
   },
   "devDependencies": {
-    "0xray": "file:../xray",
+    "0xray": "^4.0.7",
     "@types/node": "^22.15.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",

@@ -8,7 +8,8 @@ import { OrchestratorFeedbackIngester } from './ingestion/orchestrator-feedback-
 import { RepertoireOrchestratorBridge } from './orchestrator-bridge/RepertoireOrchestratorBridge.js';
 import { OntologicalTrapEnforcer, } from './governance/ontological-trap-enforcer.js';
 import { DEFAULT_MIN_CONFIDENCE_GATE } from './orchestrator-bridge/confidence-gate.js';
-import { DEFAULT_DATA_DIR, DEFAULT_FEEDBACK_DIR, DEFAULT_LOG_DIR, DEFAULT_SIGNALS_PATH, DEFAULT_STATE_PATH, defaultProjectStateDir, hydrateWritableSignals, isRepertoirePackageCwd, } from './paths.js';
+import { effectiveSignalConfidence, meetsConfidenceGate } from './registry/confidence-decay.js';
+import { DEFAULT_SIGNALS_PATH, collectKernelDiaryText, defaultWritablePaths, discoverFieldLogDirs, discoverSiblingRepos, discoverXrayKernelDirs, hydrateWritableSignals, isGenericFieldObservedDefinition, reloadOpProc, shouldAutoSyncField, shouldAutoSyncXray, } from './paths.js';
 export class RepertoireService {
     signalsManager;
     stateManager;
@@ -16,45 +17,132 @@ export class RepertoireService {
     metaInference;
     feedbackIngester;
     logDir;
+    projectRoot;
     constructor(options = {}) {
         const cwd = options.projectRoot ?? process.cwd();
-        const inOrganRepo = isRepertoirePackageCwd(cwd);
-        const projectState = defaultProjectStateDir(cwd);
-        const dataDir = options.dataDir ?? (inOrganRepo ? DEFAULT_DATA_DIR : projectState);
-        this.logDir = options.logDir ?? (inOrganRepo ? DEFAULT_LOG_DIR : join(projectState, 'logs'));
+        this.projectRoot = cwd;
+        const writable = defaultWritablePaths(cwd);
+        const dataDir = options.dataDir ?? writable.dataDir;
+        this.logDir = options.logDir ?? writable.logDir;
         const seed = options.signalsPath ??
             (options.dataDir ? join(dataDir, 'curated_signals.json') : DEFAULT_SIGNALS_PATH);
         this.signalsManager = new CuratedSignalsManager(hydrateWritableSignals(seed, cwd));
-        this.stateManager = new InferenceStateManager(options.statePath ??
-            (inOrganRepo
-                ? options.dataDir
-                    ? join(dataDir, 'inference-state.json')
-                    : DEFAULT_STATE_PATH
-                : join(projectState, 'inference-state.json')));
+        this.stateManager = new InferenceStateManager(options.statePath ?? writable.statePath);
         this.orchestratorBridge = new RepertoireOrchestratorBridge(this.signalsManager);
         this.metaInference = new MetaInferenceEngine({
             logDir: this.logDir,
-            statePath: options.statePath ??
-                (inOrganRepo ? DEFAULT_STATE_PATH : join(projectState, 'inference-state.json')),
+            statePath: options.statePath ?? writable.statePath,
         });
-        this.feedbackIngester = new OrchestratorFeedbackIngester(options.feedbackDir ?? (inOrganRepo ? DEFAULT_FEEDBACK_DIR : join(projectState, 'feedback')));
+        this.feedbackIngester = new OrchestratorFeedbackIngester(options.feedbackDir ?? writable.feedbackDir);
+        if (shouldAutoSyncField(options.syncField)) {
+            this.syncFieldMemory();
+        }
+        if (shouldAutoSyncXray(options.syncXray)) {
+            this.syncXrayMemory();
+            this.syncWorkspaceRepos();
+            this.heatKernelDiary();
+        }
+    }
+    syncFieldMemory(sourceDirs) {
+        const sources = sourceDirs ?? discoverFieldLogDirs(this.projectRoot);
+        let imported = 0;
+        let skipped = 0;
+        const promoted = [];
+        for (const sourceDir of sources) {
+            const result = this.ingestGrooverLogs(sourceDir);
+            imported += result.imported;
+            skipped += result.skipped;
+            for (const name of result.promoted) {
+                if (!promoted.includes(name))
+                    promoted.push(name);
+            }
+        }
+        return { imported, skipped, promoted, sources };
     }
     ingestGrooverLogs(sourceDir, options = {}) {
         const ingester = new GrooverLogIngester({
             sourceDir,
             targetDir: this.logDir,
             signalsManager: this.signalsManager,
+            stateManager: this.stateManager,
             dryRun: options.dryRun,
         });
         return ingester.ingest();
     }
-    ingestXraySessions(sourceDir) {
+    ingestXraySessions(sourceDir, options = {}) {
         const ingester = new XraySessionIngester({
             sourceDir,
             targetDir: this.logDir,
             signalsManager: this.signalsManager,
+            stateManager: this.stateManager,
+            repoPrimitive: options.repoPrimitive,
         });
         return ingester.ingest();
+    }
+    syncXrayMemory(sourceDirs) {
+        const sources = sourceDirs ?? discoverXrayKernelDirs(this.projectRoot);
+        let imported = 0;
+        let skipped = 0;
+        const promoted = [];
+        for (const sourceDir of sources) {
+            const result = this.ingestXraySessions(sourceDir);
+            imported += result.imported;
+            skipped += result.skipped;
+            for (const name of result.promoted) {
+                if (!promoted.includes(name))
+                    promoted.push(name);
+            }
+        }
+        return { imported, skipped, promoted, sources };
+    }
+    syncWorkspaceRepos() {
+        const siblings = discoverSiblingRepos(this.projectRoot);
+        const observed = [];
+        const fleshed = [];
+        const sources = [];
+        const matches = siblings.map((sibling) => {
+            sources.push(sibling.root);
+            return { name: sibling.primitive, confidence: 0.55 };
+        });
+        if (matches.length > 0) {
+            const grown = this.signalsManager.recordPrimitiveObservations(matches);
+            for (const name of grown) {
+                if (!observed.includes(name))
+                    observed.push(name);
+            }
+        }
+        for (const sibling of siblings) {
+            const existing = this.signalsManager.getByName(sibling.primitive);
+            if (!existing ||
+                !isGenericFieldObservedDefinition(existing.definition) ||
+                !sibling.description.trim()) {
+                continue;
+            }
+            if (this.signalsManager.fleshGenericRepoSignal(sibling.primitive, sibling.description, sibling.description)) {
+                fleshed.push(sibling.primitive);
+            }
+        }
+        return { observed, fleshed, sources };
+    }
+    /**
+     * Heat existing dest names from kernel diary text. No new names.
+     * Colon pattern ids like `architect:architect_skill` never become dest keys.
+     */
+    heatKernelDiary(collected) {
+        const diary = collected ?? collectKernelDiaryText(this.projectRoot);
+        if (!diary.text.trim()) {
+            return { heated: [], sources: diary.sources };
+        }
+        const hits = this.signalsManager.matchByText(diary.text, 2);
+        const matches = hits.map((hit) => ({
+            name: hit.signal.name,
+            confidence: 0.55,
+        }));
+        const heated = matches.length > 0 ? this.signalsManager.recordPrimitiveObservations(matches) : [];
+        return { heated, sources: diary.sources };
+    }
+    reloadOpProc() {
+        return reloadOpProc(this.projectRoot);
     }
     ingestOrchestratorFeedback(entry) {
         const logPath = this.feedbackIngester.ingest(entry);
@@ -109,7 +197,8 @@ export class RepertoireService {
         })
             .map((signal) => ({
             ...signal,
-            effectiveConfidence: signal.observation_stats.avg_confidence,
+            effectiveConfidence: effectiveSignalConfidence(signal)?.effectiveConfidence ??
+                signal.observation_stats.avg_confidence,
         }))
             .sort((a, b) => b.effectiveConfidence - a.effectiveConfidence ||
             (b.observation_stats?.observation_count ?? 0) -
@@ -131,7 +220,8 @@ export class RepertoireService {
         return matches
             .map((match) => {
             const stats = match.signal.observation_stats;
-            const confidence = stats?.avg_confidence;
+            const decayed = effectiveSignalConfidence(match.signal);
+            const confidence = decayed?.effectiveConfidence ?? stats?.avg_confidence;
             if (stats === undefined || confidence === undefined)
                 return null;
             return {
@@ -145,7 +235,7 @@ export class RepertoireService {
             };
         })
             .filter((entry) => entry !== null)
-            .filter((entry) => entry.confidence >= minConfidence)
+            .filter((entry) => meetsConfidenceGate(entry.confidence, minConfidence))
             .sort((a, b) => b.confidence - a.confidence)
             .slice(0, limit);
     }

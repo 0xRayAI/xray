@@ -5,7 +5,8 @@ export declare class InferenceStateManager {
     load(): InferenceState;
     save(state: InferenceState): void;
     isProcessed(id: string): boolean;
-    markProcessed(ids: string[], kind?: 'comment' | 'session'): void;
+    markProcessed(ids: string[], kind?: 'comment' | 'session' | 'post'): void;
+    countProcessed(): number;
     private createEmpty;
 }
 //# sourceMappingURL=InferenceStateManager.d.ts.map

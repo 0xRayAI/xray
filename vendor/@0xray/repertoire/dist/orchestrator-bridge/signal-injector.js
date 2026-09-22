@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { meetsConfidenceGate } from '../registry/confidence-decay.js';
 import { applyConfidenceComplexityBoost, confidenceWeightedAgentBoost, DEFAULT_MIN_CONFIDENCE_GATE, getConfidenceForTask, resolveSignalConfidence, } from './confidence-gate.js';
 export class SignalInjector {
     signalsManager;
@@ -27,7 +28,7 @@ export class SignalInjector {
             : 0;
         const trapSignals = matches.filter((match) => match.signal.tags.includes('ontological-trap'));
         const highConfidenceTrapPresent = ontologicalTrapDetected &&
-            trapSignals.some((match) => (signalConfidences[match.signal.name] ?? 0) >= DEFAULT_MIN_CONFIDENCE_GATE);
+            trapSignals.some((match) => meetsConfidenceGate(signalConfidences[match.signal.name] ?? 0, DEFAULT_MIN_CONFIDENCE_GATE));
         return {
             matchedSignals: matches.map((match) => match.signal.name),
             matchedTags: [...new Set(matches.flatMap((match) => match.signal.tags))],

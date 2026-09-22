@@ -55,6 +55,33 @@ describe('wear-vendored-repertoire', () => {
     }
   });
 
+  it('replaces an older leftover with the vendored copy', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), '0xray-wear-older-'));
+    const packageRoot = path.join(tmp, 'pkg');
+    const vendor = path.join(packageRoot, 'vendor', '@0xray', 'repertoire');
+    const existing = path.join(packageRoot, 'node_modules', '@0xray', 'repertoire');
+    mkdirSync(vendor, { recursive: true });
+    mkdirSync(existing, { recursive: true });
+    writeFileSync(
+      path.join(vendor, 'package.json'),
+      JSON.stringify({ name: '@0xray/repertoire', version: '0.2.5' }),
+    );
+    writeFileSync(
+      path.join(existing, 'package.json'),
+      JSON.stringify({ name: '@0xray/repertoire', version: '0.2.2' }),
+    );
+    try {
+      wearVendoredRepertoire(packageRoot, packageRoot);
+      const worn = JSON.parse(readFileSync(path.join(existing, 'package.json'), 'utf8')) as {
+        version?: string;
+      };
+      expect(worn.version).toBe('0.2.5');
+      expect(realpathSync(existing)).toBe(realpathSync(vendor));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('does not clobber a different usable @0xray/repertoire install', () => {
     const tmp = mkdtempSync(path.join(os.tmpdir(), '0xray-wear-keep-'));
     const packageRoot = path.join(tmp, 'pkg');

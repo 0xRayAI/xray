@@ -90,6 +90,7 @@ export interface CuratedSignalsFile {
 export interface InferenceState {
     processedCommentIds: string[];
     processedSessionIds: string[];
+    processedPostIds: string[];
     lastRun: string | null;
 }
 export interface SynthesisReport {
@@ -110,9 +111,13 @@ export interface SignalMatch {
 }
 export interface SignalConfidenceDetail {
     name: string;
+    /** Routing confidence (decayed excess-above-gate when source is registry). */
     confidence: number;
     source: 'registry' | 'task-metadata';
     matchedVia?: SignalMatch['matchedOn'];
+    storedConfidence?: number;
+    decayFactor?: number;
+    staleDays?: number;
 }
 export interface TaskConfidenceContext {
     signals: SignalConfidenceDetail[];
