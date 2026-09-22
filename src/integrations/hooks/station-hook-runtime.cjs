@@ -5,7 +5,7 @@
  * Heat writers merge stock fields; unknown keys and ## Durable / ## Seed survive.
  */
 const { execFileSync } = require("child_process");
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
+const { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
 const { join } = require("path");
 
 const HOOKS_DIR = __dirname;
@@ -203,10 +203,216 @@ function stationSafeSignals(names) {
   return out;
 }
 
-/** Overlay + factory names on dest. OP-PROC lives here — not on Station.md. */
+function destSignalsPath(root) {
+  return join(root, ".xray", "state", "repertoire", "curated_signals.json");
+}
+
+function notesPath(root) {
+  return join(root, ".xray", "state", "NOTES.md");
+}
+
+function repertoirePackageRoots(root) {
+  const candidates = [
+    join(root, "node_modules", "@0xray", "repertoire"),
+    join(root, "..", "repertoire"),
+    join(root, "vendor", "@0xray", "repertoire"),
+  ];
+  const out = [];
+  for (const pkgRoot of candidates) {
+    const pkgFile = join(pkgRoot, "package.json");
+    if (!existsSync(pkgFile)) continue;
+    try {
+      const pkg = JSON.parse(readFileSync(pkgFile, "utf8"));
+      if (pkg.name === "@0xray/repertoire" || pkg.name === "repertoire") out.push(pkgRoot);
+    } catch {
+      /* skip */
+    }
+  }
+  return out;
+}
+
+function repertoireDataFile(root, fileName) {
+  for (const pkgRoot of repertoirePackageRoots(root)) {
+    const dest = join(pkgRoot, "data", fileName);
+    if (existsSync(dest)) return dest;
+  }
+  return null;
+}
+
+function readSignalRecords(filePath) {
+  if (!filePath || !existsSync(filePath)) return [];
+  try {
+    const data = JSON.parse(readFileSync(filePath, "utf8"));
+    const signals = Array.isArray(data.signals) ? data.signals : [];
+    return signals.filter((signal) => signal && String(signal.name || "").trim());
+  } catch {
+    return [];
+  }
+}
+
+function signalNameSet(filePath) {
+  return new Set(readSignalRecords(filePath).map((signal) => String(signal.name).trim()));
+}
+
+function mergeMissingSignals(destPath, incoming) {
+  if (!incoming.length || !existsSync(destPath)) return 0;
+  let data;
+  try {
+    data = JSON.parse(readFileSync(destPath, "utf8"));
+  } catch {
+    return 0;
+  }
+  if (!Array.isArray(data.signals)) return 0;
+  const have = new Set(
+    data.signals.map((signal) => String((signal && signal.name) || "").trim()).filter(Boolean),
+  );
+  let added = 0;
+  for (const signal of incoming) {
+    const name = String(signal.name).trim();
+    if (!name || have.has(name)) continue;
+    data.signals.push(signal);
+    have.add(name);
+    added += 1;
+  }
+  if (added) writeFileSync(destPath, `${JSON.stringify(data, null, 2)}\n`);
+  return added;
+}
+
+/** Hydrate project dest from seed + stack + subject overlays. Never write the tarball. */
+function hydrateDestOnWake(root) {
+  const dest = destSignalsPath(root);
+  const seed = repertoireDataFile(root, "curated_signals.json");
+  if (!existsSync(dest) && seed) {
+    mkdirSync(join(root, ".xray", "state", "repertoire"), { recursive: true });
+    copyFileSync(seed, dest);
+  }
+  if (!existsSync(dest)) return { dest: null, added: 0, destCount: 0 };
+  const added =
+    mergeMissingSignals(dest, readSignalRecords(repertoireDataFile(root, "stack-overlay.json"))) +
+    mergeMissingSignals(dest, readSignalRecords(repertoireDataFile(root, "subject-overlay.json")));
+  return { dest, added, destCount: countCuratedSignals(dest) || 0 };
+}
+
+function readNotesPickup(root) {
+  const dest = notesPath(root);
+  if (!existsSync(dest)) return null;
+  try {
+    const text = readFileSync(dest, "utf8");
+    const match = text.match(/\*\*Pickup line:\*\*\s*([^\n]+)/);
+    return clipIntent(match && match[1] ? match[1] : null);
+  } catch {
+    return null;
+  }
+}
+
+function readLatestSessionApproaches(root) {
+  const latest = join(root, "docs", "inference", "latest-session.json");
+  if (!existsSync(latest)) return null;
+  try {
+    const data = JSON.parse(readFileSync(latest, "utf8"));
+    const approaches = Array.isArray(data.approaches) ? data.approaches : [];
+    return clipIntent(approaches.filter(Boolean).join(" "));
+  } catch {
+    return null;
+  }
+}
+
+function sessionCaptureStampPath(root) {
+  return join(root, ".xray", "state", "session-capture-stamp.json");
+}
+
+function readSessionCaptureConfig(root) {
+  let cfg = {};
+  try {
+    cfg = JSON.parse(readFileSync(join(root, ".xray", "features.json"), "utf8")).inference_session_capture || {};
+  } catch {
+    cfg = {};
+  }
+  return {
+    enabled: cfg.enabled === true,
+    minCommits: typeof cfg.min_commits === "number" && cfg.min_commits > 0 ? cfg.min_commits : 3,
+    lookback: typeof cfg.lookback_commits === "number" && cfg.lookback_commits > 0 ? cfg.lookback_commits : 20,
+  };
+}
+
+function gitCommitSubjects(root, args) {
+  try {
+    const out = execFileSync("git", ["log", "--format=%h||%s", "--no-merges", ...args], {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 5000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    return String(out)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const idx = line.indexOf("||");
+        return {
+          hash: idx === -1 ? line : line.slice(0, idx),
+          message: idx === -1 ? "" : line.slice(idx + 2),
+        };
+      });
+  } catch {
+    return [];
+  }
+}
+
+/** Every floor that heats. Dedup per HEAD. Cursor-only copy was the leftover. */
+function maybeCaptureSessionOnHeadMove(root) {
+  const cfg = readSessionCaptureConfig(root);
+  if (!cfg.enabled) return null;
+  const git = readGitBrief(root);
+  if (!git || !git.head) return null;
+  let stamp = null;
+  try {
+    stamp = JSON.parse(readFileSync(sessionCaptureStampPath(root), "utf8"));
+  } catch {
+    stamp = null;
+  }
+  if (stamp && stamp.head === git.head) return null;
+  const commits = stamp && stamp.head
+    ? gitCommitSubjects(root, [`${stamp.head}..HEAD`])
+    : gitCommitSubjects(root, ["-n", String(cfg.lookback)]);
+  if (commits.length < cfg.minCommits) return null;
+  const sessionId = `session-${new Date().toISOString().slice(0, 10)}-${git.head}`;
+  const approaches = commits.map((row) => row.message).filter(Boolean);
+  const session = {
+    sessionId,
+    timestamp: new Date().toISOString(),
+    span: {
+      from: stamp && stamp.head ? stamp.head : `HEAD~${cfg.lookback}`,
+      to: git.head,
+    },
+    problems: [],
+    approaches,
+    wrongTurns: [],
+    solutions: [],
+    patterns: [],
+    matched_primitives: [],
+    metrics: { commits: commits.length },
+  };
+  const outDir = join(root, "docs", "inference");
+  mkdirSync(outDir, { recursive: true });
+  const filePath = join(outDir, `session-${sessionId.replace(/^session-/, "")}.json`);
+  writeFileSync(filePath, `${JSON.stringify(session, null, 2)}\n`);
+  writeFileSync(join(outDir, "latest-session.json"), `${JSON.stringify(session, null, 2)}\n`);
+  mkdirSync(join(root, ".xray", "state"), { recursive: true });
+  writeFileSync(
+    sessionCaptureStampPath(root),
+    `${JSON.stringify({ head: git.head, sessionId, path: filePath, updatedAt: session.timestamp }, null, 2)}\n`,
+  );
+  return filePath;
+}
+
+/** Overlay + factory names on dest. Subject repo-* stay off this list. */
 function readOpProcNames(root) {
-  const dest = join(root, ".xray", "state", "repertoire", "curated_signals.json");
+  const dest = destSignalsPath(root);
   if (!existsSync(dest)) return [];
+  const factory = signalNameSet(repertoireDataFile(root, "curated_signals.json"));
+  const stack = signalNameSet(repertoireDataFile(root, "stack-overlay.json"));
+  const filter = factory.size || stack.size;
   try {
     const data = JSON.parse(readFileSync(dest, "utf8"));
     if (!Array.isArray(data.signals)) return [];
@@ -214,6 +420,8 @@ function readOpProcNames(root) {
     for (const signal of data.signals) {
       const name = String(signal && signal.name ? signal.name : "").trim();
       if (!name || name.toLowerCase().startsWith("bedrock-")) continue;
+      if (name.toLowerCase().startsWith("repo-")) continue;
+      if (filter && !factory.has(name) && !stack.has(name)) continue;
       names.push(name);
     }
     return names;
@@ -295,8 +503,9 @@ function buildRepertoireResume(root) {
   if (!modulePath) {
     return "Repertoire: not installed (memory_routing stays off)";
   }
-  let signalsPath = mr.config && mr.config.signalsPath;
-  if (signalsPath && !signalsPath.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(signalsPath)) {
+  const destPath = destSignalsPath(root);
+  let signalsPath = existsSync(destPath) ? destPath : mr.config && mr.config.signalsPath;
+  if (signalsPath && signalsPath !== destPath && !signalsPath.startsWith("/") && !/^[A-Za-z]:[\\/]/.test(signalsPath)) {
     signalsPath = join(root, signalsPath);
   }
   if (!signalsPath) {
@@ -311,6 +520,10 @@ function buildRepertoireResume(root) {
 }
 
 function applyStationHeat(root, host, extra = {}, existing = {}) {
+  const hydrate = hydrateDestOnWake(root);
+  const captured = maybeCaptureSessionOnHeadMove(root);
+  const pickup = readNotesPickup(root);
+  const approaches = readLatestSessionApproaches(root);
   const prevHost = typeof existing.host === "string" ? existing.host : null;
   const nextSwap = prevHost && host && prevHost !== host ? { from: prevHost, to: host } : null;
   const keptSwap =
@@ -324,6 +537,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const intent =
     clipIntent(extra.intent || extra.prompt || extra.userMessage || extra.user_prompt) ||
     (typeof existing.intent === "string" ? existing.intent : null);
+  const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
   const planLine = readPlanLine(root);
   const repertoireResume =
@@ -334,16 +548,18 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
   let matchedSignals = stationSafeSignals(extra.matchedSignals);
   const priorWorking = readRepertoireWorking(root);
-  if (!matchedSignals.length && intent) {
+  const destCount = hydrate.destCount || (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
+  if (!matchedSignals.length && matchText) {
     if (
       priorWorking &&
-      priorWorking.intent === intent &&
+      priorWorking.matchText === matchText &&
+      priorWorking.destCount === destCount &&
       Array.isArray(priorWorking.matchedSignals) &&
       priorWorking.matchedSignals.length
     ) {
       matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
     } else {
-      matchedSignals = stationSafeSignals(matchStationSignalsSync(root, intent));
+      matchedSignals = stationSafeSignals(matchStationSignalsSync(root, matchText));
     }
   }
   if (!matchedSignals.length && priorWorking) {
@@ -357,16 +573,24 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     hookEvent: extra.hookEvent || extra.source || null,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
     repertoireResume,
+    destCount,
   };
+  if (pickup) workingSnapshot.pickup = pickup;
+  if (matchText) workingSnapshot.matchText = matchText;
+  if (captured) workingSnapshot.sessionCapture = captured;
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals;
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const working = persistRepertoireWorking(root, workingSnapshot);
-  if (isCompactHook(extra) && matchedSignals.length) {
+  const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
+  if (
+    matchedSignals.length &&
+    (isCompactHook(extra) || hydrate.added > 0 || pickupChanged)
+  ) {
     ingestCompactFeedbackSync(
       root,
       typeof extra.sessionId === "string" ? extra.sessionId : "station",
-      extra.hookEvent || extra.source || "post_compact",
+      extra.hookEvent || extra.source || (isCompactHook(extra) ? "post_compact" : "wake"),
       matchedSignals,
     );
   }
@@ -541,6 +765,9 @@ module.exports = {
   persistRepertoireWorking,
   readRepertoireWorking,
   readOpProcNames,
+  hydrateDestOnWake,
+  readNotesPickup,
+  maybeCaptureSessionOnHeadMove,
   formatWorkingLine,
   applyStationHeat,
   extractPreservedStationLines,

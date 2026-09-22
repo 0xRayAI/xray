@@ -313,6 +313,66 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('wake heat hydrates subject overlay and keeps repo-* off opProc', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-memory-wake-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      fs.writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'curated_signals.json'),
+        JSON.stringify({ signals: [{ name: 'three-subsystem-verifiable-os' }] }),
+      );
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'stack-overlay.json'),
+        JSON.stringify({ signals: [{ name: 'station-survives-the-cut' }] }),
+      );
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'subject-overlay.json'),
+        JSON.stringify({
+          signals: [
+            {
+              name: 'repo-clearing',
+              definition: 'Clearing hangar. x402 pay rail.',
+            },
+          ],
+        }),
+      );
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Wake is the memory. Bookmark, index, and mind meet on heat.\n',
+      );
+      const heat = applyStationHeat(tmp, 'cursor', { intent: 'BRAIN-003 wake join' }, {});
+      const dest = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'), 'utf8'),
+      );
+      const names = dest.signals.map((signal: { name: string }) => signal.name);
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'three-subsystem-verifiable-os',
+          'station-survives-the-cut',
+          'repo-clearing',
+        ]),
+      );
+      const working = readRepertoireWorking(tmp);
+      expect(working?.pickup).toMatch(/Wake is the memory/);
+      expect(working?.destCount).toBe(3);
+      expect(working?.opProcNames).toEqual(
+        expect.arrayContaining(['three-subsystem-verifiable-os', 'station-survives-the-cut']),
+      );
+      expect(working?.opProcNames).not.toContain('repo-clearing');
+      expect(heat.repertoireResume).toContain('3 signals');
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('writeStationMarkdown is the Read target', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-md-'));
     try {

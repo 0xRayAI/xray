@@ -35,7 +35,7 @@ Bots started the OP-PROC. The lead is the learned layer above them.
 
 ## Wear first (every wake)
 
-1. Read `.xray/state/STATION.md` — Cursor and Grok do not inject it.
+1. Read `.xray/state/STATION.md` — Cursor and Grok do not inject it. Unfinished path is the second Read. If dest is on, `repertoire-working.json` is the third (`pickup` + `opProcNames`).
 2. Repertoire writes `.xray/state/repertoire/`, never package `data/curated_signals.json`.
 3. Same cloud id. Same critic id. Never spawn a twin critic.
 4. Dummy and standing bodies Read Station before they work. Wear = the Read + the card.

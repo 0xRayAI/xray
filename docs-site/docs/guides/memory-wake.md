@@ -6,7 +6,7 @@ Chat dies. Bookmark, index, and mind already exist. They do not meet on wake. Th
 
 ## Thesis
 
-`applyStationHeat` is the hippocampus. It already runs on every floor that boots. It does not yet hydrate dest, attach NOTES, or ingest the diary. Three calls in that one function. Codex 69 rewire. No new MCP. No new `SKILL.md`.
+`applyStationHeat` is the hippocampus. It already runs on every floor that boots. **Wired this wave:** hydrate dest from seed + stack + subject overlays (vendor 0.2.0 cannot merge — heat does), attach NOTES pickup, capture session on every heat, `opProcNames` = factory ∪ stack (no `repo-*`). Codex 69 rewire. No new MCP. No new `SKILL.md`.
 
 ## Three areas → pieces that already exist
 
