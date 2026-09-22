@@ -19,5 +19,6 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | `scripts/test/test-*-integration.cjs` + `validate-e2e-full.cjs` + `test-consumer-e2e.mjs` + `test-cjs-mjs-scripts.cjs` | Duplicate runners; live floor tests stay `test-*-e2e.mjs` |
 | `scripts/test/test-consumer-readiness.cjs` | Pre-mill duplicate; `test:consumer` now aliases packed mjs |
 | `scripts/governance/retro-governance.mjs` | Phase-0 ritual; no npm/CI callers |
+| `scripts/bash/sync-docs.sh` | Unused; `rm -rf docs-site/docs` would wipe the live site |
 
 **Kept in `docs/`:** `architecture/governance-model.md` (Dynamo SSOT, 4.0 still uses it), `api/plugin-api.md` (nucleus plugin freeze), `reflections/` (session reflections).

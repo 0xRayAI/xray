@@ -9,7 +9,7 @@ Dummy: `bc-e5e5c445-3053-5247-bd7d-207915249e2f` — iron-card watcher; resume
 
 ## Cut
 
-Wave 7 housekeeping: consumer cjs archived, blaze pipeline paths repo-relative, retro-governance archived. HOLD unified + v41 e2e list. Not D. After cut: Station → NOTES → WATCHER.md.
+Wave 8 housekeeping: archived leftover `sync-docs.sh` (would wipe live Docusaurus). Not D. After cut: Station → NOTES → WATCHER.md.
 
 Prior ship: `0xray@4.0.18` live. Do not republish.
 
