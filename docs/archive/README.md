@@ -23,15 +23,24 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | root `test-debug.mjs` / `test-edit-tracking.ts` / `test-skill.json` | One-off toys; zero inbound refs. Deleted on CLEANSE wave 10. |
 | root `security-report.json` | June 2026 empty scan snapshot. Writer still lives in `src/security/security-scanner.ts`. |
 
+**Wave 11 (cleanup is the work)** — cut/archive:
+
+| Path | Why archived / cut |
+|---|---|
+| `src/mcps/shared/security-scanner.ts` | Unused twin. Live is `src/security/security-scanner.ts`. |
+| `src/mcps/shared/prompt-security-validator.ts` | Only the unused twin imported it. Live is `src/security/prompt-security-validator.ts`. |
+| `integrations-costume/` | Root `integrations/` community SKILL dump. Live wear is `src/integrations` (Cursor, Grok, Hermes, OpenClaw). |
+| `commands-copy/` | Root `commands/` stale subset. Live wear is `src/opencode/commands`. |
+
 **Wave 10 (lead thread, 4.0.19)** — found, not cut:
 
 | ID | Finding | Action |
 |---|---|---|
 | C6 | vendor leftover 0.2.0 | CLOSED by 4.0.19 |
 | I1 | `applyStationHeat` hydrates + rematches; it does not construct `RepertoireService` / grow | HOLD — not tidy |
-| I2 | `src/security/security-scanner.ts` ≈ `src/mcps/shared/security-scanner.ts` | HOLD — duplicate, do not merge mid-cleanse |
-| C59 | root `integrations/` community SKILL dump (not packed) | HOLD — costume leftover |
-| C61 | root `commands/` copy of `src/opencode/commands` | HOLD — live mill is `src/opencode` |
+| I2 | unused `src/mcps/shared/security-scanner.ts` + its twin validator | CUT — live scanner is `src/security/` |
+| C59 | root `integrations/` community SKILL dump | ARCHIVE → `docs/archive/integrations-costume/` |
+| C61 | root `commands/` stale copy | ARCHIVE → `docs/archive/commands-copy/` |
 | C62 | `advanced-features/` off consumer boot | HOLD — museum |
 | C63 | `api/mcp.ts` + `mcp-server.mjs` | HOLD — Vercel / Railway |
 
