@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### ✨ Features
+- **Vendored Repertoire 0.2.5** — `vendor/@0xray/repertoire` is the published 0.2.5 package (overlays included). Wear replaces an older leftover in `node_modules`. A newer user-installed copy is left alone. Boot reads worn `node_modules`, then vendor, then a sibling checkout last. Repertoire stays optional (`enabled: false` + `provider: repertoire`); Station is the memory when it is off.
 - **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
 
 ### 📚 Documentation
@@ -28,6 +29,17 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.
+
+---
+
+## [4.0.19] - 2026-09-22
+
+### ✨ Features
+- **Vendored Repertoire 0.2.5** — published 0.2.5 lives in `vendor/@0xray/repertoire`. Wear replaces older leftovers. Optional; Station is the memory when it is off.
+
+### 🔎 Other Changes
+- Load worn Repertoire first; sibling checkout last. (f8a90b531)
+- Put published Repertoire 0.2.5 inside 0xray vendor and wear it. (a90b0a7a4)
 
 ---
 

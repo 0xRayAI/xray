@@ -1,4 +1,5 @@
 import type { CuratedSignal, CuratedSignalsFile, OrchestratorFeedbackEntry, PrimitiveMatch, SignalMatch, SignalPriority, SignalStatus } from '../types.js';
+import { type DecayOptions } from './confidence-decay.js';
 export interface PromotionGateOptions {
     minAvgConfidence?: number;
     minObservations?: number;
@@ -10,6 +11,13 @@ export declare const DEFAULT_PROMOTION_MIN_OBSERVATIONS = 2;
 export declare const FEEDBACK_SUCCESS_CONFIDENCE_BOOST = 0.002;
 export declare const FEEDBACK_FAILURE_CONFIDENCE_PENALTY = 0.005;
 export declare const FEEDBACK_MIN_CONFIDENCE = 0.55;
+/** Enriched JSONL names only — not June heading dumps (`phase-3-…`, `7-final-statement`). */
+export declare function isFieldPrimitiveName(name: string): boolean;
+/** Slug a session/pattern/package label into a dest name, or null. */
+export declare function slugFieldPrimitiveName(raw: string): string | null;
+/** Workspace map name — `repo-xray`, not a June heading. */
+export declare function repoPrimitiveName(pkgName: string, dirName?: string): string | null;
+export declare function proposeFieldObservedSignal(name: string, now: string): CuratedSignal;
 export interface FeedbackOutcomeResult {
     signalName: string;
     previousAvgConfidence: number | null;
@@ -17,10 +25,15 @@ export interface FeedbackOutcomeResult {
     feedbackStats: NonNullable<CuratedSignal['feedback_stats']>;
 }
 export declare class CuratedSignalsManager {
-    private readonly filePath;
+    readonly filePath: string;
     constructor(filePath?: string);
     load(): CuratedSignalsFile;
     save(data: CuratedSignalsFile): void;
+    /**
+     * Replace a generic field-observed stub with live sibling flesh.
+     * Keeps observation stats. Refuses overlay/subject definitions already written.
+     */
+    fleshGenericRepoSignal(name: string, definition: string, snippet?: string): boolean;
     addSignal(signal: CuratedSignal): void;
     getByName(name: string): CuratedSignal | undefined;
     getByTag(tag: string): CuratedSignal[];
@@ -37,7 +50,12 @@ export declare class CuratedSignalsManager {
     }): string[];
     shouldPromoteSignal(signal: CuratedSignal, options?: PromotionGateOptions): boolean;
     promoteQualifiedSignals(options?: PromotionGateOptions): string[];
-    getSignalsAboveConfidence(minAvgConfidence?: number): CuratedSignal[];
+    getSignalsAboveConfidence(minAvgConfidence?: number, options?: DecayOptions): CuratedSignal[];
+    /**
+     * Demote project-local validated signals whose raw (unfloored) decay
+     * dropped below the gate. Factory-scale corpora (≥100 observations) stay.
+     */
+    demoteStaleValidatedSignals(options?: DecayOptions): string[];
     /**
      * Record orchestrator routing outcome against signals used for the task.
      * Successful outcomes nudge avg_confidence up slightly; failures nudge down.

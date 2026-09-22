@@ -4,6 +4,7 @@ import { MetaInferenceEngine } from './synthesis/meta-inference-engine.js';
 import { OrchestratorFeedbackIngester } from './ingestion/orchestrator-feedback-ingester.js';
 import { RepertoireOrchestratorBridge } from './orchestrator-bridge/RepertoireOrchestratorBridge.js';
 import { OntologicalTrapEnforcer, type GovernWithSolarFn } from './governance/ontological-trap-enforcer.js';
+import { type KernelDiaryCollect, type OpProcReload } from './paths.js';
 import type { AgentCapability, CuratedSignal, ExecutionPlan, OrchestrationTask, OrchestratorFeedbackEntry, RepertoireInheritedContext, RepertoireRoutingContext, SynthesisReport, TaskConfidenceContext } from './types.js';
 export interface RepertoireServiceOptions {
     dataDir?: string;
@@ -12,6 +13,10 @@ export interface RepertoireServiceOptions {
     statePath?: string;
     feedbackDir?: string;
     projectRoot?: string;
+    /** Grow dest from sibling field JSONL. Default on outside Vitest. */
+    syncField?: boolean;
+    /** Grow dest from 0xRay session-capture + sibling repo map. Default on outside Vitest. */
+    syncXray?: boolean;
 }
 export declare class RepertoireService {
     readonly signalsManager: CuratedSignalsManager;
@@ -20,7 +25,14 @@ export declare class RepertoireService {
     readonly metaInference: MetaInferenceEngine;
     readonly feedbackIngester: OrchestratorFeedbackIngester;
     private readonly logDir;
+    private readonly projectRoot;
     constructor(options?: RepertoireServiceOptions);
+    syncFieldMemory(sourceDirs?: string[]): {
+        imported: number;
+        skipped: number;
+        promoted: string[];
+        sources: string[];
+    };
     ingestGrooverLogs(sourceDir: string, options?: {
         dryRun?: boolean;
     }): {
@@ -28,10 +40,33 @@ export declare class RepertoireService {
         skipped: number;
         promoted: string[];
     };
-    ingestXraySessions(sourceDir: string): {
+    ingestXraySessions(sourceDir: string, options?: {
+        repoPrimitive?: string;
+    }): {
         imported: number;
         skipped: number;
+        promoted: string[];
     };
+    syncXrayMemory(sourceDirs?: string[]): {
+        imported: number;
+        skipped: number;
+        promoted: string[];
+        sources: string[];
+    };
+    syncWorkspaceRepos(): {
+        observed: string[];
+        fleshed: string[];
+        sources: string[];
+    };
+    /**
+     * Heat existing dest names from kernel diary text. No new names.
+     * Colon pattern ids like `architect:architect_skill` never become dest keys.
+     */
+    heatKernelDiary(collected?: KernelDiaryCollect): {
+        heated: string[];
+        sources: string[];
+    };
+    reloadOpProc(): OpProcReload;
     ingestOrchestratorFeedback(entry: OrchestratorFeedbackEntry): {
         logPath: string;
         updatedSignals: FeedbackOutcomeResult[];

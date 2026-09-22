@@ -24,7 +24,13 @@ describe('factory memory organ wear', () => {
       readFileSync(path.join(root, 'vendor/@0xray/repertoire/package.json'), 'utf8'),
     );
     expect(pkg.name).toBe('@0xray/repertoire');
-    expect(pkg.version).toBe('0.2.0');
+    expect(pkg.version).toBe('0.2.5');
+    expect(existsSync(path.join(root, 'vendor/@0xray/repertoire/data/stack-overlay.json'))).toBe(
+      true,
+    );
+    expect(existsSync(path.join(root, 'vendor/@0xray/repertoire/data/subject-overlay.json'))).toBe(
+      true,
+    );
     expect(pkg.dependencies?.['0xray']).toBeUndefined();
     const registry = JSON.parse(
       readFileSync(path.join(root, 'vendor/@0xray/repertoire/data/curated_signals.json'), 'utf8'),

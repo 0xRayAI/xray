@@ -15,7 +15,7 @@ Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. 
 | Constitution on four floors | Grok, OpenCode, Hermes, OpenClaw — one SSOT gate |
 | Temperament | `frontier` / `guided` / `strict` / `auto`. Missing key stays guided |
 | Stranger-install wear | pack → isolated install → Codex 11 blocks. Ephemeral e2e does not clobber machine markers |
-| Factory memory organ | `@0xray/repertoire@0.2.0` vendored (8 seed primitives, no Bedrock). Isolated tarball wears it without `../repertoire`. Extra MCP `repertoire`, not an 8th `xray-*`. |
+| Factory memory organ | `@0xray/repertoire@0.2.5` vendored (seed plus overlays). Isolated tarball wears it without `../repertoire`. Extra MCP `repertoire`, not an 8th `xray-*`. Optional. |
 | Repertoire unprefix | companion `feat/mcp-unprefix`. Grok TUI sees `repertoire__*` |
 | Enable-when-resolves | leftover `memory_routing` default-off turns on if the module is actually there (install **and** runtime). Explicit opt-out kept |
 | Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap`. **This is survive-the-cut** — not Repertoire 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md) |

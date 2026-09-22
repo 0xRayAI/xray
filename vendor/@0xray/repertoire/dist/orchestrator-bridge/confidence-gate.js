@@ -1,4 +1,5 @@
 import { DEFAULT_PROMOTION_MIN_CONFIDENCE, } from '../registry/CuratedSignalsManager.js';
+import { effectiveSignalConfidence, meetsConfidenceGate } from '../registry/confidence-decay.js';
 export const DEFAULT_MIN_CONFIDENCE_GATE = DEFAULT_PROMOTION_MIN_CONFIDENCE;
 export const TRAP_CAPABLE_AGENTS = ['architect', 'security-auditor', 'researcher'];
 export function resolveSignalConfidence(signalName, signalsManager, metadataConfidence) {
@@ -6,8 +7,9 @@ export function resolveSignalConfidence(signalName, signalsManager, metadataConf
         return metadataConfidence;
     }
     const signal = signalsManager.getByName(signalName);
-    if (signal?.observation_stats?.avg_confidence !== undefined) {
-        return signal.observation_stats.avg_confidence;
+    const decayed = signal ? effectiveSignalConfidence(signal) : null;
+    if (decayed) {
+        return decayed.effectiveConfidence;
     }
     return null;
 }
@@ -20,21 +22,36 @@ export function getConfidenceForTask(task, signalsManager) {
     const metadataConfidences = task.metadata?.memorySignalConfidences ?? {};
     const signals = textMatches
         .map((match) => {
-        const confidence = resolveSignalConfidence(match.signal.name, signalsManager, metadataConfidences[match.signal.name]);
-        if (confidence === null)
+        const metadata = metadataConfidences[match.signal.name];
+        if (typeof metadata === 'number') {
+            return {
+                name: match.signal.name,
+                confidence: metadata,
+                source: 'task-metadata',
+                matchedVia: match.matchedOn,
+                storedConfidence: metadata,
+                decayFactor: 1,
+                staleDays: 0,
+            };
+        }
+        const decayed = effectiveSignalConfidence(match.signal);
+        if (!decayed)
             return null;
         return {
             name: match.signal.name,
-            confidence,
+            confidence: decayed.effectiveConfidence,
             source: 'registry',
             matchedVia: match.matchedOn,
+            storedConfidence: decayed.storedConfidence,
+            decayFactor: decayed.decayFactor,
+            staleDays: decayed.staleDays,
         };
     })
         .filter((entry) => entry !== null)
-        .filter((entry) => entry.confidence >= DEFAULT_MIN_CONFIDENCE_GATE);
+        .filter((entry) => meetsConfidenceGate(entry.confidence, DEFAULT_MIN_CONFIDENCE_GATE));
     const trapSignals = signals.filter((entry) => signalsManager.getByName(entry.name)?.tags.includes('ontological-trap'));
     const highConfidenceTrapPresent = trapDetected &&
-        trapSignals.some((entry) => entry.confidence >= DEFAULT_MIN_CONFIDENCE_GATE);
+        trapSignals.some((entry) => meetsConfidenceGate(entry.confidence, DEFAULT_MIN_CONFIDENCE_GATE));
     const avgConfidence = signals.length > 0
         ? signals.reduce((sum, entry) => sum + entry.confidence, 0) / signals.length
         : 0;

@@ -1,17 +1,20 @@
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { CuratedSignalsManager } from '../registry/CuratedSignalsManager.js';
+import { defaultWritablePaths } from '../paths.js';
 import { buildInferenceEntryFromGrooverLog, EnrichedGrooverLogError, isEnrichedGrooverLog, } from './groover-log-parser.js';
 export class GrooverLogIngester {
     sourceDir;
     targetDir;
     signalsManager;
+    stateManager;
     promoteAfterIngest;
     dryRun;
     constructor(options) {
         this.sourceDir = options.sourceDir;
-        this.targetDir = options.targetDir ?? 'logs/groover-inference';
+        this.targetDir = options.targetDir ?? defaultWritablePaths().logDir;
         this.signalsManager = options.signalsManager ?? new CuratedSignalsManager();
+        this.stateManager = options.stateManager;
         this.promoteAfterIngest = options.promoteAfterIngest ?? true;
         this.dryRun = options.dryRun ?? false;
     }
@@ -52,6 +55,7 @@ export class GrooverLogIngester {
                     const targetFile = join(this.targetDir, basename(file));
                     appendFileSync(targetFile, JSON.stringify(entry) + '\n');
                     this.recordObservations(entry);
+                    this.markState(entry);
                     if (id)
                         existingIds.add(id);
                     imported++;
@@ -82,6 +86,16 @@ export class GrooverLogIngester {
         this.signalsManager.recordPrimitiveObservations(matches, {
             governanceForced: entry.governance_forced,
         });
+    }
+    markState(entry) {
+        if (!this.stateManager)
+            return;
+        if (entry.comment_id)
+            this.stateManager.markProcessed([entry.comment_id], 'comment');
+        if (entry.post_id)
+            this.stateManager.markProcessed([entry.post_id], 'post');
+        if (entry.session_id)
+            this.stateManager.markProcessed([entry.session_id], 'session');
     }
     loadExistingIds() {
         const ids = new Set();

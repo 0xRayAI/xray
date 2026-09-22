@@ -2,7 +2,7 @@
 
 Pluggable **judgment** enrichment for orchestrator agent selection, thinDispatch scoring, researcher votes, and per-task feedback. Not session continuity — that is [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
-**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.0` vendored). `0xray@4.0.0` ships `memory_routing.enabled: true`.
+**Default provider:** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.5` vendored). Shipped on; optional. Turn off with `"enabled": false, "provider": "repertoire"`.
 
 ## Overview
 

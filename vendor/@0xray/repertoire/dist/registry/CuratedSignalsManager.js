@@ -1,13 +1,72 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { DEFAULT_SIGNALS_PATH, hydrateWritableSignals, isFactorySeedFile, isGenericFieldObservedDefinition, } from '../paths.js';
+import { effectiveSignalConfidence, shouldDemoteValidatedSignal, } from './confidence-decay.js';
 export const DEFAULT_PROMOTION_MIN_CONFIDENCE = 0.55;
 export const DEFAULT_PROMOTION_MIN_OBSERVATIONS = 2;
 export const FEEDBACK_SUCCESS_CONFIDENCE_BOOST = 0.002;
 export const FEEDBACK_FAILURE_CONFIDENCE_PENALTY = 0.005;
 export const FEEDBACK_MIN_CONFIDENCE = DEFAULT_PROMOTION_MIN_CONFIDENCE;
+const FIELD_PRIMITIVE_NAME = /^[A-Za-z][A-Za-z0-9_-]{2,119}$/;
+const GROOVER_EXPERIMENT_NAMES = new Set([
+    'criteria_selection_gap',
+    'external_norm_smuggling_risk',
+    'model-latent-geometry-as-true-invariant',
+]);
+/** Enriched JSONL names only — not June heading dumps (`phase-3-…`, `7-final-statement`). */
+export function isFieldPrimitiveName(name) {
+    if (!FIELD_PRIMITIVE_NAME.test(name))
+        return false;
+    if (/^phase-\d/i.test(name))
+        return false;
+    if (/^\d/.test(name))
+        return false;
+    if (GROOVER_EXPERIMENT_NAMES.has(name))
+        return false;
+    return true;
+}
+/** Slug a session/pattern/package label into a dest name, or null. */
+export function slugFieldPrimitiveName(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed)
+        return null;
+    const bare = trimmed.replace(/^@[^/]+\//, '');
+    const slug = bare
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    return isFieldPrimitiveName(slug) ? slug : null;
+}
+/** Workspace map name — `repo-xray`, not a June heading. */
+export function repoPrimitiveName(pkgName, dirName) {
+    const pkgSlug = slugFieldPrimitiveName(pkgName);
+    const dirSlug = dirName ? slugFieldPrimitiveName(dirName) : null;
+    const scaffold = pkgSlug != null && (/vite-react/.test(pkgSlug) || /shadcn/.test(pkgSlug));
+    const slug = pkgSlug && !scaffold ? pkgSlug : (dirSlug ?? pkgSlug);
+    if (!slug)
+        return null;
+    const name = slug.startsWith('repo-') ? slug : `repo-${slug}`;
+    return isFieldPrimitiveName(name) ? name : null;
+}
+export function proposeFieldObservedSignal(name, now) {
+    const spoken = name.replace(/[_-]+/g, ' ').trim();
+    return {
+        name,
+        definition: `${spoken}. Field-observed domain primitive grown from enriched JSONL. Not the factory seed.`,
+        tags: ['field-observed', 'domain'],
+        priority: 'medium',
+        status: 'proposed',
+        first_seen: now,
+        evaluation_criteria: `Enriched log named ${name} at or above the 0.55 gate.`,
+        validation_experiment: 'Ingest field JSONL. Promote after two observations.',
+        master_index_integration: 'Project dest only. Factory tarball stays 8 names.',
+        implementation_notes: 'Propose-on-observe. Do not copy the 145-name 0.1.8 dump.',
+        example_inference_snippet: spoken,
+    };
+}
 export class CuratedSignalsManager {
     filePath;
-    constructor(filePath = 'data/curated_signals.json') {
-        this.filePath = filePath;
+    constructor(filePath) {
+        this.filePath = filePath ?? hydrateWritableSignals(DEFAULT_SIGNALS_PATH);
     }
     load() {
         if (!existsSync(this.filePath)) {
@@ -16,8 +75,27 @@ export class CuratedSignalsManager {
         return JSON.parse(readFileSync(this.filePath, 'utf8'));
     }
     save(data) {
+        if (isFactorySeedFile(this.filePath)) {
+            throw new Error(`Refusing to write factory seed (${this.filePath}). Hydrate a project copy under .xray/state/repertoire/.`);
+        }
         data.last_updated = new Date().toISOString();
         writeFileSync(this.filePath, JSON.stringify(data, null, 2));
+    }
+    /**
+     * Replace a generic field-observed stub with live sibling flesh.
+     * Keeps observation stats. Refuses overlay/subject definitions already written.
+     */
+    fleshGenericRepoSignal(name, definition, snippet) {
+        const data = this.load();
+        const signal = data.signals.find((entry) => entry.name === name);
+        if (!signal || !isGenericFieldObservedDefinition(signal.definition)) {
+            return false;
+        }
+        signal.definition = definition;
+        if (snippet)
+            signal.example_inference_snippet = snippet;
+        this.save(data);
+        return true;
     }
     addSignal(signal) {
         const data = this.load();
@@ -53,6 +131,13 @@ export class CuratedSignalsManager {
                 score += 5;
                 matchedOn.push('name');
             }
+            else if (signal.name.startsWith('repo-')) {
+                const tail = signal.name.slice(5);
+                if (tail.length >= 3 && new RegExp(`\\b${tail}\\b`, 'i').test(normalized)) {
+                    score += 5;
+                    matchedOn.push('name');
+                }
+            }
             for (const tag of signal.tags) {
                 if (normalized.includes(tag.toLowerCase())) {
                     score += 3;
@@ -60,7 +145,10 @@ export class CuratedSignalsManager {
                     break;
                 }
             }
-            const definitionWords = signal.definition.toLowerCase().split(/\W+/).filter((w) => w.length > 5);
+            const definitionWords = signal.definition
+                .toLowerCase()
+                .split(/[^\w.]+/)
+                .filter((w) => w.length > 5 || (/\d/.test(w) && w.length >= 3));
             const definitionHits = definitionWords.filter((w) => normalized.includes(w)).length;
             if (definitionHits >= 2) {
                 score += Math.min(definitionHits, 4);
@@ -111,9 +199,13 @@ export class CuratedSignalsManager {
         for (const match of matches) {
             if (match.confidence < minConfidence)
                 continue;
-            const signal = data.signals.find((entry) => entry.name === match.name);
-            if (!signal)
-                continue;
+            let signal = data.signals.find((entry) => entry.name === match.name);
+            if (!signal) {
+                if (!isFieldPrimitiveName(match.name))
+                    continue;
+                signal = proposeFieldObservedSignal(match.name, now);
+                data.signals.push(signal);
+            }
             const previous = signal.observation_stats;
             const observationCount = (previous?.observation_count ?? 0) + 1;
             const totalConfidence = (previous?.avg_confidence ?? 0) * (observationCount - 1) + match.confidence;
@@ -157,8 +249,29 @@ export class CuratedSignalsManager {
         }
         return promoted;
     }
-    getSignalsAboveConfidence(minAvgConfidence = DEFAULT_PROMOTION_MIN_CONFIDENCE) {
-        return this.load().signals.filter((signal) => (signal.observation_stats?.avg_confidence ?? 0) >= minAvgConfidence);
+    getSignalsAboveConfidence(minAvgConfidence = DEFAULT_PROMOTION_MIN_CONFIDENCE, options = {}) {
+        return this.load().signals.filter((signal) => {
+            const decayed = effectiveSignalConfidence(signal, options);
+            return (decayed?.effectiveConfidence ?? 0) >= minAvgConfidence;
+        });
+    }
+    /**
+     * Demote project-local validated signals whose raw (unfloored) decay
+     * dropped below the gate. Factory-scale corpora (≥100 observations) stay.
+     */
+    demoteStaleValidatedSignals(options = {}) {
+        const data = this.load();
+        const demoted = [];
+        for (const signal of data.signals) {
+            if (shouldDemoteValidatedSignal(signal, options)) {
+                signal.status = 'proposed';
+                demoted.push(signal.name);
+            }
+        }
+        if (demoted.length > 0) {
+            this.save(data);
+        }
+        return demoted;
     }
     /**
      * Record orchestrator routing outcome against signals used for the task.

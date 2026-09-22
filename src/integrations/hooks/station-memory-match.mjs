@@ -32,19 +32,19 @@ function providerCandidates() {
       : join(root, routing.module_path)
     : null;
   const raw = [
-    join(root, '..', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
-    join(root, 'node_modules', '@0xray', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
     configured,
+    join(root, 'node_modules', '@0xray', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
     join(root, 'vendor', '@0xray', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
+    join(root, '..', 'repertoire', 'dist', 'provider', 'memory-routing-provider.js'),
   ].filter(Boolean);
-  const withSubject = [];
-  const rest = [];
+  const seen = new Set();
+  const out = [];
   for (const dest of raw) {
-    const overlay = dest.replace(/dist\/provider\/memory-routing-provider\.js$/, 'data/subject-overlay.json');
-    if (existsSync(overlay)) withSubject.push(dest);
-    else rest.push(dest);
+    if (seen.has(dest)) continue;
+    seen.add(dest);
+    out.push(dest);
   }
-  return [...withSubject, ...rest];
+  return out;
 }
 
 async function loadProvider() {

@@ -14,7 +14,7 @@
 
 ## Setup
 
-`0xray@4.0.0` vendors `@0xray/repertoire@0.2.0`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. Explicit opt-out: `enabled: false` with `provider: "repertoire"`. This is not an 8th 0xRay MCP.
+`0xray` vendors `@0xray/repertoire@0.2.5`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. Repertoire is optional: `enabled: false` with `provider: "repertoire"` turns it off. Station is the memory when it is off. This is not an 8th 0xRay MCP.
 
 Shipped `xray/features.json`:
 
