@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -377,6 +378,43 @@ describe('delegation-gate temperament', () => {
       sessionId: 'oc-live-1',
     });
     expect(fs.statSync(card).mtimeMs).toBe(firstMtime);
+  });
+
+  it('maybeHeatHostStation rewrites boot when HEAD moves on the same session', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    execFileSync('git', ['init'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.email', 'heat@test'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.name', 'heat'], { cwd: tmp, stdio: 'ignore' });
+    fs.writeFileSync(path.join(tmp, 'README.md'), 'heat\n');
+    execFileSync('git', ['add', 'README.md'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['commit', '-m', 'init heat metal'], { cwd: tmp, stdio: 'ignore' });
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-same',
+    });
+    const first = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { git?: { head?: string }; timestamp?: string };
+    expect(first.git?.head).toBeTruthy();
+    fs.writeFileSync(path.join(tmp, 'MORE.md'), 'moved\n');
+    execFileSync('git', ['add', 'MORE.md'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['commit', '-m', 'move HEAD'], { cwd: tmp, stdio: 'ignore' });
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-same',
+    });
+    const next = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { git?: { head?: string }; timestamp?: string };
+    expect(next.git?.head).toBeTruthy();
+    expect(next.git?.head).not.toBe(first.git?.head);
+    expect(next.timestamp).not.toBe(first.timestamp);
   });
 
   it('hermes auto stays guided (spawn still denied)', () => {

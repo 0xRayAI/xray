@@ -23,11 +23,9 @@ import {
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { appendHookActivity } from '../../grok/hooks/grok-hook-activity.js';
 import {
-  buildRepertoireResume,
   heatLiveMemory,
   maybeCaptureSessionOnHeadMove,
-  readGitBrief,
-  stationDurableHoldsNpm,
+  stationBootNeedsRefresh,
 } from '../../hooks/station-hook-runtime.mjs';
 
 export { heatLiveMemory, maybeCaptureSessionOnHeadMove };
@@ -76,6 +74,40 @@ export function cursorWorkspaceRoot(event = {}) {
     process.env.GROK_WORKSPACE_ROOT ||
     process.cwd()
   );
+}
+
+function addHeatRoot(out, seen, value) {
+  if (!value) return;
+  const resolved = path.resolve(String(value));
+  if (seen.has(resolved)) return;
+  seen.add(resolved);
+  out.push(resolved);
+}
+
+/** Every live context that already has a Station card — cwd plus mill when they differ. */
+export function cursorHeatRoots(event = {}) {
+  const seen = new Set();
+  const out = [];
+  addHeatRoot(out, seen, event.cwd);
+  addHeatRoot(out, seen, event.workspaceRoot);
+  const listed = event.workspace_roots || event.workspaceRoots;
+  if (Array.isArray(listed)) {
+    for (const row of listed) {
+      if (typeof row === 'string') addHeatRoot(out, seen, row);
+      else if (row && typeof row === 'object' && row.path) addHeatRoot(out, seen, row.path);
+    }
+  }
+  addHeatRoot(out, seen, process.env.CURSOR_PROJECT_DIR);
+  const mill = process.env.XRAY_AI_PATH;
+  if (mill) {
+    const resolved = path.resolve(String(mill));
+    const millHasCard =
+      fs.existsSync(path.join(resolved, '.xray', 'state', 'STATION.md')) ||
+      fs.existsSync(path.join(resolved, '.xray', 'features.json'));
+    if (millHasCard) addHeatRoot(out, seen, resolved);
+  }
+  if (out.length === 0) addHeatRoot(out, seen, cursorWorkspaceRoot(event));
+  return out;
 }
 
 export function cursorSessionId(event = {}) {
@@ -142,18 +174,7 @@ export function classifyPreCompactEvent(event = {}, argv = process.argv) {
 }
 
 export function cursorBootNeedsRefresh(existing, root) {
-  if (!existing || typeof existing !== 'object') return true;
-  if (existing.host !== CURSOR_HOST) return true;
-  if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
-  if (!existing.stationLine) return true;
-  const liveGit = readGitBrief(root);
-  const bootHead = existing.git && existing.git.head ? String(existing.git.head) : '';
-  if (liveGit && liveGit.head && bootHead !== liveGit.head) return true;
-  const liveResume = buildRepertoireResume(root);
-  if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
-  if (stationDurableHoldsNpm(root)) return true;
-  return false;
+  return stationBootNeedsRefresh(existing, root, CURSOR_HOST);
 }
 
 export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-use-boot', extra = {}) {

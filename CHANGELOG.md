@@ -42,6 +42,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### 🔄 Changes
 
 ### 🐛 Bug Fixes
+- fix: rewrite session-boot when HEAD moves — first-wins skip froze metal (same session still heats dest)
 - fix: grow dest from live git on every floor (a7685eb09)
 - fix: heat grows the project copy — cleanup is memory (be10c82eb)
 

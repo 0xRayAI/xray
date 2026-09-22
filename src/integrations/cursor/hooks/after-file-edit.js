@@ -6,6 +6,7 @@
 
 import {
   appendHookActivity,
+  cursorHeatRoots,
   cursorSessionId,
   cursorWorkspaceRoot,
   ensureCursorSessionBoot,
@@ -17,9 +18,11 @@ async function main() {
   try {
     const event = await readStdinJson();
     const eventRoot = cursorWorkspaceRoot(event);
-    const bootPath = ensureCursorSessionBoot(eventRoot, '0xray/cursor-after-file-edit-boot', {
-      sessionId: cursorSessionId(event),
-    });
+    const sessionId = cursorSessionId(event);
+    let bootPath = null;
+    for (const root of cursorHeatRoots(event)) {
+      bootPath = ensureCursorSessionBoot(root, '0xray/cursor-after-file-edit-boot', { sessionId });
+    }
     appendHookActivity(eventRoot, 'cursor-after-file-edit', 'session-boot', 'info', {
       bootPath,
       file: event.file_path || event.path || null,

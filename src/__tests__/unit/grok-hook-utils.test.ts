@@ -59,6 +59,21 @@ describe('grok-hook-utils', () => {
     expect(payload.repertoireResume).toMatch(/^Repertoire:/);
   });
 
+  it('buildSessionBootPayload does not keep extra.timestamp from a prior boot', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    const payload = buildSessionBootPayload(tmp, '0xray/cursor-pre-tool-use-boot', {
+      host: 'cursor',
+      hookEvent: 'lead-heat',
+      timestamp: '2026-09-21T20:04:50.397Z',
+    });
+    expect(payload.hookEvent).toBe('lead-heat');
+    expect(payload.timestamp).not.toBe('2026-09-21T20:04:50.397Z');
+    expect(Date.parse(String(payload.timestamp))).toBeGreaterThan(Date.parse('2026-09-21T20:04:50.397Z'));
+  });
+
   it('sessionBootNeedsRefresh when workspaceRoot or host is stale', () => {
     expect(
       sessionBootNeedsRefresh(

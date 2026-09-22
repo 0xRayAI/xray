@@ -9,6 +9,7 @@ import {
   appendHookActivity,
   checkCodexPatterns,
   checkFullTestSuite,
+  cursorHeatRoots,
   cursorSessionId,
   cursorToolContext,
   cursorWorkspaceRoot,
@@ -47,9 +48,10 @@ async function main() {
   try {
     const event = await readStdinJson();
     const eventRoot = cursorWorkspaceRoot(event);
-    ensureCursorSessionBoot(eventRoot, '0xray/cursor-pre-tool-use-boot', {
-      sessionId: cursorSessionId(event),
-    });
+    const sessionId = cursorSessionId(event);
+    for (const root of cursorHeatRoots(event)) {
+      ensureCursorSessionBoot(root, '0xray/cursor-pre-tool-use-boot', { sessionId });
+    }
 
     const features = loadFeatures(eventRoot);
     const gateFeatures = loadDelegationGateFeatures(eventRoot, 'cursor');

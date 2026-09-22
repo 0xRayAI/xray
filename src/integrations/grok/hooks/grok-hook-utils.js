@@ -306,10 +306,12 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
     ...(userAsideBoot ?? {}),
     sessionId,
-    timestamp: new Date().toISOString(),
     source,
     ...extra,
     ...heat,
+    hook: source,
+    source,
+    timestamp: new Date().toISOString(),
   };
 }
 

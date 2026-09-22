@@ -871,6 +871,22 @@ function stripHoldNpm(line) {
     .replace(/[ \t]+$/g, "");
 }
 
+/** Same-session skip must still rewrite when HEAD, organ count, or Hold npm diverges. */
+function stationBootNeedsRefresh(existing, root, host) {
+  if (!existing || typeof existing !== "object") return true;
+  if (host && existing.host && existing.host !== host) return true;
+  if (!existing.suit_profile) return true;
+  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (!existing.stationLine) return true;
+  const liveGit = readGitBrief(root);
+  const bootHead = existing.git && existing.git.head ? String(existing.git.head) : "";
+  if (liveGit && liveGit.head && bootHead !== liveGit.head) return true;
+  const liveResume = buildRepertoireResume(root);
+  if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
+  if (stationDurableHoldsNpm(root)) return true;
+  return false;
+}
+
 function stationDurableHoldsNpm(root) {
   return readExistingStationMarkdown(root)
     .split(/\r?\n/)
@@ -1013,4 +1029,5 @@ module.exports = {
   writeStationMarkdown,
   isHoldNpmLine,
   stationDurableHoldsNpm,
+  stationBootNeedsRefresh,
 };

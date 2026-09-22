@@ -35,3 +35,4 @@ export const formatStationMarkdown = impl.formatStationMarkdown;
 export const writeStationMarkdown = impl.writeStationMarkdown;
 export const isHoldNpmLine = impl.isHoldNpmLine;
 export const stationDurableHoldsNpm = impl.stationDurableHoldsNpm;
+export const stationBootNeedsRefresh = impl.stationBootNeedsRefresh;

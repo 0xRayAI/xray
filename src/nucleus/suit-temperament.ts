@@ -23,6 +23,7 @@ const stationHeat = requireCjs('../integrations/hooks/station-hook-runtime.cjs')
     existing?: Record<string, unknown>,
   ) => Record<string, unknown>;
   heatLiveMemory: (root: string) => { captured: string | null; grow: Record<string, unknown> | null };
+  stationBootNeedsRefresh: (existing: Record<string, unknown>, root: string, host: string) => boolean;
   writeStationMarkdown: (root: string, fields: Record<string, unknown>) => string | null;
 };
 
@@ -160,7 +161,12 @@ export function maybeHeatHostStation(
   const sameHost = existing.host === host;
   const sameSession =
     existingSessionId !== null && sessionId !== null && existingSessionId === sessionId;
-  if (sameHost && sameSession && fs.existsSync(cardPath)) {
+  if (
+    sameHost &&
+    sameSession &&
+    fs.existsSync(cardPath) &&
+    !stationHeat.stationBootNeedsRefresh(existing, projectRoot, host)
+  ) {
     stationHeat.heatLiveMemory(projectRoot);
     return bootPath;
   }

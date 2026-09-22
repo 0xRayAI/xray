@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
   cursorBootNeedsRefresh,
+  cursorHeatRoots,
 } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
 import {
   classifyUsageCite,
@@ -98,7 +99,7 @@ function runHook(
     env: {
       ...process.env,
       XRAY_ROOT: root,
-      XRAY_AI_PATH: packageRoot,
+      XRAY_AI_PATH: root,
       CURSOR_PROJECT_DIR: root,
     },
   });
@@ -184,6 +185,25 @@ describe('Cursor cloud hooks adapter', () => {
       expect(card).toContain('keep-me-ben-001');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('cursorHeatRoots heats cwd and a separate mill that already has a card', () => {
+    const cwd = mkdtempSync(path.join(tmpdir(), 'xray-heat-cwd-'));
+    const mill = mkdtempSync(path.join(tmpdir(), 'xray-heat-mill-'));
+    const prev = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      process.env.XRAY_AI_PATH = mill;
+      const roots = cursorHeatRoots({ cwd });
+      expect(roots).toContain(path.resolve(cwd));
+      expect(roots).toContain(path.resolve(mill));
+    } finally {
+      if (prev === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prev;
+      rmSync(cwd, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
     }
   });
 
