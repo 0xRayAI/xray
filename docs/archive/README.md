@@ -20,5 +20,19 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | `scripts/test/test-consumer-readiness.cjs` | Pre-mill duplicate; `test:consumer` now aliases packed mjs |
 | `scripts/governance/retro-governance.mjs` | Phase-0 ritual; no npm/CI callers |
 | `scripts/bash/sync-docs.sh` | Unused; `rm -rf docs-site/docs` would wipe the live site |
+| root `test-debug.mjs` / `test-edit-tracking.ts` / `test-skill.json` | One-off toys; zero inbound refs. Deleted on CLEANSE wave 10. |
+| root `security-report.json` | June 2026 empty scan snapshot. Writer still lives in `src/security/security-scanner.ts`. |
+
+**Wave 10 (lead thread, 4.0.19)** — found, not cut:
+
+| ID | Finding | Action |
+|---|---|---|
+| C6 | vendor leftover 0.2.0 | CLOSED by 4.0.19 |
+| I1 | `applyStationHeat` hydrates + rematches; it does not construct `RepertoireService` / grow | HOLD — not tidy |
+| I2 | `src/security/security-scanner.ts` ≈ `src/mcps/shared/security-scanner.ts` | HOLD — duplicate, do not merge mid-cleanse |
+| C59 | root `integrations/` community SKILL dump (not packed) | HOLD — costume leftover |
+| C61 | root `commands/` copy of `src/opencode/commands` | HOLD — live mill is `src/opencode` |
+| C62 | `advanced-features/` off consumer boot | HOLD — museum |
+| C63 | `api/mcp.ts` + `mcp-server.mjs` | HOLD — Vercel / Railway |
 
 **Kept in `docs/`:** `architecture/governance-model.md` (Dynamo SSOT, 4.0 still uses it), `api/plugin-api.md` (nucleus plugin freeze), `reflections/` (session reflections).
