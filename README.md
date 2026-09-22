@@ -51,7 +51,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **Unreleased** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). Shipped in 4.0.15+. |
+| **4.0.18** | Memory wake: heat hydrates dest + overlays, captures sessions on every floor, subject-first match. On npm. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
 | **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |

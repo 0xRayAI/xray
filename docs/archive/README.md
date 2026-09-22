@@ -11,5 +11,7 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | `reports/` | StringRay v1.3.4 / v2 commercial mill output (not 4.0 wear) |
 | `reflection-stringray-assessment-2026-03-10.md` | 2026-03-10 StringRay reflection (was in `logs/`) |
 | `scripts/v2-refactor/` | 2026-05-20 v2 harness; unused by pack/CI; mac leftover `/Users/blaze/dev/stringray` |
+| `scripts/test/vote-*.mjs` | v3 one-off governance vote harnesses |
+| `logs-reports/` | Feb 2026 StringRay report digest (was in `logs/reports/`) |
 
 **Kept in `docs/`:** `architecture/governance-model.md` (Dynamo SSOT, 4.0 still uses it), `api/plugin-api.md` (nucleus plugin freeze), `reflections/` (session reflections).

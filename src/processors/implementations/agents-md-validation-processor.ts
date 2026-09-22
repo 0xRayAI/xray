@@ -300,7 +300,7 @@ export class AgentsMdValidationProcessor {
         "",
         "## Codex",
         "",
-        `0xRay enforces Universal Development Codex (60 terms) for systematic error prevention.`,
+        `0xRay enforces Universal Development Codex (69 terms) for systematic error prevention.`,
         "",
       ].join("\n"),
       "## CLI Commands": [
