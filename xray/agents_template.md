@@ -16,7 +16,7 @@ Quick reference for the 0xRay AI orchestration framework (v16 MCPs-centric three
 | Command | Description |
 |---------|-------------|
 | `xray setup` | Full framework setup (hooks, Hermes, symlinks) |
-| `xray validate` | Validate codex compliance |
+| `xray validate` | Wear check (pack paths, Cursor hooks, mill) — not leftover init.sh |
 | `xray codex check` | Check codex rules |
 | `xray health` | Framework health check |
 | `xray hooks` | Manage lifecycle hooks |

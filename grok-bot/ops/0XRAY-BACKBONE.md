@@ -8,7 +8,7 @@ Updated: 2026-09-13
 ## What we wear
 - **Mill + inspect** only (thin plant). Proof: `.xray/foundry-inventory.json` + `npx @0xray/foundry inspect`
 - Hard rules in prompts + reviewer proof on risky ships
-- Current plant pin on seats: `0xray@4.0.15` · `@0xray/foundry@0.1.12`
+- Current plant pin on seats: `0xray@4.0.18` · `@0xray/foundry@0.1.12`
 
 ## What we do not wear
 - Full “costume” dump of dozens of skills/agents

@@ -13,7 +13,7 @@ Chat approval is not proof. Grok Bot is not a fake tool-deny floor.
 
 ## How to fasten
 ```bash
-npm i 0xray@4.0.15 @0xray/foundry@0.1.12
+npm i 0xray@4.0.18 @0xray/foundry@0.1.12
 npx @0xray/foundry mint --skip-live
 ```
 
