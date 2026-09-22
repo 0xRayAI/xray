@@ -288,7 +288,6 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const heat = applyStationHeat(root, extra.host || 'grok', extra, existing);
   const compactHold = retainCompactFields(existing, extra);
   return {
-    hook: source,
     lead_dev_mode: features.lead_dev_mode,
     no_new_surface: features.no_new_surface,
     host: extra.host || 'grok',
@@ -308,7 +307,6 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
     ...(userAsideBoot ?? {}),
     sessionId,
-    source,
     ...extra,
     ...heat,
     ...compactHold,
