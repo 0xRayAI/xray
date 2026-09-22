@@ -825,7 +825,9 @@ describe('Cursor cloud hooks adapter', () => {
       const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
       expect(log).toContain('event=preToolUse');
       expect(log).not.toContain('mill=MISSING');
-      expect(existsSync(path.join(packageRoot, '.xray', 'state', 'STATION.md'))).toBe(true);
+      const millLog = readFileSync(path.join(mill, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(millLog).toContain('event=preToolUse');
+      expect(millLog).not.toContain('mill=MISSING');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
       rmSync(mill, { recursive: true, force: true });

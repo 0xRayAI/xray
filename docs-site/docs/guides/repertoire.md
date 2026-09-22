@@ -56,7 +56,7 @@ Validated by `xray/features.schema.json` at load time:
 | Key | Default | Description |
 |-----|---------|-------------|
 | `dataDir` | package `data/` (vendored 0.2) | Registry + inference state root |
-| `signalsPath` | `.xray/state/repertoire/curated_signals.json` | Project-local registry (factory seed hydrates here; never the tarball) |
+| `signalsPath` | `.xray/state/repertoire/curated_signals.json` | Project-local registry (factory + stack laws). Dest is named invariants, not hangar `repo-*` or git slugs. |
 | `statePath` | `data/inference-state.json` | Idempotent ingest cursor |
 | `logDir` | `logs/groover-inference` | Enriched JSONL log directory |
 
