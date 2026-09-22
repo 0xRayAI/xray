@@ -689,16 +689,15 @@ export function evaluatePreToolGate(
   toolInput: ToolGateInput,
   ctx: PreToolGateContext,
 ): PreToolGateResult {
-  if (ctx.host === 'openclaw') {
-    try {
-      maybeHeatHostStation(ctx.projectRoot, 'openclaw', {
-        source: '0xray/openclaw-pre-tool',
-        sessionId: ctx.sessionId || 'openclaw',
-        hookEvent: ctx.hookEvent || 'session_start',
-      });
-    } catch {
-      /* station heat is best-effort — constitution still runs */
-    }
+  const host = ctx.host || 'generic';
+  try {
+    maybeHeatHostStation(ctx.projectRoot, host, {
+      source: `0xray/${host}-pre-tool`,
+      sessionId: ctx.sessionId || host,
+      hookEvent: ctx.hookEvent || 'pre_tool_use',
+    });
+  } catch {
+    /* station heat is best-effort — constitution still runs */
   }
 
   const constitution = evaluateConstitutionGate(toolName, toolInput, ctx);

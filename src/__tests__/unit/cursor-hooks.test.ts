@@ -528,6 +528,8 @@ describe('Cursor cloud hooks adapter', () => {
       expect(files.length).toBeGreaterThan(0);
       const latest = JSON.parse(readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8'));
       expect(latest.approaches.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
+      const patternNames = (latest.patterns || []).map((row: { name?: string }) => row.name);
+      expect(patternNames.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
       const firstCount = files.length;
       runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
       const again = readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));

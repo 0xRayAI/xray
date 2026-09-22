@@ -93,10 +93,12 @@ USER / TOOL
     │                       ├─ STATION.md                 (projection)
     │                       └─ repertoire-working.json    (opProcNames if dest)
     │
-    ├─[t0b] heat grow (dest ON) ──► RepertoireService
+    ├─[t0b] capture then grow (dest ON) ──► dest.lock ──► RepertoireService
+    │                 ├─ session-*.json from THIS wake's git (commit slugs + structural)
     │                 ├─ syncXrayMemory (session-*.json)
     │                 ├─ syncWorkspaceRepos (sibling repo-* names)
     │                 ├─ heatKernelDiary + NOTES / CLEANSE list
+    │                 ├─ Cursor / Grok / Hermes / OpenClaw + asides share one dest
     │                 └─ Groover field stays off
     │
     ├─[t1] work ──► kernel gather (best-effort, often COLD)

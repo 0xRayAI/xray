@@ -24,12 +24,13 @@ import {
 import { appendHookActivity } from '../../grok/hooks/grok-hook-activity.js';
 import {
   buildRepertoireResume,
+  heatLiveMemory,
   maybeCaptureSessionOnHeadMove,
   readGitBrief,
   stationDurableHoldsNpm,
 } from '../../hooks/station-hook-runtime.mjs';
 
-export { maybeCaptureSessionOnHeadMove };
+export { heatLiveMemory, maybeCaptureSessionOnHeadMove };
 
 export const CURSOR_HOST = 'cursor';
 export const EVENT_CLASS_HOST = 'cursor-host-precompact';
@@ -161,7 +162,7 @@ export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-us
     try {
       const existing = JSON.parse(fs.readFileSync(bootPath, 'utf8'));
       if (!cursorBootNeedsRefresh(existing, root)) {
-        maybeCaptureSessionOnHeadMove(root);
+        heatLiveMemory(root);
         return bootPath;
       }
     } catch {
@@ -172,9 +173,7 @@ export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-us
     host: CURSOR_HOST,
     ...extra,
   });
-  const written = writeSessionBoot(root, payload) || bootPath;
-  maybeCaptureSessionOnHeadMove(root);
-  return written;
+  return writeSessionBoot(root, payload) || bootPath;
 }
 
 export function writeCursorPrecompactReceipt(root, fields) {

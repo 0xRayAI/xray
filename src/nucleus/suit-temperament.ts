@@ -22,6 +22,7 @@ const stationHeat = requireCjs('../integrations/hooks/station-hook-runtime.cjs')
     extra?: Record<string, unknown>,
     existing?: Record<string, unknown>,
   ) => Record<string, unknown>;
+  heatLiveMemory: (root: string) => { captured: string | null; grow: Record<string, unknown> | null };
   writeStationMarkdown: (root: string, fields: Record<string, unknown>) => string | null;
 };
 
@@ -160,6 +161,7 @@ export function maybeHeatHostStation(
   const sameSession =
     existingSessionId !== null && sessionId !== null && existingSessionId === sessionId;
   if (sameHost && sameSession && fs.existsSync(cardPath)) {
+    stationHeat.heatLiveMemory(projectRoot);
     return bootPath;
   }
   return writeSuitSessionBoot(projectRoot, host, extra);

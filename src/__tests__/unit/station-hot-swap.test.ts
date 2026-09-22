@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 import {
   applyStationHeat,
   clipIntent,
@@ -283,7 +283,7 @@ describe('station hot-swap', () => {
     }
   });
 
-  it('heat grows the project copy from a kernel session when the organ is worn', () => {
+  it('heat grows the project copy from real git commits when the organ is worn', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-grow-'));
     const tmp = path.join(parent, 'xray');
     const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
@@ -298,6 +298,7 @@ describe('station hot-swap', () => {
         path.join(tmp, '.xray', 'features.json'),
         JSON.stringify({
           memory_routing: { enabled: true, provider: 'repertoire' },
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
         }),
       );
       fs.writeFileSync(
@@ -306,23 +307,25 @@ describe('station hot-swap', () => {
           signals: [{ name: 'three-subsystem-verifiable-os', tags: ['os'] }],
         }),
       );
-      fs.mkdirSync(path.join(tmp, 'docs', 'inference'), { recursive: true });
-      fs.writeFileSync(
-        path.join(tmp, 'docs', 'inference', 'session-cleanup.json'),
-        JSON.stringify({
-          sessionId: 'cleanup-is-memory-1',
-          timestamp: '2026-09-22T18:00:00.000Z',
-          patterns: [{ name: 'cleanup-is-memory', confidence: 0.55 }],
-        }),
-      );
-      applyStationHeat(tmp, 'cursor', { intent: 'cleanup is memory' }, {});
+      fs.writeFileSync(path.join(tmp, 'LIVE.md'), 'live\n');
+      execFileSync('git', ['add', 'LIVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'feat: live-context-memory'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'LOCK.md'), 'lock\n');
+      execFileSync('git', ['add', 'LOCK.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: parallel-floor-heat'], { cwd: tmp, stdio: 'ignore' });
+      applyStationHeat(tmp, 'cursor', { intent: 'live context memory' }, {});
       const dest = JSON.parse(
         fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'), 'utf8'),
       );
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toContain('three-subsystem-verifiable-os');
-      expect(names).toContain('cleanup-is-memory');
-      expect(names.length).toBeGreaterThan(1);
+      expect(names).toContain('live-context-memory');
+      expect(names).toContain('parallel-floor-heat');
+      const session = JSON.parse(
+        fs.readFileSync(path.join(tmp, 'docs', 'inference', 'latest-session.json'), 'utf8'),
+      );
+      const patternNames = (session.patterns as { name: string }[]).map((row) => row.name);
+      expect(patternNames).toEqual(expect.arrayContaining(['live-context-memory', 'parallel-floor-heat']));
       const working = readRepertoireWorking(tmp);
       expect(working?.grow).toEqual(
         expect.objectContaining({
@@ -330,6 +333,72 @@ describe('station hot-swap', () => {
         }),
       );
       expect(Number(working?.grow && 'after' in working.grow ? working.grow.after : 0)).toBeGreaterThan(1);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('parallel floor heats share one dest lock and keep a valid project copy', async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-parallel-'));
+    const tmp = path.join(parent, 'xray');
+    const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
+    const millOrgan = path.resolve(process.cwd(), 'vendor', '@0xray', 'repertoire');
+    const runtime = path.resolve(process.cwd(), 'src/integrations/hooks/station-hook-runtime.cjs');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.dirname(vendor), { recursive: true });
+      fs.symlinkSync(millOrgan, vendor);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: true, provider: 'repertoire' },
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'three-subsystem-verifiable-os', tags: ['os'] }],
+        }),
+      );
+      fs.writeFileSync(path.join(tmp, 'LIVE.md'), 'live\n');
+      execFileSync('git', ['add', 'LIVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'feat: live-context-memory'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'LOCK.md'), 'lock\n');
+      execFileSync('git', ['add', 'LOCK.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: parallel-floor-heat'], { cwd: tmp, stdio: 'ignore' });
+      const script =
+        'const heat = require(process.argv[1]); heat.applyStationHeat(process.argv[2], process.argv[3], { intent: process.argv[4] }, {});';
+      const run = (host: string, intent: string) =>
+        new Promise<number>((resolve) => {
+          const child = spawn(process.execPath, ['-e', script, runtime, tmp, host, intent], {
+            stdio: 'ignore',
+          });
+          const timer = setTimeout(() => {
+            child.kill();
+            resolve(1);
+          }, 60000);
+          child.on('exit', (code) => {
+            clearTimeout(timer);
+            resolve(code ?? 1);
+          });
+        });
+      const codes = await Promise.all([
+        run('cursor', 'lead live context'),
+        run('hermes', 'critic live context'),
+      ]);
+      expect(codes.every((code) => code === 0)).toBe(true);
+      const destRaw = fs.readFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        'utf8',
+      );
+      const dest = JSON.parse(destRaw);
+      const names = dest.signals.map((signal: { name: string }) => signal.name);
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).toContain('live-context-memory');
+      expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'dest.lock'))).toBe(false);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }

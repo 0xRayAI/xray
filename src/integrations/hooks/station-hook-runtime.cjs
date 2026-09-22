@@ -5,7 +5,17 @@
  * Heat writers merge stock fields; unknown keys and ## Durable / ## Seed survive.
  */
 const { execFileSync } = require("child_process");
-const { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
+const {
+  closeSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} = require("fs");
 const { join } = require("path");
 
 const HOOKS_DIR = __dirname;
@@ -379,7 +389,151 @@ function gitCommitSubjects(root, args) {
   }
 }
 
-/** Every floor that heats. Dedup per HEAD. Cursor-only copy was the leftover. */
+function destLockPath(root) {
+  return join(root, ".xray", "state", "repertoire", "dest.lock");
+}
+
+function sleepMs(ms) {
+  try {
+    const buf = new Int32Array(new SharedArrayBuffer(4));
+    Atomics.wait(buf, 0, 0, ms);
+  } catch {
+    /* lock retry is best-effort */
+  }
+}
+
+/** Parallel live contexts share one project copy. Exclusive create; stale after 60s. */
+function withDestLock(root, fn) {
+  const lockPath = destLockPath(root);
+  mkdirSync(join(root, ".xray", "state", "repertoire"), { recursive: true });
+  const started = Date.now();
+  while (Date.now() - started < 50000) {
+    try {
+      const fd = openSync(lockPath, "wx");
+      try {
+        writeFileSync(fd, `${JSON.stringify({ pid: process.pid, at: new Date().toISOString() })}\n`);
+        return fn();
+      } finally {
+        try {
+          closeSync(fd);
+        } catch {
+          /* leftover */
+        }
+        try {
+          unlinkSync(lockPath);
+        } catch {
+          /* leftover */
+        }
+      }
+    } catch (err) {
+      if (!err || err.code !== "EEXIST") return fn();
+      try {
+        const st = statSync(lockPath);
+        if (Date.now() - st.mtimeMs > 60000) unlinkSync(lockPath);
+      } catch {
+        /* leftover */
+      }
+      sleepMs(40);
+    }
+  }
+  return fn();
+}
+
+function slugPrimitiveName(raw) {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return null;
+  const bare = trimmed.replace(/^@[^/]+\//, "");
+  const slug = bare
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!/^[a-z][a-z0-9-]{2,119}$/.test(slug)) return null;
+  if (/^phase-\d/.test(slug)) return null;
+  if (/^\d/.test(slug)) return null;
+  if (
+    slug === "criteria-selection-gap" ||
+    slug === "external-norm-smuggling-risk" ||
+    slug === "model-latent-geometry-as-true-invariant"
+  ) {
+    return null;
+  }
+  return slug;
+}
+
+function stripConventionalSubject(message) {
+  return String(message || "")
+    .replace(/^(feat|fix|chore|docs|test|refactor|perf|style|ci|build|revert)(\([^)]+\))?:\s*/i, "")
+    .trim();
+}
+
+/** Real git → dest names. Not a leftover catalog. Kernel structural names when the diff shows them. */
+function patternsFromGit(root, commits, span) {
+  const patterns = [];
+  const seen = new Set();
+  const add = (raw, confidence, description) => {
+    const slug = slugPrimitiveName(raw);
+    if (!slug || seen.has(slug)) return;
+    seen.add(slug);
+    patterns.push({ name: slug, confidence, description: description || String(raw) });
+  };
+  for (const row of commits) {
+    add(stripConventionalSubject(row.message), 0.55, row.message);
+  }
+  try {
+    const from = span && span.from ? String(span.from) : "";
+    const to = span && span.to ? String(span.to) : "HEAD";
+    if (from && !from.startsWith("HEAD~")) {
+      const out = execFileSync("git", ["diff", "--name-status", `${from}..${to}`], {
+        cwd: root,
+        encoding: "utf8",
+        timeout: 4000,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      const lines = String(out).split("\n").filter(Boolean);
+      if (lines.some((line) => /\.(test|spec)\.[jt]sx?|__tests__|\/tests\//.test(line))) {
+        add("test-expansion", 0.55, "git test files");
+      }
+      if (lines.some((line) => /^D[\t ]/.test(line))) {
+        add("dead-code-removal", 0.55, "git deletions");
+      }
+      if (lines.some((line) => /hooks\/station|session-capture|semantic-patterns/.test(line))) {
+        add("station-heat", 0.55, "heat path");
+      }
+    }
+  } catch {
+    /* structural names are extra — commit slugs still grow dest */
+  }
+  return patterns;
+}
+
+function latestSessionNewerThanGrow(root) {
+  const latest = join(root, "docs", "inference", "latest-session.json");
+  if (!existsSync(latest)) return false;
+  const working = readRepertoireWorking(root);
+  const grownAt = working && working.grow && (working.grow.at || working.updatedAt);
+  if (!grownAt) return true;
+  try {
+    return statSync(latest).mtimeMs > Date.parse(String(grownAt));
+  } catch {
+    return true;
+  }
+}
+
+/** Capture then grow. Skip-path for floors that already have a live card. */
+function heatLiveMemory(root) {
+  const mr = readMemoryRoutingConfig(root);
+  if (isExplicitMemoryRoutingOptOut(mr)) {
+    return { captured: null, grow: null };
+  }
+  return withDestLock(root, () => {
+    const captured = maybeCaptureSessionOnHeadMove(root);
+    const grow = captured || latestSessionNewerThanGrow(root) ? growDestOnWake(root) : null;
+    if (grow) persistRepertoireWorking(root, { grow });
+    return { captured, grow };
+  });
+}
+
+/** Every floor that heats. Dedup per HEAD. Patterns come from git, not a leftover catalog. */
 function maybeCaptureSessionOnHeadMove(root) {
   const cfg = readSessionCaptureConfig(root);
   if (!cfg.enabled) return null;
@@ -398,18 +552,19 @@ function maybeCaptureSessionOnHeadMove(root) {
   if (commits.length < cfg.minCommits) return null;
   const sessionId = `session-${new Date().toISOString().slice(0, 10)}-${git.head}`;
   const approaches = commits.map((row) => row.message).filter(Boolean);
+  const span = {
+    from: stamp && stamp.head ? stamp.head : commits[commits.length - 1] ? commits[commits.length - 1].hash : git.head,
+    to: git.head,
+  };
   const session = {
     sessionId,
     timestamp: new Date().toISOString(),
-    span: {
-      from: stamp && stamp.head ? stamp.head : `HEAD~${cfg.lookback}`,
-      to: git.head,
-    },
+    span,
     problems: [],
     approaches,
     wrongTurns: [],
     solutions: [],
-    patterns: [],
+    patterns: patternsFromGit(root, commits, span),
     matched_primitives: [],
     metrics: { commits: commits.length },
   };
@@ -489,7 +644,7 @@ function growDestOnWake(root) {
       encoding: "utf8",
       timeout: 45000,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0" },
+      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0", REPERTOIRE_DEST_LOCK: "held" },
     });
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
@@ -560,15 +715,23 @@ function buildRepertoireResume(root) {
 function applyStationHeat(root, host, extra = {}, existing = {}) {
   const mr = readMemoryRoutingConfig(root);
   const memoryOff = isExplicitMemoryRoutingOptOut(mr);
-  const hydrate = memoryOff ? { dest: null, added: 0, destCount: 0 } : hydrateDestOnWake(root);
-  const grow = memoryOff ? null : growDestOnWake(root);
+  const live = memoryOff
+    ? { hydrate: { dest: null, added: 0, destCount: 0 }, captured: null, grow: null }
+    : withDestLock(root, () => {
+        const hydrateInner = hydrateDestOnWake(root);
+        const capturedInner = maybeCaptureSessionOnHeadMove(root);
+        const growInner = growDestOnWake(root);
+        return { hydrate: hydrateInner, captured: capturedInner, grow: growInner };
+      });
+  const hydrate = live.hydrate;
+  const captured = live.captured;
+  const grow = live.grow;
   const destCountAfterGrow =
     grow && typeof grow.after === "number"
       ? grow.after
       : existsSync(destSignalsPath(root))
         ? countCuratedSignals(destSignalsPath(root)) || 0
         : hydrate.destCount;
-  const captured = maybeCaptureSessionOnHeadMove(root);
   const pickup = readNotesPickup(root);
   const approaches = readLatestSessionApproaches(root);
   const prevHost = typeof existing.host === "string" ? existing.host : null;
@@ -836,6 +999,10 @@ module.exports = {
   readOpProcNames,
   hydrateDestOnWake,
   growDestOnWake,
+  heatLiveMemory,
+  withDestLock,
+  slugPrimitiveName,
+  patternsFromGit,
   readNotesPickup,
   maybeCaptureSessionOnHeadMove,
   formatWorkingLine,

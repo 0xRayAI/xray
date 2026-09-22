@@ -468,6 +468,20 @@ async function handlePreProcess(input, projectRoot, logDir) {
   const { tool, args } = input;
   const startTime = Date.now();
 
+  try {
+    const gate = await import('../hooks/delegation-gate-runtime.mjs');
+    if (typeof gate.maybeHeatHostStation === 'function') {
+      gate.maybeHeatHostStation(projectRoot, 'hermes', {
+        source: '0xray/hermes-pre-process',
+        sessionId: input.sessionId || 'hermes',
+        hookEvent: 'pre_tool_use',
+        ...(input.intent ? { intent: input.intent } : {}),
+      });
+    }
+  } catch {
+    /* live memory is best-effort — quality gate still runs */
+  }
+
   logToolEvent(logDir, "start", tool, args);
   logToActivity(logDir, `pre-process: tool=${tool}`);
 
