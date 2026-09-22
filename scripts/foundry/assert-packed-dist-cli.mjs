@@ -24,6 +24,10 @@ export const REQUIRED_PACK_PATHS = [
   "dist/integrations/cursor/hooks/after-file-edit.js",
   "dist/integrations/cursor/hooks/cursor-hook-utils.js",
   "dist/integrations/cursor/hooks/cursor-usage-receipt.js",
+  "dist/integrations/cursor/hooks/xray-cloud-hook.sh",
+  "dist/integrations/cursor/hooks/pre-tool-use.sh",
+  "dist/integrations/cursor/hooks/pre-compact.sh",
+  "dist/integrations/cursor/hooks/after-file-edit.sh",
 ];
 
 export function packedFilePaths(files) {

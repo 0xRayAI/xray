@@ -11,6 +11,7 @@ const {
   XRAY_CONFIG_FILES,
   installCursorBridge,
   resolveCursorHooksTemplate,
+  CURSOR_HOOK_SCRIPTS,
 } = require("../../../scripts/node/install-bridges.cjs");
 
 describe("install-bridges xray config deploy", () => {
@@ -312,8 +313,14 @@ describe("install-bridges cursor wear", () => {
     fs.mkdirSync(hooksDir, { recursive: true });
     fs.writeFileSync(
       path.join(hooksDir, "hooks.json"),
-      JSON.stringify({ version: 1, hooks: { preToolUse: [{ command: "node pre-tool-use.js" }] } }),
+      JSON.stringify({
+        version: 1,
+        hooks: { preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }] },
+      }),
     );
+    for (const name of CURSOR_HOOK_SCRIPTS) {
+      fs.writeFileSync(path.join(hooksDir, name), `#!/bin/sh\necho ${name}\n`);
+    }
   });
 
   afterEach(() => {
@@ -329,14 +336,53 @@ describe("install-bridges cursor wear", () => {
     expect(fastened.hooks.preToolUse).toHaveLength(1);
   });
 
-  it("leaves an existing consumer hooks.json alone", () => {
+  it("rewrites leftover env-assignment hooks.json to relative sh and copies scripts", () => {
     const destDir = path.join(consumerRoot, ".cursor");
     fs.mkdirSync(destDir, { recursive: true });
     const dest = path.join(destDir, "hooks.json");
-    fs.writeFileSync(dest, JSON.stringify({ version: 1, hooks: { keep: true } }));
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({
+        version: 1,
+        hooks: {
+          preToolUse: [
+            {
+              command:
+                'XRAY_AI_PATH="${XRAY_AI_PATH:-../xray}" node "${XRAY_AI_PATH:-../xray}/src/integrations/cursor/hooks/pre-tool-use.js"',
+            },
+          ],
+        },
+      }),
+    );
+    installCursorBridge(consumerRoot, packageRoot, () => {});
+    const rewritten = JSON.parse(fs.readFileSync(dest, "utf-8"));
+    expect(rewritten.hooks.preToolUse[0].command).toBe(".cursor/hooks/pre-tool-use.sh");
+    expect(rewritten.hooks.preCompact[0].command).toBe(".cursor/hooks/pre-compact.sh");
+    expect(rewritten.hooks.beforeReadFile[0].command).toBe(".cursor/hooks/before-read-file.sh");
+    expect(fs.existsSync(path.join(destDir, "hooks", "xray-cloud-hook.sh"))).toBe(true);
+    expect(fs.existsSync(path.join(destDir, "hooks", "pre-tool-use.sh"))).toBe(true);
+  });
+
+  it("keeps extra events on an already-relative hooks.json", () => {
+    const destDir = path.join(consumerRoot, ".cursor");
+    fs.mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, "hooks.json");
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({
+        version: 1,
+        hooks: {
+          preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }],
+          preCompact: [{ command: ".cursor/hooks/pre-compact.sh" }],
+          afterFileEdit: [{ command: ".cursor/hooks/after-file-edit.sh" }],
+          keep: [{ command: ".cursor/hooks/pre-tool-use.sh" }],
+        },
+      }),
+    );
     installCursorBridge(consumerRoot, packageRoot, () => {});
     const kept = JSON.parse(fs.readFileSync(dest, "utf-8"));
-    expect(kept.hooks.keep).toBe(true);
+    expect(kept.hooks.keep[0].command).toBe(".cursor/hooks/pre-tool-use.sh");
+    expect(kept.hooks.beforeShellExecution[0].command).toBe(".cursor/hooks/before-shell-execution.sh");
   });
 
   it("resolves the shipped cursor hooks template from this package", () => {
@@ -345,13 +391,15 @@ describe("install-bridges cursor wear", () => {
     expect(fs.existsSync(real as string)).toBe(true);
   });
 
-  it("consumer template commands point at packed dist hook JS that exists as src build input", () => {
+  it("consumer template commands are relative cloud-safe sh and JS still exists as src build input", () => {
     const real = resolveCursorHooksTemplate(process.cwd());
     const hooks = JSON.parse(fs.readFileSync(real as string, "utf-8")) as {
       hooks: Record<string, Array<{ command: string }>>;
     };
     for (const cmd of Object.values(hooks.hooks).flat().map((h) => h.command)) {
-      expect(cmd).toContain("dist/integrations/cursor/hooks/");
+      expect(cmd).toMatch(/^\.cursor\/hooks\/[\w.-]+\.sh$/);
+      expect(cmd).not.toMatch(/XRAY_AI_PATH=/);
+      expect(cmd).not.toContain("dist/integrations/cursor/hooks/");
     }
     for (const name of [
       "hooks.json",
@@ -360,6 +408,8 @@ describe("install-bridges cursor wear", () => {
       "after-file-edit.js",
       "cursor-hook-utils.js",
       "cursor-usage-receipt.js",
+      "xray-cloud-hook.sh",
+      "pre-tool-use.sh",
     ]) {
       expect(fs.existsSync(path.join(process.cwd(), "src", "integrations", "cursor", "hooks", name))).toBe(
         true,

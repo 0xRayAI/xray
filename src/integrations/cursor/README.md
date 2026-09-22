@@ -8,11 +8,11 @@ Repertoire MCP is optional. Station + gates work without a full memory-routing r
 
 1. Commit `.cursor/hooks.json` at the **project root** (this file, not `~/.cursor/hooks.json`).
 2. Cursor Cloud Agent clones the repo and loads **project** hooks. Desktop Agent Chat does the same when the folder is the workspace.
-3. Hook names are camelCase: `preToolUse`, `preCompact`, `afterFileEdit`. Commands are shell strings. Stdin is JSON; stdout is JSON.
+3. Hook names are camelCase: `preToolUse`, `preCompact`, `afterFileEdit`, plus Cloud `beforeShellExecution` / `beforeReadFile`. Command is a **relative** `.cursor/hooks/*.sh` — Cloud execs argv[0] without a shell. Do not put `XRAY_AI_PATH=` in `hooks.json`. Stdin is JSON; stdout is JSON.
 4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it.
 5. `preCompact` is observational (cannot block). It merges Station (stock heat updates; ticket / seed / Durable / unfinished keys stay).
 
-Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` (dist paths under `node_modules/0xray`) when wearing the published package. This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`.
+Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. `xray-cloud-hook.sh` finds mill JS at `XRAY_AI_PATH`, `../xray`, or `node_modules/0xray` (dist then src). This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`.
 
 ## Contracts
 

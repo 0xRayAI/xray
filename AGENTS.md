@@ -50,7 +50,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
 6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
-7. Cursor fifth wear: fasten `.cursor/hooks.json` when absent (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI.
+7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
 8. Optional git hooks
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.

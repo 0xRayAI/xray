@@ -118,15 +118,20 @@ describe('Cursor cloud hooks adapter', () => {
     };
     expect(template.version).toBe(1);
     expect(repo.version).toBe(1);
-    expect(existsSync(path.join(packageRoot, '.cursor/hooks/invoke-probe.sh'))).toBe(true);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/xray-cloud-hook.sh'))).toBe(true);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/pre-tool-use.sh'))).toBe(true);
     for (const cmd of Object.values(repo.hooks).flat().map((h) => h.command)) {
-      expect(cmd).toContain('invoke-probe.sh');
+      expect(cmd).toMatch(/^\.cursor\/hooks\/[\w.-]+\.sh$/);
+      expect(cmd).not.toMatch(/XRAY_AI_PATH=/);
+      expect(cmd).not.toContain('invoke-probe.sh');
     }
     for (const hooks of [template.hooks, repo.hooks]) {
       expect(hooks.sessionStart).toBeUndefined();
-      expect(hooks.preToolUse?.[0]?.command).toContain('pre-tool-use.js');
-      expect(hooks.preCompact?.[0]?.command).toContain('pre-compact.js');
-      expect(hooks.afterFileEdit?.[0]?.command).toContain('after-file-edit.js');
+      expect(hooks.preToolUse?.[0]?.command).toBe('.cursor/hooks/pre-tool-use.sh');
+      expect(hooks.preCompact?.[0]?.command).toBe('.cursor/hooks/pre-compact.sh');
+      expect(hooks.afterFileEdit?.[0]?.command).toBe('.cursor/hooks/after-file-edit.sh');
+      expect(hooks.beforeShellExecution?.[0]?.command).toBe('.cursor/hooks/before-shell-execution.sh');
+      expect(hooks.beforeReadFile?.[0]?.command).toBe('.cursor/hooks/before-read-file.sh');
     }
   });
 
@@ -556,6 +561,61 @@ describe('Cursor cloud hooks adapter', () => {
       expect(again.length).toBe(firstCount);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('xray-cloud-hook.sh logs invoke and fail-opens when mill JS is missing', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-miss-'));
+    try {
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: tmp,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env: { ...process.env, PATH: process.env.PATH || '/usr/bin:/bin' },
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string };
+      expect(out.permission).toBe('allow');
+      const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(log).toContain('event=preToolUse');
+      expect(log).toContain('mill=MISSING');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('xray-cloud-hook.sh execs mill JS when XRAY_AI_PATH is set', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-hit-'));
+    const mill = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-mill-'));
+    try {
+      mkdirSync(path.join(mill, 'src', 'integrations', 'cursor', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(mill, 'src', 'integrations', 'cursor', 'hooks', 'pre-tool-use.js'),
+        'console.log(JSON.stringify({ permission: "allow", mill: process.env.XRAY_AI_PATH }));\n',
+      );
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: tmp,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          PATH: process.env.PATH || '/usr/bin:/bin',
+          XRAY_AI_PATH: mill,
+        },
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string; mill?: string };
+      expect(out.permission).toBe('allow');
+      expect(path.resolve(out.mill || '')).toBe(path.resolve(mill));
+      const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(log).toContain('event=preToolUse');
+      expect(log).not.toContain('mill=MISSING');
+      expect(existsSync(path.join(packageRoot, '.xray', 'state', 'STATION.md'))).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
     }
   });
 });

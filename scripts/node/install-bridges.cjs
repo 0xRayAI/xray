@@ -710,6 +710,26 @@ function deployXrayConfig(targetDir, packageRoot, log) {
   return copied;
 }
 
+const CURSOR_HOOK_SCRIPTS = [
+  "xray-cloud-hook.sh",
+  "pre-tool-use.sh",
+  "pre-compact.sh",
+  "after-file-edit.sh",
+  "before-read-file.sh",
+  "before-shell-execution.sh",
+];
+
+const CLOUD_SAFE_CURSOR_HOOKS = {
+  version: 1,
+  hooks: {
+    preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }],
+    preCompact: [{ command: ".cursor/hooks/pre-compact.sh" }],
+    afterFileEdit: [{ command: ".cursor/hooks/after-file-edit.sh" }],
+    beforeShellExecution: [{ command: ".cursor/hooks/before-shell-execution.sh" }],
+    beforeReadFile: [{ command: ".cursor/hooks/before-read-file.sh" }],
+  },
+};
+
 function resolveCursorHooksTemplate(packageRoot) {
   const src = path.join(packageRoot, "src", "integrations", "cursor", "hooks", "hooks.json");
   if (fs.existsSync(src)) return src;
@@ -718,24 +738,97 @@ function resolveCursorHooksTemplate(packageRoot) {
   return null;
 }
 
+function resolveCursorHookScriptDir(packageRoot) {
+  const src = path.join(packageRoot, "src", "integrations", "cursor", "hooks");
+  if (fs.existsSync(path.join(src, "xray-cloud-hook.sh"))) return src;
+  const dist = path.join(packageRoot, "dist", "integrations", "cursor", "hooks");
+  if (fs.existsSync(path.join(dist, "xray-cloud-hook.sh"))) return dist;
+  return null;
+}
+
+function isEnvAssignmentCursorCommand(command) {
+  const cmd = String(command || "");
+  return (
+    /XRAY_AI_PATH=/.test(cmd) ||
+    /XRAY_HOOK_EVENT=/.test(cmd) ||
+    /invoke-probe\.sh/.test(cmd) ||
+    /\$\{XRAY_AI_PATH/.test(cmd) ||
+    /^\s*node\s+/.test(cmd)
+  );
+}
+
+function isRelativeCursorHookCommand(command) {
+  return /^\.cursor\/hooks\/[\w.-]+\.sh$/.test(String(command || ""));
+}
+
+function mergeCloudSafeCursorHooks(existing) {
+  const next =
+    existing && typeof existing === "object" ? { ...existing, hooks: { ...(existing.hooks || {}) } } : { version: 1, hooks: {} };
+  next.version = 1;
+  for (const [name, entries] of Object.entries(CLOUD_SAFE_CURSOR_HOOKS.hooks)) {
+    const current = next.hooks[name];
+    const leftover = Array.isArray(current) && current.some((h) => isEnvAssignmentCursorCommand(h && h.command));
+    const missingRelative =
+      !Array.isArray(current) || !current.some((h) => isRelativeCursorHookCommand(h && h.command));
+    if (!current || leftover || missingRelative) {
+      next.hooks[name] = entries;
+    }
+  }
+  return next;
+}
+
+function fastenCursorHookScripts(targetDir, packageRoot, log) {
+  const srcDir = resolveCursorHookScriptDir(packageRoot);
+  const destDir = path.join(targetDir, ".cursor", "hooks");
+  fs.mkdirSync(destDir, { recursive: true });
+  if (!srcDir) {
+    log("cursor-bridge", "hook scripts missing", "warn", { reason: "xray-cloud-hook.sh not in src or dist" });
+    return 0;
+  }
+  let copied = 0;
+  for (const name of CURSOR_HOOK_SCRIPTS) {
+    const src = path.join(srcDir, name);
+    if (!fs.existsSync(src)) continue;
+    const dest = path.join(destDir, name);
+    fs.copyFileSync(src, dest);
+    try {
+      fs.chmodSync(dest, 0o755);
+    } catch {
+      // chmod is best-effort on hosts that ignore mode
+    }
+    copied++;
+  }
+  return copied;
+}
+
 /**
- * Fifth wear: project `.cursor/hooks.json` so Cursor Cloud heats Station and gates tools.
- * Leave an existing file alone (this exo already wears src/ via invoke-probe).
+ * Fifth wear: project `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`.
+ * Cloud execs argv[0] without a shell — leftover `XRAY_AI_PATH=` one-liners never start.
+ * Rewrite leftover env-assignment / invoke-probe templates. Keep already-relative events.
  */
 function installCursorBridge(targetDir, packageRoot, log) {
   const dest = path.join(targetDir, ".cursor", "hooks.json");
+  const copied = fastenCursorHookScripts(targetDir, packageRoot, log);
+  let existing = null;
   if (fs.existsSync(dest)) {
-    log("cursor-bridge", ".cursor/hooks.json exists — leave", "info");
-    return dest;
+    try {
+      existing = JSON.parse(fs.readFileSync(dest, "utf8"));
+    } catch {
+      existing = null;
+    }
   }
   const template = resolveCursorHooksTemplate(packageRoot);
-  if (!template) {
+  if (!existing && !template) {
     log("cursor-bridge", "skipped", "warn", { reason: "cursor hooks template missing" });
     return null;
   }
+  const next = mergeCloudSafeCursorHooks(existing);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(template, dest);
-  log("cursor-bridge", "hooks.json fastened", "info", { path: ".cursor/hooks.json" });
+  fs.writeFileSync(dest, `${JSON.stringify(next, null, 2)}\n`);
+  log("cursor-bridge", existing ? "hooks.json rewritten cloud-safe" : "hooks.json fastened", "info", {
+    path: ".cursor/hooks.json",
+    scripts: copied,
+  });
   return dest;
 }
 
@@ -833,4 +926,10 @@ module.exports = {
   wearVendoredRepertoire,
   installCursorBridge,
   resolveCursorHooksTemplate,
+  resolveCursorHookScriptDir,
+  fastenCursorHookScripts,
+  mergeCloudSafeCursorHooks,
+  isEnvAssignmentCursorCommand,
+  CURSOR_HOOK_SCRIPTS,
+  CLOUD_SAFE_CURSOR_HOOKS,
 };

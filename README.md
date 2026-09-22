@@ -188,7 +188,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | **Grok CLI / Build** | `npx 0xray grok install` | Project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin), 7 MCPs servers |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
-| **Cursor** | postinstall (`installCursorBridge`) | Fastens `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI. |
+| **Cursor** | postinstall (`installCursorBridge`) | Fastens `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrites leftover env-assignment one-liners. Not a fifth chat TUI. |
 
 ## Governance & Codex
 

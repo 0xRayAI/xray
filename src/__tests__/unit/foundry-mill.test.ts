@@ -39,6 +39,8 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.js');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-hook-utils.js');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-usage-receipt.js');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/xray-cloud-hook.sh');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.sh');
     expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
     expect(() =>
       assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),
