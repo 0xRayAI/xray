@@ -31,9 +31,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.
-- **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.
-- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.
-- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy. 0xray stays 4.0.15.
+- **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog.
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+.
+- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy.
 
 ---
 
