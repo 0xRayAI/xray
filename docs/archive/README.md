@@ -17,5 +17,7 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | `scripts/test-v2-consumer/` | Unused v2 consumer playbook paces |
 | `scripts/bash/purge-legacy-docs-0xray-v2.sh` | One-off `rm -rf docs/archive` leftover; no callers |
 | `scripts/test/test-*-integration.cjs` + `validate-e2e-full.cjs` + `test-consumer-e2e.mjs` + `test-cjs-mjs-scripts.cjs` | Duplicate runners; live floor tests stay `test-*-e2e.mjs` |
+| `scripts/test/test-consumer-readiness.cjs` | Pre-mill duplicate; `test:consumer` now aliases packed mjs |
+| `scripts/governance/retro-governance.mjs` | Phase-0 ritual; no npm/CI callers |
 
 **Kept in `docs/`:** `architecture/governance-model.md` (Dynamo SSOT, 4.0 still uses it), `api/plugin-api.md` (nucleus plugin freeze), `reflections/` (session reflections).

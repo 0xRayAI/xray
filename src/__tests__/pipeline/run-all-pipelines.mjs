@@ -8,6 +8,11 @@
 
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = join(__dirname, '../../..');
 
 const PIPELINES = [
   { name: 'Governance', path: 'test-governance-pipeline.mjs' },
@@ -29,7 +34,7 @@ function runTest(fullPath) {
   try {
     const result = execSync(`node ${fullPath}`, {
       encoding: 'utf-8',
-      cwd: '/Users/blaze/dev/xray',
+      cwd: PROJECT_ROOT,
       timeout: 60000
     });
     return { success: true, output: result };
@@ -45,7 +50,7 @@ function runConsecutive(pipeline) {
   
   let consecutivePasses = 0;
   let iteration = 0;
-  const fullPath = `/Users/blaze/dev/xray/src/__tests__/pipeline/${pipeline.path}`;
+  const fullPath = join(__dirname, pipeline.path);
   
   while (consecutivePasses < CONSECUTIVE_PASSES_REQUIRED) {
     iteration++;
@@ -78,7 +83,7 @@ function main() {
   const results = [];
   
   for (const pipeline of PIPELINES) {
-  const fullPath = `/Users/blaze/dev/xray/src/__tests__/pipeline/${pipeline.path}`;
+  const fullPath = join(__dirname, pipeline.path);
     
     if (!existsSync(fullPath)) {
       console.log(`\n⚠️  Skipping ${pipeline.name}: test file not found`);
