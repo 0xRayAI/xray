@@ -34,6 +34,34 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.17] - 2026-09-22
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: write session-*.json from Cursor heat when HEAD moves (363186a02)
+- feat: persist overlay OP-PROC on repertoire-working after compact heat (8c55793e8)
+
+### 📚 Documentation
+- docs: ASCII gather/store/retrieve trees for Station memory (d8f2f3b89)
+- docs: Station is always the pickup memory after compact (bec431c61)
+- docs: Groover is not Repertoire — do not grow dest from Groover field (203147d19)
+- docs: Subject review. Fix n ship. — dest review then leftover then D (ad4ffa7f6)
+- docs: stop /loop when the card and WAVEBOARD are idle (60f0fd53f)
+- docs: clean ticks every cycle — rewrite /loop prompt, do not act on stale metal (e71a19559)
+
+### 🧪 Tests
+- test: match Compact cut wording on Station-as-memory (7f9a4f091)
+
+### 🔎 Other Changes
+- Merge main — include weekday-mirror #97 in 4.0.17 tarball (86fdec7ce)
+- Merge pull request #97 from 0xRayAI/cursor/weekday-mirror-dist-voice-9b4d (d0853aad1)
+- docs(grok-bot): weekday mirror for Dist reply voice and CoS wake hygiene (f91233b59)
+- Merge branch 'cursor/clean-ticks-fbe0' — clean ticks every cycle (12dd06362)
+- Merge branch 'cursor/leftover-validate-d-fbe0' — release 4.0.16 live, leftover validate gone (8fa037212)
+
+---
+
 ## [4.0.16] - 2026-09-20
 
 ### 🔄 Changes
