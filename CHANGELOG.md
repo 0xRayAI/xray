@@ -37,6 +37,16 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.20] - 2026-09-22
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: grow dest from live git on every floor (a7685eb09)
+- fix: heat grows the project copy — cleanup is memory (be10c82eb)
+
+---
+
 ## [4.0.19] - 2026-09-22
 
 ### ✨ Features
