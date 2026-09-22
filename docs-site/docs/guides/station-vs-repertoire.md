@@ -8,6 +8,8 @@ sidebar_label: Station vs Repertoire 0.1
 
 If Repertoire is **not** installed, `STATION.md` **is** the memory. Heat it this wake. NOTES hold the deep cut. Compact survival does not wait for dest.
 
+The three pieces already exist (bookmark · index · mind). They do not meet on wake. That join is [Memory wake](./memory-wake.md) — `applyStationHeat`, not a new organ.
+
 ## Three organs
 
 | Organ | Job | Not |
