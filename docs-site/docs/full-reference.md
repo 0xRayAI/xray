@@ -241,14 +241,14 @@ Install more skills: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-Four-floor consumer e2e against **0xray@4.0.0**:
+Four-floor consumer e2e against **0xray@4.0.18**:
 
 | Suite | Status |
 |-------|--------|
 | OpenCode E2E | 34/0 |
 | Grok CLI E2E | 63/0 |
-| Hermes E2E | 39/0/2 (npm 4.0.0 pack) |
-| OpenClaw E2E | 96/0/1 (npm 4.0.0 pack) |
+| Hermes E2E | 39/0/2 (npm 4.0.18 pack) |
+| OpenClaw E2E | 96/0/1 (npm 4.0.18 pack) |
 | Consumer smoke | `release-gate.mjs` — pack → install → 7 MCP + 4 chat bridges + Cursor hooks + organ on |
 
 ---

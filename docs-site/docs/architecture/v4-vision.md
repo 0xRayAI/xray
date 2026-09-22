@@ -33,7 +33,7 @@ What is built and worn is a **tempered v2 OS with four bridges**. That bone is r
 - Grok 4.6 class hosts (`profile: auto` → frontier): spawn-without-plan **warns**; confer off unless opted in. Codex still denies `any`, Codex 29, and new surface.
 - OpenCode / Hermes / OpenClaw stay **guided** unless you say otherwise. Full ceremony: analyze-complexity, spawn-plan deny, confer.
 - Inference pickle on this generation of hosts is **OpenCode CLI** (`opencode run`), not a fifth provider 0xRay owns. Zen/Go HTTP catalogs are host env, not the suit.
-- npm is **4.0.0**. Stranger install (`npm i 0xray@4.0.0` → four-host `--force`) is the wear test, not a hero machine.
+- npm is **4.0.18**. Stranger install (`npm i 0xray` → four-host `--force`) is the wear test, not a hero machine.
 
 ## Where we are going
 

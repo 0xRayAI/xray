@@ -2,7 +2,7 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
-**Version**: 4.0.0
+**Version**: 4.0.18
 
 ## Temperament on upgrade (v4.0)
 
