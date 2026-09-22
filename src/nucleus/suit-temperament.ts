@@ -141,11 +141,19 @@ function concreteSessionId(value: unknown): string | null {
  * OpenClaw has no SessionStart — PreToolUse is the session boundary.
  * Install/init cards without a session id are not a live session.
  */
+function isCursorWorkspaceWrapper(projectRoot: string): boolean {
+  return (
+    fs.existsSync(path.join(projectRoot, 'repos', 'xray')) ||
+    fs.existsSync(path.join(projectRoot, 'repos', 'repertoire'))
+  );
+}
+
 export function maybeHeatHostStation(
   projectRoot: string,
   host: SuitHost,
   extra: Record<string, unknown> = {},
 ): string | null {
+  if (isCursorWorkspaceWrapper(projectRoot)) return null;
   const bootPath = path.join(projectRoot, '.xray', 'state', 'session-boot.json');
   const cardPath = path.join(projectRoot, '.xray', 'state', 'STATION.md');
   let existing: Record<string, unknown> = {};

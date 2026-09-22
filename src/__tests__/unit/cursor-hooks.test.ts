@@ -277,6 +277,8 @@ describe('Cursor cloud hooks adapter', () => {
       }).trim();
       const out = JSON.parse(stdout) as { permission: string };
       expect(out.permission).toBe('allow');
+      expect(existsSync(path.join(workspace, '.xray', 'state', 'STATION.md'))).toBe(false);
+      expect(existsSync(path.join(mill, '.xray', 'state', 'STATION.md'))).toBe(true);
     } finally {
       if (prevAi === undefined) delete process.env.XRAY_AI_PATH;
       else process.env.XRAY_AI_PATH = prevAi;

@@ -49,18 +49,20 @@ async function main() {
     const event = await readStdinJson();
     const eventRoot = cursorWorkspaceRoot(event);
     const sessionId = cursorSessionId(event);
-    for (const root of cursorHeatRoots(event)) {
+    const heatRoots = cursorHeatRoots(event);
+    for (const root of heatRoots) {
       ensureCursorSessionBoot(root, '0xray/cursor-pre-tool-use-boot', { sessionId });
     }
+    const gateRoot = heatRoots[0] || eventRoot;
 
-    const features = loadFeatures(eventRoot);
-    const gateFeatures = loadDelegationGateFeatures(eventRoot, 'cursor');
+    const features = loadFeatures(gateRoot);
+    const gateFeatures = loadDelegationGateFeatures(gateRoot, 'cursor');
     const ctx = cursorToolContext(event);
     toolName = ctx.toolName;
     const { content, cmd, toolInput } = ctx;
 
     const gateBlock = evaluatePreToolGate(toolName, toolInput, {
-      projectRoot: eventRoot,
+      projectRoot: gateRoot,
       sessionId,
       features: gateFeatures,
       host: 'cursor',
