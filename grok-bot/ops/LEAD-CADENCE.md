@@ -72,7 +72,7 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 
 Dummy exists to **test `SKILLS.md`**. If a dummy cannot run the worn catalog from disk, the encode failed. Same-sess bodies exist to **keep context** across compact — they wear the suit and hold a Station card. Do not invent a new critic to “get a fresh look.”
 
-The dummy is also the **compact-seal asker**. Question + hash live on `WATCHER.md`. Dummy never opens a seal file. Dummy grades by hashing the lead's answer. Invent-turn answers are void — first score is after a host compact. Do not put the seal on Station, NOTES, the required Read packet, or the timer prompt.
+The dummy is also the **compact-seal asker**. Question + hash live on `WATCHER.md`. Dummy never opens a seal file. Dummy grades by hashing the lead's answer, and only when Station `Compact:` differs from `Compact-at-arm` on that card. Invent-turn answers are void. Do not put the seal on Station, NOTES, the required Read packet, or the timer prompt.
 
 ### Metamorphosis (how an LLM becomes OP-PROC)
 
