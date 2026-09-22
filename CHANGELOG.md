@@ -35,6 +35,17 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.19] - 2026-09-22
+
+### ✨ Features
+- **Vendored Repertoire 0.2.5** — published 0.2.5 lives in `vendor/@0xray/repertoire`. Wear replaces older leftovers. Optional; Station is the memory when it is off.
+
+### 🔎 Other Changes
+- Load worn Repertoire first; sibling checkout last. (f8a90b531)
+- Put published Repertoire 0.2.5 inside 0xray vendor and wear it. (a90b0a7a4)
+
+---
+
 ## [4.0.18] - 2026-09-22
 
 ### 🔄 Changes
