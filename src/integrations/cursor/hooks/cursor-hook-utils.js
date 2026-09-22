@@ -137,18 +137,8 @@ export function millRootFromToolPath(filePath) {
 
 function addMillCardsUnderWrapper(out, seen, wrapper) {
   if (!wrapper || !isCursorWorkspaceWrapper(wrapper)) return;
-  const repos = path.join(path.resolve(String(wrapper)), 'repos');
-  let names = [];
-  try {
-    names = fs.readdirSync(repos);
-  } catch {
-    names = ['xray', 'repertoire'];
-  }
-  for (const name of names) {
-    if (!name || name.startsWith('.')) continue;
-    const mill = path.join(repos, name);
-    if (shouldHeatRoot(mill)) addHeatRoot(out, seen, mill);
-  }
+  const mill = path.join(path.resolve(String(wrapper)), 'repos', 'xray');
+  if (heatRootHasCard(mill) && isHeatRootWritable(mill)) addHeatRoot(out, seen, mill);
 }
 
 /** Every live context that already has a Station card — cwd plus mill when they differ. */
@@ -176,7 +166,13 @@ export function cursorHeatRoots(event = {}) {
   const ctx = cursorToolContext(event);
   for (const filePath of ctx.paths) {
     const fromPath = millRootFromToolPath(filePath);
-    if (shouldHeatRoot(fromPath)) addHeatRoot(out, seen, fromPath);
+    if (
+      fromPath &&
+      fs.existsSync(path.join(fromPath, '.xray', 'state', 'STATION.md')) &&
+      isHeatRootWritable(fromPath)
+    ) {
+      addHeatRoot(out, seen, fromPath);
+    }
   }
   if (out.length === 0) {
     const fallback = cursorWorkspaceRoot(event);

@@ -237,6 +237,23 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
+  it('does not heat a hangar under the wrapper that has no Station card', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-hangar-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const hangar = path.join(workspace, 'repos', 'clearing');
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      mkdirSync(path.join(hangar, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(hangar, '.xray', 'state', 'STATION.md'), '# leftover hangar\n');
+      const roots = cursorHeatRoots({ cwd: workspace });
+      expect(roots).toEqual([path.resolve(mill)]);
+      expect(roots).not.toContain(path.resolve(hangar));
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   it('skips a leftover wrapper Station card and heats the Read mill path', () => {
     const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-leftover-'));
     const mill = path.join(workspace, 'repos', 'xray');
