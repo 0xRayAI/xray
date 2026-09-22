@@ -58,7 +58,6 @@ async function main() {
     const ctx = cursorToolContext(event);
     toolName = ctx.toolName;
     const { content, cmd, toolInput } = ctx;
-    const sessionId = cursorSessionId(event);
 
     const gateBlock = evaluatePreToolGate(toolName, toolInput, {
       projectRoot: eventRoot,
