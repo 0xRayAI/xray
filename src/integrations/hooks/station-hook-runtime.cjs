@@ -203,6 +203,21 @@ function stationSafeSignals(names) {
   return out;
 }
 
+/** Keep subject repo-* in the short list the card and working file hold. */
+function preferSubjectHits(names, cap = 8) {
+  if (!Array.isArray(names)) return [];
+  const unique = [];
+  for (const raw of names) {
+    const name = String(raw || "").trim();
+    if (!name || name.toLowerCase().startsWith("bedrock-")) continue;
+    if (unique.includes(name)) continue;
+    unique.push(name);
+  }
+  const subject = unique.filter((name) => name.startsWith("repo-"));
+  const rest = unique.filter((name) => !name.startsWith("repo-"));
+  return [...subject, ...rest].slice(0, cap);
+}
+
 function destSignalsPath(root) {
   return join(root, ".xray", "state", "repertoire", "curated_signals.json");
 }
@@ -534,10 +549,12 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       ? existing.hotSwap
       : null;
   const hotSwap = nextSwap || keptSwap;
-  const intent =
-    clipIntent(extra.intent || extra.prompt || extra.userMessage || extra.user_prompt) ||
-    (typeof existing.intent === "string" ? existing.intent : null);
+  const incomingIntent = clipIntent(
+    extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
+  );
+  const intent = incomingIntent || (typeof existing.intent === "string" ? existing.intent : null);
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
+  const rematch = Boolean(incomingIntent);
   const git = readGitBrief(root);
   const planLine = readPlanLine(root);
   const repertoireResume =
@@ -548,24 +565,25 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
   let matchedSignals = [];
   if (Array.isArray(extra.matchedSignals) && extra.matchedSignals.length) {
-    matchedSignals = extra.matchedSignals
-      .map((name) => String(name || "").trim())
-      .filter((name) => name && !name.toLowerCase().startsWith("bedrock-"))
-      .slice(0, 8);
+    matchedSignals = preferSubjectHits(extra.matchedSignals, 8);
   }
   const priorWorking = readRepertoireWorking(root);
   const destCount = hydrate.destCount || (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
   if (!matchedSignals.length && matchText) {
     if (
+      !rematch &&
       priorWorking &&
       priorWorking.matchText === matchText &&
       priorWorking.destCount === destCount &&
       Array.isArray(priorWorking.matchedSignals) &&
       priorWorking.matchedSignals.length
     ) {
-      matchedSignals = priorWorking.matchedSignals.slice(0, 8);
+      matchedSignals = preferSubjectHits(priorWorking.matchedSignals, 8);
     } else {
-      matchedSignals = matchStationSignalsSync(root, matchText).slice(0, 8);
+      matchedSignals = preferSubjectHits(
+        matchStationSignalsSync(root, rematch && incomingIntent ? incomingIntent : matchText),
+        8,
+      );
     }
   }
   if (!matchedSignals.length && priorWorking) {

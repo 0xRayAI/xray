@@ -368,6 +368,28 @@ describe('station hot-swap', () => {
       );
       expect(working?.opProcNames).not.toContain('repo-clearing');
       expect(heat.repertoireResume).toContain('3 signals');
+      const stacked = applyStationHeat(
+        tmp,
+        'cursor',
+        {
+          intent: 'x402 pay rail',
+          matchedSignals: [
+            'station-survives-the-cut',
+            'live-loop-not-pacer',
+            'peer-wears-without-commands',
+            'same-sess-wear-station',
+            'loop-until-station-done',
+            'workstreams-keep-moving',
+            'cursor-host-no-inject',
+            'station-refresh-this-wake',
+            'repo-clearing',
+          ],
+        },
+        {},
+      );
+      const after = readRepertoireWorking(tmp);
+      expect(after?.matchedSignals).toContain('repo-clearing');
+      expect(stacked.workingLine).toContain('repo-clearing');
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
