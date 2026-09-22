@@ -1,6 +1,7 @@
 /**
  * Station heat — compaction / host-swap card.
- * SSOT remains session-boot.json. STATION.md is the projection the model Reads.
+ * STATION.md is the pickup ticket. session-boot.json is the snapshot.
+ * Heat must not paint leftover boot extras onto the card.
  * Grok ignores SessionStart/UserPromptSubmit stdout; disk + AGENTS.md is the contract.
  * Heat writers merge stock fields; unknown keys and ## Durable / ## Seed survive.
  */
@@ -102,6 +103,63 @@ function readPlanLine(root) {
     }
   }
   return readGitSubject(root);
+}
+
+function isStockTicket(value) {
+  const text = String(value || "").trim().toLowerCase();
+  return !text || text === "(none)" || text === "(none yet)";
+}
+
+function readStationTicketField(root, field) {
+  const md = readExistingStationMarkdown(root);
+  const re = field === "Plan" ? /^Plan:\s*(.*)$/im : /^Intent:\s*(.*)$/im;
+  const match = md.match(re);
+  if (!match) return null;
+  const value = clipIntent(match[1]);
+  if (!value || isStockTicket(value)) return null;
+  return value;
+}
+
+function bootHeadMoved(root, existing) {
+  const live = readGitBrief(root);
+  const bootHead = existing && existing.git && existing.git.head ? String(existing.git.head) : "";
+  return Boolean(live && live.head && bootHead && bootHead !== live.head);
+}
+
+/** Live ticket beats leftover boot. Extra spoken intent still wins. */
+function resolveHeatIntent(root, extra, existing) {
+  const incoming = clipIntent(
+    extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
+  );
+  if (incoming) return { intent: incoming, rematch: true };
+  const card = readStationTicketField(root, "Intent");
+  const pickup = clipIntent(readNotesPickup(root));
+  const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
+  const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
+  if (pickup && cardIsBootEcho && pickup !== bootIntent) {
+    return { intent: pickup, rematch: true };
+  }
+  if (card && !cardIsBootEcho) return { intent: card, rematch: card !== bootIntent };
+  if (pickup && pickup !== bootIntent) return { intent: pickup, rematch: true };
+  if (card) return { intent: card, rematch: false };
+  if (bootIntent) return { intent: bootIntent, rematch: false };
+  const git = readGitSubject(root);
+  return { intent: git, rematch: Boolean(git) };
+}
+
+function resolveHeatPlan(root, extra, existing) {
+  const incoming = clipIntent(extra.plan || extra.planLine);
+  if (incoming) return incoming;
+  const card = readStationTicketField(root, "Plan");
+  const bootPlan = typeof existing.planLine === "string" ? clipIntent(existing.planLine) : null;
+  const live = readPlanLine(root);
+  const cardIsBootEcho = Boolean(card && bootPlan && card === bootPlan);
+  if (card && !cardIsBootEcho) return card;
+  if (bootHeadMoved(root, existing) && bootPlan && live === bootPlan) {
+    return readGitSubject(root) || card || live;
+  }
+  if (card) return card;
+  return live;
 }
 
 function resolveRepertoireProviderModule(root) {
@@ -744,14 +802,12 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       ? existing.hotSwap
       : null;
   const hotSwap = nextSwap || keptSwap;
-  const incomingIntent = clipIntent(
-    extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
-  );
-  const intent = incomingIntent || (typeof existing.intent === "string" ? existing.intent : null);
+  const resolved = resolveHeatIntent(root, extra, existing);
+  const intent = resolved.intent;
+  const rematch = resolved.rematch;
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
-  const rematch = Boolean(incomingIntent);
   const git = readGitBrief(root);
-  const planLine = readPlanLine(root);
+  const planLine = resolveHeatPlan(root, extra, existing);
   const repertoireResume =
     typeof extra.repertoireResume === "string" ? extra.repertoireResume : buildRepertoireResume(root);
   const swapBit = hotSwap ? `hot-swap ${hotSwap.from} → ${hotSwap.to}` : `host ${host}`;
@@ -779,7 +835,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       matchedSignals = preferSubjectHits(priorWorking.matchedSignals, 8);
     } else {
       matchedSignals = preferSubjectHits(
-        matchStationSignalsSync(root, rematch && incomingIntent ? incomingIntent : matchText),
+        matchStationSignalsSync(root, rematch && intent ? intent : matchText),
         8,
       );
     }
@@ -884,6 +940,12 @@ function stationBootNeedsRefresh(existing, root, host) {
   const liveResume = buildRepertoireResume(root);
   if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
   if (stationDurableHoldsNpm(root)) return true;
+  const cardIntent = readStationTicketField(root, "Intent");
+  const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
+  if (cardIntent && bootIntent && cardIntent !== bootIntent) return true;
+  const cardPlan = readStationTicketField(root, "Plan");
+  const bootPlan = typeof existing.planLine === "string" ? clipIntent(existing.planLine) : null;
+  if (cardPlan && bootPlan && cardPlan !== bootPlan) return true;
   return false;
 }
 
@@ -1023,6 +1085,10 @@ module.exports = {
   maybeCaptureSessionOnHeadMove,
   formatWorkingLine,
   applyStationHeat,
+  isStockTicket,
+  readStationTicketField,
+  resolveHeatIntent,
+  resolveHeatPlan,
   extractPreservedStationLines,
   mergeStationMarkdown,
   formatStationMarkdown,

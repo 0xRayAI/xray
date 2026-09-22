@@ -281,7 +281,7 @@ describe('Cursor cloud hooks adapter', () => {
       expect(out.user_message).toContain('event_class=cursor-precompact-synthetic');
       const card = readFileSync(dest, 'utf8');
       expect(card).toContain('Host: cursor');
-      expect(card).not.toContain('Intent: old intent before compact');
+      expect(card).toContain('Intent: old intent before compact');
       for (const line of BEN_KEYS) {
         expect(card).toContain(line);
         expect(card.split(line).length - 1).toBe(1);

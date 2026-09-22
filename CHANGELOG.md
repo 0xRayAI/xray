@@ -29,6 +29,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **OP-PROC reload after compact** — overlay dest names *are* OP-PROC. Heat writes them to `.xray/state/repertoire-working.json` `opProcNames`. Station stays a ticket (count + four working matches). Not a new skill.
 - **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field as if that is the KB. On `LEAD-CADENCE.md` Heads from tails. Not on Station.
 
+### 🐛 Bug Fixes
+- **Station ticket survives heat** — leftover `session-boot` extras (`Subject brain` / Draft #96) no longer overwrite a live Station Intent/Plan. Pickup beats a boot-echo card. HEAD move drops a leftover lead-dev-plan that still echoes boot. Not a new MCP/skill.
+
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.
 - **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog.

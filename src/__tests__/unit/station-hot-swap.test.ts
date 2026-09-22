@@ -199,6 +199,102 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('leftover boot intent loses to NOTES pickup when Station is a boot echo', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-pickup-beats-echo-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Subject brain. Overlay on dest.', 'Plan: Draft #96.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** #101 live memory. Capture then grow. Do not stuff dest.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        { host: 'cursor', intent: 'Subject brain. Overlay on dest.', planLine: 'Draft #96.' },
+      );
+      expect(heat.intent).toMatch(/#101 live memory/);
+      expect(heat.intent).not.toMatch(/Subject brain/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('restored Station ticket beats leftover boot extras', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-card-beats-boot-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        [
+          '# Station',
+          '',
+          'Intent: #101 live memory. Wave 12 cleanup. Do not stuff dest.',
+          'Plan: 4.0.20 live. Dest grew via heat.',
+          '',
+        ].join('\n'),
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        {
+          host: 'cursor',
+          intent: 'Subject brain. Overlay on dest.',
+          planLine: 'Trees on station-vs-repertoire. Heat Station. Draft #96.',
+        },
+      );
+      expect(heat.intent).toContain('#101 live memory');
+      expect(heat.planLine).toContain('4.0.20 live');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('HEAD move drops leftover lead-dev-plan that still echoes boot', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-stale-plan-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+        JSON.stringify({
+          active: true,
+          phases: [
+            {
+              todos: [{ id: 'c11', task: 'Trees on station-vs-repertoire. Heat Station. Draft #96.', status: 'in_progress' }],
+            },
+          ],
+        }),
+      );
+      const firstHead = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: tmp,
+        encoding: 'utf8',
+      }).trim();
+      fs.writeFileSync(path.join(tmp, 'MORE.md'), 'moved\n');
+      execFileSync('git', ['add', 'MORE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'stamp leftover pins'], { cwd: tmp, stdio: 'ignore' });
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        {
+          host: 'cursor',
+          intent: 'Subject brain. Overlay on dest.',
+          planLine: 'Trees on station-vs-repertoire. Heat Station. Draft #96.',
+          git: { branch: 'main', head: firstHead },
+        },
+      );
+      expect(heat.planLine).toBe('stamp leftover pins');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('plan line uses live todos, not a stale description, then git subject', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plan-'));
     try {
