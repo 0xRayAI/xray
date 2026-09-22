@@ -34,6 +34,22 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ---
 
+## [4.0.18] - 2026-09-22
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: wake heat joins bookmark, index, and mind (ad596aae2)
+
+### 🐛 Bug Fixes
+- fix: pin subject hits on wake rematch (65de9d37a)
+- fix: wake match loads 0.2.5 and keeps subject hits (80b61236d)
+
+### 📚 Documentation
+- docs: memory-wake join — BRAIN-003 (1c128e69c)
+
+---
+
 ## [4.0.17] - 2026-09-22
 
 ### 🔄 Changes

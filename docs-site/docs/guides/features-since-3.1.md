@@ -2,6 +2,12 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.18 — Memory wake
+
+- `applyStationHeat` hydrates dest from seed + stack + subject overlays, attaches NOTES pickup, captures sessions on every floor that heats
+- `opProcNames` is factory ∪ stack; `repo-*` stay off. Fresh intent rematches; subject hits pin into the short list
+- Guide: [memory-wake](./memory-wake.md). Station stays a ticket. Do not pin 0.1.8.
+
 ## Unreleased — foundry-plant/0 fasten protocol
 
 - **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill **`@0xray/foundry@0.1.12`**. CLI shims `foundry blip` / `foundry sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.
