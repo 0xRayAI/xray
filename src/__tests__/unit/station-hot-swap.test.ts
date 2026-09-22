@@ -9,7 +9,10 @@ import {
   extractPreservedStationLines,
   formatStationMarkdown,
   mergeStationMarkdown,
+  patternsFromGit,
+  pruneKeywordDest,
   readRepertoireWorking,
+  retainCompactFields,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
@@ -530,7 +533,7 @@ describe('station hot-swap', () => {
     }
   });
 
-  it('wake heat hydrates subject overlay and keeps repo-* off opProc', () => {
+  it('wake heat hydrates stack laws and keeps repo-* off dest', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-memory-wake-'));
     const tmp = path.join(parent, 'xray');
     const repertoire = path.join(parent, 'repertoire');
@@ -571,20 +574,17 @@ describe('station hot-swap', () => {
       );
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toEqual(
-        expect.arrayContaining([
-          'three-subsystem-verifiable-os',
-          'station-survives-the-cut',
-          'repo-clearing',
-        ]),
+        expect.arrayContaining(['three-subsystem-verifiable-os', 'station-survives-the-cut']),
       );
+      expect(names).not.toContain('repo-clearing');
       const working = readRepertoireWorking(tmp);
       expect(working?.pickup).toMatch(/Wake is the memory/);
-      expect(working?.destCount).toBe(3);
+      expect(working?.destCount).toBe(2);
       expect(working?.opProcNames).toEqual(
         expect.arrayContaining(['three-subsystem-verifiable-os', 'station-survives-the-cut']),
       );
       expect(working?.opProcNames).not.toContain('repo-clearing');
-      expect(heat.repertoireResume).toContain('3 signals');
+      expect(heat.repertoireResume).toContain('2 signals');
       const stacked = applyStationHeat(
         tmp,
         'cursor',
@@ -605,11 +605,82 @@ describe('station hot-swap', () => {
         {},
       );
       const after = readRepertoireWorking(tmp);
-      expect(after?.matchedSignals).toContain('repo-clearing');
-      expect(stacked.workingLine).toContain('repo-clearing');
+      expect(after?.matchedSignals).toContain('station-survives-the-cut');
+      expect(after?.matchedSignals).not.toContain('repo-clearing');
+      expect(stacked.workingLine).toContain('station-survives-the-cut');
+      expect(stacked.workingLine).not.toContain('repo-clearing');
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
+  });
+
+  it('patternsFromGit observes existing laws and does not mint commit slugs', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-observe-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'station-survives-the-cut', definition: 'Compact card holds.' }],
+        }),
+      );
+      const patterns = patternsFromGit(tmp, [
+        { message: 'fix: station survives the cut after compact' },
+        { message: 'chore: stamp package-lock to 4.0.20' },
+        { message: 'feat: repo-clearing hangar rail' },
+      ]);
+      expect(patterns.map((row: { name: string }) => row.name)).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pruneKeywordDest drops repo-* and git-slug keywords', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-prune-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+      fs.writeFileSync(
+        dest,
+        JSON.stringify({
+          signals: [
+            { name: 'station-survives-the-cut', definition: 'Compact card holds.' },
+            { name: 'repo-xray', definition: 'Mill checkout.' },
+            { name: 'stamp-package-lock-to-4-0-20', definition: 'Lockfile cut.' },
+            {
+              name: 'cleanup-is-memory',
+              definition: 'Field-observed domain primitive from diary heat.',
+            },
+          ],
+        }),
+      );
+      const pruned = pruneKeywordDest(tmp);
+      expect(pruned.removed).toBe(3);
+      expect(pruned.kept).toBe(1);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('retainCompactFields keeps pre_compact across later lead-heat', () => {
+    expect(
+      retainCompactFields(
+        { hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' },
+        { hookEvent: 'lead-heat', host: 'cursor' },
+      ),
+    ).toEqual({ hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' });
+    expect(
+      retainCompactFields(
+        { hookEvent: 'pre_compact' },
+        { hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' },
+      ),
+    ).toEqual({ hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' });
+    expect(retainCompactFields({}, { hookEvent: 'lead-heat' })).toEqual({});
   });
 
   it('writeStationMarkdown is the Read target', () => {

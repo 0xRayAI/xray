@@ -118,7 +118,6 @@ async function growDest(projectRoot) {
       ensureDestShape(destSignals);
       const before = service.signalsManager.load().signals.length;
       const sessions = service.syncXrayMemory();
-      const siblings = service.syncWorkspaceRepos();
       const kernel =
         typeof pathsMod.collectKernelDiaryText === 'function'
           ? pathsMod.collectKernelDiaryText(projectRoot)
@@ -134,7 +133,7 @@ async function growDest(projectRoot) {
           before,
           after,
           imported: sessions.imported,
-          observed: siblings.observed,
+          observed: 0,
           heated: diary.heated,
         })}\n`,
       );

@@ -4,8 +4,8 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 
 ## 4.0.18 — Memory wake
 
-- `applyStationHeat` hydrates dest from seed + stack + subject overlays, attaches NOTES pickup, captures sessions on every floor that heats
-- `opProcNames` is factory ∪ stack; `repo-*` stay off. Fresh intent rematches; subject hits pin into the short list
+- `applyStationHeat` hydrates dest from seed + stack, attaches NOTES pickup, captures sessions on every floor that heats
+- `opProcNames` is factory ∪ stack; `repo-*` and git slugs stay off dest. Fresh intent rematches; law hits pin into the short list
 - Guide: [memory-wake](./memory-wake.md). Station stays a ticket. Do not pin 0.1.8.
 
 ## Unreleased — foundry-plant/0 fasten protocol

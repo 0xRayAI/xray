@@ -94,12 +94,11 @@ USER / TOOL
     │                       └─ repertoire-working.json    (opProcNames if dest)
     │
     ├─[t0b] capture then grow (dest ON) ──► dest.lock ──► RepertoireService
-    │                 ├─ session-*.json from THIS wake's git (commit slugs + structural)
+    │                 ├─ session-*.json from THIS wake's git (observe existing laws only)
     │                 ├─ syncXrayMemory (session-*.json)
-    │                 ├─ syncWorkspaceRepos (sibling repo-* names)
-    │                 ├─ heatKernelDiary + NOTES / CLEANSE list
+    │                 ├─ heatKernelDiary + NOTES / CLEANSE list (then prune keywords)
     │                 ├─ Cursor / Grok / Hermes / OpenClaw + asides share one dest
-    │                 └─ Groover field stays off
+    │                 └─ Groover field stays off — no sibling repo-* mint
     │
     ├─[t1] work ──► kernel gather (best-effort, often COLD)
     │                 ├─ session-capture → docs/inference/session-*.json

@@ -519,6 +519,49 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
+  it('host preCompact then HEAD-moving preToolUse still holds pre_compact', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-compact-hold-'));
+    try {
+      plantFeatures(tmp);
+      gitInit(tmp);
+      const dest = seedBenStation(tmp);
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        'ts=2026-09-15T09:30:49+00:00 event=preCompact cwd=/tmp node=/exec-daemon/node\n',
+      );
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 231344,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      writeFileSync(path.join(tmp, 'MOVE.md'), 'head moved after compact\n');
+      execFileSync('git', ['add', 'MOVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'stamp-package-lock-to-4-0-20'], { cwd: tmp, stdio: 'ignore' });
+      expect(
+        cursorBootNeedsRefresh(
+          JSON.parse(readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8')),
+          tmp,
+        ),
+      ).toBe(true);
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'README.md' }, cwd: tmp }, tmp);
+      const card = readFileSync(dest, 'utf8');
+      expect(card).toContain('Compact: preCompact Y (count=1)');
+      expect(card).toMatch(/Working: last pre_compact/);
+      const boot = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+      ) as { hookEvent?: string; event_class?: string };
+      expect(boot.hookEvent).toBe('pre_compact');
+      expect(boot.event_class).toBe('cursor-host-precompact');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('afterFileEdit boots Station and emits empty object', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-edit-'));
     try {
@@ -695,7 +738,10 @@ describe('Cursor cloud hooks adapter', () => {
       const latest = JSON.parse(readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8'));
       expect(latest.approaches.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
       const patternNames = (latest.patterns || []).map((row: { name?: string }) => row.name);
-      expect(patternNames.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
+      expect(patternNames).not.toContain('compact-rekey-from-disk');
+      expect(patternNames.every((name: string | undefined) => !String(name).startsWith('repo-'))).toBe(
+        true,
+      );
       const firstCount = files.length;
       runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
       const again = readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));

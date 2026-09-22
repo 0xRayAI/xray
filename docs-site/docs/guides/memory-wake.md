@@ -6,14 +6,14 @@ Chat dies. Bookmark, index, and mind already exist. They do not meet on wake. Th
 
 ## Thesis
 
-`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.5` (seed + stack + subject overlays). Heat copies those onto the project list. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
+`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.5` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
 
 ## Three areas → pieces that already exist
 
 | Area | Job | Already there | Broken join |
 |---|---|---|---|
 | **Bookmark** | Survive as a role | `STATION.md` ← `session-boot.json` ← `applyStationHeat` | Intent stays a ship receipt. Match first-wins on the same Intent. |
-| **Index** | Named long-term store | dest + factory/stack/subject overlays + `MemoryRoutingProvider` + `ingestFeedback` | Heat never hydrates. This mill dest can sit at 40 with zero `repo-*`. `readOpProcNames` dumps every dest name. |
+| **Index** | Named long-term store | dest + factory/stack laws + `MemoryRoutingProvider` + `ingestFeedback` | Dest is a judgment index, not a hangar keyword store. `repo-*` and git slugs prune. `readOpProcNames` is factory ∪ stack. |
 | **Mind** | This-wake thought + traces | NOTES pickup · `session-*.json` · `heatKernelDiary` · `XraySessionIngester` · survive-compact Reads | Capture is Cursor HEAD-move only. Ingest runs when `RepertoireService` constructs — hooks do not construct it. `repertoire-working.json` goes stale. Bodies stop at Station. |
 
 Groover is not the producer. Do not pin 0.1.8. Do not dump 145. Do not paste OP-PROC onto Station.
@@ -47,7 +47,7 @@ Hold without thickening the Grok exo: do not inject dest into the system prompt.
 
 ## Done when
 
-- After compact on Cursor: Station Read → NOTES pickup equals `working.pickup`; xray dest has the subject `repo-*` map; `getTaskConfidence("x402")` hits `repo-clearing`
+- After compact on Cursor: Station Read → NOTES pickup equals `working.pickup`; dest stays laws (no `repo-*`); compact `hookEvent` holds across later preToolUse
 - After Grok session-start: same working file; a `session-*.json` can appear without Cursor
 - `reloadOpProc` names ≠ all dest names
 - Dummy / same critic: wake without a command novel and state the pickup from disk

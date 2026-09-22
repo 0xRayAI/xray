@@ -258,32 +258,44 @@ function readRepertoireWorking(root) {
   }
 }
 
+function isKeywordDestName(name) {
+  const n = String(name || "").trim().toLowerCase();
+  if (!n) return true;
+  if (n.startsWith("repo-") || n.startsWith("bedrock-")) return true;
+  if (n === "test-expansion" || n === "dead-code-removal" || n === "station-heat") return true;
+  if (/^release-v?\d/.test(n) || /^stamp-/.test(n) || /^drop-stale-/.test(n)) return true;
+  if (/\b4-0-\d{2}\b/.test(n) && /npm|package-lock|release|stamp/.test(n)) return true;
+  return false;
+}
+
+function isGenericFieldObservedSignal(signal) {
+  const definition = String((signal && signal.definition) || "");
+  return /field-observed domain primitive/i.test(definition);
+}
+
 function stationSafeSignals(names) {
   if (!Array.isArray(names)) return [];
   const out = [];
   for (const raw of names) {
     const name = String(raw || "").trim();
-    if (!name) continue;
-    if (name.toLowerCase().startsWith("bedrock-")) continue;
+    if (!name || isKeywordDestName(name)) continue;
     out.push(name);
     if (out.length >= 4) break;
   }
   return out;
 }
 
-/** Keep subject repo-* in the short list the card and working file hold. */
-function preferSubjectHits(names, cap = 8) {
+/** Laws only. Hangar repo-* and git-slug keywords stay off the card. */
+function preferLawHits(names, cap = 8) {
   if (!Array.isArray(names)) return [];
   const unique = [];
   for (const raw of names) {
     const name = String(raw || "").trim();
-    if (!name || name.toLowerCase().startsWith("bedrock-")) continue;
+    if (!name || isKeywordDestName(name)) continue;
     if (unique.includes(name)) continue;
     unique.push(name);
   }
-  const subject = unique.filter((name) => name.startsWith("repo-"));
-  const rest = unique.filter((name) => !name.startsWith("repo-"));
-  return [...subject, ...rest].slice(0, cap);
+  return unique.slice(0, cap);
 }
 
 function destSignalsPath(root) {
@@ -337,6 +349,52 @@ function signalNameSet(filePath) {
   return new Set(readSignalRecords(filePath).map((signal) => String(signal.name).trim()));
 }
 
+function destLawNameSet(root) {
+  const names = new Set();
+  for (const fileName of ["curated_signals.json", "stack-overlay.json"]) {
+    for (const name of signalNameSet(repertoireDataFile(root, fileName))) {
+      if (!isKeywordDestName(name)) names.add(name);
+    }
+  }
+  for (const name of signalNameSet(destSignalsPath(root))) {
+    if (!isKeywordDestName(name)) names.add(name);
+  }
+  return names;
+}
+
+/** Drop hangar repo-* and git-slug keywords. Keep factory + stack laws. */
+function pruneKeywordDest(root) {
+  const dest = destSignalsPath(root);
+  if (!dest || !existsSync(dest)) return { removed: 0, kept: 0 };
+  let data;
+  try {
+    data = JSON.parse(readFileSync(dest, "utf8"));
+  } catch {
+    return { removed: 0, kept: 0 };
+  }
+  if (!Array.isArray(data.signals)) return { removed: 0, kept: 0 };
+  const factory = signalNameSet(repertoireDataFile(root, "curated_signals.json"));
+  const stack = signalNameSet(repertoireDataFile(root, "stack-overlay.json"));
+  const kept = [];
+  let removed = 0;
+  for (const signal of data.signals) {
+    const name = String((signal && signal.name) || "").trim();
+    if (!name) continue;
+    const protectedLaw = factory.has(name) || stack.has(name);
+    if (!protectedLaw && (isKeywordDestName(name) || isGenericFieldObservedSignal(signal))) {
+      removed += 1;
+      continue;
+    }
+    kept.push(signal);
+  }
+  if (removed) {
+    data.signals = kept;
+    data.last_updated = new Date().toISOString();
+    writeFileSync(dest, `${JSON.stringify(data, null, 2)}\n`);
+  }
+  return { removed, kept: kept.length };
+}
+
 function mergeMissingSignals(destPath, incoming) {
   if (!incoming.length || !existsSync(destPath)) return 0;
   let data;
@@ -366,7 +424,7 @@ function mergeMissingSignals(destPath, incoming) {
   return added;
 }
 
-/** Hydrate project dest from seed + stack + subject overlays. Never write the tarball. */
+/** Hydrate project dest from seed + stack. Subject repo-* stay off dest. */
 function hydrateDestOnWake(root) {
   const dest = destSignalsPath(root);
   const seed = repertoireDataFile(root, "curated_signals.json");
@@ -375,10 +433,12 @@ function hydrateDestOnWake(root) {
     copyFileSync(seed, dest);
   }
   if (!existsSync(dest)) return { dest: null, added: 0, destCount: 0 };
-  const added =
-    mergeMissingSignals(dest, readSignalRecords(repertoireDataFile(root, "stack-overlay.json"))) +
-    mergeMissingSignals(dest, readSignalRecords(repertoireDataFile(root, "subject-overlay.json")));
-  return { dest, added, destCount: countCuratedSignals(dest) || 0 };
+  const added = mergeMissingSignals(
+    dest,
+    readSignalRecords(repertoireDataFile(root, "stack-overlay.json")),
+  );
+  const pruned = pruneKeywordDest(root);
+  return { dest, added, destCount: countCuratedSignals(dest) || 0, pruned };
 }
 
 function readNotesPickup(root) {
@@ -529,42 +589,18 @@ function stripConventionalSubject(message) {
     .trim();
 }
 
-/** Real git → dest names. Not a leftover catalog. Kernel structural names when the diff shows them. */
-function patternsFromGit(root, commits, span) {
+/** Observe existing laws mentioned in git. Do not mint commit slugs. */
+function patternsFromGit(root, commits) {
+  const text = (Array.isArray(commits) ? commits : [])
+    .map((row) => String((row && row.message) || ""))
+    .join("\n")
+    .toLowerCase();
   const patterns = [];
-  const seen = new Set();
-  const add = (raw, confidence, description) => {
-    const slug = slugPrimitiveName(raw);
-    if (!slug || seen.has(slug)) return;
-    seen.add(slug);
-    patterns.push({ name: slug, confidence, description: description || String(raw) });
-  };
-  for (const row of commits) {
-    add(stripConventionalSubject(row.message), 0.55, row.message);
-  }
-  try {
-    const from = span && span.from ? String(span.from) : "";
-    const to = span && span.to ? String(span.to) : "HEAD";
-    if (from && !from.startsWith("HEAD~")) {
-      const out = execFileSync("git", ["diff", "--name-status", `${from}..${to}`], {
-        cwd: root,
-        encoding: "utf8",
-        timeout: 4000,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-      const lines = String(out).split("\n").filter(Boolean);
-      if (lines.some((line) => /\.(test|spec)\.[jt]sx?|__tests__|\/tests\//.test(line))) {
-        add("test-expansion", 0.55, "git test files");
-      }
-      if (lines.some((line) => /^D[\t ]/.test(line))) {
-        add("dead-code-removal", 0.55, "git deletions");
-      }
-      if (lines.some((line) => /hooks\/station|session-capture|semantic-patterns/.test(line))) {
-        add("station-heat", 0.55, "heat path");
-      }
+  if (!text.trim()) return patterns;
+  for (const name of destLawNameSet(root)) {
+    if (text.includes(name) || text.includes(name.replace(/-/g, " "))) {
+      patterns.push({ name, confidence: 0.7, description: "observe existing law from git" });
     }
-  } catch {
-    /* structural names are extra — commit slugs still grow dest */
   }
   return patterns;
 }
@@ -717,7 +753,9 @@ function growDestOnWake(root) {
     });
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
-    return parsed && typeof parsed === "object" ? parsed : null;
+    const pruned = pruneKeywordDest(root);
+    if (!parsed || typeof parsed !== "object") return { pruned };
+    return { ...parsed, pruned: pruned.removed, destCount: countCuratedSignals(destSignalsPath(root)) };
   } catch {
     return null;
   }
@@ -746,6 +784,31 @@ function ingestCompactFeedbackSync(root, sessionId, hookEvent, signals) {
 function isCompactHook(extra) {
   const hook = String(extra.hookEvent || extra.source || "");
   return /compact/i.test(hook);
+}
+
+function isCompactEventName(value) {
+  return /compact/i.test(String(value || ""));
+}
+
+/** Keep Compact boot fields after later preToolUse / HEAD rewrite. */
+function retainCompactFields(existing, extra = {}) {
+  const incomingHook = extra && (extra.hookEvent || extra.source || extra.hook);
+  if (isCompactEventName(incomingHook) || (extra && extra.event_class)) {
+    const kept = {};
+    if (extra.hookEvent) kept.hookEvent = extra.hookEvent;
+    if (extra.conversation_id) kept.conversation_id = extra.conversation_id;
+    if (extra.generation_id) kept.generation_id = extra.generation_id;
+    if (extra.event_class) kept.event_class = extra.event_class;
+    return kept;
+  }
+  const prior = existing && typeof existing === "object" ? existing : {};
+  if (!isCompactEventName(prior.hookEvent) && !prior.event_class) return {};
+  const kept = {};
+  if (prior.hookEvent) kept.hookEvent = prior.hookEvent;
+  if (prior.conversation_id) kept.conversation_id = prior.conversation_id;
+  if (prior.generation_id) kept.generation_id = prior.generation_id;
+  if (prior.event_class) kept.event_class = prior.event_class;
+  return kept;
 }
 
 function formatWorkingLine(working) {
@@ -827,7 +890,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
   let matchedSignals = [];
   if (Array.isArray(extra.matchedSignals) && extra.matchedSignals.length) {
-    matchedSignals = preferSubjectHits(extra.matchedSignals, 8);
+    matchedSignals = preferLawHits(extra.matchedSignals, 8);
   }
   const priorWorking = readRepertoireWorking(root);
   const destCount =
@@ -843,9 +906,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       Array.isArray(priorWorking.matchedSignals) &&
       priorWorking.matchedSignals.length
     ) {
-      matchedSignals = preferSubjectHits(priorWorking.matchedSignals, 8);
+      matchedSignals = preferLawHits(priorWorking.matchedSignals, 8);
     } else {
-      matchedSignals = preferSubjectHits(
+      matchedSignals = preferLawHits(
         matchStationSignalsSync(root, rematch && intent ? intent : matchText),
         8,
       );
@@ -854,16 +917,18 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (!matchedSignals.length && priorWorking) {
     matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
   }
+  const compactHold = retainCompactFields(existing, extra);
+  const nextHook = compactHold.hookEvent || extra.hookEvent || extra.source || null;
   const workingSnapshot = {
     host,
     intent,
     git,
     hotSwap,
-    hookEvent: extra.hookEvent || extra.source || null,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
     repertoireResume,
     destCount,
   };
+  if (nextHook) workingSnapshot.hookEvent = nextHook;
   if (pickup) workingSnapshot.pickup = pickup;
   if (matchText) workingSnapshot.matchText = matchText;
   if (captured) workingSnapshot.sessionCapture = captured;
@@ -905,6 +970,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     repertoireResume,
     workingLine,
     stationLine,
+    ...compactHold,
   };
 }
 
@@ -1107,4 +1173,9 @@ module.exports = {
   isHoldNpmLine,
   stationDurableHoldsNpm,
   stationBootNeedsRefresh,
+  isKeywordDestName,
+  pruneKeywordDest,
+  preferLawHits,
+  retainCompactFields,
+  destLawNameSet,
 };
