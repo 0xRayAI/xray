@@ -944,7 +944,6 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
-  const working = persistRepertoireWorking(root, workingSnapshot);
   const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
   if (
     !memoryOff &&
@@ -958,6 +957,11 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       matchedSignals,
     );
   }
+  if (!memoryOff) {
+    const latePrune = pruneKeywordDest(root);
+    if (latePrune.kept) workingSnapshot.destCount = latePrune.kept;
+  }
+  const working = persistRepertoireWorking(root, workingSnapshot);
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
   const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;

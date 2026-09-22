@@ -382,7 +382,7 @@ describe('station hot-swap', () => {
     }
   });
 
-  it('heat grows the project copy from real git commits when the organ is worn', () => {
+  it('heat grows stack laws from git observe and does not mint commit slugs', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-grow-'));
     const tmp = path.join(parent, 'xray');
     const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
@@ -418,20 +418,22 @@ describe('station hot-swap', () => {
       );
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toContain('three-subsystem-verifiable-os');
-      expect(names).toContain('live-context-memory');
-      expect(names).toContain('parallel-floor-heat');
+      expect(names).not.toContain('live-context-memory');
+      expect(names).not.toContain('parallel-floor-heat');
+      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
       const session = JSON.parse(
         fs.readFileSync(path.join(tmp, 'docs', 'inference', 'latest-session.json'), 'utf8'),
       );
       const patternNames = (session.patterns as { name: string }[]).map((row) => row.name);
-      expect(patternNames).toEqual(expect.arrayContaining(['live-context-memory', 'parallel-floor-heat']));
+      expect(patternNames).not.toContain('live-context-memory');
+      expect(patternNames).not.toContain('parallel-floor-heat');
       const working = readRepertoireWorking(tmp);
       expect(working?.grow).toEqual(
         expect.objectContaining({
           after: expect.any(Number),
         }),
       );
-      expect(Number(working?.grow && 'after' in working.grow ? working.grow.after : 0)).toBeGreaterThan(1);
+      expect(Number(working?.grow && 'after' in working.grow ? working.grow.after : 0)).toBeGreaterThan(0);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
@@ -496,7 +498,8 @@ describe('station hot-swap', () => {
       const dest = JSON.parse(destRaw);
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toContain('three-subsystem-verifiable-os');
-      expect(names).toContain('live-context-memory');
+      expect(names).not.toContain('live-context-memory');
+      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
       expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'dest.lock'))).toBe(false);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
