@@ -68,27 +68,27 @@ async function main() {
       host: 'cursor',
     });
     if (!gateBlock.allow) {
-      finish(eventRoot, 'deny', gateBlock.reason, gateBlock.hint, toolName, { gate: gateBlock.gate });
+      finish(gateRoot, 'deny', gateBlock.reason, gateBlock.hint, toolName, { gate: gateBlock.gate });
     }
 
     if (isWriteTool(toolName) && content) {
       const extraBlock = checkCodexPatterns(content, { terms: [11, 29] });
-      if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
+      if (extraBlock) finish(gateRoot, 'deny', extraBlock, null, toolName);
     }
 
     if (isShellTool(toolName) && cmd) {
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+      if (testHint) finish(gateRoot, 'allow', null, testHint, toolName);
     }
 
     if (gateBlock.reason) {
-      finish(eventRoot, 'allow', gateBlock.reason, gateBlock.hint, toolName, {
+      finish(gateRoot, 'allow', gateBlock.reason, gateBlock.hint, toolName, {
         gate: gateBlock.gate,
         warn: true,
       });
     }
 
-    finish(eventRoot, 'allow', null, null, toolName);
+    finish(gateRoot, 'allow', null, null, toolName);
   } catch (err) {
     appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,

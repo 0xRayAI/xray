@@ -9,8 +9,8 @@ Repertoire MCP is optional. Station + gates work without a full memory-routing r
 1. Commit `.cursor/hooks.json` at the **project root** (this file, not `~/.cursor/hooks.json`).
 2. Cursor Cloud Agent clones the repo and loads **project** hooks. Desktop Agent Chat does the same when the folder is the workspace.
 3. Hook names are camelCase: `preToolUse`, `preCompact`, `afterFileEdit`, plus Cloud `beforeShellExecution` / `beforeReadFile`. Command is a **relative** `.cursor/hooks/*.sh` — Cloud execs argv[0] without a shell. Do not put `XRAY_AI_PATH=` in `hooks.json`. Stdin is JSON; stdout is JSON.
-4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it. A multi-repo Cloud wrapper (`/agent` with `repos/xray`) is not a dest heat root. Dest `EACCES` fail-opens — a wired hook must not deny every tool.
-5. `install-bridges` also fastens the daemon workspace root when it can see `repos/xray` above the checkout. Command stays a relative `.cursor/hooks/*.sh`.
+4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it. A multi-repo Cloud wrapper (`/agent` with `repos/xray`) is not a dest heat root, even if a leftover wrapper card exists. Heat the mill under `repos/` and the Read path. Dest `EACCES` fail-opens — a wired hook must not deny every tool.
+5. `install-bridges` also fastens the daemon workspace root when it can see `repos/xray` above the checkout, then pokes local `ReloadAgentSkills` so a mid-session wear binds this daemon. Command stays a relative `.cursor/hooks/*.sh`.
 6. `preCompact` is observational (cannot block). It merges Station (stock heat updates; ticket / seed / Durable / unfinished keys stay).
 
 Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. `xray-cloud-hook.sh` finds mill JS at `XRAY_AI_PATH`, `../xray`, or `node_modules/0xray` (dist then src). This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`.

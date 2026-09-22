@@ -118,9 +118,37 @@ export function isHeatRootWritable(root) {
 export function shouldHeatRoot(root) {
   if (!root) return false;
   const resolved = path.resolve(String(root));
-  if (heatRootHasCard(resolved)) return isHeatRootWritable(resolved);
   if (isCursorWorkspaceWrapper(resolved)) return false;
+  if (heatRootHasCard(resolved)) return isHeatRootWritable(resolved);
   return isHeatRootWritable(resolved);
+}
+
+export function millRootFromToolPath(filePath) {
+  if (!filePath) return null;
+  const resolved = path.resolve(String(filePath));
+  const marker = `${path.sep}repos${path.sep}`;
+  const idx = resolved.indexOf(marker);
+  if (idx === -1) return null;
+  const after = resolved.slice(idx + marker.length);
+  const repo = after.split(path.sep)[0];
+  if (!repo) return null;
+  return resolved.slice(0, idx + marker.length + repo.length);
+}
+
+function addMillCardsUnderWrapper(out, seen, wrapper) {
+  if (!wrapper || !isCursorWorkspaceWrapper(wrapper)) return;
+  const repos = path.join(path.resolve(String(wrapper)), 'repos');
+  let names = [];
+  try {
+    names = fs.readdirSync(repos);
+  } catch {
+    names = ['xray', 'repertoire'];
+  }
+  for (const name of names) {
+    if (!name || name.startsWith('.')) continue;
+    const mill = path.join(repos, name);
+    if (shouldHeatRoot(mill)) addHeatRoot(out, seen, mill);
+  }
 }
 
 /** Every live context that already has a Station card — cwd plus mill when they differ. */
@@ -138,17 +166,22 @@ export function cursorHeatRoots(event = {}) {
   candidates.push(process.env.CURSOR_PROJECT_DIR);
   for (const value of candidates) {
     if (shouldHeatRoot(value)) addHeatRoot(out, seen, value);
+    addMillCardsUnderWrapper(out, seen, value);
   }
-  const mill = process.env.XRAY_AI_PATH;
+  const mill = process.env.XRAY_AI_PATH || process.env.XRAY_ROOT;
   if (mill) {
     const resolved = path.resolve(String(mill));
-    if (heatRootHasCard(resolved) && isHeatRootWritable(resolved)) {
-      addHeatRoot(out, seen, resolved);
-    }
+    if (shouldHeatRoot(resolved)) addHeatRoot(out, seen, resolved);
+  }
+  const ctx = cursorToolContext(event);
+  for (const filePath of ctx.paths) {
+    const fromPath = millRootFromToolPath(filePath);
+    if (shouldHeatRoot(fromPath)) addHeatRoot(out, seen, fromPath);
   }
   if (out.length === 0) {
     const fallback = cursorWorkspaceRoot(event);
     if (shouldHeatRoot(fallback)) addHeatRoot(out, seen, fallback);
+    addMillCardsUnderWrapper(out, seen, fallback);
   }
   return out;
 }

@@ -10,6 +10,7 @@ const {
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
   installCursorBridge,
+  parseExecDaemonCmdline,
   resolveCursorHooksTemplate,
   resolveCursorWorkspaceRoot,
   CURSOR_HOOK_SCRIPTS,
@@ -390,6 +391,19 @@ describe("install-bridges cursor wear", () => {
     const real = resolveCursorHooksTemplate(process.cwd());
     expect(real).toBeTruthy();
     expect(fs.existsSync(real as string)).toBe(true);
+  });
+
+  it("parses a local exec-daemon cmdline without needing the live process", () => {
+    const parsed = parseExecDaemonCmdline([
+      "node",
+      "/exec-daemon/index.js",
+      "--port",
+      "26053",
+      "--auth-token",
+      "test-token",
+    ]);
+    expect(parsed).toEqual({ port: "26053", token: "test-token" });
+    expect(parseExecDaemonCmdline(["node", "other.js", "--port", "1"])).toBeNull();
   });
 
   it("fastens the multi-repo Cloud workspace root as well as the consumer checkout", () => {

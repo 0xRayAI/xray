@@ -9,6 +9,7 @@ import {
   cursorBootNeedsRefresh,
   cursorHeatRoots,
   isCursorWorkspaceWrapper,
+  millRootFromToolPath,
   shouldHeatRoot,
 } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
 import { heatLiveMemory } from '../../integrations/hooks/station-hook-runtime.mjs';
@@ -223,7 +224,7 @@ describe('Cursor cloud hooks adapter', () => {
       mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
       writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
       writeFileSync(path.join(mill, '.xray', 'features.json'), '{}\n');
-      process.env.XRAY_AI_PATH = mill;
+      delete process.env.XRAY_AI_PATH;
       expect(isCursorWorkspaceWrapper(workspace)).toBe(true);
       expect(shouldHeatRoot(workspace)).toBe(false);
       const roots = cursorHeatRoots({ cwd: workspace });
@@ -232,6 +233,30 @@ describe('Cursor cloud hooks adapter', () => {
     } finally {
       if (prev === undefined) delete process.env.XRAY_AI_PATH;
       else process.env.XRAY_AI_PATH = prev;
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('skips a leftover wrapper Station card and heats the Read mill path', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-leftover-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    try {
+      mkdirSync(path.join(workspace, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(workspace, '.xray', 'state', 'STATION.md'), '# leftover wrapper\n');
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      expect(shouldHeatRoot(workspace)).toBe(false);
+      expect(millRootFromToolPath(path.join(mill, '.xray', 'state', 'STATION.md'))).toBe(
+        path.resolve(mill),
+      );
+      const roots = cursorHeatRoots({
+        cwd: workspace,
+        tool_name: 'Read',
+        tool_input: { path: path.join(mill, '.xray', 'state', 'STATION.md') },
+      });
+      expect(roots).not.toContain(path.resolve(workspace));
+      expect(roots).toContain(path.resolve(mill));
+    } finally {
       rmSync(workspace, { recursive: true, force: true });
     }
   });

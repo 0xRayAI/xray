@@ -7,7 +7,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const { execFileSync, execSync } = require("child_process");
 const {
   wantsCostume,
   isIsolatedHome,
@@ -871,12 +871,107 @@ function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
  * Cloud execs argv[0] without a shell — leftover `XRAY_AI_PATH=` one-liners never start.
  * Also fasten the daemon workspace root on multi-repo Cloud seats.
  */
+function parseExecDaemonCmdline(parts) {
+  if (!Array.isArray(parts) || parts.length === 0) return null;
+  const joined = parts.join(" ");
+  if (!joined.includes("exec-daemon")) return null;
+  let port = "";
+  let token = "";
+  for (let i = 0; i < parts.length; i += 1) {
+    const arg = parts[i];
+    if (arg === "--port" || arg === "-p") port = parts[i + 1] || "";
+    if (arg === "--auth-token" || arg === "--authToken") token = parts[i + 1] || "";
+    if (typeof arg === "string" && arg.startsWith("--port=")) port = arg.slice("--port=".length);
+    if (typeof arg === "string" && arg.startsWith("--auth-token=")) {
+      token = arg.slice("--auth-token=".length);
+    }
+  }
+  if (!port || !token) return null;
+  return { port: String(port), token: String(token) };
+}
+
+function findLocalExecDaemon() {
+  let names;
+  try {
+    names = fs.readdirSync("/proc");
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    if (!/^\d+$/.test(name)) continue;
+    let parts;
+    try {
+      parts = fs.readFileSync(path.join("/proc", name, "cmdline"), "utf8").split("\0");
+    } catch {
+      continue;
+    }
+    const parsed = parseExecDaemonCmdline(parts);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+function reloadCursorHostHooks(log) {
+  const write =
+    typeof log === "function"
+      ? log
+      : () => {
+          /* noop */
+        };
+  try {
+    const daemon = findLocalExecDaemon();
+    if (!daemon) {
+      write("cursor-bridge", "host reload skipped", "info", { reason: "no-local-daemon" });
+      return false;
+    }
+    const script = [
+      'const http = require("http");',
+      "const req = http.request({",
+      '  host: "127.0.0.1",',
+      "  port: process.env.XRAY_RELOAD_PORT,",
+      '  path: "/agent.v1.ControlService/ReloadAgentSkills",',
+      '  method: "POST",',
+      "  headers: {",
+      '    "content-type": "application/json",',
+      '    authorization: "Bearer " + process.env.XRAY_RELOAD_TOKEN,',
+      '    "connect-protocol-version": "1",',
+      "  },",
+      "}, (res) => { res.resume(); res.on(\"end\", () => process.stdout.write(String(res.statusCode || 0))); });",
+      "req.on(\"error\", () => process.exit(2));",
+      "req.setTimeout(3000, () => { req.destroy(); process.exit(3); });",
+      'req.end("{}");',
+    ].join("\n");
+    const status = execFileSync(process.execPath, ["-e", script], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        XRAY_RELOAD_PORT: String(daemon.port),
+        XRAY_RELOAD_TOKEN: daemon.token,
+      },
+      timeout: 4000,
+    }).trim();
+    const code = Number(status);
+    write("cursor-bridge", "host hooks reloaded", code === 200 ? "info" : "warn", {
+      status: code,
+      port: daemon.port,
+    });
+    return code === 200;
+  } catch (err) {
+    write("cursor-bridge", "host reload skipped", "warn", {
+      error: err && err.message ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
 function installCursorBridge(targetDir, packageRoot, log) {
   const dest = fastenCursorHooksAt(targetDir, packageRoot, log);
   const workspace = resolveCursorWorkspaceRoot(targetDir);
   if (workspace && path.resolve(workspace) !== path.resolve(targetDir)) {
     fastenCursorHooksAt(workspace, packageRoot, log);
   }
+  reloadCursorHostHooks(log);
   return dest;
 }
 
@@ -973,6 +1068,8 @@ module.exports = {
   installFrameworkDogfoodWear,
   wearVendoredRepertoire,
   installCursorBridge,
+  parseExecDaemonCmdline,
+  reloadCursorHostHooks,
   resolveCursorHooksTemplate,
   resolveCursorWorkspaceRoot,
   fastenCursorHooksAt,
