@@ -9,7 +9,7 @@ Dummy: `bc-e5e5c445-3053-5247-bd7d-207915249e2f` — iron-card watcher; resume
 
 ## Cut
 
-Wave 5 housekeeping: stamp `v4-now.md` 4.0.18, archive leftover job/session dumps + unused `scripts/ci` + `test-v2-consumer` + purge-legacy script, mill-detect consumer readiness, cut unused kernel-activation repro. Not D. After cut: Station → NOTES → WATCHER.md.
+Wave 6 housekeeping: unused duplicate e2e runners archived. Live `test-*-e2e.mjs` stay. Organ-isolation HOLD. Not D. After cut: Station → NOTES → WATCHER.md.
 
 Prior ship: `0xray@4.0.18` live. Do not republish.
 

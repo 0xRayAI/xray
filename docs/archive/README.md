@@ -16,5 +16,6 @@ Not the 4.0 wear contract. Live architecture for the suit is `docs-site/docs/arc
 | `scripts/ci/` | Unused v3 CI scanners; live `.github` does not call them |
 | `scripts/test-v2-consumer/` | Unused v2 consumer playbook paces |
 | `scripts/bash/purge-legacy-docs-0xray-v2.sh` | One-off `rm -rf docs/archive` leftover; no callers |
+| `scripts/test/test-*-integration.cjs` + `validate-e2e-full.cjs` + `test-consumer-e2e.mjs` + `test-cjs-mjs-scripts.cjs` | Duplicate runners; live floor tests stay `test-*-e2e.mjs` |
 
 **Kept in `docs/`:** `architecture/governance-model.md` (Dynamo SSOT, 4.0 still uses it), `api/plugin-api.md` (nucleus plugin freeze), `reflections/` (session reflections).
