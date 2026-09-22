@@ -9,6 +9,7 @@ import {
   appendHookActivity,
   buildSessionBootPayload,
   classifyPreCompactEvent,
+  cursorGenerationId,
   cursorHeatRoots,
   cursorSessionId,
   cursorWorkspaceRoot,
@@ -40,6 +41,7 @@ async function main() {
     eventClass = classifyPreCompactEvent(event);
     const eventRoot = cursorWorkspaceRoot(event);
     const sessionId = cursorSessionId(event);
+    const generationId = cursorGenerationId(event);
     const intent = extractIntent(event);
     let bootPath = null;
     let receiptPath = null;
@@ -60,6 +62,13 @@ async function main() {
         hookEvent: 'pre_compact',
         trigger: event.trigger || 'synthetic',
         sessionId,
+        conversation_id: sessionId,
+        generation_id: generationId,
+        is_first_compaction:
+          typeof event.is_first_compaction === 'boolean' ? event.is_first_compaction : null,
+        message_count: typeof event.message_count === 'number' ? event.message_count : null,
+        messages_to_compact:
+          typeof event.messages_to_compact === 'number' ? event.messages_to_compact : null,
         bootPath,
         timestamp: new Date().toISOString(),
       });

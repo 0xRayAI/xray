@@ -67,7 +67,7 @@ MEMORY OS
 GATHER                         STORE                         RETRIEVE
 ──────                         ─────                         ────────
 preToolUse / afterFileEdit  →  session-boot.json          →  Read STATION.md
-preCompact (often misses)   →  STATION.md                 →  same bc, do not cold-start
+preCompact (Cloud: Yes)     →  STATION.md + receipt ids   →  same bc / Task id, resume only
 lead heat (this wake)       →  repertoire-working.json    →  opProcNames if dest on
 storyteller / commits       →  docs/inference/session-*   →  XraySessionIngester
 kernel patterns / routing   →  logs/framework/*           →  health / ingest
@@ -120,8 +120,8 @@ USER / TOOL
 ```
 CONTEXT WINDOW ████████████████░░░░  filling
                     │
-                    ├─ SHOULD fire  preCompact ──► write Station + receipt
-                    │                 (host often SKIPS this)
+                    ├─ DOES fire  preCompact ──► write Station + receipt ids
+                    │                 (Cloud support matrix: Yes. Bind hooks first.)
                     │
                     ▼
               COMPACT  (chat dies)
@@ -130,7 +130,7 @@ CONTEXT WINDOW ████████████████░░░░  fil
               POST  Read disk. Do not reconstruct from summary.
 ```
 
-`preCompact` is observational. It cannot block. Conversation compact on this host often leaves **no** `cursor-precompact.json`. Survival is heat **during** the wake (t0/t2/lead), not a prayer at t-compact.
+`preCompact` is observational. It cannot block or spawn. Official stdout is only `user_message`. The spawn token is the id the host already returned: stdin `conversation_id` (same Cloud `bc-`) and any Task agent id. Resume that id. Do not print an id from the hook and expect a new agent. Survival is still heat **during** the wake (t0/t2/lead) plus the receipt when the host does compact.
 
 ### Post compact (retrieve)
 

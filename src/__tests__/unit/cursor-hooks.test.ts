@@ -439,12 +439,37 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'manual',
           context_usage_percent: 90,
+          conversation_id: 'bc-spawn-id-enough',
+          generation_id: 'gen-resume-1',
+          is_first_compaction: true,
+          message_count: 45,
+          messages_to_compact: 30,
           cwd: tmp,
         },
         tmp,
       );
       const out = JSON.parse(stdout) as { user_message?: string };
       expect(out.user_message).toContain('event_class=cursor-host-precompact');
+      const receipt = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-precompact.json'), 'utf8'),
+      ) as {
+        sessionId: string;
+        conversation_id: string;
+        generation_id: string;
+        is_first_compaction: boolean;
+        message_count: number;
+        messages_to_compact: number;
+      };
+      expect(receipt.sessionId).toBe('bc-spawn-id-enough');
+      expect(receipt.conversation_id).toBe('bc-spawn-id-enough');
+      expect(receipt.generation_id).toBe('gen-resume-1');
+      expect(receipt.is_first_compaction).toBe(true);
+      expect(receipt.message_count).toBe(45);
+      expect(receipt.messages_to_compact).toBe(30);
+      const usage = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
+      ) as { usage: { bcId: string | null } };
+      expect(usage.usage.bcId).toBe('bc-spawn-id-enough');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

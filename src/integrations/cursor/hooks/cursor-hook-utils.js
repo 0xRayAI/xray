@@ -193,6 +193,10 @@ export function cursorSessionId(event = {}) {
   );
 }
 
+export function cursorGenerationId(event = {}) {
+  return event.generation_id || event.generationId || null;
+}
+
 export function cursorToolContext(event = {}) {
   const toolName = event.tool_name || event.toolName || process.env.TOOL_NAME || 'unknown';
   const toolInput = event.tool_input ?? event.toolInput ?? {};
