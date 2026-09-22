@@ -36,6 +36,10 @@ xray/inference/
 .xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
 .xray/state/session-capture-stamp.json
+.xray/state/MEMORY-SEAL.md
+.xray/state/WATCHER.md
+.xray/state/WATCHER-HEARTBEAT.md
+.xray/state/CLEANSE-LIST.md
 
 # 0xRay runtime artifacts
 .opencode/**/*.d.ts

@@ -72,6 +72,8 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 
 Dummy exists to **test `SKILLS.md`**. If a dummy cannot run the worn catalog from disk, the encode failed. Same-sess bodies exist to **keep context** across compact — they wear the suit and hold a Station card. Do not invent a new critic to “get a fresh look.”
 
+The dummy is also the **compact-seal asker**. Question lives on `WATCHER.md`. Seal lives in `.xray/state/MEMORY-SEAL.md`. Watcher never reads the seal. After compact: answer first, then score context-hold vs disk-pickup. Do not put the seal on Station, NOTES, or the timer prompt.
+
 ### Metamorphosis (how an LLM becomes OP-PROC)
 
 Not more bots. Not a command stream. That is the old skin.
