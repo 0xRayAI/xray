@@ -546,7 +546,13 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const intentBit = intent ? `intent: ${intent}` : "intent: (none yet)";
   const gitBit = git ? `git ${git.branch}@${git.head}` : "git: n/a";
   const planBit = planLine ? `plan: ${planLine}` : "plan: (none)";
-  let matchedSignals = stationSafeSignals(extra.matchedSignals);
+  let matchedSignals = [];
+  if (Array.isArray(extra.matchedSignals) && extra.matchedSignals.length) {
+    matchedSignals = extra.matchedSignals
+      .map((name) => String(name || "").trim())
+      .filter((name) => name && !name.toLowerCase().startsWith("bedrock-"))
+      .slice(0, 8);
+  }
   const priorWorking = readRepertoireWorking(root);
   const destCount = hydrate.destCount || (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
   if (!matchedSignals.length && matchText) {
@@ -557,9 +563,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       Array.isArray(priorWorking.matchedSignals) &&
       priorWorking.matchedSignals.length
     ) {
-      matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
+      matchedSignals = priorWorking.matchedSignals.slice(0, 8);
     } else {
-      matchedSignals = stationSafeSignals(matchStationSignalsSync(root, matchText));
+      matchedSignals = matchStationSignalsSync(root, matchText).slice(0, 8);
     }
   }
   if (!matchedSignals.length && priorWorking) {
@@ -578,7 +584,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (pickup) workingSnapshot.pickup = pickup;
   if (matchText) workingSnapshot.matchText = matchText;
   if (captured) workingSnapshot.sessionCapture = captured;
-  if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals;
+  if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const working = persistRepertoireWorking(root, workingSnapshot);
