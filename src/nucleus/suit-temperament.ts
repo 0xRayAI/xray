@@ -181,8 +181,13 @@ export function writeSuitSessionBoot(
 ): string {
   const profile = resolveSuitProfile(loadSuitTemperamentRaw(projectRoot), host);
   const stateDir = path.join(projectRoot, '.xray', 'state');
-  fs.mkdirSync(stateDir, { recursive: true });
   const bootPath = path.join(stateDir, 'session-boot.json');
+  try {
+    fs.mkdirSync(stateDir, { recursive: true });
+  } catch {
+    /* Cloud workspace wrapper is often unwritable — fail open */
+    return bootPath;
+  }
   let existing: Record<string, unknown> = {};
   if (fs.existsSync(bootPath)) {
     try {

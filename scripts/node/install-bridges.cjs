@@ -802,11 +802,45 @@ function fastenCursorHookScripts(targetDir, packageRoot, log) {
 }
 
 /**
- * Fifth wear: project `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`.
- * Cloud execs argv[0] without a shell — leftover `XRAY_AI_PATH=` one-liners never start.
- * Rewrite leftover env-assignment / invoke-probe templates. Keep already-relative events.
+ * Multi-repo Cloud workspaces bind hooks at the daemon cwd (e.g. /agent),
+ * not the primary git checkout. Fasten that root too when it is visible.
  */
-function installCursorBridge(targetDir, packageRoot, log) {
+function resolveCursorWorkspaceRoot(targetDir) {
+  const envRoot = process.env.CURSOR_PROJECT_DIR;
+  if (envRoot) {
+    const resolved = path.resolve(envRoot);
+    if (fs.existsSync(resolved) && resolved !== path.resolve(targetDir)) {
+      return resolved;
+    }
+  }
+  let dir = path.resolve(targetDir);
+  for (let i = 0; i < 6; i += 1) {
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    if (
+      fs.existsSync(path.join(parent, "repos", "xray")) ||
+      fs.existsSync(path.join(parent, "repos", "repertoire"))
+    ) {
+      return parent;
+    }
+    dir = parent;
+  }
+  return null;
+}
+
+function fastenCursorHooksAt(targetDir, packageRoot, log) {
+  try {
+    return fastenCursorHooksAtUnsafe(targetDir, packageRoot, log);
+  } catch (err) {
+    log("cursor-bridge", "workspace fasten skipped", "warn", {
+      target: targetDir,
+      error: err && err.message ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
   const dest = path.join(targetDir, ".cursor", "hooks.json");
   const copied = fastenCursorHookScripts(targetDir, packageRoot, log);
   let existing = null;
@@ -819,16 +853,30 @@ function installCursorBridge(targetDir, packageRoot, log) {
   }
   const template = resolveCursorHooksTemplate(packageRoot);
   if (!existing && !template) {
-    log("cursor-bridge", "skipped", "warn", { reason: "cursor hooks template missing" });
+    log("cursor-bridge", "skipped", "warn", { reason: "cursor hooks template missing", target: targetDir });
     return null;
   }
   const next = mergeCloudSafeCursorHooks(existing);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.writeFileSync(dest, `${JSON.stringify(next, null, 2)}\n`);
   log("cursor-bridge", existing ? "hooks.json rewritten cloud-safe" : "hooks.json fastened", "info", {
-    path: ".cursor/hooks.json",
+    path: dest,
     scripts: copied,
   });
+  return dest;
+}
+
+/**
+ * Fifth wear: project `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`.
+ * Cloud execs argv[0] without a shell — leftover `XRAY_AI_PATH=` one-liners never start.
+ * Also fasten the daemon workspace root on multi-repo Cloud seats.
+ */
+function installCursorBridge(targetDir, packageRoot, log) {
+  const dest = fastenCursorHooksAt(targetDir, packageRoot, log);
+  const workspace = resolveCursorWorkspaceRoot(targetDir);
+  if (workspace && path.resolve(workspace) !== path.resolve(targetDir)) {
+    fastenCursorHooksAt(workspace, packageRoot, log);
+  }
   return dest;
 }
 
@@ -926,6 +974,8 @@ module.exports = {
   wearVendoredRepertoire,
   installCursorBridge,
   resolveCursorHooksTemplate,
+  resolveCursorWorkspaceRoot,
+  fastenCursorHooksAt,
   resolveCursorHookScriptDir,
   fastenCursorHookScripts,
   mergeCloudSafeCursorHooks,

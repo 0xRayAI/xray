@@ -11,6 +11,7 @@ const {
   XRAY_CONFIG_FILES,
   installCursorBridge,
   resolveCursorHooksTemplate,
+  resolveCursorWorkspaceRoot,
   CURSOR_HOOK_SCRIPTS,
 } = require("../../../scripts/node/install-bridges.cjs");
 
@@ -389,6 +390,23 @@ describe("install-bridges cursor wear", () => {
     const real = resolveCursorHooksTemplate(process.cwd());
     expect(real).toBeTruthy();
     expect(fs.existsSync(real as string)).toBe(true);
+  });
+
+  it("fastens the multi-repo Cloud workspace root as well as the consumer checkout", () => {
+    const workspace = path.join(tmpRoot, "agent");
+    const repos = path.join(workspace, "repos");
+    const mill = path.join(repos, "xray");
+    const consumer = path.join(repos, "repertoire");
+    fs.mkdirSync(mill, { recursive: true });
+    fs.mkdirSync(consumer, { recursive: true });
+    expect(resolveCursorWorkspaceRoot(consumer)).toBe(workspace);
+    const dest = installCursorBridge(consumer, packageRoot, () => {});
+    expect(dest).toBe(path.join(consumer, ".cursor", "hooks.json"));
+    expect(fs.existsSync(path.join(workspace, ".cursor", "hooks", "pre-tool-use.sh"))).toBe(true);
+    const workspaceHooks = JSON.parse(
+      fs.readFileSync(path.join(workspace, ".cursor", "hooks.json"), "utf-8"),
+    );
+    expect(workspaceHooks.hooks.preToolUse[0].command).toBe(".cursor/hooks/pre-tool-use.sh");
   });
 
   it("consumer template commands are relative cloud-safe sh and JS still exists as src build input", () => {

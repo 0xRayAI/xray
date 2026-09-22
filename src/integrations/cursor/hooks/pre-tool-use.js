@@ -91,14 +91,16 @@ async function main() {
     appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,
       error: err.message,
+      failOpen: true,
     });
+    // Dest EACCES on a Cloud workspace wrapper must not deny every tool.
     finish(
       fallbackRoot,
-      'deny',
-      `preToolUse hook error — blocked for safety: ${err.message}`,
+      'allow',
+      `preToolUse hook error — fail open: ${err.message}`,
       null,
       toolName,
-      { gate: 'hook-error' },
+      { gate: 'hook-error-fail-open' },
     );
   }
 }

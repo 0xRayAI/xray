@@ -463,7 +463,12 @@ function sleepMs(ms) {
 /** Parallel live contexts share one project copy. Exclusive create; stale after 60s. */
 function withDestLock(root, fn) {
   const lockPath = destLockPath(root);
-  mkdirSync(join(root, ".xray", "state", "repertoire"), { recursive: true });
+  try {
+    mkdirSync(join(root, ".xray", "state", "repertoire"), { recursive: true });
+  } catch (err) {
+    if (err && (err.code === "EACCES" || err.code === "EPERM")) return null;
+    throw err;
+  }
   const started = Date.now();
   while (Date.now() - started < 50000) {
     try {
@@ -579,16 +584,22 @@ function latestSessionNewerThanGrow(root) {
 
 /** Capture then grow. Skip-path for floors that already have a live card. */
 function heatLiveMemory(root) {
-  const mr = readMemoryRoutingConfig(root);
-  if (isExplicitMemoryRoutingOptOut(mr)) {
+  try {
+    const mr = readMemoryRoutingConfig(root);
+    if (isExplicitMemoryRoutingOptOut(mr)) {
+      return { captured: null, grow: null };
+    }
+    const result = withDestLock(root, () => {
+      const captured = maybeCaptureSessionOnHeadMove(root);
+      const grow = captured || latestSessionNewerThanGrow(root) ? growDestOnWake(root) : null;
+      if (grow) persistRepertoireWorking(root, { grow });
+      return { captured, grow };
+    });
+    return result || { captured: null, grow: null };
+  } catch {
+    /* dest EACCES / unwritable heat root must not deny the host tool */
     return { captured: null, grow: null };
   }
-  return withDestLock(root, () => {
-    const captured = maybeCaptureSessionOnHeadMove(root);
-    const grow = captured || latestSessionNewerThanGrow(root) ? growDestOnWake(root) : null;
-    if (grow) persistRepertoireWorking(root, { grow });
-    return { captured, grow };
-  });
 }
 
 /** Every floor that heats. Dedup per HEAD. Patterns come from git, not a leftover catalog. */
