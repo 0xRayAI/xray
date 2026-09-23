@@ -193,6 +193,8 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(lock.packages['']?.version).toBe(pkg.version);
     expect(bumper).toContain("updateJsonVersionField('xray/features.json'");
     expect(bumper).toContain("updateJsonVersionField('.xray/features.json'");
+    expect(bumper).toContain('updatePackageLockVersion(current)');
+    expect(bumper).toContain("'package-lock.json'");
   });
 
   it('kernel files use era, not a three-part patch stamp on the header line', () => {
