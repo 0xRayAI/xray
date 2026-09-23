@@ -47,7 +47,7 @@ describe('version manager patch-ref strip set', () => {
     expect(src).not.toContain('function bumpVersion');
   });
 
-  it('removes the live patch ref and leaves changelog stamps', () => {
+  it('removes every present-tense patch pin and leaves changelog stamps', () => {
     const input = [
       'Wear 0xray@9.9.9 today.',
       'npm is **9.9.9**',
@@ -56,17 +56,24 @@ describe('version manager patch-ref strip set', () => {
       'This cut is 9.9.9',
       'This cut is **9.9.9**',
       '## [9.9.9] - 2026-01-01',
-      'Older pin 0xray@1.2.3 stays.',
+      'Older pin 0xray@1.2.3 goes.',
+      'npm is **1.2.3**',
+      'Product **8.8.8** is on npm',
+      'Do not republish 7.7.7',
+      'This cut is 6.6.6',
+      'This cut is **5.5.5**',
     ].join('\n');
     const out = stripPatchRefText(input, '9.9.9');
-    expect(out).not.toContain('0xray@9.9.9');
-    expect(out).not.toContain('npm is **9.9.9**');
-    expect(out).not.toContain('Product **9.9.9** is on npm');
-    expect(out).not.toContain('Do not republish 9.9.9');
-    expect(out).not.toContain('This cut is 9.9.9');
-    expect(out).not.toContain('This cut is **9.9.9**');
+    expect(out).not.toMatch(/0xray@\d+\.\d+\.\d+/);
+    expect(out).not.toMatch(/npm is \*\*\d+\.\d+\.\d+\*\*/);
+    expect(out).not.toMatch(/Product \*\*\d+\.\d+\.\d+\*\* is on npm/);
+    expect(out).not.toMatch(/Do not republish \d+\.\d+\.\d+/);
+    expect(out).not.toMatch(/This cut is/);
     expect(out).toContain('## [9.9.9] - 2026-01-01');
-    expect(out).toContain('0xray@1.2.3');
+    expect(out).toContain('Wear today.');
+    expect(out).toContain('Older pin goes.');
+    expect(stripPatchRefText(input, 'nope')).toBe(input);
+    expect(stripPatchRefText(input, '9.9')).toBe(input);
   });
 
   it('writes shipped prose and leaves Station, NOTES, dest, and node_modules', () => {

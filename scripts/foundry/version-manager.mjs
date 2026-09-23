@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Foundry stamper — JSON version fields, CHANGELOG, and the live patch-ref strip.
+ * Foundry stamper — JSON version fields, CHANGELOG, and the present-tense patch-pin strip.
  *
  * Does NOT bump package.json (reconcile-version.mjs advances the next cut).
  * Does NOT publish.
- * Strips that patch ref from shipped guides and shipped OP-PROC.
+ * Strips every present-tense patch pin from shipped guides and shipped OP-PROC.
  * Does NOT edit Station, NOTES, dest, or node_modules.
  *
  * Usage:
@@ -393,21 +393,23 @@ export function isPatchRefStripRefused(relPath) {
 }
 
 /**
- * Remove the live patch ref from prose. Stamps in CHANGELOG headings stay,
- * because this does not match `## [x.y.z]`.
+ * Remove every present-tense patch pin from prose. Stamps in CHANGELOG
+ * headings stay, because this does not match `## [x.y.z]`.
+ * `version` must be semver or the call is a no-op. The pins removed are
+ * not limited to that version.
  * @param {string} content
  * @param {string} version
  */
 export function stripPatchRefText(content, version) {
   if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) return content;
-  const v = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const semver = '\\d+\\.\\d+\\.\\d+';
   const patterns = [
-    new RegExp(`0xray@${v}\\b`, 'g'),
-    new RegExp(`npm is \\*\\*${v}\\*\\*`, 'g'),
-    new RegExp(`Product \\*\\*${v}\\*\\* is on npm`, 'g'),
-    new RegExp(`Do not republish ${v}\\b`, 'g'),
-    new RegExp(`This cut is \\*\\*${v}\\*\\*`, 'g'),
-    new RegExp(`This cut is ${v}\\b`, 'g'),
+    new RegExp(`0xray@${semver}\\b`, 'g'),
+    new RegExp(`npm is \\*\\*${semver}\\*\\*`, 'g'),
+    new RegExp(`Product \\*\\*${semver}\\*\\* is on npm`, 'g'),
+    new RegExp(`Do not republish ${semver}\\b`, 'g'),
+    new RegExp(`This cut is \\*\\*${semver}\\*\\*`, 'g'),
+    new RegExp(`This cut is ${semver}\\b`, 'g'),
   ];
   let next = content;
   for (const re of patterns) next = next.replace(re, '');
@@ -435,7 +437,8 @@ export function stripPatchRefFile(baseDir, rel, version) {
 }
 
 /**
- * Strip `version` from shipped guides and shipped OP-PROC under baseDir.
+ * Strip every present-tense patch pin from shipped guides and shipped OP-PROC under baseDir.
+ * `version` must be semver or the call is a no-op.
  * Refuses `.xray/state/**`, NOTES, dest curated_signals.json, and node_modules.
  * Does not bump. Does not publish.
  * @param {string} baseDir
@@ -485,7 +488,7 @@ export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
   return candidates.filter((rel) => fs.existsSync(path.join(baseDir, rel)));
 }
 
-/** Stamp JSON + CHANGELOG, then strip the package patch ref from shipped guides and OP-PROC. No bump. No publish. */
+/** Stamp JSON + CHANGELOG, then strip every present-tense patch pin from shipped guides and OP-PROC. No bump. No publish. */
 function updateReleaseArtifactsOnly(changeDescription = '') {
   const current = getCurrentVersion();
   const counts = getFrameworkCounts();
@@ -497,7 +500,7 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   updateOpenclawPluginVersion(current);
   const stripped = stripLivePatchRefs(rootDir, current);
   if (stripped.length > 0) {
-    process.stdout.write(`Stripped patch ref ${current} from ${stripped.join(', ')}\n`);
+    process.stdout.write(`Stripped present-tense patch pins from ${stripped.join(', ')}\n`);
   }
   runReleaseDocsValidation();
   process.stdout.write(`Release artifacts updated for v${current}\n`);
@@ -531,7 +534,7 @@ function main() {
     process.stdout.write(`Current version: ${getCurrentVersion()}\n`);
     process.stdout.write('Usage: npx @0xray/foundry stamp\n');
     process.stdout.write('Bump is refused. Reconcile advances the next cut, then this stamper runs.\n');
-    process.stdout.write('The stamper strips that patch ref from shipped guides and shipped OP-PROC.\n');
+    process.stdout.write('The stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC.\n');
     process.stdout.write('It does not edit Station, NOTES, dest, or node_modules. It does not publish.\n');
     process.exit(0);
   }

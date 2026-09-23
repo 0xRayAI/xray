@@ -26,7 +26,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Test then ship is the hero/);
     expect(text).toMatch(/Ship without that proof is the catastrophe/);
     expect(text).toMatch(/refreshes a changed definition/);
-    expect(text).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(text).toMatch(/stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC/);
     expect(text).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
     expect(text).toMatch(/It does not publish/);
     expect(text).toMatch(/not fully proved/);
@@ -98,11 +98,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(planes?.definition).toMatch(/the catastrophe/);
     expect(planes?.definition).toMatch(/refreshes a changed definition/);
     expect(planes?.definition).toMatch(/not fully proved/);
-    expect(planes?.definition).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(planes?.definition).toMatch(/stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC/);
     expect(planes?.definition).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
     expect(overlay.signals.some((signal) => signal.name === 'six-planes')).toBe(false);
     const cascade = overlay.signals.find((signal) => signal.name === 'wake-cascade');
-    expect(cascade?.definition).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(cascade?.definition).toMatch(/stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC/);
     expect(cascade?.definition).toMatch(/Chat is not the brain/);
     expect(cascade?.definition).toMatch(/test then ship is the hero/);
     expect(cascade?.definition).toMatch(/the lead keeps control/);
@@ -147,7 +147,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Test then ship is the hero/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/It does not publish/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/not fully proved/);
@@ -179,7 +179,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Test then ship is the hero/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/It does not publish/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/not fully proved/);
