@@ -164,6 +164,13 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(stationVs).not.toContain('no @0xray/repertoire');
     expect(stationVs).not.toContain('memory_routing stays off');
     expect(stationVs).toMatch(/explicit opt-out only/);
+    const heat = read('src/integrations/hooks/station-hook-runtime.cjs');
+    expect(heat).not.toContain('memory_routing stays off');
+    expect(heat).toContain('Repertoire: module unresolved');
+    expect(heat).toContain('matched_primitives: preferLawHits');
+    const ingest = read('src/integrations/hooks/station-memory-ingest.mjs');
+    expect(ingest).not.toContain('observed: 0');
+    expect(ingest).toContain('observed: heatedNames.length');
   });
 
   it('stamps both features.json files and lock matches package.json', () => {

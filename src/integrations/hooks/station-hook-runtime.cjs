@@ -661,6 +661,7 @@ function maybeCaptureSessionOnHeadMove(root) {
     from: stamp && stamp.head ? stamp.head : commits[commits.length - 1] ? commits[commits.length - 1].hash : git.head,
     to: git.head,
   };
+  const patterns = patternsFromGit(root, commits, span);
   const session = {
     sessionId,
     timestamp: new Date().toISOString(),
@@ -669,8 +670,8 @@ function maybeCaptureSessionOnHeadMove(root) {
     approaches,
     wrongTurns: [],
     solutions: [],
-    patterns: patternsFromGit(root, commits, span),
-    matched_primitives: [],
+    patterns,
+    matched_primitives: preferLawHits(patterns.map((row) => row && row.name)),
     metrics: { commits: commits.length },
   };
   const outDir = join(root, "docs", "inference");
@@ -754,8 +755,16 @@ function growDestOnWake(root) {
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
     const pruned = pruneKeywordDest(root);
-    if (!parsed || typeof parsed !== "object") return { pruned };
-    return { ...parsed, pruned: pruned.removed, destCount: countCuratedSignals(destSignalsPath(root)) };
+    const destCount = countCuratedSignals(destSignalsPath(root)) || 0;
+    if (!parsed || typeof parsed !== "object") return { pruned: pruned.removed, destCount };
+    const heated = Array.isArray(parsed.heated) ? parsed.heated.length : 0;
+    return {
+      ...parsed,
+      observed: heated,
+      pruned: pruned.removed,
+      destCount,
+      after: destCount,
+    };
   } catch {
     return null;
   }
@@ -826,7 +835,7 @@ function buildRepertoireResume(root) {
   const modulePath = resolveRepertoireProviderModule(root);
   const mr = readMemoryRoutingConfig(root);
   if (!modulePath) {
-    return "Repertoire: not installed (memory_routing stays off)";
+    return "Repertoire: module unresolved";
   }
   const destPath = destSignalsPath(root);
   let signalsPath = existsSync(destPath) ? destPath : mr.config && mr.config.signalsPath;
@@ -1108,7 +1117,7 @@ function formatStationMarkdown(fields) {
   } else {
     lines.push("Git: n/a");
   }
-  lines.push(fields.repertoireResume || "Repertoire: not installed (memory_routing stays off)");
+  lines.push(fields.repertoireResume || "Repertoire: module unresolved");
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }

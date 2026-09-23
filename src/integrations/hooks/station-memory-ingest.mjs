@@ -128,13 +128,15 @@ async function growDest(projectRoot) {
         sources: [...(kernel.sources || []), ...cleanup.sources],
       });
       const after = service.signalsManager.load().signals.length;
+      const heatedNames = Array.isArray(diary.heated) ? diary.heated : [];
       process.stdout.write(
         `${JSON.stringify({
           before,
           after,
           imported: sessions.imported,
-          observed: 0,
-          heated: diary.heated,
+          observed: heatedNames.length,
+          heated: heatedNames,
+          destCount: after,
         })}\n`,
       );
       return;
