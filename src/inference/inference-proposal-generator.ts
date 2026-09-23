@@ -18,6 +18,25 @@ function signalsForPattern(corpus: InferenceCorpus, pattern: RecurringPattern): 
   return [...new Set(names)];
 }
 
+/** Solid band starts at 0.82. Landed work with no wrong turn clears it. */
+const LANDED_RESONANCE = 0.85;
+const WRONG_TURN_RESONANCE = 0.4;
+
+function resonanceForNamedSignal(corpus: InferenceCorpus, sessionIds: string[]): number {
+  const sessions = corpus.sessions.filter((session) => sessionIds.includes(session.sessionId));
+  if (sessions.some((session) => (session.wrongTurns?.length ?? 0) > 0)) return WRONG_TURN_RESONANCE;
+  if (sessions.some((session) => (session.approaches?.length ?? 0) > 0 || (session.solutions?.length ?? 0) > 0)) {
+    return LANDED_RESONANCE;
+  }
+  let confidence = 0.7;
+  for (const session of sessions) {
+    for (const pattern of session.patterns) {
+      if (pattern.confidence > confidence) confidence = pattern.confidence;
+    }
+  }
+  return confidence;
+}
+
 function sessionsForWrongTurn(corpus: InferenceCorpus, turn: string): string[] {
   return corpus.sessions
     .filter((session) => session.wrongTurns.includes(turn))
@@ -94,6 +113,7 @@ function adjustConfidenceFromHistory(
   }
 
   for (const proposal of proposals) {
+    if (proposal.id.startsWith("named:")) continue;
     const approved = approvedTypes.get(proposal.type) ?? 0;
     const rejected = rejectedTypes.get(proposal.type) ?? 0;
     const total = approved + rejected;
@@ -185,6 +205,33 @@ export function generateProposals(
   }
 
   const sorted = proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
+  const alreadyNamed = new Set(sorted.flatMap((proposal) => proposal.namedSignals ?? []));
+  const alreadyIds = new Set((history ?? []).flatMap((cycle) => cycle.proposals.map((proposal) => proposal.id)));
+  const bySignal = new Map<string, string[]>();
+  for (const session of corpus.sessions) {
+    const listed = session.matched_primitives ?? session.matchedPrimitives ?? [];
+    for (const name of listed) {
+      if (name.length === 0 || alreadyNamed.has(name)) continue;
+      const sessions = bySignal.get(name) ?? [];
+      if (!sessions.includes(session.sessionId)) sessions.push(session.sessionId);
+      bySignal.set(name, sessions);
+    }
+  }
+  for (const [name, sessionIds] of bySignal) {
+    const id = `named:${name}:${[...new Set(sessionIds)].sort().join(",")}`;
+    if (alreadyIds.has(id)) continue;
+    sorted.push({
+      id,
+      type: "codify",
+      title: `Grade named signal ${name}`,
+      description: `Sessions ${sessionIds.join(", ")} named ${name}.`,
+      evidence: sessionIds.map((sessionId) => `Seen in session ${sessionId}`),
+      confidence: resonanceForNamedSignal(corpus, sessionIds),
+      source: "recurring_pattern",
+      status: "pending",
+      namedSignals: [name],
+    });
+  }
 
   if (history && history.length > 0) {
     adjustConfidenceFromHistory(sorted, history);
