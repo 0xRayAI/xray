@@ -821,7 +821,7 @@
     },
     {
       "name": "heat-is-not-conviction",
-      "definition": "Heat records confidence 0.55, which is also the promotion gate, so averages sit on that floor. More hits do not raise conviction. Promotion flips a proposed law to validated at two observations and that same floor. Conviction moves on feedback, not on heat. Kernel diary text is logs/framework/activity.log, routing outcomes, pattern metrics, and .xray/inference/latest-workflow.json plus workflow-status.json. Heat matches that text onto existing names and does not mint a law. A missing session file or a stale inference-state timestamp is telemetry, not a law.",
+      "definition": "Heat records confidence 0.55, which is also the promotion gate, so averages sit on that floor. More hits do not raise conviction. Promotion flips a proposed law to validated at two observations and that same floor. Conviction moves on feedback, not on heat. Kernel diary text is logs/framework/activity.log, routing outcomes, pattern metrics, and .xray/inference/latest-workflow.json plus workflow-status.json. Heat matches that text onto existing names and does not mint a law. A missing session file or a stale inference-state timestamp is telemetry, not a law. Repertoire mergeStackOverlay appends a missing name and leaves an existing definition in place. mergeStackOverlay does not pass fleshGeneric, so it does not refresh a stack law. The xray wake hook refreshStackLaw refreshes a changed stack definition and keeps observation stats.",
       "tags": ["memory", "heat", "kernel"],
       "priority": "high",
       "status": "proposed",
@@ -829,7 +829,7 @@
       "evaluation_criteria": "A rising observation count at 0.55 is not treated as learning.",
       "validation_experiment": "A seat reads observation mass as conviction — treat as fail.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
-      "implementation_notes": "heatKernelDiary hardcodes 0.55. promoteQualifiedSignals uses DEFAULT_PROMOTION_MIN_CONFIDENCE and min observations 2.",
+      "implementation_notes": "heatKernelDiary hardcodes 0.55. promoteQualifiedSignals uses DEFAULT_PROMOTION_MIN_CONFIDENCE and min observations 2. mergeStackOverlay in repertoire src/paths.ts does not pass fleshGeneric. refreshStackLaw in station-hook-runtime.cjs does.",
       "example_inference_snippet": "More hits do not raise conviction. Heat writes the promotion floor.",
       "observation_stats": {
         "observation_count": 1,
