@@ -28,9 +28,9 @@ export declare function resolveReadableConfigPath(configured: string | undefined
 export declare function resolveWritableConfigPath(configured: string | undefined, cwd: string, fallback: string): string;
 export declare function isGenericFieldObservedDefinition(definition: string): boolean;
 /**
- * Additive merge of `data/stack-overlay.json` into a project copy.
- * Existing names keep their stats. Missing overlay names are appended.
- * Refuses the factory tarball path.
+ * Merge `data/stack-overlay.json` into a project copy.
+ * Missing names are appended. A changed stack law field is refreshed.
+ * Observation stats on existing names stay. Refuses the factory tarball path.
  */
 export declare function mergeStackOverlay(destPath: string, overlayPath?: string): number;
 /**

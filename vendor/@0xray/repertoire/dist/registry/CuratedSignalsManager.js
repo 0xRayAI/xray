@@ -1,11 +1,74 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { DEFAULT_SIGNALS_PATH, hydrateWritableSignals, isFactorySeedFile, isGenericFieldObservedDefinition, } from '../paths.js';
 import { effectiveSignalConfidence, shouldDemoteValidatedSignal, } from './confidence-decay.js';
 export const DEFAULT_PROMOTION_MIN_CONFIDENCE = 0.55;
 export const DEFAULT_PROMOTION_MIN_OBSERVATIONS = 2;
-export const FEEDBACK_SUCCESS_CONFIDENCE_BOOST = 0.002;
-export const FEEDBACK_FAILURE_CONFIDENCE_PENALTY = 0.005;
-export const FEEDBACK_MIN_CONFIDENCE = DEFAULT_PROMOTION_MIN_CONFIDENCE;
+/** One outcome moves routing. A 0.002 nudge on a floor average does not. */
+export const FEEDBACK_SUCCESS_CONFIDENCE_BOOST = 0.1;
+export const FEEDBACK_FAILURE_CONFIDENCE_PENALTY = 0.1;
+/** Failure may drop below the promotion gate so the law leaves the next decision. */
+export const FEEDBACK_MIN_CONFIDENCE = 0;
+/** Consecutive definition content words that count as a paraphrase of the law. */
+export const LAW_CLAUSE_SPAN = 4;
+const LEARNED_CONVICTION_FILE = 'learned-conviction.json';
+const CLAUSE_STOP = new Set([
+    'a', 'an', 'the', 'only', 'just', 'not', 'never', 'always', 'and', 'or', 'of', 'to', 'for',
+    'on', 'in', 'with', 'from', 'by', 'is', 'are', 'be', 'this', 'that', 'it', 'as', 'at', 'do',
+    'does', 'into', 'than', 'then', 'so', 'if', 'but', 'its', 'their', 'was', 'were',
+]);
+export function isConfidenceFloor(value, gate = DEFAULT_PROMOTION_MIN_CONFIDENCE) {
+    return Math.abs(value - gate) <= 1e-4;
+}
+export function clauseTokens(text) {
+    return text
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((word) => word.length >= 3 && !CLAUSE_STOP.has(word));
+}
+function isSubsequence(window, query) {
+    let index = 0;
+    for (const word of window) {
+        while (index < query.length && query[index] !== word)
+            index += 1;
+        if (index >= query.length)
+            return false;
+        index += 1;
+    }
+    return true;
+}
+/**
+ * A paraphrase is four consecutive definition content words, in order, inside a
+ * short query window (twice the clause). Two stray words are not a clause.
+ * The same words scattered through a long diary are not a clause.
+ */
+export function lawClauseInText(definition, text, span = LAW_CLAUSE_SPAN) {
+    const law = clauseTokens(definition);
+    const query = clauseTokens(text);
+    if (law.length < span || query.length < span)
+        return false;
+    const room = span * 2;
+    for (let start = 0; start + span <= law.length; start += 1) {
+        const window = law.slice(start, start + span);
+        for (let at = 0; at < query.length; at += 1) {
+            const slice = query.slice(at, at + room);
+            if (slice.length < span)
+                break;
+            if (isSubsequence(window, slice))
+                return true;
+        }
+    }
+    return false;
+}
+function evidenceWeight(previous, gate) {
+    if (!previous)
+        return 0;
+    if (typeof previous.evidence_count === 'number')
+        return previous.evidence_count;
+    if (previous.avg_confidence > gate + 1e-4)
+        return previous.observation_count;
+    return 0;
+}
 const FIELD_PRIMITIVE_NAME = /^[A-Za-z][A-Za-z0-9_-]{2,119}$/;
 /**
  * The diary names a law only when it contains the signal id, or the id with
@@ -82,6 +145,10 @@ export class CuratedSignalsManager {
     filePath;
     constructor(filePath) {
         this.filePath = filePath ?? hydrateWritableSignals(DEFAULT_SIGNALS_PATH);
+        this.restoreLearnedConviction();
+    }
+    learnedConvictionPath() {
+        return join(dirname(this.filePath), LEARNED_CONVICTION_FILE);
     }
     load() {
         if (!existsSync(this.filePath)) {
@@ -134,17 +201,20 @@ export class CuratedSignalsManager {
         return this.load().signals.filter((s) => s.priority === priority);
     }
     /**
-     * Score text against signals. A hit requires the signal id, or the id with
-     * hyphens read as spaces. Two definition words are not a match.
+     * Score text against signals. A hit is the signal id, the id with hyphens
+     * read as spaces, or a consecutive definition clause. Two definition words
+     * are not a match.
      */
     matchByText(text, minScore = 2) {
         const normalized = text.toLowerCase();
         const matches = [];
         for (const signal of this.load().signals) {
-            if (!signalNameInText(text, signal.name))
+            const named = signalNameInText(text, signal.name);
+            const clause = !named && lawClauseInText(signal.definition, text);
+            if (!named && !clause)
                 continue;
-            const matchedOn = ['name'];
-            let score = 5;
+            const matchedOn = named ? ['name'] : ['definition'];
+            let score = named ? 5 : 4;
             for (const tag of signal.tags) {
                 if (normalized.includes(tag.toLowerCase())) {
                     score += 3;
@@ -248,13 +318,38 @@ export class CuratedSignalsManager {
             }
             const previous = signal.observation_stats;
             const observationCount = (previous?.observation_count ?? 0) + 1;
-            const totalConfidence = (previous?.avg_confidence ?? 0) * (observationCount - 1) + match.confidence;
+            const forced = (previous?.governance_forced_count ?? 0) + (options.governanceForced ? 1 : 0);
+            const atFloor = isConfidenceFloor(match.confidence, minConfidence);
+            if (atFloor) {
+                signal.observation_stats = previous
+                    ? {
+                        ...previous,
+                        observation_count: observationCount,
+                        last_seen: now,
+                        governance_forced_count: forced,
+                        evidence_count: evidenceWeight(previous, minConfidence),
+                    }
+                    : {
+                        observation_count: observationCount,
+                        avg_confidence: match.confidence,
+                        max_confidence: match.confidence,
+                        last_seen: now,
+                        governance_forced_count: forced,
+                        evidence_count: 0,
+                    };
+                updated.push(signal.name);
+                continue;
+            }
+            const weight = evidenceWeight(previous, minConfidence);
+            const evidenceCount = weight + 1;
+            const priorAvg = weight > 0 && previous ? previous.avg_confidence : 0;
             signal.observation_stats = {
                 observation_count: observationCount,
-                avg_confidence: totalConfidence / observationCount,
+                avg_confidence: (priorAvg * weight + match.confidence) / evidenceCount,
                 max_confidence: Math.max(previous?.max_confidence ?? 0, match.confidence),
                 last_seen: now,
-                governance_forced_count: (previous?.governance_forced_count ?? 0) + (options.governanceForced ? 1 : 0),
+                governance_forced_count: forced,
+                evidence_count: evidenceCount,
             };
             updated.push(signal.name);
         }
@@ -344,11 +439,14 @@ export class CuratedSignalsManager {
                     ? FEEDBACK_SUCCESS_CONFIDENCE_BOOST
                     : -FEEDBACK_FAILURE_CONFIDENCE_PENALTY;
                 const next = Math.max(FEEDBACK_MIN_CONFIDENCE, Math.min(1, signal.observation_stats.avg_confidence + delta));
+                const weight = evidenceWeight(signal.observation_stats, DEFAULT_PROMOTION_MIN_CONFIDENCE);
                 signal.observation_stats = {
                     ...signal.observation_stats,
                     avg_confidence: next,
+                    evidence_count: weight > 0 ? weight : 1,
                     last_seen: now,
                 };
+                this.writeLearnedConviction(signal.name, signal.observation_stats);
             }
             results.push({
                 signalName,
@@ -361,6 +459,77 @@ export class CuratedSignalsManager {
             this.save(data);
         }
         return results;
+    }
+    /**
+     * Conviction that left the 0.55 floor. Not the observation counter.
+     * A wake that copies the overlay floor back onto dest restores this file.
+     */
+    writeLearnedConviction(name, stats) {
+        if (isFactorySeedFile(this.filePath))
+            return;
+        const path = this.learnedConvictionPath();
+        let file = { schema_version: '1', signals: {} };
+        if (existsSync(path)) {
+            try {
+                const parsed = JSON.parse(readFileSync(path, 'utf8'));
+                if (parsed &&
+                    parsed.signals &&
+                    typeof parsed.signals === 'object' &&
+                    !Array.isArray(parsed.signals)) {
+                    file = parsed;
+                }
+            }
+            catch {
+                file = { schema_version: '1', signals: {} };
+            }
+        }
+        file.schema_version = '1';
+        file.signals[name] = {
+            avg_confidence: stats.avg_confidence,
+            evidence_count: stats.evidence_count ?? 1,
+            updated_at: stats.last_seen,
+        };
+        writeFileSync(path, `${JSON.stringify(file, null, 2)}\n`);
+    }
+    restoreLearnedConviction() {
+        if (isFactorySeedFile(this.filePath) || !existsSync(this.filePath))
+            return [];
+        const path = this.learnedConvictionPath();
+        if (!existsSync(path))
+            return [];
+        let learned;
+        try {
+            learned = JSON.parse(readFileSync(path, 'utf8'));
+        }
+        catch {
+            return [];
+        }
+        if (!learned?.signals || typeof learned.signals !== 'object' || Array.isArray(learned.signals)) {
+            return [];
+        }
+        const data = this.load();
+        const restored = [];
+        for (const [name, row] of Object.entries(learned.signals)) {
+            if (!row || typeof row.avg_confidence !== 'number')
+                continue;
+            if (isConfidenceFloor(row.avg_confidence))
+                continue;
+            const signal = data.signals.find((entry) => entry.name === name);
+            const stats = signal?.observation_stats;
+            if (!signal || !stats)
+                continue;
+            if (!isConfidenceFloor(stats.avg_confidence))
+                continue;
+            signal.observation_stats = {
+                ...stats,
+                avg_confidence: row.avg_confidence,
+                evidence_count: typeof row.evidence_count === 'number' ? row.evidence_count : stats.evidence_count,
+            };
+            restored.push(name);
+        }
+        if (restored.length > 0)
+            this.save(data);
+        return restored;
     }
     createEmptyFile() {
         return {

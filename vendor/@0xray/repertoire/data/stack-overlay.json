@@ -483,7 +483,7 @@
     },
     {
       "name": "compact-rekey-from-disk",
-      "definition": "After compact, rekey from Station + COMPACT-SURVIVAL.md + project Repertoire names. Chat summary is not the mind. Probe stack language before acting.",
+      "definition": "After compact, rekey from Station, the overlay names, and learned conviction beside dest. Chat summary is not the mind. A floor observation count is not a decision. Feedback moves conviction by a tenth, and that value is restored when a wake flattens it back to 0.55. Probe stack language before acting.",
       "tags": [
         "compact",
         "rekey",
@@ -495,7 +495,7 @@
       "evaluation_criteria": "Reply treats the name as a stack invariant, not a factory trap.",
       "validation_experiment": "Probe getTaskConfidence with the example snippet and expect this name.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
-      "implementation_notes": "Grow on the project copy. Never write the tarball.",
+      "implementation_notes": "learned-conviction.json sits next to the project curated_signals.json. It stores avg_confidence, not observation_count. Restore it when dest avg is on the 0.55 floor.",
       "example_inference_snippet": "Rekey from disk. Push knowledge into Repertoire before the next compact.",
       "observation_stats": {
         "observation_count": 1,
@@ -821,7 +821,7 @@
     },
     {
       "name": "heat-is-not-conviction",
-      "definition": "Heat touches last_seen on names the kernel diary already matches. Heat touches last_seen only when the diary contains that signal's name; two definition words are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. It does not append a confidence sample, so a second heat does not raise observation_count and does not move avg_confidence. More hits do not raise conviction. Promotion still flips a proposed law to validated at two observations and confidence 0.55. Conviction moves on feedback, not on heat. Kernel diary text is logs/framework/activity.log, routing outcomes, pattern metrics, and .xray/inference/latest-workflow.json plus workflow-status.json. Heat matches that text onto existing names and does not mint a law. A missing session file or a stale inference-state timestamp is telemetry, not a law. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats. It does not pass fleshGeneric. Subject overlay still fleshes only a generic field-observed stub.",
+      "definition": "Heat touches last_seen on names the kernel diary already matches. Heat touches last_seen when the diary contains that signal's name or a local clause of four definition content words; two definition words are not a hit; the same words scattered through a long diary are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. It does not append a confidence sample, so a second heat does not raise observation_count and does not move avg_confidence. More hits do not raise conviction. Promotion still flips a proposed law to validated at two observations and confidence 0.55. Conviction moves on feedback, not on heat. Kernel diary text is logs/framework/activity.log, routing outcomes, pattern metrics, and .xray/inference/latest-workflow.json plus workflow-status.json. Heat matches that text onto existing names and does not mint a law. A missing session file or a stale inference-state timestamp is telemetry, not a law. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats. It does not pass fleshGeneric. Subject overlay still fleshes only a generic field-observed stub. A floor observation count does not change a route. Feedback moves conviction by a tenth, and a failure can leave 0.55. learned-conviction.json beside dest restores that average when a wake flattens it to 0.55. It does not store the observation count.",
       "tags": ["memory", "heat", "kernel"],
       "priority": "high",
       "status": "proposed",
@@ -829,7 +829,7 @@
       "evaluation_criteria": "A rising observation count at 0.55 is not treated as learning.",
       "validation_experiment": "A seat reads observation mass as conviction — treat as fail.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
-      "implementation_notes": "heatKernelDiary calls touchLastSeen. recordPrimitiveObservations still appends samples for session and field ingest. promoteQualifiedSignals uses DEFAULT_PROMOTION_MIN_CONFIDENCE 0.55 and min observations 2. mergeStackOverlay in repertoire src/paths.ts refreshes stack law fields and keeps observation_stats. It does not pass fleshGeneric.",
+      "implementation_notes": "heatKernelDiary calls touchLastSeen. recordPrimitiveObservations still appends samples for session and field ingest. A floor sample does not move avg_confidence. Feedback steps are a tenth. learned-conviction.json beside dest stores avg_confidence, not observation_count, and restores it when dest is flattened to 0.55. promoteQualifiedSignals uses DEFAULT_PROMOTION_MIN_CONFIDENCE 0.55 and min observations 2. mergeStackOverlay in repertoire src/paths.ts refreshes stack law fields and keeps observation_stats. It does not pass fleshGeneric.",
       "example_inference_snippet": "Heat touches last_seen and does not append a confidence sample. A changed stack definition refreshes and the observation count stays.",
       "observation_stats": {
         "observation_count": 1,
