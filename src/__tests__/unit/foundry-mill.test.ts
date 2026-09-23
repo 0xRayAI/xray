@@ -195,6 +195,9 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(bumper).toContain("updateJsonVersionField('.xray/features.json'");
     expect(bumper).toContain('updatePackageLockVersion(current)');
     expect(bumper).toContain("'package-lock.json'");
+    const reconcile = read('scripts/foundry/reconcile-version.mjs');
+    expect(reconcile).toContain('syncPackageLockVersion(rootDir, target)');
+    expect(reconcile).toContain('package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json');
   });
 
   it('kernel files use era, not a three-part patch stamp on the header line', () => {

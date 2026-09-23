@@ -11,6 +11,8 @@ import {
   stripLivePatchRefs,
   stripPatchRefFile,
   stripPatchRefText,
+  syncPackageLockVersion,
+  packageLockVersions,
 } from '../../../scripts/foundry/version-manager.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -110,6 +112,37 @@ describe('version manager patch-ref strip set', () => {
         expect(stripPatchRefFile(tmp, rel, version)).toBe(false);
         expect(readFileSync(path.join(tmp, rel), 'utf8')).toBe(pin);
       }
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('package lock follows package.json', () => {
+  it('writes the root version and packages[""].version and leaves the rest', () => {
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-lock-sync-'));
+    try {
+      const lock = {
+        name: '0xray',
+        version: '4.0.21',
+        lockfileVersion: 3,
+        packages: {
+          '': { name: '0xray', version: '4.0.21', dependencies: { commander: '^11.1.0' } },
+          'node_modules/commander': { version: '11.1.0' },
+        },
+      };
+      writeFileSync(path.join(tmp, 'package-lock.json'), `${JSON.stringify(lock, null, 2)}\n`);
+      expect(syncPackageLockVersion(tmp, '4.0.22')).toBe('updated');
+      expect(syncPackageLockVersion(tmp, '4.0.22')).toBe('same');
+      const written = JSON.parse(readFileSync(path.join(tmp, 'package-lock.json'), 'utf8')) as {
+        version: string;
+        packages: Record<string, { version?: string; dependencies?: Record<string, string> }>;
+      };
+      expect(packageLockVersions(tmp)).toEqual({ root: '4.0.22', pkg: '4.0.22' });
+      expect(written.version).toBe('4.0.22');
+      expect(written.packages['']?.version).toBe('4.0.22');
+      expect(written.packages['']?.dependencies?.commander).toBe('^11.1.0');
+      expect(written.packages['node_modules/commander']?.version).toBe('11.1.0');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
