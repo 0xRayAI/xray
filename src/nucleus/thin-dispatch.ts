@@ -22,7 +22,7 @@ import {
 } from "../delegation/complexity-core.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
 import {
-  getMemoryRoutingProviderSync,
+  ensureMemoryRoutingProviderSync,
   initializeMemoryRouting,
 } from "../memory-routing/index.js";
 
@@ -93,7 +93,7 @@ export function scoreAndRoute(
   const score = scoreComplexity(operation, context, thresholds);
   let agent = routeToAgent(score);
 
-  const provider = getMemoryRoutingProviderSync();
+  const provider = ensureMemoryRoutingProviderSync();
   let memoryRouting: { providerId: string; adjustedScore: number; signals: string[] } | undefined;
 
   if (provider.id !== "null") {

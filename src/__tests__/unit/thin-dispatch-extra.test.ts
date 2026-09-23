@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 vi.mock('../../core/framework-logger.js', () => ({
   frameworkLogger: { log: vi.fn().mockResolvedValue(undefined) },
@@ -91,7 +93,7 @@ describe('thinDispatch — adjusted score updates strategy', () => {
     const routing = await import('../../memory-routing/index.js');
     const dispatch = await import('../../nucleus/thin-dispatch.js');
     const { getStrategyForLevel, getAgentCountForLevel } = await import('../../delegation/complexity-core.js');
-    const spy = vi.spyOn(routing, 'getMemoryRoutingProviderSync').mockReturnValue({
+    const spy = vi.spyOn(routing, 'ensureMemoryRoutingProviderSync').mockReturnValue({
       id: 'test-adjust',
       resolveThinDispatch: (agent: string, _operation: string, score: number) => ({
         agent,
@@ -104,7 +106,7 @@ describe('thinDispatch — adjusted score updates strategy', () => {
           synthesisAvailable: false,
         },
       }),
-    } as unknown as ReturnType<typeof routing.getMemoryRoutingProviderSync>);
+    } as unknown as ReturnType<typeof routing.ensureMemoryRoutingProviderSync>);
 
     try {
       const base = dispatch.scoreComplexity('rename variable', { files: ['a.ts'] });
@@ -122,5 +124,19 @@ describe('thinDispatch — NUCLEUS_THIN_DISPATCH_VERSION', () => {
   it('should be a valid semver string', async () => {
     const mod = await import('../../nucleus/thin-dispatch.js');
     expect(mod.NUCLEUS_THIN_DISPATCH_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+});
+
+describe('thinDispatch — organ after a yield', () => {
+  it('still routes a named trap after an awaited turn', async () => {
+    const organ = resolve(process.cwd(), 'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js');
+    if (!existsSync(organ)) return;
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const routed = scoreAndRoute('attestation-as-map', {});
+    expect(routed.memoryRouting?.providerId).toBe('repertoire');
+    expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
+    expect(routed.agent).toBe('architect');
+    expect(routed.score.score).toBeGreaterThanOrEqual(26);
   });
 });

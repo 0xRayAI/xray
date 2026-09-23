@@ -12,6 +12,7 @@ export type {
 export {
   getMemoryRoutingProvider,
   getMemoryRoutingProviderSync,
+  ensureMemoryRoutingProviderSync,
   getMemoryRoutingConfig,
   resetMemoryRoutingProvider,
   initializeMemoryRouting,

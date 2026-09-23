@@ -137,6 +137,39 @@ describe("Inference Accumulator", () => {
     expect(sessions).toEqual([]);
   });
 
+  it("should ignore session notes that have no metrics", () => {
+    writeSession("a", 4);
+    fs.writeFileSync(
+      path.join(inferenceDir, "session-notes.json"),
+      JSON.stringify({
+        sessionId: "notes",
+        timestamp: new Date().toISOString(),
+        problems: ["a note"],
+        approaches: [],
+        wrongTurns: [],
+        solutions: [],
+        patterns: [],
+      }),
+    );
+
+    const corpus = accumulateCorpus(inferenceDir);
+    expect(corpus.sessions.map((s) => s.sessionId)).toEqual(["a"]);
+    expect(corpus.totalCommits).toBe(4);
+    expect(shouldTriggerCycle(inferenceDir, path.join(stateDir, "cycle.json")).trigger).toBe(true);
+  });
+
+  it("should treat a pattern with no evidence array as empty evidence", () => {
+    const session = makeSession("a", 6, ["Bare Pattern"]);
+    const bare = session.patterns[0] as { evidence?: string[] };
+    delete bare.evidence;
+    fs.writeFileSync(path.join(inferenceDir, "session-a.json"), JSON.stringify(session));
+
+    const corpus = accumulateCorpus(inferenceDir);
+    expect(corpus.sessions).toHaveLength(1);
+    expect(corpus.totalCommits).toBe(6);
+    expect(corpus.recurringPatterns).toEqual([]);
+  });
+
   it("should handle malformed session files gracefully", () => {
     writeSession("a", 10);
     fs.writeFileSync(path.join(inferenceDir, "session-bad.json"), "not json {{{");
