@@ -95,6 +95,22 @@ Lead packet is four lines:
 
 If you need a fifth line, the encode failed — update `SEATS.md` / this file / the worn skill, then grow a Repertoire name. Do not thicken Station with the procedure.
 
+### Feat rebase
+
+When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop. Go up a level and answer the original message again from this seat. Do not continue the side thread and call that the job.
+
+- Digressive inversion: the mantra becomes the long work.
+- Parallelism glitch: parent, critic, and side branches each hold a different present.
+- Cure: the reply to the original message. Not another seat.
+
+### Cold brief
+
+When you start a new critic or any new subagent that does not already have this thread:
+
+- Give them the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass).
+- Give them the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed.
+- If the branch moves after you brief them, send the new SHA before they verdict.
+
 ### When knowledge grows
 
 Monitor the lead. New law that had to be spoken twice goes to disk this wake: `SEATS.md` or this file or the existing `orchestrator` / `ship-ready-mill-gate` skill. Codex 69: rewire. Do not add `src/skills/critic/SKILL.md`. Project-local Repertoire gets the name. NOTES get the leftover. Station stays thin.

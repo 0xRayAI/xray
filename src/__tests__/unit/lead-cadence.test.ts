@@ -18,6 +18,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Live tick/);
     expect(text).toMatch(/A friend would hear:/);
     expect(text).toMatch(/Jargon is not the job/);
+    expect(text).toMatch(/### Feat rebase/);
+    expect(text).toMatch(/answer the original message again from this seat/);
     expect(text).toMatch(/Do not spend the loop reciting dest names, mill liturgy, or host mantras/);
     expect(text).toMatch(/Codex 69/);
     expect(text).toMatch(/Dummy exists to \*\*test `SKILLS\.md`\*\*/);
@@ -51,6 +53,10 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Two idle pacers/);
     expect(text).toMatch(/subscribe_github_pr/);
     expect(text).toMatch(/Dispatch \(not a script\)/);
+    expect(text).toMatch(/Cold brief/);
+    expect(text).toMatch(/latest commit SHA on the branch under review/);
+    expect(text).toMatch(/Station card \(`\.xray\/state\/STATION\.md`: intent, plan, git\)/);
+    expect(text).toMatch(/send the new SHA before they verdict/);
     expect(text).toMatch(/When knowledge grows/);
     expect(text).toMatch(/Wear, then review/);
     expect(text).toMatch(/Metamorphosis \(how an LLM becomes OP-PROC\)/);
@@ -72,7 +78,13 @@ describe('lead cadence encode — peer can find the beat', () => {
     const millGate = path.join(root, 'grok-bot', 'skills', 'ship-ready-mill-gate', 'SKILL.md');
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Lead cadence \(syncopation\)/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Jargon is not the job/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Feat rebase/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Station card/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Jargon is not the job/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Feat rebase/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Station card/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Clean ticks every cycle/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/WAVEBOARD are idle/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Subject review\. Fix n ship/);
