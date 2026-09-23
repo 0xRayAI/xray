@@ -29,6 +29,58 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.22] - 2026-09-23
+
+### 🔄 Changes
+
+### ✨ Features
+- feat: rebase — answer the original message from this seat (a9a9e432b)
+
+### 🐛 Bug Fixes
+- fix: cursor gate follows the suit mill, not a sibling synthesis checkpoint (7a21cd996)
+- fix: stamper strips every present-tense patch pin from shipped prose (4962b353f)
+- fix: docs check uses the stamper strip set (f46377822)
+- fix: stamper strips shipped prose only and proposals name recurring patterns (2b98354f7)
+- fix: worn heat matches the signal id and dest keeps that law (9952f6dc2)
+- fix: wake does not append a floor sample on heat (fe0492c98)
+- fix: heat law matches the organ that touches last_seen (35390de44)
+- fix: stack law refresh stays on the wake hook (f4a0c5d82)
+- fix: store hero invariants as repertoire laws (9deed910b)
+- fix: store the wake cascade as a repertoire law (ebf5aed8a)
+- fix: test/ship plane and law refresh onto Station (87ad30bc5)
+- fix: encode six planes and the live-cut hand (2eb24387e)
+- fix: engine cadence and the three-module defects (d11b796d9)
+- fix: heat resume and session match leftover after #103 (#104) (664a2039b)
+- fix: persist heated length on the working receipt (2e28d1dbe)
+- fix: heat resume and session match leftover (0f8b5b4ab)
+- fix: leftover opt-out teaching after #102 (#103) (b8fc6bef7)
+- fix: leftover stamps and dest-as-laws docs after #101 (#102) (910a739c4)
+- fix: stamp leftover lock and worn features to the live package version (41f648d43)
+- fix: dest stays laws — compact boot holds (#101) (9b731441d)
+- fix: cleanse stale 4.0.15 pins and leftover validate wording (5ea8e0dff)
+
+### 📚 Documentation
+- docs: cold brief is latest SHA plus Station (55c2497e4)
+- docs: jargon is not the job — results first on cadence (3699a56d0)
+- docs: leftover opt-out ASCII after #102 (3974a2920)
+- docs: leftover Repertoire optional language after #101 (5f64b68f3)
+- docs: archive unused v2-refactor harness and fix migrate leftover URLs (23042fb7e)
+- docs: archive StringRay leftover reports and update mill seed (eaa85fe5a)
+
+### 🧪 Tests
+- test: gate station-vs-repertoire opt-out leftover (aef80e538)
+
+### 🔧 Maintenance
+- chore: drop unused MCP scanner twin and archive costume dumps (49fc4c96c)
+- chore: drop leftover root test toys and stamp live 4.0.19 (5997a5924)
+- chore: archive leftover sync-docs script that wipes the live site (a23205b5b)
+- chore: alias leftover consumer check and drop blaze pipeline paths (ef98637d9)
+- chore: archive unused duplicate e2e runners (7806bd21e)
+- chore: tidy leftover CI harnesses, kernel repro, and live npm pins (fe1f08ad0)
+- chore: tidy leftover vote harnesses, debug repro, and shipped Unreleased pins (05587368e)
+
+---
+
 ## [4.0.21] - 2026-09-23
 
 ### ✨ Features

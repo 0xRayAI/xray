@@ -129,7 +129,7 @@ xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume /
 Configured in project `.mcp.json` on postinstall:
 
 ```bash
-npx -y 0xray mcp skills    # stdio server
+npx -y 0xray mcp skills # stdio server
 ```
 
 MCP tools include: `invoke-skill`, `list-skills`, `skill-code-review`, `skill-security-audit`, `skill-api-design`, `skill-testing-strategy`, and more.

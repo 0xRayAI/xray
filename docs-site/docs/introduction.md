@@ -8,19 +8,19 @@ Not a catalog of 42 agents. The product is the skeleton you wear.
 
 4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
-- **Bone:** three subsystems, Codex PreToolUse, four chat adapters plus Cursor hooks  
-- **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface  
-- **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny)  
-- **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume  
+- **Bone:** three subsystems, Codex PreToolUse, four chat adapters plus Cursor hooks 
+- **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface 
+- **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny) 
+- **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume 
 - **Fat (trim later):** duplicate orchestrators, extra `*.server.ts`, `advanced-features/` — [trim list](./architecture/v3-museum.md)
 
 ## Quick Start
 
 ```bash
-npm install 0xray          # auto: mill+inspect plant + 4 chat bridges + Cursor hooks + 7 MCP + AGENTS.md + .mcp.json
+npm install 0xray # auto: mill+inspect plant + 4 chat bridges + Cursor hooks + 7 MCP + AGENTS.md + .mcp.json
 
-npx 0xray status           # verify
-npx 0xray setup            # optional extras
+npx 0xray status # verify
+npx 0xray setup # optional extras
 
 # Per-platform (same as postinstall, idempotent)
 npx 0xray opencode install
@@ -36,15 +36,15 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Inference                       │
-│  Reasoning · Memory routing · Execution         │
+│ Inference │
+│ Reasoning · Memory routing · Execution │
 ├─────────────────────────────────────────────────┤
-│           External Governance (Dynamo)           │
-│  Codex enforcement · v3 gate + CI validators    │
-│  7 MCP servers (3 deliberate on proposals)      │
+│ External Governance (Dynamo) │
+│ Codex enforcement · v3 gate + CI validators │
+│ 7 MCP servers (3 deliberate on proposals) │
 ├─────────────────────────────────────────────────┤
-│          Autonomous Engine (thinDispatch)        │
-│  Task routing · AsideContext · Confidence gate  │
+│ Autonomous Engine (thinDispatch) │
+│ Task routing · AsideContext · Confidence gate │
 └─────────────────────────────────────────────────┘
 ```
 

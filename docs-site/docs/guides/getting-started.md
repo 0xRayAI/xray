@@ -25,8 +25,8 @@ Postinstall **automatically** (via `install-bridges.cjs`):
 - **Mill target:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
 
 ```bash
-npx 0xray status           # verify install
-npx 0xray setup            # optional: symlinks, hook extras
+npx 0xray status # verify install
+npx 0xray setup # optional: symlinks, hook extras
 ```
 
 ## Manual per-platform install
@@ -34,11 +34,11 @@ npx 0xray setup            # optional: symlinks, hook extras
 Same result as postinstall — safe to re-run:
 
 ```bash
-npx 0xray opencode install      # OpenCode agents + opencode.json
-npx 0xray grok install          # Grok plugin + ~/.grok/skills + 7 MCP
-npx 0xray hermes install        # ~/.hermes/plugins/xray-hermes
-npx 0xray openclaw install      # .xray/config/openclaw.json + skills
-npx 0xray skill:install         # starter skills
+npx 0xray opencode install # OpenCode agents + opencode.json
+npx 0xray grok install # Grok plugin + ~/.grok/skills + 7 MCP
+npx 0xray hermes install # ~/.hermes/plugins/xray-hermes
+npx 0xray openclaw install # .xray/config/openclaw.json + skills
+npx 0xray skill:install # starter skills
 ```
 
 :::note

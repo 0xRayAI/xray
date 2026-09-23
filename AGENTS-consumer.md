@@ -91,14 +91,14 @@ Configure in `.xray/features.json`:
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "signalsPath": ".xray/state/repertoire/curated_signals.json",
-    "statePath": ".xray/state/repertoire/inference-state.json",
-    "feedbackDir": ".xray/state/repertoire/feedback"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
@@ -108,8 +108,8 @@ Configure in `.xray/features.json`:
 
 ```json
 "repertoire": {
-  "command": "npx",
-  "args": ["-y", "@0xray/repertoire", "mcp"]
+ "command": "npx",
+ "args": ["-y", "@0xray/repertoire", "mcp"]
 }
 ```
 

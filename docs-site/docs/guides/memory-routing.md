@@ -8,14 +8,14 @@ Pluggable **judgment** enrichment for orchestrator agent selection, thinDispatch
 
 ```
 features.json (memory_routing)
-       │
-       ▼
+ │
+ ▼
 provider-loader.ts ──► createMemoryRoutingProvider()
-       │
-       ├── ExecutionPlanner (enrichTasks, getTaskConfidence, selectAgent)
-       ├── thinDispatch.scoreAndRoute (resolveThinDispatch)
-       ├── Researcher analyzeProposal (researcher-confidence.ts)
-       └── ingestFeedback (per-task, v3.3)
+ │
+ ├── ExecutionPlanner (enrichTasks, getTaskConfidence, selectAgent)
+ ├── thinDispatch.scoreAndRoute (resolveThinDispatch)
+ ├── Researcher analyzeProposal (researcher-confidence.ts)
+ └── ingestFeedback (per-task, v3.3)
 ```
 
 ## Configuration
@@ -24,16 +24,16 @@ In `.xray/features.json` or `xray/features.json` (validated by `features.schema.
 
 ```json
 {
-  "memory_routing": {
-    "enabled": true,
-    "provider": "repertoire",
-    "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
-    "config": {
-      "signalsPath": ".xray/state/repertoire/curated_signals.json",
-      "statePath": ".xray/state/repertoire/inference-state.json",
-      "feedbackDir": ".xray/state/repertoire/feedback"
-    }
-  }
+ "memory_routing": {
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
+ }
 }
 ```
 
@@ -79,8 +79,8 @@ In-process routing uses `MemoryRoutingProvider`. External LLM sessions (Hermes, 
 
 ```json
 "repertoire": {
-  "command": "npx",
-  "args": ["-y", "@0xray/repertoire", "mcp"]
+ "command": "npx",
+ "args": ["-y", "@0xray/repertoire", "mcp"]
 }
 ```
 
@@ -94,7 +94,7 @@ Export from your package:
 
 ```typescript
 export function createMemoryRoutingProvider(
-  config?: Record<string, unknown>
+ config?: Record<string, unknown>
 ): MemoryRoutingProvider
 ```
 

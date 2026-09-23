@@ -11,14 +11,14 @@ CLI, bridges, seven MCP servers, Codex. Product thesis: [4.0 vision](./architect
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: 4 chat bridges + Cursor hooks + 7 MCP servers + AGENTS.md + .mcp.json
+npm install 0xray # postinstall: 4 chat bridges + Cursor hooks + 7 MCP servers + AGENTS.md + .mcp.json
 
-npx 0xray status           # verify
-npx 0xray setup            # optional extras
+npx 0xray status # verify
+npx 0xray setup # optional extras
 
 # Per-platform (idempotent — same as postinstall)
 npx 0xray opencode install
-npx 0xray grok install     # 7 MCP servers + dual skill sync
+npx 0xray grok install # 7 MCP servers + dual skill sync
 npx 0xray hermes install
 npx 0xray openclaw install
 npx 0xray skill:install
@@ -36,16 +36,16 @@ npx 0xray --help
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Inference                       │
-│  Reasoning · Pattern learning · Execution       │
+│ Inference │
+│ Reasoning · Pattern learning · Execution │
 ├─────────────────────────────────────────────────┤
-│           External Governance (Dynamo)           │
-│  Codex enforcement · Multi-agent review · SSOT  │
-│  3 MCP skill servers deliberate proposals       │
+│ External Governance (Dynamo) │
+│ Codex enforcement · Multi-agent review · SSOT │
+│ 3 MCP skill servers deliberate proposals │
 ├─────────────────────────────────────────────────┤
-│          Autonomous Engine (thinDispatch)        │
-│  Task routing · Multi-agent coordination        │
-│  Complexity-based delegation (7-flow MCP)       │
+│ Autonomous Engine (thinDispatch) │
+│ Task routing · Multi-agent coordination │
+│ Complexity-based delegation (7-flow MCP) │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -173,21 +173,21 @@ Every subsystem is configurable via `features.json` (located at `xray/features.j
 
 ```json
 {
-  "memory_routing": {
-    "enabled": true,
-    "provider": "repertoire"
-  },
-  "token_optimization": {
-    "enabled": true,
-    "max_context_tokens": 20000,
-    "context_compression": { "enabled": true, "threshold_tokens": 15000, "compression_ratio": 0.4 }
-  },
-  "multi_agent_orchestration": { "enabled": true, "max_concurrent_agents": 3 },
-  "autonomous_reporting": { "enabled": true, "interval_minutes": 60 },
-  "security": { "enabled": true, "vulnerability_scanning": true },
-  "analytics": { "enabled": true, "default_limit": 100 },
-  "pattern_learning": { "enabled": true, "learning_interval_ms": 3600000 },
-  "complexity_thresholds": { "simple": 15, "moderate": 25, "complex": 50, "enterprise": 100 }
+ "memory_routing": {
+ "enabled": true,
+ "provider": "repertoire"
+ },
+ "token_optimization": {
+ "enabled": true,
+ "max_context_tokens": 20000,
+ "context_compression": { "enabled": true, "threshold_tokens": 15000, "compression_ratio": 0.4 }
+ },
+ "multi_agent_orchestration": { "enabled": true, "max_concurrent_agents": 3 },
+ "autonomous_reporting": { "enabled": true, "interval_minutes": 60 },
+ "security": { "enabled": true, "vulnerability_scanning": true },
+ "analytics": { "enabled": true, "default_limit": 100 },
+ "pattern_learning": { "enabled": true, "learning_interval_ms": 3600000 },
+ "complexity_thresholds": { "simple": 15, "moderate": 25, "complex": 50, "enterprise": 100 }
 }
 ```
 
@@ -199,16 +199,16 @@ Governance is your quality gate. Configure it under `inference_governance` in `f
 
 ```json
 {
-  "inference_governance": {
-    "enabled": true,
-    "endpoint_url": "https://your-governance-endpoint/governance",
-    "request_timeout_ms": 10000,
-    "min_confidence_threshold": 0.5,
-    "decision_logic": {
-      "pass_confidence_min": 0.9,
-      "revision_confidence_max": 0.89
-    }
-  }
+ "inference_governance": {
+ "enabled": true,
+ "endpoint_url": "https://your-governance-endpoint/governance",
+ "request_timeout_ms": 10000,
+ "min_confidence_threshold": 0.5,
+ "decision_logic": {
+ "pass_confidence_min": 0.9,
+ "revision_confidence_max": 0.89
+ }
+ }
 }
 ```
 
@@ -263,10 +263,10 @@ npx 0xray status
 npx 0xray skill:install
 
 # 3. Read the station card after compact / host-swap
-#    .xray/state/STATION.md
+# .xray/state/STATION.md
 
 # 4. Agent surfaces
-#    AGENTS.md (copied on postinstall)
+# AGENTS.md (copied on postinstall)
 
 # 5. Run a health check
 npx 0xray health
