@@ -109,8 +109,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/thin-dispatch-invariant/);
     const byName = new Map(overlay.signals.map((signal) => [signal.name, signal.definition]));
     expect(byName.get('heat-is-not-conviction')).toMatch(/do not raise conviction/);
-    expect(byName.get('heat-is-not-conviction')).toMatch(/mergeStackOverlay does not pass fleshGeneric/);
-    expect(text).toMatch(/mergeStackOverlay does not pass fleshGeneric/);
+    expect(byName.get('heat-is-not-conviction')).toMatch(/does not append a confidence sample/);
+    expect(byName.get('heat-is-not-conviction')).toMatch(/refreshes a changed stack definition/);
+    expect(text).toMatch(/does not append a confidence sample/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/keyword map over session problem strings/);
     expect(byName.get('governance-vote-invariant')).toMatch(/clamped to 0\.\.1/);
     expect(byName.get('thin-dispatch-invariant')).toMatch(/at least 26 forces architect/);
@@ -134,7 +135,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/A reflection is not this capture/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Capture priority/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/heat-is-not-conviction/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/mergeStackOverlay does not pass fleshGeneric/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/does not append a confidence sample/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
@@ -154,7 +155,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/A reflection is not this capture/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Capture priority/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/thin-dispatch-invariant/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/mergeStackOverlay does not pass fleshGeneric/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/refreshes a changed stack definition/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
