@@ -1,0 +1,56 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const ingestFeedback = vi.fn();
+const buildRoutingContext = vi.fn();
+
+vi.mock("../../../memory-routing/provider-registry.js", () => ({
+  ensureMemoryRoutingProviderSync: () => ({
+    id: "repertoire",
+    ingestFeedback,
+    buildRoutingContext,
+  }),
+}));
+
+import { recordLesson } from "../../../memory-routing/record-lesson.js";
+
+describe("recordLesson", () => {
+  beforeEach(() => {
+    ingestFeedback.mockClear();
+    buildRoutingContext.mockReset();
+  });
+
+  it("steps the signals the task text named and records the outcome", () => {
+    buildRoutingContext.mockReturnValue({ matchedSignals: ["wake-cascade", "wake-cascade"] });
+
+    const taught = recordLesson({
+      operation: "Codify wake-cascade pattern",
+      success: true,
+      taskId: "prop-1",
+      assignedAgent: "inference-cycle",
+      sessionId: "cycle-1",
+    });
+
+    expect(taught).toEqual(["wake-cascade"]);
+    expect(ingestFeedback).toHaveBeenCalledTimes(1);
+    expect(ingestFeedback.mock.calls[0][0]).toMatchObject({
+      memorySignals: ["wake-cascade"],
+      success: true,
+      taskId: "prop-1",
+    });
+  });
+
+  it("writes nothing when the task names no stored signal", () => {
+    buildRoutingContext.mockReturnValue({ matchedSignals: [] });
+
+    const taught = recordLesson({
+      operation: "Codify Extract Method pattern",
+      success: false,
+      taskId: "prop-2",
+      assignedAgent: "inference-cycle",
+      sessionId: "cycle-1",
+    });
+
+    expect(taught).toEqual([]);
+    expect(ingestFeedback).not.toHaveBeenCalled();
+  });
+});

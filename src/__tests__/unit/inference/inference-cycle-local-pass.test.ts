@@ -7,6 +7,7 @@ import type { SessionInference } from "../../../inference/session-capture.js";
 const callServerTool = vi.fn(() => {
   throw new Error("Dynamo must not be called when inference governance is off");
 });
+const recordLesson = vi.fn(() => [] as string[]);
 
 vi.mock("../../../core/features-config.js", () => ({
   featuresConfigLoader: {
@@ -18,6 +19,10 @@ vi.mock("../../../mcps/mcp-client.js", () => ({
   mcpClientManager: {
     callServerTool: (...args: unknown[]) => callServerTool(...args),
   },
+}));
+
+vi.mock("../../../memory-routing/record-lesson.js", () => ({
+  recordLesson: (...args: unknown[]) => recordLesson(...args),
 }));
 
 import { InferenceCycle } from "../../../inference/inference-cycle.js";
@@ -58,6 +63,7 @@ describe("Inference cycle local governance pass", () => {
   afterEach(() => {
     if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     callServerTool.mockClear();
+    recordLesson.mockClear();
   });
 
   it("scores proposals on the local matrix when inference governance is off", async () => {
@@ -85,5 +91,7 @@ describe("Inference cycle local governance pass", () => {
     });
     expect(patternVote?.decision).toBe("approve");
     expect(patternVote?.confidence).toBe(0.89);
+    const lessons = recordLesson.mock.calls.map((call) => call[0] as { success: boolean; operation: string });
+    expect(lessons.some((lesson) => lesson.success && lesson.operation.includes("Extract Method"))).toBe(true);
   });
 });

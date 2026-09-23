@@ -9,6 +9,7 @@ import { getConfigDir } from "../core/config-paths.js";
 import { generateProposals } from "./inference-proposal-generator.js";
 import { applyProposals as applyProposalsEx } from "./inference-applier.js";
 import { applyDecisionMatrix } from "../governance/governance-core.js";
+import { recordLesson } from "../memory-routing/record-lesson.js";
 
 export interface InferenceProposal {
   id: string;
@@ -281,6 +282,8 @@ export class InferenceCycle {
         p.status = "rejected";
       }
 
+      this.recordGovernedLessons(cycleId, proposals, votes);
+
       if (approved.length > 0) {
         if (!this.options.skipApply) {
           this.setPhase("applying");
@@ -330,6 +333,37 @@ export class InferenceCycle {
       return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals, votes);
     } finally {
       InferenceCycle.reEntryLock = false;
+    }
+  }
+
+  /** Governance said good or bad. Write a tenth for every signal the proposal text actually named. */
+  private recordGovernedLessons(
+    cycleId: string,
+    proposals: InferenceProposal[],
+    votes: InferenceCycleResult["votes"],
+  ): void {
+    for (const proposal of proposals) {
+      const vote = votes.find((item) => item.proposalId === proposal.id);
+      if (!vote) continue;
+      if (vote.decision !== "approve" && vote.decision !== "reject" && vote.decision !== "needs_revision") {
+        continue;
+      }
+      if (vote.details.some((line) => line.includes("governance error"))) continue;
+
+      const taught = recordLesson({
+        operation: [proposal.title, proposal.description, ...proposal.evidence].join("\n"),
+        success: vote.decision === "approve",
+        taskId: proposal.id,
+        assignedAgent: "inference-cycle",
+        sessionId: cycleId,
+      });
+      if (taught.length > 0) {
+        frameworkLogger.log("inference-cycle", "lesson-recorded", "info", {
+          proposalId: proposal.id,
+          decision: vote.decision,
+          signals: taught,
+        });
+      }
     }
   }
 

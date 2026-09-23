@@ -1,0 +1,37 @@
+import { ensureMemoryRoutingProviderSync } from "./provider-registry.js";
+
+export interface LessonInput {
+  operation: string;
+  success: boolean;
+  taskId: string;
+  assignedAgent: string;
+  sessionId: string;
+}
+
+/**
+ * A finished task names the signals its text actually matched and says
+ * whether the outcome was good. That is the one-tenth step. No match, no write.
+ */
+export function recordLesson(input: LessonInput): string[] {
+  const provider = ensureMemoryRoutingProviderSync();
+  if (provider.id === "null" || !provider.ingestFeedback) return [];
+
+  const names = [
+    ...new Set(
+      provider.buildRoutingContext(input.operation).matchedSignals.filter((name) => name.length > 0),
+    ),
+  ];
+  if (names.length === 0) return [];
+
+  provider.ingestFeedback({
+    timestamp: new Date().toISOString(),
+    sessionId: input.sessionId,
+    taskId: input.taskId,
+    assignedAgent: input.assignedAgent,
+    memorySignals: names,
+    complexity: 0,
+    success: input.success,
+    durationMs: 0,
+  });
+  return names;
+}

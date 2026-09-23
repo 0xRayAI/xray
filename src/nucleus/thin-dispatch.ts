@@ -25,6 +25,7 @@ import {
   ensureMemoryRoutingProviderSync,
   initializeMemoryRouting,
 } from "../memory-routing/index.js";
+import { recordLesson } from "../memory-routing/record-lesson.js";
 
 initializeMemoryRouting();
 
@@ -115,6 +116,16 @@ export function scoreAndRoute(
       level: adjustedLevel,
       signals: resolved.context.matchedSignals,
     });
+
+    if (resolved.context.matchedSignals.length > 0) {
+      recordLesson({
+        operation,
+        success: resolved.adjustedScore > score.score,
+        taskId: `route:${operation.slice(0, 80)}`,
+        assignedAgent: agent,
+        sessionId: "thin-dispatch",
+      });
+    }
 
     return {
       score: {

@@ -5,6 +5,7 @@ import * as path from "path";
 import type { SessionInference } from "../../../inference/session-capture.js";
 
 const callServerTool = vi.fn();
+const recordLesson = vi.fn(() => [] as string[]);
 
 vi.mock("../../../core/features-config.js", () => ({
   featuresConfigLoader: {
@@ -16,6 +17,10 @@ vi.mock("../../../mcps/mcp-client.js", () => ({
   mcpClientManager: {
     callServerTool: (...args: unknown[]) => callServerTool(...args),
   },
+}));
+
+vi.mock("../../../memory-routing/record-lesson.js", () => ({
+  recordLesson: (...args: unknown[]) => recordLesson(...args),
 }));
 
 import { InferenceCycle } from "../../../inference/inference-cycle.js";
@@ -65,6 +70,7 @@ describe("Inference cycle Dynamo MCP vote", () => {
   afterEach(() => {
     if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     callServerTool.mockReset();
+    recordLesson.mockClear();
     if (previousForce === undefined) delete process.env.XRAY_FORCE_MCP_GOVERNANCE;
     else process.env.XRAY_FORCE_MCP_GOVERNANCE = previousForce;
   });
@@ -95,6 +101,9 @@ describe("Inference cycle Dynamo MCP vote", () => {
     expect(dynamoVote?.decision).toBe("needs_revision");
     expect(dynamoVote?.details.join(" ")).toContain("external-dynamo: needs_revision (0.76)");
     expect(dynamoVote?.details.join(" ")).not.toContain("parse-failed");
+    const lessons = recordLesson.mock.calls.map((call) => call[0] as { success: boolean });
+    expect(lessons.length).toBeGreaterThan(0);
+    expect(lessons.every((lesson) => lesson.success === false)).toBe(true);
   });
 
   it("stores an unreadable governance error instead of abstaining at 0.5", async () => {
@@ -119,5 +128,6 @@ describe("Inference cycle Dynamo MCP vote", () => {
       expect(vote.details[0]).toContain("InferenceGovernanceIntegration is not available");
       expect(vote.details[0]).not.toContain("parse-failed");
     }
+    expect(recordLesson).not.toHaveBeenCalled();
   });
 });
