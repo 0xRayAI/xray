@@ -119,8 +119,7 @@ describe("Inference Cycle", () => {
 
     expect(result.votes.length).toBeGreaterThan(0);
     for (const vote of result.votes) {
-      // With strict Dynamo Solar SSOT, 'abstain' is valid in test environments.
-      expect(["approve", "reject", "abstain"]).toContain(vote.decision);
+      expect(["approve", "reject", "needs_revision", "abstain"]).toContain(vote.decision);
       expect(vote.confidence).toBeGreaterThanOrEqual(0);
       expect(vote.confidence).toBeLessThanOrEqual(1);
     }

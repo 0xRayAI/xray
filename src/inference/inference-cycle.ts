@@ -8,6 +8,7 @@ import { mcpClientManager } from "../mcps/mcp-client.js";
 import { getConfigDir } from "../core/config-paths.js";
 import { generateProposals } from "./inference-proposal-generator.js";
 import { applyProposals as applyProposalsEx } from "./inference-applier.js";
+import { applyDecisionMatrix } from "../governance/governance-core.js";
 
 export interface InferenceProposal {
   id: string;
@@ -333,7 +334,7 @@ export class InferenceCycle {
       this.isGovernanceMcpPreferred();
 
     if (!useGovernanceMcp) {
-      throw new Error("Governance MCP is required but not available");
+      return this.governWithLocalMatrix(proposals);
     }
 
     const result = await Promise.race([
@@ -362,6 +363,25 @@ export class InferenceCycle {
       overall: parsed.overallDecision,
     });
     return parsed.votes;
+  }
+
+  /** Flag off: the local matrix is the pass. Dynamo is not called and the miss is not stored as a reject. */
+  private governWithLocalMatrix(proposals: InferenceProposal[]): InferenceCycleResult["votes"] {
+    return proposals.map((proposal) => {
+      const resonance = Number.isFinite(proposal.confidence) ? proposal.confidence : 0.8;
+      const matrix = applyDecisionMatrix({ resonance });
+      const decision = matrix.recommendation === "PASS"
+        ? "approve"
+        : matrix.recommendation === "REJECT"
+          ? "reject"
+          : "needs_revision";
+      return {
+        proposalId: proposal.id,
+        decision,
+        confidence: matrix.confidence,
+        details: ["local-matrix: inference_governance disabled", ...matrix.reasons],
+      };
+    });
   }
 
   private isGovernanceMcpPreferred(): boolean {

@@ -1,0 +1,89 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import type { SessionInference } from "../../../inference/session-capture.js";
+
+const callServerTool = vi.fn(() => {
+  throw new Error("Dynamo must not be called when inference governance is off");
+});
+
+vi.mock("../../../core/features-config.js", () => ({
+  featuresConfigLoader: {
+    loadConfig: () => ({ inference_governance: { enabled: false } }),
+  },
+}));
+
+vi.mock("../../../mcps/mcp-client.js", () => ({
+  mcpClientManager: {
+    callServerTool: (...args: unknown[]) => callServerTool(...args),
+  },
+}));
+
+import { InferenceCycle } from "../../../inference/inference-cycle.js";
+
+function makeSession(id: string): SessionInference {
+  return {
+    sessionId: `session-${id}`,
+    timestamp: new Date().toISOString(),
+    span: { from: "HEAD~10", to: "HEAD" },
+    problems: ["Bug: same bug every time"],
+    approaches: ["Extract methods"],
+    wrongTurns: [],
+    solutions: ["Applied fix"],
+    reasoningChain: [],
+    patterns: [
+      {
+        name: "Extract Method",
+        confidence: 0.9,
+        evidence: ["3 new files in implementations/"],
+        description: "Methods extracted from monolith",
+      },
+    ],
+    metrics: {
+      commits: 10,
+      filesChanged: 10,
+      insertions: 100,
+      deletions: 50,
+      filesAdded: 2,
+      filesDeleted: 1,
+      uniqueDirs: 3,
+    },
+  };
+}
+
+describe("Inference cycle local governance pass", () => {
+  let tmpDir: string;
+
+  afterEach(() => {
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+    callServerTool.mockClear();
+  });
+
+  it("scores proposals on the local matrix when inference governance is off", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-local-pass-"));
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+    for (let i = 0; i < 4; i++) {
+      fs.writeFileSync(path.join(inferenceDir, `session-s${i}.json`), JSON.stringify(makeSession(`s${i}`)));
+    }
+
+    const cycle = new InferenceCycle(tmpDir, undefined, { skipApply: true, skipDeployVerify: true });
+    const result = await cycle.maybeRunCycle();
+
+    expect(result.triggered).toBe(true);
+    expect(result.votes.length).toBeGreaterThan(0);
+    expect(callServerTool).not.toHaveBeenCalled();
+    for (const vote of result.votes) {
+      expect(vote.confidence).toBeGreaterThan(0);
+      expect(vote.details[0]).toBe("local-matrix: inference_governance disabled");
+      expect(vote.details.join(" ")).not.toMatch(/TAU/);
+    }
+    const patternVote = result.votes.find((vote) => {
+      const proposal = result.proposals.find((item) => item.id === vote.proposalId);
+      return proposal?.source === "recurring_pattern";
+    });
+    expect(patternVote?.decision).toBe("approve");
+    expect(patternVote?.confidence).toBe(0.89);
+  });
+});
