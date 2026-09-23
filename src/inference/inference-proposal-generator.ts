@@ -6,8 +6,15 @@ function primitivesForSessions(corpus: InferenceCorpus, sessionIds: string[]): s
   const names: string[] = [];
   for (const session of corpus.sessions) {
     if (!wanted.has(session.sessionId)) continue;
-    for (const name of session.matchedPrimitives ?? []) names.push(name);
+    const listed = session.matched_primitives ?? session.matchedPrimitives ?? [];
+    for (const name of listed) names.push(name);
   }
+  return [...new Set(names.filter((name) => name.length > 0))];
+}
+
+function signalsForPattern(corpus: InferenceCorpus, pattern: RecurringPattern): string[] {
+  const names = primitivesForSessions(corpus, pattern.sessions);
+  if (pattern.name.length > 0) names.push(pattern.name);
   return [...new Set(names)];
 }
 
@@ -157,7 +164,7 @@ export function generateProposals(
       confidence: pattern.avgConfidence,
       source: "recurring_pattern",
       status: "pending",
-      namedSignals: primitivesForSessions(corpus, pattern.sessions),
+      namedSignals: signalsForPattern(corpus, pattern),
     });
   }
 

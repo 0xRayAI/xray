@@ -338,7 +338,7 @@ export class InferenceCycle {
     }
   }
 
-  /** Governance said good or bad. Write a tenth for every signal the proposal text actually named. */
+  /** Approve or reject grades the signals that proposal's sessions already named. needs-revision does not write. */
   private recordGovernedLessons(
     cycleId: string,
     proposals: InferenceProposal[],

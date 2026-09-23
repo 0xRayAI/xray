@@ -134,7 +134,9 @@ export function loadSessionInferences(dir: string): SessionInference[] {
     .map((f) => {
       try {
         const parsed = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
-        parsed.matchedPrimitives = readMatchedPrimitives(parsed);
+        const named = readMatchedPrimitives(parsed);
+        parsed.matched_primitives = named;
+        parsed.matchedPrimitives = named;
         return parsed;
       } catch {
         return null;

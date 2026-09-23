@@ -170,6 +170,20 @@ describe("Inference Accumulator", () => {
     expect(corpus.recurringPatterns).toEqual([]);
   });
 
+  it("keeps matched_primitives from the session file", () => {
+    const session = makeSession("named", 6, ["test-expansion"]);
+    const raw = {
+      ...session,
+      matched_primitives: ["wake-cascade", "wake-cascade", ""],
+    };
+    fs.writeFileSync(path.join(inferenceDir, "session-named.json"), JSON.stringify(raw));
+
+    const loaded = loadSessionInferences(inferenceDir);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0]?.matched_primitives).toEqual(["wake-cascade"]);
+    expect(loaded[0]?.matchedPrimitives).toEqual(["wake-cascade"]);
+  });
+
   it("should handle malformed session files gracefully", () => {
     writeSession("a", 10);
     fs.writeFileSync(path.join(inferenceDir, "session-bad.json"), "not json {{{");
