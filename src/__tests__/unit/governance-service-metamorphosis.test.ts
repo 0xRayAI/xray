@@ -79,6 +79,38 @@ describe('GovernanceService metamorphosis + PHI/TAU wiring', () => {
     expect(response.results[0]?.moralOverride).toBe('rejected_critical');
   });
 
+  it('does not reject Aligned or Mild tension when moralFusion is absent', async () => {
+    for (const tension of ['Aligned', 'Mild'] as const) {
+      (getGovernanceIntegration as ReturnType<typeof vi.fn>).mockReturnValue({
+        isAvailable: () => true,
+        checkProposal: vi.fn().mockResolvedValue({
+          vote: 'YES',
+          reason: `${tension} without fusion`,
+          passed: true,
+          governanceResponse: { confidence: 0.9 },
+          moralTension: tension,
+          moralScore: 0.9,
+        }),
+      });
+
+      const service = new GovernanceService();
+      const response = await service.govern({
+        proposals: [
+          {
+            id: `p-${tension}`,
+            type: 'fix',
+            title: 'Safe change',
+            description: 'Moral tension without fusion',
+          },
+        ],
+        options: { requireExternalDynamo: false },
+      });
+
+      expect(response.results[0]?.finalDecision).not.toBe('reject');
+      expect(response.results[0]?.moralOverride).not.toBe('rejected_critical');
+    }
+  });
+
   it('downgrades metamorphosis proposals below threshold to needs_revision', async () => {
     (mcpClientManager.callServerTool as ReturnType<typeof vi.fn>).mockResolvedValue(
       makeTextResponse('abstain', '0.2', 'low confidence'),

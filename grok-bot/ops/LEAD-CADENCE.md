@@ -113,9 +113,52 @@ When you start a new critic or any new subagent that does not already have this 
 - Give them the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed.
 - If the branch moves after you brief them, send the new SHA before they verdict.
 
+### Control
+
+The lead keeps control. A subagent does not already have this thread, and it does not already wear the suit.
+
+- Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply to that duty.
+- The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit.
+- The lead checks the result. The subagent does not close the loop.
+
+### Engine cadence
+
+This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
+
+1. Change the engine with precision.
+2. Ship it local: build and install the tree. A live npm version stays live. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish.
+3. Test the change.
+4. Run another deep review of the diff you just made.
+5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
+6. Ship the PR.
+
+### Planes
+
+The operating planes are code, OP-PROC, model, suit, mill, host, and test/ship.
+
+- Code is the reactive engine still in TypeScript.
+- OP-PROC is the procedure the model carries.
+- The model is the seat that runs the procedure.
+- The suit is worn PPE: constitution, temperament, Station.
+- The mill fashions and fastens. Version manager is the mill's release hand.
+- The host is the floor. Temperament is how loud the engine is on that floor.
+- Test/ship is the critical OP-PROC plane. Test then ship is the hero. Ship without that proof is the catastrophe. After compaction the brain is operational when this plane still runs.
+
+Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station. Station is the short-term card. That cadence is how the next body still has a brain.
+
+As the model improves, reactive decisions move out of code into OP-PROC. That move is why the mill and the suit exist. It is not fully proved.
+
+Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. Do not freeze the live cut.
+
 ### When knowledge grows
 
 Monitor the lead. New law that had to be spoken twice goes to disk this wake: `SEATS.md` or this file or the existing `orchestrator` / `ship-ready-mill-gate` skill. Codex 69: rewire. Do not add `src/skills/critic/SKILL.md`. Project-local Repertoire gets the name. NOTES get the leftover. Station stays thin.
+
+### Cascade
+
+Chat is not the brain. Compaction drops the seat. A cascade that must survive is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Observation counts are not capture.
+
+Capture priority: a law is an invariant you would otherwise re-read the source to relearn. One law per subsystem bone. Telemetry stays in the kernel diary and inference output. Heat touches last_seen and does not append a confidence sample, so more hits do not raise conviction. Heat touches last_seen only when the diary contains that signal's name; two definition words are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. The diary is `logs/framework/activity.log`, routing outcomes, pattern metrics, and `.xray/inference/latest-workflow.json` plus `workflow-status.json`. Hero names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats.
 
 ### Ship track (always)
 
@@ -137,7 +180,7 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 |------|--------|------------------|
 | **A — PR + CI** | Branch + PR · critic PASS · CI green | GitHub checks on the PR head |
 | **B — Pack** | Packed tarball installs and the required dist paths exist | `npx @0xray/foundry gate` → `assert-packed-dist-cli.mjs` · consumer smoke |
-| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. Guides, Station, and this file do not pin a cut. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG only |
+| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. The stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC. It does not edit Station, NOTES, dest, or node_modules. It does not publish. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG and strips every present-tense patch pin |
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
 | **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
 

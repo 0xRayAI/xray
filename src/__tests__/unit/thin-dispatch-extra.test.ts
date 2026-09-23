@@ -5,7 +5,7 @@ vi.mock('../../core/framework-logger.js', () => ({
 }));
 
 describe('thinDispatch — scoreComplexity edge cases', () => {
-  let scoreComplexity: any;
+  let scoreComplexity: (operation: string, context: unknown) => { score: number; level: string; recommendedStrategy: string; estimatedAgents: number };
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -48,7 +48,7 @@ describe('thinDispatch — scoreComplexity edge cases', () => {
 });
 
 describe('thinDispatch — routeToAgent edge cases', () => {
-  let routeToAgent: any;
+  let routeToAgent: (scoreOrLevel: number | { level: string }, level?: string) => string;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -83,6 +83,38 @@ describe('thinDispatch — routeToAgent edge cases', () => {
     expect(result).toHaveProperty('score');
     expect(result).toHaveProperty('agent');
     expect(typeof result.agent).toBe('string');
+  });
+});
+
+describe('thinDispatch — adjusted score updates strategy', () => {
+  it('sets recommendedStrategy from the level of the adjusted score', async () => {
+    const routing = await import('../../memory-routing/index.js');
+    const dispatch = await import('../../nucleus/thin-dispatch.js');
+    const { getStrategyForLevel, getAgentCountForLevel } = await import('../../delegation/complexity-core.js');
+    const spy = vi.spyOn(routing, 'getMemoryRoutingProviderSync').mockReturnValue({
+      id: 'test-adjust',
+      resolveThinDispatch: (agent: string, _operation: string, score: number) => ({
+        agent,
+        adjustedScore: score <= 50 ? 60 : 10,
+        context: {
+          providerId: 'test-adjust',
+          matchedSignals: ['level-cross'],
+          matchedTags: [],
+          flags: {},
+          synthesisAvailable: false,
+        },
+      }),
+    } as unknown as ReturnType<typeof routing.getMemoryRoutingProviderSync>);
+
+    try {
+      const base = dispatch.scoreComplexity('rename variable', { files: ['a.ts'] });
+      const routed = dispatch.scoreAndRoute('level-cross rename variable', { files: ['a.ts'] });
+      expect(routed.score.level).not.toBe(base.level);
+      expect(routed.score.recommendedStrategy).toBe(getStrategyForLevel(routed.score.level));
+      expect(routed.score.estimatedAgents).toBe(getAgentCountForLevel(routed.score.level));
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 

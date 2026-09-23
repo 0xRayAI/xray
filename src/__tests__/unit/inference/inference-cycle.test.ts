@@ -224,4 +224,45 @@ describe("Inference Cycle", () => {
     expect(parsed.proposals).toBeInstanceOf(Array);
     expect(parsed.votes).toBeInstanceOf(Array);
   }, 15000);
+
+  it("writes cycle state when a triggered run has no proposals", async () => {
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+    const session = makeSession("empty", 10, "unused");
+    session.problems = [];
+    session.patterns = [];
+    session.wrongTurns = [];
+    fs.writeFileSync(path.join(inferenceDir, "session-empty.json"), JSON.stringify(session));
+
+    const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
+    const result = await cycle.maybeRunCycle();
+
+    expect(result.triggered).toBe(true);
+    expect(result.phase).toBe("complete");
+    expect(result.proposals).toEqual([]);
+
+    const statePath = path.join(tmpDir, ".xray", "inference", "inference-cycle-state.json");
+    expect(fs.existsSync(statePath)).toBe(true);
+    const state = JSON.parse(fs.readFileSync(statePath, "utf-8")) as { cycleId: string; phase: string };
+    expect(state.cycleId).toBe(result.cycleId);
+    expect(state.phase).toBe("complete");
+
+    const historyPath = path.join(tmpDir, ".xray", "inference", "inference-cycle-history.json");
+    const history = JSON.parse(fs.readFileSync(historyPath, "utf-8")) as Array<{ cycleId: string }>;
+    expect(history.at(-1)?.cycleId).toBe(result.cycleId);
+
+    const again = await cycle.maybeRunCycle();
+    expect(again.triggered).toBe(false);
+  });
+
+  it("applies later getInstance options on the existing instance", () => {
+    InferenceCycle.resetInstance();
+    const first = InferenceCycle.getInstance(tmpDir, { skipApply: true });
+    const second = InferenceCycle.getInstance(tmpDir, { force: true });
+    expect(second).toBe(first);
+    const options = (second as unknown as { options: { force?: boolean; skipApply?: boolean } }).options;
+    expect(options.force).toBe(true);
+    expect(options.skipApply).toBe(true);
+    InferenceCycle.resetInstance();
+  });
 });

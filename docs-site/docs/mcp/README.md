@@ -8,37 +8,37 @@ Project `.mcp.json` (written on postinstall):
 
 ```json
 {
-  "mcpServers": {
-    "xray-governance": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "governance"],
-      "env": { "XRAY_FORCE_MCP_GOVERNANCE": "true" }
-    },
-    "xray-skills": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "skills"]
-    },
-    "xray-orchestrator": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "orchestrator"]
-    },
-    "xray-enforcer": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "enforcer"]
-    },
-    "xray-researcher": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "researcher"]
-    },
-    "xray-code-review": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "code-review"]
-    },
-    "xray-architect-tools": {
-      "command": "npx",
-      "args": ["-y", "0xray", "mcp", "architect-tools"]
-    }
-  }
+ "mcpServers": {
+ "xray-governance": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "governance"],
+ "env": { "XRAY_FORCE_MCP_GOVERNANCE": "true" }
+ },
+ "xray-skills": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "skills"]
+ },
+ "xray-orchestrator": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "orchestrator"]
+ },
+ "xray-enforcer": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "enforcer"]
+ },
+ "xray-researcher": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "researcher"]
+ },
+ "xray-code-review": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "code-review"]
+ },
+ "xray-architect-tools": {
+ "command": "npx",
+ "args": ["-y", "0xray", "mcp", "architect-tools"]
+ }
+ }
 }
 ```
 

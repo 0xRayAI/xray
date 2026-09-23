@@ -9,6 +9,7 @@ import {
   appendHookActivity,
   checkCodexPatterns,
   checkFullTestSuite,
+  cursorGateRoot,
   cursorHeatRoots,
   cursorSessionId,
   cursorToolContext,
@@ -53,7 +54,7 @@ async function main() {
     for (const root of heatRoots) {
       ensureCursorSessionBoot(root, '0xray/cursor-pre-tool-use-boot', { sessionId });
     }
-    const gateRoot = heatRoots[0] || eventRoot;
+    const gateRoot = cursorGateRoot(heatRoots, eventRoot);
 
     const features = loadFeatures(gateRoot);
     const gateFeatures = loadDelegationGateFeatures(gateRoot, 'cursor');

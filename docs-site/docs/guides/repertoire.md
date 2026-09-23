@@ -20,14 +20,14 @@ Shipped `xray/features.json`:
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "signalsPath": ".xray/state/repertoire/curated_signals.json",
-    "statePath": ".xray/state/repertoire/inference-state.json",
-    "feedbackDir": ".xray/state/repertoire/feedback"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
@@ -115,8 +115,8 @@ Server tools are **unprefixed** so Grok TUI can register them (`server__tool` â†
 
 ```json
 "repertoire": {
-  "command": "node",
-  "args": ["node_modules/@0xray/repertoire/dist/mcp/server.js"]
+ "command": "node",
+ "args": ["node_modules/@0xray/repertoire/dist/mcp/server.js"]
 }
 ```
 
@@ -138,10 +138,10 @@ In-process orchestrator code uses `getMemoryRoutingProviderSync()`.
 ```bash
 cd repertoire
 npm run ingest -- --source /path/to/groover/logs
-npm run pipeline          # ingest + meta-inference
-npm run query             # ad-hoc confidence query
-npm run test:e2e          # enriched loop regression
-npm run test:mcp          # stdio MCP smoke
+npm run pipeline # ingest + meta-inference
+npm run query # ad-hoc confidence query
+npm run test:e2e # enriched loop regression
+npm run test:mcp # stdio MCP smoke
 ```
 
 ## Data model (summary)

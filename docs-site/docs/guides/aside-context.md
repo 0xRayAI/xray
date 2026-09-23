@@ -12,13 +12,13 @@ Restored and wired in **v3.2.0** (was briefly removed as dead code in v3.0 clean
 
 ```
 orchestrate-task / analyze-complexity / govern-and-apply
-       │
-       ▼
-  spawnAside(options)  ──► ActiveAside (observations[], inheritedContext)
-       │
-       ├── addObservations (governance, orchestration, complexity extractors)
-       ├── get-orchestration-status reports activeAsideCount
-       └── closeAside / closeAllAsides on completion or cancel
+ │
+ ▼
+ spawnAside(options) ──► ActiveAside (observations[], inheritedContext)
+ │
+ ├── addObservations (governance, orchestration, complexity extractors)
+ ├── get-orchestration-status reports activeAsideCount
+ └── closeAside / closeAllAsides on completion or cancel
 ```
 
 | Concept | Description |
@@ -45,9 +45,9 @@ Spawns aside with task count + execution mode; passes `asideId` to `taskHandler`
 
 ```typescript
 const aside = await spawnAside({
-  description: `Orchestration: ${description}`,
-  sessionId,
-  inheritedContext: { taskCount, executionMode },
+ description: `Orchestration: ${description}`,
+ sessionId,
+ inheritedContext: { taskCount, executionMode },
 });
 // taskHandler receives { asideId: aside.asideId }
 ```
@@ -80,11 +80,11 @@ plan.memoryContext = provider.buildInheritedContext(memoryTasks);
 
 ```typescript
 await spawnAside({
-  description: `Orchestrate: ${description}`,
-  sessionId,
-  inheritedContext: {
-    memoryRouting: executionPlan.memoryContext,
-  },
+ description: `Orchestrate: ${description}`,
+ sessionId,
+ inheritedContext: {
+ memoryRouting: executionPlan.memoryContext,
+ },
 });
 ```
 
@@ -94,9 +94,9 @@ Flow:
 
 ```
 Repertoire.buildInheritedContext(tasks)
-       → ExecutionPlan.memoryContext
-       → AsideContext.inheritedContext.memoryRouting
-       → observations + governance loop
+ → ExecutionPlan.memoryContext
+ → AsideContext.inheritedContext.memoryRouting
+ → observations + governance loop
 ```
 
 ## Observation extractors
@@ -112,11 +112,11 @@ Repertoire.buildInheritedContext(tasks)
 ```typescript
 // Spawn
 const result = await spawnAside({
-  description: string;
-  sessionId?: string;
-  parentAsideId?: string;       // nested asides: parent.aside-N
-  inheritedContext?: Record<string, unknown>;  // Repertoire memoryRouting
-  priorVerdictContext?: Record<string, unknown>;
+ description: string;
+ sessionId?: string;
+ parentAsideId?: string; // nested asides: parent.aside-N
+ inheritedContext?: Record<string, unknown>; // Repertoire memoryRouting
+ priorVerdictContext?: Record<string, unknown>;
 });
 
 // Lifecycle

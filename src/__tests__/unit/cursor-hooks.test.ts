@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
   cursorBootNeedsRefresh,
+  cursorGateRoot,
   cursorHeatRoots,
   isCursorWorkspaceWrapper,
   millRootFromToolPath,
@@ -194,6 +195,40 @@ describe('Cursor cloud hooks adapter', () => {
       expect(card).toContain('keep-me-ben-001');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('cursor gate follows the suit mill when a sibling checkpoint is due', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-gate-sibling-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const sibling = path.join(workspace, 'repos', 'repertoire');
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      writeFileSync(path.join(mill, 'package.json'), JSON.stringify({ name: '0xray' }));
+      writeFileSync(
+        path.join(mill, '.xray', 'features.json'),
+        JSON.stringify({ synthesis: { enabled: false }, suit_temperament: { profile: 'auto' } }),
+      );
+      mkdirSync(path.join(sibling, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(sibling, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      writeFileSync(
+        path.join(sibling, '.xray', 'features.json'),
+        JSON.stringify({ synthesis: { enabled: true, every_n_gates: 12 } }),
+      );
+      writeFileSync(
+        path.join(sibling, '.xray', 'state', 'synthesis-checkpoint.json'),
+        JSON.stringify({ synthesisDue: true, sessionId: 'old', dueReason: 'gate threshold (12/12)' }),
+      );
+      const roots = cursorHeatRoots({
+        cwd: sibling,
+        workspace_roots: [workspace],
+      });
+      expect(roots).toContain(path.resolve(sibling));
+      expect(cursorGateRoot(roots, sibling)).toBe(path.resolve(mill));
+      expect(cursorGateRoot([path.resolve(sibling)], sibling)).toBe(path.resolve(sibling));
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 

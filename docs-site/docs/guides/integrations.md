@@ -7,9 +7,9 @@ Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` i
 **Repertoire is preferred** on every floor (vendored 0.2.5, dest = laws). Full 4-chat-bridge wear matrix:
 
 ```bash
-npm run install:bridges       # all four chat bridges
-npm run verify:suit:all       # verify Grok + OpenCode + OpenClaw + Hermes
-npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e2e
+npm run install:bridges # all four chat bridges
+npm run verify:suit:all # verify Grok + OpenCode + OpenClaw + Hermes
+npm run confirm:suit:all # install + verify + Grok harness + trap-routing e2e
 ```
 
 ## Overview
@@ -41,15 +41,15 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 
 ```json
 {
-  "mcpServers": {
-    "xray-governance": { "command": "npx", "args": ["-y", "0xray", "mcp", "governance"] },
-    "xray-skills":       { "command": "npx", "args": ["-y", "0xray", "mcp", "skills"] },
-    "xray-orchestrator": { "command": "npx", "args": ["-y", "0xray", "mcp", "orchestrator"] },
-    "xray-enforcer":     { "command": "npx", "args": ["-y", "0xray", "mcp", "enforcer"] },
-    "xray-researcher":   { "command": "npx", "args": ["-y", "0xray", "mcp", "researcher"] },
-    "xray-code-review":  { "command": "npx", "args": ["-y", "0xray", "mcp", "code-review"] },
-    "xray-architect-tools": { "command": "npx", "args": ["-y", "0xray", "mcp", "architect-tools"] }
-  }
+ "mcpServers": {
+ "xray-governance": { "command": "npx", "args": ["-y", "0xray", "mcp", "governance"] },
+ "xray-skills": { "command": "npx", "args": ["-y", "0xray", "mcp", "skills"] },
+ "xray-orchestrator": { "command": "npx", "args": ["-y", "0xray", "mcp", "orchestrator"] },
+ "xray-enforcer": { "command": "npx", "args": ["-y", "0xray", "mcp", "enforcer"] },
+ "xray-researcher": { "command": "npx", "args": ["-y", "0xray", "mcp", "researcher"] },
+ "xray-code-review": { "command": "npx", "args": ["-y", "0xray", "mcp", "code-review"] },
+ "xray-architect-tools": { "command": "npx", "args": ["-y", "0xray", "mcp", "architect-tools"] }
+ }
 }
 ```
 
@@ -75,8 +75,8 @@ npx 0xray opencode install
 - Marketplace: `.grok-plugin/plugin.json` + root `.mcp.json`
 
 ```bash
-npm install 0xray          # postinstall handles Grok if consumer project
-npx 0xray grok install    # explicit re-run / force sync
+npm install 0xray # postinstall handles Grok if consumer project
+npx 0xray grok install # explicit re-run / force sync
 ```
 
 See [Grok Guide](../architecture/GROK_GUIDE.md).
@@ -127,7 +127,7 @@ Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.
 npx 0xray status
 npx 0xray health
 npx 0xray validate
-npm run release:gate    # framework repo only — full consumer smoke
+npm run release:gate # framework repo only — full consumer smoke
 ```
 
 **Repertoire consumer** (`@0xray/repertoire`):

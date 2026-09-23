@@ -629,6 +629,60 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('wake heat refreshes a changed stack definition and keeps observation stats', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-law-refresh-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      fs.writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'curated_signals.json'),
+        JSON.stringify({ signals: [] }),
+      );
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'stack-overlay.json'),
+        JSON.stringify({
+          signals: [
+            {
+              name: 'operating-planes',
+              definition: 'Test then ship is the hero. Ship without that proof is the catastrophe.',
+              tags: ['test-ship'],
+            },
+          ],
+        }),
+      );
+      const destDir = path.join(tmp, '.xray', 'state', 'repertoire');
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(destDir, 'curated_signals.json'),
+        JSON.stringify({
+          signals: [
+            {
+              name: 'operating-planes',
+              definition: 'Six planes only.',
+              tags: ['planes'],
+              observation_stats: { observation_count: 9, avg_confidence: 0.57 },
+            },
+          ],
+        }),
+      );
+      applyStationHeat(tmp, 'cursor', {}, {});
+      const dest = JSON.parse(fs.readFileSync(path.join(destDir, 'curated_signals.json'), 'utf8'));
+      const law = dest.signals.find((signal: { name: string }) => signal.name === 'operating-planes');
+      expect(law.definition).toMatch(/the hero/);
+      expect(law.definition).toMatch(/the catastrophe/);
+      expect(law.observation_stats).toEqual({ observation_count: 9, avg_confidence: 0.57 });
+      expect(dest.signals.filter((signal: { name: string }) => signal.name === 'operating-planes')).toHaveLength(1);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('patternsFromGit observes existing laws and does not mint commit slugs', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-observe-'));
     try {

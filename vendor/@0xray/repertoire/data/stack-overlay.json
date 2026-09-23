@@ -1,6 +1,6 @@
 {
   "description": "Stack-language overlay for 0xRay 4.0 memory routing. Additive to the 8-name factory seed. Not a plant diary and not the 0.1.8 brain.",
-  "last_updated": "2026-09-20T00:00:00.000Z",
+  "last_updated": "2026-09-23T00:00:00.000Z",
   "source": "stack-overlay-4.0",
   "schema_version": "1.1",
   "implementation_guidance": {
@@ -762,6 +762,135 @@
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
       "implementation_notes": "LEAD-CADENCE.md Feat rebase. Not a new skill.",
       "example_inference_snippet": "Go up a level and answer the original message again from this seat.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "operating-planes",
+      "definition": "Operating planes are code, OP-PROC, model, suit, mill, host, and test/ship. Test/ship is the critical OP-PROC plane: test then ship is the hero; ship without that proof is the catastrophe. Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station, the short-term card that survives compaction. As the model improves, reactive decisions move out of code into OP-PROC. That move is not fully proved. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut.",
+      "tags": [
+        "planes",
+        "op-proc",
+        "test-ship",
+        "version-manager"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "Reply names test/ship as the hero or the catastrophe, and treats a live cut as the stamper stripping shipped guides and shipped OP-PROC.",
+      "validation_experiment": "A seat ships without the test, or wakes after compact without the test/ship plane — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "LEAD-CADENCE.md Planes. Not a new skill. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. The stamper strips shipped guides and shipped OP-PROC. It does not edit Station, NOTES, dest, or node_modules. It does not publish.",
+      "example_inference_snippet": "Test then ship is the hero. Ship without that proof is the catastrophe.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "wake-cascade",
+      "definition": "Chat is not the brain. Compaction drops the seat. Short-term memory is Station. Long-term memory is the project repertoire law list. NOTES is the deep cut: the pickup line cadences onto Station, and the body holds the cascade the card cannot. Capture a cascade by writing a named signal on the stack overlay and hydrating it onto dest. Observation counts are not capture. A reflection is not this capture. This wake, sorted: planes are code, OP-PROC, model, suit, mill, host, and test/ship; test then ship is the hero and ship without that proof is the catastrophe; each wake refreshes a changed stack definition and keeps observation stats, then heat writes matched names onto Station; the lead keeps control and a subagent gets the duty, the latest SHA, the Station card, the laws, and the suit built from the tree under review; when the work becomes mantra or the planes no longer share one present, answer the original message from this seat; once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut; the stamper does not edit Station, NOTES, dest, or node_modules; it does not publish; engine cadence is change, ship local, test, review the diff, monitor dest against Station, ship the PR; missing moral fusion is not an isotopic reject, vote confidence is a clamped weighted mean, thinDispatch strategy follows the adjusted level, and an empty inference cycle saves state.",
+      "tags": [
+        "cascade",
+        "memory",
+        "repertoire"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "After compact the seat can state the cascade from the repertoire name and from NOTES, without the chat.",
+      "validation_experiment": "A seat wakes blank and rebuilds the planes from the thread summary — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "NOTES body is the same cascade for the second Read. Not a reflection. Not a new skill.",
+      "example_inference_snippet": "Chat is not the brain. The cascade is the repertoire name wake-cascade.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "heat-is-not-conviction",
+      "definition": "Heat touches last_seen on names the kernel diary already matches. Heat touches last_seen only when the diary contains that signal's name; two definition words are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. It does not append a confidence sample, so a second heat does not raise observation_count and does not move avg_confidence. More hits do not raise conviction. Promotion still flips a proposed law to validated at two observations and confidence 0.55. Conviction moves on feedback, not on heat. Kernel diary text is logs/framework/activity.log, routing outcomes, pattern metrics, and .xray/inference/latest-workflow.json plus workflow-status.json. Heat matches that text onto existing names and does not mint a law. A missing session file or a stale inference-state timestamp is telemetry, not a law. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats. It does not pass fleshGeneric. Subject overlay still fleshes only a generic field-observed stub.",
+      "tags": ["memory", "heat", "kernel"],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "A rising observation count at 0.55 is not treated as learning.",
+      "validation_experiment": "A seat reads observation mass as conviction — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "heatKernelDiary calls touchLastSeen. recordPrimitiveObservations still appends samples for session and field ingest. promoteQualifiedSignals uses DEFAULT_PROMOTION_MIN_CONFIDENCE 0.55 and min observations 2. mergeStackOverlay in repertoire src/paths.ts refreshes stack law fields and keeps observation_stats. It does not pass fleshGeneric.",
+      "example_inference_snippet": "Heat touches last_seen and does not append a confidence sample. A changed stack definition refreshes and the observation count stays.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "inference-cycle-invariant",
+      "definition": "An inference cycle that generates no proposals still writes inference-cycle-state.json. Without that write the one-day trigger never starts and the next call repeats. InferenceCycle.getInstance applies later options, including force and skipApply. Governance failure rejects the proposals. Proposal text is a keyword map over session problem strings. generateProposals also emits recurring-pattern titles.",
+      "tags": ["inference", "invariant"],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "Empty cycles persist state, and later getInstance options apply.",
+      "validation_experiment": "An empty cycle returns without a state file — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "src/inference/inference-cycle.ts and inference-proposal-generator.ts. generateProposals maps session problem strings through a keyword map and also emits recurring-pattern titles. Not a new skill.",
+      "example_inference_snippet": "An empty inference cycle still saves state. Proposal text is a keyword map over session problem strings. generateProposals also emits recurring-pattern titles.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "governance-vote-invariant",
+      "definition": "PHI 1.666 and TAU 0.865 are unused constants. The matrix cutoffs are the literals 0.92, 0.95, 0.82, 0.88, 0.75, and 0.80. Reason text does not claim TAU. mergeVotes averageConfidence is the weighted mean of confidence, sum of weight times confidence over sum of weight, clamped to 0..1. That number is resonance. isotopicRatio is compared only when it is a finite number. moralFusion is not defaulted to 0.5. A missing fusion number does not force reject. Critical moral tension does reject. Without moral fields the three-skill vote stands.",
+      "tags": ["governance", "invariant"],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "A vote with no moral fusion is not an isotopic reject, and average confidence stays in 0..1.",
+      "validation_experiment": "Reason text names TAU, or average confidence exceeds 1 — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "src/governance/governance-core.ts and governance-service.ts. Not a new skill.",
+      "example_inference_snippet": "No moral fusion is not an isotopic reject. Average confidence is a clamped weighted mean.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "thin-dispatch-invariant",
+      "definition": "scoreComplexity applies the thresholds it is given. After Repertoire adjusts the score, level, recommendedStrategy, and estimatedAgents follow the adjusted level. A high-confidence trap with an adjusted score of at least 26 forces architect. A provenance-failure tag with an adjusted score under 51 forces bug-triage-specialist. On a frontier host the spawn gate warns and allows a spawn with no plan. Guided and strict hosts deny. The lead-dev plan builder is on.",
+      "tags": ["engine", "invariant", "thin-dispatch"],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "Strategy follows the adjusted level, and the trap routes are architect at 26 and bug-triage under 51.",
+      "validation_experiment": "Strategy stays on the pre-adjust level after Repertoire moves the score — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "src/nucleus/thin-dispatch.ts and RepertoireOrchestratorBridge.resolveThinDispatchAgent. Not a new skill.",
+      "example_inference_snippet": "After Repertoire adjusts the score, strategy follows the adjusted level. A trap at 26 forces architect.",
       "observation_stats": {
         "observation_count": 1,
         "avg_confidence": 0.55,

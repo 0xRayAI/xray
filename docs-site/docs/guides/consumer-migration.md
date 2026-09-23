@@ -31,7 +31,7 @@ npx 0xray opencode install
 npx 0xray grok install
 npx 0xray hermes install
 npx 0xray openclaw install
-npx 0xray setup    # optional extras
+npx 0xray setup # optional extras
 ```
 
 ## Seven MCP Servers (v3.4.1)
@@ -112,7 +112,7 @@ Every release passes `npm run release:gate` (or CI equivalent):
 
 ```bash
 npm run release:gate
-npm run release:npm    # gate first, then npm publish — do not use a scripts.publish lifecycle
+npm run release:npm # gate first, then npm publish — do not use a scripts.publish lifecycle
 ```
 
 ## 0xray (framework) vs consumer project

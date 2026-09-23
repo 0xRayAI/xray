@@ -31,6 +31,7 @@ Rewire `applyStationHeat` (and only that). Existing call sites stay:
 ```
 applyStationHeat(root, host, extra, existing)
   1. hydrateWritableSignals(dest)     index present on THIS mill
+                                  changed stack definition refreshes; observation stats stay
   2. maybeCaptureSession(root)        lift off Cursor-only into this runtime
   3. maybeIngestWake(root)            existing match/ingest helpers; debounce
   4. pickup = readNotesPickup(root)   first **Pickup line:** in NOTES, ≤240
@@ -55,4 +56,4 @@ Hold without thickening the Grok exo: do not inject dest into the system prompt.
 
 ## Not this
 
-Do not republish a live npm version. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.
+A live npm version stays live. Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.

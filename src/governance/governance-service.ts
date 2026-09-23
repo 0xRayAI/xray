@@ -186,22 +186,24 @@ export class GovernanceService {
         let moralOverride: GovernanceResult['moralOverride'] = 'none';
 
         if (
-          externalVote?.moralTension ||
-          externalVote?.moralScore != null ||
-          externalVote?.moralFusion != null
+          externalVote &&
+          (externalVote.moralTension ||
+            externalVote.moralScore != null ||
+            externalVote.moralFusion != null)
         ) {
           const matrixInput: Parameters<typeof applyDecisionMatrix>[0] = {
             resonance: averageConfidence,
-            isotopicRatio: externalVote.moralFusion ?? 0.5,
           };
+          const fusion = externalVote.moralFusion;
+          if (typeof fusion === 'number' && Number.isFinite(fusion)) {
+            matrixInput.isotopicRatio = fusion;
+            matrixInput.moralFusion = fusion;
+          }
           if (externalVote.moralTension != null) {
             matrixInput.moralTension = externalVote.moralTension;
           }
           if (externalVote.moralScore != null) {
             matrixInput.moralScore = externalVote.moralScore;
-          }
-          if (externalVote.moralFusion != null) {
-            matrixInput.moralFusion = externalVote.moralFusion;
           }
           const matrix = applyDecisionMatrix(matrixInput);
           moralOverride = matrix.moralOverride ?? 'none';

@@ -25,20 +25,20 @@ Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks,
 ## Quick Start
 
 ```bash
-npm install 0xray          # postinstall: mill+inspect plant + 4 bridges + 7 MCPs + AGENTS.md + .mcp.json
-npx 0xray status          # verify install
-npx 0xray setup            # optional: symlinks, hook extras
-npx @0xray/foundry inspect --skip-live   # mill receipt (chat is not a receipt)
+npm install 0xray # postinstall: mill+inspect plant + 4 bridges + 7 MCPs + AGENTS.md + .mcp.json
+npx 0xray status # verify install
+npx 0xray setup # optional: symlinks, hook extras
+npx @0xray/foundry inspect --skip-live # mill receipt (chat is not a receipt)
 ```
 
 Manual per-platform install (idempotent, same result as postinstall):
 
 ```bash
 npx 0xray opencode install
-npx 0xray grok install     # 7 MCPs servers + project .grok/plugins/0xray (not machine last-wins)
+npx 0xray grok install # 7 MCPs servers + project .grok/plugins/0xray (not machine last-wins)
 npx 0xray hermes install
 npx 0xray openclaw install
-npx 0xray skill:install    # starter skills
+npx 0xray skill:install # starter skills
 ```
 
 ## Autonomy command (default operating model)
@@ -81,16 +81,16 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                  Inference                       │
-│  Proposals · Reflection · Memory routing        │
+│ Inference │
+│ Proposals · Reflection · Memory routing │
 ├─────────────────────────────────────────────────┤
-│           External Governance (Dynamo)           │
-│  Codex enforcement · Resonance/Isotopic · SSOT    │
-│  3 deliberation MCPs: code-review, security,     │
-│  researcher (within 7-server consumer surface)  │
+│ External Governance (Dynamo) │
+│ Codex enforcement · Resonance/Isotopic · SSOT │
+│ 3 deliberation MCPs: code-review, security, │
+│ researcher (within 7-server consumer surface) │
 ├─────────────────────────────────────────────────┤
-│          Autonomous Engine (thinDispatch)        │
-│  7-flow · AsideContext · Confidence gate        │
+│ Autonomous Engine (thinDispatch) │
+│ 7-flow · AsideContext · Confidence gate │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -155,14 +155,14 @@ See [AGENTS.md](AGENTS.md) and [SKILLS.md](SKILLS.md) for the full agent and ski
 
 ```json
 "memory_routing": {
-  "enabled": true,
-  "provider": "repertoire",
-  "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
-  "config": {
-    "signalsPath": ".xray/state/repertoire/curated_signals.json",
-    "statePath": ".xray/state/repertoire/inference-state.json",
-    "feedbackDir": ".xray/state/repertoire/feedback"
-  }
+ "enabled": true,
+ "provider": "repertoire",
+ "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+ "config": {
+ "signalsPath": ".xray/state/repertoire/curated_signals.json",
+ "statePath": ".xray/state/repertoire/inference-state.json",
+ "feedbackDir": ".xray/state/repertoire/feedback"
+ }
 }
 ```
 
@@ -208,9 +208,9 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ```bash
 npm test
-npm run pack:tmp-proof  # pack → tmp fasten + hangar inspect
-npm run release:gate    # full release gate (before upload)
-npm run release:npm     # gate + prepare + npm publish --access public
+npm run pack:tmp-proof # pack → tmp fasten + hangar inspect
+npm run release:gate # full release gate (before upload)
+npm run release:npm # gate + prepare + npm publish --access public
 ```
 
 ## Release
@@ -219,8 +219,8 @@ The **4.0** line is on npm. Do **not** run `release:major` to ship a 4.x fix (th
 
 ```bash
 npm run release:gate
-npm run release:npm     # after gate is green; uses npm publish --access public
-npm run release:patch   # version bump pipeline (not for an already-bumped package.json)
+npm run release:npm # after gate is green; uses npm publish --access public
+npm run release:patch # version bump pipeline (not for an already-bumped package.json)
 ```
 
 Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.
