@@ -6,7 +6,7 @@ sidebar_label: Station vs Repertoire 0.1
 
 **Station is survive-the-cut. Repertoire is preferred for judgment + growing named laws.** They are not the same job. Wear Repertoire. Do not pin `@0xray/repertoire@0.1.8` to remember a ticket, a cloud id, or a wiped chat.
 
-If Repertoire is **not** installed, `STATION.md` **is** the memory. Heat it this wake. NOTES hold the deep cut. Compact survival does not wait for dest.
+If Repertoire is **explicitly off**, `STATION.md` is the compact ticket. Heat it this wake. NOTES hold the deep cut. Compact survival does not wait for dest.
 
 The three pieces already exist (bookmark · index · mind). They do not meet on wake. That join is [Memory wake](./memory-wake.md) — `applyStationHeat`, not a new organ.
 
@@ -35,7 +35,7 @@ Do not put the 145/188 dump back in the factory seed. Do not paste it onto `STAT
 ## What 4.0 wears
 
 - **Continuity:** Station. Grok **Reads** the card (does not inject). Compact heat rewrites stock fields and keeps unknown keys + `## Durable` / `## Seed`.
-- **Routing seed:** vendored `@0xray/repertoire@0.2.5` (factory seed plus overlays). Worn mill reads `.xray/state/repertoire/curated_signals.json`, not the tarball. Optional. Station is the memory when it is off.
+- **Routing seed:** vendored `@0xray/repertoire@0.2.5` (factory seed plus overlays). Worn mill reads `.xray/state/repertoire/curated_signals.json`, not the tarball. **Repertoire is preferred.** Explicit opt-out only (`enabled: false`, `provider: repertoire`). Station is the compact ticket when it is off — not a substitute.
 - **Do not pin 0.1.8** for a normal mill install. The 0.1 *job* (judgment) is still real when a field emits enriched JSONL (`matched_primitives` + `match_confidence`) **and** 0xRay actually routes (`analyze-complexity` / thinDispatch / researcher). Then grow the **project-local** copy. That is not Station.
 
 Frontier hosts often skip intake (spawn **warns**, does not deny). Then the judgment loop stays idle even if Repertoire is fastened. That is expected, not a missing Station plant.
@@ -54,10 +54,10 @@ Four layers, one job: survive the cut and grow intelligence. Chat is not a store
 
 ```
 MEMORY OS
-├── Station.md          ALWAYS. Pickup ticket. THE memory if dest is off.
+├── Station.md          ALWAYS. Pickup ticket. Compact ticket if dest is off.
 ├── NOTES.md            Deep cut Station is too thin to hold.
 ├── OP-PROC             How we work. Hooks + dest names. Not pasted on Station.
-├── Repertoire dest     OPTIONAL. Named intelligence when worn.
+├── Repertoire dest     PREFERRED. Named laws when worn.
 └── Kernel diary        GATHER. session-*.json, activity.log, workflows.
 ```
 
@@ -152,7 +152,7 @@ NEW WINDOW
     └─5─ Resume same bc / same critic. Do not cold-start.
 ```
 
-### No Repertoire (Station is the memory)
+### Opt-out (Station is the compact ticket)
 
 ```
 npm install 0xray          (no @0xray/repertoire)
@@ -185,7 +185,7 @@ FRESH CLONE / FRESH INSTALL
     │           ├─ OpenCode / Grok / Hermes / OpenClaw
     │           └─ Cursor last-mile (.cursor/hooks.json → dist hooks)
     │
-    ├─ optional  npm i @0xray/repertoire
+    ├─ Repertoire vendored on (preferred)
     │     └─ hydrateWritableSignals
     │           ├─ copy factory 8 → .xray/state/repertoire/curated_signals.json
     │           ├─ merge stack-overlay (OP-PROC names)

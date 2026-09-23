@@ -119,7 +119,7 @@ Exo adapter notes: `src/integrations/cursor/README.md`.
 
 ## Memory routing
 
-Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.5`). Optional: `"enabled": false, "provider": "repertoire"`. Station is the memory when it is off. See [Memory Routing](./memory-routing.md).
+Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.5`). **Repertoire is preferred.** Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Station is the compact ticket when it is off. See [Memory Routing](./memory-routing.md).
 
 ## Verify installation
 

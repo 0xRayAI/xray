@@ -38,7 +38,7 @@ In `.xray/features.json` / `xray/features.json`:
 }
 ```
 
-When that is set: do not copy seed files, do not require the package, Station is the memory. Missing vendor must not crash boot.
+When that is set: do not copy seed files, do not require the package, Station is the compact ticket. Missing vendor must not crash boot.
 
 ## Steps
 

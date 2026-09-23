@@ -2,7 +2,7 @@
 
 Thin adapter. Repo `.cursor/hooks.json` (schema **version 1**) calls 0xRay gates and the Station PreCompact writer. **sessionStart is not used** — managed Cursor cloud does not fire it.
 
-Repertoire MCP is optional. Station + gates work without a full memory-routing rewire.
+Repertoire is preferred (vendored, dest = named laws). Station + Codex gates still run if memory-routing is explicitly off — that is fallback, not the preferred brain.
 
 ## How cloud picks up project hooks
 
