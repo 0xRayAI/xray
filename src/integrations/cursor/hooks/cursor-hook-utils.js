@@ -182,6 +182,25 @@ export function cursorHeatRoots(event = {}) {
   return out;
 }
 
+function packageNameAt(root) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    return typeof pkg.name === 'string' ? pkg.name : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Constitution follows the suit mill when that package is in the heat set.
+ * A sibling repo's leftover synthesis checkpoint must not deny the host.
+ */
+export function cursorGateRoot(heatRoots, eventRoot) {
+  const mill = heatRoots.find((root) => packageNameAt(root) === '0xray');
+  if (mill) return mill;
+  return heatRoots[0] || eventRoot;
+}
+
 export function cursorSessionId(event = {}) {
   return (
     event.conversation_id ||
