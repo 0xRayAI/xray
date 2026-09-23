@@ -70,6 +70,65 @@ export function resolveWritableConfigPath(configured, cwd, fallback) {
         return configured;
     return resolve(cwd, configured);
 }
+const STACK_LAW_FIELDS = [
+    'definition',
+    'tags',
+    'priority',
+    'evaluation_criteria',
+    'validation_experiment',
+    'example_inference_snippet',
+    'implementation_notes',
+];
+function assignStackLawField(existing, field, next) {
+    switch (field) {
+        case 'definition':
+            if (typeof next === 'string')
+                existing.definition = next;
+            break;
+        case 'tags':
+            if (Array.isArray(next))
+                existing.tags = [...next];
+            break;
+        case 'priority':
+            if (typeof next === 'string')
+                existing.priority = next;
+            break;
+        case 'evaluation_criteria':
+            if (typeof next === 'string')
+                existing.evaluation_criteria = next;
+            break;
+        case 'validation_experiment':
+            if (typeof next === 'string')
+                existing.validation_experiment = next;
+            break;
+        case 'example_inference_snippet':
+            if (typeof next === 'string')
+                existing.example_inference_snippet = next;
+            break;
+        case 'implementation_notes':
+            if (typeof next === 'string')
+                existing.implementation_notes = next;
+            break;
+        default: {
+            const unexpected = field;
+            throw new Error(`unknown stack law field ${String(unexpected)}`);
+        }
+    }
+}
+/** Copy changed stack law text onto an existing project name. Observation stats stay. */
+function refreshStackLaw(existing, signal) {
+    let dirty = false;
+    for (const field of STACK_LAW_FIELDS) {
+        const next = signal[field];
+        if (next == null)
+            continue;
+        if (JSON.stringify(existing[field]) === JSON.stringify(next))
+            continue;
+        assignStackLawField(existing, field, next);
+        dirty = true;
+    }
+    return dirty;
+}
 export function isGenericFieldObservedDefinition(definition) {
     return definition.includes('Field-observed domain primitive');
 }
@@ -104,6 +163,9 @@ function mergeOverlaySignals(destPath, overlayPath, options = {}) {
             changed += 1;
             continue;
         }
+        if (options.refreshLaws && refreshStackLaw(existing, signal)) {
+            changed += 1;
+        }
         if (options.fleshGeneric && isGenericFieldObservedDefinition(existing.definition)) {
             existing.definition = signal.definition;
             if (signal.tags)
@@ -127,12 +189,12 @@ function mergeOverlaySignals(destPath, overlayPath, options = {}) {
     return changed;
 }
 /**
- * Additive merge of `data/stack-overlay.json` into a project copy.
- * Existing names keep their stats. Missing overlay names are appended.
- * Refuses the factory tarball path.
+ * Merge `data/stack-overlay.json` into a project copy.
+ * Missing names are appended. A changed stack law field is refreshed.
+ * Observation stats on existing names stay. Refuses the factory tarball path.
  */
 export function mergeStackOverlay(destPath, overlayPath = DEFAULT_STACK_OVERLAY_PATH) {
-    return mergeOverlaySignals(destPath, overlayPath);
+    return mergeOverlaySignals(destPath, overlayPath, { refreshLaws: true });
 }
 /**
  * Additive merge of `data/subject-overlay.json` — product/repo flesh.
