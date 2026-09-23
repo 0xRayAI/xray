@@ -54,79 +54,79 @@ Four layers, one job: survive the cut and grow intelligence. Chat is not a store
 
 ```
 MEMORY OS
-├── Station.md          ALWAYS. Pickup ticket. Compact ticket if dest is off.
-├── NOTES.md            Deep cut Station is too thin to hold.
-├── OP-PROC             How we work. Hooks + dest names. Not pasted on Station.
-├── Repertoire dest     PREFERRED. Named laws when worn.
-└── Kernel diary        GATHER. session-*.json, activity.log, workflows.
+├── Station.md ALWAYS. Pickup ticket. Compact ticket if dest is off.
+├── NOTES.md Deep cut Station is too thin to hold.
+├── OP-PROC How we work. Hooks + dest names. Not pasted on Station.
+├── Repertoire dest PREFERRED. Named laws when worn.
+└── Kernel diary GATHER. session-*.json, activity.log, workflows.
 ```
 
 ### Gather / store / retrieve
 
 ```
-GATHER                         STORE                         RETRIEVE
-──────                         ─────                         ────────
-preToolUse / afterFileEdit  →  session-boot.json          →  Read STATION.md
-preCompact (Cloud: Yes)     →  STATION.md + receipt ids   →  same bc / Task id, resume only
-lead heat (this wake)       →  repertoire-working.json    →  opProcNames if dest on
-storyteller / commits       →  docs/inference/session-*   →  XraySessionIngester
-kernel patterns / routing   →  logs/framework/*           →  health / ingest
-analyze-complexity          →  dest curated_signals.json  →  getTaskConfidence
-task done                   →  ingestFeedback             →  enrichTasks
-spoken twice                →  LEAD-CADENCE / skill       →  wear, do not re-ask
-deep cut this job           →  NOTES.md                   →  second Read after compact
+GATHER STORE RETRIEVE
+────── ───── ────────
+preToolUse / afterFileEdit → session-boot.json → Read STATION.md
+preCompact (Cloud: Yes) → STATION.md + receipt ids → same bc / Task id, resume only
+lead heat (this wake) → repertoire-working.json → opProcNames if dest on
+storyteller / commits → docs/inference/session-* → XraySessionIngester
+kernel patterns / routing → logs/framework/* → health / ingest
+analyze-complexity → dest curated_signals.json → getTaskConfidence
+task done → ingestFeedback → enrichTasks
+spoken twice → LEAD-CADENCE / skill → wear, do not re-ask
+deep cut this job → NOTES.md → second Read after compact
 ```
 
 ### Active wake (intelligence is live)
 
 ```
 USER / TOOL
-    │
-    ├─[t0] preToolUse ──► ensureCursorSessionBoot
-    │                       ├─ cursorBootNeedsRefresh? (HEAD / dest count / Hold npm)
-    │                       ├─ applyStationHeat
-    │                       │     ├─ clip Intent (≤240)
-    │                       │     ├─ Git branch@head
-    │                       │     ├─ Repertoire: on — N  |  explicit off
-    │                       │     └─ Working ≤4 matched names
-    │                       ├─ session-boot.json          (SSOT)
-    │                       ├─ STATION.md                 (projection)
-    │                       └─ repertoire-working.json    (opProcNames if dest)
-    │
-    ├─[t0b] capture then grow (dest ON) ──► dest.lock ──► RepertoireService
-    │                 ├─ session-*.json from THIS wake's git (observe existing laws only)
-    │                 ├─ syncXrayMemory (session-*.json)
-    │                 ├─ heatKernelDiary + NOTES / CLEANSE list (then prune keywords)
-    │                 ├─ Cursor / Grok / Hermes / OpenClaw + asides share one dest
-    │                 └─ Groover field stays off — no sibling repo-* mint
-    │
-    ├─[t1] work ──► kernel gather (best-effort, often COLD)
-    │                 ├─ session-capture → docs/inference/session-*.json
-    │                 ├─ activity.log / routing-outcomes / pattern-metrics
-    │                 └─ .xray/inference/workflow-*.json
-    │
-    ├─[t2] afterFileEdit ──► same heat if metal moved
-    │
-    ├─[t3] intake (frontier: optional) ──► analyze-complexity
-    │                 ├─ enrichTasks / getTaskConfidence   (dest ON)
-    │                 └─ skip if dest OFF — Station still holds the ticket
-    │
-    └─[t4] task close ──► ingestFeedback → dest observations (dest ON only)
+ │
+ ├─[t0] preToolUse ──► ensureCursorSessionBoot
+ │ ├─ cursorBootNeedsRefresh? (HEAD / dest count / Hold npm)
+ │ ├─ applyStationHeat
+ │ │ ├─ clip Intent (≤240)
+ │ │ ├─ Git branch@head
+ │ │ ├─ Repertoire: on — N | explicit off
+ │ │ └─ Working ≤4 matched names
+ │ ├─ session-boot.json (SSOT)
+ │ ├─ STATION.md (projection)
+ │ └─ repertoire-working.json (opProcNames if dest)
+ │
+ ├─[t0b] capture then grow (dest ON) ──► dest.lock ──► RepertoireService
+ │ ├─ session-*.json from THIS wake's git (observe existing laws only)
+ │ ├─ syncXrayMemory (session-*.json)
+ │ ├─ heatKernelDiary + NOTES / CLEANSE list (then prune keywords)
+ │ ├─ Cursor / Grok / Hermes / OpenClaw + asides share one dest
+ │ └─ Groover field stays off — no sibling repo-* mint
+ │
+ ├─[t1] work ──► kernel gather (best-effort, often COLD)
+ │ ├─ session-capture → docs/inference/session-*.json
+ │ ├─ activity.log / routing-outcomes / pattern-metrics
+ │ └─ .xray/inference/workflow-*.json
+ │
+ ├─[t2] afterFileEdit ──► same heat if metal moved
+ │
+ ├─[t3] intake (frontier: optional) ──► analyze-complexity
+ │ ├─ enrichTasks / getTaskConfidence (dest ON)
+ │ └─ skip if dest OFF — Station still holds the ticket
+ │
+ └─[t4] task close ──► ingestFeedback → dest observations (dest ON only)
 ```
 
 ### Compact moment (timing)
 
 ```
-CONTEXT WINDOW ████████████████░░░░  filling
-                    │
-                    ├─ DOES fire  preCompact ──► write Station + receipt ids
-                    │                 (Cloud support matrix: Yes. Bind hooks first.)
-                    │
-                    ▼
-              COMPACT  (chat dies)
-                    │
-                    ▼
-              POST  Read disk. Do not reconstruct from summary.
+CONTEXT WINDOW ████████████████░░░░ filling
+ │
+ ├─ DOES fire preCompact ──► write Station + receipt ids
+ │ (Cloud support matrix: Yes. Bind hooks first.)
+ │
+ ▼
+ COMPACT (chat dies)
+ │
+ ▼
+ POST Read disk. Do not reconstruct from summary.
 ```
 
 `preCompact` is observational. It cannot block or spawn. Official stdout is only `user_message`. The spawn token is the id the host already returned: stdin `conversation_id` (same Cloud `bc-`) and any Task agent id. Resume that id. Do not print an id from the hook and expect a new agent. Survival is still heat **during** the wake (t0/t2/lead) plus the receipt when the host does compact.
@@ -135,88 +135,88 @@ CONTEXT WINDOW ████████████████░░░░  fil
 
 ```
 NEW WINDOW
-    │
-    ├─1─ Read STATION.md
-    │      ├─ Repertoire: explicit off ──► Station + NOTES ARE the mind. STOP looking for dest.
-    │      └─ Repertoire: on — N       ──► ticket first, then dest.
-    │
-    ├─2─ Read NOTES (unfinished path on the card)
-    │
-    ├─3─ Read COMPACT-SURVIVAL (who / seats)
-    │
-    ├─4─ IF dest ON
-    │      ├─ reloadOpProc()              factory ∪ overlay names
-    │      ├─ repertoire-working.opProcNames
-    │      └─ getTaskConfidence(compact language)
-    │
-    └─5─ Resume same bc / same critic. Do not cold-start.
+ │
+ ├─1─ Read STATION.md
+ │ ├─ Repertoire: explicit off ──► Station + NOTES ARE the mind. STOP looking for dest.
+ │ └─ Repertoire: on — N ──► ticket first, then dest.
+ │
+ ├─2─ Read NOTES (unfinished path on the card)
+ │
+ ├─3─ Read COMPACT-SURVIVAL (who / seats)
+ │
+ ├─4─ IF dest ON
+ │ ├─ reloadOpProc() factory ∪ overlay names
+ │ ├─ repertoire-working.opProcNames
+ │ └─ getTaskConfidence(compact language)
+ │
+ └─5─ Resume same bc / same critic. Do not cold-start.
 ```
 
 ### Opt-out (Station is the compact ticket)
 
 ```
-npm install 0xray          (Repertoire vendored, memory_routing ON)
-        │
-        ▼
+npm install 0xray (Repertoire vendored, memory_routing ON)
+ │
+ ▼
 explicit opt-out only
-        "memory_routing": { "enabled": false, "provider": "repertoire" }
-        │
-        ▼
+ "memory_routing": { "enabled": false, "provider": "repertoire" }
+ │
+ ▼
 postinstall → installAllBridges
-        ├─ AGENTS.md / .xray / .mcp.json / four bridges + Cursor hooks
-        └─ seed + grow skipped — Station holds the ticket
-        │
-        ▼
+ ├─ AGENTS.md / .xray / .mcp.json / four bridges + Cursor hooks
+ └─ seed + grow skipped — Station holds the ticket
+ │
+ ▼
 WAKE
-        ├─ heat STATION.md every material move
-        ├─ write NOTES if the cut is deeper than 240 chars
-        └─ dest path is not the brain — do not invent keywords
-        │
-        ▼
+ ├─ heat STATION.md every material move
+ ├─ write NOTES if the cut is deeper than 240 chars
+ └─ dest path is not the brain — do not invent keywords
+ │
+ ▼
 COMPACT
-        └─ Read Station → NOTES → continue. That is enough.
+ └─ Read Station → NOTES → continue. That is enough.
 ```
 
 ### Onboarding (collection starts here)
 
 ```
 FRESH CLONE / FRESH INSTALL
-    │
-    ├─ npm i 0xray
-    │     └─ postinstall.cjs → installAllBridges
-    │           ├─ deploy .xray (codex, features, config)
-    │           ├─ .mcp.json (7 servers)
-    │           ├─ OpenCode / Grok / Hermes / OpenClaw
-    │           └─ Cursor last-mile (.cursor/hooks.json → dist hooks)
-    │
-    ├─ Repertoire vendored on (preferred)
-    │     └─ hydrateWritableSignals
-    │           ├─ copy factory 8 → .xray/state/repertoire/curated_signals.json
-    │           ├─ merge stack-overlay (OP-PROC names)
-    │           └─ features.json memory_routing.signalsPath → dest
-    │
-    └─ first preToolUse
-          ├─ mill-absence? write Station from empty
-          ├─ Intent often "(none yet)" — Cursor stdin has no prompt
-          └─ lead / second heat must write the real Intent
+ │
+ ├─ npm i 0xray
+ │ └─ postinstall.cjs → installAllBridges
+ │ ├─ deploy .xray (codex, features, config)
+ │ ├─ .mcp.json (7 servers)
+ │ ├─ OpenCode / Grok / Hermes / OpenClaw
+ │ └─ Cursor last-mile (.cursor/hooks.json → dist hooks)
+ │
+ ├─ Repertoire vendored on (preferred)
+ │ └─ hydrateWritableSignals
+ │ ├─ copy factory 8 → .xray/state/repertoire/curated_signals.json
+ │ ├─ merge stack-overlay (OP-PROC names)
+ │ └─ features.json memory_routing.signalsPath → dest
+ │
+ └─ first preToolUse
+ ├─ mill-absence? write Station from empty
+ ├─ Intent often "(none yet)" — Cursor stdin has no prompt
+ └─ lead / second heat must write the real Intent
 
 UPGRADE of an existing mill
-    │
-    ├─ npm i 0xray@latest          (do not redeploy hangar tarball)
-    ├─ dest already there          (hydrate merges overlay, does not wipe)
-    └─ cursorBootNeedsRefresh if HEAD / dest count / Durable Hold npm diverged
+ │
+ ├─ npm i 0xray@latest (do not redeploy hangar tarball)
+ ├─ dest already there (hydrate merges overlay, does not wipe)
+ └─ cursorBootNeedsRefresh if HEAD / dest count / Durable Hold npm diverged
 ```
 
 ### Kernel collection (what actually writes)
 
 ```
-KERNEL DIARY                         WHO WRITES                         DEST READS?
-docs/inference/session-*.json        Cursor heat on HEAD move + capture YES (XraySessionIngester)
-.xray/inference/workflow-*.json      inference workflow                 discover dir; needs session-*
-logs/framework/activity.log          frameworkLogger                    not dest (diary only)
-logs/framework/routing-outcomes.json orchestrator                       not dest
-logs/framework/pattern-metrics.json  kernel-patterns / adaptive         not dest
-session-boot.json / STATION.md       hooks + lead heat                  pickup, not dest
+KERNEL DIARY WHO WRITES DEST READS?
+docs/inference/session-*.json Cursor heat on HEAD move + capture YES (XraySessionIngester)
+.xray/inference/workflow-*.json inference workflow discover dir; needs session-*
+logs/framework/activity.log frameworkLogger not dest (diary only)
+logs/framework/routing-outcomes.json orchestrator not dest
+logs/framework/pattern-metrics.json kernel-patterns / adaptive not dest
+session-boot.json / STATION.md hooks + lead heat pickup, not dest
 ```
 
 Session ingest is **cold** until `session-*.json` exists. Overlay names are OP-PROC, not product-domain memory. Groover JSONL is not the producer.

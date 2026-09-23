@@ -195,9 +195,9 @@ Lead publishes. Do not hand this to a browser subagent.
 1. **npm CLI:** after gate PASS, every time run `npm publish --access public` (no `--auth-type=web`, no `--otp=` from chat). Stay logged in — do **not** `npm logout`. Run it in the live TTY (do not pipe through `tee`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. Do **not** ask the human to type a 6-digit authenticator code into chat. The human approves OTP at that URL in their own session.
 2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
 3. **Registry install (live verify):** `npm view` is not an install. Prove **both** paths before moving on:
-   - **Fresh:** empty temp dir → `npm init -y` → `npm install <pkg>@<version>` from the registry (not a local tgz).
-   - **Upgrade:** existing consumer on the prior live version → `npm install <pkg>@<version>`. Leftover `XRAY_AI_PATH=` `.cursor/hooks.json` is rewritten to relative `.cursor/hooks/*.sh`. Wear and mill plant still present.
-   Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS` on disk, then `npx <pkg> status`, `npx <pkg> health`, and `npx <pkg> validate`. `validate` is the wear check (pack paths, Cursor hooks, mill, repertoire) — **not** leftover `.opencode/init.sh`.
+ - **Fresh:** empty temp dir → `npm init -y` → `npm install <pkg>@<version>` from the registry (not a local tgz).
+ - **Upgrade:** existing consumer on the prior live version → `npm install <pkg>@<version>`. Leftover `XRAY_AI_PATH=` `.cursor/hooks.json` is rewritten to relative `.cursor/hooks/*.sh`. Wear and mill plant still present.
+ Assert version, `_resolved` is `registry.npmjs.org`, `REQUIRED_PACK_PATHS` on disk, then `npx <pkg> status`, `npx <pkg> health`, and `npx <pkg> validate`. `validate` is the wear check (pack paths, Cursor hooks, mill, repertoire) — **not** leftover `.opencode/init.sh`.
 4. **Railway:** only after the reviewed npm version exists; poll the service until the new revision is live; do not start the next hangar cut on a stale deploy.
 5. Read-only `npm view` is always allowed. Do not run `foundry release` without `--i-mean-it` / `FOUNDRY_RELEASE=1` — the trap is the last stop.
 

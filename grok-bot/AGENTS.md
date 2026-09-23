@@ -5,10 +5,10 @@ You are setting up **Grok Bot agents** on the 0xRay factory OS.
 ## Goal
 For **each key agent** (coordinator, implementer, reviewer, Dist, …):
 
-1. Fasten its **own suit** (mill + inspect)  
-2. Register / mint / pin identity (Groover) when it needs a DID  
-3. Set up **OWS pay** if it will call paid shops  
-4. Plant **hangar** shops if it uses the hangar economy  
+1. Fasten its **own suit** (mill + inspect) 
+2. Register / mint / pin identity (Groover) when it needs a DID 
+3. Set up **OWS pay** if it will call paid shops 
+4. Plant **hangar** shops if it uses the hangar economy 
 
 Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
 

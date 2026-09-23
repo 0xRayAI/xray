@@ -7,15 +7,15 @@ version: 1.0.0
 schema_version: "1.0"
 tags: [orchestration, orchestrator, lead-dev]
 capabilities:
-  - coordinate_agents
-  - delegate_tasks
-  - manage_workflow
+ - coordinate_agents
+ - delegate_tasks
+ - manage_workflow
 dependencies: []
 
 mcp:
-  orchestrator:
-    command: node
-    args: [node_modules/0xray/dist/mcps/orchestrator.server.js]
+ orchestrator:
+ command: node
+ args: [node_modules/0xray/dist/mcps/orchestrator.server.js]
 ---
 
 # Orchestrator Skill — includes lead-dev operating model

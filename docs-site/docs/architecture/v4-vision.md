@@ -76,8 +76,8 @@ The opportunity is not a new methodology. It is a **super-powered lens** on that
 | Review | Another model, another chat, cold start | Handoff is a **testable interface** — state must survive |
 | Ship | Human remembers CI, memory, which host | Wear + Repertoire + gate are the plant, not the operator’s head |
 
-**Temperament** is how much foreman you put on a floor (frontier vs guided).  
-**Synchronicity** is whether the working state survives the handoff (session id, Repertoire, host markers that still point at a live dist).  
+**Temperament** is how much foreman you put on a floor (frontier vs guided). 
+**Synchronicity** is whether the working state survives the handoff (session id, Repertoire, host markers that still point at a live dist). 
 **The exo** is what makes the old loop factory-grade across models and hosts without inventing a fifth religion of process.
 
 First observable breaks are at those interfaces, not inside the model: session identity dropped, wear marker pointing at a dead temp dir, memory routing off so the next station starts ignorant. Treat them as tests. That is the workflow 4.0 has to mean, or “factory” stays a metaphor.

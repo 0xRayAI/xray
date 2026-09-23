@@ -30,16 +30,16 @@ Rewire `applyStationHeat` (and only that). Existing call sites stay:
 
 ```
 applyStationHeat(root, host, extra, existing)
-  1. hydrateWritableSignals(dest)     index present on THIS mill
-                                  changed stack definition refreshes; observation stats stay
-  2. maybeCaptureSession(root)        lift off Cursor-only into this runtime
-  3. maybeIngestWake(root)            existing match/ingest helpers; debounce
-  4. pickup = readNotesPickup(root)   first **Pickup line:** in NOTES, ≤240
-  5. matchText = intent + pickup + latest session approaches
-  6. matchedSignals = getTaskConfidence(matchText)
-  7. opProcNames = reloadOpProc()     factory ∪ stack only
-  8. persist repertoire-working       { pickup, subjectHits, opProcNames, destCount }
-  9. Station projection stays thin    Intent / Working ≤4 / Unfinished path
+ 1. hydrateWritableSignals(dest) index present on THIS mill
+ changed stack definition refreshes; observation stats stay
+ 2. maybeCaptureSession(root) lift off Cursor-only into this runtime
+ 3. maybeIngestWake(root) existing match/ingest helpers; debounce
+ 4. pickup = readNotesPickup(root) first **Pickup line:** in NOTES, ≤240
+ 5. matchText = intent + pickup + latest session approaches
+ 6. matchedSignals = getTaskConfidence(matchText)
+ 7. opProcNames = reloadOpProc() factory ∪ stack only
+ 8. persist repertoire-working { pickup, subjectHits, opProcNames, destCount }
+ 9. Station projection stays thin Intent / Working ≤4 / Unfinished path
 ```
 
 `cursorBootNeedsRefresh` already refreshes when `repertoireResume` count changes. Hydrate first, then the count moves, then heat rewrites. Do not add a hook.
