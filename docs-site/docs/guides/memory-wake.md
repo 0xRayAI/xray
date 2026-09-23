@@ -56,4 +56,4 @@ Hold without thickening the Grok exo: do not inject dest into the system prompt.
 
 ## Not this
 
-A live npm version stays live. Once it is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.
+A live npm version stays live. Once a version is live, the stamper strips that patch ref from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.

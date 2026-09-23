@@ -126,7 +126,7 @@ The lead keeps control. A subagent does not already have this thread, and it doe
 This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
 
 1. Change the engine with precision.
-2. Ship it local: build and install the tree. A live npm version stays live. Version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut.
+2. Ship it local: build and install the tree. A live npm version stays live. Once a version is live, the stamper strips that patch ref from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish.
 3. Test the change.
 4. Run another deep review of the diff you just made.
 5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
@@ -148,7 +148,7 @@ Long-term memory is the project law list. Each wake copies stack laws onto that 
 
 As the model improves, reactive decisions move out of code into OP-PROC. That move is why the mill and the suit exist. It is not fully proved.
 
-Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. Do not freeze the live cut.
+Once a version is live, the stamper strips that patch ref from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. Do not freeze the live cut.
 
 ### When knowledge grows
 
@@ -180,7 +180,7 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 |------|--------|------------------|
 | **A — PR + CI** | Branch + PR · critic PASS · CI green | GitHub checks on the PR head |
 | **B — Pack** | Packed tarball installs and the required dist paths exist | `npx @0xray/foundry gate` → `assert-packed-dist-cli.mjs` · consumer smoke |
-| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. Guides, Station, and this file do not pin a cut. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG only |
+| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. The stamper strips a live patch ref from shipped guides and shipped OP-PROC. It does not edit Station, NOTES, dest, or node_modules. It does not publish. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG and strips that patch ref |
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
 | **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
 

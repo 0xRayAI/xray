@@ -772,7 +772,7 @@
     },
     {
       "name": "operating-planes",
-      "definition": "Operating planes are code, OP-PROC, model, suit, mill, host, and test/ship. Test/ship is the critical OP-PROC plane: test then ship is the hero; ship without that proof is the catastrophe. Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station, the short-term card that survives compaction. As the model improves, reactive decisions move out of code into OP-PROC. That move is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut.",
+      "definition": "Operating planes are code, OP-PROC, model, suit, mill, host, and test/ship. Test/ship is the critical OP-PROC plane: test then ship is the hero; ship without that proof is the catastrophe. Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station, the short-term card that survives compaction. As the model improves, reactive decisions move out of code into OP-PROC. That move is not fully proved. Once a version is live, the stamper strips that patch ref from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. Do not freeze the live cut.",
       "tags": [
         "planes",
         "op-proc",
@@ -782,10 +782,10 @@
       "priority": "high",
       "status": "proposed",
       "first_seen": "2026-09-23",
-      "evaluation_criteria": "Reply names test/ship as the hero or the catastrophe, and treats a live cut as version manager's next hand.",
+      "evaluation_criteria": "Reply names test/ship as the hero or the catastrophe, and treats a live cut as the stamper stripping shipped guides and shipped OP-PROC.",
       "validation_experiment": "A seat ships without the test, or wakes after compact without the test/ship plane — treat as fail.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
-      "implementation_notes": "LEAD-CADENCE.md Planes. Not a new skill. Patch stamps stay in package.json, CHANGELOG, and stamped JSON.",
+      "implementation_notes": "LEAD-CADENCE.md Planes. Not a new skill. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. The stamper strips shipped guides and shipped OP-PROC. It does not edit Station, NOTES, dest, or node_modules. It does not publish.",
       "example_inference_snippet": "Test then ship is the hero. Ship without that proof is the catastrophe.",
       "observation_stats": {
         "observation_count": 1,
@@ -797,7 +797,7 @@
     },
     {
       "name": "wake-cascade",
-      "definition": "Chat is not the brain. Compaction drops the seat. Short-term memory is Station. Long-term memory is the project repertoire law list. NOTES is the deep cut: the pickup line cadences onto Station, and the body holds the cascade the card cannot. Capture a cascade by writing a named signal on the stack overlay and hydrating it onto dest. Observation counts are not capture. A reflection is not this capture. This wake, sorted: planes are code, OP-PROC, model, suit, mill, host, and test/ship; test then ship is the hero and ship without that proof is the catastrophe; each wake refreshes a changed stack definition and keeps observation stats, then heat writes matched names onto Station; the lead keeps control and a subagent gets the duty, the latest SHA, the Station card, the laws, and the suit built from the tree under review; when the work becomes mantra or the planes no longer share one present, answer the original message from this seat; once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut; engine cadence is change, ship local, test, review the diff, monitor dest against Station, ship the PR; missing moral fusion is not an isotopic reject, vote confidence is a clamped weighted mean, thinDispatch strategy follows the adjusted level, and an empty inference cycle saves state.",
+      "definition": "Chat is not the brain. Compaction drops the seat. Short-term memory is Station. Long-term memory is the project repertoire law list. NOTES is the deep cut: the pickup line cadences onto Station, and the body holds the cascade the card cannot. Capture a cascade by writing a named signal on the stack overlay and hydrating it onto dest. Observation counts are not capture. A reflection is not this capture. This wake, sorted: planes are code, OP-PROC, model, suit, mill, host, and test/ship; test then ship is the hero and ship without that proof is the catastrophe; each wake refreshes a changed stack definition and keeps observation stats, then heat writes matched names onto Station; the lead keeps control and a subagent gets the duty, the latest SHA, the Station card, the laws, and the suit built from the tree under review; when the work becomes mantra or the planes no longer share one present, answer the original message from this seat; once a version is live, the stamper strips that patch ref from shipped guides and shipped OP-PROC, or reconcile advances the next cut; the stamper does not edit Station, NOTES, dest, or node_modules; it does not publish; engine cadence is change, ship local, test, review the diff, monitor dest against Station, ship the PR; missing moral fusion is not an isotopic reject, vote confidence is a clamped weighted mean, thinDispatch strategy follows the adjusted level, and an empty inference cycle saves state.",
       "tags": [
         "cascade",
         "memory",
@@ -841,7 +841,7 @@
     },
     {
       "name": "inference-cycle-invariant",
-      "definition": "An inference cycle that generates no proposals still writes inference-cycle-state.json. Without that write the one-day trigger never starts and the next call repeats. InferenceCycle.getInstance applies later options, including force and skipApply. Governance failure rejects the proposals. Proposal text is a keyword map over session problem strings.",
+      "definition": "An inference cycle that generates no proposals still writes inference-cycle-state.json. Without that write the one-day trigger never starts and the next call repeats. InferenceCycle.getInstance applies later options, including force and skipApply. Governance failure rejects the proposals. Proposal text is a keyword map over session problem strings. generateProposals also emits recurring-pattern titles.",
       "tags": ["inference", "invariant"],
       "priority": "high",
       "status": "proposed",
@@ -849,8 +849,8 @@
       "evaluation_criteria": "Empty cycles persist state, and later getInstance options apply.",
       "validation_experiment": "An empty cycle returns without a state file — treat as fail.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
-      "implementation_notes": "src/inference/inference-cycle.ts and inference-proposal-generator.ts. Not a new skill.",
-      "example_inference_snippet": "An empty inference cycle still saves state. Proposal text is a keyword map over session problems.",
+      "implementation_notes": "src/inference/inference-cycle.ts and inference-proposal-generator.ts. generateProposals maps session problem strings through a keyword map and also emits recurring-pattern titles. Not a new skill.",
+      "example_inference_snippet": "An empty inference cycle still saves state. Proposal text is a keyword map over session problem strings. generateProposals also emits recurring-pattern titles.",
       "observation_stats": {
         "observation_count": 1,
         "avg_confidence": 0.55,

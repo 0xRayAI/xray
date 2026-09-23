@@ -26,7 +26,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Test then ship is the hero/);
     expect(text).toMatch(/Ship without that proof is the catastrophe/);
     expect(text).toMatch(/refreshes a changed definition/);
-    expect(text).toMatch(/version manager strips that patch ref/);
+    expect(text).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(text).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
+    expect(text).toMatch(/It does not publish/);
     expect(text).toMatch(/not fully proved/);
     expect(text).toMatch(/Do not freeze the live cut/);
     expect(text).toMatch(/The lead keeps control/);
@@ -96,8 +98,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(planes?.definition).toMatch(/the catastrophe/);
     expect(planes?.definition).toMatch(/refreshes a changed definition/);
     expect(planes?.definition).toMatch(/not fully proved/);
+    expect(planes?.definition).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(planes?.definition).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
     expect(overlay.signals.some((signal) => signal.name === 'six-planes')).toBe(false);
     const cascade = overlay.signals.find((signal) => signal.name === 'wake-cascade');
+    expect(cascade?.definition).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
     expect(cascade?.definition).toMatch(/Chat is not the brain/);
     expect(cascade?.definition).toMatch(/test then ship is the hero/);
     expect(cascade?.definition).toMatch(/the lead keeps control/);
@@ -123,6 +128,10 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/a sample below 0\.55 is not recorded/);
     expect(text).toMatch(/Constructing the organ does not append workspace samples/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/keyword map over session problem strings/);
+    expect(byName.get('inference-cycle-invariant')).toMatch(/generateProposals also emits recurring-pattern titles/);
+    expect(byName.get('inference-cycle-invariant')).toMatch(/inference-cycle-state\.json/);
+    expect(byName.get('inference-cycle-invariant')).toMatch(/getInstance applies later options/);
+    expect(byName.get('inference-cycle-invariant')).toMatch(/Governance failure rejects/);
     expect(byName.get('governance-vote-invariant')).toMatch(/clamped to 0\.\.1/);
     expect(byName.get('thin-dispatch-invariant')).toMatch(/at least 26 forces architect/);
   });
@@ -138,7 +147,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Test then ship is the hero/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/version manager strips that patch ref/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/It does not publish/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Chat is not the brain/);
@@ -168,7 +179,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Test then ship is the hero/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/version manager strips that patch ref/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/stamper strips that patch ref from shipped guides and shipped OP-PROC/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/does not edit Station, NOTES, dest, or node_modules/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/It does not publish/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Chat is not the brain/);

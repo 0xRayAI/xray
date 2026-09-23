@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Foundry stamper — JSON version fields + CHANGELOG only.
+ * Foundry stamper — JSON version fields, CHANGELOG, and the live patch-ref strip.
  *
- * Does NOT bump package.json (reconcile-version.mjs is the one bumper).
- * Does NOT rewrite markdown prose (validate-release-docs.mjs verifies).
+ * Does NOT bump package.json (reconcile-version.mjs advances the next cut).
+ * Does NOT publish.
+ * Strips that patch ref from shipped guides and shipped OP-PROC.
+ * Does NOT edit Station, NOTES, dest, or node_modules.
  *
  * Usage:
  *   npx @0xray/foundry stamp
@@ -285,7 +287,7 @@ function updateChangelog(newVersion, changeDescription) {
   console.log(`✅ Updated CHANGELOG.md`);
 }
 
-/** Markdown prose is verified, not rewritten. */
+/** Kernel headers stay era text. Patch refs are stripped from the shipped set below. */
 
 export const DOCS_SITE_HEADER_FILES = [
   'docs-site/docs/index.md',
@@ -340,6 +342,114 @@ function getCurrentVersion() {
   return pkg.version;
 }
 
+/**
+ * Shipped guides whose present-tense patch ref the stamper removes.
+ * Historical headings (features-since) stay. Seat memory is not in this list.
+ */
+export const SHIPPED_GUIDE_STRIP_FILES = [
+  'README.md',
+  'AGENTS.md',
+  'AGENTS-consumer.md',
+  'SKILLS.md',
+  'llms.txt',
+  'docs-site/docs/index.md',
+  'docs-site/docs/introduction.md',
+  'docs-site/docs/full-reference.md',
+  'docs-site/docs/architecture/v4-now.md',
+  'docs-site/docs/architecture/v4-vision.md',
+  'docs-site/docs/guides/memory-wake.md',
+  'docs-site/docs/guides/memory-routing.md',
+  'docs-site/docs/guides/repertoire.md',
+  'docs-site/docs/guides/station-vs-repertoire.md',
+  'docs-site/docs/guides/getting-started.md',
+  'docs-site/docs/guides/integrations.md',
+  'docs-site/docs/guides/consumer-migration.md',
+  'docs-site/docs/guides/aside-context.md',
+  'docs-site/docs/mcp/README.md',
+  'docs-site/docs/agents/README.md',
+  'grok-bot/AGENTS.md',
+];
+
+/** Shipped OP-PROC. Station, NOTES, and dest are not procedure files the stamper may edit. */
+export const SHIPPED_OP_PROC_STRIP_FILES = [
+  'grok-bot/ops/LEAD-CADENCE.md',
+  'src/skills/orchestrator/SKILL.md',
+  'grok-bot/skills/ship-ready-mill-gate/SKILL.md',
+];
+
+export function patchRefStripRelPaths() {
+  return [...SHIPPED_GUIDE_STRIP_FILES, ...SHIPPED_OP_PROC_STRIP_FILES];
+}
+
+/** Seat-local memory and installed trees. The stamper never writes these. */
+export function isPatchRefStripRefused(relPath) {
+  const norm = path.posix.normalize(String(relPath).replace(/\\/g, '/')).replace(/^\.\//, '');
+  const parts = norm.split('/').filter((part) => part !== '' && part !== '.');
+  if (parts[parts.length - 1] === 'NOTES.md') return true;
+  if (parts.includes('node_modules')) return true;
+  const xrayAt = parts.indexOf('.xray');
+  if (xrayAt !== -1 && parts[xrayAt + 1] === 'state') return true;
+  return false;
+}
+
+/**
+ * Remove the live patch ref from prose. Stamps in CHANGELOG headings stay,
+ * because this does not match `## [x.y.z]`.
+ * @param {string} content
+ * @param {string} version
+ */
+export function stripPatchRefText(content, version) {
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) return content;
+  const v = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const patterns = [
+    new RegExp(`0xray@${v}\\b`, 'g'),
+    new RegExp(`npm is \\*\\*${v}\\*\\*`, 'g'),
+    new RegExp(`Product \\*\\*${v}\\*\\* is on npm`, 'g'),
+    new RegExp(`Do not republish ${v}\\b`, 'g'),
+    new RegExp(`This cut is \\*\\*${v}\\*\\*`, 'g'),
+    new RegExp(`This cut is ${v}\\b`, 'g'),
+  ];
+  let next = content;
+  for (const re of patterns) next = next.replace(re, '');
+  return next.replace(/[ \t]{2,}/g, ' ');
+}
+
+/**
+ * @param {string} baseDir
+ * @param {string} rel
+ * @param {string} version
+ * @returns {boolean} true when the file changed
+ */
+export function stripPatchRefFile(baseDir, rel, version) {
+  if (isPatchRefStripRefused(rel)) return false;
+  const full = path.resolve(baseDir, rel);
+  const relToBase = path.relative(baseDir, full);
+  if (relToBase.startsWith('..') || path.isAbsolute(relToBase)) return false;
+  if (isPatchRefStripRefused(relToBase.split(path.sep).join('/'))) return false;
+  if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return false;
+  const before = fs.readFileSync(full, 'utf8');
+  const after = stripPatchRefText(before, version);
+  if (after === before) return false;
+  fs.writeFileSync(full, after);
+  return true;
+}
+
+/**
+ * Strip `version` from shipped guides and shipped OP-PROC under baseDir.
+ * Refuses `.xray/state/**`, NOTES, dest curated_signals.json, and node_modules.
+ * Does not bump. Does not publish.
+ * @param {string} baseDir
+ * @param {string} version
+ * @returns {string[]} relative paths that changed
+ */
+export function stripLivePatchRefs(baseDir, version) {
+  const changed = [];
+  for (const rel of patchRefStripRelPaths()) {
+    if (stripPatchRefFile(baseDir, rel, version)) changed.push(rel);
+  }
+  return changed;
+}
+
 /** Paths written by release artifact updates (existing files only). */
 export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
   const candidates = [
@@ -375,16 +485,20 @@ export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
   return candidates.filter((rel) => fs.existsSync(path.join(baseDir, rel)));
 }
 
-/** Update CHANGELOG + README + AGENTS (+ consumer/docs) for current package.json version (no bump). */
+/** Stamp JSON + CHANGELOG, then strip the package patch ref from shipped guides and OP-PROC. No bump. No publish. */
 function updateReleaseArtifactsOnly(changeDescription = '') {
   const current = getCurrentVersion();
   const counts = getFrameworkCounts();
-  process.stdout.write(`Release artifacts for v${current} (JSON + CHANGELOG only)\n`);
+  process.stdout.write(`Release artifacts for v${current} (JSON + CHANGELOG; strip shipped guides and OP-PROC)\n`);
   process.stdout.write(`counts: ${counts.agents} agents, ${counts.mcps} MCPs, ${counts.skills} skills\n`);
   updateChangelog(current, changeDescription);
   updatePluginJsonVersion(current);
   updateFeaturesJsonVersion(current);
   updateOpenclawPluginVersion(current);
+  const stripped = stripLivePatchRefs(rootDir, current);
+  if (stripped.length > 0) {
+    process.stdout.write(`Stripped patch ref ${current} from ${stripped.join(', ')}\n`);
+  }
   runReleaseDocsValidation();
   process.stdout.write(`Release artifacts updated for v${current}\n`);
 }
@@ -416,7 +530,9 @@ function main() {
   if (args.includes('--help') || args.includes('-h')) {
     process.stdout.write(`Current version: ${getCurrentVersion()}\n`);
     process.stdout.write('Usage: npx @0xray/foundry stamp\n');
-    process.stdout.write('Bump is refused. Use reconcile-version.mjs --apply, then this stamper.\n');
+    process.stdout.write('Bump is refused. Reconcile advances the next cut, then this stamper runs.\n');
+    process.stdout.write('The stamper strips that patch ref from shipped guides and shipped OP-PROC.\n');
+    process.stdout.write('It does not edit Station, NOTES, dest, or node_modules. It does not publish.\n');
     process.exit(0);
   }
 
