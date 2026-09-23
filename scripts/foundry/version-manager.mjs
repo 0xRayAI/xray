@@ -333,6 +333,31 @@ function updateFeaturesJsonVersion(newVersion) {
   updateJsonVersionField('.xray/features.json', newVersion);
 }
 
+function updatePackageLockVersion(newVersion) {
+  const full = path.join(rootDir, 'package-lock.json');
+  if (!fs.existsSync(full)) return;
+  const raw = fs.readFileSync(full, 'utf-8');
+  const lock = JSON.parse(raw);
+  const previous = typeof lock.version === 'string' ? lock.version : '';
+  if (previous === newVersion && lock.packages?.['']?.version === newVersion) return;
+  const lines = raw.split('\n');
+  let rootDone = false;
+  let pkgDone = false;
+  const next = lines.map((line) => {
+    if (!rootDone && line === `  "version": "${previous}",`) {
+      rootDone = true;
+      return `  "version": "${newVersion}",`;
+    }
+    if (rootDone && !pkgDone && line === `      "version": "${previous}",`) {
+      pkgDone = true;
+      return `      "version": "${newVersion}",`;
+    }
+    return line;
+  });
+  if (!rootDone || !pkgDone) return;
+  fs.writeFileSync(full, next.join('\n'));
+}
+
 function updateOpenclawPluginVersion(newVersion) {
   updateJsonVersionField('src/integrations/openclaw/plugin/xray-pre-tool/package.json', newVersion);
 }
@@ -482,6 +507,7 @@ export function getReleaseArtifactPaths(baseDir = resolveMillRoot()) {
     'docs-site/sidebars.ts',
     'xray/features.json',
     '.xray/features.json',
+    'package-lock.json',
     'docs/PIPELINE-FACET-SNAPSHOT.json',
     'src/integrations/openclaw/plugin/xray-pre-tool/package.json',
   ];
@@ -497,6 +523,7 @@ function updateReleaseArtifactsOnly(changeDescription = '') {
   updateChangelog(current, changeDescription);
   updatePluginJsonVersion(current);
   updateFeaturesJsonVersion(current);
+  updatePackageLockVersion(current);
   updateOpenclawPluginVersion(current);
   const stripped = stripLivePatchRefs(rootDir, current);
   if (stripped.length > 0) {
