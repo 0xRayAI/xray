@@ -55,4 +55,4 @@ Hold without thickening the Grok exo: do not inject dest into the system prompt.
 
 ## Not this
 
-Do not republish a live npm version. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.
+A live npm version stays live. Once it is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.

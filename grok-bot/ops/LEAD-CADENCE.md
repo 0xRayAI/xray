@@ -126,11 +126,26 @@ The lead keeps control. A subagent does not already have this thread, and it doe
 This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
 
 1. Change the engine with precision.
-2. Ship it local: build and install the tree. Do not republish a live npm version.
+2. Ship it local: build and install the tree. A live npm version stays live. Version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut.
 3. Test the change.
 4. Run another deep review of the diff you just made.
 5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
 6. Ship the PR.
+
+### Planes
+
+The operating planes are code, OP-PROC, model, suit, mill, and host.
+
+- Code is the reactive engine still in TypeScript.
+- OP-PROC is the procedure the model carries.
+- The model is the seat that runs the procedure.
+- The suit is worn PPE: constitution, temperament, Station.
+- The mill fashions and fastens. Version manager is the mill's release hand.
+- The host is the floor. Temperament is how loud the engine is on that floor.
+
+As the model improves, reactive decisions move out of code into OP-PROC. That move is why the mill and the suit exist. It is not fully proved.
+
+Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Patch stamps stay in package.json, CHANGELOG, and stamped JSON. Do not freeze the live cut.
 
 ### When knowledge grows
 

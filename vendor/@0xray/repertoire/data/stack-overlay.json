@@ -1,6 +1,6 @@
 {
   "description": "Stack-language overlay for 0xRay 4.0 memory routing. Additive to the 8-name factory seed. Not a plant diary and not the 0.1.8 brain.",
-  "last_updated": "2026-09-20T00:00:00.000Z",
+  "last_updated": "2026-09-23T00:00:00.000Z",
   "source": "stack-overlay-4.0",
   "schema_version": "1.1",
   "implementation_guidance": {
@@ -762,6 +762,30 @@
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
       "implementation_notes": "LEAD-CADENCE.md Feat rebase. Not a new skill.",
       "example_inference_snippet": "Go up a level and answer the original message again from this seat.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
+    },
+    {
+      "name": "six-planes",
+      "definition": "Operating planes are code (reactive engine), OP-PROC (procedure the model carries), model (the seat), suit (worn PPE), mill (version manager fashions and fastens), and host (the floor). As the model improves, reactive decisions move out of TypeScript into OP-PROC. That move is why the mill and the suit exist and is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut.",
+      "tags": [
+        "planes",
+        "op-proc",
+        "version-manager"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "Reply names the six planes and treats a live cut as version manager's next hand, not a freeze.",
+      "validation_experiment": "A seat repeats do-not-republish after the cut is live, or lists SHAs as the planes — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "LEAD-CADENCE.md Planes. Not a new skill. Patch stamps stay in package.json, CHANGELOG, and stamped JSON.",
+      "example_inference_snippet": "Once a version is live, version manager strips that patch ref or advances the next cut.",
       "observation_stats": {
         "observation_count": 1,
         "avg_confidence": 0.55,

@@ -21,6 +21,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/### Feat rebase/);
     expect(text).toMatch(/Engine cadence/);
     expect(text).toMatch(/Ship it local/);
+    expect(text).toMatch(/### Planes/);
+    expect(text).toMatch(/code, OP-PROC, model, suit, mill, and host/);
+    expect(text).toMatch(/version manager strips that patch ref/);
+    expect(text).toMatch(/not fully proved/);
+    expect(text).toMatch(/Do not freeze the live cut/);
     expect(text).toMatch(/The lead keeps control/);
     expect(text).toMatch(/wears the applicable 0xRay suit/);
     expect(text).toMatch(/answer the original message again from this seat/);
@@ -76,6 +81,13 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Green CI is not publish/);
     expect(text).not.toMatch(/npm, Railway, spend, credentials — Ask-first/);
     expect(readFileSync(catalog, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
+    const overlay = JSON.parse(
+      readFileSync(path.join(root, 'vendor/@0xray/repertoire/data/stack-overlay.json'), 'utf8'),
+    ) as { signals: Array<{ name: string; definition: string }> };
+    const six = overlay.signals.find((signal) => signal.name === 'six-planes');
+    expect(six?.definition).toMatch(/not fully proved/);
+    expect(six?.definition).toMatch(/version manager strips that patch ref/);
+    expect(six?.definition).toMatch(/Do not freeze the live cut/);
   });
 
   it('rewires worn lead surfaces — no new skill file', () => {
@@ -85,6 +97,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Feat rebase/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Engine cadence/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Ship it local/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/### Planes/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/version manager strips that patch ref/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/not fully proved/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
@@ -93,6 +110,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/Feat rebase/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Engine cadence/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Ship it local/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/### Planes/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/version manager strips that patch ref/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/not fully proved/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/latest commit SHA on the branch under review/);

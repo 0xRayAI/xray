@@ -85,11 +85,15 @@ Jargon is not the job. Review and cadence ask whether the change works. Do not s
 This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
 
 1. Change the engine with precision.
-2. Ship it local: build and install the tree. Do not republish a live npm version.
+2. Ship it local: build and install the tree. A live npm version stays live. Version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut.
 3. Test the change.
 4. Run another deep review of the diff you just made.
 5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
 6. Ship the PR.
+
+### Planes
+
+Operating planes: code, OP-PROC, model, suit, mill, host. Reactive decisions move out of TypeScript into OP-PROC as the model improves. That move is why the mill and the suit exist. It is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut.
 - **Close:** loop until Station is done. Compact: Station survives the cut. Overlay dest names are OP-PROC — reload `repertoire-working.json` `opProcNames`, not Station.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
