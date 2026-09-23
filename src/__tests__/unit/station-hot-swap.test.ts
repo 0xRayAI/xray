@@ -11,8 +11,10 @@ import {
   mergeStationMarkdown,
   maybeCaptureSessionOnHeadMove,
   patternsFromGit,
+  persistRepertoireWorking,
   pruneKeywordDest,
   readRepertoireWorking,
+  workingGrowSnapshot,
   retainCompactFields,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
@@ -680,6 +682,34 @@ describe('station hot-swap', () => {
       };
       expect(session.patterns.map((row) => row.name)).toEqual(['station-survives-the-cut']);
       expect(session.matched_primitives).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('writes heated length onto repertoire-working.json', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-grow-receipt-'));
+    try {
+      const receipt = workingGrowSnapshot({
+        before: 52,
+        after: 38,
+        imported: 0,
+        observed: 4,
+        heated: ['a', 'b', 'c', 'd'],
+      });
+      expect(receipt).toEqual({ before: 52, after: 38, imported: 0, observed: 4 });
+      expect(workingGrowSnapshot({ before: 1, after: 1, observed: ['law-a', 'law-b'] })).toEqual({
+        before: 1,
+        after: 1,
+        imported: undefined,
+        observed: 2,
+      });
+      persistRepertoireWorking(tmp, { grow: receipt });
+      const disk = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire-working.json'), 'utf8'),
+      ) as { grow: { observed: number; after: number } };
+      expect(disk.grow.observed).toBe(4);
+      expect(disk.grow.after).toBe(38);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

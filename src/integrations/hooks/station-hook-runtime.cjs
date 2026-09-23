@@ -820,6 +820,28 @@ function retainCompactFields(existing, extra = {}) {
   return kept;
 }
 
+/** Persist heated length. A number stays a number. An array is a count. Never drop a number to 0. */
+function workingGrowSnapshot(grow) {
+  if (!grow || typeof grow !== "object") return null;
+  if (typeof grow.after !== "number") {
+    return typeof grow.skipped === "string" ? grow.skipped : null;
+  }
+  const observed =
+    typeof grow.observed === "number"
+      ? grow.observed
+      : Array.isArray(grow.observed)
+        ? grow.observed.length
+        : Array.isArray(grow.heated)
+          ? grow.heated.length
+          : 0;
+  return {
+    before: grow.before,
+    after: grow.after,
+    imported: grow.imported,
+    observed,
+  };
+}
+
 function formatWorkingLine(working) {
   if (!working || typeof working !== "object") return null;
   const matched = stationSafeSignals(working.matchedSignals);
@@ -941,15 +963,8 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (pickup) workingSnapshot.pickup = pickup;
   if (matchText) workingSnapshot.matchText = matchText;
   if (captured) workingSnapshot.sessionCapture = captured;
-  if (grow && grow.skipped) workingSnapshot.grow = grow.skipped;
-  if (grow && typeof grow.after === "number") {
-    workingSnapshot.grow = {
-      before: grow.before,
-      after: grow.after,
-      imported: grow.imported,
-      observed: Array.isArray(grow.observed) ? grow.observed.length : 0,
-    };
-  }
+  const growReceipt = workingGrowSnapshot(grow);
+  if (growReceipt) workingSnapshot.grow = growReceipt;
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
@@ -1174,6 +1189,7 @@ module.exports = {
   readNotesPickup,
   maybeCaptureSessionOnHeadMove,
   formatWorkingLine,
+  workingGrowSnapshot,
   applyStationHeat,
   isStockTicket,
   readStationTicketField,

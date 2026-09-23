@@ -168,6 +168,8 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(heat).not.toContain('memory_routing stays off');
     expect(heat).toContain('Repertoire: module unresolved');
     expect(heat).toContain('matched_primitives: preferLawHits');
+    expect(heat).toContain('workingGrowSnapshot');
+    expect(heat).not.toContain('Array.isArray(grow.observed) ? grow.observed.length : 0');
     const ingest = read('src/integrations/hooks/station-memory-ingest.mjs');
     expect(ingest).not.toContain('observed: 0');
     expect(ingest).toContain('observed: heatedNames.length');
