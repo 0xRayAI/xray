@@ -77,6 +77,7 @@ Jargon is not the job. Review and cadence ask whether the change works. Do not s
 - **Live tick, not pacer:** `/loop` runs work now. Keep workstreams moving. Do not idle-wait 12 minutes. **Clean ticks every cycle** — unsubscribe then resubscribe so the prompt matches metal. Name-dedupe does not rewrite. A stale prompt (waiting URL after live, Hold after strip) is dirty: rewrite, do not act. **If the card and WAVEBOARD are idle, unsubscribe and do not resubscribe.**
 - **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch:** ticket + PR URLs + “Wear, then review.” The critic Reads `SEATS.md` Reviewer. Do not paste a command novel. When a law is spoken twice, encode it this wake.
+- **Cold brief:** a new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
 - **Close:** loop until Station is done. Compact: Station survives the cut. Overlay dest names are OP-PROC — reload `repertoire-working.json` `opProcNames`, not Station.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.

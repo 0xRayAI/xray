@@ -43,6 +43,8 @@ Implementer builds · reviewer Strict only · coordinator routes · human for ca
 
 Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR URLs only. Critic Reads Station, verifies the diff, posts COMMENT (not self-APPROVE), proof card ≤15 lines + friend-test line. Does not merge or publish.
 
+A new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
+
 ## Fail closed
 Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.
 
