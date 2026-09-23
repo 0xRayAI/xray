@@ -100,4 +100,28 @@ describe("Inference cycle local governance pass", () => {
       && lesson.signals?.includes("Extract Method")
     )).toBe(true);
   });
+
+  it("passes an empty signal list when the sessions named nothing", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-local-pass-"));
+    const inferenceDir = path.join(tmpDir, "docs", "inference");
+    fs.mkdirSync(inferenceDir, { recursive: true });
+    for (let i = 0; i < 3; i++) {
+      const unnamed = makeSession(`plain-${i}`);
+      unnamed.problems = ["wake-cascade showed up in the writeup"];
+      unnamed.patterns = [];
+      unnamed.matchedPrimitives = [];
+      unnamed.approaches = [];
+      unnamed.solutions = [];
+      fs.writeFileSync(path.join(inferenceDir, `session-plain-${i}.json`), JSON.stringify(unnamed));
+    }
+
+    const cycle = new InferenceCycle(tmpDir, undefined, { skipApply: true, skipDeployVerify: true });
+    const result = await cycle.maybeRunCycle();
+    const problem = result.proposals.find((proposal) => proposal.id.startsWith("problem:"));
+    expect(problem?.namedSignals).toEqual([]);
+
+    const lessons = recordLesson.mock.calls.map((call) => call[0] as { signals?: string[]; taskId: string });
+    const problemLesson = lessons.find((lesson) => lesson.taskId.startsWith("problem:"));
+    expect(problemLesson?.signals).toEqual([]);
+  });
 });

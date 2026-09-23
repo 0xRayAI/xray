@@ -60,6 +60,22 @@ export type CyclePhase =
 
 const CYCLE_STATE_FILE = "inference-cycle-state.json";
 const CYCLE_HISTORY_FILE = "inference-cycle-history.json";
+const GRADED_LESSON_IDS_FILE = "inference-cycle-graded-ids.json";
+const HISTORY_CAP = 50;
+const LESSON_ID_PREFIXES = ["named:", "pattern:", "problem:", "wrong:"] as const;
+
+function isLessonProposalId(id: string): boolean {
+  return LESSON_ID_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+function lessonIdsFromUnknown(parsed: unknown): string[] {
+  if (!Array.isArray(parsed)) return [];
+  const ids: string[] = [];
+  for (const item of parsed) {
+    if (typeof item === "string" && isLessonProposalId(item)) ids.push(item);
+  }
+  return ids;
+}
 
 export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
 
@@ -345,7 +361,7 @@ export class InferenceCycle {
     votes: InferenceCycleResult["votes"],
   ): void {
     const alreadyGraded = new Set(
-      this.loadHistory().flatMap((cycle) => cycle.proposals.map((proposal) => proposal.id)),
+      this.loadHistory().flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)),
     );
     for (const proposal of proposals) {
       if (alreadyGraded.has(proposal.id)) continue;
@@ -361,7 +377,7 @@ export class InferenceCycle {
         taskId: proposal.id,
         assignedAgent: "inference-cycle",
         sessionId: cycleId,
-        ...(named.length > 0 ? { signals: named } : {}),
+        signals: named,
       });
       if (taught.length > 0) {
         frameworkLogger.log("inference-cycle", "lesson-recorded", "info", {
@@ -547,18 +563,84 @@ export class InferenceCycle {
       }
     }
     history.push(result);
-    if (history.length > 50) history = history.slice(-50);
+    const dropped = history.length > HISTORY_CAP ? history.slice(0, history.length - HISTORY_CAP) : [];
+    if (history.length > HISTORY_CAP) history = history.slice(-HISTORY_CAP);
+    this.retainDroppedLessonIds(dropped, history);
     fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+  }
+
+  /** Lesson ids that leave the 50-entry window stay covered. Empty cycles do not erase them. */
+  private retainDroppedLessonIds(dropped: InferenceCycleResult[], kept: InferenceCycleResult[]): void {
+    if (dropped.length === 0) return;
+    const keptIds = new Set(kept.flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)));
+    const retained = new Set(this.readRetainedLessonIds());
+    let changed = false;
+    for (const cycle of dropped) {
+      for (const proposal of cycle.proposals ?? []) {
+        if (!isLessonProposalId(proposal.id)) continue;
+        if (keptIds.has(proposal.id) || retained.has(proposal.id)) continue;
+        retained.add(proposal.id);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    if (!fs.existsSync(this.stateDir)) {
+      fs.mkdirSync(this.stateDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(this.stateDir, GRADED_LESSON_IDS_FILE),
+      JSON.stringify([...retained].sort(), null, 2),
+    );
+  }
+
+  private readRetainedLessonIds(): string[] {
+    const file = path.join(this.stateDir, GRADED_LESSON_IDS_FILE);
+    if (!fs.existsSync(file)) return [];
+    try {
+      return lessonIdsFromUnknown(JSON.parse(fs.readFileSync(file, "utf-8")));
+    } catch {
+      return [];
+    }
+  }
+
+  private retainedLessonCycle(ids: string[]): InferenceCycleResult {
+    return {
+      cycleId: "retained-lessons",
+      triggered: false,
+      triggerReason: "lesson ids kept past the history cap",
+      corpusSummary: { sessions: 0, totalCommits: 0, recurringPatterns: 0, recurringProblems: 0 },
+      proposals: ids.map((id) => ({
+        id,
+        type: "codify" as const,
+        title: id,
+        description: "",
+        evidence: [],
+        confidence: 0,
+        source: "recurring_pattern" as const,
+        status: "pending" as const,
+      })),
+      votes: [],
+      phase: "complete",
+      completedAt: "1970-01-01T00:00:00.000Z",
+      duration: 0,
+    };
   }
 
   private loadHistory(): InferenceCycleResult[] {
     const historyPath = path.join(this.stateDir, CYCLE_HISTORY_FILE);
-    if (!fs.existsSync(historyPath)) return [];
-    try {
-      return JSON.parse(fs.readFileSync(historyPath, "utf-8"));
-    } catch {
-      return [];
+    let history: InferenceCycleResult[] = [];
+    if (fs.existsSync(historyPath)) {
+      try {
+        const parsed: unknown = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+        history = Array.isArray(parsed) ? parsed as InferenceCycleResult[] : [];
+      } catch {
+        history = [];
+      }
     }
+    const present = new Set(history.flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)));
+    const missing = this.readRetainedLessonIds().filter((id) => !present.has(id));
+    if (missing.length === 0) return history;
+    return [this.retainedLessonCycle(missing), ...history];
   }
 
   private buildBlockedResult(cycleId: string, reason: string): InferenceCycleResult {
