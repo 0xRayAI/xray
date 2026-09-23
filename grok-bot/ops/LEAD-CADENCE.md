@@ -4,6 +4,8 @@ Higher than grok-bot seats. Dist cadence (`dist/CADENCE.md`) is how often we pos
 
 **A friend would hear:** a second copy of you should pick up the ticket from disk and keep working. The human should not have to re-teach the rules every wake. Dummy bodies prove the worn catalog. Same-sess bodies keep the suit on. Workstreams stay moving. Station done is the close — not a timer.
 
+Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.
+
 ## Peer test (the encode gate)
 
 Give another instance only worn 0xRay: `AGENTS.md` · this file · `.xray/state/STATION.md` · Repertoire project copy. No command stream.

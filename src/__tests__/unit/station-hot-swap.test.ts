@@ -9,9 +9,12 @@ import {
   extractPreservedStationLines,
   formatStationMarkdown,
   mergeStationMarkdown,
+  maybeCaptureSessionOnHeadMove,
   patternsFromGit,
+  persistRepertoireWorking,
   pruneKeywordDest,
   readRepertoireWorking,
+  workingGrowSnapshot,
   retainCompactFields,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
@@ -89,13 +92,22 @@ describe('station hot-swap', () => {
       intent: 'survive the cut',
       planLine: null,
       git: { branch: 'feat/v4-temperament', head: 'abc1234' },
-      repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
+      repertoireResume: 'Repertoire: module unresolved',
     });
     expect(md).toContain('Host: grok (frontier)');
+    expect(md).toContain('Repertoire: module unresolved');
+    expect(md).not.toContain('memory_routing stays off');
     expect(md).toContain('Intent: survive the cut');
     expect(md).toContain('Do not cold-start');
     expect(md).toContain('Grok does not inject this file');
     expect(md).not.toContain('Hot-swap:');
+    const missing = formatStationMarkdown({
+      host: 'grok',
+      suit_profile: 'guided',
+      intent: 'no organ',
+    });
+    expect(missing).toContain('Repertoire: module unresolved');
+    expect(missing).not.toContain('memory_routing stays off');
   });
 
   it('stranger without Repertoire still gets git + intent heat', () => {
@@ -115,7 +127,7 @@ describe('station hot-swap', () => {
       expect(payload.intent).toBe('make the cut the test');
       expect(payload.git?.head).toBeTruthy();
       expect(payload.stationLine).toContain('intent: make the cut the test');
-      expect(payload.repertoireResume).toMatch(/not installed/);
+      expect(payload.repertoireResume).toMatch(/module unresolved/);
       const card = fs.readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
       expect(card).toContain('make the cut the test');
       expect(card).toContain('Do not cold-start');
@@ -634,6 +646,70 @@ describe('station hot-swap', () => {
         { message: 'feat: repo-clearing hangar rail' },
       ]);
       expect(patterns.map((row: { name: string }) => row.name)).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('session capture writes matched_primitives from existing dest laws', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-capture-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'station-survives-the-cut', definition: 'Compact card holds.' }],
+        }),
+      );
+      fs.writeFileSync(path.join(tmp, 'a.md'), 'a\n');
+      execFileSync('git', ['add', '.'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'docs: station survives the cut'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'b.md'), 'b\n');
+      execFileSync('git', ['add', '.'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: keep moving'], { cwd: tmp, stdio: 'ignore' });
+      const filePath = maybeCaptureSessionOnHeadMove(tmp);
+      expect(filePath).toBeTruthy();
+      const session = JSON.parse(fs.readFileSync(String(filePath), 'utf8')) as {
+        matched_primitives: string[];
+        patterns: Array<{ name: string }>;
+      };
+      expect(session.patterns.map((row) => row.name)).toEqual(['station-survives-the-cut']);
+      expect(session.matched_primitives).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('writes heated length onto repertoire-working.json', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-grow-receipt-'));
+    try {
+      const receipt = workingGrowSnapshot({
+        before: 52,
+        after: 38,
+        imported: 0,
+        observed: 4,
+        heated: ['a', 'b', 'c', 'd'],
+      });
+      expect(receipt).toEqual({ before: 52, after: 38, imported: 0, observed: 4 });
+      expect(workingGrowSnapshot({ before: 1, after: 1, observed: ['law-a', 'law-b'] })).toEqual({
+        before: 1,
+        after: 1,
+        imported: undefined,
+        observed: 2,
+      });
+      persistRepertoireWorking(tmp, { grow: receipt });
+      const disk = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire-working.json'), 'utf8'),
+      ) as { grow: { observed: number; after: number } };
+      expect(disk.grow.observed).toBe(4);
+      expect(disk.grow.after).toBe(38);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

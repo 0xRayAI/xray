@@ -28,6 +28,7 @@ export const patternsFromGit = impl.patternsFromGit;
 export const readNotesPickup = impl.readNotesPickup;
 export const maybeCaptureSessionOnHeadMove = impl.maybeCaptureSessionOnHeadMove;
 export const formatWorkingLine = impl.formatWorkingLine;
+export const workingGrowSnapshot = impl.workingGrowSnapshot;
 export const applyStationHeat = impl.applyStationHeat;
 export const isStockTicket = impl.isStockTicket;
 export const readStationTicketField = impl.readStationTicketField;

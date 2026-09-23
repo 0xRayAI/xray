@@ -661,6 +661,7 @@ function maybeCaptureSessionOnHeadMove(root) {
     from: stamp && stamp.head ? stamp.head : commits[commits.length - 1] ? commits[commits.length - 1].hash : git.head,
     to: git.head,
   };
+  const patterns = patternsFromGit(root, commits, span);
   const session = {
     sessionId,
     timestamp: new Date().toISOString(),
@@ -669,8 +670,8 @@ function maybeCaptureSessionOnHeadMove(root) {
     approaches,
     wrongTurns: [],
     solutions: [],
-    patterns: patternsFromGit(root, commits, span),
-    matched_primitives: [],
+    patterns,
+    matched_primitives: preferLawHits(patterns.map((row) => row && row.name)),
     metrics: { commits: commits.length },
   };
   const outDir = join(root, "docs", "inference");
@@ -754,8 +755,16 @@ function growDestOnWake(root) {
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
     const pruned = pruneKeywordDest(root);
-    if (!parsed || typeof parsed !== "object") return { pruned };
-    return { ...parsed, pruned: pruned.removed, destCount: countCuratedSignals(destSignalsPath(root)) };
+    const destCount = countCuratedSignals(destSignalsPath(root)) || 0;
+    if (!parsed || typeof parsed !== "object") return { pruned: pruned.removed, destCount };
+    const heated = Array.isArray(parsed.heated) ? parsed.heated.length : 0;
+    return {
+      ...parsed,
+      observed: heated,
+      pruned: pruned.removed,
+      destCount,
+      after: destCount,
+    };
   } catch {
     return null;
   }
@@ -811,6 +820,28 @@ function retainCompactFields(existing, extra = {}) {
   return kept;
 }
 
+/** Persist heated length. A number stays a number. An array is a count. Never drop a number to 0. */
+function workingGrowSnapshot(grow) {
+  if (!grow || typeof grow !== "object") return null;
+  if (typeof grow.after !== "number") {
+    return typeof grow.skipped === "string" ? grow.skipped : null;
+  }
+  const observed =
+    typeof grow.observed === "number"
+      ? grow.observed
+      : Array.isArray(grow.observed)
+        ? grow.observed.length
+        : Array.isArray(grow.heated)
+          ? grow.heated.length
+          : 0;
+  return {
+    before: grow.before,
+    after: grow.after,
+    imported: grow.imported,
+    observed,
+  };
+}
+
 function formatWorkingLine(working) {
   if (!working || typeof working !== "object") return null;
   const matched = stationSafeSignals(working.matchedSignals);
@@ -826,7 +857,7 @@ function buildRepertoireResume(root) {
   const modulePath = resolveRepertoireProviderModule(root);
   const mr = readMemoryRoutingConfig(root);
   if (!modulePath) {
-    return "Repertoire: not installed (memory_routing stays off)";
+    return "Repertoire: module unresolved";
   }
   const destPath = destSignalsPath(root);
   let signalsPath = existsSync(destPath) ? destPath : mr.config && mr.config.signalsPath;
@@ -932,15 +963,8 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (pickup) workingSnapshot.pickup = pickup;
   if (matchText) workingSnapshot.matchText = matchText;
   if (captured) workingSnapshot.sessionCapture = captured;
-  if (grow && grow.skipped) workingSnapshot.grow = grow.skipped;
-  if (grow && typeof grow.after === "number") {
-    workingSnapshot.grow = {
-      before: grow.before,
-      after: grow.after,
-      imported: grow.imported,
-      observed: Array.isArray(grow.observed) ? grow.observed.length : 0,
-    };
-  }
+  const growReceipt = workingGrowSnapshot(grow);
+  if (growReceipt) workingSnapshot.grow = growReceipt;
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
@@ -1108,7 +1132,7 @@ function formatStationMarkdown(fields) {
   } else {
     lines.push("Git: n/a");
   }
-  lines.push(fields.repertoireResume || "Repertoire: not installed (memory_routing stays off)");
+  lines.push(fields.repertoireResume || "Repertoire: module unresolved");
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }
@@ -1165,6 +1189,7 @@ module.exports = {
   readNotesPickup,
   maybeCaptureSessionOnHeadMove,
   formatWorkingLine,
+  workingGrowSnapshot,
   applyStationHeat,
   isStockTicket,
   readStationTicketField,

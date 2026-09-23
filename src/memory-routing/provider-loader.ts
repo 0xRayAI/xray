@@ -86,7 +86,9 @@ export function isExplicitMemoryRoutingOptOut(config: MemoryRoutingConfig): bool
   return config.enabled === false && config.provider === 'repertoire';
 }
 
-/** Leftover shipped default: enabled false + provider null. Not an explicit opt-out. */
+/** Leftover shipped default: enabled false + provider null. Not an explicit opt-out.
+ *  resolveLeftoverEnabledConfig migrates old tarballs when the organ is on disk.
+ *  Explicit opt-out is enabled: false + provider: repertoire. */
 export function isLeftoverMemoryRoutingOff(config: MemoryRoutingConfig): boolean {
   if (config.enabled === true) return false;
   if (isExplicitMemoryRoutingOptOut(config)) return false;

@@ -6,7 +6,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### Fixed
+- **Heat + capture leftover** — module-missing resume is `Repertoire: module unresolved`, not “memory_routing stays off”. Session capture writes `matched_primitives` from existing dest laws in git. Grow receipt is post-prune dest count + heated length. Leftover `provider: null` still migrates old tarballs; explicit opt-out stays `enabled: false` + `provider: repertoire`. Does not republish.
+
 ### 📚 Documentation
+- **Jargon is not the job.** Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras. On `LEAD-CADENCE.md` + ship-ready mill gate + orchestrator cadence. Not a new Codex term.
 - **Leftover after #102** — `station-vs-repertoire.md` opt-out ASCII no longer teaches package-absence (`no @0xray/repertoire` / `memory_routing stays off`). Explicit opt-out is `enabled: false` + `provider: repertoire`. Dead integrate note is history. Compact seed drops leftover “optional MCP”. `validate-release-docs` now gates that guide. Does not republish.
 - **Leftover after #101** — stamp `package-lock.json` and `.xray/features.json` to the live package version. Rewire `updateFeaturesJsonVersion` so both features files stamp together. Guides that still called Repertoire optional now say preferred + explicit opt-out; Station is the compact ticket.
 
