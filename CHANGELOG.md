@@ -37,6 +37,21 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.23] - 2026-09-23
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: start the Dynamo client when external governance is required (d17b9cf19)
+- fix: score proposals locally when inference governance is off (ae8075116)
+- fix: finish the inference cycle and load the organ before routing (69522e6c3)
+- fix: vendor the organ that seeds conviction above the floor (103961128)
+- fix: vendor the organ that routes on conviction, not a floor count (24d215a5a)
+- fix: reconcile writes the lock version when it bumps (434ddafef)
+- fix: package-lock version follows package.json on stamp (026c36d55)
+
+---
+
 ## [4.0.22] - 2026-09-23
 
 ### 🔄 Changes
