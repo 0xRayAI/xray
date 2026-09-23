@@ -47,3 +47,5 @@ Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR 
 Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.
 
 Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.
+
+Feat rebase: when the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop. Go up a level and answer the original message again from this seat. Do not continue the side thread and call that the job.

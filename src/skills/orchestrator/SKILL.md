@@ -66,6 +66,8 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 
 Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.
 
+- **Feat rebase:** when the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop. Go up a level and answer the original message again from this seat. Do not continue the side thread and call that the job.
+
 - **Peer test:** another instance with only worn 0xRay continues the ticket. No command stream.
 - **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
 - **Dummy tests `SKILLS.md`:** a suited dummy proves the worn catalog. Same-sess bodies keep context and hold a Station card.

@@ -18,6 +18,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Live tick/);
     expect(text).toMatch(/A friend would hear:/);
     expect(text).toMatch(/Jargon is not the job/);
+    expect(text).toMatch(/### Feat rebase/);
+    expect(text).toMatch(/answer the original message again from this seat/);
     expect(text).toMatch(/Do not spend the loop reciting dest names, mill liturgy, or host mantras/);
     expect(text).toMatch(/Codex 69/);
     expect(text).toMatch(/Dummy exists to \*\*test `SKILLS\.md`\*\*/);
@@ -72,7 +74,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     const millGate = path.join(root, 'grok-bot', 'skills', 'ship-ready-mill-gate', 'SKILL.md');
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Lead cadence \(syncopation\)/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Jargon is not the job/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Feat rebase/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Jargon is not the job/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Feat rebase/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Clean ticks every cycle/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/WAVEBOARD are idle/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Subject review\. Fix n ship/);
