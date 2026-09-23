@@ -70,6 +70,24 @@ export interface GovernanceIntegrationConfig {
 }
 
 /**
+ * Public Dynamo Solar SSOT. Used only when a caller requires external
+ * governance and neither features nor GOVERNANCE_ENDPOINT names a host.
+ * The client posts to /call_connected_tool on this origin.
+ */
+export const PUBLIC_DYNAMO_SSOT = 'https://mcp-production-80e2.up.railway.app';
+
+/**
+ * Origin for POST /call_connected_tool.
+ * Preference: configured endpoint, then GOVERNANCE_ENDPOINT, then the public SSOT.
+ */
+export function resolveDynamoBaseUrl(configured: string): string {
+  const fromConfig = configured.trim();
+  const fromEnv = (process.env.GOVERNANCE_ENDPOINT || '').trim();
+  const raw = fromConfig || fromEnv || PUBLIC_DYNAMO_SSOT;
+  return raw.replace(/\/governance\/?$/, '').replace(/\/$/, '');
+}
+
+/**
  * Default governance configuration
  */
 export const DEFAULT_GOVERNANCE_CONFIG: GovernanceIntegrationConfig = {

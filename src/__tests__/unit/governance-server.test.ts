@@ -9,7 +9,10 @@ vi.mock("../../governance/codex-policy.service.js", () => ({
 }));
 
 vi.mock("../../integrations/governance/index.js", () => ({
-  initializeGovernanceIntegration: vi.fn(),
+  initializeGovernanceIntegration: vi.fn(async () => ({
+    isAvailable: () => true,
+    ensureDynamoClient: async () => undefined,
+  })),
   shutdownGovernanceIntegration: vi.fn(),
 }));
 
@@ -496,6 +499,32 @@ describe("GovernanceServer", () => {
       expect(typeof server.handlers["get_active_codex"]).toBe("function");
     });
   });
+
+    it("arms Dynamo when external governance is required and the client is down", async () => {
+      const ensureDynamoClient = vi.fn();
+      vi.mocked(initializeGovernanceIntegration).mockResolvedValue({
+        isAvailable: () => false,
+        ensureDynamoClient,
+      } as Awaited<ReturnType<typeof initializeGovernanceIntegration>>);
+      const mockGovern = vi.fn().mockResolvedValue({ summary: "ok", results: [] });
+      vi.mocked(getGovernanceService).mockReturnValue({
+        govern: mockGovern,
+      } as ReturnType<typeof getGovernanceService>);
+
+      const handle = server as unknown as {
+        handleGovernProposals: (args: {
+          proposals: Array<{ type: string; title: string; description: string }>;
+          options: { require_external: boolean };
+        }) => Promise<unknown>;
+      };
+      await handle.handleGovernProposals({
+        proposals: [{ type: "fix", title: "Fix", description: "Desc" }],
+        options: { require_external: true },
+      });
+
+      expect(ensureDynamoClient).toHaveBeenCalledTimes(1);
+      expect(mockGovern).toHaveBeenCalledTimes(1);
+    });
 
   describe("initializeGovernance", () => {
     it("initializes governance when enabled in config", async () => {

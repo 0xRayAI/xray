@@ -97,6 +97,13 @@ function governanceToolText(result: unknown): string {
   return typeof text === "string" ? text : "";
 }
 
+function governanceToolIsError(result: unknown): boolean {
+  if (typeof result !== "object" || result === null || !("isError" in result)) {
+    return false;
+  }
+  return (result as { isError?: unknown }).isError === true;
+}
+
 export class InferenceCycle {
   private static instances = new Map<string, InferenceCycle>();
   private static reEntryLock = false;
@@ -337,6 +344,7 @@ export class InferenceCycle {
       return this.governWithLocalMatrix(proposals);
     }
 
+    const governanceMcpTimeoutMs = 90_000;
     const result = await Promise.race([
       mcpClientManager.callServerTool("governance", "govern_proposals", {
         proposals: proposals.map(p => ({
@@ -352,11 +360,17 @@ export class InferenceCycle {
         options: { require_external: true },
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Governance MCP timed out after 8s")), 8000)
+        setTimeout(
+          () => reject(new Error(`Governance MCP timed out after ${governanceMcpTimeoutMs / 1000}s`)),
+          governanceMcpTimeoutMs,
+        )
       ),
     ]);
 
     const text = governanceToolText(result);
+    if (governanceToolIsError(result)) {
+      throw new Error(text || "Governance MCP returned an error");
+    }
     const parsed = this.parseGovernanceMcpResponse(text, proposals);
     frameworkLogger.log("inference-cycle", "governance-mcp-primary-path", "info", {
       proposalCount: proposals.length,
@@ -413,17 +427,12 @@ export class InferenceCycle {
       });
       return { votes, overallDecision: data.overallDecision || "needs_revision" };
     } catch {
+      const preview = text.substring(0, 300);
       frameworkLogger.log('inference-cycle', 'governance-mcp-parse-failed', 'warning', {
-        textPreview: text.substring(0, 200),
+        textPreview: preview,
         proposalCount: proposals.length,
       });
-      const votes = proposals.map(p => ({
-        proposalId: p.id,
-        decision: "abstain",
-        confidence: 0.5,
-        details: ["governance-mcp: parse-failed"],
-      }));
-      return { votes, overallDecision: "needs_revision" };
+      throw new Error(`governance-mcp: unreadable vote: ${preview || "empty governance response"}`);
     }
   }
 

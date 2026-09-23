@@ -15,7 +15,7 @@ import type {
   SolarGovernanceVoteResult,
   BatchGovernanceCheck,
 } from './types.js';
-import { DEFAULT_GOVERNANCE_CONFIG } from './types.js';
+import { DEFAULT_GOVERNANCE_CONFIG, resolveDynamoBaseUrl } from './types.js';
 import { GovernanceClient } from './governance-client.js';
 import type { InferenceProposal } from '../../inference/inference-cycle.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
@@ -110,7 +110,30 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    * Check if governance is enabled and available
    */
   isAvailable(): boolean {
-    return this.configData.enabled && this.client !== null && this.status === 'initialized';
+    return this.client !== null && this.status === 'initialized';
+  }
+
+  /**
+   * Start the Dynamo client when a caller required external governance
+   * and boot skipped it because inference_governance.enabled is false.
+   */
+  async ensureDynamoClient(): Promise<void> {
+    if (this.status !== 'initialized') {
+      await this.initialize();
+    }
+    if (this.client !== null) {
+      return;
+    }
+
+    const endpoint = resolveDynamoBaseUrl(this.configData.endpointUrl);
+    this.client = new GovernanceClient({
+      baseUrl: endpoint,
+      timeoutMs: this.configData.requestTimeoutMs,
+    });
+
+    await this.log('info', 'Dynamo client armed for required external governance', {
+      endpoint,
+    });
   }
 
   /**
