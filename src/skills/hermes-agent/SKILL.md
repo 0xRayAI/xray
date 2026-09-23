@@ -64,7 +64,7 @@ Returns: pass/fail with per-file results and violations.
 
 ### xray_codex_check
 
-Validate code against the 60-term Universal Development Codex. Checks error-handling, type-safety, performance, security, architecture.
+Validate code against the 69-term Universal Development Codex. Checks error-handling, type-safety, performance, security, architecture.
 
 ```
 xray_codex_check(code="const x: any = foo()", operation="create")

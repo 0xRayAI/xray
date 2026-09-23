@@ -9,7 +9,7 @@ Wear and product docs live on the Docusaurus site: `docs-site/docs/`.
 | `architecture/governance-model.md` | Dynamo Solar SSOT |
 | `api/plugin-api.md` | Nucleus plugin freeze |
 | `reflections/` | Session reflections |
-| `archive/` | v3 snapshots and the 41-MCP migration that did not ship |
+| `archive/` | v3 snapshots, the 41-MCP migration that did not ship, and StringRay-era reports |
 
 ```bash
 npm install 0xray

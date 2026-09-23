@@ -106,7 +106,7 @@
     "debug:inference:force": "XRAY_FORCE_MCP_GOVERNANCE=true XRAY_DEV_PATH=dist node dist/cli/index.js inference:run --force",
     "validate:full": "npm run validate",
     "test:unified": "node scripts/test/test-unified-framework.mjs",
-    "test:consumer": "node scripts/test/test-consumer-readiness.cjs",
+    "test:consumer": "node scripts/mjs/test-consumer-readiness.mjs",
     "config:setup": "node scripts/config/utils.js setup-dev",
     "monitoring:start": "node scripts/monitoring/daemon.js start",
     "monitoring:stop": "node scripts/monitoring/daemon.js stop",

@@ -57,7 +57,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 | `npx 0xray hermes install` | Hermes plugin bridge |
 | `npx 0xray openclaw install` | OpenClaw config + skills |
 | `npx 0xray skill:install` | Install starter skills |
-| `npx 0xray validate` | Validate codex compliance |
+| `npx 0xray validate` | Wear check (pack paths, Cursor hooks, mill, repertoire) — not leftover init.sh |
 | `npx 0xray codex check` | Check codex rules |
 | `npx 0xray health` | Framework health check |
 | `npx 0xray mcp <server>` | Start an MCP server (stdio) |

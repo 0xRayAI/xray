@@ -17,9 +17,16 @@ const __dirname = path.dirname(__filename);
 class ConsumerReadinessCheck {
   constructor() {
     this.checks = [];
-    // Check if we're running from a consumer environment (not the source directory)
+    // Mill = this repo (package name 0xray + src/). Consumer = installed tarball.
     const cwd = process.cwd();
-    this.isConsumerEnvironment = !cwd.includes("dev/stringray") && cwd.includes("dev/jelly");
+    let isDevMill = false;
+    try {
+      const pkg = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf8"));
+      isDevMill = pkg.name === "0xray" && fs.existsSync(path.join(cwd, "src"));
+    } catch {
+      isDevMill = false;
+    }
+    this.isConsumerEnvironment = !isDevMill;
   }
 
   async runChecks() {
@@ -78,7 +85,7 @@ class ConsumerReadinessCheck {
       if (fs.existsSync(".mcp.json")) {
         const mcpConfig = JSON.parse(fs.readFileSync(".mcp.json", "utf8"));
         const serverCount = Object.keys(mcpConfig.mcpServers || {}).length;
-        const hasServers = serverCount >= 16; // At least 16 servers
+        const hasServers = serverCount >= 7; // consumer mill: 7 0xRay MCP servers
 
         this.checks.push({
           name: "MCP server configuration",
