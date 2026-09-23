@@ -66,6 +66,36 @@ export interface InferenceCycleOptions {
   force?: boolean;
 }
 
+interface GovernanceToolPayload {
+  content?: Array<{ text?: string }>;
+}
+
+interface GovernanceWireVote {
+  server?: string;
+  decision?: string;
+  confidence?: number;
+}
+
+interface GovernanceWireResult {
+  finalDecision?: string;
+  averageConfidence?: number;
+  votes?: GovernanceWireVote[];
+}
+
+interface GovernanceWirePayload {
+  results?: GovernanceWireResult[];
+  overallDecision?: string;
+}
+
+function governanceToolText(result: unknown): string {
+  if (typeof result !== "object" || result === null || !("content" in result)) {
+    return "";
+  }
+  const content = (result as GovernanceToolPayload).content;
+  const text = content?.[0]?.text;
+  return typeof text === "string" ? text : "";
+}
+
 export class InferenceCycle {
   private static instances = new Map<string, InferenceCycle>();
   private static reEntryLock = false;
@@ -73,10 +103,16 @@ export class InferenceCycle {
 
   static getInstance(projectRoot?: string, options?: InferenceCycleOptions): InferenceCycle {
     const root = path.resolve(projectRoot || process.cwd());
-    if (!InferenceCycle.instances.has(root)) {
-      InferenceCycle.instances.set(root, new InferenceCycle(root, undefined, options));
+    const existing = InferenceCycle.instances.get(root);
+    if (existing) {
+      if (options) {
+        existing.options = { ...existing.options, ...options };
+      }
+      return existing;
     }
-    return InferenceCycle.instances.get(root)!;
+    const created = new InferenceCycle(root, undefined, options);
+    InferenceCycle.instances.set(root, created);
+    return created;
   }
 
   static resetInstance(): void {
@@ -197,7 +233,10 @@ export class InferenceCycle {
 
       if (proposals.length === 0) {
         this.setPhase("complete");
-        return this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals);
+        this.saveCycleState(cycleId);
+        const emptyResult = this.buildResult(cycleId, true, threshold.reason, startTime, corpus, proposals);
+        this.appendHistory(emptyResult);
+        return emptyResult;
       }
 
       this.setPhase("governing");
@@ -316,7 +355,7 @@ export class InferenceCycle {
       ),
     ]);
 
-    const text = (result as any)?.content?.[0]?.text || "";
+    const text = governanceToolText(result);
     const parsed = this.parseGovernanceMcpResponse(text, proposals);
     frameworkLogger.log("inference-cycle", "governance-mcp-primary-path", "info", {
       proposalCount: proposals.length,
@@ -341,15 +380,15 @@ export class InferenceCycle {
   } {
     // The governance MCP returns a GovernanceResponse JSON
     try {
-      const data = JSON.parse(text);
+      const data = JSON.parse(text) as GovernanceWirePayload;
       const results = data.results || [];
       const votes = proposals.map((p, i) => {
         const r = results[i] || {};
         return {
           proposalId: p.id,
-          decision: (r.finalDecision === 'approve' ? 'approve' : r.finalDecision === 'reject' ? 'reject' : 'needs_revision') as any,
+          decision: (r.finalDecision === 'approve' ? 'approve' : r.finalDecision === 'reject' ? 'reject' : 'needs_revision'),
           confidence: r.averageConfidence || 0.75,
-          details: (r.votes || []).map((v: any) => `${v.server}: ${v.decision} (${v.confidence})`),
+          details: (r.votes || []).map((v: GovernanceWireVote) => `${v.server}: ${v.decision} (${v.confidence})`),
         };
       });
       return { votes, overallDecision: data.overallDecision || "needs_revision" };
@@ -360,7 +399,7 @@ export class InferenceCycle {
       });
       const votes = proposals.map(p => ({
         proposalId: p.id,
-        decision: "abstain" as any,
+        decision: "abstain",
         confidence: 0.5,
         details: ["governance-mcp: parse-failed"],
       }));

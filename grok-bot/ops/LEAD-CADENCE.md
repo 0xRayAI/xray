@@ -113,6 +113,25 @@ When you start a new critic or any new subagent that does not already have this 
 - Give them the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed.
 - If the branch moves after you brief them, send the new SHA before they verdict.
 
+### Control
+
+The lead keeps control. A subagent does not already have this thread, and it does not already wear the suit.
+
+- Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply to that duty.
+- The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit.
+- The lead checks the result. The subagent does not close the loop.
+
+### Engine cadence
+
+This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
+
+1. Change the engine with precision.
+2. Ship it local: build and install the tree. Do not republish a live npm version.
+3. Test the change.
+4. Run another deep review of the diff you just made.
+5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
+6. Ship the PR.
+
 ### When knowledge grows
 
 Monitor the lead. New law that had to be spoken twice goes to disk this wake: `SEATS.md` or this file or the existing `orchestrator` / `ship-ready-mill-gate` skill. Codex 69: rewire. Do not add `src/skills/critic/SKILL.md`. Project-local Repertoire gets the name. NOTES get the leftover. Station stays thin.

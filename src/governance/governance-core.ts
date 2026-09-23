@@ -15,7 +15,8 @@ const TAU = 0.865;
 
 export interface DecisionMatrixInput {
   resonance: number;
-  isotopicRatio: number;
+  /** Present only when a real moralFusion number was supplied. Absent is not 0.5. */
+  isotopicRatio?: number;
   vortexVolume?: number;
   historicalCoherence?: number;
   solarActivity?: 'quiet' | 'moderate' | 'active' | 'storm';
@@ -101,20 +102,27 @@ export function applyDecisionMatrix(input: DecisionMatrixInput): DecisionMatrixO
     reasons.push(`Moral alignment confirmed (score: ${(moralScore * 100).toFixed(0)}%)`);
   }
 
-  if (resonance >= 0.92 && isotopicRatio >= 0.95) {
+  // Cutoffs stay the literals the tests lock (0.92/0.95, 0.82/0.88, 0.75/0.80).
+  // PHI and TAU are not those cutoffs, so reasons do not claim them.
+  const ratio = typeof isotopicRatio === 'number' && Number.isFinite(isotopicRatio) ? isotopicRatio : undefined;
+  const highBand = resonance >= 0.92 && (ratio === undefined || ratio >= 0.95);
+  const solidBand = resonance >= 0.82 && (ratio === undefined || ratio >= 0.88);
+  const belowCutoff = resonance < 0.75 || (ratio !== undefined && ratio < 0.80);
+
+  if (highBand) {
     recommendation = 'PASS';
     confidence = 0.97;
     voteWeight = 1.4;
-    reasons.push('High symbiotic resonance (PHI-aligned)');
-  } else if (resonance >= 0.82 && isotopicRatio >= 0.88) {
+    reasons.push('High symbiotic resonance');
+  } else if (solidBand) {
     recommendation = 'PASS';
     confidence = 0.89;
     voteWeight = 1.15;
-    reasons.push('Solid alignment above TAU threshold');
-  } else if (resonance < 0.75 || isotopicRatio < 0.80) {
+    reasons.push('Solid alignment above the resonance cutoff');
+  } else if (belowCutoff) {
     recommendation = 'REJECT';
     confidence = 0.84;
-    reasons.push('Signal below critical threshold (1 - TAU)');
+    reasons.push('Signal below the critical resonance or isotopic cutoff');
   } else {
     reasons.push('Moderate resonance - requires refinement');
   }
@@ -169,17 +177,21 @@ export function mergeVotes(votes: GovernanceVote[]): {
     };
   }
 
+  const weightOf = (vote: GovernanceVote): number => vote.weight ?? 1;
+
   const approveWeight = votes
     .filter(v => v.decision === 'approve')
-    .reduce((sum, v) => sum + (v.weight ?? 1) * v.confidence, 0);
+    .reduce((sum, v) => sum + weightOf(v) * v.confidence, 0);
 
-  const totalWeight = votes.reduce((sum, v) => sum + (v.weight ?? 1) * v.confidence, 0);
+  const weightedConfidenceSum = votes.reduce((sum, v) => sum + weightOf(v) * v.confidence, 0);
+  const weightSum = votes.reduce((sum, v) => sum + weightOf(v), 0);
 
-  const avgConfidence = totalWeight > 0 ? totalWeight / votes.length : 0.5;
+  const rawMean = weightSum > 0 ? weightedConfidenceSum / weightSum : 0.5;
+  const avgConfidence = Math.min(1, Math.max(0, rawMean));
 
   let finalDecision: GovernanceResult['finalDecision'] = 'needs_revision';
-  if (totalWeight > 0) {
-    const approveRatio = approveWeight / totalWeight;
+  if (weightedConfidenceSum > 0) {
+    const approveRatio = approveWeight / weightedConfidenceSum;
     if (approveRatio > 0.66) {
       finalDecision = 'approve';
     } else if (approveRatio < 0.33) {

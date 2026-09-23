@@ -16,6 +16,8 @@ import {
   DEFAULT_THRESHOLDS,
   getLevelFromScore,
   getAgentForTier,
+  getAgentCountForLevel,
+  getStrategyForLevel,
   levelToTier,
 } from "../delegation/complexity-core.js";
 import { ComplexityAnalyzer } from "../delegation/complexity-analyzer.js";
@@ -40,6 +42,9 @@ export function scoreComplexity(
   thresholds?: ComplexityThresholds
 ): ComplexityScore {
   const analyzer = new ComplexityAnalyzer();
+  if (thresholds) {
+    analyzer.setThresholds(thresholds);
+  }
   const metrics = analyzer.analyzeComplexity(operation, context);
   const score = analyzer.calculateComplexityScore(metrics);
 
@@ -112,7 +117,13 @@ export function scoreAndRoute(
     });
 
     return {
-      score: { ...score, score: resolved.adjustedScore, level: adjustedLevel },
+      score: {
+        ...score,
+        score: resolved.adjustedScore,
+        level: adjustedLevel,
+        recommendedStrategy: getStrategyForLevel(adjustedLevel),
+        estimatedAgents: getAgentCountForLevel(adjustedLevel),
+      },
       agent,
       memoryRouting,
     };

@@ -10,6 +10,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed
+- **Engine cadence.** Change the engine, ship it local (build and install the tree; do not republish), test, review the diff, monitor dest and Station, then ship the PR. Missing moral fusion is not an isotopic reject; vote confidence is a clamped weighted mean; thinDispatch strategy follows the adjusted level; an empty inference cycle saves state and later getInstance options apply. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Not a new skill.
 - **Heat + capture leftover** — module-missing resume is `Repertoire: module unresolved`, not “memory_routing stays off”. Session capture writes `matched_primitives` from existing dest laws in git. Grow receipt is post-prune dest count + heated length. Leftover `provider: null` still migrates old tarballs; explicit opt-out stays `enabled: false` + `provider: repertoire`. Does not republish.
 
 ### 📚 Documentation

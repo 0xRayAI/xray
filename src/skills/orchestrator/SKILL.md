@@ -78,6 +78,18 @@ Jargon is not the job. Review and cadence ask whether the change works. Do not s
 - **Board clock:** PR events + resume the same critic. Not two idle pacers. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch:** ticket + PR URLs + “Wear, then review.” The critic Reads `SEATS.md` Reviewer. Do not paste a command novel. When a law is spoken twice, encode it this wake.
 - **Cold brief:** a new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
+- **Control:** The lead keeps control. Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply. The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit. The lead checks the result.
+
+### Engine cadence
+
+This suite is the engine that builds the engine. When a seat sees OP-PROC, write it onto these existing surfaces in the same wake. Do not open a new skill.
+
+1. Change the engine with precision.
+2. Ship it local: build and install the tree. Do not republish a live npm version.
+3. Test the change.
+4. Run another deep review of the diff you just made.
+5. Monitor long-term memory (dest name count and whether observations are the only growth) and short-term memory (Station: intent, plan, git).
+6. Ship the PR.
 - **Close:** loop until Station is done. Compact: Station survives the cut. Overlay dest names are OP-PROC — reload `repertoire-working.json` `opProcNames`, not Station.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
