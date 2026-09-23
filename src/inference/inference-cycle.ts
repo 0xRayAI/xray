@@ -344,7 +344,11 @@ export class InferenceCycle {
     proposals: InferenceProposal[],
     votes: InferenceCycleResult["votes"],
   ): void {
+    const alreadyGraded = new Set(
+      this.loadHistory().flatMap((cycle) => cycle.proposals.map((proposal) => proposal.id)),
+    );
     for (const proposal of proposals) {
+      if (alreadyGraded.has(proposal.id)) continue;
       const vote = votes.find((item) => item.proposalId === proposal.id);
       if (!vote) continue;
       if (vote.decision !== "approve" && vote.decision !== "reject") continue;

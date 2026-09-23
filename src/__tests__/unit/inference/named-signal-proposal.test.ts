@@ -102,6 +102,37 @@ describe("named signal proposals", () => {
     expect(again.some((proposal) => proposal.id.startsWith("named:"))).toBe(false);
   });
 
+  it("grades only the new session when an earlier session already named the signal", () => {
+    const prior = generateProposals(corpus([session("sess-old")]));
+    const proposals = generateProposals(
+      corpus([session("sess-old"), session("sess-new")]),
+      [{ ...rejectedCodifyHistory()[0]!, proposals: prior }],
+    );
+    const grade = proposals.find((proposal) => proposal.id.startsWith("named:wake-cascade:"));
+    expect(grade?.id).toBe("named:wake-cascade:sess-new");
+  });
+
+  it("does not propose a pattern whose sessions were already graded", () => {
+    const pattern = {
+      name: "test-expansion",
+      occurrences: 2,
+      avgConfidence: 0.44,
+      sessions: ["sess-a", "sess-b"],
+      evidence: [],
+      description: "tests",
+    };
+    const first = generateProposals(corpus([
+      session("sess-a", { matched_primitives: [] }),
+      session("sess-b", { matched_primitives: [] }),
+    ], [pattern]));
+    const again = generateProposals(corpus([
+      session("sess-a", { matched_primitives: [] }),
+      session("sess-b", { matched_primitives: [] }),
+    ], [pattern]), [{ ...rejectedCodifyHistory()[0]!, proposals: first }]);
+    expect(first.some((proposal) => proposal.id === "pattern:test-expansion:sess-a,sess-b")).toBe(true);
+    expect(again.some((proposal) => proposal.id.startsWith("pattern:test-expansion:"))).toBe(false);
+  });
+
   it("does not add a second grade when a kept proposal already names the signal", () => {
     const landed = session("sess-a");
     const other = session("sess-b");

@@ -120,7 +120,7 @@ describe("Inference Pipeline Integration", () => {
     const result = await cycle.maybeRunCycle();
 
     for (const proposal of result.proposals) {
-      expect(proposal.id).toMatch(/^prop-/);
+      expect(proposal.id).toMatch(/^(prop-|pattern:|problem:|wrong:|named:)/);
       expect(["fix", "refactor", "automate", "guard", "codify"]).toContain(proposal.type);
       expect(proposal.title).toBeTruthy();
       expect(proposal.description).toBeTruthy();
@@ -141,7 +141,7 @@ describe("Inference Pipeline Integration", () => {
 
     expect(result.votes.length).toBe(result.proposals.length);
     for (const vote of result.votes) {
-      expect(vote.proposalId).toMatch(/^prop-/);
+      expect(vote.proposalId).toMatch(/^(prop-|pattern:|problem:|wrong:|named:)/);
       // Allow 'abstain' due to strict Dynamo Solar SSOT requirement in test environments.
       expect(["approve", "reject", "abstain"]).toContain(vote.decision);
       expect(vote.confidence).toBeGreaterThanOrEqual(0);
