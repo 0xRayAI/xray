@@ -9,6 +9,9 @@
  *   npx @0xray/foundry reconcile --check
  *   npx @0xray/foundry reconcile patch
  *   npx @0xray/foundry reconcile patch --apply
+ *
+ * --apply writes package.json and the package-lock.json version fields.
+ * --check fails when the lock does not match package.json.
  */
 
 import { execSync } from "child_process";
@@ -16,6 +19,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { readRootPackage, resolveMillRoot } from "./mill-root.mjs";
+import { packageLockVersions, syncPackageLockVersion } from "./version-manager.mjs";
 
 const rootDir = resolveMillRoot();
 const pkgPath = path.join(rootDir, "package.json");
@@ -101,8 +105,12 @@ function main() {
   }
 
   console.log("\n=== Version Reconcile ===\n");
+  const lockBefore = packageLockVersions(rootDir);
   console.log(`  npm registry : ${npm}`);
   console.log(`  package.json : ${local}`);
+  console.log(
+    `  package-lock : ${lockBefore ? `${lockBefore.root} / ${lockBefore.pkg}` : "(none)"}`,
+  );
   console.log(`  latest tag   : ${tag ? `v${tag}` : "(none)"}`);
   if (bumpType) {
     console.log(`  bump ${bumpType}  : ${target} (from baseline ${baseline})`);
@@ -112,7 +120,13 @@ function main() {
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
     pkg.version = target;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
-    console.log(`\n✅ Updated package.json → ${target}`);
+    const synced = syncPackageLockVersion(rootDir, target);
+    if (synced === "unmatched") {
+      fail(
+        `package-lock.json version fields were not updated to ${target}. Refusing to leave the lock behind package.json.`,
+      );
+    }
+    console.log(`\n✅ Updated package.json and package-lock.json → ${target}`);
   }
 
   if (!checkMode) {
@@ -127,6 +141,14 @@ function main() {
   // Strict checks for release gate / pre-tag
   if (compare(local, npm) <= 0) {
     fail(`package.json (${local}) must be > npm (${npm}). Run: npx @0xray/foundry reconcile patch --apply`);
+  }
+
+  const pkgVersion = readLocalVersion();
+  const lockNow = packageLockVersions(rootDir);
+  if (lockNow && (lockNow.root !== pkgVersion || lockNow.pkg !== pkgVersion)) {
+    fail(
+      `package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json (${pkgVersion}). The bumper writes both: npx @0xray/foundry reconcile patch --apply`,
+    );
   }
 
   if (tag && compare(local, tag) < 0) {

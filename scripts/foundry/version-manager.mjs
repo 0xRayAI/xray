@@ -333,13 +333,27 @@ function updateFeaturesJsonVersion(newVersion) {
   updateJsonVersionField('.xray/features.json', newVersion);
 }
 
-function updatePackageLockVersion(newVersion) {
-  const full = path.join(rootDir, 'package-lock.json');
-  if (!fs.existsSync(full)) return;
+export function packageLockVersions(dir) {
+  const full = path.join(dir, 'package-lock.json');
+  if (!fs.existsSync(full)) return null;
+  const lock = JSON.parse(fs.readFileSync(full, 'utf-8'));
+  const root = typeof lock.version === 'string' ? lock.version : '';
+  const pkg = typeof lock.packages?.['']?.version === 'string' ? lock.packages[''].version : '';
+  return { root, pkg };
+}
+
+/**
+ * Write the root lock version and packages[""].version to match package.json.
+ * Returns 'missing' | 'same' | 'updated' | 'unmatched'.
+ * Does not rewrite the rest of the lock.
+ */
+export function syncPackageLockVersion(dir, newVersion) {
+  const full = path.join(dir, 'package-lock.json');
+  if (!fs.existsSync(full)) return 'missing';
   const raw = fs.readFileSync(full, 'utf-8');
-  const lock = JSON.parse(raw);
-  const previous = typeof lock.version === 'string' ? lock.version : '';
-  if (previous === newVersion && lock.packages?.['']?.version === newVersion) return;
+  const current = packageLockVersions(dir);
+  if (current && current.root === newVersion && current.pkg === newVersion) return 'same';
+  const previous = current?.root ?? '';
   const lines = raw.split('\n');
   let rootDone = false;
   let pkgDone = false;
@@ -354,8 +368,20 @@ function updatePackageLockVersion(newVersion) {
     }
     return line;
   });
-  if (!rootDone || !pkgDone) return;
+  if (!rootDone || !pkgDone) return 'unmatched';
   fs.writeFileSync(full, next.join('\n'));
+  return 'updated';
+}
+
+function updatePackageLockVersion(newVersion) {
+  const synced = syncPackageLockVersion(rootDir, newVersion);
+  if (synced === 'updated') {
+    console.log(`✅ Updated package-lock.json (version: ${newVersion})`);
+  }
+  if (synced === 'unmatched') {
+    console.error(`\n❌ package-lock.json version fields did not match the expected shape for ${newVersion}\n`);
+    process.exit(1);
+  }
 }
 
 function updateOpenclawPluginVersion(newVersion) {

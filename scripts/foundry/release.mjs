@@ -3,7 +3,7 @@
 /**
  * Canonical 0xRay release script.
  *
- * 1. Bump version from npm registry baseline (reconcile-version)
+ * 1. Bump version from npm registry baseline (reconcile-version writes package.json and package-lock.json)
  * 2. Release artifacts (CHANGELOG / README / AGENTS / docs) — before gate so docs tests pass
  * 3. Release gate (build + test + consumer smoke)
  * 4. Commit release artifacts → push

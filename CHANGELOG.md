@@ -11,6 +11,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### Fixed
 - **Lock matches the cut.** `package-lock.json` root version and `packages[""].version` follow `package.json` on stamp. The 4.0.22 release left the lock at 4.0.21. Not a new skill.
+- **Bumper writes the lock.** `reconcile --apply` updates `package.json` and the lock version fields together. `reconcile --check` (the docs mill in CI) fails when they differ. Not a new skill.
 - **Cursor gate root.** The suit mill already has synthesis off. Cursor tools follow that mill when it is in the heat set, so a sibling repo's leftover synthesis checkpoint does not deny the host. Not a new skill.
 - **Engine cadence.** Change the engine, ship it local (build and install the tree; a live cut stays live), test, review the diff, monitor dest and Station, then ship the PR. Missing moral fusion is not an isotopic reject; vote confidence is a clamped weighted mean; thinDispatch strategy follows the adjusted level; an empty inference cycle saves state and later getInstance options apply. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Not a new skill.
 - **Operating planes.** Code, OP-PROC, model, suit, mill, host, and test/ship. Test then ship is the hero; ship without that proof is the catastrophe. Project long-term memory refreshes a changed stack definition and keeps observation stats. Heat writes the matched names onto Station. Name `operating-planes` on the stack overlay. Not a new skill.
