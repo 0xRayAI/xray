@@ -70,6 +70,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Station card \(`\.xray\/state\/STATION\.md`: intent, plan, git\)/);
     expect(text).toMatch(/send the new SHA before they verdict/);
     expect(text).toMatch(/When knowledge grows/);
+    expect(text).toMatch(/### Cascade/);
+    expect(text).toMatch(/Chat is not the brain/);
+    expect(text).toMatch(/A reflection is not this capture/);
     expect(text).toMatch(/Wear, then review/);
     expect(text).toMatch(/Metamorphosis \(how an LLM becomes OP-PROC\)/);
     expect(text).toMatch(/opProcNames/);
@@ -94,6 +97,11 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(planes?.definition).toMatch(/refreshes a changed definition/);
     expect(planes?.definition).toMatch(/not fully proved/);
     expect(overlay.signals.some((signal) => signal.name === 'six-planes')).toBe(false);
+    const cascade = overlay.signals.find((signal) => signal.name === 'wake-cascade');
+    expect(cascade?.definition).toMatch(/Chat is not the brain/);
+    expect(cascade?.definition).toMatch(/test then ship is the hero/);
+    expect(cascade?.definition).toMatch(/the lead keeps control/);
+    expect(cascade?.definition).toMatch(/A reflection is not this capture/);
   });
 
   it('rewires worn lead surfaces — no new skill file', () => {
@@ -110,6 +118,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/version manager strips that patch ref/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Chat is not the brain/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/A reflection is not this capture/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
@@ -125,6 +135,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/version manager strips that patch ref/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Chat is not the brain/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/A reflection is not this capture/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/latest commit SHA on the branch under review/);

@@ -794,6 +794,30 @@
         "last_seen": "2026-09-23T00:00:00.000Z",
         "governance_forced_count": 0
       }
+    },
+    {
+      "name": "wake-cascade",
+      "definition": "Chat is not the brain. Compaction drops the seat. Short-term memory is Station. Long-term memory is the project repertoire law list. NOTES is the deep cut: the pickup line cadences onto Station, and the body holds the cascade the card cannot. Capture a cascade by writing a named signal on the stack overlay and hydrating it onto dest. Observation counts are not capture. A reflection is not this capture. This wake, sorted: planes are code, OP-PROC, model, suit, mill, host, and test/ship; test then ship is the hero and ship without that proof is the catastrophe; each wake refreshes a changed stack definition and keeps observation stats, then heat writes matched names onto Station; the lead keeps control and a subagent gets the duty, the latest SHA, the Station card, the laws, and the suit built from the tree under review; when the work becomes mantra or the planes no longer share one present, answer the original message from this seat; once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut; engine cadence is change, ship local, test, review the diff, monitor dest against Station, ship the PR; missing moral fusion is not an isotopic reject, vote confidence is a clamped weighted mean, thinDispatch strategy follows the adjusted level, and an empty inference cycle saves state.",
+      "tags": [
+        "cascade",
+        "memory",
+        "repertoire"
+      ],
+      "priority": "high",
+      "status": "proposed",
+      "first_seen": "2026-09-23",
+      "evaluation_criteria": "After compact the seat can state the cascade from the repertoire name and from NOTES, without the chat.",
+      "validation_experiment": "A seat wakes blank and rebuilds the planes from the thread summary — treat as fail.",
+      "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
+      "implementation_notes": "NOTES body is the same cascade for the second Read. Not a reflection. Not a new skill.",
+      "example_inference_snippet": "Chat is not the brain. The cascade is the repertoire name wake-cascade.",
+      "observation_stats": {
+        "observation_count": 1,
+        "avg_confidence": 0.55,
+        "max_confidence": 0.55,
+        "last_seen": "2026-09-23T00:00:00.000Z",
+        "governance_forced_count": 0
+      }
     }
   ]
 }

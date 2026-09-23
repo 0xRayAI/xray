@@ -154,6 +154,10 @@ Once a version is live, version manager strips that patch ref from guides, Stati
 
 Monitor the lead. New law that had to be spoken twice goes to disk this wake: `SEATS.md` or this file or the existing `orchestrator` / `ship-ready-mill-gate` skill. Codex 69: rewire. Do not add `src/skills/critic/SKILL.md`. Project-local Repertoire gets the name. NOTES get the leftover. Station stays thin.
 
+### Cascade
+
+Chat is not the brain. Compaction drops the seat. A cascade that must survive is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Observation counts are not capture.
+
 ### Ship track (always)
 
 1. **One thing at a time.** Brain (Cursor wear + Repertoire) before swarm. Swarm after the organ routes stack names.
