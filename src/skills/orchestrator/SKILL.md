@@ -76,5 +76,5 @@ The seven rules are the engine. The cadence is the time signature. Disk SSOT: `g
 - **Close:** loop until Station is done. Compact: Station survives the cut. Overlay dest names are OP-PROC — reload `repertoire-working.json` `opProcNames`, not Station.
 - **Board:** critic Strict comments; forge implements; lead stays main thread.
 - **Codex 69:** rewire this skill and existing ops. Do not add a new `SKILL.md` to hold the cadence.
-- **Ship matrix:** `LEAD-CADENCE.md` Decision matrix — A PR+CI · B pack · C `release:docs-check` · D `foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first.
+- **Ship matrix:** `LEAD-CADENCE.md` Decision matrix — A PR+CI · B pack · C `release:docs-check` (`reconcile --check`; no patch stamps on guides) · D `foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Patch number lives in `package.json` + CHANGELOG.
 - **Metamorphosis:** LLM → OP-PROC is in-context worn seats (same critic, same dummy, resume only). Not more bots.

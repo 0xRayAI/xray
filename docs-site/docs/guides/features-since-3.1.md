@@ -7,11 +7,11 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - **Repertoire is preferred.** Dest is a judgment index of named invariants. Wake hydrate is factory + stack only. `patternsFromGit` observes existing laws; it does not mint commit slugs. Grow skips sibling `repo-*`. `pruneKeywordDest` runs after organ match remints subject overlay.
 - Compact `hookEvent` / `event_class` / spawn ids hold across later preToolUse, including a HEAD move. Grok session-boot keeps one trailing `hook`/`source` after `compactHold`.
 - Cloud `preCompact` is supported. Persist `conversation_id` + `generation_id` and resume that id. Wrapper heat is mill-only.
-- Guides: [memory-wake](./memory-wake.md) · [station-vs-repertoire](./station-vs-repertoire.md). This cut is `4.0.21`. Do not republish `4.0.20`.
+- Guides: [memory-wake](./memory-wake.md) · [station-vs-repertoire](./station-vs-repertoire.md).
 
 ## 4.0.20 — Wear + live memory
 
-- Vendored Repertoire 0.2.5 worn on install. Cursor fifth wear. Heat grows the project copy. Next cut is dest-as-laws (Unreleased), not a republish of this tag.
+- Vendored Repertoire 0.2.5 worn on install. Cursor fifth wear. Heat grows the project copy.
 
 ## 4.0.18 — Memory wake
 

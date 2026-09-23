@@ -63,7 +63,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ### Consolidations
 
-- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup. **4.0.9:** does not mill npm global prefix or `_npx`.
+- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup. Mill target is the consumer project, not npm global prefix or `_npx`.
 - **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
 - **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
 - **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
@@ -200,9 +200,9 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Testing
 
-| Suite | Status (v4.0.1) |
-|-------|-----------------|
-| Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 (npm 4.0.0 pack) |
+| Suite | Status |
+|-------|--------|
+| Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 |
 | Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 chat bridges + Cursor hooks + organ on |
 | Pack → tmp proof | `npm run pack:tmp-proof` — tgz install + `foundry mint --skip-live` + hangar shops + inspect (no costume dump). Playwright n/a (CLI). |
 
@@ -215,12 +215,12 @@ npm run release:npm     # gate + prepare + npm publish --access public
 
 ## Release
 
-Product **4.0.0** is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT.
+The **4.0** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
 
 ```bash
 npm run release:gate
 npm run release:npm     # after gate is green; uses npm publish --access public
-npm run release:patch   # version bump pipeline (not for a already-bumped 4.0.0)
+npm run release:patch   # version bump pipeline (not for an already-bumped package.json)
 ```
 
 Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.

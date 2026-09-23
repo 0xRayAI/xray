@@ -2,8 +2,6 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
-**Version**: 4.0.0
-
 ## Temperament on upgrade (v4.0)
 
 Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).
@@ -98,7 +96,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 - Walk from `node_modules` to consumer project root.
 - Legacy `xray` package name tolerance.
 - Hooks and MCPs placed correctly for node_modules and copy-to-root layouts.
-- **4.0.9 mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
+- **Mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
 
 ## Verify gate (term 76)
 

@@ -158,7 +158,7 @@ npx 0xray skill:install <source>
 |---------|------------------|
 | **Memory routing** (v3.3) | **Repertoire preferred** — researcher + thinDispatch + planner use dest laws. Extra MCP `npx @0xray/repertoire mcp` (not an 8th `xray-*`). Dest is named invariants, not `repo-*` slugs. |
 | **AsideContext** (v3.2) | Orchestrator subcontexts during skill dispatch |
-| **7 MCP servers** (v4.0.1) | `xray-skills` is the primary skill invocation surface |
+| **7 MCP servers** (v4.0) | `xray-skills` is the primary skill invocation surface |
 
 Docs: [AGENTS.md](AGENTS.md) · [README.md](README.md) · [Docusaurus guides](docs-site/docs/guides/)
 

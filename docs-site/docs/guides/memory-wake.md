@@ -55,4 +55,4 @@ Hold without thickening the Grok exo: do not inject dest into the system prompt.
 
 ## Not this
 
-This cut is `0xray@4.0.21`. Do not republish `0xray@4.0.20` or `@0xray/repertoire@0.2.5`. Hangars stay hangars. Railway ask-first.
+Do not republish a live npm version. Hangars stay hangars. Railway ask-first. Patch number lives in `package.json` + CHANGELOG.

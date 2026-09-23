@@ -18,7 +18,7 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 
 ## Steps (every material wake)
 1. **Read durable state** (whichever exists for this seat):
-   - Project: `.xray/state/STATION.md` first. Station is always the pickup memory. If the card says Repertoire is not installed, Station + the unfinished NOTES path **are** the mind — heat Station this wake; do not wait for dest.
+   - Project: `.xray/state/STATION.md` first. Station is the compact ticket. **Repertoire is preferred** (dest = named laws). If the card says Repertoire is off, Station + the unfinished NOTES path **are** the mind — heat Station this wake; do not wait for dest. Do not pin a patch number on Station.
    - Then: unfinished path on the card (NOTES / WAVEBOARD). Then `.xray/state/repertoire-working.json` if dest is on (`pickup` + `opProcNames`). Heat hydrates dest and attaches pickup. Do not look for OP-PROC on Station.
    - Fleet: `ops/WAVEBOARD.md`, `ops/ATTENTION_STATE.md`
    - Agent memory (profile + recent log) — do not re-ask what is already stored

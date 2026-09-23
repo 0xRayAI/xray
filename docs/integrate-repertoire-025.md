@@ -43,7 +43,7 @@ When that is set: do not copy seed files, do not require the package, Station is
 ## Steps
 
 1. Put this plan on disk. Read it back. Thin Station points here.
-2. Branch from current `main` (`0xray@4.0.18`). Do not pile this onto the cleanup branch.
+2. Branch from current `main`. Do not pile this onto the cleanup branch.
 3. Download `@0xray/repertoire@0.2.5` from npm (`npm pack`). Replace `vendor/@0xray/repertoire/` with that exact tree. Confirm `package.json` version is 0.2.5 and `data/stack-overlay.json` + `data/subject-overlay.json` exist.
 4. Change wear so an older leftover in `node_modules` is replaced by vendor. Keep a newer user-installed copy (someone who installed Repertoire themselves). Same real path as vendor is already worn — leave it.
 5. Change the boot file-finder order to: worn `node_modules`, then `vendor`, then a sibling checkout last. Do not prefer a sibling file over the copy `0xray` ships.

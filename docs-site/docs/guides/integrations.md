@@ -35,7 +35,7 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 7. Fasten Cursor `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`; rewrite leftover env-assignment commands
 8. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
 
-**4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
+**Mill target:** the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
 
 ## Seven MCP servers (all platforms)
 

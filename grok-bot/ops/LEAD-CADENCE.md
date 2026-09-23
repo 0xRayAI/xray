@@ -50,7 +50,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Human cut** | Downbeat | Blaze 1:1 jumps the line (`OPS-SPEC.md` wake hygiene). |
 | **Live tick** | Off-beat work | `/loop` via `cursor-subscriptions-subscribe_timer`. First run is **now**. Interval is the next real close, not sleep. **Clean the prompt every cycle** (unsubscribe then resubscribe — name-dedupe does not rewrite). Name stays `loop-<purpose>`. |
 | **Workstream** | Ostinato | Keep every open stream moving. No idle wait for a pacer. Park only on a human gate or a finished close. |
-| **Compact cut** | Rest that must survive | Station is always the pickup memory — heat it this wake. If Repertoire is off, Station + NOTES **are** the mind. Dest names are OP-PROC when worn (`repertoire-working.json` `opProcNames`). Do not paste OP-PROC onto Station. NOTES hold the deep cut. |
+| **Compact cut** | Rest that must survive | Station is the compact ticket — heat it this wake. **Repertoire is preferred** (dest = named laws). If Repertoire is off (explicit), Station + NOTES **are** the mind. Dest names are OP-PROC when worn (`repertoire-working.json` `opProcNames`). Do not paste OP-PROC onto Station. NOTES hold the deep cut. Do not pin a patch number on Station. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
 | **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm/Railway are lead-owned after mill-gate **D**. Green CI is not publish. |
@@ -117,11 +117,11 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 |------|--------|------------------|
 | **A — PR + CI** | Branch + PR · critic PASS · CI green | GitHub checks on the PR head |
 | **B — Pack** | Packed tarball installs and the required dist paths exist | `npx @0xray/foundry gate` → `assert-packed-dist-cli.mjs` · consumer smoke |
-| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides | `npm run release:docs-check` (`validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG only |
+| **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. Guides, Station, and this file do not pin a cut. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG only |
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
 | **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
 
-Fail-closed: red CI, docs-check fail, pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
+Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
 
 Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`). That is a host paste, not the OS decision. Spend / credentials / deletes / taste / mint-rotate stay Ask-first.
 
@@ -172,7 +172,7 @@ Merge after critic PASS + CI (gate A). Publish only after mill-gate **D** + `fou
 
 ### Heads from tails
 
-Station = cascade / multi-phase card. Repertoire = long-running names. Hangar = end product (usually no AI). Jelly = dormant. Suit = mill + inspect + Codex + Station + optional organ. **Groover ≠ Repertoire.** Groover was a broken experiment of how the organ was supposed to work — identity hangar / field producer, not the KB. Do not grow dest from Groover field (`repertoire-brain` 145, sibling `groover-inference-logs`) as if that is Repertoire becoming real. Sort before acting. Copious notes go to `.xray/state/NOTES.md`, not onto Station.
+Station = cascade / multi-phase card (no patch stamp). Repertoire = preferred long-running KB; dest is named laws, not keywords. Hangar = end product (usually no AI). Jelly = dormant. Suit = mill + inspect + Codex + Station + Repertoire. **Groover ≠ Repertoire.** Groover was a broken experiment of how the organ was supposed to work — identity hangar / field producer, not the KB. Do not grow dest from Groover field (`repertoire-brain` 145, sibling `groover-inference-logs`) as if that is Repertoire becoming real. Sort before acting. Copious notes go to `.xray/state/NOTES.md`, not onto Station.
 
 ## Status beat (material only)
 

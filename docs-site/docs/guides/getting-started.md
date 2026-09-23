@@ -22,7 +22,7 @@ Postinstall **automatically** (via `install-bridges.cjs`):
 - Installs **4 chat bridges**: OpenCode, Grok, Hermes, OpenClaw (PPE + wiring), plus **Cursor** `.cursor/hooks.json`
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume
 - **`autonomy-command`** is the default operating model (orchestrator skill + `lead_dev_mode`)
-- **4.0.9:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
+- **Mill target:** mills the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`
 
 ```bash
 npx 0xray status           # verify install

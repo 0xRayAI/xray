@@ -6,7 +6,7 @@ sidebar_label: 4.0 left
 
 What is **done on the plant** vs what is **still open**. Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Mill: [4.0 foundry](./v4-foundry.md).
 
-Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. `0xray@4.0.3` empty mill plant. Do not run `release:major`. Costume dump is `foundry.json` `"costume": true`.
+Mill plant fastens **inspect** (inspect AI work) plus `mill`. Empty mill plant is gone. Do not run `release:major`. Costume dump is `foundry.json` `"costume": true`.
 
 ## Done (worn and shipped as 4.0.0)
 
@@ -21,7 +21,7 @@ Product **4.0.4** mill plant fastens **inspect** (inspect AI work) plus `mill`. 
 | Station card | `.xray/state/STATION.md` from `session-boot.json`. Intent, git, live plan, host, Repertoire working snapshot. Host change stamps `hotSwap`. **This is survive-the-cut** — not Repertoire 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md) |
 | Repertoire working state | `.xray/state/repertoire-working.json` at compact / host-swap / session heat. Card `Working:` line. Routing uses the registry; Bedrock names stay off the card |
 | Grok Read contract | AGENTS.md Read. OpenCode injects. Grok does not — do not thicken the exo |
-| Framework dogfood wear | `postinstall.cjs` always calls `installAllBridges`; non-consumer path patches `.grok/hooks/0xray.json` and enable-when-resolves |
+| Framework dogfood wear | `postinstall.cjs` always calls `installAllBridges`; non-consumer path patches `.grok/hooks/0xray.json`. Repertoire preferred (explicit opt-out only) |
 | OpenClaw session heat | first PreToolUse with a **concrete** session id writes the card (install/init cards with no session id do not skip that heat) |
 | Grok hook quoting | `grokHookShellCommand` and the shipped template quote `XRAY_AI_PATH` and the script path (Grok fail-opens if the shell never starts) |
 | grok_postprocessor_light | `loadFeatures` forwards the flag; PostToolUse actually runs the light pipeline |

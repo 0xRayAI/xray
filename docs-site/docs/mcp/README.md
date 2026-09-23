@@ -72,7 +72,7 @@ Orchestrates full proposal pipeline through code-review + security-audit + resea
 
 Hosted endpoint (optional): `https://governance-production-69c3.up.railway.app/mcp`
 
-## Postinstall (v4.0.1)
+## Postinstall
 
 `npm install 0xray` runs `install-bridges.cjs`, which:
 

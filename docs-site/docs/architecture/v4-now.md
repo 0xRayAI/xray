@@ -14,7 +14,7 @@ Exo skeleton: constitution always on, temperament scales ceremony, four host flo
 
 ## Line (feat/v4-temperament)
 
-npm **4.0.20** (`https://www.npmjs.com/package/0xray`). Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`) is history. Next 4.x fix is `npm run release:npm` — never `release:major` (that becomes 5.0.0).
+Live npm: [`0xray`](https://www.npmjs.com/package/0xray). Tag `v4.0.0` on `0xRayAI/xray` `main` (`f80b42c`) is history. Next 4.x fix is `npm run release:npm` — never `release:major` (that becomes 5.0.0). Do not pin a patch number here.
 
 **Bone that is already worn (this machine + branch):**
 
@@ -33,10 +33,10 @@ npm **4.0.20** (`https://www.npmjs.com/package/0xray`). Tag `v4.0.0` on `0xRayAI
 
 ## Next bites
 
-Open list: [4.0 left](./v4-left.md). npm is **4.0.20**. Remaining: land the release-gate follow-up (smoke + `scripts.publish` lifecycle + reconcile), optional `@0xray/repertoire@0.2.0` npm.
+Open list: [4.0 left](./v4-left.md). Remaining: land the release-gate follow-up (smoke + `scripts.publish` lifecycle + reconcile). Repertoire is preferred (vendored on).
 
 Do not start a fifth MCP. Do not re-litigate Zen pickle. Do not thicken the Grok exo.
 
 ## One line for the next model
 
-**Suit that survives the context window. Four floors attested. npm 4.0.20. Gate follow-up: smoke matches organ-on; do not re-run the gate after the registry PUT.**
+**Suit that survives the context window. Four floors attested. Gate follow-up: smoke matches organ-on; do not re-run the gate after the registry PUT.**
