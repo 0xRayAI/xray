@@ -6,7 +6,7 @@ This is the working plan. If chat is compacted, read Station, then this file, th
 
 Copy the published npm package `@0xray/repertoire@0.2.5` into `0xray`’s `vendor/@0xray/repertoire/` folder. Make that the copy `0xray` loads. Then publish a new `0xray` so installs get that copy.
 
-Repertoire is optional. `0xray` must boot if Repertoire is missing or turned off. Station remains the memory when Repertoire is off. This does not claim Repertoire is finished long-term memory. It only stops `0xray` from running an older leftover copy.
+**Repertoire is preferred.** `0xray` still boots if Repertoire is missing or explicitly turned off — Station then holds the compact ticket. That is fallback, not the preferred brain. Dest is named laws. This cut stops `0xray` from running an older leftover copy.
 
 ## What this is not
 

@@ -47,7 +47,7 @@ See [Suit temperament](./v3-temperament.md). Missing key = **guided** (existing 
 | `provider` | Behavior |
 |------------|----------|
 | `"null"` | NullMemoryRoutingProvider — no enrichment |
-| `"repertoire"` | Load Repertoire via `module_path` |
+| `"repertoire"` | **Preferred.** Load Repertoire via `module_path` (ships on) |
 | `"custom"` | Load any module exporting `createMemoryRoutingProvider()` |
 
 When `enabled: true` and provider is `repertoire` or `custom`, `module_path` is **required**.

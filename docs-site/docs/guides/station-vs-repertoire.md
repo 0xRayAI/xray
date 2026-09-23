@@ -4,7 +4,7 @@ sidebar_label: Station vs Repertoire 0.1
 
 # Station vs Repertoire 0.1
 
-**Station is survive-the-cut. Repertoire is judgment + growing named intelligence when worn. They are not the same job.** Do not pin `@0xray/repertoire@0.1.8` to remember a ticket, a cloud id, or a wiped chat.
+**Station is survive-the-cut. Repertoire is preferred for judgment + growing named laws.** They are not the same job. Wear Repertoire. Do not pin `@0xray/repertoire@0.1.8` to remember a ticket, a cloud id, or a wiped chat.
 
 If Repertoire is **not** installed, `STATION.md` **is** the memory. Heat it this wake. NOTES hold the deep cut. Compact survival does not wait for dest.
 

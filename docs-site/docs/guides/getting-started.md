@@ -58,7 +58,7 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 - **7 MCP servers** on the consumer surface (`npx -y 0xray mcp`)
 - **Mill plant** `mill` + `inspect` (default). 45-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
 - **4 platform bridges** installed on postinstall
-- **Repertoire organ on** (vendored 0.2)
+- **Repertoire is preferred** (vendored 0.2.5 ships on; dest = named laws)
 
 Every code change can be reviewed by 3 specialized AI servers before it executes. Bad proposals are blocked automatically.
 
@@ -87,11 +87,11 @@ See [MCP Servers](../mcp/README.md) for details.
 | MCP Servers | 7 consumer servers via `npx -y 0xray mcp` |
 | Codex | 69-term error prevention rules |
 | Governance | 3-layer deliberation pipeline (Dynamo SSOT) |
-| Memory Routing | Repertoire organ **on** in 4.0 (vendored 0.2). Opt out: `"enabled": false, "provider": "repertoire"` |
+| Memory Routing | **Repertoire preferred** — vendored 0.2.5 ships **on**. Dest is named laws, not `repo-*`. Station is the compact ticket. Explicit opt-out only: `"enabled": false, "provider": "repertoire"` |
 
 ## Memory Routing
 
-Shipped **on**. See [Memory Routing](./memory-routing.md) and [Repertoire](./repertoire.md).
+**Wear Repertoire.** Shipped **on**. See [Memory Routing](./memory-routing.md) and [Repertoire](./repertoire.md).
 
 ## Next Steps
 

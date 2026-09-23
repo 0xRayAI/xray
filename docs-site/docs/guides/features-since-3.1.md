@@ -4,7 +4,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 
 ## Unreleased — dest is laws
 
-- Dest is a judgment index of named invariants. Wake hydrate is factory + stack only. `patternsFromGit` observes existing laws; it does not mint commit slugs. Grow skips sibling `repo-*`. `pruneKeywordDest` runs after organ match remints subject overlay.
+- **Repertoire is preferred.** Dest is a judgment index of named invariants. Wake hydrate is factory + stack only. `patternsFromGit` observes existing laws; it does not mint commit slugs. Grow skips sibling `repo-*`. `pruneKeywordDest` runs after organ match remints subject overlay.
 - Compact `hookEvent` / `event_class` / spawn ids hold across later preToolUse, including a HEAD move. Grok session-boot keeps one trailing `hook`/`source` after `compactHold`.
 - Cloud `preCompact` is supported. Persist `conversation_id` + `generation_id` and resume that id. Wrapper heat is mill-only.
 - Guides: [memory-wake](./memory-wake.md) · [station-vs-repertoire](./station-vs-repertoire.md). Do not republish `4.0.20` until a new D.

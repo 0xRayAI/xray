@@ -4,7 +4,7 @@ Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` i
 
 0xRay integrates with four chat platforms plus Cursor project hooks. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
 
-**Repertoire consumer** (full 4-chat-bridge wear matrix):
+**Repertoire is preferred** on every floor (vendored 0.2.5, dest = laws). Full 4-chat-bridge wear matrix:
 
 ```bash
 npm run install:bridges       # all four chat bridges

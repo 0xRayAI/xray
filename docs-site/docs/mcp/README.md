@@ -42,6 +42,8 @@ Project `.mcp.json` (written on postinstall):
 }
 ```
 
+**Repertoire is preferred** and is **not** an 8th `xray-*` server. Wear `npx @0xray/repertoire mcp` beside these seven. Dest is named laws.
+
 ## Server reference
 
 | Server | Command | Role |

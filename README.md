@@ -14,13 +14,13 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
-- **Muscle** — Repertoire: auto-enables when the module resolves; session-start writes a one-line resume so the next station is not born amnesiac
+- **Muscle** — **Repertoire is preferred.** Vendored 0.2.5 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
 
 ```bash
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
+Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.5** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 
@@ -149,9 +149,9 @@ Core governance agents:
 
 See [AGENTS.md](AGENTS.md) and [SKILLS.md](SKILLS.md) for the full agent and skill catalog.
 
-## Memory Routing + Repertoire (v3.3+)
+## Memory Routing + Repertoire (preferred, v3.3+)
 
-Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`):
+**Wear Repertoire.** It is the long-term judgment organ. Station holds the ticket across compact. Dest is named invariants, not keywords. Pluggable `memory_routing` in `features.json` (validated by `features.schema.json`) ships **on**:
 
 ```json
 "memory_routing": {
@@ -174,9 +174,9 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 | **AsideContext** (v3.2) | `buildInheritedContext` → `inheritedContext.memoryRouting` on orchestrator `spawnAside` |
 | **Feedback** | Per-task `ingestFeedback()` closes the learning loop |
 
-**External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.
+**External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs. Preferred. Not optional flavor.
 
-Opt out: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
+Explicit opt-out only: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
 
 Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](docs-site/docs/guides/repertoire.md) · [features.json](docs-site/docs/guides/features-json.md) · [all features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 
