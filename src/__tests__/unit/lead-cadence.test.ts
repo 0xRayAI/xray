@@ -110,8 +110,12 @@ describe('lead cadence encode — peer can find the beat', () => {
     const byName = new Map(overlay.signals.map((signal) => [signal.name, signal.definition]));
     expect(byName.get('heat-is-not-conviction')).toMatch(/do not raise conviction/);
     expect(byName.get('heat-is-not-conviction')).toMatch(/does not append a confidence sample/);
+    expect(byName.get('heat-is-not-conviction')).toMatch(/only when the diary contains that signal's name/);
+    expect(byName.get('heat-is-not-conviction')).toMatch(/a weak session score is not lifted to 0\.55/);
     expect(byName.get('heat-is-not-conviction')).toMatch(/refreshes a changed stack definition/);
     expect(text).toMatch(/does not append a confidence sample/);
+    expect(text).toMatch(/only when the diary contains that signal's name/);
+    expect(text).toMatch(/a weak session score is not lifted to 0\.55/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/keyword map over session problem strings/);
     expect(byName.get('governance-vote-invariant')).toMatch(/clamped to 0\.\.1/);
     expect(byName.get('thin-dispatch-invariant')).toMatch(/at least 26 forces architect/);
@@ -136,6 +140,10 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Capture priority/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/heat-is-not-conviction/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/does not append a confidence sample/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/only when the diary contains that signal's name/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/a weak session score is not lifted to 0\.55/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/only when the diary contains that signal's name/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/a weak session score is not lifted to 0\.55/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
