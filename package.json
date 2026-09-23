@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.0.20",
+  "version": "4.0.21",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -124,7 +124,7 @@
     "consumer:smoke": "node scripts/node/consumer-install-smoke.mjs",
     "pack:tmp-proof": "node scripts/node/pack-tmp-suit-proof.mjs",
     "release:gate": "node scripts/foundry/release-gate.mjs",
-    "release:docs-check": "node scripts/foundry/validate-release-docs.mjs",
+    "release:docs-check": "node scripts/foundry/reconcile-version.mjs --check && node scripts/foundry/validate-release-docs.mjs",
     "pre-publish-guard": "node scripts/node/pre-publish-guard.js",
     "safe-publish": "npm run prepare-consumer && npm run build",
     "release:npm": "node scripts/foundry/release.mjs --publish-only",

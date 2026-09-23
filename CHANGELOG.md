@@ -6,6 +6,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [4.0.21] - 2026-09-23
+
 ### ✨ Features
 - **Cleanup is memory** — `applyStationHeat` grows the project copy when Repertoire is on: kernel sessions and NOTES/CLEANSE diary heat, then prunes keyword names. Dest is laws (named invariants), not hangar `repo-*` or git slugs. Groover field stays off. Opt-out still skips seed and grow. Station stays the pickup card. Not a new MCP/skill.
 - **Live context memory** — capture then grow. Session `patterns` observe existing dest/stack laws mentioned in git — they do not mint commit slugs. Cursor skip / afterFileEdit, Grok heat, Hermes pre-process, and OpenClaw pre-tool share one dest lock so parallel seats write one project copy. Not a new MCP/skill.
