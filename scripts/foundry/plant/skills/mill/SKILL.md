@@ -11,7 +11,7 @@ The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI wo
 
 **Mill-fill:** their keys/files win. Mill plant names they did not overlay stay. JSON always merges.
 
-**Factory:** Repertoire enable-when-resolves. Seven generated MCP. Constitution (PPE) stays worn. Not a fifth MCP. Not 5.0.
+**Factory:** **Repertoire is preferred** (vendored 0.2.5 ships on; dest = named laws). Seven generated MCP. Constitution (PPE) stays worn. Not a fifth MCP. Not 5.0.
 
 **Costume:** `foundry.json` `"costume": true` copies the 45/42 mill costume.
 

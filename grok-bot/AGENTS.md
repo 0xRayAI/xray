@@ -35,7 +35,7 @@ Humans: same path; start at `README.md`.
 
 ## Adjust from plant (monitor)
 Current verified pins (change if live plant moves):
-- Suit: `0xray@4.0.15` · `@0xray/foundry@0.1.12`
+- Suit: `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)
 - Registry MCP + website URLs — see `llms.txt`
 - Hangar: `npx groover-hangar` · catalog is Clearing `GET /v1/catalog` (Groover DID + pin, plus solar + live shop). Groover MCP `list_hangars` reads it. Settle USDC on Base.
 - OWS: keys in `~/.ows` · see Open Wallet docs
@@ -54,7 +54,7 @@ The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) a
 
 Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
 
-Full Repertoire MCP (optional memory router on the CLI) is an aid, not required theater in every Grok Bot chat.
+Repertoire is preferred on a worn 0xray seat. Do not bolt full Repertoire MCP onto every Grok Bot chat as theater — this chat does not fire 0xRay hooks.
 
 ## Op proc index
 

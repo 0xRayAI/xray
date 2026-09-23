@@ -23,13 +23,12 @@ import {
 } from '../../hooks/delegation-gate-runtime.mjs';
 import { appendHookActivity } from '../../grok/hooks/grok-hook-activity.js';
 import {
-  buildRepertoireResume,
+  heatLiveMemory,
   maybeCaptureSessionOnHeadMove,
-  readGitBrief,
-  stationDurableHoldsNpm,
+  stationBootNeedsRefresh,
 } from '../../hooks/station-hook-runtime.mjs';
 
-export { maybeCaptureSessionOnHeadMove };
+export { heatLiveMemory, maybeCaptureSessionOnHeadMove };
 
 export const CURSOR_HOST = 'cursor';
 export const EVENT_CLASS_HOST = 'cursor-host-precompact';
@@ -77,6 +76,112 @@ export function cursorWorkspaceRoot(event = {}) {
   );
 }
 
+function addHeatRoot(out, seen, value) {
+  if (!value) return;
+  const resolved = path.resolve(String(value));
+  if (seen.has(resolved)) return;
+  seen.add(resolved);
+  out.push(resolved);
+}
+
+export function isCursorWorkspaceWrapper(root) {
+  if (!root) return false;
+  const resolved = path.resolve(String(root));
+  return (
+    fs.existsSync(path.join(resolved, 'repos', 'xray')) ||
+    fs.existsSync(path.join(resolved, 'repos', 'repertoire'))
+  );
+}
+
+export function heatRootHasCard(root) {
+  if (!root) return false;
+  const resolved = path.resolve(String(root));
+  return (
+    fs.existsSync(path.join(resolved, '.xray', 'state', 'STATION.md')) ||
+    fs.existsSync(path.join(resolved, '.xray', 'features.json'))
+  );
+}
+
+export function isHeatRootWritable(root) {
+  if (!root) return false;
+  const resolved = path.resolve(String(root));
+  try {
+    const probe = path.join(resolved, '.xray', 'state');
+    fs.mkdirSync(probe, { recursive: true });
+    fs.accessSync(probe, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function shouldHeatRoot(root) {
+  if (!root) return false;
+  const resolved = path.resolve(String(root));
+  if (isCursorWorkspaceWrapper(resolved)) return false;
+  if (heatRootHasCard(resolved)) return isHeatRootWritable(resolved);
+  return isHeatRootWritable(resolved);
+}
+
+export function millRootFromToolPath(filePath) {
+  if (!filePath) return null;
+  const resolved = path.resolve(String(filePath));
+  const marker = `${path.sep}repos${path.sep}`;
+  const idx = resolved.indexOf(marker);
+  if (idx === -1) return null;
+  const after = resolved.slice(idx + marker.length);
+  const repo = after.split(path.sep)[0];
+  if (!repo) return null;
+  return resolved.slice(0, idx + marker.length + repo.length);
+}
+
+function addMillCardsUnderWrapper(out, seen, wrapper) {
+  if (!wrapper || !isCursorWorkspaceWrapper(wrapper)) return;
+  const mill = path.join(path.resolve(String(wrapper)), 'repos', 'xray');
+  if (heatRootHasCard(mill) && isHeatRootWritable(mill)) addHeatRoot(out, seen, mill);
+}
+
+/** Every live context that already has a Station card — cwd plus mill when they differ. */
+export function cursorHeatRoots(event = {}) {
+  const seen = new Set();
+  const out = [];
+  const candidates = [event.cwd, event.workspaceRoot];
+  const listed = event.workspace_roots || event.workspaceRoots;
+  if (Array.isArray(listed)) {
+    for (const row of listed) {
+      if (typeof row === 'string') candidates.push(row);
+      else if (row && typeof row === 'object' && row.path) candidates.push(row.path);
+    }
+  }
+  candidates.push(process.env.CURSOR_PROJECT_DIR);
+  for (const value of candidates) {
+    if (shouldHeatRoot(value)) addHeatRoot(out, seen, value);
+    addMillCardsUnderWrapper(out, seen, value);
+  }
+  const mill = process.env.XRAY_AI_PATH || process.env.XRAY_ROOT;
+  if (mill) {
+    const resolved = path.resolve(String(mill));
+    if (shouldHeatRoot(resolved)) addHeatRoot(out, seen, resolved);
+  }
+  const ctx = cursorToolContext(event);
+  for (const filePath of ctx.paths) {
+    const fromPath = millRootFromToolPath(filePath);
+    if (
+      fromPath &&
+      fs.existsSync(path.join(fromPath, '.xray', 'state', 'STATION.md')) &&
+      isHeatRootWritable(fromPath)
+    ) {
+      addHeatRoot(out, seen, fromPath);
+    }
+  }
+  if (out.length === 0) {
+    const fallback = cursorWorkspaceRoot(event);
+    if (shouldHeatRoot(fallback)) addHeatRoot(out, seen, fallback);
+    addMillCardsUnderWrapper(out, seen, fallback);
+  }
+  return out;
+}
+
 export function cursorSessionId(event = {}) {
   return (
     event.conversation_id ||
@@ -86,6 +191,10 @@ export function cursorSessionId(event = {}) {
     process.env.CURSOR_SESSION_ID ||
     null
   );
+}
+
+export function cursorGenerationId(event = {}) {
+  return event.generation_id || event.generationId || null;
 }
 
 export function cursorToolContext(event = {}) {
@@ -141,27 +250,21 @@ export function classifyPreCompactEvent(event = {}, argv = process.argv) {
 }
 
 export function cursorBootNeedsRefresh(existing, root) {
-  if (!existing || typeof existing !== 'object') return true;
-  if (existing.host !== CURSOR_HOST) return true;
-  if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
-  if (!existing.stationLine) return true;
-  const liveGit = readGitBrief(root);
-  const bootHead = existing.git && existing.git.head ? String(existing.git.head) : '';
-  if (liveGit && liveGit.head && bootHead !== liveGit.head) return true;
-  const liveResume = buildRepertoireResume(root);
-  if (liveResume && existing.repertoireResume && liveResume !== existing.repertoireResume) return true;
-  if (stationDurableHoldsNpm(root)) return true;
-  return false;
+  return stationBootNeedsRefresh(existing, root, CURSOR_HOST);
 }
 
 export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-use-boot', extra = {}) {
   const bootPath = sessionBootPath(root);
+  if (!shouldHeatRoot(root)) return bootPath;
   if (fs.existsSync(bootPath)) {
     try {
       const existing = JSON.parse(fs.readFileSync(bootPath, 'utf8'));
       if (!cursorBootNeedsRefresh(existing, root)) {
-        maybeCaptureSessionOnHeadMove(root);
+        try {
+          heatLiveMemory(root);
+        } catch {
+          /* dest EACCES must not deny the host tool */
+        }
         return bootPath;
       }
     } catch {
@@ -172,9 +275,7 @@ export function ensureCursorSessionBoot(root, source = '0xray/cursor-pre-tool-us
     host: CURSOR_HOST,
     ...extra,
   });
-  const written = writeSessionBoot(root, payload) || bootPath;
-  maybeCaptureSessionOnHeadMove(root);
-  return written;
+  return writeSessionBoot(root, payload) || bootPath;
 }
 
 export function writeCursorPrecompactReceipt(root, fields) {

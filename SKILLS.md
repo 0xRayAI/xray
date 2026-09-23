@@ -4,7 +4,7 @@
 
 **45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not this catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Agent map: [llms.txt](llms.txt).
 
-xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
+xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. **Repertoire is preferred** for long-term judgment (vendored 0.2.5, dest = named laws). Station is the compact ticket, not a skill and not a keyword store. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
 
 ---
 
@@ -156,9 +156,9 @@ npx 0xray skill:install <source>
 
 | Feature | Skill connection |
 |---------|------------------|
-| **Memory routing** (v3.3) | Researcher uses Repertoire signals; optional `@0xray/repertoire` MCP |
+| **Memory routing** (v3.3) | **Repertoire preferred** — researcher + thinDispatch + planner use dest laws. Extra MCP `npx @0xray/repertoire mcp` (not an 8th `xray-*`). Dest is named invariants, not `repo-*` slugs. |
 | **AsideContext** (v3.2) | Orchestrator subcontexts during skill dispatch |
-| **7 MCP servers** (v4.0.1) | `xray-skills` is the primary skill invocation surface |
+| **7 MCP servers** (v4.0) | `xray-skills` is the primary skill invocation surface |
 
 Docs: [AGENTS.md](AGENTS.md) · [README.md](README.md) · [Docusaurus guides](docs-site/docs/guides/)
 

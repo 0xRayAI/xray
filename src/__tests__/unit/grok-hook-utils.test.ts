@@ -59,6 +59,50 @@ describe('grok-hook-utils', () => {
     expect(payload.repertoireResume).toMatch(/^Repertoire:/);
   });
 
+  it('buildSessionBootPayload does not keep extra.timestamp from a prior boot', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    const payload = buildSessionBootPayload(tmp, '0xray/cursor-pre-tool-use-boot', {
+      host: 'cursor',
+      hookEvent: 'lead-heat',
+      timestamp: '2026-09-21T20:04:50.397Z',
+    });
+    expect(payload.hookEvent).toBe('lead-heat');
+    expect(payload.timestamp).not.toBe('2026-09-21T20:04:50.397Z');
+    expect(Date.parse(String(payload.timestamp))).toBeGreaterThan(Date.parse('2026-09-21T20:04:50.397Z'));
+  });
+
+  it('buildSessionBootPayload keeps pre_compact after later lead-heat', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'session-boot.json'),
+      JSON.stringify({
+        host: 'cursor',
+        hookEvent: 'pre_compact',
+        event_class: 'cursor-host-precompact',
+        conversation_id: 'bc-compact-hold',
+        lead_dev_mode: true,
+        suit_profile: 'frontier',
+        workspaceRoot: tmp,
+        repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
+        stationLine: 'host cursor',
+      }),
+    );
+    const payload = buildSessionBootPayload(tmp, '0xray/cursor-pre-tool-use-boot', {
+      host: 'cursor',
+      hookEvent: 'lead-heat',
+    });
+    expect(payload.hookEvent).toBe('pre_compact');
+    expect(payload.event_class).toBe('cursor-host-precompact');
+    expect(payload.conversation_id).toBe('bc-compact-hold');
+  });
+
   it('sessionBootNeedsRefresh when workspaceRoot or host is stale', () => {
     expect(
       sessionBootNeedsRefresh(

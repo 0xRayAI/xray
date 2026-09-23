@@ -20,6 +20,10 @@ export const VALIDATE_PACK_PATHS: readonly string[] = [
   "dist/integrations/cursor/hooks/after-file-edit.js",
   "dist/integrations/cursor/hooks/cursor-hook-utils.js",
   "dist/integrations/cursor/hooks/cursor-usage-receipt.js",
+  "dist/integrations/cursor/hooks/xray-cloud-hook.sh",
+  "dist/integrations/cursor/hooks/pre-tool-use.sh",
+  "dist/integrations/cursor/hooks/pre-compact.sh",
+  "dist/integrations/cursor/hooks/after-file-edit.sh",
 ];
 
 export const CONSUMER_WEAR_PATHS = [
@@ -28,6 +32,8 @@ export const CONSUMER_WEAR_PATHS = [
   ".xray/codex.json",
   ".xray/features.json",
   ".cursor/hooks.json",
+  ".cursor/hooks/pre-tool-use.sh",
+  ".cursor/hooks/xray-cloud-hook.sh",
 ] as const;
 
 export const MILL_PLANT_SKILLS = ["mill", "inspect"] as const;
@@ -126,7 +132,7 @@ export function collectValidateReport(cwd: string): ValidateReport {
       ok: missingWear.length === 0,
       detail:
         missingWear.length === 0
-          ? "AGENTS.md · .mcp.json · .xray · .cursor/hooks.json"
+          ? "AGENTS.md · .mcp.json · .xray · .cursor/hooks.json · .cursor/hooks/*.sh"
           : `missing ${missingWear.join(", ")}`,
     });
 

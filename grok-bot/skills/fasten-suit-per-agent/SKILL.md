@@ -13,7 +13,7 @@ description: >-
 1. Create or enter that agent’s project (`package.json` required). Example: `forge-suit/`, `critic-suit/`.
 2. Install plant:
    ```bash
-   npm i 0xray@4.0.15 @0xray/foundry@0.1.12
+   npm i 0xray
    ```
 3. Fasten thin mill only:
    ```bash

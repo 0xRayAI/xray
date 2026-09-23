@@ -22,6 +22,8 @@ const stationHeat = requireCjs('../integrations/hooks/station-hook-runtime.cjs')
     extra?: Record<string, unknown>,
     existing?: Record<string, unknown>,
   ) => Record<string, unknown>;
+  heatLiveMemory: (root: string) => { captured: string | null; grow: Record<string, unknown> | null };
+  stationBootNeedsRefresh: (existing: Record<string, unknown>, root: string, host: string) => boolean;
   writeStationMarkdown: (root: string, fields: Record<string, unknown>) => string | null;
 };
 
@@ -139,11 +141,19 @@ function concreteSessionId(value: unknown): string | null {
  * OpenClaw has no SessionStart — PreToolUse is the session boundary.
  * Install/init cards without a session id are not a live session.
  */
+function isCursorWorkspaceWrapper(projectRoot: string): boolean {
+  return (
+    fs.existsSync(path.join(projectRoot, 'repos', 'xray')) ||
+    fs.existsSync(path.join(projectRoot, 'repos', 'repertoire'))
+  );
+}
+
 export function maybeHeatHostStation(
   projectRoot: string,
   host: SuitHost,
   extra: Record<string, unknown> = {},
 ): string | null {
+  if (isCursorWorkspaceWrapper(projectRoot)) return null;
   const bootPath = path.join(projectRoot, '.xray', 'state', 'session-boot.json');
   const cardPath = path.join(projectRoot, '.xray', 'state', 'STATION.md');
   let existing: Record<string, unknown> = {};
@@ -159,7 +169,13 @@ export function maybeHeatHostStation(
   const sameHost = existing.host === host;
   const sameSession =
     existingSessionId !== null && sessionId !== null && existingSessionId === sessionId;
-  if (sameHost && sameSession && fs.existsSync(cardPath)) {
+  if (
+    sameHost &&
+    sameSession &&
+    fs.existsSync(cardPath) &&
+    !stationHeat.stationBootNeedsRefresh(existing, projectRoot, host)
+  ) {
+    stationHeat.heatLiveMemory(projectRoot);
     return bootPath;
   }
   return writeSuitSessionBoot(projectRoot, host, extra);
@@ -173,8 +189,13 @@ export function writeSuitSessionBoot(
 ): string {
   const profile = resolveSuitProfile(loadSuitTemperamentRaw(projectRoot), host);
   const stateDir = path.join(projectRoot, '.xray', 'state');
-  fs.mkdirSync(stateDir, { recursive: true });
   const bootPath = path.join(stateDir, 'session-boot.json');
+  try {
+    fs.mkdirSync(stateDir, { recursive: true });
+  } catch {
+    /* Cloud workspace wrapper is often unwritable — fail open */
+    return bootPath;
+  }
   let existing: Record<string, unknown> = {};
   if (fs.existsSync(bootPath)) {
     try {

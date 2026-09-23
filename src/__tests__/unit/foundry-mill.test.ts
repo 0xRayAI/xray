@@ -39,6 +39,8 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.js');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-hook-utils.js');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-usage-receipt.js');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/xray-cloud-hook.sh');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.sh');
     expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
     expect(() =>
       assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),
@@ -148,6 +150,14 @@ describe('foundry mill — docs verify, do not rewrite', () => {
   it('does not require the patch version in features-since-3.1', () => {
     const src = read('scripts/foundry/validate-release-docs.mjs');
     expect(src).not.toContain("rel.includes('features-since-3.1') && !content.includes(version)");
+  });
+
+  it('present-tense patch pins stay off kernel and OP-PROC', () => {
+    const src = read('scripts/foundry/validate-release-docs.mjs');
+    expect(src).toContain('NO_PRESENT_TENSE_PATCH');
+    expect(src).toContain('PRESENT_TENSE_PATCH_RE');
+    expect(src).toContain('docs-site/docs/architecture/v4-now.md');
+    expect(src).toContain('grok-bot/ops/LEAD-CADENCE.md');
   });
 
   it('kernel files use era, not a three-part patch stamp on the header line', () => {

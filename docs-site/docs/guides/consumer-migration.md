@@ -2,8 +2,6 @@
 
 **Audience**: Plugin authors, bridge maintainers (Hermes, OpenClaw, Grok Build, OpenCode), and projects that consume `0xray` directly.
 
-**Version**: 4.0.0
-
 ## Temperament on upgrade (v4.0)
 
 Existing `.xray/features.json` **without** `suit_temperament` stays **guided** (full spawn-plan deny). Postinstall merge will not silently frontier a Grok consumer. New installs copy shipped `profile: "auto"` (Grok → frontier, Hermes/OpenCode → guided). See [Suit temperament](./v3-temperament.md).
@@ -68,8 +66,9 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 
 ### v3.3 — Memory routing + Repertoire
 
+- **Repertoire is preferred.** Vendored 0.2.5 ships **on**. Dest is named laws, not hangar `repo-*`.
 - Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`).
-- Repertoire (`@0xray/repertoire`) is the default provider in the framework repo.
+- Repertoire (`@0xray/repertoire`) is the default provider. Station is the compact ticket, not a substitute.
 - `MemoryRoutingProvider` contract: `enrichTasks`, `getTaskConfidence`, `resolveThinDispatch`, `ingestFeedback`.
 - External hosts: add `repertoire-mcp` to `.mcp.json` (`repertoire__get_task_confidence`, etc.).
 - See [Memory Routing](./memory-routing.md) and [Repertoire Integration](./repertoire.md).
@@ -97,7 +96,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 - Walk from `node_modules` to consumer project root.
 - Legacy `xray` package name tolerance.
 - Hooks and MCPs placed correctly for node_modules and copy-to-root layouts.
-- **4.0.9 mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
+- **Mill target:** do not mill npm global prefix or npx `_npx` cache. Parent of `node_modules` is the mill target only when it is a real project (`package.json`). `npm i -g` mill-skips dogfood (mills the 0xray package itself, not Homebrew `lib`). Isolated HOME never writes passwd `~/.grok`.
 
 ## Verify gate (term 76)
 

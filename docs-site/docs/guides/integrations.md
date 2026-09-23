@@ -4,7 +4,7 @@ Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` i
 
 0xRay integrates with four chat platforms plus Cursor project hooks. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
 
-**Repertoire consumer** (full 4-chat-bridge wear matrix):
+**Repertoire is preferred** on every floor (vendored 0.2.5, dest = laws). Full 4-chat-bridge wear matrix:
 
 ```bash
 npm run install:bridges       # all four chat bridges
@@ -32,10 +32,10 @@ npm run confirm:suit:all      # install + verify + Grok harness + trap-routing e
 4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
 6. Create OpenClaw config (mill plant)
-7. Fasten Cursor `.cursor/hooks.json` when absent (leaves an existing file alone)
+7. Fasten Cursor `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`; rewrite leftover env-assignment commands
 8. Copy `AGENTS-consumer.md` → `AGENTS.md`, seed `.gitignore`. Factory hangar shops coexist via `shopPlant`
 
-**4.0.9:** mill target is the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
+**Mill target:** the consumer project, not npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not last-wins clobber the machine plugin). `npm i -g 0xray` dogfood-skips.
 
 ## Seven MCP servers (all platforms)
 
@@ -109,9 +109,9 @@ npx 0xray openclaw install
 
 ## Cursor (fifth wear)
 
-- Fastens project `.cursor/hooks.json` from `src/integrations/cursor/hooks/hooks.json` (dist path after publish)
-- Hooks: `preToolUse` (Codex gate + Station heat), `preCompact` (Station merge), `afterFileEdit` (Station boot)
-- Leaves an existing consumer `.cursor/hooks.json` alone (this exo wears `src/` via invoke-probe)
+- Fastens project `.cursor/hooks.json` plus relative `.cursor/hooks/*.sh` (Cloud execs argv[0] without a shell)
+- Hooks: `preToolUse` (Codex gate + Station heat), `preCompact` (Station merge), `afterFileEdit` (Station boot), `beforeShellExecution` / `beforeReadFile` (same gate)
+- Rewrites leftover `XRAY_AI_PATH=` / invoke-probe one-liners. Keeps already-relative events.
 - Not a fifth chat TUI. No new MCP/skill surface (Codex 69)
 - Cursor host does not inject Station — Read `.xray/state/STATION.md` after compact
 

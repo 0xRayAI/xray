@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -377,6 +378,91 @@ describe('delegation-gate temperament', () => {
       sessionId: 'oc-live-1',
     });
     expect(fs.statSync(card).mtimeMs).toBe(firstMtime);
+  });
+
+  it('maybeHeatHostStation rewrites boot when HEAD moves on the same session', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    execFileSync('git', ['init'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.email', 'heat@test'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.name', 'heat'], { cwd: tmp, stdio: 'ignore' });
+    fs.writeFileSync(path.join(tmp, 'README.md'), 'heat\n');
+    execFileSync('git', ['add', 'README.md'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['commit', '-m', 'init heat metal'], { cwd: tmp, stdio: 'ignore' });
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-same',
+    });
+    const first = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { git?: { head?: string }; timestamp?: string };
+    expect(first.git?.head).toBeTruthy();
+    fs.writeFileSync(path.join(tmp, 'MORE.md'), 'moved\n');
+    execFileSync('git', ['add', 'MORE.md'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['commit', '-m', 'move HEAD'], { cwd: tmp, stdio: 'ignore' });
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-same',
+    });
+    const next = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { git?: { head?: string }; timestamp?: string };
+    expect(next.git?.head).toBeTruthy();
+    expect(next.git?.head).not.toBe(first.git?.head);
+    expect(next.timestamp).not.toBe(first.timestamp);
+  });
+
+  it('maybeHeatHostStation does not paint leftover boot intent onto a restored card', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { lead_dev_mode: true },
+      }),
+    );
+    execFileSync('git', ['init'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.email', 'heat@test'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.name', 'heat'], { cwd: tmp, stdio: 'ignore' });
+    fs.writeFileSync(path.join(tmp, 'README.md'), 'heat\n');
+    execFileSync('git', ['add', 'README.md'], { cwd: tmp, stdio: 'ignore' });
+    execFileSync('git', ['commit', '-m', 'init heat metal'], { cwd: tmp, stdio: 'ignore' });
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-c11',
+      intent: 'Subject brain. Overlay on dest.',
+    });
+    const card = path.join(tmp, '.xray', 'state', 'STATION.md');
+    fs.writeFileSync(
+      card,
+      [
+        '# Station',
+        '',
+        'Host: cursor (frontier)',
+        'Intent: #101 live memory. Wave 12 cleanup. Do not stuff dest.',
+        'Plan: 4.0.20 live. Dest grew via heat.',
+        'Git: leftover@deadbeef',
+        '',
+        'Continue this card. Compaction and host change are the same cut. Do not cold-start.',
+        '',
+      ].join('\n'),
+    );
+    maybeHeatHostStation(tmp, 'cursor', {
+      source: '0xray/cursor-pre-tool',
+      sessionId: 'bc-c11',
+    });
+    const boot = JSON.parse(
+      fs.readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+    ) as { intent?: string; planLine?: string };
+    const md = fs.readFileSync(card, 'utf8');
+    expect(boot.intent).toContain('#101 live memory');
+    expect(boot.planLine).toContain('4.0.20 live');
+    expect(md).toContain('#101 live memory');
+    expect(md).not.toContain('Subject brain');
   });
 
   it('hermes auto stays guided (spawn still denied)', () => {

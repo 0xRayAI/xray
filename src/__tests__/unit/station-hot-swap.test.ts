@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 import {
   applyStationHeat,
   clipIntent,
   extractPreservedStationLines,
   formatStationMarkdown,
   mergeStationMarkdown,
+  patternsFromGit,
+  pruneKeywordDest,
   readRepertoireWorking,
+  retainCompactFields,
   writeStationMarkdown,
 } from '../../integrations/hooks/station-hook-runtime.mjs';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
@@ -199,6 +202,102 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('leftover boot intent loses to NOTES pickup when Station is a boot echo', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-pickup-beats-echo-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Subject brain. Overlay on dest.', 'Plan: Draft #96.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** #101 live memory. Capture then grow. Do not stuff dest.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        { host: 'cursor', intent: 'Subject brain. Overlay on dest.', planLine: 'Draft #96.' },
+      );
+      expect(heat.intent).toMatch(/#101 live memory/);
+      expect(heat.intent).not.toMatch(/Subject brain/);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('restored Station ticket beats leftover boot extras', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-card-beats-boot-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        [
+          '# Station',
+          '',
+          'Intent: #101 live memory. Wave 12 cleanup. Do not stuff dest.',
+          'Plan: 4.0.20 live. Dest grew via heat.',
+          '',
+        ].join('\n'),
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        {
+          host: 'cursor',
+          intent: 'Subject brain. Overlay on dest.',
+          planLine: 'Trees on station-vs-repertoire. Heat Station. Draft #96.',
+        },
+      );
+      expect(heat.intent).toContain('#101 live memory');
+      expect(heat.planLine).toContain('4.0.20 live');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('HEAD move drops leftover lead-dev-plan that still echoes boot', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-stale-plan-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'lead-dev-plan.json'),
+        JSON.stringify({
+          active: true,
+          phases: [
+            {
+              todos: [{ id: 'c11', task: 'Trees on station-vs-repertoire. Heat Station. Draft #96.', status: 'in_progress' }],
+            },
+          ],
+        }),
+      );
+      const firstHead = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: tmp,
+        encoding: 'utf8',
+      }).trim();
+      fs.writeFileSync(path.join(tmp, 'MORE.md'), 'moved\n');
+      execFileSync('git', ['add', 'MORE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'stamp leftover pins'], { cwd: tmp, stdio: 'ignore' });
+      const heat = applyStationHeat(
+        tmp,
+        'cursor',
+        {},
+        {
+          host: 'cursor',
+          intent: 'Subject brain. Overlay on dest.',
+          planLine: 'Trees on station-vs-repertoire. Heat Station. Draft #96.',
+          git: { branch: 'main', head: firstHead },
+        },
+      );
+      expect(heat.planLine).toBe('stamp leftover pins');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('plan line uses live todos, not a stale description, then git subject', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plan-'));
     try {
@@ -283,6 +382,130 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('heat grows stack laws from git observe and does not mint commit slugs', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-grow-'));
+    const tmp = path.join(parent, 'xray');
+    const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
+    const millOrgan = path.resolve(process.cwd(), 'vendor', '@0xray', 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.dirname(vendor), { recursive: true });
+      fs.symlinkSync(millOrgan, vendor);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: true, provider: 'repertoire' },
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'three-subsystem-verifiable-os', tags: ['os'] }],
+        }),
+      );
+      fs.writeFileSync(path.join(tmp, 'LIVE.md'), 'live\n');
+      execFileSync('git', ['add', 'LIVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'feat: live-context-memory'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'LOCK.md'), 'lock\n');
+      execFileSync('git', ['add', 'LOCK.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: parallel-floor-heat'], { cwd: tmp, stdio: 'ignore' });
+      applyStationHeat(tmp, 'cursor', { intent: 'live context memory' }, {});
+      const dest = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'), 'utf8'),
+      );
+      const names = dest.signals.map((signal: { name: string }) => signal.name);
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).not.toContain('live-context-memory');
+      expect(names).not.toContain('parallel-floor-heat');
+      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
+      const session = JSON.parse(
+        fs.readFileSync(path.join(tmp, 'docs', 'inference', 'latest-session.json'), 'utf8'),
+      );
+      const patternNames = (session.patterns as { name: string }[]).map((row) => row.name);
+      expect(patternNames).not.toContain('live-context-memory');
+      expect(patternNames).not.toContain('parallel-floor-heat');
+      const working = readRepertoireWorking(tmp);
+      expect(working?.grow).toEqual(
+        expect.objectContaining({
+          after: expect.any(Number),
+        }),
+      );
+      expect(Number(working?.grow && 'after' in working.grow ? working.grow.after : 0)).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('parallel floor heats share one dest lock and keep a valid project copy', async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-parallel-'));
+    const tmp = path.join(parent, 'xray');
+    const vendor = path.join(tmp, 'vendor', '@0xray', 'repertoire');
+    const millOrgan = path.resolve(process.cwd(), 'vendor', '@0xray', 'repertoire');
+    const runtime = path.resolve(process.cwd(), 'src/integrations/hooks/station-hook-runtime.cjs');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.dirname(vendor), { recursive: true });
+      fs.symlinkSync(millOrgan, vendor);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          memory_routing: { enabled: true, provider: 'repertoire' },
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'three-subsystem-verifiable-os', tags: ['os'] }],
+        }),
+      );
+      fs.writeFileSync(path.join(tmp, 'LIVE.md'), 'live\n');
+      execFileSync('git', ['add', 'LIVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'feat: live-context-memory'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'LOCK.md'), 'lock\n');
+      execFileSync('git', ['add', 'LOCK.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: parallel-floor-heat'], { cwd: tmp, stdio: 'ignore' });
+      const script =
+        'const heat = require(process.argv[1]); heat.applyStationHeat(process.argv[2], process.argv[3], { intent: process.argv[4] }, {});';
+      const run = (host: string, intent: string) =>
+        new Promise<number>((resolve) => {
+          const child = spawn(process.execPath, ['-e', script, runtime, tmp, host, intent], {
+            stdio: 'ignore',
+          });
+          const timer = setTimeout(() => {
+            child.kill();
+            resolve(1);
+          }, 60000);
+          child.on('exit', (code) => {
+            clearTimeout(timer);
+            resolve(code ?? 1);
+          });
+        });
+      const codes = await Promise.all([
+        run('cursor', 'lead live context'),
+        run('hermes', 'critic live context'),
+      ]);
+      expect(codes.every((code) => code === 0)).toBe(true);
+      const destRaw = fs.readFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        'utf8',
+      );
+      const dest = JSON.parse(destRaw);
+      const names = dest.signals.map((signal: { name: string }) => signal.name);
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).not.toContain('live-context-memory');
+      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
+      expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'dest.lock'))).toBe(false);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('reloads overlay OP-PROC onto repertoire-working, not Station', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-op-proc-reload-'));
     try {
@@ -313,7 +536,7 @@ describe('station hot-swap', () => {
     }
   });
 
-  it('wake heat hydrates subject overlay and keeps repo-* off opProc', () => {
+  it('wake heat hydrates stack laws and keeps repo-* off dest', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-memory-wake-'));
     const tmp = path.join(parent, 'xray');
     const repertoire = path.join(parent, 'repertoire');
@@ -354,20 +577,17 @@ describe('station hot-swap', () => {
       );
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toEqual(
-        expect.arrayContaining([
-          'three-subsystem-verifiable-os',
-          'station-survives-the-cut',
-          'repo-clearing',
-        ]),
+        expect.arrayContaining(['three-subsystem-verifiable-os', 'station-survives-the-cut']),
       );
+      expect(names).not.toContain('repo-clearing');
       const working = readRepertoireWorking(tmp);
       expect(working?.pickup).toMatch(/Wake is the memory/);
-      expect(working?.destCount).toBe(3);
+      expect(working?.destCount).toBe(2);
       expect(working?.opProcNames).toEqual(
         expect.arrayContaining(['three-subsystem-verifiable-os', 'station-survives-the-cut']),
       );
       expect(working?.opProcNames).not.toContain('repo-clearing');
-      expect(heat.repertoireResume).toContain('3 signals');
+      expect(heat.repertoireResume).toContain('2 signals');
       const stacked = applyStationHeat(
         tmp,
         'cursor',
@@ -388,11 +608,82 @@ describe('station hot-swap', () => {
         {},
       );
       const after = readRepertoireWorking(tmp);
-      expect(after?.matchedSignals).toContain('repo-clearing');
-      expect(stacked.workingLine).toContain('repo-clearing');
+      expect(after?.matchedSignals).toContain('station-survives-the-cut');
+      expect(after?.matchedSignals).not.toContain('repo-clearing');
+      expect(stacked.workingLine).toContain('station-survives-the-cut');
+      expect(stacked.workingLine).not.toContain('repo-clearing');
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
     }
+  });
+
+  it('patternsFromGit observes existing laws and does not mint commit slugs', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-observe-'));
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'station-survives-the-cut', definition: 'Compact card holds.' }],
+        }),
+      );
+      const patterns = patternsFromGit(tmp, [
+        { message: 'fix: station survives the cut after compact' },
+        { message: 'chore: stamp package-lock to 4.0.20' },
+        { message: 'feat: repo-clearing hangar rail' },
+      ]);
+      expect(patterns.map((row: { name: string }) => row.name)).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pruneKeywordDest drops repo-* and git-slug keywords', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-prune-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+      fs.writeFileSync(
+        dest,
+        JSON.stringify({
+          signals: [
+            { name: 'station-survives-the-cut', definition: 'Compact card holds.' },
+            { name: 'repo-xray', definition: 'Mill checkout.' },
+            { name: 'stamp-package-lock-to-4-0-20', definition: 'Lockfile cut.' },
+            {
+              name: 'cleanup-is-memory',
+              definition: 'Field-observed domain primitive from diary heat.',
+            },
+          ],
+        }),
+      );
+      const pruned = pruneKeywordDest(tmp);
+      expect(pruned.removed).toBe(3);
+      expect(pruned.kept).toBe(1);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toEqual(['station-survives-the-cut']);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('retainCompactFields keeps pre_compact across later lead-heat', () => {
+    expect(
+      retainCompactFields(
+        { hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' },
+        { hookEvent: 'lead-heat', host: 'cursor' },
+      ),
+    ).toEqual({ hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' });
+    expect(
+      retainCompactFields(
+        { hookEvent: 'pre_compact' },
+        { hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' },
+      ),
+    ).toEqual({ hookEvent: 'pre_compact', event_class: 'cursor-host-precompact' });
+    expect(retainCompactFields({}, { hookEvent: 'lead-heat' })).toEqual({});
   });
 
   it('writeStationMarkdown is the Read target', () => {

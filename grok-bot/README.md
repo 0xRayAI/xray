@@ -33,7 +33,7 @@ npx @0xray/grok-bot doctor --json
 4. **Hangar** — plant shops (`plant-hangar-shops`)  
 
 ## Plant pins (monitor / adjust)
-- `0xray@4.0.15` · `@0xray/foundry@0.1.12`  
+- `0xray` (current npm) · mill nested in the tarball (`npx @0xray/foundry`)
 - Live URLs in `llms.txt`  
 
 This package orchestrates. It does not vendor the whole OS.

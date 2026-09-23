@@ -58,6 +58,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Decision matrix to ship \(lead-owned\)/);
     expect(text).toMatch(/A — PR \+ CI/);
     expect(text).toMatch(/release:docs-check/);
+    expect(text).toMatch(/Patch stamps/);
+    expect(text).toMatch(/reconcile-version\.mjs --check/);
     expect(text).toMatch(/foundry release/);
     expect(text).toMatch(/Green CI is not publish/);
     expect(text).not.toMatch(/npm, Railway, spend, credentials — Ask-first/);

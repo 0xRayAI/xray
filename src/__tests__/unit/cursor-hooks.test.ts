@@ -7,7 +7,12 @@ import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
   cursorBootNeedsRefresh,
+  cursorHeatRoots,
+  isCursorWorkspaceWrapper,
+  millRootFromToolPath,
+  shouldHeatRoot,
 } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
+import { heatLiveMemory } from '../../integrations/hooks/station-hook-runtime.mjs';
 import {
   classifyUsageCite,
   parseInvokeProbeLog,
@@ -98,7 +103,7 @@ function runHook(
     env: {
       ...process.env,
       XRAY_ROOT: root,
-      XRAY_AI_PATH: packageRoot,
+      XRAY_AI_PATH: root,
       CURSOR_PROJECT_DIR: root,
     },
   });
@@ -117,15 +122,20 @@ describe('Cursor cloud hooks adapter', () => {
     };
     expect(template.version).toBe(1);
     expect(repo.version).toBe(1);
-    expect(existsSync(path.join(packageRoot, '.cursor/hooks/invoke-probe.sh'))).toBe(true);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/xray-cloud-hook.sh'))).toBe(true);
+    expect(existsSync(path.join(packageRoot, '.cursor/hooks/pre-tool-use.sh'))).toBe(true);
     for (const cmd of Object.values(repo.hooks).flat().map((h) => h.command)) {
-      expect(cmd).toContain('invoke-probe.sh');
+      expect(cmd).toMatch(/^\.cursor\/hooks\/[\w.-]+\.sh$/);
+      expect(cmd).not.toMatch(/XRAY_AI_PATH=/);
+      expect(cmd).not.toContain('invoke-probe.sh');
     }
     for (const hooks of [template.hooks, repo.hooks]) {
       expect(hooks.sessionStart).toBeUndefined();
-      expect(hooks.preToolUse?.[0]?.command).toContain('pre-tool-use.js');
-      expect(hooks.preCompact?.[0]?.command).toContain('pre-compact.js');
-      expect(hooks.afterFileEdit?.[0]?.command).toContain('after-file-edit.js');
+      expect(hooks.preToolUse?.[0]?.command).toBe('.cursor/hooks/pre-tool-use.sh');
+      expect(hooks.preCompact?.[0]?.command).toBe('.cursor/hooks/pre-compact.sh');
+      expect(hooks.afterFileEdit?.[0]?.command).toBe('.cursor/hooks/after-file-edit.sh');
+      expect(hooks.beforeShellExecution?.[0]?.command).toBe('.cursor/hooks/before-shell-execution.sh');
+      expect(hooks.beforeReadFile?.[0]?.command).toBe('.cursor/hooks/before-read-file.sh');
     }
   });
 
@@ -184,6 +194,137 @@ describe('Cursor cloud hooks adapter', () => {
       expect(card).toContain('keep-me-ben-001');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('cursorHeatRoots heats cwd and a separate mill that already has a card', () => {
+    const cwd = mkdtempSync(path.join(tmpdir(), 'xray-heat-cwd-'));
+    const mill = mkdtempSync(path.join(tmpdir(), 'xray-heat-mill-'));
+    const prev = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      process.env.XRAY_AI_PATH = mill;
+      const roots = cursorHeatRoots({ cwd });
+      expect(roots).toContain(path.resolve(cwd));
+      expect(roots).toContain(path.resolve(mill));
+    } finally {
+      if (prev === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prev;
+      rmSync(cwd, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
+    }
+  });
+
+  it('cursorHeatRoots skips a multi-repo Cloud workspace wrapper and heats the mill card', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-wrap-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const prev = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      writeFileSync(path.join(mill, '.xray', 'features.json'), '{}\n');
+      delete process.env.XRAY_AI_PATH;
+      expect(isCursorWorkspaceWrapper(workspace)).toBe(true);
+      expect(shouldHeatRoot(workspace)).toBe(false);
+      const roots = cursorHeatRoots({ cwd: workspace });
+      expect(roots).not.toContain(path.resolve(workspace));
+      expect(roots).toContain(path.resolve(mill));
+    } finally {
+      if (prev === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prev;
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('does not heat a hangar under the wrapper that has no Station card', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-hangar-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const hangar = path.join(workspace, 'repos', 'clearing');
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      mkdirSync(path.join(hangar, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(hangar, '.xray', 'state', 'STATION.md'), '# leftover hangar\n');
+      const roots = cursorHeatRoots({ cwd: workspace });
+      expect(roots).toEqual([path.resolve(mill)]);
+      expect(roots).not.toContain(path.resolve(hangar));
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('skips a leftover wrapper Station card and heats the Read mill path', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-leftover-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    try {
+      mkdirSync(path.join(workspace, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(workspace, '.xray', 'state', 'STATION.md'), '# leftover wrapper\n');
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      expect(shouldHeatRoot(workspace)).toBe(false);
+      expect(millRootFromToolPath(path.join(mill, '.xray', 'state', 'STATION.md'))).toBe(
+        path.resolve(mill),
+      );
+      const roots = cursorHeatRoots({
+        cwd: workspace,
+        tool_name: 'Read',
+        tool_input: { path: path.join(mill, '.xray', 'state', 'STATION.md') },
+      });
+      expect(roots).not.toContain(path.resolve(workspace));
+      expect(roots).toContain(path.resolve(mill));
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('heatLiveMemory fail-opens on an unwritable root', () => {
+    const locked = mkdtempSync(path.join(tmpdir(), 'xray-heat-lock-'));
+    try {
+      writeFileSync(path.join(locked, 'probe.txt'), 'x\n');
+      execFileSync('chmod', ['555', locked], { stdio: 'ignore' });
+      expect(heatLiveMemory(locked)).toEqual({ captured: null, grow: null });
+    } finally {
+      execFileSync('chmod', ['755', locked], { stdio: 'ignore' });
+      rmSync(locked, { recursive: true, force: true });
+    }
+  });
+
+  it('preToolUse fail-opens when the Cloud workspace wrapper cannot take dest', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-wrap-deny-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const prevAi = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'features.json'), JSON.stringify({
+        suit_temperament: { profile: 'auto' },
+        multi_agent_orchestration: { enabled: true, lead_dev_mode: true, no_new_surface: true },
+      }));
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      const stdout = execFileSync(process.execPath, [preTool], {
+        cwd: workspace,
+        input: JSON.stringify({
+          tool_name: 'Read',
+          tool_input: { path: 'README.md' },
+          cwd: workspace,
+        }),
+        encoding: 'utf8',
+        timeout: 30000,
+        env: {
+          ...process.env,
+          XRAY_AI_PATH: mill,
+          XRAY_ROOT: mill,
+          CURSOR_PROJECT_DIR: workspace,
+        },
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string };
+      expect(out.permission).toBe('allow');
+      expect(existsSync(path.join(workspace, '.xray', 'state', 'STATION.md'))).toBe(false);
+      expect(existsSync(path.join(mill, '.xray', 'state', 'STATION.md'))).toBe(true);
+    } finally {
+      if (prevAi === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prevAi;
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 
@@ -261,7 +402,7 @@ describe('Cursor cloud hooks adapter', () => {
       expect(out.user_message).toContain('event_class=cursor-precompact-synthetic');
       const card = readFileSync(dest, 'utf8');
       expect(card).toContain('Host: cursor');
-      expect(card).not.toContain('Intent: old intent before compact');
+      expect(card).toContain('Intent: old intent before compact');
       for (const line of BEN_KEYS) {
         expect(card).toContain(line);
         expect(card.split(line).length - 1).toBe(1);
@@ -298,12 +439,37 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'manual',
           context_usage_percent: 90,
+          conversation_id: 'bc-spawn-id-enough',
+          generation_id: 'gen-resume-1',
+          is_first_compaction: true,
+          message_count: 45,
+          messages_to_compact: 30,
           cwd: tmp,
         },
         tmp,
       );
       const out = JSON.parse(stdout) as { user_message?: string };
       expect(out.user_message).toContain('event_class=cursor-host-precompact');
+      const receipt = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-precompact.json'), 'utf8'),
+      ) as {
+        sessionId: string;
+        conversation_id: string;
+        generation_id: string;
+        is_first_compaction: boolean;
+        message_count: number;
+        messages_to_compact: number;
+      };
+      expect(receipt.sessionId).toBe('bc-spawn-id-enough');
+      expect(receipt.conversation_id).toBe('bc-spawn-id-enough');
+      expect(receipt.generation_id).toBe('gen-resume-1');
+      expect(receipt.is_first_compaction).toBe(true);
+      expect(receipt.message_count).toBe(45);
+      expect(receipt.messages_to_compact).toBe(30);
+      const usage = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
+      ) as { usage: { bcId: string | null } };
+      expect(usage.usage.bcId).toBe('bc-spawn-id-enough');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -348,6 +514,49 @@ describe('Cursor cloud hooks adapter', () => {
       expect(usage.usage.context_tokens).toBe(231344);
       expect(usage.compact.eventClass).toBe('cursor-host-precompact');
       expect(usage.compact.hostFired).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('host preCompact then HEAD-moving preToolUse still holds pre_compact', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-compact-hold-'));
+    try {
+      plantFeatures(tmp);
+      gitInit(tmp);
+      const dest = seedBenStation(tmp);
+      writeFileSync(
+        path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'),
+        'ts=2026-09-15T09:30:49+00:00 event=preCompact cwd=/tmp node=/exec-daemon/node\n',
+      );
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 231344,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      writeFileSync(path.join(tmp, 'MOVE.md'), 'head moved after compact\n');
+      execFileSync('git', ['add', 'MOVE.md'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'stamp-package-lock-to-4-0-20'], { cwd: tmp, stdio: 'ignore' });
+      expect(
+        cursorBootNeedsRefresh(
+          JSON.parse(readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8')),
+          tmp,
+        ),
+      ).toBe(true);
+      runHook(preTool, { tool_name: 'Read', tool_input: { path: 'README.md' }, cwd: tmp }, tmp);
+      const card = readFileSync(dest, 'utf8');
+      expect(card).toContain('Compact: preCompact Y (count=1)');
+      expect(card).toMatch(/Working: last pre_compact/);
+      const boot = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'session-boot.json'), 'utf8'),
+      ) as { hookEvent?: string; event_class?: string };
+      expect(boot.hookEvent).toBe('pre_compact');
+      expect(boot.event_class).toBe('cursor-host-precompact');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -528,12 +737,100 @@ describe('Cursor cloud hooks adapter', () => {
       expect(files.length).toBeGreaterThan(0);
       const latest = JSON.parse(readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8'));
       expect(latest.approaches.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
+      const patternNames = (latest.patterns || []).map((row: { name?: string }) => row.name);
+      expect(patternNames).not.toContain('compact-rekey-from-disk');
+      expect(patternNames.every((name: string | undefined) => !String(name).startsWith('repo-'))).toBe(
+        true,
+      );
       const firstCount = files.length;
       runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
       const again = readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));
       expect(again.length).toBe(firstCount);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('xray-cloud-hook.sh logs invoke and fail-opens when mill JS is missing', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-miss-'));
+    try {
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: tmp,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env: { ...process.env, PATH: process.env.PATH || '/usr/bin:/bin' },
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string };
+      expect(out.permission).toBe('allow');
+      const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(log).toContain('event=preToolUse');
+      expect(log).toContain('mill=MISSING');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('xray-cloud-hook.sh finds mill at cwd/repos/xray from a Cloud workspace root', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-cloud-ws-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    try {
+      mkdirSync(path.join(mill, 'src', 'integrations', 'cursor', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(mill, 'src', 'integrations', 'cursor', 'hooks', 'pre-tool-use.js'),
+        'console.log(JSON.stringify({ permission: "allow", from: "workspace-mill" }));\n',
+      );
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: workspace,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env: { ...process.env, PATH: process.env.PATH || '/usr/bin:/bin' },
+      }).trim();
+      expect(JSON.parse(stdout).from).toBe('workspace-mill');
+      const log = readFileSync(path.join(workspace, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(log).toContain('event=preToolUse');
+      expect(log).not.toContain('mill=MISSING');
+    } finally {
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
+  it('xray-cloud-hook.sh execs mill JS when XRAY_AI_PATH is set', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-hit-'));
+    const mill = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-mill-'));
+    try {
+      mkdirSync(path.join(mill, 'src', 'integrations', 'cursor', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(mill, 'src', 'integrations', 'cursor', 'hooks', 'pre-tool-use.js'),
+        'console.log(JSON.stringify({ permission: "allow", mill: process.env.XRAY_AI_PATH }));\n',
+      );
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: tmp,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          PATH: process.env.PATH || '/usr/bin:/bin',
+          XRAY_AI_PATH: mill,
+        },
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string; mill?: string };
+      expect(out.permission).toBe('allow');
+      expect(path.resolve(out.mill || '')).toBe(path.resolve(mill));
+      const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(log).toContain('event=preToolUse');
+      expect(log).not.toContain('mill=MISSING');
+      const millLog = readFileSync(path.join(mill, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
+      expect(millLog).toContain('event=preToolUse');
+      expect(millLog).not.toContain('mill=MISSING');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
     }
   });
 });

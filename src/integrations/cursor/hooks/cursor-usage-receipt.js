@@ -69,6 +69,9 @@ export function hostUsageFromPreCompactEvent(event = {}) {
   if (typeof event.windowCite === 'string' && event.windowCite) usage.windowCite = event.windowCite;
   if (typeof event.model === 'string' && event.model) usage.model = event.model;
   if (typeof event.bcId === 'string' && event.bcId) usage.bcId = event.bcId;
+  else if (typeof event.conversation_id === 'string' && event.conversation_id) {
+    usage.bcId = event.conversation_id;
+  }
   return usage;
 }
 

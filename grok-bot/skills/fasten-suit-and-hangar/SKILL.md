@@ -8,7 +8,7 @@ description: >-
 
 ## Steps
 1. Enter a project with `package.json`.
-2. `npm i 0xray@4.0.15 @0xray/foundry@0.1.12` (add hangar package only if planting shops).
+2. `npm i 0xray` (add hangar package only if planting shops). Mill is nested in the tarball.
 3. `npx @0xray/foundry mint --skip-live` — thin mill plant only.
 4. Confirm inventory: `suit: "fastened"`, mill + inspect present, `costume: false`.
 5. `npx @0xray/foundry inspect --skip-live` → `ok: true`.

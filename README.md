@@ -14,13 +14,13 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
-- **Muscle** — Repertoire: auto-enables when the module resolves; session-start writes a one-line resume so the next station is not born amnesiac
+- **Muscle** — **Repertoire is preferred.** Vendored 0.2.5 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
 
 ```bash
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. Repertoire **0.2** is the factory memory organ (vendored): seed primitives, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Opt out with `"enabled": false, "provider": "repertoire"`.
+Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.5** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 
@@ -51,7 +51,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **Unreleased** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). 0xray stays 4.0.15. |
+| **Unreleased** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
 | **4.0.0** | Exo + temperament. Constitution always on; ceremony by host. Repertoire organ on (vendored 0.2). Station card survives compact/host-swap. **On npm.** [vision](docs-site/docs/architecture/v4-vision.md) · [now](docs-site/docs/architecture/v4-now.md) |
 | **3.4.1** | Unified `install-bridges.cjs` on postinstall — OpenCode, Grok, Hermes, OpenClaw in one pass. All 7 MCPs servers via `npx -y 0xray mcp <cmd>` (no `dist/` paths). Canonical `release.mjs` pipeline. |
@@ -63,7 +63,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ### Consolidations
 
-- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup. **4.0.9:** does not mill npm global prefix or `_npx`.
+- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup. Mill target is the consumer project, not npm global prefix or `_npx`.
 - **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
 - **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
 - **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
@@ -149,9 +149,9 @@ Core governance agents:
 
 See [AGENTS.md](AGENTS.md) and [SKILLS.md](SKILLS.md) for the full agent and skill catalog.
 
-## Memory Routing + Repertoire (v3.3+)
+## Memory Routing + Repertoire (preferred, v3.3+)
 
-Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`):
+**Wear Repertoire.** It is the long-term judgment organ. Station holds the ticket across compact. Dest is named invariants, not keywords. Pluggable `memory_routing` in `features.json` (validated by `features.schema.json`) ships **on**:
 
 ```json
 "memory_routing": {
@@ -174,9 +174,9 @@ Pluggable `memory_routing` block in `features.json` (validated by `features.sche
 | **AsideContext** (v3.2) | `buildInheritedContext` → `inheritedContext.memoryRouting` on orchestrator `spawnAside` |
 | **Feedback** | Per-task `ingestFeedback()` closes the learning loop |
 
-**External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs.
+**External hosts** (Hermes/Grok): add `repertoire-mcp` to `.mcp.json` — see Repertoire docs. Preferred. Not optional flavor.
 
-Opt out: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
+Explicit opt-out only: `"memory_routing": { "enabled": false, "provider": "repertoire" }`.
 
 Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](docs-site/docs/guides/repertoire.md) · [features.json](docs-site/docs/guides/features-json.md) · [all features since 3.1](docs-site/docs/guides/features-since-3.1.md)
 
@@ -188,7 +188,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 | **Grok CLI / Build** | `npx 0xray grok install` | Project `.grok/plugins/0xray` (shared HOME does not clobber machine plugin), 7 MCPs servers |
 | **Hermes Agent** | `npx 0xray hermes install` | `~/.hermes/plugins/xray-hermes`, consumer root marker |
 | **OpenClaw** | `npx 0xray openclaw install` | `.xray/config/openclaw.json`, skill sync |
-| **Cursor** | postinstall (`installCursorBridge`) | Fastens `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI. |
+| **Cursor** | postinstall (`installCursorBridge`) | Fastens `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrites leftover env-assignment one-liners. Not a fifth chat TUI. |
 
 ## Governance & Codex
 
@@ -200,9 +200,9 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Testing
 
-| Suite | Status (v4.0.1) |
-|-------|-----------------|
-| Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 (npm 4.0.0 pack) |
+| Suite | Status |
+|-------|--------|
+| Four-floor consumer e2e | OpenCode 34/0 · Grok 63/0 · Hermes 39/0/2 · OpenClaw 96/0/1 |
 | Consumer smoke | `npm run release:gate` — pack → clean install → 7 MCPs + 4 chat bridges + Cursor hooks + organ on |
 | Pack → tmp proof | `npm run pack:tmp-proof` — tgz install + `foundry mint --skip-live` + hangar shops + inspect (no costume dump). Playwright n/a (CLI). |
 
@@ -215,12 +215,12 @@ npm run release:npm     # gate + prepare + npm publish --access public
 
 ## Release
 
-Product **4.0.0** is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT.
+The **4.0** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
 
 ```bash
 npm run release:gate
 npm run release:npm     # after gate is green; uses npm publish --access public
-npm run release:patch   # version bump pipeline (not for a already-bumped 4.0.0)
+npm run release:patch   # version bump pipeline (not for an already-bumped package.json)
 ```
 
 Pipeline: reconcile-version → release-gate (build + test + consumer smoke) → CHANGELOG/README/AGENTS artifacts → commit → tag → npm publish.

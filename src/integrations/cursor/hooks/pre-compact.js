@@ -9,6 +9,8 @@ import {
   appendHookActivity,
   buildSessionBootPayload,
   classifyPreCompactEvent,
+  cursorGenerationId,
+  cursorHeatRoots,
   cursorSessionId,
   cursorWorkspaceRoot,
   readStdinJson,
@@ -39,34 +41,49 @@ async function main() {
     eventClass = classifyPreCompactEvent(event);
     const eventRoot = cursorWorkspaceRoot(event);
     const sessionId = cursorSessionId(event);
+    const generationId = cursorGenerationId(event);
     const intent = extractIntent(event);
-    const payload = buildSessionBootPayload(eventRoot, '0xray/cursor-compact', {
-      host: 'cursor',
-      hookEvent: 'pre_compact',
-      event_class: eventClass,
-      sessionId,
-      ...(intent ? { intent } : {}),
-    });
-    const bootPath = writeSessionBoot(eventRoot, payload);
-    const receiptPath = writeCursorPrecompactReceipt(eventRoot, {
-      event_class: eventClass,
-      hookEvent: 'pre_compact',
-      trigger: event.trigger || 'synthetic',
-      sessionId,
-      bootPath,
-      timestamp: new Date().toISOString(),
-    });
-    const usagePath = writeCursorUsageReceipt(eventRoot, {
-      eventClass,
-      sessionId,
-      usage: hostUsageFromPreCompactEvent(event),
-    });
+    let bootPath = null;
+    let receiptPath = null;
+    let usagePath = null;
+    let stationLine = null;
+    for (const root of cursorHeatRoots(event)) {
+      const payload = buildSessionBootPayload(root, '0xray/cursor-compact', {
+        host: 'cursor',
+        hookEvent: 'pre_compact',
+        event_class: eventClass,
+        sessionId,
+        ...(intent ? { intent } : {}),
+      });
+      bootPath = writeSessionBoot(root, payload);
+      stationLine = payload.stationLine;
+      receiptPath = writeCursorPrecompactReceipt(root, {
+        event_class: eventClass,
+        hookEvent: 'pre_compact',
+        trigger: event.trigger || 'synthetic',
+        sessionId,
+        conversation_id: sessionId,
+        generation_id: generationId,
+        is_first_compaction:
+          typeof event.is_first_compaction === 'boolean' ? event.is_first_compaction : null,
+        message_count: typeof event.message_count === 'number' ? event.message_count : null,
+        messages_to_compact:
+          typeof event.messages_to_compact === 'number' ? event.messages_to_compact : null,
+        bootPath,
+        timestamp: new Date().toISOString(),
+      });
+      usagePath = writeCursorUsageReceipt(root, {
+        eventClass,
+        sessionId,
+        usage: hostUsageFromPreCompactEvent(event),
+      });
+    }
     appendHookActivity(eventRoot, 'cursor-pre-compact', 'station-written', 'success', {
       bootPath,
       receiptPath,
       usagePath,
       event_class: eventClass,
-      stationLine: payload.stationLine,
+      stationLine,
     });
     console.log(
       JSON.stringify({

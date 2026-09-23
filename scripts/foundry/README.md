@@ -60,7 +60,7 @@ After mill plant is fastened, overlay their plant (defaults; remap in `foundry.j
 
 **Mill-fill is law:** their keys/files win; mill names they did not plant stay unless they overlay the same name. JSON facets always merge. Skill overlay is project dirs on every TUI floor (OpenCode, Grok, Hermes, OpenClaw). YML agents stay OpenCode. CLI re-wear calls mint **once** after mill copies. Isolated HOME is passwd home, not `os.homedir()`. CI report is `.xray/foundry-ci-report.json` (`.opencode/logs` shim).
 
-**Default mill plant:** `mill` + `inspect` (inspect AI work). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only (files from this package `plant/`). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. Factory Repertoire still enable-when-resolves. PPE stays worn.
+**Default mill plant:** `mill` + `inspect` (inspect AI work). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only (files from this package `plant/`). Fastens a suit, not an empty one. Not 45/42 costume. `foundry.json` `"costume": true` copies that dump. **Repertoire is preferred** (vendored, dest = laws). PPE stays worn.
 
 **foundry-plant/0:** `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares and ships in its own `plant/`. Organs (looker, vibe, mixer) live in the mill. Adding an organ is a mill publish, not a foundry catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Foundry **0.1.12**.
 
@@ -76,7 +76,7 @@ A friend would hear: Blips should look like Rippel living motions with sound, no
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` are first-class with mill plant. Inspect does not treat those worn names as a costume dump. `foundry.json` `"shopPlant"` names more shops (array), a plant dir (string), or `{ "skills": [...], "dir": "..." }`. This is not `"costume": true` and does not copy 45/42.
 
-**4.0.9 mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not clobber machine plugin). Nested mill **0.1.12** (foundry-plant/0; blip/sound drawers in `@0xray/blip`; inspect dest matches `resolveGrokPluginDests`).
+**Mill target (0xray postinstall, not this mill package):** `install-bridges.cjs` does not mill npm global prefix or npx `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. Shared HOME Grok last-mile is project `.grok/plugins/0xray` (two seats do not clobber machine plugin). Nested mill ships in the 0xray tarball (foundry-plant/0; blip/sound drawers in `@0xray/blip`; inspect dest matches `resolveGrokPluginDests`).
 
 ## Publish this mill
 

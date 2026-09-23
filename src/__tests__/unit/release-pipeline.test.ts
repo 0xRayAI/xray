@@ -56,6 +56,14 @@ describe('release pipeline', () => {
     expect(paths).toContain('src/integrations/openclaw/plugin/xray-pre-tool/package.json');
   });
 
+  it('release:docs-check refuses a package.json that is not ahead of npm', () => {
+    const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    expect(pkg.scripts['release:docs-check']).toContain('reconcile-version.mjs --check');
+    expect(pkg.scripts['release:docs-check']).toContain('validate-release-docs.mjs');
+  });
+
   it('canonical release.mjs bumps via reconcile, not version-manager', () => {
     const src = readFileSync(path.join(root, 'scripts/foundry/release.mjs'), 'utf8');
     expect(src).toContain('reconcile-version.mjs');

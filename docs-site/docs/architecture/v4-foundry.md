@@ -38,9 +38,9 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-Wear copies **factory** (PPE hooks, Repertoire enable-when-resolves, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
+Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
-**4.0.9 mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips; a consumer `npm i 0xray` still fastens mill+inspect.
+**Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips; a consumer `npm i 0xray` still fastens mill+inspect.
 
 ## Mills (inventory)
 
@@ -86,7 +86,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Costume (opt-in):** YML agents, skills, Codex, features, Grok `hooks.json` template, Hermes plugin tree, OpenClaw pre-tool plugin. Default is mill plant, not this dump.
 
-**Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire enable-when-resolves.
+**Generated wiring:** `.mcp.json`, hook command strings with `XRAY_AI_PATH`, consumer-root markers, Repertoire preferred (explicit opt-out only).
 
 **Minted from their tree (overlay).** Default SSOT: `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Postinstall copies those onto `.xray/` and project skill dirs (`.opencode/skills`, project `.grok/plugins/0xray/skills` if present). JSON facets always merge (mill-fill). YML agents are the OpenCode wear dir. Mill-managed `AGENTS.md` overlays from `xray/AGENTS.md`. `foundry.json` remaps mill SSOT paths and may declare `shopPlant`. CLI re-wear mints once after mill copies. `SKILLS.md` is still **not** written to the consumer root. Inventory `suit` is `overlay` when any facet came from their tree, `fastened` when only mill plant, `costume` when `"costume": true`. Dogfood writes no inventory.
 

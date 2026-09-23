@@ -241,7 +241,7 @@ Install more skills: `npx 0xray skill:install`
 
 ## Testing & Reliability
 
-Four-floor consumer e2e against **0xray@4.0.0**:
+Four-floor consumer e2e against the **4.0** line:
 
 | Suite | Status |
 |-------|--------|

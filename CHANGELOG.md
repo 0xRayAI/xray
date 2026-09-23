@@ -6,14 +6,19 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+## [4.0.21] - 2026-09-23
+
 ### ✨ Features
-- **Vendored Repertoire 0.2.5** — `vendor/@0xray/repertoire` is the published 0.2.5 package (overlays included). Wear replaces an older leftover in `node_modules`. A newer user-installed copy is left alone. Boot reads worn `node_modules`, then vendor, then a sibling checkout last. Repertoire stays optional (`enabled: false` + `provider: repertoire`); Station is the memory when it is off.
-- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` (preToolUse / preCompact / afterFileEdit) so Cursor Cloud heats Station and gates tools. Leaves an existing file alone. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
+- **Cleanup is memory** — `applyStationHeat` grows the project copy when Repertoire is on: kernel sessions and NOTES/CLEANSE diary heat, then prunes keyword names. Dest is laws (named invariants), not hangar `repo-*` or git slugs. Groover field stays off. Opt-out still skips seed and grow. Station stays the pickup card. Not a new MCP/skill.
+- **Live context memory** — capture then grow. Session `patterns` observe existing dest/stack laws mentioned in git — they do not mint commit slugs. Cursor skip / afterFileEdit, Grok heat, Hermes pre-process, and OpenClaw pre-tool share one dest lock so parallel seats write one project copy. Not a new MCP/skill.
+- **Vendored Repertoire 0.2.5** — `vendor/@0xray/repertoire` is the published 0.2.5 package (overlays included). Wear replaces an older leftover in `node_modules`. A newer user-installed copy is left alone. Boot reads worn `node_modules`, then vendor, then a sibling checkout last. **Repertoire is preferred.** Explicit opt-out (`enabled: false` + `provider: repertoire`) still skips seed and grow; Station is the memory when it is off.
+- **Cursor fifth wear** — `install-bridges.cjs` fastens project `.cursor/hooks.json` plus relative `.cursor/hooks/*.sh` so Cursor Cloud heats Station and gates tools. Leftover env-assignment commands are rewritten. Not a fifth chat TUI. No new MCP/skill surface. Pack gate (`REQUIRED_PACK_PATHS`) now requires `dist/integrations/cursor/hooks/{hooks.json,pre-tool-use.js,pre-compact.js,after-file-edit.js,cursor-hook-utils.js,cursor-usage-receipt.js,xray-cloud-hook.sh,pre-tool-use.sh,pre-compact.sh,after-file-edit.sh}` so a published tarball cannot ship a dead consumer command. `preToolUse` / `afterFileEdit` rewrite the card when git HEAD or Repertoire count diverges — Ticket / Durable / Seed stay. OP-PROC stays in the hook, not on Station.
 
 ### 📚 Documentation
 - Cursor fifth wear in README integrations table, AGENTS / AGENTS-consumer / SKILLS / llms.txt, and Docusaurus integrations / getting-started / consumer-migration.
 - **Lead cadence (syncopation)** — `grok-bot/ops/LEAD-CADENCE.md` is the peer-lead OP-PROC: dummy `SKILLS.md` tests, same-sess wear + Station card, npm OTP+poll, always branch/worktree/PR, loop until Station is done, workstreams not idle pacers. Wired into `orchestrator` skill, AGENTS hot-swap, OPS-CATALOG. Not a new skill (Codex 69).
-- **Repertoire project copy** — shipped `memory_routing.config.signalsPath` is `.xray/state/repertoire/curated_signals.json`. The factory tarball stays read-only. After compact the suit routes the living project names, not the 8-name seed.
+- **Repertoire is preferred** — README, SKILLS.md, llms.txt, AGENTS, AGENTS-consumer, and the memory guides say wear it. Dest is named laws. Station is the compact ticket, not a substitute. Shipped `signalsPath` is `.xray/state/repertoire/curated_signals.json`. Do not pin 0.1.8.
+- **Few files have versions** — patch stamps live in `package.json`, CHANGELOG, and stamped JSON only. Guides, Station, and OP-PROC do not pin a cut. `release:docs-check` refuses present-tense `0xray@x.y.z` / “this cut is” on those surfaces.
 - **Board clock** — critique board wakes on PR events and resumes the same critic. Two idle pacers (reviewer + lead-reader) are forbidden; they inflate context and cause compact. Merge after PASS+CI (gate A). Publish only after mill-gate D + `foundry gate`.
 - **Dispatch encode** — lead cards ticket + PR URLs + “Wear, then review.” Critic OP-PROC lives on `SEATS.md` Reviewer. When a law is spoken twice, write it to disk this wake. No new skill.
 - **Ship decision matrix** — lead-owned. A PR+CI · B pack (`assert-packed-dist-cli` + consumer smoke) · C `npm run release:docs-check` · D `npx @0xray/foundry release --i-mean-it`. Green CI is not ship. Spend / credentials stay Ask-first. Host Auto Review may still card npm/Railway; that is not the OS decision.
@@ -27,11 +32,27 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **OP-PROC reload after compact** — overlay dest names *are* OP-PROC. Heat writes them to `.xray/state/repertoire-working.json` `opProcNames`. Station stays a ticket (count + four working matches). Not a new skill.
 - **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field as if that is the KB. On `LEAD-CADENCE.md` Heads from tails. Not on Station.
 
+### 🐛 Bug Fixes
+- **Dest is laws, not keywords** — wake hydrate is seed + stack only. `patternsFromGit` observes existing laws. Grow skips `syncWorkspaceRepos`. `pruneKeywordDest` drops `repo-*` / release-stamp slugs / generic field-observed names unless factory or stack protects them. Compact `hookEvent` / `event_class` hold across later preToolUse even when HEAD moves. Not a new MCP/skill.
+- **Cursor Cloud host fire** — leftover `XRAY_AI_PATH=` / invoke-probe one-liners never start on Cloud (argv[0] is not a shell). Fasten copies `.cursor/hooks/*.sh` and rewrites leftover env-assignment templates to relative paths (`preToolUse` / `preCompact` / `afterFileEdit` / `beforeShellExecution` / `beforeReadFile`). Workspace wrapper (`/agent` with `repos/xray`) is not a dest heat root, even with a leftover wrapper card. Heat discovers mill cards under `repos/` and the Read path. Dest `EACCES` fail-opens so a wired hook cannot deny every tool. Fasten also writes the daemon workspace root when visible, then pokes local `ReloadAgentSkills` so a mid-session wear binds this daemon. Cloud `preCompact` is supported (hooks.md: Yes). It fires on a real window compact after bind — this seat `event=preCompact` at 2026-09-22T23:16:22 with host stdin (256k / 230861 / 90%). Hook stdout cannot spawn; persist `conversation_id` + `generation_id` on the receipt and resume that id (same as Task's returned agent id). Not a new MCP/skill.
+- **Station ticket survives heat** — leftover `session-boot` extras (`Subject brain` / Draft #96) no longer overwrite a live Station Intent/Plan. Pickup beats a boot-echo card. HEAD move drops a leftover lead-dev-plan that still echoes boot. Not a new MCP/skill.
+
 ### 🔄 Changes
 - **Durable Hold npm** — heat + `cursorBootNeedsRefresh` + `npx 0xray validate` drop/fail `Hold npm` on Station. Identity stays. Mill-gate holds the ship latch. Not a new skill.
-- **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog. 0xray stays 4.0.15.
-- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. 0xray stays 4.0.15.
-- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy. 0xray stays 4.0.15.
+- **Hangar catalog** — mill hangar docs use Clearing `GET /v1/catalog` as the directory (listed hangars: Groover DID + pin, plus solar + live shop), not a hardcoded extract/witness/pin route table. Groover MCP `list_hangars` reads that catalog.
+- **foundry-plant/0** — fasten is a protocol any mill implements, not a 0xray-owned catalog of plant kinds. Builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+.
+- **Blip/sound mills moved to `@0xray/blip`** — 4.44s drawers (render, kapow, vibe, wow-pass listen/cel, sound bed/mixer, looker) live in the blip product mill. `@0xray/foundry@0.1.11` shims `foundry blip|sound` including `blip look`. Railway plant consumes the product mill, not a hand-vendored copy.
+
+---
+
+## [4.0.20] - 2026-09-22
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: rewrite session-boot when HEAD moves — first-wins skip froze metal (same session still heats dest)
+- fix: grow dest from live git on every floor (a7685eb09)
+- fix: heat grows the project copy — cleanup is memory (be10c82eb)
 
 ---
 

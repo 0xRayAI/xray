@@ -4,7 +4,7 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 **4.0** — a suit that survives the context window.
 
-**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · Repertoire when it resolves.
+**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.5, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 
@@ -50,7 +50,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)
 6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
-7. Cursor fifth wear: fasten `.cursor/hooks.json` when absent (preToolUse / preCompact / afterFileEdit). Leaves an existing file alone. Not a fifth chat TUI.
+7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
 8. Optional git hooks
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
@@ -59,9 +59,9 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 **Blip plant:** Product mill `@0xray/blip` (not a mill copy). Hangar shop pair later. Alias `"plant": "blip"` + `npx @0xray/foundry blip render --brief "..." --mode still|motion:orb` writes a 4.44s mp4 **with an audio bed**. Registry v0: still + Rippel five (`orb` `swirl` `snap` `waves` `spark`). Motions are Rippel v2 `VisualConfig.circles` at ≥720p — sharp look + tempo/frequency animation on all five (wireframe is `--engine wireframe` only). Auto bed syncopates to the motion grid. Each mint wears a sparse seed mesh plus field accents (stars, grids, gradients, blinkers); receipt `visualConfig.mesh` + `visualConfig.field` are the fingerprints. `kapow` is a design opt (`motion:kapow`) — two-tier comic stamp on the same stanza. Organs live in the mill: `blip-vibe` (`npx @0xray/foundry blip vibe`) scores stamp density; `blip-looker` (`npx @0xray/foundry blip look`) is the friend hitting replay; appeal 0–10; ship bar is **8**. `still` is the Power Plant ident — plate dissolves over 4.44s at ≥720p (`#08090B` `#F5F7FA` `#3DE0E8` `#F5C518` `#4A7FD4`), not a frozen poster. Adding an organ is a mill publish, not an xray catalog PR. CLI shim `foundry blip` remains (0.1.11+). Inspect checks duration / mode id / file / audio.
 
-## Memory routing + Repertoire (v3.3+)
+## Memory routing + Repertoire (preferred, v3.3+)
 
-**Station is the successor card** (Read `.xray/state/STATION.md`). Repertoire 0.2 is a thin routing seed (8 factory names). The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8 for mill wear. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
+**Wear Repertoire.** It is the long-term judgment organ. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. **Station is the compact ticket** (Read `.xray/state/STATION.md`) — not a substitute for Repertoire. The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
 
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 

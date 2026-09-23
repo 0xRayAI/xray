@@ -9,6 +9,7 @@ import {
   appendHookActivity,
   checkCodexPatterns,
   checkFullTestSuite,
+  cursorHeatRoots,
   cursorSessionId,
   cursorToolContext,
   cursorWorkspaceRoot,
@@ -47,57 +48,61 @@ async function main() {
   try {
     const event = await readStdinJson();
     const eventRoot = cursorWorkspaceRoot(event);
-    ensureCursorSessionBoot(eventRoot, '0xray/cursor-pre-tool-use-boot', {
-      sessionId: cursorSessionId(event),
-    });
+    const sessionId = cursorSessionId(event);
+    const heatRoots = cursorHeatRoots(event);
+    for (const root of heatRoots) {
+      ensureCursorSessionBoot(root, '0xray/cursor-pre-tool-use-boot', { sessionId });
+    }
+    const gateRoot = heatRoots[0] || eventRoot;
 
-    const features = loadFeatures(eventRoot);
-    const gateFeatures = loadDelegationGateFeatures(eventRoot, 'cursor');
+    const features = loadFeatures(gateRoot);
+    const gateFeatures = loadDelegationGateFeatures(gateRoot, 'cursor');
     const ctx = cursorToolContext(event);
     toolName = ctx.toolName;
     const { content, cmd, toolInput } = ctx;
-    const sessionId = cursorSessionId(event);
 
     const gateBlock = evaluatePreToolGate(toolName, toolInput, {
-      projectRoot: eventRoot,
+      projectRoot: gateRoot,
       sessionId,
       features: gateFeatures,
       host: 'cursor',
     });
     if (!gateBlock.allow) {
-      finish(eventRoot, 'deny', gateBlock.reason, gateBlock.hint, toolName, { gate: gateBlock.gate });
+      finish(gateRoot, 'deny', gateBlock.reason, gateBlock.hint, toolName, { gate: gateBlock.gate });
     }
 
     if (isWriteTool(toolName) && content) {
       const extraBlock = checkCodexPatterns(content, { terms: [11, 29] });
-      if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
+      if (extraBlock) finish(gateRoot, 'deny', extraBlock, null, toolName);
     }
 
     if (isShellTool(toolName) && cmd) {
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+      if (testHint) finish(gateRoot, 'allow', null, testHint, toolName);
     }
 
     if (gateBlock.reason) {
-      finish(eventRoot, 'allow', gateBlock.reason, gateBlock.hint, toolName, {
+      finish(gateRoot, 'allow', gateBlock.reason, gateBlock.hint, toolName, {
         gate: gateBlock.gate,
         warn: true,
       });
     }
 
-    finish(eventRoot, 'allow', null, null, toolName);
+    finish(gateRoot, 'allow', null, null, toolName);
   } catch (err) {
     appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,
       error: err.message,
+      failOpen: true,
     });
+    // Dest EACCES on a Cloud workspace wrapper must not deny every tool.
     finish(
       fallbackRoot,
-      'deny',
-      `preToolUse hook error — blocked for safety: ${err.message}`,
+      'allow',
+      `preToolUse hook error — fail open: ${err.message}`,
       null,
       toolName,
-      { gate: 'hook-error' },
+      { gate: 'hook-error-fail-open' },
     );
   }
 }
