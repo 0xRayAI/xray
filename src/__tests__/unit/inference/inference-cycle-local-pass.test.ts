@@ -45,6 +45,7 @@ function makeSession(id: string): SessionInference {
         description: "Methods extracted from monolith",
       },
     ],
+    matchedPrimitives: ["wake-cascade"],
     metrics: {
       commits: 10,
       filesChanged: 10,
@@ -91,7 +92,7 @@ describe("Inference cycle local governance pass", () => {
     });
     expect(patternVote?.decision).toBe("approve");
     expect(patternVote?.confidence).toBe(0.89);
-    const lessons = recordLesson.mock.calls.map((call) => call[0] as { success: boolean; operation: string });
-    expect(lessons.some((lesson) => lesson.success && lesson.operation.includes("Extract Method"))).toBe(true);
+    const lessons = recordLesson.mock.calls.map((call) => call[0] as { success: boolean; operation: string; signals?: string[] });
+    expect(lessons.some((lesson) => lesson.success && lesson.operation.includes("Extract Method") && lesson.signals?.includes("wake-cascade"))).toBe(true);
   });
 });

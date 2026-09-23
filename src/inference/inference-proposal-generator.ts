@@ -1,6 +1,22 @@
 import type { InferenceProposal, InferenceCycleResult } from "./inference-cycle.js";
 import type { InferenceCorpus, RecurringPattern, RecurringProblem } from "./inference-accumulator.js";
 
+function primitivesForSessions(corpus: InferenceCorpus, sessionIds: string[]): string[] {
+  const wanted = new Set(sessionIds);
+  const names: string[] = [];
+  for (const session of corpus.sessions) {
+    if (!wanted.has(session.sessionId)) continue;
+    for (const name of session.matchedPrimitives ?? []) names.push(name);
+  }
+  return [...new Set(names)];
+}
+
+function sessionsForWrongTurn(corpus: InferenceCorpus, turn: string): string[] {
+  return corpus.sessions
+    .filter((session) => session.wrongTurns.includes(turn))
+    .map((session) => session.sessionId);
+}
+
 function classifyProposalType(problemPattern: string): InferenceProposal["type"] {
   const lower = problemPattern.toLowerCase();
   if (lower.includes("bug") || lower.includes("fix") || lower.includes("stability")) return "fix";
@@ -101,6 +117,7 @@ export function generateProposals(
       confidence: Math.min(0.95, 0.5 + problem.occurrences * 0.15),
       source: "recurring_problem",
       status: "pending",
+      namedSignals: primitivesForSessions(corpus, problem.sessions),
     });
   }
 
@@ -122,6 +139,7 @@ export function generateProposals(
       confidence: 0.4,
       source: "recurring_problem",
       status: "pending",
+      namedSignals: primitivesForSessions(corpus, [session]),
     });
     seenPatterns.add(normalized);
   }
@@ -139,6 +157,7 @@ export function generateProposals(
       confidence: pattern.avgConfidence,
       source: "recurring_pattern",
       status: "pending",
+      namedSignals: primitivesForSessions(corpus, pattern.sessions),
     });
   }
 
@@ -154,6 +173,7 @@ export function generateProposals(
       confidence: 0.7,
       source: "wrong_turn",
       status: "pending",
+      namedSignals: primitivesForSessions(corpus, sessionsForWrongTurn(corpus, wt)),
     });
   }
 

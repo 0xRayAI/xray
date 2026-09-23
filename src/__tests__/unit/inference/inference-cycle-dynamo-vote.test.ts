@@ -101,9 +101,7 @@ describe("Inference cycle Dynamo MCP vote", () => {
     expect(dynamoVote?.decision).toBe("needs_revision");
     expect(dynamoVote?.details.join(" ")).toContain("external-dynamo: needs_revision (0.76)");
     expect(dynamoVote?.details.join(" ")).not.toContain("parse-failed");
-    const lessons = recordLesson.mock.calls.map((call) => call[0] as { success: boolean });
-    expect(lessons.length).toBeGreaterThan(0);
-    expect(lessons.every((lesson) => lesson.success === false)).toBe(true);
+    expect(recordLesson).not.toHaveBeenCalled();
   });
 
   it("stores an unreadable governance error instead of abstaining at 0.5", async () => {

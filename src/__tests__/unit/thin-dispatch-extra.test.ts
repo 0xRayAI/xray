@@ -144,8 +144,6 @@ describe('thinDispatch — organ after a yield', () => {
     expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
     expect(routed.agent).toBe('architect');
     expect(routed.score.score).toBeGreaterThanOrEqual(26);
-    const lesson = recordLesson.mock.calls.at(-1)?.[0] as { operation: string; success: boolean } | undefined;
-    expect(lesson?.operation).toBe('attestation-as-map');
-    expect(lesson?.success).toBe(true);
+    expect(recordLesson).not.toHaveBeenCalled();
   });
 });

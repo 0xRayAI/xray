@@ -20,6 +20,8 @@ export interface InferenceProposal {
   confidence: number;
   source: "recurring_problem" | "recurring_pattern" | "wrong_turn";
   status: "pending" | "approved" | "rejected" | "applied" | "failed";
+  /** Repertoire signals the sessions behind this proposal already named. */
+  namedSignals?: string[];
 }
 
 export interface InferenceCycleResult {
@@ -345,17 +347,17 @@ export class InferenceCycle {
     for (const proposal of proposals) {
       const vote = votes.find((item) => item.proposalId === proposal.id);
       if (!vote) continue;
-      if (vote.decision !== "approve" && vote.decision !== "reject" && vote.decision !== "needs_revision") {
-        continue;
-      }
+      if (vote.decision !== "approve" && vote.decision !== "reject") continue;
       if (vote.details.some((line) => line.includes("governance error"))) continue;
 
+      const named = proposal.namedSignals ?? [];
       const taught = recordLesson({
         operation: [proposal.title, proposal.description, ...proposal.evidence].join("\n"),
         success: vote.decision === "approve",
         taskId: proposal.id,
         assignedAgent: "inference-cycle",
         sessionId: cycleId,
+        ...(named.length > 0 ? { signals: named } : {}),
       });
       if (taught.length > 0) {
         frameworkLogger.log("inference-cycle", "lesson-recorded", "info", {

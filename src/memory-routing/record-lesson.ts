@@ -6,6 +6,8 @@ export interface LessonInput {
   taskId: string;
   assignedAgent: string;
   sessionId: string;
+  /** Signals the finished task already named. When set, text matching is not used. */
+  signals?: string[];
 }
 
 /**
@@ -16,11 +18,8 @@ export function recordLesson(input: LessonInput): string[] {
   const provider = ensureMemoryRoutingProviderSync();
   if (provider.id === "null" || !provider.ingestFeedback) return [];
 
-  const names = [
-    ...new Set(
-      provider.buildRoutingContext(input.operation).matchedSignals.filter((name) => name.length > 0),
-    ),
-  ];
+  const named = input.signals ?? provider.buildRoutingContext(input.operation).matchedSignals;
+  const names = [...new Set(named.filter((name) => name.length > 0))];
   if (names.length === 0) return [];
 
   provider.ingestFeedback({

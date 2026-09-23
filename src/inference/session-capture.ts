@@ -14,6 +14,8 @@ export interface SessionInference {
   reasoningChain: ReasoningLink[];
   patterns: StructuralPattern[];
   metrics: SessionMetrics;
+  /** Signals this session already named. Loaded from matched_primitives. */
+  matchedPrimitives?: string[];
 }
 
 export interface ReasoningLink {

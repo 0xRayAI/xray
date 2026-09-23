@@ -133,7 +133,9 @@ export function loadSessionInferences(dir: string): SessionInference[] {
     .filter((f) => f.startsWith("session-") && f.endsWith(".json"))
     .map((f) => {
       try {
-        return JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        const parsed = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        parsed.matchedPrimitives = readMatchedPrimitives(parsed);
+        return parsed;
       } catch {
         return null;
       }
@@ -142,6 +144,14 @@ export function loadSessionInferences(dir: string): SessionInference[] {
 }
 
 /** Captured patterns sometimes omit evidence. That is an empty list, not a throw. */
+function readMatchedPrimitives(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const raw = (value as { matched_primitives?: unknown }).matched_primitives
+    ?? (value as { matchedPrimitives?: unknown }).matchedPrimitives;
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((item): item is string => typeof item === "string" && item.length > 0))];
+}
+
 function patternEvidence(pattern: { evidence?: unknown }): string[] {
   if (!Array.isArray(pattern.evidence)) return [];
   return pattern.evidence.filter((item): item is string => typeof item === "string");

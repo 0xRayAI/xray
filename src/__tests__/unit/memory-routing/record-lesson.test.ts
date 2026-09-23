@@ -53,4 +53,40 @@ describe("recordLesson", () => {
     expect(taught).toEqual([]);
     expect(ingestFeedback).not.toHaveBeenCalled();
   });
+
+  it("grades signals the task already named even when the text matches nothing", () => {
+    buildRoutingContext.mockReturnValue({ matchedSignals: [] });
+
+    const taught = recordLesson({
+      operation: "Codify test-expansion pattern",
+      success: false,
+      taskId: "prop-3",
+      assignedAgent: "inference-cycle",
+      sessionId: "cycle-1",
+      signals: ["wake-cascade", "wake-cascade"],
+    });
+
+    expect(taught).toEqual(["wake-cascade"]);
+    expect(ingestFeedback).toHaveBeenCalledTimes(1);
+    expect(ingestFeedback.mock.calls[0][0]).toMatchObject({
+      memorySignals: ["wake-cascade"],
+      success: false,
+    });
+  });
+
+  it("writes nothing when the named signal list is empty", () => {
+    buildRoutingContext.mockReturnValue({ matchedSignals: ["wake-cascade"] });
+
+    const taught = recordLesson({
+      operation: "wake-cascade",
+      success: true,
+      taskId: "prop-4",
+      assignedAgent: "inference-cycle",
+      sessionId: "cycle-1",
+      signals: [],
+    });
+
+    expect(taught).toEqual([]);
+    expect(ingestFeedback).not.toHaveBeenCalled();
+  });
 });
