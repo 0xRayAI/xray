@@ -47,7 +47,7 @@ A new critic or any new subagent that does not already have this thread gets the
 
 The lead keeps control. Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply. The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit. The lead checks the result.
 
-Chat is not the brain. A cascade that must survive compaction is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture.
+Chat is not the brain. A cascade that must survive compaction is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Capture priority: a law is an invariant you would otherwise re-read the source to relearn. One law per subsystem bone. Heat matches kernel diary text onto existing names at 0.55, the promotion floor, so more hits do not raise conviction. Hero names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`.
 
 ## Fail closed
 Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.

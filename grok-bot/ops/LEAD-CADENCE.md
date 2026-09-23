@@ -158,6 +158,8 @@ Monitor the lead. New law that had to be spoken twice goes to disk this wake: `S
 
 Chat is not the brain. Compaction drops the seat. A cascade that must survive is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Observation counts are not capture.
 
+Capture priority: a law is an invariant you would otherwise re-read the source to relearn. One law per subsystem bone. Telemetry stays in the kernel diary and inference output. Heat matches that text onto existing names at confidence 0.55, the promotion floor, so more hits do not raise conviction. The diary is `logs/framework/activity.log`, routing outcomes, pattern metrics, and `.xray/inference/latest-workflow.json` plus `workflow-status.json`. Hero names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`.
+
 ### Ship track (always)
 
 1. **One thing at a time.** Brain (Cursor wear + Repertoire) before swarm. Swarm after the organ routes stack names.

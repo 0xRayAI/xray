@@ -102,6 +102,16 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(cascade?.definition).toMatch(/test then ship is the hero/);
     expect(cascade?.definition).toMatch(/the lead keeps control/);
     expect(cascade?.definition).toMatch(/A reflection is not this capture/);
+    expect(text).toMatch(/Capture priority/);
+    expect(text).toMatch(/heat-is-not-conviction/);
+    expect(text).toMatch(/inference-cycle-invariant/);
+    expect(text).toMatch(/governance-vote-invariant/);
+    expect(text).toMatch(/thin-dispatch-invariant/);
+    const byName = new Map(overlay.signals.map((signal) => [signal.name, signal.definition]));
+    expect(byName.get('heat-is-not-conviction')).toMatch(/do not raise conviction/);
+    expect(byName.get('inference-cycle-invariant')).toMatch(/keyword map over session problem strings/);
+    expect(byName.get('governance-vote-invariant')).toMatch(/clamped to 0\.\.1/);
+    expect(byName.get('thin-dispatch-invariant')).toMatch(/at least 26 forces architect/);
   });
 
   it('rewires worn lead surfaces — no new skill file', () => {
@@ -120,6 +130,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Chat is not the brain/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/A reflection is not this capture/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Capture priority/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/heat-is-not-conviction/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
@@ -137,6 +149,8 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Chat is not the brain/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/A reflection is not this capture/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Capture priority/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/thin-dispatch-invariant/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
