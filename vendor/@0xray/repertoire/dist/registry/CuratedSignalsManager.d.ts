@@ -23,6 +23,10 @@ export declare function clauseTokens(text: string): string[];
  * The same words scattered through a long diary are not a clause.
  */
 export declare function lawClauseInText(definition: string, text: string, span?: number): boolean;
+export declare function isAboveConfidenceFloor(value: number, gate?: number): boolean;
+/** Hot lines kept on a law. Older lines leave only after their task id is in the ledger. */
+export declare const LESSON_LINE_CAP = 20;
+export declare const LESSON_TEXT_CAP = 400;
 /**
  * The diary names a law only when it contains the signal id, or the id with
  * hyphens read as spaces. A repo tail, leftover tokens, and two definition
@@ -88,8 +92,15 @@ export declare class CuratedSignalsManager {
      */
     recordFeedbackOutcome(entry: OrchestratorFeedbackEntry): FeedbackOutcomeResult[];
     /**
+     * Append one graded line. A task id already on the law, or already aged into
+     * the ledger, does not move the average and does not append again.
+     * Past the cap, the oldest line leaves only after its id is in the ledger.
+     */
+    private rememberLesson;
+    /**
      * Conviction that left the 0.55 floor. Not the observation counter.
-     * A wake that copies the overlay floor back onto dest restores this file.
+     * Graded lines sit beside the average. A wake that copies the overlay floor
+     * back onto dest restores both.
      */
     private writeLearnedConviction;
     /**

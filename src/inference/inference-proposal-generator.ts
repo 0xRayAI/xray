@@ -43,6 +43,24 @@ function sessionsForWrongTurn(corpus: InferenceCorpus, turn: string): string[] {
     .map((session) => session.sessionId);
 }
 
+const LESSON_TEXT_CAP = 400;
+
+/** The trace a graded line stores. Wrong turns, then approaches, then solutions. */
+function lessonTrace(corpus: InferenceCorpus, sessionIds: string[]): string {
+  const wanted = new Set(sessionIds);
+  const lines: string[] = [];
+  for (const session of corpus.sessions) {
+    if (!wanted.has(session.sessionId)) continue;
+    for (const turn of session.wrongTurns ?? []) {
+      if (turn.trim()) lines.push(turn.trim());
+    }
+    for (const line of [...(session.approaches ?? []), ...(session.solutions ?? [])]) {
+      if (line.trim()) lines.push(line.trim());
+    }
+  }
+  return [...new Set(lines)].join("; ").slice(0, LESSON_TEXT_CAP);
+}
+
 function sortedSessionIds(sessionIds: string[]): string[] {
   return [...new Set(sessionIds.filter((sessionId) => sessionId.length > 0))].sort();
 }
@@ -176,6 +194,7 @@ export function generateProposals(
       source: "recurring_problem",
       status: "pending",
       namedSignals: primitivesForSessions(corpus, sessions),
+      lesson: lessonTrace(corpus, sessions),
     });
   }
 
@@ -204,6 +223,7 @@ export function generateProposals(
       source: "recurring_problem",
       status: "pending",
       namedSignals: primitivesForSessions(corpus, sessions),
+      lesson: lessonTrace(corpus, sessions),
     });
     seenPatterns.add(normalized);
   }
@@ -225,6 +245,7 @@ export function generateProposals(
       source: "recurring_pattern",
       status: "pending",
       namedSignals: signalsForPattern(corpus, { ...pattern, sessions }),
+      lesson: lessonTrace(corpus, sessions),
     });
   }
 
@@ -244,6 +265,7 @@ export function generateProposals(
       source: "wrong_turn",
       status: "pending",
       namedSignals: primitivesForSessions(corpus, sessions),
+      lesson: lessonTrace(corpus, sessions),
     });
   }
 
@@ -273,6 +295,7 @@ export function generateProposals(
       source: "recurring_pattern",
       status: "pending",
       namedSignals: [name],
+      lesson: lessonTrace(corpus, sessions),
     });
   }
 

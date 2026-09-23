@@ -70,6 +70,7 @@ describe("named signal proposals", () => {
     const grade = proposals.find((proposal) => proposal.id === "named:wake-cascade:sess-landed");
     expect(grade?.namedSignals).toEqual(["wake-cascade"]);
     expect(grade?.confidence).toBe(0.85);
+    expect(grade?.lesson).toBe("fix: observe the law");
   });
 
   it("keeps a wrong turn below the cutoff when no kept proposal already names it", () => {

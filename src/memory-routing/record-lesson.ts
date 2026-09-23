@@ -8,6 +8,8 @@ export interface LessonInput {
   sessionId: string;
   /** Signals the finished task already named. When set, text matching is not used. */
   signals?: string[];
+  /** Approaches, solutions, or the wrong turn from the sessions that named the law. */
+  lesson?: string;
 }
 
 /**
@@ -31,6 +33,7 @@ export function recordLesson(input: LessonInput): string[] {
     complexity: 0,
     success: input.success,
     durationMs: 0,
+    lesson: input.lesson ?? "",
   });
   return names;
 }

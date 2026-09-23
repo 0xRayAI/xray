@@ -25,6 +25,7 @@ import {
   ensureMemoryRoutingProviderSync,
   initializeMemoryRouting,
 } from "../memory-routing/index.js";
+import type { MemorySignalLessons } from "../memory-routing/types.js";
 
 initializeMemoryRouting();
 
@@ -89,7 +90,7 @@ export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[] } } {
+): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; lessons?: MemorySignalLessons[] } } {
   const score = scoreComplexity(operation, context, thresholds);
   let agent = routeToAgent(score);
 
@@ -103,6 +104,7 @@ export function scoreAndRoute(
       providerId: resolved.context.providerId,
       adjustedScore: resolved.adjustedScore,
       signals: resolved.context.matchedSignals,
+      ...(resolved.context.lessons ? { lessons: resolved.context.lessons } : {}),
     };
 
     const adjustedLevel = getLevelFromScore(resolved.adjustedScore, thresholds);

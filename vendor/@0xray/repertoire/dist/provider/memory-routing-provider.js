@@ -37,6 +37,7 @@ function toRoutingContext(ctx) {
         synthesisAvailable: ctx.synthesisAvailable,
         signalConfidences: ctx.signalConfidences,
         avgMatchConfidence: ctx.avgMatchConfidence,
+        ...(ctx.lessons ? { lessons: ctx.lessons } : {}),
     };
 }
 export { resolveReadableConfigPath as resolveProviderConfigPath } from '../paths.js';
@@ -191,6 +192,7 @@ export class RepertoireMemoryRoutingProvider {
             success: entry.success,
             durationMs: entry.durationMs,
             dynamoResult: entry.dynamoResult,
+            ...(typeof entry.lesson === 'string' ? { lesson: entry.lesson } : {}),
         });
     }
     buildSynthesisContext(opts) {

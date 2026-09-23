@@ -10,6 +10,7 @@ import { generateProposals } from "./inference-proposal-generator.js";
 import { applyProposals as applyProposalsEx } from "./inference-applier.js";
 import { applyDecisionMatrix } from "../governance/governance-core.js";
 import { recordLesson } from "../memory-routing/record-lesson.js";
+import { writeLessonPickup } from "../memory-routing/lesson-pickup.js";
 
 export interface InferenceProposal {
   id: string;
@@ -22,6 +23,8 @@ export interface InferenceProposal {
   status: "pending" | "approved" | "rejected" | "applied" | "failed";
   /** Repertoire signals the sessions behind this proposal already named. */
   namedSignals?: string[];
+  /** Approaches, solutions, or the wrong turn from those sessions. */
+  lesson?: string;
 }
 
 export interface InferenceCycleResult {
@@ -378,6 +381,7 @@ export class InferenceCycle {
         assignedAgent: "inference-cycle",
         sessionId: cycleId,
         signals: named,
+        lesson: proposal.lesson ?? "",
       });
       if (taught.length > 0) {
         frameworkLogger.log("inference-cycle", "lesson-recorded", "info", {
@@ -387,6 +391,7 @@ export class InferenceCycle {
         });
       }
     }
+    writeLessonPickup(this.projectRoot);
   }
 
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {

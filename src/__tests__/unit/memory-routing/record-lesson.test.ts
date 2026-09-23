@@ -64,6 +64,7 @@ describe("recordLesson", () => {
       assignedAgent: "inference-cycle",
       sessionId: "cycle-1",
       signals: ["wake-cascade", "wake-cascade"],
+      lesson: "fix: observe the law",
     });
 
     expect(taught).toEqual(["wake-cascade"]);
@@ -71,6 +72,7 @@ describe("recordLesson", () => {
     expect(ingestFeedback.mock.calls[0][0]).toMatchObject({
       memorySignals: ["wake-cascade"],
       success: false,
+      lesson: "fix: observe the law",
     });
   });
 

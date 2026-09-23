@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { DEFAULT_PROMOTION_MIN_CONFIDENCE, isConfidenceFloor, } from '../registry/CuratedSignalsManager.js';
 import { meetsConfidenceGate } from '../registry/confidence-decay.js';
 import { applyConfidenceComplexityBoost, confidenceWeightedAgentBoost, DEFAULT_MIN_CONFIDENCE_GATE, getConfidenceForTask, resolveSignalConfidence, } from './confidence-gate.js';
 export class SignalInjector {
@@ -29,6 +30,20 @@ export class SignalInjector {
         const trapSignals = matches.filter((match) => match.signal.tags.includes('ontological-trap'));
         const highConfidenceTrapPresent = ontologicalTrapDetected &&
             trapSignals.some((match) => meetsConfidenceGate(signalConfidences[match.signal.name] ?? 0, DEFAULT_MIN_CONFIDENCE_GATE));
+        const lessons = matches
+            .filter((match) => {
+            const avg = match.signal.observation_stats?.avg_confidence;
+            const lines = match.signal.lessons ?? [];
+            return (typeof avg === 'number'
+                && avg > DEFAULT_PROMOTION_MIN_CONFIDENCE
+                && !isConfidenceFloor(avg)
+                && lines.length > 0);
+        })
+            .map((match) => ({
+            name: match.signal.name,
+            definition: match.signal.definition,
+            lines: match.signal.lessons ?? [],
+        }));
         return {
             matchedSignals: matches.map((match) => match.signal.name),
             matchedTags: [...new Set(matches.flatMap((match) => match.signal.tags))],
@@ -38,6 +53,7 @@ export class SignalInjector {
             signalConfidences,
             avgMatchConfidence,
             highConfidenceTrapPresent,
+            ...(lessons.length > 0 ? { lessons } : {}),
         };
     }
     matchSignalsForTasks(tasks) {
