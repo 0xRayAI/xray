@@ -1,0 +1,13 @@
+{
+  "kind": "forge-go",
+  "mill": "inspect",
+  "profile": "bare",
+  "hooksBound": false,
+  "repertoireFastened": false,
+  "stationPresent": false,
+  "require": "bare",
+  "ok": true,
+  "goal": "KILLER-DUAL Arm B",
+  "repo": "https://github.com/0xRayAI/xray",
+  "generatedAt": "2026-09-15T09:23:55.381Z"
+}

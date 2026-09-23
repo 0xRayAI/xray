@@ -241,7 +241,7 @@ Use **live-gate** + **mill-gate** only. Do not re-implement ProcessorManager in 
 | After commit | git `post-commit` + `inference_session_capture` |
 | Before push | git `pre-push` |
 | Before tag/publish | `npx @0xray/foundry gate` then `gate --verify-only` |
-| Wear / plant | `npx @0xray/foundry inspect` (six checks) |
+| Wear / plant | `npx @0xray/foundry inspect` (six checks + harness GO) |
 | Docs freshness | `npx @0xray/foundry docs-check` |
 | Consumer pack | `consumer-install-smoke.mjs` / `pack:tmp-proof` |
 

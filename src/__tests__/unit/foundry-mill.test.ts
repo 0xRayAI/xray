@@ -1256,6 +1256,7 @@ describe('foundry mill — inspect organ', () => {
         'ci',
         'live-put',
         'isolated-home',
+        'harness',
       ]);
       const isolatedHome = report.checks.find((c) => c.id === 'isolated-home') as {
         isolated?: boolean;
@@ -1368,6 +1369,92 @@ describe('foundry mill — inspect organ', () => {
   it('CLI mint runs inspect after overlay; --skip-live keeps unit mills offline', () => {
     expect(read('scripts/foundry/mint.mjs')).toContain('inspectSuit');
     expect(read('scripts/foundry/cli.mjs')).toContain('inspect: { script: "inspect.mjs"');
+  });
+
+  it('harness probe is observational: vendor Repertoire is not fasten; hooks.json binds', async () => {
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => unknown;
+    };
+    const { probeHarness, classifyHarnessProfile, parseInspectArgs, inspectSuit } = await import(
+      '../../../scripts/foundry/inspect.mjs'
+    );
+    expect(classifyHarnessProfile({ hooksBound: false, repertoireFastened: false, stationPresent: false })).toBe(
+      'bare',
+    );
+    expect(classifyHarnessProfile({ hooksBound: true, repertoireFastened: true, stationPresent: false })).toBe(
+      'suited',
+    );
+    expect(classifyHarnessProfile({ hooksBound: true, repertoireFastened: false, stationPresent: false })).toBe(
+      'partial',
+    );
+    expect(parseInspectArgs(['--skip-live', '--go', '--require-harness=bare', '--goal=arm-b'])).toEqual({
+      skipLive: true,
+      go: true,
+      goOut: null,
+      requireHarness: 'bare',
+      goal: 'arm-b',
+    });
+
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-harness-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
+      );
+      mintConsumerSuit(root, tmp, () => undefined);
+      mkdirSync(path.join(tmp, 'vendor/@0xray/repertoire'), { recursive: true });
+      const bare = probeHarness(tmp);
+      expect(bare.profile).toBe('bare');
+      expect(bare.hooks.bound).toBe(false);
+      expect(bare.repertoire.fastened).toBe(false);
+      expect(bare.repertoire.vendorSource).toBe(true);
+
+      mkdirSync(path.join(tmp, '.cursor'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.cursor/hooks.json'),
+        `${JSON.stringify({ version: 1, hooks: { preToolUse: [{ command: 'true' }] } }, null, 2)}\n`,
+      );
+      expect(probeHarness(tmp).profile).toBe('partial');
+
+      mkdirSync(path.join(tmp, 'node_modules/@0xray/repertoire'), { recursive: true });
+      const suited = probeHarness(tmp);
+      expect(suited.profile).toBe('suited');
+      expect(suited.repertoire.fastened).toBe(true);
+
+      const inspectOpts = {
+        millRoot: root,
+        skipLive: true,
+        env: { HOME: path.join(tmp, '.lastmile-home') },
+        machineHome: '/Users/henry',
+      };
+      const gated = await inspectSuit(tmp, {
+        ...inspectOpts,
+        requireHarness: 'bare',
+        go: true,
+        goal: 'KILLER-DUAL Arm B',
+      });
+      expect(gated.ok).toBe(false);
+      expect(gated.failed).toContain('harness');
+      expect(gated.go?.kind).toBe('forge-go');
+      expect(gated.go?.profile).toBe('suited');
+      expect(gated.go?.ok).toBe(false);
+
+      rmSync(path.join(tmp, '.cursor/hooks.json'));
+      rmSync(path.join(tmp, 'node_modules/@0xray/repertoire'), { recursive: true, force: true });
+      const goBare = await inspectSuit(tmp, {
+        ...inspectOpts,
+        requireHarness: 'bare',
+        go: true,
+        goal: 'KILLER-DUAL Arm B',
+      });
+      expect(goBare.ok, JSON.stringify(goBare.checks, null, 2)).toBe(true);
+      expect(goBare.go?.profile).toBe('bare');
+      expect(goBare.go?.hooksBound).toBe(false);
+      expect(goBare.go?.repertoireFastened).toBe(false);
+      expect(goBare.go?.ok).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
 

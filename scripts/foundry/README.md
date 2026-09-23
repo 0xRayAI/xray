@@ -23,7 +23,7 @@ npx @0xray/foundry release [patch|minor|major] --i-mean-it
 npx @0xray/foundry release --publish-only --dry-run
 npx @0xray/foundry release --publish-only --i-mean-it
 npx @0xray/foundry mint
-npx @0xray/foundry inspect [--skip-live]
+npx @0xray/foundry inspect [--skip-live] [--go] [--go-out PATH] [--require-harness=bare|suited|partial]
 npx @0xray/foundry sound render [--brief TEXT] [--genre ambient|techno|jazz]
 npx @0xray/foundry sound inspect
 npx @0xray/foundry sound mix
@@ -39,7 +39,7 @@ npx @0xray/foundry hooks
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
-`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME). Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
+`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME) plus observational harness (Cursor/Grok hooks bound, Repertoire fastened, Station present). `--go` emits a shop-style forge GO receipt; `--require-harness=bare|suited|partial` turns that observation into a gate. Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 

@@ -29,7 +29,7 @@ const HELP =
   "Mill, not exo. FOUNDRY_ROOT overrides cwd (the repo being milled).\n" +
   "release bumps/commits/pushes/publishes the milled cwd — pass --dry-run or --i-mean-it (or FOUNDRY_RELEASE=1).\n" +
   "Mint fastens the requested factory plant (default mill; foundry.json plant: sound|blip turns mill off), then inspect.\n" +
-  "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL; on a blip seat, last blip receipt.\n" +
+  "inspect runs mill checks plus, on a sound seat, last bed receipt PASS/FAIL; on a blip seat, last blip receipt. Observational harness (hooks / Repertoire / Station). --go emits a forge GO receipt. Not an 8th MCP.\n" +
   "sound render|inspect|mix is the factory-sound plant (brief → seed → genre → wav → metrics; mix levels every variation). Sibling to mill, not a mill copy.\n" +
   "blip render|inspect|vibe|look is the factory-blip plant (brief → seed → still|motion:<id> → 4.44s mp4; vibe is stamp density, look is the friend hitting replay, ship bar 8). Sibling to mill + sound.\n" +
   "gate is build+test. docs-build is Docusaurus on the 0xray exo. ci reports GitHub Actions (no auto-push). hooks installs git pre/post hooks.\n";

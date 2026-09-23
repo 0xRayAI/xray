@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
- * Mill inspect organ. Runs the six checks. Not an 8th MCP. Not PPE.
+ * Mill inspect organ. Runs the six plant checks plus observational harness.
+ * Not an 8th MCP. Not PPE. Does not fasten hooks or Repertoire.
  *
- *   npx @0xray/foundry inspect [--skip-live]
+ *   npx @0xray/foundry inspect [--skip-live] [--go] [--go-out PATH]
+ *     [--require-harness=bare|suited|partial] [--goal TEXT]
  */
 
 import { spawnSync } from "node:child_process";
@@ -61,6 +63,140 @@ function readJson(file) {
   } catch {
     return null;
   }
+}
+
+const HARNESS_PROFILES = new Set(["bare", "suited", "partial"]);
+
+export function parseInspectArgs(argv = process.argv.slice(2)) {
+  const out = {
+    skipLive: false,
+    go: false,
+    goOut: null,
+    requireHarness: null,
+    goal: null,
+  };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--skip-live") out.skipLive = true;
+    else if (arg === "--go") out.go = true;
+    else if (arg === "--go-out") out.goOut = argv[++i] || null;
+    else if (arg.startsWith("--go-out=")) out.goOut = arg.slice("--go-out=".length);
+    else if (arg === "--require-harness") out.requireHarness = argv[++i] || null;
+    else if (arg.startsWith("--require-harness=")) {
+      out.requireHarness = arg.slice("--require-harness=".length);
+    } else if (arg === "--goal") out.goal = argv[++i] || null;
+    else if (arg.startsWith("--goal=")) out.goal = arg.slice("--goal=".length);
+  }
+  if (out.goOut) out.go = true;
+  return out;
+}
+
+function hooksFileBound(file) {
+  if (!fs.existsSync(file)) return false;
+  const json = readJson(file);
+  const hooks = json?.hooks;
+  if (!hooks || typeof hooks !== "object") return false;
+  return Object.values(hooks).some(
+    (list) =>
+      Array.isArray(list) &&
+      list.some((entry) => typeof entry?.command === "string" && entry.command.trim()),
+  );
+}
+
+export function classifyHarnessProfile({ hooksBound, repertoireFastened, stationPresent }) {
+  if (!hooksBound && !repertoireFastened && !stationPresent) return "bare";
+  if (hooksBound && repertoireFastened) return "suited";
+  return "partial";
+}
+
+export function probeHarness(root) {
+  const cursorHooks = path.join(root, ".cursor", "hooks.json");
+  const grokHooks = path.join(root, ".grok", "plugins", "0xray", "hooks", "hooks.json");
+  const grokPluginHooks = path.join(root, ".grok-plugin", "hooks", "hooks.json");
+  const hooks = {
+    cursor: hooksFileBound(cursorHooks),
+    grok: hooksFileBound(grokHooks) || hooksFileBound(grokPluginHooks),
+  };
+  hooks.bound = Boolean(hooks.cursor || hooks.grok);
+
+  const repertoire = {
+    nodeModules: fs.existsSync(path.join(root, "node_modules", "@0xray", "repertoire")),
+    state: fs.existsSync(path.join(root, ".xray", "state", "repertoire")),
+    vendorSource: fs.existsSync(path.join(root, "vendor", "@0xray", "repertoire")),
+  };
+  repertoire.fastened = Boolean(repertoire.nodeModules || repertoire.state);
+
+  const features =
+    readJson(path.join(root, ".xray", "features.json")) ||
+    readJson(path.join(root, "xray", "features.json"));
+  repertoire.memoryRoutingDeclared = features?.memory_routing?.provider === "repertoire";
+
+  const stationPresent = fs.existsSync(path.join(root, ".xray", "state", "STATION.md"));
+  const profile = classifyHarnessProfile({
+    hooksBound: hooks.bound,
+    repertoireFastened: repertoire.fastened,
+    stationPresent,
+  });
+
+  return {
+    id: "harness",
+    hooks,
+    repertoire,
+    station: { present: stationPresent },
+    profile,
+  };
+}
+
+export function checkHarness(root, requireHarness = null) {
+  const probe = probeHarness(root);
+  if (requireHarness && !HARNESS_PROFILES.has(requireHarness)) {
+    return {
+      ...probe,
+      ok: false,
+      require: requireHarness,
+      detail: `unknown --require-harness=${requireHarness} (bare|suited|partial)`,
+    };
+  }
+  if (requireHarness && probe.profile !== requireHarness) {
+    return {
+      ...probe,
+      ok: false,
+      require: requireHarness,
+      detail: `harness profile ${probe.profile} != required ${requireHarness}`,
+    };
+  }
+  return {
+    ...probe,
+    ok: true,
+    require: requireHarness,
+    skipped: !requireHarness,
+    detail: requireHarness ? null : "observational — pass --require-harness to gate",
+  };
+}
+
+function gitRemote(root) {
+  const remote = spawnSync("git", ["config", "--get", "remote.origin.url"], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  if (remote.error || remote.status !== 0) return null;
+  return (remote.stdout || "").trim() || null;
+}
+
+export function buildForgeGo(root, harness, opts = {}) {
+  return {
+    kind: "forge-go",
+    mill: "inspect",
+    profile: harness.profile,
+    hooksBound: Boolean(harness.hooks?.bound),
+    repertoireFastened: Boolean(harness.repertoire?.fastened),
+    stationPresent: Boolean(harness.station?.present),
+    require: harness.require || null,
+    ok: harness.ok !== false,
+    goal: opts.goal || process.env.FOUNDRY_GO_GOAL || null,
+    repo: gitRemote(root),
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 function checkDiff(root) {
@@ -412,6 +548,9 @@ export async function inspectSuit(root, opts = {}) {
   const skipLive = Boolean(opts.skipLive);
   const env = opts.env || process.env;
   const machineHome = opts.machineHome || mint.machineHome();
+  const requireHarness = opts.requireHarness || null;
+  const go = Boolean(opts.go);
+  const goal = opts.goal || null;
 
   const checks = [];
   checks.push(checkDiff(root));
@@ -445,22 +584,38 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
+  checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
   const receipt = checks.find((c) => c.id === "receipt") || {};
-  return {
+  const harness = checks.find((c) => c.id === "harness") || {};
+  const report = {
     ok: failed.length === 0,
     failed: failed.map((c) => c.id),
     checks,
     dna: receipt.dna || null,
     pack: "0xray-suit",
   };
+  if (go) {
+    report.go = buildForgeGo(root, harness, { goal });
+  }
+  return report;
 }
 
 async function main() {
-  const skipLive = process.argv.includes("--skip-live");
+  const args = parseInspectArgs(process.argv.slice(2));
   const root = resolveMillRoot();
-  const report = await inspectSuit(root, { skipLive });
+  const report = await inspectSuit(root, {
+    skipLive: args.skipLive,
+    requireHarness: args.requireHarness,
+    go: args.go,
+    goal: args.goal,
+  });
+  if (args.goOut) {
+    const dest = path.isAbsolute(args.goOut) ? args.goOut : path.join(root, args.goOut);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, `${JSON.stringify(report.go || report, null, 2)}\n`);
+  }
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   process.exit(report.ok ? 0 : 1);
 }
