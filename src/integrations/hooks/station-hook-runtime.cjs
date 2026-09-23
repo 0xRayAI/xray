@@ -395,6 +395,30 @@ function pruneKeywordDest(root) {
   return { removed, kept: kept.length };
 }
 
+const STACK_LAW_FIELDS = [
+  "definition",
+  "tags",
+  "priority",
+  "evaluation_criteria",
+  "validation_experiment",
+  "example_inference_snippet",
+  "implementation_notes",
+];
+
+/** Stack text cadences onto an existing project law. Observation stats stay. */
+function refreshStackLaw(existing, signal) {
+  let dirty = false;
+  for (const field of STACK_LAW_FIELDS) {
+    if (signal[field] == null) continue;
+    const next = signal[field];
+    const prev = existing[field];
+    if (JSON.stringify(prev) === JSON.stringify(next)) continue;
+    existing[field] = next;
+    dirty = true;
+  }
+  return dirty;
+}
+
 function mergeMissingSignals(destPath, incoming) {
   if (!incoming.length || !existsSync(destPath)) return 0;
   let data;
@@ -404,24 +428,35 @@ function mergeMissingSignals(destPath, incoming) {
     return 0;
   }
   if (!Array.isArray(data.signals)) return 0;
-  const have = new Set(
-    data.signals.map((signal) => String((signal && signal.name) || "").trim()).filter(Boolean),
-  );
-  let added = 0;
+  const byName = new Map();
+  for (const signal of data.signals) {
+    const name = String((signal && signal.name) || "").trim();
+    if (name) byName.set(name, signal);
+  }
+  let changed = 0;
   for (const signal of incoming) {
     const name = String(signal.name).trim();
-    if (!name || have.has(name)) continue;
-    data.signals.push({
-      ...signal,
-      name,
-      tags: Array.isArray(signal.tags) ? signal.tags : [],
-      definition: typeof signal.definition === "string" ? signal.definition : name,
-    });
-    have.add(name);
-    added += 1;
+    if (!name) continue;
+    const existing = byName.get(name);
+    if (!existing) {
+      const created = {
+        ...signal,
+        name,
+        tags: Array.isArray(signal.tags) ? signal.tags : [],
+        definition: typeof signal.definition === "string" ? signal.definition : name,
+      };
+      data.signals.push(created);
+      byName.set(name, created);
+      changed += 1;
+      continue;
+    }
+    if (refreshStackLaw(existing, signal)) changed += 1;
   }
-  if (added) writeFileSync(destPath, `${JSON.stringify(data, null, 2)}\n`);
-  return added;
+  if (changed) {
+    data.last_updated = new Date().toISOString();
+    writeFileSync(destPath, `${JSON.stringify(data, null, 2)}\n`);
+  }
+  return changed;
 }
 
 /** Hydrate project dest from seed + stack. Subject repo-* stay off dest. */

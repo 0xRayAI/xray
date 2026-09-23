@@ -11,7 +11,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### Fixed
 - **Engine cadence.** Change the engine, ship it local (build and install the tree; a live cut stays live), test, review the diff, monitor dest and Station, then ship the PR. Missing moral fusion is not an isotopic reject; vote confidence is a clamped weighted mean; thinDispatch strategy follows the adjusted level; an empty inference cycle saves state and later getInstance options apply. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Not a new skill.
-- **Six planes.** Code, OP-PROC, model, suit, mill, host. Reactive decisions move into OP-PROC as the model improves; that move is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Name `six-planes` on the stack overlay. Not a new skill.
+- **Operating planes.** Code, OP-PROC, model, suit, mill, host, and test/ship. Test then ship is the hero; ship without that proof is the catastrophe. Project long-term memory refreshes a changed stack definition and keeps observation stats. Heat writes the matched names onto Station. Name `operating-planes` on the stack overlay. Not a new skill.
 - **Heat + capture leftover** — module-missing resume is `Repertoire: module unresolved`, not “memory_routing stays off”. Session capture writes `matched_primitives` from existing dest laws in git. Grow receipt is post-prune dest count + heated length. Leftover `provider: null` still migrates old tarballs; explicit opt-out stays `enabled: false` + `provider: repertoire`. Does not republish.
 
 ### 📚 Documentation

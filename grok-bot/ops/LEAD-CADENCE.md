@@ -134,7 +134,7 @@ This suite is the engine that builds the engine. When a seat sees OP-PROC, write
 
 ### Planes
 
-The operating planes are code, OP-PROC, model, suit, mill, and host.
+The operating planes are code, OP-PROC, model, suit, mill, host, and test/ship.
 
 - Code is the reactive engine still in TypeScript.
 - OP-PROC is the procedure the model carries.
@@ -142,6 +142,9 @@ The operating planes are code, OP-PROC, model, suit, mill, and host.
 - The suit is worn PPE: constitution, temperament, Station.
 - The mill fashions and fastens. Version manager is the mill's release hand.
 - The host is the floor. Temperament is how loud the engine is on that floor.
+- Test/ship is the critical OP-PROC plane. Test then ship is the hero. Ship without that proof is the catastrophe. After compaction the brain is operational when this plane still runs.
+
+Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station. Station is the short-term card. That cadence is how the next body still has a brain.
 
 As the model improves, reactive decisions move out of code into OP-PROC. That move is why the mill and the suit exist. It is not fully proved.
 

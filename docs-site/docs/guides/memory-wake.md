@@ -31,6 +31,7 @@ Rewire `applyStationHeat` (and only that). Existing call sites stay:
 ```
 applyStationHeat(root, host, extra, existing)
   1. hydrateWritableSignals(dest)     index present on THIS mill
+                                  changed stack definition refreshes; observation stats stay
   2. maybeCaptureSession(root)        lift off Cursor-only into this runtime
   3. maybeIngestWake(root)            existing match/ingest helpers; debounce
   4. pickup = readNotesPickup(root)   first **Pickup line:** in NOTES, ≤240

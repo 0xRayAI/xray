@@ -22,7 +22,10 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/Engine cadence/);
     expect(text).toMatch(/Ship it local/);
     expect(text).toMatch(/### Planes/);
-    expect(text).toMatch(/code, OP-PROC, model, suit, mill, and host/);
+    expect(text).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
+    expect(text).toMatch(/Test then ship is the hero/);
+    expect(text).toMatch(/Ship without that proof is the catastrophe/);
+    expect(text).toMatch(/refreshes a changed definition/);
     expect(text).toMatch(/version manager strips that patch ref/);
     expect(text).toMatch(/not fully proved/);
     expect(text).toMatch(/Do not freeze the live cut/);
@@ -84,10 +87,13 @@ describe('lead cadence encode — peer can find the beat', () => {
     const overlay = JSON.parse(
       readFileSync(path.join(root, 'vendor/@0xray/repertoire/data/stack-overlay.json'), 'utf8'),
     ) as { signals: Array<{ name: string; definition: string }> };
-    const six = overlay.signals.find((signal) => signal.name === 'six-planes');
-    expect(six?.definition).toMatch(/not fully proved/);
-    expect(six?.definition).toMatch(/version manager strips that patch ref/);
-    expect(six?.definition).toMatch(/Do not freeze the live cut/);
+    const planes = overlay.signals.find((signal) => signal.name === 'operating-planes');
+    expect(planes?.definition).toMatch(/test\/ship/);
+    expect(planes?.definition).toMatch(/the hero/);
+    expect(planes?.definition).toMatch(/the catastrophe/);
+    expect(planes?.definition).toMatch(/refreshes a changed definition/);
+    expect(planes?.definition).toMatch(/not fully proved/);
+    expect(overlay.signals.some((signal) => signal.name === 'six-planes')).toBe(false);
   });
 
   it('rewires worn lead surfaces — no new skill file', () => {
@@ -98,7 +104,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Engine cadence/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Ship it local/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/### Planes/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Test then ship is the hero/);
+    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/version manager strips that patch ref/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
@@ -111,7 +119,9 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/Engine cadence/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Ship it local/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/### Planes/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/code, OP-PROC, model, suit, mill, host, and test\/ship/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Test then ship is the hero/);
+    expect(readFileSync(millGate, 'utf8')).toMatch(/Ship without that proof is the catastrophe/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/version manager strips that patch ref/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/not fully proved/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);

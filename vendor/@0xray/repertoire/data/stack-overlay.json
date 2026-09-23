@@ -771,21 +771,22 @@
       }
     },
     {
-      "name": "six-planes",
-      "definition": "Operating planes are code (reactive engine), OP-PROC (procedure the model carries), model (the seat), suit (worn PPE), mill (version manager fashions and fastens), and host (the floor). As the model improves, reactive decisions move out of TypeScript into OP-PROC. That move is why the mill and the suit exist and is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut.",
+      "name": "operating-planes",
+      "definition": "Operating planes are code, OP-PROC, model, suit, mill, host, and test/ship. Test/ship is the critical OP-PROC plane: test then ship is the hero; ship without that proof is the catastrophe. Long-term memory is the project law list. Each wake copies stack laws onto that list, keeps observation stats, and refreshes a changed definition. Heat writes the matched names onto Station, the short-term card that survives compaction. As the model improves, reactive decisions move out of code into OP-PROC. That move is not fully proved. Once a version is live, version manager strips that patch ref from guides, Station, and OP-PROC, or advances the next cut. Do not freeze the live cut.",
       "tags": [
         "planes",
         "op-proc",
+        "test-ship",
         "version-manager"
       ],
       "priority": "high",
       "status": "proposed",
       "first_seen": "2026-09-23",
-      "evaluation_criteria": "Reply names the six planes and treats a live cut as version manager's next hand, not a freeze.",
-      "validation_experiment": "A seat repeats do-not-republish after the cut is live, or lists SHAs as the planes — treat as fail.",
+      "evaluation_criteria": "Reply names test/ship as the hero or the catastrophe, and treats a live cut as version manager's next hand.",
+      "validation_experiment": "A seat ships without the test, or wakes after compact without the test/ship plane — treat as fail.",
       "master_index_integration": "Project-local curated_signals after hydrateWritableSignals merges data/stack-overlay.json. Never write the factory tarball.",
       "implementation_notes": "LEAD-CADENCE.md Planes. Not a new skill. Patch stamps stay in package.json, CHANGELOG, and stamped JSON.",
-      "example_inference_snippet": "Once a version is live, version manager strips that patch ref or advances the next cut.",
+      "example_inference_snippet": "Test then ship is the hero. Ship without that proof is the catastrophe.",
       "observation_stats": {
         "observation_count": 1,
         "avg_confidence": 0.55,
