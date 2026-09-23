@@ -47,6 +47,7 @@ const NO_PRESENT_TENSE_PATCH = [
   'docs-site/docs/guides/memory-wake.md',
   'docs-site/docs/guides/memory-routing.md',
   'docs-site/docs/guides/repertoire.md',
+  'docs-site/docs/guides/station-vs-repertoire.md',
   'docs-site/docs/guides/getting-started.md',
   'docs-site/docs/guides/integrations.md',
   'docs-site/docs/guides/consumer-migration.md',
@@ -70,6 +71,7 @@ const REQUIRED_GUIDES = [
   'docs-site/docs/guides/memory-routing.md',
   'docs-site/docs/guides/aside-context.md',
   'docs-site/docs/guides/repertoire.md',
+  'docs-site/docs/guides/station-vs-repertoire.md',
   'docs-site/docs/guides/integrations.md',
   'docs-site/docs/guides/consumer-migration.md',
   'docs-site/docs/mcp/README.md',
@@ -83,6 +85,18 @@ function millLawLagErrors(content) {
   }
   if (/SKILLS\.md \+ 45 skills → platform skill directories/.test(content)) {
     errors.push('lags mill law: postinstall must not sync 45 skills as default plant');
+  }
+  return errors;
+}
+
+/** Opt-out is features.json, not package-absence. */
+function repertoireOptOutErrors(content) {
+  const errors = [];
+  if (/\(no @0xray\/repertoire\)/.test(content)) {
+    errors.push('opt-out must not teach package-absence (no @0xray/repertoire)');
+  }
+  if (/memory_routing stays off/.test(content)) {
+    errors.push('opt-out must not teach memory_routing stays off on npm install');
   }
   return errors;
 }
@@ -354,6 +368,13 @@ export function validateReleaseDocs(rootDir = resolveMillRoot()) {
     }
     for (const e of presentTensePatchPinErrors(content)) {
       errors.push(`${rel}: ${e}`);
+    }
+  }
+
+  const stationVs = readFile(rootDir, 'docs-site/docs/guides/station-vs-repertoire.md');
+  if (stationVs) {
+    for (const e of repertoireOptOutErrors(stationVs)) {
+      errors.push(`docs-site/docs/guides/station-vs-repertoire.md: ${e}`);
     }
   }
 

@@ -157,7 +157,13 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(src).toContain('NO_PRESENT_TENSE_PATCH');
     expect(src).toContain('PRESENT_TENSE_PATCH_RE');
     expect(src).toContain('docs-site/docs/architecture/v4-now.md');
+    expect(src).toContain('docs-site/docs/guides/station-vs-repertoire.md');
+    expect(src).toContain('repertoireOptOutErrors');
     expect(src).toContain('grok-bot/ops/LEAD-CADENCE.md');
+    const stationVs = read('docs-site/docs/guides/station-vs-repertoire.md');
+    expect(stationVs).not.toContain('no @0xray/repertoire');
+    expect(stationVs).not.toContain('memory_routing stays off');
+    expect(stationVs).toMatch(/explicit opt-out only/);
   });
 
   it('stamps both features.json files and lock matches package.json', () => {
