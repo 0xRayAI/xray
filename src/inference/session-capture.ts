@@ -14,6 +14,10 @@ export interface SessionInference {
   reasoningChain: ReasoningLink[];
   patterns: StructuralPattern[];
   metrics: SessionMetrics;
+  /** Signals this session already named. Session JSON stores this list. */
+  matched_primitives?: string[];
+  /** Same list after load, so callers can read either field. */
+  matchedPrimitives?: string[];
 }
 
 export interface ReasoningLink {

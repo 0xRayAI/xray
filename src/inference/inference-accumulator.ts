@@ -61,11 +61,12 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
   for (const session of sessions) {
     for (const p of session.patterns) {
       const existing = patternMap.get(p.name);
+      const evidence = patternEvidence(p);
       if (existing) {
         existing.count++;
         existing.confidence.push(p.confidence);
         existing.sessions.push(session.sessionId);
-        for (const e of p.evidence) {
+        for (const e of evidence) {
           if (!existing.evidence.includes(e)) existing.evidence.push(e);
         }
       } else {
@@ -73,7 +74,7 @@ export function accumulateCorpus(inferenceDir: string): InferenceCorpus {
           count: 1,
           confidence: [p.confidence],
           sessions: [session.sessionId],
-          evidence: [...p.evidence],
+          evidence: [...evidence],
           description: p.description,
         });
       }
@@ -132,12 +133,42 @@ export function loadSessionInferences(dir: string): SessionInference[] {
     .filter((f) => f.startsWith("session-") && f.endsWith(".json"))
     .map((f) => {
       try {
-        return JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        const parsed = JSON.parse(fs.readFileSync(path.join(dir, f), "utf-8")) as SessionInference;
+        const named = readMatchedPrimitives(parsed);
+        parsed.matched_primitives = named;
+        parsed.matchedPrimitives = named;
+        return parsed;
       } catch {
         return null;
       }
     })
-    .filter((s): s is SessionInference => s !== null);
+    .filter((s): s is SessionInference => isSessionInference(s));
+}
+
+/** Captured patterns sometimes omit evidence. That is an empty list, not a throw. */
+function readMatchedPrimitives(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  const raw = (value as { matched_primitives?: unknown }).matched_primitives
+    ?? (value as { matchedPrimitives?: unknown }).matchedPrimitives;
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((item): item is string => typeof item === "string" && item.length > 0))];
+}
+
+function patternEvidence(pattern: { evidence?: unknown }): string[] {
+  if (!Array.isArray(pattern.evidence)) return [];
+  return pattern.evidence.filter((item): item is string => typeof item === "string");
+}
+
+/** Notes and partial JSON under docs/inference are not sessions. */
+function isSessionInference(value: unknown): value is SessionInference {
+  if (!value || typeof value !== "object") return false;
+  const session = value as SessionInference;
+  return typeof session.sessionId === "string"
+    && Array.isArray(session.patterns)
+    && Array.isArray(session.problems)
+    && Array.isArray(session.approaches)
+    && Array.isArray(session.wrongTurns)
+    && typeof session.metrics?.commits === "number";
 }
 
 function loadLastCycleDate(filePath: string): string | null {

@@ -245,8 +245,19 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
     }
   }
 
+  /** Boot stays flag-gated. A required external call starts the client on demand. */
+  private async armRequiredDynamo(requireExternal: boolean): Promise<void> {
+    if (!requireExternal) return;
+    const integration = await initializeGovernanceIntegration();
+    if (!integration.isAvailable()) {
+      await integration.ensureDynamoClient();
+    }
+  }
+
   private async handleGovernProposals(args: GovernProposalsArgs): Promise<CallToolResult> {
     const service = getGovernanceService();
+    const requireExternal = this.resolveRequireExternal(args.options?.require_external);
+    await this.armRequiredDynamo(requireExternal);
 
     const request: GovernanceRequest = {
       proposals: args.proposals.map((p, i) => ({
@@ -260,7 +271,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       })),
       context: args.context || {},
       options: {
-        requireExternalDynamo: this.resolveRequireExternal(args.options?.require_external),
+        requireExternalDynamo: requireExternal,
       },
     };
 

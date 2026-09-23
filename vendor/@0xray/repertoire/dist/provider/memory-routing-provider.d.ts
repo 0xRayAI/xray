@@ -42,6 +42,16 @@ export interface MemoryRoutingContext {
     synthesisAvailable: boolean;
     signalConfidences?: Record<string, number>;
     avgMatchConfidence?: number;
+    lessons?: Array<{
+        name: string;
+        definition: string;
+        lines: Array<{
+            taskId: string;
+            decision: 'success' | 'failure';
+            text: string;
+            at: string;
+        }>;
+    }>;
 }
 export interface MemoryInheritedContext {
     providerId: string;
@@ -68,6 +78,7 @@ export interface OrchestratorFeedbackEntry {
     success: boolean;
     durationMs: number;
     dynamoResult?: Record<string, unknown>;
+    lesson?: string;
 }
 export interface MemoryRoutingProviderConfig {
     dataDir?: string;

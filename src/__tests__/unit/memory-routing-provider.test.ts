@@ -200,11 +200,11 @@ describe('MemoryRoutingProvider', () => {
     );
 
     if (provider.id === 'repertoire') {
-      const ctx = provider.buildRoutingContext('ontological-trap attestation boundary');
+      const operation = 'attestation-as-map';
+      const ctx = provider.buildRoutingContext(operation);
       expect(ctx.matchedSignals.length).toBeGreaterThan(0);
       expect(ctx.flags.ontologicalTrapDetected).toBe(true);
 
-      const operation = 'ontological-trap attestation boundary';
       const thin = provider.resolveThinDispatch('code-reviewer', operation, 30);
       expect(thin.adjustedScore).toBeGreaterThanOrEqual(30);
       expect(thin.context.flags.ontologicalTrapDetected).toBe(true);

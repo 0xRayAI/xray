@@ -102,7 +102,7 @@ describe("Inference Layer E2E", () => {
       expect(result.duration).toBeGreaterThan(0);
 
       for (const proposal of result.proposals) {
-        expect(proposal.id).toMatch(/^prop-/);
+        expect(proposal.id).toMatch(/^(prop-|pattern:|problem:|wrong:|named:)/);
         expect(["fix", "refactor", "automate", "guard", "codify"]).toContain(proposal.type);
         expect(proposal.confidence).toBeGreaterThan(0);
         expect(proposal.confidence).toBeLessThanOrEqual(1);

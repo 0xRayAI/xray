@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { frameworkLogger } from '../core/framework-logger.js';
@@ -27,6 +28,8 @@ function resolveUnavailableReason(provider: MemoryRoutingProvider): string | nul
     return null;
   }
 }
+
+const require = createRequire(import.meta.url);
 
 const REPERTOIRE_CANDIDATE_PATHS = [
   'node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js',
@@ -148,6 +151,68 @@ export function resolveLeftoverEnabledConfig(
   };
   if (config.config) enabled.config = config.config;
   return enabled;
+}
+
+function providerFromModule(
+  mod: {
+    createMemoryRoutingProvider?: (config?: MemoryRoutingProviderConfig) => MemoryRoutingProvider;
+    default?: {
+      createMemoryRoutingProvider?: (config?: MemoryRoutingProviderConfig) => MemoryRoutingProvider;
+    };
+  },
+  modulePath: string,
+  effective: MemoryRoutingConfig,
+): MemoryRoutingProvider {
+  const factory = mod.createMemoryRoutingProvider ?? mod.default?.createMemoryRoutingProvider;
+  if (typeof factory !== 'function') {
+    throw new Error(`Module ${modulePath} must export createMemoryRoutingProvider()`);
+  }
+  const provider = factory((effective.config ?? {}) as MemoryRoutingProviderConfig);
+  if (!provider?.id || typeof provider.isAvailable !== 'function') {
+    throw new Error(`Invalid memory routing provider from ${modulePath}`);
+  }
+  return provider;
+}
+
+function resolveEffectiveProvider(
+  config: MemoryRoutingConfig,
+  cwd: string,
+): { effective: MemoryRoutingConfig; modulePath: string } | null {
+  const validation = validateMemoryRoutingConfig(config);
+  if (!validation.valid) return null;
+  const leftover = resolveLeftoverEnabledConfig(validation.normalized, cwd);
+  const effective = leftover ?? validation.normalized;
+  if (!effective.enabled || effective.provider === 'null') return null;
+  const modulePath =
+    resolveModulePath(effective.module_path, cwd) ??
+    defaultPathForProvider(effective.provider, cwd);
+  if (!modulePath) return null;
+  return { effective, modulePath };
+}
+
+/**
+ * First route cannot wait on the async import. Node loads this ESM with require.
+ * Returns null when routing is off or the module cannot be constructed.
+ */
+export function loadMemoryRoutingProviderSync(
+  config: MemoryRoutingConfig,
+  cwd = process.cwd(),
+): MemoryRoutingProvider | null {
+  const resolved = resolveEffectiveProvider(config, cwd);
+  if (!resolved) return null;
+  try {
+    const mod = require(resolved.modulePath) as {
+      createMemoryRoutingProvider?: (config?: MemoryRoutingProviderConfig) => MemoryRoutingProvider;
+      default?: {
+        createMemoryRoutingProvider?: (config?: MemoryRoutingProviderConfig) => MemoryRoutingProvider;
+      };
+    };
+    const provider = providerFromModule(mod, resolved.modulePath, resolved.effective);
+    if (!provider.isAvailable()) return null;
+    return provider;
+  } catch {
+    return null;
+  }
 }
 
 export async function loadMemoryRoutingProvider(

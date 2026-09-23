@@ -8,6 +8,9 @@ import { mcpClientManager } from "../mcps/mcp-client.js";
 import { getConfigDir } from "../core/config-paths.js";
 import { generateProposals } from "./inference-proposal-generator.js";
 import { applyProposals as applyProposalsEx } from "./inference-applier.js";
+import { applyDecisionMatrix } from "../governance/governance-core.js";
+import { recordLesson } from "../memory-routing/record-lesson.js";
+import { writeLessonPickup } from "../memory-routing/lesson-pickup.js";
 
 export interface InferenceProposal {
   id: string;
@@ -18,6 +21,10 @@ export interface InferenceProposal {
   confidence: number;
   source: "recurring_problem" | "recurring_pattern" | "wrong_turn";
   status: "pending" | "approved" | "rejected" | "applied" | "failed";
+  /** Repertoire signals the sessions behind this proposal already named. */
+  namedSignals?: string[];
+  /** Approaches, solutions, or the wrong turn from those sessions. */
+  lesson?: string;
 }
 
 export interface InferenceCycleResult {
@@ -56,6 +63,22 @@ export type CyclePhase =
 
 const CYCLE_STATE_FILE = "inference-cycle-state.json";
 const CYCLE_HISTORY_FILE = "inference-cycle-history.json";
+const GRADED_LESSON_IDS_FILE = "inference-cycle-graded-ids.json";
+const HISTORY_CAP = 50;
+const LESSON_ID_PREFIXES = ["named:", "pattern:", "problem:", "wrong:"] as const;
+
+function isLessonProposalId(id: string): boolean {
+  return LESSON_ID_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+function lessonIdsFromUnknown(parsed: unknown): string[] {
+  if (!Array.isArray(parsed)) return [];
+  const ids: string[] = [];
+  for (const item of parsed) {
+    if (typeof item === "string" && isLessonProposalId(item)) ids.push(item);
+  }
+  return ids;
+}
 
 export type AgentInvoker = (agentName: string, prompt: string) => Promise<string>;
 
@@ -94,6 +117,13 @@ function governanceToolText(result: unknown): string {
   const content = (result as GovernanceToolPayload).content;
   const text = content?.[0]?.text;
   return typeof text === "string" ? text : "";
+}
+
+function governanceToolIsError(result: unknown): boolean {
+  if (typeof result !== "object" || result === null || !("isError" in result)) {
+    return false;
+  }
+  return (result as { isError?: unknown }).isError === true;
 }
 
 export class InferenceCycle {
@@ -273,6 +303,8 @@ export class InferenceCycle {
         p.status = "rejected";
       }
 
+      this.recordGovernedLessons(cycleId, proposals, votes);
+
       if (approved.length > 0) {
         if (!this.options.skipApply) {
           this.setPhase("applying");
@@ -325,6 +357,43 @@ export class InferenceCycle {
     }
   }
 
+  /** Approve or reject grades the signals that proposal's sessions already named. needs-revision does not write. */
+  private recordGovernedLessons(
+    cycleId: string,
+    proposals: InferenceProposal[],
+    votes: InferenceCycleResult["votes"],
+  ): void {
+    const alreadyGraded = new Set(
+      this.loadHistory().flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)),
+    );
+    for (const proposal of proposals) {
+      if (alreadyGraded.has(proposal.id)) continue;
+      const vote = votes.find((item) => item.proposalId === proposal.id);
+      if (!vote) continue;
+      if (vote.decision !== "approve" && vote.decision !== "reject") continue;
+      if (vote.details.some((line) => line.includes("governance error"))) continue;
+
+      const named = proposal.namedSignals ?? [];
+      const taught = recordLesson({
+        operation: [proposal.title, proposal.description, ...proposal.evidence].join("\n"),
+        success: vote.decision === "approve",
+        taskId: proposal.id,
+        assignedAgent: "inference-cycle",
+        sessionId: cycleId,
+        signals: named,
+        lesson: proposal.lesson ?? "",
+      });
+      if (taught.length > 0) {
+        frameworkLogger.log("inference-cycle", "lesson-recorded", "info", {
+          proposalId: proposal.id,
+          decision: vote.decision,
+          signals: taught,
+        });
+      }
+    }
+    writeLessonPickup(this.projectRoot);
+  }
+
   private async governProposals(proposals: InferenceProposal[]): Promise<InferenceCycleResult["votes"]> {
     // Governance MCP is the sole governance path (governance.server.ts + GovernanceService).
     // It calls individual skill MCPs (code-review, security-audit, researcher) internally
@@ -333,9 +402,10 @@ export class InferenceCycle {
       this.isGovernanceMcpPreferred();
 
     if (!useGovernanceMcp) {
-      throw new Error("Governance MCP is required but not available");
+      return this.governWithLocalMatrix(proposals);
     }
 
+    const governanceMcpTimeoutMs = 90_000;
     const result = await Promise.race([
       mcpClientManager.callServerTool("governance", "govern_proposals", {
         proposals: proposals.map(p => ({
@@ -351,17 +421,42 @@ export class InferenceCycle {
         options: { require_external: true },
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Governance MCP timed out after 8s")), 8000)
+        setTimeout(
+          () => reject(new Error(`Governance MCP timed out after ${governanceMcpTimeoutMs / 1000}s`)),
+          governanceMcpTimeoutMs,
+        )
       ),
     ]);
 
     const text = governanceToolText(result);
+    if (governanceToolIsError(result)) {
+      throw new Error(text || "Governance MCP returned an error");
+    }
     const parsed = this.parseGovernanceMcpResponse(text, proposals);
     frameworkLogger.log("inference-cycle", "governance-mcp-primary-path", "info", {
       proposalCount: proposals.length,
       overall: parsed.overallDecision,
     });
     return parsed.votes;
+  }
+
+  /** Flag off: the local matrix is the pass. Dynamo is not called and the miss is not stored as a reject. */
+  private governWithLocalMatrix(proposals: InferenceProposal[]): InferenceCycleResult["votes"] {
+    return proposals.map((proposal) => {
+      const resonance = Number.isFinite(proposal.confidence) ? proposal.confidence : 0.8;
+      const matrix = applyDecisionMatrix({ resonance });
+      const decision = matrix.recommendation === "PASS"
+        ? "approve"
+        : matrix.recommendation === "REJECT"
+          ? "reject"
+          : "needs_revision";
+      return {
+        proposalId: proposal.id,
+        decision,
+        confidence: matrix.confidence,
+        details: ["local-matrix: inference_governance disabled", ...matrix.reasons],
+      };
+    });
   }
 
   private isGovernanceMcpPreferred(): boolean {
@@ -393,17 +488,12 @@ export class InferenceCycle {
       });
       return { votes, overallDecision: data.overallDecision || "needs_revision" };
     } catch {
+      const preview = text.substring(0, 300);
       frameworkLogger.log('inference-cycle', 'governance-mcp-parse-failed', 'warning', {
-        textPreview: text.substring(0, 200),
+        textPreview: preview,
         proposalCount: proposals.length,
       });
-      const votes = proposals.map(p => ({
-        proposalId: p.id,
-        decision: "abstain",
-        confidence: 0.5,
-        details: ["governance-mcp: parse-failed"],
-      }));
-      return { votes, overallDecision: "needs_revision" };
+      throw new Error(`governance-mcp: unreadable vote: ${preview || "empty governance response"}`);
     }
   }
 
@@ -478,18 +568,84 @@ export class InferenceCycle {
       }
     }
     history.push(result);
-    if (history.length > 50) history = history.slice(-50);
+    const dropped = history.length > HISTORY_CAP ? history.slice(0, history.length - HISTORY_CAP) : [];
+    if (history.length > HISTORY_CAP) history = history.slice(-HISTORY_CAP);
+    this.retainDroppedLessonIds(dropped, history);
     fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+  }
+
+  /** Lesson ids that leave the 50-entry window stay covered. Empty cycles do not erase them. */
+  private retainDroppedLessonIds(dropped: InferenceCycleResult[], kept: InferenceCycleResult[]): void {
+    if (dropped.length === 0) return;
+    const keptIds = new Set(kept.flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)));
+    const retained = new Set(this.readRetainedLessonIds());
+    let changed = false;
+    for (const cycle of dropped) {
+      for (const proposal of cycle.proposals ?? []) {
+        if (!isLessonProposalId(proposal.id)) continue;
+        if (keptIds.has(proposal.id) || retained.has(proposal.id)) continue;
+        retained.add(proposal.id);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    if (!fs.existsSync(this.stateDir)) {
+      fs.mkdirSync(this.stateDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(this.stateDir, GRADED_LESSON_IDS_FILE),
+      JSON.stringify([...retained].sort(), null, 2),
+    );
+  }
+
+  private readRetainedLessonIds(): string[] {
+    const file = path.join(this.stateDir, GRADED_LESSON_IDS_FILE);
+    if (!fs.existsSync(file)) return [];
+    try {
+      return lessonIdsFromUnknown(JSON.parse(fs.readFileSync(file, "utf-8")));
+    } catch {
+      return [];
+    }
+  }
+
+  private retainedLessonCycle(ids: string[]): InferenceCycleResult {
+    return {
+      cycleId: "retained-lessons",
+      triggered: false,
+      triggerReason: "lesson ids kept past the history cap",
+      corpusSummary: { sessions: 0, totalCommits: 0, recurringPatterns: 0, recurringProblems: 0 },
+      proposals: ids.map((id) => ({
+        id,
+        type: "codify" as const,
+        title: id,
+        description: "",
+        evidence: [],
+        confidence: 0,
+        source: "recurring_pattern" as const,
+        status: "pending" as const,
+      })),
+      votes: [],
+      phase: "complete",
+      completedAt: "1970-01-01T00:00:00.000Z",
+      duration: 0,
+    };
   }
 
   private loadHistory(): InferenceCycleResult[] {
     const historyPath = path.join(this.stateDir, CYCLE_HISTORY_FILE);
-    if (!fs.existsSync(historyPath)) return [];
-    try {
-      return JSON.parse(fs.readFileSync(historyPath, "utf-8"));
-    } catch {
-      return [];
+    let history: InferenceCycleResult[] = [];
+    if (fs.existsSync(historyPath)) {
+      try {
+        const parsed: unknown = JSON.parse(fs.readFileSync(historyPath, "utf-8"));
+        history = Array.isArray(parsed) ? parsed as InferenceCycleResult[] : [];
+      } catch {
+        history = [];
+      }
     }
+    const present = new Set(history.flatMap((cycle) => (cycle.proposals ?? []).map((proposal) => proposal.id)));
+    const missing = this.readRetainedLessonIds().filter((id) => !present.has(id));
+    if (missing.length === 0) return history;
+    return [this.retainedLessonCycle(missing), ...history];
   }
 
   private buildBlockedResult(cycleId: string, reason: string): InferenceCycleResult {
