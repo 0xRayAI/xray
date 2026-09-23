@@ -328,6 +328,7 @@ function updateJsonVersionField(relPath, newVersion) {
 
 function updateFeaturesJsonVersion(newVersion) {
   updateJsonVersionField('xray/features.json', newVersion);
+  updateJsonVersionField('.xray/features.json', newVersion);
 }
 
 function updateOpenclawPluginVersion(newVersion) {
