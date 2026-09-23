@@ -4,7 +4,7 @@ Host: cursor (frontier)
 Intent: COMPACT-BEN-001 Station-seed compact survival
 Plan: Path C SEED → WORK → COMPACT → QUIZ → FORWARD → RECEIPT
 Git: n/a
-Repertoire: not required for this adapter (optional MCP)
+Repertoire: not required for this adapter (explicit off)
 
 Ticket: COMPACT-BEN-001
 Seed: 42

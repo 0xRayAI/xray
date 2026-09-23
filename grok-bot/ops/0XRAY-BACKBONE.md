@@ -14,7 +14,7 @@ Updated: 2026-09-13
 - Full “costume” dump of dozens of skills/agents
 - Fake tool-deny floor on Grok Bot
 - Cloning the full coding-agent MCP set as seven new servers here
-- Treating unused organs (for example repertoire) as live when they are not installed
+- Treating Repertoire as optional / absent — it is preferred and vendored; explicit opt-out only (`enabled: false`, `provider: repertoire`)
 
 ## Three layers (see THREE-LAYERS.md)
 1. **Skills** — recipes agents read  

@@ -87,7 +87,7 @@ USER / TOOL
     │                       ├─ applyStationHeat
     │                       │     ├─ clip Intent (≤240)
     │                       │     ├─ Git branch@head
-    │                       │     ├─ Repertoire: on — N  |  not installed
+    │                       │     ├─ Repertoire: on — N  |  explicit off
     │                       │     └─ Working ≤4 matched names
     │                       ├─ session-boot.json          (SSOT)
     │                       ├─ STATION.md                 (projection)
@@ -137,8 +137,8 @@ CONTEXT WINDOW ████████████████░░░░  fil
 NEW WINDOW
     │
     ├─1─ Read STATION.md
-    │      ├─ Repertoire: not installed ──► Station + NOTES ARE the mind. STOP looking for dest.
-    │      └─ Repertoire: on — N        ──► ticket first, then dest.
+    │      ├─ Repertoire: explicit off ──► Station + NOTES ARE the mind. STOP looking for dest.
+    │      └─ Repertoire: on — N       ──► ticket first, then dest.
     │
     ├─2─ Read NOTES (unfinished path on the card)
     │
@@ -155,18 +155,22 @@ NEW WINDOW
 ### Opt-out (Station is the compact ticket)
 
 ```
-npm install 0xray          (no @0xray/repertoire)
+npm install 0xray          (Repertoire vendored, memory_routing ON)
+        │
+        ▼
+explicit opt-out only
+        "memory_routing": { "enabled": false, "provider": "repertoire" }
         │
         ▼
 postinstall → installAllBridges
         ├─ AGENTS.md / .xray / .mcp.json / four bridges + Cursor hooks
-        └─ memory_routing stays off
+        └─ seed + grow skipped — Station holds the ticket
         │
         ▼
 WAKE
         ├─ heat STATION.md every material move
         ├─ write NOTES if the cut is deeper than 240 chars
-        └─ dest path does not exist — do not invent it
+        └─ dest path is not the brain — do not invent keywords
         │
         ▼
 COMPACT
