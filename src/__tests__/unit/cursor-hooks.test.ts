@@ -46,7 +46,7 @@ function seedBenStation(root: string) {
       'Intent: old intent before compact',
       'Plan: (none)',
       'Git: n/a',
-      'Repertoire: not required for this adapter (optional MCP)',
+      'Repertoire: not required for this adapter (explicit off)',
       '',
       ...BEN_KEYS,
       '',

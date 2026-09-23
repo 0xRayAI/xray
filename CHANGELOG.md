@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### 📚 Documentation
+- **Leftover after #102** — `station-vs-repertoire.md` opt-out ASCII no longer teaches package-absence (`no @0xray/repertoire` / `memory_routing stays off`). Explicit opt-out is `enabled: false` + `provider: repertoire`. Dead integrate note is history. Compact seed drops leftover “optional MCP”. `validate-release-docs` now gates that guide. Does not republish.
 - **Leftover after #101** — stamp `package-lock.json` and `.xray/features.json` to the live package version. Rewire `updateFeaturesJsonVersion` so both features files stamp together. Guides that still called Repertoire optional now say preferred + explicit opt-out; Station is the compact ticket.
 
 ## [4.0.21] - 2026-09-23
