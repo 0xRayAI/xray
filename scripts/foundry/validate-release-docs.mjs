@@ -18,6 +18,7 @@ import {
   DOCS_SITE_HEADER_FILES,
   getFrameworkCounts,
   getReleaseArtifactPaths,
+  patchRefStripRelPaths,
 } from './version-manager.mjs';
 import { isXrayExoRepo, resolveMillRoot } from './mill-root.mjs';
 
@@ -31,31 +32,13 @@ function kernelLineHasPatchStamp(content) {
 
 /**
  * Present-tense cut pins. Keep: package.json, CHANGELOG, stamped JSON,
- * features-since headings. Rip from guides, Station, OP-PROC.
+ * features-since headings. The check set is the stamper set: shipped guides
+ * and shipped OP-PROC, including the mill-gate skill. Seat memory is not in it.
  */
 const PRESENT_TENSE_PATCH_RE =
   /This cut is|Do not republish \d+\.\d+\.\d+|0xray@\d+\.\d+\.\d+|npm is \*\*\d+\.\d+\.\d+\*\*|Product \*\*\d+\.\d+\.\d+\*\* is on npm/;
 
-const NO_PRESENT_TENSE_PATCH = [
-  'README.md',
-  'AGENTS.md',
-  'AGENTS-consumer.md',
-  'SKILLS.md',
-  'llms.txt',
-  'docs-site/docs/architecture/v4-now.md',
-  'docs-site/docs/architecture/v4-vision.md',
-  'docs-site/docs/guides/memory-wake.md',
-  'docs-site/docs/guides/memory-routing.md',
-  'docs-site/docs/guides/repertoire.md',
-  'docs-site/docs/guides/station-vs-repertoire.md',
-  'docs-site/docs/guides/getting-started.md',
-  'docs-site/docs/guides/integrations.md',
-  'docs-site/docs/guides/consumer-migration.md',
-  'docs-site/docs/mcp/README.md',
-  'grok-bot/ops/LEAD-CADENCE.md',
-  'grok-bot/AGENTS.md',
-  'src/skills/orchestrator/SKILL.md',
-];
+const NO_PRESENT_TENSE_PATCH = patchRefStripRelPaths();
 
 function presentTensePatchPinErrors(content) {
   if (PRESENT_TENSE_PATCH_RE.test(content)) {

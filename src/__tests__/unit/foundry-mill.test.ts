@@ -156,10 +156,13 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     const src = read('scripts/foundry/validate-release-docs.mjs');
     expect(src).toContain('NO_PRESENT_TENSE_PATCH');
     expect(src).toContain('PRESENT_TENSE_PATCH_RE');
-    expect(src).toContain('docs-site/docs/architecture/v4-now.md');
-    expect(src).toContain('docs-site/docs/guides/station-vs-repertoire.md');
+    expect(src).toContain('patchRefStripRelPaths()');
     expect(src).toContain('repertoireOptOutErrors');
-    expect(src).toContain('grok-bot/ops/LEAD-CADENCE.md');
+    const stamper = read('scripts/foundry/version-manager.mjs');
+    expect(stamper).toContain('docs-site/docs/architecture/v4-now.md');
+    expect(stamper).toContain('docs-site/docs/guides/station-vs-repertoire.md');
+    expect(stamper).toContain('grok-bot/ops/LEAD-CADENCE.md');
+    expect(stamper).toContain('grok-bot/skills/ship-ready-mill-gate/SKILL.md');
     const stationVs = read('docs-site/docs/guides/station-vs-repertoire.md');
     expect(stationVs).not.toContain('no @0xray/repertoire');
     expect(stationVs).not.toContain('memory_routing stays off');
