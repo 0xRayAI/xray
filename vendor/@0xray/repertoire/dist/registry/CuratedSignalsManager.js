@@ -69,6 +69,13 @@ function evidenceWeight(previous, gate) {
         return previous.observation_count;
     return 0;
 }
+/** Historical averages with no counter still count as one piece of evidence. */
+function seededEvidenceCount(evidence) {
+    return typeof evidence === 'number' && evidence > 0 ? evidence : 1;
+}
+function isAboveConfidenceFloor(value, gate = DEFAULT_PROMOTION_MIN_CONFIDENCE) {
+    return value > gate && !isConfidenceFloor(value, gate);
+}
 const FIELD_PRIMITIVE_NAME = /^[A-Za-z][A-Za-z0-9_-]{2,119}$/;
 /**
  * The diary names a law only when it contains the signal id, or the id with
@@ -146,6 +153,7 @@ export class CuratedSignalsManager {
     constructor(filePath) {
         this.filePath = filePath ?? hydrateWritableSignals(DEFAULT_SIGNALS_PATH);
         this.restoreLearnedConviction();
+        this.seedLearnedConviction();
     }
     learnedConvictionPath() {
         return join(dirname(this.filePath), LEARNED_CONVICTION_FILE);
@@ -467,29 +475,82 @@ export class CuratedSignalsManager {
     writeLearnedConviction(name, stats) {
         if (isFactorySeedFile(this.filePath))
             return;
-        const path = this.learnedConvictionPath();
-        let file = { schema_version: '1', signals: {} };
-        if (existsSync(path)) {
-            try {
-                const parsed = JSON.parse(readFileSync(path, 'utf8'));
-                if (parsed &&
-                    parsed.signals &&
-                    typeof parsed.signals === 'object' &&
-                    !Array.isArray(parsed.signals)) {
-                    file = parsed;
-                }
-            }
-            catch {
-                file = { schema_version: '1', signals: {} };
-            }
-        }
-        file.schema_version = '1';
+        const file = this.readLearnedConvictionFile();
         file.signals[name] = {
             avg_confidence: stats.avg_confidence,
-            evidence_count: stats.evidence_count ?? 1,
+            evidence_count: seededEvidenceCount(stats.evidence_count),
             updated_at: stats.last_seen,
         };
-        writeFileSync(path, `${JSON.stringify(file, null, 2)}\n`);
+        this.writeLearnedConvictionFile(file);
+    }
+    /**
+     * Averages already above the floor survive a flatten even when no new
+     * feedback has run. Floor names, including float dust at 0.55, stay out.
+     */
+    seedLearnedConviction() {
+        if (isFactorySeedFile(this.filePath) || !existsSync(this.filePath))
+            return [];
+        const data = this.load();
+        const learned = this.readLearnedConvictionFile();
+        const seeded = [];
+        let destDirty = false;
+        for (const signal of data.signals) {
+            const stats = signal.observation_stats;
+            if (!stats || !isAboveConfidenceFloor(stats.avg_confidence))
+                continue;
+            const evidence = seededEvidenceCount(stats.evidence_count);
+            if (stats.evidence_count !== evidence) {
+                signal.observation_stats = { ...stats, evidence_count: evidence };
+                destDirty = true;
+            }
+            const current = signal.observation_stats;
+            if (!current)
+                continue;
+            const row = learned.signals[signal.name];
+            const rowAvg = row && typeof row.avg_confidence === 'number' ? row.avg_confidence : undefined;
+            const missing = rowAvg === undefined;
+            const higher = rowAvg !== undefined && current.avg_confidence > rowAvg + 1e-4;
+            const rowEvidence = row && typeof row.evidence_count === 'number' && row.evidence_count > 0
+                ? row.evidence_count
+                : undefined;
+            if (!missing && !higher && rowEvidence !== undefined)
+                continue;
+            const keptAvg = !missing && !higher && rowAvg !== undefined ? rowAvg : current.avg_confidence;
+            learned.signals[signal.name] = {
+                avg_confidence: keptAvg,
+                evidence_count: evidence,
+                updated_at: current.last_seen,
+            };
+            seeded.push(signal.name);
+        }
+        if (seeded.length > 0)
+            this.writeLearnedConvictionFile(learned);
+        if (destDirty)
+            this.save(data);
+        return seeded;
+    }
+    readLearnedConvictionFile() {
+        const empty = { schema_version: '1', signals: {} };
+        const path = this.learnedConvictionPath();
+        if (!existsSync(path))
+            return empty;
+        try {
+            const parsed = JSON.parse(readFileSync(path, 'utf8'));
+            if (parsed &&
+                parsed.signals &&
+                typeof parsed.signals === 'object' &&
+                !Array.isArray(parsed.signals)) {
+                return { schema_version: '1', signals: parsed.signals };
+            }
+        }
+        catch {
+            return empty;
+        }
+        return empty;
+    }
+    writeLearnedConvictionFile(file) {
+        const body = { schema_version: '1', signals: file.signals };
+        writeFileSync(this.learnedConvictionPath(), `${JSON.stringify(body, null, 2)}\n`);
     }
     restoreLearnedConviction() {
         if (isFactorySeedFile(this.filePath) || !existsSync(this.filePath))

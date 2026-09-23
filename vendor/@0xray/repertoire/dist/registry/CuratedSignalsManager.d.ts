@@ -92,6 +92,13 @@ export declare class CuratedSignalsManager {
      * A wake that copies the overlay floor back onto dest restores this file.
      */
     private writeLearnedConviction;
+    /**
+     * Averages already above the floor survive a flatten even when no new
+     * feedback has run. Floor names, including float dust at 0.55, stay out.
+     */
+    private seedLearnedConviction;
+    private readLearnedConvictionFile;
+    private writeLearnedConvictionFile;
     restoreLearnedConviction(): string[];
     private createEmptyFile;
 }
