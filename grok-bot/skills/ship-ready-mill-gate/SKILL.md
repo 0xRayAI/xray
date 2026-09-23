@@ -45,3 +45,5 @@ Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR 
 
 ## Fail closed
 Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.
+
+Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.

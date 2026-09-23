@@ -64,6 +64,8 @@ Config: `features.json` → `multi_agent_orchestration.lead_dev_mode`
 
 The seven rules are the engine. The cadence is the time signature. Disk SSOT: `grok-bot/ops/LEAD-CADENCE.md`.
 
+Jargon is not the job. Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras.
+
 - **Peer test:** another instance with only worn 0xRay continues the ticket. No command stream.
 - **Wear first:** Read `.xray/state/STATION.md`. Same cloud. Same critic (resume only). Dummy Reads Station.
 - **Dummy tests `SKILLS.md`:** a suited dummy proves the worn catalog. Same-sess bodies keep context and hold a Station card.
