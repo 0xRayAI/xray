@@ -160,6 +160,23 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     expect(src).toContain('grok-bot/ops/LEAD-CADENCE.md');
   });
 
+  it('stamps both features.json files and lock matches package.json', () => {
+    const pkg = JSON.parse(read('package.json')) as { version: string };
+    const mill = JSON.parse(read('xray/features.json')) as { version: string };
+    const worn = JSON.parse(read('.xray/features.json')) as { version: string };
+    const lock = JSON.parse(read('package-lock.json')) as {
+      version: string;
+      packages: Record<string, { version?: string }>;
+    };
+    const bumper = read('scripts/foundry/version-manager.mjs');
+    expect(mill.version).toBe(pkg.version);
+    expect(worn.version).toBe(pkg.version);
+    expect(lock.version).toBe(pkg.version);
+    expect(lock.packages['']?.version).toBe(pkg.version);
+    expect(bumper).toContain("updateJsonVersionField('xray/features.json'");
+    expect(bumper).toContain("updateJsonVersionField('.xray/features.json'");
+  });
+
   it('kernel files use era, not a three-part patch stamp on the header line', () => {
     const files = [
       'README.md',

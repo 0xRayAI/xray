@@ -6,6 +6,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
+### 📚 Documentation
+- **Leftover after #101** — stamp `package-lock.json` and `.xray/features.json` to the live package version. Rewire `updateFeaturesJsonVersion` so both features files stamp together. Guides that still called Repertoire optional now say preferred + explicit opt-out; Station is the compact ticket.
+
 ## [4.0.21] - 2026-09-23
 
 ### ✨ Features
