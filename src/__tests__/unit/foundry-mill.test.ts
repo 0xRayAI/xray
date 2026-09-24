@@ -41,6 +41,9 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/cursor-usage-receipt.js');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/xray-cloud-hook.sh');
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/cursor/hooks/pre-tool-use.sh');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/plates.cjs');
+    expect(REQUIRED_PACK_PATHS).toContain('docs-site/docs/plates/memory-recall.md');
+    expect(REQUIRED_PACK_PATHS).toContain('docs-site/docs/plates/processor.md');
     expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
     expect(() =>
       assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),
@@ -59,7 +62,8 @@ describe('foundry mill — packed dist/cli gate', () => {
   });
 
   it('prepack and mill publish call the packed dist/cli assert', () => {
-    const pkg = JSON.parse(read('package.json')) as { scripts: Record<string, string> };
+    const pkg = JSON.parse(read('package.json')) as { scripts: Record<string, string>; files?: string[] };
+    expect(pkg.files).toContain('docs-site/docs/plates/');
     expect(pkg.scripts.prepack).toContain('assert-packed-dist-cli.mjs');
     expect(read('scripts/foundry/release.mjs')).toContain('assert-packed-dist-cli.mjs');
     expect(read('scripts/node/consumer-install-smoke.mjs')).toContain(

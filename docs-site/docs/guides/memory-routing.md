@@ -77,7 +77,7 @@ Example: trap tasks score higher complexity than plain tasks at the same `estima
 
 A grade that passes appends one lesson on the named law. The same task id does not step the average again. `LESSON_LINE_CAP` is 20: past that window the oldest line leaves only after its task id is in the ledger. `RETAINED_LESSON_ID_CAP` is 20, insertion order, oldest first. Speech that names no stored signal mints one proposed signal tagged `learned`. The same speech does not mint twice. `LEARNED_SIGNAL_CAP` is 24 and evicts only signals that are both `proposed` and `learned`. Factory signals stay.
 
-A plate is the pipeline schematic. Lessons are episodes on a signal. Station keeps the short subsystem table and one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`, when intent names one pipeline. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic, not the whole plate set. Stamps live in [Plates](../plates/index.md).
+A plate is the pipeline schematic. Lessons are episodes on a signal. Station keeps the short subsystem table and one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`, when intent names one pipeline. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic, not the whole plate set. Stamps live in [Plates](../plates/index.md). The npm package ships `docs-site/docs/plates/`, so a worn suit resolves the stamp from the installed reader.
 
 ## Repertoire MCP (external hosts)
 

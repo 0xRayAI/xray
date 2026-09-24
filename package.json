@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.0.24",
+  "version": "4.0.25",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -179,6 +179,7 @@
     "src/opencode/workflows/",
     "src/integrations/grok/plugin/0xray/",
     "src/integrations/openclaw/plugin/",
+    "docs-site/docs/plates/",
     "src/skills/",
     "src/mcps/",
     ".plugin/",

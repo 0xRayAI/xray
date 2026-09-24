@@ -166,7 +166,7 @@ A passing grade appends one lesson on the named law and stores that line beside 
 
 Speech that names no stored signal mints one proposed signal tagged `learned`. The same speech does not mint twice. Factory signals are not eviction candidates.
 
-A plate is the machine schematic ([Plates](../plates/index.md)). Station keeps one pointer line for the plate intent names. Pre-compact and `MEMORY_ROUTING` inject that one schematic.
+A plate is the machine schematic ([Plates](../plates/index.md)). The npm package ships `docs-site/docs/plates/`. Station keeps one pointer line for the plate intent names. Pre-compact and `MEMORY_ROUTING` inject that one schematic.
 
 ## Testing
 

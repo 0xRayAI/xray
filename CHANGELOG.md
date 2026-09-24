@@ -41,6 +41,20 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.25] - 2026-09-24
+
+`0xray@4.0.25` ships the plate schematics in the package. `docs-site/docs/plates/` is on the npm `files` list. A worn suit resolves `memory-recall` and `processor` from `dist/integrations/hooks/plates.cjs`.
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: ship plate schematics in the npm package (b1bdd7415)
+
+### 📚 Documentation
+- docs: announce 4.0.24 — hot-swap, memory organ, plates (b04b80a15)
+
+---
+
 ## [4.0.24] - 2026-09-24
 
 `0xray@4.0.24` is on npm. `npm install 0xray`.

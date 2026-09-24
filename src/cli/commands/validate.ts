@@ -24,6 +24,9 @@ export const VALIDATE_PACK_PATHS: readonly string[] = [
   "dist/integrations/cursor/hooks/pre-tool-use.sh",
   "dist/integrations/cursor/hooks/pre-compact.sh",
   "dist/integrations/cursor/hooks/after-file-edit.sh",
+  "dist/integrations/hooks/plates.cjs",
+  "docs-site/docs/plates/memory-recall.md",
+  "docs-site/docs/plates/processor.md",
 ];
 
 export const CONSUMER_WEAR_PATHS = [

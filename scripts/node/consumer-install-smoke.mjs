@@ -67,6 +67,9 @@ const REQUIRED_TARBALL_DIST = [
   "package/dist/cli/index.js",
   "package/dist/mcps/orchestrator.server.js",
   "package/dist/integrations/grok/hooks/session-start.js",
+  "package/dist/integrations/hooks/plates.cjs",
+  "package/docs-site/docs/plates/memory-recall.md",
+  "package/docs-site/docs/plates/processor.md",
 ];
 
 function assertPackedDistCliInTarball(tarballPath) {
@@ -78,7 +81,7 @@ function assertPackedDistCliInTarball(tarballPath) {
       `packed tarball missing ${missing.join(", ")} (0xray@4.0.13 shipped 0 dist files)`,
     );
   }
-  process.stdout.write("  ✅ packed tarball includes dist/cli + MCP + Grok hooks\n");
+  process.stdout.write("  ✅ packed tarball includes dist/cli + MCP + Grok hooks + plate stamps\n");
 }
 
 function assertOrganRequire(tmpRoot) {

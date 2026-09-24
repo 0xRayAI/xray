@@ -2,6 +2,10 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.25 — plates travel in the package
+
+- **Plates travel in the package.** `docs-site/docs/plates/` is on the npm `files` list (`memory-recall`, `processor`, and the rest of the stamp set). The worn reader at `dist/integrations/hooks/plates.cjs` walks up to that directory and resolves `memory-recall` and `processor`.
+
 ## 4.0.24 — hot-swap, memory organ, plates
 
 - **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
