@@ -46,6 +46,10 @@ applyStationHeat(root, host, extra, existing)
 
 Hold without thickening the Grok exo: do not inject dest into the system prompt. survive-compact already Reads Station → NOTES → working. One line on the existing hot-swap paragraph: unfinished path is the second Read; working json is the third if dest is on. That is a rewire of `AGENTS-consumer.md` / `LEAD-CADENCE.md` / `survive-compact/SKILL.md`, not a new skill.
 
+## Hot-swap
+
+Compaction and a host change are the same cut. The station card survives it: Read `.xray/state/STATION.md` and continue the ticket. Lessons stay bounded at 20 hot lines, 20 retained task ids, and 24 learned proposed signals. Speech that names no stored signal mints one proposed signal tagged `learned`. Recall carries one plate.
+
 ## Done when
 
 - After compact on Cursor: Station Read → NOTES pickup equals `working.pickup`; dest stays laws (no `repo-*`); compact `hookEvent` holds across later preToolUse

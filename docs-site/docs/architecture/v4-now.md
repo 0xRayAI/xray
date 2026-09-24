@@ -25,7 +25,7 @@ Live npm: [`0xray`](https://www.npmjs.com/package/0xray). Tag `v4.0.0` on `0xRay
 - Hermes pack local 4.0; plugin id `xray-hermes`
 - **Repertoire preferred** — factory seed **0.2.8** vendored. Grok MCP names unprefixed. Not an 8th 0xRay MCP. Do not pin 0.1.8.
 - **Memory:** shipped `memory_routing` is **on**. Station heat matches seed signals on every host. Compact ingest is shared. Working state: `.xray/state/repertoire-working.json`. Explicit opt-out: `enabled: false` + `provider: "repertoire"`.
-- **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact), host change, and OpenClaw first-tool write it. AGENTS.md: Read the card (Grok does not inject). Live plan line. Stranger without Repertoire still has git + intent + plan.
+- **Hot-swap:** `.xray/state/STATION.md` is the card. Compaction (PreCompact), host change, and OpenClaw first-tool write it. The card survives the cut. AGENTS.md: Read the card (Grok does not inject). Live plan line. Lessons stay at 20 hot / 20 retained / 24 learned proposed. Speech that names nothing mints one. Recall carries one plate. Stranger without Repertoire still has git + intent + plan.
 - **Wear review P0:** quoted Grok hook commands; `postinstall` dogfood actually runs; OpenClaw heat skips only on a concrete session; `grok_postprocessor_light` forwarded; Repertoire `config.toml` on the project.
 - Stranger-install wear: plugin in tarball, dist-then-src, postinstall PreToolUse, ephemeral markers not clobbering machine, OpenClaw `opencode-cli` backend when `opencode` is on PATH.
 
