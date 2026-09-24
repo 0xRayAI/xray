@@ -43,6 +43,15 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [4.0.24] - 2026-09-24
 
+`0xray@4.0.24` is on npm. `npm install 0xray`.
+
+Exo, not a catalog. A factory stamps a skeleton (Inference, External Governance, Autonomous Engine) and fastens a mill. Code mill, music mill (`@0xray/blip` sound), agents across TUIs and LLMs wear it and operate.
+
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates.** One INPUT/PROCESSING/OUTPUT schematic per pipeline in `docs-site/docs/plates/`. Station keeps one pointer line. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24.
+
 ### 🔄 Changes
 
 ### 🐛 Bug Fixes

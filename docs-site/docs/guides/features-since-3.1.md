@@ -2,11 +2,12 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
-## 4.0.24 — plates, lesson caps, and speech mint
+## 4.0.24 — hot-swap, memory organ, plates
 
-- **Plates** are pipeline schematics in [Plates](../plates/index.md) (routing, governance, boot, orchestration, processor, reporting, memory-recall). One plate per recall. Station keeps the short subsystem table and one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic.
-- **Lessons** are episodes on a signal. `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20, insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay.
-- Worn organ is vendored `@0xray/repertoire@0.2.8`.
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates** are one INPUT/PROCESSING/OUTPUT schematic per pipeline in [Plates](../plates/index.md) (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24 (`@0xray/repertoire@0.2.8`).
 
 ## 4.0.21 — dest is laws
 
