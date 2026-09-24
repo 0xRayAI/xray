@@ -28,6 +28,70 @@ export function cursorUsageReceiptPath(root) {
   return path.join(root, '.xray', 'state', 'cursor-usage-receipt.json');
 }
 
+/** Proof log. A cut is greppable here; cursor-hook-invoke.log has no session id. */
+export function cursorHookLogPath(root) {
+  return path.join(root, '.xray', 'state', 'cursor-hook.log');
+}
+
+function logToken(value) {
+  if (value == null) return '';
+  return String(value).replace(/[\r\n]+/g, '');
+}
+
+/**
+ * Safe filename segment for `.xray/state/cursor-receipts/<id>.json`.
+ * Empty when the id cannot be kept inside that directory.
+ */
+export function sanitizeSessionReceiptId(sessionId) {
+  const raw = typeof sessionId === 'string' ? sessionId.trim() : '';
+  if (!raw) return '';
+  const safe = raw
+    .replace(/\0/g, '')
+    .replace(/[/\\]/g, '_')
+    .replace(/\.\./g, '_')
+    .replace(/[^A-Za-z0-9._-]+/g, '_')
+    .replace(/^[._]+/, '')
+    .replace(/[._]+$/g, '');
+  if (!safe || safe === '.' || safe === '..') return '';
+  return safe.slice(0, 180);
+}
+
+export function cursorSessionReceiptPath(root, sessionId) {
+  const safe = sanitizeSessionReceiptId(sessionId);
+  if (!safe) return null;
+  return path.join(root, '.xray', 'state', 'cursor-receipts', `${safe}.json`);
+}
+
+/**
+ * Append one preCompact proof line. True only when the append landed and
+ * the file contains that session id (grep of *.log can find the cut).
+ */
+export function appendCursorCompactProofLog(root, fields = {}) {
+  const sessionId = logToken(fields.sessionId);
+  const timestamp = logToken(fields.timestamp) || new Date().toISOString();
+  const line = [
+    `ts=${timestamp}`,
+    `session_id=${sessionId}`,
+    `context_tokens=${logToken(fields.context_tokens)}`,
+    `context_usage_percent=${logToken(fields.context_usage_percent)}`,
+    `context_window_size=${logToken(fields.context_window_size)}`,
+    `generation_id=${logToken(fields.generation_id)}`,
+  ].join(' ');
+  const dest = cursorHookLogPath(root);
+  try {
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.appendFileSync(dest, `${line}\n`);
+  } catch {
+    return false;
+  }
+  if (!sessionId) return false;
+  try {
+    return fs.readFileSync(dest, 'utf8').includes(`session_id=${sessionId}`);
+  } catch {
+    return false;
+  }
+}
+
 export function parseInvokeProbeLog(root) {
   const dest = invokeProbeLogPath(root);
   const counts = { preToolUse: 0, preCompact: 0, afterFileEdit: 0, unknown: 0 };
@@ -228,7 +292,7 @@ export function buildCursorUsageReceipt(root, input = {}) {
       preToolUseCount: probe.counts.preToolUse,
       afterFileEditCount: probe.counts.afterFileEdit,
       eventClass,
-      probeLogExists: probe.exists,
+      probeLogExists: input.probeLogExists === true,
     },
     usage,
     repertoire,
@@ -294,6 +358,35 @@ export function writeCursorUsageReceipt(root, input = {}) {
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, JSON.stringify(receipt, null, 2));
     upsertStationCompactRow(root, receipt);
+    return dest;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Per-session copy of the latest precompact + usage receipts.
+ * The next arm overwrites cursor-precompact.json and cursor-usage-receipt.json.
+ */
+export function writeCursorSessionReceipt(root, sessionId, paths = {}) {
+  const dest = cursorSessionReceiptPath(root, sessionId);
+  if (!dest) return null;
+  if (!paths.precompactPath && !paths.usagePath) return null;
+  try {
+    const payload = {
+      sessionId: typeof sessionId === 'string' ? sessionId : null,
+      precompact: null,
+      usage: null,
+    };
+    if (paths.precompactPath && fs.existsSync(paths.precompactPath)) {
+      payload.precompact = JSON.parse(fs.readFileSync(paths.precompactPath, 'utf8'));
+    }
+    if (paths.usagePath && fs.existsSync(paths.usagePath)) {
+      payload.usage = JSON.parse(fs.readFileSync(paths.usagePath, 'utf8'));
+    }
+    if (!payload.precompact && !payload.usage) return null;
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, JSON.stringify(payload, null, 2));
     return dest;
   } catch {
     return null;

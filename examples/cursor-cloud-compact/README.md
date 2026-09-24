@@ -26,4 +26,6 @@ If Cursor does not fire `preCompact`, invoke `src/integrations/cursor/hooks/pre-
 
 EVAL: do not upgrade FAIL to `cursor-host-precompact` without `.xray/state/cursor-precompact.json` (or invoke-probe `event=preCompact`) written by the **host**. A session that boots before `.cursor/hooks.json` exists will not bind project hooks mid-run. #5 closed the 500k fill bar. Arm S (`examples/killer-dual/`) is the first host emit on this track.
 
+A cut counts only when `.xray/state/cursor-receipts/<sessionId>.json` exists and `.xray/state/cursor-hook.log` contains that same session id. The single latest `cursor-usage-receipt.json` or `cursor-precompact.json` is not enough — the next arm overwrites it. `cursor-hook-invoke.log` does not carry the session id. `probeLogExists` is true only when the hook-log append succeeded.
+
 Suited follow-on (KILLER-DUAL Arm S): `examples/killer-dual/` — real-usage receipt, no chars÷4 FILL. Survive: `RECEIPT-HOST-PRECOMPACT.md`. Compare: `COMPARE.md`.

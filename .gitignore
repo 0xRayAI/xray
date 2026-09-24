@@ -35,6 +35,8 @@ xray/inference/
 .xray/state/cursor-precompact.json
 .xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
+.xray/state/cursor-hook.log
+.xray/state/cursor-receipts/
 .xray/state/session-capture-stamp.json
 .xray/state/MEMORY-SEAL.md
 .xray/state/WATCHER.md
