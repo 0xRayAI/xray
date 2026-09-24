@@ -1,6 +1,6 @@
 # Repertoire Integration (v3.3+)
 
-**Repertoire is preferred.** [Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire@0.2.5` vendored) is the long-term judgment organ. It matches named laws and enriches orchestrator routing through the `MemoryRoutingProvider` contract. Wear it. Do not treat Station as a substitute.
+**Repertoire is preferred.** [Repertoire](https://github.com/0xRayAI/repertoire) (`@0xray/repertoire@0.2.8` vendored) is the long-term judgment organ. It matches named laws and enriches orchestrator routing through the `MemoryRoutingProvider` contract. Wear it. Do not treat Station as a substitute.
 
 **Not the successor card.** Survive compact / host change is [Station](../architecture/v4-now.md) (Read `.xray/state/STATION.md`). 0.1.0–0.1.8 were the same **judgment** organ; 0.2 cut the factory seed to 8 names. Do not pin 0.1.8. Split: [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
@@ -14,7 +14,7 @@
 
 ## Setup
 
-`0xray` vendors `@0xray/repertoire@0.2.5`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. **Preferred on.** Explicit opt-out only: `enabled: false` with `provider: "repertoire"`. Station then holds the compact ticket — that is fallback, not the preferred brain. This is not an 8th 0xRay MCP.
+`0xray` vendors `@0xray/repertoire@0.2.8`. Fresh `npm install 0xray` ships `memory_routing.enabled: true`. **Preferred on.** Explicit opt-out only: `enabled: false` with `provider: "repertoire"`. Station then holds the compact ticket — that is fallback, not the preferred brain. This is not an 8th 0xRay MCP.
 
 Shipped `xray/features.json`:
 

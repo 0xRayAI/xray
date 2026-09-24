@@ -2,7 +2,7 @@
 
 Factory memory organ for [0xRay](https://github.com/0xRayAI/xray): seed primitives, in-process memory routing, extra MCP (not an 8th `xray-*` server).
 
-**v0.2.5** · 0xRay **4.0** wear. Runtime does **not** depend on `0xray` (optional peer for suit-verify scripts).
+**v0.2.8** · 0xRay **4.0** wear. Runtime does **not** depend on `0xray` (optional peer for suit-verify scripts).
 
 ## Install
 
@@ -65,6 +65,8 @@ Override with env:
 | `repertoire__ingest_feedback` | Record orchestrator outcomes |
 
 Routing confidence is **time-weighted**: excess above the 0.55 gate fades after a 14-day grace (60-day half-life). Factory seed sitting on the gate keeps routing. `npm run signals:hygiene` reports decay on the hydrated project copy under `.xray/state/repertoire/`; it dry-runs in this repo unless `--i-mean-it` (writes the project copy, never the tarball).
+
+A grade that passes appends one lesson on the named law and stores that line beside the average. The same task id does not step again. `LESSON_LINE_CAP` is 20: past that window the oldest line leaves only after its task id is in the ledger. `RETAINED_LESSON_ID_CAP` is 20, kept in insertion order (oldest first, not alphabetical). Speech that names no stored signal mints one proposed signal tagged `learned`, and the same speech does not mint twice. `LEARNED_SIGNAL_CAP` is 24 and evicts only `proposed` + `learned` signals. Factory signals stay.
 
 ## 0xRay memory routing (in-process)
 

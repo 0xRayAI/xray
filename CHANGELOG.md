@@ -8,6 +8,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### Features
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
+- **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed

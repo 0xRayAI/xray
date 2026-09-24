@@ -26,6 +26,19 @@ export declare function lawClauseInText(definition: string, text: string, span?:
 export declare function isAboveConfidenceFloor(value: number, gate?: number): boolean;
 /** Hot lines kept on a law. Older lines leave only after their task id is in the ledger. */
 export declare const LESSON_LINE_CAP = 20;
+/**
+ * Aged task ids kept so a replay does not step the average.
+ * Insertion order, oldest first. Same size as the hot window: past this cap the oldest id leaves.
+ * Alphabetical order is not age, so the ledger is not sorted.
+ */
+export declare const RETAINED_LESSON_ID_CAP = 20;
+/**
+ * Proposed signals minted from speech (`tags` includes `learned`).
+ * One lesson-window of room past the hot lines, so unnamed speech can land and then the
+ * lowest confidence leaves, then the oldest last_seen. Factory signals and anything not
+ * proposed-and-learned stay.
+ */
+export declare const LEARNED_SIGNAL_CAP = 24;
 export declare const LESSON_TEXT_CAP = 400;
 /**
  * The diary names a law only when it contains the signal id, or the id with
@@ -92,9 +105,16 @@ export declare class CuratedSignalsManager {
      */
     recordFeedbackOutcome(entry: OrchestratorFeedbackEntry): FeedbackOutcomeResult[];
     /**
-     * Append one graded line. A task id already on the law, or already aged into
-     * the ledger, does not move the average and does not append again.
-     * Past the cap, the oldest line leaves only after its id is in the ledger.
+     * Shed proposed speech mints past LEARNED_SIGNAL_CAP.
+     * Lowest confidence leaves first, then the oldest last_seen. Factory laws stay.
+     */
+    private evictSpeechMints;
+    private dropLearnedConviction;
+    /**
+     * Append one graded line. A task id already on the law, or still in the capped
+     * ledger, does not move the average and does not append again.
+     * Past the hot cap, the oldest line leaves only after its id is in the ledger.
+     * Past the ledger cap, the oldest id leaves. Order is recency, not alphabetical.
      */
     private rememberLesson;
     /**

@@ -49,8 +49,8 @@ try {
     fail('organ nested', 'node_modules/@0xray/repertoire missing');
   } else {
     const organPkg = JSON.parse(readFileSync(join(organRoot, 'package.json'), 'utf8'));
-    if (organPkg.version !== '0.2.5') fail('organ version', organPkg.version);
-    else pass('nested @0xray/repertoire@0.2.5');
+    if (organPkg.version !== '0.2.8') fail('organ version', organPkg.version);
+    else pass('nested @0xray/repertoire@0.2.8');
     if (organPkg.dependencies && organPkg.dependencies['0xray']) {
       fail('cycle', 'organ still depends on 0xray at runtime');
     } else pass('organ has no runtime 0xray dep');

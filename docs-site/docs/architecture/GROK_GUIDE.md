@@ -49,7 +49,7 @@ See [Suit temperament](../guides/v3-temperament.md).
 
 ## Repertoire
 
-Shipped `memory_routing.enabled: true` with vendored `@0xray/repertoire@0.2.5`. Extra host MCP `repertoire`, not an eighth `xray-*`. Optional: `"enabled": false, "provider": "repertoire"`.
+Shipped `memory_routing.enabled: true` with vendored `@0xray/repertoire@0.2.8`. Extra host MCP `repertoire`, not an eighth `xray-*`. Optional: `"enabled": false, "provider": "repertoire"`.
 
 ## Related
 

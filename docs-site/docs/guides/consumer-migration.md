@@ -66,7 +66,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 
 ### v3.3 — Memory routing + Repertoire
 
-- **Repertoire is preferred.** Vendored 0.2.5 ships **on**. Dest is named laws, not hangar `repo-*`.
+- **Repertoire is preferred.** Vendored 0.2.8 ships **on**. Dest is named laws, not hangar `repo-*`.
 - Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`).
 - Repertoire (`@0xray/repertoire`) is the default provider. Station is the compact ticket, not a substitute.
 - `MemoryRoutingProvider` contract: `enrichTasks`, `getTaskConfidence`, `resolveThinDispatch`, `ingestFeedback`.
