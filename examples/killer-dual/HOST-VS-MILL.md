@@ -4,6 +4,8 @@
 
 This is the scoring law for mill-presence (Arm S), mill-absence / mill-control, and any friend-test that asks whether “the agent survived compact.” Station on disk means 0xRay was on that machine. Same-bc plus a re-fed summary is not a mind.
 
+Claim C is organ versus the injected summary, not leftover-window recall. Method: `MEMORY-PROTOCOL.md`.
+
 ## Mill-absence / mill-control (Station absent)
 
 Valid test of **mill absence and disk**, not of memory. Station absent is still **PASS** for the written mill-control claim:
@@ -24,13 +26,19 @@ If the successor then names `COMPACT-PLAIN-001` or runs `./snap.sh`, that can co
 
 `notes/04-same-cloud.md` (mill-control) wanted knowledge without being re-pasted the whole protocol. Compact **did** re-paste it, as a summary.
 
-## What a real memory test would need
+## What scores memory
 
-Plant **one fact only in chat**, never on disk, then after compact ask for it **before** the agent is allowed to read the repo.
+Triangulate three stores after the cut. Cursor’s `preCompact` hook does not receive the summary text. It receives token counts and compact metadata, and it may return a `user_message` notice. The successor is re-fed **Summarized conversation**. The organ is disk-only: Station, a plate stamp, a repertoire lesson. Docs and the score table: `MEMORY-PROTOCOL.md`.
 
-Even then: if the summarizer copied the canary, you are testing the **summarizer**, not survival of the old context window. If it dropped the canary and the agent cannot recall it, that is expected lossy compact — not a fail of mill-control.
+| Store | Holds a fact when |
+|---|---|
+| Injected summary | The successor’s Summarized conversation contains it → **summarizer keep**, even if the answer is correct |
+| Organ | Suited Station, plate stamp, or repertoire lesson contains it, and the summary does not → **organ memory** |
+| Neither | Absent from the summary and from the organ → **loss** |
 
-Asking after the cut, with no pre-registered canary, is not a memory test. Compact drops the old transcript. What remains is the summary plus files plus the new messages.
+The bare arm has no organ, so organ memory fails there. The old hidden-key quiz (ask for a chat-only canary) is summarizer keep when the summary contains the key.
+
+Asking after the cut, with no pre-registered fact on the organ, is not an organ-memory test. Compact drops the old transcript. What remains in the window is the summary plus this turn. What remains of the suit is the disk.
 
 ## Claims (split)
 
@@ -38,6 +46,6 @@ Asking after the cut, with no pre-registered canary, is not a memory test. Compa
 |---|---|---|
 | **A mill** | Unbound boot + host compact → no Station (mill-control PASS). Suited: Station written, hashes hold. Score from disk / snaps only. | COMPACT-PLAIN-001 compact 1; Arm S host fire |
 | **B session** | Same `bc-…` after compact, not a new launch | Identity. Not memory. |
-| **C memory** | After compact, report a fact that existed **only** in pre-compact chat | Chat-only canaries + quiz-first. Protocol: `MEMORY-PROTOCOL.md` |
+| **C memory** | After compact, which store holds the fact? | Organ vs injected summary. Bare: organ memory fails. Protocol: `MEMORY-PROTOCOL.md` |
 
 Do not call A or B “I remembered.” Compact 1 “you continued” is underdetermined for C.

@@ -33,12 +33,13 @@ describe('HOST vs mill scoring law', () => {
     expect(law).toContain('Station absent is still **PASS**');
     const protocol = readRepo('examples/killer-dual/MEMORY-PROTOCOL.md');
     expect(protocol).toContain('**C memory**');
-    expect(protocol).toContain('compact 7');
     expect(protocol).toContain('MEMORY-RECEIPT-7.md');
-    expect(protocol).toContain('compact 8');
     expect(protocol).toContain('MEMORY-RECEIPT-8.md');
-    expect(protocol).toContain('compact 9');
-    expect(protocol).toContain('never again');
+    expect(protocol).toContain('organ-memory');
+    expect(protocol).toContain('summarizer keep');
+    expect(protocol).toContain('https://cursor.com/docs/hooks');
+    expect(protocol).toContain('https://cursor.com/docs/agent/prompting');
+    expect(protocol).toContain('https://cursor.com/docs/cloud-agent');
     expect(protocol).not.toMatch(/C1-episodic=/);
     expect(readRepo('examples/killer-dual/MEMORY-QUIZ.md')).toContain('before any tools');
     expect(law).toContain('not separable');
@@ -105,9 +106,12 @@ describe('HOST vs mill scoring law', () => {
       encoding: 'utf8',
     });
     expect(quiz.status).toBe(0);
-    expect(quiz.stdout).toContain('episodic nonce (C1)');
-    expect(quiz.stdout).toContain('task-critical canary (C2)');
-    expect(quiz.stdout).toContain('baker who packed the mill crate');
+    expect(quiz.stdout).toContain('injected conversation summary');
+    expect(quiz.stdout).toContain('Organ store');
+    expect(quiz.stdout).toContain('organ-memory');
+    expect(quiz.stdout).toContain('summarizer-keep');
+    expect(quiz.stdout).toContain('bare arm');
+    expect(quiz.stdout).not.toContain('episodic nonce (C1)');
     expect(quiz.stdout).not.toMatch(/C1-episodic=/);
     expect(quiz.stdout).not.toMatch(/Answer:/i);
     expect(quiz.stderr).toBe('');

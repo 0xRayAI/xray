@@ -1,6 +1,6 @@
 # KILLER-DUAL — Arm S (suited)
 
-Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + fastened Repertoire. Real work A/B replaces fake FILL.
+Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + fastened Repertoire. Real work A/B replaces fake FILL. The memory cell is organ versus the injected summary, not leftover-window recall.
 
 | File | What |
 |------|------|
@@ -13,9 +13,10 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `COMPARE.md` | Arm S vs Arm B compare (both host fire; token split = writer-liveness) |
 | `TRANSITION.md` | PreToolUse vs PreCompact vs Grok Bot `survive-compact` — eval cases |
 | `NOTES-EXCHANGE.md` | Dual-arm mailbox (no cloud-to-cloud queue) |
-| `MEMORY-PROTOCOL.md` | Claim A mill / B session / C memory. Quiz-first. No canary values. |
-| `MEMORY-QUIZ.md` | Questions only. After compact, answer before any tools. |
+| `MEMORY-PROTOCOL.md` | Claim A mill / B session / C organ-vs-summary. No canary values. |
+| `MEMORY-QUIZ.md` | Questions only. Three stores: summary, organ, score. |
 | `memory_quiz.py` | Prints those questions. No answers. No canary values. |
+| `MEMORY-RECEIPT-TRIANGULATION.md` | Disk delta for the corrected cell. Organ held the keys; work file and bare tree did not. No canary values. |
 | `MEMORY-RECEIPT.md` | Compact 6 Claim C. C1/C2 re-fed in summary → not leftover-window memory. No canary values. Frozen. |
 | `cursor-usage-receipt.compact6.json` | Compact 6 snapshot — host window **256000**, tokens 298693, `preCompactCount=6` |
 | `MEMORY-RECEIPT-7.md` | Compact 7 Claim C. Quiz-first + no canary table; summary still re-fed C1/C2 from working notes. Frozen. |

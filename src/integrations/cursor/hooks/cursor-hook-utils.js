@@ -307,3 +307,26 @@ export function writeCursorPrecompactReceipt(root, fields) {
     return null;
   }
 }
+
+/**
+ * Score one fact after a compact cut.
+ * Organ memory requires the suited organ and absence from the injected summary.
+ * A fact in the summary is summarizer keep, even when the agent answers it.
+ * A fact in neither store is loss. The bare arm has no organ, so organ memory fails there.
+ * @param {{ arm: 'bare' | 'suited', inOrgan: boolean, inSummary: boolean }} stores
+ * @returns {'organ-memory' | 'summarizer-keep' | 'loss'}
+ */
+export function scoreCompactFact(stores) {
+  const arm = stores && stores.arm;
+  const inOrgan = stores && stores.inOrgan;
+  const inSummary = stores && stores.inSummary;
+  if (arm !== 'bare' && arm !== 'suited') {
+    throw new Error('compact fact arm must be bare or suited');
+  }
+  if (typeof inOrgan !== 'boolean' || typeof inSummary !== 'boolean') {
+    throw new Error('compact fact stores must be booleans');
+  }
+  if (inSummary) return 'summarizer-keep';
+  if (arm === 'suited' && inOrgan) return 'organ-memory';
+  return 'loss';
+}

@@ -11,6 +11,7 @@ import {
   cursorHeatRoots,
   isCursorWorkspaceWrapper,
   millRootFromToolPath,
+  scoreCompactFact,
   shouldHeatRoot,
 } from '../../integrations/cursor/hooks/cursor-hook-utils.js';
 import { heatLiveMemory } from '../../integrations/hooks/station-hook-runtime.mjs';
@@ -867,5 +868,15 @@ describe('Cursor cloud hooks adapter', () => {
       rmSync(tmp, { recursive: true, force: true });
       rmSync(mill, { recursive: true, force: true });
     }
+  });
+
+  it('scores compact memory by organ versus summary', () => {
+    expect(scoreCompactFact({ arm: 'suited', inOrgan: true, inSummary: false })).toBe('organ-memory');
+    expect(scoreCompactFact({ arm: 'suited', inOrgan: true, inSummary: true })).toBe('summarizer-keep');
+    expect(scoreCompactFact({ arm: 'suited', inOrgan: false, inSummary: true })).toBe('summarizer-keep');
+    expect(scoreCompactFact({ arm: 'suited', inOrgan: false, inSummary: false })).toBe('loss');
+    expect(scoreCompactFact({ arm: 'bare', inOrgan: false, inSummary: false })).toBe('loss');
+    expect(scoreCompactFact({ arm: 'bare', inOrgan: true, inSummary: false })).toBe('loss');
+    expect(scoreCompactFact({ arm: 'bare', inOrgan: false, inSummary: true })).toBe('summarizer-keep');
   });
 });
