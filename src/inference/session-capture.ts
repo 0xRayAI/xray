@@ -620,6 +620,55 @@ function fewSentences(text: string): string {
 }
 
 /** Id, or that id with hyphens read as spaces. Same hit `patternsFromGit` stores for the proposal generator. */
+export function reflectionSessionId(relativePath: string): string {
+  const slug = relativePath
+    .replace(/\.md$/i, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `session-reflection-${slug}`;
+}
+
+/** Reflection markdown is the speech. No session file is written. */
+export function captureReflectionInference(input: {
+  relativePath: string;
+  text: string;
+  modifiedAt: Date;
+  signalNames: readonly string[];
+}): SessionInference | null {
+  const speech = parseOperationSpeech(input.text);
+  const heard = speech.approaches.length + speech.solutions.length + speech.wrongTurns.length;
+  if (heard === 0) return null;
+  const named = storedSignalsNamedBySpeech(
+    [...speech.approaches, ...speech.solutions, ...speech.wrongTurns].join(" "),
+    input.signalNames,
+  );
+  const emptyMetrics: SessionMetrics = {
+    commits: 0,
+    filesChanged: 0,
+    insertions: 0,
+    deletions: 0,
+    filesAdded: 0,
+    filesDeleted: 0,
+    uniqueDirs: 0,
+  };
+  return {
+    sessionId: reflectionSessionId(input.relativePath),
+    timestamp: input.modifiedAt.toISOString(),
+    span: { from: "reflection", to: input.relativePath },
+    problems: [],
+    approaches: speech.approaches,
+    wrongTurns: speech.wrongTurns,
+    solutions: speech.solutions,
+    reasoningChain: [],
+    patterns: [],
+    metrics: emptyMetrics,
+    matched_primitives: named,
+    matchedPrimitives: named,
+  };
+}
+
 function storedSignalsNamedBySpeech(speech: string, signalNames: readonly string[]): string[] {
   const hay = speech.toLowerCase();
   const named: string[] = [];

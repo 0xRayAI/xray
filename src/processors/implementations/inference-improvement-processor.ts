@@ -15,6 +15,7 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 import { getConfigDir } from "../../core/config-paths.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
 import { captureCompletedInferenceOperation } from "../../inference/session-capture.js";
+import { loadReflectionInferences } from "../../inference/inference-accumulator.js";
 import { InferenceCycle } from "../../inference/inference-cycle.js";
 
 interface InferenceWorkflowContext {
@@ -381,7 +382,10 @@ Final validation and application of approved changes:
         { operationId, saved }
       );
     }
-    if (captured === 0) return;
+    const namedReflection = loadReflectionInferences(inferenceDir).some(
+      (session) => (session.matched_primitives?.length ?? 0) > 0,
+    );
+    if (captured === 0 && !namedReflection) return;
     const cycle = new InferenceCycle(directory, undefined, {
       force: true,
       skipApply: true,
