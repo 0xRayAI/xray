@@ -1045,6 +1045,19 @@ const STOCK_STATION_PREFIXES = [
   "working:",
 ];
 
+/** Stock design map. Exact lines so a later heat does not preserve a second copy. */
+const DESIGN_MAP_LINES = [
+  "Subsystem map:",
+  "+----------------------+------------------------------------------+",
+  "| Subsystem            | After compact                            |",
+  "+----------------------+------------------------------------------+",
+  "| Inference            | proposals, reflection, Repertoire        |",
+  "| External Governance  | Dynamo vote, Codex                       |",
+  "| Autonomous Engine    | thinDispatch, AsideContext               |",
+  "| Lessons              | hot lines on the signal; this card       |",
+  "+----------------------+------------------------------------------+",
+];
+
 const STOCK_STATION_FOOTERS = [
   "continue this card. compaction and host change are the same cut. do not cold-start.",
   "grok does not inject this file — read it. opencode injects. do not thicken the grok exo.",
@@ -1097,6 +1110,7 @@ function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
   if (/^#\s+station\s*$/i.test(trimmed)) return true;
+  if (DESIGN_MAP_LINES.includes(trimmed)) return true;
   const lower = trimmed.toLowerCase();
   if (STOCK_STATION_FOOTERS.includes(lower)) return true;
   return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
@@ -1169,6 +1183,8 @@ function formatStationMarkdown(fields) {
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }
+  lines.push("");
+  lines.push(...DESIGN_MAP_LINES);
   lines.push("");
   lines.push("Continue this card. Compaction and host change are the same cut. Do not cold-start.");
   lines.push("Grok does not inject this file — Read it. OpenCode injects. Do not thicken the Grok exo.");

@@ -906,7 +906,12 @@ describe('station hot-swap', () => {
         repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
       });
       expect(dest).toBe(path.join(tmp, '.xray', 'state', 'STATION.md'));
-      expect(fs.readFileSync(dest || '', 'utf8')).toContain('Host: openclaw (guided)');
+      const card = fs.readFileSync(dest || '', 'utf8');
+      expect(card).toContain('Host: openclaw (guided)');
+      expect(card).toContain('| Inference            | proposals, reflection, Repertoire        |');
+      expect(card).toContain('| External Governance  | Dynamo vote, Codex                       |');
+      expect(card).toContain('| Autonomous Engine    | thinDispatch, AsideContext               |');
+      expect(card).toContain('| Lessons              | hot lines on the signal; this card       |');
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
@@ -997,6 +1002,9 @@ describe('station hot-swap', () => {
     const twice = mergeStationMarkdown(stock, once);
     expect(countStationFooters(once)).toEqual({ continueCount: 1, grokCount: 1 });
     expect(countStationFooters(twice)).toEqual({ continueCount: 1, grokCount: 1 });
+    expect(twice.split('| Inference').length - 1).toBe(1);
+    expect(twice).toContain('| External Governance');
+    expect(twice).toContain('| Autonomous Engine');
     expect(twice).toContain('Ticket: KILLER-DUAL-CLOUD');
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });

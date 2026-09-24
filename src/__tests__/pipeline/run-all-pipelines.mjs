@@ -62,10 +62,11 @@ function runConsecutive(pipeline) {
       consecutivePasses++;
       console.log(`  ✅ Pass ${consecutivePasses}/${CONSECUTIVE_PASSES_REQUIRED}`);
     } else {
-      consecutivePasses = 0;
       console.log(`  ❌ Failed`);
       console.log(`\n  Error output:`);
       console.log('  ' + result.output.split('\n').slice(0, 15).join('\n  '));
+      console.log(`\n  ❌ ${pipeline.name} failed. One red pipeline stops the run.`);
+      return false;
     }
   }
   

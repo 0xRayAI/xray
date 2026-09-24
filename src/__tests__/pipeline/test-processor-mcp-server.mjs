@@ -238,26 +238,27 @@ test('should export XrayProcessorPipelineServer', () => {
   }
 });
 
-test('should handle execute-pre-processors tool call', () => {
+
+function assertHandlerMap(toolName, handlerName) {
   const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
   const content = fs.readFileSync(serverPath, 'utf-8');
-  if (!content.includes('handlePreProcessors')) {
-    throw new Error('handlePreProcessors not implemented');
+  if (!content.includes('this.handlers')) {
+    throw new Error('handlers map missing');
   }
-  if (!content.includes('case "execute-pre-processors"')) {
-    throw new Error('execute-pre-processors case not handled');
+  if (!content.includes('"' + toolName + '":')) {
+    throw new Error(toolName + ' is not registered on the handler map');
   }
+  if (!content.includes(handlerName)) {
+    throw new Error(handlerName + ' is not implemented');
+  }
+}
+
+test('should handle execute-pre-processors tool call', () => {
+  assertHandlerMap('execute-pre-processors', 'handlePreProcessors');
 });
 
 test('should handle execute-post-processors tool call', () => {
-  const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
-  const content = fs.readFileSync(serverPath, 'utf-8');
-  if (!content.includes('handlePostProcessors')) {
-    throw new Error('handlePostProcessors not implemented');
-  }
-  if (!content.includes('case "execute-post-processors"')) {
-    throw new Error('execute-post-processors case not handled');
-  }
+  assertHandlerMap('execute-post-processors', 'handlePostProcessors');
 });
 
 // ============================================
@@ -372,14 +373,7 @@ test('should require content for codex-validation', () => {
 });
 
 test('should handle codex-validation tool call', () => {
-  const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
-  const content = fs.readFileSync(serverPath, 'utf-8');
-  if (!content.includes('handleCodexValidation')) {
-    throw new Error('handleCodexValidation not implemented');
-  }
-  if (!content.includes('case "codex-validation"')) {
-    throw new Error('codex-validation case not handled');
-  }
+  assertHandlerMap('codex-validation', 'handleCodexValidation');
 });
 
 // ============================================
@@ -404,14 +398,7 @@ test('should require content and operation for framework-compliance-check', () =
 });
 
 test('should handle framework-compliance-check tool call', () => {
-  const serverPath = path.join(PROJECT_ROOT, 'src/mcps/processor-pipeline.server.ts');
-  const content = fs.readFileSync(serverPath, 'utf-8');
-  if (!content.includes('handleComplianceCheck')) {
-    throw new Error('handleComplianceCheck not implemented');
-  }
-  if (!content.includes('case "framework-compliance-check"')) {
-    throw new Error('framework-compliance-check case not handled');
-  }
+  assertHandlerMap('framework-compliance-check', 'handleComplianceCheck');
 });
 
 // ============================================
