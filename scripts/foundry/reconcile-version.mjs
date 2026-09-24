@@ -11,7 +11,9 @@
  *   npx @0xray/foundry reconcile patch --apply
  *
  * --apply writes package.json and the package-lock.json version fields.
- * --check fails when the lock does not match package.json.
+ * --check passes when package.json is equal to the registry (already published)
+ * or greater (the pre-publish bump). It fails when package.json is behind npm,
+ * or when the lock does not match package.json.
  */
 
 import { execSync } from "child_process";
@@ -91,6 +93,21 @@ function fail(msg) {
   process.exit(1);
 }
 
+/**
+ * Registry gate for --check.
+ * Equal to npm is a shipped release. Greater is the pre-publish bump.
+ * Only a package.json behind the registry fails.
+ * @param {string} local
+ * @param {string} npmVersion
+ * @returns {string | null}
+ */
+export function publishedVersionCheckError(local, npmVersion) {
+  if (compare(local, npmVersion) < 0) {
+    return `package.json (${local}) must be >= npm (${npmVersion}). Run: npx @0xray/foundry reconcile patch --apply`;
+  }
+  return null;
+}
+
 function main() {
   const local = readLocalVersion();
   const npm = readPublishedVersion();
@@ -138,9 +155,12 @@ function main() {
     return;
   }
 
-  // Strict checks for release gate / pre-tag
-  if (compare(local, npm) <= 0) {
-    fail(`package.json (${local}) must be > npm (${npm}). Run: npx @0xray/foundry reconcile patch --apply`);
+  // Strict checks for release gate / pre-tag.
+  // `local` is the version read before --apply. Apply still writes
+  // bumpVersion(max(npm, tag)) and is not this gate.
+  const behindNpm = publishedVersionCheckError(local, npm);
+  if (behindNpm) {
+    fail(behindNpm);
   }
 
   const pkgVersion = readLocalVersion();

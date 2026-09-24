@@ -56,7 +56,7 @@ describe('release pipeline', () => {
     expect(paths).toContain('src/integrations/openclaw/plugin/xray-pre-tool/package.json');
   });
 
-  it('release:docs-check refuses a package.json that is not ahead of npm', () => {
+  it('release:docs-check runs reconcile --check then validate-release-docs', () => {
     const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
       scripts: Record<string, string>;
     };
