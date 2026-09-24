@@ -148,4 +148,32 @@ describe("named signal proposals", () => {
     expect(proposals.filter((proposal) => proposal.id.startsWith("named:wake-cascade:"))).toEqual([]);
     expect(proposals.some((proposal) => proposal.namedSignals?.includes("wake-cascade"))).toBe(true);
   });
+
+  it("grades a new session when a kept proposal already named the signal for other sessions", () => {
+    const proposals = generateProposals(corpus([
+      session("sess-a"),
+      session("sess-b"),
+      session("sess-new"),
+    ], [{
+      name: "Extract Method",
+      occurrences: 2,
+      avgConfidence: 0.9,
+      sessions: ["sess-a", "sess-b"],
+      evidence: ["methods"],
+      description: "extracted",
+    }]));
+    expect(proposals.some((proposal) => proposal.id === "named:wake-cascade:sess-new")).toBe(true);
+    expect(proposals.some((proposal) => proposal.id.startsWith("named:wake-cascade:") && proposal.id.includes("sess-a"))).toBe(false);
+    expect(proposals.some((proposal) => proposal.id.startsWith("named:wake-cascade:") && proposal.id.includes("sess-b"))).toBe(false);
+  });
+
+  it("does not treat a longer graded id as covering a new session id", () => {
+    const prior = generateProposals(corpus([session("sess-landed-extra")]));
+    const proposals = generateProposals(
+      corpus([session("sess-landed-extra"), session("sess-landed")]),
+      [{ ...rejectedCodifyHistory()[0]!, proposals: prior }],
+    );
+    const grade = proposals.find((proposal) => proposal.id.startsWith("named:wake-cascade:"));
+    expect(grade?.id).toBe("named:wake-cascade:sess-landed");
+  });
 });

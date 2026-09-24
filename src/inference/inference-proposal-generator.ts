@@ -179,13 +179,16 @@ export function generateProposals(
   history?: InferenceCycleResult[],
 ): InferenceProposal[] {
   const proposals: InferenceProposal[] = [];
+  const proposalSessions = new Map<string, string[]>();
 
   for (const problem of corpus.recurringProblems) {
     const prefix = `problem:${problem.pattern}:`;
     const sessions = freshSessions(history, prefix, problem.sessions);
     if (sessions.length === 0) continue;
+    const id = `${prefix}${sessions.join(",")}`;
+    proposalSessions.set(id, sessions);
     proposals.push({
-      id: `${prefix}${sessions.join(",")}`,
+      id,
       type: classifyProposalType(problem.pattern),
       title: generateTitle(problem),
       description: `Recurring across ${problem.occurrences} sessions: ${problem.pattern}`,
@@ -213,8 +216,10 @@ export function generateProposals(
       seenPatterns.add(normalized);
       continue;
     }
+    const id = `${prefix}${sessions.join(",")}`;
+    proposalSessions.set(id, sessions);
     proposals.push({
-      id: `${prefix}${sessions.join(",")}`,
+      id,
       type: classifyProposalType(problem),
       title: `Investigate: ${problem.substring(0, 80)}`,
       description: `Observed in session ${session}: ${problem}`,
@@ -235,8 +240,10 @@ export function generateProposals(
     if (sessions.length === 0) continue;
 
     const type = patternToProposalType(pattern);
+    const id = `${prefix}${sessions.join(",")}`;
+    proposalSessions.set(id, sessions);
     proposals.push({
-      id: `${prefix}${sessions.join(",")}`,
+      id,
       type,
       title: `Codify ${pattern.name} pattern`,
       description: `${pattern.name} detected across ${pattern.occurrences} sessions (avg confidence: ${Math.round(pattern.avgConfidence * 100)}%). ${pattern.description}`,
@@ -255,8 +262,10 @@ export function generateProposals(
     const prefix = `wrong:${wt}:`;
     const sessions = freshSessions(history, prefix, sessionsForWrongTurn(corpus, wt));
     if (sessions.length === 0) continue;
+    const id = `${prefix}${sessions.join(",")}`;
+    proposalSessions.set(id, sessions);
     proposals.push({
-      id: `${prefix}${sessions.join(",")}`,
+      id,
       type: "guard",
       title: `Guard against: ${summary}`,
       description: `Recurring wrong turn detected: ${wt}. Add a guard or validation to prevent this pattern.`,
@@ -270,12 +279,22 @@ export function generateProposals(
   }
 
   const sorted = proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
-  const alreadyNamed = new Set(sorted.flatMap((proposal) => proposal.namedSignals ?? []));
+  const sessionsAlreadyNamed = new Map<string, Set<string>>();
+  for (const proposal of sorted) {
+    const covered = proposalSessions.get(proposal.id) ?? [];
+    for (const name of proposal.namedSignals ?? []) {
+      if (name.length === 0) continue;
+      const set = sessionsAlreadyNamed.get(name) ?? new Set<string>();
+      for (const sessionId of covered) set.add(sessionId);
+      sessionsAlreadyNamed.set(name, set);
+    }
+  }
   const bySignal = new Map<string, string[]>();
   for (const session of corpus.sessions) {
     const listed = session.matched_primitives ?? session.matchedPrimitives ?? [];
     for (const name of listed) {
-      if (name.length === 0 || alreadyNamed.has(name)) continue;
+      if (name.length === 0) continue;
+      if (sessionsAlreadyNamed.get(name)?.has(session.sessionId)) continue;
       const sessions = bySignal.get(name) ?? [];
       if (!sessions.includes(session.sessionId)) sessions.push(session.sessionId);
       bySignal.set(name, sessions);
