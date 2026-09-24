@@ -80,13 +80,14 @@ const mockProvider: MemoryRoutingProvider = {
     matchedSignals: ['attestation-as-map'],
     avgConfidence: 0.92,
     maxConfidence: 0.92,
-    highConfidenceTrapPresent: true,
+    highConfidenceTrapPresent: trapPresent,
     ontologicalTrapDetected: true,
     complexityBoost: 19,
     recommendedAgent: 'architect',
   }),
 };
 
+let trapPresent = true;
 const mockInitializeMemoryRouting = vi.fn();
 
 vi.mock('../../memory-routing/index.js', async (importOriginal) => {
@@ -112,6 +113,22 @@ describe('researcher Repertoire wiring', () => {
   beforeEach(() => {
     resetMemoryRoutingProvider();
     vi.clearAllMocks();
+    trapPresent = true;
+  });
+
+  it('shows matched lesson speech when the match is not a trap', async () => {
+    trapPresent = false;
+    const { XrayLibrarianServer } = await import('../../mcps/researcher.server.js');
+    const server = new XrayLibrarianServer();
+    const result = await server.analyzeProposal({
+      proposalTitle: 'Consumer revalidation',
+      proposalDescription: 'attestation-as-map requires a check on the consumer side.',
+      proposalType: 'governance',
+    });
+    const text = result.content[0]?.text ?? '';
+    expect(text).toContain('MEMORY_ROUTING:');
+    expect(text).toContain(`lesson: attestation-as-map: ${MATCHED_LESSON}`);
+    expect(text).not.toContain(UNMATCHED_LESSON);
   });
 
   it('calls initializeMemoryRouting on server construction', async () => {

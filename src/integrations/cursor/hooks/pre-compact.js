@@ -22,6 +22,57 @@ import {
   writeCursorUsageReceipt,
 } from './cursor-usage-receipt.js';
 
+async function memoryRoutingModule() {
+  const { existsSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const { fileURLToPath, pathToFileURL } = await import('node:url');
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    join(here, '../../../memory-routing/index.js'),
+    join(here, '../../../../dist/memory-routing/index.js'),
+  ];
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) throw new Error('memory-routing module missing');
+  return pathToFileURL(found).href;
+}
+
+async function lessonSpeechForIntent(root, intent) {
+  if (!intent) return [];
+  try {
+    const { readFileSync, existsSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { loadMemoryRoutingProvider } = await import(await memoryRoutingModule());
+    let routing = { enabled: false, provider: 'null' };
+    const featuresPath = join(root, '.xray', 'features.json');
+    if (existsSync(featuresPath)) {
+      try {
+        routing = JSON.parse(readFileSync(featuresPath, 'utf8')).memory_routing || routing;
+      } catch {
+        /* leftover default */
+      }
+    }
+    const provider = await loadMemoryRoutingProvider(routing, root);
+    if (!provider || provider.id === 'null' || typeof provider.buildRoutingContext !== 'function') {
+      return [];
+    }
+    const context = provider.buildRoutingContext(String(intent));
+    const matched = new Set(Array.isArray(context.matchedSignals) ? context.matchedSignals : []);
+    const lines = [];
+    for (const lesson of context.lessons || []) {
+      if (!matched.has(lesson.name)) continue;
+      for (const line of lesson.lines || []) {
+        const text = String(line.text || '').trim().slice(0, 400);
+        if (text.length === 0) continue;
+        lines.push(`${lesson.name}: ${text}`);
+        if (lines.length >= 4) return lines;
+      }
+    }
+    return lines;
+  } catch {
+    return [];
+  }
+}
+
 function extractIntent(event) {
   return (
     event.prompt ||
@@ -85,10 +136,12 @@ async function main() {
       event_class: eventClass,
       stationLine,
     });
+    const lessonLines = await lessonSpeechForIntent(eventRoot, intent);
+    const lessonNote = lessonLines.length > 0 ? ` Lessons: ${lessonLines.join(' | ')}` : '';
     console.log(
       JSON.stringify({
         user_message:
-          `0xRay Station written. Read .xray/state/STATION.md — do not cold-start. event_class=${eventClass}`,
+          `0xRay Station written. Read .xray/state/STATION.md — do not cold-start. event_class=${eventClass}${lessonNote}`,
       }),
     );
     process.exit(0);

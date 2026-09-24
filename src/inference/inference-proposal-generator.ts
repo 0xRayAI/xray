@@ -38,6 +38,15 @@ function resonanceForNamedSignal(corpus: InferenceCorpus, sessionIds: string[]):
   return confidence;
 }
 
+function speechSlug(text: string): string {
+  const words = text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 3)
+    .slice(0, 6);
+  return words.join("-").slice(0, 48).replace(/-+$/g, "");
+}
+
 function sessionsForWrongTurn(corpus: InferenceCorpus, turn: string): string[] {
   return corpus.sessions
     .filter((session) => session.wrongTurns.includes(turn))
@@ -299,6 +308,31 @@ export function generateProposals(
       bySignal.set(name, sessions);
     }
   }
+  const minted = new Set<string>();
+  for (const session of corpus.sessions) {
+    if (minted.size >= 3) break;
+    const listed = session.matched_primitives ?? session.matchedPrimitives ?? [];
+    if (listed.some((name) => name.length > 0)) continue;
+    const speech = lessonTrace(corpus, [session.sessionId]).trim();
+    const slug = speechSlug(speech);
+    if (slug.length === 0 || minted.has(slug)) continue;
+    const sessions = freshSessions(history, `mint:${slug}:`, [session.sessionId]);
+    if (sessions.length === 0) continue;
+    minted.add(slug);
+    sorted.push({
+      id: `mint:${slug}:${sessions.join(",")}`,
+      type: "codify",
+      title: `Learn ${slug}`,
+      description: speech,
+      evidence: [speech],
+      confidence: resonanceForNamedSignal(corpus, sessions),
+      source: "recurring_pattern",
+      status: "pending",
+      namedSignals: [slug],
+      lesson: speech,
+    });
+  }
+
   for (const [name, sessionIds] of bySignal) {
     const sessions = freshSessions(history, `named:${name}:`, sessionIds);
     if (sessions.length === 0) continue;

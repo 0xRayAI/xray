@@ -65,6 +65,39 @@ function rejectedCodifyHistory(): InferenceCycleResult[] {
 }
 
 describe("named signal proposals", () => {
+  it("learns speech that names no stored signal, once", () => {
+    const fresh = session("sess-new", {
+      matched_primitives: [],
+      patterns: [],
+      approaches: ["I tried the route table and the check failed closed"],
+    });
+    const first = generateProposals(corpus([fresh]));
+    const minted = first.find((proposal) => proposal.id.startsWith("mint:"));
+    expect(minted?.namedSignals?.[0]).toBe("tried-the-route-table-and-the");
+    expect(minted?.lesson).toContain("failed closed");
+    const again = generateProposals(corpus([fresh]), [{
+      cycleId: "prior",
+      triggered: true,
+      triggerReason: "test",
+      corpusSummary: { sessions: 1, totalCommits: 1, recurringPatterns: 0, recurringProblems: 0 },
+      proposals: [{
+        id: minted?.id ?? "",
+        type: "codify",
+        title: "Learn",
+        description: minted?.lesson ?? "",
+        evidence: [],
+        confidence: 0.85,
+        source: "recurring_pattern",
+        status: "approved",
+      }],
+      votes: [],
+      phase: "complete",
+      completedAt: "2026-09-23T00:00:00.000Z",
+      duration: 1,
+    }]);
+    expect(again.some((proposal) => proposal.id.startsWith("mint:"))).toBe(false);
+  });
+
   it("grades a signal a session named once when the work landed", () => {
     const proposals = generateProposals(corpus([session("sess-landed")]));
     const grade = proposals.find((proposal) => proposal.id === "named:wake-cascade:sess-landed");
