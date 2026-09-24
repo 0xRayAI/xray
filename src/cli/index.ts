@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { readFileSync, existsSync } from "fs";
 import { getConfigDir } from "../core/config-paths.js";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { inferenceRunMayEnter } from "../inference/inference-run-gate.js";
 
 // Get package root relative to this script location
 const packageRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
@@ -309,6 +310,21 @@ console.log("  • @security-auditor scan this project");
     }
   });
 
+type CliReportType = "orchestration" | "agent-usage" | "context-awareness" | "performance" | "full-analysis";
+
+function cliReportType(value: string | undefined): CliReportType {
+  if (
+    value === "orchestration" ||
+    value === "agent-usage" ||
+    value === "context-awareness" ||
+    value === "performance" ||
+    value === "full-analysis"
+  ) {
+    return value;
+  }
+  return "full-analysis";
+}
+
 program
   .command("report")
   .description("Generate framework activity and health reports")
@@ -325,7 +341,7 @@ program
   .option("--ci", "CI-friendly JSON output for pipelines")
   .action(async (options) => {
     // Resolve convenience flags to report type
-    const typeMap: Record<string, string> = {
+    const typeMap: Record<string, CliReportType> = {
       daily: "full-analysis",
       performance: "performance",
       compliance: "full-analysis",
@@ -333,7 +349,7 @@ program
       ci: "full-analysis",
     };
 
-    let reportType = options.type;
+    let reportType = cliReportType(typeof options.type === "string" ? options.type : undefined);
     let outputFormat: "json" | "markdown" = "json";
 
     // Convenience flags override --type
@@ -372,7 +388,7 @@ program
       const reportingSystem = new FrameworkReportingSystem();
 
       const report = await reportingSystem.generateReport({
-        type: reportType as any,
+        type: reportType,
         outputFormat,
       });
 
@@ -772,6 +788,12 @@ program
     console.log('  --status    Show tuner status');
   });
 
+function exitWhenFlushed(code: number): void {
+  process.stdout.write("", () => {
+    process.exit(code);
+  });
+}
+
 // Inference cycle run command
 program
   .command('inference:run')
@@ -782,6 +804,8 @@ program
   .option('--no-researcher-review', 'Skip downstream researcher review of PRs')
   .option('--json', 'Output raw JSON result')
    .action(async (options) => {
+     let code = 0;
+     try {
      const { InferenceCycle } = await import('../inference/inference-cycle.js');
      const { shouldTriggerCycle } = await import('../inference/inference-accumulator.js');
      const { accumulateCorpus } = await import('../inference/inference-accumulator.js');
@@ -809,13 +833,12 @@ program
      }
 
      const features = featuresConfigLoader.loadConfig();
-     const inferenceConfig = (features as any)?.inference;
-    if (!inferenceConfig?.enabled) {
+    if (!inferenceRunMayEnter(features.inference, options.force === true)) {
       if (options.json) {
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
       } else {
         console.log('Inference feature is disabled in features.json.');
-        console.log('Enable it by setting inference.enabled = true in .opencode/plugins/features.json (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule)');
+        console.log('Set inference.enabled to true in xray/features.json, or pass --force.');
       }
       return;
     }
@@ -856,7 +879,7 @@ program
     }
 
     // Initialize external governance integration for two-oscillator governance
-    const govConfig = (features as any)?.inference_governance;
+    const govConfig = features.inference_governance;
     if (govConfig?.enabled) {
       await shutdownGovernanceIntegration();
       await initializeGovernanceIntegration();
@@ -896,13 +919,24 @@ program
 
     if (result.deployVerification) {
       console.log(`\nDeploy verification: ${result.deployVerification.success ? 'PASSED' : 'FAILED'}`);
-      const failedChecks = result.deployVerification.checks.filter((c: any) => !c.passed);
+      const failedChecks = result.deployVerification.checks.filter((check) => !check.passed);
       if (failedChecks.length > 0) {
         for (const c of failedChecks) {
           console.log(`  Failed: ${c.name} — ${c.output?.substring(0, 200)}`);
         }
       }
     }
+  } catch (error) {
+    code = 1;
+    const message = error instanceof Error ? error.message : String(error);
+    if (options.json) {
+      console.log(JSON.stringify({ triggered: false, reason: message }));
+    } else {
+      console.log(message);
+    }
+  } finally {
+    exitWhenFlushed(code);
+  }
   });
 
 // Publish agent command
