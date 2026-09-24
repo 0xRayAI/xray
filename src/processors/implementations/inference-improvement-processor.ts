@@ -15,6 +15,7 @@ import { frameworkLogger } from "../../core/framework-logger.js";
 import { getConfigDir } from "../../core/config-paths.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
 import { captureCompletedInferenceOperation } from "../../inference/session-capture.js";
+import { InferenceCycle } from "../../inference/inference-cycle.js";
 
 interface InferenceWorkflowContext {
   timestamp: string;
@@ -363,6 +364,7 @@ Final validation and application of approved changes:
     const inferenceDir = path.join(directory, "docs", "inference");
     const signalNames = readStoredSignalNames(directory);
     const ids = operationIdsToCapture(promptsDir, currentOperationId);
+    let captured = 0;
     for (const operationId of ids) {
       const saved = captureCompletedInferenceOperation({
         operationId,
@@ -371,6 +373,7 @@ Final validation and application of approved changes:
         signalNames,
       });
       if (!saved) continue;
+      captured += 1;
       await frameworkLogger.log(
         "inference-improvement",
         "operation_session_captured",
@@ -378,6 +381,13 @@ Final validation and application of approved changes:
         { operationId, saved }
       );
     }
+    if (captured === 0) return;
+    const cycle = new InferenceCycle(directory, undefined, {
+      force: true,
+      skipApply: true,
+      skipDeployVerify: true,
+    });
+    await cycle.maybeRunCycle();
   }
 }
 

@@ -69,7 +69,7 @@ describe("captureCompletedInferenceOperation", () => {
     const loaded = loadSessionInferences(inferenceDir);
     expect(loaded).toHaveLength(1);
     const session = loaded[0];
-    expect(session?.sessionId).toMatch(/^session-\d{4}-\d{2}-\d{2}$/);
+    expect(session?.sessionId).toMatch(/^session-\d{4}-\d{2}-\d{2}-inference-finished$/);
     expect(FORBIDDEN_SESSION_IDS).not.toContain(session?.sessionId);
     expect(session?.approaches[0]).toContain("wake-cascade");
     expect(session?.solutions[0]).toContain("a friend could hear");

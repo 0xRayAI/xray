@@ -38,9 +38,15 @@ export interface SessionMetrics {
   uniqueDirs: number;
 }
 
-/** Date stamp the corpus session uses. Callers do not append a HEAD suffix. */
-export function mintSessionId(now: Date = new Date()): string {
-  return `session-${now.toISOString().slice(0, 10)}`;
+/** Date stamp plus the operation id. Callers do not append a HEAD suffix. */
+export function mintSessionId(now: Date = new Date(), distinct?: string): string {
+  const day = now.toISOString().slice(0, 10);
+  const suffix = (distinct ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return suffix.length > 0 ? `session-${day}-${suffix}` : `session-${day}`;
 }
 
 export function captureSessionInference(
@@ -432,7 +438,7 @@ export interface OperationCaptureInput {
 /**
  * One corpus session for a finished inference operation.
  * Speech comes from that run's prompt result text. No speech, no file.
- * Does not grade: the cycle votes later.
+ * Does not grade. The caller runs the cycle before it returns.
  */
 export function captureCompletedInferenceOperation(input: OperationCaptureInput): string | null {
   const operationId = input.operationId.trim();
@@ -447,7 +453,7 @@ export function captureCompletedInferenceOperation(input: OperationCaptureInput)
   const named = storedSignalsNamedBySpeech(raw, input.signalNames);
   const now = new Date().toISOString();
   const session: SessionInference = {
-    sessionId: mintSessionId(),
+    sessionId: mintSessionId(new Date(), operationId),
     timestamp: now,
     span: { from: operationId, to: operationId },
     problems: [],
