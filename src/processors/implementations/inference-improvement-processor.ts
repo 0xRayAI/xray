@@ -14,6 +14,7 @@ import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { getConfigDir } from "../../core/config-paths.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
+import { captureCompletedInferenceOperation } from "../../inference/session-capture.js";
 
 interface InferenceWorkflowContext {
   timestamp: string;
@@ -93,7 +94,8 @@ export class InferenceImprovementProcessor extends PostProcessor {
       
       await this.saveWorkflowContext(directory, workflowContext);
       
-      await this.triggerAgentWorkflow(workflowContext);
+      const workflowId = await this.triggerAgentWorkflow(workflowContext);
+      await this.captureFinishedOperationSpeech(directory, workflowId);
 
       await frameworkLogger.log(
         "inference-improvement",
@@ -316,7 +318,7 @@ Final validation and application of approved changes:
 `;
   }
 
-  private async triggerAgentWorkflow(context: InferenceWorkflowContext): Promise<void> {
+  private async triggerAgentWorkflow(context: InferenceWorkflowContext): Promise<string> {
     const workflow = {
       ...context.workflow,
       phase: "data_gathering" as const,
@@ -338,12 +340,82 @@ Final validation and application of approved changes:
 
     const workflowBase = path.isAbsolute(this.workflowDir) ? this.workflowDir : path.join(process.cwd(), this.workflowDir);
     const outputPath = path.join(workflowBase, "workflow-status.json");
+    const workflowId = `inference-${Date.now()}`;
     fs.writeFileSync(outputPath, JSON.stringify({
       status: "in_progress",
       phase: "data_gathering",
       nextAgent: "researcher",
       message: "Invoke @researcher to begin data gathering phase",
-      workflowId: `inference-${Date.now()}`
+      workflowId
     }, null, 2));
+    return workflowId;
+  }
+
+  /**
+   * The operation is finished once its prompt result text is on disk.
+   * One session per operation id. Empty speech writes nothing.
+   */
+  private async captureFinishedOperationSpeech(directory: string, currentOperationId: string): Promise<void> {
+    const workflowBase = path.isAbsolute(this.workflowDir)
+      ? this.workflowDir
+      : path.join(directory, this.workflowDir);
+    const promptsDir = path.join(workflowBase, "prompts");
+    const inferenceDir = path.join(directory, "docs", "inference");
+    const signalNames = readStoredSignalNames(directory);
+    const ids = operationIdsToCapture(promptsDir, currentOperationId);
+    for (const operationId of ids) {
+      const saved = captureCompletedInferenceOperation({
+        operationId,
+        promptsDir,
+        inferenceDir,
+        signalNames,
+      });
+      if (!saved) continue;
+      await frameworkLogger.log(
+        "inference-improvement",
+        "operation_session_captured",
+        "info",
+        { operationId, saved }
+      );
+    }
+  }
+}
+
+function operationIdsToCapture(promptsDir: string, currentOperationId: string): string[] {
+  const ids = new Set<string>();
+  if (currentOperationId.trim().length > 0) ids.add(currentOperationId);
+  if (!fs.existsSync(promptsDir)) return [...ids];
+  for (const name of fs.readdirSync(promptsDir)) {
+    const stem = /^(inference-\d+)\.result\.(md|txt)$/i.exec(name);
+    if (stem?.[1]) ids.add(stem[1]);
+    const full = path.join(promptsDir, name);
+    if (!name.endsWith(".md") && !name.endsWith(".txt")) continue;
+    let text = "";
+    try {
+      text = fs.readFileSync(full, "utf8");
+    } catch {
+      continue;
+    }
+    const declared = /^operation:\s*(\S+)\s*$/im.exec(text);
+    if (declared?.[1]) ids.add(declared[1]);
+  }
+  return [...ids];
+}
+
+function readStoredSignalNames(directory: string): string[] {
+  const dest = path.join(directory, ".xray", "state", "repertoire", "curated_signals.json");
+  if (!fs.existsSync(dest)) return [];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(dest, "utf8")) as { signals?: unknown };
+    if (!Array.isArray(parsed.signals)) return [];
+    const names: string[] = [];
+    for (const signal of parsed.signals) {
+      if (!signal || typeof signal !== "object") continue;
+      const name = (signal as { name?: unknown }).name;
+      if (typeof name === "string" && name.trim().length > 0) names.push(name.trim());
+    }
+    return names;
+  } catch {
+    return [];
   }
 }
