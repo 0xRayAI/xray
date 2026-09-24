@@ -673,7 +673,11 @@ function heatLiveMemory(root) {
   }
 }
 
-/** Every floor that heats. Dedup per HEAD. Patterns come from git, not a leftover catalog. */
+/**
+ * Station note on HEAD move. Dedup per HEAD.
+ * Commit subjects are match text for the card, not a graded lesson.
+ * Do not mint session-<date>-<short HEAD> under docs/inference.
+ */
 function maybeCaptureSessionOnHeadMove(root) {
   const cfg = readSessionCaptureConfig(root);
   if (!cfg.enabled) return null;
@@ -690,34 +694,28 @@ function maybeCaptureSessionOnHeadMove(root) {
     ? gitCommitSubjects(root, [`${stamp.head}..HEAD`])
     : gitCommitSubjects(root, ["-n", String(cfg.lookback)]);
   if (commits.length < cfg.minCommits) return null;
-  const sessionId = `session-${new Date().toISOString().slice(0, 10)}-${git.head}`;
   const approaches = commits.map((row) => row.message).filter(Boolean);
   const span = {
     from: stamp && stamp.head ? stamp.head : commits[commits.length - 1] ? commits[commits.length - 1].hash : git.head,
     to: git.head,
   };
   const patterns = patternsFromGit(root, commits, span);
-  const session = {
-    sessionId,
+  const stationNote = {
     timestamp: new Date().toISOString(),
     span,
-    problems: [],
     approaches,
-    wrongTurns: [],
-    solutions: [],
     patterns,
     matched_primitives: preferLawHits(patterns.map((row) => row && row.name)),
     metrics: { commits: commits.length },
   };
   const outDir = join(root, "docs", "inference");
   mkdirSync(outDir, { recursive: true });
-  const filePath = join(outDir, `session-${sessionId.replace(/^session-/, "")}.json`);
-  writeFileSync(filePath, `${JSON.stringify(session, null, 2)}\n`);
-  writeFileSync(join(outDir, "latest-session.json"), `${JSON.stringify(session, null, 2)}\n`);
+  const filePath = join(outDir, "latest-session.json");
+  writeFileSync(filePath, `${JSON.stringify(stationNote, null, 2)}\n`);
   mkdirSync(join(root, ".xray", "state"), { recursive: true });
   writeFileSync(
     sessionCaptureStampPath(root),
-    `${JSON.stringify({ head: git.head, sessionId, path: filePath, updatedAt: session.timestamp }, null, 2)}\n`,
+    `${JSON.stringify({ head: git.head, path: filePath, updatedAt: stationNote.timestamp }, null, 2)}\n`,
   );
   return filePath;
 }
