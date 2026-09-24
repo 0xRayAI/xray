@@ -1,5 +1,6 @@
 import type { InferenceProposal, InferenceCycleResult } from "./inference-cycle.js";
 import type { InferenceCorpus, RecurringPattern, RecurringProblem } from "./inference-accumulator.js";
+import { LESSON_TEXT_CAP } from "../memory-routing/types.js";
 
 function primitivesForSessions(corpus: InferenceCorpus, sessionIds: string[]): string[] {
   const wanted = new Set(sessionIds);
@@ -42,8 +43,6 @@ function sessionsForWrongTurn(corpus: InferenceCorpus, turn: string): string[] {
     .filter((session) => session.wrongTurns.includes(turn))
     .map((session) => session.sessionId);
 }
-
-const LESSON_TEXT_CAP = 400;
 
 /** The trace a graded line stores. Wrong turns, then approaches, then solutions. */
 function lessonTrace(corpus: InferenceCorpus, sessionIds: string[]): string {
