@@ -1,0 +1,9 @@
+{
+  "name": "cursor-cloud-compact-needle",
+  "private": true,
+  "description": "Local tokenizer for compaction needle pile (not part of 0xray package)",
+  "type": "module",
+  "dependencies": {
+    "gpt-tokenizer": "^2.8.1"
+  }
+}
