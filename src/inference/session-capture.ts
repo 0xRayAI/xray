@@ -669,6 +669,26 @@ export function captureReflectionInference(input: {
   };
 }
 
+/** The gauge file. One session log per reflection, skipped when that id is already on disk. */
+export function saveReflectionSession(session: SessionInference, inferenceDir: string): string | null {
+  if (reflectionAlreadySaved(inferenceDir, session.sessionId)) return null;
+  return saveSessionInference(session, inferenceDir);
+}
+
+function reflectionAlreadySaved(inferenceDir: string, sessionId: string): boolean {
+  if (!fs.existsSync(inferenceDir)) return false;
+  for (const name of fs.readdirSync(inferenceDir)) {
+    if (!name.startsWith("session-") || !name.endsWith(".json") || name === "latest-session.json") continue;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(inferenceDir, name), "utf8")) as { sessionId?: unknown };
+      if (parsed.sessionId === sessionId) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
 function storedSignalsNamedBySpeech(speech: string, signalNames: readonly string[]): string[] {
   const hay = speech.toLowerCase();
   const named: string[] = [];

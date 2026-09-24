@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { accumulateCorpus, loadReflectionInferences } from "../../../inference/inference-accumulator.js";
+import { saveReflectionSession } from "../../../inference/session-capture.js";
 
 describe("reflection corpus", () => {
   let projectRoot: string;
@@ -37,6 +38,9 @@ describe("reflection corpus", () => {
     expect(loaded[0]?.matched_primitives).toEqual(["heat-is-not-conviction"]);
     expect(loaded[0]?.approaches.length).toBeGreaterThan(0);
     expect(fs.readdirSync(inferenceDir)).toEqual([]);
+    const written = saveReflectionSession(loaded[0]!, inferenceDir);
+    expect(written && path.basename(written).startsWith("session-reflection-heat-note-")).toBe(true);
+    expect(saveReflectionSession(loaded[0]!, inferenceDir)).toBeNull();
 
     const corpus = accumulateCorpus(inferenceDir);
     expect(corpus.sessions.map((session) => session.sessionId)).toContain("session-reflection-heat-note");

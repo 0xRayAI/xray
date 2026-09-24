@@ -14,7 +14,7 @@ import { PostProcessor } from "../processor-interfaces.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import { getConfigDir } from "../../core/config-paths.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
-import { captureCompletedInferenceOperation } from "../../inference/session-capture.js";
+import { captureCompletedInferenceOperation, saveReflectionSession } from "../../inference/session-capture.js";
 import { loadReflectionInferences } from "../../inference/inference-accumulator.js";
 import { InferenceCycle } from "../../inference/inference-cycle.js";
 
@@ -382,10 +382,17 @@ Final validation and application of approved changes:
         { operationId, saved }
       );
     }
-    const namedReflection = loadReflectionInferences(inferenceDir).some(
-      (session) => (session.matched_primitives?.length ?? 0) > 0,
-    );
-    if (captured === 0 && !namedReflection) return;
+    let reflectionSaved = 0;
+    for (const session of loadReflectionInferences(inferenceDir)) {
+      const saved = saveReflectionSession(session, inferenceDir);
+      if (!saved) continue;
+      reflectionSaved += 1;
+      await frameworkLogger.log("inference-improvement", "reflection_session_written", "info", {
+        sessionId: session.sessionId,
+        saved,
+      });
+    }
+    if (captured === 0 && reflectionSaved === 0) return;
     const cycle = new InferenceCycle(directory, undefined, {
       force: true,
       skipApply: true,
