@@ -211,6 +211,8 @@ export class InferenceCycle {
 
       for (const p of proposals) InferenceCycle.governedProposalIds.add(p.id);
 
+      this.recordGovernedLessons(cycleId, proposals, votes);
+
       this.setPhase("complete");
       this.saveCycleState(cycleId);
 
