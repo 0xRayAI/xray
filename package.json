@@ -179,6 +179,7 @@
     "src/opencode/workflows/",
     "src/integrations/grok/plugin/0xray/",
     "src/integrations/openclaw/plugin/",
+    "docs-site/docs/plates/",
     "src/skills/",
     "src/mcps/",
     ".plugin/",
