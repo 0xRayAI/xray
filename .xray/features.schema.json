@@ -97,6 +97,23 @@
         "lookback_commits": { "type": "integer", "minimum": 1 }
       }
     },
+    "inference": {
+      "type": "object",
+      "description": "Self-improvement cycle. A missing key is on. Explicit enabled false turns inference:run off unless --force.",
+      "properties": {
+        "description": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "workflow_dir": { "type": "string" },
+        "reports_dir": { "type": "string" },
+        "pattern_matching": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "confidence_threshold": { "type": "number" }
+          }
+        }
+      }
+    },
     "suit_temperament": {
       "type": "object",
       "description": "0xRay 4.0 — constitution always on; ceremony scales by host. Missing key = guided (existing consumers unchanged).",

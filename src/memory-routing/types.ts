@@ -34,6 +34,9 @@ export interface MemoryTaskConfidence {
   recommendedAgent: string | null;
 }
 
+/** Characters kept on one graded lesson line. lessonTrace stores with this cap. */
+export const LESSON_TEXT_CAP = 400;
+
 export interface MemoryLessonLine {
   taskId: string;
   decision: 'success' | 'failure';

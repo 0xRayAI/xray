@@ -2,6 +2,13 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.24 — hot-swap, memory organ, plates
+
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates** are one INPUT/PROCESSING/OUTPUT schematic per pipeline in [Plates](../plates/index.md) (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line, `Plate: <id> — .xray/state/plates/<id>.md`. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24 (`@0xray/repertoire@0.2.8`).
+
 ## 4.0.21 — dest is laws
 
 - **Repertoire is preferred.** Dest is a judgment index of named invariants. Wake hydrate is factory + stack only. `patternsFromGit` observes existing laws; it does not mint commit slugs. Grow skips sibling `repo-*`. `pruneKeywordDest` runs after organ match remints subject overlay.

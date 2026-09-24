@@ -409,6 +409,10 @@ export interface FeaturesConfig {
   storytelling?: StorytellingConfig;
   auto_reflection?: AutoReflectionConfig;
   inference?: InferenceConfig;
+  /** External Dynamo pass. Off uses the local decision matrix. */
+  inference_governance?: {
+    enabled?: boolean;
+  };
   memory_routing?: MemoryRoutingConfig;
   /** P2.2 — lightweight Grok write-tool postprocessor marker */
   grok_postprocessor_light?: boolean;
@@ -925,6 +929,17 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
         search_result_cache: true,
         cache_ttl_seconds: 300,
         max_cache_size_mb: 50,
+      },
+
+      inference: {
+        description: "Self-improvement cycle that grades a new named session into repertoire",
+        enabled: true,
+        workflow_dir: ".xray/inference",
+        reports_dir: ".xray/reports",
+        pattern_matching: {
+          enabled: true,
+          confidence_threshold: 0.7,
+        },
       },
 
       synthesis: {

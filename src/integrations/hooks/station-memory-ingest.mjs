@@ -3,9 +3,23 @@
  * Station organ write — compact ingest + wake grow.
  * Grow uses the worn RepertoireService. Groover field stays off.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+/** Tail cap for diary files the kernel list does not open. Heat only. */
+const UNREAD_DIARY_CAP = 80_000;
+
+/**
+ * Suit logs with a writer and no brain reader.
+ * Graded sessions and the five kernel-diary files stay on their existing readers.
+ * latest-session.json stays a station note, not a corpus session.
+ */
+const UNREAD_DIARY_FILES = [
+  ['logs', 'framework', 'activity-report.json'],
+  ['logs', 'framework', 'plugin-tool-events.log'],
+  ['.xray', 'inference', 'postprocessor-light-latest.json'],
+];
 
 const root = process.argv[2];
 const mode = process.argv[3] || 'station';
@@ -95,6 +109,50 @@ function readCleanupDiary(projectRoot) {
   return { text: parts.join('\n'), sources };
 }
 
+function pushMatching(dir, pattern, into) {
+  if (!existsSync(dir)) return;
+  let names = [];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return;
+  }
+  const matched = names.filter((name) => pattern.test(name)).sort().reverse();
+  for (const name of matched) into.push(join(dir, name));
+}
+
+/**
+ * Diary, activity, and workflow files the kernel candidate list does not open.
+ * Text is heat for last_seen. It is not a lesson and not a graded session.
+ */
+export function collectUnreadSuitDiary(projectRoot) {
+  const files = UNREAD_DIARY_FILES.map((parts) => join(projectRoot, ...parts));
+  pushMatching(join(projectRoot, '.xray', 'inference'), /^workflow-\d+\.json$/, files);
+  pushMatching(join(projectRoot, 'logs', 'monitoring'), /^memory-monitor-.+\.log$/, files);
+  pushMatching(join(projectRoot, '.opencode', 'logs'), /^xray-plugin-.+\.log$/, files);
+  const sources = [];
+  const chunks = [];
+  let used = 0;
+  for (const file of files) {
+    const resolved = resolve(file);
+    if (!existsSync(resolved) || sources.includes(resolved)) continue;
+    let raw = '';
+    try {
+      raw = readFileSync(resolved, 'utf8');
+    } catch {
+      continue;
+    }
+    if (!raw.trim()) continue;
+    const remain = UNREAD_DIARY_CAP - used;
+    if (remain <= 0) break;
+    const slice = raw.length > remain ? raw.slice(-remain) : raw;
+    chunks.push(slice);
+    sources.push(resolved);
+    used += slice.length;
+  }
+  return { text: chunks.join('\n'), sources };
+}
+
 async function growDest(projectRoot) {
   const routing = readRouting(projectRoot);
   if (isExplicitOptOut(routing)) {
@@ -123,9 +181,10 @@ async function growDest(projectRoot) {
           ? pathsMod.collectKernelDiaryText(projectRoot)
           : { text: '', sources: [] };
       const cleanup = readCleanupDiary(projectRoot);
+      const unread = collectUnreadSuitDiary(projectRoot);
       const diary = service.heatKernelDiary({
-        text: [kernel.text, cleanup.text].filter(Boolean).join('\n'),
-        sources: [...(kernel.sources || []), ...cleanup.sources],
+        text: [kernel.text, cleanup.text, unread.text].filter(Boolean).join('\n'),
+        sources: [...(kernel.sources || []), ...cleanup.sources, ...unread.sources],
       });
       const after = service.signalsManager.load().signals.length;
       const heatedNames = Array.isArray(diary.heated) ? diary.heated : [];
@@ -147,49 +206,57 @@ async function growDest(projectRoot) {
   process.stdout.write(`${JSON.stringify({ skipped: 'no-organ' })}\n`);
 }
 
-if (!root) {
-  process.exit(0);
+function invokedAsScript() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return import.meta.url === pathToFileURL(entry).href;
 }
 
-if (mode === '--grow') {
-  await growDest(root);
-  process.exit(0);
-}
-
-const sessionId = mode;
-const hookEvent = process.argv[4] || 'post_compact';
-let signals = [];
-try {
-  signals = JSON.parse(process.argv[5] || '[]');
-} catch {
-  signals = [];
-}
-if (!Array.isArray(signals) || signals.length === 0) {
-  process.exit(0);
-}
-
-let routing = { enabled: false, provider: 'null' };
-const featuresPath = join(root, '.xray', 'features.json');
-if (existsSync(featuresPath)) {
-  try {
-    routing = JSON.parse(readFileSync(featuresPath, 'utf8')).memory_routing || routing;
-  } catch {
-    /* leftover */
+if (invokedAsScript()) {
+  if (!root) {
+    process.exit(0);
   }
+
+  if (mode === '--grow') {
+    await growDest(root);
+    process.exit(0);
+  }
+
+  const sessionId = mode;
+  const hookEvent = process.argv[4] || 'post_compact';
+  let signals = [];
+  try {
+    signals = JSON.parse(process.argv[5] || '[]');
+  } catch {
+    signals = [];
+  }
+  if (!Array.isArray(signals) || signals.length === 0) {
+    process.exit(0);
+  }
+
+  let routing = { enabled: false, provider: 'null' };
+  const featuresPath = join(root, '.xray', 'features.json');
+  if (existsSync(featuresPath)) {
+    try {
+      routing = JSON.parse(readFileSync(featuresPath, 'utf8')).memory_routing || routing;
+    } catch {
+      /* leftover */
+    }
+  }
+
+  const { loadMemoryRoutingProvider } = await import('../../memory-routing/index.js');
+  const provider = await loadMemoryRoutingProvider(routing, root);
+  if (!provider || typeof provider.ingestFeedback !== 'function') process.exit(0);
+
+  provider.ingestFeedback({
+    timestamp: new Date().toISOString(),
+    sessionId,
+    taskId: `station-${hookEvent}`,
+    assignedAgent: 'station',
+    memorySignals: signals,
+    complexity: 0,
+    success: true,
+    durationMs: 0,
+  });
+  process.exit(0);
 }
-
-const { loadMemoryRoutingProvider } = await import('../../memory-routing/index.js');
-const provider = await loadMemoryRoutingProvider(routing, root);
-if (!provider || typeof provider.ingestFeedback !== 'function') process.exit(0);
-
-provider.ingestFeedback({
-  timestamp: new Date().toISOString(),
-  sessionId,
-  taskId: `station-${hookEvent}`,
-  assignedAgent: 'station',
-  memorySignals: signals,
-  complexity: 0,
-  success: true,
-  durationMs: 0,
-});
-process.exit(0);

@@ -18,6 +18,8 @@ export interface SessionInference {
   matched_primitives?: string[];
   /** Same list after load, so callers can read either field. */
   matchedPrimitives?: string[];
+  /** Inference operation this session was captured from. A second completion of the same id does not write another file. */
+  operationId?: string;
 }
 
 export interface ReasoningLink {
@@ -36,6 +38,17 @@ export interface SessionMetrics {
   uniqueDirs: number;
 }
 
+/** Date stamp plus the operation id. Callers do not append a HEAD suffix. */
+export function mintSessionId(now: Date = new Date(), distinct?: string): string {
+  const day = now.toISOString().slice(0, 10);
+  const suffix = (distinct ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return suffix.length > 0 ? `session-${day}-${suffix}` : `session-${day}`;
+}
+
 export function captureSessionInference(
   fromRef: string,
   toRef: string,
@@ -52,7 +65,7 @@ export function captureSessionInference(
   const reasoningChain = buildReasoningChain(problems, approaches, wrongTurns, solutions);
 
   return {
-    sessionId: `session-${new Date().toISOString().slice(0, 10)}`,
+    sessionId: mintSessionId(),
     timestamp: new Date().toISOString(),
     span: { from: fromRef, to: toRef },
     problems,
@@ -410,6 +423,282 @@ function buildReasoningChain(
   }
 
   return chain;
+}
+
+/** Same cap `lessonTrace` applies before a vote can store the line. */
+const OPERATION_LESSON_CAP = 400;
+
+export interface OperationCaptureInput {
+  operationId: string;
+  promptsDir: string;
+  inferenceDir: string;
+  signalNames: readonly string[];
+}
+
+/**
+ * One corpus session for a finished inference operation.
+ * Speech comes from that run's prompt result text. No speech, no file.
+ * Does not grade. The caller runs the cycle before it returns.
+ */
+export function captureCompletedInferenceOperation(input: OperationCaptureInput): string | null {
+  const operationId = input.operationId.trim();
+  if (!operationId) return null;
+  if (operationAlreadyCaptured(input.inferenceDir, operationId)) return null;
+
+  const raw = readOperationSpeech(input.promptsDir, operationId);
+  const speech = parseOperationSpeech(raw);
+  const heard = speech.approaches.length + speech.solutions.length + speech.wrongTurns.length;
+  if (!raw.trim() || heard === 0) return null;
+
+  const named = storedSignalsNamedBySpeech(raw, input.signalNames);
+  const now = new Date().toISOString();
+  const session: SessionInference = {
+    sessionId: mintSessionId(new Date(), operationId),
+    timestamp: now,
+    span: { from: operationId, to: operationId },
+    problems: [],
+    approaches: speech.approaches,
+    wrongTurns: speech.wrongTurns,
+    solutions: speech.solutions,
+    reasoningChain: [],
+    patterns: [],
+    metrics: {
+      commits: 0,
+      filesChanged: 0,
+      insertions: 0,
+      deletions: 0,
+      filesAdded: 0,
+      filesDeleted: 0,
+      uniqueDirs: 0,
+    },
+    matched_primitives: named,
+    matchedPrimitives: named,
+    operationId,
+  };
+  return saveSessionInference(session, input.inferenceDir);
+}
+
+function operationAlreadyCaptured(inferenceDir: string, operationId: string): boolean {
+  if (!fs.existsSync(inferenceDir)) return false;
+  for (const name of fs.readdirSync(inferenceDir)) {
+    if (!name.startsWith("session-") || !name.endsWith(".json")) continue;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(inferenceDir, name), "utf8")) as { operationId?: unknown };
+      if (parsed.operationId === operationId) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
+function readOperationSpeech(promptsDir: string, operationId: string): string {
+  if (!fs.existsSync(promptsDir)) return "";
+  const chunks: string[] = [];
+  for (const name of fs.readdirSync(promptsDir).sort()) {
+    const full = path.join(promptsDir, name);
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(full);
+    } catch {
+      continue;
+    }
+    if (!stat.isFile()) continue;
+    let text = "";
+    try {
+      text = fs.readFileSync(full, "utf8");
+    } catch {
+      continue;
+    }
+    if (name === `${operationId}.result.md` || name === `${operationId}.result.txt`) {
+      chunks.push(text);
+      continue;
+    }
+    if (/\.result\.(md|txt)$/i.test(name) && operationDeclared(text) === operationId) {
+      chunks.push(text);
+      continue;
+    }
+    if (name.endsWith(".md") && !name.includes(".result.")) {
+      const section = resultSection(text);
+      if (section && (operationDeclared(section) === operationId || operationDeclared(text) === operationId)) {
+        chunks.push(section);
+      }
+    }
+  }
+  return chunks.join("\n").trim();
+}
+
+function operationDeclared(text: string): string | null {
+  const match = /^operation:\s*(\S+)\s*$/im.exec(text);
+  return match?.[1] ?? null;
+}
+
+function resultSection(text: string): string {
+  const parts = text.split(/\n##\s+(?:Result|Speech)\s*\n/i);
+  if (parts.length < 2) return "";
+  return parts.slice(1).join("\n").trim();
+}
+
+interface OperationSpeech {
+  approaches: string[];
+  solutions: string[];
+  wrongTurns: string[];
+}
+
+function parseOperationSpeech(raw: string): OperationSpeech {
+  const body = raw
+    .split("\n")
+    .filter((line) => !/^operation:\s*\S+\s*$/i.test(line.trim()))
+    .join("\n")
+    .trim();
+  const buckets: OperationSpeech = { approaches: [], solutions: [], wrongTurns: [] };
+  if (!body) return buckets;
+
+  let current: keyof OperationSpeech | null = null;
+  let labeled = false;
+  const sectionLines: string[] = [];
+  const flush = (): void => {
+    if (!current) {
+      sectionLines.length = 0;
+      return;
+    }
+    const text = fewSentences(sectionLines.join(" "));
+    sectionLines.length = 0;
+    if (text) buckets[current].push(text);
+  };
+
+  for (const line of body.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const inline = /^([^:]{2,40}):\s+(.+)$/.exec(trimmed);
+    if (inline) {
+      const bucket = bucketForLabel(inline[1] ?? "");
+      if (bucket) {
+        flush();
+        current = bucket;
+        labeled = true;
+        sectionLines.push(inline[2] ?? "");
+        continue;
+      }
+    }
+    const heading = /^(?:#{1,3}\s*)(.+)$/.exec(trimmed);
+    if (heading) {
+      const bucket = bucketForLabel(heading[1] ?? "");
+      if (bucket) {
+        flush();
+        current = bucket;
+        labeled = true;
+        continue;
+      }
+    }
+    if (current) sectionLines.push(trimmed);
+  }
+  flush();
+
+  if (!labeled) {
+    const text = fewSentences(body);
+    if (text) buckets.approaches.push(text);
+  }
+  return buckets;
+}
+
+function bucketForLabel(label: string): keyof OperationSpeech | null {
+  const lower = label.toLowerCase().replace(/^#+\s*/, "").replace(/:$/, "").trim();
+  if (/^(tried|approaches?|what was tried)$/.test(lower)) return "approaches";
+  if (/^(worked|solutions?|what worked)$/.test(lower)) return "solutions";
+  if (/^(failed|wrong turns?|what failed)$/.test(lower)) return "wrongTurns";
+  return null;
+}
+
+function fewSentences(text: string): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const sentences = flat.split(/(?<=[.!?])\s+/).filter((part) => part.length > 0).slice(0, 4);
+  const joined = sentences.join(" ");
+  if (joined.length <= OPERATION_LESSON_CAP) return joined;
+  return joined.slice(0, OPERATION_LESSON_CAP);
+}
+
+/** Id, or that id with hyphens read as spaces. Same hit `patternsFromGit` stores for the proposal generator. */
+export function reflectionSessionId(relativePath: string): string {
+  const slug = relativePath
+    .replace(/\.md$/i, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return `session-reflection-${slug}`;
+}
+
+/** Reflection markdown is the speech. No session file is written. */
+export function captureReflectionInference(input: {
+  relativePath: string;
+  text: string;
+  modifiedAt: Date;
+  signalNames: readonly string[];
+}): SessionInference | null {
+  const speech = parseOperationSpeech(input.text);
+  const heard = speech.approaches.length + speech.solutions.length + speech.wrongTurns.length;
+  if (heard === 0) return null;
+  const named = storedSignalsNamedBySpeech(
+    [...speech.approaches, ...speech.solutions, ...speech.wrongTurns].join(" "),
+    input.signalNames,
+  );
+  const emptyMetrics: SessionMetrics = {
+    commits: 0,
+    filesChanged: 0,
+    insertions: 0,
+    deletions: 0,
+    filesAdded: 0,
+    filesDeleted: 0,
+    uniqueDirs: 0,
+  };
+  return {
+    sessionId: reflectionSessionId(input.relativePath),
+    timestamp: input.modifiedAt.toISOString(),
+    span: { from: "reflection", to: input.relativePath },
+    problems: [],
+    approaches: speech.approaches,
+    wrongTurns: speech.wrongTurns,
+    solutions: speech.solutions,
+    reasoningChain: [],
+    patterns: [],
+    metrics: emptyMetrics,
+    matched_primitives: named,
+    matchedPrimitives: named,
+  };
+}
+
+/** The gauge file. One session log per reflection, skipped when that id is already on disk. */
+export function saveReflectionSession(session: SessionInference, inferenceDir: string): string | null {
+  if (reflectionAlreadySaved(inferenceDir, session.sessionId)) return null;
+  return saveSessionInference(session, inferenceDir);
+}
+
+function reflectionAlreadySaved(inferenceDir: string, sessionId: string): boolean {
+  if (!fs.existsSync(inferenceDir)) return false;
+  for (const name of fs.readdirSync(inferenceDir)) {
+    if (!name.startsWith("session-") || !name.endsWith(".json") || name === "latest-session.json") continue;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(inferenceDir, name), "utf8")) as { sessionId?: unknown };
+      if (parsed.sessionId === sessionId) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
+}
+
+function storedSignalsNamedBySpeech(speech: string, signalNames: readonly string[]): string[] {
+  const hay = speech.toLowerCase();
+  const named: string[] = [];
+  for (const name of signalNames) {
+    const id = name.trim().toLowerCase();
+    if (!id) continue;
+    const spaced = id.replace(/-/g, " ");
+    if (hay.includes(id) || (spaced !== id && hay.includes(spaced))) named.push(name.trim());
+  }
+  return [...new Set(named)];
 }
 
 function approachKeyword(approach: string): string {

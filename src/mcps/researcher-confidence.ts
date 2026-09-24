@@ -1,8 +1,11 @@
 import { frameworkLogger } from '../core/framework-logger.js';
 import { getMemoryRoutingProvider } from '../memory-routing/index.js';
-import type {
-  MemoryRoutingContext,
-  MemoryTaskConfidence,
+import { recallPlate } from '../memory-routing/plates.js';
+import {
+  LESSON_TEXT_CAP,
+  type MemoryRoutingContext,
+  type MemorySignalLessons,
+  type MemoryTaskConfidence,
 } from '../memory-routing/types.js';
 
 const TRAP_LANGUAGE = /TYPE:\s*ontological-trap|ontological[- ]trap/i;
@@ -14,6 +17,10 @@ export interface ResearcherMemoryContext {
   matchedSignals: string[];
   recommendedAgent: string | null;
   triggeredBy: 'trap-language' | 'high-confidence-primitives';
+  /** Graded lines for signals this task already matched. */
+  lessons?: MemorySignalLessons[];
+  /** Proposal text used to recall at most one pipeline plate. */
+  proposalText?: string;
 }
 
 export function shouldQueryRepertoireConfidence(
@@ -80,6 +87,7 @@ export async function resolveResearcherMemoryContext(input: {
     confidence.matchedSignals.length > 0
       ? confidence.matchedSignals
       : routingContext.matchedSignals;
+  const lessons = lessonsForMatchedSignals(routingContext.lessons, matchedSignals);
 
   const context: ResearcherMemoryContext = {
     providerId: provider.id,
@@ -87,6 +95,8 @@ export async function resolveResearcherMemoryContext(input: {
     matchedSignals,
     recommendedAgent: confidence.recommendedAgent,
     triggeredBy: trapLanguageDetected ? 'trap-language' : 'high-confidence-primitives',
+    proposalText: taskText,
+    ...(lessons.length > 0 ? { lessons } : {}),
   };
 
   if (confidence.highConfidenceTrapPresent) {
@@ -122,6 +132,12 @@ export function buildMemoryRoutingEvidence(
     lines.push(`Recommended agent for trap handling: ${recommendedAgent}`);
   }
 
+  for (const line of lessonSpeechLines(context.lessons, matchedSignals)) {
+    lines.push(`Lesson: ${line}`);
+  }
+
+  appendRecalledPlate(lines, context.proposalText);
+
   return lines;
 }
 
@@ -140,5 +156,42 @@ export function formatMemoryRoutingBlock(context: ResearcherMemoryContext): stri
     lines.push(`  recommendedAgent: ${recommendedAgent}`);
   }
 
+  for (const line of lessonSpeechLines(context.lessons, matchedSignals)) {
+    lines.push(`  lesson: ${line}`);
+  }
+
+  appendRecalledPlate(lines, context.proposalText);
+
   return lines.join('\n');
+}
+
+function appendRecalledPlate(lines: string[], proposalText: string | undefined): void {
+  const plate = recallPlate(proposalText);
+  if (!plate) return;
+  lines.push(`Plate: ${plate.id}`);
+  lines.push(plate.body);
+}
+
+function lessonsForMatchedSignals(
+  lessons: MemorySignalLessons[] | undefined,
+  matchedSignals: string[],
+): MemorySignalLessons[] {
+  const matched = new Set(matchedSignals);
+  return (lessons ?? []).filter((lesson) => matched.has(lesson.name));
+}
+
+/** Stored lesson text for signals this task matched. Empty text is omitted. */
+function lessonSpeechLines(
+  lessons: MemorySignalLessons[] | undefined,
+  matchedSignals: string[],
+): string[] {
+  const speech: string[] = [];
+  for (const lesson of lessonsForMatchedSignals(lessons, matchedSignals)) {
+    for (const line of lesson.lines) {
+      const text = line.text.trim().slice(0, LESSON_TEXT_CAP);
+      if (text.length === 0) continue;
+      speech.push(`${lesson.name}: ${text}`);
+    }
+  }
+  return speech;
 }

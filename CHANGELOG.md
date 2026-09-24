@@ -7,9 +7,13 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Features
+- **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
+- **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed
+- **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
+- **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.
 - **A governed proposal teaches.** A route lookup does not write a lesson. When a vote finishes, the cycle grades the signals that proposal's sessions already named. A session that names a stored signal is graded even when that name appears once. Landed approaches and no wrong turn clear the solid band. A wrong turn stays below the cutoff. Earlier rejects of other codify proposals do not pull that grade down. Approve steps those signals up by a tenth. Reject steps them down by a tenth. Needs-revision, an abstain, a governance error, and a proposal whose sessions named nothing do not write. Proposal ids stay on the signal and the sessions not yet graded, so a later cycle does not teach those sessions again. A new session is a new id. Those ids remain after the history window of 50 fills, including with empty cycles. A proposal that carries an empty name list does not fall through to matching its text. A grade that passes appends one line — the task, the decision, and the approaches, solutions, or wrong turn from the sessions that named the law — on that signal and beside the average. The same task does not append again. The route for a law above 0.55 includes the law text and those lines, and Station's lessons section is refreshed from dest. Not a new skill.
 - **Dynamo client on a required external call.** `govern_proposals` with external governance required starts `InferenceGovernanceIntegration` even when `inference_governance.enabled` is false. Boot still skips that client while the flag is off, and the inference cycle still uses the local matrix unless the flag is on or `XRAY_FORCE_MCP_GOVERNANCE=true`. An unreadable MCP payload is stored as the error text, not an abstain at 0.5. The MCP wait matches the governance budget (90s). Not a new skill.
 - **Subsystem pass.** A session file with no `metrics.commits` is not a session, and a captured pattern with no `evidence` array is empty evidence, so the inference cycle no longer dies before it writes state. `scoreAndRoute` loads the memory organ on the first call with a synchronous require, before any dynamic import of that module. A cached null provider does not block that load, and a late null load does not replace an organ already in hand. Not a new skill.
@@ -36,6 +40,31 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Drop unused `src/mcps/shared/security-scanner.ts` and its unused validator twin. Live scanner stays `src/security/`.
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
+
+## [4.0.24] - 2026-09-24
+
+`0xray@4.0.24` is on npm. `npm install 0xray`.
+
+Exo, not a catalog. A factory stamps a skeleton (Inference, External Governance, Autonomous Engine) and fastens a mill. Code mill, music mill (`@0xray/blip` sound), agents across TUIs and LLMs wear it and operate.
+
+- **Hot-swappable compaction.** Compaction and host change are the same cut. The station card (`.xray/state/STATION.md`) is the handoff. The next turn continues the card.
+- **Memory organ.** Finished speech and reflections become lessons on signals. Kernel and activity logs are heat (`last_seen`) only. Unnamed speech mints a signal. Caps: 20 hot lesson lines, 20 retained ids (insertion order), 24 learned proposed signals. Factory laws stay.
+- **Plates.** One INPUT/PROCESSING/OUTPUT schematic per pipeline in `docs-site/docs/plates/`. Station keeps one pointer line. Recall injects that one schematic. A lesson is an episode. A plate is the machine.
+- **Repertoire 0.2.8** is the organ package, vendored in 4.0.24.
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: put matched lesson speech on the MEMORY_ROUTING block (2a2f0411d)
+- fix: process reflection markdown as inference speech (64d7a6eee)
+- fix: run discovered processors and keep commit subjects off the session log (d9fb2ee15)
+- fix: grade a captured operation before the wake ends (c5760000b)
+- fix: heat no longer writes a gradeable lesson from commit subjects (ceeb3a536)
+- fix: grade a new session when another proposal already named the signal (bf4d5e59a)
+- fix: let inference:run enter the cycle and exit (12c3e5142)
+- fix: grade named signals on an external vote (5fc21d174)
+
+---
 
 ## [4.0.23] - 2026-09-23
 

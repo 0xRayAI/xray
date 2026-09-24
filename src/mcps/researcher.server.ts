@@ -472,7 +472,7 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
     });
 
     const enrichedEvidence = [...(evidence || [])];
-    if (memoryContext?.confidence.highConfidenceTrapPresent) {
+    if (memoryContext) {
       enrichedEvidence.push(...buildMemoryRoutingEvidence(memoryContext));
     }
 
@@ -491,10 +491,9 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
         recommendedAgent: memoryContext?.recommendedAgent,
       });
 
-    const memoryRoutingBlock =
-      memoryContext?.confidence.highConfidenceTrapPresent
-        ? `\n${formatMemoryRoutingBlock(memoryContext)}`
-        : "";
+    const memoryRoutingBlock = memoryContext
+      ? `\n${formatMemoryRoutingBlock(memoryContext)}`
+      : "";
 
     return {
       content: [

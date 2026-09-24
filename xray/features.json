@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "4.0.23",
+  "version": "4.0.24",
   "description": "0xRay Framework - Unified Feature Configuration",
   "suit_temperament": {
     "profile": "auto",
@@ -172,6 +172,16 @@
     "every_n_gates": 12,
     "every_n_turns": 0,
     "every_n_todos_completed": 0
+  },
+  "inference": {
+    "description": "Self-improvement cycle that grades a new named session into repertoire",
+    "enabled": true,
+    "workflow_dir": ".xray/inference",
+    "reports_dir": ".xray/reports",
+    "pattern_matching": {
+      "enabled": true,
+      "confidence_threshold": 0.7
+    }
   },
   "inference_governance": {
     "enabled": false,

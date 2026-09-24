@@ -4,7 +4,7 @@ Temperament: **Grok** defaults to **frontier** when `suit_temperament.profile` i
 
 0xRay integrates with four chat platforms plus Cursor project hooks. Consumer `npm install 0xray` runs **`install-bridges.cjs`** automatically — manual commands below are idempotent re-runs of the same steps.
 
-**Repertoire is preferred** on every floor (vendored 0.2.5, dest = laws). Full 4-chat-bridge wear matrix:
+**Repertoire is preferred** on every floor (vendored 0.2.8, dest = laws). Full 4-chat-bridge wear matrix:
 
 ```bash
 npm run install:bridges # all four chat bridges
@@ -119,7 +119,7 @@ Exo adapter notes: `src/integrations/cursor/README.md`.
 
 ## Memory routing
 
-Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.5`). **Repertoire is preferred.** Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Station is the compact ticket when it is off. See [Memory Routing](./memory-routing.md).
+Shipped **on** (`memory_routing.enabled: true`, vendored `@0xray/repertoire@0.2.8`). **Repertoire is preferred.** Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Station is the compact ticket when it is off. See [Memory Routing](./memory-routing.md).
 
 ## Verify installation
 

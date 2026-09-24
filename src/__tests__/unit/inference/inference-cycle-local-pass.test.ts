@@ -124,4 +124,30 @@ describe("Inference cycle local governance pass", () => {
     const problemLesson = lessons.find((lesson) => lesson.taskId.startsWith("problem:"));
     expect(problemLesson?.signals).toEqual([]);
   });
+
+  it("grades a named signal when an external vote approves", async () => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "xray-external-grade-"));
+    const cycle = new InferenceCycle(tmpDir, undefined, { skipApply: true, skipDeployVerify: true });
+    const result = await cycle.governExternalProposals([{
+      id: "named:wake-cascade:sess-ext",
+      type: "codify",
+      title: "wake-cascade",
+      description: "named law",
+      evidence: [],
+      confidence: 0.9,
+      source: "recurring_pattern",
+      status: "pending",
+      namedSignals: ["wake-cascade"],
+      lesson: "fix: observe the law",
+    }]);
+
+    expect(result.votes[0]?.decision).toBe("approve");
+    expect(callServerTool).not.toHaveBeenCalled();
+    expect(recordLesson).toHaveBeenCalledWith(expect.objectContaining({
+      taskId: "named:wake-cascade:sess-ext",
+      success: true,
+      signals: ["wake-cascade"],
+      lesson: "fix: observe the law",
+    }));
+  });
 });

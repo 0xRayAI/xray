@@ -20,6 +20,8 @@ import {
 } from '../../integrations/hooks/station-hook-runtime.mjs';
 import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 import { buildSessionBootPayload, writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.js';
+import { accumulateCorpus, loadSessionInferences } from '../../inference/inference-accumulator.js';
+import { generateProposals } from '../../inference/inference-proposal-generator.js';
 
 const SEEDED_CUSTOM_KEYS = [
   'Ticket: COMPACT-AB-001',
@@ -98,6 +100,7 @@ describe('station hot-swap', () => {
     expect(md).toContain('Repertoire: module unresolved');
     expect(md).not.toContain('memory_routing stays off');
     expect(md).toContain('Intent: survive the cut');
+    expect(md).not.toContain('Plate:');
     expect(md).toContain('Do not cold-start');
     expect(md).toContain('Grok does not inject this file');
     expect(md).not.toContain('Hot-swap:');
@@ -108,6 +111,24 @@ describe('station hot-swap', () => {
     });
     expect(missing).toContain('Repertoire: module unresolved');
     expect(missing).not.toContain('memory_routing stays off');
+  });
+
+  it('names one plate when intent names a pipeline and drops it on the next heat', () => {
+    const plated = formatStationMarkdown({
+      host: 'cursor',
+      suit_profile: 'frontier',
+      intent: 'execute pre processors',
+    });
+    expect(plated).toContain('Plate: processor — .xray/state/plates/processor.md');
+    expect(plated).not.toContain('INPUT LAYER');
+    const again = formatStationMarkdown({
+      host: 'hermes',
+      suit_profile: 'guided',
+      intent: 'execute pre processors',
+    });
+    const merged = mergeStationMarkdown(again, plated);
+    expect(merged.split('Plate:').length - 1).toBe(1);
+    expect(merged).toContain('Host: hermes (guided)');
   });
 
   it('stranger without Repertoire still gets git + intent heat', () => {
@@ -729,13 +750,91 @@ describe('station hot-swap', () => {
       execFileSync('git', ['add', '.'], { cwd: tmp, stdio: 'ignore' });
       execFileSync('git', ['commit', '-m', 'chore: keep moving'], { cwd: tmp, stdio: 'ignore' });
       const filePath = maybeCaptureSessionOnHeadMove(tmp);
-      expect(filePath).toBeTruthy();
+      expect(filePath).toBe(path.join(tmp, 'docs', 'inference', 'latest-session.json'));
       const session = JSON.parse(fs.readFileSync(String(filePath), 'utf8')) as {
         matched_primitives: string[];
         patterns: Array<{ name: string }>;
+        sessionId?: string;
       };
       expect(session.patterns.map((row) => row.name)).toEqual(['station-survives-the-cut']);
       expect(session.matched_primitives).toEqual(['station-survives-the-cut']);
+      expect(session.sessionId).toBeUndefined();
+      expect(fs.readdirSync(path.join(tmp, 'docs', 'inference')).filter((name) => name.startsWith('session-'))).toEqual(
+        [],
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('heat and compact HEAD move do not write a corpus session graded from commit subjects', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-heat-not-lesson-'));
+    const keptName = 'session-kept-on-disk.json';
+    const keptBody = `${JSON.stringify(
+      {
+        sessionId: 'session-kept-on-disk',
+        timestamp: '2026-09-01T00:00:00.000Z',
+        span: { from: 'aaa', to: 'bbb' },
+        problems: [],
+        approaches: ['a kept note that is not a commit subject'],
+        wrongTurns: [],
+        solutions: [],
+        patterns: [],
+        metrics: { commits: 1 },
+      },
+      null,
+      2,
+    )}\n`;
+    try {
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.mkdirSync(path.join(tmp, 'docs', 'inference'), { recursive: true });
+      fs.writeFileSync(path.join(tmp, 'docs', 'inference', keptName), keptBody);
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          inference_session_capture: { enabled: true, min_commits: 3, lookback_commits: 20 },
+        }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [{ name: 'station-survives-the-cut', definition: 'Compact card holds.' }],
+        }),
+      );
+      fs.writeFileSync(path.join(tmp, 'a.md'), 'a\n');
+      execFileSync('git', ['add', '.'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'docs: station survives the cut'], { cwd: tmp, stdio: 'ignore' });
+      fs.writeFileSync(path.join(tmp, 'b.md'), 'b\n');
+      execFileSync('git', ['add', '.'], { cwd: tmp, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'chore: keep moving'], { cwd: tmp, stdio: 'ignore' });
+
+      const captured = maybeCaptureSessionOnHeadMove(tmp);
+      expect(captured).toBe(path.join(tmp, 'docs', 'inference', 'latest-session.json'));
+      applyStationHeat(tmp, 'cursor', { hookEvent: 'pre_compact', intent: 'compact after head moved' }, {});
+
+      const inferenceDir = path.join(tmp, 'docs', 'inference');
+      const corpusFiles = fs.readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));
+      expect(corpusFiles).toEqual([keptName]);
+      expect(fs.readFileSync(path.join(inferenceDir, keptName), 'utf8')).toBe(keptBody);
+      expect(fs.readdirSync(inferenceDir).some((name) => /^session-\d{4}-\d{2}-\d{2}-[0-9a-f]+\.json$/.test(name))).toBe(
+        false,
+      );
+
+      const loaded = loadSessionInferences(inferenceDir);
+      expect(loaded.map((session) => session.sessionId)).toEqual(['session-kept-on-disk']);
+      const proposals = generateProposals(accumulateCorpus(inferenceDir));
+      const lessons = proposals.map((proposal) => proposal.lesson ?? '').join('\n');
+      expect(lessons).not.toContain('docs: station survives the cut');
+      expect(lessons).not.toContain('chore: keep moving');
+      expect(proposals.some((proposal) => proposal.id.includes('station-survives-the-cut'))).toBe(false);
+
+      const stationNote = JSON.parse(fs.readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8')) as {
+        approaches: string[];
+        sessionId?: string;
+      };
+      expect(stationNote.sessionId).toBeUndefined();
+      expect(stationNote.approaches.join(' ')).toMatch(/station survives the cut/);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
@@ -826,7 +925,12 @@ describe('station hot-swap', () => {
         repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
       });
       expect(dest).toBe(path.join(tmp, '.xray', 'state', 'STATION.md'));
-      expect(fs.readFileSync(dest || '', 'utf8')).toContain('Host: openclaw (guided)');
+      const card = fs.readFileSync(dest || '', 'utf8');
+      expect(card).toContain('Host: openclaw (guided)');
+      expect(card).toContain('| Inference            | proposals, reflection, Repertoire        |');
+      expect(card).toContain('| External Governance  | Dynamo vote, Codex                       |');
+      expect(card).toContain('| Autonomous Engine    | thinDispatch, AsideContext               |');
+      expect(card).toContain('| Lessons              | hot lines on the signal; this card       |');
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
@@ -917,6 +1021,9 @@ describe('station hot-swap', () => {
     const twice = mergeStationMarkdown(stock, once);
     expect(countStationFooters(once)).toEqual({ continueCount: 1, grokCount: 1 });
     expect(countStationFooters(twice)).toEqual({ continueCount: 1, grokCount: 1 });
+    expect(twice.split('| Inference').length - 1).toBe(1);
+    expect(twice).toContain('| External Governance');
+    expect(twice).toContain('| Autonomous Engine');
     expect(twice).toContain('Ticket: KILLER-DUAL-CLOUD');
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });

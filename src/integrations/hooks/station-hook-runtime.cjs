@@ -20,6 +20,7 @@ const {
 const { join } = require("path");
 
 const HOOKS_DIR = __dirname;
+const { plateStockLine } = require("./plates.cjs");
 
 const INTENT_MAX = 240;
 
@@ -673,7 +674,11 @@ function heatLiveMemory(root) {
   }
 }
 
-/** Every floor that heats. Dedup per HEAD. Patterns come from git, not a leftover catalog. */
+/**
+ * Station note on HEAD move. Dedup per HEAD.
+ * Commit subjects are match text for the card, not a graded lesson.
+ * Do not mint session-<date>-<short HEAD> under docs/inference.
+ */
 function maybeCaptureSessionOnHeadMove(root) {
   const cfg = readSessionCaptureConfig(root);
   if (!cfg.enabled) return null;
@@ -690,34 +695,28 @@ function maybeCaptureSessionOnHeadMove(root) {
     ? gitCommitSubjects(root, [`${stamp.head}..HEAD`])
     : gitCommitSubjects(root, ["-n", String(cfg.lookback)]);
   if (commits.length < cfg.minCommits) return null;
-  const sessionId = `session-${new Date().toISOString().slice(0, 10)}-${git.head}`;
   const approaches = commits.map((row) => row.message).filter(Boolean);
   const span = {
     from: stamp && stamp.head ? stamp.head : commits[commits.length - 1] ? commits[commits.length - 1].hash : git.head,
     to: git.head,
   };
   const patterns = patternsFromGit(root, commits, span);
-  const session = {
-    sessionId,
+  const stationNote = {
     timestamp: new Date().toISOString(),
     span,
-    problems: [],
     approaches,
-    wrongTurns: [],
-    solutions: [],
     patterns,
     matched_primitives: preferLawHits(patterns.map((row) => row && row.name)),
     metrics: { commits: commits.length },
   };
   const outDir = join(root, "docs", "inference");
   mkdirSync(outDir, { recursive: true });
-  const filePath = join(outDir, `session-${sessionId.replace(/^session-/, "")}.json`);
-  writeFileSync(filePath, `${JSON.stringify(session, null, 2)}\n`);
-  writeFileSync(join(outDir, "latest-session.json"), `${JSON.stringify(session, null, 2)}\n`);
+  const filePath = join(outDir, "latest-session.json");
+  writeFileSync(filePath, `${JSON.stringify(stationNote, null, 2)}\n`);
   mkdirSync(join(root, ".xray", "state"), { recursive: true });
   writeFileSync(
     sessionCaptureStampPath(root),
-    `${JSON.stringify({ head: git.head, sessionId, path: filePath, updatedAt: session.timestamp }, null, 2)}\n`,
+    `${JSON.stringify({ head: git.head, path: filePath, updatedAt: stationNote.timestamp }, null, 2)}\n`,
   );
   return filePath;
 }
@@ -1045,6 +1044,20 @@ const STOCK_STATION_PREFIXES = [
   "git:",
   "repertoire:",
   "working:",
+  "plate:",
+];
+
+/** Stock design map. Exact lines so a later heat does not preserve a second copy. */
+const DESIGN_MAP_LINES = [
+  "Subsystem map:",
+  "+----------------------+------------------------------------------+",
+  "| Subsystem            | After compact                            |",
+  "+----------------------+------------------------------------------+",
+  "| Inference            | proposals, reflection, Repertoire        |",
+  "| External Governance  | Dynamo vote, Codex                       |",
+  "| Autonomous Engine    | thinDispatch, AsideContext               |",
+  "| Lessons              | hot lines on the signal; this card       |",
+  "+----------------------+------------------------------------------+",
 ];
 
 const STOCK_STATION_FOOTERS = [
@@ -1099,6 +1112,7 @@ function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
   if (/^#\s+station\s*$/i.test(trimmed)) return true;
+  if (DESIGN_MAP_LINES.includes(trimmed)) return true;
   const lower = trimmed.toLowerCase();
   if (STOCK_STATION_FOOTERS.includes(lower)) return true;
   return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
@@ -1171,6 +1185,10 @@ function formatStationMarkdown(fields) {
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }
+  const plateLine = plateStockLine(fields.intent);
+  if (plateLine) lines.push(plateLine);
+  lines.push("");
+  lines.push(...DESIGN_MAP_LINES);
   lines.push("");
   lines.push("Continue this card. Compaction and host change are the same cut. Do not cold-start.");
   lines.push("Grok does not inject this file — Read it. OpenCode injects. Do not thicken the Grok exo.");

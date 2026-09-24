@@ -749,7 +749,7 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
-  it('afterFileEdit writes session-*.json when HEAD moved and capture is on', () => {
+  it('afterFileEdit does not write a gradeable session when HEAD moved and capture is on', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-session-'));
     try {
       plantFeatures(tmp);
@@ -769,18 +769,18 @@ describe('Cursor cloud hooks adapter', () => {
       const files = existsSync(inferenceDir)
         ? readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'))
         : [];
-      expect(files.length).toBeGreaterThan(0);
+      expect(files).toEqual([]);
       const latest = JSON.parse(readFileSync(path.join(inferenceDir, 'latest-session.json'), 'utf8'));
+      expect(latest.sessionId).toBeUndefined();
       expect(latest.approaches.join(' ')).toMatch(/station-survives-the-cut|compact-rekey-from-disk/);
       const patternNames = (latest.patterns || []).map((row: { name?: string }) => row.name);
       expect(patternNames).not.toContain('compact-rekey-from-disk');
       expect(patternNames.every((name: string | undefined) => !String(name).startsWith('repo-'))).toBe(
         true,
       );
-      const firstCount = files.length;
       runHook(afterEdit, { file_path: 'TWO.md', cwd: tmp }, tmp);
       const again = readdirSync(inferenceDir).filter((name) => name.startsWith('session-') && name.endsWith('.json'));
-      expect(again.length).toBe(firstCount);
+      expect(again).toEqual([]);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

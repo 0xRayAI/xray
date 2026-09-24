@@ -6,7 +6,7 @@ Chat dies. Bookmark, index, and mind already exist. They do not meet on wake. Th
 
 ## Thesis
 
-`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.5` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
+`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.8` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
 
 ## Three areas → pieces that already exist
 
@@ -45,6 +45,10 @@ applyStationHeat(root, host, extra, existing)
 `cursorBootNeedsRefresh` already refreshes when `repertoireResume` count changes. Hydrate first, then the count moves, then heat rewrites. Do not add a hook.
 
 Hold without thickening the Grok exo: do not inject dest into the system prompt. survive-compact already Reads Station → NOTES → working. One line on the existing hot-swap paragraph: unfinished path is the second Read; working json is the third if dest is on. That is a rewire of `AGENTS-consumer.md` / `LEAD-CADENCE.md` / `survive-compact/SKILL.md`, not a new skill.
+
+## Hot-swap
+
+Compaction and a host change are the same cut. The station card survives it: Read `.xray/state/STATION.md` and continue the ticket. Lessons stay bounded at 20 hot lines, 20 retained task ids, and 24 learned proposed signals. Speech that names no stored signal mints one proposed signal tagged `learned`. Recall carries one plate.
 
 ## Done when
 

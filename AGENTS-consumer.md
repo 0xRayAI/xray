@@ -6,7 +6,7 @@ Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NA
 
 **4.0** — a suit that survives the context window
 
-Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.5 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
+Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.8 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 

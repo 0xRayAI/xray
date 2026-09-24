@@ -14,13 +14,13 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
-- **Muscle** — **Repertoire is preferred.** Vendored 0.2.5 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
+- **Muscle** — **Repertoire is preferred.** Vendored 0.2.8 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
 
 ```bash
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.5** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
+Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.8** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 

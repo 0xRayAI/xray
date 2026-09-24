@@ -24,7 +24,7 @@ describe('factory memory organ wear', () => {
       readFileSync(path.join(root, 'vendor/@0xray/repertoire/package.json'), 'utf8'),
     );
     expect(pkg.name).toBe('@0xray/repertoire');
-    expect(pkg.version).toBe('0.2.5');
+    expect(pkg.version).toBe('0.2.8');
     expect(existsSync(path.join(root, 'vendor/@0xray/repertoire/data/stack-overlay.json'))).toBe(
       true,
     );

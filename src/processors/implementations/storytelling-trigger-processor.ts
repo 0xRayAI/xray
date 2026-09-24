@@ -4,16 +4,11 @@ import { execSync } from "child_process";
 import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
-import { featuresConfigLoader } from "../../core/features-config.js";
+import { featuresConfigLoader, type StorytellingConfig } from "../../core/features-config.js";
 import {
   analyzeStructuralPatterns,
   StructuralPattern,
 } from "../../inference/semantic-patterns.js";
-import {
-  captureSessionInference,
-  saveSessionInference,
-  SessionInference,
-} from "../../inference/session-capture.js";
 import { InferenceCycle } from "../../inference/inference-cycle.js";
 
 interface CommitInfo {
@@ -41,34 +36,6 @@ interface DiffSummary {
 
 type ReflectionCadence = "commit" | "release";
 
-interface StorytellingTriggerConfig {
-  enabled: boolean;
-  threshold?: number;
-  story_type: string;
-  file_count_threshold?: number;
-  duration_minutes_threshold?: number;
-}
-
-interface StorytellingConfig {
-  enabled: boolean;
-  reflection_triggers: {
-    commit_count: StorytellingTriggerConfig;
-    publish: StorytellingTriggerConfig;
-    complex_changes: StorytellingTriggerConfig;
-    session_duration: StorytellingTriggerConfig;
-  };
-  story_types: Record<string, {
-    location: string;
-    min_words: number;
-    ideal_words: number;
-    framework: string;
-  }>;
-  quality_requirements: {
-    require_frontmatter: boolean;
-    require_key_takeaways: boolean;
-  };
-}
-
 export class StorytellingTriggerProcessor extends PostProcessor {
   readonly name = "storytelling-trigger";
   readonly priority = 5;
@@ -79,7 +46,7 @@ export class StorytellingTriggerProcessor extends PostProcessor {
   constructor() {
     super();
     const features = featuresConfigLoader.loadConfig();
-    this.config = (features.storytelling as any) ?? null;
+    this.config = features.storytelling ?? null;
   }
 
   protected async run(context: ProcessorContext): Promise<unknown> {
@@ -429,15 +396,9 @@ export class StorytellingTriggerProcessor extends PostProcessor {
       }
 
       if (semanticPatterns.length > 0) {
-        try {
-          const session = captureSessionInference(sinceRef, untilRef);
-          if (session) {
-            const savedPath = saveSessionInference(session);
-            inferences.push(`Structured inference captured → ${path.basename(savedPath)}`);
-          }
-        } catch {
-          // session capture is best-effort
-        }
+        inferences.push(
+          "Semantic patterns stay on the reflection. A graded session comes from finished operation speech, not from commit subjects.",
+        );
       }
     }
 
