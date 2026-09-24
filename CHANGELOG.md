@@ -41,6 +41,22 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.24] - 2026-09-24
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: put matched lesson speech on the MEMORY_ROUTING block (2a2f0411d)
+- fix: process reflection markdown as inference speech (64d7a6eee)
+- fix: run discovered processors and keep commit subjects off the session log (d9fb2ee15)
+- fix: grade a captured operation before the wake ends (c5760000b)
+- fix: heat no longer writes a gradeable lesson from commit subjects (ceeb3a536)
+- fix: grade a new session when another proposal already named the signal (bf4d5e59a)
+- fix: let inference:run enter the cycle and exit (12c3e5142)
+- fix: grade named signals on an external vote (5fc21d174)
+
+---
+
 ## [4.0.23] - 2026-09-23
 
 ### 🔄 Changes
