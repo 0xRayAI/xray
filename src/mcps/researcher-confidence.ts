@@ -1,5 +1,6 @@
 import { frameworkLogger } from '../core/framework-logger.js';
 import { getMemoryRoutingProvider } from '../memory-routing/index.js';
+import { recallPlate } from '../memory-routing/plates.js';
 import {
   LESSON_TEXT_CAP,
   type MemoryRoutingContext,
@@ -18,6 +19,8 @@ export interface ResearcherMemoryContext {
   triggeredBy: 'trap-language' | 'high-confidence-primitives';
   /** Graded lines for signals this task already matched. */
   lessons?: MemorySignalLessons[];
+  /** Proposal text used to recall at most one pipeline plate. */
+  proposalText?: string;
 }
 
 export function shouldQueryRepertoireConfidence(
@@ -92,6 +95,7 @@ export async function resolveResearcherMemoryContext(input: {
     matchedSignals,
     recommendedAgent: confidence.recommendedAgent,
     triggeredBy: trapLanguageDetected ? 'trap-language' : 'high-confidence-primitives',
+    proposalText: taskText,
     ...(lessons.length > 0 ? { lessons } : {}),
   };
 
@@ -132,6 +136,8 @@ export function buildMemoryRoutingEvidence(
     lines.push(`Lesson: ${line}`);
   }
 
+  appendRecalledPlate(lines, context.proposalText);
+
   return lines;
 }
 
@@ -154,7 +160,16 @@ export function formatMemoryRoutingBlock(context: ResearcherMemoryContext): stri
     lines.push(`  lesson: ${line}`);
   }
 
+  appendRecalledPlate(lines, context.proposalText);
+
   return lines.join('\n');
+}
+
+function appendRecalledPlate(lines: string[], proposalText: string | undefined): void {
+  const plate = recallPlate(proposalText);
+  if (!plate) return;
+  lines.push(`Plate: ${plate.id}`);
+  lines.push(plate.body);
 }
 
 function lessonsForMatchedSignals(

@@ -22,6 +22,23 @@ import {
   writeCursorUsageReceipt,
 } from './cursor-usage-receipt.js';
 
+async function loadPlates() {
+  const { existsSync } = await import('node:fs');
+  const { dirname, join } = await import('node:path');
+  const { fileURLToPath, pathToFileURL } = await import('node:url');
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    join(here, '../../hooks/plates.cjs'),
+    join(here, '../../../integrations/hooks/plates.cjs'),
+  ];
+  const found = candidates.find((candidate) => existsSync(candidate));
+  if (!found) return null;
+  const loaded = await import(pathToFileURL(found).href);
+  if (typeof loaded.recallPlate === 'function') return loaded;
+  if (loaded.default && typeof loaded.default.recallPlate === 'function') return loaded.default;
+  return null;
+}
+
 async function memoryRoutingModule() {
   const { existsSync } = await import('node:fs');
   const { dirname, join } = await import('node:path');
@@ -98,6 +115,13 @@ async function main() {
     let receiptPath = null;
     let usagePath = null;
     let stationLine = null;
+    let plates = null;
+    let plateBody = '';
+    try {
+      plates = await loadPlates();
+    } catch {
+      plates = null;
+    }
     for (const root of cursorHeatRoots(event)) {
       const payload = buildSessionBootPayload(root, '0xray/cursor-compact', {
         host: 'cursor',
@@ -128,6 +152,17 @@ async function main() {
         sessionId,
         usage: hostUsageFromPreCompactEvent(event),
       });
+      if (plates) {
+        try {
+          const named = plates.recallPlate(payload.intent || intent || '');
+          if (named) {
+            plates.stampPlateIfMissing(root, named.id);
+            if (!plateBody) plateBody = `\n\n${String(named.body || '').trim()}`;
+          }
+        } catch {
+          /* plate stamp is observational */
+        }
+      }
     }
     appendHookActivity(eventRoot, 'cursor-pre-compact', 'station-written', 'success', {
       bootPath,
@@ -141,7 +176,7 @@ async function main() {
     console.log(
       JSON.stringify({
         user_message:
-          `0xRay Station written. Read .xray/state/STATION.md — do not cold-start. event_class=${eventClass}${lessonNote}`,
+          `0xRay Station written. Read .xray/state/STATION.md — do not cold-start. event_class=${eventClass}${lessonNote}${plateBody}`,
       }),
     );
     process.exit(0);

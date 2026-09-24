@@ -20,6 +20,7 @@ const {
 const { join } = require("path");
 
 const HOOKS_DIR = __dirname;
+const { plateStockLine } = require("./plates.cjs");
 
 const INTENT_MAX = 240;
 
@@ -1043,6 +1044,7 @@ const STOCK_STATION_PREFIXES = [
   "git:",
   "repertoire:",
   "working:",
+  "plate:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1183,6 +1185,8 @@ function formatStationMarkdown(fields) {
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }
+  const plateLine = plateStockLine(fields.intent);
+  if (plateLine) lines.push(plateLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
   lines.push("");

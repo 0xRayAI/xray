@@ -100,6 +100,7 @@ describe('station hot-swap', () => {
     expect(md).toContain('Repertoire: module unresolved');
     expect(md).not.toContain('memory_routing stays off');
     expect(md).toContain('Intent: survive the cut');
+    expect(md).not.toContain('Plate:');
     expect(md).toContain('Do not cold-start');
     expect(md).toContain('Grok does not inject this file');
     expect(md).not.toContain('Hot-swap:');
@@ -110,6 +111,24 @@ describe('station hot-swap', () => {
     });
     expect(missing).toContain('Repertoire: module unresolved');
     expect(missing).not.toContain('memory_routing stays off');
+  });
+
+  it('names one plate when intent names a pipeline and drops it on the next heat', () => {
+    const plated = formatStationMarkdown({
+      host: 'cursor',
+      suit_profile: 'frontier',
+      intent: 'execute pre processors',
+    });
+    expect(plated).toContain('Plate: processor — .xray/state/plates/processor.md');
+    expect(plated).not.toContain('INPUT LAYER');
+    const again = formatStationMarkdown({
+      host: 'hermes',
+      suit_profile: 'guided',
+      intent: 'execute pre processors',
+    });
+    const merged = mergeStationMarkdown(again, plated);
+    expect(merged.split('Plate:').length - 1).toBe(1);
+    expect(merged).toContain('Host: hermes (guided)');
   });
 
   it('stranger without Repertoire still gets git + intent heat', () => {
