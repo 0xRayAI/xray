@@ -154,6 +154,20 @@ npm run test:mcp # stdio MCP smoke
 
 Confidence values come from `observation_stats` or explicit task metadata — no text-score fallbacks.
 
+## Lessons, mint, and caps
+
+A passing grade appends one lesson on the named law and stores that line beside the average. The same task id does not step again.
+
+| Cap | Value | What leaves |
+|-----|-------|-------------|
+| `LESSON_LINE_CAP` | 20 | Oldest lesson text, only after its task id is in the ledger |
+| `RETAINED_LESSON_ID_CAP` | 20 | Oldest id, insertion order (not alphabetical) |
+| `LEARNED_SIGNAL_CAP` | 24 | Only `proposed` signals tagged `learned` (lowest confidence, then oldest `last_seen`) |
+
+Speech that names no stored signal mints one proposed signal tagged `learned`. The same speech does not mint twice. Factory signals are not eviction candidates.
+
+A plate is the machine schematic ([Plates](../plates/index.md)). Station keeps one pointer line for the plate intent names. Pre-compact and `MEMORY_ROUTING` inject that one schematic.
+
 ## Testing
 
 0xRay framework repo:
