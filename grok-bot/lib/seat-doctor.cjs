@@ -98,22 +98,43 @@ function probeOws(home) {
 // A leading `(example)` marker is unfilled. A mid-line mention is not.
 const HOUSE_EXAMPLE_LINE = /^\s*[-*]?\s*\(example\)/;
 
-function probeHouse(cwd) {
-  const file = path.join(cwd, 'house', 'HOUSE.md');
-  if (!fs.existsSync(file)) {
-    return {
-      status: 'warn',
-      file,
-      detail: 'no house/HOUSE.md, run setup-house',
-    };
+function walkForHouse(start) {
+  let dir = path.resolve(start);
+  const root = path.parse(dir).root;
+  while (true) {
+    const candidate = path.join(dir, 'house', 'HOUSE.md');
+    if (fs.existsSync(candidate)) return path.resolve(candidate);
+    if (dir === root) return null;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
   }
+}
+
+function fileFromHouseEnv(envValue) {
+  const resolved = path.resolve(envValue);
+  try {
+    const st = fs.statSync(resolved);
+    if (st.isFile()) return resolved;
+    if (st.isDirectory()) {
+      const direct = path.join(resolved, 'HOUSE.md');
+      if (fs.existsSync(direct)) return path.resolve(direct);
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function inspectHouseFile(file, via) {
   let text = '';
   try {
     text = fs.readFileSync(file, 'utf8');
   } catch {
     return {
       status: 'warn',
-      file,
+      file: null,
+      via: null,
       detail: 'no house/HOUSE.md, run setup-house',
     };
   }
@@ -122,11 +143,78 @@ function probeHouse(cwd) {
     return {
       status: 'fail',
       file,
+      via,
       detail: 'HOUSE.md still has unfilled example lines',
       unfilled: unfilled.length,
     };
   }
-  return { status: 'pass', file, detail: 'house/HOUSE.md' };
+  return { status: 'pass', file, via, detail: file };
+}
+
+function probeHouse(cwd, env) {
+  const raw = env && typeof env.GROK_BOT_HOUSE === 'string' ? env.GROK_BOT_HOUSE.trim() : '';
+  if (raw) {
+    const file = fileFromHouseEnv(raw);
+    if (!file) {
+      return {
+        status: 'warn',
+        file: null,
+        via: null,
+        detail: `GROK_BOT_HOUSE is set but HOUSE.md is missing (${path.resolve(raw)})`,
+      };
+    }
+    return inspectHouseFile(file, 'GROK_BOT_HOUSE');
+  }
+  const walked = walkForHouse(cwd);
+  if (!walked) {
+    return {
+      status: 'warn',
+      file: null,
+      via: null,
+      detail: 'no house/HOUSE.md, run setup-house',
+    };
+  }
+  return inspectHouseFile(walked, 'walk-up');
+}
+
+function initHouse(opts = {}) {
+  const seatRoot = path.resolve(opts.dir || opts.cwd || process.cwd());
+  const kitRoot = opts.kitRoot || path.resolve(__dirname, '..');
+  const srcDir = path.join(kitRoot, 'templates', 'house');
+  const destDir = path.join(seatRoot, 'house');
+  if (!fs.existsSync(srcDir)) {
+    return { ok: false, code: 1, message: `templates/house is missing (${srcDir})` };
+  }
+  const names = fs.readdirSync(srcDir).filter((name) => {
+    try {
+      return fs.statSync(path.join(srcDir, name)).isFile();
+    } catch {
+      return false;
+    }
+  });
+  const conflicts = [];
+  for (const name of names) {
+    const dest = path.join(destDir, name);
+    if (fs.existsSync(dest)) conflicts.push(dest);
+  }
+  if (conflicts.length > 0) {
+    return {
+      ok: false,
+      code: 1,
+      message: `refusing to overwrite existing house files: ${conflicts.join(', ')}`,
+    };
+  }
+  fs.mkdirSync(destDir, { recursive: true });
+  for (const name of names) {
+    fs.copyFileSync(path.join(srcDir, name), path.join(destDir, name));
+  }
+  return {
+    ok: true,
+    code: 0,
+    destDir,
+    files: names.map((name) => path.join(destDir, name)),
+    message: `copied templates/house to ${destDir}`,
+  };
 }
 
 function nextSteps(report) {
@@ -164,7 +252,7 @@ function diagnoseSeat(opts = {}) {
   const mill = Boolean(millFile) || fromInventory.mill;
   const inspect = Boolean(inspectFile) || fromInventory.inspect;
   const plantOk = Boolean(seat) && mill && inspect;
-  const house = probeHouse(cwd);
+  const house = probeHouse(cwd, opts.env || process.env);
   const report = {
     ok: plantOk && house.status !== 'fail',
     cwd,
@@ -231,7 +319,12 @@ function formatDoctor(report) {
     let label = 'WARN';
     if (report.house.status === 'pass') label = 'PASS';
     else if (report.house.status === 'fail') label = 'FAIL';
-    lines.push(`House: ${label} — ${report.house.detail}`);
+    if (report.house.file && report.house.via) {
+      const tail = report.house.status === 'fail' ? ` — ${report.house.detail}` : '';
+      lines.push(`House: ${label} — ${report.house.file} (via ${report.house.via})${tail}`);
+    } else {
+      lines.push(`House: ${label} — ${report.house.detail}`);
+    }
   }
   lines.push('');
   lines.push('Next');
@@ -243,11 +336,22 @@ function formatDoctor(report) {
 }
 
 function parseDoctorArgs(argv) {
-  const out = { command: null, cwd: null, home: null, json: false, printLlms: false };
+  const out = { command: null, cwd: null, home: null, dir: null, json: false, printLlms: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === 'doctor' || arg === 'ready' || arg === 'help') {
       out.command = arg;
+      continue;
+    }
+    if (arg === 'house') {
+      const next = argv[i + 1];
+      if (next !== 'init') {
+        const err = new Error('usage: grok-bot house init');
+        err.code = 'USAGE';
+        throw err;
+      }
+      out.command = 'house-init';
+      i += 1;
       continue;
     }
     if (arg === '--json') {
@@ -262,7 +366,7 @@ function parseDoctorArgs(argv) {
       out.command = 'help';
       continue;
     }
-    if (arg === '--cwd' || arg === '--home') {
+    if (arg === '--cwd' || arg === '--home' || arg === '--dir') {
       const value = argv[i + 1];
       if (!value || value.startsWith('-')) {
         const err = new Error(`${arg} needs a path`);
@@ -270,7 +374,8 @@ function parseDoctorArgs(argv) {
         throw err;
       }
       if (arg === '--cwd') out.cwd = value;
-      else out.home = value;
+      else if (arg === '--home') out.home = value;
+      else out.dir = value;
       i += 1;
       continue;
     }
@@ -291,10 +396,12 @@ function usageText(kitRoot) {
 
 Commands:
   doctor | ready   Prove mill+inspect, warn if house/HOUSE.md is missing, fail if example lines remain
+  house init       Copy templates/house into ./house. Refuses if a target file exists
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:
-  --cwd <dir>      Seat root (default: cwd)
+  --cwd <dir>      Seat root for doctor (default: cwd)
+  --dir <path>     Seat root for house init (default: cwd)
   --home <dir>     Home for ~/.ows check (tests)
   --json           Machine-readable doctor report
   --print-llms     Print kit llms.txt
@@ -329,6 +436,11 @@ function runDoctorCli(argv, io = {}) {
     }
     return 0;
   }
+  if (parsed.command === 'house-init') {
+    const result = initHouse({ dir: parsed.dir || parsed.cwd, kitRoot });
+    stdout.write(`${result.message}\n`);
+    return result.code;
+  }
   const report = diagnoseSeat({ cwd: parsed.cwd, home: parsed.home });
   if (parsed.json) {
     stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -342,6 +454,7 @@ module.exports = {
   PLANT_URLS,
   diagnoseSeat,
   formatDoctor,
+  initHouse,
   parseDoctorArgs,
   runDoctorCli,
   usageText,

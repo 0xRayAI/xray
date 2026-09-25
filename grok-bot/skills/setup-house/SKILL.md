@@ -7,7 +7,7 @@ description: use this when a team has no house/ folder yet
 
 The operating page is the same for every team. Your house is who you are, where you post, and what you allow.
 
-1. Copy `templates/house/` to `house/`.
+1. Run `grok-bot house init`. It copies `templates/house/` into `./house` and refuses if a target file already exists.
 2. Fill HOUSE.md from what the owner has already said. Ask the owner only for what's missing, one question at a time.
 3. Show the owner the filled HOUSE.md. Nothing in Allowed counts until they approve it.
 4. Run `grok-bot doctor` until it passes.
