@@ -1,6 +1,6 @@
 # How to rerun
 
-Two Cursor cloud agents, both Composer 2.5, window 200000. Start them together. Give each one its own prompt below. Do not spawn subagents inside either run.
+Two Cursor cloud agents, both Composer 2.5, window 200000. Start them together. Give each one its own prompt below. Do not spawn subagents inside either run. Each arm has the helm: do not stop, do not ask questions, do not ask permission, read all source to build deep context, and when one file ends open the next; a status note, a file list, or a question ends the turn and fails the fill; work until the session is ready to summarize, and only then report the keyword back; segment 2 waits until the compaction cut is real.
 
 There are two segments. Segment 1 is the word. Segment 2 is the boundary. Segment 2 is a later segment. Run it only after the word cut is real. Keep it out of the fill.
 
