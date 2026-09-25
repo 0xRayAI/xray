@@ -19,7 +19,7 @@ Do not report the keyword until both of these exist for your own session id:
 
 The receipt must show model composer-2.5, context_window_size 200000, and context_tokens greater than 100000. The single file `.xray/state/cursor-usage-receipt.json` does not count. Saying the keyword before that pair exists fails the test. After both files exist, report the keyword. The suited arm reads it back from the organ. The plain arm says it from chat only and does not open the jsonl.
 
-There are two segments. Segment 1 is the word. Segment 2 is the boundary. Segment 2 is a later segment. Run it only after the word cut is real. Keep it out of the fill.
+There are two segments. Segment 1 is the word. Segment 2 is the boundary. Do segment 1 first. Do not start segment 2 during the read. When the compaction cut is real, stay in this session and do segment 2. Do not stop between them.
 
 ## Segment 1
 
@@ -36,7 +36,7 @@ A cut counts only with both `.xray/state/cursor-hook.log` and `.xray/state/curso
 
 ## Segment 2
 
-Segment 2 is a later segment. Run it only after the word cut is real.
+Segment 2 starts only after the word cut is real, in this same session. It is not part of the fill. Do not stop after the recall.
 
 After compaction, ask questions about 0xRay that were only in the pre-cut read: what sits between repertoire and 0xRay, what `recordLesson`, `ingestFeedback`, and `recallLesson` do, and where the suit wears `memory_routing`. The suited arm should answer from the organ. The plain arm must not re-open the source and should not be able to answer from an organ.
 
