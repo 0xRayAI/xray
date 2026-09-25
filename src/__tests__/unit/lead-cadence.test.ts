@@ -207,7 +207,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Subject review\. Fix n ship/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Groover is not Repertoire/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/opProcNames/);
-    expect(readFileSync(agents, 'utf8')).toMatch(/LEAD-CADENCE\.md/);
+    expect(readFileSync(agents, 'utf8')).toMatch(/grok-bot\/OP-PROC\.md/);
     expect(existsSync(path.join(root, 'src', 'skills', 'lead-cadence', 'SKILL.md'))).toBe(false);
   });
 });
