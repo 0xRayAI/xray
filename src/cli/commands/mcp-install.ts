@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, cpSync, rmSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
 import { getConfigDir } from "../../core/config-paths.js";
 
 interface MCPSource {
@@ -226,9 +227,49 @@ function removeMCP(name: string): void {
   console.log(`\n✅ Removed ${name}`);
 }
 
+export type McpInstallerAction =
+  | { kind: "list" | "status" | "help" }
+  | { kind: "install" | "remove"; name?: string }
+  | { kind: "unknown"; command: string };
+
+const MCP_INSTALLER_ALIASES: Record<string, string> = {
+  "mcp:list": "list",
+  "mcp-list": "list",
+  "mcp:status": "status",
+  "mcp-status": "status",
+  "mcp:install": "install",
+  "mcp-install": "install",
+  "mcp:remove": "remove",
+  "mcp-remove": "remove",
+};
+
+/** Colon and hyphen forms documented on `npx 0xray` map to the bare dispatcher verbs. */
+export function normalizeMcpInstallerToken(command: string | undefined): string | undefined {
+  if (command === undefined) return undefined;
+  return MCP_INSTALLER_ALIASES[command] ?? command;
+}
+
+export function classifyMcpInstallerArgs(args: readonly string[]): McpInstallerAction {
+  const raw = args[0];
+  const command = normalizeMcpInstallerToken(raw);
+  if (command === undefined || command === "status") return { kind: "status" };
+  if (command === "list") return { kind: "list" };
+  if (command === "help" || command === "--help" || command === "-h") return { kind: "help" };
+  if (command === "install" || command === "remove") {
+    const name = args[1];
+    return name === undefined ? { kind: command } : { kind: command, name };
+  }
+  return { kind: "unknown", command: raw ?? command };
+}
+
+const isDirectRun =
+  process.argv[1] !== undefined &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
 async function main(): Promise<void> {
+  if (!isDirectRun) return;
   const args = process.argv.slice(2);
-  const command = args[0];
+  const command = normalizeMcpInstallerToken(args[0]);
 
   switch (command) {
     case "list":

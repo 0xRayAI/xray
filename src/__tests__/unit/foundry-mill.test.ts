@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { FOUNDRY_EXO_CANNOT_SHIP, executeReleaseWorkflow } from '../../enforcement/enforcer-tools.js';
 import { VersionComplianceProcessor } from '../../processors/implementations/version-compliance-processor.js';
 import { eraFromVersion, buildDocsHeader } from '../../../scripts/foundry/version-manager.mjs';
+import { publishedVersionCheckError } from '../../../scripts/foundry/reconcile-version.mjs';
 import { validateReleaseDocs } from '../../../scripts/foundry/validate-release-docs.mjs';
 import { mintAfterWear } from '../../cli/commands/foundry-mint-wear.js';
 import { millPackageDir, resolveHookInstaller } from '../../../scripts/foundry/mill-root.mjs';
@@ -202,6 +203,17 @@ describe('foundry mill — docs verify, do not rewrite', () => {
     const reconcile = read('scripts/foundry/reconcile-version.mjs');
     expect(reconcile).toContain('syncPackageLockVersion(rootDir, target)');
     expect(reconcile).toContain('package-lock.json (${lockNow.root} / ${lockNow.pkg}) must match package.json');
+    expect(reconcile).toContain('publishedVersionCheckError(local, npm)');
+    expect(reconcile).toContain('if (applyMode && bumpType)');
+    expect(reconcile).not.toContain('must be > npm');
+  });
+
+  it('reconcile --check accepts npm equality and a pre-publish bump, rejects a version behind npm', () => {
+    expect(publishedVersionCheckError('4.0.25', '4.0.25')).toBeNull();
+    expect(publishedVersionCheckError('4.0.26', '4.0.25')).toBeNull();
+    expect(publishedVersionCheckError('4.0.24', '4.0.25')).toBe(
+      'package.json (4.0.24) must be >= npm (4.0.25). Run: npx @0xray/foundry reconcile patch --apply',
+    );
   });
 
   it('kernel files use era, not a three-part patch stamp on the header line', () => {
