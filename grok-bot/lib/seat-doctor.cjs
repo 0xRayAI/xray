@@ -95,6 +95,39 @@ function probeOws(home) {
   }
 }
 
+const HOUSE_EXAMPLE_MARKER = '(example)';
+
+function probeHouse(cwd) {
+  const file = path.join(cwd, 'house', 'HOUSE.md');
+  if (!fs.existsSync(file)) {
+    return {
+      status: 'warn',
+      file,
+      detail: 'no house/HOUSE.md, run setup-house',
+    };
+  }
+  let text = '';
+  try {
+    text = fs.readFileSync(file, 'utf8');
+  } catch {
+    return {
+      status: 'warn',
+      file,
+      detail: 'no house/HOUSE.md, run setup-house',
+    };
+  }
+  const unfilled = text.split(/\r?\n/).filter((line) => line.includes(HOUSE_EXAMPLE_MARKER));
+  if (unfilled.length > 0) {
+    return {
+      status: 'fail',
+      file,
+      detail: 'HOUSE.md still has unfilled example lines',
+      unfilled: unfilled.length,
+    };
+  }
+  return { status: 'pass', file, detail: 'house/HOUSE.md' };
+}
+
 function nextSteps(report) {
   const steps = [];
   if (!report.plant.ok) {
@@ -130,8 +163,9 @@ function diagnoseSeat(opts = {}) {
   const mill = Boolean(millFile) || fromInventory.mill;
   const inspect = Boolean(inspectFile) || fromInventory.inspect;
   const plantOk = Boolean(seat) && mill && inspect;
+  const house = probeHouse(cwd);
   const report = {
-    ok: plantOk,
+    ok: plantOk && house.status !== 'fail',
     cwd,
     seat,
     plant: {
@@ -147,6 +181,7 @@ function diagnoseSeat(opts = {}) {
     },
     repertoire: probeRepertoire(cwd),
     ows: probeOws(home),
+    house,
     urls: PLANT_URLS,
     next: [],
   };
@@ -191,6 +226,10 @@ function formatDoctor(report) {
       ? `OWS pay: yes — ${report.ows.path}`
       : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
   );
+  if (report.house) {
+    const label = report.house.status === 'pass' ? 'PASS' : report.house.status === 'fail' ? 'FAIL' : 'WARN';
+    lines.push(`House: ${label} — ${report.house.detail}`);
+  }
   lines.push('');
   lines.push('Next');
   report.next.forEach((step, i) => {
@@ -248,7 +287,7 @@ function usageText(kitRoot) {
   return `@0xray/grok-bot — complete setup path for Grok Bot agents
 
 Commands:
-  doctor | ready   Prove mill+inspect on this seat and print hangar/Clearing next steps
+  doctor | ready   Prove mill+inspect, warn if house/HOUSE.md is missing, fail if example lines remain
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:

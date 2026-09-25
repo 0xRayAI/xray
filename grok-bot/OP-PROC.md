@@ -1,17 +1,37 @@
-# 0xRay OP PROC
+# Operating procedure
 
-The one-page operating procedure for the Grok Bot seats. Read this first; everything in `ops/` is reference.
+How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`.
 
-- **Never (CoS):** deploy, npm publish, Railway, CloudAgent, Dist-post, or spend.
-- **Seats:** Code/PR/cloud/deploy/npm = forge · Ship/live/security/identity review = critic (≤15 lines, no merge) · @0xRayAI post = herald (CoS exact copy) · Listings = magnet · Audio = sound · Money/creds/deletes = Blaze.
-- **Packet (every handoff):** goal · constraints · path · acceptance · evidence · next owner · escalate. Free-text pings are not a card. Seven fields always. Two-minute jobs get one line with the same seven fields, packed. The form stays; essays don't.
-- **Done** = live receipt (URL, npm view, critic PASS). Green CI is gate A only. Chat LGTM is not done. Gates: A CI green · B pack installs · C docs match · D published and proven live (fresh install + upgrade). Chat LGTM still isn't done.
-- **Review:** Light/Normal = forge + CI. Strict only for ship/live/security/identity. Ops/docs mirrors = Normal. Don't critic a docs PR. Critic FAIL means forge fixes on the same PR and critic re-reviews. Loop until PASS or HOLD (HOLD = human). FAIL is not a parking lot.
-- **Disk, not chat.** After compact: Read Station, then board, then memory, then resume the same seat. Don't spawn a twin. [`ops/WAVEBOARD.md`](ops/WAVEBOARD.md) and [`ATTENTION_STATE.md`](ops/ATTENTION_STATE.md) must exist or the board is theater.
-- **Words:** card (one ticket, one seat), packet (the seven-part handoff). Station = survival strip. Beat = a real event, not a timer. Idle /loop on a parked mill = theater. Wake on PR/you/compact, not every 10 minutes.
-- **You first.** Blaze 1:1 beats bot pings. First action on his turn is the reply. Friend-test anything a human reads (~3 seconds + "a friend would hear"). Bots can compress.
-- **Dist:** @0xRayAI roots ≥4h apart; ship notes reset the clock; replies ~15m when you choose to reply. Herald posts CoS words. No Locked: openers. Replies to our posts carry no question unless it's the thing we're testing. If we say we'll share it, same turn.
-- **Capital:** Ask first on npm publish, Railway, hangar pay, secrets, deletes. Allow git push to known eng repos + Dist when the execute path is on. Railway stays Ask first by default. Exception: 0xRayAI/0xray-moltbook, where merge to main after critic PASS is the deploy (already approved). Add 0xRayAI/0xray-moltbook to allowed git push. Do not generalize "any merge deploys."
-- **Quiet** on CLOSED / MERGED / LIVE re-acks.
+- **Coordinator never:** deploy, publish a package, change production, launch a cloud agent, post in public, or spend.
+- **Roles:** Code, pull requests, cloud work, deploys, and package publish = **implementer**. Shipping the package after review = **publisher** (often the same person as the implementer). Ship, live, security, and identity review = **reviewer** (a short note, no merge). Public posts, listings, and audio are optional **specialists**. Money, credentials, and deletes = the **human owner**.
+- **Packet (every handoff):** goal, constraints, path, acceptance, evidence, next owner, escalate. A chat ping is not a card. Seven fields always. A two-minute job is one line with the same seven fields. The form stays. Essays don't.
+- **Done** = a live receipt (a URL, a registry view, or reviewer PASS). Green CI is only the first gate. A chat "looks good" is not done. Gates: A CI green, B the pack installs, C the docs match, D it is published and proven live (a fresh install and an upgrade).
+- **Review:** Light and Normal = implementer + CI. Strict only for ship, live, security, or identity. Doc copies = Normal. Don't send a docs change to the reviewer. If the reviewer fails it, the implementer fixes the same PR and the reviewer looks again. Loop until PASS or HOLD. HOLD means the human. A fail is not a parking lot.
+- **Disk, not chat.** After the thread is compacted: read the station (the short survival note), then the board, then memory, then resume the same role. Don't start a second copy. Read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first. If a file is missing, use the same name under `templates/house/`. No board file means the board is theater.
+- **Words:** A card is one ticket for one role. A packet is the seven-part handoff. The station is the survival strip. A beat is a real event, not a timer. An idle loop on parked work is theater. Wake on a PR, a person, or a compact — not every 10 minutes.
+- **You first.** The human's direct message beats bot pings. The first action on their turn is the reply. Anything a human reads should land in about three seconds, the way you'd say it to a friend. Bots can be shorter with each other.
+- **Public voice:** the account, the gap between posts, and the reply rules are placeholders in `house/`. The poster uses the coordinator's words. Don't open with "Locked:". A reply to your own post asks a question only when that question is the thing you are testing. If you say you will share something, do it the same turn.
+- **Money and ship:** Ask first before you publish a package, change production, pay, touch secrets, or delete — unless `house/` names an exception. Git push only to repos named in `house/`. A "merge deploys this repo" exception is also named there, one repo at a time. Do not treat that as a rule for every repo.
+- **Quiet** when someone only repeats CLOSED, MERGED, or LIVE.
 
-That's the whole proc. Don't wear the book. Wear this.
+That's the whole procedure. Don't memorize the long book. Wear this page.
+
+## House
+The page above is the same for every team. Your house is what's yours: who the people and seats are, where you post, and what you allow. Keep it in `house/`. Seats read `house/` first, then this page. When they disagree, the house wins, but only for the things listed here.
+
+A house holds six things:
+1. **Owner:** the human who decides money, credentials, deletes and taste.
+2. **Seats:** which bot fills each role (coordinator, implementer, reviewer, publisher, plus any specialists) and what each one never does.
+3. **Public voice:** the account you post from, spacing between posts, and reply rules.
+4. **Allowed:** repos seats may push to, and any merge-is-deploy exceptions, each named one by one.
+5. **Ask first:** everything else that spends, publishes, deploys or deletes.
+6. **Board:** `house/WAVEBOARD.md` (open cards) and `house/ATTENTION_STATE.md` (what needs the owner now).
+
+Setting up a house (coordinator, first wake):
+1. Copy `templates/house/` to `house/`.
+2. Fill HOUSE.md from what the owner has already said. Ask the owner only for what's missing, one question at a time.
+3. Show the owner the filled HOUSE.md. Nothing in Allowed counts until they approve it.
+4. Run `grok-bot doctor` until it passes.
+5. Tell every seat to read `house/` on its next wake.
+
+Change the house when the owner says a rule twice. Don't put rules there that belong on this page.

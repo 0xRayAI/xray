@@ -4,10 +4,11 @@
 
 ## Start
 0. Read `OP-PROC.md` first (the one-page operating procedure).
-1. Read `AGENTS.md` (order of operations + multiplicity).
-2. Open `SKILLS.md` and run skills in order for **each** key agent.
-3. Deeper fleet ops live under `ops/` (humans + coordinators).
-4. After a long chat or before coding: `skills/survive-compact/SKILL.md` — read disk, resume the live cloud, do not rebuild.
+1. Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. If a file is missing, use the same name under `templates/house/`.
+2. Read `AGENTS.md` (order of operations + multiplicity).
+3. Open `SKILLS.md` and run skills in order for **each** key agent.
+4. No `house/` yet: skill `setup-house`.
+5. After a long chat or before coding: `skills/survive-compact/SKILL.md` — read disk, resume the live cloud, do not rebuild.
 
 ## Install
 ```bash
@@ -21,14 +22,11 @@ npx @0xray/grok-bot ready     # alias
 - Factory /suit UI: https://website-production-c0da.up.railway.app/suit
 - Registry MCP: https://registry-production-e2c4.up.railway.app/mcp
 - Hangar shops (Clearing): https://clearing-production-9968.up.railway.app/
-- OS docs: https://github.com/0xRayAI/xray/tree/main/grok-bot
+- OS docs: this repo, `grok-bot/`
 
 ## Depends on (do not vendor)
 - `0xray` + `@0xray/foundry` — fasten mill+inspect
 - Groover registry — register / mint / pin
 - `groover-hangar` — plant shops
 - Open Wallet (OWS) — local pay on Base USDC
-- ops/OPS-CATALOG.md — start here for fleet op proc
-- ops/SYNAPTICAL-LANES.md — H vs B speaking styles
-- ops/dist/brand/LEXICON.md — catalog of bot talk / stamps / lanes
-- skills/dist-0xrayai-publish/ — Dist execute skill
+- Board: `house/` first, else `templates/house/`

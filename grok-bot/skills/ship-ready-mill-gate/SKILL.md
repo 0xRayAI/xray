@@ -41,9 +41,9 @@ Do not rebuild old processor-manager loops as bot gates.
 ## Who
 Implementer builds · reviewer Strict only · coordinator routes · human for capital
 
-Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR URLs only. Critic Reads Station, verifies the diff, posts COMMENT (not self-APPROVE), proof card ≤15 lines + friend-test line. Does not merge or publish.
+Reviewer card: a short proof. Lead dispatches ticket + PR URLs only. The reviewer reads the station, verifies the diff, posts a COMMENT (not a self-approve), proof card ≤15 lines + friend-test line. Does not merge or publish.
 
-A new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
+A new reviewer or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
 
 The lead keeps control. Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply. The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit. The lead checks the result.
 

@@ -20,7 +20,7 @@ Grok Bot chat **does not** fire 0xRay `PreCompact` / Repertoire hooks. Do not wa
 1. **Read durable state** (whichever exists for this seat):
    - Project: `.xray/state/STATION.md` first. Station is the compact ticket. **Repertoire is preferred** (dest = named laws). If the card says Repertoire is off, Station + the unfinished NOTES path **are** the mind — heat Station this wake; do not wait for dest. Do not pin a patch number on Station.
    - Then: unfinished path on the card (NOTES / WAVEBOARD). Then `.xray/state/repertoire-working.json` if dest is on (`pickup` + `opProcNames`). Heat hydrates dest and attaches pickup. Do not look for OP-PROC on Station.
-   - Fleet: `ops/WAVEBOARD.md`, `ops/ATTENTION_STATE.md`
+   - Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first. If a file is missing, use the same name under `templates/house/`.
    - Agent memory (profile + recent log) — do not re-ask what is already stored
 2. **Name the live track** in one line: intent · open PR/cloud id · next beat · “already built / do not rebuild”
 3. **Clouds:** same problem/PR/ship → **resume** that `bc-…`. New outcome only → launch. Never duplicate a live track.

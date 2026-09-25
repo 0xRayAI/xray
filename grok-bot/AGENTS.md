@@ -5,7 +5,7 @@
 You are setting up **Grok Bot agents** on the 0xRay factory OS.
 
 ## Goal
-For **each key agent** (coordinator, implementer, reviewer, Dist, …):
+For **each key agent** (coordinator, implementer, reviewer, publisher, …):
 
 1. Fasten its **own suit** (mill + inspect) 
 2. Register / mint / pin identity (Groover) when it needs a DID 
@@ -15,7 +15,7 @@ For **each key agent** (coordinator, implementer, reviewer, Dist, …):
 Do **not** share one suit across all agents on a machine if you can avoid it. Multiplicity is the point.
 
 ## Prove this seat
-From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). PASS means mill + inspect are fastened. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag). Do not mill-plant Clearing into 0xRay.
+From the agent project root: `npx @0xray/grok-bot doctor` (alias `ready`). PASS means mill + inspect are fastened. It warns when `house/HOUSE.md` is missing and fails when example lines are still unfilled. The same printout lists hangar (`npx groover-hangar`) and Clearing next steps (402, `~/.ows`, ZigZag). Do not mill-plant Clearing into 0xRay.
 
 ## Order (complete path)
 Follow `SKILLS.md` in this order **per agent**:
@@ -54,10 +54,10 @@ Cold-seat proof: `ops/GROK-HOOK-PROOF.md`.
 ## Survive compaction (Grok Bot chat)
 The host may summarize or trim a long thread. 0xRay compact hooks (PreCompact) and Repertoire do **not** run in this chat — do not wait for them.
 
-Use skill `survive-compact`: read on-disk notes (STATION / WAVEBOARD / stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
+Use skill `survive-compact`: read on-disk notes (station, then `house/WAVEBOARD.md` / `house/ATTENTION_STATE.md`, else `templates/house/`, then stored memory), name the live track, **resume** the existing cloud, and do not rebuild what disk already shows done. Chat may lose early turns; disk must not lose the ticket. Do not treat a re-fed summary as proof the old context window survived.
 
 Repertoire is preferred on a worn 0xray seat. Do not bolt full Repertoire MCP onto every Grok Bot chat as theater — this chat does not fire 0xRay hooks.
 
 ## Op proc index
 
-Start at [`ops/OPS-CATALOG.md`](ops/OPS-CATALOG.md). Friend-test: `ops/GIBBERISH-CHECK.md`. Lanes: `ops/SYNAPTICAL-LANES.md`. Lexicon: `ops/dist/brand/LEXICON.md`.
+Start at [`OP-PROC.md`](OP-PROC.md). Board: `house/` first, else `templates/house/`. Longer notes under `ops/` stay in the git repo and are not in the npm package.

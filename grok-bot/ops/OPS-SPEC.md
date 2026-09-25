@@ -68,7 +68,7 @@ Stay quiet on repeat acks, including eng re-acks of CLOSED / MERGED / LIVE. Coor
 2. **House** — event routines (esp. eng signal intake) must **self-quiet** when the beat is already CLOSED/MERGED/LIVE on ATTENTION. Never hand parent a stale “tell Blaze” for a finished PR head.
 
 **CoS laws**
-- Always answer Blaze pokes (`stat`, `you there`, `fix yourself`, any 1:1) from **live** `gh` + `ATTENTION_STATE.md` — never from backlog handoff text alone.
+- Always answer Blaze pokes (`stat`, `you there`, `fix yourself`, any 1:1) from **live** `gh` + `house/ATTENTION_STATE.md` (else `templates/house/ATTENTION_STATE.md`) — never from backlog handoff text alone.
 - Quiet on stale routine/intake is OK **only** when the turn has **no** Blaze message.
 - Eng intake PAUSED until rearm after one clean new-PR fire; prompt must keep self-quiet.
 - Cover CoS is temporary; park when primary answers.

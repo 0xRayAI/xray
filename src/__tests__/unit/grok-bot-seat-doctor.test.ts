@@ -32,6 +32,7 @@ const {
     };
     repertoire: { status: string; detail?: string; name?: string; version?: string; signals?: number | null };
     ows: { present: boolean; path: string };
+    house: { status: string; detail: string; file: string };
     next: string[];
     urls: { clearing: string };
   };
@@ -234,6 +235,60 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.ok).toBe(false);
       expect(report.urls.clearing).toBe(PLANT_URLS.clearing);
       expect(report.next.some((s) => s.includes('never xray-clearing'))).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when house/HOUSE.md is missing and does not fail the plant', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('warn');
+      expect(report.house.detail).toBe('no house/HOUSE.md, run setup-house');
+      expect(report.ok).toBe(true);
+      expect(formatDoctor(report)).toMatch(/House: WARN — no house\/HOUSE\.md, run setup-house/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when HOUSE.md still has unfilled example lines', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(
+        path.join(dir, 'house', 'HOUSE.md'),
+        '# House\n\n## Owner\n(example) Ada — the human.\n',
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('fail');
+      expect(report.ok).toBe(false);
+      expect(formatDoctor(report)).toMatch(/House: FAIL — HOUSE.md still has unfilled example lines/);
+      const r = runBin(['doctor', '--cwd', dir, '--home', dir], dir);
+      expect(r.status).toBe(1);
+      expect(r.stdout).toMatch(/no house\/HOUSE\.md, run setup-house|unfilled example lines/);
+      expect(r.stdout).toMatch(/House: FAIL/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('passes the house check when example lines are filled in', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(formatDoctor(report)).toMatch(/House: PASS — house\/HOUSE\.md/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
