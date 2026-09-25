@@ -13,5 +13,6 @@ The one-page operating procedure for the Grok Bot seats. Read this first; everyt
 - **Dist:** @0xRayAI roots ≥4h apart; ship notes reset the clock; replies ~15m when you choose to reply. Herald posts CoS words. No Locked: openers. Replies to our posts carry no question unless it's the thing we're testing. If we say we'll share it, same turn.
 - **Capital:** Ask first on npm publish, Railway, hangar pay, secrets, deletes. Allow git push to known eng repos + Dist when the execute path is on. Railway stays Ask first by default. Exception: 0xRayAI/0xray-moltbook, where merge to main after critic PASS is the deploy (already approved). Add 0xRayAI/0xray-moltbook to allowed git push. Do not generalize "any merge deploys."
 - **Quiet** on CLOSED / MERGED / LIVE re-acks.
+- **Clouds + churn:** A cloud is only for heavy multi-file code in a repo that needs its own machine. Docs, board notes, PR review, deploy/publish and small edits go to a seat. Same problem or PR: resume that cloud. One cloud per track. Check recent clouds before launching. The implementer owns every cloud. Churn is waste: a second cloud on the same track, a twin reviewer, redoing work a seat already has, or an idle loop on parked work. Stop and card it. Reference: [CLOUD-CONTINUITY.md](../ops/CLOUD-CONTINUITY.md).
 
 That's the whole proc. Don't wear the book. Wear this.

@@ -13,6 +13,7 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 - **Public voice:** the account, the gap between posts, and the reply rules are placeholders in `house/`. The poster uses the coordinator's words. Don't open with "Locked:". A reply to your own post asks a question only when that question is the thing you are testing. If you say you will share something, do it the same turn.
 - **Money and ship:** Ask first before you publish a package, change production, pay, touch secrets, or delete — unless `house/` names an exception. Git push only to repos named in `house/`. A "merge deploys this repo" exception is also named there, one repo at a time. Do not treat that as a rule for every repo.
 - **Quiet** when someone only repeats CLOSED, MERGED, or LIVE.
+- **Clouds + churn:** A cloud is only for heavy multi-file code in a repo that needs its own machine. Docs, board notes, PR review, deploy/publish and small edits go to a seat. Same problem or PR: resume that cloud. One cloud per track. Check recent clouds before launching. The implementer owns every cloud. Churn is waste: a second cloud on the same track, a twin reviewer, redoing work a seat already has, or an idle loop on parked work. Stop and card it. Reference: [CLOUD-CONTINUITY.md](ops/CLOUD-CONTINUITY.md).
 
 That's the whole procedure. Don't memorize the long book. Wear this page.
 
