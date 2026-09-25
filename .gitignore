@@ -92,8 +92,8 @@ node_modules/
 dist/
 !grok-bot/ops/dist/
 !grok-bot/ops/dist/**
-!grok-bot/dist/
-!grok-bot/dist/POSTED.md
+!grok-bot/house/dist/
+!grok-bot/house/dist/POSTED.md
 !vendor/@0xray/repertoire/dist/
 !vendor/@0xray/repertoire/dist/**
 tsconfig.tsbuildinfo
