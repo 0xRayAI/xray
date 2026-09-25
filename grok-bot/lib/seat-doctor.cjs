@@ -227,7 +227,9 @@ function formatDoctor(report) {
       : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
   );
   if (report.house) {
-    const label = report.house.status === 'pass' ? 'PASS' : report.house.status === 'fail' ? 'FAIL' : 'WARN';
+    let label = 'WARN';
+    if (report.house.status === 'pass') label = 'PASS';
+    else if (report.house.status === 'fail') label = 'FAIL';
     lines.push(`House: ${label} — ${report.house.detail}`);
   }
   lines.push('');
