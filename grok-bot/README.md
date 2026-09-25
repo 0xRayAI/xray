@@ -3,6 +3,8 @@
 
 ## Start here
 
+**Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
+
 Read [`ops/OPS-CATALOG.md`](ops/OPS-CATALOG.md) for operating docs and the bot-talk catalog.
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 

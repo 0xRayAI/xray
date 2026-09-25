@@ -1,5 +1,7 @@
 # AGENTS.md — @0xray/grok-bot
 
+**Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
+
 You are setting up **Grok Bot agents** on the 0xRay factory OS.
 
 ## Goal

@@ -3,6 +3,7 @@
 > Complete setup path for Grok Bot agents on the 0xRay mill: suits (one per agent), Groover identity, OWS pay, hangar shops.
 
 ## Start
+0. Read `OP-PROC.md` first (the one-page operating procedure).
 1. Read `AGENTS.md` (order of operations + multiplicity).
 2. Open `SKILLS.md` and run skills in order for **each** key agent.
 3. Deeper fleet ops live under `ops/` (humans + coordinators).
