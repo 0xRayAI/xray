@@ -41,6 +41,22 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.26] - 2026-09-25
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: store a lesson when the task matches no signal (e3c75b43d)
+- fix: prove a Cursor compact cut with a session log and per-session receipt (bb3a1c68f)
+- fix: mill check accepts a published version; mcp:status runs (a8bd79e23)
+
+### 🔎 Other Changes
+- Merge pull request #116 from 0xRayAI/cursor/mill-ci-mcp-status-fbe0 (ba94508d2)
+- Merge pull request #120 from 0xRayAI/cursor/lesson-recall-fbe0 (8f4a5a62a)
+- Merge pull request #119 from 0xRayAI/cursor/compact-receipt-proof-fbe0 (a911fd17b)
+
+---
+
 ## [4.0.25] - 2026-09-24
 
 `0xray@4.0.25` ships the plate schematics in the package. `docs-site/docs/plates/` is on the npm `files` list. A worn suit resolves `memory-recall` and `processor` from `dist/integrations/hooks/plates.cjs`.
