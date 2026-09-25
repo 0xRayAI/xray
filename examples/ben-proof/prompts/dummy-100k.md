@@ -1,44 +1,51 @@
-Build a real Node app of 50,000 to 100,000 lines that forces YOUR context window to compact. You are Composer 2.5. Your window is 200,000 tokens. A generator script does not count, because the source never enters the conversation.
+You are Composer 2.5. Your window is 200,000 tokens. You are the plain arm.
 
-SUCCESS is a host compaction receipt whose session id is THIS agent, not a line count.
+This prompt is segment 1. Segment 1 is the word. Segment 2 is the boundary. Segment 2 is a separate segment. Do not run it in this fill.
 
-## Study the memory organ first
-Memory is the organ between repertoire and 0xRay. That is the worked example of a useful organ. Before you build anything, fully research that organ. Read it with the Read tool, 400 lines at a time. Skip node_modules. Read the source, not a summary.
+## Write the locked step list first
 
-Read both sides:
-- /agent/repos/repertoire — the organ: provider, signals, recall, ingest, the memory-routing provider, curated signals, lesson record and recall.
-- /agent/repos/xray — where the suit wears it: memory_routing, memory-routing-provider wiring, ExecutionPlanner, thinDispatch, researcher confidence, AsideContext inheritedContext.memoryRouting, recordLesson, ingestFeedback, recallLesson.
+Before any long read, write this locked step list, then follow it in order:
 
-That code is a lot. The read alone is about 120,000 tokens. A generator, a line count on disk, or a short status note does not fill the window and does not teach you what an organ is.
+1. Mint a codeword.
+2. Read the organ.
+3. Recall the word after a real cut.
+4. Boundary questions.
+5. Continue at the next step.
 
-Only after that read, build a new organ beside it: a factory that takes one task, checks it, and stores a lesson. Real modules. Write them, then Read them back. Do not write the app in /tmp.
+Steps 4 and 5 are segment 2. Leave them locked and unstarted. After a real cut, continue at the next locked step. Do not start the list over.
 
-## Hard rules
-- Do not spawn subagents. Their context will not fill yours.
-- Do not npm install 0xray. Do not wear the suit. Do not read `/tmp/recall-bench-100k`. Reading repertoire and the xray memory-organ wear points is required.
-- Do not write a generator script. Every substantial source file must be sent through the Write tool so the full text is in your tool call, then read back with the Read tool in slices of at most 400 lines.
-- Do not hand-write receipt or hook files. Only the host hook may write those.
-- Do not commit or push.
-- Do not bake a bench token into source. Intake mints `bench-<hex>` at runtime. Intake is the only writer. `npm run recall` only prints the last token already in `data/lessons.jsonl` and must not add a line.
+## Segment 1
 
-## App
-You are the plain arm. Build a new organ beside 0xRay, a factory that takes one task, checks it, and stores a lesson. Real modules, Write then Read. Do not write the app in /tmp. No 0xRay dependency. Do not wear the suit.
+Mint a codeword before any long read. Do not npm install 0xray. Do not wear the suit. Do not call the organ. A jsonl file on disk is allowed. From `examples/ben-proof/dummy`, run `npm run intake` once and let it write the word to `data/lessons.jsonl`. Do not type the word in chat. Do not open that file. Do not run intake again.
 
-Run `npm run intake` once before the bulk of the writes. Redirect stdout to a mint file. Do not Read that file or `data/lessons.jsonl`. Do not type the code word. Do not run intake again. Do not run recall until after the cut.
+Then fully research the memory organ. Memory is the organ between repertoire and 0xRay. Read the source with the Read tool, 400 lines at a time. Skip `node_modules`. Read both sides:
 
-Author real modules (gates, processors, intake, recall). You may read `/agent/repos/xray/examples/ben-proof/dummy` in slices of at most 400 lines and write corresponding modules with the Write tool. After every few files, Read them back.
+- `/agent/repos/repertoire` — provider, signals, recall, ingest.
+- `/agent/repos/xray` wear points — `memory_routing`, memory-routing-provider, ExecutionPlanner, thinDispatch, researcher confidence, AsideContext `memoryRouting`, `recordLesson`, `ingestFeedback`, `recallLesson`.
 
-Keep going until EITHER:
-1. `/agent/repos/xray/.xray/state/cursor-hook.log` has a line for YOUR session id with context_tokens greater than 100000 and context_window_size 200000, AND the per-session receipt has model composer-2.5 and those same fields, OR
-2. You have authored at least 50,000 lines through Write, re-read the app in 400-line slices, and if still no receipt, continue toward 100,000 lines and re-read again.
+That read is about 120,000 tokens. Do not summarize instead of reading. Do not generate filler. Do not write under `/tmp`. Do not spawn subagents. A status sentence fails the fill.
 
-Do not end the turn early. Ending before a receipt or before the 100k re-read is a failure.
+A cut counts only when both of these exist for this session, the model is `composer-2.5`, `context_window_size` is 200000, `context_tokens` is greater than 100000, and the codeword was minted before the cut:
 
-If that receipt appears, run `npm run recall` once. A file that still has the word is not you remembering. Report the file and the chat as two separate facts.
+- `.xray/state/cursor-hook.log`
+- `.xray/state/cursor-receipts/<sessionId>.json`
+
+Do not write those files yourself. Only the host hook writes them.
+
+When that cut is real, try to recall the word in chat without opening the file. Expected: the file can still hold the word; chat memory does not. Then stop. Segment 2 waits.
+
+## Segment 2
+
+Segment 2 is a later segment. Run it only after the word cut is real. It is not this fill.
+
+After compaction, questions about 0xRay that were only in the pre-cut read: what sits between repertoire and 0xRay, what `recordLesson`, `ingestFeedback`, and `recallLesson` do, and where the suit wears `memory_routing`. Do not re-open the source. You have no organ to answer from.
+
+Lock and step continuance: after the cut, continue at the next locked step instead of starting over. Continuance here should be worse than the suited arm.
 
 ## Return
-- line count excluding node_modules
-- hook log line and receipt fields if a NEW receipt exists
-- what recall printed
-- whether the post-cut summary still contained the word
-- if no new receipt, say so plainly
+
+- session id, model, `context_tokens`, and `context_window_size` from the hook line and the receipt, when a new receipt exists
+- that the codeword was minted to the jsonl file before the cut, and that you did not open the file after the cut
+- what you could say of the word from chat alone
+- the locked step you were on when you stopped
+- if there is no new receipt, say so plainly

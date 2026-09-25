@@ -1,49 +1,51 @@
-Build a real Node app of 50,000 to 100,000 lines that forces YOUR context window to compact. You are Composer 2.5. Your window is 200,000 tokens. A previous 32k-line build failed to compact because a generator script wrote the files on disk and the source never entered the conversation.
+You are Composer 2.5. Your window is 200,000 tokens. You are the suited arm.
 
-SUCCESS is a host compaction receipt whose session id is THIS agent, not a line count.
+This prompt is segment 1. Segment 1 is the word. Segment 2 is the boundary. Segment 2 is a separate segment. Do not run it in this fill.
 
-## Study the memory organ first
-Memory is the organ between repertoire and 0xRay. That is the worked example of a useful organ. Before you build anything, fully research that organ. Read it with the Read tool, 400 lines at a time. Skip node_modules. Read the source, not a summary.
+## Write the locked step list first
 
-Read both sides:
-- /agent/repos/repertoire — the organ: provider, signals, recall, ingest, the memory-routing provider, curated signals, lesson record and recall.
-- /agent/repos/xray — where the suit wears it: memory_routing, memory-routing-provider wiring, ExecutionPlanner, thinDispatch, researcher confidence, AsideContext inheritedContext.memoryRouting, recordLesson, ingestFeedback, recallLesson.
+Before any long read, write this locked step list, then follow it in order:
 
-That code is a lot. The read alone is about 120,000 tokens. A generator, a line count on disk, or a short status note does not fill the window and does not teach you what an organ is.
+1. Mint a codeword.
+2. Read the organ.
+3. Recall the word after a real cut.
+4. Boundary questions.
+5. Continue at the next step.
 
-Only after that read, build a new organ beside it: a factory that takes one task, checks it, and stores a lesson. Real modules. Write them, then Read them back. Do not write the app in /tmp.
+Steps 4 and 5 are segment 2. Leave them locked and unstarted. After a real cut, continue at the next locked step. Do not start the list over.
 
-## Hard rules
-- Do not spawn subagents. Their context will not fill yours.
-- Do not write a generator script that emits the bulk of the lines. Forbidden: `scripts/generate-*.mjs`, a loop that writes thousands of near-identical modules, or `node -e` that dumps files. Every substantial source file must be sent through the Write tool so the full text is in your tool call, then read back with the Read tool.
-- Do not hand-write `.xray/state/cursor-usage-receipt.json`, `cursor-precompact.json`, or `cursor-hook.log`. Only the host hook may write those. An agent-forged receipt does not count.
-- Do not write the live repertoire seat at `/agent/repos/xray/.xray/state/repertoire/` or anything inside `/agent/repos/repertoire`. Do not commit or push. Do not npm-publish or version-bump.
-- No `any`, no `@ts-ignore`, no `eval`, no new `SKILL.md`, no new MCP server.
-- Do not put a bench token, canary, or secret in this prompt's echo, in README, or as a source constant. The app mints `bench-<hex>` at runtime inside the process that handles a task.
+## Segment 1
 
-## App
-You are the suited arm. Build a new organ beside 0xRay, a factory that takes one task, checks it, and stores a lesson. Real modules, Write then Read. Do not write the app in /tmp.
+Mint a codeword before any long read. You may install `0xray@4.0.26` and `@0xray/repertoire@0.2.8` in `examples/ben-proof/suited`. Store the word through the organ (`npm run wear`). Do not type the word in chat. Do not read the mint file back.
 
-Wear the published suit inside that directory only:
-- `npm install 0xray@4.0.26` and `@0xray/repertoire@0.2.8`
-- The product: one task goes through intake, a governance check, and a saved lesson. A second process recalls that lesson.
-- `npm test` must spawn recall in a separate process and compare it to the lesson stored on disk. Fail if the token string is baked into source.
+Then fully research the memory organ. Memory is the organ between repertoire and 0xRay. Read the source with the Read tool, 400 lines at a time. Skip `node_modules`. Read both sides:
 
-Author real modules, not empty stubs. Read `/agent/repos/xray` source in slices of at most 400 lines (Read tool). For each slice, write a corresponding module in the app (a processor, a gate, a plate record, a ranker) whose body is specific to what you read: real checks, real field names, real lesson text. Write that file with the Write tool (full contents in the call). After every few files, Read them back in slices of at most 400 lines.
+- `/agent/repos/repertoire` — provider, signals, recall, ingest.
+- `/agent/repos/xray` wear points — `memory_routing`, memory-routing-provider, ExecutionPlanner, thinDispatch, researcher confidence, AsideContext `memoryRouting`, `recordLesson`, `ingestFeedback`, `recallLesson`.
 
-Run wear once before the bulk of the writes, task string exactly: compaction memory bench suited arm. Redirect stdout to a mint file. Do not Read that file again. Do not type the code word.
+That read is about 120,000 tokens. Do not summarize instead of reading. Do not generate filler. Do not write under `/tmp`. Do not spawn subagents. A status sentence fails the fill.
 
-Keep going until EITHER:
-1. `/agent/repos/xray/.xray/state/cursor-hook.log` has a line for YOUR session id with context_tokens greater than 100000 and context_window_size 200000, AND `/agent/repos/xray/.xray/state/cursor-receipts/<sessionId>.json` has model composer-2.5 and those same fields, OR
-2. You have authored at least 50,000 lines through Write, re-read the whole app tree once in 400-line slices, and if still no receipt, continue writing toward 100,000 lines and re-read again.
+A cut counts only when both of these exist for this session, the model is `composer-2.5`, `context_window_size` is 200000, `context_tokens` is greater than 100000, and the codeword was minted before the cut:
 
-Do not end the turn early to report progress. Ending before a receipt or before the 100k re-read is a failure.
+- `.xray/state/cursor-hook.log`
+- `.xray/state/cursor-receipts/<sessionId>.json`
 
-If a receipt for your session appears, finish the file you are on, run `npm test`, run recall once in a second process, and stop.
+Do not write those files yourself. Only the host hook writes them.
+
+When that cut is real, recall the word through the organ (`npm run recall`). Then stop. Segment 2 waits.
+
+## Segment 2
+
+Segment 2 is a later segment. Run it only after the word cut is real. It is not this fill.
+
+After compaction, questions about 0xRay that were only in the pre-cut read: what sits between repertoire and 0xRay, what `recordLesson`, `ingestFeedback`, and `recallLesson` do, and where the suit wears `memory_routing`. Answer from the organ.
+
+Lock and step continuance: after the cut, continue at the next locked step instead of starting over. Hold the step.
 
 ## Return
-- line count of your `.js`/`.mjs` excluding `node_modules` and `.xray`
-- whether `npm test` passed
-- hook log line and receipt fields (session id, timestamp, context_tokens, context_usage_percent, context_window_size, model) if a NEW receipt exists
-- the first lesson line from recall
-- if no new receipt, say so plainly
+
+- session id, model, `context_tokens`, and `context_window_size` from the hook line and the receipt, when a new receipt exists
+- that the codeword was minted before the cut and stored through the organ
+- what the organ returned for the word
+- the locked step you were on when you stopped
+- if there is no new receipt, say so plainly
