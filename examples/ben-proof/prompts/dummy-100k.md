@@ -2,16 +2,19 @@ Build a real Node app of 50,000 to 100,000 lines that forces YOUR context window
 
 SUCCESS is a host compaction receipt whose session id is THIS agent, not a line count.
 
+## Fill the window first
+Fully research the 0xRay repo. Read the source with the Read tool, 400 lines at a time, skipping node_modules. That read alone is about 120,000 tokens. Do not skip it. Do not summarize a file instead of reading it. When you finish the tree, the window should be near full. A generator, a line count on disk, or a short status note does not fill the window.
+
 ## Hard rules
 - Do not spawn subagents. Their context will not fill yours.
-- Do not install 0xray. Do not read `/tmp/recall-bench-100k` or `/agent/repos/xray/src`.
+- Do not npm install 0xray. Do not wear the suit. Do not read `/tmp/recall-bench-100k`. Read `/agent/repos/xray` so the window fills.
 - Do not write a generator script. Every substantial source file must be sent through the Write tool so the full text is in your tool call, then read back with the Read tool in slices of at most 400 lines.
 - Do not hand-write receipt or hook files. Only the host hook may write those.
 - Do not commit or push.
 - Do not bake a bench token into source. Intake mints `bench-<hex>` at runtime. Intake is the only writer. `npm run recall` only prints the last token already in `data/lessons.jsonl` and must not add a line.
 
 ## App
-You are the plain arm. Create a fresh app at `/tmp/recall-bench-dummy/app`. No 0xRay dependency.
+You are the plain arm. Build a new organ beside 0xRay, a factory that takes one task, checks it, and stores a lesson. Real modules, Write then Read. Do not write the app in /tmp. No 0xRay dependency. Do not wear the suit.
 
 Run `npm run intake` once before the bulk of the writes. Redirect stdout to a mint file. Do not Read that file or `data/lessons.jsonl`. Do not type the code word. Do not run intake again. Do not run recall until after the cut.
 

@@ -2,6 +2,9 @@ Build a real Node app of 50,000 to 100,000 lines that forces YOUR context window
 
 SUCCESS is a host compaction receipt whose session id is THIS agent, not a line count.
 
+## Fill the window first
+Fully research the 0xRay repo. Read the source with the Read tool, 400 lines at a time, skipping node_modules. That read alone is about 120,000 tokens. Do not skip it. Do not summarize a file instead of reading it. When you finish the tree, the window should be near full. A generator, a line count on disk, or a short status note does not fill the window.
+
 ## Hard rules
 - Do not spawn subagents. Their context will not fill yours.
 - Do not write a generator script that emits the bulk of the lines. Forbidden: `scripts/generate-*.mjs`, a loop that writes thousands of near-identical modules, or `node -e` that dumps files. Every substantial source file must be sent through the Write tool so the full text is in your tool call, then read back with the Read tool.
@@ -11,7 +14,7 @@ SUCCESS is a host compaction receipt whose session id is THIS agent, not a line 
 - Do not put a bench token, canary, or secret in this prompt's echo, in README, or as a source constant. The app mints `bench-<hex>` at runtime inside the process that handles a task.
 
 ## App
-You are the suited arm. Create a fresh app at `/tmp/recall-bench-100k`.
+You are the suited arm. Build a new organ beside 0xRay, a factory that takes one task, checks it, and stores a lesson. Real modules, Write then Read. Do not write the app in /tmp.
 
 Wear the published suit inside that directory only:
 - `npm install 0xray@4.0.26` and `@0xray/repertoire@0.2.8`
