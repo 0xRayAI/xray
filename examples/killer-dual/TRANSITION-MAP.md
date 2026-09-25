@@ -1,60 +1,42 @@
-# Transition map — suited organ memory vs dummy file memory
+# Two Cursor cloud agents, side by side
 
-**Plain:** Two seats, one job. Each seat wrote a token before the cut. The host compacted. Each seat was asked for that token. Both brought the pre-cut token back. Model `composer-2.5`. Window `200000`.
+We ran the same job twice, both on Cursor cloud. One agent was wearing 0xRay. The other was a plain app with no 0xRay. Each one wrote down a code word before the chat was compacted. After the cut, we asked each one for that word. Both came back with the word they had written before the cut.
 
-A counted cut has both pieces for the same session id: a line in `.xray/state/cursor-hook.log`, and the per-session receipt `.xray/state/cursor-receipts/<sessionId>.json`. The line has `context_tokens` above zero and model `composer-2.5`. The newest `cursor-usage-receipt.json` by itself is the last arm to write, so it is not the proof.
+The model was Composer 2.5. The window was 200,000 tokens.
 
-`TRANSITION.md` is PreToolUse vs PreCompact vs Grok Bot. `COMPARE.md` scores mill-on-disk and says that compare is not a memory A/B. This file is the memory A/B. The sessions under **Eval cases** were measured and left behind the map.
+A cut only counts when that same session left two traces: a line in the hook log that shows how full the window was, and a receipt file named for that session. The line has to show a real token count, and the model has to be Composer 2.5. A line with zero tokens does not count. A different model does not count. The newest receipt file by itself is not enough, because it only remembers whoever wrote last.
 
-## Side by side (same job, two seats)
+## The two runs
 
-| | Suited (organ memory) | Dummy (file memory, no 0xray) |
+| | Wearing 0xRay | Plain app, no 0xRay |
 |--|--|--|
-| Seat | 0xRay worn. The token lives in the organ. | Bare. The token lives in a file. |
+| What it was | A Cursor cloud agent with 0xRay on. The code word lived in 0xRay's memory. | A Cursor cloud agent with no 0xRay. The code word lived in a file. |
 | Session | `bc-24e5e7e5-a924-554c-9294-ba9d813d0958` | `bc-9893bcfe-a184-5028-a277-0eb943c6c6cf` |
-| Mint (before the cut) | Wear stored `bench-5679e6fb` at `2026-09-24T20:34:29.210Z` on task `wear:bench-wear-1790282069191`. Task string: compaction memory bench suited arm. | `mint-final.out` saved `bench-4b80c22a6bea282336f10e74aab9e122` at `2026-09-24T20:34:17.814Z`. lessonId `cb3be50a-e8b6-4c61-8424-26cb59bbd921`. |
-| Cut evidence (hook log + per-session receipt) | Hook log `2026-09-24T20:38:43.090Z`. `context_tokens=182938`. `context_usage_percent=91.469`. `context_window_size=200000`. `generation_id=8fda442f-d9fa-4218-8cc0-7d59899c696e`. Model `composer-2.5`. `cursor-hook.log` line 11. Receipt usage timestamp `2026-09-24T20:38:43.104Z`. | Qualifying hook line `2026-09-24T20:39:48.500Z`. `context_tokens=187858`. `context_usage_percent=93.929`. `context_window_size=200000`. `generation_id=d32499d0-b576-458e-a24c-2e20344e6419`. Model `composer-2.5`. `cursor-hook.log` line 12, paired with the per-session receipt for this session id. The same session also logged 20:35, 20:37, and 20:38 with `context_tokens=0`, and one receipt names `gemini-2.5-flash`. Those rows stay off this cell. |
-| Recall (after the cut) | The line that came back first was `bench-5679e6fb`, stored at 20:34:29, before the 20:38:43 cut. | Recall printed `bench-4b80c22a6bea282336f10e74aab9e122`, the token `mint-final.out` saved at 20:34:17, before the 20:39:48 cut. |
-| Verdict | **Recalled.** Pre-cut token. Full Composer 2.5 window. Hook log and per-session receipt both present. | **Recalled.** Pre-cut token. Full Composer 2.5 window. Hook log and per-session receipt both present on the qualifying line. |
+| Before the cut | At 20:34:29 it stored `bench-5679e6fb`. The task was "compaction memory bench suited arm". | At 20:34:17 it saved `bench-4b80c22a6bea282336f10e74aab9e122` in `mint-final.out`. |
+| The cut | 20:38:43. The window was 182,938 tokens full, 91.5% of 200,000. Composer 2.5. Hook log line 11, plus a receipt for this session at 20:38:43.104. | 20:39:48. The window was 187,858 tokens full, 93.9% of 200,000. Composer 2.5. Hook log line 12, plus a receipt for this session. Earlier lines for this same session at 20:35, 20:37, and 20:38 said zero tokens, and one receipt named Gemini. Those do not count. |
+| After the cut | Asked for the word. The first answer was `bench-5679e6fb`, the one stored at 20:34:29. | Asked for the word. The answer was `bench-4b80c22a6bea282336f10e74aab9e122`, the one saved at 20:34:17. |
+| Result | Got the pre-cut word back. | Got the pre-cut word back. |
 
-Finished score: both pre-cut tokens recalled.
+Both agents remembered the word they wrote before the chat was compacted.
 
-## Eval cases (behind the map)
+## Runs we opened and then set aside
 
-Each case below was opened and set aside. The map above is the score.
+These looked close. They are not the score.
 
-### 1. `bc-08ddb83e` — parent cloud
+1. The parent cloud (`bc-08ddb83e`), around 19:00. It was 230,655 tokens of a 256,000 window. That was this conversation, not one of the two test agents.
 
-About `2026-09-24T19:00:18Z`. `230655` tokens of a `256000` window (`90.1%`). `is_first_compaction` is false. This is the parent session. An arm cut is a different session.
+2. `bc-f847c6d1-9e1c-5cf3-8caa-d6f111ed0cfd` at 18:26. Composer 2.5, 180,663 of 200,000. The word was already sitting in the prompt (`kiln-app-6N2R`). There was no hook log. It did not have to remember anything.
 
-### 2. `bc-f847c6d1-9e1c-5cf3-8caa-d6f111ed0cfd` — token already in the prompt
+3. `bc-32957fa9-0879-5af5-9276-ba1f67d1d730` at 15:09. 183,339 of 200,000. The agent said the cut had not happened. No hook log.
 
-`2026-09-24T18:26:47.005Z`. `180663` tokens, `90.3315%` of `200000`, model `composer-2.5`, first compaction. The token was prompt-resident (`kiln-app-6N2R`). No hook log. The store under test was the prompt, so this is outside organ memory.
+4. `bc-2f90f7fe-2cdb-5534-ac6b-c160b92aba3c` at 19:14. Composer 2.5, 187,232 of 200,000. The word was still in the conversation. No hook log line for it.
 
-### 3. `bc-32957fa9-0879-5af5-9276-ba1f67d1d730` — agent disclaimed the cut
+5. `bc-9af8270f-a4a7-53a2-a0d4-f96632aec5d0` at 19:18. Composer 2.5, 182,919 of 200,000. Same problem: the word was still in the conversation, and there was no hook log.
 
-`2026-09-24T15:09:27.701Z`. `183339` / `200000` (`91.6695%`). The agent disclaimed the cut. No hook log.
+6. `bc-124cb957-4968-5877-a859-e201befd6672` at 19:29. A log line exists, but the token count was zero and the model was Gemini. That is not a full Composer window.
 
-### 4. `bc-2f90f7fe-2cdb-5534-ac6b-c160b92aba3c` — host-shaped, token in the conversation
+7. `bc-d20ce3cf-7379-549a-9840-a04836f3f267` at 19:30. This one did compact for real: 186,783 of 200,000, Composer 2.5, hook log present. Recall missed. 0xRay had been asked to store a lesson and stored nothing, because the task matched no existing signal. That miss is why the lesson store was fixed. It is not a pass.
 
-`2026-09-24T19:14:00.406Z`. `187232` tokens, `93.616%` of `200000`, model `composer-2.5`, first compaction, generation `eb054e32`. The token was in the conversation. No log match. Host-shaped. The memory score is the map above.
+8. `bc-1adc273e-60d4-5edf-8310-4d8a062bf31d` at 19:53. Composer 2.5, 193,374 of 200,000, hook log present. The word on disk was written at 19:54:18, about 26 seconds after the cut. Remembering a word you wrote after the cut is not survival.
 
-### 5. `bc-9af8270f-a4a7-53a2-a0d4-f96632aec5d0` — token in the conversation
-
-`2026-09-24T19:18:36.558Z`. `182919` tokens, `91.4595%` of `200000`, model `composer-2.5`, generation `a8443ad1`. No hook log. The token was in the conversation.
-
-### 6. `bc-124cb957-4968-5877-a859-e201befd6672` — zero tokens, other model
-
-`2026-09-24T19:29:33.418Z`. A log line exists. `context_tokens=0`. Model `gemini-2.5-flash`. A counted cut is a full Composer 2.5 window.
-
-### 7. `bc-d20ce3cf-7379-549a-9840-a04836f3f267` — log confirmed, recall missed
-
-`2026-09-24T19:30:20.636Z`. Log confirmed. `186783` tokens, `93.3915%`, window `200000`, model `composer-2.5`, generation `f0949d6a`. Recall of this mint failed. `recordLesson` with an empty signal list stored nothing. This miss is why the lesson-store fix exists. The cut was real. The memory was empty. It stays behind the score.
-
-### 8. `bc-1adc273e-60d4-5edf-8310-4d8a062bf31d` — lesson written after the cut
-
-Qualifying line `2026-09-24T19:53:52.854Z`. `193374` tokens, `96.687%`, window `200000`, model `composer-2.5`, generation `49a3223a`. Smoke passed. `lessons.jsonl` `createdAt` `2026-09-24T19:54:18.672Z` holds token `bench-cf809ddf`, 26 seconds after the cut. A token written after the cut is a later write. Survival means the token was already stored when the cut fired.
-
-### 9. `bc-5ee38012-aa34-5396-bfed-ebc77993b473` — earlier suited pass, superseded
-
-`2026-09-24T19:51:10.353Z`. `182586` tokens, `91.293%`, window `200000`, model `composer-2.5`. Wear stored `bench-af152405` at `19:46:49`. Recall returned it first. This pass matched the rule. The later pair in the map above is the finished score, so this session stays here as the earlier suited pass.
+9. `bc-5ee38012-aa34-5396-bfed-ebc77993b473` at 19:51. Composer 2.5, 182,586 of 200,000. It stored `bench-af152405` at 19:46:49 and recalled it after the cut. That one did pass. The pair in the table above is the finished score, so this earlier pass sits here as the run it replaced.
