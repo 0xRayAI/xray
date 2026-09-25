@@ -1,0 +1,14 @@
+{
+  "name": "recall-bench-100k",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "wear": "node bin/wear.mjs",
+    "recall": "node bin/recall.mjs",
+    "test": "node test/roundtrip.mjs"
+  },
+  "dependencies": {
+    "@0xray/repertoire": "0.2.8",
+    "0xray": "4.0.26"
+  }
+}

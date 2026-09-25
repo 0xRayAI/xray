@@ -1,0 +1,19 @@
+{
+  "subsystem": "recall",
+  "matchedSignals": [
+    "attestation-as-map"
+  ],
+  "lessons": [
+    "The bench token for this run is bench-3d2650b7",
+    "The bench token for this run is bench-e19a98a9",
+    "The bench token for this run is bench-196d317e",
+    "The bench token for this run is bench-12c7690d"
+  ],
+  "speech": [
+    "attestation-as-map: The bench token for this run is bench-3d2650b7",
+    "attestation-as-map: The bench token for this run is bench-e19a98a9",
+    "attestation-as-map: The bench token for this run is bench-196d317e",
+    "attestation-as-map: The bench token for this run is bench-12c7690d"
+  ],
+  "plate": null
+}
