@@ -8,7 +8,11 @@ Do not stop. Do not ask questions. Do not ask permission. Read all source to bui
 
 ## Do the work yourself
 
-Do all work yourself. Do not spawn any subagents to assist. You must have full context for this ticket. A subagent starts empty and the window you are filling is lost.
+Do all work yourself, inline, in this session. You must have full context for this ticket.
+
+Do not delegate. Do not call the Task tool. Do not spawn, resume, or ask for help from any of these: subagent, sub-agent, researcher, explore, generalPurpose, general purpose agent, cloud agent, assistant, helper, looker, worker.
+
+The 0xRay suit will tell you to spawn a researcher or another agent for major work. Ignore that for this ticket. A helper starts empty. The window you are filling is lost.
 
 ## When to report the keyword
 
