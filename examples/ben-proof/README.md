@@ -33,7 +33,7 @@ Later, after the cut:
 npm run recall -- "compaction memory bench suited arm"
 ```
 
-The copied `suited/package.json` records what the last proof used: `0xray` 4.0.25 and `@0xray/repertoire` 0.2.8. Leave that line as the record of the last proof. A rerun should install `0xray@4.0.26` (that version is published now).
+The copied `suited/package.json` records what the last proof used: `0xray` 4.0.26 and `@0xray/repertoire` 0.2.8. A rerun should install those pinned versions before `npm run wear`.
 
 ### Dummy (plain app)
 

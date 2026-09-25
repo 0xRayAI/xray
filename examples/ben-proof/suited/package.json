@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@0xray/repertoire": "0.2.8",
-    "0xray": "4.0.25"
+    "0xray": "4.0.26"
   }
 }
