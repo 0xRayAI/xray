@@ -1,0 +1,476 @@
+
+> recall-bench-100k@1.0.0 wear
+> node bin/wear.mjs compaction memory bench suited arm
+
+{
+  "subsystem": "wear",
+  "subsystems": {
+    "inference": {
+      "label": "Inference",
+      "surfaces": [
+        "memory_routing",
+        "recordLesson",
+        "Repertoire buildRoutingContext"
+      ]
+    },
+    "governance": {
+      "label": "External Governance",
+      "surfaces": [
+        "codex PreToolUse",
+        "Dynamo Solar SSOT",
+        "governance MCP"
+      ]
+    },
+    "engine": {
+      "label": "Autonomous Engine",
+      "surfaces": [
+        "nucleus scoreAndRoute",
+        "thinDispatch resolveThinDispatch",
+        "AsideContext",
+        "delegation-gate PreToolUse"
+      ]
+    },
+    "inferenceHooks": {
+      "label": "Inference side effects",
+      "surfaces": [
+        "recordLesson",
+        "synthesis checkpoint",
+        "confer quorum",
+        "station-memory-ingest"
+      ]
+    }
+  },
+  "governance": {
+    "available": true,
+    "version": "3.1.0",
+    "termCount": 69
+  },
+  "memoryRoutingHealth": {
+    "valid": true,
+    "errors": [],
+    "normalized": {
+      "enabled": true,
+      "provider": "repertoire",
+      "module_path": "node_modules/@0xray/repertoire/dist/provider/memory-routing-provider.js",
+      "config": {
+        "signalsPath": ".xray/state/repertoire/curated_signals.json",
+        "statePath": ".xray/state/repertoire/inference-state.json",
+        "feedbackDir": ".xray/state/repertoire/feedback"
+      }
+    }
+  },
+  "suit": {
+    "host": "cursor",
+    "profile": "frontier",
+    "ceremony": "lite",
+    "spawnPlanMode": "warn"
+  },
+  "spawnPlan": {
+    "hasPlan": false,
+    "validForSpawn": false,
+    "resolved": {
+      "source": "none",
+      "asideId": null,
+      "active": false
+    }
+  },
+  "synthesis": {
+    "enabled": false,
+    "intervalMinutes": null
+  },
+  "delegationGate": {
+    "ceremony": "lite",
+    "spawnPlanMode": "warn",
+    "readTool": {
+      "allow": true,
+      "gate": null,
+      "reason": null
+    },
+    "spawnSubagent": {
+      "allow": true,
+      "gate": "spawn-plan-missing",
+      "reason": "Codex 59/67: call xray-orchestrator analyze-complexity first — writes .xray/state/lead-dev-plan.json required before spawn_subagent"
+    }
+  },
+  "leadDevPlan": {
+    "active": true,
+    "complexity": 7,
+    "requiresPhasedPlan": false,
+    "phases": 1,
+    "todos": 1,
+    "firstTodo": "backend-engineer"
+  },
+  "execution": {
+    "enriched": {
+      "id": "wear:bench-wear-1790282069191",
+      "description": "compaction memory bench suited arm",
+      "type": "implementation",
+      "priority": "high",
+      "dependencies": [],
+      "estimatedComplexity": 25,
+      "metadata": {
+        "repertoireSignals": [
+          "compaction-memory-bench-suited-arm"
+        ],
+        "matchedPrimitives": [
+          "compaction-memory-bench-suited-arm"
+        ],
+        "ontologicalTrapDetected": false,
+        "memorySignalConfidences": {
+          "compaction-memory-bench-suited-arm": 0.95
+        },
+        "memoryAvgConfidence": 0.95,
+        "memoryHighConfidenceTrap": false,
+        "memoryComplexityBoost": 8,
+        "match_confidence": {
+          "compaction-memory-bench-suited-arm": 0.95
+        },
+        "memoryProviderId": "repertoire",
+        "memorySignals": [
+          "compaction-memory-bench-suited-arm"
+        ]
+      }
+    },
+    "inherited": {
+      "providerId": "repertoire",
+      "matchedSignals": [
+        {
+          "name": "compaction-memory-bench-suited-arm",
+          "definition": "The bench token for this run is bench-a9b5384b",
+          "priority": "medium"
+        }
+      ],
+      "flags": {
+        "ontologicalTrapDetected": false
+      }
+    }
+  },
+  "intake": {
+    "normalized": {
+      "id": "wear:bench-wear-1790282069191",
+      "description": "compaction memory bench suited arm",
+      "type": "implementation",
+      "priority": "high",
+      "dependencies": [],
+      "estimatedComplexity": 25,
+      "metadata": {}
+    },
+    "validation": {
+      "valid": true,
+      "errors": []
+    },
+    "flags": {
+      "ontological": false,
+      "trap": false,
+      "attestation": false,
+      "consumer": false,
+      "revalidation": false
+    },
+    "complexity": 41,
+    "sessionOk": true,
+    "tokenEstimate": 9
+  },
+  "governancePass": {
+    "summary": {
+      "total": 4,
+      "failed": 0,
+      "ok": true
+    },
+    "blockingCount": 0,
+    "results": [
+      {
+        "term": 11,
+        "title": "Type Safety First",
+        "pass": true,
+        "hit": false,
+        "enforcement": "blocking",
+        "sessionLen": 24,
+        "rationale": "clean"
+      },
+      {
+        "term": 29,
+        "title": "Security by design",
+        "pass": true,
+        "hit": false,
+        "enforcement": "blocking",
+        "sessionLen": 24,
+        "rationale": "clean"
+      },
+      {
+        "term": 59,
+        "title": "Complex work orchestrator intake",
+        "pass": true,
+        "hit": false,
+        "enforcement": "blocking",
+        "sessionLen": 24,
+        "rationale": "clean"
+      },
+      {
+        "term": 69,
+        "title": "No new surface",
+        "pass": true,
+        "hit": false,
+        "enforcement": "blocking",
+        "sessionLen": 24,
+        "rationale": "clean"
+      }
+    ],
+    "intakeSummary": {
+      "normalized": {
+        "id": "wear:bench-wear-1790282069191",
+        "description": "compaction memory bench suited arm",
+        "type": "implementation",
+        "priority": "high",
+        "dependencies": [],
+        "estimatedComplexity": 25,
+        "metadata": {}
+      },
+      "validation": {
+        "valid": true,
+        "errors": []
+      },
+      "flags": {
+        "ontological": false,
+        "trap": false,
+        "attestation": false,
+        "consumer": false,
+        "revalidation": false
+      },
+      "complexity": 41,
+      "sessionOk": true,
+      "tokenEstimate": 9
+    }
+  },
+  "pipeline": {
+    "thinDispatchVersion": "0.1.0",
+    "route": {
+      "agent": "code-reviewer",
+      "score": 15,
+      "level": "simple",
+      "memoryRouting": {
+        "providerId": "repertoire",
+        "adjustedScore": 15,
+        "signals": [
+          "compaction-memory-bench-suited-arm"
+        ],
+        "lessons": [
+          {
+            "name": "compaction-memory-bench-suited-arm",
+            "definition": "The bench token for this run is bench-a9b5384b",
+            "lines": [
+              {
+                "taskId": "wear:bench-wear-1790278796443",
+                "decision": "success",
+                "text": "The bench token for this run is bench-a9b5384b",
+                "at": "2026-09-24T19:39:56.459Z"
+              },
+              {
+                "taskId": "wear:bench-wear-1790278803720",
+                "decision": "success",
+                "text": "The bench token for this run is bench-b471080a",
+                "at": "2026-09-24T19:40:03.738Z"
+              },
+              {
+                "taskId": "wear:bench-wear-1790279209402",
+                "decision": "success",
+                "text": "The bench token for this run is bench-af152405",
+                "at": "2026-09-24T19:46:49.421Z"
+              },
+              {
+                "taskId": "wear:bench-wear-1790282069191",
+                "decision": "success",
+                "text": "The bench token for this run is bench-5679e6fb",
+                "at": "2026-09-24T20:34:29.210Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "intake": {
+      "normalized": {
+        "id": "wear:bench-wear-1790282069191",
+        "description": "compaction memory bench suited arm",
+        "type": "implementation",
+        "priority": "high",
+        "dependencies": [],
+        "estimatedComplexity": 25,
+        "metadata": {}
+      },
+      "validation": {
+        "valid": true,
+        "errors": []
+      },
+      "flags": {
+        "ontological": false,
+        "trap": false,
+        "attestation": false,
+        "consumer": false,
+        "revalidation": false
+      },
+      "complexity": 41,
+      "sessionOk": true,
+      "tokenEstimate": 9
+    },
+    "governance": {
+      "summary": {
+        "total": 4,
+        "failed": 0,
+        "ok": true
+      },
+      "blockingCount": 0,
+      "results": [
+        {
+          "term": 11,
+          "title": "Type Safety First",
+          "pass": true,
+          "hit": false,
+          "enforcement": "blocking",
+          "sessionLen": 24,
+          "rationale": "clean"
+        },
+        {
+          "term": 29,
+          "title": "Security by design",
+          "pass": true,
+          "hit": false,
+          "enforcement": "blocking",
+          "sessionLen": 24,
+          "rationale": "clean"
+        },
+        {
+          "term": 59,
+          "title": "Complex work orchestrator intake",
+          "pass": true,
+          "hit": false,
+          "enforcement": "blocking",
+          "sessionLen": 24,
+          "rationale": "clean"
+        },
+        {
+          "term": 69,
+          "title": "No new surface",
+          "pass": true,
+          "hit": false,
+          "enforcement": "blocking",
+          "sessionLen": 24,
+          "rationale": "clean"
+        }
+      ],
+      "intakeSummary": {
+        "normalized": {
+          "id": "wear:bench-wear-1790282069191",
+          "description": "compaction memory bench suited arm",
+          "type": "implementation",
+          "priority": "high",
+          "dependencies": [],
+          "estimatedComplexity": 25,
+          "metadata": {}
+        },
+        "validation": {
+          "valid": true,
+          "errors": []
+        },
+        "flags": {
+          "ontological": false,
+          "trap": false,
+          "attestation": false,
+          "consumer": false,
+          "revalidation": false
+        },
+        "complexity": 41,
+        "sessionOk": true,
+        "tokenEstimate": 9
+      }
+    },
+    "recallRank": {
+      "ranked": [
+        "attestation-as-map",
+        "consumer-boundary",
+        "revalidation-required"
+      ],
+      "top": "attestation-as-map",
+      "sessionId": "bench-wear-1790282069191",
+      "score": 30
+    },
+    "plates": {
+      "matched": [],
+      "total": 13,
+      "hasRecallPlate": true
+    },
+    "lessonShape": {
+      "operation": "compaction memory bench suited arm",
+      "success": true,
+      "taskIdPrefix": "wear:bench-wear-1790282069191",
+      "hasSession": true,
+      "signalHints": []
+    },
+    "codexGate": {
+      "total": 4,
+      "failed": 0,
+      "ok": true
+    }
+  },
+  "ingestReady": {
+    "ok": true
+  },
+  "thinDispatchVersion": "0.1.0",
+  "agent": "code-reviewer",
+  "score": 13,
+  "level": "simple",
+  "memoryRouting": {
+    "providerId": "repertoire",
+    "adjustedScore": 13,
+    "signals": [
+      "compaction-memory-bench-suited-arm"
+    ],
+    "lessons": [
+      {
+        "name": "compaction-memory-bench-suited-arm",
+        "definition": "The bench token for this run is bench-a9b5384b",
+        "lines": [
+          {
+            "taskId": "wear:bench-wear-1790278796443",
+            "decision": "success",
+            "text": "The bench token for this run is bench-a9b5384b",
+            "at": "2026-09-24T19:39:56.459Z"
+          },
+          {
+            "taskId": "wear:bench-wear-1790278803720",
+            "decision": "success",
+            "text": "The bench token for this run is bench-b471080a",
+            "at": "2026-09-24T19:40:03.738Z"
+          },
+          {
+            "taskId": "wear:bench-wear-1790279209402",
+            "decision": "success",
+            "text": "The bench token for this run is bench-af152405",
+            "at": "2026-09-24T19:46:49.421Z"
+          }
+        ]
+      }
+    ]
+  },
+  "confidence": {
+    "signals": [
+      {
+        "name": "compaction-memory-bench-suited-arm",
+        "confidence": 0.85
+      }
+    ],
+    "matchedSignals": [
+      "compaction-memory-bench-suited-arm"
+    ],
+    "avgConfidence": 0.85,
+    "maxConfidence": 0.85,
+    "highConfidenceTrapPresent": false,
+    "ontologicalTrapDetected": false,
+    "complexityBoost": 6,
+    "recommendedAgent": null
+  },
+  "signals": [
+    "compaction-memory-bench-suited-arm"
+  ],
+  "sessionId": "bench-wear-1790282069191",
+  "benchToken": "bench-5679e6fb"
+}
