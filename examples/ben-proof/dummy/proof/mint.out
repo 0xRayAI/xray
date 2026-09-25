@@ -1,0 +1,8 @@
+
+> recall-bench-dummy-app@0.1.0 intake
+> node src/cli/intake.js
+
+{"ts":"2026-09-24T19:30:31.727Z","module":"governance","event":"matrix-applied","level":"info","proposalId":"7fa61dff-4aa3-4be1-81a8-1f4c3da7a988","recommendation":"PASS","confidence":0.89}
+{"ts":"2026-09-24T19:30:31.728Z","module":"gates","event":"intake-allowed","level":"debug","summaryLength":91}
+{"ts":"2026-09-24T19:30:31.728Z","module":"intake","event":"lesson-saved","level":"info","lessonId":"57f10aef-983a-417d-ad0f-6f8fcbe746d9","benchToken":"bench-2372be75fab84825df9390fbaae99d90","path":"data/lessons.jsonl"}
+{"ok":true,"lessonId":"57f10aef-983a-417d-ad0f-6f8fcbe746d9","benchToken":"bench-2372be75fab84825df9390fbaae99d90"}
