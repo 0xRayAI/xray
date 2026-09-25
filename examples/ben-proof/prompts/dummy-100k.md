@@ -2,12 +2,20 @@ Build a real Node app of 50,000 to 100,000 lines that forces YOUR context window
 
 SUCCESS is a host compaction receipt whose session id is THIS agent, not a line count.
 
-## Fill the window first
-Fully research the 0xRay repo. Read the source with the Read tool, 400 lines at a time, skipping node_modules. That read alone is about 120,000 tokens. Do not skip it. Do not summarize a file instead of reading it. When you finish the tree, the window should be near full. A generator, a line count on disk, or a short status note does not fill the window.
+## Study the memory organ first
+Memory is the organ between repertoire and 0xRay. That is the worked example of a useful organ. Before you build anything, fully research that organ. Read it with the Read tool, 400 lines at a time. Skip node_modules. Read the source, not a summary.
+
+Read both sides:
+- /agent/repos/repertoire — the organ: provider, signals, recall, ingest, the memory-routing provider, curated signals, lesson record and recall.
+- /agent/repos/xray — where the suit wears it: memory_routing, memory-routing-provider wiring, ExecutionPlanner, thinDispatch, researcher confidence, AsideContext inheritedContext.memoryRouting, recordLesson, ingestFeedback, recallLesson.
+
+That code is a lot. The read alone is about 120,000 tokens. A generator, a line count on disk, or a short status note does not fill the window and does not teach you what an organ is.
+
+Only after that read, build a new organ beside it: a factory that takes one task, checks it, and stores a lesson. Real modules. Write them, then Read them back. Do not write the app in /tmp.
 
 ## Hard rules
 - Do not spawn subagents. Their context will not fill yours.
-- Do not npm install 0xray. Do not wear the suit. Do not read `/tmp/recall-bench-100k`. Read `/agent/repos/xray` so the window fills.
+- Do not npm install 0xray. Do not wear the suit. Do not read `/tmp/recall-bench-100k`. Reading repertoire and the xray memory-organ wear points is required.
 - Do not write a generator script. Every substantial source file must be sent through the Write tool so the full text is in your tool call, then read back with the Read tool in slices of at most 400 lines.
 - Do not hand-write receipt or hook files. Only the host hook may write those.
 - Do not commit or push.
