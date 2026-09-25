@@ -503,8 +503,105 @@ describe('Cursor cloud hooks adapter', () => {
       expect(receipt.messages_to_compact).toBe(30);
       const usage = JSON.parse(
         readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
-      ) as { usage: { bcId: string | null } };
+      ) as { usage: { bcId: string | null }; compact: { probeLogExists: boolean } };
       expect(usage.usage.bcId).toBe('bc-spawn-id-enough');
+      expect(usage.compact.probeLogExists).toBe(true);
+      const hookLog = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      expect(hookLog).toContain('session_id=bc-spawn-id-enough');
+      expect(hookLog).toContain('context_usage_percent=90');
+      expect(hookLog).toContain('context_tokens=');
+      expect(hookLog).toContain('context_window_size=');
+      expect(hookLog).toContain('generation_id=gen-resume-1');
+      const sessionCopy = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-receipts', 'bc-spawn-id-enough.json'), 'utf8'),
+      ) as {
+        sessionId: string;
+        precompact: { generation_id: string };
+        usage: { compact: { probeLogExists: boolean } };
+      };
+      expect(sessionCopy.sessionId).toBe('bc-spawn-id-enough');
+      expect(sessionCopy.precompact.generation_id).toBe('gen-resume-1');
+      expect(sessionCopy.usage.compact.probeLogExists).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('two preCompact arms keep a per-session receipt and a hook log line each', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-two-arm-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          conversation_id: 'bc-arm-one',
+          generation_id: 'gen-arm-one',
+          context_tokens: 187232,
+          context_usage_percent: 93.616,
+          context_window_size: 200000,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          conversation_id: 'bc-arm-two/../evil',
+          generation_id: 'gen-arm-two',
+          context_tokens: 182919,
+          context_usage_percent: 91.4595,
+          context_window_size: 200000,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      const latestUsage = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'), 'utf8'),
+      ) as { sessionId: string; usage: { context_tokens: number }; compact: { probeLogExists: boolean } };
+      const latestPrecompact = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'cursor-precompact.json'), 'utf8'),
+      ) as { sessionId: string; context_tokens?: number };
+      expect(latestUsage.sessionId).toBe('bc-arm-two/../evil');
+      expect(latestUsage.usage.context_tokens).toBe(182919);
+      expect(latestUsage.compact.probeLogExists).toBe(true);
+      expect(latestPrecompact.sessionId).toBe('bc-arm-two/../evil');
+      const hookLog = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      expect(hookLog).toContain('session_id=bc-arm-one');
+      expect(hookLog).toContain('context_tokens=187232');
+      expect(hookLog).toContain('context_usage_percent=93.616');
+      expect(hookLog).toContain('context_window_size=200000');
+      expect(hookLog).toContain('generation_id=gen-arm-one');
+      expect(hookLog).toContain('session_id=bc-arm-two/../evil');
+      expect(hookLog).toContain('context_tokens=182919');
+      expect(hookLog).toContain('generation_id=gen-arm-two');
+      const receiptDir = path.join(tmp, '.xray', 'state', 'cursor-receipts');
+      const names = readdirSync(receiptDir);
+      expect(names).toContain('bc-arm-one.json');
+      const secondName = names.find((name) => name.includes('bc-arm-two') && name.endsWith('.json'));
+      expect(secondName).toBeTruthy();
+      expect(secondName).not.toContain('..');
+      expect(secondName).not.toContain('/');
+      const firstCopy = JSON.parse(readFileSync(path.join(receiptDir, 'bc-arm-one.json'), 'utf8')) as {
+        sessionId: string;
+        usage: { usage: { context_tokens: number } };
+      };
+      const secondCopy = JSON.parse(readFileSync(path.join(receiptDir, secondName as string), 'utf8')) as {
+        sessionId: string;
+        usage: { usage: { context_tokens: number }; compact: { probeLogExists: boolean } };
+      };
+      expect(firstCopy.sessionId).toBe('bc-arm-one');
+      expect(firstCopy.usage.usage.context_tokens).toBe(187232);
+      expect(secondCopy.sessionId).toBe('bc-arm-two/../evil');
+      expect(secondCopy.usage.usage.context_tokens).toBe(182919);
+      expect(secondCopy.usage.compact.probeLogExists).toBe(true);
+      expect(path.resolve(path.join(receiptDir, secondName as string)).startsWith(path.resolve(receiptDir))).toBe(
+        true,
+      );
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -613,6 +710,8 @@ describe('Cursor cloud hooks adapter', () => {
     const ignore = readFileSync(path.join(packageRoot, '.gitignore'), 'utf8');
     expect(ignore).toMatch(/^\.xray\/state\/session-boot\.json$/m);
     expect(ignore).toMatch(/^\.xray\/state\/cursor-usage-receipt\.json$/m);
+    expect(ignore).toMatch(/^\.xray\/state\/cursor-hook\.log$/m);
+    expect(ignore).toMatch(/^\.xray\/state\/cursor-receipts\/$/m);
   });
 
   it('parseInvokeProbeLog counts host preCompact without synthetic invoke', () => {
@@ -691,12 +790,14 @@ describe('Cursor cloud hooks adapter', () => {
       expect(dest).toBe(path.join(tmp, '.xray', 'state', 'cursor-usage-receipt.json'));
       const receipt = JSON.parse(readFileSync(dest as string, 'utf8')) as {
         ok: boolean;
-        compact: { hostFired: boolean; preCompactCount: number };
+        compact: { hostFired: boolean; preCompactCount: number; probeLogExists: boolean };
         usage: { miss: boolean; model: string };
       };
       expect(receipt.ok).toBe(true);
       expect(receipt.compact.hostFired).toBe(false);
       expect(receipt.compact.preCompactCount).toBe(0);
+      expect(receipt.compact.probeLogExists).toBe(false);
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'cursor-hook.log'))).toBe(false);
       expect(receipt.usage.miss).toBe(true);
       expect(receipt.usage.model).toBe('cursor-grok-4.6-high');
       const card = readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');

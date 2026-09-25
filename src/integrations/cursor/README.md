@@ -40,7 +40,9 @@ Do **not** prove window pressure with UTF-8 chars÷4. `src/integrations/cursor/h
 | `cursor-cloud` `run-info` / `get-events` / dashboard (model, bc-id, window) | yes — token MISS is honest |
 | chars÷4, fill-only, `fillBytes` | **forbidden** (`ok: false`) |
 
-Host `preCompact` fire is counted from `.xray/state/cursor-hook-invoke.log` (`event=preCompact`). Do not hand-invoke `pre-compact.js` to mint that Y.
+Host `preCompact` fire is counted from `.xray/state/cursor-hook-invoke.log` (`event=preCompact`). Do not hand-invoke `pre-compact.js` to mint that Y. That invoke log has no session id.
+
+A cut counts only when `.xray/state/cursor-receipts/<sessionId>.json` exists **and** `.xray/state/cursor-hook.log` contains a line with that same session id (timestamp, `context_tokens`, `context_usage_percent`, `context_window_size`, `generation_id`). `probeLogExists` is true only when that append succeeded. `.xray/state/cursor-usage-receipt.json` and `cursor-precompact.json` keep only the newest event. That single latest json is not enough — the next arm overwrites it.
 
 Arm S landscape + receipt: `examples/killer-dual/`.
 

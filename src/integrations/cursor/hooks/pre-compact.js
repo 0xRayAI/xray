@@ -18,7 +18,9 @@ import {
   writeSessionBoot,
 } from './cursor-hook-utils.js';
 import {
+  appendCursorCompactProofLog,
   hostUsageFromPreCompactEvent,
+  writeCursorSessionReceipt,
   writeCursorUsageReceipt,
 } from './cursor-usage-receipt.js';
 
@@ -132,6 +134,17 @@ async function main() {
       });
       bootPath = writeSessionBoot(root, payload);
       stationLine = payload.stationLine;
+      const stampedAt = new Date().toISOString();
+      const proofLogged = appendCursorCompactProofLog(root, {
+        sessionId,
+        timestamp: stampedAt,
+        context_tokens: typeof event.context_tokens === 'number' ? event.context_tokens : null,
+        context_usage_percent:
+          typeof event.context_usage_percent === 'number' ? event.context_usage_percent : null,
+        context_window_size:
+          typeof event.context_window_size === 'number' ? event.context_window_size : null,
+        generation_id: generationId,
+      });
       receiptPath = writeCursorPrecompactReceipt(root, {
         event_class: eventClass,
         hookEvent: 'pre_compact',
@@ -145,12 +158,17 @@ async function main() {
         messages_to_compact:
           typeof event.messages_to_compact === 'number' ? event.messages_to_compact : null,
         bootPath,
-        timestamp: new Date().toISOString(),
+        timestamp: stampedAt,
       });
       usagePath = writeCursorUsageReceipt(root, {
         eventClass,
         sessionId,
+        probeLogExists: proofLogged,
         usage: hostUsageFromPreCompactEvent(event),
+      });
+      writeCursorSessionReceipt(root, sessionId, {
+        precompactPath: receiptPath,
+        usagePath,
       });
       if (plates) {
         try {
