@@ -22,7 +22,7 @@ npx @0xray/grok-bot ready     # alias
 - Factory /suit UI: https://website-production-c0da.up.railway.app/suit
 - Registry MCP: https://registry-production-e2c4.up.railway.app/mcp
 - Hangar shops (Clearing): https://clearing-production-9968.up.railway.app/
-- OS docs: this repo, `grok-bot/`
+- OS docs: https://github.com/0xRayAI/xray/tree/main/grok-bot
 
 ## Depends on (do not vendor)
 - `0xray` + `@0xray/foundry` — fasten mill+inspect

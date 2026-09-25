@@ -14,8 +14,6 @@ Primary scripts for agents. Run in order for **each** key agent.
 |-------|------|
 | [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Reviewer proof card is a short note |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
-| [enterprise-cos-wave-loop](skills/enterprise-cos-wave-loop/SKILL.md) | Coordinator wave loop |
-| [synaptical-comms](skills/synaptical-comms/SKILL.md) | Friend-test house comms |
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
 | [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — copy `templates/house/` and fill HOUSE.md |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
@@ -34,4 +32,4 @@ These skills name one team's people and accounts. They stay in the git repo:
 - `skills/synaptical-comms/`
 - the public-post skill (account-specific)
 
-The wave-loop and comms rows above are those same files. Use them from the repo, not from the installed package.
+Use them from the repo, not from the installed package.

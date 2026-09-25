@@ -95,9 +95,8 @@ function probeOws(home) {
   }
 }
 
-// House check keys on unfilled `(example)` lines, not on seat names.
-// A team may rename every seat. That still passes.
-const HOUSE_EXAMPLE_MARKER = '(example)';
+// A leading `(example)` marker is unfilled. A mid-line mention is not.
+const HOUSE_EXAMPLE_LINE = /^\s*[-*]?\s*\(example\)/;
 
 function probeHouse(cwd) {
   const file = path.join(cwd, 'house', 'HOUSE.md');
@@ -118,7 +117,7 @@ function probeHouse(cwd) {
       detail: 'no house/HOUSE.md, run setup-house',
     };
   }
-  const unfilled = text.split(/\r?\n/).filter((line) => line.includes(HOUSE_EXAMPLE_MARKER));
+  const unfilled = text.split(/\r?\n/).filter((line) => HOUSE_EXAMPLE_LINE.test(line));
   if (unfilled.length > 0) {
     return {
       status: 'fail',

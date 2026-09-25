@@ -16,7 +16,7 @@ const {
   runDoctorCli,
   PLANT_URLS,
 } = requireCjs(path.join(root, 'grok-bot', 'lib', 'seat-doctor.cjs')) as {
-  diagnoseSeat: (opts?: { cwd?: string; home?: string }) => {
+  diagnoseSeat: (opts?: { cwd?: string; home?: string; env?: Record<string, string> }) => {
     ok: boolean;
     cwd: string;
     seat: { name: string | null; version: string | null } | null;
@@ -32,7 +32,7 @@ const {
     };
     repertoire: { status: string; detail?: string; name?: string; version?: string; signals?: number | null };
     ows: { present: boolean; path: string };
-    house: { status: string; detail: string; file: string };
+    house: { status: string; detail: string; file: string | null };
     next: string[];
     urls: { clearing: string };
   };
@@ -245,7 +245,7 @@ describe('grok-bot seat doctor — CLI', () => {
     try {
       writeSeat(dir);
       plantMillInspect(dir);
-      const report = diagnoseSeat({ cwd: dir, home: dir });
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: {} });
       expect(report.house.status).toBe('warn');
       expect(report.house.detail).toBe('no house/HOUSE.md, run setup-house');
       expect(report.ok).toBe(true);
@@ -335,6 +335,24 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.status).toBe('pass');
       expect(report.ok).toBe(true);
       expect(formatDoctor(report)).toMatch(/House: PASS — house\/HOUSE\.md/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not fail on a mid-line (example)', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(
+        path.join(dir, 'house', 'HOUSE.md'),
+        '# House\n\nNames are not an (example) of a seat.\n',
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: {} });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

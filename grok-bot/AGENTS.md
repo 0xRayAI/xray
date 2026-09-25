@@ -31,7 +31,7 @@ Humans: same path; start at `README.md`.
 
 ## Rules
 - Chat “done” is not proof — keep inventory, inspect `ok`, txs, curls.
-- Friend test any public copy (`ops/GIBBERISH-CHECK.md`).
+- Friend test any public copy ([GIBBERISH-CHECK.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GIBBERISH-CHECK.md)).
 - Coordinator routes; implementer executes; do not ask the coordinator to mint/deploy for you.
 - This package **orchestrates**. It does not replace `0xray` or Groover.
 
@@ -45,7 +45,7 @@ Current verified pins (change if live plant moves):
 If a URL or version fails, update this kit — do not invent a parallel stack.
 
 ## PreToolUse on Grok Bot (observe)
-Cold-seat proof: `ops/GROK-HOOK-PROOF.md`.
+Cold-seat proof: [GROK-HOOK-PROOF.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GROK-HOOK-PROOF.md).
 
 - Fasten **does** plant Grok plugin `PreToolUse` / `PostToolUse` hooks and the gate script runs.
 - Grok Bot **chat** is not that plugin host — do not invent a fake PreToolUse floor in the assistant.
