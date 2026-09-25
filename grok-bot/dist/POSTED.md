@@ -19,7 +19,7 @@
 - https://x.com/0xRayAI/status/2101810460563579080 @ 2026-09-20T23:07:18Z
 - npm get-started · whole · friend-test PASS
 
-## 2026-09-20 — mention reply architecture (not a root)
+## 2026-09-20 — mention reply v4.0.15 architecture (not a root)
 - reply to https://x.com/Blaze0x1/status/2101679518540829041
 - https://x.com/0xRayAI/status/2101810630831349959
 - architecture path / factory toolkit · whole · friend-test PASS
@@ -54,7 +54,7 @@ DELETED (Locked: miss):
 - 2101811590899093762
 
 NEW (conversational, not roots):
-1. https://x.com/0xRayAI/status/2101850559347150867 ← 2101679518540829041
+1. https://x.com/0xRayAI/status/2101850559347150867 ← 2101679518540829041 (v4.0.15)
 2. https://x.com/0xRayAI/status/2101850721700258221 ← 2101319726605500718 (notebook)
 3. https://x.com/0xRayAI/status/2101850885722648984 ← 2100892746542133303 (get-started)
 4. https://x.com/0xRayAI/status/2101851271917383940 ← 2100676879237660912 (Blips)
