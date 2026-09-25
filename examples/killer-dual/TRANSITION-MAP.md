@@ -1,6 +1,8 @@
 # Two Cursor cloud agents, side by side
 
-We ran the same job twice, both on Cursor cloud. One agent was wearing 0xRay. The other was a plain app with no 0xRay. Each one wrote down a code word before the chat was compacted. After the cut, we asked each one for that word. Both came back with the word they had written before the cut.
+We ran the same job twice, both on Cursor cloud. One agent was wearing 0xRay. The other was a plain app with no 0xRay. Each one wrote down a code word before the chat was compacted. After the cut, we asked each one for that word.
+
+The one wearing 0xRay came back with the word it had written before the cut. The plain app did not remember it. The word was still sitting in a file, and a later read printed that file. That is the file lasting, not the agent remembering.
 
 The model was Composer 2.5. The window was 200,000 tokens.
 
@@ -14,10 +16,8 @@ A cut only counts when that same session left two traces: a line in the hook log
 | Session | `bc-24e5e7e5-a924-554c-9294-ba9d813d0958` | `bc-9893bcfe-a184-5028-a277-0eb943c6c6cf` |
 | Before the cut | At 20:34:29 it stored `bench-5679e6fb`. The task was "compaction memory bench suited arm". | At 20:34:17 it saved `bench-4b80c22a6bea282336f10e74aab9e122` in `mint-final.out`. |
 | The cut | 20:38:43. The window was 182,938 tokens full, 91.5% of 200,000. Composer 2.5. Hook log line 11, plus a receipt for this session at 20:38:43.104. | 20:39:48. The window was 187,858 tokens full, 93.9% of 200,000. Composer 2.5. Hook log line 12, plus a receipt for this session. Earlier lines for this same session at 20:35, 20:37, and 20:38 said zero tokens, and one receipt named Gemini. Those do not count. |
-| After the cut | Asked for the word. The first answer was `bench-5679e6fb`, the one stored at 20:34:29. | Asked for the word. The answer was `bench-4b80c22a6bea282336f10e74aab9e122`, the one saved at 20:34:17. |
-| Result | Got the pre-cut word back. | Got the pre-cut word back. |
-
-Both agents remembered the word they wrote before the chat was compacted.
+| After the cut | Asked for the word. The first answer was `bench-5679e6fb`, the one stored at 20:34:29. | The chat did not come back with the word. A later read of the file printed `bench-4b80c22a6bea282336f10e74aab9e122`, the one saved at 20:34:17. The file was still there. |
+| Result | Remembered the word from before the cut. | Did not remember the word. The file still had it. |
 
 ## Runs we opened and then set aside
 
