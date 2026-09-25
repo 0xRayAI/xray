@@ -43,5 +43,8 @@ If Dist (or CoS-drafted Dist) **says we will share / send / post** something pub
 ## Seat stamps
 See `brand/SEAT-STAMPS.md`. Sign sometimes in body when seat voice is claimed (`blinky 🖲️`). Dist signature line stays `— Dist / @0xRayAI`.
 
+## From the operating page
+No thanks-only replies. No cut-line posts by default. One idea per post. Claim only what is live, with a link. No double posts. Sign off with an em dash, then Dist / your public handle. This house signs `— Dist / @0xRayAI`. Reuse media first. At most 1 new generated image per post. See `brand/MEDIA-LEAN.md`.
+
 ## Banned Dist filler (rewrite)
 `op proc` · `dialect` · `friend-test` as a thing · `synaptical` · bare `mill`/`suit`/`hangar` without plain gloss · “copy that” · “noted” · “multiverse noted”
