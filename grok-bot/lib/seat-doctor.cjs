@@ -95,6 +95,8 @@ function probeOws(home) {
   }
 }
 
+// House check keys on unfilled `(example)` lines, not on seat names.
+// A team may rename every seat. That still passes.
 const HOUSE_EXAMPLE_MARKER = '(example)';
 
 function probeHouse(cwd) {

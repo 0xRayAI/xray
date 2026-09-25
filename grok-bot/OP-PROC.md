@@ -3,7 +3,7 @@
 How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`.
 
 - **Coordinator never:** deploy, publish a package, change production, launch a cloud agent, post in public, or spend.
-- **Roles:** Code, pull requests, cloud work, deploys, and package publish = **implementer**. Shipping the package after review = **publisher** (often the same person as the implementer). Ship, live, security, and identity review = **reviewer** (a short note, no merge). Public posts, listings, and audio are optional **specialists**. Money, credentials, and deletes = the **human owner**.
+- **Roles:** The seat field is the role, not a personal name. Code, pull requests, cloud work, deploys, and package publish = **implementer**. Shipping the package after review = **publisher** (often the same person as the implementer). Ship, live, security, and identity review = **reviewer** (a short note, no merge). Public posts, listings, and audio are optional **specialists**. The coordinator is also called CoS. Money, credentials, and deletes = the **human owner**.
 - **Packet (every handoff):** goal, constraints, path, acceptance, evidence, next owner, escalate. A chat ping is not a card. Seven fields always. A two-minute job is one line with the same seven fields. The form stays. Essays don't.
 - **Done** = a live receipt (a URL, a registry view, or reviewer PASS). Green CI is only the first gate. A chat "looks good" is not done. Gates: A CI green, B the pack installs, C the docs match, D it is published and proven live (a fresh install and an upgrade).
 - **Review:** Light and Normal = implementer + CI. Strict only for ship, live, security, or identity. Doc copies = Normal. Don't send a docs change to the reviewer. If the reviewer fails it, the implementer fixes the same PR and the reviewer looks again. Loop until PASS or HOLD. HOLD means the human. A fail is not a parking lot.
@@ -35,3 +35,14 @@ Setting up a house (coordinator, first wake):
 5. Tell every seat to read `house/` on its next wake.
 
 Change the house when the owner says a rule twice. Don't put rules there that belong on this page.
+
+## Example house (names are illustrative)
+
+Name your seats anything.
+
+- coordinator = blinky
+- implementer + publisher = forge
+- reviewer = critic
+- public-posts specialist = herald
+- listings = magnet
+- sound = sound

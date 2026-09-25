@@ -4,7 +4,7 @@
 (example) Ada — the human who decides money, credentials, deletes, and taste.
 
 ## Seats
-(example) Coordinator: north. Never deploys, publishes, or spends. Implementer and publisher: smith. Reviewer: lens. Never merges. Specialist (posts): quill. Never invents the words.
+(example) Coordinator. Never deploys, publishes, or spends. Implementer and publisher. Reviewer. Never merges. Public-posts specialist. Never invents the words. Listings. Audio.
 
 ## Public voice
 (example) @example. Root posts at least 4 hours apart. Reply only when you mean to.

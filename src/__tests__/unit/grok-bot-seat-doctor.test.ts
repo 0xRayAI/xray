@@ -278,6 +278,52 @@ describe('grok-bot seat doctor — CLI', () => {
     }
   });
 
+  it('passes when seats are renamed and example lines are gone', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir, 'anvil-seat');
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(
+        path.join(dir, 'house', 'HOUSE.md'),
+        [
+          '# House',
+          '',
+          '## Owner',
+          'Ada.',
+          '',
+          '## Seats',
+          '- Coordinator: north. Never deploys, publishes, or spends.',
+          '- Implementer and publisher: anvil.',
+          '- Reviewer: lens. Never merges.',
+          '- Public-posts specialist: quill. Never invents the words.',
+          '- Listings: peg.',
+          '- Audio: reed.',
+          '',
+          '## Public voice',
+          '@example',
+          '',
+          '## Allowed',
+          'git push to org/app',
+          '',
+          '## Ask first',
+          'Package publish.',
+          '',
+          '## Board',
+          'house/WAVEBOARD.md and house/ATTENTION_STATE.md',
+          '',
+        ].join('\n'),
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.house.status).toBe('pass');
+      expect(report.ok).toBe(true);
+      expect(formatDoctor(report)).toMatch(/House: PASS — house\/HOUSE\.md/);
+      expect(formatDoctor(report)).toMatch(/Seat: anvil-seat@1\.0\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('passes the house check when example lines are filled in', () => {
     const dir = scratch();
     try {
