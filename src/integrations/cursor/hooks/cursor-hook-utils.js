@@ -187,6 +187,73 @@ export function cursorHeatRoots(event = {}) {
   return out;
 }
 
+function isNestedConsumerWearRoot(root, millRoot) {
+  if (!root || !millRoot) return false;
+  const resolved = path.resolve(String(root));
+  const millResolved = path.resolve(String(millRoot));
+  if (resolved === millResolved) return false;
+  if (!heatRootHasCard(resolved) || !isHeatRootWritable(resolved)) return false;
+  const wornRay = path.join(resolved, 'node_modules', '0xray', 'package.json');
+  if (!fs.existsSync(wornRay)) return false;
+  if (!resolved.startsWith(millResolved + path.sep)) return false;
+  return true;
+}
+
+/**
+ * Nested consumer benches (e.g. examples/ben-proof/suited) wear 0xray locally.
+ * preCompact stdin has no Read paths, so cursorHeatRoots never visits those dirs.
+ */
+export function discoverNestedConsumerWearRoots(millRoot) {
+  const millResolved = path.resolve(String(millRoot));
+  if (packageNameAt(millResolved) !== '0xray') return [];
+  const out = [];
+  const seen = new Set();
+  const queue = [path.join(millResolved, 'examples')];
+  let steps = 0;
+  while (queue.length > 0 && steps < 500) {
+    steps += 1;
+    const dir = queue.shift();
+    if (!dir || !fs.existsSync(dir)) continue;
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const ent of entries) {
+      if (!ent.isDirectory()) continue;
+      if (ent.name === 'node_modules' || ent.name === '.git' || ent.name === 'dist') continue;
+      const full = path.join(dir, ent.name);
+      if (isNestedConsumerWearRoot(full, millResolved) && !seen.has(full)) {
+        seen.add(full);
+        out.push(full);
+      }
+      queue.push(full);
+    }
+  }
+  return out;
+}
+
+/** Mill heat roots plus nested consumer wear sites that share the same compact proof. */
+export function cursorCompactProofRoots(event = {}) {
+  const seen = new Set();
+  const out = [];
+  for (const root of cursorHeatRoots(event)) {
+    const resolved = path.resolve(String(root));
+    if (seen.has(resolved)) continue;
+    seen.add(resolved);
+    out.push(resolved);
+    if (packageNameAt(resolved) !== '0xray') continue;
+    for (const worn of discoverNestedConsumerWearRoots(resolved)) {
+      const wornResolved = path.resolve(String(worn));
+      if (seen.has(wornResolved)) continue;
+      seen.add(wornResolved);
+      out.push(wornResolved);
+    }
+  }
+  return out;
+}
+
 function packageNameAt(root) {
   try {
     const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -209,6 +276,7 @@ export function cursorGateRoot(heatRoots, eventRoot) {
 export function cursorSessionId(event = {}) {
   return (
     event.conversation_id ||
+    event.conversationId ||
     event.session_id ||
     event.sessionId ||
     process.env.CURSOR_CONVERSATION_ID ||

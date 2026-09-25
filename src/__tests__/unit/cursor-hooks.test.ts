@@ -7,8 +7,10 @@ import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
   cursorBootNeedsRefresh,
+  cursorCompactProofRoots,
   cursorGateRoot,
   cursorHeatRoots,
+  discoverNestedConsumerWearRoots,
   isCursorWorkspaceWrapper,
   millRootFromToolPath,
   shouldHeatRoot,
@@ -248,6 +250,58 @@ describe('Cursor cloud hooks adapter', () => {
       else process.env.XRAY_AI_PATH = prev;
       rmSync(cwd, { recursive: true, force: true });
       rmSync(mill, { recursive: true, force: true });
+    }
+  });
+
+  it('cursorCompactProofRoots mirrors preCompact proof to nested consumer wear dirs', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-compact-wear-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const suited = path.join(mill, 'examples', 'ben-proof', 'suited');
+    const prev = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      writeFileSync(path.join(mill, 'package.json'), JSON.stringify({ name: '0xray' }));
+      mkdirSync(path.join(suited, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(suited, '.xray', 'features.json'), '{}\n');
+      mkdirSync(path.join(suited, 'node_modules', '0xray'), { recursive: true });
+      writeFileSync(path.join(suited, 'node_modules', '0xray', 'package.json'), JSON.stringify({ name: '0xray' }));
+      process.env.XRAY_AI_PATH = mill;
+      const heatOnly = cursorHeatRoots({ cwd: workspace });
+      expect(heatOnly).toEqual([path.resolve(mill)]);
+      expect(heatOnly).not.toContain(path.resolve(suited));
+      const proofRoots = cursorCompactProofRoots({ cwd: workspace });
+      expect(proofRoots).toContain(path.resolve(mill));
+      expect(proofRoots).toContain(path.resolve(suited));
+      expect(discoverNestedConsumerWearRoots(mill)).toEqual([path.resolve(suited)]);
+      plantFeatures(mill);
+      seedBenStation(mill);
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          conversation_id: 'bc-suited-wear-mirror',
+          context_tokens: 150000,
+          context_window_size: 200000,
+          cwd: workspace,
+        },
+        mill,
+      );
+      const millLog = readFileSync(path.join(mill, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      const suitedLog = readFileSync(path.join(suited, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      expect(millLog).toContain('session_id=bc-suited-wear-mirror');
+      expect(suitedLog).toContain('session_id=bc-suited-wear-mirror');
+      expect(
+        existsSync(path.join(mill, '.xray', 'state', 'cursor-receipts', 'bc-suited-wear-mirror.json')),
+      ).toBe(true);
+      expect(
+        existsSync(path.join(suited, '.xray', 'state', 'cursor-receipts', 'bc-suited-wear-mirror.json')),
+      ).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prev;
+      rmSync(workspace, { recursive: true, force: true });
     }
   });
 

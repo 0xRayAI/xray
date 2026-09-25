@@ -10,7 +10,7 @@ import {
   buildSessionBootPayload,
   classifyPreCompactEvent,
   cursorGenerationId,
-  cursorHeatRoots,
+  cursorCompactProofRoots,
   cursorSessionId,
   cursorWorkspaceRoot,
   readStdinJson,
@@ -124,7 +124,7 @@ async function main() {
     } catch {
       plates = null;
     }
-    for (const root of cursorHeatRoots(event)) {
+    for (const root of cursorCompactProofRoots(event)) {
       const payload = buildSessionBootPayload(root, '0xray/cursor-compact', {
         host: 'cursor',
         hookEvent: 'pre_compact',
