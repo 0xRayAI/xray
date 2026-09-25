@@ -41,6 +41,24 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.27] - 2026-09-25
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: mirror preCompact proof to nested consumer wear roots (16b7481af)
+
+### 📚 Documentation
+- docs: add ben-proof suited compaction bench harness (13284b9d8)
+- docs: core audit fixes and a readable memory-scoring doc (#126) (23b370d1e)
+- docs: point 0xray at grok-bot/OP-PROC.md (#125) (53b1889dc)
+
+### 🔎 Other Changes
+- docs(grok-bot): OP-PROC amendment (Blaze 10:31) + moltbook push allow (#123) (a2abed78c)
+- docs(grok-bot): OP-PROC one-page front door + WAVEBOARD/ATTENTION_STATE mirror (#122) (519b2dae0)
+
+---
+
 ## [4.0.26] - 2026-09-25
 
 ### 🔄 Changes
