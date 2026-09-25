@@ -1,0 +1,19 @@
+
+> recall-bench-100k@1.0.0 recall
+> node bin/recall.mjs compaction memory bench suited arm
+
+{
+  "subsystem": "recall",
+  "matchedSignals": [
+    "compaction-memory-bench-suited-arm"
+  ],
+  "lessons": [
+    "The bench token for this run is bench-62c4e948",
+    "The bench token for this run is bench-59c653e5"
+  ],
+  "speech": [
+    "compaction-memory-bench-suited-arm: The bench token for this run is bench-62c4e948",
+    "compaction-memory-bench-suited-arm: The bench token for this run is bench-59c653e5"
+  ],
+  "plate": null
+}
