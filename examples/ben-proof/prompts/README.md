@@ -2,6 +2,10 @@
 
 Two Cursor cloud agents, both Composer 2.5, window 200000. Start them together. Give each one its own prompt below. Do not spawn subagents inside either run. Each arm has the helm: do not stop, do not ask questions, do not ask permission, read all source to build deep context, and when one file ends open the next; a status note, a file list, or a question ends the turn and fails the fill; work until the session is ready to summarize, and only then report the keyword back; segment 2 waits until the compaction cut is real.
 
+## Do the work yourself
+
+Do all work yourself. Do not spawn any subagents to assist. You must have full context for this ticket. A subagent starts empty and the window you are filling is lost.
+
 ## When to report the keyword
 
 Do not report the keyword until both of these exist for your own session id:

@@ -6,6 +6,10 @@ This prompt is segment 1. Segment 1 is the word. Segment 2 is the boundary. Segm
 
 Do not stop. Do not ask questions. Do not ask permission. Read all source to build deep context. When one file ends, open the next. A status note, a file list, or a question ends the turn and fails the fill. Work until the session is ready to summarize. Only then report the keyword back. Segment 2 waits until the compaction cut is real.
 
+## Do the work yourself
+
+Do all work yourself. Do not spawn any subagents to assist. You must have full context for this ticket. A subagent starts empty and the window you are filling is lost.
+
 ## When to report the keyword
 
 Do not report the keyword until both of these exist for your own session id:
