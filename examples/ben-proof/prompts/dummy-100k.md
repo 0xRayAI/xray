@@ -6,6 +6,15 @@ This prompt is segment 1. Segment 1 is the word. Segment 2 is the boundary. Segm
 
 Do not stop. Do not ask questions. Do not ask permission. Read all source to build deep context. When one file ends, open the next. A status note, a file list, or a question ends the turn and fails the fill. Work until the session is ready to summarize. Only then report the keyword back. Segment 2 waits until the compaction cut is real.
 
+## When to report the keyword
+
+Do not report the keyword until both of these exist for your own session id:
+
+- a line in `.xray/state/cursor-hook.log`
+- the file `.xray/state/cursor-receipts/<sessionId>.json`
+
+The receipt must show model composer-2.5, context_window_size 200000, and context_tokens greater than 100000. The single file `.xray/state/cursor-usage-receipt.json` does not count. Saying the keyword before that pair exists fails the test. After both files exist, report the keyword. The suited arm reads it back from the organ. The plain arm says it from chat only and does not open the jsonl.
+
 ## Write the locked step list first
 
 Before any long read, write this locked step list, then follow it in order:
