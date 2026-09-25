@@ -331,13 +331,15 @@ export function classifyPreCompactEvent(event = {}, argv = process.argv) {
   if (fromEvent) return fromEvent;
 
   const named = event.hook_event_name || event.hookEventName || event.hook;
-  const looksHost =
-    named === 'preCompact' ||
-    named === 'pre_compact' ||
-    event.trigger === 'auto' ||
-    event.trigger === 'manual' ||
-    typeof event.context_tokens === 'number' ||
-    typeof event.context_usage_percent === 'number';
+  const hookNamed = named === 'preCompact' || named === 'pre_compact';
+  const triggerNamed = event.trigger === 'auto' || event.trigger === 'manual';
+  const generation = event.generation_id || event.generationId;
+  const hasGeneration = typeof generation === 'string' && generation.trim().length > 0;
+  const hasPercent = typeof event.context_usage_percent === 'number';
+  // A token count or trigger alone is not a host fire. The 2026-09-25 20:28
+  // line had context_tokens 120000 and window 200000 with no generation id,
+  // no usage percent, and no preCompact invoke.
+  const looksHost = (hookNamed || triggerNamed) && hasGeneration && hasPercent;
   return looksHost ? EVENT_CLASS_HOST : EVENT_CLASS_SYNTHETIC;
 }
 

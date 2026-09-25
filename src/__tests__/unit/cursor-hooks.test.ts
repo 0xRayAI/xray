@@ -282,7 +282,9 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'auto',
           conversation_id: 'bc-suited-wear-mirror',
+          generation_id: 'gen-suited-wear-mirror',
           context_tokens: 150000,
+          context_usage_percent: 75,
           context_window_size: 200000,
           cwd: workspace,
         },
@@ -421,7 +423,24 @@ describe('Cursor cloud hooks adapter', () => {
     expect(classifyPreCompactEvent({}, [])).toBe('cursor-precompact-synthetic');
     expect(
       classifyPreCompactEvent(
-        { hook_event_name: 'preCompact', trigger: 'auto', context_tokens: 12 },
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 120000,
+          context_window_size: 200000,
+        },
+        [],
+      ),
+    ).toBe('cursor-precompact-synthetic');
+    expect(
+      classifyPreCompactEvent(
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 12,
+          context_usage_percent: 90,
+          generation_id: 'gen-host-1',
+        },
         [],
       ),
     ).toBe('cursor-host-precompact');
@@ -431,6 +450,31 @@ describe('Cursor cloud hooks adapter', () => {
         ['--event-class=cursor-precompact-synthetic'],
       ),
     ).toBe('cursor-precompact-synthetic');
+  });
+
+  it('token count and window without a generation id do not write a host proof', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-false-cut-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      const { stdout } = runHook(
+        preCompact,
+        {
+          trigger: 'auto',
+          conversation_id: 'bc-false-cut',
+          context_tokens: 120000,
+          context_window_size: 200000,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      const out = JSON.parse(stdout) as { user_message?: string };
+      expect(out.user_message).toContain('event_class=cursor-precompact-synthetic');
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'cursor-hook.log'))).toBe(false);
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'cursor-receipts', 'bc-false-cut.json'))).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('preToolUse emits Cursor permission allow on Read', () => {
@@ -677,6 +721,8 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'auto',
           context_tokens: 231344,
+          context_usage_percent: 90.15,
+          generation_id: 'gen-survive-1',
           cwd: tmp,
         },
         tmp,
@@ -721,6 +767,8 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'auto',
           context_tokens: 231344,
+          context_usage_percent: 90.15,
+          generation_id: 'gen-hold-1',
           cwd: tmp,
         },
         tmp,
