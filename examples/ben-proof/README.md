@@ -8,6 +8,8 @@ Two Cursor cloud agents. Both Composer 2.5. The window is 200000 tokens. A count
 
 ## How to run it
 
+The rerun instructions are in `prompts/README.md`.
+
 Mint the code word before you fill the window. Read real source in slices of at most 400 lines. Do not generate files to fill the window. Do not spawn subagents during the fill.
 
 A cut counts only when that same session has both of these, and both say the model is `composer-2.5` with a nonzero token count:
