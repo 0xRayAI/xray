@@ -158,7 +158,7 @@ Monitor the lead. New law that had to be spoken twice goes to disk this wake: `S
 
 Chat is not the brain. Compaction drops the seat. A cascade that must survive is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Observation counts are not capture.
 
-Memory scoring: [docs/memory-scoring.md](../../docs/memory-scoring.md).
+Memory scoring: [docs/memory-scoring.md](https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md).
 
 ### Ship track (always)
 
