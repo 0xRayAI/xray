@@ -15,11 +15,11 @@ Not capital. Not secrets. **Process + product wake limits.** Same miss family as
 1. Eng signal intake **PAUSED**
 2. Intake prompt patched: self-quiet if PR already MERGED/CLOSED or ATTENTION marks beat closed
 3. ATTENTION/WAVEBOARD scrubbed to live truth
-4. STATION parachute + recovery note (`ops/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`)
+4. STATION parachute + recovery note ([`house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`](../house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md))
 5. Cover CoS spun down when blinky answering
 
 ## Standing law (encode)
-See `OPS-SPEC.md` § Wake hygiene · `enterprise-cos-wave-loop` · `ROUTINES-INVENTORY.md`.
+See `OPS-SPEC.md` § Wake hygiene · `enterprise-cos-wave-loop` · [`ROUTINES-INVENTORY.md`](../house/ROUTINES-INVENTORY.md).
 
 ## Avoid
 - Never quiet on Blaze `stat` / `you there` / `fix yourself` / any 1:1 poke — even if a stale routine shares the wake
@@ -29,7 +29,7 @@ See `OPS-SPEC.md` § Wake hygiene · `enterprise-cos-wave-loop` · `ROUTINES-INV
 - Do not rearm eng intake until one clean fire on a **new** open PR
 
 ## Related
-- Recovery: `ops/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`
+- Recovery: [`house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`](../house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md)
 - Auto Review capital: `AUTO-REVIEW-POLICY.md` (separate track)
 
 ## Addendum — slow 1:1 reply (same day, later)

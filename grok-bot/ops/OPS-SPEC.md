@@ -61,7 +61,7 @@ Stay quiet on repeat acks, including eng re-acks of CLOSED / MERGED / LIVE. Coor
 
 - **Latency HARD (2026-09-16):** On any turn with a Blaze 1:1 message, the **first** user-visible action is the chat reply (≤2 sentences). Seat cards, disk digests, Dist EXECUTE, and GitHub come **after**. Agent/routine wakes never jump the line.
 
-**Miss:** `MISS-CHAT-WAKE-2026-09-16.md` · recovery `ops/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`
+**Miss:** `MISS-CHAT-WAKE-2026-09-16.md` · recovery [`house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`](../house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md)
 
 **Two layers**
 1. **Platform** — bloated CoS 1:1 can fail to wake on human messages (transcript tail timeouts). Bot/routine wakes may still work. Fix: STATION/ATTENTION parachute; fresh 1:1 if sticky.

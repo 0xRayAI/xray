@@ -13,7 +13,7 @@
 
 ## Root gate (how to check)
 
-1. Read `POSTED.md` last **root** timestamp (ignore cut-lines and mention-replies).
+1. Read [`POSTED.md`](../../dist/POSTED.md) last **root** timestamp (ignore cut-lines and mention-replies).
 2. If now − last_root &lt; 4h → **HOLD** new roots (queue overnight / next weekday window).
 3. Ship note exception: only if npm/GitHub/docs URL is live *now*.
 

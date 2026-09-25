@@ -15,7 +15,7 @@ Plain roles from `LEAN-COMPUTE.md` mapped to named agents.
 | Human | Blaze | — |
 
 ## Coordinator (blinky 🖲️)
-Route work, merge when rules allow, check proof, keep waves moving on real closes.
+Route work, check proof, keep waves moving on real closes. The coordinator never merges. The implementer merges after the gate.
 Draft Dist copy; friend-test; hand exact packets to herald.
 Sign sometimes: `blinky 🖲️` in body when claiming CoS voice (not as Dist sig line).
 

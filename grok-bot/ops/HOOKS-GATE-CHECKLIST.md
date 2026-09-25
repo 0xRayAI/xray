@@ -4,7 +4,7 @@ Last pass: 2026-09-13
 ## Seat plants
 | Seat | 0xray | foundry | inspect --skip-live | Light after-write ON |
 |------|-------|---------|---------------------|----------------------|
-| blinky / forge / critic / herald | 4.0.15 | 0.1.12 | ok | yes |
+| blinky / forge / critic / herald | 4.0.26 | 0.1.12 | ok | yes |
 
 ```bash
 cd /workspace/<suit> && ./node_modules/@0xray/foundry/cli.mjs inspect --skip-live
