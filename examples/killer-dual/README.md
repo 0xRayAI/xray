@@ -12,6 +12,7 @@ Cursor Cloud long-run on **0xRayAI/xray** only. Harness: `.cursor/hooks.json` + 
 | `cursor-usage-receipt.third.json` | Third fire snapshot — host window **256000**, tokens 232105 |
 | `COMPARE.md` | Arm S vs Arm B compare (both host fire; token split = writer-liveness) |
 | `TRANSITION.md` | PreToolUse vs PreCompact vs Grok Bot `survive-compact` — eval cases |
+| `TRANSITION-MAP.md` | Finished two-arm score — suited organ memory vs dummy file memory. Eval cases sit behind the map. |
 | `NOTES-EXCHANGE.md` | Dual-arm mailbox (no cloud-to-cloud queue) |
 | `MEMORY-PROTOCOL.md` | Claim A mill / B session / C memory. Quiz-first. No canary values. |
 | `MEMORY-QUIZ.md` | Questions only. After compact, answer before any tools. |
