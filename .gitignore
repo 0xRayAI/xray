@@ -21,6 +21,9 @@ xray/inference/
 
 # Temp files
 *.log
+*.out
+rerun-*/
+rerun_*/
 0xray-*.tgz
 *.tmp
 
@@ -66,6 +69,12 @@ xray/inference/
 .opencode/package.json
 .opencode/package-lock.json
 .opencode/bun.lock
+
+# Nested lockfiles. Root, grok-bot, and foundry are the published packages.
+**/package-lock.json
+!/package-lock.json
+!/grok-bot/package-lock.json
+!/scripts/foundry/package-lock.json
 
 # Compiled TypeScript output in .opencode/
 .opencode/core/
