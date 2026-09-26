@@ -355,32 +355,38 @@ function main() {
       const entry = mcp.mcpServers[name];
       const cli = path.join(tmpRoot, "node_modules", "0xray", "dist", "cli", "index.js");
       const args = Array.isArray(entry.args) ? entry.args.map(String) : [];
-      if (entry.command !== "env" || args[0] !== "-i") {
-        throw new Error(`${name} must launch via env -i, got ${entry.command} ${args.join(" ")}`);
+      const launcher = path.join(nmRoot, "scripts", "node", "mcp-launch.cjs");
+      if (entry.command !== "node" || args[0] !== launcher || args[1] !== "--keep") {
+        throw new Error(`${name} must launch via node mcp-launch.cjs --keep, got ${entry.command} ${args.join(" ")}`);
       }
-      let i = 1;
-      const assigned = [];
-      while (i < args.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(args[i])) {
-        assigned.push(args[i].split("=")[0]);
-        i += 1;
-      }
-      const inner = args.slice(i);
+      const dash = args.indexOf("--");
+      if (dash < 0) throw new Error(`${name} launcher args missing --`);
+      const kept = String(args[2] || "").split(",").filter(Boolean);
+      const inner = args.slice(dash + 1);
       const pinnedNode = inner[0] === "node" && inner[1] === cli && inner[2] === "mcp";
       const pinnedNpx =
         inner[0] === "npx" && inner[1] === "-y" && /^0xray@\d/.test(inner[2] || "") && inner[3] === "mcp";
       if (!pinnedNode && !pinnedNpx) {
-        throw new Error(`${name} must pin node CLI or npx 0xray@version inside env -i, got ${inner.join(" ")}`);
+        throw new Error(`${name} must pin node CLI or npx 0xray@version after --, got ${inner.join(" ")}`);
       }
       if (inner.includes("0xray")) {
         throw new Error(`${name} launched unpinned 0xray`);
       }
       for (const required of ["PATH", "HOME", "XRAY_ROOT"]) {
-        if (!assigned.includes(required)) {
-          throw new Error(`${name} scoped env missing ${required}`);
+        if (!kept.includes(required)) {
+          throw new Error(`${name} keep list missing ${required}`);
+        }
+      }
+      if (entry.env && (entry.env.PATH || entry.env.HOME)) {
+        throw new Error(`${name} baked PATH or HOME into the env block`);
+      }
+      for (const arg of args) {
+        if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(arg)) {
+          throw new Error(`${name} put an env assignment in argv: ${arg.split("=")[0]}`);
         }
       }
       for (const banned of ["NPM_TOKEN", "CURSOR_AUTH_TOKEN", "GITHUB_TOKEN", "GH_TOKEN", "RAILWAY_TOKEN"]) {
-        if (assigned.includes(banned) || (entry.env && Object.prototype.hasOwnProperty.call(entry.env, banned))) {
+        if (kept.includes(banned) || (entry.env && Object.prototype.hasOwnProperty.call(entry.env, banned))) {
           throw new Error(`${name} inherited ${banned}`);
         }
       }

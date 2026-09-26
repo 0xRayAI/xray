@@ -389,7 +389,7 @@ function registerGrokMcpServers(targetDir, log, pluginDirs) {
         argv.push("--env", `${key}=${value}`);
       }
       execFileSync("grok", argv, { stdio: "pipe" });
-      log("grok-bridge", `registered ${s.name} (env -i)`, "info");
+      log("grok-bridge", `registered ${s.name} (mcp-launch)`, "info");
     } catch {
       // already registered or grok config conflict — non-blocking
     }

@@ -205,23 +205,24 @@ function pinnedMcpLaunch(targetDir, mcpCmd) {
 
 /**
  * Stdio MCP hosts merge an `env` object onto the parent process. They cannot
- * drop inherited secrets (NPM_TOKEN, CURSOR_AUTH_TOKEN, GH_TOKEN, GITHUB_TOKEN,
- * RAILWAY_TOKEN, CDP keys, and other TOKEN, KEY, or SECRET variables).
- * Every launch written here is therefore:
- *   env -i PATH=… HOME=… XRAY_ROOT=… [server flags] [user keys] <pinned command>
- * `env -i` starts the server with that map only. The `env` / `environment`
- * field records the same map for hosts that also read it; user keys overlay
- * and win. PATH and HOME come from the installer process because the server
- * needs them to resolve binaries and the home directory. XRAY_ROOT is what
- * `src/core/config-paths.ts` reads. NODE_OPTIONS is omitted: none of the seven
- * stdio servers read it. HTTP-only vars (MCP_PORT, GOVERNANCE_API_KEY, …)
- * are omitted unless a user key on the entry sets them.
+ * drop inherited secrets. argv is world-readable, so values never go on the
+ * command line. Every launch is:
+ *   node <mcp-launch.cjs> --keep PATH,HOME,XRAY_ROOT[,flag][,user names] -- <pinned command>
+ * `scripts/node/mcp-launch.cjs` copies those names from its own environ (the
+ * live host, after the host merged this entry's `env` block) and spawns the
+ * server. PATH and HOME are names only; their values are whatever the host
+ * has at launch. XRAY_ROOT and non-secret server flags stay in the `env`
+ * block. User keys stay in that block too, and their names are appended to
+ * --keep. NODE_OPTIONS is omitted: none of the seven stdio servers read it.
  */
+const LIVE_ENV_NAMES = ["PATH", "HOME"];
+
+function mcpLauncherPath() {
+  return path.join(__dirname, "mcp-launch.cjs");
+}
+
 function baseScopedEnv(targetDir) {
-  const env = {
-    PATH: process.env.PATH || "/usr/bin:/bin",
-    HOME: process.env.HOME || os.homedir(),
-  };
+  const env = {};
   if (targetDir) env.XRAY_ROOT = targetDir;
   return env;
 }
@@ -250,14 +251,27 @@ function mergeScopedEnv(layers) {
   return orderedEnv(merged);
 }
 
+function configEnvFromMap(envMap) {
+  const ordered = orderedEnv(envMap || {});
+  const config = {};
+  for (const key of Object.keys(ordered)) {
+    if (LIVE_ENV_NAMES.includes(key)) continue;
+    config[key] = ordered[key];
+  }
+  return config;
+}
+
+function keepList(config) {
+  return [...LIVE_ENV_NAMES, ...Object.keys(config)];
+}
+
 function wrapScopedLaunch(inner, envMap) {
-  const env = orderedEnv(envMap);
-  const assignments = Object.keys(env).map((key) => `${key}=${env[key]}`);
-  const commandList = ["env", "-i", ...assignments, inner.command, ...inner.args];
+  const env = configEnvFromMap(envMap);
+  const tail = [mcpLauncherPath(), "--keep", keepList(env).join(","), "--", inner.command, ...inner.args];
   return {
-    command: "env",
-    args: commandList.slice(1),
-    commandList,
+    command: "node",
+    args: tail,
+    commandList: ["node", ...tail],
     env,
   };
 }
@@ -275,13 +289,23 @@ function commandTokens(server) {
   return tokens;
 }
 
+function isMcpLauncherToken(token) {
+  return token === "mcp-launch.cjs" || token.endsWith(`${path.sep}mcp-launch.cjs`) || token.endsWith("/mcp-launch.cjs");
+}
+
 function peelScopedLaunch(tokens) {
-  if (tokens[0] !== "env") return tokens.slice();
-  let i = 1;
-  if (tokens[i] === "-i" || tokens[i] === "--ignore-environment") i += 1;
-  else return tokens.slice();
-  while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i])) i += 1;
-  return tokens.slice(i);
+  if (tokens[0] === "env") {
+    let i = 1;
+    if (tokens[i] === "-i" || tokens[i] === "--ignore-environment") i += 1;
+    else return tokens.slice();
+    while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i])) i += 1;
+    return tokens.slice(i);
+  }
+  if (tokens[0] === "node" && isMcpLauncherToken(tokens[1] || "")) {
+    const dash = tokens.indexOf("--");
+    if (dash >= 0) return tokens.slice(dash + 1);
+  }
+  return tokens.slice();
 }
 
 function launchTokens(server) {
@@ -325,7 +349,7 @@ function mcpCmdFromInner(inner) {
   return inner.args.length > 0 ? inner.args[inner.args.length - 1] : null;
 }
 
-/** Framework fills gaps. User env, enabled/disabled, and version pins win. Unpinned `0xray` is repinned. Launch is always `env -i`. */
+/** Framework fills gaps. User env, enabled/disabled, and version pins win. Unpinned `0xray` is repinned. Launch is `node mcp-launch.cjs --keep names -- cmd`. */
 function mergeUserWinsServer(framework, user, targetDir) {
   if (!user || typeof user !== "object") return framework;
   if (!framework || typeof framework !== "object") return user;
@@ -473,7 +497,7 @@ function buildPluginMcpJson(targetDir) {
   return { mcpServers };
 }
 
-/** Project .mcp.json for Grok/Cursor. `env -i` drops inherited secrets; XRAY_ROOT is set when targetDir is known. */
+/** Project .mcp.json for Grok/Cursor. Launcher allowlist drops inherited secrets; XRAY_ROOT is set when targetDir is known. */
 function buildPortableProjectMcpJson(targetDir) {
   const mcpServers = {};
   for (const s of XRAY_MCP_SERVERS) {
