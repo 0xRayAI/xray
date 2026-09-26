@@ -105,6 +105,19 @@ jobs:
         # Playwright n/a (mill CLI). Standalone: npm run pack:tmp-proof
         run: node scripts/node/consumer-install-smoke.mjs
 
+  data-check:
+    name: Data check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Block checked-in run data
+        run: node .ci/check-data.mjs
+      - name: Reject a suited rerun log
+        run: node .ci/check-data.mjs --self-check
+
   docs-build:
     name: Docs Build
     runs-on: ubuntu-latest
