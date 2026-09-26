@@ -159,16 +159,25 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Chat is not the brain/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/A reflection is not this capture/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Capture priority/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/heat-is-not-conviction/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/does not append a confidence sample/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/a local clause of four definition content words/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/floor observation count does not change a route/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/learned-conviction\.json/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/two definition words are not a hit/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/a weak session score is not lifted to 0\.55/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/a sample below 0\.55 is not recorded/);
-    expect(readFileSync(orchestrator, 'utf8')).toMatch(/Constructing the organ does not append workspace samples/);
+    expect(readFileSync(orchestrator, 'utf8')).toContain(
+      'https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md',
+    );
+    const scoringText = readFileSync(path.join(root, 'docs', 'memory-scoring.md'), 'utf8');
+    expect(scoringText).toMatch(/Capture priority/);
+    expect(scoringText).toMatch(/heat-is-not-conviction/);
+    expect(scoringText).toMatch(/does not append a confidence sample/);
+    expect(scoringText).toMatch(/a local clause of four definition content words/);
+    expect(scoringText).toMatch(/floor observation count does not change a route/);
+    expect(scoringText).toMatch(/learned-conviction\.json/);
+    expect(scoringText).toMatch(/Two definition words are not a hit/);
+    expect(scoringText).toMatch(/A weak session score is not lifted to 0\.55/);
+    expect(scoringText).toMatch(/A sample below 0\.55 is not recorded/);
+    expect(scoringText).toMatch(/Constructing the organ does not append workspace samples/);
+    expect(scoringText).toMatch(/inference-cycle-invariant/);
+    expect(scoringText).toMatch(/governance-vote-invariant/);
+    expect(scoringText).toMatch(/thin-dispatch-invariant/);
+    expect(scoringText).toMatch(/mergeStackOverlay/);
+    expect(scoringText).toMatch(/Feedback moves conviction by a tenth/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/a local clause of four definition content words/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/floor observation count does not change a route/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/learned-conviction\.json/);
