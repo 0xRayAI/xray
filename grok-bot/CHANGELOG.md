@@ -6,7 +6,7 @@
 - **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts the repo is stale: rewrite the prompt, do not act.
 - **Idle `/loop` stop** — when the card and the board are idle, unsubscribe and do not resubscribe. Not a heartbeat on parked work.
 - **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
-- **Groover is not Repertoire.** groover-hangar is live, and people can launch a hangar on Base.
+- groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
 
 ## 0.1.6
 
