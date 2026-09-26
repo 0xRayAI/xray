@@ -43,7 +43,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [4.0.27] - 2026-09-25
 
-Next patch after npm `4.0.26`. Not published. Not tagged.
+Next patch after npm `4.0.26`. Released 2026-09-26.
 
 A counted host compact needs a non-empty generation id and a numeric `context_usage_percent`. That hook line and per-session receipt are written on the suit mill and mirrored onto nested consumer wear roots. Memory scoring rules live in `docs/memory-scoring.md`. The orchestrator links that file and does not copy the rules. Companion package `@0xray/grok-bot@0.1.6`: one general operating page, a `house/` overlay that is not in that npm pack, `templates/house/` in the pack, `grok-bot house init` (copy, refuse to overwrite), and doctor lookup via `GROK_BOT_HOUSE` or a walk-up for `house/HOUSE.md`.
 
