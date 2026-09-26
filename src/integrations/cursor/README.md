@@ -44,6 +44,8 @@ Host `preCompact` fire is counted from `.xray/state/cursor-hook-invoke.log` (`ev
 
 A cut counts only when `.xray/state/cursor-receipts/<sessionId>.json` exists **and** `.xray/state/cursor-hook.log` contains a line with that same session id (timestamp, `context_tokens`, `context_usage_percent`, `context_window_size`, `generation_id`). `probeLogExists` is true only when that append succeeded. `.xray/state/cursor-usage-receipt.json` and `cursor-precompact.json` keep only the newest event. That single latest json is not enough — the next arm overwrites it.
 
+Nested consumer benches under `examples/` (e.g. `examples/ben-proof/suited` with local `node_modules/0xray`) receive the same hook log line and per-session receipt as the mill — `preCompact` has no Read paths, so those wear roots are discovered from the suit mill at compact time.
+
 Arm S landscape + receipt: `examples/killer-dual/`.
 
 ## Friend test

@@ -7,8 +7,10 @@ import { fileURLToPath } from 'node:url';
 import {
   classifyPreCompactEvent,
   cursorBootNeedsRefresh,
+  cursorCompactProofRoots,
   cursorGateRoot,
   cursorHeatRoots,
+  discoverNestedConsumerWearRoots,
   isCursorWorkspaceWrapper,
   millRootFromToolPath,
   shouldHeatRoot,
@@ -251,6 +253,60 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
+  it('cursorCompactProofRoots mirrors preCompact proof to nested consumer wear dirs', () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'xray-compact-wear-'));
+    const mill = path.join(workspace, 'repos', 'xray');
+    const suited = path.join(mill, 'examples', 'ben-proof', 'suited');
+    const prev = process.env.XRAY_AI_PATH;
+    try {
+      mkdirSync(path.join(mill, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(mill, '.xray', 'state', 'STATION.md'), '# Station\n');
+      writeFileSync(path.join(mill, 'package.json'), JSON.stringify({ name: '0xray' }));
+      mkdirSync(path.join(suited, '.xray', 'state'), { recursive: true });
+      writeFileSync(path.join(suited, '.xray', 'features.json'), '{}\n');
+      mkdirSync(path.join(suited, 'node_modules', '0xray'), { recursive: true });
+      writeFileSync(path.join(suited, 'node_modules', '0xray', 'package.json'), JSON.stringify({ name: '0xray' }));
+      process.env.XRAY_AI_PATH = mill;
+      const heatOnly = cursorHeatRoots({ cwd: workspace });
+      expect(heatOnly).toEqual([path.resolve(mill)]);
+      expect(heatOnly).not.toContain(path.resolve(suited));
+      const proofRoots = cursorCompactProofRoots({ cwd: workspace });
+      expect(proofRoots).toContain(path.resolve(mill));
+      expect(proofRoots).toContain(path.resolve(suited));
+      expect(discoverNestedConsumerWearRoots(mill)).toEqual([path.resolve(suited)]);
+      plantFeatures(mill);
+      seedBenStation(mill);
+      runHook(
+        preCompact,
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          conversation_id: 'bc-suited-wear-mirror',
+          generation_id: 'gen-suited-wear-mirror',
+          context_tokens: 150000,
+          context_usage_percent: 75,
+          context_window_size: 200000,
+          cwd: workspace,
+        },
+        mill,
+      );
+      const millLog = readFileSync(path.join(mill, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      const suitedLog = readFileSync(path.join(suited, '.xray', 'state', 'cursor-hook.log'), 'utf8');
+      expect(millLog).toContain('session_id=bc-suited-wear-mirror');
+      expect(suitedLog).toContain('session_id=bc-suited-wear-mirror');
+      expect(
+        existsSync(path.join(mill, '.xray', 'state', 'cursor-receipts', 'bc-suited-wear-mirror.json')),
+      ).toBe(true);
+      expect(
+        existsSync(path.join(suited, '.xray', 'state', 'cursor-receipts', 'bc-suited-wear-mirror.json')),
+      ).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.XRAY_AI_PATH;
+      else process.env.XRAY_AI_PATH = prev;
+      rmSync(workspace, { recursive: true, force: true });
+    }
+  });
+
   it('cursorHeatRoots skips a multi-repo Cloud workspace wrapper and heats the mill card', () => {
     const workspace = mkdtempSync(path.join(tmpdir(), 'xray-heat-wrap-'));
     const mill = path.join(workspace, 'repos', 'xray');
@@ -367,7 +423,24 @@ describe('Cursor cloud hooks adapter', () => {
     expect(classifyPreCompactEvent({}, [])).toBe('cursor-precompact-synthetic');
     expect(
       classifyPreCompactEvent(
-        { hook_event_name: 'preCompact', trigger: 'auto', context_tokens: 12 },
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 120000,
+          context_window_size: 200000,
+        },
+        [],
+      ),
+    ).toBe('cursor-precompact-synthetic');
+    expect(
+      classifyPreCompactEvent(
+        {
+          hook_event_name: 'preCompact',
+          trigger: 'auto',
+          context_tokens: 12,
+          context_usage_percent: 90,
+          generation_id: 'gen-host-1',
+        },
         [],
       ),
     ).toBe('cursor-host-precompact');
@@ -377,6 +450,31 @@ describe('Cursor cloud hooks adapter', () => {
         ['--event-class=cursor-precompact-synthetic'],
       ),
     ).toBe('cursor-precompact-synthetic');
+  });
+
+  it('token count and window without a generation id do not write a host proof', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cursor-false-cut-'));
+    try {
+      plantFeatures(tmp);
+      seedBenStation(tmp);
+      const { stdout } = runHook(
+        preCompact,
+        {
+          trigger: 'auto',
+          conversation_id: 'bc-false-cut',
+          context_tokens: 120000,
+          context_window_size: 200000,
+          cwd: tmp,
+        },
+        tmp,
+      );
+      const out = JSON.parse(stdout) as { user_message?: string };
+      expect(out.user_message).toContain('event_class=cursor-precompact-synthetic');
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'cursor-hook.log'))).toBe(false);
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'cursor-receipts', 'bc-false-cut.json'))).toBe(false);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('preToolUse emits Cursor permission allow on Read', () => {
@@ -623,6 +721,8 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'auto',
           context_tokens: 231344,
+          context_usage_percent: 90.15,
+          generation_id: 'gen-survive-1',
           cwd: tmp,
         },
         tmp,
@@ -667,6 +767,8 @@ describe('Cursor cloud hooks adapter', () => {
           hook_event_name: 'preCompact',
           trigger: 'auto',
           context_tokens: 231344,
+          context_usage_percent: 90.15,
+          generation_id: 'gen-hold-1',
           cwd: tmp,
         },
         tmp,

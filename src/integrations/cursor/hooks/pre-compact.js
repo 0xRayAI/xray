@@ -10,8 +10,9 @@ import {
   buildSessionBootPayload,
   classifyPreCompactEvent,
   cursorGenerationId,
-  cursorHeatRoots,
+  cursorCompactProofRoots,
   cursorSessionId,
+  EVENT_CLASS_HOST,
   cursorWorkspaceRoot,
   readStdinJson,
   writeCursorPrecompactReceipt,
@@ -124,7 +125,7 @@ async function main() {
     } catch {
       plates = null;
     }
-    for (const root of cursorHeatRoots(event)) {
+    for (const root of cursorCompactProofRoots(event)) {
       const payload = buildSessionBootPayload(root, '0xray/cursor-compact', {
         host: 'cursor',
         hookEvent: 'pre_compact',
@@ -135,16 +136,19 @@ async function main() {
       bootPath = writeSessionBoot(root, payload);
       stationLine = payload.stationLine;
       const stampedAt = new Date().toISOString();
-      const proofLogged = appendCursorCompactProofLog(root, {
-        sessionId,
-        timestamp: stampedAt,
-        context_tokens: typeof event.context_tokens === 'number' ? event.context_tokens : null,
-        context_usage_percent:
-          typeof event.context_usage_percent === 'number' ? event.context_usage_percent : null,
-        context_window_size:
-          typeof event.context_window_size === 'number' ? event.context_window_size : null,
-        generation_id: generationId,
-      });
+      const hostProof = eventClass === EVENT_CLASS_HOST;
+      const proofLogged = hostProof
+        ? appendCursorCompactProofLog(root, {
+            sessionId,
+            timestamp: stampedAt,
+            context_tokens: typeof event.context_tokens === 'number' ? event.context_tokens : null,
+            context_usage_percent:
+              typeof event.context_usage_percent === 'number' ? event.context_usage_percent : null,
+            context_window_size:
+              typeof event.context_window_size === 'number' ? event.context_window_size : null,
+            generation_id: generationId,
+          })
+        : false;
       receiptPath = writeCursorPrecompactReceipt(root, {
         event_class: eventClass,
         hookEvent: 'pre_compact',
@@ -166,10 +170,12 @@ async function main() {
         probeLogExists: proofLogged,
         usage: hostUsageFromPreCompactEvent(event),
       });
-      writeCursorSessionReceipt(root, sessionId, {
-        precompactPath: receiptPath,
-        usagePath,
-      });
+      if (hostProof) {
+        writeCursorSessionReceipt(root, sessionId, {
+          precompactPath: receiptPath,
+          usagePath,
+        });
+      }
       if (plates) {
         try {
           const named = plates.recallPlate(payload.intent || intent || '');
