@@ -66,6 +66,9 @@ Thumbs.db
 *.tmp
 *.tgz
 
+# Generated organ-app corpus (engine sources stay tracked)
+organ-app/laws/
+
 # --- 0xray suit (postinstall) ---
 .grok/
 .mcp.json
