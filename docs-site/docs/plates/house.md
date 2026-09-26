@@ -5,14 +5,14 @@ sidebar_label: House
 
 # House
 
-One team, one folder. `grok-bot house init` copies `templates/house/` into `./house` and refuses when a target file is already there. Doctor reads `HOUSE.md` through `GROK_BOT_HOUSE`, or by walking up when that variable is unset. A wake reads the station, then the board files in `house/`.
+One team, one folder. `grok-bot house init` copies `HOUSE.md`, `WAVEBOARD.md`, and `ATTENTION_STATE.md` into `./house`. It does not copy `EXAMPLE.md`. It refuses when a target file is already there. Doctor reads `HOUSE.md` through `GROK_BOT_HOUSE`, or by walking up when that variable is unset, and FAILs with `house/EXAMPLE.md exists — delete it` when that file is present. A wake reads the station, then the board files in `house/`.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                  │
 │                                                              │
 │   npx @0xray/grok-bot house init                             │
-│   copies templates/house/ into ./house                       │
+│   copies HOUSE.md, WAVEBOARD.md, ATTENTION_STATE.md only     │
 │   refuses if a target file is already there                  │
 └──────────────────────────────┬───────────────────────────────┘
                                v
@@ -31,6 +31,7 @@ One team, one folder. `grok-bot house init` copies `templates/house/` into `./ho
 │   │ GROK_BOT_HOUSE, or walk up for house/HOUSE.md        │   │
 │   │ a set path that is missing warns and does not walk   │   │
 │   │ a line that starts with (example) fails              │   │
+│   │ house/EXAMPLE.md exists — delete it                  │   │
 │   └───────────────────────────┬──────────────────────────┘   │
 └──────────────────────────────┼───────────────────────────────┘
                                v

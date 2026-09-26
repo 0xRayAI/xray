@@ -17,10 +17,9 @@ From the project root:
 npx @0xray/grok-bot house init
 ```
 
-That copies each file in `templates/house/` into `./house`:
+That copies `HOUSE.md`, `WAVEBOARD.md`, and `ATTENTION_STATE.md` from `templates/house/` into `./house`. It does not copy `EXAMPLE.md`.
 
 - `HOUSE.md`
-- `EXAMPLE.md` (illustrative seat names)
 - `WAVEBOARD.md`
 - `ATTENTION_STATE.md`
 
@@ -29,7 +28,7 @@ A first run prints `copied templates/house to <project>/house` and exits 0.
 Run it again and it exits 1. It lists every destination file that already exists and copies nothing:
 
 ```text
-refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, <project>/house/EXAMPLE.md, <project>/house/HOUSE.md, <project>/house/WAVEBOARD.md
+refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, <project>/house/HOUSE.md, <project>/house/WAVEBOARD.md
 ```
 
 `--dir <path>` chooses the project root. The default is the working directory.
@@ -83,6 +82,12 @@ Lookup:
 
 - When `GROK_BOT_HOUSE` is set, doctor uses it and does not walk up. The value may be the directory that holds `HOUSE.md`, or the `HOUSE.md` file itself. A missing path, or a directory with no `HOUSE.md` in it, warns, `GROK_BOT_HOUSE is set but HOUSE.md is missing (<path>)`.
 - When `GROK_BOT_HOUSE` is unset, `seat-doctor.cjs` walks up from the working directory to find `house/HOUSE.md`.
+
+If `house/EXAMPLE.md` is in the seat, the house check fails and the command exits 1:
+
+```text
+House: FAIL — <project>/house/HOUSE.md (via walk-up) — house/EXAMPLE.md exists — delete it
+```
 
 Unfilled starter lines fail the house check and the command exits 1:
 
