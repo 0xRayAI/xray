@@ -7,7 +7,7 @@ sidebar_label: Set up a house
 
 The operating page is the same for every team. Yours is `house/HOUSE.md`: owner, seats, public voice, allowed repos, ask first, and the board. Those six headings win over the general page. Start at the [operating procedure](../../../grok-bot/OP-PROC.md), follow the [setup-house](../../../grok-bot/skills/setup-house/SKILL.md) skill, and keep the [house plate](../plates/house.md) as the stamp.
 
-These steps match `@0xray/grok-bot` 0.1.6 (`grok-bot/lib/seat-doctor.cjs`).
+These steps match `@0xray/grok-bot` 0.1.7 (`grok-bot/lib/seat-doctor.cjs`).
 
 ## Copy the template
 

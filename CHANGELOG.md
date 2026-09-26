@@ -41,6 +41,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.28] - 2026-09-26
+
+Next patch after npm `4.0.27`. Not published.
+
+MCP servers start through `scripts/node/mcp-launch.cjs` and only see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are no longer inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, .mcp.json, and opencode.json. `house init` no longer copies EXAMPLE.md, and doctor FAILs while `house/EXAMPLE.md` exists. Inspect has a new machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit directory. Companion package `@0xray/grok-bot@0.1.7`.
+
+---
+
 ## [4.0.27] - 2026-09-25
 
 Next patch after npm `4.0.26`. Released 2026-09-26.

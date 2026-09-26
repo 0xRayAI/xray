@@ -2,6 +2,15 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.28 — suit edits survive install, MCP env is names only
+
+- **MCP launch.** Servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay in the env block and out of argv.
+- **Postinstall keeps user edits** to AGENTS.md, `.mcp.json`, and `opencode.json`.
+- **House.** `house init` no longer copies EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists.
+- **Inspect** has a machinePlugin check. It fails when a machine `~/.grok/plugins` directory is named `0xray` or starts with `0xray`.
+- **Cursor hook.** XRAY_ROOT defaults to the suit directory.
+- **@0xray/grok-bot 0.1.7** records the same house init and doctor change. `house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md only.
+
 ## 4.0.27 — compact proof, memory scoring, grok-bot house
 
 - **Nested preCompact wear.** A counted host compact needs a non-empty `generation_id` and a numeric `context_usage_percent`. The same hook line and per-session receipt are written on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). `preCompact` has no Read paths, so those roots are discovered from the mill at compact time. See [Cursor hooks](../../../src/integrations/cursor/README.md).
