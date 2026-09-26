@@ -14,6 +14,7 @@ const PLATE_IDS = Object.freeze([
   "processor",
   "reporting",
   "memory-recall",
+  "house",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -60,6 +61,12 @@ const CUES = {
     [/memory\s+recall/i, 5],
     [/recall(?:s|ed|ing)?\s+(?:a\s+|one\s+|the\s+)?plate/i, 5],
     [/stamp(?:ed|ing)?\s+plates?/i, 4],
+  ],
+  house: [
+    [/\bhouse\b/i, 5],
+    [/house init/i, 4],
+    [/GROK_BOT_HOUSE/i, 4],
+    [/setup-house/i, 4],
   ],
 };
 

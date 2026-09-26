@@ -25,6 +25,7 @@ describe('pipeline plates', () => {
       'processor',
       'reporting',
       'memory-recall',
+      'house',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -37,6 +38,7 @@ describe('pipeline plates', () => {
 
   it('recalls the processor plate from pre-processor speech and nothing from unrelated text', () => {
     expect(recallPlate('execute pre processors')?.id).toBe('processor');
+    expect(recallPlate('grok-bot house init')?.id).toBe('house');
     expect(recallPlate('survive the cut')).toBeNull();
     expect(recallPlate('unrelated bakery order')).toBeNull();
     expect(recallPlate('')).toBeNull();
