@@ -43,9 +43,6 @@ Bots own Dist for @0xRayAI. We post updates, infra notes, and product-stack educ
 
 Herald drafts and posts. Magnet places discovery listings. Blinky sequences waves so Dist doesn’t collide with itself.
 
-## Brand images
-SSOT: `ops/dist/brand/BRAND-IMAGES.md` (POST-001 = diagram default).
-
 ## Media
 Engaging imagery/vids required for growth. Lean law: `brand/MEDIA-LEAN.md` (reuse kit → light gen → hero → film).
 
@@ -55,7 +52,7 @@ Engaging imagery/vids required for growth. Lean law: `brand/MEDIA-LEAN.md` (reus
 
 1. **≥4 hours** between **root** posts (edu / calendar / lexicon).
 2. **Ship / release notes** may post when the release is live — they also **reset** the 4h clock.
-3. **Mentions / replies** we choose to answer: **~15 min** lane (watch/digest). Not gated by 4h. Cut-lines ASAP on our truncated posts.
+3. **Mentions / replies** we choose to answer: **~15 min** lane (watch/digest). Not gated by 4h. No cut-line posts by default.
 4. **Calendar Day N ≠ same-day dump.** “Day 3” waits for the next open root slot. Never fire multiple calendar roots in one afternoon because the schedule says so.
 5. **Who gates:** CoS only hands **root** `EXECUTE` when the 4h slot is open. Herald **refuses** early roots. Mention packets follow VOICE + 15m watch.
 6. Prefer the **weekday Dist publish** routine as the default edu root slot.

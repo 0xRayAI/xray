@@ -13,9 +13,9 @@ Always-on rules for eng and coordinator seats. Stay thin.
 - No rabbit holes — stop when acceptance passes
 - Fit for purpose — iterate; no enterprise-from-day-one
 - Surgical edits only — no theater
-- Review levels: Light / Normal / Strict (`ops/LEAN-COMPUTE.md`)
-- Clouds: seats first (`ops/CLOUD-CONTINUITY.md`)
-- Friend test OS docs before git (`ops/GIBBERISH-CHECK.md`)
+- Review levels: Light / Normal / Strict ([LEAN-COMPUTE.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/LEAN-COMPUTE.md))
+- Clouds: seats first ([CLOUD-CONTINUITY.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/CLOUD-CONTINUITY.md))
+- Friend test OS docs before git ([GIBBERISH-CHECK.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/GIBBERISH-CHECK.md))
 - After a real close, coordinator starts the next everyday step
 
 ## On Grok Bot

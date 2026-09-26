@@ -9,11 +9,11 @@ function readKit(rel: string): string {
   return readFileSync(path.join(root, 'grok-bot', rel), 'utf8');
 }
 
-describe('grok-bot 0.1.5 Auto Review ops pack', () => {
-  it('pins the kit version to 0.1.5', () => {
+describe('grok-bot Auto Review ops pack', () => {
+  it('pins the kit version to 0.1.6', () => {
     const pkg = JSON.parse(readKit('package.json')) as { name: string; version: string };
     expect(pkg.name).toBe('@0xray/grok-bot');
-    expect(pkg.version).toBe('0.1.5');
+    expect(pkg.version).toBe('0.1.6');
   });
 
   it('locks Ask-first capital rules and Dist/git Allow', () => {

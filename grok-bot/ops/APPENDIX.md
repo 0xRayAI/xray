@@ -3,8 +3,9 @@
 Repeats, miss logs, forge Cursor notes. Read only when needed. [OP-PROC.md](../OP-PROC.md) is the front door.
 
 ## Live board (mirrored from the CoS suit)
-- [`WAVEBOARD.md`](WAVEBOARD.md) — the card board: in flight, backlog, blocked on Blaze, closed.
-- [`ATTENTION_STATE.md`](ATTENTION_STATE.md) — current mode, what needs Blaze, open cards, holds.
+Read `house/` first. If a file is missing, use `templates/house/`.
+- [`../house/WAVEBOARD.md`](../house/WAVEBOARD.md) — open cards. Fallback: [`../templates/house/WAVEBOARD.md`](../templates/house/WAVEBOARD.md).
+- [`../house/ATTENTION_STATE.md`](../house/ATTENTION_STATE.md) — what needs the owner now. Fallback: [`../templates/house/ATTENTION_STATE.md`](../templates/house/ATTENTION_STATE.md).
 
 ## Reference
 - [`0XRAY-BACKBONE.md`](0XRAY-BACKBONE.md) — what 0xRay is for this fleet.

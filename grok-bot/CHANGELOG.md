@@ -8,6 +8,11 @@
 - **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship.
 - **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field.
 
+## 0.1.6
+
+- General operating page, plus a House section that is the same for every team. This team's own house lives in `house/` and is not in the npm package.
+- `templates/house/` is the fill-in starter. Skill `setup-house` copies it. `grok-bot doctor` warns when `house/HOUSE.md` is missing and fails when example lines are still unfilled.
+
 ## 0.1.5
 
 - Clear “what runs when” map for bot gates (live hooks + mill/git/release only; skip list). Strict review is ship/live/security/identity only. Everyday ops-doc copies: implementer + CI, no extra reviewer.

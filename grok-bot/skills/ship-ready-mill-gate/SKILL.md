@@ -28,7 +28,7 @@ The lead runs the CLI. A browser subagent is the wrong seat.
 2. Every time run `npm publish --access public` in the live TTY — **no** `--auth-type=web`, **no** `--otp=` from chat, no `tee`.
 3. Give the human the clickable `https://www.npmjs.com/auth/cli/<id>` URL. Do not press Enter. Do not open a VM browser. Do not ask for a 6-digit authenticator code in chat.
 4. Wait on the same CLI for `+ <name>@<version>`.
-5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes.
+5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes. Deploy Railway only after npm is live.
 6. Then tag `v<version>` if missing. Do not start the next cut on a stale `npm view`.
 7. **Registry install — both paths:** `npm view` is not an install.
  - Fresh: empty temp dir → `npm init -y` → `npm install <name>@<version>` from the registry.
@@ -41,13 +41,13 @@ Do not rebuild old processor-manager loops as bot gates.
 ## Who
 Implementer builds · reviewer Strict only · coordinator routes · human for capital
 
-Reviewer card lives in `ops/SEATS.md` (critic ✶). Lead dispatches ticket + PR URLs only. Critic Reads Station, verifies the diff, posts COMMENT (not self-APPROVE), proof card ≤15 lines + friend-test line. Does not merge or publish.
+Reviewer card: a short proof. Lead dispatches ticket + PR URLs only. The reviewer reads the station, verifies the diff, posts a COMMENT (not a self-approve), proof card ≤15 lines + friend-test line. Does not merge or publish.
 
-A new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
+A new reviewer or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it; do not reuse an earlier SHA from a previous pass) and the Station card (`.xray/state/STATION.md`: intent, plan, git). If the card is missing, give branch + HEAD + what just changed. If the branch moves after you brief them, send the new SHA before they verdict.
 
 The lead keeps control. Do not assume the subagent has the context. Give the duty, the latest SHA, the Station card, and the laws that apply. The subagent wears the applicable 0xRay suit before it works: the tree under review, built and installed. An older published package is not that suit. The lead checks the result.
 
-Chat is not the brain. A cascade that must survive compaction is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Capture priority: a law is an invariant you would otherwise re-read the source to relearn. One law per subsystem bone. Heat touches last_seen and does not append a confidence sample, so more hits do not raise conviction. Heat touches last_seen when the diary contains that signal's name or a local clause of four definition content words; two definition words are not a hit; the same words scattered through a long diary are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. Hero names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats. A floor observation count does not change a route. Feedback moves conviction by a tenth, and a failure can leave 0.55. learned-conviction.json beside dest restores that average when a wake flattens it to 0.55. It does not store the observation count.
+Chat is not the brain. A cascade that must survive compaction is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Memory scoring: [docs/memory-scoring.md](https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md).
 
 ## Fail closed
 Red CI, missing proof, docs lag, a guide pinning a patch, local version ≤ npm, live docs fail, gate fail, Strict without reviewer, or friend-test fail on public/OS docs.

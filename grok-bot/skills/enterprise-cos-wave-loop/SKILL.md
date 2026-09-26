@@ -51,7 +51,7 @@ This is **ops/skill law**, not a suit `PreToolUse` deny. Grok Bot chat has no ho
 - **Blaze-first HARD:** Blaze 1:1 beats bot pings, rooms, routines. Park other work and answer Blaze first when he is waiting.
 `ops/MISS-CHAT-WAKE-2026-09-16.md` · `OPS-SPEC.md` § Wake hygiene.
 
-1. **Blaze 1:1 always wins.** Any human poke (`stat`, `you there`, `fix yourself`, any question) → answer from live `gh` + `ATTENTION_STATE.md` first. Never stay silent because a stale routine shares the wake.
+1. **Blaze 1:1 always wins.** Any human poke (`stat`, `you there`, `fix yourself`, any question) → answer from live `gh` + `house/ATTENTION_STATE.md` first (else `templates/house/ATTENTION_STATE.md`). Never stay silent because a stale routine shares the wake.
 2. **Stale intake/routines** that re-litigate CLOSED/MERGED/LIVE beats → quiet **only** when there is no Blaze message in the turn.
 3. **Eng signal intake** must self-quiet (read ATTENTION before handoff). PAUSED until rearm after a clean new-PR fire.
 4. Bloated 1:1 → STATION parachute; suggest fresh chat if wakes stay sticky. Cover CoS temporary only.

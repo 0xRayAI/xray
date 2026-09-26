@@ -10,7 +10,7 @@ Jargon is not the job. Review and cadence ask whether the change works. Do not s
 
 Give another instance only worn 0xRay: `AGENTS.md` · this file · `.xray/state/STATION.md` · Repertoire project copy. No command stream.
 
-They must: Read Station · continue the same `bc-…` · resume the same critic · run a **live tick** (real close) · hold npm/Railway until mill-gate **D** + `foundry gate` PASS. Green CI is only gate **A**.
+They must: Read Station · continue the cloud named on the board · resume the same critic · run a **live tick** (real close) · npm publish and Railway deploy stay Ask-first even after mill-gate **D** and `foundry gate` PASS. Green CI is only gate **A**.
 
 If they wait for the human to restate the rules, the encode failed.
 
@@ -55,7 +55,7 @@ The grid is uneven on purpose. Do not flatten it into one timer.
 | **Compact cut** | Rest that must survive | Station is the compact ticket — heat it this wake. **Repertoire is preferred** (dest = named laws). If Repertoire is off (explicit), Station + NOTES **are** the mind. Dest names are OP-PROC when worn (`repertoire-working.json` `opProcNames`). Do not paste OP-PROC onto Station. NOTES hold the deep cut. Do not pin a patch number on Station. |
 | **Board** | Call and response | Critic Strict comments. Forge implements. Dialog until PASS or HOLD. Lead stays the main thread. |
 | **Seat law** | Ghost note | CoS ASSIGN DON'T DO. Forge owns eng clouds. Critic is resume-only. |
-| **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm/Railway are lead-owned after mill-gate **D**. Green CI is not publish. |
+| **Human gates** | Held rest | Spend, credentials, deletes, taste, mint/rotate tokens — Ask-first (`OPS-SPEC.md`). npm publish and Railway deploy stay Ask-first even after mill-gate **D**. Green CI is not publish. |
 | **Dist root** | Slow pulse | `dist/CADENCE.md` ≥4h. Do not use Dist spacing as the lead work clock. |
 
 ## Transcribed laws (the rest of the cadence)
@@ -68,8 +68,8 @@ These are the rules Blaze transcribed. A peer does not get them as chat. They li
 |------|-----|--------------|
 | **Lead** | Main thread. Plan, dispatch, read all output, loop until Station is done. | Same cloud `bc-…`. Never relaunch. |
 | **Dummy** | Prove worn `SKILLS.md` / mill catalog. Friend-test the playbook. No product side effects. | Resume the dummy id when it exists. Read Station. Wear the suit. |
-| **Peer boot** | Fresh body proves they can wear + install without a command novel. Two paths: brand-new consumer **and** upgrade of an existing install. Cursor wear. | Resume `bc-49e17122-b167-5204-a36f-e62a6e2aba00` only. Not a second critic. Not the dummy. |
-| **Standing critic** | Board review with memory. Strict on ship. | Resume `bc-dd800001-2652-5e3e-b8d2-eac05b29ee86` only. Never spawn a twin. |
+| **Peer boot** | Fresh body proves they can wear + install without a command novel. Two paths: brand-new consumer **and** upgrade of an existing install. Cursor wear. | Resume the peer-boot cloud named on the board. Not a second critic. Not the dummy. |
+| **Standing critic** | Board review with memory. Strict on ship. | Resume the standing critic named on the board. Never spawn a twin. |
 | **Same-sess implementer** | Context-aware surgery that must remember the ticket. | Same parent sess / `bc-` as the lead. Station card on disk. Wear first. |
 
 Dummy exists to **test `SKILLS.md`**. If a dummy cannot run the worn catalog from disk, the encode failed. Same-sess bodies exist to **keep context** across compact — they wear the suit and hold a Station card. Do not invent a new critic to “get a fresh look.”
@@ -158,7 +158,7 @@ Monitor the lead. New law that had to be spoken twice goes to disk this wake: `S
 
 Chat is not the brain. Compaction drops the seat. A cascade that must survive is a named repertoire signal on the stack overlay, hydrated onto the project law list. NOTES holds the same cascade for the second Read. Station stays the ticket. A reflection is not this capture. Observation counts are not capture.
 
-Capture priority: a law is an invariant you would otherwise re-read the source to relearn. One law per subsystem bone. Telemetry stays in the kernel diary and inference output. Heat touches last_seen and does not append a confidence sample, so more hits do not raise conviction. Heat touches last_seen when the diary contains that signal's name or a local clause of four definition content words; two definition words are not a hit; the same words scattered through a long diary are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. The diary is `logs/framework/activity.log`, routing outcomes, pattern metrics, and `.xray/inference/latest-workflow.json` plus `workflow-status.json`. Hero names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`. Repertoire mergeStackOverlay refreshes a changed stack definition and keeps observation stats. A floor observation count does not change a route. Feedback moves conviction by a tenth, and a failure can leave 0.55. learned-conviction.json beside dest restores that average when a wake flattens it to 0.55. It does not store the observation count.
+Memory scoring: [docs/memory-scoring.md](https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md).
 
 ### Ship track (always)
 
@@ -186,11 +186,11 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 
 Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
 
-Host Auto Review may still card `npm publish` / Railway (`AUTO-REVIEW-POLICY.md`). That is a host paste, not the OS decision. Spend / credentials / deletes / taste / mint-rotate stay Ask-first.
+npm publish and Railway deploy stay Ask-first even after mill-gate **D** (`AUTO-REVIEW-POLICY.md`). A host paste is not the OS decision. Spend, credentials, deletes, taste, and mint-rotate stay Ask-first.
 
 ### Publish track (when D opens)
 
-Lead publishes. Do not hand this to a browser subagent.
+Ask the owner before npm publish or a Railway deploy, even after gate D. The lead runs the publish after that yes. Do not hand this to a browser subagent.
 
 1. **npm CLI:** after gate PASS, every time run `npm publish --access public` (no `--auth-type=web`, no `--otp=` from chat). Stay logged in — do **not** `npm logout`. Run it in the live TTY (do not pipe through `tee`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. Do **not** ask the human to type a 6-digit authenticator code into chat. The human approves OTP at that URL in their own session.
 2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
@@ -231,7 +231,7 @@ Two idle pacers — one for reviewing subagents, one for the lead to read them �
 | **In-context seats** | Resume the same critic. Dummy tests `SKILLS.md`. Lead stays the main thread and replies. | Twin critics. Clouds to re-review a PR (`CLOUD-CONTINUITY.md`) |
 | **One live tick** | Only after a real close, if Station is still open and no PR event fired | Two competing pacers. Auto-merge. Auto-deploy |
 
-Merge after critic PASS + CI (gate A). Publish only after mill-gate **D** + `foundry gate`. OTP then poll. A pacer never publishes.
+The implementer merges after critic PASS + CI (gate A). The coordinator never merges. npm publish and a Railway deploy stay Ask-first even after mill-gate **D** + `foundry gate`. OTP then poll. A pacer never publishes.
 
 ### Heads from tails
 

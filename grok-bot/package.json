@@ -1,6 +1,6 @@
 {
   "name": "@0xray/grok-bot",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Complete setup path for Grok Bot agents on 0xRay: per-agent suits, Groover identity, OWS pay, hangar shops. Seat doctor/ready proves mill+inspect and prints hangar/Clearing next steps.",
   "license": "MIT",
   "bin": {
@@ -9,13 +9,21 @@
   "files": [
     "bin",
     "lib",
-    "llms.txt",
+    "OP-PROC.md",
+    "templates",
+    "skills/fasten-suit-per-agent",
+    "skills/fasten-suit-and-hangar",
+    "skills/groover-factory-parity",
+    "skills/setup-ows-pay",
+    "skills/plant-hangar-shops",
+    "skills/setup-house",
+    "skills/survive-compact",
+    "skills/ship-ready-mill-gate",
+    "skills/codex-fleet-constitution",
+    "README.md",
     "AGENTS.md",
     "SKILLS.md",
-    "README.md",
-    "OP-PROC.md",
-    "ops",
-    "skills"
+    "llms.txt"
   ],
   "scripts": {
     "start": "node bin/grok-bot.js"

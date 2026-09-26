@@ -1,17 +1,30 @@
-# 0xRay OP PROC
+# Operating procedure
 
-The one-page operating procedure for the Grok Bot seats. Read this first; everything in `ops/` is reference.
+How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`. Name your seats anything. [Example house (names are illustrative)](templates/house/EXAMPLE.md).
 
-- **Never (CoS):** deploy, npm publish, Railway, CloudAgent, Dist-post, or spend.
-- **Seats:** Code/PR/cloud/deploy/npm = forge · Ship/live/security/identity review = critic (≤15 lines, no merge) · @0xRayAI post = herald (CoS exact copy) · Listings = magnet · Audio = sound · Money/creds/deletes = Blaze.
-- **Packet (every handoff):** goal · constraints · path · acceptance · evidence · next owner · escalate. Free-text pings are not a card. Seven fields always. Two-minute jobs get one line with the same seven fields, packed. The form stays; essays don't.
-- **Done** = live receipt (URL, npm view, critic PASS). Green CI is gate A only. Chat LGTM is not done. Gates: A CI green · B pack installs · C docs match · D published and proven live (fresh install + upgrade). Chat LGTM still isn't done.
-- **Review:** Light/Normal = forge + CI. Strict only for ship/live/security/identity. Ops/docs mirrors = Normal. Don't critic a docs PR. Critic FAIL means forge fixes on the same PR and critic re-reviews. Loop until PASS or HOLD (HOLD = human). FAIL is not a parking lot.
-- **Disk, not chat.** After compact: Read Station, then board, then memory, then resume the same seat. Don't spawn a twin. [`ops/WAVEBOARD.md`](ops/WAVEBOARD.md) and [`ATTENTION_STATE.md`](ops/ATTENTION_STATE.md) must exist or the board is theater.
-- **Words:** card (one ticket, one seat), packet (the seven-part handoff). Station = survival strip. Beat = a real event, not a timer. Idle /loop on a parked mill = theater. Wake on PR/you/compact, not every 10 minutes.
-- **You first.** Blaze 1:1 beats bot pings. First action on his turn is the reply. Friend-test anything a human reads (~3 seconds + "a friend would hear"). Bots can compress.
-- **Dist:** @0xRayAI roots ≥4h apart; ship notes reset the clock; replies ~15m when you choose to reply. Herald posts CoS words. No Locked: openers. Replies to our posts carry no question unless it's the thing we're testing. If we say we'll share it, same turn.
-- **Capital:** Ask first on npm publish, Railway, hangar pay, secrets, deletes. Allow git push to known eng repos + Dist when the execute path is on. Railway stays Ask first by default. Exception: 0xRayAI/0xray-moltbook, where merge to main after critic PASS is the deploy (already approved). Add 0xRayAI/0xray-moltbook to allowed git push. Do not generalize "any merge deploys."
-- **Quiet** on CLOSED / MERGED / LIVE re-acks.
+- **Coordinator never:** deploy, publish a package, change production, launch a cloud agent, post in public, spend, or merge. The implementer merges after the gate.
+- **Roles:** The seat field is the role, not a personal name. Code, pull requests, cloud work, deploys, and package publish = **implementer**. Shipping after review = **publisher**. Ship, live, security, and identity review = **reviewer** (a short note, no merge). Public posts, listings, and audio are optional **specialists**. The coordinator is also called CoS. Money, credentials, and deletes = the **human owner**.
+- **Packet (every handoff):** goal, constraints, path, acceptance, evidence, next owner, escalate. A chat ping is not a card. Seven fields always, one line when the job is short. A card is one ticket. The station is the survival strip. A beat is a real event. An idle loop on parked work is theater. Wake on a PR, a person, or a compact.
+- **Done** = a live receipt (a URL, a registry view, or reviewer PASS). Green CI is only gate A. Gates: A CI green, B the pack installs, C the docs match, D published and proven live (fresh install and upgrade). A chat "looks good" is not done.
+- **Review:** Light and Normal = implementer + CI. Strict only for ship, live, security, or identity. Doc copies = Normal. If the reviewer fails it, the implementer fixes the same PR and the reviewer looks again, until PASS or HOLD. HOLD means the human.
+- **Disk, not chat.** After compact: read the station, then the board, then memory, then resume the same role. Don't start a second copy. Read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first; if missing, use `templates/house/`. No board file means the board is theater.
+- **You first.** The human's direct message beats bot pings. Reply first. Anything a human reads should land in about three seconds. **Public voice** (account, spacing, replies) is a placeholder in `house/`. Don't open with "Locked:". If you say you will share something, do it the same turn. **Quiet** when someone only repeats CLOSED, MERGED, or LIVE.
+- **Money and ship:** Ask first before you publish, change production, pay, touch secrets, or delete — unless `house/` names an exception. Git push only to repos named in `house/`. A "merge deploys this repo" exception is named there, one repo at a time.
 
-That's the whole proc. Don't wear the book. Wear this.
+| Rule | What to do |
+|---|---|
+| Clouds + churn | Heavy multi-file code only. One cloud per track. [CLOUD-CONTINUITY.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/CLOUD-CONTINUITY.md). |
+| Branch + PR always | Pull first, branch from fresh origin/main, rebase before merge, never commit on main. Roll back by closing the PR or reverting. |
+| Coding discipline | Stay on task, no stubs, surgical edits, YAGNI, stop at acceptance. |
+| npm | CLI auth, no OTP in chat, poll until live, Railway after npm. [Publish](skills/ship-ready-mill-gate/SKILL.md). |
+| Briefing | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. |
+| Board before building | Check the board before building. Write forward to the board and memory. |
+| Answer the owner | Answer from live GitHub and the board. Routines stay quiet on closed beats. A failing routine never blocks a reply. |
+| Speak up | On ownership, a blocker, live proof, or a money or credential change. |
+| Ask-first also covers | Sends to outside agent networks, public gists holding secrets, token rotation, billing, taste calls. |
+| Dist | No thanks-only replies. No cut-lines by default. [VOICE.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/dist/VOICE.md). |
+| Status | Done / Verify / Reflect / Next. |
+| Twice to disk | A rule said twice goes to disk the same day. Procedure changes mirror as a Normal PR. |
+| Cloud prompts | Written in plain English. |
+
+**House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Setup: copy `templates/house/` to `house/`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice.

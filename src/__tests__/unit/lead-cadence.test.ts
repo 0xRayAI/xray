@@ -10,6 +10,7 @@ describe('lead cadence encode — peer can find the beat', () => {
   const catalog = path.join(root, 'grok-bot', 'ops', 'OPS-CATALOG.md');
   const orchestrator = path.join(root, 'src', 'skills', 'orchestrator', 'SKILL.md');
   const agents = path.join(root, 'AGENTS.md');
+  const scoringLink = 'https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md';
 
   it('ships the disk SSOT and catalogs it', () => {
     expect(existsSync(cadence)).toBe(true);
@@ -49,7 +50,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(text).toMatch(/npm view` is not an install/);
     expect(text).toMatch(/REQUIRED_PACK_PATHS/);
     expect(text).toMatch(/Peer boot/);
-    expect(text).toMatch(/bc-49e17122-b167-5204-a36f-e62a6e2aba00/);
+    expect(text).toMatch(/named on the board/);
     expect(text).toMatch(/Fresh \+ upgrade live-verify/);
     expect(text).toMatch(/leftover `\.opencode\/init\.sh`/);
     expect(text).toMatch(/Always a branch/);
@@ -107,11 +108,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(cascade?.definition).toMatch(/test then ship is the hero/);
     expect(cascade?.definition).toMatch(/the lead keeps control/);
     expect(cascade?.definition).toMatch(/A reflection is not this capture/);
-    expect(text).toMatch(/Capture priority/);
-    expect(text).toMatch(/heat-is-not-conviction/);
-    expect(text).toMatch(/inference-cycle-invariant/);
-    expect(text).toMatch(/governance-vote-invariant/);
-    expect(text).toMatch(/thin-dispatch-invariant/);
+    expect(text).toContain(scoringLink);
     const byName = new Map(overlay.signals.map((signal) => [signal.name, signal.definition]));
     expect(byName.get('heat-is-not-conviction')).toMatch(/do not raise conviction/);
     expect(byName.get('heat-is-not-conviction')).toMatch(/does not append a confidence sample/);
@@ -124,14 +121,6 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(byName.get('heat-is-not-conviction')).toMatch(/a sample below 0\.55 is not recorded/);
     expect(byName.get('heat-is-not-conviction')).toMatch(/Constructing the organ does not append workspace samples/);
     expect(byName.get('heat-is-not-conviction')).toMatch(/refreshes a changed stack definition/);
-    expect(text).toMatch(/does not append a confidence sample/);
-    expect(text).toMatch(/a local clause of four definition content words/);
-    expect(text).toMatch(/floor observation count does not change a route/);
-    expect(text).toMatch(/learned-conviction\.json/);
-    expect(text).toMatch(/two definition words are not a hit/);
-    expect(text).toMatch(/a weak session score is not lifted to 0\.55/);
-    expect(text).toMatch(/a sample below 0\.55 is not recorded/);
-    expect(text).toMatch(/Constructing the organ does not append workspace samples/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/keyword map over session problem strings/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/generateProposals also emits recurring-pattern titles/);
     expect(byName.get('inference-cycle-invariant')).toMatch(/inference-cycle-state\.json/);
@@ -159,9 +148,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/Chat is not the brain/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/A reflection is not this capture/);
-    expect(readFileSync(orchestrator, 'utf8')).toContain(
-      'https://github.com/0xRayAI/xray/blob/main/docs/memory-scoring.md',
-    );
+    expect(readFileSync(orchestrator, 'utf8')).toContain(scoringLink);
     const scoringText = readFileSync(path.join(root, 'docs', 'memory-scoring.md'), 'utf8');
     expect(scoringText).toMatch(/Capture priority/);
     expect(scoringText).toMatch(/heat-is-not-conviction/);
@@ -178,13 +165,6 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(scoringText).toMatch(/thin-dispatch-invariant/);
     expect(scoringText).toMatch(/mergeStackOverlay/);
     expect(scoringText).toMatch(/Feedback moves conviction by a tenth/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/a local clause of four definition content words/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/floor observation count does not change a route/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/learned-conviction\.json/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/two definition words are not a hit/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/a weak session score is not lifted to 0\.55/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/a sample below 0\.55 is not recorded/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/Constructing the organ does not append workspace samples/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/wears the applicable 0xRay suit/);
     expect(readFileSync(orchestrator, 'utf8')).toMatch(/latest commit SHA on the branch under review/);
@@ -204,8 +184,7 @@ describe('lead cadence encode — peer can find the beat', () => {
     expect(readFileSync(millGate, 'utf8')).toMatch(/Do not freeze the live cut/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/Chat is not the brain/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/A reflection is not this capture/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/Capture priority/);
-    expect(readFileSync(millGate, 'utf8')).toMatch(/thin-dispatch-invariant/);
+    expect(readFileSync(millGate, 'utf8')).toContain(scoringLink);
     expect(readFileSync(millGate, 'utf8')).toMatch(/refreshes a changed stack definition/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/The lead keeps control/);
     expect(readFileSync(millGate, 'utf8')).toMatch(/wears the applicable 0xRay suit/);

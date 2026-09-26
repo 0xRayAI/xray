@@ -5,7 +5,7 @@
 
 **Read first:** [`OP-PROC.md`](OP-PROC.md) — the one-page operating procedure.
 
-Read [`ops/OPS-CATALOG.md`](ops/OPS-CATALOG.md) for operating docs and the bot-talk catalog.
+Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` (your project house, not in this package). If those files are missing, use [`templates/house/`](templates/house/) (skill `setup-house`).
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
 Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one suit per key agent**).  
@@ -41,4 +41,4 @@ npx @0xray/grok-bot doctor --json
 This package orchestrates. It does not vendor the whole OS.
 
 ## Fleet ops
-Coordinator procedures remain under `ops/` (review levels, clouds, friend test).
+Read `house/` first (this team's board and rules). If `house/` is missing, use `templates/house/`. Longer notes under `ops/` stay in the git repo and are not in the npm package.

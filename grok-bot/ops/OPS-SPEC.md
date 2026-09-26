@@ -61,14 +61,14 @@ Stay quiet on repeat acks, including eng re-acks of CLOSED / MERGED / LIVE. Coor
 
 - **Latency HARD (2026-09-16):** On any turn with a Blaze 1:1 message, the **first** user-visible action is the chat reply (≤2 sentences). Seat cards, disk digests, Dist EXECUTE, and GitHub come **after**. Agent/routine wakes never jump the line.
 
-**Miss:** `MISS-CHAT-WAKE-2026-09-16.md` · recovery `ops/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`
+**Miss:** `MISS-CHAT-WAKE-2026-09-16.md` · recovery [`house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md`](../house/recovery/BLINKY-CHAT-WAKE-2026-09-16.md)
 
 **Two layers**
 1. **Platform** — bloated CoS 1:1 can fail to wake on human messages (transcript tail timeouts). Bot/routine wakes may still work. Fix: STATION/ATTENTION parachute; fresh 1:1 if sticky.
 2. **House** — event routines (esp. eng signal intake) must **self-quiet** when the beat is already CLOSED/MERGED/LIVE on ATTENTION. Never hand parent a stale “tell Blaze” for a finished PR head.
 
 **CoS laws**
-- Always answer Blaze pokes (`stat`, `you there`, `fix yourself`, any 1:1) from **live** `gh` + `ATTENTION_STATE.md` — never from backlog handoff text alone.
+- Always answer Blaze pokes (`stat`, `you there`, `fix yourself`, any 1:1) from **live** `gh` + `house/ATTENTION_STATE.md` (else `templates/house/ATTENTION_STATE.md`) — never from backlog handoff text alone.
 - Quiet on stale routine/intake is OK **only** when the turn has **no** Blaze message.
 - Eng intake PAUSED until rearm after one clean new-PR fire; prompt must keep self-quiet.
 - Cover CoS is temporary; park when primary answers.

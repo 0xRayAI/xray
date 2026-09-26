@@ -10,7 +10,7 @@ description: >-
 **One project root → one suit → one inventory DNA** per key agent. Repeat this skill for each agent.
 
 ## Steps
-1. Create or enter that agent’s project (`package.json` required). Example: `forge-suit/`, `critic-suit/`.
+1. Create or enter that agent’s project (`package.json` required). Example: `implementer-suit/`, `reviewer-suit/`.
 2. Install plant:
    ```bash
    npm i 0xray

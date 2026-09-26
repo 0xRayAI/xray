@@ -24,9 +24,9 @@ Speak up when ownership, blockers, live proof, or money/public/credentials chang
 
 | Role | Does | Does not |
 |------|------|----------|
-| **Implementer** | Build, deploy, publish, E2E from live docs | Ask the coordinator to deploy for them |
+| **Implementer** | Build, deploy, publish, merge after the gate, E2E from live docs | Ask the coordinator to deploy for them |
 | **Reviewer** | Strict reviews only | Light/Normal by default; merge; rewrite the fix |
-| **Coordinator** | Route, merge when rules allow, check proof, Dist drafts | Deploy, implement, **or launch/drive Cursor clouds** (card forge) |
+| **Coordinator** | Route, check proof, Dist drafts | Deploy, implement, merge, **or launch/drive Cursor clouds** (card forge) |
 | **Human** | Money, public posts, credentials, destructive acts | Everyday eng execution |
 
 ## Fit for purpose (every pass)

@@ -29,7 +29,7 @@
 - Duplicate of yesterday’s diagram with no new idea
 
 ## Brand
-Follow `BRAND-IMAGES.md` + `STAMPS.md` + `PROMPT-TEMPLATE.md`. Friend-test every asset. No off-brand photoreal faces. No watermark soup.
+Follow `STAMPS.md` + `PROMPT-TEMPLATE.md`. Friend-test every asset. No off-brand photoreal faces. No watermark soup.
 
 ## Kit inventory (start here)
 - `suits/` · exo heroes (Blaze + exo-v4 plates)

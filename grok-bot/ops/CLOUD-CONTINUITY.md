@@ -11,6 +11,9 @@ Only for **heavy multi-file code work in a git repo** that needs an isolated cod
 ## When not to
 Docs, checklists, board notes, restating CI, reviewing an open PR, deploy/publish, Light/Normal local work, a second cloud on the same track.
 
+## Churn
+Churn is waste: a second cloud on the same track, a twin reviewer, redoing work a seat already has, or an idle loop on parked work. Stop and card it.
+
 ## Continuity
 1. Same problem / PR / ship track → **resume** that cloud. Keep its branch.
 2. Genuinely new outcome → launch new.
@@ -30,6 +33,6 @@ CoS launching clouds “to go faster” is a **fatal seat defect** (same class a
 Clouds cut metal. Seats run the company.
 
 ## Repo access (HARD — 2026-09-15)
-Private SSOT repos must be readable by Cursor clouds **before** launch. See `CLOUD-REPO-ACCESS.md`.
+Private SSOT repos must be readable by Cursor clouds **before** launch. See [CLOUD-REPO-ACCESS.md](../house/CLOUD-REPO-ACCESS.md).
 
 Fatal: guessing Rippel numbers because `git clone` 404’d. Use access grant or staged tarball.

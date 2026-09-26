@@ -12,20 +12,24 @@ Primary scripts for agents. Run in order for **each** key agent.
 ## Fleet / OS skills (reference)
 | Skill | When |
 |-------|------|
-| [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Critic proof card: `ops/SEATS.md` Reviewer |
+| [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Reviewer proof card is a short note |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
-| [enterprise-cos-wave-loop](skills/enterprise-cos-wave-loop/SKILL.md) | Coordinator wave loop |
-| [synaptical-comms](skills/synaptical-comms/SKILL.md) | Friend-test house comms |
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
+| [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — copy `templates/house/` and fill HOUSE.md |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
+## Board
+Read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first. If a file is missing, use the same name under `templates/house/`.
+
 ## Ops reference
-`ops/THREE-LAYERS.md` · `ops/SUIT-ATTESTATION.md` · `ops/LEAN-COMPUTE.md` · `ops/PROCESSORS-MAP-GROK.md` · `ops/CLOUD-CONTINUITY.md`
+Longer notes under `ops/` stay in the git repo and are not in the npm package.
 
-Same problem or open PR? Resume that cloud (`ops/CLOUD-CONTINUITY.md`). After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.
+Same problem or open PR? Resume that cloud. After a long chat or before coding: `survive-compact` — read disk, then continue. Do not launch a duplicate.
 
-## Catalog (2026-09-14)
+## Not in the npm package
+These skills name one team's people and accounts. They stay in the git repo:
+- `skills/enterprise-cos-wave-loop/`
+- `skills/synaptical-comms/`
+- the public-post skill (account-specific)
 
-- `skills/dist-0xrayai-publish/` — Dist posts as @0xRayAI (friend-test + cadence)
-- `ops/OPS-CATALOG.md` — start-here index for op proc + Dist docs + LEXICON
-- `ops/SYNAPTICAL-LANES.md` — H (human/public) vs B (bot-internal) speaking lanes
+Use them from the repo, not from the installed package.
