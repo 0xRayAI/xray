@@ -1,6 +1,6 @@
 # Two-agent compaction proof
 
-This folder is the code and the run files for the finished score. The side-by-side story is in `examples/killer-dual/TRANSITION-MAP.md`. Leave that file where it is.
+This folder is the code and the run files for the finished score. The side-by-side story is in `examples/killer-dual/TRANSITION.md`. Leave that file where it is.
 
 Two Cursor cloud agents. Both Composer 2.5. The window is 200000 tokens. A counted cut needs `context_tokens` greater than 100000.
 

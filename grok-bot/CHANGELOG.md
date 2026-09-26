@@ -2,17 +2,18 @@
 
 ## Unreleased
 
-- Lead cadence (syncopation): `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, peer boot (four lines, no command novel), fresh+upgrade registry install, CLI auth URL + poll, branch/worktree/PR, loop until Station, workstreams not idle pacers. `npx 0xray validate` is the wear check, not leftover init.sh. Board clock is PR events + same critic. Dispatch is four lines. Ship matrix A–D is lead-owned. Cataloged. Dist clock stays `dist/CADENCE.md`.
-- **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts metal is dirty: wear, rewrite, do not act.
-- **Idle `/loop` stop** — card + WAVEBOARD idle → unsubscribe, do not resubscribe. Not a heartbeat on a parked mill.
-- **Subject review. Fix n ship.** After PASS, review dest/domain, close leftovers, then D. PASS is not ship.
-- **Groover is not Repertoire.** Groover was a broken experiment of the organ. Do not grow dest from Groover field.
+- Lead cadence: `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, peer boot (four lines, no command novel), fresh and upgrade registry install, CLI auth URL then poll, branch and pull request, loop until the station card is done, live tracks not an idle timer. `npx 0xray validate` is the check, not leftover init.sh. The clock is pull-request events and the same reviewer. Dispatch is four lines. Ship gates stay with the lead. The public-post clock stays in `ops/dist/CADENCE.md`.
+- **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts the repo is stale: rewrite the prompt, do not act.
+- **Idle `/loop` stop** — when the card and the board are idle, unsubscribe and do not resubscribe. Not a heartbeat on parked work.
+- **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
+- groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
 
 ## 0.1.6
 
 - General operating page, plus a House section that is the same for every team. This team's own house lives in `house/` and is not in the npm package.
 - `templates/house/` is the fill-in starter. `grok-bot house init` copies it into `./house` and refuses if a target file already exists. Skill `setup-house` runs that command.
 - `grok-bot doctor` uses `GROK_BOT_HOUSE` when that path is set (the house directory or its `HOUSE.md`). A set path that is missing warns and does not walk. Otherwise doctor walks up from the working directory for `house/HOUSE.md`. No house file warns. Unfilled example lines fail.
+- Upgrading from 0.1.5: 29 house-internal docs are no longer in the package. That is `ops/*`, `ops/dist/*`, and three skills (`synaptical-comms`, `enterprise-cos-wave-loop`, `dist-0xrayai-publish`). They stay in this git repo under `grok-bot/ops/` and those skill folders. `grok-bot house init` copies `templates/house/` for a new team and does not restore those 29 docs.
 
 ## 0.1.5
 
