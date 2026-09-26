@@ -2,7 +2,7 @@
 
 Pluggable **judgment** enrichment for orchestrator agent selection, thinDispatch scoring, researcher votes, and per-task feedback. Not session continuity — that is [Station vs Repertoire 0.1](./station-vs-repertoire.md).
 
-**Repertoire is preferred.** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.8` vendored) ships **on**. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
+**Repertoire is preferred.** [Repertoire](./repertoire.md) (`@0xray/repertoire@0.2.8` vendored) ships **on**. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Scoring rules (heat is not conviction, what counts as a hit) are [memory-scoring](../../../docs/memory-scoring.md). The orchestrator links that file and does not copy the rules.
 
 ## Overview
 

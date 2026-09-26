@@ -22,7 +22,7 @@ Groover is not the producer. Do not pin 0.1.8. Do not dump 145. Do not paste OP-
 
 Rewire `applyStationHeat` (and only that). Existing call sites stay:
 
-- Cursor `preToolUse` / `afterFileEdit` / `preCompact`
+- Cursor `preToolUse` / `afterFileEdit` / `preCompact`. A counted host `preCompact` needs a generation id and a numeric usage percent, and that hook line and receipt are mirrored onto nested consumer wear roots.
 - Grok `session-start` / `pre-tool-use`
 - Hermes `session-start` (via `buildSessionBootPayload`)
 - OpenClaw first `preToolUse`

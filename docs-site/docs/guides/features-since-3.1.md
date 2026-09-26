@@ -2,6 +2,12 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.27 — compact proof, memory scoring, grok-bot house
+
+- **Nested preCompact wear.** A counted host compact needs a non-empty `generation_id` and a numeric `context_usage_percent`. The same hook line and per-session receipt are written on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). `preCompact` has no Read paths, so those roots are discovered from the mill at compact time. See [Cursor hooks](../../../src/integrations/cursor/README.md).
+- **Memory scoring** is one doc: [memory-scoring](../../../docs/memory-scoring.md). The orchestrator skill links it and does not copy the rules.
+- **@0xray/grok-bot 0.1.6** is the companion package, not this tarball. The general operating page is the same for every team ([OP-PROC](../../../grok-bot/OP-PROC.md)). `house/` is the team overlay and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor reads `GROK_BOT_HOUSE` when it is set (a missing path warns and does not walk). Otherwise it walks up from the working directory for `house/HOUSE.md`.
+
 ## 4.0.25 — plates travel in the package
 
 - **Plates travel in the package.** `docs-site/docs/plates/` is on the npm `files` list (`memory-recall`, `processor`, and the rest of the stamp set). The worn reader at `dist/integrations/hooks/plates.cjs` walks up to that directory and resolves `memory-recall` and `processor`.
