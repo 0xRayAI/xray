@@ -22,6 +22,9 @@ const {
   wireOpencodeBridge,
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
+  mergeMcpMap,
+  mergeNamedRecords,
+  jsonDeepEqual,
   copyHermesFindProjectRootHelper,
   copyHermesHookRuntimes,
   installOpenClawHostWear,
@@ -199,10 +202,21 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
     if (fs.existsSync(userOpencode)) {
       const destData = JSON.parse(fs.readFileSync(userOpencode, "utf8"));
       const merged = { ...destData };
-      if (srcData.agent) merged.agent = srcData.agent;
-      if (srcData.mcp) merged.mcp = { ...destData.mcp, ...srcData.mcp };
-      if (srcData.compaction) merged.compaction = srcData.compaction;
-      fs.writeFileSync(userOpencode, JSON.stringify(merged, null, 2) + "\n");
+      if (srcData.agent || destData.agent) {
+        merged.agent = mergeNamedRecords(srcData.agent, destData.agent);
+      }
+      if (srcData.mcp || destData.mcp) {
+        merged.mcp = mergeMcpMap(srcData.mcp, destData.mcp);
+      }
+      if (srcData.compaction || destData.compaction) {
+        merged.compaction =
+          srcData.compaction && destData.compaction
+            ? { ...srcData.compaction, ...destData.compaction }
+            : destData.compaction || srcData.compaction;
+      }
+      if (!jsonDeepEqual(merged, destData)) {
+        fs.writeFileSync(userOpencode, JSON.stringify(merged, null, 2) + "\n");
+      }
     } else {
       fs.copyFileSync(rootOpencode, userOpencode);
     }
@@ -308,13 +322,13 @@ function copyOpencodePlugin(packageRoot, opencodeDest, log) {
   if (!fs.existsSync(pluginSource)) return;
   const pluginDestDir = path.dirname(pluginDest);
   if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
-  const shouldCopy =
-    !fs.existsSync(pluginDest) ||
-    fs.statSync(pluginSource).mtime > fs.statSync(pluginDest).mtime;
-  if (shouldCopy) {
-    fs.copyFileSync(pluginSource, pluginDest);
-    log("opencode-bridge", "plugin updated", "info");
+  const scopePkg = path.join(opencodeDest, "package.json");
+  if (!fs.existsSync(scopePkg)) {
+    fs.writeFileSync(scopePkg, `${JSON.stringify({ type: "module" })}\n`);
   }
+  const shim = `export { default } from ${JSON.stringify(pluginSource)};\n`;
+  fs.writeFileSync(pluginDest, shim);
+  log("opencode-bridge", "plugin shim written", "info");
 }
 
 function installOpencodeBridge(targetDir, packageRoot, log) {
@@ -1068,6 +1082,8 @@ module.exports = {
   installFrameworkDogfoodWear,
   wearVendoredRepertoire,
   installCursorBridge,
+  mergeOpencodeJson,
+  copyOpencodePlugin,
   parseExecDaemonCmdline,
   reloadCursorHostHooks,
   resolveCursorHooksTemplate,

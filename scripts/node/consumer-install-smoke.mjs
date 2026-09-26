@@ -353,11 +353,18 @@ function main() {
         throw new Error(`Missing MCP server in .mcp.json: ${name}`);
       }
       const entry = mcp.mcpServers[name];
-      if (entry.command !== "npx") {
-        throw new Error(`${name} should use npx, got ${entry.command}`);
+      const cli = path.join(tmpRoot, "node_modules", "0xray", "dist", "cli", "index.js");
+      const args = Array.isArray(entry.args) ? entry.args.map(String) : [];
+      const pinnedNode = entry.command === "node" && args[0] === cli && args[1] === "mcp";
+      const pinnedNpx = entry.command === "npx" && args[0] === "-y" && /^0xray@\d/.test(args[1] || "") && args[2] === "mcp";
+      if (!pinnedNode && !pinnedNpx) {
+        throw new Error(`${name} must pin node CLI or npx 0xray@version, got ${entry.command} ${args.join(" ")}`);
+      }
+      if (args.includes("0xray")) {
+        throw new Error(`${name} launched unpinned 0xray`);
       }
     }
-    console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} npx MCP servers`);
+    console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} version-pinned MCP servers`);
 
     assertFreshInstallDefaults(tmpRoot, version);
     assertOrganRequire(tmpRoot);

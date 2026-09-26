@@ -259,6 +259,27 @@ describe('grok-bot seat doctor — CLI', () => {
     }
   });
 
+  it('fails the house check when house/EXAMPLE.md is still present', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      mkdirSync(path.join(dir, 'house'));
+      writeFileSync(path.join(dir, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
+      writeFileSync(path.join(dir, 'house', 'EXAMPLE.md'), 'Example house (names are illustrative)\n');
+      const report = diagnoseSeat({ cwd: dir, home: dir, env: {} });
+      expect(report.house.status).toBe('fail');
+      expect(report.ok).toBe(false);
+      expect(report.house.detail).toMatch(/house\/EXAMPLE\.md exists — delete it/);
+      expect(formatDoctor(report)).toMatch(/House: FAIL — .+ — house\/EXAMPLE\.md exists — delete it/);
+      const r = runBin(['doctor', '--cwd', dir, '--home', dir], dir);
+      expect(r.status).toBe(1);
+      expect(r.stdout).toMatch(/delete it/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('fails when HOUSE.md still has unfilled example lines', () => {
     const dir = scratch();
     try {
@@ -369,7 +390,10 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(r.status).toBe(0);
       const house = path.join(dir, 'house');
       const names = readdirSync(house).sort();
-      expect(names).toEqual(readdirSync(path.join(root, 'grok-bot', 'templates', 'house')).sort());
+      expect(names).toEqual(
+        readdirSync(path.join(root, 'grok-bot', 'templates', 'house')).filter((name) => name !== 'EXAMPLE.md').sort(),
+      );
+      expect(existsSync(path.join(house, 'EXAMPLE.md'))).toBe(false);
       expect(readFileSync(path.join(house, 'HOUSE.md'), 'utf8')).toBe(
         readFileSync(path.join(root, 'grok-bot', 'templates', 'house', 'HOUSE.md'), 'utf8'),
       );

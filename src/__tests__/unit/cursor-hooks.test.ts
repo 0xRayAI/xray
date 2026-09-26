@@ -1071,4 +1071,34 @@ describe('Cursor cloud hooks adapter', () => {
       rmSync(mill, { recursive: true, force: true });
     }
   });
+
+  it('xray-cloud-hook.sh keeps hook state in the suit cwd, not the mill', () => {
+    const suit = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-suit-'));
+    const mill = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-mill-root-'));
+    try {
+      mkdirSync(path.join(mill, 'dist', 'integrations', 'cursor', 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(mill, 'dist', 'integrations', 'cursor', 'hooks', 'pre-tool-use.js'),
+        'console.log(JSON.stringify({ permission: "allow", root: process.env.XRAY_ROOT, mill: process.env.XRAY_AI_PATH }));\n',
+      );
+      const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
+      const env = { ...process.env, PATH: process.env.PATH || '/usr/bin:/bin', XRAY_AI_PATH: mill };
+      delete env.XRAY_ROOT;
+      const stdout = execFileSync('/bin/sh', [runner, 'preToolUse', 'pre-tool-use.js'], {
+        cwd: suit,
+        encoding: 'utf8',
+        input: '{}',
+        timeout: 10000,
+        env,
+      }).trim();
+      const out = JSON.parse(stdout) as { permission: string; root?: string; mill?: string };
+      expect(out.permission).toBe('allow');
+      expect(path.resolve(out.root || '')).toBe(path.resolve(suit));
+      expect(path.resolve(out.mill || '')).toBe(path.resolve(mill));
+      expect(path.resolve(out.root || '')).not.toBe(path.resolve(mill));
+    } finally {
+      rmSync(suit, { recursive: true, force: true });
+      rmSync(mill, { recursive: true, force: true });
+    }
+  });
 });

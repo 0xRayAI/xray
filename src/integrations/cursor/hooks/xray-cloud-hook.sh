@@ -59,5 +59,5 @@ fi
 
 export XRAY_HOOK_EVENT="$EVENT"
 export XRAY_AI_PATH="$MILL"
-export XRAY_ROOT="$MILL"
+export XRAY_ROOT="${XRAY_ROOT:-$(pwd)}"
 exec "$NODE_BIN" "${MILL}/${REL}"

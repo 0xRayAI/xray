@@ -515,7 +515,7 @@ export function packagesToProbe(root) {
   });
 }
 
-function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()) {
+export function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()) {
   const isolated = isIsolatedHome(env, machine);
   const machinePlugin = machineGrokPluginDir(machine);
   const dests = mint.resolveGrokPluginDests(root, env, machine);
@@ -530,6 +530,17 @@ function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()
       dests,
       machinePlugin,
       detail: `isolated HOME must not write ${machinePlugin}`,
+    };
+  }
+  if (fs.existsSync(machinePlugin)) {
+    return {
+      id: "isolated-home",
+      ok: false,
+      isolated,
+      dest,
+      dests,
+      machinePlugin,
+      detail: `machine-level ${machinePlugin} exists — delete it (isolated:${isolated} must not be ok)`,
     };
   }
   return {

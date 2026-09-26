@@ -127,13 +127,18 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
         env,
         machineHome: machine,
       });
-      expect(inspectA.ok, JSON.stringify(inspectA.checks, null, 2)).toBe(true);
+      expect(inspectA.ok, JSON.stringify(inspectA.checks, null, 2)).toBe(false);
+      expect(inspectA.failed).toContain('isolated-home');
       const isolatedA = inspectA.checks.find((c) => c.id === 'isolated-home') as {
+        ok?: boolean;
         isolated?: boolean;
         dest?: string;
         machinePlugin?: string;
+        detail?: string;
       };
+      expect(isolatedA.ok).toBe(false);
       expect(isolatedA.isolated).toBe(false);
+      expect(isolatedA.detail).toMatch(/delete it/);
       expect(isolatedA.dest).toBe(path.join(seatA, '.grok', 'plugins', '0xray'));
       expect(isolatedA.dest).toBe(resolveGrokPluginDests(seatA, env, machine)[0]);
       expect(isolatedA.machinePlugin).toBe(machinePlugin);
@@ -144,7 +149,8 @@ describe('Grok multi-seat wear — project dest, no last-wins machine clobber', 
         env,
         machineHome: machine,
       });
-      expect(inspectB.ok, JSON.stringify(inspectB.checks, null, 2)).toBe(true);
+      expect(inspectB.ok, JSON.stringify(inspectB.checks, null, 2)).toBe(false);
+      expect(inspectB.failed).toContain('isolated-home');
       const isolatedB = inspectB.checks.find((c) => c.id === 'isolated-home') as {
         dest?: string;
       };

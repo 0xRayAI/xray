@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { spawnSync } from "node:child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { pathToFileURL } from "node:url";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -10,6 +12,8 @@ const {
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
   installCursorBridge,
+  mergeOpencodeJson,
+  copyOpencodePlugin,
   parseExecDaemonCmdline,
   resolveCursorHooksTemplate,
   resolveCursorWorkspaceRoot,
@@ -446,6 +450,100 @@ describe("install-bridges cursor wear", () => {
       expect(fs.existsSync(path.join(process.cwd(), "src", "integrations", "cursor", "hooks", name))).toBe(
         true,
       );
+    }
+  });
+});
+
+describe("install-bridges user-wins opencode merge and plugin shim", () => {
+  it("merges agents per name so a user temperature is not replaced", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "xray-oc-src-"));
+    const consumer = fs.mkdtempSync(path.join(os.tmpdir(), "xray-oc-user-"));
+    const userFile = {
+      $schema: "https://opencode.ai/config.json",
+      agent: {
+        architect: { description: "Architect", temperature: 0.2, mode: "primary" },
+        strategist: { temperature: 1 },
+        custom: { temperature: 0.4 },
+      },
+      mcp: {
+        "xray-skills": {
+          type: "local",
+          command: ["npx", "-y", "0xray@4.0.27", "mcp", "skills"],
+          enabled: false,
+          environment: { L1_MARKER_ENV: "kept" },
+        },
+      },
+      permission: { bash: "ask" },
+      compaction: { auto: false, prune: true },
+    };
+    try {
+      fs.writeFileSync(
+        path.join(root, "opencode.json"),
+        `${JSON.stringify({
+          agent: {
+            architect: { description: "Architect", temperature: 1, mode: "primary" },
+            strategist: { temperature: 1 },
+          },
+          mcp: {
+            "xray-skills": {
+              type: "local",
+              command: ["npx", "-y", "0xray", "mcp", "skills"],
+              enabled: true,
+            },
+          },
+          compaction: { auto: true, prune: true },
+        })}\n`,
+      );
+      fs.writeFileSync(path.join(consumer, "opencode.json"), `${JSON.stringify(userFile, null, 2)}\n`);
+      const before = fs.readFileSync(path.join(consumer, "opencode.json"), "utf8");
+      mergeOpencodeJson(consumer, root, () => undefined);
+      expect(fs.readFileSync(path.join(consumer, "opencode.json"), "utf8")).toBe(before);
+      const merged = JSON.parse(before) as {
+        agent: { architect: { temperature: number }; custom: { temperature: number }; strategist: { temperature: number } };
+        mcp: { "xray-skills": { enabled: boolean; command: string[]; environment: { L1_MARKER_ENV: string } } };
+        permission: { bash: string };
+        compaction: { auto: boolean };
+      };
+      expect(merged.agent.architect.temperature).toBe(0.2);
+      expect(merged.agent.custom.temperature).toBe(0.4);
+      expect(merged.agent.strategist.temperature).toBe(1);
+      expect(merged.mcp["xray-skills"].enabled).toBe(false);
+      expect(merged.mcp["xray-skills"].command[2]).toBe("0xray@4.0.27");
+      expect(merged.mcp["xray-skills"].environment.L1_MARKER_ENV).toBe("kept");
+      expect(merged.permission.bash).toBe("ask");
+      expect(merged.compaction.auto).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+      fs.rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+
+  it("writes an OpenCode shim that re-exports the package dist plugin", () => {
+    const packageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "xray-shim-pkg-"));
+    const dest = fs.mkdtempSync(path.join(os.tmpdir(), "xray-shim-dest-"));
+    const plugin = path.join(packageRoot, "dist", "plugin", "xray-codex-injection.js");
+    fs.mkdirSync(path.dirname(plugin), { recursive: true });
+    fs.writeFileSync(plugin, "export default function plugin(){ return { loaded: true }; }\n");
+    try {
+      copyOpencodePlugin(packageRoot, dest, () => undefined);
+      const shimPath = path.join(dest, "plugin", "xray-codex-injection.js");
+      const shim = fs.readFileSync(shimPath, "utf8");
+      expect(shim).toBe(`export { default } from ${JSON.stringify(plugin)};\n`);
+      expect(shim).not.toContain("plugin-logger");
+      expect(JSON.parse(fs.readFileSync(path.join(dest, "package.json"), "utf8"))).toEqual({ type: "module" });
+      const loaded = spawnSync(
+        process.execPath,
+        [
+          "-e",
+          "import(process.argv[1]).then((m) => { if (m.default().loaded !== true) process.exit(2); }).catch((e) => { console.error(e); process.exit(1); })",
+          pathToFileURL(shimPath).href,
+        ],
+        { encoding: "utf8" },
+      );
+      expect(loaded.status, `${loaded.stdout}\n${loaded.stderr}`).toBe(0);
+    } finally {
+      fs.rmSync(packageRoot, { recursive: true, force: true });
+      fs.rmSync(dest, { recursive: true, force: true });
     }
   });
 });

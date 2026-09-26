@@ -138,6 +138,15 @@ function inspectHouseFile(file, via) {
       detail: 'no house/HOUSE.md, run setup-house',
     };
   }
+  const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
+  if (fs.existsSync(exampleSibling)) {
+    return {
+      status: 'fail',
+      file,
+      via,
+      detail: 'house/EXAMPLE.md exists — delete it',
+    };
+  }
   const unfilled = text.split(/\r?\n/).filter((line) => HOUSE_EXAMPLE_LINE.test(line));
   if (unfilled.length > 0) {
     return {
@@ -186,6 +195,7 @@ function initHouse(opts = {}) {
     return { ok: false, code: 1, message: `templates/house is missing (${srcDir})` };
   }
   const names = fs.readdirSync(srcDir).filter((name) => {
+    if (name === 'EXAMPLE.md') return false;
     try {
       return fs.statSync(path.join(srcDir, name)).isFile();
     } catch {

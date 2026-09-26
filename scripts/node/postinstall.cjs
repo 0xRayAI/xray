@@ -25,6 +25,8 @@ function structuredLog(component, action, status, details) {
 }
 
 const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
+const XRAY_MANAGED_AGENTS_BEGIN = "<!-- 0xray-managed:begin -->";
+const XRAY_MANAGED_AGENTS_END = "<!-- 0xray-managed:end -->";
 
 function fillConsumerPlaceholders(content, consumer) {
   const name = consumer.name || "this project";
@@ -36,24 +38,51 @@ function fillConsumerPlaceholders(content, consumer) {
     .join(versionParen);
 }
 
+function renderManagedAgents(packageRoot, targetDir) {
+  let content = fs.readFileSync(path.join(packageRoot, "AGENTS-consumer.md"), "utf8");
+  const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
+  content = fillConsumerPlaceholders(content, consumer).trim();
+  if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
+    content = `${content}\n\n${XRAY_MANAGED_AGENTS_MARKER}`;
+  }
+  return `${XRAY_MANAGED_AGENTS_BEGIN}\n${content}\n${XRAY_MANAGED_AGENTS_END}\n`;
+}
+
+function managedRegion(text) {
+  const beginAt = text.indexOf(XRAY_MANAGED_AGENTS_BEGIN);
+  const endAt = text.indexOf(XRAY_MANAGED_AGENTS_END);
+  if (beginAt === -1 || endAt === -1 || endAt < beginAt) return null;
+  return {
+    before: text.slice(0, beginAt),
+    after: text.slice(endAt + XRAY_MANAGED_AGENTS_END.length),
+  };
+}
+
+function outsideRegionEdited(parts) {
+  return parts.before.trim() !== "" || parts.after.trim() !== "";
+}
+
 function deployManagedAgents(packageRoot, targetDir, log) {
   const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
   const agentsDest = path.join(targetDir, "AGENTS.md");
   if (!fs.existsSync(agentsConsumer)) return;
-  const shouldDeployAgents =
-    !fs.existsSync(agentsDest) ||
-    fs.readFileSync(agentsDest, "utf8").includes(XRAY_MANAGED_AGENTS_MARKER);
-  if (shouldDeployAgents) {
-    let content = fs.readFileSync(agentsConsumer, "utf8");
-    const consumer = readPackageIdentity(path.join(targetDir, "package.json"));
-    content = fillConsumerPlaceholders(content, consumer);
-    if (!content.includes(XRAY_MANAGED_AGENTS_MARKER)) {
-      content = `${content.trimEnd()}\n\n${XRAY_MANAGED_AGENTS_MARKER}\n`;
-    }
-    fs.writeFileSync(agentsDest, content);
-  } else {
-    log("postinstall", "Skipped AGENTS.md (consumer-customized)", "info");
+  const next = renderManagedAgents(packageRoot, targetDir);
+  if (!fs.existsSync(agentsDest)) {
+    fs.writeFileSync(agentsDest, next);
+    return;
   }
+  const current = fs.readFileSync(agentsDest, "utf8");
+  const parts = managedRegion(current);
+  if (!parts || outsideRegionEdited(parts)) {
+    fs.writeFileSync(path.join(targetDir, "AGENTS.md.0xray-new"), next);
+    log("postinstall", "AGENTS.md left in place; wrote AGENTS.md.0xray-new", "info");
+    return;
+  }
+  const beginAt = next.indexOf(XRAY_MANAGED_AGENTS_BEGIN);
+  const endAt = next.indexOf(XRAY_MANAGED_AGENTS_END);
+  const interior = next.slice(beginAt, endAt + XRAY_MANAGED_AGENTS_END.length);
+  const updated = `${parts.before}${interior}${parts.after}`;
+  if (updated !== current) fs.writeFileSync(agentsDest, updated);
 }
 
 function deployConsumerGitignore(packageRoot, targetDir, log) {

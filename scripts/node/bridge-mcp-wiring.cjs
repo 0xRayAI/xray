@@ -165,10 +165,144 @@ function detectConsumerExtraMcpServers(targetDir) {
   return extras;
 }
 
-function buildStdioMcpServer(mcpCmd, env, targetDir) {
+function readInstalledXrayVersion() {
+  const pkgPath = path.join(__dirname, "..", "..", "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+  if (typeof pkg.version !== "string" || !pkg.version) {
+    throw new Error("0xray package.json version missing; refusing unpinned MCP launch");
+  }
+  return pkg.version;
+}
+
+function localXrayCli(targetDir) {
+  if (!targetDir) return null;
+  const cli = path.join(targetDir, "node_modules", "0xray", "dist", "cli", "index.js");
+  return fs.existsSync(cli) ? cli : null;
+}
+
+/** Prefer the installed CLI. Else pin npx to this package version. Never bare `0xray`. */
+function pinnedMcpLaunch(targetDir, mcpCmd) {
+  const cli = localXrayCli(targetDir);
+  if (cli) {
+    return {
+      command: "node",
+      args: [cli, "mcp", mcpCmd],
+      commandList: ["node", cli, "mcp", mcpCmd],
+    };
+  }
+  const spec = `0xray@${readInstalledXrayVersion()}`;
   return {
     command: "npx",
-    args: ["-y", "0xray", "mcp", mcpCmd],
+    args: ["-y", spec, "mcp", mcpCmd],
+    commandList: ["npx", "-y", spec, "mcp", mcpCmd],
+  };
+}
+
+function launchTokens(server) {
+  if (!server || typeof server !== "object") return [];
+  const tokens = [];
+  if (typeof server.command === "string") tokens.push(server.command);
+  else if (Array.isArray(server.command)) tokens.push(...server.command.map(String));
+  if (Array.isArray(server.args)) tokens.push(...server.args.map(String));
+  return tokens;
+}
+
+function hasVersionPin(server) {
+  return launchTokens(server).some((token) => /^0xray@.+/.test(token));
+}
+
+function isUnpinnedXrayLaunch(server) {
+  return launchTokens(server).some((token) => token === "0xray");
+}
+
+function jsonDeepEqual(a, b) {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (a === null || b === null || typeof a !== "object") return a === b;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((item, i) => jsonDeepEqual(item, b[i]));
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) => Object.prototype.hasOwnProperty.call(b, key) && jsonDeepEqual(a[key], b[key]));
+}
+
+/** Framework fills gaps. User env, enabled/disabled, and version pins win. Unpinned `0xray` is repinned. */
+function mergeUserWinsServer(framework, user) {
+  if (!user || typeof user !== "object") return framework;
+  if (!framework || typeof framework !== "object") return user;
+  const next = { ...user };
+  if (!hasVersionPin(user) && isUnpinnedXrayLaunch(user)) {
+    next.command = framework.command;
+    if (Object.prototype.hasOwnProperty.call(framework, "args")) next.args = framework.args;
+    else delete next.args;
+  }
+  for (const envKey of ["env", "environment"]) {
+    if (!framework[envKey] && !user[envKey]) continue;
+    const mergedEnv = { ...(framework[envKey] || {}), ...(user[envKey] || {}) };
+    if (!jsonDeepEqual(mergedEnv, user[envKey] || {})) next[envKey] = mergedEnv;
+  }
+  if (!Object.prototype.hasOwnProperty.call(user, "enabled") && Object.prototype.hasOwnProperty.call(framework, "enabled")) {
+    next.enabled = framework.enabled;
+  }
+  if (!Object.prototype.hasOwnProperty.call(user, "disabled") && Object.prototype.hasOwnProperty.call(framework, "disabled")) {
+    next.disabled = framework.disabled;
+  }
+  return next;
+}
+
+function mergeMcpMap(frameworkServers, userServers) {
+  const framework = frameworkServers && typeof frameworkServers === "object" ? frameworkServers : {};
+  const user = userServers && typeof userServers === "object" ? userServers : {};
+  const merged = {};
+  const seen = new Set();
+  for (const name of Object.keys(user)) {
+    seen.add(name);
+    merged[name] = framework[name] ? mergeUserWinsServer(framework[name], user[name]) : user[name];
+  }
+  for (const name of Object.keys(framework)) {
+    if (seen.has(name)) continue;
+    merged[name] = framework[name];
+  }
+  return merged;
+}
+
+function mergeNamedRecords(src, dest) {
+  const source = src && typeof src === "object" ? src : {};
+  const user = dest && typeof dest === "object" ? dest : {};
+  const merged = {};
+  const seen = new Set();
+  for (const name of Object.keys(user)) {
+    seen.add(name);
+    const fromSrc = source[name];
+    const fromUser = user[name];
+    if (
+      fromSrc &&
+      fromUser &&
+      typeof fromSrc === "object" &&
+      typeof fromUser === "object" &&
+      !Array.isArray(fromSrc) &&
+      !Array.isArray(fromUser)
+    ) {
+      merged[name] = { ...fromSrc, ...fromUser };
+    } else {
+      merged[name] = fromUser;
+    }
+  }
+  for (const name of Object.keys(source)) {
+    if (seen.has(name)) continue;
+    merged[name] = source[name];
+  }
+  return merged;
+}
+
+function buildStdioMcpServer(mcpCmd, env, targetDir) {
+  const launch = pinnedMcpLaunch(targetDir, mcpCmd);
+  return {
+    command: launch.command,
+    args: launch.args,
     env: { ...env, XRAY_ROOT: targetDir },
   };
 }
@@ -195,9 +329,10 @@ function buildOpencodeMcpEntries(targetDir) {
   const entries = {};
   for (const s of XRAY_MCP_SERVERS) {
     const environment = { ...s.env };
+    const launch = pinnedMcpLaunch(targetDir, s.mcpCmd);
     entries[s.name] = {
       type: "local",
-      command: ["npx", "-y", "0xray", "mcp", s.mcpCmd],
+      command: launch.commandList,
       enabled: true,
       ...(Object.keys(environment).length > 0 ? { environment } : {}),
     };
@@ -209,9 +344,10 @@ function buildOpencodeMcpEntries(targetDir) {
 function buildPluginMcpJson(targetDir) {
   const mcpServers = {};
   for (const s of XRAY_MCP_SERVERS) {
+    const launch = pinnedMcpLaunch(targetDir, s.mcpCmd);
     mcpServers[s.name] = {
-      command: "npx",
-      args: ["-y", "0xray", "mcp", s.mcpCmd],
+      command: launch.command,
+      args: launch.args,
       env: { ...s.env, XRAY_ROOT: targetDir },
     };
   }
@@ -219,12 +355,13 @@ function buildPluginMcpJson(targetDir) {
 }
 
 /** Portable .mcp.json for Grok/Cursor — no absolute XRAY_ROOT */
-function buildPortableProjectMcpJson() {
+function buildPortableProjectMcpJson(targetDir) {
   const mcpServers = {};
   for (const s of XRAY_MCP_SERVERS) {
+    const launch = pinnedMcpLaunch(targetDir, s.mcpCmd);
     mcpServers[s.name] = {
-      command: "npx",
-      args: ["-y", "0xray", "mcp", s.mcpCmd],
+      command: launch.command,
+      args: launch.args,
       ...(Object.keys(s.env).length > 0 ? { env: { ...s.env } } : {}),
     };
   }
@@ -312,16 +449,21 @@ function mergeOpencodeMcpRegistry(targetDir) {
       config = { $schema: "https://opencode.ai/config.json", mcp: {} };
     }
   }
-  config.mcp = { ...(config.mcp || {}), ...entries };
-  fs.writeFileSync(opencodePath, `${JSON.stringify(config, null, 2)}\n`);
+  const existed = fs.existsSync(opencodePath);
+  const nextMcp = mergeMcpMap(entries, config.mcp || {});
+  const next = { ...config, mcp: nextMcp };
+  if (existed && jsonDeepEqual(next, config)) return Object.keys(entries).length;
+  fs.writeFileSync(opencodePath, `${JSON.stringify(next, null, 2)}\n`);
   return Object.keys(entries).length;
 }
 
 function deployPortableProjectMcpJson(targetDir) {
   const destPath = path.join(targetDir, ".mcp.json");
-  const portable = buildPortableProjectMcpJson();
+  const portable = buildPortableProjectMcpJson(targetDir);
   let existing = { mcpServers: {} };
+  let hadFile = false;
   if (fs.existsSync(destPath)) {
+    hadFile = true;
     try {
       existing = JSON.parse(fs.readFileSync(destPath, "utf8"));
     } catch {
@@ -329,14 +471,12 @@ function deployPortableProjectMcpJson(targetDir) {
     }
   }
   const extras = detectConsumerExtraMcpServers(targetDir);
+  const framework = { ...portable.mcpServers, ...(extras.openclaw || {}) };
   const merged = {
     ...existing,
-    mcpServers: {
-      ...(existing.mcpServers || {}),
-      ...portable.mcpServers,
-      ...(extras.openclaw || {}),
-    },
+    mcpServers: mergeMcpMap(framework, existing.mcpServers || {}),
   };
+  if (hadFile && jsonDeepEqual(merged, existing)) return;
   fs.writeFileSync(destPath, `${JSON.stringify(merged, null, 2)}\n`);
 }
 
@@ -573,6 +713,11 @@ module.exports = {
   buildStdioMcpServer,
   buildPluginMcpJson,
   buildPortableProjectMcpJson,
+  pinnedMcpLaunch,
+  mergeMcpMap,
+  mergeNamedRecords,
+  mergeUserWinsServer,
+  jsonDeepEqual,
   copyHermesFindProjectRootHelper,
   writeHermesPluginArtifacts,
   syncHermesMcpRegistry,
