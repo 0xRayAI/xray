@@ -53,7 +53,7 @@ Suited session `bc-24e5e7e5-a924-554c-9294-ba9d813d0958`. The wear at `2026-09-2
 
 `suited/proof/recall.out` is an earlier recall that printed no lessons. `suited/proof/recall2.out` lists four earlier words and does not contain `bench-5679e6fb`. The chat answer is the one in the transition map.
 
-Dummy session `bc-9893bcfe-a184-5028-a277-0eb943c6c6cf`. `dummy/proof/mint-final.out` saved `bench-4b80c22a6bea282336f10e74aab9e122` at `2026-09-24T20:34:17.814Z`. The same word is the last line of `dummy/proof/lessons.jsonl`. The cut line is `proofs/bc-9893bcfe-a184-5028-a277-0eb943c6c6cf.hook-line.txt`: `2026-09-24T20:39:48.500Z`, 187858 tokens, 93.929 percent of 200000, generation `d32499d0-b576-458e-a24c-2e20344e6419`. Earlier hook lines for this same session said zero tokens. Those do not count. The chat did not come back with the word.
+Dummy session `bc-9893bcfe-a184-5028-a277-0eb943c6c6cf`. The last line of `dummy/proof/lessons.jsonl` saved `bench-4b80c22a6bea282336f10e74aab9e122` at `2026-09-24T20:34:17.813Z`. The cut line is `proofs/bc-9893bcfe-a184-5028-a277-0eb943c6c6cf.hook-line.txt`: `2026-09-24T20:39:48.500Z`, 187858 tokens, 93.929 percent of 200000, generation `d32499d0-b576-458e-a24c-2e20344e6419`. Earlier hook lines for this same session said zero tokens. Those do not count. The chat did not come back with the word.
 
 When this folder was packed, `.xray/state/cursor-receipts/` did not still hold a json file for either of those two session ids. The only receipt left there was a later parent session, so it was not copied. The two hook lines above are the lines that were still on disk.
 
