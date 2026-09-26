@@ -81,8 +81,8 @@ npx @0xray/grok-bot doctor
 
 Lookup:
 
-- A non-empty `GROK_BOT_HOUSE` is the only lookup. The value may be the directory that holds `HOUSE.md`, or the `HOUSE.md` file itself. A missing path, or a directory with no `HOUSE.md` in it, warns, `GROK_BOT_HOUSE is set but HOUSE.md is missing (<path>)`, and doctor does not walk.
-- When `GROK_BOT_HOUSE` is unset, doctor walks up from the working directory and uses the first `house/HOUSE.md` it finds.
+- When `GROK_BOT_HOUSE` is set, doctor uses it and does not walk up. The value may be the directory that holds `HOUSE.md`, or the `HOUSE.md` file itself. A missing path, or a directory with no `HOUSE.md` in it, warns, `GROK_BOT_HOUSE is set but HOUSE.md is missing (<path>)`.
+- When `GROK_BOT_HOUSE` is unset, `seat-doctor.cjs` walks up from the working directory to find `house/HOUSE.md`.
 
 Unfilled starter lines fail the house check and the command exits 1:
 

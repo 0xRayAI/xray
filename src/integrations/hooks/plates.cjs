@@ -63,8 +63,8 @@ const CUES = {
     [/stamp(?:ed|ing)?\s+plates?/i, 4],
   ],
   house: [
-    [/\bhouse\b/i, 5],
     [/house init/i, 4],
+    [/HOUSE\.md/i, 4],
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
   ],

@@ -50,6 +50,11 @@ describe('pipeline plates', () => {
     expect(plateStockLine('survive the cut')).toBeNull();
   });
 
+  it('does not recall house from a bare house word or when other plates tie', () => {
+    expect(recallPlate('in-house tooling review')).toBeNull();
+    expect(recallPlate('house processor boot')?.id).not.toBe('house');
+  });
+
   it('stamps a missing worn plate and leaves an edited copy in place', () => {
     const root = mkdtempSync(join(tmpdir(), 'xray-plates-'));
     try {
