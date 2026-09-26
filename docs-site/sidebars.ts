@@ -43,6 +43,7 @@ const sidebars: SidebarsConfig = {
         'guides/user-asides',
         'guides/parallel-work-tracks',
         'guides/self-hosting-dynamo',
+        'guides/house',
       ],
     },
     {
@@ -57,6 +58,7 @@ const sidebars: SidebarsConfig = {
         'plates/processor',
         'plates/reporting',
         'plates/memory-recall',
+        'plates/house',
       ],
     },
     'full-reference',

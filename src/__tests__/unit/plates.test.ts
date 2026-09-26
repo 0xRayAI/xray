@@ -25,6 +25,7 @@ describe('pipeline plates', () => {
       'processor',
       'reporting',
       'memory-recall',
+      'house',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -37,6 +38,7 @@ describe('pipeline plates', () => {
 
   it('recalls the processor plate from pre-processor speech and nothing from unrelated text', () => {
     expect(recallPlate('execute pre processors')?.id).toBe('processor');
+    expect(recallPlate('grok-bot house init')?.id).toBe('house');
     expect(recallPlate('survive the cut')).toBeNull();
     expect(recallPlate('unrelated bakery order')).toBeNull();
     expect(recallPlate('')).toBeNull();
@@ -46,6 +48,11 @@ describe('pipeline plates', () => {
       'Plate: processor — .xray/state/plates/processor.md',
     );
     expect(plateStockLine('survive the cut')).toBeNull();
+  });
+
+  it('does not recall house from a bare house word or when other plates tie', () => {
+    expect(recallPlate('in-house tooling review')).toBeNull();
+    expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
   it('stamps a missing worn plate and leaves an edited copy in place', () => {
