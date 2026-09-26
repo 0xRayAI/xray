@@ -355,13 +355,34 @@ function main() {
       const entry = mcp.mcpServers[name];
       const cli = path.join(tmpRoot, "node_modules", "0xray", "dist", "cli", "index.js");
       const args = Array.isArray(entry.args) ? entry.args.map(String) : [];
-      const pinnedNode = entry.command === "node" && args[0] === cli && args[1] === "mcp";
-      const pinnedNpx = entry.command === "npx" && args[0] === "-y" && /^0xray@\d/.test(args[1] || "") && args[2] === "mcp";
-      if (!pinnedNode && !pinnedNpx) {
-        throw new Error(`${name} must pin node CLI or npx 0xray@version, got ${entry.command} ${args.join(" ")}`);
+      if (entry.command !== "env" || args[0] !== "-i") {
+        throw new Error(`${name} must launch via env -i, got ${entry.command} ${args.join(" ")}`);
       }
-      if (args.includes("0xray")) {
+      let i = 1;
+      const assigned = [];
+      while (i < args.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(args[i])) {
+        assigned.push(args[i].split("=")[0]);
+        i += 1;
+      }
+      const inner = args.slice(i);
+      const pinnedNode = inner[0] === "node" && inner[1] === cli && inner[2] === "mcp";
+      const pinnedNpx =
+        inner[0] === "npx" && inner[1] === "-y" && /^0xray@\d/.test(inner[2] || "") && inner[3] === "mcp";
+      if (!pinnedNode && !pinnedNpx) {
+        throw new Error(`${name} must pin node CLI or npx 0xray@version inside env -i, got ${inner.join(" ")}`);
+      }
+      if (inner.includes("0xray")) {
         throw new Error(`${name} launched unpinned 0xray`);
+      }
+      for (const required of ["PATH", "HOME", "XRAY_ROOT"]) {
+        if (!assigned.includes(required)) {
+          throw new Error(`${name} scoped env missing ${required}`);
+        }
+      }
+      for (const banned of ["NPM_TOKEN", "CURSOR_AUTH_TOKEN", "GITHUB_TOKEN", "GH_TOKEN", "RAILWAY_TOKEN"]) {
+        if (assigned.includes(banned) || (entry.env && Object.prototype.hasOwnProperty.call(entry.env, banned))) {
+          throw new Error(`${name} inherited ${banned}`);
+        }
       }
     }
     console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} version-pinned MCP servers`);

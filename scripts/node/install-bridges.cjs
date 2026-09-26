@@ -22,6 +22,7 @@ const {
   wireOpencodeBridge,
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
+  scopedMcpLaunch,
   mergeMcpMap,
   mergeNamedRecords,
   jsonDeepEqual,
@@ -206,7 +207,7 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
         merged.agent = mergeNamedRecords(srcData.agent, destData.agent);
       }
       if (srcData.mcp || destData.mcp) {
-        merged.mcp = mergeMcpMap(srcData.mcp, destData.mcp);
+        merged.mcp = mergeMcpMap(srcData.mcp, destData.mcp, targetDir);
       }
       if (srcData.compaction || destData.compaction) {
         merged.compaction =
@@ -382,15 +383,13 @@ function registerGrokMcpServers(targetDir, log, pluginDirs) {
 
   for (const s of XRAY_MCP_SERVERS) {
     try {
-      const envEntries = { ...s.env, XRAY_ROOT: targetDir };
-      const envFlags = Object.entries(envEntries)
-        .map(([k, v]) => `--env "${k}=${v}"`)
-        .join(" ");
-      execSync(
-        `grok mcp add ${s.name} --command npx --args "-y" "0xray" "mcp" "${s.mcpCmd}" ${envFlags}`,
-        { stdio: "pipe" }
-      );
-      log("grok-bridge", `registered ${s.name} (npx)`, "info");
+      const launch = scopedMcpLaunch(targetDir, s.mcpCmd, s.env);
+      const argv = ["mcp", "add", s.name, "--command", launch.command, "--args", launch.args[0], ...launch.args.slice(1)];
+      for (const [key, value] of Object.entries(launch.env)) {
+        argv.push("--env", `${key}=${value}`);
+      }
+      execFileSync("grok", argv, { stdio: "pipe" });
+      log("grok-bridge", `registered ${s.name} (env -i)`, "info");
     } catch {
       // already registered or grok config conflict — non-blocking
     }

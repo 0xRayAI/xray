@@ -1320,6 +1320,7 @@ describe('foundry mill — inspect organ', () => {
         'ci',
         'live-put',
         'isolated-home',
+        'machinePlugin',
         'harness',
       ]);
       const isolatedHome = report.checks.find((c) => c.id === 'isolated-home') as {
@@ -1372,11 +1373,47 @@ describe('foundry mill — inspect organ', () => {
           isolated?: boolean;
           detail?: string;
         };
+        const stainedPlugin = stained.checks.find((c) => c.id === 'machinePlugin') as {
+          ok?: boolean;
+          detail?: string;
+          hits?: string[];
+        };
         expect(stained.ok).toBe(false);
-        expect(stained.failed).toContain('isolated-home');
-        expect(stainedHome.ok).toBe(false);
+        expect(stained.failed).toContain('machinePlugin');
+        expect(stained.failed).not.toContain('isolated-home');
+        expect(stainedHome.ok).toBe(true);
         expect(stainedHome.isolated).toBe(false);
-        expect(stainedHome.detail).toMatch(/delete it/);
+        expect(stainedHome.detail).toBeUndefined();
+        expect(stainedPlugin.ok).toBe(false);
+        expect(stainedPlugin.detail).toMatch(/delete it/);
+        expect(stainedPlugin.hits).toEqual([path.join(machineWithPlugin, '.grok', 'plugins', '0xray')]);
+        const isolatedStained = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: path.join(tmp, '.lastmile-home') },
+          machineHome: machineWithPlugin,
+        });
+        const isolatedHomeStained = isolatedStained.checks.find((c) => c.id === 'isolated-home') as {
+          ok?: boolean;
+          isolated?: boolean;
+        };
+        expect(isolatedHomeStained.ok).toBe(true);
+        expect(isolatedHomeStained.isolated).toBe(true);
+        expect(isolatedStained.ok).toBe(false);
+        expect(isolatedStained.failed).toEqual(['machinePlugin']);
+        rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray'), { recursive: true, force: true });
+        mkdirSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true });
+        const alt = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: machineWithPlugin },
+          machineHome: machineWithPlugin,
+        });
+        expect(alt.ok).toBe(false);
+        expect(alt.failed).toContain('machinePlugin');
+        const altHome = alt.checks.find((c) => c.id === 'isolated-home') as { ok?: boolean; isolated?: boolean };
+        expect(altHome.ok).toBe(true);
+        expect(altHome.isolated).toBe(false);
       } finally {
         rmSync(machineWithPlugin, { recursive: true, force: true });
       }

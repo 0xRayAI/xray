@@ -495,12 +495,17 @@ describe("install-bridges user-wins opencode merge and plugin shim", () => {
         })}\n`,
       );
       fs.writeFileSync(path.join(consumer, "opencode.json"), `${JSON.stringify(userFile, null, 2)}\n`);
-      const before = fs.readFileSync(path.join(consumer, "opencode.json"), "utf8");
       mergeOpencodeJson(consumer, root, () => undefined);
-      expect(fs.readFileSync(path.join(consumer, "opencode.json"), "utf8")).toBe(before);
-      const merged = JSON.parse(before) as {
+      const mergedRaw = fs.readFileSync(path.join(consumer, "opencode.json"), "utf8");
+      const merged = JSON.parse(mergedRaw) as {
         agent: { architect: { temperature: number }; custom: { temperature: number }; strategist: { temperature: number } };
-        mcp: { "xray-skills": { enabled: boolean; command: string[]; environment: { L1_MARKER_ENV: string } } };
+        mcp: {
+          "xray-skills": {
+            enabled: boolean;
+            command: string[];
+            environment: { L1_MARKER_ENV: string; XRAY_ROOT: string; PATH: string; HOME: string; NPM_TOKEN?: string };
+          };
+        };
         permission: { bash: string };
         compaction: { auto: boolean };
       };
@@ -508,10 +513,17 @@ describe("install-bridges user-wins opencode merge and plugin shim", () => {
       expect(merged.agent.custom.temperature).toBe(0.4);
       expect(merged.agent.strategist.temperature).toBe(1);
       expect(merged.mcp["xray-skills"].enabled).toBe(false);
-      expect(merged.mcp["xray-skills"].command[2]).toBe("0xray@4.0.27");
+      expect(merged.mcp["xray-skills"].command[0]).toBe("env");
+      expect(merged.mcp["xray-skills"].command[1]).toBe("-i");
+      expect(merged.mcp["xray-skills"].command).toContain("0xray@4.0.27");
+      expect(merged.mcp["xray-skills"].command).not.toContain("0xray");
       expect(merged.mcp["xray-skills"].environment.L1_MARKER_ENV).toBe("kept");
+      expect(merged.mcp["xray-skills"].environment.XRAY_ROOT).toBe(consumer);
+      expect(merged.mcp["xray-skills"].environment.NPM_TOKEN).toBeUndefined();
       expect(merged.permission.bash).toBe("ask");
       expect(merged.compaction.auto).toBe(false);
+      mergeOpencodeJson(consumer, root, () => undefined);
+      expect(fs.readFileSync(path.join(consumer, "opencode.json"), "utf8")).toBe(mergedRaw);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
       fs.rmSync(consumer, { recursive: true, force: true });
