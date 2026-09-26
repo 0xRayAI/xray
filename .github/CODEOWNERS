@@ -1,2 +1,4 @@
 /.ci/data-allowlist @htafolla
+/.ci/check-data.mjs @htafolla
+/.github/workflows/mill-ci.yml @htafolla
 /.gitignore @htafolla

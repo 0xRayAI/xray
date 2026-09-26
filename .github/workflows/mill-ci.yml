@@ -115,6 +115,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: Block checked-in run data
         run: node .ci/check-data.mjs
+      - name: Reject a suited rerun log
+        run: node .ci/check-data.mjs --self-check
 
   docs-build:
     name: Docs Build

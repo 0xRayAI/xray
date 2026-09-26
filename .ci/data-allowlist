@@ -10,11 +10,11 @@ examples/ben-proof/suited/proof/recall2.out
 # Pre-cut recall for session bc-bfb024b3, kept with the two logs the README cites.
 examples/ben-proof/suited/proof/recall-bc-bfb024b3-pre-cut.out
 
-# Baseline app with no 0xRay. The bench README still runs it (26 files).
-examples/ben-proof/dummy/**
+# Count only. The bench README still runs this baseline app (26 files). Log, out, rerun, and size rules still apply.
+count:examples/ben-proof/dummy/**
 
-# Suited harness for the same bench. Together with dummy, examples/ben-proof is over 20 files.
-examples/ben-proof/suited/**
+# Count only. With dummy, examples/ben-proof is over 20 files. The three recall logs above are the only out-file exemptions.
+count:examples/ben-proof/suited/**
 
-# Arm record already on main. 26 files sit in this directory.
-examples/killer-dual/**
+# Count only. 26 files already sit in this directory. Log, out, rerun, and size rules still apply.
+count:examples/killer-dual/**
