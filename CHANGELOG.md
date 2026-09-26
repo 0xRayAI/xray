@@ -43,6 +43,10 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [4.0.27] - 2026-09-25
 
+Next patch after npm `4.0.26`. Released 2026-09-26.
+
+A counted host compact needs a non-empty generation id and a numeric `context_usage_percent`. That hook line and per-session receipt are written on the suit mill and mirrored onto nested consumer wear roots. Memory scoring rules live in `docs/memory-scoring.md`. The orchestrator links that file and does not copy the rules. Companion package `@0xray/grok-bot@0.1.6`: one general operating page, a `house/` overlay that is not in that npm pack, `templates/house/` in the pack, `grok-bot house init` (copy, refuse to overwrite), and doctor lookup via `GROK_BOT_HOUSE` or a walk-up for `house/HOUSE.md`.
+
 ### 🔄 Changes
 
 ### 🐛 Bug Fixes
@@ -50,6 +54,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - fix: mirror preCompact proof to nested consumer wear roots (16b7481af)
 
 ### 📚 Documentation
+- feat(grok-bot): house init and shared house lookup (#128) (0f93687f2)
+- General operating page for grok-bot, with a fill-in house (#124) (17e02c5a7)
+- docs: orchestrator links memory-scoring (#127) (bca04dba8)
 - docs: add ben-proof suited compaction bench harness (13284b9d8)
 - docs: core audit fixes and a readable memory-scoring doc (#126) (23b370d1e)
 - docs: point 0xray at grok-bot/OP-PROC.md (#125) (53b1889dc)

@@ -7,7 +7,7 @@
 1. Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md`. If a file is missing, use the same name under `templates/house/`.
 2. Read `AGENTS.md` (order of operations + multiplicity).
 3. Open `SKILLS.md` and run skills in order for **each** key agent.
-4. No `house/` yet: skill `setup-house`.
+4. No `house/` yet: `npx @0xray/grok-bot house init` (skill `setup-house`). It copies `templates/house/` and refuses to overwrite. Doctor uses `GROK_BOT_HOUSE` if set, otherwise walks up for `house/HOUSE.md`.
 5. After a long chat or before coding: `skills/survive-compact/SKILL.md` — read disk, resume the live cloud, do not rebuild.
 
 ## Install

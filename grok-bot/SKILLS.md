@@ -15,7 +15,7 @@ Primary scripts for agents. Run in order for **each** key agent.
 | [ship-ready-mill-gate](skills/ship-ready-mill-gate/SKILL.md) | Strict ship checklist. Reviewer proof card is a short note |
 | [codex-fleet-constitution](skills/codex-fleet-constitution/SKILL.md) | Token discipline / fit-for-purpose |
 | [survive-compact](skills/survive-compact/SKILL.md) | After long wakes / before coding — re-read disk; chat may lose early turns |
-| [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — copy `templates/house/` and fill HOUSE.md |
+| [setup-house](skills/setup-house/SKILL.md) | No `house/` folder yet — `grok-bot house init` copies `templates/house/` and refuses to overwrite |
 | [fasten-suit-and-hangar](skills/fasten-suit-and-hangar/SKILL.md) | Legacy combined fasten (prefer per-agent skill above) |
 
 ## Board

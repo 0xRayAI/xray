@@ -11,7 +11,8 @@
 ## 0.1.6
 
 - General operating page, plus a House section that is the same for every team. This team's own house lives in `house/` and is not in the npm package.
-- `templates/house/` is the fill-in starter. Skill `setup-house` copies it. `grok-bot doctor` warns when `house/HOUSE.md` is missing and fails when example lines are still unfilled.
+- `templates/house/` is the fill-in starter. `grok-bot house init` copies it into `./house` and refuses if a target file already exists. Skill `setup-house` runs that command.
+- `grok-bot doctor` uses `GROK_BOT_HOUSE` when that path is set (the house directory or its `HOUSE.md`). A set path that is missing warns and does not walk. Otherwise doctor walks up from the working directory for `house/HOUSE.md`. No house file warns. Unfilled example lines fail.
 
 ## 0.1.5
 
