@@ -46,6 +46,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### 🔄 Changes
 
 ### 🐛 Bug Fixes
+- fix: a host compact proof requires a non-empty generation id and a numeric context_usage_percent (d869cbf79)
 - fix: mirror preCompact proof to nested consumer wear roots (16b7481af)
 
 ### 📚 Documentation

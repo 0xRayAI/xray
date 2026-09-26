@@ -25,7 +25,7 @@ Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and t
 
 `preCompact` labels `event_class`:
 
-- `cursor-host-precompact` — Cursor actually fired the hook
+- `cursor-host-precompact` — Cursor actually fired the hook. The event must carry a non-empty `generation_id` and a numeric `context_usage_percent`, plus the hook name or trigger. A token count or `trigger: auto` alone stays synthetic and does not write `cursor-hook.log` or `cursor-receipts/<sessionId>.json`.
 - `cursor-precompact-synthetic` — script invoked with `--event-class=cursor-precompact-synthetic` (Path C fallback)
 - `cursor-host-precompact-FAIL` — HOST-FIRE fill ran; host did not spawn `preCompact` (see `RECEIPT-HOST-PRECOMPACT.md`, `-2.md`, `-3.md`)
 - First live host fire (Arm S): `examples/killer-dual/RECEIPT-HOST-PRECOMPACT.md`
