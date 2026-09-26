@@ -582,6 +582,46 @@ describe('foundry mill — mint from consumer SSOT', () => {
       expect(agents).toContain('**acme-app**');
       expect(agents).toContain('(2.3.4)');
       expect(agents).not.toContain('{{CONSUMER_NAME}}');
+      expect(agents.startsWith('<!-- 0xray-managed:begin -->')).toBe(true);
+      expect(agents).toContain('<!-- 0xray-managed:end -->');
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('leaves a hand-edited AGENTS.md and writes AGENTS.md.0xray-new', () => {
+    const { deployManagedAgents } = requireCjs(path.join(root, 'scripts/node/postinstall.cjs')) as {
+      deployManagedAgents: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
+    };
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'xray-agents-guard-'));
+    try {
+      writeFileSync(
+        path.join(tmp, 'package.json'),
+        `${JSON.stringify({ name: 'acme-app', version: '2.3.4' }, null, 2)}\n`,
+      );
+      deployManagedAgents(root, tmp, () => undefined);
+      const agentsPath = path.join(tmp, 'AGENTS.md');
+      const managed = readFileSync(agentsPath, 'utf8');
+      const outside = `${managed.trimEnd()}\n\n## Local notes\nDo not clobber.\n`;
+      writeFileSync(agentsPath, outside);
+      const legacy = mkdtempSync(path.join(os.tmpdir(), 'xray-agents-legacy-'));
+      writeFileSync(path.join(legacy, 'package.json'), `${JSON.stringify({ name: 'acme-app', version: '1.0.0' })}\n`);
+      writeFileSync(path.join(legacy, 'AGENTS.md'), '# Hand edited\n\n<!-- 0xray-managed -->\n');
+      try {
+        deployManagedAgents(root, tmp, () => undefined);
+        expect(readFileSync(agentsPath, 'utf8')).toBe(outside);
+        const sidecar = readFileSync(path.join(tmp, 'AGENTS.md.0xray-new'), 'utf8');
+        expect(sidecar).toContain('<!-- 0xray-managed:begin -->');
+        expect(sidecar).toContain('**acme-app**');
+        expect(sidecar).not.toContain('## Local notes');
+
+        const legacyBefore = readFileSync(path.join(legacy, 'AGENTS.md'), 'utf8');
+        deployManagedAgents(root, legacy, () => undefined);
+        expect(readFileSync(path.join(legacy, 'AGENTS.md'), 'utf8')).toBe(legacyBefore);
+        expect(readFileSync(path.join(legacy, 'AGENTS.md.0xray-new'), 'utf8')).toContain('<!-- 0xray-managed:end -->');
+      } finally {
+        rmSync(legacy, { recursive: true, force: true });
+      }
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
@@ -1280,6 +1320,7 @@ describe('foundry mill — inspect organ', () => {
         'ci',
         'live-put',
         'isolated-home',
+        'machinePlugin',
         'harness',
       ]);
       const isolatedHome = report.checks.find((c) => c.id === 'isolated-home') as {
@@ -1305,6 +1346,7 @@ describe('foundry mill — inspect organ', () => {
       });
       expect(shared.ok, JSON.stringify(shared.checks, null, 2)).toBe(true);
       const sharedHome = shared.checks.find((c) => c.id === 'isolated-home') as {
+        ok?: boolean;
         isolated?: boolean;
         dest?: string;
         dests?: string[];
@@ -1315,6 +1357,66 @@ describe('foundry mill — inspect organ', () => {
       expect(sharedHome.machinePlugin).toBe('/Users/henry/.grok/plugins/0xray');
       expect(sharedHome.dest).not.toBe(sharedHome.machinePlugin);
       expect(sharedHome.dests).toEqual([path.join(tmp, '.grok', 'plugins', '0xray')]);
+      expect(sharedHome.ok).toBe(true);
+
+      const machineWithPlugin = mkdtempSync(path.join(os.tmpdir(), 'xray-machine-plugin-'));
+      mkdirSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray'), { recursive: true });
+      try {
+        const stained = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: machineWithPlugin },
+          machineHome: machineWithPlugin,
+        });
+        const stainedHome = stained.checks.find((c) => c.id === 'isolated-home') as {
+          ok?: boolean;
+          isolated?: boolean;
+          detail?: string;
+        };
+        const stainedPlugin = stained.checks.find((c) => c.id === 'machinePlugin') as {
+          ok?: boolean;
+          detail?: string;
+          hits?: string[];
+        };
+        expect(stained.ok).toBe(false);
+        expect(stained.failed).toContain('machinePlugin');
+        expect(stained.failed).not.toContain('isolated-home');
+        expect(stainedHome.ok).toBe(true);
+        expect(stainedHome.isolated).toBe(false);
+        expect(stainedHome.detail).toBeUndefined();
+        expect(stainedPlugin.ok).toBe(false);
+        expect(stainedPlugin.detail).toMatch(/delete it/);
+        expect(stainedPlugin.hits).toEqual([path.join(machineWithPlugin, '.grok', 'plugins', '0xray')]);
+        const isolatedStained = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: path.join(tmp, '.lastmile-home') },
+          machineHome: machineWithPlugin,
+        });
+        const isolatedHomeStained = isolatedStained.checks.find((c) => c.id === 'isolated-home') as {
+          ok?: boolean;
+          isolated?: boolean;
+        };
+        expect(isolatedHomeStained.ok).toBe(true);
+        expect(isolatedHomeStained.isolated).toBe(true);
+        expect(isolatedStained.ok).toBe(false);
+        expect(isolatedStained.failed).toEqual(['machinePlugin']);
+        rmSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray'), { recursive: true, force: true });
+        mkdirSync(path.join(machineWithPlugin, '.grok', 'plugins', '0xray-alt'), { recursive: true });
+        const alt = await inspectSuit(tmp, {
+          millRoot: root,
+          skipLive: true,
+          env: { HOME: machineWithPlugin },
+          machineHome: machineWithPlugin,
+        });
+        expect(alt.ok).toBe(false);
+        expect(alt.failed).toContain('machinePlugin');
+        const altHome = alt.checks.find((c) => c.id === 'isolated-home') as { ok?: boolean; isolated?: boolean };
+        expect(altHome.ok).toBe(true);
+        expect(altHome.isolated).toBe(false);
+      } finally {
+        rmSync(machineWithPlugin, { recursive: true, force: true });
+      }
       const receipt = JSON.parse(
         readFileSync(path.join(tmp, '.xray/foundry-inventory.json'), 'utf8'),
       ) as { dna: string };

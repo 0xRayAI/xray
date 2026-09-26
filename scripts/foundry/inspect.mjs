@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mill inspect organ. Runs the six plant checks plus observational harness.
+ * Mill inspect organ. Runs the plant checks, a machinePlugin check, and observational harness.
  * Not an 8th MCP. Not PPE. Does not fasten hooks or Repertoire.
  *
  *   npx @0xray/foundry inspect [--skip-live] [--go] [--go-out PATH]
@@ -515,7 +515,7 @@ export function packagesToProbe(root) {
   });
 }
 
-function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()) {
+export function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()) {
   const isolated = isIsolatedHome(env, machine);
   const machinePlugin = machineGrokPluginDir(machine);
   const dests = mint.resolveGrokPluginDests(root, env, machine);
@@ -539,6 +539,50 @@ function checkIsolatedHome(root, env = process.env, machine = mint.machineHome()
     machinePlugin,
     dest,
     dests,
+  };
+}
+
+function isXrayPluginName(name) {
+  return name === "0xray" || name.startsWith("0xray");
+}
+
+/** 0xray plugin dirs under the machine HOME's grok plugin folder. */
+export function machineXrayPluginPaths(machine = mint.machineHome()) {
+  const pluginsDir = path.join(machine, ".grok", "plugins");
+  if (!fs.existsSync(pluginsDir)) return [];
+  let names;
+  try {
+    names = fs.readdirSync(pluginsDir);
+  } catch {
+    return [];
+  }
+  return names
+    .filter((name) => isXrayPluginName(name))
+    .sort()
+    .map((name) => path.join(pluginsDir, name));
+}
+
+/**
+ * `isolated` stays HOME != machine home. This check is whether a machine-level
+ * 0xray Grok plugin exists. Overall inspect ok is false when this check fails.
+ */
+export function checkMachinePlugin(machine = mint.machineHome()) {
+  const machinePlugin = machineGrokPluginDir(machine);
+  const hits = machineXrayPluginPaths(machine);
+  if (hits.length > 0) {
+    return {
+      id: "machinePlugin",
+      ok: false,
+      machinePlugin,
+      hits,
+      detail: `machine-level ${hits.join(", ")} exists — delete it`,
+    };
+  }
+  return {
+    id: "machinePlugin",
+    ok: true,
+    machinePlugin,
+    hits: [],
   };
 }
 
@@ -584,6 +628,7 @@ export async function inspectSuit(root, opts = {}) {
   }
 
   checks.push(checkIsolatedHome(root, env, machineHome));
+  checks.push(checkMachinePlugin(machineHome));
   checks.push(checkHarness(root, requireHarness));
 
   const failed = checks.filter((c) => c.ok === false);
