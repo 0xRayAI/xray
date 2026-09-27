@@ -17,6 +17,8 @@ export interface SynthesisConsultReceipt {
   hardeningNote: string;
   todoId?: string;
   recordedAt?: string;
+  /** Synthesis plan generation this receipt belongs to. A previous cycle's PASS cannot clear the next s.N. */
+  cycleId?: string;
 }
 
 const CONSULT_TODO_PATTERN = /^s\.\d+$/;
@@ -52,13 +54,28 @@ export function writeSynthesisConsultReceipt(
 ): string {
   const receiptPath = synthesisConsultReceiptPath(todoId, projectRoot);
   fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
+  const cycleId = receipt.cycleId ?? readPlanConsultCycleId(projectRoot);
   const payload: SynthesisConsultReceipt = {
     ...receipt,
     todoId,
     recordedAt: receipt.recordedAt ?? new Date().toISOString(),
+    ...(cycleId ? { cycleId } : {}),
   };
   fs.writeFileSync(receiptPath, JSON.stringify(payload, null, 2));
   return receiptPath;
+}
+
+function readPlanConsultCycleId(projectRoot: string): string | undefined {
+  const planPath = path.join(projectRoot, '.xray', 'state', 'lead-dev-plan.json');
+  if (!fs.existsSync(planPath)) return undefined;
+  try {
+    const data = JSON.parse(fs.readFileSync(planPath, 'utf8')) as { consultCycleId?: unknown };
+    return typeof data.consultCycleId === 'string' && data.consultCycleId.trim()
+      ? data.consultCycleId
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function normalizeSubagent(agent: string): string {
@@ -90,7 +107,7 @@ export function consultVerdictBlocksCompletion(
 export function validateSynthesisConsultReceipt(
   receipt: SynthesisConsultReceipt,
   todoId: string,
-  expected?: { sessionId?: string | null; subagent?: string },
+  expected?: { sessionId?: string | null; subagent?: string; cycleId?: string },
 ): boolean {
   if (!receipt.sessionId || !receipt.subagent || !isValidVerdict(receipt.verdict)) {
     return false;
@@ -101,6 +118,7 @@ export function validateSynthesisConsultReceipt(
   if (expected?.subagent && !subagentsAlign(expected.subagent, receipt.subagent)) {
     return false;
   }
+  if (expected?.cycleId && receipt.cycleId !== expected.cycleId) return false;
   if (receipt.todoId && receipt.todoId !== todoId) return false;
   return true;
 }
@@ -108,7 +126,7 @@ export function validateSynthesisConsultReceipt(
 export function hasValidSynthesisConsultReceipt(
   todoId: string,
   projectRoot = process.cwd(),
-  expected?: { sessionId?: string | null; subagent?: string },
+  expected?: { sessionId?: string | null; subagent?: string; cycleId?: string },
 ): boolean {
   const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
   if (!receipt) return false;

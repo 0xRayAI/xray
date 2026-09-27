@@ -476,9 +476,11 @@ function consultReceiptsAreRealApproves(
 ): boolean {
   const todos = getSynthesisConsultTodos(plan);
   if (todos.length === 0) return false;
-  return todos.every(
-    (todo) => loadSynthesisConsultReceipt(todo.id, projectRoot)?.verdict === 'PASS',
-  );
+  return todos.every((todo) => {
+    const receipt = loadSynthesisConsultReceipt(todo.id, projectRoot);
+    if (receipt?.verdict !== 'PASS') return false;
+    return !plan.consultCycleId || receipt.cycleId === plan.consultCycleId;
+  });
 }
 
 const CONFER_AGENT_EMOJI: Record<string, string> = {

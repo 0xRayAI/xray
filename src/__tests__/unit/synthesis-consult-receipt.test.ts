@@ -180,4 +180,53 @@ describe('synthesis-consult-receipt', () => {
     expect(built?.verdict).toBe('UNREVIEWED');
     expect(built?.subagent).toBe('code-review');
   });
+
+  it('does not let a cycle-1 PASS complete cycle-2 s.1', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const cycle1 = buildSynthesisCheckpointPlan('cycle-1', tmp);
+    savePersistedLeadDevPlan(
+      { ...cycle1!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'cycle 1',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(true);
+
+    const cycle2 = buildSynthesisCheckpointPlan('cycle-2', tmp);
+    expect(cycle2?.consultCycleId).toBeTruthy();
+    expect(cycle2?.consultCycleId).not.toBe(cycle1?.consultCycleId);
+    savePersistedLeadDevPlan(
+      { ...cycle2!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'cycle 2',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(true);
+  });
 });

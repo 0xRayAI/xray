@@ -336,9 +336,10 @@ export function updatePlanTodoStatus(
   }
 
   if (status === 'completed' && isSynthesisConsultTodoId(todoId)) {
-    const receiptExpected: { sessionId?: string | null; subagent?: string } = {};
+    const receiptExpected: { sessionId?: string | null; subagent?: string; cycleId?: string } = {};
     if (plan.sessionId !== undefined) receiptExpected.sessionId = plan.sessionId;
     if (targetTodo?.subagent) receiptExpected.subagent = targetTodo.subagent;
+    if (plan.consultCycleId) receiptExpected.cycleId = plan.consultCycleId;
     if (!hasValidSynthesisConsultReceipt(todoId, projectRoot, receiptExpected)) {
       return false;
     }

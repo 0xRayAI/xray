@@ -3,6 +3,7 @@
  * Config: features.json → multi_agent_orchestration (lead_dev_mode), NOT a separate surface.
  */
 
+import { randomUUID } from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { featuresConfigLoader } from '../core/features-config.js';
@@ -69,6 +70,8 @@ export interface LeadDevPlan {
   mandatoryConsults: string[];
   phases: LeadDevPhase[];
   testProtocol: { perSuiteFirst: boolean; fullSuiteGate: boolean; hint: string };
+  /** New id each synthesis plan. Receipts from an older id cannot complete s.1–s.3. */
+  consultCycleId?: string;
 }
 
 const TASK_TYPE_ROUTES: Record<string, SubagentRoute> = {
@@ -196,6 +199,7 @@ export function buildSynthesisCheckpointPlan(
       fullSuiteGate: false,
       hint: 'Synthesis checkpoint — consult mandatory agents before resuming gated work',
     },
+    consultCycleId: randomUUID(),
   };
 }
 
