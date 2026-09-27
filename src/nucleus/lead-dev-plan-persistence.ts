@@ -15,6 +15,7 @@ import {
   recordExecutionSlice,
 } from './synthesis.js';
 import {
+  consultVerdictAllowsTodoCompletion,
   hasValidSynthesisConsultReceipt,
   isSynthesisConsultTodoId,
   loadSynthesisConsultReceipt,
@@ -342,7 +343,7 @@ export function updatePlanTodoStatus(
       return false;
     }
     const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
-    if (receipt?.verdict === 'FAIL') {
+    if (receipt && !consultVerdictAllowsTodoCompletion(receipt.verdict, projectRoot)) {
       return false;
     }
   }

@@ -7,7 +7,11 @@ export type LocalConferInput = {
   llmConfigured?: boolean | undefined;
 };
 
-/** Receipt when nested LLM is absent or returned no vote. Never approve — analyze_proposal feeds mergeVotes. */
+/**
+ * Receipt when nested LLM is absent or returned no vote.
+ * Never approve — analyze_proposal feeds mergeVotes.
+ * Decision stays abstain; a no-model abstain is UNREVIEWED on the consult receipt.
+ */
 export function localConferVote(input: LocalConferInput): GovernanceVote {
   const role = input.role;
   if (input.llmConfigured) {

@@ -15,6 +15,7 @@ import {
   codebaseStructure as architectCodebaseStructure,
   dependencyAnalysis as architectDependencyAnalysis,
   architectureAssessment as architectArchitectureAssessment,
+  formatConferArchitectureAssessment,
 } from "../architect/architect-tools.js";
 
 interface DirectoryNode {
@@ -242,7 +243,7 @@ class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
     const result = await architectArchitectureAssessment(projectRoot, assessmentType);
     const assessmentJson = JSON.stringify(result, null, 2);
     const text = conferPrompt.trim()
-      ? `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: CONDITIONAL\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`
+      ? formatConferArchitectureAssessment(conferPrompt, result)
       : assessmentJson;
 
     return {
