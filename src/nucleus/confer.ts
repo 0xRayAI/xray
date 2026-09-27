@@ -22,7 +22,6 @@ import {
   type SynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
-import { conferDefaultForProfile, resolveRuntimeSuitProfile } from './suit-temperament.js';
 
 export const CONFER_AGENTS = [...MANDATORY_MAJOR_CONSULTS] as const;
 
@@ -64,20 +63,20 @@ export function conferCheckpointPath(projectRoot = process.cwd()): string {
 }
 
 export function defaultConferConfig(): ConferConfig {
-  return { enabled: true, on_synthesis: true };
+  return { enabled: false, on_synthesis: false };
 }
 
+/** Fixture PASS is a test harness. Live orchestrate-task and XRAY_CONFER_FIXTURE cannot reach it. */
+export const CONFER_FIXTURE_UNREACHABLE = 'Confer fixture is unreachable outside tests';
+
+export function conferFixtureAllowed(): boolean {
+  return process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+}
+
+/** A suit profile does not enable Confer. Missing confer key stays off, including strict. */
 export function loadConferConfig(projectRoot = process.cwd()): ConferConfig {
   const featuresPath = path.join(projectRoot, '.xray', 'features.json');
-  const profile = resolveRuntimeSuitProfile(projectRoot);
-  if (profile === 'strict') {
-    return { enabled: true, on_synthesis: true };
-  }
-  if (!fs.existsSync(featuresPath)) {
-    return conferDefaultForProfile(profile)
-      ? defaultConferConfig()
-      : { enabled: false, on_synthesis: false };
-  }
+  if (!fs.existsSync(featuresPath)) return defaultConferConfig();
   try {
     const data = JSON.parse(fs.readFileSync(featuresPath, 'utf8')) as {
       multi_agent_orchestration?: {
@@ -87,18 +86,13 @@ export function loadConferConfig(projectRoot = process.cwd()): ConferConfig {
     };
     const orch = data.multi_agent_orchestration ?? {};
     const raw = orch.confer ?? {};
-    if (profile === 'frontier') {
-      const optedIn = raw.enabled === true || orch.confer_on_synthesis === true;
-      return { enabled: optedIn, on_synthesis: optedIn };
-    }
+    const optedIn = raw.enabled === true || orch.confer_on_synthesis === true;
     return {
-      enabled: raw.enabled !== false && orch.confer_on_synthesis !== false,
-      on_synthesis: raw.on_synthesis !== false && orch.confer_on_synthesis !== false,
+      enabled: optedIn,
+      on_synthesis: optedIn && raw.on_synthesis !== false,
     };
   } catch {
-    return conferDefaultForProfile(profile)
-      ? defaultConferConfig()
-      : { enabled: false, on_synthesis: false };
+    return defaultConferConfig();
   }
 }
 
@@ -307,6 +301,14 @@ export async function runConferQuorum(
     fixture?: boolean;
   } = {},
 ): Promise<ConferQuorumResult> {
+  if (options.fixture && !conferFixtureAllowed()) {
+    return {
+      status: 'failed',
+      agents: [],
+      message: CONFER_FIXTURE_UNREACHABLE,
+    };
+  }
+
   const cfg = loadConferConfig(projectRoot);
   if (!cfg.enabled || !cfg.on_synthesis) {
     return {

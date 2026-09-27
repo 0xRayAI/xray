@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Confer quorum fixture — 3-agent synthesis consult completes via fixture mode.
+ * Fixture PASS is reachable only when NODE_ENV=test (this harness) or VITEST.
  */
+process.env.NODE_ENV = 'test';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';

@@ -109,7 +109,7 @@ describe('lead-dev plan builder (internal)', () => {
         30,
         tmp,
       );
-      expect(isolated?.phases[0]?.todos.length).toBe(MANDATORY_MAJOR_CONSULTS.length);
+      expect(isolated?.phases[0]?.todos.length).toBe(0);
 
       fs.writeFileSync(
         path.join(tmp, '.xray', 'state', 'session-boot.json'),
@@ -123,6 +123,27 @@ describe('lead-dev plan builder (internal)', () => {
         tmp,
       );
       expect(frontier?.phases[0]?.todos.length).toBe(0);
+
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({
+          suit_temperament: { profile: 'auto' },
+          multi_agent_orchestration: {
+            enabled: true,
+            lead_dev_mode: true,
+            auto_consult_major_work: true,
+            confer: { enabled: true },
+          },
+        }),
+      );
+      const optedIn = buildLeadDevPlan(
+        'Aside worktree isolation',
+        ['implement'],
+        [{ description: 'aside impl', type: 'implement' }],
+        30,
+        tmp,
+      );
+      expect(optedIn?.phases[0]?.todos.length).toBe(MANDATORY_MAJOR_CONSULTS.length);
       expect(frontier?.phases[1]?.todos.length).toBeGreaterThan(0);
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
