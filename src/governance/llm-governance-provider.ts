@@ -209,20 +209,48 @@ function runHermesGovernanceInference(
   ).trim();
 }
 
+function sanitizeVoteReasoning(reasoning: string): string {
+  return reasoning
+    .split("\n")
+    .map((line) =>
+      /^\s*(?:[-*•]\s*)?(?:Verdict:|DECISION:)/i.test(line) ? `> ${line.trim()}` : line,
+    )
+    .join("\n")
+    .trim();
+}
+
 function parseVote(text: string): GovernanceVote | null {
-  const decisionMatch = text.match(/DECISION:\s*(approve|reject|abstain)/i);
-  const confidenceMatch = text.match(/CONFIDENCE:\s*([0-9.]+)/i);
-  const reasoningMatch = text.match(/REASONING:\s*(.+)/is);
+  // First exact token before REASONING. The prompt menu and anything the model
+  // writes inside the reasoning body are not a second vote.
+  const lines = text.split("\n");
+  const reasoningIdx = lines.findIndex((line) => /^REASONING:/i.test(line.trim()));
+  const headerLines = reasoningIdx < 0 ? lines : lines.slice(0, reasoningIdx);
+  let decisionWord: string | undefined;
+  for (const line of headerLines) {
+    const match = line.trim().match(/^DECISION:\s*(approve|reject|abstain)\s*$/i);
+    if (match?.[1]) {
+      decisionWord = match[1];
+      break;
+    }
+  }
+  if (!decisionWord) return null;
 
-  if (!decisionMatch || !decisionMatch[1]) return null;
-
+  const header = headerLines.join("\n");
+  const confidenceMatch = header.match(/CONFIDENCE:\s*([0-9.]+)/i);
   const rawConfidence = confidenceMatch?.[1];
   const confidence = rawConfidence ? parseFloat(rawConfidence) : 0.5;
+  const reasoningBody =
+    reasoningIdx < 0
+      ? ""
+      : lines
+          .slice(reasoningIdx)
+          .join("\n")
+          .replace(/^REASONING:\s*/i, "");
 
   return {
-    decision: decisionMatch[1].toLowerCase() as "approve" | "reject" | "abstain",
-    confidence: isNaN(confidence) ? 0.5 : Math.min(1, Math.max(0, confidence)),
-    reasoning: reasoningMatch?.[1]?.trim() || "No reasoning provided",
+    decision: decisionWord.toLowerCase() as "approve" | "reject" | "abstain",
+    confidence: Number.isNaN(confidence) ? 0.5 : Math.min(1, Math.max(0, confidence)),
+    reasoning: sanitizeVoteReasoning(reasoningBody) || "No reasoning provided",
   };
 }
 

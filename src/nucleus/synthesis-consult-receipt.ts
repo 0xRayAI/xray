@@ -108,26 +108,58 @@ export function hasValidSynthesisConsultReceipt(
   return validateSynthesisConsultReceipt(receipt, todoId, expected);
 }
 
-export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
-  const normalized = text.toUpperCase();
-  const decisionMatch = text.match(/\bDECISION:\s*(\w+)/i);
-  if (decisionMatch) {
-    const decision = decisionMatch[1]!.toLowerCase();
-    if (decision === 'approve' || decision === 'approved' || decision === 'pass') {
-      return 'PASS';
-    }
-    if (decision === 'reject' || decision === 'rejected' || decision === 'fail') {
-      return 'FAIL';
-    }
-    if (
-      decision === 'abstain' ||
-      decision === 'needs_revision' ||
-      decision === 'conditional' ||
-      decision === 'revise'
-    ) {
-      return 'CONDITIONAL';
-    }
+const EXPLICIT_VERDICT_LINE = /^Verdict:\s*(PASS|CONDITIONAL|FAIL)\s*$/i;
+const DECISION_LINE =
+  /^DECISION:\s*(approve|reject|abstain|approved|rejected|pass|fail|needs_revision|conditional|revise)\s*$/i;
+
+function lineWithoutBullet(rawLine: string): string {
+  return rawLine.trim().replace(/^[-*•]\s*/, '');
+}
+
+function splitAtReasoning(text: string): { header: string; reasoning: string | null } {
+  const lines = text.split('\n');
+  const idx = lines.findIndex((rawLine) => /^REASONING:/i.test(lineWithoutBullet(rawLine)));
+  if (idx < 0) return { header: text, reasoning: null };
+  return {
+    header: lines.slice(0, idx).join('\n'),
+    reasoning: lines.slice(idx).join('\n'),
+  };
+}
+
+/** First exact DECISION line before REASONING. A menu or a line inside the reasoning body is not a vote. */
+function firstHeaderDecision(text: string): SynthesisConsultVerdict | null {
+  const { header } = splitAtReasoning(text);
+  for (const rawLine of header.split('\n')) {
+    const match = lineWithoutBullet(rawLine).match(DECISION_LINE);
+    const decision = match?.[1]?.toLowerCase();
+    if (!decision) continue;
+    if (decision === 'approve' || decision === 'approved' || decision === 'pass') return 'PASS';
+    if (decision === 'reject' || decision === 'rejected' || decision === 'fail') return 'FAIL';
+    return 'CONDITIONAL';
   }
+  return null;
+}
+
+function lastExplicitVerdictLine(text: string): SynthesisConsultVerdict | null {
+  let found: SynthesisConsultVerdict | null = null;
+  for (const rawLine of text.split('\n')) {
+    const match = lineWithoutBullet(rawLine).match(EXPLICIT_VERDICT_LINE);
+    if (match?.[1]) found = match[1].toUpperCase() as SynthesisConsultVerdict;
+  }
+  return found;
+}
+
+export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
+  const decision = firstHeaderDecision(text);
+  if (decision) return decision;
+
+  // Verdict lines inside REASONING are model text, not the vote.
+  const { header, reasoning } = splitAtReasoning(text);
+  const scanTarget = reasoning === null ? text : header;
+  const explicit = lastExplicitVerdictLine(scanTarget);
+  if (explicit) return explicit;
+
+  const normalized = scanTarget.toUpperCase();
   if (/\bCONDITIONAL(\s+PASS)?\b/.test(normalized)) return 'CONDITIONAL';
   if (/\b(?:PASS|SHIP|APPROVE)\b/.test(normalized)) return 'PASS';
   if (/\b(?:FAIL|REJECT)\b/.test(normalized)) return 'FAIL';

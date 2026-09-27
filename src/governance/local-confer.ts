@@ -32,6 +32,17 @@ export function localConferVote(input: LocalConferInput): GovernanceVote {
   };
 }
 
+/** Stop a model from planting a second DECISION or Verdict line inside the reasoning body. */
+export function sanitizeGovernanceReasoning(reasoning: string): string {
+  return reasoning
+    .split("\n")
+    .map((line) =>
+      /^\s*(?:[-*•]\s*)?(?:Verdict:|DECISION:)/i.test(line) ? `> ${line.trim()}` : line,
+    )
+    .join("\n");
+}
+
 export function formatGovernanceVoteText(vote: GovernanceVote, extra = ""): string {
-  return `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${vote.reasoning}${extra}`;
+  const reasoning = sanitizeGovernanceReasoning(vote.reasoning);
+  return `DECISION: ${vote.decision}\nCONFIDENCE: ${vote.confidence.toFixed(2)}\nREASONING: ${reasoning}${extra}`;
 }
