@@ -8,6 +8,11 @@
 - **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
 - groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
 
+## 0.1.7
+
+- `grok-bot house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md. It does not copy EXAMPLE.md.
+- `grok-bot doctor` FAILs while `house/EXAMPLE.md` exists. The message says to delete it.
+
 ## 0.1.6
 
 - General operating page, plus a House section that is the same for every team. This team's own house lives in `house/` and is not in the npm package.
