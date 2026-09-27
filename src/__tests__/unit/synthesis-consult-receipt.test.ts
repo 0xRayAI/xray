@@ -21,9 +21,20 @@ describe('synthesis-consult-receipt', () => {
   const sessionId = 'receipt-test-session';
 
   it('parses verdict tokens from consult output', () => {
-    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBe('CONDITIONAL');
-    expect(parseConsultVerdictFromText('Code review: SHIP')).toBe('PASS');
-    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Code review: SHIP')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Verdict: PASS')).toBe('PASS');
+    expect(parseConsultVerdictFromText('Verdict: FAIL')).toBe('FAIL');
+  });
+
+  it.each([
+    'NOT PASS',
+    'PASS? no, FAIL',
+    'This does not pass. FAIL.',
+    'I reject this; would not approve',
+  ])('treats ambiguous review text as UNREVIEWED: %s', (text) => {
+    expect(parseConsultVerdictFromText(text)).toBe('UNREVIEWED');
   });
 
   it('keeps DECISION reject when reasoning injects Verdict PASS', () => {
@@ -150,7 +161,7 @@ describe('synthesis-consult-receipt', () => {
       'Architecture consult complete. CONDITIONAL PASS — consult receipt gate recommended.',
       tmp,
     );
-    expect(receipt?.verdict).toBe('CONDITIONAL');
+    expect(receipt?.verdict).toBe('UNREVIEWED');
     expect(
       hasValidSynthesisConsultReceipt('s.2', tmp, {
         sessionId,
@@ -166,7 +177,7 @@ describe('synthesis-consult-receipt', () => {
       sessionId,
       'Review complete. PASS — align sessionId between seed and Grok hooks.',
     );
-    expect(built?.verdict).toBe('PASS');
+    expect(built?.verdict).toBe('UNREVIEWED');
     expect(built?.subagent).toBe('code-review');
   });
 });

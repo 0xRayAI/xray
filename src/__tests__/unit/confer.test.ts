@@ -122,6 +122,13 @@ describe('confer quorum SSOT', () => {
     expect(parseConsultVerdictFromText('DECISION: abstain\n')).toBe('CONDITIONAL');
   });
 
+  it('does not treat an echoed verdict menu as a pass', () => {
+    const echo = '- Verdict: PASS | CONDITIONAL | FAIL';
+    expect(parseConsultVerdictFromText(echo)).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText(`${echo}\nVerdict: FAIL`)).toBe('FAIL');
+    expect(parseConsultVerdictFromText(`${echo}\nVerdict: PASS`)).toBe('PASS');
+  });
+
   it('FAIL verdict records receipt but does not complete todo', () => {
     const plan = buildSynthesisCheckpointPlan('due');
     savePersistedLeadDevPlan(

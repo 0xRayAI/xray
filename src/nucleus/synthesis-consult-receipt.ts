@@ -116,6 +116,7 @@ export function hasValidSynthesisConsultReceipt(
 }
 
 const EXPLICIT_VERDICT_LINE = /^Verdict:\s*(PASS|CONDITIONAL|FAIL|UNREVIEWED)\s*$/i;
+const VERDICT_OPTION_ECHO = /\bPASS\s*\|\s*CONDITIONAL\s*\|\s*FAIL\b/i;
 const DECISION_LINE =
   /^DECISION:\s*(approve|reject|abstain|approved|rejected|pass|fail|needs_revision|conditional|revise)\s*$/i;
 
@@ -153,6 +154,16 @@ function firstHeaderDecision(text: string): SynthesisConsultVerdict | null {
   return null;
 }
 
+function hasAmbiguousVerdictLine(text: string): boolean {
+  for (const rawLine of text.split('\n')) {
+    const line = lineWithoutBullet(rawLine);
+    if (!/^Verdict:/i.test(line)) continue;
+    if (EXPLICIT_VERDICT_LINE.test(line)) continue;
+    return true;
+  }
+  return false;
+}
+
 function lastExplicitVerdictLine(text: string): SynthesisConsultVerdict | null {
   let found: SynthesisConsultVerdict | null = null;
   for (const rawLine of text.split('\n')) {
@@ -172,10 +183,11 @@ export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdi
   const explicit = lastExplicitVerdictLine(scanTarget);
   if (explicit) return explicit;
 
-  const normalized = scanTarget.toUpperCase();
-  if (/\bCONDITIONAL(\s+PASS)?\b/.test(normalized)) return 'CONDITIONAL';
-  if (/\b(?:PASS|SHIP|APPROVE)\b/.test(normalized)) return 'PASS';
-  if (/\b(?:FAIL|REJECT)\b/.test(normalized)) return 'FAIL';
+  if (!text.trim()) return null;
+  if (hasAmbiguousVerdictLine(text) || VERDICT_OPTION_ECHO.test(text)) return 'UNREVIEWED';
+  if (/\b(?:PASS|FAIL|CONDITIONAL|UNREVIEWED|SHIP|APPROVE|REJECT)\b/i.test(text)) {
+    return 'UNREVIEWED';
+  }
   return null;
 }
 
