@@ -8,10 +8,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { XrayKnowledgeSkillBase } from "../shared/knowledge-skill-base.js";
-import {
-  isGovernanceLlmConfigured,
-  tryLLMGovernance,
-} from "../../governance/llm-governance-provider.js";
+import { attemptLLMGovernance } from "../../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
 
 interface SecurityVulnerability {
@@ -999,17 +996,19 @@ class XraySecurityAuditServer extends XrayKnowledgeSkillBase {
   async analyzeProposal(args: AnalyzeProposalArgs) {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args;
 
+    const attempt = await attemptLLMGovernance(
+      "security-audit",
+      proposalTitle,
+      proposalDescription,
+      evidence,
+      proposalType,
+    );
     const vote =
-      (await tryLLMGovernance(
-        "security-audit",
-        proposalTitle,
-        proposalDescription,
-        evidence,
-        proposalType,
-      )) ??
+      attempt.vote ??
       localConferVote({
         role: "security-audit",
-        llmConfigured: isGovernanceLlmConfigured(),
+        llmConfigured: attempt.miss !== "not-configured",
+        ...(attempt.miss ? { miss: attempt.miss } : {}),
       });
 
     return {

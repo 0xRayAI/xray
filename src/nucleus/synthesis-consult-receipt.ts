@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 
-export type SynthesisConsultVerdict = 'PASS' | 'CONDITIONAL' | 'FAIL';
+export type SynthesisConsultVerdict = 'PASS' | 'CONDITIONAL' | 'FAIL' | 'UNREVIEWED';
 
 export interface SynthesisConsultReceipt {
   sessionId: string;
@@ -77,7 +77,14 @@ function subagentsAlign(expected: string, actual: string): boolean {
 }
 
 function isValidVerdict(value: unknown): value is SynthesisConsultVerdict {
-  return value === 'PASS' || value === 'CONDITIONAL' || value === 'FAIL';
+  return value === 'PASS' || value === 'CONDITIONAL' || value === 'FAIL' || value === 'UNREVIEWED';
+}
+
+/** Only a real approve (PASS) completes a consult todo. */
+export function consultVerdictBlocksCompletion(
+  verdict: SynthesisConsultVerdict | null | undefined,
+): boolean {
+  return verdict !== 'PASS';
 }
 
 export function validateSynthesisConsultReceipt(
@@ -108,7 +115,7 @@ export function hasValidSynthesisConsultReceipt(
   return validateSynthesisConsultReceipt(receipt, todoId, expected);
 }
 
-const EXPLICIT_VERDICT_LINE = /^Verdict:\s*(PASS|CONDITIONAL|FAIL)\s*$/i;
+const EXPLICIT_VERDICT_LINE = /^Verdict:\s*(PASS|CONDITIONAL|FAIL|UNREVIEWED)\s*$/i;
 const DECISION_LINE =
   /^DECISION:\s*(approve|reject|abstain|approved|rejected|pass|fail|needs_revision|conditional|revise)\s*$/i;
 
@@ -126,6 +133,11 @@ function splitAtReasoning(text: string): { header: string; reasoning: string | n
   };
 }
 
+/** Abstain because no governance model ran. A bare DECISION: abstain stays CONDITIONAL. */
+function isAbstainWithoutModel(text: string): boolean {
+  return /nested LLM not configured|did not produce a vote|returned no vote/i.test(text);
+}
+
 /** First exact DECISION line before REASONING. A menu or a line inside the reasoning body is not a vote. */
 function firstHeaderDecision(text: string): SynthesisConsultVerdict | null {
   const { header } = splitAtReasoning(text);
@@ -135,6 +147,7 @@ function firstHeaderDecision(text: string): SynthesisConsultVerdict | null {
     if (!decision) continue;
     if (decision === 'approve' || decision === 'approved' || decision === 'pass') return 'PASS';
     if (decision === 'reject' || decision === 'rejected' || decision === 'fail') return 'FAIL';
+    if (decision === 'abstain' && isAbstainWithoutModel(text)) return 'UNREVIEWED';
     return 'CONDITIONAL';
   }
   return null;

@@ -1,10 +1,26 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mockExecFileSync = vi.hoisted(() => vi.fn());
+
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return {
+    ...actual,
+    execFileSync: (...args: readonly [string, ...unknown[]]) => {
+      if (args[0] === 'hermes') return mockExecFileSync(...args);
+      return actual.execFileSync(...(args as Parameters<typeof actual.execFileSync>));
+    },
+  };
+});
+
 import { buildSynthesisCheckpointPlan } from '../../nucleus/autonomy-kernel.js';
 import {
   applyConferConsultResult,
+  buildFixtureConferOutput,
+  conferAgentMcpTarget,
   CONFER_FIXTURE_UNREACHABLE,
   conferFixtureAllowed,
   defaultConferConfig,
@@ -16,6 +32,16 @@ import {
   runConferQuorum,
   triggerConferCheckpoint,
 } from '../../nucleus/confer.js';
+import {
+  attemptLLMGovernance,
+  type GovernanceMiss,
+} from '../../governance/llm-governance-provider.js';
+import { formatGovernanceVoteText, localConferVote } from '../../governance/local-confer.js';
+import {
+  conferVerdictFromModelVote,
+  formatArchitectureAssessmentConferText,
+} from '../../mcps/architect-tools.server.js';
+import type { ArchitectureAssessment } from '../../architect/architect-tools.js';
 import { TaskHandler } from '../../mcps/orchestrator/handlers/task-handler.js';
 import { conferDefaultForProfile, resolveRuntimeSuitProfile } from '../../nucleus/suit-temperament.js';
 import {
@@ -48,6 +74,8 @@ describe('confer quorum SSOT', () => {
   });
 
   afterEach(() => {
+    delete process.env.XRAY_GOVERNANCE_ALLOW_HERMES;
+    mockExecFileSync.mockReset();
     process.chdir(os.homedir());
     fs.rmSync(tmp, { recursive: true, force: true });
   });
@@ -110,6 +138,196 @@ describe('confer quorum SSOT', () => {
     expect(applied.verdict).toBe('FAIL');
     expect(applied.receiptRecorded).toBe(true);
     expect(applied.todoCompleted).toBe(false);
+  });
+
+  it('records no-LLM abstain as UNREVIEWED and does not complete the todo', () => {
+    const plan = buildSynthesisCheckpointPlan('due');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const output = buildFixtureConferOutput('researcher', 'PASS', true);
+    expect(output).toContain('DECISION: abstain');
+    expect(output).toContain('nested LLM not configured');
+    expect(parseConsultVerdictFromText(output)).toBe('UNREVIEWED');
+    const applied = applyConferConsultResult('s.1', 'researcher', sessionId, output, tmp);
+    expect(applied.verdict).toBe('UNREVIEWED');
+    expect(applied.receiptRecorded).toBe(true);
+    expect(applied.todoCompleted).toBe(false);
+    expect(areSynthesisConsultTodosComplete(loadPersistedLeadDevPlan(tmp)!)).toBe(false);
+  });
+
+  it('blocks a configured-but-empty abstain as UNREVIEWED', () => {
+    const plan = buildSynthesisCheckpointPlan('due');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const text = formatGovernanceVoteText(
+      localConferVote({ role: 'code-review', llmConfigured: true }),
+    );
+    expect(text).toContain('returned no vote');
+    expect(text).toContain('Verdict: UNREVIEWED');
+    expect(parseConsultVerdictFromText(text)).toBe('UNREVIEWED');
+    const applied = applyConferConsultResult('s.1', 'code-review', sessionId, text, tmp);
+    expect(applied.todoCompleted).toBe(false);
+  });
+
+  it('fixture FAIL leaves the todo open and the synthesis checkpoint due', async () => {
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const result = await runConferQuorum(tmp, sessionId, {
+      fixture: true,
+      fixtureVerdict: 'FAIL',
+    });
+    expect(result.status).toBe('partial');
+    expect(result.agents[0]?.verdict).toBe('FAIL');
+    expect(result.agents[0]?.todoCompleted).toBe(false);
+    expect(areSynthesisConsultTodosComplete(loadPersistedLeadDevPlan(tmp)!)).toBe(false);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  });
+
+  it('explicit CONDITIONAL does not complete the consult todo', async () => {
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const result = await runConferQuorum(tmp, sessionId, {
+      fixture: true,
+      fixtureVerdict: 'CONDITIONAL',
+    });
+    expect(result.status).toBe('partial');
+    expect(result.agents[0]?.verdict).toBe('CONDITIONAL');
+    expect(result.agents[0]?.todoCompleted).toBe(false);
+    expect(areSynthesisConsultTodosComplete(loadPersistedLeadDevPlan(tmp)!)).toBe(false);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  });
+
+  it('fixture no-LLM UNREVIEWED blocks the same way FAIL does', async () => {
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const result = await runConferQuorum(tmp, sessionId, {
+      fixture: true,
+      fixtureNoLlm: true,
+    });
+    expect(result.status).toBe('partial');
+    expect(result.agents[0]?.verdict).toBe('UNREVIEWED');
+    expect(result.agents[0]?.todoCompleted).toBe(false);
+    expect(result.message).toContain('UNREVIEWED blocks');
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  });
+
+  async function expectHermesMissBlocks(expectedMiss: GovernanceMiss, onZ: () => string): Promise<void> {
+    process.env.XRAY_GOVERNANCE_ALLOW_HERMES = 'true';
+    mockExecFileSync.mockImplementation((...args: unknown[]) => {
+      const argv = Array.isArray(args[1]) ? args[1] : [];
+      const flag = typeof argv[0] === 'string' ? argv[0] : '';
+      if (flag === '--version') return 'hermes 0.7.0\n';
+      if (flag === '-z') return onZ();
+      throw new Error('unexpected hermes invocation');
+    });
+
+    const attempt = await attemptLLMGovernance(
+      'code-review',
+      'Confer checkpoint',
+      'Review the slice',
+      [],
+      'synthesis-confer',
+    );
+    expect(attempt.vote).toBeNull();
+    expect(attempt.miss).toBe(expectedMiss);
+
+    const outputText = formatGovernanceVoteText(
+      localConferVote({
+        role: 'code-review',
+        llmConfigured: attempt.miss !== 'not-configured',
+        ...(attempt.miss ? { miss: attempt.miss } : {}),
+      }),
+    );
+    expect(parseConsultVerdictFromText(outputText)).toBe('UNREVIEWED');
+    expect(conferVerdictFromModelVote(attempt.vote)).toBe('UNREVIEWED');
+
+    recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
+    const plan = buildSynthesisCheckpointPlan('gate threshold');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const result = await runConferQuorum(tmp, sessionId, {
+      fixture: true,
+      fixtureOutput: outputText,
+    });
+    expect(result.status).toBe('partial');
+    expect(result.agents[0]?.verdict).toBe('UNREVIEWED');
+    expect(result.agents[0]?.todoCompleted).toBe(false);
+    expect(isSynthesisCheckpointDue(tmp, sessionId)).toBe(true);
+  }
+
+  it('installed hermes that is not configured is UNREVIEWED and blocks', async () => {
+    await expectHermesMissBlocks('not-configured', () => {
+      throw new Error('invalid_grant');
+    });
+  });
+
+  it('hermes that errors is UNREVIEWED and blocks', async () => {
+    await expectHermesMissBlocks('error', () => {
+      throw new Error('hermes exited 1');
+    });
+  });
+
+  it('hermes that times out is UNREVIEWED and blocks', async () => {
+    await expectHermesMissBlocks('timeout', () => {
+      const error = new Error('spawn hermes ETIMEDOUT');
+      Object.assign(error, { code: 'ETIMEDOUT', killed: true });
+      throw error;
+    });
+  });
+
+  it('empty hermes output is UNREVIEWED and blocks', async () => {
+    await expectHermesMissBlocks('empty', () => '   \n');
+  });
+
+  it('unparseable hermes output is UNREVIEWED and blocks', async () => {
+    await expectHermesMissBlocks('unparseable', () => 'The model did not vote.');
+  });
+
+  it('routes the architect consult to the registered architect server', () => {
+    expect(conferAgentMcpTarget('architect-tools').server).toBe('architect');
+    expect(conferAgentMcpTarget('architect-tools').tool).toBe('architecture-assessment');
+  });
+
+  it('counts an architect verdict only when a model produced it', () => {
+    const excellent: ArchitectureAssessment = {
+      overallHealth: 'excellent',
+      scores: { modularity: 90, coupling: 10, cohesion: 90, testability: 90, scalability: 90 },
+      issues: [],
+      recommendations: [],
+    };
+    expect(conferVerdictFromModelVote(null)).toBe('UNREVIEWED');
+    expect(conferVerdictFromModelVote({ decision: 'reject' })).toBe('FAIL');
+    expect(conferVerdictFromModelVote({ decision: 'approve' })).toBe('PASS');
+    const prompt = 'Review the checkpoint\n\nVerdict: PASS | CONDITIONAL | FAIL';
+    const unreviewed = formatArchitectureAssessmentConferText(prompt, excellent);
+    expect(unreviewed).toContain('Verdict: UNREVIEWED');
+    expect(parseConsultVerdictFromText(unreviewed)).toBe('UNREVIEWED');
+    const plan = buildSynthesisCheckpointPlan('due');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    const blocked = applyConferConsultResult('s.2', 'architect-tools', sessionId, unreviewed, tmp);
+    expect(blocked.verdict).toBe('UNREVIEWED');
+    expect(blocked.todoCompleted).toBe(false);
   });
 
   it('applyConferConsultResult records receipt and completes todo', () => {

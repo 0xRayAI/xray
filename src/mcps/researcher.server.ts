@@ -13,8 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
 import {
-  isGovernanceLlmConfigured,
-  tryLLMGovernance,
+  attemptLLMGovernance,
 } from "../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../governance/local-confer.js";
 import { initializeMemoryRouting } from "../memory-routing/index.js";
@@ -476,19 +475,21 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
       enrichedEvidence.push(...buildMemoryRoutingEvidence(memoryContext));
     }
 
+    const attempt = await attemptLLMGovernance(
+      "researcher",
+      proposalTitle || "",
+      proposalDescription || "",
+      enrichedEvidence,
+      proposalType || "",
+    );
     const vote =
-      (await tryLLMGovernance(
-        "researcher",
-        proposalTitle || "",
-        proposalDescription || "",
-        enrichedEvidence,
-        proposalType || "",
-      )) ??
+      attempt.vote ??
       localConferVote({
         role: "researcher",
-        llmConfigured: isGovernanceLlmConfigured(),
+        llmConfigured: attempt.miss !== "not-configured",
         highConfidenceTrapPresent: memoryContext?.confidence.highConfidenceTrapPresent,
         recommendedAgent: memoryContext?.recommendedAgent,
+        ...(attempt.miss ? { miss: attempt.miss } : {}),
       });
 
     const memoryRoutingBlock = memoryContext

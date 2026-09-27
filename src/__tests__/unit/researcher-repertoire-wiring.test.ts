@@ -101,6 +101,7 @@ vi.mock('../../memory-routing/index.js', async (importOriginal) => {
 });
 
 vi.mock('../../governance/llm-governance-provider.js', () => ({
+  attemptLLMGovernance: vi.fn().mockResolvedValue({ vote: null, miss: 'not-configured' }),
   tryLLMGovernance: vi.fn().mockResolvedValue(null),
   isGovernanceLlmConfigured: () => false,
 }));

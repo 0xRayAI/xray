@@ -17,10 +17,13 @@ import {
 } from './lead-dev-plan-persistence.js';
 import {
   buildReceiptFromConsultOutput,
+  consultVerdictBlocksCompletion,
+  loadSynthesisConsultReceipt,
   tryRecordSynthesisConsultReceipt,
   parseConsultVerdictFromText,
   type SynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
+import { formatGovernanceVoteText, localConferVote } from '../governance/local-confer.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
 
 export const CONFER_AGENTS = [...MANDATORY_MAJOR_CONSULTS] as const;
@@ -185,7 +188,7 @@ export function conferAgentMcpTarget(subagent: string): {
   switch (subagent) {
     case 'architect-tools':
       return {
-        server: 'architect-tools',
+        server: 'architect',
         tool: 'architecture-assessment',
         args: (prompt, projectRoot) => ({
           projectRoot,
@@ -248,7 +251,7 @@ export async function invokeConferAgent(
   }
   if (!parseConsultVerdictFromText(text)) {
     throw new Error(
-      `Confer response from ${subagent} missing parseable verdict (expected Verdict: PASS|CONDITIONAL|FAIL or DECISION: approve|reject|abstain)`,
+      `Confer response from ${subagent} missing parseable verdict (expected an explicit Verdict: PASS|CONDITIONAL|FAIL|UNREVIEWED line, or DECISION: approve|reject|abstain)`,
     );
   }
   return text;
@@ -269,7 +272,7 @@ export function applyConferConsultResult(
     projectRoot,
   );
   let todoCompleted = false;
-  if (receipt && receipt.verdict !== 'FAIL') {
+  if (receipt && !consultVerdictBlocksCompletion(receipt.verdict)) {
     todoCompleted = updatePlanTodoStatus(todoId, 'completed', projectRoot);
   }
   return {
@@ -282,14 +285,33 @@ export function applyConferConsultResult(
   };
 }
 
+export function buildFixtureConferOutput(
+  subagent: string,
+  verdict: SynthesisConsultReceipt['verdict'] = 'PASS',
+  noLlm = false,
+): string {
+  if (noLlm) {
+    const role = subagent === 'code-review' ? 'code-review' : 'researcher';
+    return formatGovernanceVoteText(localConferVote({ role, llmConfigured: false }));
+  }
+  return `Verdict: ${verdict}\nTop risks: none\nHardening: confer fixture quorum for ${subagent}`;
+}
+
 export function writeFixtureConferReceipt(
   todoId: string,
   subagent: string,
   sessionId: string,
   projectRoot = process.cwd(),
+  verdict: SynthesisConsultReceipt['verdict'] = 'PASS',
+  noLlm = false,
 ): ConferAgentResult {
-  const output = `Verdict: PASS\nTop risks: none\nHardening: confer fixture quorum for ${subagent}`;
-  return applyConferConsultResult(todoId, subagent, sessionId, output, projectRoot);
+  return applyConferConsultResult(
+    todoId,
+    subagent,
+    sessionId,
+    buildFixtureConferOutput(subagent, verdict, noLlm),
+    projectRoot,
+  );
 }
 
 export async function runConferQuorum(
@@ -299,6 +321,12 @@ export async function runConferQuorum(
     collocatedText?: string;
     dueReason?: string | null;
     fixture?: boolean;
+    /** Used only when fixture is true. Defaults to PASS. FAIL and UNREVIEWED do not complete the todo. */
+    fixtureVerdict?: SynthesisConsultReceipt['verdict'];
+    /** Fixture text is the real no-model localConferVote (UNREVIEWED), not a hardcoded PASS. */
+    fixtureNoLlm?: boolean;
+    /** Used only when fixture is true. Replaces the generated fixture text for every consult. */
+    fixtureOutput?: string;
   } = {},
 ): Promise<ConferQuorumResult> {
   if (options.fixture && !conferFixtureAllowed()) {
@@ -327,7 +355,7 @@ export async function runConferQuorum(
     };
   }
 
-  if (areSynthesisConsultTodosComplete(plan)) {
+  if (areSynthesisConsultTodosComplete(plan) && consultReceiptsAreRealApproves(plan, projectRoot)) {
     return {
       status: 'completed',
       agents: [],
@@ -354,7 +382,23 @@ export async function runConferQuorum(
     try {
       let agentResult: ConferAgentResult;
       if (options.fixture) {
-        agentResult = writeFixtureConferReceipt(todo.id, todo.subagent, sessionId, projectRoot);
+        agentResult =
+          options.fixtureOutput !== undefined
+            ? applyConferConsultResult(
+                todo.id,
+                todo.subagent,
+                sessionId,
+                options.fixtureOutput,
+                projectRoot,
+              )
+            : writeFixtureConferReceipt(
+                todo.id,
+                todo.subagent,
+                sessionId,
+                projectRoot,
+                options.fixtureVerdict ?? 'PASS',
+                options.fixtureNoLlm === true,
+              );
       } else {
         const prompt = buildConferPrompt(
           todo.subagent,
@@ -378,7 +422,9 @@ export async function runConferQuorum(
         saveConferCheckpoint(state, projectRoot);
       } else {
         state.status = 'failed';
-        state.lastError = `Receipt or todo completion failed for ${todo.id}`;
+        state.lastError = consultVerdictBlocksCompletion(agentResult.verdict)
+          ? `${agentResult.verdict} blocks ${todo.id}`
+          : `Receipt or todo completion failed for ${todo.id}`;
         saveConferCheckpoint(state, projectRoot);
         return {
           status: 'partial',
@@ -408,7 +454,8 @@ export async function runConferQuorum(
   const done =
     refreshed &&
     isSynthesisRealignmentPlan(refreshed) &&
-    areSynthesisConsultTodosComplete(refreshed);
+    areSynthesisConsultTodosComplete(refreshed) &&
+    consultReceiptsAreRealApproves(refreshed, projectRoot);
 
   state.status = done ? 'completed' : 'failed';
   if (!done) state.lastError = 'Consult todos remain after confer loop';
@@ -421,6 +468,17 @@ export async function runConferQuorum(
       ? 'Confer quorum complete — researcher, architect-tools, code-review consulted'
       : (state.lastError ?? 'Confer incomplete'),
   };
+}
+
+function consultReceiptsAreRealApproves(
+  plan: PersistedLeadDevPlan,
+  projectRoot: string,
+): boolean {
+  const todos = getSynthesisConsultTodos(plan);
+  if (todos.length === 0) return false;
+  return todos.every(
+    (todo) => loadSynthesisConsultReceipt(todo.id, projectRoot)?.verdict === 'PASS',
+  );
 }
 
 const CONFER_AGENT_EMOJI: Record<string, string> = {

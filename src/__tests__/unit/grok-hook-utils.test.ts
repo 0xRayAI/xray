@@ -152,6 +152,28 @@ describe('grok-hook-utils', () => {
     expect(boot.repertoireResume).toMatch(/^Repertoire:/);
   });
 
+  it('buildSessionBootPayload records UNREVIEWED when a consult receipt abstained without a model', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'synthesis-consult-s.1.json'),
+      JSON.stringify({
+        sessionId: 's',
+        subagent: 'researcher',
+        verdict: 'UNREVIEWED',
+        topRisks: [],
+        hardeningNote: 'no governance LLM',
+      }),
+    );
+    const payload = buildSessionBootPayload(tmp, 'test/session-start');
+    expect(payload.conferReview).toBe('UNREVIEWED');
+    expect(payload.conferReviewHint).toMatch(/UNREVIEWED/);
+    expect(payload.conferReviewHint).toMatch(/blocks/);
+  });
+
   it('loadFeatures forwards grok_postprocessor_light from features.json', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),

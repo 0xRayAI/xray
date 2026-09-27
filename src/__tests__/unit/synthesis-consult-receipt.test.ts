@@ -81,6 +81,45 @@ describe('synthesis-consult-receipt', () => {
     expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
   });
 
+  it('blocks consult todo completion when receipt verdict is CONDITIONAL or UNREVIEWED', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'CONDITIONAL',
+        topRisks: [],
+        hardeningNote: 'needs another pass',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'UNREVIEWED',
+        topRisks: [],
+        hardeningNote: 'no model',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+  });
+
   it('allows consult todo completion with valid receipt', () => {
     writeSynthesisConsultReceipt(
       's.1',
