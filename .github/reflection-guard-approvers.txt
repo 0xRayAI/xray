@@ -1,0 +1,5 @@
+# GitHub logins that may approve deletion or rename of docs/reflections/** or docs/deep-reflections/**.
+# An APPROVED review counts only when its commit_id is the pull request's current head.
+# htafolla is listed as the account that opened the restore pull request.
+# That this login is Blaze is UNVERIFIED, for Blaze to confirm.
+htafolla

@@ -64,6 +64,23 @@ function expectedDuplicate(pathName, byHash, digest) {
   return `duplicate of ${others.join("; ")}`;
 }
 
+function laterDeletion(left, right) {
+  const leftTime = Date.parse(left.deletingDate);
+  const rightTime = Date.parse(right.deletingDate);
+  if (leftTime !== rightTime) return leftTime > rightTime;
+  return left.deletingSha > right.deletingSha;
+}
+
+function archiveRelative(row, rows) {
+  let latest = row;
+  for (const candidate of rows) {
+    if (candidate.path !== row.path) continue;
+    if (laterDeletion(candidate, latest)) latest = candidate;
+  }
+  if (row.deletingSha === latest.deletingSha) return row.path;
+  return `${row.path}.${row.deletingSha.slice(0, 7)}`;
+}
+
 const markdown = readFileSync(manifestPath, "utf8");
 const rows = parseManifest(markdown);
 if (rows.length === 0) fail(["manifest table has no rows"]);
@@ -72,12 +89,13 @@ const errors = [];
 const derived = [];
 
 for (const row of rows) {
-  const restoredPath = path.join(root, "docs/reflections/restored", row.path);
+  const archived = archiveRelative(row, rows);
+  const restoredPath = path.join(root, "docs/reflections/restored", archived);
   let onDisk;
   try {
     onDisk = readFileSync(restoredPath);
   } catch {
-    errors.push(`missing ${row.path}`);
+    errors.push(`missing ${archived} (original ${row.path})`);
     continue;
   }
   let fromGit;
