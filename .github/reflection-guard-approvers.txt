@@ -1,4 +1,7 @@
-# GitHub logins that may approve deletion or rename of docs/reflections/** or docs/deep-reflections/**.
+# GitHub logins that may approve deletion or rename of docs/reflections/** or docs/deep-reflections/**,
+# and any change to this file, .github/workflows/mill-ci.yml,
+# scripts/node/reflection-delete-guard.mjs, or src/__tests__/unit/reflection-delete-guard.test.ts.
+# The workflow reads this file from the pull request base ref, not from the pull request checkout.
 # An APPROVED review counts only when its commit_id is the pull request's current head.
 # htafolla is listed as the account that opened the restore pull request.
 # That this login is Blaze is UNVERIFIED, for Blaze to confirm.

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   evaluateReflectionDeleteGuard,
   hasAllowlistedApproval,
   parseApproverAllowlist,
+  readAllowlistAtBase,
 } from "../../../scripts/node/reflection-delete-guard.mjs";
 
 const HEAD = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -99,5 +104,68 @@ describe("reflection delete guard", () => {
 
   it("reads allowlist logins and skips blank and comment lines", () => {
     expect(parseApproverAllowlist("# note\n\nhtafolla\n  \n# other\n")).toEqual(["htafolla"]);
+  });
+
+  it("fails when a pull request adds its own account to the allowlist", () => {
+    const diff = "M\t.github/reflection-guard-approvers.txt";
+    const reviews = [{ state: "APPROVED", commit_id: HEAD, user: { login: "self-added" } }];
+    const result = evaluateReflectionDeleteGuard(diff, approval(reviews));
+    expect(result.ok).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.violations).toEqual([
+      { status: "M", path: ".github/reflection-guard-approvers.txt" },
+    ]);
+  });
+
+  it("fails when a pull request edits the guard workflow without an approval", () => {
+    const diff = "M\t.github/workflows/mill-ci.yml";
+    const result = evaluateReflectionDeleteGuard(diff, approval([]));
+    expect(result.ok).toBe(false);
+    expect(result.approved).toBe(false);
+    expect(result.violations).toEqual([{ status: "M", path: ".github/workflows/mill-ci.yml" }]);
+  });
+
+  it("fails when a pull request edits the guard script or its test without an approval", () => {
+    const diff = [
+      "M\tscripts/node/reflection-delete-guard.mjs",
+      "D\tsrc/__tests__/unit/reflection-delete-guard.test.ts",
+    ].join("\n");
+    const result = evaluateReflectionDeleteGuard(diff, approval([]));
+    expect(result.ok).toBe(false);
+    expect(result.violations.map((item) => item.path)).toEqual([
+      "scripts/node/reflection-delete-guard.mjs",
+      "src/__tests__/unit/reflection-delete-guard.test.ts",
+    ]);
+  });
+
+  it("passes a guard-file edit when the base allowlist approved the current head", () => {
+    const diff = "M\t.github/workflows/mill-ci.yml";
+    const reviews = [{ state: "APPROVED", commit_id: HEAD, user: { login: "htafolla" } }];
+    const result = evaluateReflectionDeleteGuard(diff, approval(reviews));
+    expect(result.ok).toBe(true);
+    expect(result.approved).toBe(true);
+  });
+
+  it("reads the allowlist from the base ref, not the checkout", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "reflection-guard-"));
+    const git = (...args: string[]) =>
+      execFileSync("git", args, { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    try {
+      git("init", "-b", "main");
+      git("config", "user.email", "guard@example.com");
+      git("config", "user.name", "guard");
+      const allowlist = path.join(dir, ".github", "reflection-guard-approvers.txt");
+      mkdirSync(path.dirname(allowlist), { recursive: true });
+      writeFileSync(allowlist, "htafolla\n");
+      git("add", ".github/reflection-guard-approvers.txt");
+      git("commit", "-m", "base allowlist");
+      const base = git("rev-parse", "HEAD").trim();
+      writeFileSync(allowlist, "htafolla\nself-added\n");
+      git("add", ".github/reflection-guard-approvers.txt");
+      git("commit", "-m", "pr adds its own account");
+      expect(readAllowlistAtBase(base, dir)).toEqual(["htafolla"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

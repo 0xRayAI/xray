@@ -1,19 +1,29 @@
 #!/usr/bin/env node
 /**
  * Fail a pull request that deletes or renames a file under
- * docs/reflections/ or docs/deep-reflections/ unless an allowlisted
- * GitHub account has an APPROVED review on the pull request's current head.
+ * docs/reflections/ or docs/deep-reflections/, or that changes the guard's
+ * own allowlist, workflow, script, or test, unless an allowlisted GitHub
+ * account has an APPROVED review on the pull request's current head.
+ * The allowlist is the file on the base ref, never the pull request checkout.
  * A line in the pull request body is not a bypass. A review of an older head is not a bypass.
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 
 const PROTECTED_PREFIXES = ["docs/reflections/", "docs/deep-reflections/"];
 const ALLOWLIST_PATH = ".github/reflection-guard-approvers.txt";
+const GUARD_SELF_PATHS = [
+  ALLOWLIST_PATH,
+  ".github/workflows/mill-ci.yml",
+  "scripts/node/reflection-delete-guard.mjs",
+  "src/__tests__/unit/reflection-delete-guard.test.ts",
+];
 
 export function isProtectedReflectionPath(filePath) {
   return PROTECTED_PREFIXES.some((prefix) => filePath.startsWith(prefix));
+}
+
+export function isGuardSelfPath(filePath) {
+  return GUARD_SELF_PATHS.includes(filePath);
 }
 
 export function parseApproverAllowlist(text) {
@@ -43,25 +53,38 @@ export function hasAllowlistedApproval(reviews, allowlist, headSha) {
  * @param {string} nameStatus git diff --name-status --find-renames output
  * @param {{ reviews?: Array<{ state?: string, commit_id?: string, user?: { login?: string } | null }>, allowlist?: string[], headSha?: string }} approval
  */
+function pushViolation(violations, status, filePath, oldPath) {
+  if (oldPath) {
+    violations.push({ status, path: filePath, oldPath });
+    return;
+  }
+  violations.push({ status, path: filePath });
+}
+
 export function evaluateReflectionDeleteGuard(nameStatus, approval) {
   const violations = [];
   for (const line of String(nameStatus ?? "").split(/\r?\n/)) {
     if (!line.trim()) continue;
     const parts = line.split("\t");
     const status = parts[0] ?? "";
-    if (status.startsWith("D")) {
-      const filePath = parts[1] ?? "";
-      if (isProtectedReflectionPath(filePath)) {
-        violations.push({ status, path: filePath });
+    if (status.startsWith("R") || status.startsWith("C")) {
+      const oldPath = parts[1] ?? "";
+      const filePath = parts[2] ?? "";
+      const rename = status.startsWith("R");
+      const guardTouched = isGuardSelfPath(filePath) || (rename && isGuardSelfPath(oldPath));
+      const reflectionMoved = rename && isProtectedReflectionPath(oldPath);
+      if (guardTouched || reflectionMoved) {
+        pushViolation(violations, status, filePath, oldPath);
       }
       continue;
     }
-    if (status.startsWith("R")) {
-      const oldPath = parts[1] ?? "";
-      const filePath = parts[2] ?? "";
-      if (isProtectedReflectionPath(oldPath)) {
-        violations.push({ status, path: filePath, oldPath });
-      }
+    const filePath = parts[1] ?? "";
+    if (isGuardSelfPath(filePath)) {
+      pushViolation(violations, status, filePath);
+      continue;
+    }
+    if (status.startsWith("D") && isProtectedReflectionPath(filePath)) {
+      pushViolation(violations, status, filePath);
     }
   }
   const approved = hasAllowlistedApproval(
@@ -116,9 +139,17 @@ async function fetchPullRequestReviews(repo, prNumber, token) {
   return reviews;
 }
 
-function readAllowlist() {
-  const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-  return parseApproverAllowlist(readFileSync(path.join(root, ALLOWLIST_PATH), "utf8"));
+export function readAllowlistAtBase(baseSha, cwd) {
+  const shown = spawnSync("git", ["show", `${baseSha}:${ALLOWLIST_PATH}`], {
+    encoding: "utf8",
+    cwd,
+  });
+  if (shown.status === 0) return parseApproverAllowlist(shown.stdout);
+  const detail = shown.stderr ?? "";
+  if (detail.includes("does not exist") || detail.includes("exists on disk, but not")) {
+    return [];
+  }
+  throw new Error(`cannot read allowlist at ${baseSha}: ${detail.trim()}`);
 }
 
 async function main() {
@@ -146,7 +177,10 @@ async function main() {
       process.stderr.write("reflection-delete-guard: cannot read reviews (GITHUB_TOKEN, GITHUB_REPOSITORY, PR_NUMBER required)\n");
       process.exit(1);
     }
-    allowlist = readAllowlist();
+    allowlist = readAllowlistAtBase(base);
+    if (allowlist.length === 0) {
+      process.stderr.write(`reflection-delete-guard: allowlist at ${base}:${ALLOWLIST_PATH} is empty\n`);
+    }
     reviews = await fetchPullRequestReviews(repo, prNumber, token);
   }
   const result = evaluateReflectionDeleteGuard(nameStatus, { reviews, allowlist, headSha: head });
@@ -156,13 +190,13 @@ async function main() {
     );
     process.exit(0);
   }
-  process.stderr.write("reflection-delete-guard: blocked deletion or rename under docs/reflections or docs/deep-reflections\n");
+  process.stderr.write("reflection-delete-guard: blocked protected reflection deletion or guard-file change\n");
   for (const violation of result.violations) {
     const from = violation.oldPath ? `${violation.oldPath} -> ` : "";
     process.stderr.write(`${violation.status}\t${from}${violation.path}\n`);
   }
   process.stderr.write(
-    "Bypass is an APPROVED review on this head SHA by a login in .github/reflection-guard-approvers.txt. A pull request body line is not a bypass.\n",
+    "Bypass is an APPROVED review on this head SHA by a login in the allowlist on the base ref (.github/reflection-guard-approvers.txt). The pull request's own copy of that file is not a bypass. A pull request body line is not a bypass.\n",
   );
   process.exit(1);
 }

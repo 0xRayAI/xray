@@ -40,6 +40,7 @@ jobs:
       - name: Reflection delete guard test
         run: npx vitest run src/__tests__/unit/reflection-delete-guard.test.ts
       - name: Guard reflection deletions
+        # Allowlist is git show BASE_SHA:.github/reflection-guard-approvers.txt, not the PR checkout.
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
