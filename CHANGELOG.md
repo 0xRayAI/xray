@@ -41,6 +41,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.30] - 2026-09-28
+
+Next patch after npm `4.0.29`. Released 2026-09-28.
+
+Fixes the 4.0.29 regression where `npx 0xray wear` and `npx 0xray setup` exited 1 with `cursor-wear: not a git work tree` outside a git checkout (#147). Outside a git checkout, both commands again write the 4.0.28 consumer project setup and skip only Cursor hooks, with one stderr line: `cursor-wear: hooks skipped because this folder is not a git checkout`. Inside a git checkout, `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 had dropped: managed `AGENTS.md`, `.gitignore` entries, `.xray` config, the `node_modules/@0xray/repertoire` link, the mill/inspect plant, chat bridges, the `.opencode/skills` sync, and the `dist` / `scripts` links. `wear` then adds the Cursor hooks, including the six hook scripts, and the `.xray/state/cursor-hook-wear/` snapshot. Postinstall is unchanged: it links the vendored repertoire and prints `npx 0xray wear`. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
 ## [4.0.29] - 2026-09-28
 
 Next patch after npm `4.0.28`. Released 2026-09-28.
