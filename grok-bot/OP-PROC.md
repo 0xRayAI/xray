@@ -43,6 +43,7 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 7. Cloud notes gate. Every cloud round files its reflection and memory notes as UNREVIEWED before critic sees the PR.
 8. Local hygiene. In repos that depend on 0xray, install with `npm ci --ignore-scripts`. Skipping a hook (`--no-verify`) needs Blaze's OK and is noted in the receipt.
 9. Gos. Merge, publish, deploy, spend and prod credentials need Blaze's go. A go covers exactly what it names.
+10. Merge on PASS. A critic PASS on an unchanged head is the go to merge, with no second ask. Any new push needs a fresh verdict. Publish and deploy still need their own go (rule 9).
 
 ## Board (WAVEBOARD)
 0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat posts one line in the room; CoS turns it into the row change.
