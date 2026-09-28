@@ -1847,8 +1847,13 @@ function installFrameworkDogfoodWear(packageRoot, log) {
 function installAllBridges(opts) {
   const packageRoot = path.resolve(opts.packageRoot);
   const targetDir = path.resolve(opts.targetDir);
+  const { guardHostInstallWrites } = require("./host-install-guard.cjs");
+  return guardHostInstallWrites(targetDir, () => installAllBridgesUnguarded(packageRoot, targetDir, opts.log));
+}
+
+function installAllBridgesUnguarded(packageRoot, targetDir, logFn) {
   const log =
-    opts.log ||
+    logFn ||
     ((_component, _action, _status, _details) => {
       /* noop */
     });

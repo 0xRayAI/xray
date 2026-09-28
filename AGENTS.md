@@ -53,6 +53,8 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
 8. Optional git hooks
 
+In a git checkout, install leaves tracked files byte for byte and does not create a new file unless git already ignores that path.
+
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 
 **Sound plant:** Dist audio beds are a mill (`@0xray/blip`), not a foundry organ catalog. Alias `"plant": "sound"` + `npx @0xray/foundry sound render` writes a crystal-clear wav (Rippel membrane/metal/mixer, not a sine toy) and a bed receipt. `sound-mixer` (`npx @0xray/foundry sound mix`) lives in the mill and levels every genre × tempo × motif — hats, plate, glue — not just the last bed. CLI shim `foundry sound` remains (0.1.11+). Inspect is mill-exported — not fake code-mill skills on a sound seat.

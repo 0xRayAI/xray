@@ -8,6 +8,7 @@ const {
   isConsumerInstall,
 } = require("./install-bridges.cjs");
 const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
+const { guardHostInstallWrites } = require("./host-install-guard.cjs");
 const {
   overlayConsumerTree,
   mintConsumerFromSsot,
@@ -102,36 +103,38 @@ function runPostinstall(packageRoot, targetDir, log) {
   const logFn = log || structuredLog;
   const resolvedPackage = path.resolve(packageRoot);
   const resolvedTarget = path.resolve(targetDir);
-  const consumer = isConsumerInstall(resolvedPackage, resolvedTarget);
+  return guardHostInstallWrites(resolvedTarget, () => {
+    const consumer = isConsumerInstall(resolvedPackage, resolvedTarget);
 
-  if (consumer) {
-    deployManagedAgents(resolvedPackage, resolvedTarget, logFn);
-    deployConsumerGitignore(resolvedPackage, resolvedTarget, logFn);
-  }
-
-  try {
-    installAllBridges({
-      targetDir: resolvedTarget,
-      packageRoot: resolvedPackage,
-      log: logFn,
-    });
     if (consumer) {
-      mintConsumerSuit(resolvedPackage, resolvedTarget, logFn);
+      deployManagedAgents(resolvedPackage, resolvedTarget, logFn);
+      deployConsumerGitignore(resolvedPackage, resolvedTarget, logFn);
     }
-  } catch (e) {
-    logFn("postinstall", "Bridge install failed", "error", { error: e.message });
-    throw e;
-  }
 
-  if (consumer) {
-    logFn(
-      "postinstall",
-      "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
-      "success",
-    );
-  } else {
-    logFn("postinstall", "framework dogfood wear complete", "success");
-  }
+    try {
+      installAllBridges({
+        targetDir: resolvedTarget,
+        packageRoot: resolvedPackage,
+        log: logFn,
+      });
+      if (consumer) {
+        mintConsumerSuit(resolvedPackage, resolvedTarget, logFn);
+      }
+    } catch (e) {
+      logFn("postinstall", "Bridge install failed", "error", { error: e.message });
+      throw e;
+    }
+
+    if (consumer) {
+      logFn(
+        "postinstall",
+        "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
+        "success",
+      );
+    } else {
+      logFn("postinstall", "framework dogfood wear complete", "success");
+    }
+  });
 }
 
 module.exports = {
