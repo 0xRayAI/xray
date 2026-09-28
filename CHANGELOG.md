@@ -41,6 +41,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.29] - 2026-09-28
+
+Next patch after npm `4.0.28`. Released 2026-09-28.
+
+`npm install` now only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints one line: `npx 0xray wear`. It no longer writes the suit. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json`, pointing at the installed package's dist hooks, and adds them beside existing user entries. It snapshots the pre-wear file under `.xray/state/cursor-hook-wear/`, and `npx 0xray unwear` restores it. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
 ## [4.0.28] - 2026-09-26
 
 Next patch after npm `4.0.27`. Released 2026-09-27.
