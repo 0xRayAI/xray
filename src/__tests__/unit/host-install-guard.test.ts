@@ -259,16 +259,19 @@ describe('setup installs bridges without git hooks unless asked', () => {
     }
   });
 
-  it('setup in a directory with no git exits non-zero and changes nothing', () => {
+  it('setup outside a git checkout skips cursor hooks and writes the suit', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-nogit-'));
     const script = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
     try {
       writeFileSync(path.join(project, 'keep.txt'), 'stay\n');
       const ran = spawnSync(process.execPath, [script, 'setup'], { cwd: project, encoding: 'utf8' });
-      expect(ran.status).not.toBe(0);
-      expect(readdirSync(project)).toEqual(['keep.txt']);
+      expect(ran.status).toBe(0);
+      expect(ran.stderr).toBe(
+        'cursor-wear: hooks skipped because this folder is not a git checkout\n',
+      );
+      expect(existsSync(path.join(project, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(project, '.mcp.json'))).toBe(true);
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
-      expect(existsSync(path.join(project, '.mcp.json'))).toBe(false);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }

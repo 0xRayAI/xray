@@ -1615,11 +1615,11 @@ function userBytesBeforeWear(previousText) {
   return stripOwnedHookEntries(previousText);
 }
 
-function assertCursorWearGit(targetDir) {
+function classifyCursorWearGit(targetDir) {
   try {
     execFileSync("git", ["--version"], { stdio: "ignore" });
   } catch {
-    throw new Error("cursor-wear: git is missing");
+    return "missing";
   }
   let bare = "";
   try {
@@ -1629,9 +1629,9 @@ function assertCursorWearGit(targetDir) {
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();
   } catch {
-    throw new Error("cursor-wear: not a git work tree");
+    return "not-work-tree";
   }
-  if (bare === "true") throw new Error("cursor-wear: bare repository");
+  if (bare === "true") return "bare";
   let inside = "";
   try {
     inside = execFileSync("git", ["rev-parse", "--is-inside-work-tree"], {
@@ -1640,9 +1640,47 @@ function assertCursorWearGit(targetDir) {
       stdio: ["ignore", "pipe", "pipe"],
     }).trim();
   } catch {
-    throw new Error("cursor-wear: not a git work tree");
+    return "not-work-tree";
   }
-  if (inside !== "true") throw new Error("cursor-wear: not a git work tree");
+  if (inside !== "true") return "not-work-tree";
+  return "ok";
+}
+
+function assertCursorWearGit(targetDir) {
+  const kind = classifyCursorWearGit(targetDir);
+  if (kind === "missing") throw new Error("cursor-wear: git is missing");
+  if (kind === "bare") throw new Error("cursor-wear: bare repository");
+  if (kind === "not-work-tree") throw new Error("cursor-wear: not a git work tree");
+}
+
+const CURSOR_HOOKS_SKIPPED_LINE =
+  "cursor-wear: hooks skipped because this folder is not a git checkout\n";
+
+/**
+ * 4.0.28 consumer postinstall, minus Cursor hooks and git hooks.
+ * Used only when the folder is not a git work tree.
+ */
+function wearSuitSkippingCursorHooks(packageRoot, targetDir, log) {
+  const write = typeof log === "function" ? log : () => {};
+  if (isConsumerInstall(packageRoot, targetDir)) {
+    const { deployManagedAgents } = require("./postinstall.cjs");
+    const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
+    const { mintConsumerSuit } = require("../foundry/mint-suit.cjs");
+    deployManagedAgents(packageRoot, targetDir, write);
+    applyConsumerGitignore(targetDir, packageRoot);
+    wearVendoredRepertoire(packageRoot, targetDir, write);
+    deployXrayConfig(targetDir, packageRoot, write);
+    deployProjectMcpJson(targetDir, write);
+    mergeOpencodeJson(targetDir, packageRoot, write);
+    installOpencodeBridge(targetDir, packageRoot, write);
+    installGrokBridge(targetDir, packageRoot, write);
+    installHermesBridge(targetDir, packageRoot, write);
+    installOpenclawBridge(targetDir, packageRoot, write);
+    mintConsumerSuit(packageRoot, targetDir, write);
+  } else {
+    wearVendoredRepertoire(packageRoot, targetDir, write);
+  }
+  process.stderr.write(CURSOR_HOOKS_SKIPPED_LINE);
 }
 
 function isGitTracked(targetDir, rel) {
@@ -1794,6 +1832,10 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
   const resolvedPackage = path.resolve(packageRoot);
+  if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
+    wearSuitSkippingCursorHooks(resolvedPackage, resolvedTarget, write);
+    return;
+  }
   assertCursorWearGit(resolvedTarget);
   if (!isConsumerInstall(resolvedPackage, resolvedTarget) || !consumerDistHooksReady(resolvedPackage)) {
     return fastenCursorHooksAt(resolvedTarget, resolvedPackage, write);
@@ -1959,6 +2001,10 @@ function setupProjectBridges(opts) {
       : () => {
           /* noop */
         };
+  if (classifyCursorWearGit(targetDir) === "not-work-tree") {
+    wearSuitSkippingCursorHooks(packageRoot, targetDir, log);
+    return;
+  }
   assertSetupGit(targetDir);
   deployProjectMcpJson(targetDir, log);
   installOpencodeBridge(targetDir, packageRoot, log);
