@@ -30,12 +30,13 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 **House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Setup: `grok-bot house init`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice.
 
 ## Syncopate (the higher-level rules)
-Syncopate means finding our head from our tail: we watch what we actually did, write it down, and fold it into rules. The detailed lists below are the evidence. These five rules sit on top of them.
+Syncopate means finding our head from our tail: we watch what we actually did, write it down, and fold it into rules. The detailed lists below are the evidence. These six rules sit on top of them.
 1. Beat. Every real event changes the board in the same turn.
 2. Spend on agreement. Agree on the design and the acceptance tests before paying for a round. The labels (blocker, nit, UNVERIFIED) decide what is worth fixing.
 3. Proof over claims. Live behavior, checked by someone other than the author.
 4. Write it down, then synthesize. A note may overlap or complement what is already written (the gibberish clause). Keep it, and fold overlaps into a higher-level rule instead of piling up a longer list.
 5. Hold the handle (soft target, evolving). At any given time, a seat operates on 3 to 5 operating parameters, 10 at most. Operating parameters are the rules and constraints actively in force, like the five rules above. The same target applies to open threads and board rows in work. For now this is a target we grow into, not a gate. Count on the board, trend toward it, and never block work because the count is high.
+6. Guard the owner's lines. Anything irreversible, risky, or outside our own repos waits for the owner's go (Confer rules 8-9, the RACI table, and the house rows).
 
 ## Confer cadence (how spend decisions get made)
 This cadence is how the room decides spend. It is not the Confer feature, which stays off (see house).
