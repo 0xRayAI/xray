@@ -35,7 +35,7 @@ Syncopate means finding our head from our tail: we watch what we actually did, w
 2. Spend on agreement. Agree on the design and the acceptance tests before paying for a round. The labels (blocker, nit, UNVERIFIED) decide what is worth fixing.
 3. Proof over claims. Live behavior, checked by someone other than the author.
 4. Write it down, then synthesize. A note may overlap or complement what is already written (the gibberish clause). Keep it, and fold overlaps into a higher-level rule instead of piling up a longer list.
-5. Hold the handle (soft target, evolving). Aim for 3 to 5 threads at a time and 10 at most, whether that means open tracks, board rows in work, or rules on this page. For now this is a target we grow into, not a gate. Count the threads on the board and trend toward the target; do not block work because the count is high.
+5. Hold the handle (soft target, evolving). At any given time, a seat operates on 3 to 5 operating parameters, 10 at most. Operating parameters are the rules and constraints actively in force, like the five rules above. The same target applies to open threads and board rows in work. For now this is a target we grow into, not a gate. Count on the board, trend toward it, and never block work because the count is high.
 
 ## Confer cadence (how spend decisions get made)
 1. Design before spend. Critic and CoS agree the fix design before the first paid cloud round. Critic's first review gives the complete blocker list; later rounds add nothing new unless the code changed.
