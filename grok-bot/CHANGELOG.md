@@ -8,6 +8,10 @@
 - **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
 - groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
 
+## 0.1.8
+
+- OP-PROC: Syncopate six rules, Confer cadence, Board rules and RACI moved into CADENCE.md (#144)
+
 ## 0.1.7
 
 - `grok-bot house init` copies HOUSE.md, WAVEBOARD.md, and ATTENTION_STATE.md. It does not copy EXAMPLE.md.
