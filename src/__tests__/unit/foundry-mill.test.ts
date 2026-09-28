@@ -469,8 +469,8 @@ describe('foundry mill — gate and scripts', () => {
   });
 
   it('consumer postinstall skips costume skill dump unless foundry.json costume', () => {
-    const { runPostinstall } = requireCjs(path.join(root, 'scripts/node/postinstall.cjs')) as {
-      runPostinstall: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
     };
     const mill = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-costume-mill-'));
     const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-costume-app-'));
@@ -491,7 +491,7 @@ describe('foundry mill — gate and scripts', () => {
         path.join(consumer, 'package.json'),
         `${JSON.stringify({ name: 'acme-app', version: '1.0.0' }, null, 2)}\n`,
       );
-      runPostinstall(mill, consumer, () => undefined);
+      mintConsumerSuit(mill, consumer, () => undefined);
       expect(existsSync(path.join(consumer, '.opencode/skills/enforcer/SKILL.md'))).toBe(false);
       expect(existsSync(path.join(consumer, '.opencode/agents/orchestrator.yml'))).toBe(false);
       expect(readFileSync(path.join(consumer, '.opencode/skills/mill/SKILL.md'), 'utf8')).toBe(
@@ -627,16 +627,19 @@ describe('foundry mill — mint from consumer SSOT', () => {
     }
   });
 
-  it('runPostinstall overlays after bridges, not via a file-wide indexOf', () => {
+  it('runPostinstall writes nothing; mint still overlays the suit', () => {
     const src = read('scripts/node/postinstall.cjs');
+    expect(src).not.toContain('installAllBridges');
+    expect(src).not.toContain('setup');
     const start = src.indexOf('function runPostinstall');
     const end = src.indexOf('module.exports');
     const body = src.slice(start, end);
-    expect(body.indexOf('installAllBridges')).toBeGreaterThan(-1);
-    expect(body.indexOf('mintConsumerSuit')).toBeGreaterThan(body.indexOf('installAllBridges'));
+    expect(body).toContain('npx 0xray wear');
+    expect(body).not.toContain('installAllBridges');
+    expect(body).not.toContain('mintConsumerSuit');
 
-    const { runPostinstall } = requireCjs(path.join(root, 'scripts/node/postinstall.cjs')) as {
-      runPostinstall: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
+    const { mintConsumerSuit } = requireCjs(path.join(root, 'scripts/foundry/mint-suit.cjs')) as {
+      mintConsumerSuit: (pkg: string, target: string, log: (...a: unknown[]) => void) => void;
     };
     const mill = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-millpkg-'));
     const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-foundry-consumer-'));
@@ -666,7 +669,7 @@ describe('foundry mill — mint from consumer SSOT', () => {
       writeFileSync(path.join(consumer, 'src/skills/acme-tool/SKILL.md'), 'CONSUMER ACME\n');
       mkdirSync(path.join(consumer, 'xray'), { recursive: true });
       writeFileSync(path.join(consumer, 'xray/AGENTS.md'), '# Acme card\n');
-      runPostinstall(mill, consumer, () => undefined);
+      mintConsumerSuit(mill, consumer, () => undefined);
       expect(readFileSync(path.join(consumer, 'AGENTS.md'), 'utf8')).toContain('Acme card');
       expect(readFileSync(path.join(consumer, '.opencode/skills/acme-tool/SKILL.md'), 'utf8')).toBe(
         'CONSUMER ACME\n',

@@ -59,56 +59,71 @@ program
   )
   .version(version);
 
-function runSetup() {
-  const setupScript = join(packageRoot, "scripts", "node", "setup.cjs");
-  validateScriptPath(setupScript, "setup script");
-  execSync(`node "${setupScript}"`, { stdio: "inherit", cwd: process.cwd() });
+function runNodeScript(scriptName: string, args: string[] = []): void {
+  const script = join(packageRoot, "scripts", "node", scriptName);
+  validateScriptPath(script, scriptName);
+  const quoted = [script, ...args].map((part) => `"${part}"`).join(" ");
+  execSync(`node ${quoted}`, { stdio: "inherit", cwd: process.cwd() });
 }
 
 program
   .command("install")
   .description("Install xray framework in the current project")
-  .action(async () => {
-    frameworkLogger.log('cli', 'install-start', 'info', { message: 'Installing xray framework...' });
+  .action(() => {
+    frameworkLogger.log('cli', 'install', 'info', { message: 'nothing written' });
+    process.stdout.write("nothing written\n");
+  });
+
+program
+  .command("setup")
+  .description("Set up .mcp.json and the OpenCode, Grok, Hermes, and OpenClaw bridges")
+  .option("--git-hooks", "also install git hooks")
+  .action((opts: { gitHooks?: boolean }) => {
+    const args = ["setup"];
+    if (opts.gitHooks) args.push("--git-hooks");
     try {
-      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
-      validateScriptPath(postinstallScript, "postinstall script");
-      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
-      frameworkLogger.log('cli', 'install-success', 'info', { message: 'xray framework installed' });
-      // UX banner kept for user visibility post-install (non-removable per exception)
-      console.log("✅ xray framework installed!");
-      console.log("💡 Run 'npx xray setup' for full configuration (hooks, Hermes, symlinks)");
+      runNodeScript("install-bridges.cjs", args);
     } catch (error) {
-      frameworkLogger.log('cli', 'install-error', 'error', { error: error instanceof Error ? error.message : String(error) });
-      console.error("❌ Installation failed:", error instanceof Error ? error.message : String(error));
+      frameworkLogger.log("cli", "setup-error", "error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       process.exit(1);
     }
   });
 
 program
-  .command("setup")
-  .description("Full framework setup: hooks, Hermes integration, symlinks, MCP paths")
-  .action(runSetup);
+  .command("wear")
+  .description("Wear the 0xray suit in this git checkout")
+  .action(() => {
+    try {
+      runNodeScript("wear-cursor-hooks.cjs");
+    } catch (error) {
+      frameworkLogger.log('cli', 'wear-error', 'error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
+  });
+
+program
+  .command("unwear")
+  .description("Remove the 0xray suit and restore the pre-wear hooks file")
+  .action(() => {
+    try {
+      runNodeScript("unwear-cursor-hooks.cjs");
+    } catch (error) {
+      frameworkLogger.log('cli', 'unwear-error', 'error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
+  });
 
 program
   .command("init")
   .description("Initialize xray configuration in the current project")
-  .action(async () => {
-    console.log("🚀 xray CLI: Initializing configuration...");
-    try {
-      const postinstallScript = join(packageRoot, "scripts", "node", "postinstall.cjs");
-      validateScriptPath(postinstallScript, "postinstall script");
-      execSync(`node "${postinstallScript}"`, { stdio: "inherit", cwd: process.cwd() });
-      runSetup();
-
-      console.log("✅ xray configuration initialized!");
-    } catch (error) {
-      console.error(
-        "❌ Initialization failed:",
-        error instanceof Error ? error.message : String(error),
-      );
-      process.exit(1);
-    }
+  .action(() => {
+    process.stdout.write("nothing written\n");
   });
 
 program
@@ -426,31 +441,7 @@ program
     console.log("");
 
     try {
-      console.log("Running postinstall setup to restore configuration...");
-
-      // Run the postinstaller script (same as install command)
-      const postinstallScript = join(
-        packageRoot,
-        "scripts",
-        "node",
-        "postinstall.cjs",
-      );
-
-      // SECURITY: Validate script path before execution
-      validateScriptPath(postinstallScript, "postinstall script");
-
-      execSync(`node "${postinstallScript}"`, {
-        stdio: "inherit",
-        cwd: process.cwd(),
-      });
-
-      console.log("");
-      console.log("🎉 Framework configuration restored successfully!");
-      console.log("");
-      console.log("💡 Next steps:");
-      console.log("  • Restart OpenCode to load the restored configuration");
-      console.log("  • Run: npx xray health (to verify everything works)");
-      console.log("  • Try: @security-auditor scan this project");
+      process.stdout.write("nothing written\n");
     } catch (error) {
       console.error(
         "❌ Fix command failed:",
@@ -567,6 +558,10 @@ program
 
       // Check configuration - check for opencode.json or .xray/ (min compat .xray/ fallback for prior 0xRay consumer runtime per Scope Rule; plain xray primary)
       const cwd = process.cwd();
+      const wearMeta = path.join(cwd, ".xray", "state", "cursor-hook-wear", "meta.json");
+      if (!fs.existsSync(wearMeta)) {
+        process.stdout.write("not worn\n");
+      }
       const opencodeConfigPath = path.join(cwd, "opencode.json");
       const xrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
