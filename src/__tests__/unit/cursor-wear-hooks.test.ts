@@ -29,10 +29,11 @@ const bridges = require(path.join(repoRoot, 'scripts/node/install-bridges.cjs'))
   ) => string;
   unwearCursorHooks: (target: string) => boolean;
   installCursorBridge: (target: string, packageRoot: string, log?: () => void) => string | null;
+  isXrayHookCommand: (command: string) => boolean;
   CURSOR_HOOK_EVENTS: Array<[string, string]>;
 };
 
-const { wearCursorHooks, unwearCursorHooks, installCursorBridge, CURSOR_HOOK_EVENTS } = bridges;
+const { wearCursorHooks, unwearCursorHooks, installCursorBridge, isXrayHookCommand, CURSOR_HOOK_EVENTS } = bridges;
 
 const EVENT_JS: Record<string, string> = {
   preToolUse: 'pre-tool-use.js',
@@ -470,23 +471,31 @@ describe('cursor wear wires installed dist hooks', () => {
       writeFileSync(path.join(factory, '.cursor', 'hooks', 'pre-tool-use.sh'), userHook);
       writeFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), userHook);
       const suited = path.join(factory, 'examples', 'ben-proof', 'suited');
-      mkdirSync(path.join(suited, '.cursor'), { recursive: true });
+      const committed = readFileSync(path.join(repoRoot, 'examples', 'ben-proof', 'suited', '.cursor', 'hooks.json'), 'utf8');
+      mkdirSync(path.join(suited, '.cursor', 'hooks'), { recursive: true });
       writeFileSync(path.join(suited, 'package.json'), `${JSON.stringify({ name: 'recall-bench' })}\n`);
-      writeFileSync(path.join(suited, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      writeFileSync(path.join(suited, '.cursor', 'hooks.json'), committed);
+      for (const [event, script] of CURSOR_HOOK_EVENTS) {
+        writeFileSync(
+          path.join(suited, '.cursor', 'hooks', script),
+          `#!/bin/sh\nexec /bin/sh "\${HERE}/xray-cloud-hook.sh" ${event} x.js\n`,
+        );
+      }
       const packageRoot = path.join(suited, 'node_modules', '0xray');
       plantDistHooks(packageRoot, 'dist');
       wearCursorHooks(suited, packageRoot, () => {});
       expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
       expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-tool-use.sh'), 'utf8')).toBe(userHook);
       expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
-      expect(existsSync(path.join(suited, '.cursor', 'hooks'))).toBe(false);
+      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toBe(committed);
+      expect(commandsOf(path.join(suited, '.cursor', 'hooks.json')).preCompact).toEqual([
+        '.cursor/hooks/pre-compact.sh',
+      ]);
+      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).not.toContain('node_modules/0xray/dist');
       assertNoRepoWearState(suited);
       assertNoRepoWearState(factory);
-      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toContain(
-        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
-      );
-      expect(unwearCursorHooks(suited)).toBe(true);
-      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
+      expect(unwearCursorHooks(suited)).toBe(false);
+      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toBe(committed);
       expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
       expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
     } finally {
@@ -560,7 +569,68 @@ describe('cursor wear wires installed dist hooks', () => {
       expect(after).toContain('./also-mine.sh');
       expect(after).toContain('./keep-me.sh');
       expect(after).not.toContain('node_modules/0xray/dist');
+      expect(after).not.toContain('"preToolUse": []');
       expect(after).not.toBe(CONSUMER_ORIGINAL);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('restores the user hooks.json after the snapshot is deleted and wear runs again', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-lost-state-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    try {
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      wearCursorHooks(project, packageRoot, () => {});
+      rmSync(path.join(project, '.cursor-wear-state'), { recursive: true, force: true });
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a duplicate hooks key and ignores legacy commands outside dist', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-dup-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const broken = '{ "hooks": { "stop": [] }, "hooks": { "preCompact": [] } }\n';
+    try {
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
+      expect(() => wearCursorHooks(project, packageRoot, () => {})).toThrow(/duplicate key "hooks"/);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(broken);
+      expect(existsSync(path.join(project, '.cursor-wear-state'))).toBe(false);
+      expect(
+        isXrayHookCommand(
+          'XRAY_AI_PATH="/tmp/xray" node /tmp/xray/src/integrations/cursor/hooks/pre-tool-use.js',
+        ),
+      ).toBe(false);
+      expect(
+        isXrayHookCommand(
+          'XRAY_AI_PATH="/tmp" node node_modules/0xray/dist/integrations/cursor/hooks/pre-tool-use.js',
+        ),
+      ).toBe(true);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('saves a snapshot when dist hook scripts are missing', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-nodist-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    try {
+      mkdirSync(packageRoot, { recursive: true });
+      writeFileSync(path.join(packageRoot, 'package.json'), `${JSON.stringify({ name: '0xray' })}\n`);
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(existsSync(path.join(project, '.cursor-wear-state', 'hooks.json.xray-before'))).toBe(true);
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }

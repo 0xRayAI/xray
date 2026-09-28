@@ -15,17 +15,17 @@ Repertoire is preferred (vendored, dest = named laws). Station + Codex gates sti
 
 Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. This exo repo's own `.cursor/hooks.json` stays on `.cursor/hooks/*.sh` so dogfood can run `src/integrations/cursor/hooks/*.js` before `npm run build`.
 
-Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries. The command is a relative path to the installed package:
+Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries, unless that event already runs `xray-cloud-hook.sh` (the committed `.cursor/hooks/*.sh` runners). A suited bench that already commits those runners is left byte for byte. The new command, when one is added, is a relative path to the installed package:
 
 `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`
 
-Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script. A `hooks.json` that contains `//` comments is merged in place. If that file cannot be parsed safely, wear stops and writes nothing.
+Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script, and wear adds the dist command beside it. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
 
-Wearing again writes the same bytes. Restore with:
+Wearing again writes the same bytes. The pre-wear copy is `<project>/.cursor-wear-state/` (gitignored, not in the npm package), so `npm ci` does not delete it. Wear never stores an already-worn `hooks.json` as that copy. Restore with:
 
 `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`
 
-If `hooks.json` was edited after wear, unwear keeps those edits, removes only the installed dist entries, and warns on stderr. Snapshots live under `node_modules/0xray/.cursor-wear-state/`, outside the project tree.
+If the snapshot directory is gone, unwear still removes the dist entries. If `hooks.json` was edited after wear, unwear keeps those edits, removes only the installed dist entries, and warns on stderr. Events that only existed to hold those entries are removed instead of being left as empty arrays.
 
 `xray-cloud-hook.sh` resolution order (first file that exists wins). Each run appends one `cursor-hook-invoke.log` line with `js=` set to the absolute path it executes:
 
@@ -83,3 +83,7 @@ echo '{"hook_event_name":"preCompact","trigger":"auto","context_tokens":1}' \
 ```
 
 Path C seed + receipt: `examples/cursor-cloud-compact/`. Suited Arm S (real usage, no FILL): `examples/killer-dual/`.
+
+## Known limits
+
+`findLocalExecDaemon` reads the local exec-daemon auth token from `/proc/<pid>/cmdline` (`scripts/node/install-bridges.cjs:927`–`:935`). That read needs a separate security review. Wear does not change it.

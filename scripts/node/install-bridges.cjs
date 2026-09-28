@@ -5,7 +5,6 @@
  * plus Cursor project hooks (fifth wear — not a fifth chat TUI).
  */
 
-const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { execFileSync, execSync } = require("child_process");
@@ -884,8 +883,13 @@ function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
     return null;
   }
   const next = mergeCloudSafeCursorHooks(existing);
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, `${JSON.stringify(next, null, 2)}\n`);
+  const body = `${JSON.stringify(next, null, 2)}\n`;
+  const previousText = fs.existsSync(dest) ? fs.readFileSync(dest, "utf8") : null;
+  if (previousText !== body) {
+    saveCursorWearSnapshot(targetDir, previousText, body);
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, body);
+  }
   log("cursor-bridge", existing ? "hooks.json rewritten cloud-safe" : "hooks.json fastened", "info", {
     path: dest,
     scripts: copied,
@@ -1012,10 +1016,9 @@ function installedCursorHookEntries(fromDir, packageRoot) {
 }
 
 /**
- * Ours only when the command points into the installed dist hooks, or when it
- * is the legacy `XRAY_AI_PATH=` one-liner that launches
- * `integrations/cursor/hooks/<name>.js`. A user's `.cursor/hooks/pre-compact.sh`
- * is not ours.
+ * Ours only when the command points at the installed dist hook.
+ * Legacy one-liners count only when they launch that same dist `.js`.
+ * A user's `.cursor/hooks/pre-compact.sh` is not ours.
  */
 function isXrayHookCommand(command) {
   const cmd = String(command || "").trim();
@@ -1023,7 +1026,22 @@ function isXrayHookCommand(command) {
   if (/(?:^|[/\\])node_modules\/0xray\/dist\/integrations\/cursor\/hooks\/[\w.-]+\.sh$/.test(cmd)) {
     return true;
   }
-  return /XRAY_AI_PATH=/.test(cmd) && /integrations\/cursor\/hooks\/[\w.-]+\.js/.test(cmd);
+  return (
+    /XRAY_AI_PATH=/.test(cmd) &&
+    /node_modules\/0xray\/dist\/integrations\/cursor\/hooks\/[\w.-]+\.js/.test(cmd)
+  );
+}
+
+function commandAlreadyRunsXrayHook(command, targetDir) {
+  if (isXrayHookCommand(command)) return true;
+  const match = /^(?:\.\/)?\.cursor\/hooks\/([\w.-]+\.sh)$/.exec(String(command || "").trim());
+  if (!match || !targetDir) return false;
+  const abs = path.join(path.resolve(targetDir), ".cursor", "hooks", match[1]);
+  try {
+    return fs.readFileSync(abs, "utf8").includes("xray-cloud-hook.sh");
+  } catch {
+    return false;
+  }
 }
 
 function scanJsonc(text) {
@@ -1110,9 +1128,32 @@ function refuseHooksEdit(hooksPath, reason) {
   throw new Error(`cursor-wear: refusing to edit ${hooksPath}: ${reason}. Wrote nothing.`);
 }
 
+function assertUniqueJsonKeys(text) {
+  const tokens = tokenizeJsonc(text);
+  const visit = (idx) => {
+    const token = tokens[idx];
+    if (!token) return;
+    if (token.type === "{") {
+      const obj = objectPairs(tokens, idx);
+      for (const pair of obj.pairs) visit(pair.valIdx);
+      return;
+    }
+    if (token.type === "[") {
+      const close = matchingBracket(tokens, idx);
+      for (const el of arrayElements(tokens, idx, close)) visit(el.startIdx);
+    }
+  };
+  if (tokens.length) visit(0);
+}
+
 function parseHooksText(text, hooksPath) {
   const scan = scanJsonc(text);
   if (!scan.ok) refuseHooksEdit(hooksPath, scan.reason);
+  try {
+    assertUniqueJsonKeys(text);
+  } catch (err) {
+    refuseHooksEdit(hooksPath, err.message || String(err));
+  }
   let parsed;
   try {
     parsed = JSON.parse(stripJsonComments(text));
@@ -1219,7 +1260,10 @@ function objectPairs(tokens, openIdx) {
       valEnd = matchingBracket(tokens, valIdx);
       if (valEnd < 0) throw new Error("unbalanced braces");
     }
-    pairs.push({ key: keyTok.value, valIdx, valEnd });
+    if (pairs.some((pair) => pair.key === keyTok.value)) {
+      throw new Error(`duplicate key ${JSON.stringify(keyTok.value)}`);
+    }
+    pairs.push({ key: keyTok.value, keyIdx: i, valIdx, valEnd });
     i = valEnd + 1;
     if (i < closeIdx && tokens[i] && tokens[i].type === ",") i += 1;
   }
@@ -1290,7 +1334,7 @@ function renderEventEntry(command) {
   return `{ "command": ${JSON.stringify(command)} }`;
 }
 
-function editJsoncHooks(text, xrayByEvent) {
+function editJsoncHooks(text, xrayByEvent, targetDir) {
   let tokens;
   try {
     tokens = tokenizeJsonc(text);
@@ -1326,10 +1370,17 @@ function editJsoncHooks(text, xrayByEvent) {
     if (tokens[pair.valIdx].type !== "[") throw new Error(`${event} is not an array`);
     const elements = arrayElements(tokens, pair.valIdx, pair.valEnd);
     const owned = [];
+    let coveredByRunner = false;
     for (const el of elements) {
       if (tokens[el.startIdx].type !== "{") continue;
       const cmd = commandOfObject(tokens, el.startIdx);
-      if (cmd && isXrayHookCommand(cmd.value)) owned.push({ el, cmd });
+      if (!cmd) continue;
+      if (isXrayHookCommand(cmd.value)) owned.push({ el, cmd });
+      else if (commandAlreadyRunsXrayHook(cmd.value, targetDir)) coveredByRunner = true;
+    }
+    if (coveredByRunner) {
+      if (owned.length > 0) edits.push(...ownedDeletionEdits(tokens, owned.map((item) => item.el)));
+      continue;
     }
     if (owned.length === 0) {
       edits.push({
@@ -1364,13 +1415,10 @@ function editJsoncHooks(text, xrayByEvent) {
   return applyTextEdits(text, edits);
 }
 
-function renderWornHooks(originalText, hooksPath, xrayByEvent) {
-  const parsed = parseHooksText(originalText, hooksPath);
-  if (!parsed.hasComments) {
-    return serializeHooksDoc(mergeInstalledCursorHooks(parsed.parsed, xrayByEvent));
-  }
+function renderWornHooks(originalText, hooksPath, xrayByEvent, targetDir) {
+  parseHooksText(originalText, hooksPath);
   try {
-    return editJsoncHooks(originalText, xrayByEvent);
+    return editJsoncHooks(originalText, xrayByEvent, targetDir);
   } catch (err) {
     refuseHooksEdit(hooksPath, err.message || String(err));
   }
@@ -1394,7 +1442,38 @@ function stripOwnedHookEntries(text) {
       if (cmd && isXrayHookCommand(cmd.value)) owned.push(el);
     }
   }
-  return applyTextEdits(text, ownedDeletionEdits(tokens, owned));
+  return stripDanglingCommas(stripEmptyShippedEvents(applyTextEdits(text, ownedDeletionEdits(tokens, owned))));
+}
+
+function stripDanglingCommas(text) {
+  const tokens = tokenizeJsonc(text);
+  const edits = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    if (tokens[i].type !== ",") continue;
+    const next = tokens[i + 1];
+    if (next && (next.type === "}" || next.type === "]")) {
+      edits.push({ start: tokens[i].start, end: next.start, insert: "" });
+    }
+  }
+  return applyTextEdits(text, edits);
+}
+
+function stripEmptyShippedEvents(text) {
+  const shipped = new Set(CURSOR_HOOK_EVENTS.map(([event]) => event));
+  const tokens = tokenizeJsonc(text);
+  if (!tokens.length || tokens[0].type !== "{") return text;
+  const root = objectPairs(tokens, 0);
+  const hooksPair = root.pairs.find((pair) => pair.key === "hooks");
+  if (!hooksPair || tokens[hooksPair.valIdx].type !== "{") return text;
+  const hooksObj = objectPairs(tokens, hooksPair.valIdx);
+  const empty = [];
+  for (const pair of hooksObj.pairs) {
+    if (!shipped.has(pair.key) || tokens[pair.valIdx].type !== "[") continue;
+    if (arrayElements(tokens, pair.valIdx, pair.valEnd).length === 0) {
+      empty.push({ startIdx: pair.keyIdx, endIdx: pair.valEnd });
+    }
+  }
+  return applyTextEdits(text, ownedDeletionEdits(tokens, empty));
 }
 
 /**
@@ -1450,13 +1529,12 @@ function serializeHooksDoc(doc) {
   return `${JSON.stringify(doc, null, 2)}\n`;
 }
 
-function wearStateDir(packageRoot, targetDir) {
-  const id = crypto.createHash("sha256").update(path.resolve(targetDir)).digest("hex").slice(0, 16);
-  return path.join(path.resolve(packageRoot), ".cursor-wear-state", id);
+function wearStateDir(targetDir) {
+  return path.join(path.resolve(targetDir), ".cursor-wear-state");
 }
 
-function wearStatePaths(packageRoot, targetDir) {
-  const dir = wearStateDir(packageRoot, targetDir);
+function wearStatePaths(targetDir) {
+  const dir = wearStateDir(targetDir);
   return {
     dir,
     meta: path.join(dir, "meta.json"),
@@ -1465,23 +1543,37 @@ function wearStatePaths(packageRoot, targetDir) {
   };
 }
 
-function loadWearState(packageRoot, targetDir) {
-  const paths = wearStatePaths(packageRoot, targetDir);
-  const cursor = path.join(targetDir, ".cursor");
-  const hooksPath = path.join(cursor, "hooks.json");
-  if (fs.existsSync(paths.meta)) {
-    return { paths, meta: JSON.parse(fs.readFileSync(paths.meta, "utf8")), fresh: false };
-  }
-  const meta = {
-    version: 1,
-    existed: fs.existsSync(hooksPath),
-    cursorDirExisted: fs.existsSync(cursor),
-    also: [],
-  };
+function textHasDistHookEntries(text) {
+  return /(?:^|[/\\])node_modules\/0xray\/dist\/integrations\/cursor\/hooks\/[\w.-]+\.sh/.test(
+    String(text || ""),
+  );
+}
+
+function userBytesBeforeWear(previousText) {
+  if (previousText == null) return null;
+  if (!textHasDistHookEntries(previousText)) return previousText;
+  return stripOwnedHookEntries(previousText);
+}
+
+function saveCursorWearSnapshot(targetDir, previousText, writtenBody) {
+  const paths = wearStatePaths(targetDir);
   fs.mkdirSync(paths.dir, { recursive: true });
-  if (meta.existed) fs.copyFileSync(hooksPath, paths.backup);
+  let meta;
+  if (fs.existsSync(paths.meta)) {
+    meta = JSON.parse(fs.readFileSync(paths.meta, "utf8"));
+  } else {
+    const backup = userBytesBeforeWear(previousText);
+    meta = {
+      version: 1,
+      existed: previousText != null,
+      cursorDirExisted: fs.existsSync(path.join(targetDir, ".cursor")),
+      also: [],
+    };
+    if (backup != null) fs.writeFileSync(paths.backup, backup);
+  }
+  fs.writeFileSync(paths.written, writtenBody);
   fs.writeFileSync(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
-  return { paths, meta, fresh: true };
+  return { paths, meta };
 }
 
 function saveWearState(paths, meta) {
@@ -1530,13 +1622,12 @@ function removeDirIfEmpty(dir) {
 
 /**
  * Merge the five shipped Cursor hooks into the target project's
- * `.cursor/hooks.json`, pointing each command at the installed dist script.
- * Writes only `targetDir`. Does not copy `.cursor/hooks/*.sh` and does not
- * climb to a parent git root, `CURSOR_PROJECT_DIR`, or `repos/xray`.
- * Pass `{ outerRoots: true }` to also write those outer paths; each one is
- * printed as `cursor-wear: wrote outer hooks at <path>`.
- * Snapshots live under `node_modules/0xray/.cursor-wear-state/`, outside the
- * consumer tree. Idempotent.
+ * `.cursor/hooks.json`. Writes only `targetDir`. An event whose command
+ * already runs xray-cloud-hook.sh is left alone, so a committed suited
+ * hooks.json is not given a second copy. Pass `{ outerRoots: true }` to also
+ * write outer paths; each one is printed.
+ * The snapshot is `<project>/.cursor-wear-state/` (gitignored, not packed).
+ * An already-worn file is never stored as the pre-wear backup.
  */
 function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
@@ -1553,74 +1644,95 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const body =
     originalText == null
       ? serializeHooksDoc(mergeInstalledCursorHooks(null, xrayByEvent))
-      : renderWornHooks(originalText, hooksPath, xrayByEvent);
-
-  const { paths, meta } = loadWearState(resolvedPackage, resolvedTarget);
-  fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
-  fs.writeFileSync(hooksPath, body);
-  fs.writeFileSync(paths.written, body);
+      : renderWornHooks(originalText, hooksPath, xrayByEvent, resolvedTarget);
+  const changed = originalText == null || body !== originalText;
+  let snap = null;
+  if (changed) {
+    snap = saveCursorWearSnapshot(resolvedTarget, originalText, body);
+    fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
+    fs.writeFileSync(hooksPath, body);
+  } else {
+    write("cursor-bridge", "hooks.json already runs these hooks", "info", { path: hooksPath });
+  }
 
   if (options.outerRoots === true) {
-    meta.also = linkedWearRoots(resolvedTarget);
-    saveWearState(paths, meta);
-    for (const extra of meta.also) {
+    if (!snap) snap = saveCursorWearSnapshot(resolvedTarget, originalText, body);
+    snap.meta.also = linkedWearRoots(resolvedTarget);
+    saveWearState(snap.paths, snap.meta);
+    for (const extra of snap.meta.also) {
       wearCursorHooks(extra, resolvedPackage, write, { outerRoots: false });
       process.stdout.write(`cursor-wear: wrote outer hooks at ${extra}\n`);
     }
+    saveWearState(snap.paths, snap.meta);
   }
-  saveWearState(paths, meta);
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
 }
 
-/**
- * Restore `.cursor/hooks.json` when it still matches the bytes wear wrote.
- * If the user edited it after wear, warn and remove only dist entries.
- * Outer paths are restored only when that wear opted in.
- */
-function unwearCursorHooks(targetDir, log, packageRootOverride) {
-  const write = typeof log === "function" ? log : () => {};
-  const resolvedTarget = path.resolve(targetDir);
-  const packageRoot = packageRootOverride
-    ? path.resolve(packageRootOverride)
-    : path.join(resolvedTarget, "node_modules", "0xray");
-  const paths = wearStatePaths(packageRoot, resolvedTarget);
-  if (!fs.existsSync(paths.meta)) {
-    write("cursor-bridge", "unwear skipped", "info", { reason: "no snapshot", target: resolvedTarget });
+function stripHooksWithoutSnapshot(hooksPath, write) {
+  if (!fs.existsSync(hooksPath)) {
+    write("cursor-bridge", "unwear skipped", "info", { reason: "no snapshot", target: hooksPath });
     return false;
   }
-  const meta = JSON.parse(fs.readFileSync(paths.meta, "utf8"));
+  const text = fs.readFileSync(hooksPath, "utf8");
+  let next;
+  try {
+    next = stripOwnedHookEntries(text);
+  } catch (err) {
+    process.stderr.write(
+      `cursor-wear: ${hooksPath} has no snapshot and could not be parsed (${err.message}); left it unchanged\n`,
+    );
+    return false;
+  }
+  if (next === text) {
+    write("cursor-bridge", "unwear skipped", "info", { reason: "no snapshot", target: hooksPath });
+    return false;
+  }
+  fs.writeFileSync(hooksPath, next);
+  write("cursor-bridge", "hooks.json dist entries removed", "info", { path: hooksPath });
+  return true;
+}
+
+/**
+ * Restore `.cursor/hooks.json` from the project snapshot when the file still
+ * matches what wear wrote. Without a snapshot, remove dist entries anyway.
+ * If the user edited the file after wear, warn and remove only those entries.
+ */
+function unwearCursorHooks(targetDir, log) {
+  const write = typeof log === "function" ? log : () => {};
+  const resolvedTarget = path.resolve(targetDir);
+  const paths = wearStatePaths(resolvedTarget);
   const cursor = path.join(resolvedTarget, ".cursor");
   const hooksPath = path.join(cursor, "hooks.json");
+  if (!fs.existsSync(paths.meta)) return stripHooksWithoutSnapshot(hooksPath, write);
+  const meta = JSON.parse(fs.readFileSync(paths.meta, "utf8"));
   const current = fs.existsSync(hooksPath) ? fs.readFileSync(hooksPath) : null;
   const written = fs.existsSync(paths.written) ? fs.readFileSync(paths.written) : null;
   const unchanged = Boolean(current && written && current.equals(written));
-  if (unchanged) {
-    if (meta.existed) {
-      if (!fs.existsSync(paths.backup)) throw new Error(`unwear missing backup for ${hooksPath}`);
-      fs.copyFileSync(paths.backup, hooksPath);
-    } else if (fs.existsSync(hooksPath)) {
-      fs.unlinkSync(hooksPath);
+  if (unchanged && meta.existed && fs.existsSync(paths.backup)) {
+    fs.copyFileSync(paths.backup, hooksPath);
+  } else if (unchanged && !meta.existed) {
+    if (fs.existsSync(hooksPath)) fs.unlinkSync(hooksPath);
+  } else if (current) {
+    if (unchanged) {
+      process.stderr.write(`cursor-wear: ${hooksPath} backup missing; removing only 0xray dist entries\n`);
+    } else {
+      process.stderr.write(
+        `cursor-wear: ${hooksPath} changed after wear; keeping those edits and removing only 0xray dist entries\n`,
+      );
     }
-  } else {
-    process.stderr.write(
-      `cursor-wear: ${hooksPath} changed after wear; keeping those edits and removing only 0xray dist entries\n`,
-    );
-    if (current) {
-      try {
-        fs.writeFileSync(hooksPath, stripOwnedHookEntries(current.toString("utf8")));
-      } catch (err) {
-        process.stderr.write(
-          `cursor-wear: ${hooksPath} changed after wear and could not be parsed (${err.message}); left it unchanged\n`,
-        );
-      }
+    try {
+      fs.writeFileSync(hooksPath, stripOwnedHookEntries(current.toString("utf8")));
+    } catch (err) {
+      process.stderr.write(
+        `cursor-wear: ${hooksPath} changed after wear and could not be parsed (${err.message}); left it unchanged\n`,
+      );
     }
   }
+  const also = meta.also || [];
   fs.rmSync(paths.dir, { recursive: true, force: true });
   if (unchanged && !meta.cursorDirExisted) removeDirIfEmpty(cursor);
-  for (const extra of meta.also || []) {
-    unwearCursorHooks(extra, write, packageRoot);
-  }
+  for (const extra of also) unwearCursorHooks(extra, write);
   write("cursor-bridge", "hooks.json restored", "info", { path: hooksPath });
   return true;
 }
