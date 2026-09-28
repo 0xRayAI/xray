@@ -732,6 +732,19 @@ const CURSOR_HOOK_SCRIPTS = [
   "before-shell-execution.sh",
 ];
 
+/** Event entry points 0xray ships. preCompact is one of them. The dogfood
+ * `.cursor/hooks` directory also has the shared runner and invoke-probe.sh. */
+const CURSOR_HOOK_EVENTS = [
+  ["preToolUse", "pre-tool-use.sh"],
+  ["preCompact", "pre-compact.sh"],
+  ["afterFileEdit", "after-file-edit.sh"],
+  ["beforeShellExecution", "before-shell-execution.sh"],
+  ["beforeReadFile", "before-read-file.sh"],
+];
+
+const CURSOR_WEAR_META = "xray-hook-wear.json";
+const CURSOR_WEAR_BACKUP = "hooks.json.xray-before";
+
 const CLOUD_SAFE_CURSOR_HOOKS = {
   version: 1,
   hooks: {
@@ -978,11 +991,284 @@ function reloadCursorHostHooks(log) {
   }
 }
 
+function cursorWearMetaPath(targetDir) {
+  return path.join(targetDir, ".cursor", CURSOR_WEAR_META);
+}
+
+function cursorWearBackupPath(targetDir) {
+  return path.join(targetDir, ".cursor", CURSOR_WEAR_BACKUP);
+}
+
+function consumerDistHooksReady(packageRoot) {
+  const dir = path.join(packageRoot, "dist", "integrations", "cursor", "hooks");
+  if (!fs.existsSync(path.join(dir, "xray-cloud-hook.sh"))) return false;
+  return CURSOR_HOOK_EVENTS.every(([, script]) => fs.existsSync(path.join(dir, script)));
+}
+
+function installedHookCommand(fromDir, packageRoot, scriptName) {
+  const abs = path.join(packageRoot, "dist", "integrations", "cursor", "hooks", scriptName);
+  return path.relative(fromDir, abs).split(path.sep).join("/");
+}
+
+function installedCursorHookEntries(fromDir, packageRoot) {
+  const hooks = {};
+  for (const [event, script] of CURSOR_HOOK_EVENTS) {
+    hooks[event] = [{ command: installedHookCommand(fromDir, packageRoot, script) }];
+  }
+  return hooks;
+}
+
+function isXrayHookCommand(command) {
+  const cmd = String(command || "").trim();
+  if (!cmd) return false;
+  if (isEnvAssignmentCursorCommand(cmd)) return true;
+  if (
+    /^(?:\.\/)?\.cursor\/hooks\/(?:pre-tool-use|pre-compact|after-file-edit|before-read-file|before-shell-execution|xray-cloud-hook|invoke-probe)\.sh$/.test(
+      cmd,
+    )
+  ) {
+    return true;
+  }
+  return /(?:^|\/)0xray\/(?:dist|src)\/integrations\/cursor\/hooks\/[\w.-]+\.sh$/.test(cmd);
+}
+
+function rememberCreated(meta, targetDir, absPath) {
+  const rel = path.relative(targetDir, absPath).split(path.sep).join("/");
+  if (!meta.created.includes(rel)) meta.created.push(rel);
+}
+
+function readHooksDoc(hooksPath) {
+  if (!fs.existsSync(hooksPath)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Keep every non-0xray entry. Add or replace only 0xray's shipped commands.
+ * A second pass on the result is stable (same keys, same commands).
+ */
+function mergeInstalledCursorHooks(existing, xrayByEvent) {
+  const sourceHooks =
+    existing && existing.hooks && typeof existing.hooks === "object" && !Array.isArray(existing.hooks)
+      ? existing.hooks
+      : {};
+  const names = Object.keys(sourceHooks);
+  for (const name of Object.keys(xrayByEvent)) {
+    if (!names.includes(name)) names.push(name);
+  }
+  const hooks = {};
+  for (const name of names) {
+    const current = Array.isArray(sourceHooks[name]) ? sourceHooks[name] : [];
+    const shipped = xrayByEvent[name];
+    if (!shipped) {
+      hooks[name] = current.slice();
+      continue;
+    }
+    const command = shipped[0].command;
+    let replaced = false;
+    const next = [];
+    for (const entry of current) {
+      const cmd = entry && typeof entry === "object" ? entry.command : "";
+      if (isXrayHookCommand(cmd)) {
+        if (!replaced) {
+          next.push({ ...entry, command });
+          replaced = true;
+        }
+        continue;
+      }
+      next.push(entry);
+    }
+    if (!replaced) next.push({ command });
+    hooks[name] = next;
+  }
+  const doc = {};
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+    for (const key of Object.keys(existing)) {
+      if (key !== "hooks") doc[key] = existing[key];
+    }
+  }
+  if (doc.version == null) doc.version = 1;
+  doc.hooks = hooks;
+  return doc;
+}
+
+function serializeHooksDoc(doc) {
+  return `${JSON.stringify(doc, null, 2)}\n`;
+}
+
+function loadWearMeta(targetDir) {
+  const metaPath = cursorWearMetaPath(targetDir);
+  if (fs.existsSync(metaPath)) {
+    return { meta: JSON.parse(fs.readFileSync(metaPath, "utf8")), fresh: false };
+  }
+  const cursor = path.join(targetDir, ".cursor");
+  const hooksPath = path.join(cursor, "hooks.json");
+  const meta = {
+    version: 1,
+    existed: fs.existsSync(hooksPath),
+    cursorDirExisted: fs.existsSync(cursor),
+    hooksDirExisted: fs.existsSync(path.join(cursor, "hooks")),
+    created: [],
+    also: [],
+  };
+  fs.mkdirSync(cursor, { recursive: true });
+  if (meta.existed) {
+    fs.copyFileSync(hooksPath, cursorWearBackupPath(targetDir));
+  }
+  fs.writeFileSync(metaPath, `${JSON.stringify(meta, null, 2)}\n`);
+  return { meta, fresh: true };
+}
+
+function saveWearMeta(targetDir, meta) {
+  fs.mkdirSync(path.join(targetDir, ".cursor"), { recursive: true });
+  fs.writeFileSync(cursorWearMetaPath(targetDir), `${JSON.stringify(meta, null, 2)}\n`);
+}
+
+function copyCursorScriptsTracked(targetDir, packageRoot, meta, fresh, log) {
+  const destDir = path.join(targetDir, ".cursor", "hooks");
+  const before = new Set();
+  if (fresh && fs.existsSync(destDir)) {
+    for (const name of fs.readdirSync(destDir)) before.add(name);
+  }
+  fastenCursorHookScripts(targetDir, packageRoot, log);
+  if (!fresh || !fs.existsSync(destDir)) return;
+  for (const name of fs.readdirSync(destDir)) {
+    if (!before.has(name)) rememberCreated(meta, targetDir, path.join(destDir, name));
+  }
+}
+
+function resolveGitToplevel(targetDir) {
+  try {
+    const top = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      cwd: targetDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    if (!top) return null;
+    const resolved = path.resolve(top);
+    if (resolved === path.resolve(targetDir)) return null;
+    return resolved;
+  } catch {
+    return null;
+  }
+}
+
+function linkedWearRoots(targetDir) {
+  const roots = [];
+  const add = (root) => {
+    if (!root) return;
+    const resolved = path.resolve(root);
+    if (resolved === path.resolve(targetDir)) return;
+    if (roots.some((item) => path.resolve(item) === resolved)) return;
+    roots.push(resolved);
+  };
+  add(resolveCursorWorkspaceRoot(targetDir));
+  add(resolveGitToplevel(targetDir));
+  roots.sort();
+  return roots;
+}
+
+function removeDirIfEmpty(dir) {
+  try {
+    fs.rmdirSync(dir);
+  } catch {
+    // still holds user files
+  }
+}
+
+/**
+ * Merge shipped Cursor hooks into project `.cursor/hooks.json`, pointing each
+ * command at the installed package's dist script. Idempotent. Snapshot the
+ * previous bytes so `unwearCursorHooks` can restore them.
+ * When the consumer sits inside another git checkout, that checkout root is
+ * wired too — Cursor binds project hooks there.
+ */
+function wearCursorHooks(targetDir, packageRoot, log, opts) {
+  const write = typeof log === "function" ? log : () => {};
+  const options = opts || {};
+  const resolvedTarget = path.resolve(targetDir);
+  const resolvedPackage = path.resolve(packageRoot);
+  if (!isConsumerInstall(resolvedPackage, resolvedTarget) || !consumerDistHooksReady(resolvedPackage)) {
+    return fastenCursorHooksAt(resolvedTarget, resolvedPackage, write);
+  }
+
+  const { meta, fresh } = loadWearMeta(resolvedTarget);
+  copyCursorScriptsTracked(resolvedTarget, resolvedPackage, meta, fresh, write);
+  const hooksPath = path.join(resolvedTarget, ".cursor", "hooks.json");
+  const existing = readHooksDoc(hooksPath);
+  const next = mergeInstalledCursorHooks(existing, installedCursorHookEntries(resolvedTarget, resolvedPackage));
+  const body = serializeHooksDoc(next);
+  fs.writeFileSync(hooksPath, body);
+  if (fresh && !meta.existed) rememberCreated(meta, resolvedTarget, hooksPath);
+
+  if (!options.skipLinkedRoots) {
+    const also = linkedWearRoots(resolvedTarget);
+    for (const extra of also) {
+      wearCursorHooks(extra, resolvedPackage, write, { skipLinkedRoots: true });
+    }
+    meta.also = also;
+  }
+  saveWearMeta(resolvedTarget, meta);
+  write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
+  return hooksPath;
+}
+
+/**
+ * Restore `.cursor/hooks.json` to the bytes from before wear.
+ * If wear created the file, remove it and any other files wear created.
+ * Also restores git-toplevel / workspace roots that this wear linked.
+ */
+function unwearCursorHooks(targetDir, log) {
+  const write = typeof log === "function" ? log : () => {};
+  const resolvedTarget = path.resolve(targetDir);
+  const metaPath = cursorWearMetaPath(resolvedTarget);
+  if (!fs.existsSync(metaPath)) {
+    write("cursor-bridge", "unwear skipped", "info", { reason: "no snapshot", target: resolvedTarget });
+    return false;
+  }
+  const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+  const cursor = path.join(resolvedTarget, ".cursor");
+  const hooksPath = path.join(cursor, "hooks.json");
+  const backup = cursorWearBackupPath(resolvedTarget);
+  if (meta.existed) {
+    if (!fs.existsSync(backup)) {
+      throw new Error(`unwear missing backup for ${hooksPath}`);
+    }
+    fs.copyFileSync(backup, hooksPath);
+    fs.unlinkSync(backup);
+  } else if (fs.existsSync(hooksPath)) {
+    fs.unlinkSync(hooksPath);
+  }
+  for (const rel of meta.created || []) {
+    const abs = path.resolve(resolvedTarget, rel);
+    if (abs === path.resolve(hooksPath)) continue;
+    if (fs.existsSync(abs) && fs.statSync(abs).isFile()) fs.unlinkSync(abs);
+  }
+  if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+  if (!meta.hooksDirExisted) removeDirIfEmpty(path.join(cursor, "hooks"));
+  if (!meta.cursorDirExisted) removeDirIfEmpty(cursor);
+  for (const extra of meta.also || []) {
+    unwearCursorHooks(extra, write);
+  }
+  write("cursor-bridge", "hooks.json restored", "info", { path: hooksPath });
+  return true;
+}
+
 function installCursorBridge(targetDir, packageRoot, log) {
-  const dest = fastenCursorHooksAt(targetDir, packageRoot, log);
-  const workspace = resolveCursorWorkspaceRoot(targetDir);
-  if (workspace && path.resolve(workspace) !== path.resolve(targetDir)) {
-    fastenCursorHooksAt(workspace, packageRoot, log);
+  const consumerDist = isConsumerInstall(packageRoot, targetDir) && consumerDistHooksReady(packageRoot);
+  const dest = consumerDist
+    ? wearCursorHooks(targetDir, packageRoot, log)
+    : fastenCursorHooksAt(targetDir, packageRoot, log);
+  if (!consumerDist) {
+    const workspace = resolveCursorWorkspaceRoot(targetDir);
+    if (workspace && path.resolve(workspace) !== path.resolve(targetDir)) {
+      fastenCursorHooksAt(workspace, packageRoot, log);
+    }
   }
   reloadCursorHostHooks(log);
   return dest;
@@ -1093,5 +1379,12 @@ module.exports = {
   mergeCloudSafeCursorHooks,
   isEnvAssignmentCursorCommand,
   CURSOR_HOOK_SCRIPTS,
+  CURSOR_HOOK_EVENTS,
   CLOUD_SAFE_CURSOR_HOOKS,
+  wearCursorHooks,
+  unwearCursorHooks,
+  mergeInstalledCursorHooks,
+  isXrayHookCommand,
+  installedHookCommand,
+  consumerDistHooksReady,
 };

@@ -13,7 +13,22 @@ Repertoire is preferred (vendored, dest = named laws). Station + Codex gates sti
 5. `install-bridges` also fastens the daemon workspace root when it can see `repos/xray` above the checkout, then pokes local `ReloadAgentSkills` so a mid-session wear binds this daemon. Command stays a relative `.cursor/hooks/*.sh`.
 6. `preCompact` is observational (cannot block). Cloud **does** fire it ([hooks.md](https://cursor.com/docs/hooks.md) support matrix: Yes) once hooks are bound and the host actually compacts. Stdout is only `{ "user_message": "…" }` — that is a notice, not a spawn. The spawn id is stdin `conversation_id` (same `bc-`) plus Task's returned agent id. Resume that id. Do not cold-start a twin. Station merge keeps ticket / seed / Durable / unfinished keys.
 
-Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. `xray-cloud-hook.sh` finds mill JS at `XRAY_AI_PATH`, `../xray`, or `node_modules/0xray` (dist then src). This exo repo wears `src/integrations/cursor/hooks/*.js` so a cloud can run before `npm run build`.
+Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. This exo repo's own `.cursor/hooks.json` stays on `.cursor/hooks/*.sh` so dogfood can run `src/integrations/cursor/hooks/*.js` before `npm run build`.
+
+Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) merges the consumer `.cursor/hooks.json` and, when that project sits inside another git checkout, the checkout root too. Every shipped hook (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) is added beside existing user entries. The command is a relative path to the installed package:
+
+`node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`
+
+Wearing again writes the same bytes. Restore with:
+
+`node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`
+
+`xray-cloud-hook.sh` resolution order (first file that exists wins). Each run appends one `cursor-hook-invoke.log` line with `js=` set to the absolute path it executes:
+
+1. Consumer `node_modules/0xray/dist/integrations/cursor/hooks/${JS}`, walking upward from the script directory, then from cwd. A directory whose `package.json` name is `0xray` is skipped, so a factory checkout does not prefer its own `node_modules` or a nested example over `src/`.
+2. Sibling `${JS}` when the runner itself lives under `node_modules/0xray`.
+3. `$XRAY_AI_PATH` `src/` then `dist/` (explicit mill).
+4. Dogfood `src/` at cwd, `../xray`, `repos/xray`, and `$CURSOR_PROJECT_DIR/repos/xray`, then dist at cwd, then `cwd/node_modules/0xray`.
 
 ## Contracts
 
