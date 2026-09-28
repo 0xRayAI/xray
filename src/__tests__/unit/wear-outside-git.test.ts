@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
   existsSync,
+  lstatSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -76,12 +76,36 @@ function listFiles(root: string): string[] {
       if (name === 'node_modules') continue;
       const abs = path.join(dir, name);
       const rel = path.relative(root, abs).split(path.sep).join('/');
-      if (statSync(abs).isDirectory()) walk(abs);
+      const st = lstatSync(abs);
+      if (st.isSymbolicLink()) {
+        out.push(rel);
+        continue;
+      }
+      if (st.isDirectory()) walk(abs);
       else out.push(rel);
     }
   };
   walk(root);
   return out.sort();
+}
+
+function suitWithSkillsAndLinks(): string[] {
+  const skills = readdirSync(path.join(repoRoot, 'src/skills'))
+    .filter((name) => existsSync(path.join(repoRoot, 'src/skills', name, 'SKILL.md')))
+    .map((name) => `.opencode/skills/${name}/SKILL.md`);
+  return [...new Set([...SUIT_WITHOUT_CURSOR_HOOKS, ...skills, 'dist', 'scripts'])].sort();
+}
+
+function skillLinkStdout(): string {
+  const copied = readdirSync(path.join(repoRoot, 'src/skills')).filter((name) =>
+    existsSync(path.join(repoRoot, 'src/skills', name, 'SKILL.md')),
+  ).length;
+  return [
+    `✅ Skills: ${copied} updated, 0 community skills preserved`,
+    '✅ Scripts symlink: created',
+    '✅ Dist symlink: created',
+    '',
+  ].join('\n');
 }
 
 function freshHome(): string {
@@ -107,9 +131,9 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe('');
+      expect(ran.stdout).toBe(skillLinkStdout());
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json' && rel !== 'keep.txt');
-      expect(wrote).toEqual(SUIT_WITHOUT_CURSOR_HOOKS);
+      expect(wrote).toEqual(suitWithSkillsAndLinks());
       expect(wrote.some((rel) => rel === '.cursor' || rel.startsWith('.cursor/'))).toBe(false);
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
@@ -131,18 +155,22 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(setupScript, ['setup'], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe('setup: wrote .mcp.json and chat bridges\n');
+      expect(ran.stdout).toBe(`${skillLinkStdout()}setup: wrote .mcp.json and chat bridges\n`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
-      expect(wrote).toEqual(SUIT_WITHOUT_CURSOR_HOOKS);
+      expect(wrote).toEqual(suitWithSkillsAndLinks());
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
+      const again = runNode(wearScript, [project], project, home);
+      expect(again.status).toBe(0);
+      expect(again.stderr).toBe(`${SKIPPED}\n`);
+      expect(listFiles(project).filter((rel) => rel !== 'package.json')).toEqual(suitWithSkillsAndLinks());
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });
     }
   });
 
-  it('inside a git checkout still installs cursor hooks and nothing else', () => {
+  it('inside a git checkout installs cursor hooks, skill copies, and root links', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-git-'));
     const home = freshHome();
     const homeBefore = listFiles(home);
@@ -152,8 +180,11 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).not.toContain(SKIPPED);
+      expect(ran.stdout).toBe(skillLinkStdout());
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
+      expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(true);
+      expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
+      expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(false);
       expect(existsSync(path.join(project, '.mcp.json'))).toBe(false);
       expect(existsSync(path.join(project, '.grok'))).toBe(false);

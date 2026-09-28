@@ -1656,6 +1656,32 @@ function assertCursorWearGit(targetDir) {
 const CURSOR_HOOKS_SKIPPED_LINE =
   "cursor-wear: hooks skipped because this folder is not a git checkout\n";
 
+function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
+  require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
+}
+
+function setupSkillMirrorNames(packageRoot) {
+  const skillsSource = fs.existsSync(path.join(packageRoot, "src", "skills"))
+    ? path.join(packageRoot, "src", "skills")
+    : path.join(packageRoot, "dist", "skills");
+  if (!fs.existsSync(skillsSource)) return new Set();
+  const names = new Set();
+  for (const entry of fs.readdirSync(skillsSource, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    if (fs.existsSync(path.join(skillsSource, entry.name, "SKILL.md"))) names.add(entry.name);
+  }
+  return names;
+}
+
+/** The 4.0.28 skill mirror is not a consumer costume. Any other extra name still throws. */
+function isSetupSkillMirrorDump(err, packageRoot) {
+  if (!err || err.code !== "FOUNDRY_COSTUME_DUMP") return false;
+  if (!Array.isArray(err.extraSkills) || err.extraSkills.length === 0) return false;
+  if (Array.isArray(err.extraAgents) && err.extraAgents.length > 0) return false;
+  const mirrored = setupSkillMirrorNames(packageRoot);
+  return err.extraSkills.every((name) => mirrored.has(name));
+}
+
 /**
  * 4.0.28 consumer postinstall, minus Cursor hooks and git hooks.
  * Used only when the folder is not a git work tree.
@@ -1676,10 +1702,15 @@ function wearSuitSkippingCursorHooks(packageRoot, targetDir, log) {
     installGrokBridge(targetDir, packageRoot, write);
     installHermesBridge(targetDir, packageRoot, write);
     installOpenclawBridge(targetDir, packageRoot, write);
-    mintConsumerSuit(packageRoot, targetDir, write);
+    try {
+      mintConsumerSuit(packageRoot, targetDir, write);
+    } catch (err) {
+      if (!isSetupSkillMirrorDump(err, packageRoot)) throw err;
+    }
   } else {
     wearVendoredRepertoire(packageRoot, targetDir, write);
   }
+  syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   process.stderr.write(CURSOR_HOOKS_SKIPPED_LINE);
 }
 
@@ -1837,6 +1868,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
     return;
   }
   assertCursorWearGit(resolvedTarget);
+  syncSetupSkillsAndRootLinks(resolvedPackage, resolvedTarget);
   if (!isConsumerInstall(resolvedPackage, resolvedTarget) || !consumerDistHooksReady(resolvedPackage)) {
     return fastenCursorHooksAt(resolvedTarget, resolvedPackage, write);
   }
@@ -2006,6 +2038,7 @@ function setupProjectBridges(opts) {
     return;
   }
   assertSetupGit(targetDir);
+  syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   deployProjectMcpJson(targetDir, log);
   installOpencodeBridge(targetDir, packageRoot, log);
   installGrokBridge(targetDir, packageRoot, log);
