@@ -47,4 +47,4 @@ One team, one folder. `grok-bot house init` copies `HOUSE.md`, `WAVEBOARD.md`, a
 
 ```
 
-stamped · 0xray · @0xray/grok-bot 0.1.7
+stamped · 0xray · @0xray/grok-bot 0.1.8

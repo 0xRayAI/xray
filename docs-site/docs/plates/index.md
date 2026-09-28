@@ -13,4 +13,4 @@ The station card stays the short subsystem table. That table is the index still 
 
 The markdown file is the source of truth for that stamp. When the pipeline changes, edit the plate. A worn project may hold a copy at `.xray/state/plates/<id>.md`. The copy is written only when that file is missing, so a local edit stays.
 
-[Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [House](./house.md)
+[Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [House](./house.md) · [0xRay Grok-Bot Kit](./grokbot.md)
