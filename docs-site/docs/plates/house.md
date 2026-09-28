@@ -1,50 +1,53 @@
 ---
 title: House
 sidebar_label: House
+plate_type: state flow
 ---
 
 # House
 
-One team, one folder. `grok-bot house init` copies `HOUSE.md`, `WAVEBOARD.md`, and `ATTENTION_STATE.md` into `./house`. It does not copy `EXAMPLE.md`. It refuses when a target file is already there. Doctor reads `HOUSE.md` through `GROK_BOT_HOUSE`, or by walking up when that variable is unset, and FAILs with `house/EXAMPLE.md exists — delete it` when that file is present. A wake reads the station, then the board files in `house/`.
+A state flow plate: the stages a house goes through before doctor says House: PASS.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                  │
-│                                                              │
-│   npx @0xray/grok-bot house init                             │
-│   copies HOUSE.md, WAVEBOARD.md, ATTENTION_STATE.md only     │
-│   refuses if a target file is already there                  │
-└──────────────────────────────┬───────────────────────────────┘
-                               v
-┌──────────────────────────────┼───────────────────────────────┐
-│ PROCESSING LAYER             v                               │
-│                                                              │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ HOUSE.md — six headings                              │   │
-│   │ owner · seats · public voice · allowed · ask first   │   │
-│   │ board: WAVEBOARD.md + ATTENTION_STATE.md             │   │
-│   │ the owner approves Allowed before it counts          │   │
-│   └───────────────────────────┬──────────────────────────┘   │
-│                                v                             │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ grok-bot doctor                                      │   │
-│   │ GROK_BOT_HOUSE, or walk up for house/HOUSE.md        │   │
-│   │ a set path that is missing warns and does not walk   │   │
-│   │ a line that starts with (example) fails              │   │
-│   │ house/EXAMPLE.md exists — delete it                  │   │
-│   └───────────────────────────┬──────────────────────────┘   │
-└──────────────────────────────┼───────────────────────────────┘
-                               v
-┌──────────────────────────────┼───────────────────────────────┐
-│ OUTPUT LAYER                 v                               │
-│                                                              │
-│   read the station, then house/WAVEBOARD.md                  │
-│   and house/ATTENTION_STATE.md                               │
-│   a missing board file uses templates/house/                 │
-│   one card, one owner                                        │
-│   change the house when the owner says a rule twice          │
-└──────────────────────────────────────────────────────────────┘
-
+  ┌──────────────────────────────┐
+  │ EMPTY                        │
+  ├──────────────────────────────┤
+  │ · no house/ folder yet       │
+  └──────────────────────────────┘
+                  │  house init
+                  v
+  ┌──────────────────────────────┐
+  │ STARTER FILES COPIED         │
+  ├──────────────────────────────┤
+  │ · copy starter               │
+  │ · HOUSE.md, WAVEBOARD.md,    │
+  │   ATTENTION_STATE.md         │
+  └──────────────────────────────┘
+                  │
+                  v
+  ┌──────────────────────────────┐
+  │ HEADINGS FILLED              │ <──────────┐
+  ├──────────────────────────────┤            │
+  │ · fill six headings          │            │
+  │ · owner, seats, public voice │            │
+  │   allowed, ask first, board  │            │
+  └──────────────────────────────┘            │
+                  │                           │
+                  v                           │
+  ┌──────────────────────────────┐            │  not yet
+  │ OWNER APPROVES               │            │
+  ├──────────────────────────────┤            │
+  │ · owner approves Allowed     │            │
+  │ · doctor cannot check this   │            │
+  └──────────────────────────────┘            │
+                  │                           │
+                  v                           │
+  ┌──────────────────────────────┐            │
+  │ DOCTOR · House: PASS?        │ ───────────┘
+  ├──────────────────────────────┤
+  │ · doctor checks it           │
+  │ · yes: House: PASS           │
+  └──────────────────────────────┘
 ```
 
-stamped · 0xray · @0xray/grok-bot 0.1.8
+stamped · 0xray · @0xray/grok-bot 0.1.7
