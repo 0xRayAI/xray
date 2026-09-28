@@ -638,7 +638,7 @@ describe('cursor wear wires installed dist hooks', () => {
     }
   });
 
-  it('git status --porcelain in a fresh repo shows nothing new except hooks.json', () => {
+  it('git status --porcelain in a fresh repo shows hooks.json and the dist link', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-porcelain-'));
     const packageRoot = mkdtempSync(path.join(tmpdir(), 'xray-wear-porcelain-pkg-'));
     try {
@@ -651,7 +651,7 @@ describe('cursor wear wires installed dist hooks', () => {
       });
       const lines = porcelain.split('\n').filter((line) => line.trim() !== '');
       const unexpected = lines.filter(
-        (line) => line !== '?? .cursor/' && !line.includes('hooks.json'),
+        (line) => line !== '?? .cursor/' && line !== '?? dist' && !line.includes('hooks.json'),
       );
       expect(unexpected).toEqual([]);
       expect(lines.length).toBeGreaterThan(0);
@@ -660,7 +660,7 @@ describe('cursor wear wires installed dist hooks', () => {
         ['-c', 'status.showUntrackedFiles=all', 'status', '--porcelain'],
         { cwd: project, encoding: 'utf8' },
       );
-      expect(listed).toBe('?? .cursor/hooks.json\n');
+      expect(listed).toBe('?? .cursor/hooks.json\n?? dist\n');
       expect(existsSync(path.join(project, '.xray', 'state', 'cursor-hook-wear', 'meta.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor-wear-state'))).toBe(false);
       expect(existsSync(path.join(project, '.gitignore'))).toBe(false);
@@ -765,7 +765,10 @@ describe('cursor wear wires installed dist hooks', () => {
         cwd: noRepo,
         encoding: 'utf8',
       });
-      expect(noGitRun.status).not.toBe(0);
+      expect(noGitRun.status).toBe(0);
+      expect(noGitRun.stderr).toBe(
+        'cursor-wear: hooks skipped because this folder is not a git checkout\n',
+      );
       expect(existsSync(path.join(noRepo, '.cursor'))).toBe(false);
 
       const missing = spawnSync(process.execPath, [script, noGit], {
