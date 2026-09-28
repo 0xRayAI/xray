@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const { resolveConsumerTargetDir } = require("./install-bridges.cjs");
+const { linkVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
   overlayConsumerTree,
   mintConsumerFromSsot,
@@ -74,8 +75,9 @@ function deployManagedAgents(packageRoot, targetDir, log) {
   if (updated !== current) fs.writeFileSync(agentsDest, updated);
 }
 
-/** npm install writes nothing. The suit is `npx 0xray wear`. */
-function runPostinstall(_packageRoot, _targetDir, _log) {
+/** npm install links vendored @0xray/repertoire and nothing else. The suit is `npx 0xray wear`. */
+function runPostinstall(packageRoot, targetDir, _log) {
+  linkVendoredRepertoire(packageRoot, targetDir);
   console.log("Run `npx 0xray wear`");
 }
 

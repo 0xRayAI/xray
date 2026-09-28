@@ -1,5 +1,16 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -64,6 +75,33 @@ const TRACKED = [
   '.cursor/hooks/pre-compact.sh',
 ];
 
+function fileLeaves(root: string): string[] {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    if (!existsSync(dir)) return;
+    for (const name of readdirSync(dir)) {
+      const abs = path.join(dir, name);
+      const rel = path.relative(root, abs);
+      const st = lstatSync(abs);
+      if (st.isSymbolicLink() || !st.isDirectory()) out.push(rel.split(path.sep).join('/'));
+      else walk(abs);
+    }
+  };
+  walk(root);
+  return out.sort();
+}
+
+function assertOnlyRepertoireLinkAdded(project: string, before: string[]) {
+  const added = fileLeaves(project).filter((rel) => !before.includes(rel));
+  expect(added).toEqual(['node_modules/@0xray/repertoire']);
+  const dest = path.join(project, 'node_modules', '@0xray', 'repertoire');
+  const link = readlinkSync(dest);
+  expect(path.isAbsolute(link)).toBe(false);
+  expect(link).toBe(
+    path.relative(path.dirname(dest), path.join(repoRoot, 'vendor', '@0xray', 'repertoire')),
+  );
+}
+
 function writeRel(root: string, rel: string, body: string) {
   const dest = path.join(root, rel);
   mkdirSync(path.dirname(dest), { recursive: true });
@@ -104,17 +142,9 @@ describe('host install leaves tracked files alone', () => {
         stdio: 'ignore',
       });
       const before = new Map(TRACKED.map((rel) => [rel, readFileSync(path.join(project, rel))]));
-      const statusBefore = execFileSync('git', ['status', '--porcelain', '--ignored'], {
-        cwd: project,
-        encoding: 'utf8',
-      });
+      const leavesBefore = fileLeaves(project);
       runPostinstall(repoRoot, project, () => {});
-      const porcelain = execFileSync('git', ['status', '--porcelain', '--ignored'], {
-        cwd: project,
-        encoding: 'utf8',
-      });
-      expect(porcelain).toBe(statusBefore);
-      expect(porcelain).toBe('');
+      assertOnlyRepertoireLinkAdded(project, leavesBefore);
       for (const [rel, bytes] of before) {
         expect(readFileSync(path.join(project, rel))).toEqual(bytes);
       }
@@ -137,10 +167,7 @@ describe('host install leaves tracked files alone', () => {
         cwd: project,
         stdio: 'ignore',
       });
-      const before = execFileSync('git', ['status', '--porcelain', '--ignored'], {
-        cwd: project,
-        encoding: 'utf8',
-      });
+      const leavesBefore = fileLeaves(project);
       const hooks = readFileSync(path.join(project, '.cursor', 'hooks.json'));
       const ran = execFileSync(process.execPath, [path.join(repoRoot, 'scripts/node/postinstall.cjs')], {
         cwd: project,
@@ -148,16 +175,14 @@ describe('host install leaves tracked files alone', () => {
         env: { ...process.env, INIT_CWD: project },
       });
       expect(ran.trim().split('\n')).toEqual(['Run `npx 0xray wear`']);
-      expect(
-        execFileSync('git', ['status', '--porcelain', '--ignored'], { cwd: project, encoding: 'utf8' }),
-      ).toBe(before);
+      assertOnlyRepertoireLinkAdded(project, leavesBefore);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'))).toEqual(hooks);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }
   });
 
-  it('postinstall in a fresh repo changes zero tracked or untracked files', () => {
+  it('postinstall in a fresh repo adds only the vendored repertoire link', () => {
     const project = mkdtempSync(path.join(homedir(), 'xray-host-install-fresh-'));
     try {
       execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
@@ -167,14 +192,21 @@ describe('host install leaves tracked files alone', () => {
         cwd: project,
         stdio: 'ignore',
       });
-      const before = execFileSync('git', ['status', '--porcelain', '--ignored'], {
+      const leavesBefore = fileLeaves(project);
+      const statusBefore = execFileSync('git', ['status', '--porcelain', '--ignored'], {
         cwd: project,
         encoding: 'utf8',
       });
       runPostinstall(repoRoot, project, () => {});
-      expect(
-        execFileSync('git', ['status', '--porcelain', '--ignored'], { cwd: project, encoding: 'utf8' }),
-      ).toBe(before);
+      assertOnlyRepertoireLinkAdded(project, leavesBefore);
+      const porcelain = execFileSync('git', ['status', '--porcelain', '--ignored'], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      const extra = porcelain
+        .split('\n')
+        .filter((line) => line.trim() !== '' && !statusBefore.split('\n').includes(line));
+      expect(extra).toEqual(['?? node_modules/']);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }
