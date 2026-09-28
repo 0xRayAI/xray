@@ -55,3 +55,19 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 6. Staleness: a card with no movement is flagged after 2 working days and escalated to Blaze after 5.
 7. When a phase closes, CoS starts the next non-capital phase immediately.
 8. Enforcement (P2 code, separate PR): `grok-bot board check` wired into `doctor`, fails closed offline, flags missed routine heartbeats.
+
+## RACI (who does what)
+R = does it, A = answers for it, C = consulted before, I = told after. Every seat writes down OP-PROC and measures the beat; the table says who answers for each step.
+
+| Step | Blaze | CoS | forge | critic |
+| --- | --- | --- | --- | --- |
+| Ranking and next phase | C | A/R | C | C |
+| Design and acceptance tests before spend | I | A | R | R |
+| Build rounds and cloud agents | I | C | A/R | I |
+| Review verdict (blocker/nit/UNVERIFIED) | I | I | C | A/R |
+| Merge after PASS | I | I | A/R | C |
+| Publish, deploy, spend, prod credentials | A | C | R | C |
+| Beat line in the room | I | I | R | R |
+| Board row change and drift check | I | A/R | C | C |
+| OP-PROC text (Twice to disk) | C | A | R | R |
+| Daily digest | I | R | A/R | R |
