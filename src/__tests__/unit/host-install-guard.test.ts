@@ -1,6 +1,6 @@
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -10,6 +10,14 @@ const require = createRequire(import.meta.url);
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const { runPostinstall } = require(path.join(repoRoot, 'scripts/node/postinstall.cjs')) as {
   runPostinstall: (packageRoot: string, targetDir: string, log?: () => void) => void;
+};
+const { setupProjectBridges } = require(path.join(repoRoot, 'scripts/node/install-bridges.cjs')) as {
+  setupProjectBridges: (opts: {
+    packageRoot: string;
+    targetDir: string;
+    gitHooks?: boolean;
+    log?: () => void;
+  }) => void;
 };
 
 const GITIGNORE = `node_modules/
@@ -169,6 +177,86 @@ describe('host install leaves tracked files alone', () => {
       ).toBe(before);
     } finally {
       rmSync(project, { recursive: true, force: true });
+    }
+  });
+});
+
+function gitHookBytes(root: string): Map<string, Buffer> {
+  const dir = path.join(root, '.git', 'hooks');
+  const out = new Map<string, Buffer>();
+  for (const name of readdirSync(dir)) {
+    const file = path.join(dir, name);
+    if (statSync(file).isFile()) out.set(name, readFileSync(file));
+  }
+  return out;
+}
+
+describe('setup installs bridges without git hooks unless asked', () => {
+  it('setup without the flag leaves .git/hooks unchanged and writes .mcp.json', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-bridges-'));
+    try {
+      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      const before = gitHookBytes(project);
+      setupProjectBridges({ packageRoot: repoRoot, targetDir: project, log: () => {} });
+      const after = gitHookBytes(project);
+      expect([...after.keys()].sort()).toEqual([...before.keys()].sort());
+      for (const [name, bytes] of before) {
+        expect(after.get(name)).toEqual(bytes);
+      }
+      expect(existsSync(path.join(project, '.git', 'hooks', 'pre-commit'))).toBe(false);
+      const mcp = JSON.parse(readFileSync(path.join(project, '.mcp.json'), 'utf8')) as {
+        mcpServers?: Record<string, unknown>;
+      };
+      expect(Object.keys(mcp.mcpServers || {}).length).toBeGreaterThan(0);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('setup with --git-hooks installs the hooks', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-githooks-'));
+    try {
+      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      expect(existsSync(path.join(project, '.git', 'hooks', 'pre-commit'))).toBe(false);
+      setupProjectBridges({ packageRoot: repoRoot, targetDir: project, gitHooks: true, log: () => {} });
+      const hook = readFileSync(path.join(project, '.git', 'hooks', 'pre-commit'), 'utf8');
+      expect(hook).toContain('0xRay');
+      expect(existsSync(path.join(project, '.mcp.json'))).toBe(true);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('setup in a directory with no git exits non-zero and changes nothing', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-nogit-'));
+    const script = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
+    try {
+      writeFileSync(path.join(project, 'keep.txt'), 'stay\n');
+      const ran = spawnSync(process.execPath, [script, 'setup'], { cwd: project, encoding: 'utf8' });
+      expect(ran.status).not.toBe(0);
+      expect(readdirSync(project)).toEqual(['keep.txt']);
+      expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
+      expect(existsSync(path.join(project, '.mcp.json'))).toBe(false);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('setup refuses a work tree that points elsewhere and writes nothing', () => {
+    const parent = mkdtempSync(path.join(tmpdir(), 'xray-setup-parent-'));
+    const child = path.join(parent, 'nested');
+    const script = path.join(repoRoot, 'scripts/node/install-bridges.cjs');
+    try {
+      execFileSync('git', ['init'], { cwd: parent, stdio: 'ignore' });
+      mkdirSync(child);
+      writeFileSync(path.join(child, 'keep.txt'), 'stay\n');
+      const ran = spawnSync(process.execPath, [script, 'setup'], { cwd: child, encoding: 'utf8' });
+      expect(ran.status).not.toBe(0);
+      expect(ran.stderr).toContain('work tree points elsewhere');
+      expect(readdirSync(child)).toEqual(['keep.txt']);
+      expect(existsSync(path.join(child, '.mcp.json'))).toBe(false);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
     }
   });
 });

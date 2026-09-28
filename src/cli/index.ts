@@ -59,10 +59,11 @@ program
   )
   .version(version);
 
-function runNodeScript(scriptName: string): void {
+function runNodeScript(scriptName: string, args: string[] = []): void {
   const script = join(packageRoot, "scripts", "node", scriptName);
   validateScriptPath(script, scriptName);
-  execSync(`node "${script}"`, { stdio: "inherit", cwd: process.cwd() });
+  const quoted = [script, ...args].map((part) => `"${part}"`).join(" ");
+  execSync(`node ${quoted}`, { stdio: "inherit", cwd: process.cwd() });
 }
 
 program
@@ -75,9 +76,19 @@ program
 
 program
   .command("setup")
-  .description("Full framework setup: hooks, Hermes integration, symlinks, MCP paths")
-  .action(() => {
-    process.stdout.write("nothing written\n");
+  .description("Set up .mcp.json and the OpenCode, Grok, Hermes, and OpenClaw bridges")
+  .option("--git-hooks", "also install git hooks")
+  .action((opts: { gitHooks?: boolean }) => {
+    const args = ["setup"];
+    if (opts.gitHooks) args.push("--git-hooks");
+    try {
+      runNodeScript("install-bridges.cjs", args);
+    } catch (error) {
+      frameworkLogger.log("cli", "setup-error", "error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      process.exit(1);
+    }
   });
 
 program

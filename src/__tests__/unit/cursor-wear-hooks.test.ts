@@ -542,7 +542,7 @@ describe('cursor wear wires installed dist hooks', () => {
 
       const broken = '{ "hooks": \n';
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
-      expect(() => wearCursorHooks(project, packageRoot, () => {})).toThrow(/refusing to edit/);
+      expect(() => wearCursorHooks(project, packageRoot, () => {})).toThrow(/differs from the last wear/);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(broken);
       expect(existsSync(path.join(project, '.cursor', 'hooks.json.xray-before'))).toBe(false);
     } finally {
@@ -845,6 +845,63 @@ describe('cursor wear wires installed dist hooks', () => {
       rmSync(path.join(project, 'node_modules'), { recursive: true, force: true });
       expect(unwearCursorHooks(project)).toBe(true);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a second wear after the user writes an uncommitted hooks.json', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-user-file-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const script = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
+    const hooksPath = path.join(project, '.cursor', 'hooks.json');
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(project, packageRoot, () => {});
+      const user = '{"version":1,"hooks":{"stop":[{"command":"./mine.sh"}]}}\n';
+      writeFileSync(hooksPath, user);
+      const before = readFileSync(hooksPath);
+      const snapDir = path.join(project, '.xray', 'state', 'cursor-hook-wear');
+      const writtenBefore = readFileSync(path.join(snapDir, 'hooks.json.written'));
+      const metaBefore = readFileSync(path.join(snapDir, 'meta.json'));
+      const ran = spawnSync(process.execPath, [script, project], { cwd: project, encoding: 'utf8' });
+      expect(ran.status).not.toBe(0);
+      expect(ran.stderr.trim()).toBe(
+        `cursor-wear: ${hooksPath} differs from the last wear; refusing to overwrite`,
+      );
+      expect(readFileSync(hooksPath)).toEqual(before);
+      expect(readFileSync(path.join(snapDir, 'hooks.json.written'))).toEqual(writtenBefore);
+      expect(readFileSync(path.join(snapDir, 'meta.json'))).toEqual(metaBefore);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a second wear after a stop entry is added and unwear keeps the file', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-stop-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const wearScript = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
+    const unwearScript = path.join(repoRoot, 'scripts/node/unwear-cursor-hooks.cjs');
+    const hooksPath = path.join(project, '.cursor', 'hooks.json');
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(project, packageRoot, () => {});
+      const worn = JSON.parse(readFileSync(hooksPath, 'utf8')) as { hooks: Record<string, unknown> };
+      worn.hooks.stop = [{ command: './user-stop.sh' }];
+      writeFileSync(hooksPath, `${JSON.stringify(worn, null, 2)}\n`);
+      const before = readFileSync(hooksPath);
+      const ran = spawnSync(process.execPath, [wearScript, project], { cwd: project, encoding: 'utf8' });
+      expect(ran.status).not.toBe(0);
+      expect(readFileSync(hooksPath)).toEqual(before);
+      const unwore = spawnSync(process.execPath, [unwearScript, project], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      expect(unwore.status).not.toBe(0);
+      expect(existsSync(hooksPath)).toBe(true);
+      expect(readFileSync(hooksPath)).toEqual(before);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }

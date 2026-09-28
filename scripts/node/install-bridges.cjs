@@ -1767,6 +1767,18 @@ function removeDirIfEmpty(dir) {
   }
 }
 
+function assertWearSnapshotReusable(resolvedTarget, hooksPath) {
+  const paths = wearStatePaths(resolvedTarget);
+  if (!fs.existsSync(paths.meta)) return;
+  const current = fs.existsSync(hooksPath) ? fs.readFileSync(hooksPath) : null;
+  const written = fs.existsSync(paths.written) ? fs.readFileSync(paths.written) : null;
+  const same =
+    (current == null && written == null) ||
+    (current != null && written != null && current.equals(written));
+  if (same) return;
+  throw new Error(`cursor-wear: ${hooksPath} differs from the last wear; refusing to overwrite`);
+}
+
 /**
  * Merge the five shipped Cursor hooks into the target project's
  * `.cursor/hooks.json`. Writes only `targetDir`. An event whose command
@@ -1775,6 +1787,7 @@ function removeDirIfEmpty(dir) {
  * write outer paths; each one is printed.
  * The snapshot is `<project>/.xray/state/cursor-hook-wear/` (gitignored, not packed).
  * An already-worn file is never stored as the pre-wear backup.
+ * A second wear reuses the snapshot only when hooks.json still matches the last write.
  */
 function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
@@ -1787,6 +1800,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   }
 
   const hooksPath = path.join(resolvedTarget, ".cursor", "hooks.json");
+  assertWearSnapshotReusable(resolvedTarget, hooksPath);
   const xrayByEvent = installedCursorHookEntries(resolvedTarget, resolvedPackage);
   const originalText = fs.existsSync(hooksPath) ? fs.readFileSync(hooksPath, "utf8") : null;
   const body =
@@ -1908,15 +1922,50 @@ function installCursorBridge(targetDir, packageRoot, log) {
   return dest;
 }
 
-function installGitHooks(packageRoot, log) {
+function installGitHooks(packageRoot, log, cwd) {
   const installHooks = path.join(packageRoot, "scripts", "hooks", "install-hooks.cjs");
   if (!fs.existsSync(installHooks)) return;
   try {
-    execSync(`node "${installHooks}"`, { stdio: "pipe" });
+    execFileSync(process.execPath, [installHooks], { stdio: "pipe", cwd: cwd || process.cwd() });
     log("hooks", "pre-commit hook installed", "info");
   } catch {
     // non-git or hook failure — not blocking
   }
+}
+
+function assertSetupGit(targetDir) {
+  assertCursorWearGit(targetDir);
+  let top = "";
+  try {
+    top = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      cwd: targetDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch {
+    throw new Error("cursor-wear: not a git work tree");
+  }
+  if (path.resolve(top) !== path.resolve(targetDir)) {
+    throw new Error("setup: work tree points elsewhere");
+  }
+}
+
+function setupProjectBridges(opts) {
+  const packageRoot = path.resolve(opts.packageRoot);
+  const targetDir = path.resolve(opts.targetDir);
+  const log =
+    typeof opts.log === "function"
+      ? opts.log
+      : () => {
+          /* noop */
+        };
+  assertSetupGit(targetDir);
+  deployProjectMcpJson(targetDir, log);
+  installOpencodeBridge(targetDir, packageRoot, log);
+  installGrokBridge(targetDir, packageRoot, log);
+  installHermesBridge(targetDir, packageRoot, log);
+  installOpenclawBridge(targetDir, packageRoot, log);
+  if (opts.gitHooks === true) installGitHooks(packageRoot, log, targetDir);
 }
 
 /**
@@ -1976,7 +2025,6 @@ function installAllBridges(opts) {
   installHermesBridge(targetDir, packageRoot, log);
   installOpenclawBridge(targetDir, packageRoot, log);
   installCursorBridge(targetDir, packageRoot, log);
-  installGitHooks(packageRoot, log);
 
   log("install-bridges", "4-platform + cursor wear complete", "success");
 }
@@ -2018,8 +2066,33 @@ module.exports = {
   CLOUD_SAFE_CURSOR_HOOKS,
   wearCursorHooks,
   unwearCursorHooks,
+  setupProjectBridges,
   mergeInstalledCursorHooks,
   isXrayHookCommand,
   installedHookCommand,
   consumerDistHooksReady,
 };
+
+if (require.main === module) {
+  if (process.argv[2] !== "setup") {
+    process.stderr.write("setup: unknown command\n");
+    process.exit(1);
+  }
+  const gitHooks = process.argv.includes("--git-hooks");
+  try {
+    setupProjectBridges({
+      packageRoot: path.resolve(__dirname, "..", ".."),
+      targetDir: path.resolve(process.cwd()),
+      gitHooks,
+      log: () => {},
+    });
+    process.stdout.write(
+      gitHooks
+        ? "setup: wrote .mcp.json, chat bridges, and git hooks\n"
+        : "setup: wrote .mcp.json and chat bridges\n",
+    );
+  } catch (err) {
+    process.stderr.write(`${err && err.message ? err.message : err}\n`);
+    process.exit(1);
+  }
+}

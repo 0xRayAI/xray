@@ -629,6 +629,8 @@ describe('foundry mill — mint from consumer SSOT', () => {
 
   it('runPostinstall writes nothing; mint still overlays the suit', () => {
     const src = read('scripts/node/postinstall.cjs');
+    expect(src).not.toContain('installAllBridges');
+    expect(src).not.toContain('setup');
     const start = src.indexOf('function runPostinstall');
     const end = src.indexOf('module.exports');
     const body = src.slice(start, end);

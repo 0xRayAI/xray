@@ -65,7 +65,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ### Consolidations
 
-- **Install, then wear** — `npm install` runs `postinstall.cjs`, which writes nothing and prints one line: `npx 0xray wear`. `wear` and `unwear` are the commands that set up or remove the suit (`install-bridges.cjs`). Mill target is the consumer project, not npm global prefix or `_npx`.
+- **Install, then wear, then setup where needed** — `npm install` runs `postinstall.cjs`, which writes nothing and prints one line: `npx 0xray wear`. `wear` and `unwear` set up or remove the Cursor suit. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`); git hooks only with `--git-hooks`. Mill target is the consumer project, not npm global prefix or `_npx`.
 - **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
 - **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
 - **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
