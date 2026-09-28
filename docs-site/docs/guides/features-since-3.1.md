@@ -2,6 +2,12 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.30 — wear and setup work outside git again
+
+- **Non-git.** `npx 0xray wear` and `npx 0xray setup` write the 4.0.28 consumer project setup and skip only Cursor hooks. They print one line: `cursor-wear: hooks skipped because this folder is not a git checkout`.
+- **Git checkout.** `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 dropped (`AGENTS.md`, `.gitignore`, `.xray` config, repertoire link, mill/inspect plant, bridges, `.opencode/skills`, `dist` / `scripts` links). `wear` adds Cursor hooks and the `.xray/state/cursor-hook-wear/` snapshot for `unwear`.
+- **Postinstall.** Unchanged: links the vendored repertoire and prints `npx 0xray wear`.
+
 ## 4.0.29 — install links repertoire, wear sets up the suit
 
 - **Postinstall.** `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. It does not write the suit.
