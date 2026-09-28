@@ -21,7 +21,12 @@ const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../
 const srcHooks = path.join(repoRoot, 'src/integrations/cursor/hooks');
 
 const bridges = require(path.join(repoRoot, 'scripts/node/install-bridges.cjs')) as {
-  wearCursorHooks: (target: string, packageRoot: string, log?: () => void) => string;
+  wearCursorHooks: (
+    target: string,
+    packageRoot: string,
+    log?: () => void,
+    opts?: { outerRoots?: boolean },
+  ) => string;
   unwearCursorHooks: (target: string) => boolean;
   installCursorBridge: (target: string, packageRoot: string, log?: () => void) => string | null;
   CURSOR_HOOK_EVENTS: Array<[string, string]>;
@@ -109,6 +114,27 @@ function runSh(script: string, cwd: string): { stdout: string; log: string } {
   return { stdout, log };
 }
 
+function assertNoRepoWearState(root: string) {
+  expect(existsSync(path.join(root, '.cursor', 'xray-hook-wear.json'))).toBe(false);
+  expect(existsSync(path.join(root, '.cursor', 'hooks.json.xray-before'))).toBe(false);
+}
+
+function captureStream(stream: 'stdout' | 'stderr', run: () => void): string {
+  const lines: string[] = [];
+  const target = stream === 'stdout' ? process.stdout : process.stderr;
+  const orig = target.write.bind(target);
+  target.write = ((chunk: string | Uint8Array) => {
+    lines.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'));
+    return true;
+  }) as typeof target.write;
+  try {
+    run();
+  } finally {
+    target.write = orig;
+  }
+  return lines.join('');
+}
+
 function commandsOf(hooksPath: string): Record<string, string[]> {
   const doc = JSON.parse(readFileSync(hooksPath, 'utf8')) as {
     hooks: Record<string, Array<{ command?: string }>>;
@@ -137,19 +163,7 @@ describe('cursor wear wires installed dist hooks', () => {
       writeFileSync(path.join(consumer, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
       writeFileSync(path.join(consumer, '.cursor', 'user-owned.txt'), 'keep\n');
       plantDistHooks(packageRoot, 'dist');
-
-      const dogfoodSh = readdirSync(path.join(repoRoot, '.cursor', 'hooks'))
-        .filter((name) => name.endsWith('.sh'))
-        .sort();
-      expect(dogfoodSh).toEqual([
-        'after-file-edit.sh',
-        'before-read-file.sh',
-        'before-shell-execution.sh',
-        'invoke-probe.sh',
-        'pre-compact.sh',
-        'pre-tool-use.sh',
-        'xray-cloud-hook.sh',
-      ]);
+      const factoryScript = readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'));
 
       wearCursorHooks(consumer, packageRoot, () => {});
 
@@ -165,20 +179,11 @@ describe('cursor wear wires installed dist hooks', () => {
       }
       expect(consumerHooks.preCompact?.[0]).toContain('pre-compact.sh');
 
-      const factoryHooks = commandsOf(path.join(factory, '.cursor', 'hooks.json'));
-      const factoryDoc = JSON.parse(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')) as {
-        note: string;
-        hooks: { stop: Array<{ command: string }> };
-      };
-      expect(factoryDoc.note).toBe('factory');
-      expect(factoryDoc.hooks.stop[0].command).toBe('./factory-stop.sh');
-      expect(factoryHooks.preToolUse).toEqual([
-        './user-before.sh',
-        'examples/suited/node_modules/0xray/dist/integrations/cursor/hooks/pre-tool-use.sh',
-      ]);
-      expect(factoryHooks.preCompact).toEqual([
-        'examples/suited/node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
-      ]);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
+      expect(Buffer.compare(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh')), factoryScript)).toBe(0);
+      expect(existsSync(path.join(consumer, '.cursor', 'hooks'))).toBe(false);
+      assertNoRepoWearState(consumer);
+      assertNoRepoWearState(factory);
       expect(readFileSync(path.join(consumer, '.cursor', 'user-owned.txt'), 'utf8')).toBe('keep\n');
     } finally {
       rmSync(factory, { recursive: true, force: true });
@@ -210,10 +215,9 @@ describe('cursor wear wires installed dist hooks', () => {
       plantDistHooks(packageRoot, 'dist');
       wearCursorHooks(consumer, packageRoot, () => {});
       const consumerOnce = readFileSync(path.join(consumer, '.cursor', 'hooks.json'));
-      const factoryOnce = readFileSync(path.join(factory, '.cursor', 'hooks.json'));
       wearCursorHooks(consumer, packageRoot, () => {});
       expect(Buffer.compare(consumerOnce, readFileSync(path.join(consumer, '.cursor', 'hooks.json')))).toBe(0);
-      expect(Buffer.compare(factoryOnce, readFileSync(path.join(factory, '.cursor', 'hooks.json')))).toBe(0);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
     } finally {
       rmSync(empty, { recursive: true, force: true });
       rmSync(factory, { recursive: true, force: true });
@@ -246,7 +250,7 @@ describe('cursor wear wires installed dist hooks', () => {
       const packageRoot = path.join(consumer, 'node_modules', '0xray');
       plantDistHooks(packageRoot, 'dist');
       wearCursorHooks(consumer, packageRoot, () => {});
-      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).not.toBe(FACTORY_ORIGINAL);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
       expect(unwearCursorHooks(consumer)).toBe(true);
       expect(readFileSync(path.join(consumer, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
       expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
@@ -271,14 +275,15 @@ describe('cursor wear wires installed dist hooks', () => {
       writeFileSync(path.join(consumer, 'package.json'), `${JSON.stringify({ name: 'recall-bench' })}\n`);
       plantDistHooks(packageRoot, 'dist');
       wearCursorHooks(consumer, packageRoot, () => {});
-      const worn = commandsOf(path.join(factory, '.cursor', 'hooks.json'));
+      expect(existsSync(path.join(factory, '.cursor', 'hooks.json'))).toBe(false);
+      const worn = commandsOf(path.join(consumer, '.cursor', 'hooks.json'));
       const logPath = path.join(factory, '.xray', 'state', 'cursor-hook-invoke.log');
       if (existsSync(logPath)) rmSync(logPath);
 
       for (const [event, script] of CURSOR_HOOK_EVENTS) {
         const command = worn[event]?.[0];
         expect(command).toBeTruthy();
-        const stdout = execFileSync('/bin/sh', [path.join(factory, command as string)], {
+        const stdout = execFileSync('/bin/sh', [path.resolve(consumer, command as string)], {
           cwd: factory,
           encoding: 'utf8',
           input: '{}',
@@ -334,12 +339,15 @@ describe('cursor wear wires installed dist hooks', () => {
         path.join(packageRoot, 'dist', 'integrations', 'cursor', 'hooks', 'pre-compact.js'),
       );
 
+      const planted = readFileSync(path.join(consumer, '.cursor', 'hooks', 'pre-compact.sh'));
       wearCursorHooks(consumer, packageRoot, () => {});
-      const worn = commandsOf(path.join(factory, '.cursor', 'hooks.json'));
-      const fromWorn = runSh(path.join(factory, worn.preCompact[0]), factory);
+      expect(Buffer.compare(readFileSync(path.join(consumer, '.cursor', 'hooks', 'pre-compact.sh')), planted)).toBe(0);
+      expect(existsSync(path.join(factory, '.cursor', 'hooks.json'))).toBe(false);
+      const worn = commandsOf(path.join(consumer, '.cursor', 'hooks.json'));
+      const fromWorn = runSh(path.resolve(consumer, worn.preCompact[0]), factory);
       expect(JSON.parse(fromWorn.stdout).from).toBe('dist');
       expect(worn.preCompact[0]).toBe(
-        'examples/suited/node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
       );
     } finally {
       rmSync(factory, { recursive: true, force: true });
@@ -363,6 +371,198 @@ describe('cursor wear wires installed dist hooks', () => {
       expect(js?.[1]).toBe(path.join(factory, 'src', 'integrations', 'cursor', 'hooks', 'pre-compact.js'));
     } finally {
       rmSync(factory, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps a user .cursor/hooks script when the name matches a shipped hook', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-collide-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const userScript = '#!/bin/sh\necho user-pre-compact\n';
+    const original =
+      '{"version":1,"hooks":{"preCompact":[{"command":".cursor/hooks/pre-compact.sh","timeout":4}]}}\n';
+    try {
+      mkdirSync(path.join(project, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), userScript);
+      chmodSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 0o755);
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), original);
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(readFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userScript);
+      const hooks = commandsOf(path.join(project, '.cursor', 'hooks.json'));
+      expect(hooks.preCompact).toEqual([
+        '.cursor/hooks/pre-compact.sh',
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+      ]);
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(original);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userScript);
+      assertNoRepoWearState(project);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('does not write CURSOR_PROJECT_DIR or a repos/xray ancestor unless outer roots are requested', () => {
+    const base = mkdtempSync(path.join(tmpdir(), 'xray-wear-outer-'));
+    const ancestor = path.join(base, 'a', 'b', 'c');
+    const project = path.join(ancestor, 'project');
+    const outer = path.join(base, 'cursor-project-dir');
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const previous = process.env.CURSOR_PROJECT_DIR;
+    try {
+      mkdirSync(path.join(ancestor, 'repos', 'xray'), { recursive: true });
+      mkdirSync(project, { recursive: true });
+      mkdirSync(outer, { recursive: true });
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      process.env.CURSOR_PROJECT_DIR = outer;
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(existsSync(path.join(outer, '.cursor', 'hooks.json'))).toBe(false);
+      expect(existsSync(path.join(ancestor, '.cursor', 'hooks.json'))).toBe(false);
+      expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
+
+      const printed = captureStream('stdout', () => {
+        wearCursorHooks(project, packageRoot, () => {}, { outerRoots: true });
+      });
+      expect(existsSync(path.join(outer, '.cursor', 'hooks.json'))).toBe(true);
+      expect(existsSync(path.join(ancestor, '.cursor', 'hooks.json'))).toBe(false);
+      expect(printed).toContain(`cursor-wear: wrote outer hooks at ${outer}\n`);
+      expect(printed).not.toContain(ancestor);
+    } finally {
+      if (previous === undefined) delete process.env.CURSOR_PROJECT_DIR;
+      else process.env.CURSOR_PROJECT_DIR = previous;
+      rmSync(base, { recursive: true, force: true });
+    }
+  });
+
+  it('does not edit an outer checkout or the factory examples/ben-proof/suited parent', () => {
+    const outer = mkdtempSync(path.join(tmpdir(), 'xray-wear-nested-'));
+    const factory = mkdtempSync(path.join(tmpdir(), 'xray-wear-suited-'));
+    const userHook = '#!/bin/sh\necho outer-user-hook\n';
+    try {
+      gitInit(outer);
+      mkdirSync(path.join(outer, 'repos', 'xray'), { recursive: true });
+      mkdirSync(path.join(outer, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(outer, '.cursor', 'hooks.json'), FACTORY_ORIGINAL);
+      writeFileSync(path.join(outer, '.cursor', 'hooks', 'pre-compact.sh'), userHook);
+      const inner = path.join(outer, 'nested', 'repo');
+      mkdirSync(inner, { recursive: true });
+      gitInit(inner);
+      const innerPkg = path.join(inner, 'node_modules', '0xray');
+      plantDistHooks(innerPkg, 'dist');
+      writeFileSync(path.join(inner, 'package.json'), `${JSON.stringify({ name: 'inner-app' })}\n`);
+      wearCursorHooks(inner, innerPkg, () => {});
+      expect(readFileSync(path.join(outer, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
+      expect(readFileSync(path.join(outer, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
+      expect(commandsOf(path.join(inner, '.cursor', 'hooks.json')).preCompact).toEqual([
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+      ]);
+      expect(existsSync(path.join(inner, '.cursor', 'hooks'))).toBe(false);
+      expect(unwearCursorHooks(inner)).toBe(true);
+      expect(existsSync(path.join(inner, '.cursor'))).toBe(false);
+      expect(readFileSync(path.join(outer, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
+      expect(readFileSync(path.join(outer, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
+
+      gitInit(factory);
+      writeFileSync(path.join(factory, 'package.json'), `${JSON.stringify({ name: '0xray' })}\n`);
+      mkdirSync(path.join(factory, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(factory, '.cursor', 'hooks.json'), FACTORY_ORIGINAL);
+      writeFileSync(path.join(factory, '.cursor', 'hooks', 'pre-tool-use.sh'), userHook);
+      writeFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), userHook);
+      const suited = path.join(factory, 'examples', 'ben-proof', 'suited');
+      mkdirSync(path.join(suited, '.cursor'), { recursive: true });
+      writeFileSync(path.join(suited, 'package.json'), `${JSON.stringify({ name: 'recall-bench' })}\n`);
+      writeFileSync(path.join(suited, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      const packageRoot = path.join(suited, 'node_modules', '0xray');
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(suited, packageRoot, () => {});
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-tool-use.sh'), 'utf8')).toBe(userHook);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
+      expect(existsSync(path.join(suited, '.cursor', 'hooks'))).toBe(false);
+      assertNoRepoWearState(suited);
+      assertNoRepoWearState(factory);
+      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toContain(
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+      );
+      expect(unwearCursorHooks(suited)).toBe(true);
+      expect(readFileSync(path.join(suited, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks.json'), 'utf8')).toBe(FACTORY_ORIGINAL);
+      expect(readFileSync(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), 'utf8')).toBe(userHook);
+    } finally {
+      rmSync(outer, { recursive: true, force: true });
+      rmSync(factory, { recursive: true, force: true });
+    }
+  });
+
+  it('merges hooks.json comments and writes nothing when the file cannot be parsed', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-jsonc-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const original = [
+      '{',
+      '  // keep me',
+      '  "version": 1,',
+      '  "hooks": {',
+      '    "preCompact": [',
+      '      { "command": ".cursor/hooks/pre-compact.sh" } // user runner',
+      '    ],',
+      '    "stop": [{ "command": "./keep.sh" }]',
+      '  }',
+      '}',
+      '',
+    ].join('\n');
+    try {
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), original);
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(project, packageRoot, () => {});
+      const once = readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8');
+      expect(once).toContain('// keep me');
+      expect(once).toContain('// user runner');
+      expect(once).toContain('.cursor/hooks/pre-compact.sh');
+      expect(once).toContain('./keep.sh');
+      expect(once).toContain('node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh');
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(once);
+
+      const broken = '{ "hooks": \n';
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
+      expect(() => wearCursorHooks(project, packageRoot, () => {})).toThrow(/refusing to edit/);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(broken);
+      expect(existsSync(path.join(project, '.cursor', 'hooks.json.xray-before'))).toBe(false);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('unwear warns and keeps edits made after wear', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-edited-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    try {
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      wearCursorHooks(project, packageRoot, () => {});
+      const wornPath = path.join(project, '.cursor', 'hooks.json');
+      const worn = JSON.parse(readFileSync(wornPath, 'utf8')) as {
+        hooks: Record<string, Array<{ command: string; timeout?: number }>>;
+      };
+      worn.hooks.stop.push({ command: './added-after.sh', timeout: 3 });
+      worn.hooks.preCompact.push({ command: './also-mine.sh' });
+      writeFileSync(wornPath, `${JSON.stringify(worn, null, 2)}\n`);
+      const stderr = captureStream('stderr', () => {
+        expect(unwearCursorHooks(project)).toBe(true);
+      });
+      const after = readFileSync(wornPath, 'utf8');
+      expect(stderr).toContain('changed after wear');
+      expect(stderr).toContain('keeping those edits');
+      expect(after).toContain('./added-after.sh');
+      expect(after).toContain('./also-mine.sh');
+      expect(after).toContain('./keep-me.sh');
+      expect(after).not.toContain('node_modules/0xray/dist');
+      expect(after).not.toBe(CONSUMER_ORIGINAL);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
     }
   });
 });

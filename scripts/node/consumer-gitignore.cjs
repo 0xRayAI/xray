@@ -11,6 +11,7 @@ const MARKER_END = "# --- end 0xray suit ---";
 const SUIT_IGNORE_LINES = [
   ".cursor/hooks.json.xray-before",
   ".cursor/xray-hook-wear.json",
+  ".cursor-wear-state/",
   ".grok/",
   ".mcp.json",
   "opencode.json",

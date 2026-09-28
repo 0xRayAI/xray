@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Undo Cursor hook wear. Restores `.cursor/hooks.json` to the bytes from
- * before wear, or removes the file when wear created it.
+ * before wear when the file still matches what wear wrote, or removes the
+ * file when wear created it. If the file changed after wear, warns and
+ * removes only the installed dist entries.
  *
  * From the consumer project:
  *   node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs

@@ -10,18 +10,22 @@ Repertoire is preferred (vendored, dest = named laws). Station + Codex gates sti
 2. Cursor Cloud Agent clones the repo and loads **project** hooks. Desktop Agent Chat does the same when the folder is the workspace.
 3. Hook names are camelCase: `preToolUse`, `preCompact`, `afterFileEdit`, plus Cloud `beforeShellExecution` / `beforeReadFile`. Command is a **relative** `.cursor/hooks/*.sh` — Cloud execs argv[0] without a shell. Do not put `XRAY_AI_PATH=` in `hooks.json`. Stdin is JSON; stdout is JSON.
 4. First `preToolUse` or `afterFileEdit` writes `.xray/state/session-boot.json` + `.xray/state/STATION.md`. After a compact, **Read STATION.md**. The host does not inject it. A multi-repo Cloud wrapper (`/agent` with `repos/xray`) is not a dest heat root, even if a leftover wrapper card exists. Heat the mill under `repos/` and the Read path. Dest `EACCES` fail-opens — a wired hook must not deny every tool.
-5. `install-bridges` also fastens the daemon workspace root when it can see `repos/xray` above the checkout, then pokes local `ReloadAgentSkills` so a mid-session wear binds this daemon. Command stays a relative `.cursor/hooks/*.sh`.
+5. When the package has no dist hook scripts yet, `install-bridges` fastens the daemon workspace root if it can see `repos/xray` above the checkout. A consumer install that already has dist scripts writes only that consumer project directory. `ReloadAgentSkills` still runs so a mid-session wear can bind this daemon. Dogfood commands stay a relative `.cursor/hooks/*.sh`.
 6. `preCompact` is observational (cannot block). Cloud **does** fire it ([hooks.md](https://cursor.com/docs/hooks.md) support matrix: Yes) once hooks are bound and the host actually compacts. Stdout is only `{ "user_message": "…" }` — that is a notice, not a spawn. The spawn id is stdin `conversation_id` (same `bc-`) plus Task's returned agent id. Resume that id. Do not cold-start a twin. Station merge keeps ticket / seed / Durable / unfinished keys.
 
 Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. This exo repo's own `.cursor/hooks.json` stays on `.cursor/hooks/*.sh` so dogfood can run `src/integrations/cursor/hooks/*.js` before `npm run build`.
 
-Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) merges the consumer `.cursor/hooks.json` and, when that project sits inside another git checkout, the checkout root too. Every shipped hook (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) is added beside existing user entries. The command is a relative path to the installed package:
+Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries. The command is a relative path to the installed package:
 
 `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`
+
+Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script. A `hooks.json` that contains `//` comments is merged in place. If that file cannot be parsed safely, wear stops and writes nothing.
 
 Wearing again writes the same bytes. Restore with:
 
 `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`
+
+If `hooks.json` was edited after wear, unwear keeps those edits, removes only the installed dist entries, and warns on stderr. Snapshots live under `node_modules/0xray/.cursor-wear-state/`, outside the project tree.
 
 `xray-cloud-hook.sh` resolution order (first file that exists wins). Each run appends one `cursor-hook-invoke.log` line with `js=` set to the absolute path it executes:
 
