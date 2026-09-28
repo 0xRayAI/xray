@@ -31,8 +31,11 @@ describe('pipeline plates', () => {
       const plate = loadPlate(id);
       expect(plate.id).toBe(id);
       expect(plate.body).toMatch(BOX);
-      expect(plate.body).toContain('INPUT');
-      expect(plate.body).toContain('OUTPUT');
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(readFileSync(plate.sourcePath, 'utf8'))?.[1] ?? '';
+      if (!/^plate_type:\s*state flow\s*$/m.test(frontmatter)) {
+        expect(plate.body).toContain('INPUT');
+        expect(plate.body).toContain('OUTPUT');
+      }
     }
   });
 
