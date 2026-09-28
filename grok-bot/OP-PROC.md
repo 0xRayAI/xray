@@ -29,6 +29,14 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 
 **House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Setup: `grok-bot house init`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice.
 
+## Syncopate (the higher-level rules)
+Syncopate means finding our head from our tail: we watch what we actually did, write it down, and fold it into rules. The detailed lists below are the evidence. These five rules sit on top of them.
+1. Beat. Every real event changes the board in the same turn.
+2. Spend on agreement. Agree on the design and the acceptance tests before paying for a round. The labels (blocker, nit, UNVERIFIED) decide what is worth fixing.
+3. Proof over claims. Live behavior, checked by someone other than the author.
+4. Write it down, then synthesize. A note may overlap or complement what is already written (the gibberish clause). Keep it, and fold overlaps into a higher-level rule instead of piling up a longer list.
+5. Hold the handle. Work 3 to 5 threads at a time, 10 at most, whether that means open tracks, board rows in work, or rules on this page. Past 10, finish or park something before starting anything new.
+
 ## Confer cadence (how spend decisions get made)
 1. Design before spend. Critic and CoS agree the fix design before the first paid cloud round. Critic's first review gives the complete blocker list; later rounds add nothing new unless the code changed.
 2. Acceptance before the round. The tests or probes that decide PASS are agreed in the room before the round is sent. The review checks only those, plus the type-check count.
