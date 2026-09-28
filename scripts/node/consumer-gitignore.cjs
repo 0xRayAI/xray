@@ -12,6 +12,7 @@ const SUIT_IGNORE_LINES = [
   ".cursor/hooks.json.xray-before",
   ".cursor/xray-hook-wear.json",
   ".cursor-wear-state/",
+  ".xray/state/cursor-hook-wear/",
   ".grok/",
   ".mcp.json",
   "opencode.json",

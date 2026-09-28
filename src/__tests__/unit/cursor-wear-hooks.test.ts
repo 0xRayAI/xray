@@ -584,7 +584,7 @@ describe('cursor wear wires installed dist hooks', () => {
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
       wearCursorHooks(project, packageRoot, () => {});
-      rmSync(path.join(project, '.cursor-wear-state'), { recursive: true, force: true });
+      rmSync(path.join(project, '.xray', 'state', 'cursor-hook-wear'), { recursive: true, force: true });
       wearCursorHooks(project, packageRoot, () => {});
       expect(unwearCursorHooks(project)).toBe(true);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
@@ -603,7 +603,7 @@ describe('cursor wear wires installed dist hooks', () => {
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
       expect(() => wearCursorHooks(project, packageRoot, () => {})).toThrow(/duplicate key "hooks"/);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(broken);
-      expect(existsSync(path.join(project, '.cursor-wear-state'))).toBe(false);
+      expect(existsSync(path.join(project, '.xray', 'state', 'cursor-hook-wear'))).toBe(false);
       expect(
         isXrayHookCommand(
           'XRAY_AI_PATH="/tmp/xray" node /tmp/xray/src/integrations/cursor/hooks/pre-tool-use.js',
@@ -628,11 +628,53 @@ describe('cursor wear wires installed dist hooks', () => {
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
       wearCursorHooks(project, packageRoot, () => {});
-      expect(existsSync(path.join(project, '.cursor-wear-state', 'hooks.json.xray-before'))).toBe(true);
+      expect(existsSync(path.join(project, '.xray', 'state', 'cursor-hook-wear', 'hooks.json.xray-before'))).toBe(true);
       expect(unwearCursorHooks(project)).toBe(true);
       expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
     } finally {
       rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('git status --porcelain in a fresh repo shows nothing new except hooks.json', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-porcelain-'));
+    const packageRoot = mkdtempSync(path.join(tmpdir(), 'xray-wear-porcelain-pkg-'));
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      wearCursorHooks(project, packageRoot, () => {});
+      const porcelain = execFileSync('git', ['status', '--porcelain'], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      const lines = porcelain.split('\n').filter((line) => line.trim() !== '');
+      const unexpected = lines.filter(
+        (line) => line !== '?? .cursor/' && !line.includes('hooks.json'),
+      );
+      expect(unexpected).toEqual([]);
+      expect(lines.length).toBeGreaterThan(0);
+      const listed = execFileSync(
+        'git',
+        ['-c', 'status.showUntrackedFiles=all', 'status', '--porcelain'],
+        { cwd: project, encoding: 'utf8' },
+      );
+      expect(listed).toBe('?? .cursor/hooks.json\n');
+      expect(existsSync(path.join(project, '.xray', 'state', 'cursor-hook-wear', 'meta.json'))).toBe(true);
+      expect(existsSync(path.join(project, '.cursor-wear-state'))).toBe(false);
+      expect(existsSync(path.join(project, '.gitignore'))).toBe(false);
+      execFileSync('git', ['check-ignore', '-q', '--', '.xray/state/cursor-hook-wear/meta.json'], {
+        cwd: project,
+        stdio: 'ignore',
+      });
+      const gitDir = execFileSync('git', ['rev-parse', '--absolute-git-dir'], {
+        cwd: project,
+        encoding: 'utf8',
+      }).trim();
+      const exclude = readFileSync(path.join(gitDir, 'info', 'exclude'), 'utf8');
+      expect(exclude).toContain('.xray/state/cursor-hook-wear/');
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+      rmSync(packageRoot, { recursive: true, force: true });
     }
   });
 });

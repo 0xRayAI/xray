@@ -21,7 +21,7 @@ Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wea
 
 Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script, and wear adds the dist command beside it. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
 
-Wearing again writes the same bytes. The pre-wear copy is `<project>/.cursor-wear-state/` (gitignored, not in the npm package), so `npm ci` does not delete it. Wear never stores an already-worn `hooks.json` as that copy. Restore with:
+Wearing again writes the same bytes. The pre-wear copy is `<project>/.xray/state/cursor-hook-wear/` (gitignored, and left out of the npm package), so `npm ci` does not delete it. When wear creates that folder and the path is not already ignored, it appends the path to `$GIT_DIR/info/exclude`, so `git status` does not offer the snapshot for commit. Wear never stores an already-worn `hooks.json` as that copy. Restore with:
 
 `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`
 

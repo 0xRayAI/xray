@@ -41,6 +41,7 @@ rerun_*/
 .cursor/hooks.json.xray-before
 .cursor/xray-hook-wear.json
 .cursor-wear-state/
+.xray/state/cursor-hook-wear/
 .xray/state/cursor-hook.log
 .xray/state/cursor-receipts/
 .xray/state/session-capture-stamp.json

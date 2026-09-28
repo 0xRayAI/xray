@@ -1530,7 +1530,58 @@ function serializeHooksDoc(doc) {
 }
 
 function wearStateDir(targetDir) {
-  return path.join(path.resolve(targetDir), ".cursor-wear-state");
+  return path.join(path.resolve(targetDir), ".xray", "state", "cursor-hook-wear");
+}
+
+/**
+ * The snapshot lives in the project, outside node_modules. Append its path to
+ * $GIT_DIR/info/exclude when nothing already ignores it. exclude is local git
+ * metadata, so a fresh repo's `git status` does not grow a new `.gitignore`.
+ */
+function ensureWearStateGitignored(targetDir) {
+  const stateDir = wearStateDir(targetDir);
+  const probe = path.join(stateDir, "meta.json");
+  try {
+    execFileSync("git", ["check-ignore", "-q", "--", probe], {
+      cwd: targetDir,
+      stdio: "ignore",
+    });
+    return;
+  } catch (err) {
+    const notARepo = !err || err.code === "ENOENT" || err.status === 128;
+    const notIgnored = Boolean(err && err.status === 1);
+    if (notARepo || !notIgnored) return;
+  }
+  let top = "";
+  let excludeRel = "";
+  try {
+    top = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      cwd: targetDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    excludeRel = execFileSync("git", ["rev-parse", "--git-path", "info/exclude"], {
+      cwd: targetDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return;
+  }
+  if (!top || !excludeRel) return;
+  const rel = path.relative(top, stateDir).split(path.sep).join("/");
+  if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return;
+  const pattern = `${rel}/`;
+  const excludeFile = path.resolve(targetDir, excludeRel);
+  try {
+    fs.mkdirSync(path.dirname(excludeFile), { recursive: true });
+    const existing = fs.existsSync(excludeFile) ? fs.readFileSync(excludeFile, "utf8") : "";
+    if (existing.split("\n").some((line) => line.trim() === pattern)) return;
+    const suffix = existing.length === 0 || existing.endsWith("\n") ? "" : "\n";
+    fs.appendFileSync(excludeFile, `${suffix}${pattern}\n`);
+  } catch {
+    // exclude not writable — snapshot is still under .xray/state/
+  }
 }
 
 function wearStatePaths(targetDir) {
@@ -1556,6 +1607,7 @@ function userBytesBeforeWear(previousText) {
 }
 
 function saveCursorWearSnapshot(targetDir, previousText, writtenBody) {
+  ensureWearStateGitignored(targetDir);
   const paths = wearStatePaths(targetDir);
   fs.mkdirSync(paths.dir, { recursive: true });
   let meta;
@@ -1626,7 +1678,7 @@ function removeDirIfEmpty(dir) {
  * already runs xray-cloud-hook.sh is left alone, so a committed suited
  * hooks.json is not given a second copy. Pass `{ outerRoots: true }` to also
  * write outer paths; each one is printed.
- * The snapshot is `<project>/.cursor-wear-state/` (gitignored, not packed).
+ * The snapshot is `<project>/.xray/state/cursor-hook-wear/` (gitignored, not packed).
  * An already-worn file is never stored as the pre-wear backup.
  */
 function wearCursorHooks(targetDir, packageRoot, log, opts) {
