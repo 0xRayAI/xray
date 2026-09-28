@@ -1,5 +1,7 @@
 # Operating procedure
+
 How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`. Name your seats anything. [Example house (names are illustrative)](templates/house/EXAMPLE.md).
+
 - **Coordinator never:** deploy, publish a package, change production, launch a cloud agent, post in public, spend, or merge. The implementer merges after the gate.
 - **Roles:** The seat field is the role, not a personal name. Code, pull requests, cloud work, deploys, and package publish = **implementer**. Shipping after review = **publisher**. Ship, live, security, and identity review = **reviewer** (a short note, no merge). Public posts, listings, and audio are optional **specialists**. The coordinator is also called CoS. Money, credentials, and deletes = the **human owner**.
 - **Packet (every handoff):** goal, constraints, path, acceptance, evidence, next owner, escalate. A chat ping is not a card. Seven fields always, one line when the job is short. A card is one ticket. The station is the survival strip. A beat is a real event. An idle loop on parked work is theater. Wake on a PR, a person, or a compact.
@@ -8,9 +10,7 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 - **Disk, not chat.** After compact: read the station, then the board, then memory, then resume the same role. Don't start a second copy. Read `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` first; if missing, use `templates/house/`. No board file means the board is theater.
 - **You first.** The human's direct message beats bot pings. Reply first. Anything a human reads should land in about three seconds. **Public voice** (account, spacing, replies) is a placeholder in `house/`. Don't open with "Locked:". If you say you will share something, do it the same turn. **Quiet** when someone only repeats CLOSED, MERGED, or LIVE.
 - **Money and ship:** Ask first before you publish, change production, pay, touch secrets, or delete — unless `house/` names an exception. Git push only to repos named in `house/`. A "merge deploys this repo" exception is named there, one repo at a time.
-**Release gate: wear what we ship.** On 2026-09-28, 0xray 4.0.29 (#141) passed CI and critic and broke setup for non-git projects. `wear` and `setup` exited `not a git work tree`. Nobody installed the packed tarball and ran what users run. Seat suits are non-git, so one local wear would have caught it.
-Before critic review and again before publish: local build, then `npm pack`. Install that tarball on the forge seat suit first, then run the command the install message tells users to run (`npx 0xray wear`), then `doctor`, then one real run. Next, one more seat. Then fresh temp folders, one git and one non-git, each with a temp HOME: run wear, setup, and doctor, and diff the files written against the previous version.
-The critic gives no PASS on anything that ships to npm without personally installing the packed tarball and running the user command. Only the exact tarball that passed gets published (record its shasum in the release receipt), and seats re-wear one at a time. If a published release is broken, first move npm `latest` back to the last good version (`npm dist-tag add <pkg>@<good> latest`), then fix forward.
+- **Release gate:** Wear what we ship. The steps are in [CADENCE.md](CADENCE.md).
 
 | Rule | What to do |
 |---|---|
@@ -27,4 +27,5 @@ The critic gives no PASS on anything that ships to npm without personally instal
 | Status | Done / Verify / Reflect / Next. |
 | Twice to disk | A rule said twice goes to disk the same day. Procedure changes mirror as a Normal PR. |
 | Cloud prompts | Written in plain English. |
+
 **House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Setup: `grok-bot house init`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice. The six higher-level rules, the Confer cadence, the Board rules and the RACI table are in [CADENCE.md](CADENCE.md).
