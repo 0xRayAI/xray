@@ -46,6 +46,7 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 
 ## Board (WAVEBOARD)
 0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat posts one line in the room; CoS turns it into the row change.
+0a. Cadence owner is CoS. A drift check runs weekdays at 10:45, 12:45, 2:45 and 4:45 CT. It compares every In work and Review row to real PR heads, merges and cloud status, fixes the row, and posts in the eng room only when a row was off. It says nothing when the rows match. Any rule practiced twice goes into OP-PROC the same day (Twice to disk); the 5:35 PM digest flags any that didn't.
 1. The board is a ranked roadmap, not a receipt log. Every receipt updates its card and the next-move ranking in the same turn.
 2. Order: card first, then handoff file, then a room post that cites the card.
 3. Required card fields: repo, PR, head, cloud, owner, P-level, next step.
