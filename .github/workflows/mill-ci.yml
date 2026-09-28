@@ -34,6 +34,15 @@ jobs:
         run: npm run typecheck
       - name: ESLint
         run: npm run lint
+      - name: Reflection delete guard test
+        run: npx vitest run src/__tests__/unit/reflection-delete-guard.test.ts
+      - name: Guard reflection deletions
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/node/reflection-delete-guard.mjs
 
   mill:
     name: Foundry mill
