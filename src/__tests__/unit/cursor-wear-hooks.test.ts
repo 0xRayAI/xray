@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   chmodSync,
   copyFileSync,
@@ -195,6 +195,7 @@ describe('cursor wear wires installed dist hooks', () => {
     const empty = mkdtempSync(path.join(tmpdir(), 'xray-wear-empty-'));
     const factory = mkdtempSync(path.join(tmpdir(), 'xray-wear-idem-'));
     try {
+      gitInit(empty);
       const emptyPkg = path.join(empty, 'node_modules', '0xray');
       plantDistHooks(emptyPkg, 'dist');
       installCursorBridge(empty, emptyPkg, () => {});
@@ -229,12 +230,14 @@ describe('cursor wear wires installed dist hooks', () => {
     const empty = mkdtempSync(path.join(tmpdir(), 'xray-unwear-empty-'));
     const factory = mkdtempSync(path.join(tmpdir(), 'xray-unwear-user-'));
     try {
+      gitInit(empty);
       const emptyPkg = path.join(empty, 'node_modules', '0xray');
       plantDistHooks(emptyPkg, 'dist');
       wearCursorHooks(empty, emptyPkg, () => {});
       expect(existsSync(path.join(empty, '.cursor', 'hooks.json'))).toBe(true);
       expect(unwearCursorHooks(empty)).toBe(true);
       expect(existsSync(path.join(empty, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(empty, '.xray', 'state'))).toBe(false);
       expect(unwearCursorHooks(empty)).toBe(false);
 
       gitInit(factory);
@@ -382,6 +385,7 @@ describe('cursor wear wires installed dist hooks', () => {
     const original =
       '{"version":1,"hooks":{"preCompact":[{"command":".cursor/hooks/pre-compact.sh","timeout":4}]}}\n';
     try {
+      gitInit(project);
       mkdirSync(path.join(project, '.cursor', 'hooks'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), userScript);
       chmodSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), 0o755);
@@ -414,6 +418,7 @@ describe('cursor wear wires installed dist hooks', () => {
       mkdirSync(path.join(ancestor, 'repos', 'xray'), { recursive: true });
       mkdirSync(project, { recursive: true });
       mkdirSync(outer, { recursive: true });
+      gitInit(outer);
       gitInit(project);
       plantDistHooks(packageRoot, 'dist');
       process.env.CURSOR_PROJECT_DIR = outer;
@@ -521,6 +526,7 @@ describe('cursor wear wires installed dist hooks', () => {
       '',
     ].join('\n');
     try {
+      gitInit(project);
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), original);
       plantDistHooks(packageRoot, 'dist');
@@ -544,33 +550,26 @@ describe('cursor wear wires installed dist hooks', () => {
     }
   });
 
-  it('unwear warns and keeps edits made after wear', () => {
+  it('unwear exits non-zero when hooks.json changed and keeps the snapshot', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-edited-'));
     const packageRoot = path.join(project, 'node_modules', '0xray');
     try {
+      gitInit(project);
       plantDistHooks(packageRoot, 'dist');
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
       wearCursorHooks(project, packageRoot, () => {});
       const wornPath = path.join(project, '.cursor', 'hooks.json');
-      const worn = JSON.parse(readFileSync(wornPath, 'utf8')) as {
-        hooks: Record<string, Array<{ command: string; timeout?: number }>>;
-      };
-      worn.hooks.stop.push({ command: './added-after.sh', timeout: 3 });
-      worn.hooks.preCompact.push({ command: './also-mine.sh' });
-      writeFileSync(wornPath, `${JSON.stringify(worn, null, 2)}\n`);
+      const edited = `${readFileSync(wornPath, 'utf8')}\n`;
+      writeFileSync(wornPath, edited);
+      const snap = path.join(project, '.xray', 'state', 'cursor-hook-wear');
       const stderr = captureStream('stderr', () => {
-        expect(unwearCursorHooks(project)).toBe(true);
+        expect(unwearCursorHooks(project)).toBe(false);
       });
-      const after = readFileSync(wornPath, 'utf8');
-      expect(stderr).toContain('changed after wear');
-      expect(stderr).toContain('keeping those edits');
-      expect(after).toContain('./added-after.sh');
-      expect(after).toContain('./also-mine.sh');
-      expect(after).toContain('./keep-me.sh');
-      expect(after).not.toContain('node_modules/0xray/dist');
-      expect(after).not.toContain('"preToolUse": []');
-      expect(after).not.toBe(CONSUMER_ORIGINAL);
+      expect(stderr).toContain('differs at byte');
+      expect(stderr).toContain('snapshot kept');
+      expect(readFileSync(wornPath, 'utf8')).toBe(edited);
+      expect(existsSync(path.join(snap, 'meta.json'))).toBe(true);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }
@@ -580,6 +579,7 @@ describe('cursor wear wires installed dist hooks', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-lost-state-'));
     const packageRoot = path.join(project, 'node_modules', '0xray');
     try {
+      gitInit(project);
       plantDistHooks(packageRoot, 'dist');
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
@@ -598,6 +598,7 @@ describe('cursor wear wires installed dist hooks', () => {
     const packageRoot = path.join(project, 'node_modules', '0xray');
     const broken = '{ "hooks": { "stop": [] }, "hooks": { "preCompact": [] } }\n';
     try {
+      gitInit(project);
       plantDistHooks(packageRoot, 'dist');
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
       writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
@@ -623,6 +624,7 @@ describe('cursor wear wires installed dist hooks', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-nodist-'));
     const packageRoot = path.join(project, 'node_modules', '0xray');
     try {
+      gitInit(project);
       mkdirSync(packageRoot, { recursive: true });
       writeFileSync(path.join(packageRoot, 'package.json'), `${JSON.stringify({ name: '0xray' })}\n`);
       mkdirSync(path.join(project, '.cursor'), { recursive: true });
@@ -675,6 +677,176 @@ describe('cursor wear wires installed dist hooks', () => {
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(packageRoot, { recursive: true, force: true });
+    }
+  });
+
+  function gitCommit(root: string, files: string[]) {
+    execFileSync('git', ['add', '-f', '--', ...files], { cwd: root, stdio: 'ignore' });
+    execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'hooks'], {
+      cwd: root,
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: 'wear-test',
+        GIT_AUTHOR_EMAIL: 'wear-test@example.com',
+        GIT_COMMITTER_NAME: 'wear-test',
+        GIT_COMMITTER_EMAIL: 'wear-test@example.com',
+      },
+    });
+  }
+
+  it('gives a committed hooks.json v2 back byte for byte', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-v2-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const v2 = '{"version":2,"hooks":{"stop":[{"command":"./keep.sh"}]}}\n';
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), v2);
+      gitCommit(project, ['.cursor/hooks.json']);
+      wearCursorHooks(project, packageRoot, () => {});
+      const unwear = spawnSync(process.execPath, [path.join(repoRoot, 'scripts/node/unwear-cursor-hooks.cjs'), project], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      expect(unwear.status).toBe(0);
+      expect(unwear.stdout).toContain('restored');
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'))).toEqual(Buffer.from(v2));
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps a hooks.json committed after install', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-after-install-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const { runPostinstall } = require(path.join(repoRoot, 'scripts/node/postinstall.cjs')) as {
+      runPostinstall: (pkg: string, target: string, log: () => void) => void;
+    };
+    const own = '{"version":1,"hooks":{"stop":[{"command":"./mine.sh"}]}}\n';
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      runPostinstall(repoRoot, project, () => {});
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), own);
+      gitCommit(project, ['.cursor/hooks.json']);
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(own);
+      expect(existsSync(path.join(project, '.cursor'))).toBe(true);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses to wear without git, in a bare GIT_DIR, or with no .git', () => {
+    const script = path.join(repoRoot, 'scripts/node/wear-cursor-hooks.cjs');
+    const bare = mkdtempSync(path.join(tmpdir(), 'xray-wear-bare-'));
+    const noRepo = mkdtempSync(path.join(tmpdir(), 'xray-wear-norepo-'));
+    const noGit = mkdtempSync(path.join(tmpdir(), 'xray-wear-nogit-'));
+    const emptyBin = mkdtempSync(path.join(tmpdir(), 'xray-wear-emptybin-'));
+    try {
+      execFileSync('git', ['init', '--bare'], { cwd: bare, stdio: 'ignore' });
+      writeFileSync(path.join(noRepo, 'keep.txt'), 'stay\n');
+      writeFileSync(path.join(noGit, 'keep.txt'), 'stay\n');
+      const bareRun = spawnSync(process.execPath, [script, noRepo], {
+        cwd: noRepo,
+        encoding: 'utf8',
+        env: { ...process.env, GIT_DIR: bare },
+      });
+      expect(bareRun.status).not.toBe(0);
+      expect(existsSync(path.join(noRepo, '.cursor'))).toBe(false);
+      expect(existsSync(path.join(noRepo, '.xray'))).toBe(false);
+      expect(readFileSync(path.join(noRepo, 'keep.txt'), 'utf8')).toBe('stay\n');
+
+      const noGitRun = spawnSync(process.execPath, [script, noRepo], {
+        cwd: noRepo,
+        encoding: 'utf8',
+      });
+      expect(noGitRun.status).not.toBe(0);
+      expect(existsSync(path.join(noRepo, '.cursor'))).toBe(false);
+
+      const missing = spawnSync(process.execPath, [script, noGit], {
+        cwd: noGit,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: emptyBin },
+      });
+      expect(missing.status).not.toBe(0);
+      expect(missing.stderr).toContain('git is missing');
+      expect(existsSync(path.join(noGit, '.cursor'))).toBe(false);
+      expect(readFileSync(path.join(noGit, 'keep.txt'), 'utf8')).toBe('stay\n');
+    } finally {
+      rmSync(bare, { recursive: true, force: true });
+      rmSync(noRepo, { recursive: true, force: true });
+      rmSync(noGit, { recursive: true, force: true });
+      rmSync(emptyBin, { recursive: true, force: true });
+    }
+  });
+
+  it('unwear keeps the snapshot when hooks.json cannot be parsed', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-unparse-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const script = path.join(repoRoot, 'scripts/node/unwear-cursor-hooks.cjs');
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      wearCursorHooks(project, packageRoot, () => {});
+      const broken = '{ "hooks": \n';
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), broken);
+      const snap = path.join(project, '.xray', 'state', 'cursor-hook-wear', 'meta.json');
+      const before = readFileSync(snap);
+      const ran = spawnSync(process.execPath, [script, project], { cwd: project, encoding: 'utf8' });
+      expect(ran.status).not.toBe(0);
+      expect(ran.stdout).not.toContain('restored');
+      expect(ran.stderr).toContain('snapshot kept');
+      expect(readFileSync(snap)).toEqual(before);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(broken);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('does not treat a comment as an xray hook', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-comment-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const userScript = '#!/bin/sh\n# xray-cloud-hook.sh\necho user-only\n';
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks', 'pre-compact.sh'), userScript);
+      writeFileSync(
+        path.join(project, '.cursor', 'hooks.json'),
+        '{"version":1,"hooks":{"preCompact":[{"command":".cursor/hooks/pre-compact.sh"}]}}\n',
+      );
+      wearCursorHooks(project, packageRoot, () => {});
+      expect(commandsOf(path.join(project, '.cursor', 'hooks.json')).preCompact).toEqual([
+        '.cursor/hooks/pre-compact.sh',
+        'node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh',
+      ]);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('restores hooks.json after node_modules is removed', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-wipe-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    try {
+      gitInit(project);
+      plantDistHooks(packageRoot, 'dist');
+      mkdirSync(path.join(project, '.cursor'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), CONSUMER_ORIGINAL);
+      wearCursorHooks(project, packageRoot, () => {});
+      rmSync(path.join(project, 'node_modules'), { recursive: true, force: true });
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(CONSUMER_ORIGINAL);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
     }
   });
 });

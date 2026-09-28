@@ -42,18 +42,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Postinstall
 
-`postinstall.cjs` → `installAllBridges()`:
-
-1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
-2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
-3. `.gitignore.default` → `.gitignore` (if absent)
-4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
-5. `.mcp.json` (7 servers)
-6. Four chat bridges: OpenCode, Grok, Hermes, OpenClaw. Grok last-mile dest is project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
-7. Cursor fifth wear: fasten `.cursor/hooks.json` + relative `.cursor/hooks/*.sh`. Rewrite leftover `XRAY_AI_PATH=` one-liners. Not a fifth chat TUI.
-8. Optional git hooks
-
-In a git checkout, install leaves tracked files byte for byte and does not create a new file unless git already ignores that path.
+`postinstall.cjs` writes nothing. It prints one line telling you to run `npx 0xray wear`. Install first, then wear. `wear` and `unwear` are the only commands that set up or remove the suit.
 
 **Shop plant:** `shop-extract`, `shop-witness`, `shop-pin` (groover-hangar) are first-class with mill plant. Extra shops: `foundry.json` `shopPlant`. Not `"costume": true`. `npx @0xray/foundry inspect --skip-live` is the receipt.
 

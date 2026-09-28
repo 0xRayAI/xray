@@ -38,9 +38,6 @@ rerun_*/
 .xray/state/cursor-precompact.json
 .xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
-.cursor/hooks.json.xray-before
-.cursor/xray-hook-wear.json
-.cursor-wear-state/
 .xray/state/cursor-hook-wear/
 .xray/state/cursor-hook.log
 .xray/state/cursor-receipts/

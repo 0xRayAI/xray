@@ -9,9 +9,6 @@ const MARKER_END = "# --- end 0xray suit ---";
 
 /** Suit artifacts dropped by postinstall / install-bridges — keep out of product repos */
 const SUIT_IGNORE_LINES = [
-  ".cursor/hooks.json.xray-before",
-  ".cursor/xray-hook-wear.json",
-  ".cursor-wear-state/",
   ".xray/state/cursor-hook-wear/",
   ".grok/",
   ".mcp.json",

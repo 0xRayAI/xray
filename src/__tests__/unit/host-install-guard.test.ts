@@ -96,15 +96,77 @@ describe('host install leaves tracked files alone', () => {
         stdio: 'ignore',
       });
       const before = new Map(TRACKED.map((rel) => [rel, readFileSync(path.join(project, rel))]));
-      runPostinstall(repoRoot, project, () => {});
-      const porcelain = execFileSync('git', ['status', '--porcelain'], {
+      const statusBefore = execFileSync('git', ['status', '--porcelain', '--ignored'], {
         cwd: project,
         encoding: 'utf8',
       });
+      runPostinstall(repoRoot, project, () => {});
+      const porcelain = execFileSync('git', ['status', '--porcelain', '--ignored'], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      expect(porcelain).toBe(statusBefore);
       expect(porcelain).toBe('');
       for (const [rel, bytes] of before) {
         expect(readFileSync(path.join(project, rel))).toEqual(bytes);
       }
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('a bad hooks.json does not fail postinstall and changes nothing', () => {
+    const project = mkdtempSync(path.join(homedir(), 'xray-host-install-bad-'));
+    try {
+      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      writeRel(project, 'package.json', `${JSON.stringify({ name: 'acme' })}\n`);
+      writeRel(project, '.cursor/hooks.json', '{ "hooks": { "hooks": \n');
+      execFileSync('git', ['add', '-f', '--', 'package.json', '.cursor/hooks.json'], {
+        cwd: project,
+        stdio: 'ignore',
+      });
+      execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'bad hooks'], {
+        cwd: project,
+        stdio: 'ignore',
+      });
+      const before = execFileSync('git', ['status', '--porcelain', '--ignored'], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      const hooks = readFileSync(path.join(project, '.cursor', 'hooks.json'));
+      const ran = execFileSync(process.execPath, [path.join(repoRoot, 'scripts/node/postinstall.cjs')], {
+        cwd: project,
+        encoding: 'utf8',
+        env: { ...process.env, INIT_CWD: project },
+      });
+      expect(ran.trim().split('\n')).toEqual(['Run `npx 0xray wear`']);
+      expect(
+        execFileSync('git', ['status', '--porcelain', '--ignored'], { cwd: project, encoding: 'utf8' }),
+      ).toBe(before);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'))).toEqual(hooks);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('postinstall in a fresh repo changes zero tracked or untracked files', () => {
+    const project = mkdtempSync(path.join(homedir(), 'xray-host-install-fresh-'));
+    try {
+      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      writeRel(project, 'package.json', `${JSON.stringify({ name: 'acme' })}\n`);
+      execFileSync('git', ['add', '--', 'package.json'], { cwd: project, stdio: 'ignore' });
+      execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'init'], {
+        cwd: project,
+        stdio: 'ignore',
+      });
+      const before = execFileSync('git', ['status', '--porcelain', '--ignored'], {
+        cwd: project,
+        encoding: 'utf8',
+      });
+      runPostinstall(repoRoot, project, () => {});
+      expect(
+        execFileSync('git', ['status', '--porcelain', '--ignored'], { cwd: project, encoding: 'utf8' }),
+      ).toBe(before);
     } finally {
       rmSync(project, { recursive: true, force: true });
     }

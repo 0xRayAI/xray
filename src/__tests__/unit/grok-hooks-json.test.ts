@@ -154,7 +154,7 @@ describe('Grok hooks.json command strings', () => {
     }
   });
 
-  it('postinstall dogfood wear patches discovery-path hooks', () => {
+  it('postinstall writes nothing on dogfood', () => {
     const parent = mkdtempSync(path.join(tmpdir(), 'xray-postinstall-dogfood-'));
     const tmp = path.join(parent, 'xray');
     const repertoire = path.join(parent, 'repertoire');
@@ -182,15 +182,10 @@ describe('Grok hooks.json command strings', () => {
       writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
 
       runPostinstall(tmp, tmp, () => {});
-      const discovered = path.join(tmp, '.grok', 'hooks', '0xray.json');
-      expect(existsSync(discovered)).toBe(true);
-      const discoveredJson = JSON.parse(readFileSync(discovered, 'utf8'));
-      expect(JSON.stringify(discoveredJson)).toContain('PreCompact');
-      const preTool = discoveredJson.hooks?.PreToolUse?.[0]?.hooks?.[0]?.command as string;
-      expect(preTool).toContain(`XRAY_AI_PATH=${JSON.stringify(tmp)}`);
+      expect(existsSync(path.join(tmp, '.grok'))).toBe(false);
       const features = JSON.parse(readFileSync(path.join(tmp, '.xray', 'features.json'), 'utf8'));
-      expect(features.memory_routing.enabled).toBe(true);
-      expect(features.memory_routing.provider).toBe('repertoire');
+      expect(features.memory_routing.enabled).toBe(false);
+      expect(features.memory_routing.provider).toBe('null');
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

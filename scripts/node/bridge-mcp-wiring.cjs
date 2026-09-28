@@ -619,8 +619,9 @@ function deployPortableProjectMcpJson(targetDir) {
     ...existing,
     mcpServers: mergeMcpMap(framework, existing.mcpServers || {}, targetDir),
   };
-  if (hadFile && jsonDeepEqual(merged, existing)) return;
+  if (hadFile && jsonDeepEqual(merged, existing)) return false;
   fs.writeFileSync(destPath, `${JSON.stringify(merged, null, 2)}\n`);
+  return true;
 }
 
 function enableHermesPluginBestEffort() {

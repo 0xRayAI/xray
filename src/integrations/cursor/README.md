@@ -21,11 +21,7 @@ Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wea
 
 Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script, and wear adds the dist command beside it. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
 
-Wearing again writes the same bytes. The pre-wear copy is `<project>/.xray/state/cursor-hook-wear/` (gitignored, and left out of the npm package), so `npm ci` does not delete it. When wear creates that folder and the path is not already ignored, it appends the path to `$GIT_DIR/info/exclude`, so `git status` does not offer the snapshot for commit. Wear never stores an already-worn `hooks.json` as that copy. Restore with:
-
-`node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`
-
-If the snapshot directory is gone, unwear still removes the dist entries. If `hooks.json` was edited after wear, unwear keeps those edits, removes only the installed dist entries, and warns on stderr. Events that only existed to hold those entries are removed instead of being left as empty arrays.
+Install the package first (`npm install`), then `npx 0xray wear`. Postinstall writes nothing. Wearing again writes the same bytes and takes a fresh snapshot every time. The pre-wear copy is `<project>/.xray/state/cursor-hook-wear/` (gitignored, and left out of the npm package), so removing `node_modules` does not delete it. When wear creates that folder and the path is not already ignored, it appends the path to `$GIT_DIR/info/exclude`. Wear stores the user bytes, never an already-worn `hooks.json`. Restore with `npx 0xray unwear` (or `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`). Unwear prints `restored` only when the file bytes match that snapshot exactly. If the file changed or cannot be parsed, unwear exits non-zero, says what differs, and leaves the snapshot in place. Wear refuses, and writes nothing, when git is missing, the directory is not a work tree, `GIT_DIR` is bare, or `hooks.json` cannot be parsed.
 
 `xray-cloud-hook.sh` resolution order (first file that exists wins). Each run appends one `cursor-hook-invoke.log` line with `js=` set to the absolute path it executes:
 
