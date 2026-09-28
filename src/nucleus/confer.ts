@@ -17,9 +17,12 @@ import {
 } from './lead-dev-plan-persistence.js';
 import {
   buildReceiptFromConsultOutput,
+  consultVerdictAllowsTodoCompletion,
+  listUnreviewedSynthesisConsultReceipts,
   tryRecordSynthesisConsultReceipt,
   parseConsultVerdictFromText,
   type SynthesisConsultReceipt,
+  type SynthesisConsultVerdict,
 } from './synthesis-consult-receipt.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
 import { conferDefaultForProfile, resolveRuntimeSuitProfile } from './suit-temperament.js';
@@ -254,7 +257,7 @@ export async function invokeConferAgent(
   }
   if (!parseConsultVerdictFromText(text)) {
     throw new Error(
-      `Confer response from ${subagent} missing parseable verdict (expected Verdict: PASS|CONDITIONAL|FAIL or DECISION: approve|reject|abstain)`,
+      `Confer response from ${subagent} missing parseable verdict (expected a final Verdict: PASS|CONDITIONAL|FAIL or DECISION: approve|reject|abstain line)`,
     );
   }
   return text;
@@ -275,7 +278,7 @@ export function applyConferConsultResult(
     projectRoot,
   );
   let todoCompleted = false;
-  if (receipt && receipt.verdict !== 'FAIL') {
+  if (receipt && consultVerdictAllowsTodoCompletion(receipt.verdict, projectRoot)) {
     todoCompleted = updatePlanTodoStatus(todoId, 'completed', projectRoot);
   }
   return {
@@ -288,14 +291,55 @@ export function applyConferConsultResult(
   };
 }
 
+function fixtureConsultOutput(verdict: SynthesisConsultVerdict, subagent: string): string {
+  if (verdict === 'UNREVIEWED') {
+    return [
+      'DECISION: abstain',
+      'CONFIDENCE: 0.58',
+      `REASONING: Local confer (${subagent}); nested LLM not configured.`,
+      'Hardening: governance LLM absent — abstain is not a review',
+    ].join('\n');
+  }
+  const riskLine =
+    verdict === 'FAIL'
+      ? '- Top risk: fixture FAIL must keep the consult todo open'
+      : 'Top risks: none';
+  return `Verdict: ${verdict}\n${riskLine}\nHardening: confer fixture quorum for ${subagent}`;
+}
+
 export function writeFixtureConferReceipt(
   todoId: string,
   subagent: string,
   sessionId: string,
   projectRoot = process.cwd(),
+  verdict: SynthesisConsultVerdict = 'PASS',
 ): ConferAgentResult {
-  const output = `Verdict: PASS\nTop risks: none\nHardening: confer fixture quorum for ${subagent}`;
-  return applyConferConsultResult(todoId, subagent, sessionId, output, projectRoot);
+  return applyConferConsultResult(
+    todoId,
+    subagent,
+    sessionId,
+    fixtureConsultOutput(verdict, subagent),
+    projectRoot,
+  );
+}
+
+export function conferUnreviewedBootHint(projectRoot = process.cwd()): {
+  conferUnreviewed: true;
+  conferUnreviewedTodoIds: string[];
+  conferUnreviewedHint: string;
+} | null {
+  const receipts = listUnreviewedSynthesisConsultReceipts(projectRoot);
+  if (receipts.length === 0) return null;
+  const ids: string[] = [];
+  for (const receipt of receipts) {
+    if (receipt.todoId) ids.push(receipt.todoId);
+  }
+  const listed = ids.length > 0 ? ids.join(', ') : 'consult';
+  const strict = resolveRuntimeSuitProfile(projectRoot) === 'strict';
+  const conferUnreviewedHint = strict
+    ? `Confer UNREVIEWED (${listed}): no governance LLM. Strict suit_temperament keeps the todo open.`
+    : `Confer UNREVIEWED (${listed}): no governance LLM. Receipt recorded; the todo still completes unless suit_temperament.profile is strict.`;
+  return { conferUnreviewed: true, conferUnreviewedTodoIds: ids, conferUnreviewedHint };
 }
 
 export async function runConferQuorum(
@@ -305,6 +349,8 @@ export async function runConferQuorum(
     collocatedText?: string;
     dueReason?: string | null;
     fixture?: boolean;
+    /** Verdict written for every fixture agent. Defaults to PASS. */
+    fixtureVerdict?: SynthesisConsultVerdict;
   } = {},
 ): Promise<ConferQuorumResult> {
   const cfg = loadConferConfig(projectRoot);
@@ -352,7 +398,13 @@ export async function runConferQuorum(
     try {
       let agentResult: ConferAgentResult;
       if (options.fixture) {
-        agentResult = writeFixtureConferReceipt(todo.id, todo.subagent, sessionId, projectRoot);
+        agentResult = writeFixtureConferReceipt(
+          todo.id,
+          todo.subagent,
+          sessionId,
+          projectRoot,
+          options.fixtureVerdict ?? 'PASS',
+        );
       } else {
         const prompt = buildConferPrompt(
           todo.subagent,
@@ -376,7 +428,10 @@ export async function runConferQuorum(
         saveConferCheckpoint(state, projectRoot);
       } else {
         state.status = 'failed';
-        state.lastError = `Receipt or todo completion failed for ${todo.id}`;
+        state.lastError =
+          agentResult.verdict === 'FAIL' || agentResult.verdict === 'UNREVIEWED'
+            ? `Confer ${agentResult.verdict} blocked ${todo.id}`
+            : `Receipt or todo completion failed for ${todo.id}`;
         saveConferCheckpoint(state, projectRoot);
         return {
           status: 'partial',

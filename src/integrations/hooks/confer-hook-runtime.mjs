@@ -47,3 +47,9 @@ export function isConferPendingForSession(projectRoot, sessionId = null) {
   if (!mod?.isConferPending) return false;
   return mod.isConferPending(projectRoot, sessionId);
 }
+
+export function conferUnreviewedBootHint(projectRoot) {
+  const mod = loadConfer();
+  if (!mod?.conferUnreviewedBootHint) return null;
+  return mod.conferUnreviewedBootHint(projectRoot);
+}

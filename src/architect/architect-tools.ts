@@ -363,6 +363,47 @@ export async function architectureAssessment(
   return result;
 }
 
+export type ArchitectureConferVerdict = "PASS" | "CONDITIONAL" | "FAIL";
+
+/**
+ * Confer verdict from the assessment itself.
+ * critical/poor health or a critical issue → FAIL; fair health or a major issue → CONDITIONAL; otherwise PASS.
+ */
+export function conferVerdictFromArchitectureAssessment(
+  assessment: Pick<ArchitectureAssessment, "overallHealth" | "issues">,
+): ArchitectureConferVerdict {
+  if (
+    assessment.overallHealth === "critical" ||
+    assessment.overallHealth === "poor" ||
+    assessment.issues.some((issue) => issue.type === "critical")
+  ) {
+    return "FAIL";
+  }
+  if (
+    assessment.overallHealth === "fair" ||
+    assessment.issues.some((issue) => issue.type === "major")
+  ) {
+    return "CONDITIONAL";
+  }
+  return "PASS";
+}
+
+export function formatConferArchitectureAssessment(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+): string {
+  const verdict = conferVerdictFromArchitectureAssessment(assessment);
+  const riskLines = assessment.issues
+    .slice(0, 5)
+    .map((issue) => `- Top risk: ${issue.type}: ${issue.description}`);
+  const risks = riskLines.length > 0 ? riskLines.join("\n") : "Top risks: none";
+  const hardening =
+    assessment.recommendations.slice(0, 3).join("; ") ||
+    "No additional hardening noted";
+  const assessmentJson = JSON.stringify(assessment, null, 2);
+  return `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\n${risks}\nHardening: ${hardening}`;
+}
+
 // Helper functions
 
 function identifyArchitecturalPatterns(

@@ -19,7 +19,7 @@ import {
   updatePlanTodoStatusInPlace,
   loadDelegationGateFeatures,
 } from '../../hooks/delegation-gate-runtime.mjs';
-import { isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
+import { conferUnreviewedBootHint, isConferPendingForSession } from '../../hooks/confer-hook-runtime.mjs';
 import { getActiveUserAsideBoot } from '../../hooks/user-aside-hook-runtime.mjs';
 import {
   applyStationHeat,
@@ -274,6 +274,14 @@ export function loadConferPending(root = workspaceRoot(), sessionId = null) {
   }
 }
 
+export function loadConferUnreviewedHint(root = workspaceRoot()) {
+  try {
+    return conferUnreviewedBootHint(root);
+  } catch {
+    return null;
+  }
+}
+
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
   const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
@@ -281,6 +289,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
   const sessionId =
     extra.sessionId || process.env.GROK_SESSION_ID || process.env.GROK_SESSION || null;
   const conferPending = loadConferPending(root, sessionId);
+  const conferUnreviewed = loadConferUnreviewedHint(root);
   const userAsideBoot = getActiveUserAsideBoot(root, sessionId);
   const gateFeatures = loadDelegationGateFeatures(root, 'grok');
   const frontier = gateFeatures.ceremony === 'lite';
@@ -305,6 +314,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ...heat,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
+    ...(conferUnreviewed ?? {}),
     ...(userAsideBoot ?? {}),
     sessionId,
     ...extra,
