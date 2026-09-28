@@ -28,3 +28,29 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 | Cloud prompts | Written in plain English. |
 
 **House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Setup: `grok-bot house init`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice.
+
+## Confer cadence (how spend decisions get made)
+1. Design before spend. Critic and CoS agree the fix design before the first paid cloud round. Critic's first review gives the complete blocker list; later rounds add nothing new unless the code changed.
+2. Acceptance before the round. The tests or probes that decide PASS are agreed in the room before the round is sent. The review checks only those, plus the type-check count.
+3. One paid round per PR. A second Strict FAIL goes to Blaze with a smaller design or a shelve recommendation. No automatic retry.
+4. Outage exception. If the PR fixes something that is down, the round cap does not apply. Each round stays small and fixes only the named blocker; no redesign, never shelve.
+5. Consensus on blockers vs nits. Critic labels each finding:
+   - BLOCKER: names live behavior, money spent, data lost, or a failing test.
+   - NIT: never starts a paid round alone; goes to the PR body or a board card unless nearly free.
+   - UNVERIFIED: could not be reproduced; cannot block.
+   CoS weighs cost, forge sizes the change, then the room decides what goes in the round.
+6. Live proof. A green health check or deploy SUCCESS is not proof. Choose a check whose result would differ if the thing were broken. Prefer read-only checks (logs, variables) over checks that affect real users.
+7. Cloud notes gate. Every cloud round files its reflection and memory notes as UNREVIEWED before critic sees the PR.
+8. Local hygiene. In repos that depend on 0xray, install with `npm ci --ignore-scripts`. Skipping a hook (`--no-verify`) needs Blaze's OK and is noted in the receipt.
+9. Gos. Merge, publish, deploy, spend and prod credentials need Blaze's go. A go covers exactly what it names.
+
+## Board (WAVEBOARD)
+0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat posts one line in the room; CoS turns it into the row change.
+1. The board is a ranked roadmap, not a receipt log. Every receipt updates its card and the next-move ranking in the same turn.
+2. Order: card first, then handoff file, then a room post that cites the card.
+3. Required card fields: repo, PR, head, cloud, owner, P-level, next step.
+4. Status index at the top: In work, Waiting on Blaze, Backlog, Paused, Verify.
+5. Daily work history is append-only, newest entry first.
+6. Staleness: a card with no movement is flagged after 2 working days and escalated to Blaze after 5.
+7. When a phase closes, CoS starts the next non-capital phase immediately.
+8. Enforcement (P2 code, separate PR): `grok-bot board check` wired into `doctor`, fails closed offline, flags missed routine heartbeats.
