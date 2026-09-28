@@ -170,7 +170,7 @@ describe('wear and setup outside a git checkout', () => {
     }
   });
 
-  it('inside a git checkout installs cursor hooks, skill copies, and root links', () => {
+  it('inside a git checkout installs the 4.0.28 suit plus cursor hooks', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-git-'));
     const home = freshHome();
     const homeBefore = listFiles(home);
@@ -182,13 +182,17 @@ describe('wear and setup outside a git checkout', () => {
       expect(ran.stderr).toBe('');
       expect(ran.stdout).toBe(skillLinkStdout());
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
+      expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
       expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(true);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
-      expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(false);
-      expect(existsSync(path.join(project, '.mcp.json'))).toBe(false);
-      expect(existsSync(path.join(project, '.grok'))).toBe(false);
-      expect(listFiles(home)).toEqual(homeBefore);
+      expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);
+      expect(existsSync(path.join(project, '.gitignore'))).toBe(true);
+      expect(existsSync(path.join(project, '.xray', 'codex.json'))).toBe(true);
+      expect(existsSync(path.join(project, '.xray', 'features.json'))).toBe(true);
+      expect(existsSync(path.join(project, '.xray', 'config.json'))).toBe(true);
+      expect(lstatSync(path.join(project, 'node_modules', '@0xray', 'repertoire')).isSymbolicLink()).toBe(true);
+      expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });

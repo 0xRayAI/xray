@@ -1682,35 +1682,55 @@ function isSetupSkillMirrorDump(err, packageRoot) {
   return err.extraSkills.every((name) => mirrored.has(name));
 }
 
+function packageShipsConsumerSuit(packageRoot) {
+  return fs.existsSync(path.join(packageRoot, "AGENTS-consumer.md"));
+}
+
+/**
+ * 4.0.28 consumer postinstall files: AGENTS.md, .gitignore, repertoire link,
+ * .xray config, bridges, mill plant, then the setup.cjs skill mirror and
+ * dist/scripts links. Does not install Cursor hooks or git hooks.
+ * Existing user files follow the 4.0.28 guards inside those functions.
+ */
+function installConsumerProjectFiles(packageRoot, targetDir, log) {
+  const write = typeof log === "function" ? log : () => {};
+  if (!isConsumerInstall(packageRoot, targetDir) || !packageShipsConsumerSuit(packageRoot)) {
+    return false;
+  }
+  const { deployManagedAgents } = require("./postinstall.cjs");
+  const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
+  const { mintConsumerSuit } = require("../foundry/mint-suit.cjs");
+  deployManagedAgents(packageRoot, targetDir, write);
+  applyConsumerGitignore(targetDir, packageRoot);
+  wearVendoredRepertoire(packageRoot, targetDir, write);
+  deployXrayConfig(targetDir, packageRoot, write);
+  deployProjectMcpJson(targetDir, write);
+  mergeOpencodeJson(targetDir, packageRoot, write);
+  installOpencodeBridge(targetDir, packageRoot, write);
+  installGrokBridge(targetDir, packageRoot, write);
+  installHermesBridge(targetDir, packageRoot, write);
+  installOpenclawBridge(targetDir, packageRoot, write);
+  try {
+    mintConsumerSuit(packageRoot, targetDir, write);
+  } catch (err) {
+    if (!isSetupSkillMirrorDump(err, packageRoot)) throw err;
+  }
+  syncSetupSkillsAndRootLinks(packageRoot, targetDir);
+  return true;
+}
+
 /**
  * 4.0.28 consumer postinstall, minus Cursor hooks and git hooks.
  * Used only when the folder is not a git work tree.
  */
 function wearSuitSkippingCursorHooks(packageRoot, targetDir, log) {
   const write = typeof log === "function" ? log : () => {};
-  if (isConsumerInstall(packageRoot, targetDir)) {
-    const { deployManagedAgents } = require("./postinstall.cjs");
-    const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
-    const { mintConsumerSuit } = require("../foundry/mint-suit.cjs");
-    deployManagedAgents(packageRoot, targetDir, write);
-    applyConsumerGitignore(targetDir, packageRoot);
-    wearVendoredRepertoire(packageRoot, targetDir, write);
-    deployXrayConfig(targetDir, packageRoot, write);
-    deployProjectMcpJson(targetDir, write);
-    mergeOpencodeJson(targetDir, packageRoot, write);
-    installOpencodeBridge(targetDir, packageRoot, write);
-    installGrokBridge(targetDir, packageRoot, write);
-    installHermesBridge(targetDir, packageRoot, write);
-    installOpenclawBridge(targetDir, packageRoot, write);
-    try {
-      mintConsumerSuit(packageRoot, targetDir, write);
-    } catch (err) {
-      if (!isSetupSkillMirrorDump(err, packageRoot)) throw err;
+  if (!installConsumerProjectFiles(packageRoot, targetDir, write)) {
+    if (!isConsumerInstall(packageRoot, targetDir)) {
+      wearVendoredRepertoire(packageRoot, targetDir, write);
     }
-  } else {
-    wearVendoredRepertoire(packageRoot, targetDir, write);
+    syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   }
-  syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   process.stderr.write(CURSOR_HOOKS_SKIPPED_LINE);
 }
 
@@ -1868,7 +1888,11 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
     return;
   }
   assertCursorWearGit(resolvedTarget);
-  syncSetupSkillsAndRootLinks(resolvedPackage, resolvedTarget);
+  if (options.suit !== false) {
+    if (!installConsumerProjectFiles(resolvedPackage, resolvedTarget, write)) {
+      syncSetupSkillsAndRootLinks(resolvedPackage, resolvedTarget);
+    }
+  }
   if (!isConsumerInstall(resolvedPackage, resolvedTarget) || !consumerDistHooksReady(resolvedPackage)) {
     return fastenCursorHooksAt(resolvedTarget, resolvedPackage, write);
   }
@@ -1900,10 +1924,13 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
     snap.meta.also = linkedWearRoots(resolvedTarget);
     saveWearState(snap.paths, snap.meta);
     for (const extra of snap.meta.also) {
-      wearCursorHooks(extra, resolvedPackage, write, { outerRoots: false });
+      wearCursorHooks(extra, resolvedPackage, write, { outerRoots: false, suit: false });
       process.stdout.write(`cursor-wear: wrote outer hooks at ${extra}\n`);
     }
     saveWearState(snap.paths, snap.meta);
+  }
+  if (options.suit !== false && packageShipsConsumerSuit(resolvedPackage)) {
+    fastenCursorHookScripts(resolvedTarget, resolvedPackage, write);
   }
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
@@ -2038,12 +2065,14 @@ function setupProjectBridges(opts) {
     return;
   }
   assertSetupGit(targetDir);
-  syncSetupSkillsAndRootLinks(packageRoot, targetDir);
-  deployProjectMcpJson(targetDir, log);
-  installOpencodeBridge(targetDir, packageRoot, log);
-  installGrokBridge(targetDir, packageRoot, log);
-  installHermesBridge(targetDir, packageRoot, log);
-  installOpenclawBridge(targetDir, packageRoot, log);
+  if (!installConsumerProjectFiles(packageRoot, targetDir, log)) {
+    syncSetupSkillsAndRootLinks(packageRoot, targetDir);
+    deployProjectMcpJson(targetDir, log);
+    installOpencodeBridge(targetDir, packageRoot, log);
+    installGrokBridge(targetDir, packageRoot, log);
+    installHermesBridge(targetDir, packageRoot, log);
+    installOpenclawBridge(targetDir, packageRoot, log);
+  }
   if (opts.gitHooks === true) installGitHooks(packageRoot, log, targetDir);
 }
 

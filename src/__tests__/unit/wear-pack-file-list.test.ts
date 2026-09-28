@@ -26,39 +26,8 @@ const CURSOR_HOOK_FILES = [
   '.cursor/hooks/xray-cloud-hook.sh',
 ];
 
-/**
- * Git checkout files 4.0.28 wrote that this change does not restore.
- * Critic and Blaze decide whether that omission stays.
- * The six hook scripts are the old project copies; git wear writes hooks.json only.
- */
-const GIT_STILL_ONLY_IN_428 = [
-  '.cursor/hooks/after-file-edit.sh',
-  '.cursor/hooks/before-read-file.sh',
-  '.cursor/hooks/before-shell-execution.sh',
-  '.cursor/hooks/pre-compact.sh',
-  '.cursor/hooks/pre-tool-use.sh',
-  '.cursor/hooks/xray-cloud-hook.sh',
-  '.gitignore',
-  '.grok/plugins/0xray/skills/inspect/SKILL.md',
-  '.grok/plugins/0xray/skills/mill/SKILL.md',
-  '.hermes/plugins/xray-hermes/skills/inspect/SKILL.md',
-  '.hermes/plugins/xray-hermes/skills/mill/SKILL.md',
-  '.openclaw/skills/inspect/SKILL.md',
-  '.openclaw/skills/mill/SKILL.md',
-  '.opencode/agents/inspect.yml',
-  '.opencode/agents/mill.yml',
-  '.opencode/skills/inspect/SKILL.md',
-  '.opencode/skills/mill/SKILL.md',
-  '.xray/codex.json',
-  '.xray/config.json',
-  '.xray/features.json',
-  '.xray/features.schema.json',
-  '.xray/foundry-inventory.json',
-  'AGENTS.md',
-];
-
-/** Git wear snapshot. 4.0.28 did not write it. */
-const GIT_STILL_ONLY_IN_PACK = [
+/** Hook snapshot wear writes on top of the 4.0.28 project list. */
+const GIT_HOOK_SNAPSHOT = [
   '.xray/state/cursor-hook-wear/hooks.json.written',
   '.xray/state/cursor-hook-wear/meta.json',
 ];
@@ -131,7 +100,7 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
 
 describe('packed tarball file list against 0xray@4.0.28', () => {
   it(
-    'matches 4.0.28 minus cursor hooks outside git, and 4.0.28 plus hooks inside git except the unfixed gaps',
+    'matches 4.0.28 minus cursor hooks outside git, and 4.0.28 plus hooks inside git',
     { timeout: 240000, retry: 0 },
     () => {
       const work = mkdtempSync(path.join(tmpdir(), 'xray-pack-gate-'));
@@ -175,13 +144,8 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         expect(plainExtra).toEqual([]);
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
-        const gitMissing = oldGit.filter((rel) => !packedGit.includes(rel));
-        const gitExtra = packedGit.filter((rel) => !oldGit.includes(rel));
-        expect(gitMissing).toEqual([...GIT_STILL_ONLY_IN_428].sort());
-        expect(gitExtra).toEqual([...GIT_STILL_ONLY_IN_PACK].sort());
-        expect(packedGit.includes('.cursor/hooks.json')).toBe(true);
-        expect(packedGit.some((rel) => rel.startsWith('dist -> node_modules/0xray/dist'))).toBe(true);
-        expect(packedGit.some((rel) => rel.startsWith('scripts -> node_modules/0xray/scripts'))).toBe(true);
+        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT])].sort();
+        expect(packedGit).toEqual(expectedGit);
       } finally {
         rmSync(work, { recursive: true, force: true });
       }
