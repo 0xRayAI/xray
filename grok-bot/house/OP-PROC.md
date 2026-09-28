@@ -26,5 +26,12 @@ The one-page operating procedure for the Grok Bot seats. Read this first; everyt
 | Status | Done / Verify / Reflect / Next. |
 | Twice to disk | A rule said twice goes to disk the same day. Procedure changes mirror as a Normal PR. |
 | Cloud prompts | Written in plain English. |
+| Careful-change repos | htafolla/trinitarium and htafolla/chrono-warp-drive: find and record errors, but no code change or merge without Blaze's explicit go, even after critic PASS. |
+| Railway | Every MCP service deploys from its GitHub link, never `railway up`. Relinking a service whose live code differs from main needs Blaze's go. |
+| Prod Redis | Never connect without TLS from outside Railway. Check MEMORY USAGE before any DUMP (none over ~8 MB); page long lists at 1000 or fewer. |
+| Chrono dead letters | Any "possibly-sent" mint letter needs a person to check it on chain before anything else happens. |
+| Confer | Stays off. A result produced without a model is labeled unreviewed and never passes. |
+| Postalocity | Notes and fix PRs only. Never merge, rerun, or touch their workflows. |
+| X plates | 0xRay plates on X go out as attached PNGs, never pasted ASCII. |
 
 Wear this. Don't wear the book.
