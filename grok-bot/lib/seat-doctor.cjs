@@ -97,6 +97,17 @@ function probeOws(home) {
 
 // A leading `(example)` marker is unfilled. A mid-line mention is not.
 const HOUSE_EXAMPLE_LINE = /^\s*[-*]?\s*\(example\)/;
+// Opt out of wallet nags. A mid-line mention is not an opt-out.
+const WALLET_OFF_LINE = /^\s*[-*]?\s*(?:scope:\s*)?wallet\s+off\s*$/i;
+
+function scopeFromHouseText(text) {
+  const off = text.split(/\r?\n/).some((line) => WALLET_OFF_LINE.test(line));
+  return { wallet: off ? 'off' : 'on' };
+}
+
+function walletStepsOff(report) {
+  return Boolean(report.house && report.house.scope && report.house.scope.wallet === 'off');
+}
 
 function walkForHouse(start) {
   let dir = path.resolve(start);
@@ -139,12 +150,14 @@ function inspectHouseFile(file, via) {
     };
   }
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
+  const scope = scopeFromHouseText(text);
   if (fs.existsSync(exampleSibling)) {
     return {
       status: 'fail',
       file,
       via,
       detail: 'house/EXAMPLE.md exists — delete it',
+      scope,
     };
   }
   const unfilled = text.split(/\r?\n/).filter((line) => HOUSE_EXAMPLE_LINE.test(line));
@@ -155,9 +168,10 @@ function inspectHouseFile(file, via) {
       via,
       detail: 'HOUSE.md still has unfilled example lines',
       unfilled: unfilled.length,
+      scope,
     };
   }
-  return { status: 'pass', file, via, detail: file };
+  return { status: 'pass', file, via, detail: file, scope };
 }
 
 function probeHouse(cwd, env) {
@@ -186,6 +200,25 @@ function probeHouse(cwd, env) {
   return inspectHouseFile(walked, 'walk-up');
 }
 
+function isFile(file) {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function houseTemplateNames(srcDir) {
+  return fs.readdirSync(srcDir).filter((name) => {
+    if (name === 'EXAMPLE.md') return false;
+    return isFile(path.join(srcDir, name));
+  });
+}
+
+function legacyBoardPath(seatRoot) {
+  return path.join(seatRoot, 'ops', 'WAVEBOARD.md');
+}
+
 function initHouse(opts = {}) {
   const seatRoot = path.resolve(opts.dir || opts.cwd || process.cwd());
   const kitRoot = opts.kitRoot || path.resolve(__dirname, '..');
@@ -194,14 +227,8 @@ function initHouse(opts = {}) {
   if (!fs.existsSync(srcDir)) {
     return { ok: false, code: 1, message: `templates/house is missing (${srcDir})` };
   }
-  const names = fs.readdirSync(srcDir).filter((name) => {
-    if (name === 'EXAMPLE.md') return false;
-    try {
-      return fs.statSync(path.join(srcDir, name)).isFile();
-    } catch {
-      return false;
-    }
-  });
+  const names = houseTemplateNames(srcDir);
+  if (opts.migrate) return migrateHouse({ seatRoot, srcDir, destDir, names });
   const conflicts = [];
   for (const name of names) {
     const dest = path.join(destDir, name);
@@ -223,7 +250,64 @@ function initHouse(opts = {}) {
     code: 0,
     destDir,
     files: names.map((name) => path.join(destDir, name)),
+    moved: null,
     message: `copied templates/house to ${destDir}`,
+  };
+}
+
+function migrateHouse({ seatRoot, srcDir, destDir, names }) {
+  const legacy = legacyBoardPath(seatRoot);
+  const destBoard = path.join(destDir, 'WAVEBOARD.md');
+  if (fs.existsSync(legacy) && !isFile(legacy)) {
+    return { ok: false, code: 1, message: `refusing to migrate: ${legacy} is not a file` };
+  }
+  const legacyIsFile = isFile(legacy);
+  if (legacyIsFile && isFile(destBoard)) {
+    const templateBoard = path.join(srcDir, 'WAVEBOARD.md');
+    const templateText = isFile(templateBoard) ? fs.readFileSync(templateBoard, 'utf8') : null;
+    const destText = fs.readFileSync(destBoard, 'utf8');
+    if (templateText === null || destText !== templateText) {
+      return {
+        ok: false,
+        code: 1,
+        message: `refusing to overwrite ${destBoard} with ${legacy}`,
+      };
+    }
+  }
+  fs.mkdirSync(destDir, { recursive: true });
+  let moved = null;
+  if (legacyIsFile) {
+    fs.copyFileSync(legacy, destBoard);
+    fs.unlinkSync(legacy);
+    moved = destBoard;
+  }
+  const copied = [];
+  const skipped = [];
+  for (const name of names) {
+    if (name === 'WAVEBOARD.md' && moved) continue;
+    const dest = path.join(destDir, name);
+    if (isFile(dest)) {
+      skipped.push(dest);
+      continue;
+    }
+    fs.copyFileSync(path.join(srcDir, name), dest);
+    copied.push(dest);
+  }
+  const attention = path.join(destDir, 'ATTENTION_STATE.md');
+  const parts = [];
+  if (moved) parts.push(`moved ${legacy} to ${destBoard}`);
+  else parts.push('no ops/WAVEBOARD.md to move');
+  if (copied.includes(attention)) parts.push(`started ${attention}`);
+  if (copied.length > 0) parts.push(`copied templates/house to ${destDir}`);
+  else if (!moved) parts.push(`left existing house files in ${destDir}`);
+  return {
+    ok: true,
+    code: 0,
+    destDir,
+    files: moved ? [moved, ...copied] : copied,
+    moved,
+    skipped,
+    message: parts.join('; '),
   };
 }
 
@@ -235,15 +319,17 @@ function nextSteps(report) {
   } else {
     steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
   }
-  steps.push('Hangar shops: npx groover-hangar (extract / witness / pin)');
-  steps.push(
-    `Clearing: ${PLANT_URLS.clearing} (also ${PLANT_URLS.clearingRail}) — unpaid GET returns 402; pay USDC on Base via local Open Wallet (${report.ows.path})`,
-  );
-  steps.push(
-    'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
-  );
-  if (!report.ows.present) {
-    steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+  if (!walletStepsOff(report)) {
+    steps.push('Hangar shops: npx groover-hangar (extract / witness / pin)');
+    steps.push(
+      `Clearing: ${PLANT_URLS.clearing} (also ${PLANT_URLS.clearingRail}) — unpaid GET returns 402; pay USDC on Base via local Open Wallet (${report.ows.path})`,
+    );
+    steps.push(
+      'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
+    );
+    if (!report.ows.present) {
+      steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+    }
   }
   steps.push(
     `Identity (optional DID): Groover register → mint → pin. Suit UI: ${PLANT_URLS.suitUi} · registry: ${PLANT_URLS.registryMcp}`,
@@ -320,11 +406,15 @@ function formatDoctor(report) {
   } else {
     lines.push(`Repertoire: miss — ${report.repertoire.detail}`);
   }
-  lines.push(
-    report.ows.present
-      ? `OWS pay: yes — ${report.ows.path}`
-      : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
-  );
+  if (walletStepsOff(report)) {
+    lines.push('OWS pay: skipped — house Scope wallet off');
+  } else {
+    lines.push(
+      report.ows.present
+        ? `OWS pay: yes — ${report.ows.path}`
+        : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
+    );
+  }
   if (report.house) {
     let label = 'WARN';
     if (report.house.status === 'pass') label = 'PASS';
@@ -346,7 +436,7 @@ function formatDoctor(report) {
 }
 
 function parseDoctorArgs(argv) {
-  const out = { command: null, cwd: null, home: null, dir: null, json: false, printLlms: false };
+  const out = { command: null, cwd: null, home: null, dir: null, json: false, printLlms: false, migrate: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === 'doctor' || arg === 'ready' || arg === 'help') {
@@ -362,6 +452,10 @@ function parseDoctorArgs(argv) {
       }
       out.command = 'house-init';
       i += 1;
+      continue;
+    }
+    if (arg === '--migrate') {
+      out.migrate = true;
       continue;
     }
     if (arg === '--json') {
@@ -407,6 +501,8 @@ function usageText(kitRoot) {
 Commands:
   doctor | ready   Prove mill+inspect, warn if house/HOUSE.md is missing, fail if example lines remain
   house init       Copy templates/house into ./house. Refuses if a target file exists
+  house init --migrate
+                   Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. Start ATTENTION_STATE.md from the template when it is missing. Leave a house file you already changed. Refuse when both boards exist and the house board is not the untouched template
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:
@@ -446,8 +542,13 @@ function runDoctorCli(argv, io = {}) {
     }
     return 0;
   }
+  if (parsed.migrate && parsed.command !== 'house-init') {
+    stderr.write('--migrate is only valid with house init\n');
+    stdout.write(usageText(kitRoot));
+    return 2;
+  }
   if (parsed.command === 'house-init') {
-    const result = initHouse({ dir: parsed.dir || parsed.cwd, kitRoot });
+    const result = initHouse({ dir: parsed.dir || parsed.cwd, kitRoot, migrate: parsed.migrate });
     stdout.write(`${result.message}\n`);
     return result.code;
   }
