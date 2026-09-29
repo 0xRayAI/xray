@@ -15,6 +15,11 @@ const PLATE_IDS = Object.freeze([
   "reporting",
   "memory-recall",
   "house",
+  "goggles",
+  "suit",
+  "kits",
+  "host-pack",
+  "glossary",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -67,6 +72,24 @@ const CUES = {
     [/HOUSE\.md/i, 4],
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
+  ],
+  goggles: [
+    [/\bgoggles\b/i, 6],
+  ],
+  suit: [
+    [/suit plate/i, 6],
+    [/plates\/suit\b/i, 6],
+  ],
+  kits: [
+    [/\bkits plate\b/i, 6],
+    [/\bkits\b/i, 5],
+  ],
+  "host-pack": [
+    [/host\s*pack/i, 6],
+    [/host-pack/i, 6],
+  ],
+  glossary: [
+    [/\bglossary\b/i, 6],
   ],
 };
 

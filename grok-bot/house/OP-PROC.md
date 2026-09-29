@@ -33,5 +33,6 @@ The one-page operating procedure for the Grok Bot seats. Read this first; everyt
 | Confer | Stays off. A result produced without a model is labeled unreviewed and never passes. |
 | Postalocity | Notes and fix PRs only. Never merge, rerun, or touch their workflows. |
 | X plates | 0xRay plates on X go out as attached PNGs, never pasted ASCII. |
+| Goggles | It views one plane. |
 
 Wear this. Don't wear the book.
