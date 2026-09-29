@@ -1,5 +1,7 @@
 # Fleet operating spec
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 How this Grok Bot fleet runs on 0xRay. Plain roles; seat names in `SEATS.md`.
 
 ## North star

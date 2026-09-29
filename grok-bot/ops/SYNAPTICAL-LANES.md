@@ -1,5 +1,7 @@
 # Synaptical lanes — H vs B (internal language)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **For kit users:** two speaking styles in this fleet.
 
 | Lane | Who hears it | Style |

@@ -1,5 +1,7 @@
 # Save compute — how we review work
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Prefer the smallest review that matches risk.
 
 ## Review levels

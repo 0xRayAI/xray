@@ -1,5 +1,7 @@
 # Fleet lexicon (plain)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Stamp products: `STAMPS.md`. This file = **words we use**, grouped so product ≠ workstream ≠ practice.
 
 **One line:** beats clock the wave → cards on the board → seats in a suit on the mill → CoS steers from station → close with a receipt.

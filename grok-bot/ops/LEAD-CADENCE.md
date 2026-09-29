@@ -1,5 +1,7 @@
 # Lead cadence (syncopation)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Higher than grok-bot seats. Dist cadence (`dist/CADENCE.md`) is how often we post. This card is how a **peer lead** keeps the band in time.
 
 **A friend would hear:** a second copy of you should pick up the ticket from disk and keep working. The human should not have to re-teach the rules every wake. Dummy bodies prove the worn catalog. Same-sess bodies keep the suit on. Workstreams stay moving. Station done is the close — not a timer.

@@ -1,5 +1,7 @@
 # Cloud agents — when and how
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 ## Default: suited seats first
 Named agents already have suits, memory, live docs, and machine access. Prefer them for routing, review, merge, deploy, live checks, thin edits, and anything that needs fleet context.
 

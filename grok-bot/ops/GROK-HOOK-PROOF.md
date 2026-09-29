@@ -1,5 +1,7 @@
 # Grok PreToolUse proof — cold seat (2026-09-13)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Seat: cold `alpha` project fastened via `@0xray/grok-bot` path.
 
 ## Questions

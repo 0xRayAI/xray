@@ -1,5 +1,7 @@
 # Dist Charter — @0xRayAI
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Owner:** Blaze  
 **Date:** 2026-09-14  
 **Handle:** @0xRayAI (Product Dist — not blaze0x1)

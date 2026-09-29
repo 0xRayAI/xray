@@ -1,5 +1,7 @@
 # Dist cadence — @0xRayAI
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Locked:** 2026-09-14 (Blaze)
 
 ## Two lanes

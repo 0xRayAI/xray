@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- House template: every markdown file under `ops/` carries a one-line 0xRay house-example banner. `house init` also copies `AUTO-REVIEW.md` (blank Ask first and Allow; the only house file that enforces them) and optional `ROLE-MAP.md`. The Roster heading in `HOUSE.md` has no `(example)` line, so doctor still checks the six headings.
 - Lead cadence: `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, peer boot (four lines, no command novel), fresh and upgrade registry install, CLI auth URL then poll, branch and pull request, loop until the station card is done, live tracks not an idle timer. `npx 0xray validate` is the check, not leftover init.sh. The clock is pull-request events and the same reviewer. Dispatch is four lines. Ship gates stay with the lead. The public-post clock stays in `ops/dist/CADENCE.md`.
 - **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts the repo is stale: rewrite the prompt, do not act.
 - **Idle `/loop` stop** — when the card and the board are idle, unsubscribe and do not resubscribe. Not a heartbeat on parked work.

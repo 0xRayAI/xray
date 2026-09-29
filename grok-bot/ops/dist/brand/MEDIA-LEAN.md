@@ -1,5 +1,7 @@
 # Dist media · lean but engaging
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Law (Blaze 2026-09-14):** Imagery (and short vids) are critical to grow `@0xRayAI`. Stay **on brand**. Do **not** burn compute regenerating what the kit already has.
 
 ## Order of operations (every post / film)
