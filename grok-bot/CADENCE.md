@@ -2,6 +2,8 @@
 
 The working rhythm under [OP-PROC.md](OP-PROC.md).
 
+House rows in `house/` override the pack rules in this file when they conflict. That includes a merge-on-critic-PASS exception (careful-change, owner's go) and the drift-check schedule when the house sets its own.
+
 ## Syncopate (the higher-level rules)
 Syncopate means finding our head from our tail: we watch what we actually did, write it down, and fold it into rules. The detailed lists below are the evidence. These six rules sit on top of them.
 1. Beat. Every real event changes the board in the same turn.
