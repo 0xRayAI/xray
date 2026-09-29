@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { join, resolve } from "path";
 import { fileURLToPath } from "node:url";
 
@@ -89,6 +89,22 @@ program
       });
       process.exit(1);
     }
+  });
+
+program
+  .command("goggles")
+  .argument("<plane>", "one plane: host, house, or counts")
+  .option("--root <dir>", "project to look at")
+  .description("Look at one plane of what is worn. Not a power.")
+  .action((plane: string, opts: { root?: string }) => {
+    const built = join(packageRoot, "dist", "integrations", "hooks", "goggles.mjs");
+    const source = join(packageRoot, "src", "integrations", "hooks", "goggles.mjs");
+    const script = existsSync(built) ? built : source;
+    const root = opts.root || process.cwd();
+    const result = spawnSync(process.execPath, [script, plane, root], { encoding: "utf8" });
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
   });
 
 program
