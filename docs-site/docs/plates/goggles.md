@@ -6,53 +6,56 @@ plate_type: domain model
 
 # Goggles
 
-Goggles are the lens kit. Use them to read one level. Kind 0 is actuality. Kind 1 is the outer planes. Later kinds are not named. Name one plane and call it a reading. Do not tell the whole-plane story.
+Look at one thing, not the whole pile.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
-  │ GOGGLES · lens kit                                         │
+  │ GOGGLES · look at one thing                                │
   ├────────────────────────────────────────────────────────────┤
-  │ · one of four kits                                         │
-  │ · not a host pack · not the house                          │
+  │ · not the whole pile                                       │
+  │ · one of four powers                                       │
   └────────────────────────────────────────────────────────────┘
                                 │
-                               drop
+                               then
                                 v
   ┌────────────────────────────────────────────────────────────┐
   │ 0 · ACTUALITY                                              │
   ├────────────────────────────────────────────────────────────┤
-  │ · the suit while it is on                                  │
-  │ · map versus worn                                          │
-  │ · not a plate type                                         │
+  │ · the suit while it's on                                   │
+  │ · you are in it, not reading a map                         │
+  │ · not a diagram                                            │
   └────────────────────────────────────────────────────────────┘
                                 │
-                               drop
+                               then
                                 v
   ┌────────────────────────────────────────────────────────────┐
   │ 1 · OUTER PLANES                                           │
   ├────────────────────────────────────────────────────────────┤
-  │ · open set · not a pipeline                                │
-  │ · name one · call it a reading                             │
+  │ · pick one view                                            │
+  │ · say which one                                            │
+  │ · don't tell the whole story                               │
   └────────────────────────────────────────────────────────────┘
                                 │
                                 v
   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
   │ DICHOTOMY        │  │ SYNCOPATE        │  │ SYNTHESIS        │
+  │ in or out        │  │ when it hits     │  │ what fits        │
   └──────────────────┘  └──────────────────┘  └──────────────────┘
   
   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
   │ DIGEST           │  │ TRIAGE           │  │ LOOP             │
+  │ the short take   │  │ what matters     │  │ go again         │
   └──────────────────┘  └──────────────────┘  └──────────────────┘
   
   ┌────────────────────────────────────────────────────────────┐
-  │ AFTER 1 · NOT NAMED                                        │
+  │ CLOSER LOOKS                                               │
   ├────────────────────────────────────────────────────────────┤
-  │ · no kind names                                            │
-  │ · no pull-up count                                         │
+  │ · not named yet                                            │
+  │ · don't invent them                                        │
   └────────────────────────────────────────────────────────────┘
   
-    scope · ecosystem → part → one flow → one artifact
-    synchronicity is not placed · the word list stays off this plate
+    start wide → one flow → one file
+    synchronicity: not placed yet
 ```
 
-stamped · Host Pack lock 2026-09-29
+First the suit while it's on. Then one view. Closer views are not named yet.

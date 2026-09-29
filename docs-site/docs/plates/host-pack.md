@@ -6,15 +6,15 @@ plate_type: domain model
 
 # Host Pack
 
-A host pack is the suit fastened on a runtime. Kit is reserved for the four organs. Harness means the same thing in the hallway. Do not print harness on a plate, in Dist, or in the lexicon.
+Run it in the tool you already open. Same suit. No new app.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
-  │ HOST PACK                                                  │
+  │ WHERE IT RUNS                                              │
   ├────────────────────────────────────────────────────────────┤
-  │ · suit fastened on a runtime                               │
-  │ · not a kit                                                │
-  │ · do not dual-label it harness                             │
+  │ · same suit                                                │
+  │ · the tool you already open                                │
+  │ · one name for that place                                  │
   └────────────────────────────────────────────────────────────┘
   
   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
@@ -27,9 +27,7 @@ A host pack is the suit fastened on a runtime. Kit is reserved for the four orga
   │ · already runs   │  │ · already runs   │  │ · already runs   │
   └──────────────────┘  └──────────────────┘  └──────────────────┘
   
-    Suit ──wear──▶ Host Pack ──kits bolt on──▶ power up
+    same suit → the tool you open → powers snap on
 ```
 
-These six already run. Do not invent another runtime to make the picture even.
-
-stamped · Host Pack lock 2026-09-29
+These six already run.

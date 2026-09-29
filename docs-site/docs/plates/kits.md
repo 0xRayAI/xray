@@ -6,32 +6,32 @@ plate_type: domain model
 
 # Kits
 
-A kit is an organ that bolts onto the suit. There are four. Do not invent a fifth. House is not a kit. The mill is the plant inside the suit, not an organ.
+Add a power. Memory, lenses, judgment, or payments.
 
 ```
   ┌────────────────────────────┐  ┌────────────────────────────┐
   │ REPERTOIRE                 │  │ GOGGLES                    │
   ├────────────────────────────┤  ├────────────────────────────┤
-  │ · memory                   │  │ · lenses                   │
-  │ · npm name still open      │  │ · kind 0 = actuality       │
-  │ · no stamp yet             │  │ · outer planes start at 1  │
+  │ · it remembers             │  │ · look at one thing        │
+  │ · name can wait            │  │ · first, while it's on     │
+  │ · no mark yet              │  │ · then pick one view       │
   └────────────────────────────┘  └────────────────────────────┘
                                                                 
   ┌────────────────────────────┐  ┌────────────────────────────┐
   │ DYNAMO                     │  │ CLEARING                   │
   ├────────────────────────────┤  ├────────────────────────────┤
-  │ · neural                   │  │ · payments                 │
-  │ · Solar PASS / REJECT      │  │ · x402 receipts on Base    │
-  │ · kit organ                │  │ · kit organ                │
+  │ · pass or no               │  │ · payments                 │
+  │ · the judgment             │  │ · a receipt you can check  │
+  │                            │  │                            │
   └────────────────────────────┘  └────────────────────────────┘
   
   ┌────────────────────────────────────────────────────────────┐
-  │ NOT KITS                                                   │
+  │ NOT POWERS                                                 │
   ├────────────────────────────────────────────────────────────┤
-  │ · house · one team folder                                  │
-  │ · mill · the plant inside the suit                         │
-  │ · host pack · the suit on a runtime                        │
+  │ · the team folder                                          │
+  │ · the shop that builds                                     │
+  │ · where the suit runs                                      │
   └────────────────────────────────────────────────────────────┘
 ```
 
-stamped · Host Pack lock 2026-09-29
+Four. That's the set.

@@ -6,43 +6,38 @@ plate_type: domain model
 
 # Glossary
 
-Open this when suit, kit, host pack, and house get mixed up.
+Say what people get. The short name sits under that.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
-  │ GLOSSARY                                                   │
+  │ SAY WHAT PEOPLE GET                                        │
   ├────────────────────────────────────────────────────────────┤
-  │ suit · 0xRay core worn · not a kit                         │
-  │ kit · four organs · not a host pack                        │
-  │ host pack · suit on a runtime · not a kit                  │
-  │ goggles · lenses · not a host pack                         │
-  │ house · one team folder · not a kit                        │
-  │ mill · plant inside the suit · not an organ                │
-  │ plane · outer plane, kind 1 · not a pipeline               │
-  │ kind · 0 actuality, 1 outer · rest unnamed                 │
-  │ actuality · suit while it is on · not a plate type         │
-  │ plate · a stamped drawing · not actuality                  │
-  │ synchronicity · not placed                                 │
-  │ operating plane · seven inside the suit                    │
-  │ grok-bot · host pack package · not a kit                   │
+  │ suit · what the agent wears                                │
+  │ power · memory, lenses, judgment, or payments              │
+  │ where it runs · the tool you already open                  │
+  │ goggles · look at one thing                                │
+  │ house · shared rules, one board, memory that sticks        │
+  │ mill · the shop that builds and ships                      │
+  │ plane · one view, not the whole job                        │
+  │ actuality · the suit while it's on                         │
+  │ plate · the drawing, not the live run                      │
+  │ synchronicity · not placed yet                             │
+  │ grok-bot · the package you install                         │
   └────────────────────────────────────────────────────────────┘
   
   ┌────────────────────────────────────────────────────────────┐
-  │ STAMPS                                                     │
+  │ MARKS                                                      │
   ├────────────────────────────────────────────────────────────┤
-  │ kit · four organs · new                                    │
-  │ Goggles · lenses · new                                     │
-  │ Host Pack · suit on a runtime · new                        │
+  │ powers · new mark                                          │
+  │ lenses · new mark                                          │
+  │ where it runs · new mark                                   │
   ├────────────────────────────────────────────────────────────┤
-  │ grok-bot · the package · stamp stays                       │
-  │ that stamp is not the word kit                             │
-  ├────────────────────────────────────────────────────────────┤
-  │ repertoire · no stamp yet                                  │
-  │ one product, one stamp                                     │
+  │ the install keeps its old mark                             │
+  │ memory has no mark yet                                     │
+  │ one thing, one mark                                        │
   └────────────────────────────────────────────────────────────┘
   
-    still open · kinds after 1 · synchronicity · repertoire npm name
-    still open · an ownership plate type · do not fill these in
+    still open: closer views, synchronicity, the memory package name
 ```
 
-stamped · Host Pack lock 2026-09-29
+If the first line needs a glossary, it isn't done.

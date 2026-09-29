@@ -143,7 +143,8 @@ describe('pipeline plates', () => {
       expect(goggles.body).toContain(name);
     }
     expect(goggles.body).not.toMatch(/fandangle|TEGHAL|kind 2|Kind 2/);
-    expect(goggles.body).toContain('not a plate type');
+    expect(goggles.body).toContain('not a diagram');
+    expect(goggles.body).toContain('Look at one thing');
     const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
     expect(grokbot).not.toContain('Grok-Bot Kit');
     const lexicon = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/LEXICON.md'), 'utf8');

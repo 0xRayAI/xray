@@ -6,7 +6,7 @@ plate_type: domain model
 
 # Grok Bot
 
-A domain model plate for the grok-bot host pack. It is the house, board, attention, and doctor on the suit. It is not a kit. The kits are Repertoire, Goggles, Dynamo, and Clearing.
+Give your bots a house: shared rules, one board for the work, and memory that sticks.
 
 ```
   ┌──────────────────────────────┐     ┌──────────────────────────────┐     ┌──────────────────────────────┐

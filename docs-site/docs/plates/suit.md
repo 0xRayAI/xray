@@ -6,40 +6,36 @@ plate_type: domain model
 
 # Suit
 
-0xRay is the suit. It is the core an agent wears. In actuality it is the agent engine that builds factories. One major wear. Kits bolt on. A host pack is this suit on a runtime.
+Give your agent a suit. The rules stay on, you add powers, and it runs in the tool you already open.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
-  │ SUIT · 0xRay core                                          │
+  │ SUIT · what it wears                                       │
   ├────────────────────────────────────────────────────────────┤
-  │ · constitution and the rest of the core                    │
-  │ · one major wear                                           │
-  │ · in actuality: the agent engine                           │
-  │ · that builds factories                                    │
+  │ · the rules stay on                                        │
+  │ · one suit                                                 │
+  │ · it builds the factories                                  │
   └────────────────────────────────────────────────────────────┘
                                 │
-                          wear = bolt on
+                          you add powers
                                 v
   ┌────────────────────────────────────────────────────────────┐
-  │ HOST PACK · suit on a runtime                              │
+  │ WHERE IT RUNS                                              │
   ├────────────────────────────────────────────────────────────┤
-  │ · the word on a plate, in Dist, in the lexicon             │
-  │ · not a kit · never write Grok Bot kit                     │
-  │ · harness is hallway speech only                           │
+  │ · the tool you already open                                │
+  │ · not an add-on                                            │
   │ · grok-bot · Hermes · OpenCode                             │
   │ · OpenClaw · Grok CLI · Cursor                             │
   └────────────────────────────────────────────────────────────┘
                                 │
-                           kits bolt on
+                           they snap on
                                 v
   ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
   │ REPERTOIRE │  │ GOGGLES    │  │ DYNAMO     │  │ CLEARING   │
-  │ · memory   │  │ · lenses   │  │ · neural   │  │ · payments │
+  │ · memory   │  │ · lenses   │  │ · judgment │  │ · payments │
   └────────────┘  └────────────┘  └────────────┘  └────────────┘
   
-    four kits only · house is not a kit · the mill is not an organ
+    four powers · the team folder and the build shop are not powers
 ```
 
-Never call a host pack a kit.
-
-stamped · Host Pack lock 2026-09-29
+Same rules in the repo. You are not locked into one app.
