@@ -9,12 +9,12 @@ plate_type: domain model
 Add a power. Memory, judgment, or payments.
 
 ```
-  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐
-  │ REPERTOIRE         │  │ DYNAMO             │  │ CLEARING           │
-  ├────────────────────┤  ├────────────────────┤  ├────────────────────┤
-  │ · it remembers     │  │ · yes or no        │  │ · you pay          │
-  │ · the lesson stays │  │ · before it ships  │  │ · you get a receipt│
-  └────────────────────┘  └────────────────────┘  └────────────────────┘
+  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
+  │ REPERTOIRE           │  │ DYNAMO               │  │ CLEARING             │
+  ├──────────────────────┤  ├──────────────────────┤  ├──────────────────────┤
+  │ · it remembers       │  │ · yes or no          │  │ · you pay            │
+  │ · the lesson stays   │  │ · before it ships    │  │ · you get a receipt  │
+  └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
   
   ┌────────────────────────────────────────────────────────────┐
   │ NOT POWERS                                                 │
@@ -25,4 +25,4 @@ Add a power. Memory, judgment, or payments.
   └────────────────────────────────────────────────────────────┘
 ```
 
-Four. That's the set.
+Three. That's the set.
