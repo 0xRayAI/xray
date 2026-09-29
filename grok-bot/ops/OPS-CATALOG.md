@@ -1,5 +1,7 @@
 # Ops catalog — what to read in `grok-bot/`
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Start here if you wear this kit.
 
 Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agent project. It checks mill + inspect and prints hangar / Clearing next steps.

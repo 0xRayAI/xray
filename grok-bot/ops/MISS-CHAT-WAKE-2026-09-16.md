@@ -1,5 +1,7 @@
 # MISS — CoS chat wake looked dead (2026-09-16)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **A friend would hear:** Blinky went quiet when Blaze poked him. Two causes stacked: the chat itself was too fat to wake reliably, and eng-intake kept replaying finished work so “ignore stale” looked like ignoring Blaze.
 
 ## Dual cause

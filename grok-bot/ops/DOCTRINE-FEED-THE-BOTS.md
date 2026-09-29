@@ -1,5 +1,7 @@
 # Doctrine — feed the bots (Blaze 2026-09-15)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Not Dist.** Not a blaze0x1 post. Internal op doctrine.
 
 ## The cut (source) — exact Blaze lines

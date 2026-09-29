@@ -17,3 +17,8 @@
 
 ## Board
 (example) Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
+
+## Roster
+Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.
+
+Ask first and Allow are enforced only in [AUTO-REVIEW.md](AUTO-REVIEW.md).

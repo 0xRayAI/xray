@@ -1,5 +1,7 @@
 # Languages of the op model
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 How the fleet speaks. Not products. Add rows as we invent them.
 
 ## Speaking lanes (audience)

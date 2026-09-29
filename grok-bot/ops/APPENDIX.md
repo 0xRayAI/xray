@@ -1,5 +1,7 @@
 # Ops appendix
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Repeats, miss logs, forge Cursor notes. Read only when needed. [OP-PROC.md](../OP-PROC.md) is the front door.
 
 ## Live board (mirrored from the CoS suit)

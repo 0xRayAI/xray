@@ -17,18 +17,20 @@ From the project root:
 npx @0xray/grok-bot house init
 ```
 
-That copies `HOUSE.md`, `WAVEBOARD.md`, and `ATTENTION_STATE.md` from `templates/house/` into `./house`. It does not copy `EXAMPLE.md`.
+That copies every file in `templates/house/` into `./house` except `EXAMPLE.md`.
 
 - `HOUSE.md`
 - `WAVEBOARD.md`
 - `ATTENTION_STATE.md`
+- `AUTO-REVIEW.md`
+- `ROLE-MAP.md`
 
 A first run prints `copied templates/house to <project>/house` and exits 0.
 
 Run it again and it exits 1. It lists every destination file that already exists and copies nothing:
 
 ```text
-refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, <project>/house/HOUSE.md, <project>/house/WAVEBOARD.md
+refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, <project>/house/AUTO-REVIEW.md, <project>/house/HOUSE.md, <project>/house/ROLE-MAP.md, <project>/house/WAVEBOARD.md
 ```
 
 `--dir <path>` chooses the project root. The default is the working directory.
@@ -65,6 +67,12 @@ Package publish, production deploy, payments, secrets, and deletes.
 ## Board
 Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
 ```
+
+## Optional roster and Auto Review
+
+`ROLE-MAP.md` and the Roster heading in `HOUSE.md` are optional. They map role, seat name, and agent id, and they ship blank. Roster has no `(example)` line, so doctor leaves it alone. The six headings above are the ones that win.
+
+`AUTO-REVIEW.md` is the only house file that enforces Ask first and Allow. Those two sections ship blank. Paste the owner's decisions there. `HOUSE.md` records the same decisions for seats. Nothing in Allow counts until the owner approves it.
 
 ## The owner approves Allowed
 
