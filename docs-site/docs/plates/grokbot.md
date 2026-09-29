@@ -1,12 +1,12 @@
 ---
-title: 0xRay Grok-Bot Kit
-sidebar_label: 0xRay Grok-Bot Kit
+title: Grok Bot
+sidebar_label: Grok Bot
 plate_type: domain model
 ---
 
-# 0xRay Grok-Bot Kit
+# Grok Bot
 
-A domain model plate. grok-bot is the house, board, attention and doctor; it rides on the 0xray suit, memory and station.
+A domain model plate for the grok-bot host pack. It is the house, board, attention, and doctor on the suit. It is not a kit. The kits are Repertoire, Goggles, Dynamo, and Clearing.
 
 ```
   ┌──────────────────────────────┐     ┌──────────────────────────────┐     ┌──────────────────────────────┐

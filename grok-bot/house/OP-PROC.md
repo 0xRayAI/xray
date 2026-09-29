@@ -33,5 +33,6 @@ The one-page operating procedure for the Grok Bot seats. Read this first; everyt
 | Confer | Stays off. A result produced without a model is labeled unreviewed and never passes. |
 | Postalocity | Notes and fix PRs only. Never merge, rerun, or touch their workflows. |
 | X plates | 0xRay plates on X go out as attached PNGs, never pasted ASCII. |
+| Goggles | Kind 0 is actuality: the suit while it is on, not a plate type. Kind 1 is the outer planes (dichotomy, syncopate, synthesis, digest, triage, loop). Name one plane and call it a reading. Do not tell the whole-plane story. Kinds after 1 are not named. |
 
 Wear this. Don't wear the book.

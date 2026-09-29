@@ -26,13 +26,17 @@ describe('pipeline plates', () => {
       'reporting',
       'memory-recall',
       'house',
+      'goggles',
+      'host-pack',
+      'glossary',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
       expect(plate.id).toBe(id);
       expect(plate.body).toMatch(BOX);
       const frontmatter = /^---\n([\s\S]*?)\n---/.exec(readFileSync(plate.sourcePath, 'utf8'))?.[1] ?? '';
-      if (!/^plate_type:\s*state flow\s*$/m.test(frontmatter)) {
+      const plateType = /^plate_type:\s*(.+?)\s*$/m.exec(frontmatter)?.[1] ?? '';
+      if (plateType !== 'state flow' && plateType !== 'domain model') {
         expect(plate.body).toContain('INPUT');
         expect(plate.body).toContain('OUTPUT');
       }
@@ -120,5 +124,38 @@ describe('pipeline plates', () => {
     expect(paths).toContain('docs-site/docs/plates/memory-recall.md');
     expect(paths).toContain('docs-site/docs/plates/processor.md');
     expect(paths).toContain('docs-site/docs/plates/index.md');
+    expect(paths).toContain('docs-site/docs/plates/goggles.md');
   }, 120000);
+
+  it('recalls goggles for a level and refuses a whole-plane story cue', () => {
+    expect(recallPlate('open the goggles')?.id).toBe('goggles');
+    expect(recallPlate('what is actuality')?.id).toBe('goggles');
+    expect(recallPlate('outer plane')?.id).toBe('goggles');
+    expect(recallPlate('kind 0')?.id).toBe('goggles');
+    expect(recallPlate('host pack')?.id).toBe('host-pack');
+    expect(recallPlate('open the glossary')?.id).toBe('glossary');
+    expect(recallPlate('house init')?.id).toBe('house');
+    expect(recallPlate('loop the suite')?.id ?? null).toBeNull();
+    expect(recallPlate('digest the changelog')?.id ?? null).toBeNull();
+    expect(recallPlate('synthesis')?.id ?? null).toBeNull();
+    const goggles = loadPlate('goggles');
+    for (const name of ['DICHOTOMY', 'SYNCOPATE', 'SYNTHESIS', 'DIGEST', 'TRIAGE', 'LOOP', 'ACTUALITY']) {
+      expect(goggles.body).toContain(name);
+    }
+    expect(goggles.body).not.toMatch(/fandangle|TEGHAL|kind 2|Kind 2/);
+    expect(goggles.body).toContain('not a plate type');
+    const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
+    expect(grokbot).not.toContain('Grok-Bot Kit');
+    const lexicon = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/LEXICON.md'), 'utf8');
+    expect(lexicon).not.toContain('Setup pack (`@0xray/grok-bot`)');
+    expect(lexicon).toContain('Host Pack');
+    const stamps = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/STAMPS.md'), 'utf8');
+    expect(stamps).toContain('🥽');
+    expect(stamps).toContain('🖥');
+    expect(stamps).toContain('🔩');
+    expect(stamps).not.toContain('setup pack / npm kit');
+    const op = readFileSync(join(process.cwd(), 'grok-bot/OP-PROC.md'), 'utf8').split('\n');
+    const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
+    expect(opLines).toBeLessThanOrEqual(30);
+  });
 });

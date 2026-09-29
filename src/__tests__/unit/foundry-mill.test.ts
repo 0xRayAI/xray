@@ -45,6 +45,7 @@ describe('foundry mill — packed dist/cli gate', () => {
     expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/plates.cjs');
     expect(REQUIRED_PACK_PATHS).toContain('docs-site/docs/plates/memory-recall.md');
     expect(REQUIRED_PACK_PATHS).toContain('docs-site/docs/plates/processor.md');
+    expect(REQUIRED_PACK_PATHS).toContain('docs-site/docs/plates/goggles.md');
     expect(() => assertPackedPaths(REQUIRED_PACK_PATHS)).not.toThrow();
     expect(() =>
       assertPackedPaths(REQUIRED_PACK_PATHS.map((p) => `package/${p}`)),

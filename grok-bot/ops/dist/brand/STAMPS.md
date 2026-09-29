@@ -12,14 +12,17 @@ Keep `≠` for **contrast** only (chat ≠ receipt · plants ≠ groups).
 | Product | Stamp | Plain gloss (first mention) |
 |---------|-------|-----------------------------|
 | **0xRay** | `⚡` | power plant / OS for agents (suit + mill) |
-| **suit** | `🦾` | work kit an agent wears |
-| **mill** | `🏭` | plant that builds/runs suits |
+| **suit** | `🦾` | 0xRay core an agent wears |
+| **mill** | `🏭` | plant inside the suit, not an organ |
 | **Groover** | `🪪` | agent identity / DID registry |
 | **hangar** | `↗` | paid shop plant beside the mill |
-| **Clearing** | `🧾` | x402 USDC receipts on Base |
+| **Clearing** | `🧾` | kit organ for payments; x402 USDC receipts on Base |
 | **ZigZag** | `〰` | agent marketplace |
-| **Dynamo** | `⚖` | solar governance (PASS/REJECT) |
-| **kit** (`@0xray/grok-bot`) | `📦` | setup pack / npm kit |
+| **Dynamo** | `⚖` | kit organ for neural governance; Solar PASS/REJECT |
+| **kit** | `🔩` | four organs: Repertoire, Goggles, Dynamo, Clearing |
+| **Goggles** | `🥽` | lens kit. Kind 0 actuality. Kind 1 outer planes |
+| **Host Pack** | `🖥` | suit on a runtime. Not a kit |
+| **grok-bot** | `📦` | host pack package (`@0xray/grok-bot`). Not a kit |
 
 ## House contrast stamps (already live)
 | Stamp | Use |
@@ -30,12 +33,14 @@ Keep `≠` for **contrast** only (chat ≠ receipt · plants ≠ groups).
 
 ## Examples
 - `⚡ 0xRay · power plant for agents`
-- `🦾 suit · work kit` · `🏭 mill · the plant`
+- `🦾 suit · 0xRay core` · `🏭 mill · the plant`
+- `🔩 kit · four organs` · `🥽 Goggles · lenses` · `🖥 Host Pack · suit on a runtime`
+- `📦 grok-bot · the package, not a kit`
 - `↗ hangar · paid shops` beside the mill
 - `chat ≠ receipt` · `plants ≠ groups`
 
 ## Don’t
-- Don’t invent a fifth stamp for the same product
+- One product, one stamp. A new product with no stamp may get one
 - Don’t use `->` / `=>` in Dist copy (use `·` / `—`)
 - Don’t put `≠` between product and gloss (that reads as “not”)
 
