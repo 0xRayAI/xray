@@ -113,7 +113,7 @@ npx 0xray openclaw install
 - Hooks: `preToolUse` (Codex gate + Station heat), `preCompact` (Station merge), `afterFileEdit` (Station boot), `beforeShellExecution` / `beforeReadFile` (same gate)
 - Rewrites leftover `XRAY_AI_PATH=` / invoke-probe one-liners. Keeps already-relative events.
 - Not a fifth chat TUI. No new MCP/skill surface (Codex 69)
-- Cursor host does not inject Station — Read `.xray/state/STATION.md` after compact
+- Cursor host does not inject the Station file. The preCompact hook can leave one line in the next message. Read `.xray/state/STATION.md` after compact. The six chats: [What each chat can do](./host-truth.md)
 
 Exo adapter notes: `src/integrations/cursor/README.md`.
 
