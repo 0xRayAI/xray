@@ -363,7 +363,7 @@ function destLawNameSet(root) {
   return names;
 }
 
-/** Drop hangar repo-* and git-slug keywords. Keep factory + stack laws. */
+/** Drop diary slugs. Keep factory, stack, and subject-overlay names. */
 function pruneKeywordDest(root) {
   const dest = destSignalsPath(root);
   if (!dest || !existsSync(dest)) return { removed: 0, kept: 0 };
@@ -376,12 +376,13 @@ function pruneKeywordDest(root) {
   if (!Array.isArray(data.signals)) return { removed: 0, kept: 0 };
   const factory = signalNameSet(repertoireDataFile(root, "curated_signals.json"));
   const stack = signalNameSet(repertoireDataFile(root, "stack-overlay.json"));
+  const subject = signalNameSet(repertoireDataFile(root, "subject-overlay.json"));
   const kept = [];
   let removed = 0;
   for (const signal of data.signals) {
     const name = String((signal && signal.name) || "").trim();
     if (!name) continue;
-    const protectedLaw = factory.has(name) || stack.has(name);
+    const protectedLaw = factory.has(name) || stack.has(name) || subject.has(name);
     if (!protectedLaw && (isKeywordDestName(name) || isGenericFieldObservedSignal(signal))) {
       removed += 1;
       continue;
@@ -947,8 +948,8 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
   const planLine = resolveHeatPlan(root, extra, existing);
-  const repertoireResume =
-    typeof extra.repertoireResume === "string" ? extra.repertoireResume : buildRepertoireResume(root);
+  // A passed string is the previous card. Count the project file after this wake.
+  const repertoireResume = buildRepertoireResume(root);
   const swapBit = hotSwap ? `hot-swap ${hotSwap.from} → ${hotSwap.to}` : `host ${host}`;
   const intentBit = intent ? `intent: ${intent}` : "intent: (none yet)";
   const gitBit = git ? `git ${git.branch}@${git.head}` : "git: n/a";
