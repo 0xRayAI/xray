@@ -22,3 +22,6 @@
 Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.
 
 Ask first and Allow are enforced only in [AUTO-REVIEW.md](AUTO-REVIEW.md).
+
+## Scope
+Optional. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay steps in `grok-bot doctor`. Leave the line out to keep those steps.

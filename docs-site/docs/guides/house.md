@@ -35,6 +35,22 @@ refusing to overwrite existing house files: <project>/house/ATTENTION_STATE.md, 
 
 `--dir <path>` chooses the project root. The default is the working directory.
 
+## Move an old board
+
+Teams that still keep the board at `ops/WAVEBOARD.md` run:
+
+```bash
+npx @0xray/grok-bot house init --migrate
+```
+
+That moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and copies each missing template, including `ATTENTION_STATE.md`. A house file you already changed stays as it is. When both boards exist and `house/WAVEBOARD.md` is not the untouched template, the command exits 1 and writes nothing:
+
+```text
+refusing to overwrite <project>/house/WAVEBOARD.md with <project>/ops/WAVEBOARD.md
+```
+
+An untouched template board is the same bytes as `templates/house/WAVEBOARD.md`. Migrate may replace that copy with the old board. Plain `house init` does not move `ops/WAVEBOARD.md`.
+
 ## Fill the six headings
 
 `HOUSE.md` ships with one line under each heading that starts with `(example)`. Doctor treats a line as unfilled when it starts with `(example)`, after optional whitespace and an optional `-` or `*`. A mention of `(example)` later in the line does not count as unfilled.
@@ -73,6 +89,10 @@ Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.
 `ROLE-MAP.md` and the Roster heading in `HOUSE.md` are optional. They map role, seat name, and agent id, and they ship blank. Roster has no `(example)` line, so doctor leaves it alone. The six headings above are the ones that win.
 
 `AUTO-REVIEW.md` is the only house file that enforces Ask first and Allow. Those two sections ship blank. Paste the owner's decisions there. `HOUSE.md` records the same decisions for seats. Nothing in Allow counts until the owner approves it.
+
+## Scope
+
+A line in `HOUSE.md` that is exactly `wallet off` (or `Scope: wallet off`) skips the Open Wallet, Clearing, and hangar pay steps in doctor. The report says `OWS pay: skipped — house Scope wallet off`. Leave the line out and doctor keeps those steps. The line is not an `(example)` line, so it does not fail the house check.
 
 ## The owner approves Allowed
 
