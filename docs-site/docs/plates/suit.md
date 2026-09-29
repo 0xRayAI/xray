@@ -13,7 +13,7 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
   │ SUIT · what it wears                                       │
   ├────────────────────────────────────────────────────────────┤
   │ · the rules stay on                                        │
-  │ · one suit                                                 │
+  │ · you put it on once                                       │
   │ · it builds the factories                                  │
   └────────────────────────────────────────────────────────────┘
                                 │
@@ -23,7 +23,6 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
   │ WHERE IT RUNS                                              │
   ├────────────────────────────────────────────────────────────┤
   │ · the tool you already open                                │
-  │ · not an add-on                                            │
   │ · grok-bot · Hermes · OpenCode                             │
   │ · OpenClaw · Grok CLI · Cursor                             │
   └────────────────────────────────────────────────────────────┘
@@ -34,8 +33,6 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
   │ REPERTOIRE │  │ GOGGLES    │  │ DYNAMO     │  │ CLEARING   │
   │ · memory   │  │ · lenses   │  │ · judgment │  │ · payments │
   └────────────┘  └────────────┘  └────────────┘  └────────────┘
-  
-    four powers · the team folder and the build shop are not powers
 ```
 
 Same rules in the repo. You are not locked into one app.

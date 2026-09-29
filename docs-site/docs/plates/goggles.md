@@ -23,7 +23,6 @@ Look at one thing, not the whole pile.
   ├────────────────────────────────────────────────────────────┤
   │ · the suit while it's on                                   │
   │ · you are in it, not reading a map                         │
-  │ · not a diagram                                            │
   └────────────────────────────────────────────────────────────┘
                                 │
                                then
@@ -47,15 +46,7 @@ Look at one thing, not the whole pile.
   │ the short take   │  │ what matters     │  │ go again         │
   └──────────────────┘  └──────────────────┘  └──────────────────┘
   
-  ┌────────────────────────────────────────────────────────────┐
-  │ CLOSER LOOKS                                               │
-  ├────────────────────────────────────────────────────────────┤
-  │ · not named yet                                            │
-  │ · don't invent them                                        │
-  └────────────────────────────────────────────────────────────┘
-  
     start wide → one flow → one file
-    synchronicity: not placed yet
 ```
 
-First the suit while it's on. Then one view. Closer views are not named yet.
+First the suit while it's on. Then one view.

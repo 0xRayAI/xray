@@ -14,7 +14,6 @@ Run it in the tool you already open. Same suit. No new app.
   ├────────────────────────────────────────────────────────────┤
   │ · same suit                                                │
   │ · the tool you already open                                │
-  │ · one name for that place                                  │
   └────────────────────────────────────────────────────────────┘
   
   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
