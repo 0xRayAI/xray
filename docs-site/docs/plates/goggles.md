@@ -6,14 +6,14 @@ plate_type: domain model
 
 # Goggles
 
-Look at one thing, not the whole pile.
+It views one plane.
 
 ```
   ┌────────────────────────────────────────────────────────────┐
-  │ GOGGLES · look at one thing                                │
+  │ GOGGLES                                                    │
   ├────────────────────────────────────────────────────────────┤
-  │ · not the whole pile                                       │
-  │ · one of four powers                                       │
+  │ · it views one plane                                       │
+  │ · not every plane at once                                  │
   └────────────────────────────────────────────────────────────┘
                                 │
                                then
@@ -49,4 +49,4 @@ Look at one thing, not the whole pile.
     start wide → one flow → one file
 ```
 
-First the suit while it's on. Then one view.
+First the suit while it's on. Then one plane.

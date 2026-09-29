@@ -13,9 +13,9 @@ What the words mean.
   │ SAY WHAT PEOPLE GET                                        │
   ├────────────────────────────────────────────────────────────┤
   │ suit · what the agent wears                                │
-  │ power · memory, lenses, judgment, or payments              │
+  │ power · memory, judgment, or payments                      │
   │ where it runs · the tool you already open                  │
-  │ goggles · look at one thing                                │
+  │ goggles · it views one plane                               │
   │ house · shared rules, one board, memory that sticks        │
   │ mill · the shop that builds and ships                      │
   │ plane · one view, not the whole job                        │

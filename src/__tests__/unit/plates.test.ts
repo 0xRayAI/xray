@@ -143,7 +143,8 @@ describe('pipeline plates', () => {
       expect(goggles.body).toContain(name);
     }
     expect(goggles.body).not.toMatch(/fandangle|TEGHAL|kind 2|Kind 2/);
-    expect(goggles.body).toContain('Look at one thing');
+    expect(goggles.body).toContain('it views one plane');
+    expect(goggles.body).not.toContain('one of four powers');
     expect(goggles.body).not.toMatch(/no mark yet|CLOSER LOOKS|don't invent|new mark/);
     const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
     expect(grokbot).not.toContain('Grok-Bot Kit');

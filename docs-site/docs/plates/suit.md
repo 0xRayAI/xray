@@ -29,10 +29,12 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
                                 │
                            they snap on
                                 v
-  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
-  │ REPERTOIRE │  │ GOGGLES    │  │ DYNAMO     │  │ CLEARING   │
-  │ · memory   │  │ · lenses   │  │ · judgment │  │ · payments │
-  └────────────┘  └────────────┘  └────────────┘  └────────────┘
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │ REPERTOIRE       │  │ DYNAMO           │  │ CLEARING         │
+  │ · memory         │  │ · judgment       │  │ · payments       │
+  └──────────────────┘  └──────────────────┘  └──────────────────┘
+  
+    goggles views one plane
 ```
 
 Same rules in the repo. You are not locked into one app.
