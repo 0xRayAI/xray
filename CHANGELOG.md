@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Features
-- **Goggles.** Lens kit plate. Kind 0 is actuality and is not a plate type. Kind 1 is the outer planes (dichotomy, syncopate, synthesis, digest, triage, loop). Recall returns that plate for goggles, actuality, outer plane, or kind 0. Kinds after 1 are not named. Suit, kits, host pack, and glossary plates stamp the same lock. `@0xray/grok-bot` is a host pack, not a kit. Not a new skill.
+- **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
 - **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.

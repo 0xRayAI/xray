@@ -16,6 +16,8 @@ export const PLATE_IDS = [
   'memory-recall',
   'house',
   'goggles',
+  'suit',
+  'kits',
   'host-pack',
   'glossary',
 ] as const;

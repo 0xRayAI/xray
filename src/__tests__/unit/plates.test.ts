@@ -27,6 +27,8 @@ describe('pipeline plates', () => {
       'memory-recall',
       'house',
       'goggles',
+      'suit',
+      'kits',
       'host-pack',
       'glossary',
     ]);
@@ -125,39 +127,39 @@ describe('pipeline plates', () => {
     expect(paths).toContain('docs-site/docs/plates/processor.md');
     expect(paths).toContain('docs-site/docs/plates/index.md');
     expect(paths).toContain('docs-site/docs/plates/goggles.md');
+    expect(paths).toContain('docs-site/docs/plates/suit.md');
+    expect(paths).toContain('docs-site/docs/plates/kits.md');
+    expect(paths).toContain('docs-site/docs/plates/host-pack.md');
+    expect(paths).toContain('docs-site/docs/plates/glossary.md');
   }, 120000);
 
-  it('recalls goggles for a level and refuses a whole-plane story cue', () => {
+  it('recalls a plate by its name and does not recall kind names', () => {
     expect(recallPlate('open the goggles')?.id).toBe('goggles');
-    expect(recallPlate('what is actuality')?.id).toBe('goggles');
-    expect(recallPlate('outer plane')?.id).toBe('goggles');
-    expect(recallPlate('kind 0')?.id).toBe('goggles');
+    expect(recallPlate('suit plate')?.id).toBe('suit');
+    expect(recallPlate('kits')?.id).toBe('kits');
     expect(recallPlate('host pack')?.id).toBe('host-pack');
     expect(recallPlate('open the glossary')?.id).toBe('glossary');
     expect(recallPlate('house init')?.id).toBe('house');
-    expect(recallPlate('loop the suite')?.id ?? null).toBeNull();
-    expect(recallPlate('digest the changelog')?.id ?? null).toBeNull();
-    expect(recallPlate('synthesis')?.id ?? null).toBeNull();
+    expect(recallPlate('what is actuality')).toBeNull();
+    expect(recallPlate('outer plane')).toBeNull();
+    expect(recallPlate('kind 0')).toBeNull();
+    expect(recallPlate('wear the suit')).toBeNull();
     const goggles = loadPlate('goggles');
-    for (const name of ['DICHOTOMY', 'SYNCOPATE', 'SYNTHESIS', 'DIGEST', 'TRIAGE', 'LOOP', 'ACTUALITY']) {
-      expect(goggles.body).toContain(name);
-    }
-    expect(goggles.body).not.toMatch(/fandangle|TEGHAL|kind 2|Kind 2/);
     expect(goggles.body).toContain('it views one plane');
+    expect(goggles.body).not.toMatch(/ACTUALITY|DICHOTOMY|SYNCOPATE|OUTER PLANES/);
+    expect(goggles.body).not.toMatch(/kind\s*[01]|Kind\s*[01]/);
     expect(goggles.body).not.toContain('one of four powers');
-    expect(goggles.body).not.toMatch(/no mark yet|CLOSER LOOKS|don't invent|new mark/);
     const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
     expect(grokbot).not.toContain('Grok-Bot Kit');
     const lexicon = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/LEXICON.md'), 'utf8');
-    expect(lexicon).not.toContain('Setup pack (`@0xray/grok-bot`)');
-    expect(lexicon).toContain('Host Pack');
+    expect(lexicon).not.toMatch(/Kind 0|Kind 1/);
+    expect(lexicon).not.toContain('## Goggles (2026-09-29)');
     const stamps = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/STAMPS.md'), 'utf8');
-    expect(stamps).toContain('🥽');
-    expect(stamps).toContain('🖥');
-    expect(stamps).toContain('🔩');
-    expect(stamps).not.toContain('setup pack / npm kit');
+    expect(stamps).not.toMatch(/Kind 0|Kind 1/);
+    expect(stamps).not.toContain('**Host Pack**');
     const op = readFileSync(join(process.cwd(), 'grok-bot/OP-PROC.md'), 'utf8').split('\n');
     const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
     expect(opLines).toBeLessThanOrEqual(30);
+    expect(op.join('\n')).not.toMatch(/Kind 0|outer plane/i);
   });
 });

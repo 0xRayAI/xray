@@ -14,21 +14,18 @@ Things with a stamp / npm / live URL. Dist talks about these.
 
 | Term | Plain gloss |
 |------|-------------|
-| **⚡ 0xRay** | The suit. Power plant / OS for agents — factory layer |
-| **🦾 suit** | 0xRay core worn (constitution and the rest of the core). One major wear. Not a kit |
-| **🏭 mill** | Build · test · deploy plant *inside* the suit. Not an organ |
+| **⚡ 0xRay** | Power plant / OS for agents — factory layer |
+| **🦾 suit** | Work kit an agent wears (hooks, mill plant, bounds) |
+| **🏭 mill** | Build · test · deploy plant *inside* the suit |
 | **↗ hangar** | Paid shop front beside the mill |
-| **🧾 Clearing** | Kit organ for payments. Also x402 USDC receipts on Base |
+| **🧾 Clearing** | x402 USDC receipts on Base |
 | **🪪 Groover** | Agent identity / DID |
 | **〰 ZigZag** | Marketplace / discovery |
-| **⚖ Dynamo** | Kit organ for neural governance. Also Solar PASS / REJECT |
-| **🔩 kit** | Four organs only: Repertoire (memory), Goggles (lenses), Dynamo (neural), Clearing (payments). Not a host pack. Not the house |
-| **🥽 Goggles** | Kit organ for lenses. Kind 0 is actuality. Kind 1 is the outer planes |
-| **🖥 Host Pack** | The suit on a runtime. grok-bot, Hermes, OpenCode, OpenClaw, Grok CLI, Cursor. Not a kit. Harness is hallway speech for this, not a second name |
-| **📦 grok-bot** | Host pack package (`@0xray/grok-bot`). Not a kit |
+| **⚖ Dynamo** | Solar governance — PASS / REJECT |
+| **📦 kit** | Setup pack (`@0xray/grok-bot`) |
 | **pin** | Hangar shop (+ pay-to-list gate on the board) |
 | **OWS** | Local wallet for hangar pay (USDC on Base) |
-| **repertoire** | Kit organ for memory. `@0xray/repertoire` versus the organ is still open. No product stamp yet. Heat ≠ fastened |
+| **repertoire** | Optional **organ** — compact/memory heat on CLI/cloud suits. Not required for every seat. Heat ≠ fastened |
 
 ---
 
@@ -49,7 +46,6 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |
 | **group / room** | Shared chat bus (ops / eng / dist). Not Station, not memory |
 | **capital** | Blaze-only gate: spend, credentials, destructive |
-| **house** | One team folder (`HOUSE.md` and the board). Not a kit |
 
 ---
 
@@ -72,23 +68,20 @@ How we act — not a product, not a ticket type.
 
 | Pair | Diff |
 |------|------|
-| suit = 0xRay core | suit is not a kit |
-| kit ≠ host pack | kit = four organs. Host pack = the suit on a runtime. House is not a kit |
-| grok-bot ≠ kit | `@0xray/grok-bot` is a host pack package. The old "setup pack" gloss is wrong |
-| mill ≠ plant (verb) | mill = the plant inside the suit, not an organ. Plant = fasten act (or colloquial floor) |
+| suit ≠ 0xRay | kit ≠ whole power plant |
+| mill ≠ plant (verb) | mill = product organ; plant = fasten act (or colloquial floor) |
 | dist ≠ product | lane/workstream for announcing products |
 | beat ≠ card | clock ≠ ticket |
 | station ≠ board | CoS deck ≠ full WAVEBOARD |
 | card ≠ receipt | assign ≠ proof |
 | group ≠ Station | chat bus ≠ durable deck |
 | pin (shop) ≠ pin (verb on-chain) | shop name vs Groover pin step — say which |
-| organ ≠ product SKU | the four kits are organs. Clearing and Dynamo are also products. Repertoire's npm name is still open |
+| organ ≠ product SKU | repertoire is an organ of 0xRay; Clearing is a product |
 | heat ≠ fastened | Station “Repertoire: on” ≠ live `node_modules` organ |
 | wear ≠ plant (verb) | wear = run suited; plant = fasten the suit/organs onto a project |
 | wear ≠ costume | files on disk without live hooks/inspect = theater |
 
 Locked 2026-09-14 with Blaze — categorized.
-Corrected 2026-09-29: kit means four organs. Host pack is the suit on a runtime. `@0xray/grok-bot` is not a kit.
 
 ## Workstream adds (2026-09-14)
 | Term | Bucket | Plain |
@@ -104,19 +97,3 @@ Corrected 2026-09-29: kit means four organs. Host pack is the suit on a runtime.
 | **organ** | Practices | Optional module in the suit/plant |
 | **repertoire** | Products (organ) | Optional compact/memory organ — fasten to claim |
 | **wear** | Practices | Run with a fastened suit; inspect = wear check |
-
-## Goggles (2026-09-29)
-
-Lenses. Not a host pack. Open the goggles plate to read one level. Do not tell a whole-plane story.
-
-| Term | Plain gloss |
-|------|-------------|
-| **actuality** | Kind 0. The suit while it is on. Not a plate type |
-| **outer plane** | Kind 1. Open set, not a pipeline: dichotomy, syncopate, synthesis, digest, triage, loop. More may exist. Name one and call it a reading |
-| **operating plane** | The seven inside the suit: code, OP-PROC, model, suit, mill, host, test/ship. Not an outer plane |
-| **kind** | A goggle level. 0 = actuality. 1 = outer planes. Later kinds are not named. Do not invent the count |
-| **scope** | When a kind has scope: ecosystem → part → one flow → one artifact |
-| **plate** | A stamped drawing in `docs/plates`. Not actuality |
-| **synchronicity** | Not placed. Do not attach it to a plane |
-
-Still open, so do not fill them in: kinds after 1, where synchronicity sits, repertoire the organ versus `@0xray/repertoire`, and an ownership plate type. The word list behind the planes stays off this file.

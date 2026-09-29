@@ -16,6 +16,8 @@ const PLATE_IDS = Object.freeze([
   "memory-recall",
   "house",
   "goggles",
+  "suit",
+  "kits",
   "host-pack",
   "glossary",
 ]);
@@ -73,9 +75,14 @@ const CUES = {
   ],
   goggles: [
     [/\bgoggles\b/i, 6],
-    [/\bactuality\b/i, 6],
-    [/outer\s+planes?\b/i, 6],
-    [/kind\s*0\b/i, 5],
+  ],
+  suit: [
+    [/suit plate/i, 6],
+    [/plates\/suit\b/i, 6],
+  ],
+  kits: [
+    [/\bkits plate\b/i, 6],
+    [/\bkits\b/i, 5],
   ],
   "host-pack": [
     [/host\s*pack/i, 6],
