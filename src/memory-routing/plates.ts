@@ -15,6 +15,7 @@ export const PLATE_IDS = [
   'reporting',
   'memory-recall',
   'house',
+  'goggles',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

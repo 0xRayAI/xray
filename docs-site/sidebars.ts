@@ -59,6 +59,7 @@ const sidebars: SidebarsConfig = {
         'plates/reporting',
         'plates/memory-recall',
         'plates/house',
+        'plates/goggles',
       ],
     },
     'full-reference',

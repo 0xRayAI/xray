@@ -26,13 +26,15 @@ describe('pipeline plates', () => {
       'reporting',
       'memory-recall',
       'house',
+      'goggles',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
       expect(plate.id).toBe(id);
       expect(plate.body).toMatch(BOX);
       const frontmatter = /^---\n([\s\S]*?)\n---/.exec(readFileSync(plate.sourcePath, 'utf8'))?.[1] ?? '';
-      if (!/^plate_type:\s*state flow\s*$/m.test(frontmatter)) {
+      const plateType = /^plate_type:\s*(.+?)\s*$/m.exec(frontmatter)?.[1] ?? '';
+      if (plateType !== 'state flow' && plateType !== 'domain model') {
         expect(plate.body).toContain('INPUT');
         expect(plate.body).toContain('OUTPUT');
       }
@@ -51,6 +53,23 @@ describe('pipeline plates', () => {
       'Plate: processor — .xray/state/plates/processor.md',
     );
     expect(plateStockLine('survive the cut')).toBeNull();
+  });
+
+  it('recalls goggles as the lens, not the plane ladder', () => {
+    expect(recallPlate('open the goggles')?.id).toBe('goggles');
+    expect(plateStockLine('open the goggles')).toBe(
+      'Plate: goggles — .xray/state/plates/goggles.md',
+    );
+    expect(recallPlate('what is actuality')).toBeNull();
+    expect(recallPlate('kind 0')).toBeNull();
+    const goggles = loadPlate('goggles');
+    expect(goggles.body).toMatch(/it views one plane/i);
+    expect(goggles.body).toContain('ONE PLANE');
+    expect(goggles.body).toContain('OUT OF FRAME');
+    expect(goggles.body).not.toContain('ACTUALITY');
+    expect(goggles.body).not.toContain('DICHOTOMY');
+    expect(goggles.body).not.toMatch(/kind\s*[0-9]/i);
+    expect(goggles.body).not.toContain('one of four');
   });
 
   it('does not recall house from a bare house word or when other plates tie', () => {
