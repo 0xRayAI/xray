@@ -780,20 +780,28 @@ function growDestOnWake(root) {
   const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
   if (!existsSync(helper)) return null;
   try {
+    const dest = destSignalsPath(root);
+    const before = countCuratedSignals(dest) || 0;
     const out = execFileSync(process.execPath, [helper, root, "--grow"], {
       encoding: "utf8",
       timeout: 45000,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0", REPERTOIRE_DEST_LOCK: "held" },
+      env: {
+        ...process.env,
+        REPERTOIRE_FIELD_SYNC: "0",
+        REPERTOIRE_DEST_LOCK: "held",
+        REPERTOIRE_SUBJECT_OVERLAY: "0",
+      },
     });
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
     const pruned = pruneKeywordDest(root);
-    const destCount = countCuratedSignals(destSignalsPath(root)) || 0;
-    if (!parsed || typeof parsed !== "object") return { pruned: pruned.removed, destCount };
+    const destCount = countCuratedSignals(dest) || 0;
+    if (!parsed || typeof parsed !== "object") return { before, pruned: pruned.removed, destCount, after: destCount };
     const heated = Array.isArray(parsed.heated) ? parsed.heated.length : 0;
     return {
       ...parsed,
+      before,
       observed: heated,
       pruned: pruned.removed,
       destCount,

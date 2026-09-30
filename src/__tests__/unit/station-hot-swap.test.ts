@@ -650,6 +650,34 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('a suit wake does not merge repo-* back onto the project file', async () => {
+    const { hydrateWritableSignals } = await import('../../../vendor/@0xray/repertoire/dist/paths.js');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-subject-off-'));
+    const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({
+        signals: [{ name: 'three-subsystem-verifiable-os', definition: 'The suit is three subsystems.' }],
+      }),
+    );
+    const previous = process.env.REPERTOIRE_SUBJECT_OVERLAY;
+    process.env.REPERTOIRE_SUBJECT_OVERLAY = '0';
+    try {
+      hydrateWritableSignals(dest, tmp);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).toContain('station-survives-the-cut');
+      expect(names.some((name: string) => name.startsWith('repo-'))).toBe(false);
+    } finally {
+      if (previous == null) delete process.env.REPERTOIRE_SUBJECT_OVERLAY;
+      else process.env.REPERTOIRE_SUBJECT_OVERLAY = previous;
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('wake heat refreshes a changed stack definition and keeps observation stats', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-law-refresh-'));
     const tmp = path.join(parent, 'xray');
