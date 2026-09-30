@@ -4,7 +4,9 @@
  * Peer writes a scratch. Examine checks only that scratch against disk.
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
- * A pop of a plane returns its card: from, the digest, and the filled fields.
+ * A pop with no name is a glimpse of every plane.
+ * A pop of a plane returns its card, how to get up to speed, and how to deep dive.
+ * The outcome is one kind for that plane, related to the plane it came from.
  * A pop of one field returns that field. An empty field stays empty.
  * A slow look opens a plane only when that name was already popped.
  */
@@ -442,8 +444,10 @@ function popsPathBeside(scratchPath, explicit) {
   return join(dirname(scratchPath), 'pops.json');
 }
 
-const POP_KINDS = ['facet', 'feat', 'fix'];
+const POP_KINDS = ['facet', 'feat', 'fix', 'none'];
 const CARD_FIELDS = ['from', 'digest', 'plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
+const SPEED_FIELDS = ['entry', 'setup', 'skills'];
+const DIVE_FIELDS = ['files', 'plate', 'worn'];
 
 function keepRow(raw) {
   const kept = {};
@@ -454,10 +458,26 @@ function keepRow(raw) {
   return kept;
 }
 
+function readOutcomes(raw) {
+  const src = raw && raw.outcomes && typeof raw.outcomes === 'object' ? raw.outcomes : null;
+  if (!src) return null;
+  const outcomes = {};
+  for (const [name, value] of Object.entries(src)) {
+    const key = popName(name);
+    if (!key || POP_KINDS.includes(key) || CARD_FIELDS.includes(key) || key === 'speed' || key === 'dive') continue;
+    const line = popLine(value && value.line);
+    if (!line) continue;
+    outcomes[key] = { line, from: popLine(value && value.from) };
+  }
+  return Object.keys(outcomes).length ? outcomes : null;
+}
+
 function storedRow(row) {
   const kept = keepRow(row);
   if (row.card) kept.card = row.card;
   if (row.fields && Object.keys(row.fields).length) kept.fields = row.fields;
+  const outcomes = readOutcomes(row);
+  if (outcomes) kept.outcomes = outcomes;
   return kept;
 }
 
@@ -468,7 +488,8 @@ function popLine(raw) {
 function hasPop(pops, name) {
   const row = pops.planes[name];
   if (!row) return false;
-  return Boolean(row.card || row.facet || row.feat || row.fix || (row.fields && Object.keys(row.fields).length));
+  if (row.card || (row.fields && Object.keys(row.fields).length) || (row.outcomes && Object.keys(row.outcomes).length)) return true;
+  return POP_KINDS.some((kind) => row[kind]);
 }
 
 function readCard(raw) {
@@ -507,7 +528,9 @@ function loadPops(file) {
         const fields = readFields(raw);
         if (card) row.card = card;
         if (Object.keys(fields).length) row.fields = fields;
-        if (row.card || row.facet || row.feat || row.fix || row.fields) planes[key] = row;
+        const outcomes = readOutcomes(raw);
+        if (outcomes) row.outcomes = outcomes;
+        if (row.card || row.fields || row.outcomes || POP_KINDS.some((kind) => row[kind])) planes[key] = row;
       }
       return { planes };
     }
@@ -569,6 +592,65 @@ function formatCard(card) {
   return [`From: ${card.from}`, `Digest: ${card.digest}`, `Filled: ${filled}`].join('\n');
 }
 
+function firstItem(line) {
+  return popLine(String(line || '').split(',')[0]);
+}
+
+function speedText(row) {
+  const fields = row.fields || {};
+  for (const name of SPEED_FIELDS) {
+    if (fields[name]) return `${name}: ${fields[name]}`;
+  }
+  return '';
+}
+
+function diveText(row) {
+  const fields = row.fields || {};
+  for (const name of DIVE_FIELDS) {
+    if (!fields[name]) continue;
+    const item = name === 'files' ? firstItem(fields[name]) : fields[name];
+    if (item) return `${name}: ${item}`;
+  }
+  return '';
+}
+
+function outcomeText(row) {
+  const lines = [];
+  for (const kind of POP_KINDS) {
+    if (!row[kind]) continue;
+    lines.push(kind === 'none' ? 'none' : `${kind}: ${row[kind]}`);
+  }
+  const outcomes = row.outcomes || {};
+  for (const [kind, value] of Object.entries(outcomes)) {
+    const from = value.from ? ` From: ${value.from}` : '';
+    lines.push(`${kind}: ${value.line}${from}`);
+  }
+  return lines.length ? `Outcome:\n${lines.join('\n')}` : '';
+}
+
+function formatUseful(row) {
+  const speed = speedText(row) || 'Empty.';
+  const dive = diveText(row) || 'Empty.';
+  const lines = [formatCard(row.card), `Up to speed: ${speed}`, `Deep dive: ${dive}`];
+  const outcome = outcomeText(row);
+  if (outcome) lines.push(outcome);
+  return lines.join('\n');
+}
+
+function glimpseLine(name, card) {
+  const filled = card.filled.length ? card.filled.join(', ') : 'none';
+  return `${name}  From: ${card.from}  Digest: ${card.digest}  Filled: ${filled}`;
+}
+
+function planeIds(platesDir) {
+  if (!platesDir) return [];
+  const ids = ['ground'];
+  for (const id of listPipelineIds(platesDir)) {
+    if (!ids.includes(id)) ids.push(id);
+  }
+  return ids;
+}
+
 function fieldLine(plane, field) {
   if (field === 'from') return 'ground';
   if (field === 'digest') return popLine(plane.digest);
@@ -581,11 +663,6 @@ function fieldLine(plane, field) {
   const value = plane[field];
   if (Array.isArray(value)) return value.join(', ');
   return value ? String(value) : '';
-}
-
-function digestOf(platesDir, name) {
-  const plane = planeOf(platesDir, name);
-  return plane ? popLine(plane.digest) : '';
 }
 
 function popField(file, pops, key, row, field, line, platesDir) {
@@ -623,45 +700,111 @@ function popField(file, pops, key, row, field, line, platesDir) {
   return ok(`${field}: ${held}`);
 }
 
+function holdPlane(file, pops, key, row, platesDir) {
+  if (row.card) return row;
+  const plane = planeOf(platesDir, key);
+  if (!plane) {
+    ensurePopTable(file);
+    return null;
+  }
+  row.card = snapshotOf(plane);
+  pops.planes[key] = row;
+  savePops(file, pops);
+  return row;
+}
+
+function ensureUseful(file, pops, key, row, platesDir) {
+  const speedField = SPEED_FIELDS.find((name) => row.card.filled.includes(name));
+  const diveField = DIVE_FIELDS.find((name) => row.card.filled.includes(name));
+  if (speedField && !(row.fields && row.fields[speedField])) {
+    popField(file, pops, key, row, speedField, '', platesDir);
+  }
+  if (diveField && !(row.fields && row.fields[diveField])) {
+    popField(file, pops, key, row, diveField, '', platesDir);
+  }
+}
+
+function glimpse(file, platesDir) {
+  const pops = loadPops(file);
+  const known = planeIds(platesDir);
+  const names = (known.length
+    ? known
+    : Object.keys(pops.planes).filter((name) => pops.planes[name] && pops.planes[name].card)
+  ).slice().sort();
+  if (!names.length) return miss('Name one pop.');
+  let changed = false;
+  const lines = [];
+  for (const name of names) {
+    const row = { ...(pops.planes[name] || {}) };
+    if (!row.card) {
+      const plane = planeOf(platesDir, name);
+      if (!plane) continue;
+      row.card = snapshotOf(plane);
+      pops.planes[name] = row;
+      changed = true;
+    }
+    lines.push(glimpseLine(name, row.card));
+  }
+  if (changed) savePops(file, pops);
+  if (!lines.length) return miss('Name one pop.');
+  return ok(lines.join('\n'));
+}
+
+function popOutcome(file, pops, key, row, kind, line) {
+  const from = row.card ? row.card.from : '';
+  row.outcomes = { ...(row.outcomes || {}), [kind]: { line, from } };
+  pops.planes[key] = storedRow(row);
+  savePops(file, pops);
+  return ok(from ? `${kind}: ${line}\nFrom: ${from}` : `${kind}: ${line}`);
+}
+
 function runPop(words, file, platesDir) {
   if (!file) return miss('No pop table.');
-  if (!words.length) return miss('Name one pop.');
+  if (!words.length || (words.length === 1 && words[0] === 'glimpse')) return glimpse(file, platesDir);
   const key = popName(words[0]);
   if (!key) return miss('Name one pop.');
   const field = CARD_FIELDS.includes(words[1]) ? words[1] : '';
+  const pace = words[1] === 'speed' || words[1] === 'dive' ? words[1] : '';
   const kind = POP_KINDS.includes(words[1]) ? words[1] : '';
-  const line = popLine((field || kind) ? words.slice(2).join(' ') : words.slice(1).join(' '));
+  const other = !field && !pace && !kind && words[1] && popName(words[1]) ? words[1] : '';
+  const tagged = field || pace || kind || other;
+  const line = popLine(tagged ? words.slice(2).join(' ') : words.slice(1).join(' '));
   const pops = loadPops(file);
   const row = { ...(pops.planes[key] || {}) };
-  if (!field && !kind) {
+  if (!tagged) {
     if (line) return miss('Name a field.');
-    if (row.card) return ok(formatCard(row.card));
-    const plane = planeOf(platesDir, key);
-    if (!plane) {
-      ensurePopTable(file);
-      return ok('Empty.');
-    }
-    row.card = snapshotOf(plane);
-    pops.planes[key] = row;
-    savePops(file, pops);
-    return ok(formatCard(row.card));
+    const held = holdPlane(file, pops, key, row, platesDir);
+    if (!held) return ok('Empty.');
+    ensureUseful(file, pops, key, held, platesDir);
+    return ok(formatUseful(held));
   }
   if (field) return popField(file, pops, key, row, field, line, platesDir);
+  if (pace) {
+    if (line) return miss('Name a field.');
+    const held = holdPlane(file, pops, key, row, platesDir);
+    if (!held) return ok('Empty.');
+    ensureUseful(file, pops, key, held, platesDir);
+    const text = pace === 'speed' ? speedText(held) : diveText(held);
+    const label = pace === 'speed' ? 'Up to speed' : 'Deep dive';
+    return ok(`${label}: ${text || 'Empty.'}`);
+  }
+  if (other) {
+    if (!line) return miss('Name a field.');
+    if (!row.card) holdPlane(file, pops, key, row, platesDir);
+    return popOutcome(file, pops, key, row, other, line);
+  }
   if (line) {
     row[kind] = line;
     pops.planes[key] = storedRow(row);
     savePops(file, pops);
     return ok(`${kind}: ${line}`);
   }
-  if (row[kind]) return ok(`${kind}: ${row[kind]}`);
-  if (kind === 'facet') {
-    const digest = digestOf(platesDir, key);
-    if (digest) {
-      row.facet = digest;
-      pops.planes[key] = storedRow(row);
-      savePops(file, pops);
-      return ok(`facet: ${digest}`);
-    }
+  if (row[kind]) return ok(kind === 'none' && row[kind] === 'none' ? 'none' : `${kind}: ${row[kind]}`);
+  if (kind === 'none') {
+    row.none = 'none';
+    pops.planes[key] = storedRow(row);
+    savePops(file, pops);
+    return ok('none');
   }
   ensurePopTable(file);
   return ok('Empty.');
@@ -683,9 +826,12 @@ function notesPath(root) {
 }
 
 const POP_JOB = [
-  'A pop of a plane returns its card: from, the digest, and the filled fields.',
+  'A pop with no name is a glimpse of every plane: from, the digest, and the filled fields. It does not open a plane.',
+  'A pop of a plane returns its card: from, the digest, and the filled fields. It also says how to get up to speed and how to deep dive.',
+  'Up to speed is the first filled of entry, setup, and skills. Deep dive is one item: the first file, otherwise the plate, otherwise worn.',
   'A pop of one field returns that field: plate, entry, exit, files, skills, setup, teardown, or worn.',
   'A hit does not open the plane. A miss stays empty. An empty field stays empty.',
+  'The outcome is one kind for that plane, related to the plane it came from. Facet, feat, or fix. None is allowed. Another kind is allowed. A higher-order kind is about that relation, not a new law.',
   'Teardown wipes the scratch, not the table. The wear leaves the table when the file is missing.',
   'A pop is not a law. A slow look opens a plane only when that name was already popped.',
 ].join(' ');

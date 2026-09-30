@@ -53,6 +53,21 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 | Test failures | bug-triage |
 | Review | code-review |
 
+## Goggles
+
+Useful means the next call, not a stored card.
+
+This feat is not published. Wear the local build. From the worn checkout run `node dist/integrations/hooks/goggles-pipeline.mjs`. Do not run `npx 0xray goggles`. If `dist` is older than `src/integrations/hooks/goggles-pipeline.mjs`, build that tree and wear that `dist`. A subagent wears this same local build.
+
+1. Glimpse. `pop` with no name. Every plane, one line: From, Digest, and the filled names. The scratch stays closed.
+2. Up to speed. `pop <plane> speed`. The first filled of entry, setup, and skills. Empty if none of those are filled. Do not search to fill it.
+3. Deep dive. `pop <plane> dive`. One item: the first file, otherwise the plate, otherwise worn.
+4. Outcome. One kind for that plane, related to From, the plane you left. Facet is the digested state. Feat is the move. Fix is the correction. None is allowed. Another kind is allowed. A higher-order kind is about that relation, not a change inside the plane, and it is not a law.
+
+`pop <plane>` returns the card plus those two ways in. `pop <plane> <kind> <line>` records the outcome. `pop <plane> none` records that nothing is needed. A hit returns the stored line. A miss stays Empty. A named kind with no stored line stays Empty.
+
+Teardown deletes the scratch, not `.xray/state/pops.json`. A pop is not a law.
+
 ## Hooks (rewired, not new MCPs)
 
 - **SessionStart** → `session-start.js` boots lead_dev_mode

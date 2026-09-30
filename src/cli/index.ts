@@ -94,7 +94,7 @@ program
 program
   .command("goggles")
   .argument("[args...]", "plane, then examine, triage, cascade, or teardown")
-  .description("Scratch one plane. Peer writes it. Teardown deletes it.")
+  .description("Glimpse every plane, or one plane's way in. A hit does not open the plane.")
   .action((args: string[]) => {
     const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
     const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");

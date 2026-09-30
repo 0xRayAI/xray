@@ -186,6 +186,8 @@ describe('pops', () => {
       'From: ground',
       'Digest: Task text becomes an agent.',
       'Filled: plate, files, worn',
+      'Up to speed: Empty.',
+      'Deep dive: files: src/nucleus/thin-dispatch.ts',
     ].join('\n');
     expect(cycle(['pop', 'routing'], platesDir, scratch).text).toBe(card);
     expect(existsSync(scratch)).toBe(false);
@@ -196,24 +198,29 @@ describe('pops', () => {
     expect(cycle(['pop', 'routing', 'entry'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop', 'routing', 'skills'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop', 'ground', 'skills'], platesDir, scratch).text).toBe('skills: SKILLS.md');
-    const facet = cycle(['pop', 'routing', 'facet'], platesDir, scratch);
-    expect(facet.text).toBe('facet: Task text becomes an agent.');
-    expect(cycle(['pop', 'routing', 'facet'], null, scratch).text).toBe('facet: Task text becomes an agent.');
+    expect(cycle(['pop', 'routing', 'facet'], platesDir, scratch).text).toBe('Empty.');
+    expect(cycle(['pop', 'routing', 'facet'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop', 'hands', 'fix', 'a kind is chosen, not ordered'], null, scratch).text).toBe('fix: a kind is chosen, not ordered');
     expect(cycle(['pop', 'hands', 'facet'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop', 'hands', 'fix'], null, scratch).text).toBe('fix: a kind is chosen, not ordered');
-    expect(cycle(['pop', 'routing', 'not-a-kind', 'no'], null, scratch).text).toBe('Name a field.');
+    expect(cycle(['pop', 'routing', 'not-a-kind', 'no'], null, scratch).text).toBe('not-a-kind: no\nFrom: ground');
+    expect(cycle(['pop', 'routing', 'bogus'], null, scratch).text).toBe('Name a field.');
     expect(cycle(['pop', 'boot'], platesDir, scratch).text.startsWith('From: ground')).toBe(true);
     expect(cycle(['house'], platesDir, scratch).text).toBe('Empty.');
     expect(existsSync(scratch)).toBe(false);
     expect(cycle(['pop', 'house', 'fix', 'a fix alone is enough'], null, scratch).text).toBe('fix: a fix alone is enough');
     expect(cycle(['house'], platesDir, scratch).text).toContain('Filled: plate, files');
     expect(cycle(['pop', 'missing', 'feat'], null, scratch).text).toBe('Empty.');
-    expect(cycle(['pop'], null, scratch).text).toBe('Name one pop.');
+    const seen = cycle(['pop'], null, scratch);
+    expect(seen.text).toContain('boot  From: ground');
+    expect(seen.text).toContain('ground  From: ground');
+    expect(seen.text).toContain('routing  From: ground');
+    expect(seen.text).not.toContain('\nhands');
+    expect(seen.text.startsWith('hands')).toBe(false);
     const saved = JSON.parse(readFileSync(table, 'utf8'));
     expect(saved.planes.routing.card.digest).toBe('Task text becomes an agent.');
     expect(saved.planes.routing.fields.files).toBe('src/nucleus/thin-dispatch.ts');
-    expect(saved.planes.routing.facet).toBe('Task text becomes an agent.');
+    expect(saved.planes.routing.facet).toBeUndefined();
     expect(saved.planes.hands).toEqual({ fix: 'a kind is chosen, not ordered' });
     expect(saved.planes.missing).toBeUndefined();
     expect(saved.streak).toBeUndefined();
@@ -221,7 +228,7 @@ describe('pops', () => {
     writeFileSync(scratch, `${JSON.stringify({ digest: 'Home. The dev plane.' })}\n`);
     expect(cycle(['teardown'], platesDir, scratch).text.startsWith('Ground.')).toBe(true);
     expect(existsSync(scratch)).toBe(false);
-    expect(JSON.parse(readFileSync(table, 'utf8')).planes.routing.facet).toBe('Task text becomes an agent.');
+    expect(JSON.parse(readFileSync(table, 'utf8')).planes.routing.facet).toBeUndefined();
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -232,6 +239,8 @@ describe('pops', () => {
     expect(once).toContain('## Pop job');
     expect(once).toContain('A pop is not a law.');
     expect(once).toContain('A pop of a plane returns its card: from, the digest, and the filled fields.');
+    expect(once).toContain('A pop with no name is a glimpse of every plane');
+    expect(once).toContain('A higher-order kind is about that relation, not a new law.');
     expect(once).toContain('A slow look opens a plane only when that name was already popped.');
     expect(once).not.toContain('still opens a plane that was never popped');
     expect(once).not.toContain('Not the cache.');
@@ -264,6 +273,62 @@ describe('pops', () => {
     expect(opened.text).not.toBe('Task text becomes an agent.');
     expect(cycle(['house'], platesDir, scratch).text).toBe('Empty.');
     expect(JSON.parse(readFileSync(scratch, 'utf8')).id).toBe('routing');
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('glimpses every plane, then one way in, and records one outcome', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-useful-'));
+    const scratch = join(dir, 'scratch.json');
+    const seen = cycle(['pop'], platesDir, scratch);
+    expect(seen.ok).toBe(true);
+    expect(existsSync(scratch)).toBe(false);
+    expect(seen.text).toContain('ground  From: ground  Digest: Home. The dev plane.');
+    expect(seen.text).toContain('routing  From: ground');
+    expect(seen.text).not.toContain('grokbot');
+    expect(seen.text).not.toContain('Up to speed');
+    expect(cycle(['pop'], null, scratch).text).toBe(seen.text);
+
+    const ground = cycle(['pop', 'ground'], platesDir, scratch).text;
+    expect(ground).toContain('Up to speed: skills: SKILLS.md');
+    expect(ground).toContain('Deep dive: files: src');
+    expect(cycle(['pop', 'ground', 'speed'], null, scratch).text).toBe('Up to speed: skills: SKILLS.md');
+    expect(cycle(['pop', 'ground', 'dive'], null, scratch).text).toBe('Deep dive: files: src');
+    expect(existsSync(scratch)).toBe(false);
+
+    expect(cycle(['pop', 'routing', 'speed'], null, scratch).text).toBe('Up to speed: Empty.');
+    expect(cycle(['pop', 'routing', 'dive'], platesDir, scratch).text).toBe(
+      'Deep dive: files: src/nucleus/thin-dispatch.ts',
+    );
+    expect(cycle(['pop', 'routing', 'dive'], null, scratch).text).toBe(
+      'Deep dive: files: src/nucleus/thin-dispatch.ts',
+    );
+    expect(cycle(['pop', 'boot', 'dive'], platesDir, scratch).text).toBe(
+      'Deep dive: plate: docs-site/docs/plates/boot.md',
+    );
+    expect(cycle(['pop', 'boot', 'speed'], null, scratch).text).toBe('Up to speed: Empty.');
+
+    expect(cycle(
+      ['pop', 'boot', 'facet', 'From ground, boot is a plate and nothing else.'],
+      null,
+      scratch,
+    ).text).toBe('facet: From ground, boot is a plate and nothing else.');
+    expect(cycle(['pop', 'boot'], null, scratch).text).toContain(
+      'Outcome:\nfacet: From ground, boot is a plate and nothing else.',
+    );
+    expect(cycle(['pop', 'house', 'none'], null, scratch).text).toBe('none');
+    expect(cycle(['pop', 'house', 'none'], null, scratch).text).toBe('none');
+    expect(cycle(
+      ['pop', 'routing', 'recenter', 'From ground, the file does not change the home job.'],
+      null,
+      scratch,
+    ).text).toBe('recenter: From ground, the file does not change the home job.\nFrom: ground');
+
+    const saved = JSON.parse(readFileSync(join(dir, 'pops.json'), 'utf8'));
+    expect(saved.planes.routing.outcomes.recenter.from).toBe('ground');
+    expect(saved.planes.routing.outcomes.recenter.line).toContain('From ground');
+    expect(saved.planes.house.none).toBe('none');
+    expect(saved.planes.boot.facet).toContain('From ground');
+    expect(existsSync(scratch)).toBe(false);
     rmSync(dir, { recursive: true, force: true });
   });
 
