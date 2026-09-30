@@ -199,11 +199,8 @@ describe('pops', () => {
     expect(cycle(['pop', 'missing', 'feat'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop'], null, scratch).text).toBe('Name one pop.');
     const saved = JSON.parse(readFileSync(table, 'utf8'));
-    expect(saved.planes.routing.facet).toBe('Task text becomes an agent.');
-    expect(saved.planes.routing.feat).toBe('');
-    expect(saved.planes.routing.fix).toBe('');
-    expect(saved.planes.hands.facet).toBe('');
-    expect(saved.planes.hands.fix).toBe('a kind is chosen, not ordered');
+    expect(saved.planes.routing).toEqual({ facet: 'Task text becomes an agent.' });
+    expect(saved.planes.hands).toEqual({ fix: 'a kind is chosen, not ordered' });
     expect(saved.planes.missing).toBeUndefined();
     expect(saved.streak).toBeUndefined();
 

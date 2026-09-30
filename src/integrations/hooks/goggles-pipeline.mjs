@@ -444,8 +444,13 @@ function popsPathBeside(scratchPath, explicit) {
 
 const POP_KINDS = ['facet', 'feat', 'fix'];
 
-function blankPop() {
-  return { facet: '', feat: '', fix: '' };
+function keepRow(raw) {
+  const kept = {};
+  for (const kind of POP_KINDS) {
+    const line = popLine(raw && raw[kind]);
+    if (line) kept[kind] = line;
+  }
+  return kept;
 }
 
 function popLine(raw) {
@@ -468,8 +473,7 @@ function loadPops(file) {
       for (const [name, raw] of Object.entries(rawPlanes)) {
         const key = popName(name);
         if (!key || !raw || typeof raw !== 'object') continue;
-        const row = blankPop();
-        for (const kind of POP_KINDS) row[kind] = popLine(raw[kind]);
+        const row = keepRow(raw);
         if (row.facet || row.feat || row.fix) planes[key] = row;
       }
       return { planes };
@@ -479,7 +483,7 @@ function loadPops(file) {
       const key = popName(name);
       const line = popLine(facet);
       if (!key || !line) continue;
-      planes[key] = { ...blankPop(), facet: line };
+      planes[key] = { facet: line };
     }
     return { planes };
   } catch {
@@ -532,10 +536,10 @@ function runPop(words, file, platesDir) {
   const line = popLine(kind ? words.slice(2).join(' ') : words.slice(1).join(' '));
   if (!kind) return miss('Name facet, feat, or fix.');
   const pops = loadPops(file);
-  const row = pops.planes[key] ? { ...pops.planes[key] } : blankPop();
+  const row = { ...(pops.planes[key] || {}) };
   if (line) {
     row[kind] = line;
-    pops.planes[key] = row;
+    pops.planes[key] = keepRow(row);
     savePops(file, pops);
     return ok(`${kind}: ${line}`);
   }
@@ -544,7 +548,7 @@ function runPop(words, file, platesDir) {
     const digest = digestOf(platesDir, key);
     if (digest) {
       row.facet = digest;
-      pops.planes[key] = row;
+      pops.planes[key] = keepRow(row);
       savePops(file, pops);
       return ok(`facet: ${digest}`);
     }
