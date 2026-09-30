@@ -47,16 +47,34 @@ describe('goggles lens', () => {
       const off = look(root, 'house');
       expect(off.ok).toBe(true);
       if (!off.ok) return;
-      expect(off.digest).toMatch(/house is not enabled here/);
+      expect(off.digest).toBe(
+        'house is not enabled here. A missing house is not a broken suit.',
+      );
+      expect(off.digest).not.toMatch(/is the suit/);
       expect(off.one).toBeNull();
 
       writeBoot(root, 'grok-bot');
       const bot = look(root, 'house');
       expect(bot.ok).toBe(true);
       if (!bot.ok) return;
+      expect(bot.digest).toBe(
+        'house is not enabled here. The house is how this chat shares rules.',
+      );
+      expect(bot.digest).not.toMatch(/is the suit/);
       expect(bot.one).toMatch(/house init/);
 
       fs.mkdirSync(path.join(root, 'house'), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, 'house', 'HOUSE.md'),
+        '# House\n\n- (example) Owner\n',
+      );
+      const empty = look(root, 'house');
+      expect(empty.ok).toBe(true);
+      if (!empty.ok) return;
+      expect(empty.digest).toBe('Example lines are still empty.');
+      expect(empty.digest).not.toBe('house on');
+      expect(empty.one).toBe('Fill the example lines in house/HOUSE.md.');
+
       fs.writeFileSync(path.join(root, 'house', 'HOUSE.md'), '# House\n\n## Owner\nAda.\n');
       const on = look(root, 'house');
       expect(on.ok).toBe(true);

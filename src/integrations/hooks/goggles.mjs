@@ -43,24 +43,34 @@ function cardSignalCount(root) {
   }
 }
 
-function houseLook(root, hostId) {
-  const file = join(root, 'house', 'HOUSE.md');
-  if (!existsSync(file)) {
-    const one = hostId === 'grok-bot' ? 'Run grok-bot house init, then fill the six lines.' : null;
+function houseOff(hostId) {
+  if (hostId === 'grok-bot') {
     return {
-      digest: `${HOUSE_OFF}. A missing house is the suit only for Grok Bot.`,
-      one,
+      digest: `${HOUSE_OFF}. The house is how this chat shares rules.`,
+      one: 'Run grok-bot house init, then fill the six lines.',
     };
   }
+  return {
+    digest: `${HOUSE_OFF}. A missing house is not a broken suit.`,
+    one: null,
+  };
+}
+
+function houseLook(root, hostId) {
+  const file = join(root, 'house', 'HOUSE.md');
+  if (!existsSync(file)) return houseOff(hostId);
   let text = '';
   try {
     text = readFileSync(file, 'utf8');
   } catch {
-    return { digest: HOUSE_OFF, one: null };
+    return houseOff(hostId);
   }
   const unfilled = text.split(/\r?\n/).some((line) => /^\s*[-*]?\s*\(example\)/.test(line));
   if (unfilled) {
-    return { digest: HOUSE_ON, one: 'Fill the example lines in house/HOUSE.md.' };
+    return {
+      digest: 'Example lines are still empty.',
+      one: 'Fill the example lines in house/HOUSE.md.',
+    };
   }
   return { digest: HOUSE_ON, one: null };
 }
