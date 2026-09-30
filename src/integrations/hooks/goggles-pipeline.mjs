@@ -438,6 +438,58 @@ export function popsFileFor(root) {
   return join(root, '.xray', 'state', 'pops.json');
 }
 
+function isWideSearch(toolName, text, paths, root) {
+  const tool = String(toolName || '');
+  const raw = String(text || '');
+  const hunt = /grep|search|glob/i.test(tool) && !/web_/i.test(tool);
+  const shellHunt = /^\s*(rg|grep|find)\b/.test(raw);
+  if (!hunt && !shellHunt) return false;
+  if (shellHunt && /\/[\w.-]+/.test(raw)) return false;
+  const rootNorm = String(root || '').replace(/\/$/, '');
+  const narrowed = (paths || [])
+    .map((item) => String(item || '').replace(/\/$/, ''))
+    .filter((item) => item && item !== '.' && item !== rootNorm);
+  return narrowed.length === 0;
+}
+
+function planeWord(name, text) {
+  return new RegExp(`(?:^|[^A-Za-z0-9-])${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^A-Za-z0-9-]|$)`, 'i').test(String(text || ''));
+}
+
+function knownPlaneIds() {
+  try {
+    const file = join(dirname(fileURLToPath(import.meta.url)), 'goggles-planes.json');
+    return Object.keys(JSON.parse(readFileSync(file, 'utf8'))).filter((name) => name !== 'ground');
+  } catch {
+    return [];
+  }
+}
+
+function cardsNamed(text, planes) {
+  const hits = [];
+  for (const [name, row] of Object.entries(planes || {})) {
+    if (name === 'ground' || !row || !row.card || !row.card.digest) continue;
+    if (planeWord(name, text)) hits.push(name);
+  }
+  return hits;
+}
+
+export function cardStop(root, toolName, text, paths = []) {
+  const raw = String(text || '');
+  if (/\bgoggles\b/i.test(raw)) return null;
+  if (!isWideSearch(toolName, raw, paths, root)) return null;
+  const named = knownPlaneIds().filter((name) => planeWord(name, raw));
+  if (named.length !== 1) return null;
+  const hits = cardsNamed(raw, loadPops(popsFileFor(root)).planes);
+  if (hits.length !== 1) return null;
+  const card = loadPops(popsFileFor(root)).planes[hits[0]].card;
+  const filled = card.filled && card.filled.length ? card.filled.join(', ') : 'none';
+  return {
+    gate: 'goggles',
+    reason: `${hits[0]}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}.`,
+  };
+}
+
 function popsPathBeside(scratchPath, explicit) {
   if (explicit) return explicit;
   if (!scratchPath) return null;

@@ -21,6 +21,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { cardStop } from '../../hooks/goggles-pipeline.mjs';
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -135,6 +136,14 @@ async function main() {
       const extraBlock = checkCodexPatterns(content, { terms: [2, 7] });
       if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
+
+    const stop = cardStop(
+      eventRoot,
+      toolName,
+      [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n'),
+      ctx.paths || [],
+    );
+    if (stop) finish(eventRoot, 'deny', stop.reason, null, toolName, { gate: stop.gate });
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 

@@ -11,6 +11,7 @@ import {
   findPlatesDir,
   listPipelineIds,
   look,
+  cardStop,
   maintainLens,
   notesWithPickup,
   notesWithPopJob,
@@ -354,6 +355,31 @@ describe('pops', () => {
     writeFileSync(table, `${JSON.stringify({ facets: {}, streak: 3 })}\n`);
     writePopJob(root);
     expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ planes: {} });
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('stops a wide search when the card is already stored and stays quiet otherwise', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-stop-'));
+    const table = join(root, '.xray', 'state', 'pops.json');
+    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+    writeFileSync(table, JSON.stringify({
+      planes: {
+        routing: {
+          card: { from: 'ground', digest: 'Task text becomes an agent.', filled: ['plate', 'files'] },
+          facet: 'invented stamp that must not be the reason',
+        },
+      },
+    }));
+    const stopped = cardStop(root, 'grep', 'routing', []);
+    expect(stopped?.gate).toBe('goggles');
+    expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files.');
+    expect(stopped?.reason).not.toContain('invented');
+    expect(cardStop(root, 'grep', 'routing', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
+    expect(cardStop(root, 'bash', 'rg routing src/nucleus/thin-dispatch.ts', [])).toBeNull();
+    expect(cardStop(root, 'grep', 'routing and house', [])).toBeNull();
+    expect(cardStop(root, 'grep', 'house', [])).toBeNull();
+    expect(cardStop(root, 'grep', 'goggles routing', [])).toBeNull();
+    expect(cardStop(root, 'read_file', 'routing', [])).toBeNull();
     rmSync(root, { recursive: true, force: true });
   });
 });
