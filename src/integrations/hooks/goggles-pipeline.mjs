@@ -464,6 +464,11 @@ function savePops(file, pops) {
   writeFileSync(file, `${JSON.stringify({ facets: pops.facets, streak: pops.streak }, null, 2)}\n`);
 }
 
+function ensurePopTable(file, pops = { facets: {}, streak: 0 }) {
+  if (!file || existsSync(file)) return;
+  savePops(file, pops);
+}
+
 function popName(name) {
   return /^[a-z0-9][a-z0-9-]*$/i.test(String(name || '')) ? String(name) : '';
 }
@@ -485,9 +490,12 @@ export function popHit(file, name) {
   if (!file) return miss('No pop table.');
   if (!key) return miss('Name one pop.');
   const pops = loadPops(file);
-  if (pops.streak >= 3) return ok('Act.');
   const facet = pops.facets[key];
-  if (!facet) return ok('Empty.');
+  if (!facet) {
+    ensurePopTable(file, pops);
+    return ok('Empty.');
+  }
+  if (pops.streak >= 3) return ok('Act.');
   pops.streak += 1;
   savePops(file, pops);
   return ok(facet);
@@ -524,8 +532,9 @@ function notesPath(root) {
 
 const POP_JOB = [
   'Pops are a hit table at `.xray/state/pops.json`. One name, one line.',
-  'A hit returns that line and does not open the plane. A miss stays empty.',
-  'Three hits, then Act. Teardown wipes the scratch and the streak, not the table.',
+  'A hit returns that line and does not open the plane. A miss stays empty and still leaves the table.',
+  'Three hits, then Act. A miss is not Act. Teardown wipes the scratch and the streak, not the table.',
+  'The wear leaves the table when the file is missing.',
   'A pop is not a law.',
   'A slow look opens a plane only when that name is already popped.',
 ].join(' ');
@@ -553,6 +562,7 @@ export function notesWithPopJob(existing) {
 }
 
 export function writePopJob(root) {
+  ensurePopTable(popsFileFor(root));
   const notesFile = notesPath(root);
   mkdirSync(dirname(notesFile), { recursive: true });
   const prev = existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '';

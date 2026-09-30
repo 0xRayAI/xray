@@ -14,6 +14,7 @@ import {
   maintainLens,
   notesWithPickup,
   notesWithPopJob,
+  writePopJob,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const platesDir = findPlatesDir(dirname(fileURLToPath(import.meta.url)));
@@ -205,7 +206,10 @@ describe('pops', () => {
     expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
     expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
     expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Act.');
+    expect(cycle(['pop', 'missing'], null, scratch).text).toBe('Empty.');
     expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(3);
+    expect(JSON.parse(readFileSync(table, 'utf8')).facets.missing).toBeUndefined();
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Act.');
 
     writeFileSync(scratch, `${JSON.stringify({ digest: 'Home. The dev plane.' })}\n`);
     expect(cycle(['teardown'], platesDir, scratch).text.startsWith('Ground.')).toBe(true);
@@ -255,5 +259,27 @@ describe('pops', () => {
     expect(cycle(['house'], platesDir, scratch).text).toBe('Empty.');
     expect(JSON.parse(readFileSync(scratch, 'utf8')).id).toBe('routing');
     rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('a miss leaves the table and does not invent a facet', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-miss-'));
+    const scratch = join(dir, 'scratch.json');
+    const table = join(dir, 'pops.json');
+    expect(cycle(['pop', 'gibberish'], null, scratch).text).toBe('Empty.');
+    expect(existsSync(scratch)).toBe(false);
+    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ facets: {}, streak: 0 });
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('the wear leaves an empty table when the file is missing', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-wear-table-'));
+    const table = join(root, '.xray', 'state', 'pops.json');
+    writePopJob(root);
+    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ facets: {}, streak: 0 });
+    writeFileSync(table, `${JSON.stringify({ facets: { routing: 'stay' }, streak: 2 }, null, 2)}\n`);
+    writePopJob(root);
+    expect(JSON.parse(readFileSync(table, 'utf8')).facets.routing).toBe('stay');
+    expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(2);
+    rmSync(root, { recursive: true, force: true });
   });
 });
