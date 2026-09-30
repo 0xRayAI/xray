@@ -5,6 +5,7 @@
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
  * A pop is a hit on a name already stored. The table survives the wipe.
+ * A slow look opens a plane only when that name is already popped.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -387,10 +388,22 @@ function step(word, platesDir, root, store) {
   return ok(formatPeer(child));
 }
 
+function lookedName(parsed) {
+  if (parsed.plane === 'ground') return 'ground';
+  return parsed.one || '';
+}
+
 export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileStore(scratchPath) : memStore(), popsPath = null) {
   const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
   const popsFile = popsPathBeside(scratchPath, popsPath);
   if (words[0] === 'pop') return runPop(words.slice(1), popsFile);
+  const continues = words.length === 1 && (words[0] === 'teardown' || (LOOKS.has(words[0]) && words[0] !== 'peer'));
+  if (!continues) {
+    const parsed = parseLook(words);
+    if (parsed.error) return miss(parsed.error);
+    const name = lookedName(parsed);
+    if (name && !loadPops(popsFile).facets[name]) return ok('Empty.');
+  }
   const root = repoRootFrom(platesDir);
   if (words.length === 1 && words[0] === 'teardown') {
     const rec = store.load();
@@ -403,7 +416,6 @@ export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileSt
     return step(words[0], platesDir, root, store);
   }
   const parsed = parseLook(words);
-  if (parsed.error) return miss(parsed.error);
   const resolved = resolvePlane(parsed, platesDir);
   if (!resolved.ok) return resolved;
   const rec = peerRec(resolved.plane);
@@ -412,8 +424,8 @@ export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileSt
   return step(parsed.look, platesDir, root, store);
 }
 
-export function look(argv, platesDir) {
-  return cycle(argv, platesDir, null);
+export function look(argv, platesDir, popsPath = null) {
+  return cycle(argv, platesDir, null, undefined, popsPath);
 }
 
 export function scratchFileFor(root) {
@@ -515,14 +527,18 @@ const POP_JOB = [
   'A hit returns that line and does not open the plane. A miss stays empty.',
   'Three hits, then Act. Teardown wipes the scratch and the streak, not the table.',
   'A pop is not a law.',
-  'Left: the slow look still opens a plane that was never popped.',
+  'A slow look opens a plane only when that name is already popped.',
 ].join(' ');
 
 export function notesWithPopJob(existing) {
   let text = String(existing || '');
   text = text.replace(
     'PR #161. Not merged. Not published. Not the cache.',
-    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. The slow look still opens a plane that was never popped.',
+    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. A slow look opens a plane only when that name is already popped.',
+  );
+  text = text.replace(
+    'The slow look still opens a plane that was never popped.',
+    'A slow look opens a plane only when that name is already popped.',
   );
   const block = `## Pop job\n\n${POP_JOB}\n`;
   const match = /^## Pop job\r?\n/m.exec(text);
