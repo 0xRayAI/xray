@@ -1,5 +1,7 @@
 /**
- * Goggles. A snapshot of one real plane: a short digest, then the next depth.
+ * Goggles. A look at one real plane.
+ * Peer returns where you came from, one line, and the names of the fields that are filled.
+ * Examine, triage, and cascade come after that, in that order. A depth number is not a look.
  * Ground and pipeline can be landed on. Domain, eco, and the outer loop cannot.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -89,32 +91,34 @@ export function listPipelineIds(platesDir) {
   return ids;
 }
 
+const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
+const LOOKS = new Set(['peer', 'examine', 'triage', 'cascade']);
+const NOT_PLANES = new Set(['domain', 'eco', 'outer', 'outer-loop']);
+
 const GROUND = [
-  ['code', 'The reactive engine, still in TypeScript.', 'src'],
-  ['OP-PROC', 'The procedure the model carries.', 'grok-bot/OP-PROC.md'],
-  ['model', 'The seat that runs the procedure.', 'src/opencode/agents'],
-  ['suit', 'Worn gear: constitution, temperament, Station.', 'Agents.md'],
-  ['mill', 'Fashions and fastens.', null],
-  ['host', 'The floor.', 'src/integrations'],
-  ['test/ship', 'Test then ship is the hero. Ship without that proof is the catastrophe.', 'package.json'],
+  ['code', 'src'],
+  ['OP-PROC', 'grok-bot/OP-PROC.md'],
+  ['model', 'src/opencode/agents'],
+  ['suit', 'Agents.md'],
+  ['mill', null],
+  ['host', 'src/integrations'],
+  ['test/ship', 'package.json'],
 ];
 
 const SEAMS = {
   routing: {
     file: 'src/nucleus/thin-dispatch.ts',
+    worn: 'dist/nucleus/thin-dispatch.js',
     mark: 'export function scoreAndRoute',
-    digest: 'scoreAndRoute in src/nucleus/thin-dispatch.ts',
-    cascade: 'task text → scoreComplexity → routeToAgent → resolveThinDispatch → agent',
-    next: {
-      digest: 'A null provider returns the score unchanged. A worn provider can change the agent.',
-      cascade: 'score → agent → resolveThinDispatch → adjusted score, strategy, signals',
-    },
+    wornMark: 'function scoreAndRoute',
+    pick: 'resolveThinDispatch',
+    pickIn: 'resolveThinDispatch',
+    pickDigest: 'A null provider returns the score unchanged. A worn provider can change the agent.',
   },
   house: {
     file: 'grok-bot/lib/seat-doctor.cjs',
     mark: 'no house/HOUSE.md, run setup-house',
-    digest: 'seat-doctor in grok-bot/lib/seat-doctor.cjs',
-    cascade: 'missing HOUSE.md warns → example lines fail → filled lines pass',
+    pick: null,
   },
 };
 
@@ -122,21 +126,30 @@ function repoRootFrom(platesDir) {
   return dirname(dirname(dirname(platesDir)));
 }
 
-function shot(plane, one, depth, digest, cascade, deeper) {
-  const who = one ? `${plane}/${one}` : plane;
-  return {
-    ok: true,
-    text: [
-      `Snapshot: ${who}@${depth}`,
-      `Digest: ${digest}`,
-      `Cascade: ${cascade}`,
-      `Deeper: ${deeper}`,
-    ].join('\n'),
-  };
-}
-
 function miss(text) {
   return { ok: false, text };
+}
+
+function ok(text) {
+  return { ok: true, text };
+}
+
+function holds() {
+  return { kind: 'holds', text: 'Holds.' };
+}
+
+function drift(text) {
+  return { kind: 'drift', text: `Drift: ${text}` };
+}
+
+function drawing() {
+  return { kind: 'drawing', text: 'Drawing only.' };
+}
+
+function fileHas(root, rel, mark) {
+  if (!rel) return false;
+  const full = join(root, rel);
+  return existsSync(full) && readFileSync(full, 'utf8').includes(mark);
 }
 
 function pipelineBody(id, platesDir) {
@@ -144,85 +157,145 @@ function pipelineBody(id, platesDir) {
   return stripFrontmatter(raw);
 }
 
-function groundSnapshot(one, depth, root) {
-  if (!one) {
-    if (depth > 1) return miss(`Name one on ground: ${GROUND.map(([id]) => id).join(', ')}.`);
-    return shot(
-      'ground',
-      '',
-      1,
-      'Home. The dev plane.',
-      GROUND.map(([id]) => id).join(' → '),
-      'name one',
-    );
-  }
-  const part = GROUND.find(([id]) => id === one);
-  if (!part) return miss(`Name one on ground: ${GROUND.map(([id]) => id).join(', ')}.`);
-  if (depth > 2) return miss('No deeper.');
-  const [, line, file] = part;
-  const present = file ? existsSync(join(root, file)) : false;
-  const cascade = file ? (present ? file : `${file} missing`) : 'no single file';
-  const digest = present || !file ? line : `${line} Missing in this tree.`;
-  return shot('ground', one, 2, digest, cascade, 'none');
+function filledNames(flags) {
+  return FIELD_ORDER.filter((name) => flags[name]);
 }
 
-function pipelineSnapshot(one, depth, platesDir, root) {
-  const ids = listPipelineIds(platesDir);
-  if (!one || !ids.includes(one)) return miss(`Name one pipeline: ${ids.join(', ')}.`);
-  const body = pipelineBody(one, platesDir);
-  const stages = cascadeOf(body).join(' → ');
-  if (depth <= 1) {
-    return shot('pipeline', one, 1, takeOf(body), stages, '2');
+function peerText(from, digest, flags) {
+  const names = filledNames(flags);
+  return [`From: ${from}`, `Digest: ${digest}`, `Filled: ${names.join(', ')}`].join('\n');
+}
+
+function groundFlags(root) {
+  return {
+    plate: false,
+    entry: false,
+    exit: false,
+    files: true,
+    skills: existsSync(join(root, 'SKILLS.md')),
+    setup: false,
+    teardown: false,
+    worn: false,
+  };
+}
+
+function pipelineFlags(seam) {
+  return {
+    plate: true,
+    entry: false,
+    exit: false,
+    files: Boolean(seam && seam.file),
+    skills: false,
+    setup: false,
+    teardown: false,
+    worn: false,
+  };
+}
+
+function examineGround(root) {
+  for (const [id, file] of GROUND) {
+    if (!file) continue;
+    if (!existsSync(join(root, file))) return drift(`${id} is not at ${file}`);
   }
-  const seam = SEAMS[one];
-  if (!seam) {
-    if (depth > 2) return miss('No deeper.');
-    return shot('pipeline', one, 2, 'Drawing only. No file named.', stages, 'none');
+  if (!existsSync(join(root, 'SKILLS.md'))) return drift('root SKILLS.md is not there');
+  return holds();
+}
+
+function examineSeam(root, seam) {
+  if (!seam) return drawing();
+  if (!fileHas(root, seam.file, seam.mark)) {
+    return drift(`${seam.mark} is not in ${seam.file}`);
   }
-  const full = join(root, seam.file);
-  const worn = existsSync(full) && readFileSync(full, 'utf8').includes(seam.mark);
-  if (!worn) {
-    return shot('pipeline', one, 2, `Seam missing in this tree: ${seam.file}`, stages, 'none');
+  if (seam.worn && !fileHas(root, seam.worn, seam.wornMark)) {
+    return drift(`the worn build is not ${seam.file}`);
   }
-  if (depth === 2) {
-    return shot('pipeline', one, 2, seam.digest, seam.cascade, seam.next ? '3' : 'none');
-  }
-  if (!seam.next || depth > 3) return miss('No deeper.');
-  return shot('pipeline', one, 3, seam.next.digest, seam.next.cascade, 'none');
+  return holds();
+}
+
+function triageOf(exam, pick) {
+  if (exam.kind === 'drawing') return { stop: true, text: 'Pick: none' };
+  if (exam.kind === 'drift') return { stop: true, text: `Pick: ${exam.text.slice('Drift: '.length)}` };
+  if (pick) return { stop: false, text: `Pick: ${pick}` };
+  return { stop: true, text: 'Pick: none' };
+}
+
+function cascadeText(who, seam) {
+  return peerText(who, seam.pickDigest, {
+    plate: false,
+    entry: false,
+    exit: false,
+    files: false,
+    skills: false,
+    setup: false,
+    teardown: false,
+    worn: false,
+  });
 }
 
 export function parseLook(argv) {
   const words = [];
-  let depth = 1;
   for (const raw of argv) {
     const arg = String(raw || '').trim();
     if (!arg) continue;
-    if (/^\d+$/.test(arg)) depth = Number(arg);
-    else words.push(arg);
+    if (/^\d+$/.test(arg)) {
+      return { error: 'A depth number is not a look. Looks: peer, examine, triage, cascade.' };
+    }
+    words.push(arg);
   }
   if (words.length === 0) return { error: 'Name one plane: ground, pipeline.' };
   const head = words[0];
-  if (head === 'domain' || head === 'eco' || head === 'outer' || head === 'outer-loop') {
-    return { error: 'Not a plane yet. Planes: ground, pipeline.' };
+  if (NOT_PLANES.has(head)) return { error: 'Not a plane yet. Planes: ground, pipeline.' };
+  let look = 'peer';
+  const tail = words[words.length - 1];
+  if (LOOKS.has(tail) && words.length > 1) {
+    look = tail;
+    words.pop();
+  }
+  if (words.length === 1 && LOOKS.has(words[0])) {
+    return { error: 'Name one plane: ground, pipeline.' };
   }
   if (head === 'ground' || head === 'pipeline') {
-    return { plane: head, one: words[1] || '', depth };
+    if (words.length > 2) return { error: 'Name one pipeline.' };
+    return { plane: head, one: words[1] || '', look };
   }
   if (words.length > 1) return { error: 'Name one pipeline.' };
-  return { plane: 'pipeline', one: head, depth };
+  return { plane: 'pipeline', one: head, look };
 }
 
-export function snapshot(plane, one, depth, platesDir) {
-  const root = repoRootFrom(platesDir);
-  if (plane === 'ground') return groundSnapshot(one, depth, root);
-  if (plane === 'pipeline') return pipelineSnapshot(one, depth, platesDir, root);
-  return miss('Name one plane: ground, pipeline.');
+function runGround(one, look, root) {
+  if (one) return miss(`Triage did not name ${one}.`);
+  const flags = groundFlags(root);
+  if (look === 'peer') return ok(peerText('ground', 'Home. The dev plane.', flags));
+  const exam = examineGround(root);
+  if (look === 'examine') return ok(exam.text);
+  const triage = triageOf(exam, null);
+  if (look === 'triage') return ok(triage.text);
+  return ok('No cascade.');
+}
+
+function runPipeline(one, look, platesDir, root) {
+  const ids = listPipelineIds(platesDir);
+  if (!one || !ids.includes(one)) return miss(`Name one pipeline: ${ids.join(', ')}.`);
+  const seam = SEAMS[one] || null;
+  const flags = pipelineFlags(seam);
+  const digest = takeOf(pipelineBody(one, platesDir));
+  if (look === 'peer') return ok(peerText('ground', digest, flags));
+  const exam = examineSeam(root, seam);
+  if (look === 'examine') return ok(exam.text);
+  const triage = triageOf(exam, seam && seam.pick);
+  if (look === 'triage') return ok(triage.text);
+  if (triage.stop || !seam || !seam.pickDigest) return ok('No cascade.');
+  if (!fileHas(root, seam.file, seam.pickIn)) return ok('No cascade.');
+  return ok(cascadeText(`pipeline/${one}`, seam));
 }
 
 export function look(argv, platesDir) {
   const parsed = parseLook(argv);
   if (parsed.error) return miss(parsed.error);
-  return snapshot(parsed.plane, parsed.one, parsed.depth, platesDir);
+  const root = repoRootFrom(platesDir);
+  if (parsed.plane === 'ground') return runGround(parsed.one, parsed.look, root);
+  if (parsed.plane === 'pipeline') return runPipeline(parsed.one, parsed.look, platesDir, root);
+  return miss('Name one plane: ground, pipeline.');
 }
 
 function defaultPlatesDir() {
