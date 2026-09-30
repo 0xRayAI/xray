@@ -52,7 +52,7 @@ describe('goggles plane body', () => {
     const dir = mkdtempSync(join(tmpdir(), 'goggles-see-'));
     const table = join(dir, 'pops.json');
     for (const name of ['routing', 'house', 'boot', 'ground']) {
-      expect(cycle(['pop', name, 'seed'], null, null, undefined, table).ok).toBe(true);
+      expect(cycle(['pop', name, 'facet', 'seed'], null, null, undefined, table).ok).toBe(true);
     }
     const see = (argv: string[]) => look(argv, platesDir!, table);
 
@@ -84,7 +84,7 @@ describe('goggles plane body', () => {
   it('walks the scratch in order and cascades a line that is already in the file', () => {
     const scratch = join(mkdtempSync(join(tmpdir(), 'goggles-')), 'scratch.json');
     const root = dirname(dirname(dirname(platesDir!)));
-    expect(cycle(['pop', 'routing', 'Task text becomes an agent.'], null, scratch).ok).toBe(true);
+    expect(cycle(['pop', 'routing', 'facet', 'Task text becomes an agent.'], null, scratch).ok).toBe(true);
     const peer = cycle(['routing'], platesDir!, scratch);
     expect(peer.text).toContain('Filled: plate, files, worn');
     const saved = JSON.parse(readFileSync(scratch, 'utf8'));
@@ -121,7 +121,7 @@ describe('goggles plane body', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-'));
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
     writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
-    expect(cycle(['pop', 'ground', 'Home. The dev plane.'], null, join(root, '.xray', 'state', 'goggles-scratch.json')).ok).toBe(true);
+    expect(cycle(['pop', 'ground', 'facet', 'Home. The dev plane.'], null, join(root, '.xray', 'state', 'goggles-scratch.json')).ok).toBe(true);
     const written = maintainLens(root, platesDir!);
     expect(written.ok).toBe(true);
     const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
@@ -138,7 +138,7 @@ describe('goggles plane body', () => {
   it('the lens keeps the examine and triage already on the scratch', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-steps-'));
     const scratch = join(root, '.xray', 'state', 'goggles-scratch.json');
-    expect(cycle(['pop', 'boot', 'Drawing only.'], null, scratch).ok).toBe(true);
+    expect(cycle(['pop', 'boot', 'facet', 'Drawing only.'], null, scratch).ok).toBe(true);
     expect(cycle(['boot'], platesDir!, scratch).text).toContain('Filled: plate');
     expect(cycle(['examine'], platesDir!, scratch).text).toBe('Drawing only.');
     expect(cycle(['triage'], platesDir!, scratch).text).toBe('Pick: none');
@@ -157,7 +157,7 @@ describe('goggles plane body', () => {
     const scratch = join(root, '.xray', 'state', 'goggles-scratch.json');
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
     writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
-    expect(cycle(['pop', 'boot', 'Drawing only.'], null, scratch).ok).toBe(true);
+    expect(cycle(['pop', 'boot', 'facet', 'Drawing only.'], null, scratch).ok).toBe(true);
     expect(cycle(['boot'], platesDir!, scratch).text).toContain('Filled: plate');
     expect(cycle(['examine'], platesDir!, scratch).text).toBe('Drawing only.');
     expect(cycle(['triage'], platesDir!, scratch).text).toBe('Pick: none');
@@ -178,45 +178,36 @@ describe('goggles plane body', () => {
 });
 
 describe('pops', () => {
-  it('hits a stored line and does not open a plane', () => {
+  it('moves facet, feat, and fix without opening the plane', () => {
     const dir = mkdtempSync(join(tmpdir(), 'goggles-pop-'));
     const scratch = join(dir, 'scratch.json');
     const table = join(dir, 'pops.json');
-    const wrote = cycle(['pop', 'routing', 'Task text becomes an agent.'], null, scratch);
-    expect(wrote.ok).toBe(true);
-    expect(wrote.text).toBe('Task text becomes an agent.');
-    const hit = cycle(['pop', 'routing'], null, scratch);
-    expect(hit.text).toBe('Task text becomes an agent.');
+    const facet = cycle(['pop', 'routing'], platesDir, scratch);
+    expect(facet.text).toBe('facet: Task text becomes an agent.');
+    expect(existsSync(scratch)).toBe(false);
+    expect(cycle(['pop', 'routing'], null, scratch).text).toBe('facet: Task text becomes an agent.');
+    expect(cycle(['pop', 'routing', 'feat', 'cascade the digest'], null, scratch).text).toBe('feat: cascade the digest');
+    expect(cycle(['pop', 'routing', 'fix', 'do not count hits'], null, scratch).text).toBe('fix: do not count hits');
+    expect(cycle(['pop', 'routing', 'feat'], null, scratch).text).toBe('feat: cascade the digest');
+    expect(cycle(['pop', 'routing', 'not-a-kind', 'no'], null, scratch).text).toBe('Name facet, feat, or fix.');
+    const boot = cycle(['pop', 'boot'], platesDir, scratch);
+    expect(boot.text.startsWith('facet: ')).toBe(true);
+    expect(boot.text).not.toBe('Act.');
+    expect(cycle(['pop', 'boot'], null, scratch).text).toBe(boot.text);
     expect(cycle(['pop', 'missing'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop'], null, scratch).text).toBe('Name one pop.');
-    expect(cycle(['pop', 'routing'], null, scratch).text).toBe('Task text becomes an agent.');
     const saved = JSON.parse(readFileSync(table, 'utf8'));
-    expect(saved.facets.routing).toBe('Task text becomes an agent.');
-    expect(saved.streak).toBe(2);
-    expect(saved.facets.missing).toBeUndefined();
-    rmSync(dir, { recursive: true, force: true });
-  });
-
-  it('stops at three hits, and teardown keeps the table', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'goggles-pop3-'));
-    const scratch = join(dir, 'scratch.json');
-    const table = join(dir, 'pops.json');
-    expect(cycle(['pop', 'wake-cascade', 'Chat is not the brain.'], null, scratch).ok).toBe(true);
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Act.');
-    expect(cycle(['pop', 'missing'], null, scratch).text).toBe('Empty.');
-    expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(3);
-    expect(JSON.parse(readFileSync(table, 'utf8')).facets.missing).toBeUndefined();
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Act.');
+    expect(saved.planes.routing.facet).toBe('Task text becomes an agent.');
+    expect(saved.planes.routing.feat).toBe('cascade the digest');
+    expect(saved.planes.routing.fix).toBe('do not count hits');
+    expect(saved.planes.missing).toBeUndefined();
+    expect(saved.streak).toBeUndefined();
+    expect(existsSync(scratch)).toBe(false);
 
     writeFileSync(scratch, `${JSON.stringify({ digest: 'Home. The dev plane.' })}\n`);
     expect(cycle(['teardown'], platesDir, scratch).text.startsWith('Ground.')).toBe(true);
     expect(existsSync(scratch)).toBe(false);
-    expect(existsSync(table)).toBe(true);
-    expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(0);
-    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
+    expect(JSON.parse(readFileSync(table, 'utf8')).planes.routing.facet).toBe('Task text becomes an agent.');
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -226,7 +217,7 @@ describe('pops', () => {
     expect(once).toContain('The body stays.');
     expect(once).toContain('## Pop job');
     expect(once).toContain('A pop is not a law.');
-    expect(once).toContain('A slow look opens a plane only when that name is already popped.');
+    expect(once).toContain('A slow look opens a plane only when that name already has a facet.');
     expect(once).not.toContain('still opens a plane that was never popped');
     expect(once).not.toContain('Not the cache.');
     expect(notesWithPopJob(once)).toBe(once);
@@ -243,7 +234,7 @@ describe('pops', () => {
     ].join('\n');
     const next = notesWithPopJob(stale);
     expect(next).not.toContain('still opens a plane that was never popped');
-    expect(next).toContain('A slow look opens a plane only when that name is already popped.');
+    expect(next).toContain('A slow look opens a plane only when that name already has a facet.');
     expect(notesWithPopJob(next)).toBe(next);
   });
 
@@ -252,7 +243,7 @@ describe('pops', () => {
     const scratch = join(dir, 'scratch.json');
     expect(cycle(['routing'], null, scratch).text).toBe('Empty.');
     expect(existsSync(scratch)).toBe(false);
-    expect(cycle(['pop', 'routing', 'Task text becomes an agent.'], null, scratch).ok).toBe(true);
+    expect(cycle(['pop', 'routing', 'facet', 'Task text becomes an agent.'], null, scratch).ok).toBe(true);
     const opened = cycle(['routing'], platesDir, scratch);
     expect(opened.text).toContain('Filled: plate, files, worn');
     expect(opened.text).not.toBe('Task text becomes an agent.');
@@ -267,7 +258,7 @@ describe('pops', () => {
     const table = join(dir, 'pops.json');
     expect(cycle(['pop', 'gibberish'], null, scratch).text).toBe('Empty.');
     expect(existsSync(scratch)).toBe(false);
-    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ facets: {}, streak: 0 });
+    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ planes: {} });
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -275,11 +266,14 @@ describe('pops', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-wear-table-'));
     const table = join(root, '.xray', 'state', 'pops.json');
     writePopJob(root);
-    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ facets: {}, streak: 0 });
+    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ planes: {} });
     writeFileSync(table, `${JSON.stringify({ facets: { routing: 'stay' }, streak: 2 }, null, 2)}\n`);
     writePopJob(root);
     expect(JSON.parse(readFileSync(table, 'utf8')).facets.routing).toBe('stay');
     expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(2);
+    writeFileSync(table, `${JSON.stringify({ facets: {}, streak: 3 })}\n`);
+    writePopJob(root);
+    expect(JSON.parse(readFileSync(table, 'utf8'))).toEqual({ planes: {} });
     rmSync(root, { recursive: true, force: true });
   });
 });

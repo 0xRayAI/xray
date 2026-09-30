@@ -4,8 +4,8 @@
  * Peer writes a scratch. Examine checks only that scratch against disk.
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
- * A pop is a hit on a name already stored. The table survives the wipe.
- * A slow look opens a plane only when that name is already popped.
+ * A pop is one fast move. The three are facet, feat, and fix.
+ * A slow look opens a plane only when that name already has a facet.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -396,19 +396,18 @@ function lookedName(parsed) {
 export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileStore(scratchPath) : memStore(), popsPath = null) {
   const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
   const popsFile = popsPathBeside(scratchPath, popsPath);
-  if (words[0] === 'pop') return runPop(words.slice(1), popsFile);
+  if (words[0] === 'pop') return runPop(words.slice(1), popsFile, platesDir);
   const continues = words.length === 1 && (words[0] === 'teardown' || (LOOKS.has(words[0]) && words[0] !== 'peer'));
   if (!continues) {
     const parsed = parseLook(words);
     if (parsed.error) return miss(parsed.error);
     const name = lookedName(parsed);
-    if (name && !loadPops(popsFile).facets[name]) return ok('Empty.');
+    if (name && !hasFacet(loadPops(popsFile), name)) return ok('Empty.');
   }
   const root = repoRootFrom(platesDir);
   if (words.length === 1 && words[0] === 'teardown') {
     const rec = store.load();
     store.clear();
-    resetPopStreak(popsFile);
     const digest = rec && rec.digest ? rec.digest : '';
     return ok(digest ? `Ground.\n${digest}` : 'Ground.');
   }
@@ -442,18 +441,45 @@ function popsPathBeside(scratchPath, explicit) {
   return join(dirname(scratchPath), 'pops.json');
 }
 
+const POP_KINDS = ['facet', 'feat', 'fix'];
+
+function blankPop() {
+  return { facet: '', feat: '', fix: '' };
+}
+
+function popLine(raw) {
+  return String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+}
+
+function hasFacet(pops, name) {
+  return Boolean(pops.planes[name] && pops.planes[name].facet);
+}
+
 function loadPops(file) {
-  const empty = { facets: {}, streak: 0 };
+  const empty = { planes: {} };
   if (!file || !existsSync(file)) return empty;
   try {
     const data = JSON.parse(readFileSync(file, 'utf8'));
-    const facets = {};
-    const raw = data && data.facets && typeof data.facets === 'object' ? data.facets : {};
-    for (const [name, facet] of Object.entries(raw)) {
-      if (typeof facet === 'string' && facet.trim()) facets[name] = facet;
+    const planes = {};
+    const rawPlanes = data && data.planes && typeof data.planes === 'object' ? data.planes : null;
+    if (rawPlanes) {
+      for (const [name, raw] of Object.entries(rawPlanes)) {
+        const key = popName(name);
+        if (!key || !raw || typeof raw !== 'object') continue;
+        const row = blankPop();
+        for (const kind of POP_KINDS) row[kind] = popLine(raw[kind]);
+        if (row.facet || row.feat || row.fix) planes[key] = row;
+      }
+      return { planes };
     }
-    const streak = Number.isInteger(data.streak) && data.streak > 0 ? data.streak : 0;
-    return { facets, streak };
+    const rawFacets = data && data.facets && typeof data.facets === 'object' ? data.facets : {};
+    for (const [name, facet] of Object.entries(rawFacets)) {
+      const key = popName(name);
+      const line = popLine(facet);
+      if (!key || !line) continue;
+      planes[key] = { ...blankPop(), facet: line };
+    }
+    return { planes };
   } catch {
     return empty;
   }
@@ -461,58 +487,73 @@ function loadPops(file) {
 
 function savePops(file, pops) {
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ facets: pops.facets, streak: pops.streak }, null, 2)}\n`);
+  writeFileSync(file, `${JSON.stringify({ planes: pops.planes }, null, 2)}\n`);
 }
 
-function ensurePopTable(file, pops = { facets: {}, streak: 0 }) {
+function ensurePopTable(file) {
   if (!file || existsSync(file)) return;
-  savePops(file, pops);
+  savePops(file, { planes: {} });
+}
+
+function settlePopTable(file) {
+  ensurePopTable(file);
+  if (!file || !existsSync(file)) return;
+  if (Object.keys(loadPops(file).planes).length) return;
+  try {
+    const raw = JSON.parse(readFileSync(file, 'utf8'));
+    if (raw && raw.planes) return;
+  } catch {
+    return;
+  }
+  savePops(file, { planes: {} });
 }
 
 function popName(name) {
   return /^[a-z0-9][a-z0-9-]*$/i.test(String(name || '')) ? String(name) : '';
 }
 
-export function popWrite(file, name, facet) {
-  const key = popName(name);
-  const line = String(facet || '').replace(/\s+/g, ' ').trim().slice(0, 240);
-  if (!file) return miss('No pop table.');
-  if (!key) return miss('Name one pop.');
-  if (!line) return miss('A pop needs one line.');
-  const pops = loadPops(file);
-  pops.facets[key] = line;
-  savePops(file, pops);
-  return ok(line);
+function digestOf(platesDir, name) {
+  if (!platesDir) return '';
+  const parsed = parseLook([name]);
+  if (parsed.error) return '';
+  const resolved = resolvePlane(parsed, platesDir);
+  if (!resolved.ok || !resolved.plane) return '';
+  return popLine(resolved.plane.digest);
 }
 
-export function popHit(file, name) {
-  const key = popName(name);
+function runPop(words, file, platesDir) {
   if (!file) return miss('No pop table.');
+  if (!words.length) return miss('Name one pop.');
+  const key = popName(words[0]);
   if (!key) return miss('Name one pop.');
+  const kind = POP_KINDS.includes(words[1]) ? words[1] : '';
+  const line = popLine(kind ? words.slice(2).join(' ') : words.slice(1).join(' '));
+  if (!kind && line) return miss('Name facet, feat, or fix.');
   const pops = loadPops(file);
-  const facet = pops.facets[key];
-  if (!facet) {
-    ensurePopTable(file, pops);
+  const row = pops.planes[key] ? { ...pops.planes[key] } : blankPop();
+  if (line) {
+    row[kind] = line;
+    pops.planes[key] = row;
+    savePops(file, pops);
+    return ok(`${kind}: ${line}`);
+  }
+  if (kind) {
+    if (!row[kind]) {
+      ensurePopTable(file);
+      return ok('Empty.');
+    }
+    return ok(`${kind}: ${row[kind]}`);
+  }
+  if (row.facet) return ok(`facet: ${row.facet}`);
+  const digest = digestOf(platesDir, key);
+  if (!digest) {
+    ensurePopTable(file);
     return ok('Empty.');
   }
-  if (pops.streak >= 3) return ok('Act.');
-  pops.streak += 1;
+  row.facet = digest;
+  pops.planes[key] = row;
   savePops(file, pops);
-  return ok(facet);
-}
-
-export function resetPopStreak(file) {
-  if (!file || !existsSync(file)) return;
-  const pops = loadPops(file);
-  if (pops.streak === 0) return;
-  pops.streak = 0;
-  savePops(file, pops);
-}
-
-function runPop(words, file) {
-  if (!words.length) return miss('Name one pop.');
-  if (words.length === 1) return popHit(file, words[0]);
-  return popWrite(file, words[0], words.slice(1).join(' '));
+  return ok(`facet: ${digest}`);
 }
 
 export function lensPath(root) {
@@ -531,23 +572,31 @@ function notesPath(root) {
 }
 
 const POP_JOB = [
-  'Pops are a hit table at `.xray/state/pops.json`. One name, one line.',
+  'A pop is one fast move between planes. The three are facet, feat, and fix.',
+  'facet is the digested state. feat is the move. fix is the correction.',
   'A hit returns that line and does not open the plane. A miss stays empty and still leaves the table.',
-  'Three hits, then Act. A miss is not Act. Teardown wipes the scratch and the streak, not the table.',
-  'The wear leaves the table when the file is missing.',
+  'Teardown wipes the scratch, not the table. The wear leaves the table when the file is missing.',
   'A pop is not a law.',
-  'A slow look opens a plane only when that name is already popped.',
+  'A slow look opens a plane only when that name already has a facet.',
 ].join(' ');
 
 export function notesWithPopJob(existing) {
   let text = String(existing || '');
   text = text.replace(
     'PR #161. Not merged. Not published. Not the cache.',
-    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. A slow look opens a plane only when that name is already popped.',
+    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. A slow look opens a plane only when that name already has a facet.',
   );
   text = text.replace(
     'The slow look still opens a plane that was never popped.',
+    'A slow look opens a plane only when that name already has a facet.',
+  );
+  text = text.replace(
     'A slow look opens a plane only when that name is already popped.',
+    'A slow look opens a plane only when that name already has a facet.',
+  );
+  text = text.replace(
+    'Three hits, then Act. A miss is not Act. Teardown wipes the scratch and the streak, not the table.',
+    'Teardown wipes the scratch, not the table.',
   );
   const block = `## Pop job\n\n${POP_JOB}\n`;
   const match = /^## Pop job\r?\n/m.exec(text);
@@ -562,7 +611,7 @@ export function notesWithPopJob(existing) {
 }
 
 export function writePopJob(root) {
-  ensurePopTable(popsFileFor(root));
+  settlePopTable(popsFileFor(root));
   const notesFile = notesPath(root);
   mkdirSync(dirname(notesFile), { recursive: true });
   const prev = existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '';
