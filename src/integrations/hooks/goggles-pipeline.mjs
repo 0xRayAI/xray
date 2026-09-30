@@ -4,6 +4,7 @@
  * Peer writes a scratch. Examine checks only that scratch against disk.
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
+ * A pop is a hit on a name already stored. The table survives the wipe.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -386,12 +387,15 @@ function step(word, platesDir, root, store) {
   return ok(formatPeer(child));
 }
 
-export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileStore(scratchPath) : memStore()) {
+export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileStore(scratchPath) : memStore(), popsPath = null) {
   const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
+  const popsFile = popsPathBeside(scratchPath, popsPath);
+  if (words[0] === 'pop') return runPop(words.slice(1), popsFile);
   const root = repoRootFrom(platesDir);
   if (words.length === 1 && words[0] === 'teardown') {
     const rec = store.load();
     store.clear();
+    resetPopStreak(popsFile);
     const digest = rec && rec.digest ? rec.digest : '';
     return ok(digest ? `Ground.\n${digest}` : 'Ground.');
   }
@@ -416,6 +420,81 @@ export function scratchFileFor(root) {
   return join(root, '.xray', 'state', 'goggles-scratch.json');
 }
 
+export function popsFileFor(root) {
+  return join(root, '.xray', 'state', 'pops.json');
+}
+
+function popsPathBeside(scratchPath, explicit) {
+  if (explicit) return explicit;
+  if (!scratchPath) return null;
+  return join(dirname(scratchPath), 'pops.json');
+}
+
+function loadPops(file) {
+  const empty = { facets: {}, streak: 0 };
+  if (!file || !existsSync(file)) return empty;
+  try {
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    const facets = {};
+    const raw = data && data.facets && typeof data.facets === 'object' ? data.facets : {};
+    for (const [name, facet] of Object.entries(raw)) {
+      if (typeof facet === 'string' && facet.trim()) facets[name] = facet;
+    }
+    const streak = Number.isInteger(data.streak) && data.streak > 0 ? data.streak : 0;
+    return { facets, streak };
+  } catch {
+    return empty;
+  }
+}
+
+function savePops(file, pops) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ facets: pops.facets, streak: pops.streak }, null, 2)}\n`);
+}
+
+function popName(name) {
+  return /^[a-z0-9][a-z0-9-]*$/i.test(String(name || '')) ? String(name) : '';
+}
+
+export function popWrite(file, name, facet) {
+  const key = popName(name);
+  const line = String(facet || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+  if (!file) return miss('No pop table.');
+  if (!key) return miss('Name one pop.');
+  if (!line) return miss('A pop needs one line.');
+  const pops = loadPops(file);
+  pops.facets[key] = line;
+  savePops(file, pops);
+  return ok(line);
+}
+
+export function popHit(file, name) {
+  const key = popName(name);
+  if (!file) return miss('No pop table.');
+  if (!key) return miss('Name one pop.');
+  const pops = loadPops(file);
+  if (pops.streak >= 3) return ok('Act.');
+  const facet = pops.facets[key];
+  if (!facet) return ok('Empty.');
+  pops.streak += 1;
+  savePops(file, pops);
+  return ok(facet);
+}
+
+export function resetPopStreak(file) {
+  if (!file || !existsSync(file)) return;
+  const pops = loadPops(file);
+  if (pops.streak === 0) return;
+  pops.streak = 0;
+  savePops(file, pops);
+}
+
+function runPop(words, file) {
+  if (!words.length) return miss('Name one pop.');
+  if (words.length === 1) return popHit(file, words[0]);
+  return popWrite(file, words[0], words.slice(1).join(' '));
+}
+
 export function lensPath(root) {
   return join(root, '.xray', 'state', 'LENS.md');
 }
@@ -429,6 +508,41 @@ function readLens(root) {
 
 function notesPath(root) {
   return join(root, '.xray', 'state', 'NOTES.md');
+}
+
+const POP_JOB = [
+  'Pops are a hit table at `.xray/state/pops.json`. One name, one line.',
+  'A hit returns that line and does not open the plane. A miss stays empty.',
+  'Three hits, then Act. Teardown wipes the scratch and the streak, not the table.',
+  'A pop is not a law.',
+  'Left: the slow look still opens a plane that was never popped.',
+].join(' ');
+
+export function notesWithPopJob(existing) {
+  let text = String(existing || '');
+  text = text.replace(
+    'PR #161. Not merged. Not published. Not the cache.',
+    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. The slow look still opens a plane that was never popped.',
+  );
+  const block = `## Pop job\n\n${POP_JOB}\n`;
+  const match = /^## Pop job\r?\n/m.exec(text);
+  if (!match) {
+    if (!text.trim()) return block;
+    return `${text.trimEnd()}\n\n${block}`;
+  }
+  const after = text.slice(match.index + match[0].length);
+  const next = after.search(/\n## |\n# /);
+  const end = next === -1 ? text.length : match.index + match[0].length + next;
+  return `${text.slice(0, match.index)}${block}${text.slice(end)}`;
+}
+
+export function writePopJob(root) {
+  const notesFile = notesPath(root);
+  mkdirSync(dirname(notesFile), { recursive: true });
+  const prev = existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '';
+  const next = notesWithPopJob(prev);
+  if (next !== prev) writeFileSync(notesFile, next);
+  return next;
 }
 
 export function notesWithPickup(existing, pickup) {
@@ -448,7 +562,10 @@ export function maintainLens(root, platesDir) {
   let rec = readScratch(scratch);
   if (!rec) {
     const kept = readLens(root);
-    if (kept) return ok(kept);
+    if (kept) {
+      writePopJob(root);
+      return ok(kept);
+    }
     const peered = cycle(['ground'], plates, scratch);
     if (!peered.ok) return peered;
     rec = readScratch(scratch);
@@ -460,6 +577,7 @@ export function maintainLens(root, platesDir) {
   const notesFile = notesPath(root);
   const prev = existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '';
   writeFileSync(notesFile, notesWithPickup(prev, text.replace(/\n/g, ' ')));
+  writePopJob(root);
   return ok(text);
 }
 

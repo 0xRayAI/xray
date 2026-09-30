@@ -13,6 +13,7 @@ import {
   look,
   maintainLens,
   notesWithPickup,
+  notesWithPopJob,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const platesDir = findPlatesDir(dirname(fileURLToPath(import.meta.url)));
@@ -158,6 +159,59 @@ describe('goggles plane body', () => {
     expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe(lensBefore);
     expect(readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(notesBefore);
     expect(existsSync(scratch)).toBe(false);
+    expect(readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8')).toContain('## Pop job');
     rmSync(root, { recursive: true, force: true });
+  });
+});
+
+describe('pops', () => {
+  it('hits a stored line and does not open a plane', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-pop-'));
+    const scratch = join(dir, 'scratch.json');
+    const table = join(dir, 'pops.json');
+    const wrote = cycle(['pop', 'routing', 'Task text becomes an agent.'], null, scratch);
+    expect(wrote.ok).toBe(true);
+    expect(wrote.text).toBe('Task text becomes an agent.');
+    const hit = cycle(['pop', 'routing'], null, scratch);
+    expect(hit.text).toBe('Task text becomes an agent.');
+    expect(cycle(['pop', 'missing'], null, scratch).text).toBe('Empty.');
+    expect(cycle(['pop'], null, scratch).text).toBe('Name one pop.');
+    expect(cycle(['pop', 'routing'], null, scratch).text).toBe('Task text becomes an agent.');
+    const saved = JSON.parse(readFileSync(table, 'utf8'));
+    expect(saved.facets.routing).toBe('Task text becomes an agent.');
+    expect(saved.streak).toBe(2);
+    expect(saved.facets.missing).toBeUndefined();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('stops at three hits, and teardown keeps the table', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-pop3-'));
+    const scratch = join(dir, 'scratch.json');
+    const table = join(dir, 'pops.json');
+    expect(cycle(['pop', 'wake-cascade', 'Chat is not the brain.'], null, scratch).ok).toBe(true);
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Act.');
+    expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(3);
+
+    writeFileSync(scratch, `${JSON.stringify({ digest: 'Home. The dev plane.' })}\n`);
+    expect(cycle(['teardown'], platesDir, scratch).text.startsWith('Ground.')).toBe(true);
+    expect(existsSync(scratch)).toBe(false);
+    expect(existsSync(table)).toBe(true);
+    expect(JSON.parse(readFileSync(table, 'utf8')).streak).toBe(0);
+    expect(cycle(['pop', 'wake-cascade'], null, scratch).text).toBe('Chat is not the brain.');
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('the wear writes the pop job and keeps the notes body', () => {
+    const body = '**Pickup line:** old\n\n# Stay\n\nThe body stays.\n\n## This cut\n\nPR #161. Not merged. Not published. Not the cache.\n';
+    const once = notesWithPopJob(body);
+    expect(once).toContain('The body stays.');
+    expect(once).toContain('## Pop job');
+    expect(once).toContain('A pop is not a law.');
+    expect(once).toContain('The slow look still opens a plane that was never popped.');
+    expect(once).not.toContain('Not the cache.');
+    expect(notesWithPopJob(once)).toBe(once);
   });
 });
