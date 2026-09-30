@@ -367,19 +367,33 @@ describe('pops', () => {
         routing: {
           card: { from: 'ground', digest: 'Task text becomes an agent.', filled: ['plate', 'files'] },
           facet: 'invented stamp that must not be the reason',
+          feat: 'follow the stored move',
         },
       },
     }));
     const stopped = cardStop(root, 'grep', 'routing', []);
     expect(stopped?.gate).toBe('goggles');
-    expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files.');
+    expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files. Open: src/nucleus/thin-dispatch.ts. feat: follow the stored move');
     expect(stopped?.reason).not.toContain('invented');
     expect(cardStop(root, 'grep', 'routing', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
     expect(cardStop(root, 'bash', 'rg routing src/nucleus/thin-dispatch.ts', [])).toBeNull();
+    expect(cardStop(root, 'grep', 'routing', ['src/nucleus'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
+    expect(cardStop(root, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
     expect(cardStop(root, 'grep', 'routing and house', [])).toBeNull();
-    expect(cardStop(root, 'grep', 'house', [])).toBeNull();
     expect(cardStop(root, 'grep', 'goggles routing', [])).toBeNull();
     expect(cardStop(root, 'read_file', 'routing', [])).toBeNull();
+
+    const fresh = mkdtempSync(join(tmpdir(), 'goggles-hand-'));
+    mkdirSync(join(fresh, '.xray', 'state'), { recursive: true });
+    const handed = cardStop(fresh, 'grep', 'boot', []);
+    expect(handed?.reason).toContain('boot. From: ground.');
+    expect(handed?.reason).toContain('Open: docs-site/docs/plates/boot.md');
+    expect(handed?.reason).not.toContain('feat:');
+    expect(JSON.parse(readFileSync(join(fresh, '.xray', 'state', 'pops.json'), 'utf8')).planes.boot.card.digest).toBeTruthy();
+    const house = cardStop(fresh, 'grep', 'house', []);
+    expect(house?.reason).toContain('Open: grok-bot/lib/seat-doctor.cjs');
+    expect(house?.reason).not.toContain('setup-house');
     rmSync(root, { recursive: true, force: true });
+    rmSync(fresh, { recursive: true, force: true });
   });
 });

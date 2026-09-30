@@ -438,18 +438,17 @@ export function popsFileFor(root) {
   return join(root, '.xray', 'state', 'pops.json');
 }
 
-function isWideSearch(toolName, text, paths, root) {
+function isSearch(toolName, text) {
   const tool = String(toolName || '');
-  const raw = String(text || '');
-  const hunt = /grep|search|glob/i.test(tool) && !/web_/i.test(tool);
-  const shellHunt = /^\s*(rg|grep|find)\b/.test(raw);
-  if (!hunt && !shellHunt) return false;
-  if (shellHunt && /\/[\w.-]+/.test(raw)) return false;
-  const rootNorm = String(root || '').replace(/\/$/, '');
-  const narrowed = (paths || [])
-    .map((item) => String(item || '').replace(/\/$/, ''))
-    .filter((item) => item && item !== '.' && item !== rootNorm);
-  return narrowed.length === 0;
+  if (/web_/i.test(tool)) return false;
+  if (/grep|search|glob/i.test(tool)) return true;
+  return /^\s*(rg|grep|find)\b/.test(String(text || ''));
+}
+
+function isPlateOpen(toolName, text, paths) {
+  const tool = String(toolName || '');
+  if (!/read|open/i.test(tool)) return false;
+  return /\/plates\/[a-z0-9-]+\.md/i.test([text, ...(paths || [])].join('\n'));
 }
 
 function planeWord(name, text) {
@@ -465,29 +464,50 @@ function knownPlaneIds() {
   }
 }
 
-function cardsNamed(text, planes) {
-  const hits = [];
-  for (const [name, row] of Object.entries(planes || {})) {
-    if (name === 'ground' || !row || !row.card || !row.card.digest) continue;
-    if (planeWord(name, text)) hits.push(name);
+function storedAction(row) {
+  const lines = [];
+  if (row && row.feat) lines.push(`feat: ${row.feat}`);
+  if (row && row.fix) lines.push(`fix: ${row.fix}`);
+  for (const [kind, value] of Object.entries((row && row.outcomes) || {})) {
+    if (value && value.line) lines.push(`${kind}: ${value.line}`);
   }
-  return hits;
+  return lines.join(' ');
+}
+
+function openTarget(row) {
+  const dive = diveText(row);
+  return dive ? dive.replace(/^(files|plate|worn):\s*/, '') : '';
+}
+
+function pointsAt(text, paths, open) {
+  if (!open) return false;
+  return [text, ...(paths || [])].join('\n').includes(open);
 }
 
 export function cardStop(root, toolName, text, paths = []) {
-  const raw = String(text || '');
+  const raw = [String(text || ''), ...(paths || [])].join('\n');
   if (/\bgoggles\b/i.test(raw)) return null;
-  if (!isWideSearch(toolName, raw, paths, root)) return null;
-  const named = knownPlaneIds().filter((name) => planeWord(name, raw));
+  const plates = findPlatesDir(root) || findPlatesDir(dirname(fileURLToPath(import.meta.url)));
+  const names = new Set(knownPlaneIds());
+  for (const id of listPipelineIds(plates)) names.add(id);
+  names.delete('ground');
+  const named = [...names].filter((name) => planeWord(name, raw));
   if (named.length !== 1) return null;
-  const hits = cardsNamed(raw, loadPops(popsFileFor(root)).planes);
-  if (hits.length !== 1) return null;
-  const card = loadPops(popsFileFor(root)).planes[hits[0]].card;
+  if (!isSearch(toolName, text) && !isPlateOpen(toolName, raw, paths)) return null;
+  const file = popsFileFor(root);
+  const pops = loadPops(file);
+  const row = { ...(pops.planes[named[0]] || {}) };
+  const held = holdPlane(file, pops, named[0], row, plates);
+  if (!held || !held.card) return null;
+  ensureUseful(file, pops, named[0], held, plates);
+  const fresh = loadPops(file).planes[named[0]] || held;
+  const open = openTarget(fresh);
+  if (pointsAt(raw, paths, open)) return null;
+  const card = fresh.card;
   const filled = card.filled && card.filled.length ? card.filled.join(', ') : 'none';
-  return {
-    gate: 'goggles',
-    reason: `${hits[0]}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}.`,
-  };
+  const action = storedAction(fresh);
+  const reason = `${named[0]}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}. Open: ${open || 'Empty.'}${action ? `. ${action}` : ''}`;
+  return { gate: 'goggles', reason };
 }
 
 function popsPathBeside(scratchPath, explicit) {
