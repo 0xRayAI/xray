@@ -93,13 +93,13 @@ program
 
 program
   .command("goggles")
-  .argument("<id>", "one pipeline plate")
-  .description("Look at one pipeline. Not every pipeline at once.")
-  .action((id: string) => {
+  .argument("[args...]", "plane, one name, and an optional depth")
+  .description("Snapshot one plane. A number opens the next depth.")
+  .action((args: string[]) => {
     const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
     const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
     const script = existsSync(built) ? built : source;
-    const result = spawnSync(process.execPath, [script, id], { encoding: "utf8" });
+    const result = spawnSync(process.execPath, [script, ...(args ?? [])], { encoding: "utf8" });
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);

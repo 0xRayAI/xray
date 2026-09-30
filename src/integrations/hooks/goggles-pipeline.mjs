@@ -1,12 +1,10 @@
 /**
- * Goggles for the pipeline plane. One stamped pipeline. Its cascade.
- * Domain plates are a different plane.
+ * Goggles. A snapshot of one real plane: a short digest, then the next depth.
+ * Ground and pipeline can be landed on. Domain, eco, and the outer loop cannot.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const PLANE = 'pipeline';
 
 export function findPlatesDir(start) {
   let dir = start;
@@ -91,28 +89,140 @@ export function listPipelineIds(platesDir) {
   return ids;
 }
 
-export function lookPipeline(id, platesDir) {
-  const ids = listPipelineIds(platesDir);
-  const name = String(id || '').trim();
-  if (!ids.includes(name)) {
-    return {
-      ok: false,
-      text: `Name one pipeline: ${ids.join(', ')}.`,
-    };
-  }
-  const raw = readFileSync(join(platesDir, `${name}.md`), 'utf8');
-  const body = stripFrontmatter(raw);
-  const cascade = cascadeOf(body);
-  const take = takeOf(body);
+const GROUND = [
+  ['code', 'The reactive engine, still in TypeScript.', 'src'],
+  ['OP-PROC', 'The procedure the model carries.', 'grok-bot/OP-PROC.md'],
+  ['model', 'The seat that runs the procedure.', 'src/opencode/agents'],
+  ['suit', 'Worn gear: constitution, temperament, Station.', 'Agents.md'],
+  ['mill', 'Fashions and fastens.', null],
+  ['host', 'The floor.', 'src/integrations'],
+  ['test/ship', 'Test then ship is the hero. Ship without that proof is the catastrophe.', 'package.json'],
+];
+
+const SEAMS = {
+  routing: {
+    file: 'src/nucleus/thin-dispatch.ts',
+    mark: 'export function scoreAndRoute',
+    digest: 'scoreAndRoute in src/nucleus/thin-dispatch.ts',
+    cascade: 'task text → scoreComplexity → routeToAgent → resolveThinDispatch → agent',
+    next: {
+      digest: 'A null provider returns the score unchanged. A worn provider can change the agent.',
+      cascade: 'score → agent → resolveThinDispatch → adjusted score, strategy, signals',
+    },
+  },
+  house: {
+    file: 'grok-bot/lib/seat-doctor.cjs',
+    mark: 'no house/HOUSE.md, run setup-house',
+    digest: 'seat-doctor in grok-bot/lib/seat-doctor.cjs',
+    cascade: 'missing HOUSE.md warns → example lines fail → filled lines pass',
+  },
+};
+
+function repoRootFrom(platesDir) {
+  return dirname(dirname(dirname(platesDir)));
+}
+
+function shot(plane, one, depth, digest, cascade, deeper) {
+  const who = one ? `${plane}/${one}` : plane;
   return {
     ok: true,
     text: [
-      `Plane: ${PLANE}`,
-      `One: ${name}`,
-      `Cascade: ${cascade.join(' → ')}`,
-      `Take: ${take}`,
+      `Snapshot: ${who}@${depth}`,
+      `Digest: ${digest}`,
+      `Cascade: ${cascade}`,
+      `Deeper: ${deeper}`,
     ].join('\n'),
   };
+}
+
+function miss(text) {
+  return { ok: false, text };
+}
+
+function pipelineBody(id, platesDir) {
+  const raw = readFileSync(join(platesDir, `${id}.md`), 'utf8');
+  return stripFrontmatter(raw);
+}
+
+function groundSnapshot(one, depth, root) {
+  if (!one) {
+    if (depth > 1) return miss(`Name one on ground: ${GROUND.map(([id]) => id).join(', ')}.`);
+    return shot(
+      'ground',
+      '',
+      1,
+      'Home. The dev plane.',
+      GROUND.map(([id]) => id).join(' → '),
+      'name one',
+    );
+  }
+  const part = GROUND.find(([id]) => id === one);
+  if (!part) return miss(`Name one on ground: ${GROUND.map(([id]) => id).join(', ')}.`);
+  if (depth > 2) return miss('No deeper.');
+  const [, line, file] = part;
+  const present = file ? existsSync(join(root, file)) : false;
+  const cascade = file ? (present ? file : `${file} missing`) : 'no single file';
+  const digest = present || !file ? line : `${line} Missing in this tree.`;
+  return shot('ground', one, 2, digest, cascade, 'none');
+}
+
+function pipelineSnapshot(one, depth, platesDir, root) {
+  const ids = listPipelineIds(platesDir);
+  if (!one || !ids.includes(one)) return miss(`Name one pipeline: ${ids.join(', ')}.`);
+  const body = pipelineBody(one, platesDir);
+  const stages = cascadeOf(body).join(' → ');
+  if (depth <= 1) {
+    return shot('pipeline', one, 1, takeOf(body), stages, '2');
+  }
+  const seam = SEAMS[one];
+  if (!seam) {
+    if (depth > 2) return miss('No deeper.');
+    return shot('pipeline', one, 2, 'Drawing only. No file named.', stages, 'none');
+  }
+  const full = join(root, seam.file);
+  const worn = existsSync(full) && readFileSync(full, 'utf8').includes(seam.mark);
+  if (!worn) {
+    return shot('pipeline', one, 2, `Seam missing in this tree: ${seam.file}`, stages, 'none');
+  }
+  if (depth === 2) {
+    return shot('pipeline', one, 2, seam.digest, seam.cascade, seam.next ? '3' : 'none');
+  }
+  if (!seam.next || depth > 3) return miss('No deeper.');
+  return shot('pipeline', one, 3, seam.next.digest, seam.next.cascade, 'none');
+}
+
+export function parseLook(argv) {
+  const words = [];
+  let depth = 1;
+  for (const raw of argv) {
+    const arg = String(raw || '').trim();
+    if (!arg) continue;
+    if (/^\d+$/.test(arg)) depth = Number(arg);
+    else words.push(arg);
+  }
+  if (words.length === 0) return { error: 'Name one plane: ground, pipeline.' };
+  const head = words[0];
+  if (head === 'domain' || head === 'eco' || head === 'outer' || head === 'outer-loop') {
+    return { error: 'Not a plane yet. Planes: ground, pipeline.' };
+  }
+  if (head === 'ground' || head === 'pipeline') {
+    return { plane: head, one: words[1] || '', depth };
+  }
+  if (words.length > 1) return { error: 'Name one pipeline.' };
+  return { plane: 'pipeline', one: head, depth };
+}
+
+export function snapshot(plane, one, depth, platesDir) {
+  const root = repoRootFrom(platesDir);
+  if (plane === 'ground') return groundSnapshot(one, depth, root);
+  if (plane === 'pipeline') return pipelineSnapshot(one, depth, platesDir, root);
+  return miss('Name one plane: ground, pipeline.');
+}
+
+export function look(argv, platesDir) {
+  const parsed = parseLook(argv);
+  if (parsed.error) return miss(parsed.error);
+  return snapshot(parsed.plane, parsed.one, parsed.depth, platesDir);
 }
 
 function defaultPlatesDir() {
@@ -121,7 +231,7 @@ function defaultPlatesDir() {
 
 const isMain = Boolean(process.argv[1]) && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const result = lookPipeline(process.argv[2], defaultPlatesDir());
+  const result = look(process.argv.slice(2), defaultPlatesDir());
   process.stdout.write(`${result.text}\n`);
   process.exit(result.ok ? 0 : 1);
 }
