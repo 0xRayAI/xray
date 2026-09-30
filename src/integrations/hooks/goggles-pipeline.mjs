@@ -4,8 +4,9 @@
  * Peer writes a scratch. Examine checks only that scratch against disk.
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
- * A pop is one fast move. The three are facet, feat, and fix.
- * A slow look opens a plane only when that name already has a facet.
+ * A pop names facet, feat, or fix only when the mind needs that one.
+ * None is required, and they are not in an order.
+ * A slow look opens a plane only when that name was already popped.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -402,7 +403,7 @@ export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileSt
     const parsed = parseLook(words);
     if (parsed.error) return miss(parsed.error);
     const name = lookedName(parsed);
-    if (name && !hasFacet(loadPops(popsFile), name)) return ok('Empty.');
+    if (name && !hasPop(loadPops(popsFile), name)) return ok('Empty.');
   }
   const root = repoRootFrom(platesDir);
   if (words.length === 1 && words[0] === 'teardown') {
@@ -451,8 +452,9 @@ function popLine(raw) {
   return String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 240);
 }
 
-function hasFacet(pops, name) {
-  return Boolean(pops.planes[name] && pops.planes[name].facet);
+function hasPop(pops, name) {
+  const row = pops.planes[name];
+  return Boolean(row && (row.facet || row.feat || row.fix));
 }
 
 function loadPops(file) {
@@ -528,7 +530,7 @@ function runPop(words, file, platesDir) {
   if (!key) return miss('Name one pop.');
   const kind = POP_KINDS.includes(words[1]) ? words[1] : '';
   const line = popLine(kind ? words.slice(2).join(' ') : words.slice(1).join(' '));
-  if (!kind && line) return miss('Name facet, feat, or fix.');
+  if (!kind) return miss('Name facet, feat, or fix.');
   const pops = loadPops(file);
   const row = pops.planes[key] ? { ...pops.planes[key] } : blankPop();
   if (line) {
@@ -537,23 +539,18 @@ function runPop(words, file, platesDir) {
     savePops(file, pops);
     return ok(`${kind}: ${line}`);
   }
-  if (kind) {
-    if (!row[kind]) {
-      ensurePopTable(file);
-      return ok('Empty.');
+  if (row[kind]) return ok(`${kind}: ${row[kind]}`);
+  if (kind === 'facet') {
+    const digest = digestOf(platesDir, key);
+    if (digest) {
+      row.facet = digest;
+      pops.planes[key] = row;
+      savePops(file, pops);
+      return ok(`facet: ${digest}`);
     }
-    return ok(`${kind}: ${row[kind]}`);
   }
-  if (row.facet) return ok(`facet: ${row.facet}`);
-  const digest = digestOf(platesDir, key);
-  if (!digest) {
-    ensurePopTable(file);
-    return ok('Empty.');
-  }
-  row.facet = digest;
-  pops.planes[key] = row;
-  savePops(file, pops);
-  return ok(`facet: ${digest}`);
+  ensurePopTable(file);
+  return ok('Empty.');
 }
 
 export function lensPath(root) {
@@ -572,27 +569,30 @@ function notesPath(root) {
 }
 
 const POP_JOB = [
-  'A pop is one fast move between planes. The three are facet, feat, and fix.',
-  'facet is the digested state. feat is the move. fix is the correction.',
+  'The mind names facet, feat, or fix when one is needed. None is required, and they are not in an order.',
   'A hit returns that line and does not open the plane. A miss stays empty and still leaves the table.',
   'Teardown wipes the scratch, not the table. The wear leaves the table when the file is missing.',
   'A pop is not a law.',
-  'A slow look opens a plane only when that name already has a facet.',
+  'A slow look opens a plane only when that name was already popped.',
 ].join(' ');
 
 export function notesWithPopJob(existing) {
   let text = String(existing || '');
   text = text.replace(
     'PR #161. Not merged. Not published. Not the cache.',
-    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. A slow look opens a plane only when that name already has a facet.',
+    'PR #161. Not merged. Not published. The hit table is `.xray/state/pops.json`. A slow look opens a plane only when that name was already popped.',
   );
   text = text.replace(
     'The slow look still opens a plane that was never popped.',
-    'A slow look opens a plane only when that name already has a facet.',
+    'A slow look opens a plane only when that name was already popped.',
   );
   text = text.replace(
     'A slow look opens a plane only when that name is already popped.',
+    'A slow look opens a plane only when that name was already popped.',
+  );
+  text = text.replace(
     'A slow look opens a plane only when that name already has a facet.',
+    'A slow look opens a plane only when that name was already popped.',
   );
   text = text.replace(
     'Three hits, then Act. A miss is not Act. Teardown wipes the scratch and the streak, not the table.',
