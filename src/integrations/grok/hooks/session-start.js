@@ -151,7 +151,7 @@ async function main() {
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
-      ...(intent ? { intent } : {}),
+      ...(intent ? { intent, cardText: intent } : {}),
       ...(matchedSignals.length ? { matchedSignals } : {}),
     });
 

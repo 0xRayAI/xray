@@ -377,11 +377,13 @@ describe('pops', () => {
     const stopped = cardStop(root, 'grep', 'routing', []);
     expect(stopped?.gate).toBe('goggles');
     expect(stopped?.decision).toBe('deny');
-    expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files. Open: src/nucleus/thin-dispatch.ts. feat: follow the stored move');
+    expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files. Open: src/nucleus/thin-dispatch.ts');
     expect(stopped?.reason).not.toContain('invented');
+    expect(stopped?.reason).not.toContain('feat:');
+    expect(cardStop(root, 'grep', 'routing', ['src/nucleus'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
+    expect(cardStop(root, 'read_file', 'routing', [])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
     expect(cardStop(root, 'grep', 'routing', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
     expect(cardStop(root, 'bash', 'rg routing src/nucleus/thin-dispatch.ts', [])).toBeNull();
-    expect(cardStop(root, 'grep', 'routing', ['src/nucleus'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
     const drawn = cardStop(
       root,
       'read_file',
@@ -394,7 +396,7 @@ describe('pops', () => {
       target_file: 'src/nucleus/thin-dispatch.ts',
       offset: 1,
     });
-    expect(drawn?.hookSpecificOutput?.additionalContext).toBe('feat: follow the stored move');
+    expect(drawn?.hookSpecificOutput?.additionalContext).toBeUndefined();
     expect(drawn?.reason).toBeUndefined();
     const missed = cardStop(
       root,
@@ -405,12 +407,16 @@ describe('pops', () => {
     );
     expect(missed?.decision).toBe('deny');
     expect(missed?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
-    const followed = cardStop(root, 'read_file', 'src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts']);
-    expect(followed?.decision).toBe('allow');
-    expect(followed?.hookSpecificOutput?.additionalContext).toBe('feat: follow the stored move');
-    expect(followed?.hookSpecificOutput?.updatedInput).toBeUndefined();
+    expect(missed?.reason).not.toContain('feat:');
+    expect(cardStop(root, 'read_file', 'src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
+    const carried = cardStop(root, 'bash', 'npm test', []);
+    expect(carried?.decision).toBe('deny');
+    expect(carried?.reason).toBe('feat: follow the stored move');
+    expect(carried?.reason).not.toContain('invented');
+    expect(cardStop(root, 'bash', 'npm test', [])).toBeNull();
     expect(cardStop(root, 'grep', 'routing and house', [])).toBeNull();
     expect(cardStop(root, 'grep', 'goggles routing', [])).toBeNull();
+    expect(cardStop(root, 'grep', 'feat/goggles-look routing', [])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
     expect(cardStop(root, 'read_file', 'routing', [])).toBeNull();
 
     const fresh = mkdtempSync(join(tmpdir(), 'goggles-hand-'));
@@ -447,12 +453,32 @@ describe('pops', () => {
     expect(readFileSync(station, 'utf8').match(/^Card:/gm)).toHaveLength(1);
     handCard(root, 'open boot again');
     expect(readFileSync(station, 'utf8').match(/^Card:/gm)).toHaveLength(1);
+    const blocked = cardStop(root, 'bash', 'npm test', []);
+    expect(blocked?.decision).toBe('deny');
+    expect(blocked?.reason).not.toContain('Card:');
+    expect(blocked?.reason).toContain('Open: docs-site/docs/plates/boot.md');
+    expect(cardStop(
+      root,
+      'read_file',
+      'docs-site/docs/plates/boot.md',
+      ['docs-site/docs/plates/boot.md'],
+      { target_file: 'docs-site/docs/plates/boot.md' },
+    )).toBeNull();
+    expect(cardStop(root, 'bash', 'npm test', [])).toBeNull();
     handCard(root, 'finish it');
-    expect(readFileSync(station, 'utf8')).toContain('Card: boot.');
+    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    handCard(root, 'open boot');
     handCard(root, 'goggles routing');
-    expect(readFileSync(station, 'utf8')).toContain('Card: boot.');
-    expect(readFileSync(station, 'utf8')).not.toContain('Card: routing.');
-    handCard(root, 'routing and house');
+    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    handCard(root, 'open boot');
+    handCard(root, 'feat/goggles-look still names routing and house');
+    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    const clipped = `${'boot '.repeat(80)}routing`;
+    writeSessionBoot(root, {
+      intent: clipped.slice(0, 240),
+      cardText: clipped,
+      host: 'grok',
+    });
     expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
     writeSessionBoot(root, { intent: 'make the cut the test', host: 'grok' });
     expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);

@@ -438,6 +438,10 @@ export function popsFileFor(root) {
   return join(root, '.xray', 'state', 'pops.json');
 }
 
+function isGogglesWork(text) {
+  return /(?<![A-Za-z0-9-])goggles(?![A-Za-z0-9-])/i.test(String(text || ''));
+}
+
 function isSearch(toolName, text) {
   const tool = String(toolName || '');
   if (/web_/i.test(tool)) return false;
@@ -524,32 +528,26 @@ function reasonFor(name, row) {
   const card = row.card;
   const filled = card.filled && card.filled.length ? card.filled.join(', ') : 'none';
   const open = openTarget(row);
-  const action = storedAction(row);
-  return `${name}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}. Open: ${open || 'Empty.'}${action ? `. ${action}` : ''}`;
+  return `${name}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}. Open: ${open || 'Empty.'}`;
 }
 
 function denyCard(name, row) {
   return { gate: 'goggles', decision: 'deny', reason: reasonFor(name, row) };
 }
 
-function allowContext(action) {
+function denyLine(line) {
+  return { gate: 'goggles', decision: 'deny', reason: line };
+}
+
+function allowRewrite(updatedInput) {
   return {
     gate: 'goggles',
     decision: 'allow',
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
-      additionalContext: action,
+      updatedInput,
     },
   };
-}
-
-function allowRewrite(updatedInput, action) {
-  const hookSpecificOutput = {
-    hookEventName: 'PreToolUse',
-    updatedInput,
-  };
-  if (action) hookSpecificOutput.additionalContext = action;
-  return { gate: 'goggles', decision: 'allow', hookSpecificOutput };
 }
 
 const PLATE_FILE = /\/plates\/[a-z0-9-]+\.md/i;
@@ -575,42 +573,79 @@ function retarget(toolInput, open) {
   return hit ? next : null;
 }
 
-function followStoredOpen(root, toolName, raw, paths) {
-  if (!isRead(toolName) || isSearch(toolName, raw)) return null;
-  const pops = loadPops(popsFileFor(root));
-  const hits = [];
-  for (const row of Object.values(pops.planes || {})) {
-    const open = openTarget(row);
-    const action = storedAction(row);
-    if (!open || !action || !pointsAt(raw, paths, open)) continue;
-    hits.push(action);
+function saveRow(root, name, row) {
+  const file = popsFileFor(root);
+  const pops = loadPops(file);
+  pops.planes[name] = storedRow(row);
+  savePops(file, pops);
+}
+
+function markOpened(root, name) {
+  const row = loadPops(popsFileFor(root)).planes[name];
+  if (!row || row.opened) return;
+  row.opened = true;
+  saveRow(root, name, row);
+}
+
+function markFollowed(root, name) {
+  const row = loadPops(popsFileFor(root)).planes[name];
+  if (!row || row.followed) return;
+  row.followed = true;
+  saveRow(root, name, row);
+}
+
+function actOnRow(root, name, row, toolName, text, raw, paths, toolInput) {
+  const open = openTarget(row);
+  const aimed = Boolean(open && pointsAt(raw, paths, open));
+  if (isPlateOpen(toolName, raw, paths) && open && !aimed) {
+    const updated = retarget(toolInput, open);
+    if (!updated) return denyCard(name, row);
+    markOpened(root, name);
+    return allowRewrite(updated);
   }
-  if (hits.length !== 1) return null;
-  return allowContext(hits[0]);
+  if (aimed) {
+    markOpened(root, name);
+    return null;
+  }
+  if (!row.opened) return denyCard(name, row);
+  const action = storedAction(row);
+  if (action && !row.followed) {
+    markFollowed(root, name);
+    return denyLine(action);
+  }
+  if (isSearch(toolName, text) || isPlateOpen(toolName, raw, paths)) return denyCard(name, row);
+  return null;
+}
+
+function cardNameOnStation(root) {
+  const dest = stationFile(root);
+  if (!existsSync(dest)) return '';
+  const line = readFileSync(dest, 'utf8').split(/\r?\n/).find((row) => /^Card:\s/i.test(row.trim()));
+  if (!line) return '';
+  const match = /^Card:\s*([a-z0-9-]+)\./i.exec(line.trim());
+  return match ? match[1] : '';
+}
+
+function pendingFollow(root) {
+  const pops = loadPops(popsFileFor(root));
+  const names = Object.entries(pops.planes || {})
+    .filter(([, row]) => row && row.card && row.opened && storedAction(row) && !row.followed)
+    .map(([name]) => name);
+  return names.length === 1 ? names[0] : '';
 }
 
 export function cardStop(root, toolName, text, paths = [], toolInput = null) {
   const raw = [String(text || ''), ...(paths || [])].join('\n');
-  if (/\bgoggles\b/i.test(raw)) return null;
+  if (isGogglesWork(raw)) return null;
   const plates = findPlatesDir(root) || findPlatesDir(HERE);
   const named = planeNamesIn(plates, raw);
   if (named.length > 1) return null;
-  if (named.length === 0) return followStoredOpen(root, toolName, raw, paths);
-  const search = isSearch(toolName, text);
-  const reading = isRead(toolName);
-  if (!search && !reading) return null;
-  const row = prepareRow(root, named[0], plates);
+  const held = named.length === 1 ? named[0] : (cardNameOnStation(root) || pendingFollow(root));
+  if (!held || isGogglesWork(held)) return null;
+  const row = prepareRow(root, held, plates);
   if (!row || !row.card) return null;
-  const open = openTarget(row);
-  const action = storedAction(row);
-  const aimed = pointsAt(raw, paths, open);
-  if (search) return aimed ? null : denyCard(named[0], row);
-  if (isPlateOpen(toolName, raw, paths) && open && !aimed) {
-    const updated = retarget(toolInput, open);
-    return updated ? allowRewrite(updated, action) : denyCard(named[0], row);
-  }
-  if (aimed && action) return allowContext(action);
-  return null;
+  if (!named.length && row.opened && (!storedAction(row) || row.followed)) return null;
+  return actOnRow(root, held, row, toolName, text, raw, paths, toolInput);
 }
 
 function stationFile(root) {
@@ -650,20 +685,49 @@ function setCardLine(root, line) {
   writeFileSync(dest, `${text}\n`);
 }
 
+function disarm(root) {
+  const file = popsFileFor(root);
+  const pops = loadPops(file);
+  let changed = false;
+  for (const [name, row] of Object.entries(pops.planes || {})) {
+    if (!row || !row.opened || row.followed || !storedAction(row)) continue;
+    row.followed = true;
+    pops.planes[name] = storedRow(row);
+    changed = true;
+  }
+  if (changed) savePops(file, pops);
+  clearCardLine(root);
+}
+
+function arm(root, name) {
+  const row = loadPops(popsFileFor(root)).planes[name];
+  if (!row) return;
+  row.opened = false;
+  row.followed = false;
+  saveRow(root, name, row);
+}
+
 export function handCard(root, intent) {
   try {
     const text = String(intent || '');
-    if (/\bgoggles\b/i.test(text)) return null;
-    const plates = findPlatesDir(root) || findPlatesDir(HERE);
-    const named = planeNamesIn(plates, text);
-    if (named.length > 1) {
-      clearCardLine(root);
+    if (isGogglesWork(text)) {
+      disarm(root);
       return null;
     }
-    if (named.length !== 1) return null;
+    const plates = findPlatesDir(root) || findPlatesDir(HERE);
+    const named = planeNamesIn(plates, text);
+    if (named.length !== 1) {
+      disarm(root);
+      return null;
+    }
     const row = prepareRow(root, named[0], plates);
-    if (!row || !row.card) return null;
-    const line = `Card: ${reasonFor(named[0], row)}`;
+    if (!row || !row.card) {
+      disarm(root);
+      return null;
+    }
+    arm(root, named[0]);
+    const fresh = loadPops(popsFileFor(root)).planes[named[0]] || row;
+    const line = `Card: ${reasonFor(named[0], fresh)}`;
     setCardLine(root, line);
     return line;
   } catch {
@@ -711,6 +775,8 @@ function storedRow(row) {
   if (row.fields && Object.keys(row.fields).length) kept.fields = row.fields;
   const outcomes = readOutcomes(row);
   if (outcomes) kept.outcomes = outcomes;
+  if (row.opened === true) kept.opened = true;
+  if (row.followed === true) kept.followed = true;
   return kept;
 }
 
@@ -763,7 +829,9 @@ function loadPops(file) {
         if (Object.keys(fields).length) row.fields = fields;
         const outcomes = readOutcomes(raw);
         if (outcomes) row.outcomes = outcomes;
-        if (row.card || row.fields || row.outcomes || POP_KINDS.some((kind) => row[kind])) planes[key] = row;
+        if (raw.opened === true) row.opened = true;
+        if (raw.followed === true) row.followed = true;
+        if (row.card || row.fields || row.outcomes || row.opened || POP_KINDS.some((kind) => row[kind])) planes[key] = row;
       }
       return { planes };
     }

@@ -331,7 +331,7 @@ export function writeSessionBoot(root, payload) {
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
     try {
-      handCard(root, payload && payload.intent);
+      handCard(root, payload && (payload.cardText || payload.intent));
     } catch {
       /* a missed card must not fail the boot */
     }
