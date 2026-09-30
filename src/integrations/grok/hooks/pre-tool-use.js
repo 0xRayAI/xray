@@ -15,6 +15,7 @@ import {
   isShellTool,
   isWriteTool,
   loadFeatures,
+  normalizeWorkspaceRoot,
   readStdinJson,
   resolveSessionId,
   workspaceRoot,
@@ -41,7 +42,7 @@ async function main() {
 
   try {
     const event = await readStdinJson();
-    const eventRoot = event.workspaceRoot || event.cwd || root;
+    const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     ensureSessionBoot(eventRoot, '0xray/grok-pre-tool-use-boot');
 
     const features = loadFeatures(eventRoot);

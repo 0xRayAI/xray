@@ -420,6 +420,13 @@ export function lensPath(root) {
   return join(root, '.xray', 'state', 'LENS.md');
 }
 
+function readLens(root) {
+  const file = lensPath(root);
+  if (!existsSync(file)) return null;
+  const text = readFileSync(file, 'utf8').trim();
+  return text || null;
+}
+
 function notesPath(root) {
   return join(root, '.xray', 'state', 'NOTES.md');
 }
@@ -440,6 +447,8 @@ export function maintainLens(root, platesDir) {
   const scratch = scratchFileFor(root);
   let rec = readScratch(scratch);
   if (!rec) {
+    const kept = readLens(root);
+    if (kept) return ok(kept);
     const peered = cycle(['ground'], plates, scratch);
     if (!peered.ok) return peered;
     rec = readScratch(scratch);

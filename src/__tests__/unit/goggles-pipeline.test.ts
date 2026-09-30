@@ -138,4 +138,26 @@ describe('goggles plane body', () => {
     expect(lens).toContain('Pick: none');
     rmSync(root, { recursive: true, force: true });
   });
+
+  it('an empty scratch leaves a lens that was already written', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-keep-'));
+    const scratch = join(root, '.xray', 'state', 'goggles-scratch.json');
+    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+    writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
+    expect(cycle(['boot'], platesDir!, scratch).text).toContain('Filled: plate');
+    expect(cycle(['examine'], platesDir!, scratch).text).toBe('Drawing only.');
+    expect(cycle(['triage'], platesDir!, scratch).text).toBe('Pick: none');
+    expect(maintainLens(root, platesDir!).ok).toBe(true);
+    expect(cycle(['teardown'], platesDir!, scratch).text.startsWith('Ground.')).toBe(true);
+    const lensBefore = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+    const notesBefore = readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8');
+    const again = maintainLens(root, platesDir!);
+    expect(again.ok).toBe(true);
+    expect(again.text).toContain('Drawing only.');
+    expect(again.text).toContain('Pick: none');
+    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe(lensBefore);
+    expect(readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(notesBefore);
+    expect(existsSync(scratch)).toBe(false);
+    rmSync(root, { recursive: true, force: true });
+  });
 });

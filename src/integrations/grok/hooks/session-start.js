@@ -10,6 +10,7 @@ import {
   ensureSessionBoot,
   readStdinJson,
   resolveSessionId,
+  normalizeWorkspaceRoot,
   workspaceRoot,
   writeSessionBoot,
 } from './grok-hook-utils.js';
@@ -116,7 +117,7 @@ async function main() {
   try {
     const event = await readStdinJson();
     HOOK_EVENT = resolveHookEvent(event);
-    const eventRoot = event.workspaceRoot || event.cwd || root;
+    const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
       recordSynthesisTurnSlice(eventRoot, sessionId);

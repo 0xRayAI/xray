@@ -1028,6 +1028,56 @@ describe('station hot-swap', () => {
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });
 
+  it('heat drops torn footer scraps instead of pasting them back', () => {
+    const stock = formatStationMarkdown({
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'From: ground Digest: Home. The dev plane. Filled: files, skills',
+      planLine: '#161 is one machine over plane bodies. Worn locally. Do not merge #153.',
+      git: { branch: 'main', head: 'fbd394269' },
+      repertoireResume: 'Repertoire: on — 45 signals',
+      workingLine: 'Working: operating-planes, wake-cascade',
+    });
+    const existing = [
+      stock.trimEnd(),
+      '',
+      'Unfinished path: src/integrations/hooks/station-hook-runtime.cjs',
+      'this file — Read it. OpenCode injects. Do not thicken the Grok exo.',
+      '.',
+      '.',
+      '.',
+      'xo.',
+      '',
+    ].join('\n');
+    const merged = mergeStationMarkdown(stock, existing);
+    expect(merged).toContain('Unfinished path: src/integrations/hooks/station-hook-runtime.cjs');
+    expect(merged.split('\n')).not.toContain('xo.');
+    expect(merged).not.toMatch(/^this file —/m);
+    expect(merged).not.toMatch(/^\.$/m);
+    expect(countStationFooters(merged)).toEqual({ continueCount: 1, grokCount: 1 });
+  });
+
+  it('a plate line on the card is a file the same write stamps', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plate-'));
+    try {
+      writeStationMarkdown(tmp, {
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: 'BootOrchestrator.executeBootSequence brings the framework up',
+        planLine: 'stamp the plate the card names',
+        git: { branch: 'main', head: 'abc1234' },
+        repertoireResume: 'Repertoire: on — 45 signals',
+        workingLine: 'Working: operating-planes',
+      });
+      const card = fs.readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Plate: boot — .xray/state/plates/boot.md');
+      const stamped = fs.readFileSync(path.join(tmp, '.xray', 'state', 'plates', 'boot.md'), 'utf8');
+      expect(stamped).toContain('Boot');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('writeStationMarkdown merges a seeded card instead of wipe-then-write', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-merge-'));
     try {

@@ -123,6 +123,19 @@ describe('grok-hook-utils', () => {
         tmp,
       ),
     ).toBe(false);
+    expect(
+      sessionBootNeedsRefresh(
+        {
+          lead_dev_mode: true,
+          host: 'grok',
+          suit_profile: 'frontier',
+          workspaceRoot: `${tmp}/`,
+          repertoireResume: 'Repertoire: not installed (memory_routing stays off)',
+          stationLine: 'host grok. intent: (none yet). plan: (none). git: n/a. Repertoire: not installed (memory_routing stays off)',
+        },
+        tmp,
+      ),
+    ).toBe(false);
   });
 
   it('ensureSessionBoot rewrites leftover boot from another machine', () => {

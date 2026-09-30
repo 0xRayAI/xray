@@ -17,10 +17,10 @@ const {
   unlinkSync,
   writeFileSync,
 } = require("fs");
-const { join } = require("path");
+const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
-const { plateStockLine } = require("./plates.cjs");
+const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
 
 const INTENT_MAX = 240;
 
@@ -1085,7 +1085,7 @@ function stationBootNeedsRefresh(existing, root, host) {
   if (!existing || typeof existing !== "object") return true;
   if (host && existing.host && existing.host !== host) return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (existing.workspaceRoot && !sameWorkspaceRoot(existing.workspaceRoot, root)) return true;
   if (!existing.stationLine) return true;
   const liveGit = readGitBrief(root);
   const bootHead = existing.git && existing.git.head ? String(existing.git.head) : "";
@@ -1108,13 +1108,27 @@ function stationDurableHoldsNpm(root) {
     .some((line) => isHoldNpmLine(line));
 }
 
+function sameWorkspaceRoot(left, right) {
+  if (!left || !right) return false;
+  return resolve(String(left)) === resolve(String(right));
+}
+
+function isFooterFragment(line) {
+  const lower = String(line || "").trim().toLowerCase();
+  if (!lower || /^[.]+$/.test(lower)) return true;
+  return STOCK_STATION_FOOTERS.some((footer) => {
+    if (lower.length >= 12 && footer.includes(lower)) return true;
+    return lower.length >= 3 && lower.length < 12 && footer.endsWith(lower);
+  });
+}
+
 function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
   if (/^#\s+station\s*$/i.test(trimmed)) return true;
   if (DESIGN_MAP_LINES.includes(trimmed)) return true;
   const lower = trimmed.toLowerCase();
-  if (STOCK_STATION_FOOTERS.includes(lower)) return true;
+  if (STOCK_STATION_FOOTERS.includes(lower) || isFooterFragment(trimmed)) return true;
   return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
@@ -1210,6 +1224,12 @@ function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
+    try {
+      const plate = recallPlate(fields && fields.intent);
+      if (plate) stampPlateIfMissing(root, plate.id);
+    } catch {
+      /* a missing plate doc must not block the card */
+    }
     const dest = stationMarkdownPath(root);
     const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
     writeFileSync(dest, next);

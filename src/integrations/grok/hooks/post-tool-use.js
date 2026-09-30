@@ -10,6 +10,7 @@ import {
   isSubagentTool,
   isWriteTool,
   loadFeatures,
+  normalizeWorkspaceRoot,
   readStdinJson,
   resolveSessionId,
   workspaceRoot,
@@ -33,7 +34,7 @@ function extractToolOutput(event) {
 }
 
 export function handlePostToolUse(event, root = workspaceRoot()) {
-  const eventRoot = event.workspaceRoot || event.cwd || root;
+  const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
   const sessionId = resolveSessionId(event);
   const { toolName, toolInput } = extractToolContext(event);
 

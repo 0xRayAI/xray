@@ -86,12 +86,18 @@ const WRITE_TOOLS = new Set([
   'EditNotebook',
 ]);
 
+export function normalizeWorkspaceRoot(root) {
+  const raw = String(root || '').trim();
+  if (!raw) return raw;
+  return path.resolve(raw);
+}
+
 export function workspaceRoot() {
-  return (
+  return normalizeWorkspaceRoot(
     process.env.GROK_WORKSPACE_ROOT ||
     process.env.CLAUDE_PROJECT_DIR ||
     process.env.XRAY_ROOT ||
-    process.cwd()
+    process.cwd(),
   );
 }
 
@@ -301,7 +307,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
       ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'
       : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
-    workspaceRoot: root,
+    workspaceRoot: normalizeWorkspaceRoot(root),
     ...heat,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
@@ -333,7 +339,12 @@ export function sessionBootNeedsRefresh(existing, root) {
   if (existing.lead_dev_mode === undefined) return true;
   if (existing.host !== 'grok') return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (
+    existing.workspaceRoot &&
+    normalizeWorkspaceRoot(existing.workspaceRoot) !== normalizeWorkspaceRoot(root)
+  ) {
+    return true;
+  }
   if (!existing.repertoireResume) return true;
   if (!existing.stationLine) return true;
   return false;
