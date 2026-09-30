@@ -4,7 +4,7 @@
  * Examine, triage, and cascade come after that, in that order. A depth number is not a look.
  * Ground and pipeline can be landed on. Domain, eco, and the outer loop cannot.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -298,13 +298,147 @@ export function look(argv, platesDir) {
   return miss('Name one plane: ground, pipeline.');
 }
 
+export function scratchFileFor(root) {
+  return join(root, '.xray', 'state', 'goggles-scratch.json');
+}
+
+function readScratch(file) {
+  if (!file || !existsSync(file)) return null;
+  try {
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    if (!data || typeof data !== 'object' || !data.digest) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeScratch(file, data) {
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
+}
+
+function formatPeer(rec) {
+  const filled = Array.isArray(rec.filled) ? rec.filled : [];
+  return [`From: ${rec.from}`, `Digest: ${rec.digest}`, `Filled: ${filled.join(', ')}`].join('\n');
+}
+
+function peerRecord(parsed, platesDir, root) {
+  if (parsed.plane === 'ground') {
+    if (parsed.one) return miss(`Triage did not name ${parsed.one}.`);
+    const flags = groundFlags(root);
+    return {
+      ok: true,
+      rec: {
+        from: 'ground',
+        digest: 'Home. The dev plane.',
+        filled: filledNames(flags),
+        plane: 'ground',
+        id: '',
+        examine: null,
+        examineText: null,
+        triage: null,
+        stop: true,
+      },
+    };
+  }
+  const ids = listPipelineIds(platesDir);
+  if (!parsed.one || !ids.includes(parsed.one)) {
+    return miss(`Name one pipeline: ${ids.join(', ')}.`);
+  }
+  const seam = SEAMS[parsed.one] || null;
+  return {
+    ok: true,
+    rec: {
+      from: 'ground',
+      digest: takeOf(pipelineBody(parsed.one, platesDir)),
+      filled: filledNames(pipelineFlags(seam)),
+      plane: `pipeline/${parsed.one}`,
+      id: parsed.one,
+      examine: null,
+      examineText: null,
+      triage: null,
+      stop: true,
+    },
+  };
+}
+
+function examineRecord(rec, platesDir) {
+  const root = repoRootFrom(platesDir);
+  const filled = new Set(Array.isArray(rec.filled) ? rec.filled : []);
+  if (rec.plane === 'ground') return examineGround(root);
+  if (!filled.has('files')) return drawing();
+  return examineSeam(root, SEAMS[rec.id] || null);
+}
+
+function teardown(file) {
+  const rec = readScratch(file);
+  if (file && existsSync(file)) unlinkSync(file);
+  const digest = rec && rec.digest ? rec.digest : '';
+  return ok(digest ? `Ground.\n${digest}` : 'Ground.');
+}
+
+export function cycle(argv, platesDir, scratchPath) {
+  const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
+  if (words.length === 1 && words[0] === 'teardown') return teardown(scratchPath);
+  if (words.length === 1 && LOOKS.has(words[0]) && words[0] !== 'peer') {
+    const rec = readScratch(scratchPath);
+    if (!rec) return miss('The scratch is empty.');
+    if (words[0] === 'examine') {
+      const exam = examineRecord(rec, platesDir);
+      rec.examine = exam.kind;
+      rec.examineText = exam.text;
+      rec.triage = null;
+      rec.stop = true;
+      writeScratch(scratchPath, rec);
+      return ok(exam.text);
+    }
+    if (!rec.examine) return miss('Examine first.');
+    const exam = { kind: rec.examine, text: rec.examineText };
+    const seam = SEAMS[rec.id] || null;
+    const triage = triageOf(exam, seam && seam.pick);
+    if (words[0] === 'triage') {
+      rec.triage = triage.text;
+      rec.stop = triage.stop;
+      writeScratch(scratchPath, rec);
+      return ok(triage.text);
+    }
+    if (!rec.triage) return miss('Triage first.');
+    if (triage.stop || rec.stop || !seam || !seam.pickDigest) return ok('No cascade.');
+    const root = repoRootFrom(platesDir);
+    if (!fileHas(root, seam.file, seam.pickIn)) return ok('No cascade.');
+    const child = {
+      from: rec.plane,
+      digest: seam.pickDigest,
+      filled: [],
+      plane: `${rec.plane}/${seam.pick}`,
+      id: rec.id,
+      examine: null,
+      examineText: null,
+      triage: null,
+      stop: true,
+    };
+    writeScratch(scratchPath, child);
+    return ok(formatPeer(child));
+  }
+  const parsed = parseLook(words);
+  if (parsed.error) return miss(parsed.error);
+  const root = repoRootFrom(platesDir);
+  const peered = peerRecord(parsed, platesDir, root);
+  if (!peered.ok) return peered;
+  writeScratch(scratchPath, peered.rec);
+  if (parsed.look === 'peer') return ok(formatPeer(peered.rec));
+  return cycle([parsed.look], platesDir, scratchPath);
+}
+
 function defaultPlatesDir() {
   return findPlatesDir(dirname(fileURLToPath(import.meta.url)));
 }
 
 const isMain = Boolean(process.argv[1]) && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const result = look(process.argv.slice(2), defaultPlatesDir());
+  const platesDir = defaultPlatesDir();
+  const result = cycle(process.argv.slice(2), platesDir, scratchFileFor(repoRootFrom(platesDir)));
   process.stdout.write(`${result.text}\n`);
   process.exit(result.ok ? 0 : 1);
 }

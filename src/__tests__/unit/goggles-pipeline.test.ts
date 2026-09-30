@@ -1,4 +1,5 @@
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -6,6 +7,7 @@ import {
   cascadeOf,
   findPlatesDir,
   listPipelineIds,
+  cycle,
   look,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
@@ -84,5 +86,37 @@ describe('goggles look', () => {
     expect(cascadeOf('┌─┐\n│ OUTPUT LAYER                 v                              │\n')).toEqual([
       'OUTPUT LAYER',
     ]);
+  });
+
+  it('writes a scratch, refuses a step out of order, and teardown deletes it', () => {
+    const scratch = join(mkdtempSync(join(tmpdir(), 'goggles-')), 'scratch.json');
+    const peer = cycle(['routing'], platesDir!, scratch);
+    expect(peer.text).toContain('Filled: plate, files');
+    expect(peer.text).not.toContain('entry');
+    const saved = JSON.parse(readFileSync(scratch, 'utf8'));
+    expect(saved.filled).toEqual(['plate', 'files']);
+    expect(saved.examine).toBeNull();
+
+    expect(cycle(['cascade'], platesDir!, scratch).text).toBe('Examine first.');
+    expect(cycle(['triage'], platesDir!, scratch).text).toBe('Examine first.');
+    expect(existsSync(scratch)).toBe(true);
+
+    const exam = cycle(['examine'], platesDir!, scratch);
+    expect(exam.text === 'Holds.' || exam.text.startsWith('Drift:')).toBe(true);
+    const triaged = cycle(['triage'], platesDir!, scratch);
+    expect(triaged.text.startsWith('Pick:')).toBe(true);
+    const cascaded = cycle(['cascade'], platesDir!, scratch);
+    if (triaged.text === 'Pick: resolveThinDispatch') {
+      expect(cascaded.text).toContain('From: pipeline/routing');
+      expect(cascaded.text).not.toContain('entry');
+    } else {
+      expect(cascaded.text).toBe('No cascade.');
+    }
+
+    const back = cycle(['teardown'], platesDir!, scratch);
+    expect(back.text.startsWith('Ground.')).toBe(true);
+    expect(existsSync(scratch)).toBe(false);
+    expect(cycle(['examine'], platesDir!, scratch).text).toBe('The scratch is empty.');
+    rmSync(dirname(scratch), { recursive: true, force: true });
   });
 });

@@ -93,8 +93,8 @@ program
 
 program
   .command("goggles")
-  .argument("[args...]", "plane, then peer, examine, triage, or cascade")
-  .description("Look at one plane. Peer first: where you came from, one line, filled field names.")
+  .argument("[args...]", "plane, then examine, triage, cascade, or teardown")
+  .description("Scratch one plane. Peer writes it. Teardown deletes it.")
   .action((args: string[]) => {
     const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
     const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
