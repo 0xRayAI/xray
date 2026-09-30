@@ -185,6 +185,13 @@ function formatPeer(rec) {
   return [`From: ${rec.from}`, `Digest: ${rec.digest}`, `Filled: ${filled.join(', ')}`].join('\n');
 }
 
+function formatLens(rec) {
+  const lines = [formatPeer(rec)];
+  if (rec.examineText) lines.push(rec.examineText);
+  if (rec.triage) lines.push(rec.triage);
+  return lines.join('\n');
+}
+
 function blankStep(rec) {
   return { ...rec, examine: null, examineText: null, triage: null, stop: true };
 }
@@ -438,7 +445,7 @@ export function maintainLens(root, platesDir) {
     rec = readScratch(scratch);
   }
   if (!rec) return miss('No lens.');
-  const text = formatPeer(rec);
+  const text = formatLens(rec);
   mkdirSync(dirname(lensPath(root)), { recursive: true });
   writeFileSync(lensPath(root), `${text}\n`);
   const notesFile = notesPath(root);

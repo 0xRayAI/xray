@@ -122,4 +122,20 @@ describe('goggles plane body', () => {
     expect(notes).toContain('Home. The dev plane.');
     rmSync(root, { recursive: true, force: true });
   });
+
+  it('the lens keeps the examine and triage already on the scratch', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-steps-'));
+    const scratch = join(root, '.xray', 'state', 'goggles-scratch.json');
+    expect(cycle(['boot'], platesDir!, scratch).text).toContain('Filled: plate');
+    expect(cycle(['examine'], platesDir!, scratch).text).toBe('Drawing only.');
+    expect(cycle(['triage'], platesDir!, scratch).text).toBe('Pick: none');
+    const written = maintainLens(root, platesDir!);
+    expect(written.ok).toBe(true);
+    expect(written.text).toContain('Drawing only.');
+    expect(written.text).toContain('Pick: none');
+    const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+    expect(lens).toContain('Drawing only.');
+    expect(lens).toContain('Pick: none');
+    rmSync(root, { recursive: true, force: true });
+  });
 });
