@@ -21,6 +21,65 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
+import { createRequire } from 'node:module';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const hookDir = dirname(fileURLToPath(import.meta.url));
+let scoreAndRouteFn;
+
+function loadScoreAndRoute() {
+  if (scoreAndRouteFn !== undefined) return scoreAndRouteFn;
+  scoreAndRouteFn = null;
+  const require = createRequire(import.meta.url);
+  const candidates = [
+    join(hookDir, '../../../nucleus/thin-dispatch.js'),
+    join(hookDir, '../../../../dist/nucleus/thin-dispatch.js'),
+  ];
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) continue;
+    try {
+      const loaded = require(candidate);
+      if (typeof loaded.scoreAndRoute === 'function') {
+        scoreAndRouteFn = loaded.scoreAndRoute;
+        return scoreAndRouteFn;
+      }
+    } catch {
+      /* next built copy */
+    }
+  }
+  return null;
+}
+
+/** Speak only when the organ changes the agent. A match that leaves the agent is quiet. */
+export function repertoireDecisionFields(routed) {
+  if (!routed?.memoryRouting?.overridden || !routed.agent) return null;
+  const signals = Array.isArray(routed.memoryRouting.signals)
+    ? routed.memoryRouting.signals.slice(0, 4).filter(Boolean)
+    : [];
+  const why = signals.length ? ` on ${signals.join(', ')}` : '';
+  return {
+    agent: routed.agent,
+    gate: 'repertoire',
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      additionalContext: `Repertoire changed the route to ${routed.agent}${why}. Follow that agent for this work.`,
+    },
+  };
+}
+
+function repertoireRoute(operation) {
+  const text = String(operation || '').slice(0, 500).trim();
+  if (!text) return null;
+  try {
+    const scoreAndRoute = loadScoreAndRoute();
+    if (!scoreAndRoute) return null;
+    return repertoireDecisionFields(scoreAndRoute(text, {}));
+  } catch {
+    return null;
+  }
+}
 
 function finish(root, decision, reason, hint, toolName, extra = {}) {
   const out = { decision, ...extra };
@@ -31,6 +90,7 @@ function finish(root, decision, reason, hint, toolName, extra = {}) {
     tool: toolName,
     reason: reason || hint || null,
     gate: extra.gate || null,
+    agent: extra.agent || null,
     livePath: true,
   });
   process.exit(0);
@@ -76,9 +136,11 @@ async function main() {
       if (extraBlock) finish(eventRoot, 'deny', extraBlock, null, toolName);
     }
 
+    const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
+
     if (isShellTool(toolName) && cmd) {
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName);
+      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName, route || {});
     }
 
     if (gateBlock.reason) {
@@ -88,11 +150,11 @@ async function main() {
         gateBlock.reason,
         gateBlock.hint,
         toolName,
-        { gate: gateBlock.gate, warn: true },
+        { gate: gateBlock.gate, warn: true, ...(route || {}) },
       );
     }
 
-    finish(eventRoot, 'allow', null, null, toolName);
+    finish(eventRoot, 'allow', null, null, toolName, route || {});
   } catch (err) {
     appendHookActivity(root, 'grok-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,
@@ -134,4 +196,7 @@ function extractFromEvent(event) {
   };
 }
 
-main();
+const launchedAsCli = Boolean(process.argv[1] && process.argv[1].endsWith('pre-tool-use.js'));
+if (launchedAsCli) {
+  main();
+}
