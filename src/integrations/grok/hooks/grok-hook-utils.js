@@ -28,6 +28,7 @@ import {
   retainCompactFields,
   writeStationMarkdown,
 } from '../../hooks/station-hook-runtime.mjs';
+import { handCard } from '../../hooks/goggles-pipeline.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -204,6 +205,7 @@ export function extractToolContext(event) {
 
   if (toolInput.path) paths.push(String(toolInput.path));
   if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_file) paths.push(String(toolInput.target_file));
   if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
   if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
 
@@ -328,6 +330,11 @@ export function writeSessionBoot(root, payload) {
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
+    try {
+      handCard(root, payload && payload.intent);
+    } catch {
+      /* a missed card must not fail the boot */
+    }
     return sessionBootPath(root);
   } catch {
     return null;

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.js';
 import {
   assemblePlane,
   cascadeOf,
@@ -12,6 +13,7 @@ import {
   listPipelineIds,
   look,
   cardStop,
+  handCard,
   maintainLens,
   notesWithPickup,
   notesWithPopJob,
@@ -366,6 +368,7 @@ describe('pops', () => {
       planes: {
         routing: {
           card: { from: 'ground', digest: 'Task text becomes an agent.', filled: ['plate', 'files'] },
+          fields: { files: 'src/nucleus/thin-dispatch.ts' },
           facet: 'invented stamp that must not be the reason',
           feat: 'follow the stored move',
         },
@@ -373,12 +376,39 @@ describe('pops', () => {
     }));
     const stopped = cardStop(root, 'grep', 'routing', []);
     expect(stopped?.gate).toBe('goggles');
+    expect(stopped?.decision).toBe('deny');
     expect(stopped?.reason).toBe('routing. From: ground. Digest: Task text becomes an agent. Filled: plate, files. Open: src/nucleus/thin-dispatch.ts. feat: follow the stored move');
     expect(stopped?.reason).not.toContain('invented');
     expect(cardStop(root, 'grep', 'routing', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
     expect(cardStop(root, 'bash', 'rg routing src/nucleus/thin-dispatch.ts', [])).toBeNull();
     expect(cardStop(root, 'grep', 'routing', ['src/nucleus'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
-    expect(cardStop(root, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md'])?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
+    const drawn = cardStop(
+      root,
+      'read_file',
+      'docs-site/docs/plates/routing.md',
+      ['docs-site/docs/plates/routing.md'],
+      { target_file: 'docs-site/docs/plates/routing.md', offset: 1 },
+    );
+    expect(drawn?.decision).toBe('allow');
+    expect(drawn?.hookSpecificOutput?.updatedInput).toEqual({
+      target_file: 'src/nucleus/thin-dispatch.ts',
+      offset: 1,
+    });
+    expect(drawn?.hookSpecificOutput?.additionalContext).toBe('feat: follow the stored move');
+    expect(drawn?.reason).toBeUndefined();
+    const missed = cardStop(
+      root,
+      'read_file',
+      'docs-site/docs/plates/routing.md',
+      ['docs-site/docs/plates/routing.md'],
+      {},
+    );
+    expect(missed?.decision).toBe('deny');
+    expect(missed?.reason).toContain('Open: src/nucleus/thin-dispatch.ts');
+    const followed = cardStop(root, 'read_file', 'src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts']);
+    expect(followed?.decision).toBe('allow');
+    expect(followed?.hookSpecificOutput?.additionalContext).toBe('feat: follow the stored move');
+    expect(followed?.hookSpecificOutput?.updatedInput).toBeUndefined();
     expect(cardStop(root, 'grep', 'routing and house', [])).toBeNull();
     expect(cardStop(root, 'grep', 'goggles routing', [])).toBeNull();
     expect(cardStop(root, 'read_file', 'routing', [])).toBeNull();
@@ -386,14 +416,51 @@ describe('pops', () => {
     const fresh = mkdtempSync(join(tmpdir(), 'goggles-hand-'));
     mkdirSync(join(fresh, '.xray', 'state'), { recursive: true });
     const handed = cardStop(fresh, 'grep', 'boot', []);
+    expect(handed?.decision).toBe('deny');
     expect(handed?.reason).toContain('boot. From: ground.');
     expect(handed?.reason).toContain('Open: docs-site/docs/plates/boot.md');
     expect(handed?.reason).not.toContain('feat:');
     expect(JSON.parse(readFileSync(join(fresh, '.xray', 'state', 'pops.json'), 'utf8')).planes.boot.card.digest).toBeTruthy();
+    expect(cardStop(
+      fresh,
+      'read_file',
+      'docs-site/docs/plates/boot.md',
+      ['docs-site/docs/plates/boot.md'],
+      { target_file: 'docs-site/docs/plates/boot.md' },
+    )).toBeNull();
     const house = cardStop(fresh, 'grep', 'house', []);
     expect(house?.reason).toContain('Open: grok-bot/lib/seat-doctor.cjs');
     expect(house?.reason).not.toContain('setup-house');
     rmSync(root, { recursive: true, force: true });
     rmSync(fresh, { recursive: true, force: true });
+  });
+
+  it('writes the card on the station before a search', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-station-card-'));
+    const station = join(root, '.xray', 'state', 'STATION.md');
+    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+    writeFileSync(station, '# Station\n\nIntent: old\n\nContinue this card.\n');
+    const line = handCard(root, 'open boot');
+    expect(line).toContain('Card: boot. From: ground.');
+    expect(line).toContain('Open: docs-site/docs/plates/boot.md');
+    expect(line).not.toContain('feat:');
+    expect(readFileSync(station, 'utf8').match(/^Card:/gm)).toHaveLength(1);
+    handCard(root, 'open boot again');
+    expect(readFileSync(station, 'utf8').match(/^Card:/gm)).toHaveLength(1);
+    handCard(root, 'finish it');
+    expect(readFileSync(station, 'utf8')).toContain('Card: boot.');
+    handCard(root, 'goggles routing');
+    expect(readFileSync(station, 'utf8')).toContain('Card: boot.');
+    expect(readFileSync(station, 'utf8')).not.toContain('Card: routing.');
+    handCard(root, 'routing and house');
+    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    writeSessionBoot(root, { intent: 'make the cut the test', host: 'grok' });
+    expect(readFileSync(station, 'utf8')).not.toMatch(/^Card:/m);
+    writeSessionBoot(root, { intent: 'open boot', host: 'grok' });
+    const booted = readFileSync(station, 'utf8');
+    expect(booted.match(/^Card:/gm)).toHaveLength(1);
+    expect(booted).toContain('Open: docs-site/docs/plates/boot.md');
+    expect(booted).toContain('Intent: open boot');
+    rmSync(root, { recursive: true, force: true });
   });
 });

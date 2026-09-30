@@ -66,7 +66,7 @@ This feat is not published. Wear the local build. From the worn checkout run `no
 
 `pop <plane>` returns the card plus those two ways in. `pop <plane> <kind> <line>` records the outcome. `pop <plane> none` records that nothing is needed. A hit returns the stored line. A miss stays Empty. A named kind with no stored line stays Empty.
 
-When the work names one part, a search or an open of the drawing stops. The reason is the card and the one file to open. A stored move or fix is included. The one file itself, two names, and work about goggles stay quiet. The suit does not invent the outcome.
+When the work names one part, the card is on the station before a search: where you came from, one line, and which blanks are filled. A search of the project or a folder does not run. Opening the drawing opens the one file. After that file is open, a stored move or fix is the next line. If none was stored, the card stands and the blank stays blank. Two names, and work about goggles, stay quiet. The suit does not invent the outcome.
 
 Teardown deletes the scratch, not `.xray/state/pops.json`. A pop is not a law.
 

@@ -445,9 +445,12 @@ function isSearch(toolName, text) {
   return /^\s*(rg|grep|find)\b/.test(String(text || ''));
 }
 
+function isRead(toolName) {
+  return /read|open/i.test(String(toolName || ''));
+}
+
 function isPlateOpen(toolName, text, paths) {
-  const tool = String(toolName || '');
-  if (!/read|open/i.test(tool)) return false;
+  if (!isRead(toolName)) return false;
   return /\/plates\/[a-z0-9-]+\.md/i.test([text, ...(paths || [])].join('\n'));
 }
 
@@ -479,35 +482,193 @@ function openTarget(row) {
   return dive ? dive.replace(/^(files|plate|worn):\s*/, '') : '';
 }
 
-function pointsAt(text, paths, open) {
-  if (!open) return false;
-  return [text, ...(paths || [])].join('\n').includes(open);
+function hasPath(hay, open) {
+  if (!hay || !open) return false;
+  let from = 0;
+  while (from < hay.length) {
+    const at = hay.indexOf(open, from);
+    if (at < 0) return false;
+    const before = at === 0 ? '' : hay[at - 1];
+    const after = hay[at + open.length] || '';
+    const beforeOk = before === '' || /[\s'"`=/]/.test(before);
+    const afterOk = after === '' || /[\s'"`]/.test(after);
+    if (beforeOk && afterOk) return true;
+    from = at + open.length;
+  }
+  return false;
 }
 
-export function cardStop(root, toolName, text, paths = []) {
-  const raw = [String(text || ''), ...(paths || [])].join('\n');
-  if (/\bgoggles\b/i.test(raw)) return null;
-  const plates = findPlatesDir(root) || findPlatesDir(dirname(fileURLToPath(import.meta.url)));
+function pointsAt(text, paths, open) {
+  if (!open) return false;
+  return [text, ...(paths || [])].some((item) => hasPath(String(item || ''), open));
+}
+
+function planeNamesIn(plates, text) {
   const names = new Set(knownPlaneIds());
   for (const id of listPipelineIds(plates)) names.add(id);
   names.delete('ground');
-  const named = [...names].filter((name) => planeWord(name, raw));
-  if (named.length !== 1) return null;
-  if (!isSearch(toolName, text) && !isPlateOpen(toolName, raw, paths)) return null;
+  return [...names].filter((name) => planeWord(name, text));
+}
+
+function prepareRow(root, name, plates) {
   const file = popsFileFor(root);
   const pops = loadPops(file);
-  const row = { ...(pops.planes[named[0]] || {}) };
-  const held = holdPlane(file, pops, named[0], row, plates);
+  const row = { ...(pops.planes[name] || {}) };
+  const held = holdPlane(file, pops, name, row, plates);
   if (!held || !held.card) return null;
-  ensureUseful(file, pops, named[0], held, plates);
-  const fresh = loadPops(file).planes[named[0]] || held;
-  const open = openTarget(fresh);
-  if (pointsAt(raw, paths, open)) return null;
-  const card = fresh.card;
+  ensureUseful(file, pops, name, held, plates);
+  return loadPops(file).planes[name] || held;
+}
+
+function reasonFor(name, row) {
+  const card = row.card;
   const filled = card.filled && card.filled.length ? card.filled.join(', ') : 'none';
-  const action = storedAction(fresh);
-  const reason = `${named[0]}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}. Open: ${open || 'Empty.'}${action ? `. ${action}` : ''}`;
-  return { gate: 'goggles', reason };
+  const open = openTarget(row);
+  const action = storedAction(row);
+  return `${name}. From: ${card.from}. Digest: ${card.digest} Filled: ${filled}. Open: ${open || 'Empty.'}${action ? `. ${action}` : ''}`;
+}
+
+function denyCard(name, row) {
+  return { gate: 'goggles', decision: 'deny', reason: reasonFor(name, row) };
+}
+
+function allowContext(action) {
+  return {
+    gate: 'goggles',
+    decision: 'allow',
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      additionalContext: action,
+    },
+  };
+}
+
+function allowRewrite(updatedInput, action) {
+  const hookSpecificOutput = {
+    hookEventName: 'PreToolUse',
+    updatedInput,
+  };
+  if (action) hookSpecificOutput.additionalContext = action;
+  return { gate: 'goggles', decision: 'allow', hookSpecificOutput };
+}
+
+const PLATE_FILE = /\/plates\/[a-z0-9-]+\.md/i;
+const PATH_KEYS = ['path', 'file_path', 'target_file', 'target_notebook'];
+
+function retarget(toolInput, open) {
+  if (!toolInput || typeof toolInput !== 'object' || Array.isArray(toolInput)) return null;
+  const next = { ...toolInput };
+  let hit = false;
+  for (const key of PATH_KEYS) {
+    if (typeof next[key] === 'string' && PLATE_FILE.test(next[key])) {
+      next[key] = open;
+      hit = true;
+    }
+  }
+  if (Array.isArray(next.paths)) {
+    const rewritten = next.paths.map((item) => (PLATE_FILE.test(String(item)) ? open : item));
+    if (rewritten.some((item, index) => item !== next.paths[index])) {
+      next.paths = rewritten;
+      hit = true;
+    }
+  }
+  return hit ? next : null;
+}
+
+function followStoredOpen(root, toolName, raw, paths) {
+  if (!isRead(toolName) || isSearch(toolName, raw)) return null;
+  const pops = loadPops(popsFileFor(root));
+  const hits = [];
+  for (const row of Object.values(pops.planes || {})) {
+    const open = openTarget(row);
+    const action = storedAction(row);
+    if (!open || !action || !pointsAt(raw, paths, open)) continue;
+    hits.push(action);
+  }
+  if (hits.length !== 1) return null;
+  return allowContext(hits[0]);
+}
+
+export function cardStop(root, toolName, text, paths = [], toolInput = null) {
+  const raw = [String(text || ''), ...(paths || [])].join('\n');
+  if (/\bgoggles\b/i.test(raw)) return null;
+  const plates = findPlatesDir(root) || findPlatesDir(HERE);
+  const named = planeNamesIn(plates, raw);
+  if (named.length > 1) return null;
+  if (named.length === 0) return followStoredOpen(root, toolName, raw, paths);
+  const search = isSearch(toolName, text);
+  const reading = isRead(toolName);
+  if (!search && !reading) return null;
+  const row = prepareRow(root, named[0], plates);
+  if (!row || !row.card) return null;
+  const open = openTarget(row);
+  const action = storedAction(row);
+  const aimed = pointsAt(raw, paths, open);
+  if (search) return aimed ? null : denyCard(named[0], row);
+  if (isPlateOpen(toolName, raw, paths) && open && !aimed) {
+    const updated = retarget(toolInput, open);
+    return updated ? allowRewrite(updated, action) : denyCard(named[0], row);
+  }
+  if (aimed && action) return allowContext(action);
+  return null;
+}
+
+function stationFile(root) {
+  return join(root, '.xray', 'state', 'STATION.md');
+}
+
+function withoutCardLines(text) {
+  return String(text || '')
+    .split(/\r?\n/)
+    .filter((row) => !/^Card:\s/.test(row.trim()))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+function clearCardLine(root) {
+  const dest = stationFile(root);
+  if (!existsSync(dest)) return;
+  const prev = readFileSync(dest, 'utf8');
+  const next = withoutCardLines(prev).replace(/\s*$/, '');
+  const body = next ? `${next}\n` : '';
+  if (body !== prev) writeFileSync(dest, body);
+}
+
+function setCardLine(root, line) {
+  const dest = stationFile(root);
+  mkdirSync(dirname(dest), { recursive: true });
+  const prev = existsSync(dest) ? readFileSync(dest, 'utf8') : '# Station\n';
+  const rows = withoutCardLines(prev).replace(/\s*$/, '').split(/\r?\n/);
+  const marker = rows.findIndex((row) => row.startsWith('Continue this card.'));
+  const at = marker === -1 ? rows.length : marker;
+  const block = [];
+  if (at === 0 || rows[at - 1] !== '') block.push('');
+  block.push(line);
+  block.push('');
+  rows.splice(at, 0, ...block);
+  const text = rows.join('\n').replace(/\n{3,}/g, '\n\n').replace(/\s*$/, '');
+  writeFileSync(dest, `${text}\n`);
+}
+
+export function handCard(root, intent) {
+  try {
+    const text = String(intent || '');
+    if (/\bgoggles\b/i.test(text)) return null;
+    const plates = findPlatesDir(root) || findPlatesDir(HERE);
+    const named = planeNamesIn(plates, text);
+    if (named.length > 1) {
+      clearCardLine(root);
+      return null;
+    }
+    if (named.length !== 1) return null;
+    const row = prepareRow(root, named[0], plates);
+    if (!row || !row.card) return null;
+    const line = `Card: ${reasonFor(named[0], row)}`;
+    setCardLine(root, line);
+    return line;
+  } catch {
+    return null;
+  }
 }
 
 function popsPathBeside(scratchPath, explicit) {

@@ -142,8 +142,17 @@ async function main() {
       toolName,
       [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n'),
       ctx.paths || [],
+      toolInput,
     );
-    if (stop) finish(eventRoot, 'deny', stop.reason, null, toolName, { gate: stop.gate });
+    if (stop?.decision === 'deny') {
+      finish(eventRoot, 'deny', stop.reason, null, toolName, { gate: stop.gate });
+    }
+    if (stop?.decision === 'allow') {
+      finish(eventRoot, 'allow', null, null, toolName, {
+        gate: stop.gate,
+        hookSpecificOutput: stop.hookSpecificOutput,
+      });
+    }
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
 
@@ -188,6 +197,7 @@ function extractFromEvent(event) {
 
   if (toolInput.path) paths.push(String(toolInput.path));
   if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_file) paths.push(String(toolInput.target_file));
   if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
   if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
 
