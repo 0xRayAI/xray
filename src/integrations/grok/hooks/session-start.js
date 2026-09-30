@@ -21,6 +21,7 @@ import {
   scheduleAutonomousReportingMarker,
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
+import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -167,6 +168,9 @@ async function main() {
 
     try {
       scheduleAutonomousReportingMarker(eventRoot);
+      if (HOOK_EVENT === 'pre_compact' || HOOK_EVENT === 'post_compact') {
+        maintainLens(eventRoot);
+      }
       if (HOOK_EVENT === 'session_start') {
         maybeRunReflectionStub(eventRoot);
         runInferenceImprovementLight(eventRoot);

@@ -409,6 +409,44 @@ export function scratchFileFor(root) {
   return join(root, '.xray', 'state', 'goggles-scratch.json');
 }
 
+export function lensPath(root) {
+  return join(root, '.xray', 'state', 'LENS.md');
+}
+
+function notesPath(root) {
+  return join(root, '.xray', 'state', 'NOTES.md');
+}
+
+export function notesWithPickup(existing, pickup) {
+  const clipped = String(pickup || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+  const line = `**Pickup line:** ${clipped}`;
+  if (!existing || !String(existing).trim()) return `${line}\n`;
+  if (/\*\*Pickup line:\*\*/.test(existing)) {
+    return String(existing).replace(/\*\*Pickup line:\*\*\s*[^\n]*/, line);
+  }
+  return `${line}\n\n${existing}`;
+}
+
+export function maintainLens(root, platesDir) {
+  const plates = platesDir || findPlatesDir(root);
+  if (!plates) return miss('No plates.');
+  const scratch = scratchFileFor(root);
+  let rec = readScratch(scratch);
+  if (!rec) {
+    const peered = cycle(['ground'], plates, scratch);
+    if (!peered.ok) return peered;
+    rec = readScratch(scratch);
+  }
+  if (!rec) return miss('No lens.');
+  const text = formatPeer(rec);
+  mkdirSync(dirname(lensPath(root)), { recursive: true });
+  writeFileSync(lensPath(root), `${text}\n`);
+  const notesFile = notesPath(root);
+  const prev = existsSync(notesFile) ? readFileSync(notesFile, 'utf8') : '';
+  writeFileSync(notesFile, notesWithPickup(prev, text.replace(/\n/g, ' ')));
+  return ok(text);
+}
+
 function defaultPlatesDir() {
   return findPlatesDir(dirname(fileURLToPath(import.meta.url)));
 }

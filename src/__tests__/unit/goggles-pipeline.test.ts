@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +11,8 @@ import {
   findPlatesDir,
   listPipelineIds,
   look,
+  maintainLens,
+  notesWithPickup,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const platesDir = findPlatesDir(dirname(fileURLToPath(import.meta.url)));
@@ -99,5 +101,25 @@ describe('goggles plane body', () => {
     expect(existsSync(scratch)).toBe(false);
     expect(cycle(['examine'], platesDir!, scratch).text).toBe('The scratch is empty.');
     rmSync(dirname(scratch), { recursive: true, force: true });
+  });
+
+  it('the suit writes the lens and replaces only the notes pickup', () => {
+    expect(notesWithPickup('**Pickup line:** old\n\n# Stay\n\nBody.\n', 'From: ground Digest: Home.')).toBe(
+      '**Pickup line:** From: ground Digest: Home.\n\n# Stay\n\nBody.\n',
+    );
+    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-'));
+    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+    writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
+    const written = maintainLens(root, platesDir!);
+    expect(written.ok).toBe(true);
+    const lens = readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8');
+    expect(lens).toContain('From: ground');
+    expect(lens).toContain('Digest: Home. The dev plane.');
+    const notes = readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8');
+    expect(notes).toContain('# Stay');
+    expect(notes).toContain('The body stays.');
+    expect(notes).not.toContain('old job');
+    expect(notes).toContain('Home. The dev plane.');
+    rmSync(root, { recursive: true, force: true });
   });
 });
