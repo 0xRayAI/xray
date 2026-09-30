@@ -1,0 +1,26 @@
+{
+  "ground": {
+    "digest": "Home. The dev plane.",
+    "files": [
+      "src",
+      "grok-bot/OP-PROC.md",
+      "src/opencode/agents",
+      "Agents.md",
+      "src/integrations",
+      "package.json"
+    ],
+    "unpathed": ["mill"],
+    "skills": "SKILLS.md"
+  },
+  "routing": {
+    "files": ["src/nucleus/thin-dispatch.ts"],
+    "worn": "dist/nucleus/thin-dispatch.js",
+    "mark": "export function scoreAndRoute",
+    "wornMark": "function scoreAndRoute",
+    "pick": "resolveThinDispatch"
+  },
+  "house": {
+    "files": ["grok-bot/lib/seat-doctor.cjs"],
+    "mark": "no house/HOUSE.md, run setup-house"
+  }
+}

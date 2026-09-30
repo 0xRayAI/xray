@@ -1,12 +1,18 @@
 /**
- * Goggles. A look at one real plane.
- * Peer returns where you came from, one line, and the names of the fields that are filled.
- * Examine, triage, and cascade come after that, in that order. A depth number is not a look.
- * Ground and pipeline can be landed on. Domain, eco, and the outer loop cannot.
+ * Goggles. One machine over a plane body.
+ * A plane is data: the same fields, empty when absent.
+ * Peer writes a scratch. Examine checks only that scratch against disk.
+ * Triage picks one line that is already in a file, or none. Cascade opens that line.
+ * Teardown deletes the scratch. A depth number is not a look.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
+const LOOKS = new Set(['peer', 'examine', 'triage', 'cascade']);
+const NOT_PLANES = new Set(['domain', 'eco', 'outer', 'outer-loop']);
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 export function findPlatesDir(start) {
   let dir = start;
@@ -36,7 +42,6 @@ function cleanTitle(title) {
   return title.replace(/\s+v\s*$/i, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-/** First segment of the line under a ┌. A side rail may add more bars. */
 export function cascadeOf(body) {
   const lines = String(body).split(/\r?\n/);
   const stages = [];
@@ -91,36 +96,59 @@ export function listPipelineIds(platesDir) {
   return ids;
 }
 
-const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
-const LOOKS = new Set(['peer', 'examine', 'triage', 'cascade']);
-const NOT_PLANES = new Set(['domain', 'eco', 'outer', 'outer-loop']);
+function overlayTable() {
+  const file = join(HERE, 'goggles-planes.json');
+  if (!existsSync(file)) return {};
+  return JSON.parse(readFileSync(file, 'utf8'));
+}
 
-const GROUND = [
-  ['code', 'src'],
-  ['OP-PROC', 'grok-bot/OP-PROC.md'],
-  ['model', 'src/opencode/agents'],
-  ['suit', 'Agents.md'],
-  ['mill', null],
-  ['host', 'src/integrations'],
-  ['test/ship', 'package.json'],
-];
+function present(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  return Boolean(value);
+}
 
-const SEAMS = {
-  routing: {
-    file: 'src/nucleus/thin-dispatch.ts',
-    worn: 'dist/nucleus/thin-dispatch.js',
-    mark: 'export function scoreAndRoute',
-    wornMark: 'function scoreAndRoute',
-    pick: 'resolveThinDispatch',
-    pickIn: 'resolveThinDispatch',
-    pickDigest: 'A null provider returns the score unchanged. A worn provider can change the agent.',
-  },
-  house: {
-    file: 'grok-bot/lib/seat-doctor.cjs',
-    mark: 'no house/HOUSE.md, run setup-house',
-    pick: null,
-  },
-};
+export function filledOf(plane) {
+  const flags = {
+    plate: present(plane.plate),
+    entry: present(plane.entry),
+    exit: present(plane.exit),
+    files: present(plane.files) || present(plane.unpathed),
+    skills: present(plane.skills),
+    setup: present(plane.setup),
+    teardown: present(plane.teardown),
+    worn: present(plane.worn),
+  };
+  return FIELD_ORDER.filter((name) => flags[name]);
+}
+
+export function assemblePlane(id, platesDir) {
+  const extra = overlayTable()[id] || {};
+  let plate = null;
+  let digest = extra.digest || '';
+  if (id !== 'ground') {
+    const abs = join(platesDir, `${id}.md`);
+    if (!existsSync(abs)) return null;
+    plate = join('docs-site', 'docs', 'plates', `${id}.md`);
+    if (!digest) digest = takeOf(stripFrontmatter(readFileSync(abs, 'utf8')));
+  }
+  if (!digest) return null;
+  return {
+    id,
+    digest,
+    plate,
+    entry: extra.entry || null,
+    exit: extra.exit || null,
+    files: extra.files || null,
+    unpathed: extra.unpathed || null,
+    skills: extra.skills || null,
+    setup: extra.setup || null,
+    teardown: extra.teardown || null,
+    worn: extra.worn || null,
+    mark: extra.mark || null,
+    wornMark: extra.wornMark || null,
+    pick: extra.pick || null,
+  };
+}
 
 function repoRootFrom(platesDir) {
   return dirname(dirname(dirname(platesDir)));
@@ -147,89 +175,132 @@ function drawing() {
 }
 
 function fileHas(root, rel, mark) {
-  if (!rel) return false;
+  if (!rel || !mark) return false;
   const full = join(root, rel);
   return existsSync(full) && readFileSync(full, 'utf8').includes(mark);
 }
 
-function pipelineBody(id, platesDir) {
-  const raw = readFileSync(join(platesDir, `${id}.md`), 'utf8');
-  return stripFrontmatter(raw);
+function formatPeer(rec) {
+  const filled = Array.isArray(rec.filled) ? rec.filled : [];
+  return [`From: ${rec.from}`, `Digest: ${rec.digest}`, `Filled: ${filled.join(', ')}`].join('\n');
 }
 
-function filledNames(flags) {
-  return FIELD_ORDER.filter((name) => flags[name]);
+function blankStep(rec) {
+  return { ...rec, examine: null, examineText: null, triage: null, stop: true };
 }
 
-function peerText(from, digest, flags) {
-  const names = filledNames(flags);
-  return [`From: ${from}`, `Digest: ${digest}`, `Filled: ${names.join(', ')}`].join('\n');
-}
-
-function groundFlags(root) {
-  return {
-    plate: false,
-    entry: false,
-    exit: false,
-    files: true,
-    skills: existsSync(join(root, 'SKILLS.md')),
-    setup: false,
-    teardown: false,
-    worn: false,
-  };
-}
-
-function pipelineFlags(seam) {
-  return {
-    plate: true,
-    entry: false,
-    exit: false,
-    files: Boolean(seam && seam.file),
-    skills: false,
-    setup: false,
-    teardown: false,
-    worn: false,
-  };
-}
-
-function examineGround(root) {
-  for (const [id, file] of GROUND) {
-    if (!file) continue;
-    if (!existsSync(join(root, file))) return drift(`${id} is not at ${file}`);
-  }
-  if (!existsSync(join(root, 'SKILLS.md'))) return drift('root SKILLS.md is not there');
-  return holds();
-}
-
-function examineSeam(root, seam) {
-  if (!seam) return drawing();
-  if (!fileHas(root, seam.file, seam.mark)) {
-    return drift(`${seam.mark} is not in ${seam.file}`);
-  }
-  if (seam.worn && !fileHas(root, seam.worn, seam.wornMark)) {
-    return drift(`the worn build is not ${seam.file}`);
-  }
-  return holds();
-}
-
-function triageOf(exam, pick) {
-  if (exam.kind === 'drawing') return { stop: true, text: 'Pick: none' };
-  if (exam.kind === 'drift') return { stop: true, text: `Pick: ${exam.text.slice('Drift: '.length)}` };
-  if (pick) return { stop: false, text: `Pick: ${pick}` };
-  return { stop: true, text: 'Pick: none' };
-}
-
-function cascadeText(who, seam) {
-  return peerText(who, seam.pickDigest, {
-    plate: false,
-    entry: false,
-    exit: false,
-    files: false,
-    skills: false,
-    setup: false,
-    teardown: false,
-    worn: false,
+function peerRec(plane) {
+  const who = plane.id === 'ground' ? 'ground' : `pipeline/${plane.id}`;
+  return blankStep({
+    from: 'ground',
+    digest: plane.digest,
+    filled: filledOf(plane),
+    plane: who,
+    id: plane.id,
+    itemFile: null,
   });
+}
+
+function examinePlane(plane, root) {
+  const files = Array.isArray(plane.files) ? plane.files : [];
+  const checkable = files.length > 0 || plane.skills || plane.worn || plane.entry || plane.exit;
+  if (!checkable) return drawing();
+  for (const rel of files) {
+    if (!existsSync(join(root, rel))) return drift(`${rel} is not there`);
+  }
+  if (plane.mark && !fileHas(root, files[0], plane.mark)) {
+    return drift(`${plane.mark} is not in ${files[0]}`);
+  }
+  if (plane.worn && !fileHas(root, plane.worn, plane.wornMark || plane.mark)) {
+    return drift(`the worn build is not ${files[0] || plane.worn}`);
+  }
+  if (plane.skills && !existsSync(join(root, plane.skills))) {
+    return drift(`${plane.skills} is not there`);
+  }
+  if (plane.entry && files[0] && !fileHas(root, files[0], plane.entry)) {
+    return drift(`${plane.entry} is not in ${files[0]}`);
+  }
+  if (plane.exit && files[0] && !fileHas(root, files[0], plane.exit)) {
+    return drift(`${plane.exit} is not in ${files[0]}`);
+  }
+  return holds();
+}
+
+function sourceLine(root, plane) {
+  if (!plane.pick || !Array.isArray(plane.files) || !plane.files[0]) return null;
+  const full = join(root, plane.files[0]);
+  if (!existsSync(full)) return null;
+  const line = readFileSync(full, 'utf8')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .find((item) => item.includes(plane.pick));
+  return line || null;
+}
+
+function triageOf(exam, plane, root) {
+  if (exam.kind === 'drawing') return { stop: true, text: 'Pick: none', line: null };
+  if (exam.kind === 'drift') {
+    return { stop: true, text: `Pick: ${exam.text.slice('Drift: '.length)}`, line: null };
+  }
+  const line = sourceLine(root, plane);
+  if (plane.pick && line) return { stop: false, text: `Pick: ${plane.pick}`, line };
+  return { stop: true, text: 'Pick: none', line: null };
+}
+
+function readScratch(file) {
+  if (!file || !existsSync(file)) return null;
+  try {
+    const data = JSON.parse(readFileSync(file, 'utf8'));
+    if (!data || typeof data !== 'object' || !data.digest) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function fileStore(file) {
+  return {
+    load() {
+      return readScratch(file);
+    },
+    save(rec) {
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, `${JSON.stringify(rec, null, 2)}\n`);
+    },
+    clear() {
+      if (existsSync(file)) unlinkSync(file);
+    },
+  };
+}
+
+function memStore() {
+  let rec = null;
+  return {
+    load() {
+      return rec;
+    },
+    save(next) {
+      rec = next;
+    },
+    clear() {
+      rec = null;
+    },
+  };
+}
+
+function examineRec(rec, platesDir, root) {
+  if (rec.itemFile) {
+    return fileHas(root, rec.itemFile, rec.digest)
+      ? holds()
+      : drift(`the line is not in ${rec.itemFile}`);
+  }
+  const plane = assemblePlane(rec.id, platesDir);
+  if (!plane) return drift(`${rec.id} is not a plane`);
+  const filled = new Set(rec.filled || []);
+  if (!filled.has('files') && !filled.has('skills') && !filled.has('worn') && !filled.has('entry') && !filled.has('exit')) {
+    return drawing();
+  }
+  return examinePlane(plane, root);
 }
 
 export function parseLook(argv) {
@@ -262,173 +333,80 @@ export function parseLook(argv) {
   return { plane: 'pipeline', one: head, look };
 }
 
-function runGround(one, look, root) {
-  if (one) return miss(`Triage did not name ${one}.`);
-  const flags = groundFlags(root);
-  if (look === 'peer') return ok(peerText('ground', 'Home. The dev plane.', flags));
-  const exam = examineGround(root);
-  if (look === 'examine') return ok(exam.text);
-  const triage = triageOf(exam, null);
-  if (look === 'triage') return ok(triage.text);
-  return ok('No cascade.');
+function resolvePlane(parsed, platesDir) {
+  if (parsed.plane === 'ground') {
+    if (parsed.one) return miss(`Triage did not name ${parsed.one}.`);
+    const plane = assemblePlane('ground', platesDir);
+    return plane ? { ok: true, plane } : miss('Ground has no digest.');
+  }
+  const ids = listPipelineIds(platesDir);
+  if (!parsed.one || !ids.includes(parsed.one)) return miss(`Name one pipeline: ${ids.join(', ')}.`);
+  const plane = assemblePlane(parsed.one, platesDir);
+  return plane ? { ok: true, plane } : miss(`${parsed.one} has no digest.`);
 }
 
-function runPipeline(one, look, platesDir, root) {
-  const ids = listPipelineIds(platesDir);
-  if (!one || !ids.includes(one)) return miss(`Name one pipeline: ${ids.join(', ')}.`);
-  const seam = SEAMS[one] || null;
-  const flags = pipelineFlags(seam);
-  const digest = takeOf(pipelineBody(one, platesDir));
-  if (look === 'peer') return ok(peerText('ground', digest, flags));
-  const exam = examineSeam(root, seam);
-  if (look === 'examine') return ok(exam.text);
-  const triage = triageOf(exam, seam && seam.pick);
-  if (look === 'triage') return ok(triage.text);
-  if (triage.stop || !seam || !seam.pickDigest) return ok('No cascade.');
-  if (!fileHas(root, seam.file, seam.pickIn)) return ok('No cascade.');
-  return ok(cascadeText(`pipeline/${one}`, seam));
+function step(word, platesDir, root, store) {
+  const rec = store.load();
+  if (!rec) return miss('The scratch is empty.');
+  if (word === 'examine') {
+    const exam = examineRec(rec, platesDir, root);
+    store.save({ ...rec, examine: exam.kind, examineText: exam.text, triage: null, stop: true });
+    return ok(exam.text);
+  }
+  if (!rec.examine) return miss('Examine first.');
+  const plane = rec.itemFile ? null : assemblePlane(rec.id, platesDir);
+  const exam = { kind: rec.examine, text: rec.examineText };
+  const triage = plane
+    ? triageOf(exam, plane, root)
+    : { stop: true, text: 'Pick: none', line: null };
+  if (word === 'triage') {
+    store.save({ ...rec, triage: triage.text, stop: triage.stop });
+    return ok(triage.text);
+  }
+  if (!rec.triage) return miss('Triage first.');
+  if (rec.stop || triage.stop || !triage.line || !plane || !plane.files || !plane.files[0]) {
+    return ok('No cascade.');
+  }
+  const child = blankStep({
+    from: rec.plane,
+    digest: triage.line,
+    filled: [],
+    plane: `${rec.plane}/${plane.pick}`,
+    id: plane.id,
+    itemFile: plane.files[0],
+  });
+  store.save(child);
+  return ok(formatPeer(child));
+}
+
+export function cycle(argv, platesDir, scratchPath, store = scratchPath ? fileStore(scratchPath) : memStore()) {
+  const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
+  const root = repoRootFrom(platesDir);
+  if (words.length === 1 && words[0] === 'teardown') {
+    const rec = store.load();
+    store.clear();
+    const digest = rec && rec.digest ? rec.digest : '';
+    return ok(digest ? `Ground.\n${digest}` : 'Ground.');
+  }
+  if (words.length === 1 && LOOKS.has(words[0]) && words[0] !== 'peer') {
+    return step(words[0], platesDir, root, store);
+  }
+  const parsed = parseLook(words);
+  if (parsed.error) return miss(parsed.error);
+  const resolved = resolvePlane(parsed, platesDir);
+  if (!resolved.ok) return resolved;
+  const rec = peerRec(resolved.plane);
+  store.save(rec);
+  if (parsed.look === 'peer') return ok(formatPeer(rec));
+  return step(parsed.look, platesDir, root, store);
 }
 
 export function look(argv, platesDir) {
-  const parsed = parseLook(argv);
-  if (parsed.error) return miss(parsed.error);
-  const root = repoRootFrom(platesDir);
-  if (parsed.plane === 'ground') return runGround(parsed.one, parsed.look, root);
-  if (parsed.plane === 'pipeline') return runPipeline(parsed.one, parsed.look, platesDir, root);
-  return miss('Name one plane: ground, pipeline.');
+  return cycle(argv, platesDir, null);
 }
 
 export function scratchFileFor(root) {
   return join(root, '.xray', 'state', 'goggles-scratch.json');
-}
-
-function readScratch(file) {
-  if (!file || !existsSync(file)) return null;
-  try {
-    const data = JSON.parse(readFileSync(file, 'utf8'));
-    if (!data || typeof data !== 'object' || !data.digest) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function writeScratch(file, data) {
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`);
-}
-
-function formatPeer(rec) {
-  const filled = Array.isArray(rec.filled) ? rec.filled : [];
-  return [`From: ${rec.from}`, `Digest: ${rec.digest}`, `Filled: ${filled.join(', ')}`].join('\n');
-}
-
-function peerRecord(parsed, platesDir, root) {
-  if (parsed.plane === 'ground') {
-    if (parsed.one) return miss(`Triage did not name ${parsed.one}.`);
-    const flags = groundFlags(root);
-    return {
-      ok: true,
-      rec: {
-        from: 'ground',
-        digest: 'Home. The dev plane.',
-        filled: filledNames(flags),
-        plane: 'ground',
-        id: '',
-        examine: null,
-        examineText: null,
-        triage: null,
-        stop: true,
-      },
-    };
-  }
-  const ids = listPipelineIds(platesDir);
-  if (!parsed.one || !ids.includes(parsed.one)) {
-    return miss(`Name one pipeline: ${ids.join(', ')}.`);
-  }
-  const seam = SEAMS[parsed.one] || null;
-  return {
-    ok: true,
-    rec: {
-      from: 'ground',
-      digest: takeOf(pipelineBody(parsed.one, platesDir)),
-      filled: filledNames(pipelineFlags(seam)),
-      plane: `pipeline/${parsed.one}`,
-      id: parsed.one,
-      examine: null,
-      examineText: null,
-      triage: null,
-      stop: true,
-    },
-  };
-}
-
-function examineRecord(rec, platesDir) {
-  const root = repoRootFrom(platesDir);
-  const filled = new Set(Array.isArray(rec.filled) ? rec.filled : []);
-  if (rec.plane === 'ground') return examineGround(root);
-  if (!filled.has('files')) return drawing();
-  return examineSeam(root, SEAMS[rec.id] || null);
-}
-
-function teardown(file) {
-  const rec = readScratch(file);
-  if (file && existsSync(file)) unlinkSync(file);
-  const digest = rec && rec.digest ? rec.digest : '';
-  return ok(digest ? `Ground.\n${digest}` : 'Ground.');
-}
-
-export function cycle(argv, platesDir, scratchPath) {
-  const words = (Array.isArray(argv) ? argv : []).map((raw) => String(raw || '').trim()).filter(Boolean);
-  if (words.length === 1 && words[0] === 'teardown') return teardown(scratchPath);
-  if (words.length === 1 && LOOKS.has(words[0]) && words[0] !== 'peer') {
-    const rec = readScratch(scratchPath);
-    if (!rec) return miss('The scratch is empty.');
-    if (words[0] === 'examine') {
-      const exam = examineRecord(rec, platesDir);
-      rec.examine = exam.kind;
-      rec.examineText = exam.text;
-      rec.triage = null;
-      rec.stop = true;
-      writeScratch(scratchPath, rec);
-      return ok(exam.text);
-    }
-    if (!rec.examine) return miss('Examine first.');
-    const exam = { kind: rec.examine, text: rec.examineText };
-    const seam = SEAMS[rec.id] || null;
-    const triage = triageOf(exam, seam && seam.pick);
-    if (words[0] === 'triage') {
-      rec.triage = triage.text;
-      rec.stop = triage.stop;
-      writeScratch(scratchPath, rec);
-      return ok(triage.text);
-    }
-    if (!rec.triage) return miss('Triage first.');
-    if (triage.stop || rec.stop || !seam || !seam.pickDigest) return ok('No cascade.');
-    const root = repoRootFrom(platesDir);
-    if (!fileHas(root, seam.file, seam.pickIn)) return ok('No cascade.');
-    const child = {
-      from: rec.plane,
-      digest: seam.pickDigest,
-      filled: [],
-      plane: `${rec.plane}/${seam.pick}`,
-      id: rec.id,
-      examine: null,
-      examineText: null,
-      triage: null,
-      stop: true,
-    };
-    writeScratch(scratchPath, child);
-    return ok(formatPeer(child));
-  }
-  const parsed = parseLook(words);
-  if (parsed.error) return miss(parsed.error);
-  const root = repoRootFrom(platesDir);
-  const peered = peerRecord(parsed, platesDir, root);
-  if (!peered.ok) return peered;
-  writeScratch(scratchPath, peered.rec);
-  if (parsed.look === 'peer') return ok(formatPeer(peered.rec));
-  return cycle([parsed.look], platesDir, scratchPath);
 }
 
 function defaultPlatesDir() {

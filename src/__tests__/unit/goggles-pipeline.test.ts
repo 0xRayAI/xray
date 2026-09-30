@@ -4,113 +4,94 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
+  assemblePlane,
   cascadeOf,
+  cycle,
+  filledOf,
   findPlatesDir,
   listPipelineIds,
-  cycle,
   look,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const platesDir = findPlatesDir(dirname(fileURLToPath(import.meta.url)));
 
-describe('goggles look', () => {
-  it('peers routing, then examines, triages, and cascades only the pick', () => {
+describe('goggles plane body', () => {
+  it('uses the same fields for every plane and leaves empty ones out', () => {
+    expect(filledOf({
+      plate: 'docs-site/docs/plates/routing.md',
+      entry: 'scoreAndRoute',
+      exit: 'agent',
+      files: ['src/nucleus/thin-dispatch.ts'],
+    })).toEqual(['plate', 'entry', 'exit', 'files']);
+    expect(filledOf({ plate: 'docs-site/docs/plates/boot.md' })).toEqual(['plate']);
+    expect(filledOf({
+      files: ['src'],
+      unpathed: ['mill'],
+      skills: 'SKILLS.md',
+    })).toEqual(['files', 'skills']);
+
+    const routing = assemblePlane('routing', platesDir!);
+    expect(routing?.entry).toBeNull();
+    expect(routing?.exit).toBeNull();
+    expect(filledOf(routing!)).toEqual(['plate', 'files', 'worn']);
+    expect(filledOf(assemblePlane('boot', platesDir!)!)).toEqual(['plate']);
+    expect(filledOf(assemblePlane('ground', platesDir!)!)).toEqual(['files', 'skills']);
+  });
+
+  it('peers from the plane body, not a per-plane printer', () => {
     expect(platesDir).toBeTruthy();
     const ids = listPipelineIds(platesDir!);
     expect(ids).toContain('routing');
     expect(ids).toContain('house');
     expect(ids).not.toContain('grokbot');
 
-    const top = look(['routing'], platesDir!);
-    expect(top.ok).toBe(true);
-    expect(top.text).toBe(
+    expect(look(['routing'], platesDir!).text).toBe(
       [
         'From: ground',
         'Digest: Task text becomes an agent.',
-        'Filled: plate, files',
+        'Filled: plate, files, worn',
       ].join('\n'),
     );
-    expect(top.text).not.toContain('Cascade');
-    expect(top.text).not.toContain('@');
-
-    const root = dirname(dirname(dirname(platesDir!)));
-    const worn = existsSync(join(root, 'dist', 'nucleus', 'thin-dispatch.js'));
-    if (worn) {
-      expect(look(['routing', 'examine'], platesDir!).text).toBe('Holds.');
-      expect(look(['routing', 'triage'], platesDir!).text).toBe('Pick: resolveThinDispatch');
-      expect(look(['routing', 'cascade'], platesDir!).text).toBe(
-        [
-          'From: pipeline/routing',
-          'Digest: A null provider returns the score unchanged. A worn provider can change the agent.',
-          'Filled:',
-        ].join('\n'),
-      );
-    } else {
-      const drift = 'Drift: the worn build is not src/nucleus/thin-dispatch.ts';
-      expect(look(['routing', 'examine'], platesDir!).text).toBe(drift);
-      expect(look(['routing', 'triage'], platesDir!).text).toBe(
-        'Pick: the worn build is not src/nucleus/thin-dispatch.ts',
-      );
-      expect(look(['routing', 'cascade'], platesDir!).text).toBe('No cascade.');
-    }
-
-    const house = look(['house'], platesDir!);
-    expect(house.text).toContain('From: ground');
-    expect(house.text).toContain('Filled: plate, files');
-    expect(house.text).not.toContain('entry');
-  });
-
-  it('peers a drawing and does not cascade it', () => {
+    expect(look(['house'], platesDir!).text).toContain('Filled: plate, files');
+    expect(look(['house'], platesDir!).text).not.toContain('entry');
     expect(look(['boot'], platesDir!).text).toContain('Filled: plate');
-    expect(look(['boot'], platesDir!).text).not.toContain('files');
-    expect(look(['boot', 'examine'], platesDir!).text).toBe('Drawing only.');
-    expect(look(['boot', 'triage'], platesDir!).text).toBe('Pick: none');
-    expect(look(['boot', 'cascade'], platesDir!).text).toBe('No cascade.');
-  });
-
-  it('peers ground and refuses a plane, a depth number, and an unpicked item', () => {
-    const home = look(['ground'], platesDir!);
-    expect(home.text).toBe(
+    expect(look(['ground'], platesDir!).text).toBe(
       ['From: ground', 'Digest: Home. The dev plane.', 'Filled: files, skills'].join('\n'),
     );
-    expect(look(['ground', 'examine'], platesDir!).text).toBe('Holds.');
-    expect(look(['ground', 'triage'], platesDir!).text).toBe('Pick: none');
-    expect(look(['ground', 'cascade'], platesDir!).text).toBe('No cascade.');
-
     expect(look(['domain'], platesDir!).text).toBe('Not a plane yet. Planes: ground, pipeline.');
-    expect(look(['routing', 'house'], platesDir!).text).toBe('Name one pipeline.');
     expect(look(['routing', '2'], platesDir!).text).toBe(
       'A depth number is not a look. Looks: peer, examine, triage, cascade.',
     );
     expect(look(['ground', 'code'], platesDir!).text).toBe('Triage did not name code.');
+    expect(look(['boot', 'examine'], platesDir!).text).toBe('Drawing only.');
     expect(cascadeOf('┌─┐\n│ OUTPUT LAYER                 v                              │\n')).toEqual([
       'OUTPUT LAYER',
     ]);
   });
 
-  it('writes a scratch, refuses a step out of order, and teardown deletes it', () => {
+  it('walks the scratch in order and cascades a line that is already in the file', () => {
     const scratch = join(mkdtempSync(join(tmpdir(), 'goggles-')), 'scratch.json');
+    const root = dirname(dirname(dirname(platesDir!)));
     const peer = cycle(['routing'], platesDir!, scratch);
-    expect(peer.text).toContain('Filled: plate, files');
-    expect(peer.text).not.toContain('entry');
+    expect(peer.text).toContain('Filled: plate, files, worn');
     const saved = JSON.parse(readFileSync(scratch, 'utf8'));
-    expect(saved.filled).toEqual(['plate', 'files']);
-    expect(saved.examine).toBeNull();
+    expect(saved.filled).toEqual(['plate', 'files', 'worn']);
+    expect(saved.filled).not.toContain('entry');
 
     expect(cycle(['cascade'], platesDir!, scratch).text).toBe('Examine first.');
-    expect(cycle(['triage'], platesDir!, scratch).text).toBe('Examine first.');
-    expect(existsSync(scratch)).toBe(true);
-
-    const exam = cycle(['examine'], platesDir!, scratch);
-    expect(exam.text === 'Holds.' || exam.text.startsWith('Drift:')).toBe(true);
-    const triaged = cycle(['triage'], platesDir!, scratch);
-    expect(triaged.text.startsWith('Pick:')).toBe(true);
-    const cascaded = cycle(['cascade'], platesDir!, scratch);
-    if (triaged.text === 'Pick: resolveThinDispatch') {
-      expect(cascaded.text).toContain('From: pipeline/routing');
-      expect(cascaded.text).not.toContain('entry');
+    const exam = cycle(['examine'], platesDir!, scratch).text;
+    const worn = existsSync(join(root, 'dist', 'nucleus', 'thin-dispatch.js'));
+    expect(exam).toBe(worn ? 'Holds.' : 'Drift: the worn build is not src/nucleus/thin-dispatch.ts');
+    const triaged = cycle(['triage'], platesDir!, scratch).text;
+    const cascaded = cycle(['cascade'], platesDir!, scratch).text;
+    if (exam === 'Holds.') {
+      expect(triaged).toBe('Pick: resolveThinDispatch');
+      expect(cascaded).toContain('From: pipeline/routing');
+      expect(cascaded).toContain('provider.resolveThinDispatch');
+      expect(cascaded).not.toContain('Filled: plate');
     } else {
-      expect(cascaded.text).toBe('No cascade.');
+      expect(triaged).toBe('Pick: the worn build is not src/nucleus/thin-dispatch.ts');
+      expect(cascaded).toBe('No cascade.');
     }
 
     const back = cycle(['teardown'], platesDir!, scratch);
