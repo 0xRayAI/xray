@@ -182,16 +182,28 @@ describe('pops', () => {
     const dir = mkdtempSync(join(tmpdir(), 'goggles-pop-'));
     const scratch = join(dir, 'scratch.json');
     const table = join(dir, 'pops.json');
-    expect(cycle(['pop', 'routing'], platesDir, scratch).text).toBe('Name facet, feat, or fix.');
+    const card = [
+      'From: ground',
+      'Digest: Task text becomes an agent.',
+      'Filled: plate, files, worn',
+    ].join('\n');
+    expect(cycle(['pop', 'routing'], platesDir, scratch).text).toBe(card);
     expect(existsSync(scratch)).toBe(false);
+    expect(cycle(['pop', 'routing'], null, scratch).text).toBe(card);
+    expect(cycle(['pop', 'routing', 'files'], platesDir, scratch).text).toBe('files: src/nucleus/thin-dispatch.ts');
+    expect(cycle(['pop', 'routing', 'files'], null, scratch).text).toBe('files: src/nucleus/thin-dispatch.ts');
+    expect(cycle(['pop', 'routing', 'worn'], platesDir, scratch).text).toBe('worn: dist/nucleus/thin-dispatch.js');
+    expect(cycle(['pop', 'routing', 'entry'], null, scratch).text).toBe('Empty.');
+    expect(cycle(['pop', 'routing', 'skills'], null, scratch).text).toBe('Empty.');
+    expect(cycle(['pop', 'ground', 'skills'], platesDir, scratch).text).toBe('skills: SKILLS.md');
     const facet = cycle(['pop', 'routing', 'facet'], platesDir, scratch);
     expect(facet.text).toBe('facet: Task text becomes an agent.');
     expect(cycle(['pop', 'routing', 'facet'], null, scratch).text).toBe('facet: Task text becomes an agent.');
     expect(cycle(['pop', 'hands', 'fix', 'a kind is chosen, not ordered'], null, scratch).text).toBe('fix: a kind is chosen, not ordered');
     expect(cycle(['pop', 'hands', 'facet'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop', 'hands', 'fix'], null, scratch).text).toBe('fix: a kind is chosen, not ordered');
-    expect(cycle(['pop', 'routing', 'not-a-kind', 'no'], null, scratch).text).toBe('Name facet, feat, or fix.');
-    expect(cycle(['pop', 'boot'], platesDir, scratch).text).toBe('Name facet, feat, or fix.');
+    expect(cycle(['pop', 'routing', 'not-a-kind', 'no'], null, scratch).text).toBe('Name a field.');
+    expect(cycle(['pop', 'boot'], platesDir, scratch).text.startsWith('From: ground')).toBe(true);
     expect(cycle(['house'], platesDir, scratch).text).toBe('Empty.');
     expect(existsSync(scratch)).toBe(false);
     expect(cycle(['pop', 'house', 'fix', 'a fix alone is enough'], null, scratch).text).toBe('fix: a fix alone is enough');
@@ -199,7 +211,9 @@ describe('pops', () => {
     expect(cycle(['pop', 'missing', 'feat'], null, scratch).text).toBe('Empty.');
     expect(cycle(['pop'], null, scratch).text).toBe('Name one pop.');
     const saved = JSON.parse(readFileSync(table, 'utf8'));
-    expect(saved.planes.routing).toEqual({ facet: 'Task text becomes an agent.' });
+    expect(saved.planes.routing.card.digest).toBe('Task text becomes an agent.');
+    expect(saved.planes.routing.fields.files).toBe('src/nucleus/thin-dispatch.ts');
+    expect(saved.planes.routing.facet).toBe('Task text becomes an agent.');
     expect(saved.planes.hands).toEqual({ fix: 'a kind is chosen, not ordered' });
     expect(saved.planes.missing).toBeUndefined();
     expect(saved.streak).toBeUndefined();
@@ -217,7 +231,7 @@ describe('pops', () => {
     expect(once).toContain('The body stays.');
     expect(once).toContain('## Pop job');
     expect(once).toContain('A pop is not a law.');
-    expect(once).toContain('The mind names facet, feat, or fix when one is needed.');
+    expect(once).toContain('A pop of a plane returns its card: from, the digest, and the filled fields.');
     expect(once).toContain('A slow look opens a plane only when that name was already popped.');
     expect(once).not.toContain('still opens a plane that was never popped');
     expect(once).not.toContain('Not the cache.');

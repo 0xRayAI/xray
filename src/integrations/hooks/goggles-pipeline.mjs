@@ -4,8 +4,8 @@
  * Peer writes a scratch. Examine checks only that scratch against disk.
  * Triage picks one line that is already in a file, or none. Cascade opens that line.
  * Teardown deletes the scratch. A depth number is not a look.
- * A pop names facet, feat, or fix only when the mind needs that one.
- * None is required, and they are not in an order.
+ * A pop of a plane returns its card: from, the digest, and the filled fields.
+ * A pop of one field returns that field. An empty field stays empty.
  * A slow look opens a plane only when that name was already popped.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -443,6 +443,7 @@ function popsPathBeside(scratchPath, explicit) {
 }
 
 const POP_KINDS = ['facet', 'feat', 'fix'];
+const CARD_FIELDS = ['from', 'digest', 'plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 
 function keepRow(raw) {
   const kept = {};
@@ -453,13 +454,41 @@ function keepRow(raw) {
   return kept;
 }
 
+function storedRow(row) {
+  const kept = keepRow(row);
+  if (row.card) kept.card = row.card;
+  if (row.fields && Object.keys(row.fields).length) kept.fields = row.fields;
+  return kept;
+}
+
 function popLine(raw) {
   return String(raw || '').replace(/\s+/g, ' ').trim().slice(0, 240);
 }
 
 function hasPop(pops, name) {
   const row = pops.planes[name];
-  return Boolean(row && (row.facet || row.feat || row.fix));
+  if (!row) return false;
+  return Boolean(row.card || row.facet || row.feat || row.fix || (row.fields && Object.keys(row.fields).length));
+}
+
+function readCard(raw) {
+  if (!raw || !raw.card || typeof raw.card !== 'object') return null;
+  const digest = popLine(raw.card.digest);
+  if (!digest) return null;
+  const filled = Array.isArray(raw.card.filled)
+    ? raw.card.filled.map((name) => String(name)).filter((name) => CARD_FIELDS.includes(name))
+    : [];
+  return { from: popLine(raw.card.from) || 'ground', digest, filled };
+}
+
+function readFields(raw) {
+  const src = raw && raw.fields && typeof raw.fields === 'object' ? raw.fields : {};
+  const fields = {};
+  for (const name of CARD_FIELDS) {
+    const line = popLine(src[name]);
+    if (line) fields[name] = line;
+  }
+  return fields;
 }
 
 function loadPops(file) {
@@ -474,7 +503,11 @@ function loadPops(file) {
         const key = popName(name);
         if (!key || !raw || typeof raw !== 'object') continue;
         const row = keepRow(raw);
-        if (row.facet || row.feat || row.fix) planes[key] = row;
+        const card = readCard(raw);
+        const fields = readFields(raw);
+        if (card) row.card = card;
+        if (Object.keys(fields).length) row.fields = fields;
+        if (row.card || row.facet || row.feat || row.fix || row.fields) planes[key] = row;
       }
       return { planes };
     }
@@ -518,13 +551,76 @@ function popName(name) {
   return /^[a-z0-9][a-z0-9-]*$/i.test(String(name || '')) ? String(name) : '';
 }
 
-function digestOf(platesDir, name) {
-  if (!platesDir) return '';
+function planeOf(platesDir, name) {
+  if (!platesDir) return null;
   const parsed = parseLook([name]);
-  if (parsed.error) return '';
+  if (parsed.error) return null;
   const resolved = resolvePlane(parsed, platesDir);
-  if (!resolved.ok || !resolved.plane) return '';
-  return popLine(resolved.plane.digest);
+  if (!resolved.ok || !resolved.plane) return null;
+  return resolved.plane;
+}
+
+function snapshotOf(plane) {
+  return { from: 'ground', digest: popLine(plane.digest), filled: filledOf(plane) };
+}
+
+function formatCard(card) {
+  const filled = card.filled.length ? card.filled.join(', ') : 'none';
+  return [`From: ${card.from}`, `Digest: ${card.digest}`, `Filled: ${filled}`].join('\n');
+}
+
+function fieldLine(plane, field) {
+  if (field === 'from') return 'ground';
+  if (field === 'digest') return popLine(plane.digest);
+  if (field === 'plate') return plane.plate ? String(plane.plate) : '';
+  if (field === 'files') {
+    const paths = [...(Array.isArray(plane.files) ? plane.files : [])];
+    if (Array.isArray(plane.unpathed)) paths.push(...plane.unpathed);
+    return paths.join(', ');
+  }
+  const value = plane[field];
+  if (Array.isArray(value)) return value.join(', ');
+  return value ? String(value) : '';
+}
+
+function digestOf(platesDir, name) {
+  const plane = planeOf(platesDir, name);
+  return plane ? popLine(plane.digest) : '';
+}
+
+function popField(file, pops, key, row, field, line, platesDir) {
+  row.fields = { ...(row.fields || {}) };
+  if (line) {
+    row.fields[field] = line;
+    pops.planes[key] = row;
+    savePops(file, pops);
+    return ok(`${field}: ${line}`);
+  }
+  if (row.fields[field]) return ok(`${field}: ${row.fields[field]}`);
+  if (field === 'digest' && row.card) return ok(`digest: ${row.card.digest}`);
+  if (field === 'from' && row.card) return ok(`from: ${row.card.from}`);
+  if (row.card && !row.card.filled.includes(field)) return ok('Empty.');
+  const plane = planeOf(platesDir, key);
+  if (!plane) {
+    ensurePopTable(file);
+    return ok('Empty.');
+  }
+  if (!row.card) row.card = snapshotOf(plane);
+  if (!row.card.filled.includes(field)) {
+    pops.planes[key] = row;
+    savePops(file, pops);
+    return ok('Empty.');
+  }
+  const held = popLine(fieldLine(plane, field));
+  if (!held) {
+    pops.planes[key] = row;
+    savePops(file, pops);
+    return ok('Empty.');
+  }
+  row.fields[field] = held;
+  pops.planes[key] = row;
+  savePops(file, pops);
+  return ok(`${field}: ${held}`);
 }
 
 function runPop(words, file, platesDir) {
@@ -532,14 +628,28 @@ function runPop(words, file, platesDir) {
   if (!words.length) return miss('Name one pop.');
   const key = popName(words[0]);
   if (!key) return miss('Name one pop.');
+  const field = CARD_FIELDS.includes(words[1]) ? words[1] : '';
   const kind = POP_KINDS.includes(words[1]) ? words[1] : '';
-  const line = popLine(kind ? words.slice(2).join(' ') : words.slice(1).join(' '));
-  if (!kind) return miss('Name facet, feat, or fix.');
+  const line = popLine((field || kind) ? words.slice(2).join(' ') : words.slice(1).join(' '));
   const pops = loadPops(file);
   const row = { ...(pops.planes[key] || {}) };
+  if (!field && !kind) {
+    if (line) return miss('Name a field.');
+    if (row.card) return ok(formatCard(row.card));
+    const plane = planeOf(platesDir, key);
+    if (!plane) {
+      ensurePopTable(file);
+      return ok('Empty.');
+    }
+    row.card = snapshotOf(plane);
+    pops.planes[key] = row;
+    savePops(file, pops);
+    return ok(formatCard(row.card));
+  }
+  if (field) return popField(file, pops, key, row, field, line, platesDir);
   if (line) {
     row[kind] = line;
-    pops.planes[key] = keepRow(row);
+    pops.planes[key] = storedRow(row);
     savePops(file, pops);
     return ok(`${kind}: ${line}`);
   }
@@ -548,7 +658,7 @@ function runPop(words, file, platesDir) {
     const digest = digestOf(platesDir, key);
     if (digest) {
       row.facet = digest;
-      pops.planes[key] = keepRow(row);
+      pops.planes[key] = storedRow(row);
       savePops(file, pops);
       return ok(`facet: ${digest}`);
     }
@@ -573,11 +683,11 @@ function notesPath(root) {
 }
 
 const POP_JOB = [
-  'The mind names facet, feat, or fix when one is needed. None is required, and they are not in an order.',
-  'A hit returns that line and does not open the plane. A miss stays empty and still leaves the table.',
+  'A pop of a plane returns its card: from, the digest, and the filled fields.',
+  'A pop of one field returns that field: plate, entry, exit, files, skills, setup, teardown, or worn.',
+  'A hit does not open the plane. A miss stays empty. An empty field stays empty.',
   'Teardown wipes the scratch, not the table. The wear leaves the table when the file is missing.',
-  'A pop is not a law.',
-  'A slow look opens a plane only when that name was already popped.',
+  'A pop is not a law. A slow look opens a plane only when that name was already popped.',
 ].join(' ');
 
 export function notesWithPopJob(existing) {
