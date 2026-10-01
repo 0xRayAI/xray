@@ -42,6 +42,15 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.34] - 2026-10-01
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: hold the lens on the worn build when the source is not packed (6f561ef6f)
+
+---
+
 ## [4.0.33] - 2026-10-01
 
 ### 🔄 Changes
