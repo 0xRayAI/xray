@@ -25,4 +25,5 @@ UNREVIEWED
 - The Light / Normal / Strict table in `grok-bot/skills/ship-ready-mill-gate/SKILL.md` stays intact.
 - CHANGELOG `[4.0.31]` on main says "Not published from this commit" and describes goggles. Blaze (2026-09-30 CT) said `0xray@4.0.31` shipped, the tag was annotated, and the GitHub Release was skipped so Latest stayed on v4.0.30. Do not treat that changelog sentence as a hold on this procedure PR, and do not republish from this docs change.
 - Companion line in that changelog section: `@0xray/grok-bot` unchanged at 0.1.8.
+- Live check on 2026-10-01 during this cloud: `npm run release:docs-check` passed. It reported npm registry `4.0.31`, package.json `4.0.31`, and latest git tag `v4.0.30`. The tag the Releases page needs may still be missing, not only the GitHub Release. This docs PR does not create the tag or the Release.
 - In-repo cloud notes live at `grok-bot/ops/cloud-memory/` and start with `UNREVIEWED`. There was no `forge-suit/ops/cloud-memory/` directory in this checkout.
