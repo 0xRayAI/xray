@@ -186,7 +186,7 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
 | **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live · annotated tag pushed · GitHub Release URL (Latest flips; a pushed tag alone is FAIL) | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag). The script stops at the tag. Forge still drafts the GitHub Release from CHANGELOG; critic friend-tests; Blaze publishes it (or an explicit GO). |
 
-Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
+Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail, or a pushed tag with no GitHub Release. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
 
 npm publish and Railway deploy stay Ask-first even after mill-gate **D** (`AUTO-REVIEW-POLICY.md`). A host paste is not the OS decision. Spend, credentials, deletes, taste, and mint-rotate stay Ask-first.
 
