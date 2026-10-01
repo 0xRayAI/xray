@@ -42,6 +42,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.33] - 2026-10-01
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
 ## [4.0.32] - 2026-10-01
 
 Next patch after npm `4.0.31`. Not published from this commit.
