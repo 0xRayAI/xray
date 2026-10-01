@@ -354,6 +354,8 @@ export function sessionBootNeedsRefresh(existing, root) {
   }
   if (!existing.repertoireResume) return true;
   if (!existing.stationLine) return true;
+  const liveResume = buildRepertoireResume(root);
+  if (liveResume && existing.repertoireResume !== liveResume) return true;
   return false;
 }
 
