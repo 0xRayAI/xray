@@ -170,6 +170,7 @@
     "scripts/mjs/verify-temperament-live.mjs",
     "scripts/mjs/verify-four-floor-compact.mjs",
     "scripts/mjs/run-repertoire-mcp.mjs",
+    "scripts/mjs/run-goggles-mcp.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",

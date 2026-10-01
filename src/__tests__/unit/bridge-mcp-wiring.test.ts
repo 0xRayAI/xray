@@ -452,5 +452,25 @@ describe('bridge-mcp-wiring', () => {
     const portable = wiring.buildPortableProjectMcpJson();
     expect(Object.keys(portable.mcpServers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
     expect(portable.mcpServers.repertoire).toBeUndefined();
+    expect(portable.mcpServers.goggles).toBeUndefined();
+  });
+
+  it('wires goggles when repertoire is absent', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-goggles-mcp-'));
+    const launcher = path.join(consumer, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    mkdirSync(path.dirname(launcher), { recursive: true });
+    writeFileSync(launcher, '#!/usr/bin/env node\n');
+    try {
+      const extras = wiring.detectConsumerExtraMcpServers(consumer);
+      expect(extras.hermes.repertoire).toBeUndefined();
+      expect(extras.hermes.goggles.args.join(' ')).toContain('run-goggles-mcp.mjs');
+      expect(extras.hermes.goggles.env.GOGGLES_ROOT).toBe(consumer);
+      expect(extras.hermes.goggles.env.GOGGLES_PLANES_PATH).toBe('');
+      expect(Object.keys(extras.hermes.goggles.env).join(',')).not.toMatch(/TOKEN|SECRET|API_KEY|WALLET/i);
+      expect(extras.opencode.goggles.command.join(' ')).toContain('run-goggles-mcp.mjs');
+      expect(wiring.resolveGogglesMcp(consumer)).toBe(launcher);
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
   });
 });

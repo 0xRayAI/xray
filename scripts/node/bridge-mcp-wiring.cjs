@@ -139,31 +139,70 @@ function enableMemoryRoutingIfResolves(features, targetDir) {
   };
 }
 
+function resolveGogglesMcp(targetDir) {
+  const candidates = [
+    path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs"),
+    path.join(targetDir, "scripts", "mjs", "run-goggles-mcp.mjs"),
+  ];
+  return candidates.find((file) => fs.existsSync(file)) || null;
+}
+
+function gogglesScopedLaunch(targetDir, launcher) {
+  return wrapScopedLaunch(
+    { command: "node", args: [launcher] },
+    mergeScopedEnv([
+      baseScopedEnv(targetDir),
+      { GOGGLES_ROOT: targetDir, GOGGLES_PLANES_PATH: "" },
+    ]),
+  );
+}
+
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
     const repertoireMcp = resolveRepertoireMcp(targetDir);
-    if (!repertoireMcp) return extras;
-    const launch = wrapScopedLaunch(
-      { command: "node", args: [repertoireMcp] },
-      baseScopedEnv(targetDir),
-    );
-    extras.hermes.repertoire = {
-      command: launch.command,
-      args: launch.args,
-      env: launch.env,
-    };
-    extras.opencode.repertoire = {
-      type: "local",
-      command: launch.commandList,
-      enabled: true,
-      environment: launch.env,
-    };
-    extras.openclaw.repertoire = {
-      command: launch.command,
-      args: launch.args,
-      env: launch.env,
-    };
+    if (repertoireMcp) {
+      const launch = wrapScopedLaunch(
+        { command: "node", args: [repertoireMcp] },
+        baseScopedEnv(targetDir),
+      );
+      extras.hermes.repertoire = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.repertoire = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.repertoire = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
+    const gogglesMcp = resolveGogglesMcp(targetDir);
+    if (gogglesMcp) {
+      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
+      extras.hermes.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.goggles = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
   } catch {
     // best-effort
   }
@@ -880,6 +919,7 @@ module.exports = {
   detectConsumerExtraMcpServers,
   isRepertoirePackageRoot,
   resolveRepertoireMcp,
+  resolveGogglesMcp,
   resolveRepertoireProvider,
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
