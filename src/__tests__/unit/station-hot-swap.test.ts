@@ -260,6 +260,75 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('a user sentence does not replace a maintained ticket', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-keeps-ticket-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', 'Plan: Do not push.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'did you survive the compaction how well.',
+          hookEvent: 'user_prompt_submit',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a stamped sentence loses to the NOTES pickup', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-loses-to-pickup-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: did you survive the compaction how well.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'did you survive the compaction how well.',
+          hookEvent: 'user_prompt_submit',
+        },
+        { host: 'grok', intent: 'did you survive the compaction how well.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a sentence opens a ticket only when the card and pickup are empty', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-opens-empty-'));
+    try {
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: 'start the job', hookEvent: 'user_prompt_submit' },
+        {},
+      );
+      expect(heat.intent).toBe('start the job');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('restored Station ticket beats leftover boot extras', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-card-beats-boot-'));
     try {

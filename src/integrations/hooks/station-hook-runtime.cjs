@@ -127,16 +127,21 @@ function bootHeadMoved(root, existing) {
   return Boolean(live && live.head && bootHead && bootHead !== live.head);
 }
 
-/** Live ticket beats leftover boot. Extra spoken intent still wins. */
+/** Live ticket beats leftover boot. A chat sentence does not replace it. */
 function resolveHeatIntent(root, extra, existing) {
   const incoming = clipIntent(
     extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
   );
-  if (incoming) return { intent: incoming, rematch: true };
   const card = readStationTicketField(root, "Intent");
   const pickup = clipIntent(readNotesPickup(root));
   const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
   const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
+  const hook = String(extra.hookEvent || extra.source || "");
+  const chatSentence = hook.includes("user_prompt");
+  // Compact may set a ticket. A chat sentence may not replace one already on disk.
+  if (incoming && !(chatSentence && (card || pickup))) {
+    return { intent: incoming, rematch: true };
+  }
   if (pickup && cardIsBootEcho && pickup !== bootIntent) {
     return { intent: pickup, rematch: true };
   }
