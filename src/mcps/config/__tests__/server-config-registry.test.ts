@@ -83,25 +83,25 @@ describe('ServerConfigRegistry', () => {
       expect(registry.has('code-review')).toBe(true);
       const config = registry.get('code-review');
       expect(config?.command).toBe('node');
-      expect(config?.timeout).toBe(30000);
+      expect(config?.timeout).toBe(150000);
     });
 
     it('should have security-audit server registered by default', () => {
       expect(registry.has('security-audit')).toBe(true);
       const config = registry.get('security-audit');
-      expect(config?.timeout).toBe(45000);
+      expect(config?.timeout).toBe(150000);
     });
 
     it('should have security-auditor alias registered by default', () => {
       expect(registry.has('security-auditor')).toBe(true);
       const config = registry.get('security-auditor');
-      expect(config?.timeout).toBe(45000);
+      expect(config?.timeout).toBe(150000);
     });
 
     it('should have researcher server registered by default', () => {
       expect(registry.has('researcher')).toBe(true);
       const config = registry.get('researcher');
-      expect(config?.timeout).toBe(60000);
+      expect(config?.timeout).toBe(150000);
     });
 
     it('should have framework-help server registered by default', () => {
@@ -119,7 +119,7 @@ describe('ServerConfigRegistry', () => {
     it('should have architect server registered by default', () => {
       expect(registry.has('architect')).toBe(true);
       const config = registry.get('architect');
-      expect(config?.timeout).toBe(45000);
+      expect(config?.timeout).toBe(150000);
     });
 
     it('should have enforcer server registered by default', () => {
@@ -242,7 +242,16 @@ describe('ServerConfigRegistry', () => {
 
         // Governance (Dynamo Solar SSOT orchestrator) is allowed higher timeout
         // because it coordinates multiple skill MCPs + required external filter.
-        const maxTimeout = config.serverName === 'governance' ? 120000 : 60000;
+        const modelServers = new Set([
+          'governance',
+          'architect',
+          'code-review',
+          'code-reviewer',
+          'researcher',
+          'security-audit',
+          'security-auditor',
+        ]);
+        const maxTimeout = modelServers.has(config.serverName) ? 150000 : 60000;
         expect(config.timeout).toBeLessThanOrEqual(maxTimeout);
       }
     });

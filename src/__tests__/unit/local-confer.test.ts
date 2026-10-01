@@ -29,6 +29,44 @@ describe("localConferVote", () => {
     expect(vote.reasoning).not.toContain("not configured");
   });
 
+  it("labels abstain without a model as UNREVIEWED and keeps the vote abstain", () => {
+    const vote = localConferVote({ role: "code-review" });
+    expect(vote.decision).toBe("abstain");
+    const text = formatGovernanceVoteText(vote);
+    expect(text).toContain("DECISION: abstain");
+    expect(text).toContain("Verdict: UNREVIEWED");
+  });
+
+  it("labels a trap abstain without a model as UNREVIEWED", () => {
+    const text = formatGovernanceVoteText(
+      localConferVote({
+        role: "researcher",
+        highConfidenceTrapPresent: true,
+        recommendedAgent: "architect",
+      }),
+    );
+    expect(text).toContain("Verdict: UNREVIEWED");
+  });
+
+  it("labels a configured empty vote as UNREVIEWED and keeps the vote abstain", () => {
+    const vote = localConferVote({ role: "security-audit", llmConfigured: true });
+    expect(vote.decision).toBe("abstain");
+    expect(vote.reasoning).toContain("returned no vote");
+    const text = formatGovernanceVoteText(vote);
+    expect(text).toContain("DECISION: abstain");
+    expect(text).toContain("Verdict: UNREVIEWED");
+  });
+
+  it.each(["error", "timeout", "empty", "unparseable"] as const)(
+    "labels a %s miss as UNREVIEWED",
+    (miss) => {
+      const vote = localConferVote({ role: "code-review", llmConfigured: true, miss });
+      expect(vote.decision).toBe("abstain");
+      expect(vote.reasoning).toContain(`did not produce a vote (${miss})`);
+      expect(formatGovernanceVoteText(vote)).toContain("Verdict: UNREVIEWED");
+    },
+  );
+
   it("formats a confer receipt", () => {
     const text = formatGovernanceVoteText(
       { decision: "approve", confidence: 0.58, reasoning: "ok" },

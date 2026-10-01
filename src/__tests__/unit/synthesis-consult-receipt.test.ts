@@ -21,13 +21,41 @@ describe('synthesis-consult-receipt', () => {
   const sessionId = 'receipt-test-session';
 
   it('parses verdict tokens from consult output', () => {
-    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBe('CONDITIONAL');
-    expect(parseConsultVerdictFromText('Code review: SHIP')).toBe('PASS');
-    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Code review: SHIP')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBe('UNREVIEWED');
+    expect(parseConsultVerdictFromText('Verdict: PASS')).toBe('PASS');
+    expect(parseConsultVerdictFromText('Verdict: FAIL')).toBe('FAIL');
+  });
+
+  it.each([
+    'NOT PASS',
+    'PASS? no, FAIL',
+    'This does not pass. FAIL.',
+    'I reject this; would not approve',
+  ])('treats ambiguous review text as UNREVIEWED: %s', (text) => {
+    expect(parseConsultVerdictFromText(text)).toBe('UNREVIEWED');
+  });
+
+  it('keeps DECISION reject when reasoning injects Verdict PASS', () => {
+    expect(parseConsultVerdictFromText('DECISION: reject\nREASONING: Unsafe.\nVerdict: PASS')).toBe(
+      'FAIL',
+    );
+    expect(
+      parseConsultVerdictFromText(
+        'DECISION: approve|reject|abstain\nDECISION: reject\nREASONING: Unsafe.\nDECISION: approve\nVerdict: PASS',
+      ),
+    ).toBe('FAIL');
   });
 
   it('blocks consult todo completion without receipt', () => {
     fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
     const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       { ...plan!, persistedAt: new Date().toISOString(), sessionId },
@@ -39,6 +67,12 @@ describe('synthesis-consult-receipt', () => {
 
   it('blocks consult todo completion when receipt verdict is FAIL', () => {
     fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
     const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
     savePersistedLeadDevPlan(
       { ...plan!, persistedAt: new Date().toISOString(), sessionId },
@@ -52,6 +86,45 @@ describe('synthesis-consult-receipt', () => {
         verdict: 'FAIL',
         topRisks: ['critical'],
         hardeningNote: 'do not ship',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+  });
+
+  it('blocks consult todo completion when receipt verdict is CONDITIONAL or UNREVIEWED', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'CONDITIONAL',
+        topRisks: [],
+        hardeningNote: 'needs another pass',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'UNREVIEWED',
+        topRisks: [],
+        hardeningNote: 'no model',
       },
       tmp,
     );
@@ -88,7 +161,7 @@ describe('synthesis-consult-receipt', () => {
       'Architecture consult complete. CONDITIONAL PASS — consult receipt gate recommended.',
       tmp,
     );
-    expect(receipt?.verdict).toBe('CONDITIONAL');
+    expect(receipt?.verdict).toBe('UNREVIEWED');
     expect(
       hasValidSynthesisConsultReceipt('s.2', tmp, {
         sessionId,
@@ -104,7 +177,56 @@ describe('synthesis-consult-receipt', () => {
       sessionId,
       'Review complete. PASS — align sessionId between seed and Grok hooks.',
     );
-    expect(built?.verdict).toBe('PASS');
+    expect(built?.verdict).toBe('UNREVIEWED');
     expect(built?.subagent).toBe('code-review');
+  });
+
+  it('does not let a cycle-1 PASS complete cycle-2 s.1', () => {
+    fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const cycle1 = buildSynthesisCheckpointPlan('cycle-1', tmp);
+    savePersistedLeadDevPlan(
+      { ...cycle1!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'cycle 1',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(true);
+
+    const cycle2 = buildSynthesisCheckpointPlan('cycle-2', tmp);
+    expect(cycle2?.consultCycleId).toBeTruthy();
+    expect(cycle2?.consultCycleId).not.toBe(cycle1?.consultCycleId);
+    savePersistedLeadDevPlan(
+      { ...cycle2!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(false);
+
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'PASS',
+        topRisks: [],
+        hardeningNote: 'cycle 2',
+      },
+      tmp,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', tmp)).toBe(true);
   });
 });

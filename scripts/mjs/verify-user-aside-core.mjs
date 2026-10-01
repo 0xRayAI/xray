@@ -75,16 +75,15 @@ try {
     35,
     tmp,
   );
-  if (aside?.plan.phases[0]?.todos[0]?.id !== 'suit-nft.a.1.1') {
-    fail('step 3: build aside plan', aside?.plan.phases[0]?.todos[0]?.id);
+  const todo = aside?.plan.phases.flatMap((phase) => phase.todos)[0];
+  if (todo?.id !== 'suit-nft.a.2.1') {
+    fail('step 3: build aside plan', todo?.id);
   } else pass('step 3: namespaced aside todos');
 
   saveUserAside(aside, tmp);
   setActiveAsideId('suit-nft', tmp, 'verify-session');
   if (getActiveAsideId(tmp, 'verify-session') !== 'suit-nft') fail('step 4: active pointer');
   else pass('step 4: active aside pointer with session');
-
-  const todo = aside.plan.phases[0].todos[0];
   const resolved = resolveSpawnPlan({ planTodoId: todo.id }, tmp, 'verify-session');
   if (resolved.source !== 'aside') fail('step 5: resolve spawn plan', JSON.stringify(resolved));
   else pass('step 5: spawn plan resolves to aside');

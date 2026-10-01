@@ -229,6 +229,6 @@ export function spawnPlanModeForProfile(profile: SuitProfile): SpawnPlanMode {
   return 'deny';
 }
 
-export function conferDefaultForProfile(profile: SuitProfile): boolean {
-  return profile !== 'frontier';
+export function conferDefaultForProfile(_profile: SuitProfile): boolean {
+  return false;
 }

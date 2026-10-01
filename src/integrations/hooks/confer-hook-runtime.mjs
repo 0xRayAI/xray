@@ -3,7 +3,7 @@
  * Lazy-load confer SSOT for Grok session-boot hints.
  */
 import { createRequire } from 'node:module';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,4 +46,26 @@ export function isConferPendingForSession(projectRoot, sessionId = null) {
   const mod = loadConfer();
   if (!mod?.isConferPending) return false;
   return mod.isConferPending(projectRoot, sessionId);
+}
+
+/** 'UNREVIEWED' when a consult receipt recorded abstain-without-model. */
+export function readConferReviewHint(projectRoot) {
+  const stateDir = join(projectRoot, '.xray', 'state');
+  if (!existsSync(stateDir)) return null;
+  let names;
+  try {
+    names = readdirSync(stateDir);
+  } catch {
+    return null;
+  }
+  for (const name of names) {
+    if (!name.startsWith('synthesis-consult-') || !name.endsWith('.json')) continue;
+    try {
+      const receipt = JSON.parse(readFileSync(join(stateDir, name), 'utf8'));
+      if (receipt && receipt.verdict === 'UNREVIEWED') return 'UNREVIEWED';
+    } catch {
+      /* unreadable receipt is not a hint */
+    }
+  }
+  return null;
 }

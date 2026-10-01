@@ -231,7 +231,10 @@ describe('delegation-gate SSOT', () => {
   it('evaluateSynthesisGate denies writes when synthesis checkpoint is due', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
-      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
 
@@ -254,7 +257,10 @@ describe('delegation-gate SSOT', () => {
   it('evaluateSpawnPlanGate allows consult spawn on aged synthesis realignment plan', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
-      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
     const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
@@ -285,7 +291,10 @@ describe('delegation-gate SSOT', () => {
   it('evaluateSynthesisGate allows next consult spawn during realignment', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
-      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
     const plan = buildSynthesisCheckpointPlan('gate threshold', tmp);
@@ -313,7 +322,10 @@ describe('delegation-gate SSOT', () => {
   it('evaluateSynthesisGate denies govern-and-apply during synthesis due', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
-      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
 
@@ -333,7 +345,10 @@ describe('delegation-gate SSOT', () => {
   it('evaluatePreToolGate allows orchestrator consult during synthesis due', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
-      JSON.stringify({ synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 } }),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+        synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
+      }),
     );
     recordExecutionSlice('gate', { projectRoot: tmp, sessionId });
 
@@ -366,7 +381,7 @@ describe('delegation-gate SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('gate-aside', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluatePreToolGate(
       'Task',
@@ -399,7 +414,7 @@ describe('delegation-gate SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('syn-aside', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluateSynthesisGate(
       'Task',
@@ -430,7 +445,7 @@ describe('delegation-gate SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('iso-aside', tmp, 'session-owner');
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const otherSession = evaluatePreToolGate(
       'Task',
@@ -474,7 +489,7 @@ describe('delegation-gate SSOT', () => {
     aside!.worktree = '/tmp/different-worktree';
     saveUserAside(aside!, tmp);
     setActiveAsideId('cwd-aside', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluatePreToolGate(
       'Task',
@@ -517,7 +532,7 @@ describe('delegation-gate SSOT', () => {
     aside!.worktree = worktree;
     saveUserAside(aside!, tmp);
     setActiveAsideId('no-chain', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluatePreToolGate(
       'Task',
@@ -553,7 +568,7 @@ describe('delegation-gate SSOT', () => {
     aside!.worktree = worktree;
     saveUserAside(aside!, tmp);
     setActiveAsideId('syn-cwd', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluateSynthesisGate(
       'Task',
@@ -587,7 +602,7 @@ describe('delegation-gate SSOT', () => {
     aside!.worktree = worktree;
     saveUserAside(aside!, tmp);
     setActiveAsideId('cwd-ok', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluatePreToolGate(
       'Task',
@@ -619,7 +634,7 @@ describe('delegation-gate SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('pend-aside', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const spawn = evaluatePreToolGate(
       'Task',
@@ -654,7 +669,7 @@ describe('delegation-gate SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('post-aside', tmp, sessionId);
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
 
     const result = evaluatePostToolSpawn(
       'Task',

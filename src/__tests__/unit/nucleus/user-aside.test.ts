@@ -56,8 +56,8 @@ describe('user-aside SSOT', () => {
       tmp,
     );
     expect(aside).not.toBeNull();
-    const todoId = aside!.plan.phases[0]?.todos[0]?.id;
-    expect(todoId).toBe('suit-nft.a.1.1');
+    const todoId = aside!.plan.phases.flatMap((phase) => phase.todos)[0]?.id;
+    expect(todoId).toBe('suit-nft.a.2.1');
     expect(isUserAsideTodoId(todoId!)).toBe(true);
     expect(parseAsideIdFromTodoId(todoId!)).toBe('suit-nft');
   });
@@ -79,7 +79,7 @@ describe('user-aside SSOT', () => {
     saveUserAside(aside!, tmp);
     setActiveAsideId('suit-nft', tmp, 'sess-1');
 
-    const todo = aside!.plan.phases[0]!.todos[0]!;
+    const todo = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!;
     const validation = validateSpawnMatchesTodo(
       {
         planTodoId: todo.id,
@@ -108,7 +108,7 @@ describe('user-aside SSOT', () => {
     );
     saveUserAside(aside!, tmp);
     setActiveAsideId('nft', tmp);
-    const todoId = aside!.plan.phases[0]!.todos[0]!.id;
+    const todoId = aside!.plan.phases.flatMap((phase) => phase.todos)[0]!.id;
     for (const todo of aside!.plan.phases.flatMap((p) => p.todos)) {
       updateUserAsideTodoStatus(todo.id, 'completed', tmp);
     }
