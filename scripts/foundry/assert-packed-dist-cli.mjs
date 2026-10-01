@@ -35,6 +35,11 @@ export const REQUIRED_PACK_PATHS = [
   "scripts/mjs/run-goggles-mcp.mjs",
   "docs-site/docs/plates/memory-recall.md",
   "docs-site/docs/plates/processor.md",
+  "docs-site/docs/plates/goggles.md",
+  "docs-site/docs/plates/suit.md",
+  "docs-site/docs/plates/kits.md",
+  "docs-site/docs/plates/host-pack.md",
+  "docs-site/docs/plates/glossary.md",
 ];
 
 export function packedFilePaths(files) {

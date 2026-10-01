@@ -60,6 +60,11 @@ const REQUIRED_TARBALL_DIST = [
   "package/dist/integrations/hooks/plates.cjs",
   "package/docs-site/docs/plates/memory-recall.md",
   "package/docs-site/docs/plates/processor.md",
+  "package/docs-site/docs/plates/goggles.md",
+  "package/docs-site/docs/plates/suit.md",
+  "package/docs-site/docs/plates/kits.md",
+  "package/docs-site/docs/plates/host-pack.md",
+  "package/docs-site/docs/plates/glossary.md",
 ];
 
 function assertPackedDistCliInTarball(tarballPath) {

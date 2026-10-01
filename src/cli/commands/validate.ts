@@ -31,6 +31,11 @@ export const VALIDATE_PACK_PATHS: readonly string[] = [
   "scripts/mjs/run-goggles-mcp.mjs",
   "docs-site/docs/plates/memory-recall.md",
   "docs-site/docs/plates/processor.md",
+  "docs-site/docs/plates/goggles.md",
+  "docs-site/docs/plates/suit.md",
+  "docs-site/docs/plates/kits.md",
+  "docs-site/docs/plates/host-pack.md",
+  "docs-site/docs/plates/glossary.md",
 ];
 
 export const CONSUMER_WEAR_PATHS = [
