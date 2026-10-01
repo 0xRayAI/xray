@@ -42,6 +42,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.32] - 2026-10-01
+
+Next patch after npm `4.0.31`. Not published from this commit.
+
+Organ bolster for goggles-pipeline after #167. `0xray look` (and `goggles`) opens one plane through the organ. Digest and triage return the card pane. Status and health show the organ worn and Kind 0 quiet/match. Bot Plugin MCP `goggles` exposes lean tools `look` and `status_lens` over stdio on the same organ. Kind 0 name-checks the six outers and stays quiet on match; reading stays a dichotomy; digest/triage stay the card. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
 ## [4.0.31] - 2026-10-01
 
 Next patch after npm `4.0.30`. Not published from this commit.
