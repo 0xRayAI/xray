@@ -20,13 +20,20 @@ describe('foundry sound + picture inventory — bar 8 via @0xray/blip', () => {
     ) as {
       bar: number;
       motions: Array<{ vibe: number; looker: number }>;
-      strokes: Array<{ taste: number }>;
+      strokes: Array<{ taste?: number; vibe?: number; looker?: number }>;
+    };
+    const strokeMeetsBar = (stroke: { taste?: number; vibe?: number; looker?: number }): boolean => {
+      if (typeof stroke.taste === 'number') return stroke.taste + 1e-9 >= 8;
+      if (typeof stroke.vibe === 'number' && typeof stroke.looker === 'number') {
+        return stroke.vibe >= 8 && stroke.looker >= 8;
+      }
+      return false;
     };
     expect(sounds.bar).toBe(8);
     expect(pictures.bar).toBe(8);
     expect(sounds.voices.every((v) => v.taste + 1e-9 >= 8)).toBe(true);
     expect(pictures.motions.every((m) => m.vibe >= 8 && m.looker >= 8)).toBe(true);
-    expect(pictures.strokes.every((s) => s.taste + 1e-9 >= 8)).toBe(true);
+    expect(pictures.strokes.every(strokeMeetsBar)).toBe(true);
 
     const { tasteMatrix, SHIP_BAR } = requireCjs(path.join(root, 'scripts/foundry/sound-taste.cjs')) as {
       tasteMatrix: () => {
