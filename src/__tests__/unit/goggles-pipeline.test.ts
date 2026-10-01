@@ -172,7 +172,8 @@ describe('goggles plate', () => {
     expect(notes).toContain('# Stay');
     expect(notes).toContain('The body stays.');
     expect(notes).toContain('**Pickup line:** old job');
-    expect(notes).toContain('stops the action');
+    expect(notes).not.toContain('stops the action');
+    expect(notes).not.toContain('## Pop job');
     expect(notes).not.toContain('Home. The dev plane.');
     rmSync(root, { recursive: true, force: true });
   });

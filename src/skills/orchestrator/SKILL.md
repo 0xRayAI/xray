@@ -55,7 +55,7 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 
 ## Goggles
 
-Local branch only: `feat/goggles-look`. Not committed. Not merged. Not published. Grok CLI has not shipped this. Wear the local build. From the worn checkout run `node dist/integrations/hooks/goggles-pipeline.mjs`. Do not run `npx 0xray goggles`. If `dist` is older than `src/integrations/hooks/goggles-pipeline.mjs`, build that tree and wear that `dist`. A subagent wears this same local build.
+Pushed on `feat/goggles-look`. Not merged. Not published. Grok CLI has not shipped this. Wear the local build. From the worn checkout run `node dist/integrations/hooks/goggles-pipeline.mjs`. Do not run `npx 0xray goggles`. If `dist` is older than `src/integrations/hooks/goggles-pipeline.mjs`, build that tree and wear that `dist`. A subagent wears this same local build.
 
 Kind 0 is actuality. It compares the list in the file to the same six names in the code. It speaks only when those lists differ. A match is quiet. It does not read the suit that is running. It is not a plate type.
 
