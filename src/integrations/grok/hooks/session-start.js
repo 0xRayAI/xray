@@ -147,7 +147,8 @@ async function main() {
           : '0xray/grok-session-start';
 
     const intent = extractIntent(event);
-    const matchedSignals = await matchStationSignals(eventRoot, intent);
+    const matchedSignals =
+      HOOK_EVENT === 'user_prompt_submit' ? [] : await matchStationSignals(eventRoot, intent);
     const compact = COMPACT_EVENTS.has(HOOK_EVENT);
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,

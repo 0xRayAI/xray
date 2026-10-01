@@ -874,6 +874,11 @@ function isCompactHook(extra) {
   return /compact/i.test(hook);
 }
 
+function isPromptHook(extra) {
+  const hook = String((extra && (extra.hookEvent || extra.source)) || "");
+  return /user_prompt/i.test(hook);
+}
+
 function isCompactEventName(value) {
   return /compact/i.test(String(value || ""));
 }
@@ -957,7 +962,8 @@ function buildRepertoireResume(root) {
 function applyStationHeat(root, host, extra = {}, existing = {}) {
   const mr = readMemoryRoutingConfig(root);
   const memoryOff = isExplicitMemoryRoutingOptOut(mr);
-  const live = memoryOff
+  const promptHook = isPromptHook(extra);
+  const live = memoryOff || promptHook
     ? { hydrate: { dest: null, added: 0, destCount: 0 }, captured: null, grow: null }
     : withDestLock(root, () => {
         const hydrateInner = hydrateDestOnWake(root);
@@ -1012,7 +1018,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     hydrate.destCount ||
     (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
   if (!memoryOff && !matchedSignals.length && matchText) {
-    if (
+    if (promptHook) {
+      matchedSignals = preferLawHits(priorWorking && priorWorking.matchedSignals, 8);
+    } else if (
       !rematch &&
       priorWorking &&
       priorWorking.matchText === matchText &&
