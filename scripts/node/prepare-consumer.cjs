@@ -33,21 +33,25 @@ function updatePathsInFile(filePath) {
     let content = fs.readFileSync(filePath, 'utf-8');
     let updated = false;
 
-    // Transform development paths back to consumer paths (plain xray; legacy @0xray/xray removed)
-    // Only transform if it's not already a consumer path
-    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/xray/dist/plugin/mcps/')) {
+    // The published package name is 0xray, so the installed tree is node_modules/0xray.
+    // Upgrade a pre-rename node_modules/xray path before prefixing bare dist/ paths.
+    if (content.includes('node_modules/xray/')) {
+      content = content.replace(/node_modules\/xray\//g, 'node_modules/0xray/');
+      updated = true;
+    }
+
+    if (content.includes('dist/plugin/mcps/') && !content.includes('node_modules/0xray/dist/plugin/mcps/')) {
       content = content.replace(
         /dist\/plugin\/mcps\//g,
-        'node_modules/xray/dist/plugin/mcps/'
+        'node_modules/0xray/dist/plugin/mcps/'
       );
       updated = true;
     }
 
-    // Transform plugin paths back to consumer format (only the relative dev paths)
     if (content.includes('../../../dist/plugin/')) {
       content = content.replace(
         /\.\.\/\.\.\/\.\.\/dist\/plugin\//g,
-        'node_modules/xray/dist/plugin/'
+        'node_modules/0xray/dist/plugin/'
       );
       updated = true;
     }
@@ -140,4 +144,4 @@ function addJsExtensionsToDist() {
 addJsExtensionsToDist();
 
 structuredLog('prepare-consumer', 'xray v2 Consumer Preparation: Complete!', 'success');
-structuredLog('prepare-consumer', 'Package is now ready for consumer installation (plain xray technical identity).', 'info');
+structuredLog('prepare-consumer', 'Package is now ready for consumer installation (node_modules/0xray).', 'info');
