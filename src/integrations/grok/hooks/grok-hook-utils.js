@@ -303,7 +303,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ceremony: gateFeatures.ceremony ?? 'full',
     spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',
     codexBlockingTermCount: blockingTerms.length,
-    codexTerms: [59, 67, 68, 69],
+    codexTerms: [59, 67, 68, 69, 70],
     rules: features.lead_dev_mode ? LEAD_DEV_RULES : [],
     mcpIntake: frontier
       ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'

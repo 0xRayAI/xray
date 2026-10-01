@@ -72,7 +72,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 
 xray operates under the three-subsystem model: **Inference** + **External Governance** (Dynamo Solar SSOT) + **Autonomous Engine** (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
 
-**Codex**: `.xray/codex.json` — **69 terms** across all agent interactions.
+**Codex**: `.xray/codex.json` — **70 terms** across all agent interactions.
 
 ## thinDispatch Routing
 
@@ -117,7 +117,7 @@ Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signa
 
 ## Codex OS (always on — not optional)
 
-The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
+The Universal Development Codex (`.xray/codex.json`, **70 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
 
 | Term | Rule | Enforcement |
 |------|------|-------------|

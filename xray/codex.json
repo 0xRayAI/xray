@@ -1,6 +1,6 @@
 {
   "version": "3.1.0",
-  "lastUpdated": "2026-08-24",
+  "lastUpdated": "2026-10-01",
   "errorPreventionTarget": 0.998,
   "terms": {
     "1": {
@@ -62,7 +62,7 @@
     "8": {
       "number": 8,
       "title": "Prevent Infinite Loops",
-      "description": "Guarantee termination in all iterative processes. All loops must have clear termination conditions. Recursive functions must have base cases. Event loops must have exit strategies. Async operations must have timeout mechanisms.",
+      "description": "Guarantee termination in all iterative processes. All loops must have clear termination conditions. Recursive functions must have base cases. Event loops must have exit strategies. Async operations must have timeout mechanisms. A job names when it is done and when it stops.",
       "category": "core",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"
@@ -230,7 +230,7 @@
     "29": {
       "number": 29,
       "title": "Security by Design",
-      "description": "Validate all inputs. Sanitize data before rendering. Use HTTPS for all requests. Implement rate limiting. Never expose sensitive data.",
+      "description": "Validate all inputs. Sanitize data before rendering. Use HTTPS for all requests. Implement rate limiting. Never expose sensitive data. Do not trust Host or X-Forwarded-Host to choose an environment. A refusal in the UI needs the same check on the server.",
       "category": "security",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"
@@ -534,7 +534,7 @@
     "67": {
       "number": 67,
       "title": "Use Best Subagents, Reuse Session Context",
-      "description": "Delegate work to the best-suited subagent for each task. Stay responsive to user inquiries, additional todos, and course corrections. Reuse the same subagent via session ID to preserve context and avoid restarting from zero. Do not spawn fresh agents when an existing one has the relevant context.",
+      "description": "Delegate work to the best-suited subagent for each task. Stay responsive to user inquiries, additional todos, and course corrections. Reuse the same subagent via session ID to preserve context and avoid restarting from zero. Do not spawn fresh agents when an existing one has the relevant context. Reuse one cloud for a workstream. Do not launch a new agent for a check the seat can run.",
       "category": "process",
       "zeroTolerance": false,
       "enforcementLevel": "high"
@@ -551,6 +551,14 @@
       "number": 69,
       "title": "No New MCP, Skill, or Handler Surface",
       "description": "Do not add parallel APIs. Rewire existing MCP servers, skills, and orchestrator handlers. PreToolUse denies creating new src/mcps/*.server.ts, src/skills/*/SKILL.md, or orchestrator *-handler files. Existing files may be rewritten.",
+      "category": "process",
+      "zeroTolerance": true,
+      "enforcementLevel": "blocking"
+    },
+    "70": {
+      "number": 70,
+      "title": "Current Source and Worn Package Before Edits",
+      "description": "Before the first edit, the git checkout is not behind origin/main and the worn 0xray npm is the published one. Fetch first. Fast-forward or rebase onto that main. If a stash is required, diff it against that main and say whether any work would be discarded before anything is dropped. House procedure is not this constitution. Grok Bot has no pre-tool hooks, so seat rules stay in house/ and point here. PreToolUse denies edits while the checkout is behind or the worn package is older.",
       "category": "process",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"
