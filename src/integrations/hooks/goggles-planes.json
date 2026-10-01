@@ -1,4 +1,7 @@
 {
+  "actuality": "map vs worn",
+  "planes": ["dichotomy", "syncopate", "synthesis", "digest", "triage", "loop"],
+  "scope": ["ecosystem", "part", "one flow", "one artifact"],
   "ground": {
     "digest": "Home. The dev plane.",
     "files": [
@@ -7,9 +10,9 @@
       "src/opencode/agents",
       "Agents.md",
       "src/integrations",
-      "package.json"
+      "package.json",
+      "scripts/foundry"
     ],
-    "unpathed": ["mill"],
     "skills": "SKILLS.md"
   },
   "routing": {
@@ -20,7 +23,6 @@
     "pick": "resolveThinDispatch"
   },
   "house": {
-    "files": ["grok-bot/lib/seat-doctor.cjs"],
-    "mark": "no house/HOUSE.md, run setup-house"
+    "files": ["grok-bot/lib/seat-doctor.cjs"]
   }
 }
