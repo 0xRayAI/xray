@@ -12,7 +12,6 @@ import * as bundled from './goggles-pipeline.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_NAME = 'goggles';
-const DRAWING = /docs-site\/docs\/plates\/[a-z0-9-]+\.md/i;
 const CARD_PLANES = [
   'ground',
   'routing',
@@ -105,32 +104,6 @@ function projectRoot(root) {
   return process.cwd();
 }
 
-function heldReading(root) {
-  try {
-    const data = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-reading.json'), 'utf8'));
-    if (!data || typeof data !== 'object') return null;
-    if (typeof data.drift === 'string' && data.drift) return { drift: data.drift };
-    if (typeof data.plane !== 'string' || !data.plane) return null;
-    return { plane: data.plane, scope: typeof data.scope === 'string' ? data.scope : '' };
-  } catch {
-    return null;
-  }
-}
-
-function denyCode(reason) {
-  if (/wider|crosses parts|not one flow/i.test(reason)) return 'scope_wider';
-  if (/Name one plane/i.test(reason)) return 'name_one';
-  return 'leave_plane';
-}
-
-function drawingPaths(args) {
-  const hits = [];
-  for (const value of Object.values(args)) {
-    if (typeof value === 'string' && DRAWING.test(value)) hits.push(value);
-  }
-  return hits;
-}
-
 function argvFrom(args) {
   const words = [];
   if (args.kind === '0') words.push('kind', '0');
@@ -139,7 +112,7 @@ function argvFrom(args) {
   else if (typeof args.kind === 'string') words.push(args.kind);
   if (args.outer === 'outer loop') words.push('outer', 'loop');
   else if (typeof args.outer === 'string') words.push(args.outer);
-  if (typeof args.plane === 'string' && !DRAWING.test(args.plane)) words.push(args.plane);
+  if (typeof args.plane === 'string') words.push(args.plane);
   if (args.scope === 'one flow') words.push('one', 'flow');
   else if (args.scope === 'one artifact') words.push('one', 'artifact');
   else if (typeof args.scope === 'string') words.push(args.scope);
@@ -176,7 +149,7 @@ function checkArgs(args) {
   if (args.scope != null && !SCOPES.includes(args.scope)) {
     return deny('invalid_args', 'scope is one zoom level.');
   }
-  if (args.plane != null && !CARD_PLANES.includes(args.plane) && !DRAWING.test(args.plane)) {
+  if (args.plane != null && !CARD_PLANES.includes(args.plane)) {
     return deny('invalid_args', 'plane is a card plane.');
   }
   return null;
@@ -225,12 +198,6 @@ export async function answerLook(raw, root) {
   const api = await organApi();
   if (!api) return deny('invalid_args', 'Goggles organ not found.');
   const here = projectRoot(root);
-  const drawings = drawingPaths(args);
-  if (drawings.length) {
-    const stop = api.organStop(heldReading(here), { text: drawings.join('\n'), paths: drawings, tool: 'look' });
-    if (stop && stop.reason) return deny(denyCode(stop.reason), stop.reason);
-    return quiet('reading');
-  }
   if (pureKind0(args)) {
     api.maintainLens(here);
     const line = api.actualityLine();

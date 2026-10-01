@@ -90,27 +90,15 @@ describe('goggles MCP', () => {
     expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'card', content: '' });
   });
 
-  it('a plate drawing under a hold is a deny, not a zoom', async () => {
-    const root = tempRoot();
-    try {
-      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(
-        join(root, '.xray', 'state', 'goggles-reading.json'),
-        `${JSON.stringify({ plane: 'dichotomy', scope: '' })}\n`,
-      );
-      const { payload, isError } = await dispatchTool(
-        'look',
-        { plane: 'docs-site/docs/plates/routing.md' },
-        root,
-      );
-      expect(isError).toBe(true);
-      expect(payload.mode).toBe('deny');
-      expect(payload.error.code).toBe('leave_plane');
-      expect(payload.error.reason).toBe('The reading is dichotomy. That drawing is not the plane.');
-      expect(payload.content).toBe('');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+  it('a plate path is not a card plane', async () => {
+    const { payload, isError } = await dispatchTool(
+      'look',
+      { plane: 'docs-site/docs/plates/routing.md' },
+      tempRoot(),
+    );
+    expect(isError).toBe(true);
+    expect(payload.error.code).toBe('invalid_args');
+    expect(payload.mode).not.toBe('card');
   });
 
   it('a pipeline name alone is quiet', async () => {
