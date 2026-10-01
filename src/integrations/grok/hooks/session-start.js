@@ -23,7 +23,7 @@ import {
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
 import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
-import { refreshFreshness } from '../../../nucleus/work-freshness.mjs';
+import { readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -154,7 +154,9 @@ async function main() {
     let freshnessLine = null;
     if (!compact) {
       try {
-        freshnessLine = refreshFreshness(eventRoot).freshnessLine;
+        freshnessLine = HOOK_EVENT === 'session_start'
+          ? refreshFreshness(eventRoot).freshnessLine
+          : readSavedFreshness(eventRoot);
       } catch {
         freshnessLine = null;
       }

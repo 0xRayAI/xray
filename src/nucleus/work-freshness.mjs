@@ -1,6 +1,8 @@
 /**
  * Codex 70. Edits wait until the checkout is not behind origin/main
  * and the worn 0xray package is not older than the published one.
+ * This repo is the worn suit when package.json name is 0xray.
+ * Fetch and the registry check run from session start. PreToolUse reads the snapshot.
  * A temp directory inside a repo is not the workspace, so unit tests stay quiet.
  */
 
@@ -29,20 +31,14 @@ export function decideFreshness(input) {
       reason: `Codex 70: checkout is ${commits} behind origin/main. Fetch and fast-forward before editing. Diff a stash against that main before anything is dropped.`,
     };
   }
-  const worn = input.wornSuit || null;
-  const published = input.publishedSuit || null;
   const repoVersion = input.repoName === '0xray' ? input.repoVersion || null : null;
+  const worn = input.wornSuit || repoVersion;
+  const published = input.publishedSuit || null;
   const target = published || repoVersion;
   if (target && worn && compareVersions(worn, target) < 0) {
     return {
       stale: true,
       reason: `Codex 70: worn 0xray@${worn} is older than ${target}. Install the latest npm before editing.`,
-    };
-  }
-  if (target && !worn && input.repoName === '0xray') {
-    return {
-      stale: true,
-      reason: `Codex 70: 0xray@${target} is in this tree and no global 0xray is installed.`,
     };
   }
   return { stale: false, reason: '' };
@@ -83,7 +79,11 @@ function readJson(file) {
   }
 }
 
-export function wornSuitVersion() {
+export function wornSuitVersion(projectRoot, opts = {}) {
+  if (projectRoot) {
+    const local = readJson(join(projectRoot, 'node_modules', '0xray', 'package.json'));
+    if (local && local.version) return String(local.version);
+  }
   const candidates = [
     '/opt/homebrew/lib/node_modules/0xray/package.json',
     '/usr/local/lib/node_modules/0xray/package.json',
@@ -92,8 +92,9 @@ export function wornSuitVersion() {
     const pkg = readJson(file);
     if (pkg && pkg.version) return String(pkg.version);
   }
+  if (!opts.liveGlobal) return null;
   try {
-    const root = run('npm', ['root', '-g'], process.cwd(), 8000);
+    const root = run('npm', ['root', '-g'], projectRoot || process.cwd(), 8000);
     const pkg = readJson(join(root, '0xray', 'package.json'));
     return pkg && pkg.version ? String(pkg.version) : null;
   } catch {
@@ -125,12 +126,23 @@ export function readWorkSnapshot(projectRoot) {
     stashCount,
     repoName: repo && repo.name ? String(repo.name) : null,
     repoVersion: repo && repo.version ? String(repo.version) : null,
-    wornSuit: wornSuitVersion(),
+    wornSuit: wornSuitVersion(projectRoot),
     publishedSuit: saved && saved.publishedSuit ? String(saved.publishedSuit) : null,
   };
 }
 
+function freshnessFile(projectRoot) {
+  return join(projectRoot, '.xray', 'state', 'freshness.json');
+}
+
+export function readSavedFreshness(projectRoot) {
+  const saved = readJson(freshnessFile(projectRoot));
+  return saved ? describeFreshness(saved) : null;
+}
+
 export function probeFreshness(projectRoot) {
+  const saved = readJson(freshnessFile(projectRoot));
+  if (saved && saved.behind != null) return decideFreshness(saved);
   return decideFreshness(readWorkSnapshot(projectRoot));
 }
 
@@ -151,10 +163,16 @@ export function refreshFreshness(projectRoot) {
   }
   const snapshot = readWorkSnapshot(projectRoot);
   if (publishedSuit) snapshot.publishedSuit = publishedSuit;
+  if (snapshot.repoName === '0xray' && snapshot.repoVersion) {
+    snapshot.wornSuit = snapshot.repoVersion;
+  } else {
+    const globalWorn = wornSuitVersion(projectRoot, { liveGlobal: true });
+    if (globalWorn) snapshot.wornSuit = globalWorn;
+  }
   try {
     const dir = join(projectRoot, '.xray', 'state');
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, 'freshness.json'), `${JSON.stringify({
+    writeFileSync(freshnessFile(projectRoot), `${JSON.stringify({
       publishedSuit: snapshot.publishedSuit,
       wornSuit: snapshot.wornSuit,
       behind: snapshot.behind,

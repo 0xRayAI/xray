@@ -27,6 +27,29 @@ describe('Codex 70 freshness', () => {
     expect(decision.reason).toMatch(/4\.0\.9/);
   });
 
+  it('treats this 0xray repo as the worn suit when no install is recorded', () => {
+    const decision = decideFreshness({
+      behind: 0,
+      wornSuit: null,
+      publishedSuit: '4.0.34',
+      repoName: '0xray',
+      repoVersion: '4.0.34',
+    });
+    expect(decision.stale).toBe(false);
+  });
+
+  it('blocks this repo when its version is older than npm', () => {
+    const decision = decideFreshness({
+      behind: 0,
+      wornSuit: null,
+      publishedSuit: '4.0.34',
+      repoName: '0xray',
+      repoVersion: '4.0.9',
+    });
+    expect(decision.stale).toBe(true);
+    expect(decision.reason).toMatch(/4\.0\.9/);
+  });
+
   it('allows a current checkout and package', () => {
     const decision = decideFreshness({
       behind: 0,

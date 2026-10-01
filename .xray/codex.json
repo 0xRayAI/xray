@@ -558,7 +558,7 @@
     "70": {
       "number": 70,
       "title": "Current Source and Worn Package Before Edits",
-      "description": "Before the first edit, the git checkout is not behind origin/main and the worn 0xray npm is the published one. Fetch first. Fast-forward or rebase onto that main. If a stash is required, diff it against that main and say whether any work would be discarded before anything is dropped. House procedure is not this constitution. Grok Bot has no pre-tool hooks, so seat rules stay in house/ and point here. PreToolUse denies edits while the checkout is behind or the worn package is older.",
+      "description": "Before an edit, the checkout is not behind origin/main. When package.json name is 0xray, this repo is the worn suit. Otherwise the worn suit is node_modules/0xray or the global install. A worn package older than the published one waits. Fetch and the registry check run at session start. PreToolUse reads that snapshot and denies a checkout that is behind or a worn package that is older. If a stash is required, diff it against that main before anything is dropped. House procedure is not this constitution. Grok Bot has no pre-tool hooks, so seat rules stay in house/ and point here.",
       "category": "process",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"
