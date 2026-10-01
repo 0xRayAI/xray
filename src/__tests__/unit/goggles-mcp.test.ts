@@ -80,14 +80,16 @@ describe('goggles MCP', () => {
     expect(card.notes.join('\n')).not.toContain('entry');
   });
 
-  it('one artifact on a multi-file plane stays empty', async () => {
+  it('one artifact on a multi-file plane keeps the view', async () => {
     const { payload, isError } = await dispatchTool(
       'look',
       { outer: 'digest', plane: 'ground', scope: 'one artifact' },
       tempRoot(),
     );
     expect(isError).toBe(false);
-    expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'card', content: '' });
+    expect(payload.mode).toBe('card');
+    expect(payload.content.files).toContain('scripts/foundry');
+    expect(payload.content.setup).toBe('');
   });
 
   it('a plate path is not a card plane', async () => {
@@ -101,11 +103,12 @@ describe('goggles MCP', () => {
     expect(payload.mode).not.toBe('card');
   });
 
-  it('a pipeline name alone is quiet', async () => {
+  it('a plane name returns that view', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.quiet).toBe(true);
-    expect(payload.content).toBe('');
+    expect(payload.mode).toBe('card');
+    expect(payload.content.plane).toBe('routing');
+    expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
   });
 
   it('the whole set is name one plane', async () => {
