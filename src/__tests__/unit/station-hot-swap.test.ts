@@ -282,6 +282,120 @@ describe('station hot-swap', () => {
         { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
       );
       expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact keeps the ticket and refreshes the pickup', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-keeps-ticket-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', 'Plan: Do not push.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** stale line from before the cut.\n\n## Lens\n\nkeep this body.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'does this not happen automatically in the preCompact hook',
+          hookEvent: 'pre_compact',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      const notes = fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8');
+      expect(notes).toContain('**Pickup line:** Views grow on feat/goggles-look.');
+      expect(notes).not.toContain('stale line');
+      expect(notes).toContain('## Lens');
+      expect(notes).toContain('keep this body.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact copies the card even when the pickup is stale and the card matches boot', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-copies-card-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** stale line from before the cut.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'does this not happen automatically in the preCompact hook',
+          hookEvent: 'pre_compact',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact restores the pickup when the card is already the compact sentence', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-restores-pickup-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      const sentence = 'does this not happen automatically in the preCompact hook';
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', `Intent: ${sentence}`, ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: sentence, hookEvent: 'pre_compact' },
+        { host: 'grok', intent: sentence },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact opens a ticket and a pickup only when both are empty', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-opens-empty-'));
+    try {
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'COMPACT-AB-001 survive compact without wiping seed',
+          hookEvent: 'pre_compact',
+        },
+        {},
+      );
+      expect(heat.intent).toBe('COMPACT-AB-001 survive compact without wiping seed');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** COMPACT-AB-001 survive compact without wiping seed\n',
+      );
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
@@ -1339,9 +1453,12 @@ describe('station hot-swap', () => {
       writeSessionBoot(tmp, payload);
       const card = fs.readFileSync(dest, 'utf8');
       expect(card).toContain('Host: grok');
-      expect(card).toContain('Intent: COMPACT-AB-001 survive compact without wiping seed');
-      expect(card).not.toContain('Intent: old intent before compact');
+      expect(card).toContain('Intent: old intent before compact');
+      expect(card).not.toContain('Intent: COMPACT-AB-001 survive compact without wiping seed');
       expectCustomStationKeys(card);
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toContain(
+        '**Pickup line:** old intent before compact',
+      );
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

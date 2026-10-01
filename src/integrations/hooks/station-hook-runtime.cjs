@@ -127,7 +127,7 @@ function bootHeadMoved(root, existing) {
   return Boolean(live && live.head && bootHead && bootHead !== live.head);
 }
 
-/** Live ticket beats leftover boot. A chat sentence does not replace it. */
+/** Live ticket beats leftover boot. Chat and compact do not replace it. */
 function resolveHeatIntent(root, extra, existing) {
   const incoming = clipIntent(
     extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
@@ -137,10 +137,15 @@ function resolveHeatIntent(root, extra, existing) {
   const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
   const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
   const hook = String(extra.hookEvent || extra.source || "");
-  const chatSentence = hook.includes("user_prompt");
-  // Compact may set a ticket. A chat sentence may not replace one already on disk.
-  if (incoming && !(chatSentence && (card || pickup))) {
+  const keepsTicket = /user_prompt|compact/i.test(hook);
+  const compact = /compact/i.test(hook);
+  // A chat sentence or a compact summary does not replace a ticket already on disk.
+  if (incoming && !(keepsTicket && (card || pickup))) {
     return { intent: incoming, rematch: true };
+  }
+  // Compact copies the card. A stale pickup must not overwrite it.
+  if (compact && card && card !== incoming) {
+    return { intent: card, rematch: card !== bootIntent };
   }
   if (pickup && cardIsBootEcho && pickup !== bootIntent) {
     return { intent: pickup, rematch: true };
@@ -493,6 +498,32 @@ function readNotesPickup(root) {
   } catch {
     return null;
   }
+}
+
+/** One pickup line. Leaves the rest of NOTES.md alone. */
+function stampNotesPickup(root, line) {
+  const text = clipIntent(line);
+  if (!text) return null;
+  const dest = notesPath(root);
+  const marker = `**Pickup line:** ${text}`;
+  let body = "";
+  if (existsSync(dest)) {
+    try {
+      body = readFileSync(dest, "utf8");
+    } catch {
+      body = "";
+    }
+  }
+  const hasLine = /\*\*Pickup line:\*\*/.test(body);
+  const next = hasLine
+    ? body.replace(/\*\*Pickup line:\*\*\s*[^\n]*/, marker)
+    : body
+      ? `${marker}\n\n${body.replace(/^\n+/, "")}`
+      : `${marker}\n`;
+  if (next === body) return text;
+  mkdirSync(join(root, ".xray", "state"), { recursive: true });
+  writeFileSync(dest, next.endsWith("\n") ? next : `${next}\n`);
+  return text;
 }
 
 function readLatestSessionApproaches(root) {
@@ -943,7 +974,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       : existsSync(destSignalsPath(root))
         ? countCuratedSignals(destSignalsPath(root)) || 0
         : hydrate.destCount;
-  const pickup = readNotesPickup(root);
+  let pickup = readNotesPickup(root);
   const approaches = readLatestSessionApproaches(root);
   const prevHost = typeof existing.host === "string" ? existing.host : null;
   const nextSwap = prevHost && host && prevHost !== host ? { from: prevHost, to: host } : null;
@@ -958,6 +989,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
+  if (isCompactHook(extra) && intent && (readStationTicketField(root, "Intent") || pickup || clipIntent(extra.intent))) {
+    const stamped = stampNotesPickup(root, intent);
+    if (stamped) pickup = stamped;
+  }
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
   const planLine = resolveHeatPlan(root, extra, existing);

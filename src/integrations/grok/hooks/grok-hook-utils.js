@@ -330,10 +330,13 @@ export function writeSessionBoot(root, payload) {
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
-    try {
-      handCard(root, payload && (payload.cardText || payload.intent));
-    } catch {
-      /* a missed card must not fail the boot */
+    const hook = String((payload && (payload.hookEvent || payload.source)) || "");
+    if (!/compact/i.test(hook)) {
+      try {
+        handCard(root, payload && (payload.cardText || payload.intent));
+      } catch {
+        /* a missed card must not fail the boot */
+      }
     }
     return sessionBootPath(root);
   } catch {

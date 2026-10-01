@@ -148,10 +148,12 @@ async function main() {
 
     const intent = extractIntent(event);
     const matchedSignals = await matchStationSignals(eventRoot, intent);
+    const compact = COMPACT_EVENTS.has(HOOK_EVENT);
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
-      ...(intent ? { intent, cardText: intent } : {}),
+      ...(intent ? { intent } : {}),
+      ...(!compact && intent ? { cardText: intent } : {}),
       ...(matchedSignals.length ? { matchedSignals } : {}),
     });
 
