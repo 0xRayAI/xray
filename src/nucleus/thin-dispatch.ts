@@ -90,12 +90,13 @@ export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; lessons?: MemorySignalLessons[] } } {
+): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
   const score = scoreComplexity(operation, context, thresholds);
-  let agent = routeToAgent(score);
+  const baseAgent = routeToAgent(score);
+  let agent = baseAgent;
 
   const provider = ensureMemoryRoutingProviderSync();
-  let memoryRouting: { providerId: string; adjustedScore: number; signals: string[] } | undefined;
+  let memoryRouting: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean } | undefined;
 
   if (provider.id !== "null") {
     const resolved = provider.resolveThinDispatch(agent, operation, score.score);
@@ -104,13 +105,14 @@ export function scoreAndRoute(
       providerId: resolved.context.providerId,
       adjustedScore: resolved.adjustedScore,
       signals: resolved.context.matchedSignals,
+      overridden: agent !== baseAgent,
       ...(resolved.context.lessons ? { lessons: resolved.context.lessons } : {}),
     };
 
     const adjustedLevel = getLevelFromScore(resolved.adjustedScore, thresholds);
     frameworkLogger.log("nucleus-thin-dispatch", "memory-routing", "info", {
       providerId: resolved.context.providerId,
-      baseAgent: routeToAgent(score),
+      baseAgent,
       resolvedAgent: agent,
       baseScore: score.score,
       adjustedScore: resolved.adjustedScore,

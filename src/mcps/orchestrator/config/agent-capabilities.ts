@@ -14,6 +14,7 @@ import {
   fromMemoryCapabilityMap,
 } from './memory-routing-bridge.js';
 import { routeSubagent } from '../../../nucleus/autonomy-kernel.js';
+import { scoreAndRoute } from '../../../nucleus/thin-dispatch.js';
 
 /** routeSubagent names → AGENT_REGISTRY keys */
 const ROUTE_AGENT_ALIASES: Record<string, string> = {
@@ -102,6 +103,13 @@ export class AgentCapabilitiesManager {
     operationDescription = '',
     taskType = '',
   ): string | null {
+    if (operationDescription.trim()) {
+      const routed = scoreAndRoute(operationDescription, {});
+      if (routed.memoryRouting?.overridden && this.capabilities.has(routed.agent)) {
+        return routed.agent;
+      }
+    }
+
     if (taskType.trim()) {
       const routed = routeSubagent(taskType);
       const resolved = resolveRoutedAgent(routed, this.capabilities);

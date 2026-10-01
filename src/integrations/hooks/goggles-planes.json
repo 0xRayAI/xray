@@ -1,0 +1,28 @@
+{
+  "actuality": "map vs worn",
+  "planes": ["dichotomy", "syncopate", "synthesis", "digest", "triage", "loop"],
+  "scope": ["ecosystem", "part", "one flow", "one artifact"],
+  "ground": {
+    "digest": "Home. The dev plane.",
+    "files": [
+      "src",
+      "grok-bot/OP-PROC.md",
+      "src/opencode/agents",
+      "Agents.md",
+      "src/integrations",
+      "package.json",
+      "scripts/foundry"
+    ],
+    "skills": "SKILLS.md"
+  },
+  "routing": {
+    "files": ["src/nucleus/thin-dispatch.ts"],
+    "worn": "dist/nucleus/thin-dispatch.js",
+    "mark": "export function scoreAndRoute",
+    "wornMark": "function scoreAndRoute",
+    "pick": "resolveThinDispatch"
+  },
+  "house": {
+    "files": ["grok-bot/lib/seat-doctor.cjs"]
+  }
+}

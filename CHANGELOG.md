@@ -42,6 +42,14 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.31] - 2026-10-01
+
+Next patch after npm `4.0.30`. Not published from this commit.
+
+Goggles looks at one pipeline. Kind 0 name-checks the six outer names and stays quiet when the worn list matches the map. Digest and triage return one card. A leave is denied. Session boot hands the card through `handCard` and normalizes the workspace root, including a trailing slash. The mill path is `scripts/foundry`. Run `node dist/integrations/hooks/goggles-pipeline.mjs`. This cut also carries the plate docs and the live project-file signal count that landed on main after 4.0.30. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
 ## [4.0.30] - 2026-09-28
 
 Next patch after npm `4.0.29`. Released 2026-09-28.

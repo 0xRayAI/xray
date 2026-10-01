@@ -7,7 +7,7 @@
  */
 
 import { Command } from "commander";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { join, resolve } from "path";
 import { fileURLToPath } from "node:url";
 
@@ -89,6 +89,20 @@ program
       });
       process.exit(1);
     }
+  });
+
+program
+  .command("goggles")
+  .argument("[args...]", "plane, then examine, triage, cascade, or teardown")
+  .description("Glimpse every plane, or one plane's way in. A hit does not open the plane.")
+  .action((args: string[]) => {
+    const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
+    const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
+    const script = existsSync(built) ? built : source;
+    const result = spawnSync(process.execPath, [script, ...(args ?? [])], { encoding: "utf8" });
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
   });
 
 program
