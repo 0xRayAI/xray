@@ -15,6 +15,9 @@
     ],
     "skills": "SKILLS.md"
   },
+  "synthesis": {
+    "file": "src/nucleus/synthesis.ts"
+  },
   "routing": {
     "files": ["src/nucleus/thin-dispatch.ts"],
     "worn": "dist/nucleus/thin-dispatch.js",
@@ -24,5 +27,25 @@
   },
   "house": {
     "files": ["grok-bot/lib/seat-doctor.cjs"]
+  },
+  "boot": {
+    "files": ["src/core/boot-orchestrator.ts"],
+    "skills": "src/skills/boot-orchestrator/SKILL.md"
+  },
+  "governance": {
+    "files": ["src/governance/governance-service.ts"]
+  },
+  "memory-recall": {
+    "files": ["src/integrations/hooks/plates.cjs"]
+  },
+  "orchestration": {
+    "files": ["src/mcps/orchestrator/server.ts"]
+  },
+  "processor": {
+    "files": ["src/processors/processor-manager.ts"],
+    "skills": "src/skills/processor-pipeline/SKILL.md"
+  },
+  "reporting": {
+    "files": ["src/reporting/framework-reporting-system.ts"]
   }
 }

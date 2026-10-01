@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -14,6 +14,7 @@ import {
   handCard,
   look,
   growPlane,
+  examinePlane,
   lensBeforeResearch,
   lookCards,
   maintainLens,
@@ -314,6 +315,40 @@ describe('goggles plate', () => {
       else process.env.GOGGLES_ROOT = previous;
       rmSync(root, { recursive: true, force: true });
       rmSync(plates, { recursive: true, force: true });
+    }
+  });
+
+  it('an install holds on the worn build when the factory source is not packed', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-install-'));
+    const worn = join(root, 'dist/nucleus/thin-dispatch.js');
+    mkdirSync(join(root, 'dist/nucleus'), { recursive: true });
+    const plane = {
+      files: ['src/nucleus/thin-dispatch.ts'],
+      worn: 'dist/nucleus/thin-dispatch.js',
+      wornMark: 'function scoreAndRoute',
+      mark: 'export function scoreAndRoute',
+      skills: 'src/skills/routing/SKILL.md',
+    };
+    try {
+      writeFileSync(worn, 'function scoreAndRoute() {}\n');
+      expect(examinePlane(plane, root).text).toBe('Holds.');
+      writeFileSync(worn, 'unrelated\n');
+      expect(examinePlane(plane, root).text).toBe('Drift: the worn build is not src/nucleus/thin-dispatch.ts');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('a symlinked lens still answers', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'goggles-link-'));
+    const link = join(dir, 'goggles-pipeline.mjs');
+    const source = fileURLToPath(new URL('../../integrations/hooks/goggles-pipeline.mjs', import.meta.url));
+    try {
+      symlinkSync(source, link);
+      expect(execFileSync(process.execPath, [link, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
+      expect(execFileSync(process.execPath, [link, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });

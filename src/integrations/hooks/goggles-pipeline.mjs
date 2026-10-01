@@ -4,7 +4,7 @@
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -649,7 +649,21 @@ function skillFor(id, root) {
   return existsSync(join(root, rel)) ? rel : '';
 }
 
+function mappedFile(name) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[name];
+    if (!entry || typeof entry !== 'object') return '';
+    if (typeof entry.file === 'string' && entry.file) return entry.file;
+  } catch {
+    return '';
+  }
+  return '';
+}
+
 function moduleFile(name) {
+  const mapped = mappedFile(name);
+  if (mapped) return mapped;
   const platesDir = findPlatesDir(HERE);
   const root = sourceRoot(platesDir);
   const hit = sourceTexts(root).find((file) => file.rel.endsWith(`/${name}.ts`) || file.rel.endsWith(`/${name}.mjs`));
@@ -812,26 +826,39 @@ function fileHas(root, rel, mark) {
 }
 
 
-function examinePlane(plane, root) {
+function factoryName(rel) {
+  return rel.startsWith('src/') || rel.startsWith('grok-bot/');
+}
+
+function wornHolds(plane, root) {
+  if (!plane.worn || !existsSync(join(root, plane.worn))) return false;
+  if (!plane.wornMark) return true;
+  return fileHas(root, plane.worn, plane.wornMark);
+}
+
+export function examinePlane(plane, root) {
   const files = Array.isArray(plane.files) ? plane.files : [];
   const checkable = files.length > 0 || plane.skills || plane.worn;
   if (!checkable) return drawing();
-  for (const rel of files) {
-    if (!existsSync(join(root, rel))) return drift(`${rel} is not there`);
-  }
-  if (plane.mark && !fileHas(root, files[0], plane.mark)) {
-    return drift(`${plane.mark} is not in ${files[0]}`);
-  }
-  if (plane.worn && !fileHas(root, plane.worn, plane.wornMark || plane.mark)) {
+  const held = wornHolds(plane, root);
+  if (plane.worn && !held) {
     return drift(`the worn build is not ${files[0] || plane.worn}`);
   }
-  if (plane.skills && !existsSync(join(root, plane.skills))) {
+  for (const rel of files) {
+    if (existsSync(join(root, rel))) continue;
+    if (held && factoryName(rel)) continue;
+    return drift(`${rel} is not there`);
+  }
+  if (plane.mark && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.mark)) {
+    return drift(`${plane.mark} is not in ${files[0]}`);
+  }
+  if (plane.skills && !existsSync(join(root, plane.skills)) && !(held && factoryName(plane.skills))) {
     return drift(`${plane.skills} is not there`);
   }
-  if (plane.entryIsMark && plane.entry && files[0] && !fileHas(root, files[0], plane.entry)) {
+  if (plane.entryIsMark && plane.entry && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.entry)) {
     return drift(`${plane.entry} is not in ${files[0]}`);
   }
-  if (plane.exitIsMark && plane.exit && files[0] && !fileHas(root, files[0], plane.exit)) {
+  if (plane.exitIsMark && plane.exit && files[0] && existsSync(join(root, files[0])) && !fileHas(root, files[0], plane.exit)) {
     return drift(`${plane.exit} is not in ${files[0]}`);
   }
   return holds();
@@ -943,7 +970,15 @@ export function maintainLens(root) {
 }
 
 
-const isMain = Boolean(process.argv[1]) && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+function sameInvoked(argvPath, modulePath) {
+  try {
+    return realpathSync(argvPath) === realpathSync(modulePath);
+  } catch {
+    return resolve(argvPath) === resolve(modulePath);
+  }
+}
+
+const isMain = Boolean(process.argv[1]) && sameInvoked(process.argv[1], fileURLToPath(import.meta.url));
 if (isMain) {
   const answered = gogglesAnswer(process.argv.slice(2));
   const pane = process.stdout.isTTY && Array.isArray(answered.cards) && answered.cards.length > 0;
