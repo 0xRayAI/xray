@@ -75,7 +75,7 @@ function deployManagedAgents(packageRoot, targetDir, log) {
   if (updated !== current) fs.writeFileSync(agentsDest, updated);
 }
 
-/** npm install links vendored @0xray/repertoire and nothing else. The suit is `npx 0xray wear`. */
+/** npm install links vendored @0xray/repertoire and does not write `.mcp.json`. `npx 0xray wear` rewrites a checkout `dist/cli` launch to `node_modules/0xray`. */
 function runPostinstall(packageRoot, targetDir, _log) {
   linkVendoredRepertoire(packageRoot, targetDir);
   console.log("Run `npx 0xray wear`");
