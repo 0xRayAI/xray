@@ -34,7 +34,7 @@ Consumer `.mcp.json` remains **seven** servers. Extra `*.server.ts` files stay u
 
 ## Removed, recoverable
 
-128 paths are off the working tree. The deletion is staged on `main` and uncommitted. The blobs sit on `601cdafc0`, and that commit still holds them after a later delete commit.
+128 paths were removed. The blobs sit on `601cdafc0`, and that commit still holds them.
 
 ```
 git show 601cdafc0:PATH
