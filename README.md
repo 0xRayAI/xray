@@ -196,7 +196,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Governance & Codex
 
-- **69 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance (Codex 69: no new MCP/skill/handler surface)
+- **70 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance (Codex 69: no new MCP/skill/handler surface; Codex 70: current source and worn npm before edits)
 - CodexPolicyService — Governance-owned SSOT for codex loading
 - Pre-governance gate blocks non-compliant proposals
 - Active codex snapshot via `get_active_codex` MCP tool
