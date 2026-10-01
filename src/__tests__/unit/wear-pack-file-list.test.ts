@@ -66,6 +66,12 @@ function listProject(dir: string): string[] {
   return out.filter((rel) => rel !== 'package.json' && rel !== 'package-lock.json').sort();
 }
 
+/** Consumer setup links the package dist and scripts. 4.0.28 did not. That pair is expected. */
+function isRootSuitLink(rel: string): boolean {
+  const name = rel.startsWith('dist -> ') ? 'dist' : rel.startsWith('scripts -> ') ? 'scripts' : '';
+  return name !== '' && rel.includes(`/node_modules/0xray/${name}`);
+}
+
 function installAndSetup(dir: string, spec: string, git: boolean, home: string): string[] {
   mkdirSync(dir, { recursive: true });
   mkdirSync(home, { recursive: true });
@@ -141,13 +147,15 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
           path.join(work, 'new-git-home'),
         );
 
-        const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel));
-        const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel));
+        const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel) && !isRootSuitLink(rel));
+        const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel) && !isRootSuitLink(rel));
         expect(plainExtra).toEqual([]);
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
-        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT])].sort();
-        expect(packedGit).toEqual(expectedGit);
+        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT])]
+          .filter((rel) => !isRootSuitLink(rel))
+          .sort();
+        expect(packedGit.filter((rel) => !isRootSuitLink(rel))).toEqual(expectedGit);
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

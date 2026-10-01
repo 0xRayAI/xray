@@ -1580,7 +1580,7 @@ function ensureWearStateGitignored(targetDir) {
     return;
   }
   if (!top || !excludeRel) return;
-  const rel = path.relative(top, stateDir).split(path.sep).join("/");
+  const rel = path.relative(realPath(top), realPath(stateDir)).split(path.sep).join("/");
   if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return;
   const pattern = `${rel}/`;
   const excludeFile = path.resolve(targetDir, excludeRel);
@@ -1817,6 +1817,22 @@ function saveWearState(paths, meta) {
   fs.writeFileSync(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
 }
 
+/** git prints the physical path. Node's tmpdir is the /var symlink. Compare the same file. */
+function realPath(p) {
+  const abs = path.resolve(p);
+  const missing = [];
+  let cur = abs;
+  while (cur && cur !== path.dirname(cur)) {
+    try {
+      return path.join(fs.realpathSync(cur), ...missing.reverse());
+    } catch {
+      missing.push(path.basename(cur));
+      cur = path.dirname(cur);
+    }
+  }
+  return abs;
+}
+
 function resolveGitToplevel(targetDir) {
   try {
     const top = execFileSync("git", ["rev-parse", "--show-toplevel"], {
@@ -1825,8 +1841,8 @@ function resolveGitToplevel(targetDir) {
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
     if (!top) return null;
-    const resolved = path.resolve(top);
-    if (resolved === path.resolve(targetDir)) return null;
+    const resolved = realPath(top);
+    if (resolved === realPath(targetDir)) return null;
     return resolved;
   } catch {
     return null;
@@ -1835,11 +1851,12 @@ function resolveGitToplevel(targetDir) {
 
 function linkedWearRoots(targetDir) {
   const roots = [];
+  const here = realPath(targetDir);
   const add = (root) => {
     if (!root) return;
-    const resolved = path.resolve(root);
-    if (resolved === path.resolve(targetDir)) return;
-    if (roots.some((item) => path.resolve(item) === resolved)) return;
+    const resolved = realPath(root);
+    if (resolved === here) return;
+    if (roots.some((item) => realPath(item) === resolved)) return;
     roots.push(resolved);
   };
   add(resolveCursorWorkspaceRoot(targetDir));
@@ -2046,7 +2063,7 @@ function assertSetupGit(targetDir) {
   } catch {
     throw new Error("cursor-wear: not a git work tree");
   }
-  if (path.resolve(top) !== path.resolve(targetDir)) {
+  if (realPath(top) !== realPath(targetDir)) {
     throw new Error("setup: work tree points elsewhere");
   }
 }

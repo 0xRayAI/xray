@@ -288,6 +288,8 @@ describe("Inference Cycle", () => {
     session.problems = [];
     session.patterns = [];
     session.wrongTurns = [];
+    session.approaches = [];
+    session.solutions = [];
     fs.writeFileSync(path.join(inferenceDir, "session-empty.json"), JSON.stringify(session));
 
     const cycle = new InferenceCycle(tmpDir, mockAgentInvoker);
