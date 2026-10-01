@@ -21,7 +21,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { cardStop } from '../../hooks/goggles-pipeline.mjs';
+import { cardStop, lensBeforeResearch } from '../../hooks/goggles-pipeline.mjs';
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -152,6 +152,12 @@ async function main() {
         gate: stop.gate,
         hookSpecificOutput: stop.hookSpecificOutput,
       });
+    }
+
+    const spoken = [cmd, content, toolInput.pattern, toolInput.query, ...(ctx.paths || [])].filter(Boolean).join('\n');
+    const lensStop = lensBeforeResearch(eventRoot, toolName, spoken);
+    if (lensStop?.decision === 'deny') {
+      finish(eventRoot, 'deny', lensStop.reason, null, toolName, { gate: lensStop.gate });
     }
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));

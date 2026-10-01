@@ -1,9 +1,11 @@
 /**
  * Goggles. Kind 0 name-checks the six outer names.
- * Digest and triage return one card. Empty stays empty.
+ * A named plane returns its view. Field pipes fill what they can see.
+ * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
  */
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -204,10 +206,20 @@ function gogglesAnswer(argv) {
     return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
   }
   const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length !== 1) return none('');
+  if (planes.length !== 1) {
+    if (!planes.length && cardPlanesNamed(lower).length) {
+      const cards = collectCards('digest', lower);
+      if (cards && cards.length) {
+        return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
+      }
+    }
+    return none('');
+  }
   const scopes = findScopes(words.filter((word) => word.toLowerCase() !== planes[0]));
   if (scopes.length > 1) return none('');
-  return none(readingLine(planes[0], scopes[0] || ''));
+  const line = readingLine(planes[0], scopes[0] || '');
+  const file = moduleFile(planes[0]);
+  return none(file ? `${line} File: ${file}` : line);
 }
 
 export function readGoggles(argv) {
@@ -222,23 +234,17 @@ function cardPlanesNamed(lower) {
   return CARD_PLANES.filter((name) => lower.includes(name));
 }
 
-function listedFiles(plane, scope) {
-  const files = Array.isArray(plane.files) ? plane.files.map(String) : [];
-  if (scope === 'one artifact') return files.length === 1 ? [files[0]] : null;
-  const unpathed = Array.isArray(plane.unpathed) ? plane.unpathed : [];
-  const parts = files.slice();
-  for (const name of unpathed) parts.push(name === 'mill' ? 'mill has no path' : String(name));
-  return parts;
+function listedFiles(plane) {
+  return Array.isArray(plane.files) ? plane.files.map(String) : [];
 }
 
 function cardView(plane, scope, flavor, root) {
-  const listed = listedFiles(plane, scope);
-  if (!listed) return null;
+  const listed = listedFiles(plane);
   const view = {
     plane: plane.id,
     flavor,
     scope: scope || '',
-    from: plane.id === 'ground' ? '' : 'ground',
+    from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
     digest: plane.digest || '',
     plate: plane.plate || '',
     entry: plane.entry || '',
@@ -248,7 +254,6 @@ function cardView(plane, scope, flavor, root) {
     setup: plane.setup || '',
     teardown: plane.teardown || '',
     worn: plane.worn || '',
-    narrow: scope === 'one flow' || scope === 'one artifact',
   };
   if (flavor === 'triage') {
     const filled = new Set(filledOf(plane));
@@ -272,10 +277,7 @@ function formatCardText(view) {
     ['Teardown', view.teardown],
     ['Worn', view.worn],
   ];
-  const shown = view.narrow
-    ? rows.filter(([key]) => key === 'Plane' || key === 'Digest' || key === 'Files')
-    : rows;
-  let text = shown.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+  let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
   if (view.flavor === 'triage') {
     const lines = [];
     if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
@@ -286,23 +288,19 @@ function formatCardText(view) {
 }
 
 export function formatCardPane(view) {
-  const rows = [['Plane', view.plane]];
-  if (!view.narrow) rows.push(['From', view.from]);
-  rows.push(['Digest', view.digest]);
-  if (!view.narrow) {
-    rows.push(
-      ['Plate', view.plate],
-      ['Entry', view.entry],
-      ['Exit', view.exit],
-      ['Files', view.files.join(', ')],
-      ['Skills', view.skills],
-      ['Setup', view.setup],
-      ['Teardown', view.teardown],
-      ['Worn', view.worn],
-    );
-  } else {
-    rows.push(['Files', view.files.join(', ')]);
-  }
+  const rows = [
+    ['Plane', view.plane],
+    ['From', view.from],
+    ['Digest', view.digest],
+    ['Plate', view.plate],
+    ['Entry', view.entry],
+    ['Exit', view.exit],
+    ['Files', view.files.join(', ')],
+    ['Skills', view.skills],
+    ['Setup', view.setup],
+    ['Teardown', view.teardown],
+    ['Worn', view.worn],
+  ];
   if (view.flavor === 'triage') {
     if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
     if (view.exam) rows.push(['', view.exam]);
@@ -319,20 +317,15 @@ export function formatCardPane(view) {
 function collectCards(flavor, lower) {
   const named = cardPlanesNamed(lower);
   const scopes = findScopes(lower.filter((word) => word !== flavor && !named.includes(word)));
-  if (named.length > 1 || scopes.length > 1) return null;
+  if (scopes.length > 1) return null;
   const scope = scopes[0] || '';
-  if (!named.length && (scope === 'part' || scope === 'one flow' || scope === 'one artifact')) return null;
   const platesDir = findPlatesDir(HERE);
-  if (!platesDir) return null;
   const ids = named.length ? named : CARD_PLANES;
-  const root = repoRootFrom(platesDir);
+  const root = sourceRoot(platesDir);
   const cards = [];
   for (const id of ids) {
-    const plane = assemblePlane(id, platesDir);
-    if (!plane) continue;
-    const view = cardView(plane, scope, flavor, root);
-    if (!view) return null;
-    cards.push(view);
+    const plane = growPlane(id, platesDir, stateRoot());
+    cards.push(cardView(plane, scope, flavor, root));
   }
   return cards;
 }
@@ -364,6 +357,45 @@ function boxTitles(line) {
     titles.push(title);
   }
   return titles;
+}
+
+function flowEnds(body) {
+  if (!body || body.includes('INPUT LAYER')) return null;
+  const stages = [];
+  let title = '';
+  let notes = [];
+  let open = false;
+  for (const line of String(body).split(/\r?\n/)) {
+    if (line.includes('┌')) {
+      open = true;
+      title = '';
+      notes = [];
+      continue;
+    }
+    if (!open) continue;
+    if (line.includes('└')) {
+      if (title) stages.push({ title, notes: notes.slice() });
+      open = false;
+      continue;
+    }
+    if (!/[A-Za-z]/.test(line)) continue;
+    const titles = boxTitles(line);
+    if (titles.length && !title) {
+      title = titles.join(' ');
+      continue;
+    }
+    const note = line.replace(/[│|]/g, ' ').replace(/^[\s·.-]+/, '').trim();
+    if (note) notes.push(note);
+  }
+  if (stages.length < 2) return null;
+  const first = stages[0];
+  const last = stages[stages.length - 1];
+  return {
+    entry: first.title,
+    exit: last.title,
+    setup: first.notes.join(' '),
+    teardown: last.notes.join(' '),
+  };
 }
 
 function doorsOf(body) {
@@ -433,38 +465,320 @@ export function filledOf(plane) {
   return FIELD_ORDER.filter((name) => flags[name]);
 }
 
+function plateSource(id, platesDir) {
+  if (!platesDir || id === 'ground') return { body: '', path: '' };
+  const abs = join(platesDir, `${id}.md`);
+  if (!existsSync(abs)) return { body: '', path: '' };
+  return {
+    body: readFileSync(abs, 'utf8'),
+    path: join('docs-site', 'docs', 'plates', `${id}.md`),
+  };
+}
+
+function sectionOf(body, title) {
+  if (!body) return '';
+  const lines = stripFrontmatter(body).split(/\r?\n/);
+  const heading = new RegExp(`^#{1,3}\\s+${title}\\s*$`, 'i');
+  let on = false;
+  const prose = [];
+  for (const line of lines) {
+    if (heading.test(line)) {
+      on = true;
+      continue;
+    }
+    if (!on) continue;
+    if (/^#{1,3}\s+/.test(line) || line.startsWith('```')) break;
+    if (!line.trim()) {
+      if (prose.length) break;
+      continue;
+    }
+    prose.push(line.trim());
+  }
+  return prose.join(' ');
+}
+
 export function assemblePlane(id, platesDir) {
   const extra = overlayTable()[id] || {};
-  let plate = null;
-  let digest = extra.digest || '';
-  let doors = { entry: null, exit: null };
-  if (id !== 'ground') {
-    const abs = join(platesDir, `${id}.md`);
-    if (!existsSync(abs)) return null;
-    const raw = readFileSync(abs, 'utf8');
-    plate = join('docs-site', 'docs', 'plates', `${id}.md`);
-    if (!digest) digest = takeOf(stripFrontmatter(raw));
-    doors = doorsOf(raw);
-  }
-  if (!digest) return null;
+  const src = plateSource(id, platesDir);
+  const doors = src.body ? doorsOf(src.body) : { entry: null, exit: null };
+  const flow = src.body ? flowEnds(src.body) : null;
+  const digest = extra.digest || (src.body ? takeOf(stripFrontmatter(src.body)) : '');
+  const files = Array.isArray(extra.files) ? extra.files.map(String) : [];
   return {
     id,
     digest,
-    plate,
-    entry: extra.entry || doors.entry || null,
-    exit: extra.exit || doors.exit || null,
+    plate: src.path,
+    entry: extra.entry || doors.entry || (flow && flow.entry) || '',
+    exit: extra.exit || doors.exit || (flow && flow.exit) || '',
     entryIsMark: Boolean(extra.entry),
     exitIsMark: Boolean(extra.exit),
-    files: extra.files || null,
+    files,
     unpathed: extra.unpathed || null,
-    skills: extra.skills || null,
-    setup: extra.setup || null,
-    teardown: extra.teardown || null,
-    worn: extra.worn || null,
+    skills: extra.skills || '',
+    setup: extra.setup || sectionOf(src.body, 'Setup') || (flow && flow.setup) || '',
+    teardown: extra.teardown || sectionOf(src.body, 'Teardown') || (flow && flow.teardown) || '',
+    worn: extra.worn || '',
+    clues: cluesOf(src.body),
     mark: extra.mark || null,
     wornMark: extra.wornMark || null,
     pick: extra.pick || null,
   };
+}
+
+const VIEW_KEYS = ['from', 'digest', 'plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
+
+function stateRoot() {
+  const env = process.env.GOGGLES_ROOT;
+  if (typeof env === 'string' && env.trim() && env.trim() !== '.') return resolve(env.trim());
+  return process.cwd();
+}
+
+function sourceRoot(platesDir) {
+  return platesDir ? repoRootFrom(platesDir) : stateRoot();
+}
+
+function viewsPath(root) {
+  return join(root, '.xray', 'state', 'goggles-views.json');
+}
+
+function loadViews(root) {
+  try {
+    const data = JSON.parse(readFileSync(viewsPath(root), 'utf8'));
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveViews(root, views) {
+  const file = viewsPath(root);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(views, null, 2)}\n`);
+}
+
+function cluesOf(body) {
+  if (!body) return [];
+  const clues = [];
+  for (const match of String(body).matchAll(/`([^`]{4,80})`/g)) clues.push(match[1]);
+  for (const line of String(body).split(/\r?\n/)) {
+    if (!line.includes('│')) continue;
+    for (const title of boxTitles(line)) {
+      if (title.length >= 8 && title.length <= 60) clues.push(title);
+    }
+  }
+  return clues;
+}
+
+const sourceCache = new Map();
+
+function sourceTexts(root) {
+  if (sourceCache.has(root)) return sourceCache.get(root);
+  const out = [];
+  const walk = (dir, depth) => {
+    if (depth > 8) return;
+    let entries = [];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === '__tests__' || entry.name === 'dist') continue;
+      const abs = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(abs, depth + 1);
+        continue;
+      }
+      if (!/\.(ts|mjs|cjs)$/.test(entry.name) || entry.name.endsWith('.test.ts')) continue;
+      try {
+        out.push({ rel: abs.slice(root.length + 1), text: readFileSync(abs, 'utf8') });
+      } catch {
+        /* unreadable source is not a plane file */
+      }
+    }
+  };
+  walk(join(root, 'src'), 0);
+  sourceCache.set(root, out);
+  return out;
+}
+
+function fileFromClues(clues, root, planeId) {
+  const texts = sourceTexts(root);
+  const votes = new Map();
+  for (const clue of clues) {
+    const hits = [];
+    for (const file of texts) {
+      if (!file.text.includes(clue)) continue;
+      hits.push(file.rel);
+      if (hits.length > 8) break;
+    }
+    if (!hits.length || hits.length > 8) continue;
+    const weight = 9 - hits.length;
+    for (const rel of hits) votes.set(rel, (votes.get(rel) || 0) + weight);
+  }
+  const token = String(planeId || '').split('-')[0].toLowerCase();
+  const named = token ? [...votes.keys()].filter((rel) => rel.toLowerCase().includes(token)) : [];
+  const pool = new Set(named.length ? named : [...votes.keys()]);
+  let best = '';
+  let bestRank = -1;
+  for (const [rel, score] of votes) {
+    if (!pool.has(rel)) continue;
+    let rank = score * 10;
+    if (token && rel.toLowerCase().includes(token)) rank += 20;
+    if (rel.startsWith('src/cli/')) rank -= 3;
+    if (rank > bestRank || (rank === bestRank && rel.length < best.length)) {
+      best = rel;
+      bestRank = rank;
+    }
+  }
+  return best;
+}
+
+function skillFor(id, root) {
+  const dir = join(root, 'src', 'skills');
+  if (!existsSync(dir)) return '';
+  let names = [];
+  try {
+    names = readdirSync(dir, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  } catch {
+    return '';
+  }
+  const hit = names.filter((name) => name === id || name.startsWith(`${id}-`));
+  if (hit.length !== 1) return '';
+  const rel = join('src', 'skills', hit[0], 'SKILL.md');
+  return existsSync(join(root, rel)) ? rel : '';
+}
+
+function moduleFile(name) {
+  const platesDir = findPlatesDir(HERE);
+  const root = sourceRoot(platesDir);
+  const hit = sourceTexts(root).find((file) => file.rel.endsWith(`/${name}.ts`) || file.rel.endsWith(`/${name}.mjs`));
+  return hit ? hit.rel : '';
+}
+
+function hintLine(name) {
+  const cards = lookCards(['digest', name]);
+  const files = cards && cards[0] && Array.isArray(cards[0].files) ? cards[0].files : [];
+  return files.length ? `${name}: ${files.join(', ')}` : '';
+}
+
+export function suitHint(text) {
+  const words = intentWords(text);
+  const named = CARD_PLANES.filter((name) => words.includes(name));
+  if (!named.length) return lookVerb(words) ? 'Name one plane.' : '';
+  return named.map(hintLine).filter(Boolean).join('\n');
+}
+
+const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
+
+function researchCall(toolName, text) {
+  const tool = String(toolName || '');
+  const spoken = String(text || '');
+  if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
+  return /bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken));
+}
+
+/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
+export function lensPlane(text) {
+  const hint = suitHint(String(text || ''));
+  if (hint === 'Name one plane.') return { stop: true, files: [] };
+  if (!hint || hint.includes('\n')) return { stop: false, files: [] };
+  const mark = hint.indexOf(': ');
+  if (mark < 0) return { stop: false, files: [] };
+  const files = hint.slice(mark + 2).split(',').map((part) => part.trim()).filter(Boolean);
+  return { stop: false, files };
+}
+
+function lensPage(root, names) {
+  if (!names.length) return 'Name one plane.';
+  const platesDir = findPlatesDir(HERE);
+  const parts = [];
+  for (const id of names) {
+    const plane = growPlane(id, platesDir, root);
+    parts.push(formatCardText(cardView(plane, '', 'digest', sourceRoot(platesDir))));
+  }
+  return parts.join('\n\n');
+}
+
+function stampPlane(root, id) {
+  try {
+    const plates = createRequire(import.meta.url)('./plates.cjs');
+    if (!plates.PLATE_IDS.includes(id)) return;
+    plates.stampPlateIfMissing(root, id);
+  } catch {
+    /* a missed stamp must not fail the stop */
+  }
+}
+
+/** A search stays stopped. The next move is the file on the lens, not the same search again. */
+export function lensBeforeResearch(root, toolName, text) {
+  const spoken = String(text || '');
+  if (!researchCall(toolName, spoken)) return null;
+  const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
+  if (names.length === 1) stampPlane(root, names[0]);
+  return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
+}
+
+function seenFields(plane, root) {
+  const files = Array.isArray(plane.files) ? plane.files.slice() : [];
+  let worn = plane.worn || '';
+  if (!files.length && Array.isArray(plane.unpathed) && plane.unpathed.includes('mill')) {
+    if (existsSync(join(root, 'scripts', 'foundry'))) files.push('scripts/foundry');
+  }
+  if (!files.length && Array.isArray(plane.clues) && plane.clues.length) {
+    const found = fileFromClues(plane.clues, root, plane.id);
+    if (found) files.push(found);
+  }
+  let skills = plane.skills || '';
+  if (!skills) skills = skillFor(plane.id, root);
+  if (!worn) {
+    for (const file of files) {
+      if (!file.startsWith('src/')) continue;
+      let rel = file.slice(4);
+      if (rel.endsWith('.ts')) rel = rel.replace(/\.ts$/, '.js');
+      else if (!/\.(cjs|mjs|js)$/.test(rel)) continue;
+      const next = `dist/${rel}`;
+      if (existsSync(join(root, next))) {
+        worn = next;
+        break;
+      }
+    }
+  }
+  return {
+    from: plane.id === 'ground' ? '' : 'ground',
+    digest: plane.digest || '',
+    plate: plane.plate || '',
+    entry: plane.entry || '',
+    exit: plane.exit || '',
+    files,
+    skills,
+    setup: plane.setup || '',
+    teardown: plane.teardown || '',
+    worn,
+  };
+}
+
+function kept(stored, seen, key) {
+  if (key === 'files') {
+    if (Array.isArray(seen.files) && seen.files.length) return seen.files.map(String);
+    return Array.isArray(stored.files) ? stored.files.map(String) : [];
+  }
+  if (seen[key]) return seen[key];
+  return stored[key] || '';
+}
+
+export function growPlane(id, platesDir, root) {
+  const seen = seenFields(assemblePlane(id, platesDir), sourceRoot(platesDir));
+  const views = loadViews(root);
+  const stored = views[id] && typeof views[id] === 'object' ? views[id] : {};
+  const grown = { id };
+  for (const key of VIEW_KEYS) grown[key] = kept(stored, seen, key);
+  if (id === 'ground') grown.from = stored.from || '';
+  views[id] = {};
+  for (const key of VIEW_KEYS) views[id][key] = grown[key];
+  saveViews(root, views);
+  const base = assemblePlane(id, platesDir);
+  return { ...base, ...grown };
 }
 
 function repoRootFrom(platesDir) {
@@ -535,8 +849,8 @@ function isGogglesWork(text) {
 
 
 export function cardStop(root, toolName, text, paths = []) {
-  const raw = [String(text || ''), ...(paths || [])].join('\n');
-  if (isGogglesWork(raw)) {
+  const spoken = String(text || '');
+  if (spoken.length <= 200 && isGogglesWork(spoken) && !(paths || []).some((item) => /goggles/i.test(String(item)))) {
     clearReading(root);
     clearCardLine(root);
     return null;
@@ -574,15 +888,21 @@ function intentWords(text) {
   return String(text || '').toLowerCase().split(/[^a-z0-9-]+/).filter(Boolean);
 }
 
+function lookVerb(words) {
+  return words.includes('look') || words.includes('name');
+}
+
 export function handCard(root, intent) {
   try {
-    clearCardLine(root);
     const text = String(intent || '');
-    if (isGogglesWork(text)) {
+    const words = intentWords(text);
+    if (isGogglesWork(text) && text.length <= 200) {
       clearReading(root);
+      clearCardLine(root);
       return null;
     }
-    const words = intentWords(text);
+    if (!lookVerb(words)) return null;
+    clearCardLine(root);
     const looked = readGoggles(words);
     if (looked.text.startsWith('Actuality. Drift')) {
       saveReading(root, { drift: looked.text });
@@ -615,10 +935,11 @@ export function lensPath(root) {
 
 
 export function maintainLens(root) {
-  const text = actualityLine();
+  const drift = actualityLine();
+  const text = drift || 'quiet (match)';
   mkdirSync(dirname(lensPath(root)), { recursive: true });
   writeFileSync(lensPath(root), `${text}\n`);
-  return ok(text);
+  return ok(drift);
 }
 
 

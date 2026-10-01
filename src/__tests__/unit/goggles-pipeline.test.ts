@@ -9,12 +9,16 @@ import {
   actualityLine,
   actualityOf,
   cardStop,
+  findPlatesDir,
   formatCardPane,
   handCard,
   look,
+  growPlane,
+  lensBeforeResearch,
   lookCards,
   maintainLens,
   organStop,
+  suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
@@ -30,9 +34,10 @@ describe('goggles plate', () => {
   });
 
   it('kind 1 names one plane', () => {
-    for (const name of ['dichotomy', 'syncopate', 'synthesis', 'loop']) {
+    for (const name of ['dichotomy', 'syncopate', 'loop']) {
       expect(look([name]).text).toBe(`The reading is ${name}.`);
     }
+    expect(look(['synthesis']).text).toBe('The reading is synthesis. File: src/nucleus/synthesis.ts');
     expect(look(['dichotomy', 'part']).text).toBe('The reading is dichotomy. Scope is part.');
     expect(look(['syncopate', 'one', 'flow']).text).toBe('The reading is syncopate. Scope is one flow.');
     expect(look(['loop', 'one', 'artifact']).text).toBe('The reading is loop. Scope is one artifact.');
@@ -56,8 +61,8 @@ describe('goggles plate', () => {
       'Teardown:',
       'Worn:',
     ].join('\n'));
-    expect(look(['ground']).text).toBe('');
-    expect(look(['routing']).text).toBe('');
+    expect(look(['ground']).text).toBe(ground);
+    expect(look(['routing']).text).toContain('Plane: routing');
     const routing = look(['digest', 'routing']).text;
     expect(routing).toContain('Digest: Task text becomes an agent.');
     expect(routing).toContain('Files: src/nucleus/thin-dispatch.ts');
@@ -67,13 +72,17 @@ describe('goggles plate', () => {
     expect(routing).toContain('Setup:');
     expect(routing).toContain('Teardown:');
     expect(routing).not.toContain('The reading is digest.');
-    expect(look(['digest', 'routing', 'one', 'artifact']).text).toBe([
-      'Plane: routing',
-      'Digest: Task text becomes an agent.',
-      'Files: src/nucleus/thin-dispatch.ts',
-    ].join('\n'));
-    expect(look(['digest', 'ground', 'one', 'artifact']).text).toBe('');
-    expect(look(['digest', 'routing', 'house']).text).toBe('');
+    const oneFile = look(['digest', 'routing', 'one', 'artifact']).text;
+    expect(oneFile).toContain('Plane: routing');
+    expect(oneFile).toContain('Files: src/nucleus/thin-dispatch.ts');
+    expect(oneFile).toContain('Setup:');
+    const many = look(['digest', 'ground', 'one', 'artifact']).text;
+    expect(many).toContain('Plane: ground');
+    expect(many).toContain('scripts/foundry');
+    expect(many).toContain('Setup:');
+    const both = look(['digest', 'routing', 'house']).text;
+    expect(both).toContain('Plane: routing');
+    expect(both).toContain('Plane: house');
     const set = look(['digest']).text;
     for (const name of ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting']) {
       expect(set).toContain(`Plane: ${name}`);
@@ -85,10 +94,51 @@ describe('goggles plate', () => {
     const boot = look(['triage', 'boot']).text;
     expect(boot).toContain('Entry: process start · SIGINT / SIGTERM');
     expect(boot).toContain('Exit: BootResult');
-    expect(boot).toContain('Empty: files, skills, setup, teardown, worn');
-    expect(boot).toContain('Drawing only.');
+    expect(boot).toContain('src/core/boot-orchestrator.ts');
+    expect(boot).toContain('src/skills/boot-orchestrator/SKILL.md');
+    expect(boot).toContain('Empty: setup, teardown');
+    expect(boot).not.toContain('Drawing only.');
     expect(look(['digest', 'house']).text).toContain('Entry:');
     expect(look(['digest', 'house']).text).not.toContain('Entry: house');
+    const house = look(['digest', 'house']).text;
+    expect(house).toContain('Entry: EMPTY');
+    expect(house).toContain('Exit: DOCTOR · House: PASS?');
+    expect(house).toContain('Setup: no house/ folder yet');
+    expect(house).toContain('Teardown: doctor checks it yes: House: PASS');
+    const memory = look(['digest', 'memory-recall']).text;
+    expect(memory).toContain('Files: src/integrations/hooks/plates.cjs');
+    expect(memory).toContain('Worn: dist/integrations/hooks/plates.cjs');
+    expect(suitHint('open the boot plane')).toBe('boot: src/core/boot-orchestrator.ts');
+    expect(suitHint('routing and governance')).toBe(
+      'routing: src/nucleus/thin-dispatch.ts\ngovernance: src/governance/governance-service.ts',
+    );
+    expect(suitHint('look')).toBe('Name one plane.');
+    expect(suitHint('read the readme')).toBe('');
+  });
+
+  it('keeps a search stopped and lets the file through', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
+    try {
+      expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
+      const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
+      expect(first?.decision).toBe('deny');
+      expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
+      expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
+      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'search_codebase', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'find_implementation', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'get_documentation', 'open the boot plane')?.decision).toBe('deny');
+      const unnamed = lensBeforeResearch(root, 'explorer', 'learn the code');
+      expect(unnamed?.decision).toBe('deny');
+      expect(unnamed?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('refuses the set, the open slot, and the old map', () => {
@@ -104,9 +154,9 @@ describe('goggles plate', () => {
     expect(look([]).text).toBe('');
     expect(look(['dichotomy', 'triage']).text).toBe('');
     expect(look(['dichotomy', 'calling']).text).toBe('');
-    expect(look(['ground']).text).toBe('');
-    expect(look(['routing']).text).toBe('');
-    expect(look(['boot']).text).toBe('');
+    expect(look(['ground']).text).toContain('Plane: ground');
+    expect(look(['routing']).text).toContain('Plane: routing');
+    expect(look(['boot']).text).toContain('Plane: boot');
     expect(look(['domain']).text).toBe('');
     expect(look(['eco']).text).toBe('');
     expect(look(['TEGHAL']).text).toBe('');
@@ -133,7 +183,9 @@ describe('goggles plate', () => {
       decision: 'deny',
       reason: 'The reading is dichotomy. The action is triage.',
     });
-    expect(handCard(root, 'routing boot ground')).toBeNull();
+    expect(handCard(root, 'please triage this bug')).toBeNull();
+    expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
+    expect(handCard(root, 'name routing boot')).toBeNull();
     expect(cardStop(root, 'read_file', plate[0], plate)).toBeNull();
     rmSync(root, { recursive: true, force: true });
   });
@@ -171,7 +223,7 @@ describe('goggles plate', () => {
     writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
     const written = maintainLens(root);
     expect(written).toEqual({ ok: true, text: '' });
-    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('\n');
+    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
     const notes = readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8');
     expect(notes).toContain('# Stay');
     expect(notes).toContain('The body stays.');
@@ -214,7 +266,7 @@ describe('goggles plate', () => {
     expect(pane).not.toContain('n/a');
     expect(pane).not.toContain('The reading is');
     expect(lookCards(['dichotomy'])).toBeNull();
-    expect(lookCards(['digest', 'ground', 'one', 'artifact'])).toBeNull();
+    expect(lookCards(['digest', 'ground', 'one', 'artifact'])[0].files).toContain('scripts/foundry');
     const routing = lookCards(['triage', 'routing']);
     expect(routing).toHaveLength(1);
     const triagePane = formatCardPane(routing[0]);
@@ -225,13 +277,43 @@ describe('goggles plate', () => {
     expect(zoom).toHaveLength(1);
     const zoomPane = formatCardPane(zoom[0]);
     expect(zoomPane).toContain('src/nucleus/thin-dispatch.ts');
-    expect(zoomPane).not.toContain('Setup');
-    expect(zoomPane).not.toContain('Teardown');
+    expect(zoomPane).toContain('Setup');
+    expect(zoomPane).toContain('Teardown');
     const bin = join(fileURLToPath(new URL('../../integrations/hooks/goggles-pipeline.mjs', import.meta.url)));
     const piped = execFileSync(process.execPath, [bin, 'digest', 'ground'], { encoding: 'utf8' });
     expect(piped).toContain('Plane: ground');
     expect(piped).not.toContain('┌');
     expect(execFileSync(process.execPath, [bin, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
     expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
+  });
+
+  it('keeps a field the pipe already wrote, and still returns a plane with no plate', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-view-'));
+    const plates = mkdtempSync(join(tmpdir(), 'goggles-plates-'));
+    const previous = process.env.GOGGLES_ROOT;
+    try {
+      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+      writeFileSync(join(root, '.xray', 'state', 'goggles-views.json'), `${JSON.stringify({
+        routing: { setup: 'bench is up' },
+      }, null, 2)}\n`);
+      const grown = growPlane('routing', plates, root);
+      expect(grown.setup).toBe('bench is up');
+      expect(grown.digest).toBe('');
+      expect(grown.plate).toBe('');
+      const saved = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-views.json'), 'utf8'));
+      expect(saved.routing.setup).toBe('bench is up');
+      expect(saved.routing.entry).toBe('');
+      writeFileSync(join(root, '.xray', 'state', 'goggles-views.json'), `${JSON.stringify({
+        boot: { files: ['src/missing.ts'] },
+      }, null, 2)}\n`);
+      const boot = growPlane('boot', findPlatesDir(fileURLToPath(new URL('.', import.meta.url))), root);
+      expect(boot.files).toContain('src/core/boot-orchestrator.ts');
+      expect(boot.files).not.toContain('src/missing.ts');
+    } finally {
+      if (previous === undefined) delete process.env.GOGGLES_ROOT;
+      else process.env.GOGGLES_ROOT = previous;
+      rmSync(root, { recursive: true, force: true });
+      rmSync(plates, { recursive: true, force: true });
+    }
   });
 });

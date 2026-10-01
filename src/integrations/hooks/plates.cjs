@@ -179,10 +179,24 @@ function stampPlateIfMissing(projectRoot, id) {
   return { id, path, written: true };
 }
 
+function organFile(intent) {
+  try {
+    const { suitHint } = require("./goggles-pipeline.mjs");
+    const hint = suitHint(String(intent || ""));
+    if (!hint || hint === "Name one plane." || hint.includes("\n")) return "";
+    const file = hint.split(": ").slice(1).join(": ").trim();
+    return file;
+  } catch {
+    return "";
+  }
+}
+
 function plateStockLine(intent) {
   const plate = recallPlate(intent);
   if (!plate) return null;
-  return `Plate: ${plate.id} — .xray/state/plates/${plate.id}.md`;
+  const line = `Plate: ${plate.id} — .xray/state/plates/${plate.id}.md`;
+  const file = organFile(intent);
+  return file ? `${line} File: ${file}` : line;
 }
 
 module.exports = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1093,9 +1093,9 @@ describe('Cursor cloud hooks adapter', () => {
       }).trim();
       const out = JSON.parse(stdout) as { permission: string; root?: string; mill?: string };
       expect(out.permission).toBe('allow');
-      expect(path.resolve(out.root || '')).toBe(path.resolve(suit));
-      expect(path.resolve(out.mill || '')).toBe(path.resolve(mill));
-      expect(path.resolve(out.root || '')).not.toBe(path.resolve(mill));
+      expect(realpathSync(out.root || '')).toBe(realpathSync(suit));
+      expect(realpathSync(out.mill || '')).toBe(realpathSync(mill));
+      expect(realpathSync(out.root || '')).not.toBe(realpathSync(mill));
     } finally {
       rmSync(suit, { recursive: true, force: true });
       rmSync(mill, { recursive: true, force: true });

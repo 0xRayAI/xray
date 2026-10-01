@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -372,7 +373,9 @@ describe('cursor wear wires installed dist hooks', () => {
       const ran = runSh(path.join(factory, '.cursor', 'hooks', 'pre-compact.sh'), factory);
       expect(JSON.parse(ran.stdout).from).toBe('src');
       const js = /(?:^|\s)js=(\S+)/.exec(ran.log.trim().split('\n').pop() || '');
-      expect(js?.[1]).toBe(path.join(factory, 'src', 'integrations', 'cursor', 'hooks', 'pre-compact.js'));
+      expect(realpathSync(js?.[1] || '')).toBe(
+        realpathSync(path.join(factory, 'src', 'integrations', 'cursor', 'hooks', 'pre-compact.js')),
+      );
     } finally {
       rmSync(factory, { recursive: true, force: true });
     }
@@ -432,8 +435,8 @@ describe('cursor wear wires installed dist hooks', () => {
       });
       expect(existsSync(path.join(outer, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(ancestor, '.cursor', 'hooks.json'))).toBe(false);
-      expect(printed).toContain(`cursor-wear: wrote outer hooks at ${outer}\n`);
-      expect(printed).not.toContain(ancestor);
+      expect(printed).toContain(`cursor-wear: wrote outer hooks at ${realpathSync(outer)}\n`);
+      expect(printed).not.toContain(`${realpathSync(ancestor)}/`);
     } finally {
       if (previous === undefined) delete process.env.CURSOR_PROJECT_DIR;
       else process.env.CURSOR_PROJECT_DIR = previous;

@@ -60,7 +60,7 @@ export function probeGoggles(packageRoot: string, cwd: string): GogglesStatus {
   let kind0Quiet = false;
   if (lens.found) {
     kind0Text = lens.text;
-    if (!lens.text) {
+    if (!lens.text || lens.text === "quiet (match)") {
       kind0Quiet = true;
       kind0Label = "quiet (match)";
     } else {

@@ -91,6 +91,33 @@ describe('thinDispatch — routeToAgent edge cases', () => {
     expect(result).toHaveProperty('score');
     expect(result).toHaveProperty('agent');
     expect(typeof result.agent).toBe('string');
+    expect(result.file).toBeUndefined();
+    expect(result.lens).toBeUndefined();
+  });
+
+  it('routes a named plane to its file and does not pick the researcher', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const named = scoreAndRoute('open the boot plane', {});
+    expect(named.file).toBe('src/core/boot-orchestrator.ts');
+    expect(named.agent).not.toBe('researcher');
+    expect(named.agent.length).toBeGreaterThan(0);
+    expect(named.lens).toBeUndefined();
+  });
+
+  it('stops a look that names no plane', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const stopped = scoreAndRoute('look', {});
+    expect(stopped.agent).toBe('');
+    expect(stopped.lens).toBe('Name one plane.');
+    expect(stopped.file).toBeUndefined();
+  });
+
+  it('stays quiet when two planes are named', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const both = scoreAndRoute('routing and governance', {});
+    expect(both.file).toBeUndefined();
+    expect(both.lens).toBeUndefined();
+    expect(both.agent.length).toBeGreaterThan(0);
   });
 });
 

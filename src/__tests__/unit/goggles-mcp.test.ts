@@ -37,7 +37,7 @@ describe('goggles MCP', () => {
       const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
       expect(isError).toBe(false);
       expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('\n');
+      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -80,44 +80,35 @@ describe('goggles MCP', () => {
     expect(card.notes.join('\n')).not.toContain('entry');
   });
 
-  it('one artifact on a multi-file plane stays empty', async () => {
+  it('one artifact on a multi-file plane keeps the view', async () => {
     const { payload, isError } = await dispatchTool(
       'look',
       { outer: 'digest', plane: 'ground', scope: 'one artifact' },
       tempRoot(),
     );
     expect(isError).toBe(false);
-    expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'card', content: '' });
+    expect(payload.mode).toBe('card');
+    expect(payload.content.files).toContain('scripts/foundry');
+    expect(payload.content.setup).toBe('');
   });
 
-  it('a plate drawing under a hold is a deny, not a zoom', async () => {
-    const root = tempRoot();
-    try {
-      mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(
-        join(root, '.xray', 'state', 'goggles-reading.json'),
-        `${JSON.stringify({ plane: 'dichotomy', scope: '' })}\n`,
-      );
-      const { payload, isError } = await dispatchTool(
-        'look',
-        { plane: 'docs-site/docs/plates/routing.md' },
-        root,
-      );
-      expect(isError).toBe(true);
-      expect(payload.mode).toBe('deny');
-      expect(payload.error.code).toBe('leave_plane');
-      expect(payload.error.reason).toBe('The reading is dichotomy. That drawing is not the plane.');
-      expect(payload.content).toBe('');
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
+  it('a plate path is not a card plane', async () => {
+    const { payload, isError } = await dispatchTool(
+      'look',
+      { plane: 'docs-site/docs/plates/routing.md' },
+      tempRoot(),
+    );
+    expect(isError).toBe(true);
+    expect(payload.error.code).toBe('invalid_args');
+    expect(payload.mode).not.toBe('card');
   });
 
-  it('a pipeline name alone is quiet', async () => {
+  it('a plane name returns that view', async () => {
     const { payload, isError } = await dispatchTool('look', { plane: 'routing' }, tempRoot());
     expect(isError).toBe(false);
-    expect(payload.quiet).toBe(true);
-    expect(payload.content).toBe('');
+    expect(payload.mode).toBe('card');
+    expect(payload.content.plane).toBe('routing');
+    expect(payload.content.files).toEqual(['src/nucleus/thin-dispatch.ts']);
   });
 
   it('the whole set is name one plane', async () => {
@@ -153,7 +144,7 @@ describe('goggles MCP', () => {
       expect(JSON.stringify(missing.payload)).not.toContain('memory-recall');
 
       mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), '\n');
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n');
       const quiet = await dispatchTool('status_lens', {}, root);
       expect(quiet.payload.kind0).toBe('quiet');
       expect(quiet.payload.kind0Text).toBe('');

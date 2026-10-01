@@ -57,13 +57,13 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 
 The command is `0xray look`. `0xray goggles` is the same organ. A pipe keeps the line card. A terminal shows that card as a pane. Chat seats without hooks use the `goggles` MCP tools `look` and `status_lens`. Same organ.
 
-Kind 0 is actuality. It compares the list in the file to the same six names in the code. It speaks only when those lists differ. A match is quiet. It does not read the suit that is running. It is not a plate type.
+Kind 0 is actuality. It compares the list in the file to the same six names in the code. It speaks only when those lists differ. A match is quiet.
 
 Kind 1 names one plane: dichotomy, syncopate, synthesis, or loop. The lens holds that plane. An action on that plane is quiet. An action on another plane, or on a pipeline drawing, is stopped. A pipeline drawing is not a scope stop. Ground is not a scope stop. Scope, when named, is ecosystem, part, one flow, or one artifact, and an action wider than that scope is stopped. One kind and one scope level at a time. Two planes, calling, ground, and a pipeline name do not arm the lens. `outer` without one plane is `Name one plane.` After 1 is empty. Nothing is picked.
 
-`digest` and `triage` return the card already built by `assemblePlane`. The fields are from, digest, plate, entry, exit, files, skills, setup, teardown, and worn. Empty stays empty. The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. Those nine are not Kind 0. `digest` fills the card. Entry and exit are the plate's input and output box titles when that plate has them. Setup and teardown stay empty unless the row names them. The mill path is `scripts/foundry`. `triage` adds the empty fields and whether the row holds. Zoom after the card is the same ladder: ecosystem, part, one flow, one artifact. One file is one artifact. Several files are not narrowed to a guessed file.
+Naming a plane, `digest`, or `triage` returns that plane's view. The fields are from, digest, plate, entry, exit, files, skills, setup, teardown, and worn. Each field has a pipe. The pipe writes what it can see from the plate or the tree, and the view keeps that field. A field the pipe cannot see yet stays on the view for the next look. The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. Those nine are not Kind 0. The mill path is `scripts/foundry`. `triage` names the fields still open and whether the row holds. Zoom after the card is the same ladder: ecosystem, part, one flow, one artifact.
 
-The hold lasts for the work that named the plane. It does not stop one tool and then forget. Work that says goggles clears the hold and stays quiet. The suit does not invent the plane.
+The hold lasts for the work that named the plane. A sentence that does not say look or name does not arm it and does not drop it. Work that says goggles clears the hold and stays quiet. When a tool names one card plane, the suit adds that plane's file as a hint.
 
 ## Hooks (rewired, not new MCPs)
 
