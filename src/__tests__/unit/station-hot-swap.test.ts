@@ -650,6 +650,34 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('a suit wake does not merge repo-* back onto the project file', async () => {
+    const { hydrateWritableSignals } = await import('../../../vendor/@0xray/repertoire/dist/paths.js');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-subject-off-'));
+    const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({
+        signals: [{ name: 'three-subsystem-verifiable-os', definition: 'The suit is three subsystems.' }],
+      }),
+    );
+    const previous = process.env.REPERTOIRE_SUBJECT_OVERLAY;
+    process.env.REPERTOIRE_SUBJECT_OVERLAY = '0';
+    try {
+      hydrateWritableSignals(dest, tmp);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).toContain('station-survives-the-cut');
+      expect(names.some((name: string) => name.startsWith('repo-'))).toBe(false);
+    } finally {
+      if (previous == null) delete process.env.REPERTOIRE_SUBJECT_OVERLAY;
+      else process.env.REPERTOIRE_SUBJECT_OVERLAY = previous;
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('wake heat refreshes a changed stack definition and keeps observation stats', () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-law-refresh-'));
     const tmp = path.join(parent, 'xray');
@@ -1026,6 +1054,56 @@ describe('station hot-swap', () => {
     expect(twice).toContain('| Autonomous Engine');
     expect(twice).toContain('Ticket: KILLER-DUAL-CLOUD');
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
+  });
+
+  it('heat drops torn footer scraps instead of pasting them back', () => {
+    const stock = formatStationMarkdown({
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'From: ground Digest: Home. The dev plane. Filled: files, skills',
+      planLine: '#161 is one machine over plane bodies. Worn locally. Do not merge #153.',
+      git: { branch: 'main', head: 'fbd394269' },
+      repertoireResume: 'Repertoire: on — 45 signals',
+      workingLine: 'Working: operating-planes, wake-cascade',
+    });
+    const existing = [
+      stock.trimEnd(),
+      '',
+      'Unfinished path: src/integrations/hooks/station-hook-runtime.cjs',
+      'this file — Read it. OpenCode injects. Do not thicken the Grok exo.',
+      '.',
+      '.',
+      '.',
+      'xo.',
+      '',
+    ].join('\n');
+    const merged = mergeStationMarkdown(stock, existing);
+    expect(merged).toContain('Unfinished path: src/integrations/hooks/station-hook-runtime.cjs');
+    expect(merged.split('\n')).not.toContain('xo.');
+    expect(merged).not.toMatch(/^this file —/m);
+    expect(merged).not.toMatch(/^\.$/m);
+    expect(countStationFooters(merged)).toEqual({ continueCount: 1, grokCount: 1 });
+  });
+
+  it('a plate line on the card is a file the same write stamps', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plate-'));
+    try {
+      writeStationMarkdown(tmp, {
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: 'BootOrchestrator.executeBootSequence brings the framework up',
+        planLine: 'stamp the plate the card names',
+        git: { branch: 'main', head: 'abc1234' },
+        repertoireResume: 'Repertoire: on — 45 signals',
+        workingLine: 'Working: operating-planes',
+      });
+      const card = fs.readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Plate: boot — .xray/state/plates/boot.md');
+      const stamped = fs.readFileSync(path.join(tmp, '.xray', 'state', 'plates', 'boot.md'), 'utf8');
+      expect(stamped).toContain('Boot');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
   });
 
   it('writeStationMarkdown merges a seeded card instead of wipe-then-write', () => {

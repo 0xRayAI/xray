@@ -93,8 +93,8 @@ program
 
 program
   .command("goggles")
-  .argument("[args...]", "plane, one name, and an optional depth")
-  .description("Snapshot one plane. A number opens the next depth.")
+  .argument("[args...]", "plane, then examine, triage, cascade, or teardown")
+  .description("Glimpse every plane, or one plane's way in. A hit does not open the plane.")
   .action((args: string[]) => {
     const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
     const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");

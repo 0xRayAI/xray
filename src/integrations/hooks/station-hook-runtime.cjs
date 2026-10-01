@@ -17,10 +17,10 @@ const {
   unlinkSync,
   writeFileSync,
 } = require("fs");
-const { join } = require("path");
+const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
-const { plateStockLine } = require("./plates.cjs");
+const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
 
 const INTENT_MAX = 240;
 
@@ -780,20 +780,28 @@ function growDestOnWake(root) {
   const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
   if (!existsSync(helper)) return null;
   try {
+    const dest = destSignalsPath(root);
+    const before = countCuratedSignals(dest) || 0;
     const out = execFileSync(process.execPath, [helper, root, "--grow"], {
       encoding: "utf8",
       timeout: 45000,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0", REPERTOIRE_DEST_LOCK: "held" },
+      env: {
+        ...process.env,
+        REPERTOIRE_FIELD_SYNC: "0",
+        REPERTOIRE_DEST_LOCK: "held",
+        REPERTOIRE_SUBJECT_OVERLAY: "0",
+      },
     });
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
     const pruned = pruneKeywordDest(root);
-    const destCount = countCuratedSignals(destSignalsPath(root)) || 0;
-    if (!parsed || typeof parsed !== "object") return { pruned: pruned.removed, destCount };
+    const destCount = countCuratedSignals(dest) || 0;
+    if (!parsed || typeof parsed !== "object") return { before, pruned: pruned.removed, destCount, after: destCount };
     const heated = Array.isArray(parsed.heated) ? parsed.heated.length : 0;
     return {
       ...parsed,
+      before,
       observed: heated,
       pruned: pruned.removed,
       destCount,
@@ -1085,7 +1093,7 @@ function stationBootNeedsRefresh(existing, root, host) {
   if (!existing || typeof existing !== "object") return true;
   if (host && existing.host && existing.host !== host) return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (existing.workspaceRoot && !sameWorkspaceRoot(existing.workspaceRoot, root)) return true;
   if (!existing.stationLine) return true;
   const liveGit = readGitBrief(root);
   const bootHead = existing.git && existing.git.head ? String(existing.git.head) : "";
@@ -1108,13 +1116,27 @@ function stationDurableHoldsNpm(root) {
     .some((line) => isHoldNpmLine(line));
 }
 
+function sameWorkspaceRoot(left, right) {
+  if (!left || !right) return false;
+  return resolve(String(left)) === resolve(String(right));
+}
+
+function isFooterFragment(line) {
+  const lower = String(line || "").trim().toLowerCase();
+  if (!lower || /^[.]+$/.test(lower)) return true;
+  return STOCK_STATION_FOOTERS.some((footer) => {
+    if (lower.length >= 12 && footer.includes(lower)) return true;
+    return lower.length >= 3 && lower.length < 12 && footer.endsWith(lower);
+  });
+}
+
 function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
   if (/^#\s+station\s*$/i.test(trimmed)) return true;
   if (DESIGN_MAP_LINES.includes(trimmed)) return true;
   const lower = trimmed.toLowerCase();
-  if (STOCK_STATION_FOOTERS.includes(lower)) return true;
+  if (STOCK_STATION_FOOTERS.includes(lower) || isFooterFragment(trimmed)) return true;
   return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
@@ -1210,6 +1232,12 @@ function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
+    try {
+      const plate = recallPlate(fields && fields.intent);
+      if (plate) stampPlateIfMissing(root, plate.id);
+    } catch {
+      /* a missing plate doc must not block the card */
+    }
     const dest = stationMarkdownPath(root);
     const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
     writeFileSync(dest, next);

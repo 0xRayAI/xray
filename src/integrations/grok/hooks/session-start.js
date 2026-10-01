@@ -10,6 +10,7 @@ import {
   ensureSessionBoot,
   readStdinJson,
   resolveSessionId,
+  normalizeWorkspaceRoot,
   workspaceRoot,
   writeSessionBoot,
 } from './grok-hook-utils.js';
@@ -21,6 +22,7 @@ import {
   scheduleAutonomousReportingMarker,
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
+import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -115,7 +117,7 @@ async function main() {
   try {
     const event = await readStdinJson();
     HOOK_EVENT = resolveHookEvent(event);
-    const eventRoot = event.workspaceRoot || event.cwd || root;
+    const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {
       recordSynthesisTurnSlice(eventRoot, sessionId);
@@ -149,7 +151,7 @@ async function main() {
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
-      ...(intent ? { intent } : {}),
+      ...(intent ? { intent, cardText: intent } : {}),
       ...(matchedSignals.length ? { matchedSignals } : {}),
     });
 
@@ -167,6 +169,9 @@ async function main() {
 
     try {
       scheduleAutonomousReportingMarker(eventRoot);
+      if (HOOK_EVENT === 'pre_compact' || HOOK_EVENT === 'post_compact') {
+        maintainLens(eventRoot);
+      }
       if (HOOK_EVENT === 'session_start') {
         maybeRunReflectionStub(eventRoot);
         runInferenceImprovementLight(eventRoot);

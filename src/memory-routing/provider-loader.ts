@@ -11,6 +11,9 @@ import type {
 import { createMemoryRoutingProvider as createNullProvider } from './null-provider.js';
 import { validateMemoryRoutingConfig } from './validate-config.js';
 
+// Opening the organ must not merge subject repo-* back onto the project file.
+process.env.REPERTOIRE_SUBJECT_OVERLAY ??= '0';
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

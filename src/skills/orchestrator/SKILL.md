@@ -53,6 +53,18 @@ When `multi_agent_orchestration.lead_dev_mode` is true in `features.json` (defau
 | Test failures | bug-triage |
 | Review | code-review |
 
+## Goggles
+
+Pushed on `feat/goggles-look`. Not merged. Not published. Grok CLI has not shipped this. Wear the local build. From the worn checkout run `node dist/integrations/hooks/goggles-pipeline.mjs`. Do not run `npx 0xray goggles`. If `dist` is older than `src/integrations/hooks/goggles-pipeline.mjs`, build that tree and wear that `dist`. A subagent wears this same local build.
+
+Kind 0 is actuality. It compares the list in the file to the same six names in the code. It speaks only when those lists differ. A match is quiet. It does not read the suit that is running. It is not a plate type.
+
+Kind 1 names one plane: dichotomy, syncopate, synthesis, or loop. The lens holds that plane. An action on that plane is quiet. An action on another plane, or on a pipeline drawing, is stopped. A pipeline drawing is not a scope stop. Ground is not a scope stop. Scope, when named, is ecosystem, part, one flow, or one artifact, and an action wider than that scope is stopped. One kind and one scope level at a time. Two planes, calling, ground, and a pipeline name do not arm the lens. `outer` without one plane is `Name one plane.` After 1 is empty. Nothing is picked. Calling stays off.
+
+`digest` and `triage` return the card already built by `assemblePlane`. The fields are from, digest, plate, entry, exit, files, skills, setup, teardown, and worn. Empty stays empty. The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. Those nine are not Kind 0. `digest` fills the card. Entry and exit are the plate's input and output box titles when that plate has them. Setup and teardown stay empty unless the row names them. The mill path is `scripts/foundry`. `triage` adds the empty fields and whether the row holds. Zoom after the card is the same ladder: ecosystem, part, one flow, one artifact. One file is one artifact. Several files are not narrowed to a guessed file.
+
+The hold lasts for the work that named the plane. It does not stop one tool and then forget. Work that says goggles clears the hold and stays quiet. The suit does not invent the plane.
+
 ## Hooks (rewired, not new MCPs)
 
 - **SessionStart** → `session-start.js` boots lead_dev_mode

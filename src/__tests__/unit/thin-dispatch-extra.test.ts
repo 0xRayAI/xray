@@ -120,6 +120,7 @@ describe('thinDispatch — adjusted score updates strategy', () => {
       expect(routed.score.level).not.toBe(base.level);
       expect(routed.score.recommendedStrategy).toBe(getStrategyForLevel(routed.score.level));
       expect(routed.score.estimatedAgents).toBe(getAgentCountForLevel(routed.score.level));
+      expect(routed.memoryRouting?.overridden).toBe(false);
     } finally {
       spy.mockRestore();
     }
@@ -139,11 +140,22 @@ describe('thinDispatch — organ after a yield', () => {
     if (!existsSync(organ)) return;
     const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
     await new Promise((resolve) => setTimeout(resolve, 30));
-    const routed = scoreAndRoute('attestation-as-map', {});
-    expect(routed.memoryRouting?.providerId).toBe('repertoire');
+    const matched = scoreAndRoute('attestation-as-map', {});
+    expect(matched.memoryRouting?.providerId).toBe('repertoire');
+    expect(matched.memoryRouting?.signals).toContain('attestation-as-map');
+    if (matched.score.score >= 26) {
+      expect(matched.agent).toBe('architect');
+      expect(matched.memoryRouting?.overridden).toBe(true);
+    } else {
+      expect(matched.agent).toBe('code-reviewer');
+      expect(matched.memoryRouting?.overridden).toBe(false);
+    }
+
+    const routed = scoreAndRoute('attestation-as-map', { files: ['a.ts', 'b.ts'] });
     expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
     expect(routed.agent).toBe('architect');
     expect(routed.score.score).toBeGreaterThanOrEqual(26);
+    expect(routed.memoryRouting?.overridden).toBe(true);
     expect(recordLesson).not.toHaveBeenCalled();
   });
 });

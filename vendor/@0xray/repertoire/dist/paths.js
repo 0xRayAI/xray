@@ -421,6 +421,10 @@ export function reloadOpProc(cwd = process.cwd()) {
 }
 function mergeProjectOverlays(destPath) {
     mergeStackOverlay(destPath);
+    // Suit heat keeps repo-* off the project file. A wake that merges them
+    // and then prunes them records a fake 59 → 45 drop on every compact.
+    if (process.env.REPERTOIRE_SUBJECT_OVERLAY === '0')
+        return;
     mergeSubjectOverlay(destPath);
 }
 export function hydrateWritableSignals(seedPath, cwd = process.cwd()) {

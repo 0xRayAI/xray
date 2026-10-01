@@ -28,6 +28,7 @@ import {
   retainCompactFields,
   writeStationMarkdown,
 } from '../../hooks/station-hook-runtime.mjs';
+import { handCard } from '../../hooks/goggles-pipeline.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -86,12 +87,18 @@ const WRITE_TOOLS = new Set([
   'EditNotebook',
 ]);
 
+export function normalizeWorkspaceRoot(root) {
+  const raw = String(root || '').trim();
+  if (!raw) return raw;
+  return path.resolve(raw);
+}
+
 export function workspaceRoot() {
-  return (
+  return normalizeWorkspaceRoot(
     process.env.GROK_WORKSPACE_ROOT ||
     process.env.CLAUDE_PROJECT_DIR ||
     process.env.XRAY_ROOT ||
-    process.cwd()
+    process.cwd(),
   );
 }
 
@@ -198,6 +205,7 @@ export function extractToolContext(event) {
 
   if (toolInput.path) paths.push(String(toolInput.path));
   if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_file) paths.push(String(toolInput.target_file));
   if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
   if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
 
@@ -301,7 +309,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
       ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'
       : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
-    workspaceRoot: root,
+    workspaceRoot: normalizeWorkspaceRoot(root),
     ...heat,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
@@ -322,6 +330,11 @@ export function writeSessionBoot(root, payload) {
     fs.mkdirSync(stateDir, { recursive: true });
     fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
+    try {
+      handCard(root, payload && (payload.cardText || payload.intent));
+    } catch {
+      /* a missed card must not fail the boot */
+    }
     return sessionBootPath(root);
   } catch {
     return null;
@@ -333,7 +346,12 @@ export function sessionBootNeedsRefresh(existing, root) {
   if (existing.lead_dev_mode === undefined) return true;
   if (existing.host !== 'grok') return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (
+    existing.workspaceRoot &&
+    normalizeWorkspaceRoot(existing.workspaceRoot) !== normalizeWorkspaceRoot(root)
+  ) {
+    return true;
+  }
   if (!existing.repertoireResume) return true;
   if (!existing.stationLine) return true;
   return false;
