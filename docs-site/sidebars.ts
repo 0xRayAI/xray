@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'guides/memory-routing',
         'guides/repertoire',
         'guides/station-vs-repertoire',
+        'guides/host-truth',
         'guides/memory-wake',
         'guides/aside-context',
         'guides/user-asides',
