@@ -8,6 +8,7 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
+import { suitHint } from "../integrations/hooks/goggles-pipeline.mjs";
 import {
   ComplexityMetrics,
   ComplexityScore,
@@ -86,12 +87,19 @@ export function routeToAgent(
 /**
  * Convenience: score first, then route — one call.
  */
+function routeGlance(operation: string): string {
+  const hint = suitHint(operation);
+  if (!hint || hint === "Name one plane.") return "";
+  return hint;
+}
+
 export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
+): { score: ComplexityScore; agent: string; glance?: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
   const score = scoreComplexity(operation, context, thresholds);
+  const glance = routeGlance(operation);
   const baseAgent = routeToAgent(score);
   let agent = baseAgent;
 
@@ -129,9 +137,10 @@ export function scoreAndRoute(
         estimatedAgents: getAgentCountForLevel(adjustedLevel),
       },
       agent,
+      ...(glance ? { glance } : {}),
       memoryRouting,
     };
   }
 
-  return { score, agent };
+  return { score, agent, ...(glance ? { glance } : {}) };
 }

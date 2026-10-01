@@ -39,6 +39,7 @@ import {
 } from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 import { featuresConfigLoader } from '../core/features-config.js';
+import { suitHint } from '../integrations/hooks/goggles-pipeline.mjs';
 
 export class GovernanceService {
   constructor() {
@@ -239,6 +240,7 @@ export class GovernanceService {
           }
         }
 
+        const glance = suitHint(`${proposal.title} ${proposal.description}`);
         return {
           proposalId: proposal.id,
           finalDecision,
@@ -246,6 +248,7 @@ export class GovernanceService {
           votes,
           reasoningSummary: merged.reasoningSummary,
           moralOverride,
+          ...(glance && glance !== 'Name one plane.' ? { glance } : {}),
           ...(metamorphosisScore != null ? { metamorphosisScore } : {}),
         };
       });

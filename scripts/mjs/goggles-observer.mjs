@@ -66,6 +66,12 @@ try {
     files.join(', '),
   );
   check('suit hint names the boot file', suitHint('open the boot plane').includes('src/core/boot-orchestrator.ts'));
+  const house = look(['digest', 'house']).text;
+  check('house doors', house.includes('Entry: EMPTY') && house.includes('Setup: no house/ folder yet'), house.split('\n').filter((line) => /^(Entry|Exit|Setup|Teardown):/.test(line)).join(' | '));
+  const memory = look(['digest', 'memory-recall']).text;
+  check('memory worn twin', memory.includes('Worn: dist/integrations/hooks/plates.cjs'));
+  check('two planes both files', suitHint('routing and governance').includes('routing:') && suitHint('routing and governance').includes('governance:'));
+  check('a look with no plane asks for one', suitHint('look') === 'Name one plane.');
 } finally {
   rmSync(state, { recursive: true, force: true });
 }

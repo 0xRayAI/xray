@@ -261,7 +261,7 @@ export async function answerStatus(root) {
   const lens = lensBody(here);
   let kind0 = 'none';
   let kind0Text = '';
-  if (lens.found && !lens.text) kind0 = 'quiet';
+  if (lens.found && (!lens.text || lens.text === 'quiet (match)')) kind0 = 'quiet';
   else if (lens.found) {
     kind0 = 'drift';
     kind0Text = lens.text;

@@ -91,6 +91,13 @@ describe('thinDispatch — routeToAgent edge cases', () => {
     expect(result).toHaveProperty('score');
     expect(result).toHaveProperty('agent');
     expect(typeof result.agent).toBe('string');
+    expect(result.glance).toBeUndefined();
+  });
+
+  it('asks the organ when the task names one plane', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const named = scoreAndRoute('open the boot plane', {});
+    expect(named.glance).toBe('boot: src/core/boot-orchestrator.ts');
   });
 });
 

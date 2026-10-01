@@ -15,7 +15,7 @@ describe('goggles status probe', () => {
   it('a blank lens is a match and a missing organ is not drift', () => {
     const cwd = tempCwd();
     mkdirSync(join(cwd, '.xray', 'state'), { recursive: true });
-    writeFileSync(join(cwd, '.xray', 'state', 'LENS.md'), '\n');
+    writeFileSync(join(cwd, '.xray', 'state', 'LENS.md'), 'quiet (match)\n');
     const worn = probeGoggles(repoRoot, cwd);
     expect(worn.organPresent).toBe(true);
     expect(worn.organLine).toBe('Goggles: worn');

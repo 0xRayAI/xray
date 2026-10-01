@@ -37,7 +37,7 @@ describe('goggles MCP', () => {
       const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
       expect(isError).toBe(false);
       expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
-      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('\n');
+      expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -144,7 +144,7 @@ describe('goggles MCP', () => {
       expect(JSON.stringify(missing.payload)).not.toContain('memory-recall');
 
       mkdirSync(join(root, '.xray', 'state'), { recursive: true });
-      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), '\n');
+      writeFileSync(join(root, '.xray', 'state', 'LENS.md'), 'quiet (match)\n');
       const quiet = await dispatchTool('status_lens', {}, root);
       expect(quiet.payload.kind0).toBe('quiet');
       expect(quiet.payload.kind0Text).toBe('');

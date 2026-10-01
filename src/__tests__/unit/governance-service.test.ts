@@ -71,6 +71,13 @@ describe('GovernanceService', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
   describe('govern()', () => {
+    it('asks the organ when a proposal names one plane', async () => {
+      const result = await service.govern({
+        proposals: [{ id: 'boot-1', type: 'fix', title: 'open the boot plane', description: 'bring it up' }],
+      });
+      expect(result.results[0]?.glance).toBe('boot: src/core/boot-orchestrator.ts');
+    });
+
     it('calls all 3 skill MCP servers with correct proposal data', async () => {
       const result = await service.govern({ proposals: mockProposals });
 

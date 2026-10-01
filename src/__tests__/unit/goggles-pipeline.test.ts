@@ -17,6 +17,7 @@ import {
   lookCards,
   maintainLens,
   organStop,
+  suitHint,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
 
 const PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
@@ -98,6 +99,20 @@ describe('goggles plate', () => {
     expect(boot).not.toContain('Drawing only.');
     expect(look(['digest', 'house']).text).toContain('Entry:');
     expect(look(['digest', 'house']).text).not.toContain('Entry: house');
+    const house = look(['digest', 'house']).text;
+    expect(house).toContain('Entry: EMPTY');
+    expect(house).toContain('Exit: DOCTOR · House: PASS?');
+    expect(house).toContain('Setup: no house/ folder yet');
+    expect(house).toContain('Teardown: doctor checks it yes: House: PASS');
+    const memory = look(['digest', 'memory-recall']).text;
+    expect(memory).toContain('Files: src/integrations/hooks/plates.cjs');
+    expect(memory).toContain('Worn: dist/integrations/hooks/plates.cjs');
+    expect(suitHint('open the boot plane')).toBe('boot: src/core/boot-orchestrator.ts');
+    expect(suitHint('routing and governance')).toBe(
+      'routing: src/nucleus/thin-dispatch.ts\ngovernance: src/governance/governance-service.ts',
+    );
+    expect(suitHint('look')).toBe('Name one plane.');
+    expect(suitHint('read the readme')).toBe('');
   });
 
   it('refuses the set, the open slot, and the old map', () => {
@@ -182,7 +197,7 @@ describe('goggles plate', () => {
     writeFileSync(join(root, '.xray', 'state', 'NOTES.md'), '**Pickup line:** old job\n\n# Stay\n\nThe body stays.\n');
     const written = maintainLens(root);
     expect(written).toEqual({ ok: true, text: '' });
-    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('\n');
+    expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8')).toBe('quiet (match)\n');
     const notes = readFileSync(join(root, '.xray', 'state', 'NOTES.md'), 'utf8');
     expect(notes).toContain('# Stay');
     expect(notes).toContain('The body stays.');

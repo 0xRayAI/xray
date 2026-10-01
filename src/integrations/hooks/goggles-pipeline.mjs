@@ -358,6 +358,45 @@ function boxTitles(line) {
   return titles;
 }
 
+function flowEnds(body) {
+  if (!body || body.includes('INPUT LAYER')) return null;
+  const stages = [];
+  let title = '';
+  let notes = [];
+  let open = false;
+  for (const line of String(body).split(/\r?\n/)) {
+    if (line.includes('┌')) {
+      open = true;
+      title = '';
+      notes = [];
+      continue;
+    }
+    if (!open) continue;
+    if (line.includes('└')) {
+      if (title) stages.push({ title, notes: notes.slice() });
+      open = false;
+      continue;
+    }
+    if (!/[A-Za-z]/.test(line)) continue;
+    const titles = boxTitles(line);
+    if (titles.length && !title) {
+      title = titles.join(' ');
+      continue;
+    }
+    const note = line.replace(/[│|]/g, ' ').replace(/^[\s·.-]+/, '').trim();
+    if (note) notes.push(note);
+  }
+  if (stages.length < 2) return null;
+  const first = stages[0];
+  const last = stages[stages.length - 1];
+  return {
+    entry: first.title,
+    exit: last.title,
+    setup: first.notes.join(' '),
+    teardown: last.notes.join(' '),
+  };
+}
+
 function doorsOf(body) {
   let layer = '';
   let want = false;
@@ -461,21 +500,22 @@ export function assemblePlane(id, platesDir) {
   const extra = overlayTable()[id] || {};
   const src = plateSource(id, platesDir);
   const doors = src.body ? doorsOf(src.body) : { entry: null, exit: null };
+  const flow = src.body ? flowEnds(src.body) : null;
   const digest = extra.digest || (src.body ? takeOf(stripFrontmatter(src.body)) : '');
   const files = Array.isArray(extra.files) ? extra.files.map(String) : [];
   return {
     id,
     digest,
     plate: src.path,
-    entry: extra.entry || doors.entry || '',
-    exit: extra.exit || doors.exit || '',
+    entry: extra.entry || doors.entry || (flow && flow.entry) || '',
+    exit: extra.exit || doors.exit || (flow && flow.exit) || '',
     entryIsMark: Boolean(extra.entry),
     exitIsMark: Boolean(extra.exit),
     files,
     unpathed: extra.unpathed || null,
     skills: extra.skills || '',
-    setup: extra.setup || sectionOf(src.body, 'Setup'),
-    teardown: extra.teardown || sectionOf(src.body, 'Teardown'),
+    setup: extra.setup || sectionOf(src.body, 'Setup') || (flow && flow.setup) || '',
+    teardown: extra.teardown || sectionOf(src.body, 'Teardown') || (flow && flow.teardown) || '',
     worn: extra.worn || '',
     clues: cluesOf(src.body),
     mark: extra.mark || null,
@@ -615,14 +655,17 @@ function moduleFile(name) {
   return hit ? hit.rel : '';
 }
 
+function hintLine(name) {
+  const cards = lookCards(['digest', name]);
+  const files = cards && cards[0] && Array.isArray(cards[0].files) ? cards[0].files : [];
+  return files.length ? `${name}: ${files.join(', ')}` : '';
+}
+
 export function suitHint(text) {
   const words = intentWords(text);
   const named = CARD_PLANES.filter((name) => words.includes(name));
-  if (named.length !== 1) return '';
-  const cards = lookCards(['digest', named[0]]);
-  const files = cards && cards[0] && Array.isArray(cards[0].files) ? cards[0].files : [];
-  if (!files.length) return '';
-  return `${named[0]}: ${files.join(', ')}`;
+  if (!named.length) return lookVerb(words) ? 'Name one plane.' : '';
+  return named.map(hintLine).filter(Boolean).join('\n');
 }
 
 function seenFields(plane, root) {
@@ -639,8 +682,11 @@ function seenFields(plane, root) {
   if (!skills) skills = skillFor(plane.id, root);
   if (!worn) {
     for (const file of files) {
-      if (!file.startsWith('src/') || !file.endsWith('.ts')) continue;
-      const next = `dist/${file.slice(4).replace(/\.ts$/, '.js')}`;
+      if (!file.startsWith('src/')) continue;
+      let rel = file.slice(4);
+      if (rel.endsWith('.ts')) rel = rel.replace(/\.ts$/, '.js');
+      else if (!/\.(cjs|mjs|js)$/.test(rel)) continue;
+      const next = `dist/${rel}`;
       if (existsSync(join(root, next))) {
         worn = next;
         break;
@@ -838,10 +884,11 @@ export function lensPath(root) {
 
 
 export function maintainLens(root) {
-  const text = actualityLine();
+  const drift = actualityLine();
+  const text = drift || 'quiet (match)';
   mkdirSync(dirname(lensPath(root)), { recursive: true });
   writeFileSync(lensPath(root), `${text}\n`);
-  return ok(text);
+  return ok(drift);
 }
 
 
