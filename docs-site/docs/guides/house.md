@@ -108,7 +108,7 @@ npx @0xray/grok-bot doctor
 
 Lookup:
 
-- When `GROK_BOT_HOUSE` is set, doctor uses it and does not walk up. The value may be the directory that holds `HOUSE.md`, or the `HOUSE.md` file itself. A missing path, or a directory with no `HOUSE.md` in it, warns, `GROK_BOT_HOUSE is set but HOUSE.md is missing (<path>)`.
+- When `GROK_BOT_HOUSE` is set, doctor uses it and does not walk up. The value may be the directory that holds `HOUSE.md`, or the `HOUSE.md` file itself. A missing path, or a directory with no `HOUSE.md` in it, warns `house is not enabled here`.
 - When `GROK_BOT_HOUSE` is unset, `seat-doctor.cjs` walks up from the working directory to find `house/HOUSE.md`.
 
 If `house/EXAMPLE.md` is in the seat, the house check fails and the command exits 1:
@@ -126,12 +126,12 @@ House: FAIL — <project>/house/HOUSE.md (via walk-up) — HOUSE.md still has un
 After those lines are replaced, the house line is:
 
 ```text
-House: PASS — <project>/house/HOUSE.md (via walk-up)
+House: PASS — house on — <project>/house/HOUSE.md (via walk-up)
 ```
 
 With `GROK_BOT_HOUSE` pointing at that directory, the same line says `(via GROK_BOT_HOUSE)`.
 
-The process exits 0 when the house check is not FAIL and mill plus inspect are fastened on that project. A missing `house/HOUSE.md` is a warning (`no house/HOUSE.md, run setup-house`) and does not by itself fail a fastened seat. On an empty directory the plant stays `Plant: FAIL — mill+inspect not fastened`, so doctor still exits 1 after the house line is PASS. Fasten mill and inspect, then run doctor again.
+The process exits 0 when the house check is not FAIL and mill plus inspect are fastened on that project. A missing `house/HOUSE.md` warns `house is not enabled here`. That is not a broken suit on a chat that can stop a tool. Grok Bot is the chat that needs the house. The warning does not by itself fail a fastened seat. On an empty directory the plant stays `Plant: FAIL — mill+inspect not fastened`, so doctor still exits 1 after the house line is PASS. Fasten mill and inspect, then run doctor again.
 
 ## Every wake
 

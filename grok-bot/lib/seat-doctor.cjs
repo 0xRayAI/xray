@@ -146,7 +146,7 @@ function inspectHouseFile(file, via) {
       status: 'warn',
       file: null,
       via: null,
-      detail: 'no house/HOUSE.md, run setup-house',
+      detail: 'house is not enabled here',
     };
   }
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
@@ -183,7 +183,8 @@ function probeHouse(cwd, env) {
         status: 'warn',
         file: null,
         via: null,
-        detail: `GROK_BOT_HOUSE is set but HOUSE.md is missing (${path.resolve(raw)})`,
+        detail: 'house is not enabled here',
+        missing: path.resolve(raw),
       };
     }
     return inspectHouseFile(file, 'GROK_BOT_HOUSE');
@@ -194,7 +195,7 @@ function probeHouse(cwd, env) {
       status: 'warn',
       file: null,
       via: null,
-      detail: 'no house/HOUSE.md, run setup-house',
+      detail: 'house is not enabled here',
     };
   }
   return inspectHouseFile(walked, 'walk-up');
@@ -419,11 +420,13 @@ function formatDoctor(report) {
     let label = 'WARN';
     if (report.house.status === 'pass') label = 'PASS';
     else if (report.house.status === 'fail') label = 'FAIL';
+    const spoken = report.house.status === 'pass' ? 'house on' : report.house.detail;
     if (report.house.file && report.house.via) {
       const tail = report.house.status === 'fail' ? ` — ${report.house.detail}` : '';
-      lines.push(`House: ${label} — ${report.house.file} (via ${report.house.via})${tail}`);
+      const lead = report.house.status === 'fail' ? '' : `${spoken} — `;
+      lines.push(`House: ${label} — ${lead}${report.house.file} (via ${report.house.via})${tail}`);
     } else {
-      lines.push(`House: ${label} — ${report.house.detail}`);
+      lines.push(`House: ${label} — ${spoken}`);
     }
   }
   lines.push('');
@@ -499,7 +502,7 @@ function usageText(kitRoot) {
   return `@0xray/grok-bot — complete setup path for Grok Bot agents
 
 Commands:
-  doctor | ready   Prove mill+inspect, warn if house/HOUSE.md is missing, fail if example lines remain
+  doctor | ready   Prove mill+inspect. Say house on, or house is not enabled here. Fail if example lines remain
   house init       Copy templates/house into ./house. Refuses if a target file exists
   house init --migrate
                    Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. Start ATTENTION_STATE.md from the template when it is missing. Leave a house file you already changed. Refuse when both boards exist and the house board is not the untouched template

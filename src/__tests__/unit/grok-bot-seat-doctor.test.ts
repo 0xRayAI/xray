@@ -32,7 +32,13 @@ const {
     };
     repertoire: { status: string; detail?: string; name?: string; version?: string; signals?: number | null };
     ows: { present: boolean; path: string };
-    house: { status: string; detail: string; file: string | null; via: string | null };
+    house: {
+      status: string;
+      detail: string;
+      file: string | null;
+      via: string | null;
+      missing?: string;
+    };
     next: string[];
     urls: { clearing: string };
   };
@@ -251,9 +257,9 @@ describe('grok-bot seat doctor — CLI', () => {
       plantMillInspect(dir);
       const report = diagnoseSeat({ cwd: dir, home: dir, env: {} });
       expect(report.house.status).toBe('warn');
-      expect(report.house.detail).toBe('no house/HOUSE.md, run setup-house');
+      expect(report.house.detail).toBe('house is not enabled here');
       expect(report.ok).toBe(true);
-      expect(formatDoctor(report)).toMatch(/House: WARN — no house\/HOUSE\.md, run setup-house/);
+      expect(formatDoctor(report)).toMatch(/House: WARN — house is not enabled here/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -450,14 +456,18 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.status).toBe('pass');
       expect(report.house.via).toBe('GROK_BOT_HOUSE');
       expect(report.house.file).toBe(path.join(pointed, 'HOUSE.md'));
-      expect(formatDoctor(report)).toContain(`House: PASS — ${path.join(pointed, 'HOUSE.md')} (via GROK_BOT_HOUSE)`);
+      expect(formatDoctor(report)).toContain(
+        `House: PASS — house on — ${path.join(pointed, 'HOUSE.md')} (via GROK_BOT_HOUSE)`,
+      );
+      const missingPath = path.join(pointed, 'nope');
       const missing = diagnoseSeat({
         cwd: walked,
-        env: { GROK_BOT_HOUSE: path.join(pointed, 'nope') },
+        env: { GROK_BOT_HOUSE: missingPath },
       });
       expect(missing.house.status).toBe('warn');
       expect(missing.house.file).toBeNull();
-      expect(missing.house.detail).toMatch(/GROK_BOT_HOUSE is set but HOUSE.md is missing/);
+      expect(missing.house.detail).toBe('house is not enabled here');
+      expect(missing.house.missing).toBe(path.resolve(missingPath));
     } finally {
       rmSync(walked, { recursive: true, force: true });
       rmSync(pointed, { recursive: true, force: true });
