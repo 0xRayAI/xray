@@ -14,6 +14,7 @@ import {
   handCard,
   look,
   growPlane,
+  lensBeforeResearch,
   lookCards,
   maintainLens,
   organStop,
@@ -113,6 +114,22 @@ describe('goggles plate', () => {
     );
     expect(suitHint('look')).toBe('Name one plane.');
     expect(suitHint('read the readme')).toBe('');
+  });
+
+  it('stops the first research call and hands back the lens', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
+    try {
+      expect(lensBeforeResearch(root, 'read_file', 'open the boot plane')).toBeNull();
+      const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
+      expect(first?.decision).toBe('deny');
+      expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
+      expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
+      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')).toBeNull();
+      const unnamed = lensBeforeResearch(root, 'explorer', 'learn the code');
+      expect(unnamed?.reason).toBe('Name one plane.');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('refuses the set, the open slot, and the old map', () => {

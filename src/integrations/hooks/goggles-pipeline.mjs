@@ -5,6 +5,7 @@
  * A held plane stays quiet. A leave is denied.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -666,6 +667,66 @@ export function suitHint(text) {
   const named = CARD_PLANES.filter((name) => words.includes(name));
   if (!named.length) return lookVerb(words) ? 'Name one plane.' : '';
   return named.map(hintLine).filter(Boolean).join('\n');
+}
+
+function passPath(root) {
+  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
+}
+
+function loadPass(root) {
+  try {
+    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
+    if (!data || typeof data !== 'object') return null;
+    return { tool: String(data.tool || ''), plane: String(data.plane || '') };
+  } catch {
+    return null;
+  }
+}
+
+function savePass(root, pass) {
+  const file = passPath(root);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(pass)}\n`);
+}
+
+function researchCall(toolName, text) {
+  const tool = String(toolName || '');
+  if (/researcher|explorer|deep[- ]?research/i.test(tool)) return true;
+  return /bash|shell/i.test(tool) && /researcher|explorer|deep[- ]?research/i.test(String(text || ''));
+}
+
+function lensPage(root, names) {
+  if (!names.length) return 'Name one plane.';
+  const platesDir = findPlatesDir(HERE);
+  const parts = [];
+  for (const id of names) {
+    const plane = growPlane(id, platesDir, root);
+    parts.push(formatCardText(cardView(plane, '', 'digest', sourceRoot(platesDir))));
+  }
+  return parts.join('\n\n');
+}
+
+function stampPlane(root, id) {
+  try {
+    const plates = createRequire(import.meta.url)('./plates.cjs');
+    if (!plates.PLATE_IDS.includes(id)) return;
+    plates.stampPlateIfMissing(root, id);
+  } catch {
+    /* a missed stamp must not fail the stop */
+  }
+}
+
+/** First research call builds the lens and hands it back. The next call may go on. */
+export function lensBeforeResearch(root, toolName, text) {
+  const spoken = String(text || '');
+  if (!researchCall(toolName, spoken)) return null;
+  const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
+  const plane = names.join(',');
+  const prior = loadPass(root);
+  if (prior && prior.tool === String(toolName || '') && prior.plane === plane) return null;
+  if (names.length === 1) stampPlane(root, names[0]);
+  savePass(root, { tool: String(toolName || ''), plane });
+  return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
 }
 
 function seenFields(plane, root) {
