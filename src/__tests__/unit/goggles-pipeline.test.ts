@@ -121,8 +121,18 @@ describe('goggles plate', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
     try {
       expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      const search = lensBeforeResearch(root, 'grep', 'open the boot plane');
+      expect(search?.decision).toBe('deny');
+      expect(search?.gate).toBe('lens');
+      expect(search?.reason).toContain('src/core/boot-orchestrator.ts');
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
+      const other = 'src/integrations/hooks/goggles-pipeline.mjs';
+      const firstRead = lensBeforeResearch(root, 'read_file', other);
+      expect(firstRead?.decision).toBe('deny');
+      expect(firstRead?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'read_file', other)).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
       const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
       expect(first?.decision).toBe('deny');
       expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
@@ -178,7 +188,12 @@ describe('goggles plate', () => {
       reason: 'The reading is dichotomy. That drawing is not the plane.',
     });
     expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
-    expect(cardStop(root, 'read_file', 'stay on dichotomy in src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts'])).toBeNull();
+    expect(cardStop(root, 'read_file', 'stay on dichotomy in src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts'])).toEqual({
+      gate: 'goggles',
+      decision: 'allow',
+    });
+    expect(cardStop(root, 'grep', 'goggles', [])).toEqual({ gate: 'goggles', decision: 'allow' });
+    expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
     expect(cardStop(root, 'grep', 'triage the logs', [])).toEqual({
       gate: 'goggles',
       decision: 'deny',
@@ -188,6 +203,19 @@ describe('goggles plate', () => {
     expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
     expect(handCard(root, 'name routing boot')).toBeNull();
     expect(cardStop(root, 'read_file', plate[0], plate)).toBeNull();
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('holds a named plane without look and leaves casual speech alone', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-name-'));
+    mkdirSync(join(root, '.xray', 'state'), { recursive: true });
+    expect(handCard(root, 'synthesis is the bug')).toBeNull();
+    expect(cardStop(root, 'grep', 'triage the logs', [])?.reason).toBe('The reading is synthesis. The action is triage.');
+    expect(handCard(root, 'please triage this bug')).toBeNull();
+    expect(handCard(root, 'fix the loop')).toBeNull();
+    expect(cardStop(root, 'grep', 'triage the logs', [])?.reason).toBe('The reading is synthesis. The action is triage.');
+    expect(handCard(root, 'dichotomy and syncopate')).toBeNull();
+    expect(cardStop(root, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md'])).toBeNull();
     rmSync(root, { recursive: true, force: true });
   });
 
@@ -212,7 +240,7 @@ describe('goggles plate', () => {
     writeSessionBoot(root, { intent: 'short', cardText: 'look at synthesis then part', host: 'grok' });
     const station = readFileSync(join(root, '.xray', 'state', 'STATION.md'), 'utf8');
     expect(station).not.toMatch(/^Card:/m);
-    expect(cardStop(root, 'bash', 'npm test', [])).toBeNull();
+    expect(cardStop(root, 'bash', 'npm test', [])).toEqual({ gate: 'goggles', decision: 'allow' });
     const plate = 'docs-site/docs/plates/boot.md';
     expect(cardStop(root, 'read_file', plate, [plate])?.reason).toBe('The reading is synthesis. That drawing is not the plane.');
     rmSync(root, { recursive: true, force: true });

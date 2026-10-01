@@ -12,6 +12,7 @@ import {
   findPlatesDir,
   growPlane,
   handCard,
+  lensBeforeResearch,
   look,
   suitHint,
 } from '../../src/integrations/hooks/goggles-pipeline.mjs';
@@ -49,6 +50,9 @@ try {
     handCard(held, 'is it useful');
     const stayed = cardStop(held, 'read_file', 'docs-site/docs/plates/routing.md', ['docs-site/docs/plates/routing.md']);
     check('ordinary sentence does not drop the hold', Boolean(stayed && stayed.decision === 'deny'));
+    const search = lensBeforeResearch(held, 'grep', 'open the boot plane');
+    check('a grep is a search', Boolean(search && search.decision === 'deny' && String(search.reason).includes('boot-orchestrator')));
+    check('the lens file stays open', lensBeforeResearch(held, 'read_file', 'src/core/boot-orchestrator.ts') === null);
   } finally {
     rmSync(held, { recursive: true, force: true });
   }
