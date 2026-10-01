@@ -21,7 +21,7 @@ import {
   workspaceRoot,
 } from './grok-hook-utils.js';
 import { appendHookActivity } from './grok-hook-activity.js';
-import { cardStop, lensBeforeResearch, suitHint } from '../../hooks/goggles-pipeline.mjs';
+import { cardStop, lensBeforeResearch } from '../../hooks/goggles-pipeline.mjs';
 import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -161,12 +161,10 @@ async function main() {
     }
 
     const route = repertoireRoute([toolName, cmd, content].filter(Boolean).join(' '));
-    const glance = suitHint([cmd, content, toolInput.pattern, toolInput.query].filter(Boolean).join('\n'));
-    const withGlance = (hint) => [hint, glance].filter(Boolean).join('\n') || null;
 
     if (isShellTool(toolName) && cmd) {
       const testHint = checkFullTestSuite(cmd, features);
-      if (testHint) finish(eventRoot, 'allow', null, withGlance(testHint), toolName, route || {});
+      if (testHint) finish(eventRoot, 'allow', null, testHint, toolName, route || {});
     }
 
     if (gateBlock.reason) {
@@ -174,13 +172,13 @@ async function main() {
         eventRoot,
         'allow',
         gateBlock.reason,
-        withGlance(gateBlock.hint),
+        gateBlock.hint,
         toolName,
         { gate: gateBlock.gate, warn: true, ...(route || {}) },
       );
     }
 
-    finish(eventRoot, 'allow', null, withGlance(null), toolName, route || {});
+    finish(eventRoot, 'allow', null, null, toolName, route || {});
   } catch (err) {
     appendHookActivity(root, 'grok-pre-tool-use', 'hook-error', 'error', {
       tool: toolName,

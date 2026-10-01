@@ -105,7 +105,11 @@ export class AgentCapabilitiesManager {
   ): string | null {
     if (operationDescription.trim()) {
       const routed = scoreAndRoute(operationDescription, {});
+      if (routed.lens === 'Name one plane.') return null;
       if (routed.memoryRouting?.overridden && this.capabilities.has(routed.agent)) {
+        return routed.agent;
+      }
+      if (routed.file && routed.agent && routed.agent !== 'researcher' && this.capabilities.has(routed.agent)) {
         return routed.agent;
       }
     }

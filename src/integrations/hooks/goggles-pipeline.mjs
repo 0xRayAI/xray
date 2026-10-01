@@ -669,30 +669,24 @@ export function suitHint(text) {
   return named.map(hintLine).filter(Boolean).join('\n');
 }
 
-function passPath(root) {
-  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
-}
-
-function loadPass(root) {
-  try {
-    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
-    if (!data || typeof data !== 'object') return null;
-    return { tool: String(data.tool || ''), plane: String(data.plane || '') };
-  } catch {
-    return null;
-  }
-}
-
-function savePass(root, pass) {
-  const file = passPath(root);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify(pass)}\n`);
-}
+const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
 
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
-  if (/researcher|explorer|deep[- ]?research/i.test(tool)) return true;
-  return /bash|shell/i.test(tool) && /researcher|explorer|deep[- ]?research/i.test(String(text || ''));
+  const spoken = String(text || '');
+  if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
+  return /bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken));
+}
+
+/** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
+export function lensPlane(text) {
+  const hint = suitHint(String(text || ''));
+  if (hint === 'Name one plane.') return { stop: true, files: [] };
+  if (!hint || hint.includes('\n')) return { stop: false, files: [] };
+  const mark = hint.indexOf(': ');
+  if (mark < 0) return { stop: false, files: [] };
+  const files = hint.slice(mark + 2).split(',').map((part) => part.trim()).filter(Boolean);
+  return { stop: false, files };
 }
 
 function lensPage(root, names) {
@@ -716,16 +710,12 @@ function stampPlane(root, id) {
   }
 }
 
-/** First research call builds the lens and hands it back. The next call may go on. */
+/** A search stays stopped. The next move is the file on the lens, not the same search again. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   if (!researchCall(toolName, spoken)) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
-  const plane = names.join(',');
-  const prior = loadPass(root);
-  if (prior && prior.tool === String(toolName || '') && prior.plane === plane) return null;
   if (names.length === 1) stampPlane(root, names[0]);
-  savePass(root, { tool: String(toolName || ''), plane });
   return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
 }
 

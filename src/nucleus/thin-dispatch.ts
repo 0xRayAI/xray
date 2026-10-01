@@ -8,7 +8,7 @@
  */
 
 import { frameworkLogger } from "../core/framework-logger.js";
-import { suitHint } from "../integrations/hooks/goggles-pipeline.mjs";
+import { lensPlane } from "../integrations/hooks/goggles-pipeline.mjs";
 import {
   ComplexityMetrics,
   ComplexityScore,
@@ -86,20 +86,19 @@ export function routeToAgent(
 
 /**
  * Convenience: score first, then route — one call.
+ * One named plane: the route is that file, and the agent is not the researcher.
+ * A look that names no plane stops. Repertoire may still change the agent when a law matches.
  */
-function routeGlance(operation: string): string {
-  const hint = suitHint(operation);
-  if (!hint || hint === "Name one plane.") return "";
-  return hint;
-}
-
 export function scoreAndRoute(
   operation: string,
   context: unknown,
   thresholds?: ComplexityThresholds
-): { score: ComplexityScore; agent: string; glance?: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
+): { score: ComplexityScore; agent: string; file?: string; lens?: string; memoryRouting?: { providerId: string; adjustedScore: number; signals: string[]; overridden: boolean; lessons?: MemorySignalLessons[] } } {
   const score = scoreComplexity(operation, context, thresholds);
-  const glance = routeGlance(operation);
+  const plane = lensPlane(operation);
+  if (plane.stop) {
+    return { score, agent: "", lens: "Name one plane." };
+  }
   const baseAgent = routeToAgent(score);
   let agent = baseAgent;
 
@@ -137,10 +136,10 @@ export function scoreAndRoute(
         estimatedAgents: getAgentCountForLevel(adjustedLevel),
       },
       agent,
-      ...(glance ? { glance } : {}),
+      ...(plane.files[0] ? { file: plane.files[0] } : {}),
       memoryRouting,
     };
   }
 
-  return { score, agent, ...(glance ? { glance } : {}) };
+  return { score, agent, ...(plane.files[0] ? { file: plane.files[0] } : {}) };
 }

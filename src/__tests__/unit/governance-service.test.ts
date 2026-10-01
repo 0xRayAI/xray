@@ -71,11 +71,45 @@ describe('GovernanceService', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
   describe('govern()', () => {
-    it('asks the organ when a proposal names one plane', async () => {
+    it('revises a proposal that names a plane and is not about that file', async () => {
       const result = await service.govern({
         proposals: [{ id: 'boot-1', type: 'fix', title: 'open the boot plane', description: 'bring it up' }],
       });
-      expect(result.results[0]?.glance).toBe('boot: src/core/boot-orchestrator.ts');
+      expect(result.results[0]?.finalDecision).toBe('needs_revision');
+      expect(result.results[0]?.reasoningSummary).toContain('src/core/boot-orchestrator.ts');
+    });
+
+    it('keeps the vote when the proposal is about that file', async () => {
+      const result = await service.govern({
+        proposals: [{
+          id: 'boot-2',
+          type: 'fix',
+          title: 'open the boot plane',
+          description: 'edit src/core/boot-orchestrator.ts',
+        }],
+      });
+      expect(result.results[0]?.finalDecision).toBe('approve');
+    });
+
+    it('does not soften a reject that names a plane', async () => {
+      vi.mocked(mergeVotes).mockReturnValue({
+        finalDecision: 'reject',
+        averageConfidence: 0.3,
+        reasoningSummary: 'bad',
+      });
+      const result = await service.govern({
+        proposals: [{ id: 'boot-3', type: 'fix', title: 'open the boot plane', description: 'bring it up' }],
+      });
+      expect(result.results[0]?.finalDecision).toBe('reject');
+      expect(result.results[0]?.reasoningSummary).not.toContain('Not about');
+    });
+
+    it('leaves the vote alone when two planes are named', async () => {
+      const result = await service.govern({
+        proposals: [{ id: 'both-1', type: 'fix', title: 'routing and governance', description: 'touch both' }],
+      });
+      expect(result.results[0]?.finalDecision).toBe('approve');
+      expect(result.results[0]?.reasoningSummary).not.toContain('Not about');
     });
 
     it('calls all 3 skill MCP servers with correct proposal data', async () => {

@@ -39,7 +39,7 @@ import {
 } from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 import { featuresConfigLoader } from '../core/features-config.js';
-import { suitHint } from '../integrations/hooks/goggles-pipeline.mjs';
+import { lensPlane } from '../integrations/hooks/goggles-pipeline.mjs';
 
 export class GovernanceService {
   constructor() {
@@ -240,15 +240,24 @@ export class GovernanceService {
           }
         }
 
-        const glance = suitHint(`${proposal.title} ${proposal.description}`);
+        const plane = lensPlane(`${proposal.title} ${proposal.description}`);
+        const about = [proposal.title, proposal.description, ...(proposal.evidence ?? [])].join('\n');
+        let reasoningSummary = merged.reasoningSummary;
+        if (
+          plane.files.length > 0 &&
+          finalDecision === 'approve' &&
+          !plane.files.some((file) => about.includes(file))
+        ) {
+          finalDecision = 'needs_revision';
+          reasoningSummary = `${reasoningSummary} Not about ${plane.files[0]}.`.trim();
+        }
         return {
           proposalId: proposal.id,
           finalDecision,
           averageConfidence,
           votes,
-          reasoningSummary: merged.reasoningSummary,
+          reasoningSummary,
           moralOverride,
-          ...(glance && glance !== 'Name one plane.' ? { glance } : {}),
           ...(metamorphosisScore != null ? { metamorphosisScore } : {}),
         };
       });

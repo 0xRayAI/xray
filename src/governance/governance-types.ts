@@ -45,7 +45,6 @@ export interface GovernanceResult {
   averageConfidence: number;
   votes: GovernanceVote[];
   reasoningSummary: string;
-  glance?: string;
   recommendedActions?: string[];
   externalContext?: Record<string, unknown>; // Solar activity, etc.
   moralOverride?: 'rejected_critical' | 'downgraded_significant' | 'none';

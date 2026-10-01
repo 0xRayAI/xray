@@ -116,17 +116,26 @@ describe('goggles plate', () => {
     expect(suitHint('read the readme')).toBe('');
   });
 
-  it('stops the first research call and hands back the lens', () => {
+  it('keeps a search stopped and lets the file through', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
     try {
-      expect(lensBeforeResearch(root, 'read_file', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
       const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
       expect(first?.decision).toBe('deny');
       expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
       expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
-      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'search_codebase', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'find_implementation', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'get_documentation', 'open the boot plane')?.decision).toBe('deny');
       const unnamed = lensBeforeResearch(root, 'explorer', 'learn the code');
+      expect(unnamed?.decision).toBe('deny');
       expect(unnamed?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -5,6 +5,7 @@ import {
   getAgentCapabilitiesManager,
   resetAgentCapabilitiesManager,
 } from '../../mcps/orchestrator/config/agent-capabilities.js';
+import { scoreAndRoute } from '../../nucleus/thin-dispatch.js';
 
 describe('AgentCapabilitiesManager routeSubagent SSOT', () => {
   beforeEach(() => {
@@ -21,6 +22,29 @@ describe('AgentCapabilitiesManager routeSubagent SSOT', () => {
     const mgr = getAgentCapabilitiesManager();
     const agent = mgr.selectAgentForTask(['research'], 20, 'explore codebase', 'research');
     expect(agent).toBe('researcher');
+  });
+
+  it('selectAgentForTask follows the file when a plane is named', () => {
+    const mgr = getAgentCapabilitiesManager();
+    const routed = scoreAndRoute('open the boot plane', {});
+    const agent = mgr.selectAgentForTask(['research'], 20, 'open the boot plane', 'research');
+    expect(routed.file).toBe('src/core/boot-orchestrator.ts');
+    expect(agent).toBe(routed.agent);
+    expect(agent).not.toBe('researcher');
+  });
+
+  it('selectAgentForTask picks no agent when a look names no plane', () => {
+    const mgr = getAgentCapabilitiesManager();
+    expect(mgr.selectAgentForTask(['research'], 20, 'look', 'research')).toBeNull();
+  });
+
+  it('selectAgentForTask keeps the old route when two planes are named', () => {
+    const mgr = getAgentCapabilitiesManager();
+    const routed = scoreAndRoute('routing and governance', {});
+    const agent = mgr.selectAgentForTask(['research'], 20, 'routing and governance', 'research');
+    expect(routed.file).toBeUndefined();
+    expect(routed.lens).toBeUndefined();
+    expect(agent).toBe(routed.memoryRouting?.overridden ? routed.agent : 'researcher');
   });
 
   it('selectAgentForTask keeps the type route when a trap match does not change the agent', () => {
