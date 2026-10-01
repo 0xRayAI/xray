@@ -3,6 +3,7 @@
  * A named plane returns its view. Field pipes fill what they can see.
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
+ * On this host a search is grep. The lens file stays open.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -684,12 +685,58 @@ export function suitHint(text) {
 }
 
 const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
+const HOLDS_ON_NAME = new Set(['dichotomy', 'syncopate', 'synthesis']);
+
+function mapFiles() {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const files = [];
+    for (const name of [...CARD_PLANES, ...WORN_PLANES]) {
+      const entry = data[name];
+      if (!entry || typeof entry !== 'object') continue;
+      const candidates = [entry.file, entry.worn, entry.skills];
+      if (Array.isArray(entry.files)) candidates.push(...entry.files);
+      for (const file of candidates) {
+        if (typeof file === 'string' && file.includes('.') && file.includes('/')) files.push(file);
+      }
+    }
+    return files;
+  } catch {
+    return [];
+  }
+}
+
+function opensLensFile(text) {
+  const spoken = String(text || '');
+  return mapFiles().some((file) => spoken.includes(file));
+}
 
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  return /bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken));
+  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken))) return true;
+  if (/^grep$/i.test(tool)) return true;
+  return /^read_file$/i.test(tool) && !opensLensFile(spoken);
+}
+
+function passPath(root) {
+  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
+}
+
+function loadReadPass(root) {
+  try {
+    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
+    return Boolean(data && data.read === true);
+  } catch {
+    return false;
+  }
+}
+
+function saveReadPass(root) {
+  const file = passPath(root);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ read: true })}\n`);
 }
 
 /** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
@@ -724,11 +771,17 @@ function stampPlane(root, id) {
   }
 }
 
-/** A search stays stopped. The next move is the file on the lens, not the same search again. */
+/** A search stays stopped. The lens file stays open. One later read may go on. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   if (!researchCall(toolName, spoken)) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
+  if (/^read_file$/i.test(String(toolName || ''))) {
+    if (loadReadPass(root)) return null;
+    if (names.length === 1) stampPlane(root, names[0]);
+    saveReadPass(root);
+    return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
+  }
   if (names.length === 1) stampPlane(root, names[0]);
   return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
 }
@@ -876,17 +929,13 @@ function isGogglesWork(text) {
 
 
 export function cardStop(root, toolName, text, paths = []) {
-  const spoken = String(text || '');
-  if (spoken.length <= 200 && isGogglesWork(spoken) && !(paths || []).some((item) => /goggles/i.test(String(item)))) {
-    clearReading(root);
-    clearCardLine(root);
-    return null;
-  }
   const held = loadReading(root);
   if (!held) return null;
   const drift = actualityLine();
   if (drift) return organDeny(drift);
-  return organStop(held, { tool: toolName, text, paths });
+  const stopped = organStop(held, { tool: toolName, text, paths });
+  if (stopped) return stopped;
+  return { gate: 'goggles', decision: 'allow' };
 }
 
 function stationFile(root) {
@@ -928,14 +977,16 @@ export function handCard(root, intent) {
       clearCardLine(root);
       return null;
     }
-    if (!lookVerb(words)) return null;
+    const asked = lookVerb(words);
+    const planes = acceptedPlanes().filter((name) => words.includes(name));
+    if (!asked && planes.length === 0) return null;
+    if (!asked && planes.length === 1 && !HOLDS_ON_NAME.has(planes[0])) return null;
     clearCardLine(root);
     const looked = readGoggles(words);
     if (looked.text.startsWith('Actuality. Drift')) {
       saveReading(root, { drift: looked.text });
       return null;
     }
-    const planes = acceptedPlanes().filter((name) => words.includes(name));
     if (planes.length !== 1) {
       clearReading(root);
       return null;
