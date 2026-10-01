@@ -131,6 +131,22 @@ describe('GovernanceService', () => {
       expect(result.results[0].proposalId).toBe('p1');
     });
 
+    it('keeps the Dynamo adjusted vote weight', async () => {
+      mockIntegration.checkProposal.mockResolvedValue({
+        vote: 'YES',
+        reason: 'Approved',
+        passed: true,
+        weight: 1.35,
+        governanceResponse: { confidence: 0.9 },
+      });
+
+      await service.govern({ proposals: [mockProposals[0]] });
+
+      expect(mergeVotes).toHaveBeenCalledWith(expect.arrayContaining([
+        expect.objectContaining({ server: 'external-dynamo', weight: 1.35, decision: 'approve' }),
+      ]));
+    });
+
     it('integrates external Dynamo filter results', async () => {
       await service.govern({ proposals: mockProposals });
 
