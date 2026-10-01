@@ -78,7 +78,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 - **`hermes bridge`** CLI removed — use `npx 0xray hermes install`.
 - **`.opencode/xray/` fallback** removed from auto-reflection-generator (3.1.1).
 - **~180 stale `@version` JSDoc tags** and **"xray 2.0" command doc strings** cleaned (3.2.0).
-- **`advanced-features/`** decoupled from core boot — not on the consumer install path.
+- **`advanced-features/`** removed. The live Grok hook is `pre-tool-use.js`.
 - **PostProcessor** soft-deprecated since 3.0 (`enablePostProcessor: false` default).
 
 ## Three-Subsystem Architecture

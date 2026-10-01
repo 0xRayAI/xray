@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getReleaseArtifactPaths } from '../../../scripts/foundry/version-manager.mjs';
+import { waitUntilListed } from '../../../scripts/foundry/release.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -62,6 +63,49 @@ describe('release pipeline', () => {
     };
     expect(pkg.scripts['release:docs-check']).toContain('reconcile-version.mjs --check');
     expect(pkg.scripts['release:docs-check']).toContain('validate-release-docs.mjs');
+  });
+
+  it('does not treat an upload as published until npm view lists it', () => {
+    const lines: string[] = [];
+    let clock = 0;
+    let checks = 0;
+    const ok = waitUntilListed('4.0.34', {
+      name: '0xray',
+      listed: () => {
+        checks += 1;
+        return checks >= 3;
+      },
+      sleep: () => {
+        clock += 15000;
+      },
+      now: () => clock,
+      log: (line: string) => lines.push(line),
+      intervalMs: 15000,
+      timeoutMs: 60000,
+    });
+    expect(ok).toBe(true);
+    expect(checks).toBe(3);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain('has not listed 0xray@4.0.34');
+  });
+
+  it('does not push a tag when the registry never lists the upload', () => {
+    const failures: string[] = [];
+    let clock = 0;
+    const ok = waitUntilListed('4.0.34', {
+      name: '0xray',
+      listed: () => false,
+      sleep: () => {
+        clock += 15000;
+      },
+      now: () => clock,
+      log: () => {},
+      fail: (line: string) => failures.push(line),
+      intervalMs: 15000,
+      timeoutMs: 30000,
+    });
+    expect(ok).toBe(false);
+    expect(failures[0]).toContain('Tag not pushed');
   });
 
   it('canonical release.mjs bumps via reconcile, not version-manager', () => {

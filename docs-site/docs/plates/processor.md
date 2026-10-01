@@ -5,42 +5,40 @@ sidebar_label: Processor
 
 # Processor
 
-Three pipelines run in parallel. A is the live suit. B is the legacy processor manager. C is mill, git, and CI. Nothing in A is an input to B or C.
+`ProcessorManager` runs the enabled pre processors, then the enabled post processors. Prompt text longer than 10 characters is checked inside the pre pass.
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│ INPUT LAYER                                                            │
-│                                                                        │
-│   ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────┐  │
-│   │ tool / session   │  │ prompt text      │  │ commit / release   │  │
-│   └────────┬─────────┘  └────────┬─────────┘  └─────────┬──────────┘  │
-└────────────┼─────────────────────┼──────────────────────┼─────────────┘
-             v                     v                      v
-┌────────────┼─────────────────────┼──────────────────────┼─────────────┐
-│ PROCESSING LAYER   three parallel pipelines             │             │
-│            │                     │                      │             │
-│  ┌─────────┴──────────┐ ┌────────┴─────────┐ ┌──────────┴──────────┐ │
-│  │ A suit (live OS)   │ │ B legacy manager │ │ C mill / git / CI   │ │
-│  │                    │ │                  │ │                     │ │
-│  │ SessionStart       │ │ prompt-security  │ │ mint                │ │
-│  │        v           │ │        v         │ │        v            │ │
-│  │ PreToolUse         │ │ executePre       │ │ inspect             │ │
-│  │        v           │ │        v         │ │        v            │ │
-│  │ tool runs          │ │ work             │ │ pre-commit          │ │
-│  │        v           │ │        v         │ │        v            │ │
-│  │ PostToolUse        │ │ executePost      │ │ pre-push            │ │
-│  │        v           │ │                  │ │        v            │ │
-│  │ compact heat       │ │                  │ │ foundry release     │ │
-│  │                    │ │                  │ │        v            │ │
-│  │                    │ │                  │ │ CI quality → docs   │ │
-│  └─────────┬──────────┘ └────────┬─────────┘ └──────────┬──────────┘ │
-└────────────┼─────────────────────┼──────────────────────┼────────────┘
-             v                     v                      v
-┌────────────┴─────────────────────┴──────────────────────┴────────────┐
-│ OUTPUT LAYER                                                          │
-│                                                                       │
-│   ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────┐ │
-│   │ allow / deny     │  │ processor result │  │ gate / tag         │ │
-│   └──────────────────┘  └──────────────────┘  └────────────────────┘ │
-└────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ INPUT LAYER                                                  │
+│                                                              │
+│   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐  │
+│   │ tool         │   │ args         │   │ operation      │  │
+│   └──────┬───────┘   └──────┬───────┘   └───────┬────────┘  │
+└──────────┼──────────────────┼───────────────────┼───────────┘
+           v                  v                   v
+┌──────────┼──────────────────┼───────────────────┼───────────┐
+│ PROCESSING LAYER             │                   │           │
+│          v                  v                   v           │
+│   ┌──────────────────────────────────────────────────────┐ │
+│   │ executePreProcessors                                 │ │
+│   │ prompt-security-validator when the prompt is longer  │ │
+│   │ than 10 characters                                   │ │
+│   │ enabled pre processors, by priority                  │ │
+│   └──────────────────────────┬───────────────────────────┘ │
+│                              v                             │
+│   ┌──────────────────────────────────────────────────────┐ │
+│   │ executePostProcessors                                │ │
+│   │ enabled post processors, by priority                 │ │
+│   │ a stagger waits out its minimum interval             │ │
+│   │ pre results are passed in                            │ │
+│   └──────────────────────────┬───────────────────────────┘ │
+└──────────────────────────────┼──────────────────────────────┘
+                               v
+┌──────────────────────────────┼──────────────────────────────┐
+│ OUTPUT LAYER                 v                              │
+│   ┌──────────────────────────┐   ┌───────────────────────┐ │
+│   │ pre result               │   │ post results          │ │
+│   │ success and results      │   │                       │ │
+│   └──────────────────────────┘   └───────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
 ```

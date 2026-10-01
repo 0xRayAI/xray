@@ -150,7 +150,6 @@ class BasicSecurityAuditor {
       /LightweightValidator\.ts$/,
       /codex-parser\.ts$/,
       /openclaw/,
-      /advanced-features/,
       /tests\//,
       /global-processor-mocks/,
     ];

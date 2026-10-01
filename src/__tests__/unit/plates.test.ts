@@ -77,7 +77,7 @@ describe('pipeline plates', () => {
       const stamped = readFileSync(first.path, 'utf8');
       expect(stamped).toMatch(BOX);
       expect(stamped).toContain('INPUT');
-      expect(stamped).toContain('speech grades');
+      expect(stamped).toContain('stampPlateIfMissing');
       writeFileSync(first.path, 'worn edit stays\n');
       const second = stampPlateIfMissing(root, id);
       expect(second.written).toBe(false);
@@ -106,7 +106,7 @@ describe('pipeline plates', () => {
       const processor = runtime.loadPlate('processor');
       expect(memory.id).toBe('memory-recall');
       expect(memory.body).toContain('INPUT');
-      expect(memory.body).toContain('speech grades');
+      expect(memory.body).toContain('stampPlateIfMissing');
       expect(processor.id).toBe('processor');
       expect(processor.body).toContain('INPUT');
       expect(runtime.plateStockLine('execute pre processors')).toBe(

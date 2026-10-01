@@ -24,7 +24,6 @@ interface WriteStoryArgs {
 function resolveSkillMd(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    join(here, '../../../skills/storyteller/SKILL.md'),
     join(here, '../../skills/storyteller/SKILL.md'),
     join(process.cwd(), 'node_modules/0xray/dist/skills/storyteller/SKILL.md'),
     join(process.cwd(), 'node_modules/xray/dist/skills/storyteller/SKILL.md'),

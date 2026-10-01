@@ -68,8 +68,8 @@ describe('goggles plate', () => {
     expect(routing).toContain('Digest: Task text becomes an agent.');
     expect(routing).toContain('Files: src/nucleus/thin-dispatch.ts');
     expect(routing).toContain('Worn: dist/nucleus/thin-dispatch.js');
-    expect(routing).toContain('Entry: task text · @agent · scoreAndRoute');
-    expect(routing).toContain('Exit: agent · strategy · adjusted score');
+    expect(routing).toContain('Entry: task text · context · thresholds');
+    expect(routing).toContain('Exit: agent · strategy · adjusted score · file');
     expect(routing).toContain('Setup:');
     expect(routing).toContain('Teardown:');
     expect(routing).not.toContain('The reading is digest.');
