@@ -1,8 +1,8 @@
 /**
  * Nucleus Gate Tests (Phase 1F.2)
  *
- * Verifies that all governance path callers (MCP server, SelfProposalEngine,
- * CLI govern command) import handleGovernRequest from the nucleus,
+ * Verifies that the governance path callers (MCP server, SelfProposalEngine)
+ * import handleGovernRequest from the nucleus,
  * establishing "nucleus is the sole governance path" invariant.
  */
 
@@ -55,29 +55,10 @@ describe("SelfProposalEngine.ts → nucleus delegation", () => {
   });
 });
 
-describe("govern.ts → nucleus delegation", () => {
-  const source = readSource("src/cli/commands/govern.ts");
-
-  test("imports handleGovernRequest from nucleus", () => {
-    expect(source).toMatch(/(?:import|handleGovernRequest).*nucleus/);
-  });
-
-  test("calls handleGovernRequest at runtime", () => {
-    const callMatches = source.match(/handleGovernRequest\s*\(/g);
-    expect(callMatches).not.toBeNull();
-    expect(callMatches!.length).toBeGreaterThanOrEqual(1);
-  });
-
-  test("does not import governance-service directly", () => {
-    expect(source).not.toMatch(/import.*governance-service/);
-  });
-});
-
-describe("Governance surface — the three-caller invariant", () => {
+describe("Governance surface — the live callers", () => {
   const callers: Array<{ name: string; file: string; expectNucleus: boolean }> = [
     { name: "governance.server.ts", file: "src/mcps/governance.server.ts", expectNucleus: false },
     { name: "SelfProposalEngine.ts", file: "src/postprocessor/metamorphosis/SelfProposalEngine.ts", expectNucleus: true },
-    { name: "govern.ts", file: "src/cli/commands/govern.ts", expectNucleus: true },
   ];
 
   for (const { name, file, expectNucleus } of callers) {

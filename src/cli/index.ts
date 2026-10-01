@@ -500,13 +500,10 @@ program
     }
   });
 
-// Analytics command - pattern analysis, insights, and consent management
+// Analytics command - pattern analysis from recent task completions
 program
   .command("analytics")
-  .description("xray Central Analytics - Pattern analysis, insights, and consent management\n" +
-               "  In v1.7.2+: Includes consent management with granular control\n" +
-               "  Use 'npx xray analytics enable' to opt-in to data sharing\n" +
-               "  Core classes: ConsentManager, AnonymizationEngine available programmatically")
+  .description("Pattern analysis from recent task completions")
   .option("-l, --limit <number>", "Limit analysis to last N task completions")
   .option("-o, --output <file>", "Save report to file")
   .action(async (opts) => {

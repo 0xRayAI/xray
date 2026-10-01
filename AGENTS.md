@@ -125,7 +125,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 | **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook |
 | **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
 
-**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/` on consumer boot.
+**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/`.
 
 ## Default operating mode: autonomy-command
 
@@ -209,10 +209,10 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## thinDispatch routing
 
-- Simple (≤15): Single agent
-- Moderate (≤25): Single agent with tools
-- Complex (≤50): Multi-agent coordination
-- Enterprise (>50): Orchestrator-led team
+- Simple (≤15): single-agent
+- Moderate (≤25): multi-agent
+- Complex (≤50): orchestrator-led
+- Enterprise (>50): orchestrator-led
 
 ## Documentation
 

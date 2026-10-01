@@ -5,7 +5,7 @@ sidebar_label: Governance
 
 # Governance
 
-A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged. The PreToolUse codex gate stands beside the vote.
+A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged. The vote is approve, reject, or needs_revision. The PreToolUse codex gate stands beside the vote.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -44,7 +44,8 @@ A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged
 │ OUTPUT LAYER                 v                            │
 │   ┌──────────────────────┐      ┌──────────────────────┐ │
 │   │ vote                 │      │ codex decision       │ │
-│   │ approve / reject     │      │ allow / deny         │ │
+│   │ approve / reject /   │      │ allow / deny         │ │
+│   │ needs_revision       │      │                      │ │
 │   └──────────────────────┘      └──────────────────────┘ │
 └────────────────────────────────────────────────────────────┘
 ```

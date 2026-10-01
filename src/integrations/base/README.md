@@ -18,7 +18,6 @@ src/integrations/
 │   ├── types.ts           # TypeScript interfaces and types
 │   ├── Integration.ts     # BaseIntegration abstract class
 │   ├── registry.ts        # IntegrationRegistry class
-│   ├── ExampleIntegration.ts  # Example implementation
 │   └── index.ts           # Module exports
 ├── core/                  # Core framework integrations
 │   └── xray-integration.ts  # Cross-framework integration
@@ -417,14 +416,7 @@ await this.log('debug', 'Debug information', { data });
 
 ## Example Integration
 
-See [`ExampleIntegration.ts`](./ExampleIntegration.ts) for a complete example demonstrating:
-
-- Custom integration class extending `BaseIntegration`
-- Using `createSimpleIntegration` factory
-- Event handling
-- Error handling
-- Health checks
-- Configuration management
+A host integration extends `BaseIntegration` in `Integration.ts`. `createSimpleIntegration` is the short factory. Register the instance from `registry.ts`.
 
 ## Testing
 

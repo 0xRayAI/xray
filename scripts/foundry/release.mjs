@@ -9,7 +9,8 @@
  * 4. Commit release artifacts → push
  * 5. Verify gate (reconcile + git + release docs + smoke)
  * 6. npm publish (idempotent — skip if version already on registry)
- * 7. Tag → push tag (only after successful publish)
+ * 7. Poll npm view until the registry lists that version
+ * 8. Tag → push tag (only after the registry lists it)
  *
  * Usage:
  *   npx @0xray/foundry release [patch|minor|major] --dry-run
@@ -90,9 +91,13 @@ function currentBranch() {
   return execSync("git rev-parse --abbrev-ref HEAD", { cwd: rootDir, encoding: "utf-8" }).trim();
 }
 
+function say(line) {
+  process.stdout.write(`${line}\n`);
+}
+
 function npmVersionPublished(version) {
   try {
-    const out = execSync(`npm view ${packageName()}@${version} version`, {
+    const out = execSync(`npm view ${packageName()}@${version} version --prefer-online`, {
       cwd: rootDir,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
@@ -103,20 +108,58 @@ function npmVersionPublished(version) {
   }
 }
 
+function sleepMs(ms) {
+  const seconds = Math.max(1, Math.round(Number(ms) / 1000));
+  execSync(`sleep ${seconds}`, { stdio: "ignore" });
+}
+
+/**
+ * npm publish exits 0 while the registry still says the version is processing.
+ * Tag only after npm view lists it. Returns false when the wait runs out.
+ * @param {string} version
+ * @param {object} [hooks]
+ */
+export function waitUntilListed(version, hooks = {}) {
+  const name = hooks.name ?? packageName();
+  const listed = hooks.listed ?? (() => npmVersionPublished(version));
+  const sleep = hooks.sleep ?? sleepMs;
+  const now = hooks.now ?? Date.now;
+  const log = hooks.log ?? say;
+  const fail = hooks.fail ?? ((line) => {
+    process.stderr.write(`${line}\n`);
+    process.exit(1);
+  });
+  const intervalMs = hooks.intervalMs ?? Number(process.env.FOUNDRY_PUBLISH_POLL_MS || 15000);
+  const timeoutMs = hooks.timeoutMs ?? Number(process.env.FOUNDRY_PUBLISH_TIMEOUT_MS || 20 * 60 * 1000);
+  const started = now();
+  let attempt = 0;
+  while (!listed()) {
+    if (now() - started >= timeoutMs) {
+      fail(`❌ ${name}@${version} was uploaded but the registry has not listed it. Tag not pushed.`);
+      return false;
+    }
+    attempt += 1;
+    log(`… registry has not listed ${name}@${version} yet (try ${attempt})`);
+    sleep(intervalMs);
+  }
+  return true;
+}
+
 function publishIdempotent(version) {
   if (dryRun) {
-    console.log(`  would: ${npmPublishCmd()} (check ${packageName()}@${version} first)`);
+    say(`  would: ${npmPublishCmd()} then poll npm view ${packageName()}@${version} until listed`);
     return;
   }
   if (npmVersionPublished(version)) {
-    console.log(`ℹ️  ${packageName()}@${version} already on npm — skipping publish`);
+    say(`ℹ️  ${packageName()}@${version} already on npm — skipping publish`);
     return;
   }
   if (isXrayExoRepo(rootDir)) {
     runMill("assert-packed-dist-cli.mjs", [], "packed dist/cli");
   }
   execSync(npmPublishCmd(), { cwd: rootDir, stdio: "inherit", encoding: "utf-8" });
-  console.log(`✅ Published ${packageName()}@${version}`);
+  if (!waitUntilListed(version)) process.exit(1);
+  say(`✅ Published ${packageName()}@${version}`);
 }
 
 async function main() {
