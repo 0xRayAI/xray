@@ -63,7 +63,7 @@ Kind 1 names one plane: dichotomy, syncopate, synthesis, or loop. The lens holds
 
 Naming a plane, `digest`, or `triage` returns that plane's view. The fields are from, digest, plate, entry, exit, files, skills, setup, teardown, and worn. Each field has a pipe. The pipe writes what it can see from the plate or the tree, and the view keeps that field. A field the pipe cannot see yet stays on the view for the next look. The rows are ground, routing, house, boot, governance, memory-recall, orchestration, processor, and reporting. Those nine are not Kind 0. The mill path is `scripts/foundry`. `triage` names the fields still open and whether the row holds. Zoom after the card is the same ladder: ecosystem, part, one flow, one artifact.
 
-The hold lasts for the work that named the plane. It does not stop one tool and then forget. Work that says goggles clears the hold and stays quiet.
+The hold lasts for the work that named the plane. A sentence that does not say look or name does not arm it and does not drop it. Work that says goggles clears the hold and stays quiet. When a tool names one card plane, the suit adds that plane's file as a hint.
 
 ## Hooks (rewired, not new MCPs)
 
