@@ -40,7 +40,7 @@ const { resolveConsumerTargetDir, patchGrokHooks } = requireCjs(
     label: string,
   ) => void;
 };
-const { XRAY_MCP_SERVERS, resolveRepertoireMcp } = requireCjs(
+const { XRAY_MCP_SERVERS, resolveRepertoireMcp, resolveGogglesMcp } = requireCjs(
   path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')
 ) as {
   XRAY_MCP_SERVERS: ReadonlyArray<{
@@ -49,6 +49,7 @@ const { XRAY_MCP_SERVERS, resolveRepertoireMcp } = requireCjs(
     env: Record<string, string>;
   }>;
   resolveRepertoireMcp: (targetDir: string) => string | null;
+  resolveGogglesMcp: (targetDir: string) => string | null;
 };
 
 function registerGrokMcpServers(targetDir: string): void {
@@ -164,6 +165,7 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     }
 
     writeProjectRepertoireMcp(targetDir);
+    writeProjectGogglesMcp(targetDir);
     mintAfterWear(targetDir);
 
     const primary = dests[0];
@@ -248,6 +250,7 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targe
     }
   }
   const repertoireMcp = resolveRepertoireMcp(targetDir);
+  const gogglesMcp = resolveGogglesMcp(targetDir);
   if (mcp.mcpServers) {
     if (repertoireMcp) {
       mcp.mcpServers.repertoire = {
@@ -256,6 +259,15 @@ function pinGrokPluginToInstalledDist(pluginDir: string, xrayRoot: string, targe
       };
     } else {
       delete mcp.mcpServers.repertoire;
+    }
+    if (gogglesMcp) {
+      mcp.mcpServers.goggles = {
+        command: 'node',
+        args: [gogglesMcp],
+        env: { GOGGLES_ROOT: targetDir, GOGGLES_PLANES_PATH: '' },
+      };
+    } else {
+      delete mcp.mcpServers.goggles;
     }
   }
   fs.writeFileSync(mcpPath, `${JSON.stringify(mcp, null, 2)}\n`);
@@ -290,7 +302,37 @@ enabled = true
   return tomlPath;
 }
 
+/** Grok TUI reads <project>/.grok/config.toml. The launcher fills GOGGLES_ROOT from cwd. */
+export function writeProjectGogglesMcp(projectRoot: string): string | null {
+  const gogglesMcp = resolveGogglesMcp(projectRoot);
+  if (!gogglesMcp) return null;
+  const grokDir = path.join(projectRoot, '.grok');
+  fs.mkdirSync(grokDir, { recursive: true });
+  const tomlPath = path.join(grokDir, 'config.toml');
+  const block = `[mcp_servers.goggles]
+command = "node"
+args = [${JSON.stringify(gogglesMcp)}]
+enabled = true
+`;
+  let existing = '';
+  if (fs.existsSync(tomlPath)) {
+    existing = fs.readFileSync(tomlPath, 'utf8');
+  }
+  if (/\[mcp_servers\.goggles\]/.test(existing)) {
+    existing = existing.replace(
+      /\[mcp_servers\.goggles\][\s\S]*?(?=\n\[|$)/,
+      block.trim(),
+    );
+    fs.writeFileSync(tomlPath, existing.endsWith('\n') ? existing : `${existing}\n`);
+  } else {
+    const prefix = existing.trim() ? `${existing.trim()}\n\n` : '';
+    fs.writeFileSync(tomlPath, `${prefix}${block}`);
+  }
+  return tomlPath;
+}
+
 export default {
   installForGrokCLI,
   writeProjectRepertoireMcp,
+  writeProjectGogglesMcp,
 };

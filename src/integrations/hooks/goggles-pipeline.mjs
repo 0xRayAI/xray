@@ -14,9 +14,16 @@ const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
+/** Empty GOGGLES_PLANES_PATH keeps the file beside the organ. */
+export function planesFile() {
+  const override = process.env.GOGGLES_PLANES_PATH;
+  if (typeof override === 'string' && override.trim()) return override.trim();
+  return join(HERE, 'goggles-planes.json');
+}
+
 function drawnPlanes() {
   try {
-    const data = JSON.parse(readFileSync(join(HERE, 'goggles-planes.json'), 'utf8'));
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
     return Array.isArray(data.planes) ? data.planes.map((name) => String(name)) : [];
   } catch {
     return [];
@@ -169,7 +176,7 @@ function namesTheSet(lower) {
   return planes.length === 1 && planes[0] === 'loop' && findScopes(lower).length === 0;
 }
 
-export function readGoggles(argv) {
+function gogglesAnswer(argv) {
   const words = [];
   for (const raw of argv || []) {
     const arg = String(raw || '').trim();
@@ -177,102 +184,157 @@ export function readGoggles(argv) {
     words.push(arg);
   }
   const lower = words.map((word) => word.toLowerCase());
-  if (lower.includes('calling')) return ok('');
-  if (kindPastOne(words)) return ok('');
-  if (words.length === 0) return ok('');
-  if (namesTheSet(lower)) return ok('Name one plane.');
+  const none = (text) => ({ text, cards: null });
+  if (lower.includes('calling')) return none('');
+  if (kindPastOne(words)) return none('');
+  if (words.length === 0) return none('');
+  if (namesTheSet(lower)) return none('Name one plane.');
   if (isKindZero(lower)) {
-    if (findScopes(words).length) return ok('');
-    if (acceptedPlanes().some((name) => lower.includes(name))) return ok('');
-    return ok(actualityLine());
+    if (findScopes(words).length) return none('');
+    if (acceptedPlanes().some((name) => lower.includes(name))) return none('');
+    return none(actualityLine());
   }
   const flavors = CARD_FLAVORS.filter((name) => lower.includes(name));
-  if (flavors.length > 1) return ok('');
+  if (flavors.length > 1) return none('');
   if (flavors.length === 1) {
     const others = acceptedPlanes().filter((name) => name !== flavors[0] && lower.includes(name));
-    if (others.length) return ok('');
-    return ok(cardLook(flavors[0], lower));
+    if (others.length) return none('');
+    const cards = collectCards(flavors[0], lower);
+    if (!cards) return none('');
+    return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
   }
   const planes = acceptedPlanes().filter((name) => lower.includes(name));
-  if (planes.length !== 1) return ok('');
+  if (planes.length !== 1) return none('');
   const scopes = findScopes(words.filter((word) => word.toLowerCase() !== planes[0]));
-  if (scopes.length > 1) return ok('');
-  return ok(readingLine(planes[0], scopes[0] || ''));
+  if (scopes.length > 1) return none('');
+  return none(readingLine(planes[0], scopes[0] || ''));
+}
+
+export function readGoggles(argv) {
+  return ok(gogglesAnswer(argv).text);
+}
+
+export function lookCards(argv) {
+  return gogglesAnswer(argv).cards;
 }
 
 function cardPlanesNamed(lower) {
   return CARD_PLANES.filter((name) => lower.includes(name));
 }
 
-function fileList(plane) {
-  const files = Array.isArray(plane.files) ? plane.files : [];
+function listedFiles(plane, scope) {
+  const files = Array.isArray(plane.files) ? plane.files.map(String) : [];
+  if (scope === 'one artifact') return files.length === 1 ? [files[0]] : null;
   const unpathed = Array.isArray(plane.unpathed) ? plane.unpathed : [];
-  const parts = [...files];
-  for (const name of unpathed) {
-    parts.push(name === 'mill' ? 'mill has no path' : name);
-  }
-  return parts.join(', ');
+  const parts = files.slice();
+  for (const name of unpathed) parts.push(name === 'mill' ? 'mill has no path' : String(name));
+  return parts;
 }
 
-function cardRows(plane, scope) {
-  const files = Array.isArray(plane.files) ? plane.files : [];
-  if (scope === 'one artifact' && files.length !== 1) return null;
+function cardView(plane, scope, flavor, root) {
+  const listed = listedFiles(plane, scope);
+  if (!listed) return null;
+  const view = {
+    plane: plane.id,
+    flavor,
+    scope: scope || '',
+    from: plane.id === 'ground' ? '' : 'ground',
+    digest: plane.digest || '',
+    plate: plane.plate || '',
+    entry: plane.entry || '',
+    exit: plane.exit || '',
+    files: listed,
+    skills: plane.skills || '',
+    setup: plane.setup || '',
+    teardown: plane.teardown || '',
+    worn: plane.worn || '',
+    narrow: scope === 'one flow' || scope === 'one artifact',
+  };
+  if (flavor === 'triage') {
+    const filled = new Set(filledOf(plane));
+    view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
+    view.exam = examinePlane(plane, root).text;
+  }
+  return view;
+}
+
+function formatCardText(view) {
   const rows = [
-    ['Plane', plane.id],
-    ['From', plane.id === 'ground' ? '' : 'ground'],
-    ['Digest', plane.digest || ''],
-    ['Plate', plane.plate || ''],
-    ['Entry', plane.entry || ''],
-    ['Exit', plane.exit || ''],
-    ['Files', scope === 'one artifact' ? files[0] : fileList(plane)],
-    ['Skills', plane.skills || ''],
-    ['Setup', plane.setup || ''],
-    ['Teardown', plane.teardown || ''],
-    ['Worn', plane.worn || ''],
+    ['Plane', view.plane],
+    ['From', view.from],
+    ['Digest', view.digest],
+    ['Plate', view.plate],
+    ['Entry', view.entry],
+    ['Exit', view.exit],
+    ['Files', view.files.join(', ')],
+    ['Skills', view.skills],
+    ['Setup', view.setup],
+    ['Teardown', view.teardown],
+    ['Worn', view.worn],
   ];
-  if (scope === 'one flow' || scope === 'one artifact') {
-    return rows.filter(([key]) => key === 'Plane' || key === 'Digest' || key === 'Files');
+  const shown = view.narrow
+    ? rows.filter(([key]) => key === 'Plane' || key === 'Digest' || key === 'Files')
+    : rows;
+  let text = shown.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
+  if (view.flavor === 'triage') {
+    const lines = [];
+    if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
+    lines.push(view.exam);
+    text = `${text}\n${lines.join('\n')}`;
   }
-  return rows;
-}
-
-function triageNote(plane, root) {
-  const filled = new Set(filledOf(plane));
-  const empty = FIELD_ORDER.filter((name) => !filled.has(name));
-  const exam = examinePlane(plane, root);
-  const lines = [];
-  if (empty.length) lines.push(`Empty: ${empty.join(', ')}`);
-  lines.push(exam.text);
-  return lines.join('\n');
-}
-
-function formatPlaneCard(plane, scope, flavor, root) {
-  const rows = cardRows(plane, scope);
-  if (!rows) return null;
-  let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
-  if (flavor === 'triage') text = `${text}\n${triageNote(plane, root)}`;
   return text;
 }
 
-function cardLook(flavor, lower) {
+export function formatCardPane(view) {
+  const rows = [['Plane', view.plane]];
+  if (!view.narrow) rows.push(['From', view.from]);
+  rows.push(['Digest', view.digest]);
+  if (!view.narrow) {
+    rows.push(
+      ['Plate', view.plate],
+      ['Entry', view.entry],
+      ['Exit', view.exit],
+      ['Files', view.files.join(', ')],
+      ['Skills', view.skills],
+      ['Setup', view.setup],
+      ['Teardown', view.teardown],
+      ['Worn', view.worn],
+    );
+  } else {
+    rows.push(['Files', view.files.join(', ')]);
+  }
+  if (view.flavor === 'triage') {
+    if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
+    if (view.exam) rows.push(['', view.exam]);
+  }
+  const body = rows.map(([label, value]) => (label ? `${label.padEnd(8)} ${value}` : value).trimEnd());
+  const title = `${view.flavor} · ${view.plane}`;
+  const width = Math.max(title.length + 2, ...body.map((line) => line.length));
+  const top = `┌ ${title} ${'─'.repeat(Math.max(0, width - title.length - 1))}┐`;
+  const mid = body.map((line) => `│ ${line.padEnd(width)} │`);
+  const bot = `└${'─'.repeat(width + 2)}┘`;
+  return [top, ...mid, bot].join('\n');
+}
+
+function collectCards(flavor, lower) {
   const named = cardPlanesNamed(lower);
   const scopes = findScopes(lower.filter((word) => word !== flavor && !named.includes(word)));
-  if (named.length > 1 || scopes.length > 1) return '';
+  if (named.length > 1 || scopes.length > 1) return null;
   const scope = scopes[0] || '';
-  if (!named.length && (scope === 'part' || scope === 'one flow' || scope === 'one artifact')) return '';
+  if (!named.length && (scope === 'part' || scope === 'one flow' || scope === 'one artifact')) return null;
   const platesDir = findPlatesDir(HERE);
-  if (!platesDir) return '';
+  if (!platesDir) return null;
   const ids = named.length ? named : CARD_PLANES;
   const root = repoRootFrom(platesDir);
-  const blocks = [];
+  const cards = [];
   for (const id of ids) {
     const plane = assemblePlane(id, platesDir);
     if (!plane) continue;
-    const text = formatPlaneCard(plane, scope, flavor, root);
-    if (text === null) return '';
-    blocks.push(text);
+    const view = cardView(plane, scope, flavor, root);
+    if (!view) return null;
+    cards.push(view);
   }
-  return blocks.join('\n\n');
+  return cards;
 }
 
 export function findPlatesDir(start) {
@@ -347,7 +409,7 @@ function takeOf(body) {
 
 
 function overlayTable() {
-  const file = join(HERE, 'goggles-planes.json');
+  const file = planesFile();
   if (!existsSync(file)) return {};
   return JSON.parse(readFileSync(file, 'utf8'));
 }
@@ -562,7 +624,9 @@ export function maintainLens(root) {
 
 const isMain = Boolean(process.argv[1]) && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const result = readGoggles(process.argv.slice(2));
-  process.stdout.write(`${result.text}\n`);
-  process.exit(result.ok ? 0 : 1);
+  const answered = gogglesAnswer(process.argv.slice(2));
+  const pane = process.stdout.isTTY && Array.isArray(answered.cards) && answered.cards.length > 0;
+  const text = pane ? answered.cards.map((card) => formatCardPane(card)).join('\n\n') : answered.text;
+  process.stdout.write(`${text}\n`);
+  process.exit(0);
 }

@@ -29,6 +29,10 @@ export const REQUIRED_PACK_PATHS = [
   "dist/integrations/cursor/hooks/pre-compact.sh",
   "dist/integrations/cursor/hooks/after-file-edit.sh",
   "dist/integrations/hooks/plates.cjs",
+  "dist/integrations/hooks/goggles-pipeline.mjs",
+  "dist/integrations/hooks/goggles-planes.json",
+  "dist/integrations/hooks/goggles-mcp.mjs",
+  "scripts/mjs/run-goggles-mcp.mjs",
   "docs-site/docs/plates/memory-recall.md",
   "docs-site/docs/plates/processor.md",
 ];

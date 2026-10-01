@@ -3,12 +3,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { writeSessionBoot } from '../../integrations/grok/hooks/grok-hook-utils.js';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
   actualityLine,
   actualityOf,
   cardStop,
+  formatCardPane,
   handCard,
   look,
+  lookCards,
   maintainLens,
   organStop,
 } from '../../integrations/hooks/goggles-pipeline.mjs';
@@ -176,5 +180,58 @@ describe('goggles plate', () => {
     expect(notes).not.toContain('## Pop job');
     expect(notes).not.toContain('Home. The dev plane.');
     rmSync(root, { recursive: true, force: true });
+  });
+
+  it('exports the digest card and a pane that keeps empties', () => {
+    const cards = lookCards(['digest', 'ground']);
+    expect(cards).toHaveLength(1);
+    const card = cards[0];
+    expect(card.plane).toBe('ground');
+    expect(card.flavor).toBe('digest');
+    expect(card.from).toBe('');
+    expect(card.digest).toBe('Home. The dev plane.');
+    expect(card.plate).toBe('');
+    expect(card.entry).toBe('');
+    expect(card.exit).toBe('');
+    expect(card.files).toEqual([
+      'src',
+      'grok-bot/OP-PROC.md',
+      'src/opencode/agents',
+      'Agents.md',
+      'src/integrations',
+      'package.json',
+      'scripts/foundry',
+    ]);
+    expect(card.skills).toBe('SKILLS.md');
+    expect(card.setup).toBe('');
+    expect(card.teardown).toBe('');
+    expect(card.worn).toBe('');
+    const pane = formatCardPane(card);
+    for (const label of ['Plane', 'From', 'Digest', 'Plate', 'Entry', 'Exit', 'Files', 'Skills', 'Setup', 'Teardown', 'Worn']) {
+      expect(pane).toContain(label);
+    }
+    expect(pane).toContain('scripts/foundry');
+    expect(pane).not.toContain('n/a');
+    expect(pane).not.toContain('The reading is');
+    expect(lookCards(['dichotomy'])).toBeNull();
+    expect(lookCards(['digest', 'ground', 'one', 'artifact'])).toBeNull();
+    const routing = lookCards(['triage', 'routing']);
+    expect(routing).toHaveLength(1);
+    const triagePane = formatCardPane(routing[0]);
+    expect(triagePane).toContain('Empty');
+    expect(triagePane).toContain('skills, setup, teardown');
+    expect(triagePane).toContain('Holds.');
+    const zoom = lookCards(['digest', 'routing', 'one', 'artifact']);
+    expect(zoom).toHaveLength(1);
+    const zoomPane = formatCardPane(zoom[0]);
+    expect(zoomPane).toContain('src/nucleus/thin-dispatch.ts');
+    expect(zoomPane).not.toContain('Setup');
+    expect(zoomPane).not.toContain('Teardown');
+    const bin = join(fileURLToPath(new URL('../../integrations/hooks/goggles-pipeline.mjs', import.meta.url)));
+    const piped = execFileSync(process.execPath, [bin, 'digest', 'ground'], { encoding: 'utf8' });
+    expect(piped).toContain('Plane: ground');
+    expect(piped).not.toContain('┌');
+    expect(execFileSync(process.execPath, [bin, 'dichotomy'], { encoding: 'utf8' })).toBe('The reading is dichotomy.\n');
+    expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
   });
 });

@@ -91,18 +91,45 @@ program
     }
   });
 
+const LOOK_HELP =
+  "Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card.";
+
+function gogglesScript(): string {
+  const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
+  const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
+  return existsSync(built) ? built : source;
+}
+
+function runGoggles(args: string[]): void {
+  const script = gogglesScript();
+  if (!existsSync(script)) {
+    process.stderr.write("Goggles: not found\n");
+    process.exit(1);
+  }
+  if (process.stdout.isTTY) {
+    const result = spawnSync(process.execPath, [script, ...(args ?? [])], { stdio: "inherit" });
+    process.exit(result.status ?? 1);
+  }
+  const result = spawnSync(process.execPath, [script, ...(args ?? [])], { encoding: "utf8" });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  process.exit(result.status ?? 1);
+}
+
+program
+  .command("look")
+  .argument("[args...]", "kind 0, one outer, or digest/triage and one card plane")
+  .description(LOOK_HELP)
+  .action((args: string[]) => {
+    runGoggles(args);
+  });
+
 program
   .command("goggles")
-  .argument("[args...]", "plane, then examine, triage, cascade, or teardown")
-  .description("Glimpse every plane, or one plane's way in. A hit does not open the plane.")
+  .argument("[args...]", "same words as look")
+  .description(`Same organ as look. ${LOOK_HELP}`)
   .action((args: string[]) => {
-    const built = join(packageRoot, "dist", "integrations", "hooks", "goggles-pipeline.mjs");
-    const source = join(packageRoot, "src", "integrations", "hooks", "goggles-pipeline.mjs");
-    const script = existsSync(built) ? built : source;
-    const result = spawnSync(process.execPath, [script, ...(args ?? [])], { encoding: "utf8" });
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
-    process.exit(result.status ?? 1);
+    runGoggles(args);
   });
 
 program
@@ -145,7 +172,7 @@ program
   .description("Show comprehensive xray framework status")
   .action(async () => {
     const { statusCommand } = await import("./commands/status.js");
-    await statusCommand();
+    await statusCommand(packageRoot);
   });
 
 program
@@ -317,6 +344,9 @@ program
       }
 
       console.log("");
+
+      const { probeGoggles, formatGogglesStatus } = await import("./goggles-status.js");
+      process.stdout.write(`${formatGogglesStatus(probeGoggles(packageRoot, process.cwd())).join("\n")}\n\n`);
 
       if (allHealthy) {
         console.log("🎉 Framework is healthy and ready to use!");

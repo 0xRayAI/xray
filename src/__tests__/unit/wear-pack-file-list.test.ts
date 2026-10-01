@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { REQUIRED_PACK_PATHS } from '../../../scripts/foundry/assert-packed-dist-cli.mjs';
 import { execFileSync } from 'node:child_process';
 import {
+  existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -152,3 +154,20 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
     },
   );
 });
+
+describe('goggles organ files are on the pack list', () => {
+  it('names the pipeline and the plane map inside the package, not the consumer tree', () => {
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/goggles-pipeline.mjs');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/goggles-planes.json');
+    expect(REQUIRED_PACK_PATHS).toContain('dist/integrations/hooks/goggles-mcp.mjs');
+    expect(REQUIRED_PACK_PATHS).toContain('scripts/mjs/run-goggles-mcp.mjs');
+    expect(existsSync(joinPack('src/integrations/hooks/goggles-pipeline.mjs'))).toBe(true);
+    expect(existsSync(joinPack('src/integrations/hooks/goggles-planes.json'))).toBe(true);
+    expect(existsSync(joinPack('src/integrations/hooks/goggles-mcp.mjs'))).toBe(true);
+    expect(existsSync(joinPack('scripts/mjs/run-goggles-mcp.mjs'))).toBe(true);
+  });
+});
+
+function joinPack(rel: string): string {
+  return path.join(repoRoot, rel);
+}
