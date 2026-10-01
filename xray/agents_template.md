@@ -30,7 +30,7 @@ All seven use `npx -y 0xray mcp <cmd>`:
 
 xray operates under the three-subsystem model: Inference + External Governance (Dynamo Solar SSOT) + Autonomous Engine (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
 
-**Codex**: `.xray/codex.json` — **69 terms** across all agent interactions.
+**Codex**: `.xray/codex.json` — **70 terms** across all agent interactions.
 
 ## thinDispatch Routing
 

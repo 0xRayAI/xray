@@ -23,6 +23,7 @@ import {
   runInferenceImprovementLight,
 } from '../../hooks/pipeline-hook-runtime.mjs';
 import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
+import { readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
 
 function resolveHookEvent(event) {
   if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
@@ -150,12 +151,23 @@ async function main() {
     const matchedSignals =
       HOOK_EVENT === 'user_prompt_submit' ? [] : await matchStationSignals(eventRoot, intent);
     const compact = COMPACT_EVENTS.has(HOOK_EVENT);
+    let freshnessLine = null;
+    if (!compact) {
+      try {
+        freshnessLine = HOOK_EVENT === 'session_start'
+          ? refreshFreshness(eventRoot).freshnessLine
+          : readSavedFreshness(eventRoot);
+      } catch {
+        freshnessLine = null;
+      }
+    }
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
       ...(intent ? { intent } : {}),
       ...(!compact && intent ? { cardText: intent } : {}),
       ...(matchedSignals.length ? { matchedSignals } : {}),
+      ...(freshnessLine ? { freshnessLine } : {}),
     });
 
     const bootPath = writeSessionBoot(eventRoot, payload) || ensureSessionBoot(eventRoot, source);

@@ -1252,6 +1252,9 @@ function formatStationMarkdown(fields) {
   } else {
     lines.push("Git: n/a");
   }
+  if (fields.freshnessLine) {
+    lines.push(fields.freshnessLine);
+  }
   lines.push(fields.repertoireResume || "Repertoire: module unresolved");
   if (fields.workingLine) {
     lines.push(fields.workingLine);
