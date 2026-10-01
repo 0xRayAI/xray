@@ -388,7 +388,7 @@ export class GovernanceService {
           decision: result.vote === 'YES' ? 'approve' : result.vote === 'NO' ? 'reject' : 'needs_revision',
           confidence: result.governanceResponse?.confidence ?? 0.85,
           reasoning: result.reason || 'Dynamo Solar SSOT filter decision',
-          weight: 1.1,
+          weight: typeof result.weight === 'number' ? result.weight : 1.1,
           moralTension: result.moralTension,
           moralScore: result.moralScore,
           moralFusion: result.moralFusion,
