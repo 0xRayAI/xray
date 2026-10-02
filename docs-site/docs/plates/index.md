@@ -21,7 +21,7 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 
 ## State flow
 
-[House](./house.md)
+[House](./house.md) · [Review](./review.md)
 
 ## Pipeline
 

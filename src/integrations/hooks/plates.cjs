@@ -15,6 +15,7 @@ const PLATE_IDS = Object.freeze([
   "reporting",
   "memory-recall",
   "house",
+  "review",
   "goggles",
   "suit",
   "kits",
@@ -72,6 +73,13 @@ const CUES = {
     [/HOUSE\.md/i, 4],
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
+  ],
+  review: [
+    [/review plate/i, 6],
+    [/plates\/review\b/i, 6],
+    [/re-review/i, 5],
+    [/critic\s+FAIL/i, 5],
+    [/critic\s+PASS/i, 5],
   ],
   goggles: [
     [/\bgoggles\b/i, 6],

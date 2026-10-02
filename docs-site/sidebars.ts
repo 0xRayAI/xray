@@ -60,6 +60,7 @@ const sidebars: SidebarsConfig = {
         'plates/reporting',
         'plates/memory-recall',
         'plates/house',
+        'plates/review',
         'plates/goggles',
         'plates/suit',
         'plates/kits',

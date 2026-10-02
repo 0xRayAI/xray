@@ -26,6 +26,7 @@ describe('pipeline plates', () => {
       'reporting',
       'memory-recall',
       'house',
+      'review',
       'goggles',
       'suit',
       'kits',
@@ -64,6 +65,9 @@ describe('pipeline plates', () => {
 
   it('does not recall house from a bare house word or when other plates tie', () => {
     expect(recallPlate('in-house tooling review')).toBeNull();
+    expect(recallPlate('review plate')?.id).toBe('review');
+    expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
+    expect(recallPlate('re-review that head')?.id).toBe('review');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 

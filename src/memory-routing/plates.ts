@@ -15,6 +15,7 @@ export const PLATE_IDS = [
   'reporting',
   'memory-recall',
   'house',
+  'review',
   'goggles',
   'suit',
   'kits',
