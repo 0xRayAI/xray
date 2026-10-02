@@ -18,7 +18,7 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 - Message one agent directly. No fan-out, and no generic posts to rooms when a room post would wake every member for no reason.
 - Bots do simple jobs themselves (checks, CI reruns, merges after gate, file edits). Heavy work resumes the **same** cloud agent by its session id (`bc-…`). The cloud id is logged on the WAVEBOARD card. No new bots, clouds, or burns without Blaze's yes. **CoS-carded Strict** for a ship gate is Allowed (not a "deep QA" that needs a separate Blaze yes). Clouds and Grok Bot share one weekly allowance.
 - Routines are event-driven and stay silent when nothing changed. Nothing polls on a timer when an event trigger exists.
-- **Repo watchers** are required (this procedure, not optional tooling). Event-driven watchers on house-named org repos cover **issues and PRs** (open, review, CI, merge cadence). No timer polls when a GitHub event trigger exists. Quiet when nothing changed. A watcher wake resumes the same seat and the same `bc-…` when the work is heavy. No new clouds without Blaze's yes.
+- **Repo watchers** cover issue and PR cadence across house-named org repos (multiverse). Same rule: event beats, quiet when unchanged. Details under Board.
 - Budget: Blaze reports the weekly %, and CoS logs it in `ATTENTION_STATE.md`. At **50%**, CoS calls a soft pipe down: no new cards. At **75%**, Blaze calls a full pipe down.
 - **Pipe down** (Blaze only, CoS relays): write up what's in hand, then stop. Routines pause.
 - **In the dark** (CoS declares it): a shared limit has been hit (CI, rate limit, spend cap). The notice names the limit, what's blocked, and the resume time in CT. Don't retry, and don't route around it.
@@ -96,7 +96,9 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 
 ## Board
 
-Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to these instead of repeating status in chat. Repo watchers (§1) feed this board: CoS surfaces the digest (`WAVEBOARD` / `ATTENTION_STATE`); forge owns eng PR/CI cadence on org apps named in `house/`.
+Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to these instead of repeating status in chat.
+
+**Repo watchers (issue + PR cadence):** the house keeps event-driven watchers on org repos named in `house/` for issues and pull requests (open, review, CI, merge). No timer polls when a GitHub event trigger exists. Quiet when nothing changed. CoS owns the board digest; forge owns eng PR/CI cadence. A watcher wake resumes the same seat (and the same `bc-…` when the work is heavy). No new clouds without Blaze's yes.
 
 ## Relationship to pack files
 
@@ -106,3 +108,7 @@ Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to
 | `grok-bot/house/OP-PROC.md` | **This document** (our fleet). |
 | `grok-bot/CADENCE.md` | Confer spend cadence + board drift + RACI — keep; do not duplicate the five principles. |
 | `house/AUTO-REVIEW.md` | Only Ask first / Allow enforcement surface. |
+
+## Done when
+
+- This file replaces `grok-bot/house/OP-PROC.md` on main after critic Normal (docs). No Dist.
