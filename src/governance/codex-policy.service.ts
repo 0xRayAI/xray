@@ -45,6 +45,17 @@ type CodexParseCache = {
   raw: CodexRaw;
 };
 
+/** mtimeNs when the stat has it. mtimeMs only when it does not. */
+function codexClock(fileStat: { mtimeNs?: bigint | number; mtimeMs?: number }): string | null {
+  const nanos = fileStat.mtimeNs;
+  if (typeof nanos === 'bigint') return nanos.toString();
+  if (typeof nanos === 'number' && Number.isFinite(nanos)) return String(nanos);
+  if (typeof fileStat.mtimeMs === 'number' && Number.isFinite(fileStat.mtimeMs)) {
+    return String(fileStat.mtimeMs);
+  }
+  return null;
+}
+
 /**
  * Canonical implementation of the Governance Codex/Policy provider.
  * Single owner of the "first read" of any codex.json for the framework.
@@ -66,7 +77,9 @@ export class CodexPolicyService implements ICodexPolicyProvider {
     try {
       const fileStat = statSync(sourcePath);
       if (!fileStat.isFile()) return null;
-      return `${fileStat.mtimeMs}:${fileStat.size}`;
+      const clock = codexClock(fileStat);
+      if (clock === null) return null;
+      return `${clock}:${fileStat.size}`;
     } catch {
       return null;
     }
@@ -115,17 +128,18 @@ export class CodexPolicyService implements ICodexPolicyProvider {
     }
 
     try {
+      const before = this.fileIdentity(sourcePath);
       const content = await fs.readFile(sourcePath, 'utf-8');
       const data = JSON.parse(content) as Record<string, unknown>;
       const termCount = this.computeTermCount(data);
       const raw: CodexRaw = { path: sourcePath, data, isFallback: false };
-      const identity = this.fileIdentity(sourcePath);
-      if (identity) {
+      const after = this.fileIdentity(sourcePath);
+      if (before && after && before === after) {
         this.codexCache = {
           candidateKey: this.candidateKey(candidates),
           index,
           sourcePath,
-          identity,
+          identity: after,
           raw,
         };
       } else {

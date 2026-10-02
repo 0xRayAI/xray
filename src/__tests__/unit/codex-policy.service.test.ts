@@ -151,6 +151,26 @@ describe('CodexPolicyService', () => {
       expect(mockReadFile).toHaveBeenCalledTimes(1);
     });
 
+    it('does not pin a codex read that raced the file', async () => {
+      let stamps = 0;
+      mockStatSync.mockImplementation(() => {
+        stamps += 1;
+        const mtimeMs = stamps === 1 ? 10 : 20;
+        return { isFile: () => true, mtimeMs, size: 100 };
+      });
+      mockReadFile
+        .mockResolvedValueOnce(JSON.stringify({ version: '1', terms: { a: {} } }))
+        .mockResolvedValueOnce(JSON.stringify({ version: '2', terms: { a: {}, b: {} } }));
+
+      const raced = await service.getCurrentCodex();
+      expect(raced.version).toBe('1');
+      expect(mockReadFile).toHaveBeenCalledTimes(1);
+
+      const settled = await service.getCurrentCodex();
+      expect(settled.version).toBe('2');
+      expect(mockReadFile).toHaveBeenCalledTimes(2);
+    });
+
     it('parses again when the codex file changes', async () => {
       await service.getTermCount();
       mockStatSync.mockReturnValue({ isFile: () => true, mtimeMs: 20, size: 101 });
