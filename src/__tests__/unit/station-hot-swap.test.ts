@@ -1341,6 +1341,28 @@ describe('station hot-swap', () => {
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });
 
+  it('a heat keeps one Fresh line', () => {
+    const fresh = 'Fresh: up to date. package 4.0.36. published 4.0.35.';
+    const fields = {
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'survive the cut after compact',
+      planLine: 'one fresh line',
+      git: { branch: 'main', head: 'abc1234' },
+      repertoireResume: 'Repertoire: on — 8 signals',
+      workingLine: 'Working: station-merge',
+    };
+    const stock = formatStationMarkdown(fields);
+    const piled = [stock.trimEnd(), '', fresh, fresh, fresh, ''].join('\n');
+    const once = mergeStationMarkdown(stock, piled);
+    const twice = mergeStationMarkdown(stock, once);
+    const kept = (md: string) => md.split('\n').filter((line) => line.startsWith('Fresh:'));
+    expect(kept(once)).toEqual([fresh]);
+    expect(kept(twice)).toEqual([fresh]);
+    const refreshed = formatStationMarkdown({ ...fields, freshnessLine: 'Fresh: 1 behind main.' });
+    expect(kept(mergeStationMarkdown(refreshed, twice))).toEqual(['Fresh: 1 behind main.']);
+  });
+
   it('heat drops torn footer scraps instead of pasting them back', () => {
     const stock = formatStationMarkdown({
       host: 'grok',

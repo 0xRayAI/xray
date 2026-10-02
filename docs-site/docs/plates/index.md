@@ -45,4 +45,8 @@ These eight are the pages the file ref names. Each one is a search lens. Each le
 
 [Grok compact](./grok-compact.md) · [Payload heat](./payload-heat.md) · [Station heat](./station-heat.md) · [Pickup stamp](./pickup-stamp.md) · [Cursor compact](./cursor-compact.md)
 
+## Fresh line and the gate
+
+[Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md)
+
 These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.

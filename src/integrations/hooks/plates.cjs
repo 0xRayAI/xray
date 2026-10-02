@@ -41,6 +41,10 @@ const PLATE_IDS = Object.freeze([
   "station-heat",
   "pickup-stamp",
   "cursor-compact",
+  "work-fresh",
+  "kept-line",
+  "lens-gate",
+  "pre-tool",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -202,6 +206,23 @@ const CUES = {
   "cursor-compact": [
     [/cursor compact/i, 6],
     [/plates\/cursor-compact/i, 6],
+  ],
+  "work-fresh": [
+    [/work fresh/i, 6],
+    [/freshness line/i, 6],
+    [/plates\/work-fresh/i, 6],
+  ],
+  "kept-line": [
+    [/kept line/i, 6],
+    [/plates\/kept-line/i, 6],
+  ],
+  "lens-gate": [
+    [/lens gate/i, 6],
+    [/plates\/lens-gate/i, 6],
+  ],
+  "pre-tool": [
+    [/pre tool/i, 6],
+    [/plates\/pre-tool/i, 6],
   ],
 };
 

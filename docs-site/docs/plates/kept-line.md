@@ -1,35 +1,35 @@
 ---
-title: Grok compact
-sidebar_label: Grok compact
+title: Kept line
+sidebar_label: Kept line
 ---
 
-# Grok compact
+# Kept line
 
-Grok PreCompact runs session-start.js with the pre_compact event.
+A station rewrite keeps one Fresh line and drops the copies.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ a compact is about to happen                       │   │
+│   │ the card already on disk                              │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
              v
 ┌────────────┼───────────────────────────────────────────────┐
 │ PROCESSING LAYER                                            │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ build the session payload                          │   │
+│   │ keep the latest Fresh line                            │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
                                v
 ┌──────────────────────────────┼─────────────────────────────┐
 │ OUTPUT LAYER                 v                             │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ the station card is written                        │   │
+│   │ one Fresh line in the stock card                      │   │
 │   └────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────┘
 ```
 
-The hook is `session-start.js --hook-event=pre_compact`. It calls `buildSessionBootPayload`, writes the station card, and prints nothing. It does not match the conversation. Grok ignores hook stdout. The plates that belong here are payload-heat, cursor-compact, and work-fresh.
+mergeStationMarkdown in src/integrations/hooks/station-hook-runtime.cjs treats a Fresh line as stock. Copies are not preserved. When the new card has no Fresh line, the latest one is kept. The plates that belong here are station-card and work-fresh.
 
 stamped · 0xray 4.0.36

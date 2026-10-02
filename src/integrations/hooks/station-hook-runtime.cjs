@@ -1099,6 +1099,7 @@ const STOCK_STATION_PREFIXES = [
   "intent:",
   "plan:",
   "git:",
+  "fresh:",
   "repertoire:",
   "working:",
   "plate:",
@@ -1222,10 +1223,28 @@ function extractPreservedStationLines(existing) {
   return preserved;
 }
 
-function mergeStationMarkdown(stockMd, existingMd) {
-  const preserved = extractPreservedStationLines(existingMd);
-  if (!preserved.length) return stockMd;
+function latestFreshLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Fresh:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneFreshLine(stockMd, existingMd) {
   const stock = String(stockMd || "");
+  if (/^Fresh:/m.test(stock)) return stock;
+  const fresh = latestFreshLine(existingMd);
+  if (!fresh) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Repertoire:"));
+  if (at >= 0) rows.splice(at, 0, fresh);
+  else rows.splice(Math.min(rows.length, 6), 0, fresh);
+  return rows.join("\n");
+}
+
+function mergeStationMarkdown(stockMd, existingMd) {
+  const stockWithFresh = withOneFreshLine(stockMd, existingMd);
+  const preserved = extractPreservedStationLines(existingMd);
+  if (!preserved.length) return stockWithFresh;
+  const stock = stockWithFresh;
   const block = preserved.join("\n");
   const marker = "Continue this card.";
   const idx = stock.indexOf(marker);

@@ -106,7 +106,7 @@
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
     "mark": "formatStationMarkdown",
     "skills": ".agents/skills/station-card/SKILL.md",
-    "plates": ["notes-page", "record-map"]
+    "plates": ["notes-page", "record-map", "kept-line"]
   },
   "notes-page": {
     "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
@@ -154,7 +154,7 @@
     "files": ["src/integrations/grok/hooks/session-start.js"],
     "mark": "pre_compact",
     "skills": ".agents/skills/grok-compact/SKILL.md",
-    "plates": ["payload-heat", "cursor-compact"]
+    "plates": ["payload-heat", "cursor-compact", "work-fresh"]
   },
   "payload-heat": {
     "files": ["src/integrations/grok/hooks/grok-hook-utils.js"],
@@ -180,4 +180,30 @@
     "skills": ".agents/skills/cursor-compact/SKILL.md",
     "plates": ["payload-heat", "station-heat"]
   }
+,
+  "work-fresh": {
+    "files": ["src/nucleus/work-freshness.mjs"],
+    "mark": "export function refreshFreshness",
+    "skills": ".agents/skills/work-fresh/SKILL.md",
+    "plates": ["station-card", "grok-compact"]
+  },
+  "kept-line": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "function withOneFreshLine",
+    "skills": ".agents/skills/kept-line/SKILL.md",
+    "plates": ["station-card", "work-fresh"]
+  },
+  "lens-gate": {
+    "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
+    "mark": "export function lensBeforeResearch",
+    "skills": ".agents/skills/lens-gate/SKILL.md",
+    "plates": ["pre-tool"]
+  },
+  "pre-tool": {
+    "files": ["src/integrations/grok/hooks/pre-tool-use.js"],
+    "mark": "function extractFromEvent",
+    "skills": ".agents/skills/pre-tool/SKILL.md",
+    "plates": ["lens-gate"]
+  }
 }
+

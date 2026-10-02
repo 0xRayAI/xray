@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Grok SessionStart / UserPromptSubmit / PreCompact / PostCompact.
- * Grok ignores stdout here; station heat is session-boot.json + STATION.md.
+ * Compact prints nothing. Station heat is session-boot.json + STATION.md.
  */
 
 import {
@@ -148,9 +148,10 @@ async function main() {
           : '0xray/grok-session-start';
 
     const intent = extractIntent(event);
-    const matchedSignals =
-      HOOK_EVENT === 'user_prompt_submit' ? [] : await matchStationSignals(eventRoot, intent);
     const compact = COMPACT_EVENTS.has(HOOK_EVENT);
+    // The compact payload is the whole conversation. Do not match it and do not print it.
+    const matchedSignals =
+      compact || HOOK_EVENT === 'user_prompt_submit' ? [] : await matchStationSignals(eventRoot, intent);
     let freshnessLine = null;
     if (!compact) {
       try {
@@ -164,8 +165,7 @@ async function main() {
     const payload = buildSessionBootPayload(eventRoot, source, {
       hookEvent: HOOK_EVENT,
       sessionId: event.sessionId || process.env.GROK_SESSION_ID || null,
-      ...(intent ? { intent } : {}),
-      ...(!compact && intent ? { cardText: intent } : {}),
+      ...(!compact && intent ? { intent, cardText: intent } : {}),
       ...(matchedSignals.length ? { matchedSignals } : {}),
       ...(freshnessLine ? { freshnessLine } : {}),
     });
@@ -195,7 +195,7 @@ async function main() {
       /* non-blocking pipeline facets */
     }
 
-    console.log(JSON.stringify(payload));
+    if (!compact) console.log(JSON.stringify(payload));
     process.exit(0);
   } catch (err) {
     appendHookActivity(root, 'grok-session-start', 'session-boot-error', 'error', {

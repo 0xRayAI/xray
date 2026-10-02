@@ -52,6 +52,10 @@ describe('pipeline plates', () => {
       'station-heat',
       'pickup-stamp',
       'cursor-compact',
+      'work-fresh',
+      'kept-line',
+      'lens-gate',
+      'pre-tool',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -186,6 +190,11 @@ describe('pipeline plates', () => {
     expect(recallPlate('station heat')?.id).toBe('station-heat');
     expect(recallPlate('pickup stamp')?.id).toBe('pickup-stamp');
     expect(recallPlate('cursor compact')?.id).toBe('cursor-compact');
+    expect(recallPlate('work fresh')?.id).toBe('work-fresh');
+    expect(recallPlate('kept line')?.id).toBe('kept-line');
+    expect(recallPlate('lens gate')?.id).toBe('lens-gate');
+    expect(recallPlate('pre tool')?.id).toBe('pre-tool');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();

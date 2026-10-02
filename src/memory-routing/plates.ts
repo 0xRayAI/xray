@@ -41,6 +41,10 @@ export const PLATE_IDS = [
   'station-heat',
   'pickup-stamp',
   'cursor-compact',
+  'work-fresh',
+  'kept-line',
+  'lens-gate',
+  'pre-tool',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

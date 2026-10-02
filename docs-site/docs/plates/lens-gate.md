@@ -1,35 +1,35 @@
 ---
-title: Grok compact
-sidebar_label: Grok compact
+title: Lens gate
+sidebar_label: Lens gate
 ---
 
-# Grok compact
+# Lens gate
 
-Grok PreCompact runs session-start.js with the pre_compact event.
+A search names one plane or it stops.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ a compact is about to happen                       │   │
+│   │ the tool name and the spoken text                     │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
              v
 ┌────────────┼───────────────────────────────────────────────┐
 │ PROCESSING LAYER                                            │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ build the session payload                          │   │
+│   │ count card-plane names                                │   │
 │   └──────────────────────────┬─────────────────────────┘   │
 └──────────────────────────────┼─────────────────────────────┘
                                v
 ┌──────────────────────────────┼─────────────────────────────┐
 │ OUTPUT LAYER                 v                             │
 │   ┌────────────────────────────────────────────────────┐   │
-│   │ the station card is written                        │   │
+│   │ allow on one name, otherwise stop                     │   │
 │   └────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────┘
 ```
 
-The hook is `session-start.js --hook-event=pre_compact`. It calls `buildSessionBootPayload`, writes the station card, and prints nothing. It does not match the conversation. Grok ignores hook stdout. The plates that belong here are payload-heat, cursor-compact, and work-fresh.
+lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs returns null when the call is not research, and when the spoken text names exactly one card plane. Zero names, or more than one, deny with Name one plane. The plate that belongs here is pre-tool.
 
 stamped · 0xray 4.0.36

@@ -128,7 +128,10 @@ describe('goggles plate', () => {
       expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
       expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
       expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
-      const other = 'src/integrations/hooks/goggles-pipeline.mjs';
+      const lensFile = 'src/integrations/hooks/goggles-pipeline.mjs';
+      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
+      const other = 'src/core/config-paths.ts';
       const firstRead = lensBeforeResearch(root, 'read_file', other);
       expect(firstRead?.decision).toBe('deny');
       expect(firstRead?.reason).toBe('Name one plane.');
