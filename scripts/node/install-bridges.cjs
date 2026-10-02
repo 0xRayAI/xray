@@ -2097,11 +2097,46 @@ function setupProjectBridges(opts) {
  * Framework dogfood: do not deploy consumer copies over the package,
  * but keep Grok discovery hooks hot and enable Repertoire when it resolves.
  */
-function installFrameworkDogfoodWear(packageRoot, log) {
+function materializeDogfoodFeatures(packageRoot, log) {
   const featuresPath = path.join(packageRoot, ".xray", "features.json");
-  if (fs.existsSync(featuresPath)) {
-    applyResolvedMemoryRouting(featuresPath, packageRoot);
+  if (!fs.existsSync(featuresPath)) {
+    const shipped = resolveXrayConfigSource(packageRoot, "features.json");
+    fs.mkdirSync(path.dirname(featuresPath), { recursive: true });
+    if (shipped && path.resolve(shipped) !== path.resolve(featuresPath)) {
+      fs.copyFileSync(shipped, featuresPath);
+      log("grok-dogfood", "features.json materialized from shipped template", "info");
+    } else {
+      writeJsonFile(featuresPath, { memory_routing: { enabled: false, provider: "null" } });
+      log("grok-dogfood", "features.json materialized default-off", "info");
+    }
   }
+  applyResolvedMemoryRouting(featuresPath, packageRoot);
+  const stateDir = path.join(packageRoot, ".xray", "state", "repertoire");
+  fs.mkdirSync(path.join(stateDir, "feedback"), { recursive: true });
+  const signalsPath = path.join(stateDir, "curated_signals.json");
+  if (!fs.existsSync(signalsPath)) {
+    const candidates = [
+      path.join(packageRoot, "vendor", "@0xray", "repertoire", "data", "curated_signals.json"),
+      path.join(packageRoot, "..", "repertoire", "data", "curated_signals.json"),
+    ];
+    const src = candidates.find((candidate) => fs.existsSync(candidate));
+    if (src) fs.copyFileSync(src, signalsPath);
+    else {
+      // CuratedSignalsManager.load() reads document.signals, not a bare array.
+      writeJsonFile(signalsPath, {
+        description: "Curated high-signal primitives for Repertoire",
+        schema_version: "1.1",
+        signals: [],
+      });
+    }
+    log("grok-dogfood", "repertoire signals materialized", "info");
+  }
+  const inferenceState = path.join(stateDir, "inference-state.json");
+  if (!fs.existsSync(inferenceState)) writeJsonFile(inferenceState, {});
+}
+
+function installFrameworkDogfoodWear(packageRoot, log) {
+  materializeDogfoodFeatures(packageRoot, log);
 
   installCursorBridge(packageRoot, packageRoot, log);
 
