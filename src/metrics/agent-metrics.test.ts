@@ -368,6 +368,86 @@ describe("AgentMetricsSystem", () => {
       expect(aggregated.summary.totalInvocations).toBe(0);
       expect(aggregated.byAgent).toEqual({});
     });
+
+    it("should keep averages and period buckets on a large batch", () => {
+      const { system } = createMetricsSystem();
+      system.updateRetentionConfig({ maxEntries: 4000, enableAutoCleanup: false });
+      const total = 4000;
+      for (let i = 0; i < total; i++) {
+        system.trackInvocation({
+          agentName: i % 2 === 0 ? "a" : "b",
+          agentType: "custom",
+          operation: "bulk",
+          success: i % 4 !== 0,
+          duration: i,
+          complexityScore: 10,
+          complexityLevel: "simple",
+        });
+      }
+
+      const aggregated = system.aggregateMetrics();
+      const again = system.aggregateMetrics();
+
+      expect(aggregated.summary.totalInvocations).toBe(total);
+      expect(aggregated.summary.averageDuration).toBe((total - 1) / 2);
+      expect(aggregated.summary.overallSuccessRate).toBe(75);
+      expect(aggregated.byAgent.a?.totalInvocations).toBe(total / 2);
+      expect(aggregated.byAgent.a?.averageDuration).toBe((total - 2) / 2);
+      expect(aggregated.byAgent.a?.successRate).toBe(50);
+      expect(aggregated.byAgent.b?.totalInvocations).toBe(total / 2);
+      expect(aggregated.byAgent.b?.averageDuration).toBe(total / 2);
+      expect(aggregated.byAgent.b?.successRate).toBe(100);
+      expect(aggregated.byComplexity.simple?.totalInvocations).toBe(total);
+      expect(again.summary.averageDuration).toBe(aggregated.summary.averageDuration);
+      expect(again.byAgent.a?.successRate).toBe(50);
+      expect(system.getStatistics().averageDuration).toBe((total - 1) / 2);
+      expect(system.getStatistics().successRate).toBe(75);
+
+      system.destroy();
+    });
+
+    it("should move period buckets when a stored timestamp changes", () => {
+      const { system, mockState } = createMetricsSystem();
+      system.trackInvocation({
+        agentName: "mover",
+        agentType: "custom",
+        operation: "move",
+        success: true,
+        duration: 40,
+        complexityScore: 10,
+        complexityLevel: "simple",
+      });
+
+      const first = system.aggregateMetrics();
+      const today = new Date().toISOString().slice(0, 10);
+      expect(first.byTimePeriod[today]?.totalInvocations).toBe(1);
+
+      const stored = mockState.get<AgentInvocation[]>("agent_invocations");
+      expect(stored).toBeDefined();
+      stored![0]!.timestamp = Date.UTC(2020, 5, 15, 12, 30, 0);
+
+      const second = system.aggregateMetrics();
+      expect(second.byTimePeriod["2020-06-15"]?.totalInvocations).toBe(1);
+      expect(second.byTimePeriod["2020-06-15T12:00"]?.totalInvocations).toBe(1);
+      expect(second.byTimePeriod["2020-06"]?.totalInvocations).toBe(1);
+      expect(second.byTimePeriod[today]).toBeUndefined();
+      expect(system.getTimePeriodSummary("2020-06-15T12:00", "hour")?.totalInvocations).toBe(1);
+      expect(system.getTimePeriodSummary("2020-06-15", "day")?.totalInvocations).toBe(1);
+      expect(system.getTimePeriodSummary("2020-06", "month")?.totalInvocations).toBe(1);
+      expect(system.getTimePeriodSummary("2020-06-15", "hour")).toBeNull();
+      expect(system.getStatistics().oldestInvocation).toBe(Date.UTC(2020, 5, 15, 12, 30, 0));
+
+      const weekKeys = Object.keys(second.byTimePeriod).filter((key) => key.includes("W"));
+      expect(weekKeys).toHaveLength(1);
+      const weekKey = weekKeys[0];
+      expect(weekKey).toBeDefined();
+      if (weekKey) {
+        expect(second.byTimePeriod[weekKey]?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary(weekKey, "week")?.totalInvocations).toBe(1);
+      }
+
+      system.destroy();
+    });
   });
 
   describe("getAgentSummary", () => {
