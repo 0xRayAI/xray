@@ -665,7 +665,7 @@ function installHermesBridge(targetDir, packageRoot, log) {
     const src = path.join(sourceDir, entry);
     const dst = path.join(targetPluginDir, entry);
     if (entry === ".mcp.json" && sameFileBytes(dst, hermesMcp)) {
-      wearIo.skips += 1;
+      if (!adoptSourceMode(src, dst)) wearIo.skips += 1;
       continue;
     }
     copyEntryIfChanged(src, dst);

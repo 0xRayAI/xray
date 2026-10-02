@@ -666,24 +666,30 @@ describe("repeat fasten", () => {
       expect(fs.statSync(path.join(consumer, "AGENTS.md")).mtimeMs).toBe(agentsStamp);
 
       const hermesBridge = path.join(consumer, ".hermes", "plugins", "xray-hermes", "bridge.mjs");
+      const hermesMcp = path.join(consumer, ".hermes", "plugins", "xray-hermes", ".mcp.json");
       const grokMcp = path.join(consumer, ".grok", "plugins", "0xray", ".mcp.json");
       const cursorHook = path.join(consumer, ".cursor", "hooks", "pre-tool-use.sh");
       const modeOf = (file: string) => fs.statSync(file).mode & 0o777;
       expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(hermesMcp)).toBe(0o644);
       expect(modeOf(grokMcp)).toBe(0o644);
       expect(modeOf(cursorHook)).toBe(0o755);
       fs.chmodSync(hermesBridge, 0o600);
+      fs.chmodSync(hermesMcp, 0o700);
       fs.chmodSync(grokMcp, 0o700);
       fs.chmodSync(cursorHook, 0o600);
       const hermesBytes = fs.readFileSync(hermesBridge);
+      const hermesMcpBytes = fs.readFileSync(hermesMcp);
       const grokBytes = fs.readFileSync(grokMcp);
       const cursorBytes = fs.readFileSync(cursorHook);
       resetWearIo();
       wear();
       expect(fs.readFileSync(hermesBridge).equals(hermesBytes)).toBe(true);
+      expect(fs.readFileSync(hermesMcp).equals(hermesMcpBytes)).toBe(true);
       expect(fs.readFileSync(grokMcp).equals(grokBytes)).toBe(true);
       expect(fs.readFileSync(cursorHook).equals(cursorBytes)).toBe(true);
       expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(hermesMcp)).toBe(0o644);
       expect(modeOf(grokMcp)).toBe(0o644);
       expect(modeOf(cursorHook)).toBe(0o755);
 
