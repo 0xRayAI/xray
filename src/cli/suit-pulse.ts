@@ -166,22 +166,27 @@ function repertoireIndex(root: string): string | null {
   return null;
 }
 
-/** File mtime is the age. The organ reads the store; this file does not. */
+/** Whole seconds since InferenceState.lastRun. A missing or null run is none. */
+function secondsSinceLastRun(lastRun: unknown, now: number): number | null {
+  if (typeof lastRun !== "string") return null;
+  const parsed = Date.parse(lastRun);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(0, Math.floor((now - parsed) / 1000));
+}
+
 function inferenceAge(root: string, now: number): number | null {
-  const file = join(root, ".xray", "state", "repertoire", "inference-state.json");
-  if (!existsSync(file)) return null;
   const index = repertoireIndex(root);
-  if (index) {
-    try {
-      const loaded = require(index) as InferenceReaderModule;
-      const Manager = loaded.InferenceStateManager;
-      if (typeof Manager === "function") new Manager(file).load();
-    } catch {
-      /* a missing reader does not hide the file */
-    }
+  if (!index) return null;
+  const file = join(root, ".xray", "state", "repertoire", "inference-state.json");
+  try {
+    const loaded = require(index) as InferenceReaderModule;
+    const Manager = loaded.InferenceStateManager;
+    if (typeof Manager !== "function") return null;
+    const state = asRecord(new Manager(file).load());
+    return secondsSinceLastRun(state?.lastRun, now);
+  } catch {
+    return null;
   }
-  const mtimeMs = statSync(file).mtimeMs;
-  return Math.max(0, Math.floor((now - mtimeMs) / 1000));
 }
 
 function readTail(file: string, maxBytes = 65536): string {
@@ -235,7 +240,8 @@ function lastActivity(root: string): SuitPulseActivity | null {
   for (let i = lines.length - 1; i >= 0; i -= 1) {
     const line = lines[i]?.trim();
     if (!line) continue;
-    return parseActivityLine(line);
+    const parsed = parseActivityLine(line);
+    if (parsed) return parsed;
   }
   return null;
 }
