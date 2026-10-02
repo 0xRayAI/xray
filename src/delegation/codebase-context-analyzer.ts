@@ -1,7 +1,62 @@
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
+
+const JS_IMPORT_PATTERNS = [
+  /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,
+  /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+  /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+];
+
+const JS_EXPORT_PATTERNS = [
+  /export\s+(?:const|let|var|function|class|interface|type)\s+(\w+)/g,
+  /export\s+{\s*([^}]+)\s*}/g,
+  /export\s+default/g,
+];
+
+const PY_IMPORT_PATTERNS = [/from\s+([^\s]+)\s+import/g, /import\s+([^\s]+)/g];
+const JAVA_IMPORT_PATTERN = /^import\s+([^;]+);/gm;
+const JAVA_EXPORT_PATTERN = /(?:public\s+)?(?:class|interface|enum)\s+(\w+)/g;
+
+const CONFIG_FILE_PATTERNS = [
+  /package\.json$/,
+  /tsconfig\.json$/,
+  /webpack\.config\./,
+  /\.eslintrc/,
+  /\.prettierrc/,
+  /Dockerfile/,
+  /docker-compose\.yml/,
+  /\.env/,
+];
+
+const IMPORT_EXTENSIONS = ["", ".ts", ".tsx", ".js", ".jsx", ".py", ".java"];
+
+const FRAMEWORK_NEEDLES: ReadonlyArray<readonly [string, string]> = [
+  ["react", "React"],
+  ["vue", "Vue.js"],
+  ["angular", "Angular"],
+  ["svelte", "Svelte"],
+  ["express", "Express.js"],
+  ["nestjs", "NestJS"],
+  ["nextjs", "Next.js"],
+  ["nuxt", "Nuxt.js"],
+];
+
+function countLines(content: string): number {
+  let lines = 1;
+  for (let i = 0; i < content.length; i++) {
+    if (content.charCodeAt(i) === 10) lines++;
+  }
+  return lines;
+}
+
+function resetAndCollect(pattern: RegExp, content: string, into: string[]): void {
+  pattern.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(content)) !== null) {
+    if (match[1]) into.push(match[1]);
+  }
+}
 
 export interface FileInfo {
   path: string;
@@ -291,12 +346,13 @@ export class CodebaseContextAnalyzer {
    * Extract file path from cache key for validation
    */
   private extractFilePathFromCacheKey(cacheKey: string): string | null {
-    const match = cacheKey.match(/^file:(.+?:\d+)$/);
-    if (match && match[1]) {
-      const parts = match[1].split(":");
-      return parts[0] || null;
-    }
-    return null;
+    if (!cacheKey.startsWith("file:")) return null;
+    const rest = cacheKey.slice("file:".length);
+    const colon = rest.lastIndexOf(":");
+    if (colon <= 0) return null;
+    const mtime = rest.slice(colon + 1);
+    if (!/^\d+$/.test(mtime)) return null;
+    return rest.slice(0, colon);
   }
 
   /**
@@ -304,19 +360,23 @@ export class CodebaseContextAnalyzer {
    */
   private async streamFileContent(filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      let content = "";
+      const chunks: string[] = [];
+      let size = 0;
       const stream = fs.createReadStream(filePath, { encoding: "utf8" });
 
       stream.on("data", (chunk) => {
-        content += chunk;
+        const text = typeof chunk === "string" ? chunk : String(chunk);
+        size += text.length;
         // Prevent excessive memory usage during streaming
-        if (content.length > this.memoryConfig.maxFileSizeBytes) {
+        if (size > this.memoryConfig.maxFileSizeBytes) {
           stream.destroy();
           reject(new Error("File too large for streaming"));
+          return;
         }
+        chunks.push(text);
       });
 
-      stream.on("end", () => resolve(content));
+      stream.on("end", () => resolve(chunks.join("")));
       stream.on("error", reject);
     });
   }
@@ -335,16 +395,28 @@ export class CodebaseContextAnalyzer {
     const scanDirectory = async (
       dirPath: string,
       relativePath: string = "",
+      checkModule = false,
     ): Promise<void> => {
       try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+        // One listing decides module vs tree. Root is not classified as a module.
+        if (checkModule && this.isModuleNames(entries.map((entry) => entry.name))) {
+          const moduleInfo = await this.analyzeModule(
+            dirPath,
+            relativePath,
+            jobId,
+            entries,
+          );
+          modules.set(relativePath, moduleInfo);
+          return;
+        }
 
         // Process files in batches to control memory usage
         const fileEntries: Array<{ path: string; relativePath: string }> = [];
         const dirEntries: Array<{
           path: string;
           relativePath: string;
-          isModule: boolean;
         }> = [];
 
         // Separate files and directories for batch processing
@@ -358,11 +430,9 @@ export class CodebaseContextAnalyzer {
           }
 
           if (entry.isDirectory()) {
-            const isModule = this.isModuleDirectory(entryPath);
             dirEntries.push({
               path: entryPath,
               relativePath: entryRelativePath,
-              isModule,
             });
           } else if (entry.isFile()) {
             fileEntries.push({
@@ -374,16 +444,7 @@ export class CodebaseContextAnalyzer {
 
         // Process directories first (may contain modules)
         for (const dirEntry of dirEntries) {
-          if (dirEntry.isModule) {
-            const moduleInfo = await this.analyzeModule(
-              dirEntry.path,
-              dirEntry.relativePath,
-              jobId,
-            );
-            modules.set(dirEntry.relativePath, moduleInfo);
-          } else {
-            await scanDirectory(dirEntry.path, dirEntry.relativePath);
-          }
+          await scanDirectory(dirEntry.path, dirEntry.relativePath, true);
         }
 
         // Process files with concurrent processing for better performance
@@ -531,7 +592,7 @@ export class CodebaseContextAnalyzer {
 
       try {
         // Check cache first for performance
-        const cacheKey = `file:${relativePath}:${stats.mtime.getTime()}`;
+        const cacheKey = `file:${filePath}:${stats.mtime.getTime()}`;
         const cached = this.getCachedAnalysis(cacheKey);
         if (cached) {
           return {
@@ -556,7 +617,7 @@ export class CodebaseContextAnalyzer {
             ? await this.streamFileContent(filePath)
             : fs.readFileSync(filePath, "utf8");
 
-        linesOfCode = content.split("\n").length;
+        linesOfCode = countLines(content);
         const importExportData = await this.extractImportsExports(
           content,
           language,
@@ -572,6 +633,7 @@ export class CodebaseContextAnalyzer {
             imports,
             exports,
             content,
+            lastModified: stats.mtime,
             timestamp: Date.now(),
           });
         }
@@ -634,6 +696,7 @@ export class CodebaseContextAnalyzer {
     dirPath: string,
     relativePath: string,
     jobId: string,
+    prefetched?: fs.Dirent[],
   ): Promise<ModuleInfo> {
     const files: FileInfo[] = [];
     const dependencies = new Set<string>();
@@ -642,9 +705,10 @@ export class CodebaseContextAnalyzer {
     const scanModuleFiles = async (
       modulePath: string,
       moduleRelativePath: string,
+      initial?: fs.Dirent[],
     ): Promise<void> => {
       try {
-        const entries = fs.readdirSync(modulePath, { withFileTypes: true });
+        const entries = initial ?? fs.readdirSync(modulePath, { withFileTypes: true });
 
         for (const entry of entries) {
           const entryPath = path.join(modulePath, entry.name);
@@ -682,7 +746,7 @@ export class CodebaseContextAnalyzer {
       }
     };
 
-    await scanModuleFiles(dirPath, relativePath);
+    await scanModuleFiles(dirPath, relativePath, prefetched);
 
     // Determine module type
     const moduleType = this.classifyModule(relativePath, files);
@@ -746,30 +810,15 @@ export class CodebaseContextAnalyzer {
     const imports: string[] = [];
     const exports: string[] = [];
 
-    // Import patterns
-    const importPatterns = [
-      /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,
-      /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-      /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-    ];
-
-    importPatterns.forEach((pattern) => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        if (match[1]) {
-          imports.push(match[1]);
-        }
-      }
-    });
+    for (const pattern of JS_IMPORT_PATTERNS) {
+      resetAndCollect(pattern, content, imports);
+    }
 
     // Export patterns
-    const exportPatterns = [
-      /export\s+(?:const|let|var|function|class|interface|type)\s+(\w+)/g,
-      /export\s+{\s*([^}]+)\s*}/g,
-      /export\s+default/g,
-    ];
+    const exportPatterns = JS_EXPORT_PATTERNS;
 
     exportPatterns.forEach((pattern) => {
+      pattern.lastIndex = 0;
       let match;
       while ((match = pattern.exec(content)) !== null) {
         if (match[1]) {
@@ -801,17 +850,9 @@ export class CodebaseContextAnalyzer {
     const imports: string[] = [];
     const exports: string[] = [];
 
-    // Import patterns
-    const importPatterns = [/from\s+([^\s]+)\s+import/g, /import\s+([^\s]+)/g];
-
-    importPatterns.forEach((pattern) => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        if (match[1]) {
-          imports.push(match[1]);
-        }
-      }
-    });
+    for (const pattern of PY_IMPORT_PATTERNS) {
+      resetAndCollect(pattern, content, imports);
+    }
 
     // Export patterns (Python doesn't have explicit exports, but __all__ can indicate public API)
     const allMatch = content.match(/__all__\s*=\s*\[([^\]]+)\]/);
@@ -836,22 +877,8 @@ export class CodebaseContextAnalyzer {
     const imports: string[] = [];
     const exports: string[] = [];
 
-    // Import patterns
-    const importPattern = /^import\s+([^;]+);/gm;
-    let match;
-    while ((match = importPattern.exec(content)) !== null) {
-      if (match[1]) {
-        imports.push(match[1]);
-      }
-    }
-
-    // Export patterns (public classes/interfaces)
-    const exportPattern = /(?:public\s+)?(?:class|interface|enum)\s+(\w+)/g;
-    while ((match = exportPattern.exec(content)) !== null) {
-      if (match[1]) {
-        exports.push(match[1]);
-      }
-    }
+    resetAndCollect(JAVA_IMPORT_PATTERN, content, imports);
+    resetAndCollect(JAVA_EXPORT_PATTERN, content, exports);
 
     return {
       imports: Array.from(new Set(imports)),
@@ -866,7 +893,16 @@ export class CodebaseContextAnalyzer {
     fileGraph: Map<string, FileInfo>,
     dependencyGraph: Map<string, Set<string>>,
   ): Promise<void> {
-    for (const [filePath, fileInfo] of Array.from(fileGraph)) {
+    const existsCache = new Map<string, boolean>();
+    const fileExists = (absPath: string): boolean => {
+      const cached = existsCache.get(absPath);
+      if (cached !== undefined) return cached;
+      const found = fs.existsSync(absPath);
+      existsCache.set(absPath, found);
+      return found;
+    };
+
+    for (const [filePath, fileInfo] of fileGraph) {
       const dependencies = new Set<string>();
 
       for (const importPath of fileInfo.imports) {
@@ -882,23 +918,13 @@ export class CodebaseContextAnalyzer {
               resolvedPath,
             );
 
-            // Check for file extensions
-            const possibleExtensions = [
-              "",
-              ".ts",
-              ".tsx",
-              ".js",
-              ".jsx",
-              ".py",
-              ".java",
-            ];
             let foundFile = null;
 
-            for (const ext of possibleExtensions) {
+            for (const ext of IMPORT_EXTENSIONS) {
               const testPath = resolvedRelative + ext;
               if (
                 fileGraph.has(testPath) ||
-                fs.existsSync(path.join(this.projectRoot, testPath))
+                fileExists(path.join(this.projectRoot, testPath))
               ) {
                 foundFile = testPath;
                 break;
@@ -934,24 +960,55 @@ export class CodebaseContextAnalyzer {
       "monolithic";
     const entryPoints: string[] = [];
 
-    // Framework detection
-    if (this.hasFramework(fileGraph, "react")) frameworks.push("React");
-    if (this.hasFramework(fileGraph, "vue")) frameworks.push("Vue.js");
-    if (this.hasFramework(fileGraph, "angular")) frameworks.push("Angular");
-    if (this.hasFramework(fileGraph, "svelte")) frameworks.push("Svelte");
-    if (this.hasFramework(fileGraph, "express")) frameworks.push("Express.js");
-    if (this.hasFramework(fileGraph, "nestjs")) frameworks.push("NestJS");
-    if (this.hasFramework(fileGraph, "nextjs")) frameworks.push("Next.js");
-    if (this.hasFramework(fileGraph, "nuxt")) frameworks.push("Nuxt.js");
+    const foundFrameworks = new Set<string>();
+    let hasControllers = false;
+    let hasModels = false;
+    let hasViews = false;
+    let hasRepository = false;
+    let hasFactory = false;
+    let hasObserver = false;
+    let hasMicroservices = false;
 
-    // Pattern detection
-    if (this.detectMVCPattern(fileGraph)) patterns.push("MVC");
-    if (this.detectRepositoryPattern(fileGraph)) patterns.push("Repository");
-    if (this.detectObserverPattern(fileGraph)) patterns.push("Observer");
-    if (this.detectFactoryPattern(fileGraph)) patterns.push("Factory");
+    // One pass over paths and file text. Same booleans as the per-needle scans.
+    for (const [filePath, fileInfo] of fileGraph) {
+      if (!hasControllers && filePath.includes("controller")) hasControllers = true;
+      if (!hasModels && filePath.includes("model")) hasModels = true;
+      if (!hasViews && filePath.includes("view")) hasViews = true;
+      if (!hasRepository && filePath.includes("repository")) hasRepository = true;
+      if (!hasFactory && filePath.includes("factory")) hasFactory = true;
+      if (
+        !hasMicroservices &&
+        (filePath.includes("docker") ||
+          filePath.includes("kubernetes") ||
+          filePath.includes("service"))
+      ) {
+        hasMicroservices = true;
+      }
+
+      const content = fileInfo.content;
+      if (!content) continue;
+      if (!hasObserver && (content.includes("subscribe") || content.includes("observe"))) {
+        hasObserver = true;
+      }
+      if (foundFrameworks.size === FRAMEWORK_NEEDLES.length) continue;
+      const lower = content.toLowerCase();
+      for (const [needle, label] of FRAMEWORK_NEEDLES) {
+        if (!foundFrameworks.has(label) && lower.includes(needle)) {
+          foundFrameworks.add(label);
+        }
+      }
+    }
+
+    for (const [, label] of FRAMEWORK_NEEDLES) {
+      if (foundFrameworks.has(label)) frameworks.push(label);
+    }
+    if (hasControllers && hasModels && hasViews) patterns.push("MVC");
+    if (hasRepository) patterns.push("Repository");
+    if (hasObserver) patterns.push("Observer");
+    if (hasFactory) patterns.push("Factory");
 
     // Structure detection
-    if (modules.size > 5 && this.hasMicroservicesIndicators(fileGraph)) {
+    if (modules.size > 5 && hasMicroservices) {
       structure = "microservices";
     } else if (modules.size > 0) {
       structure = "modular";
@@ -1299,40 +1356,30 @@ export class CodebaseContextAnalyzer {
 
   // Helper methods
 
-  private isModuleDirectory(dirPath: string): boolean {
-    try {
-      const entries = fs.readdirSync(dirPath);
-      return (
-        entries.some((entry) => {
-          const ext = path.extname(entry);
-          return this.supportedLanguages[
-            ext as keyof typeof this.supportedLanguages
-          ];
-        }) &&
-        entries.some(
-          (entry) =>
-            entry === "package.json" ||
-            entry === "index.ts" ||
-            entry === "index.js",
-        )
-      );
-    } catch {
-      return false;
+  private isModuleNames(names: readonly string[]): boolean {
+    let hasSource = false;
+    let hasMarker = false;
+    for (const entry of names) {
+      const ext = path.extname(entry);
+      if (
+        this.supportedLanguages[ext as keyof typeof this.supportedLanguages]
+      ) {
+        hasSource = true;
+      }
+      if (
+        entry === "package.json" ||
+        entry === "index.ts" ||
+        entry === "index.js"
+      ) {
+        hasMarker = true;
+      }
+      if (hasSource && hasMarker) return true;
     }
+    return false;
   }
 
   private isConfigFile(filePath: string): boolean {
-    const configPatterns = [
-      /package\.json$/,
-      /tsconfig\.json$/,
-      /webpack\.config\./,
-      /\.eslintrc/,
-      /\.prettierrc/,
-      /Dockerfile/,
-      /docker-compose\.yml/,
-      /\.env/,
-    ];
-    return configPatterns.some((pattern) => pattern.test(filePath));
+    return CONFIG_FILE_PATTERNS.some((pattern) => pattern.test(filePath));
   }
 
   private classifyModule(
@@ -1388,62 +1435,6 @@ export class CodebaseContextAnalyzer {
     // Fallback to first source file
     const sourceFile = files.find((f) => f.isSourceCode);
     return sourceFile?.relativePath;
-  }
-
-  private hasFramework(
-    fileGraph: Map<string, FileInfo>,
-    framework: string,
-  ): boolean {
-    for (const file of Array.from(fileGraph.values())) {
-      if (file.content?.toLowerCase().includes(framework.toLowerCase())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private detectMVCPattern(fileGraph: Map<string, FileInfo>): boolean {
-    const hasControllers = Array.from(fileGraph.keys()).some((path) =>
-      path.includes("controller"),
-    );
-    const hasModels = Array.from(fileGraph.keys()).some((path) =>
-      path.includes("model"),
-    );
-    const hasViews = Array.from(fileGraph.keys()).some((path) =>
-      path.includes("view"),
-    );
-    return hasControllers && hasModels && hasViews;
-  }
-
-  private detectRepositoryPattern(fileGraph: Map<string, FileInfo>): boolean {
-    return Array.from(fileGraph.keys()).some((path) =>
-      path.includes("repository"),
-    );
-  }
-
-  private detectObserverPattern(fileGraph: Map<string, FileInfo>): boolean {
-    return Array.from(fileGraph.values()).some(
-      (file) =>
-        file.content?.includes("subscribe") ||
-        file.content?.includes("observe"),
-    );
-  }
-
-  private detectFactoryPattern(fileGraph: Map<string, FileInfo>): boolean {
-    return Array.from(fileGraph.keys()).some((path) =>
-      path.includes("factory"),
-    );
-  }
-
-  private hasMicroservicesIndicators(
-    fileGraph: Map<string, FileInfo>,
-  ): boolean {
-    return Array.from(fileGraph.keys()).some(
-      (path) =>
-        path.includes("docker") ||
-        path.includes("kubernetes") ||
-        path.includes("service"),
-    );
   }
 
   private isEntryPoint(filePath: string, fileInfo: FileInfo): boolean {
