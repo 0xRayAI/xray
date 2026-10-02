@@ -61,8 +61,11 @@ export class PromptSecurityValidator {
       riskLevel = "medium";
     }
 
-    // Blocked pattern check
+    const folded = prompt.toLowerCase();
+
+    // Blocked pattern check. Reset lastIndex so a previous call cannot hide this one.
     for (const pattern of this.config.blockedPatterns) {
+      pattern.lastIndex = 0;
       if (pattern.test(prompt)) {
         violations.push(`Blocked pattern detected: ${pattern.source}`);
         riskLevel = "high";
@@ -70,12 +73,12 @@ export class PromptSecurityValidator {
     }
 
     // Advanced pattern analysis
-    if (this.containsSystemPromptOverride(prompt)) {
+    if (this.containsSystemPromptOverride(folded)) {
       violations.push("Potential system prompt override attempt");
       riskLevel = "critical";
     }
 
-    if (this.containsInjectionAttempts(prompt)) {
+    if (this.containsInjectionAttempts(folded)) {
       violations.push("Potential prompt injection detected");
       riskLevel = "high";
     }
@@ -94,7 +97,7 @@ export class PromptSecurityValidator {
   /**
    * Check for system prompt override attempts
    */
-  private containsSystemPromptOverride(prompt: string): boolean {
+  private containsSystemPromptOverride(lowerPrompt: string): boolean {
     const overrideIndicators = [
       "you are now",
       "act as if",
@@ -107,7 +110,6 @@ export class PromptSecurityValidator {
       "different role",
     ];
 
-    const lowerPrompt = prompt.toLowerCase();
     return overrideIndicators.some((indicator) =>
       lowerPrompt.includes(indicator),
     );
@@ -116,7 +118,7 @@ export class PromptSecurityValidator {
   /**
    * Check for prompt injection attempts
    */
-  private containsInjectionAttempts(prompt: string): boolean {
+  private containsInjectionAttempts(lowerPrompt: string): boolean {
     const injectionIndicators = [
       "ignore previous",
       "forget instructions",
@@ -127,7 +129,6 @@ export class PromptSecurityValidator {
       "delete history",
     ];
 
-    const lowerPrompt = prompt.toLowerCase();
     return injectionIndicators.some((indicator) =>
       lowerPrompt.includes(indicator),
     );
@@ -141,6 +142,7 @@ export class PromptSecurityValidator {
 
     // Remove blocked patterns
     for (const pattern of this.config.blockedPatterns) {
+      pattern.lastIndex = 0;
       sanitized = sanitized.replace(pattern, "[REDACTED]");
     }
 

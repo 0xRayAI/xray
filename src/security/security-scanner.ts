@@ -343,26 +343,37 @@ export class SecurityScanner {
     vulnerabilities: SecurityVulnerability[],
   ): string[] {
     const recommendations: string[] = [];
+    let critical = false;
+    let high = false;
+    let packaged = false;
+    let eslint = false;
 
-    if (vulnerabilities.some((v) => v.severity === "critical")) {
+    for (const vuln of vulnerabilities) {
+      if (vuln.severity === "critical") critical = true;
+      else if (vuln.severity === "high") high = true;
+      if (vuln.package) packaged = true;
+      if (vuln.id.includes("eslint")) eslint = true;
+    }
+
+    if (critical) {
       recommendations.push(
         "🚨 Critical security vulnerabilities found - immediate action required",
       );
     }
 
-    if (vulnerabilities.some((v) => v.severity === "high")) {
+    if (high) {
       recommendations.push(
         "⚠️ High-severity vulnerabilities detected - prioritize fixes",
       );
     }
 
-    if (vulnerabilities.filter((v) => v.package).length > 0) {
+    if (packaged) {
       recommendations.push(
         "📦 Update vulnerable dependencies to latest secure versions",
       );
     }
 
-    if (vulnerabilities.filter((v) => v.id.includes("eslint")).length > 0) {
+    if (eslint) {
       recommendations.push("🔧 Fix code security issues identified by ESLint");
     }
 
