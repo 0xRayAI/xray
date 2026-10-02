@@ -122,6 +122,9 @@ describe('goggles plate', () => {
     try {
       expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
       expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      const two = lensBeforeResearch(root, 'grep', 'open the boot and governance planes');
+      expect(two?.decision).toBe('deny');
+      expect(two?.reason).toBe('Name one plane.');
       expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
       expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
       expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();

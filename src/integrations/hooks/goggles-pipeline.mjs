@@ -807,7 +807,7 @@ function stampPlane(root, id) {
   }
 }
 
-/** Name one plane and the tool continues. Name none and a search stops. Two planes stay quiet. */
+/** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   if (!researchCall(toolName, spoken)) return null;
@@ -816,7 +816,6 @@ export function lensBeforeResearch(root, toolName, text) {
     stampPlane(root, names[0]);
     return null;
   }
-  if (names.length > 1) return null;
   if (/^read_file$/i.test(String(toolName || ''))) {
     if (loadReadPass(root) === 'armed') {
       saveReadPass(root, true);
