@@ -14,6 +14,7 @@ export const PLATE_IDS = [
   'processor',
   'reporting',
   'memory-recall',
+  'stamp-plate',
   'house',
   'review',
   'goggles',
@@ -21,7 +22,6 @@ export const PLATE_IDS = [
   'kits',
   'host-pack',
   'glossary',
-  'stamp-plate',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

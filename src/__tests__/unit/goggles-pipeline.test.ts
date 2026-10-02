@@ -224,6 +224,20 @@ describe('goggles plate', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('a held plane may open its own drawing and a plate named on the lens', () => {
+    const held = { plane: 'stamp-plate', scope: '' };
+    const own = 'docs-site/docs/plates/stamp-plate.md';
+    const listed = 'docs-site/docs/plates/review.md';
+    const foreign = 'docs-site/docs/plates/routing.md';
+    expect(organStop(held, { tool: 'read_file', text: own, paths: [own] })).toBeNull();
+    expect(organStop(held, { tool: 'read_file', text: listed, paths: [listed] })).toBeNull();
+    expect(organStop(held, { tool: 'read_file', text: foreign, paths: [foreign] })).toEqual({
+      gate: 'goggles',
+      decision: 'deny',
+      reason: 'The reading is stamp-plate. That drawing is not the plane.',
+    });
+  });
+
   it('holds a named plane without look and leaves casual speech alone', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-name-'));
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });

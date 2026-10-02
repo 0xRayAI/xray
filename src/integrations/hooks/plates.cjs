@@ -14,6 +14,7 @@ const PLATE_IDS = Object.freeze([
   "processor",
   "reporting",
   "memory-recall",
+  "stamp-plate",
   "house",
   "review",
   "goggles",
@@ -21,7 +22,6 @@ const PLATE_IDS = Object.freeze([
   "kits",
   "host-pack",
   "glossary",
-  "stamp-plate",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */

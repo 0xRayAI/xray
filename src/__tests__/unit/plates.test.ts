@@ -25,6 +25,7 @@ describe('pipeline plates', () => {
       'processor',
       'reporting',
       'memory-recall',
+      'stamp-plate',
       'house',
       'review',
       'goggles',
@@ -32,7 +33,6 @@ describe('pipeline plates', () => {
       'kits',
       'host-pack',
       'glossary',
-      'stamp-plate',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
