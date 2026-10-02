@@ -11,6 +11,10 @@ const {
   deployXrayConfig,
   resolveXrayConfigSource,
   XRAY_CONFIG_FILES,
+  installGrokBridge,
+  installHermesBridge,
+  resetWearIo,
+  readWearIo,
   installCursorBridge,
   mergeOpencodeJson,
   copyOpencodePlugin,
@@ -558,6 +562,153 @@ describe("install-bridges user-wins opencode merge and plugin shim", () => {
     } finally {
       fs.rmSync(packageRoot, { recursive: true, force: true });
       fs.rmSync(dest, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("repeat fasten", () => {
+  const previousMachine = process.env.FOUNDRY_MACHINE_HOME;
+  let machine = "";
+  let consumer = "";
+
+  beforeEach(() => {
+    machine = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-machine-"));
+    process.env.FOUNDRY_MACHINE_HOME = machine;
+    consumer = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-consumer-"));
+    fs.writeFileSync(
+      path.join(consumer, "package.json"),
+      `${JSON.stringify({ name: "acme", version: "1.0.0" })}\n`,
+    );
+  });
+
+  afterEach(() => {
+    if (previousMachine === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
+    else process.env.FOUNDRY_MACHINE_HOME = previousMachine;
+    fs.rmSync(machine, { recursive: true, force: true });
+    fs.rmSync(consumer, { recursive: true, force: true });
+  });
+
+  function snapshot(root: string): Map<string, Buffer> {
+    const out = new Map<string, Buffer>();
+    const walk = (dir: string) => {
+      for (const name of fs.readdirSync(dir)) {
+        const abs = path.join(dir, name);
+        const st = fs.lstatSync(abs);
+        const rel = path.relative(root, abs);
+        if (st.isSymbolicLink()) out.set(rel, Buffer.from(`link:${fs.readlinkSync(abs)}`));
+        else if (st.isDirectory()) walk(abs);
+        else out.set(rel, fs.readFileSync(abs));
+      }
+    };
+    walk(root);
+    return out;
+  }
+
+  it("second fasten keeps file bytes and skips repeat writes", () => {
+    const packageRoot = process.cwd();
+    const hookPkg = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-hooks-"));
+    const hooksDir = path.join(hookPkg, "src", "integrations", "cursor", "hooks");
+    fs.mkdirSync(hooksDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(hooksDir, "hooks.json"),
+      `${JSON.stringify({ version: 1, hooks: { preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }] } })}\n`,
+    );
+    for (const name of CURSOR_HOOK_SCRIPTS) {
+      const script = path.join(hooksDir, name);
+      fs.writeFileSync(script, `#!/bin/sh\necho ${name}\n`);
+      fs.chmodSync(script, 0o755);
+    }
+    const { deployManagedAgents } = require("../../../scripts/node/postinstall.cjs") as {
+      deployManagedAgents: (pkg: string, target: string, log: () => void) => void;
+    };
+    const wear = () => {
+      deployXrayConfig(consumer, packageRoot, () => {});
+      installGrokBridge(consumer, packageRoot, () => {}, {
+        env: process.env,
+        machineHome: machine,
+      });
+      installHermesBridge(consumer, packageRoot, () => {});
+      installCursorBridge(consumer, hookPkg, () => {});
+      deployManagedAgents(packageRoot, consumer, () => {});
+    };
+    try {
+      resetWearIo();
+      wear();
+      expect(readWearIo().writes).toBeGreaterThan(0);
+
+      const configPath = path.join(consumer, ".xray", "config.json");
+      const parsedConfig = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
+      const canonical = `${JSON.stringify(parsedConfig, null, 2)}\n`;
+      fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 4));
+      resetWearIo();
+      deployXrayConfig(consumer, packageRoot, () => {});
+      expect(fs.readFileSync(configPath, "utf8")).toBe(canonical);
+      expect(readWearIo().writes).toBeGreaterThan(0);
+
+      fs.writeFileSync(configPath, canonical.slice(0, -1));
+      resetWearIo();
+      deployXrayConfig(consumer, packageRoot, () => {});
+      expect(fs.readFileSync(configPath, "utf8")).toBe(canonical);
+
+      const before = snapshot(consumer);
+      const agentsStamp = fs.statSync(path.join(consumer, "AGENTS.md")).mtimeMs;
+
+      resetWearIo();
+      wear();
+      const second = readWearIo();
+      expect(second.writes).toBe(0);
+      expect(second.skips).toBeGreaterThan(0);
+      const after = snapshot(consumer);
+      expect([...after.keys()].sort()).toEqual([...before.keys()].sort());
+      for (const [rel, bytes] of before) {
+        expect(Buffer.compare(bytes, after.get(rel) as Buffer), rel).toBe(0);
+      }
+      expect(fs.statSync(path.join(consumer, "AGENTS.md")).mtimeMs).toBe(agentsStamp);
+
+      const hermesBridge = path.join(consumer, ".hermes", "plugins", "xray-hermes", "bridge.mjs");
+      const hermesMcp = path.join(consumer, ".hermes", "plugins", "xray-hermes", ".mcp.json");
+      const grokMcp = path.join(consumer, ".grok", "plugins", "0xray", ".mcp.json");
+      const cursorHook = path.join(consumer, ".cursor", "hooks", "pre-tool-use.sh");
+      const modeOf = (file: string) => fs.statSync(file).mode & 0o777;
+      expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(hermesMcp)).toBe(0o644);
+      expect(modeOf(grokMcp)).toBe(0o644);
+      expect(modeOf(cursorHook)).toBe(0o755);
+      fs.chmodSync(hermesBridge, 0o600);
+      fs.chmodSync(hermesMcp, 0o700);
+      fs.chmodSync(grokMcp, 0o700);
+      fs.chmodSync(cursorHook, 0o600);
+      const hermesBytes = fs.readFileSync(hermesBridge);
+      const hermesMcpBytes = fs.readFileSync(hermesMcp);
+      const grokBytes = fs.readFileSync(grokMcp);
+      const cursorBytes = fs.readFileSync(cursorHook);
+      resetWearIo();
+      wear();
+      expect(fs.readFileSync(hermesBridge).equals(hermesBytes)).toBe(true);
+      expect(fs.readFileSync(hermesMcp).equals(hermesMcpBytes)).toBe(true);
+      expect(fs.readFileSync(grokMcp).equals(grokBytes)).toBe(true);
+      expect(fs.readFileSync(cursorHook).equals(cursorBytes)).toBe(true);
+      expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(hermesMcp)).toBe(0o644);
+      expect(modeOf(grokMcp)).toBe(0o644);
+      expect(modeOf(cursorHook)).toBe(0o755);
+
+      resetWearIo();
+      wear();
+      expect(readWearIo().writes).toBe(0);
+
+      const parsed = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
+      const removed = Object.keys(parsed)[0];
+      const saved = parsed[removed];
+      delete parsed[removed];
+      fs.writeFileSync(configPath, JSON.stringify(parsed));
+      resetWearIo();
+      deployXrayConfig(consumer, packageRoot, () => {});
+      const restored = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
+      expect(restored[removed]).toEqual(saved);
+      expect(readWearIo().writes).toBeGreaterThan(0);
+    } finally {
+      fs.rmSync(hookPkg, { recursive: true, force: true });
     }
   });
 });
