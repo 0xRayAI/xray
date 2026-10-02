@@ -32,6 +32,7 @@ describe('pipeline plates', () => {
       'kits',
       'host-pack',
       'glossary',
+      'stamp-plate',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -151,6 +152,8 @@ describe('pipeline plates', () => {
     expect(recallPlate('outer plane')).toBeNull();
     expect(recallPlate('kind 0')).toBeNull();
     expect(recallPlate('wear the suit')).toBeNull();
+    expect(recallPlate('stamp plate')?.id).toBe('stamp-plate');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     const goggles = loadPlate('goggles');
     expect(goggles.body).toContain('it views one plane');
     expect(goggles.body).not.toMatch(/ACTUALITY|DICHOTOMY|SYNCOPATE|OUTER PLANES/);

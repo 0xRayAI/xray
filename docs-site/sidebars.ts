@@ -66,6 +66,7 @@ const sidebars: SidebarsConfig = {
         'plates/kits',
         'plates/host-pack',
         'plates/glossary',
+        'plates/stamp-plate',
         'plates/grokbot',
       ],
     },

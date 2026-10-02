@@ -49,3 +49,12 @@ The lens is the door. It lists one skill. Read the lens and the skill is already
 7. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts` from the worktree. The worktree needs `dist` or the worn build drifts.
 
 Naming exactly one plane lets the search continue. Zero planes, or more than one, stops it with `Name one plane.`
+
+## Deep dive
+
+Every process you open, and every segue of code you follow in that dive, gets a stamped plate and a lens in the same change.
+
+1. The depth is the path you opened. A file you only named does not get one. A file you opened and explained does.
+2. One plate for the top file is too shallow once the children are open. Each opened segue gets its own plate and its own lens.
+3. The token must not contain an existing card name, and an existing card name must not contain the token. `boot` is already a plane, so a token that contains `boot` is illegal.
+4. The hook does not author the plate. The seat does, with the steps above.

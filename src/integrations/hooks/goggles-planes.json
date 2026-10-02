@@ -47,5 +47,11 @@
   },
   "reporting": {
     "files": ["src/reporting/framework-reporting-system.ts"]
+  },
+  "stamp-plate": {
+    "files": [".agents/skills/stamp-plate/SKILL.md"],
+    "mark": "Stamp a plate or a lens",
+    "skills": ".agents/skills/stamp-plate/SKILL.md",
+    "plates": ["review"]
   }
 }

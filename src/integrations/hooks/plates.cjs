@@ -21,6 +21,7 @@ const PLATE_IDS = Object.freeze([
   "kits",
   "host-pack",
   "glossary",
+  "stamp-plate",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -98,6 +99,10 @@ const CUES = {
   ],
   glossary: [
     [/\bglossary\b/i, 6],
+  ],
+  "stamp-plate": [
+    [/stamp plate/i, 6],
+    [/plates\/stamp-plate/i, 6],
   ],
 };
 
