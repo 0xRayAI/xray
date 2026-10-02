@@ -557,8 +557,8 @@
     },
     "70": {
       "number": 70,
-      "title": "Current Source and Worn Package Before Edits",
-      "description": "Before an edit, the checkout is not behind origin/main. When package.json name is 0xray, this repo is the worn suit. Otherwise the worn suit is node_modules/0xray or the global install. A worn package older than the published one waits. Fetch and the registry check run at session start. PreToolUse reads that snapshot and denies a checkout that is behind or a worn package that is older. If a stash is required, diff it against that main before anything is dropped. House procedure is not this constitution. Grok Bot has no pre-tool hooks, so seat rules stay in house/ and point here.",
+      "title": "Current Copy Before Edits",
+      "description": "Before an edit, be on the latest main and run the current package. If this repo is 0xray, this repo is that package. An older package waits. Compare set-aside work to main before you throw it away.",
       "category": "process",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"

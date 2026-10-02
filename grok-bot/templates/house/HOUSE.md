@@ -34,4 +34,4 @@ This page is not the constitution. Grok Bot has no pre-tool hooks. The constitut
 - Tester: 8, 48, 61, 62, 63, 65, and 66.
 - Non-code seats: no terms.
 
-Term 70: before an edit, the checkout is not behind origin/main and the worn npm is the published one. Diff a stash against that main before anything is dropped. Seat rules, spend, and the board stay here.
+Term 70: before an edit, be on the latest main and run the current package. Compare set-aside work to main before you throw it away. Seat rules, spend, and the board stay here.

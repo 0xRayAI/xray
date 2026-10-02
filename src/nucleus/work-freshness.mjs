@@ -1,8 +1,8 @@
 /**
- * Codex 70. Edits wait until the checkout is not behind origin/main
- * and the worn 0xray package is not older than the published one.
- * This repo is the worn suit when package.json name is 0xray.
- * Fetch and the registry check run from session start. PreToolUse reads the snapshot.
+ * Codex 70. An edit waits until this copy is on the latest main
+ * and the package is not older than the published one.
+ * This repo is that package when package.json name is 0xray.
+ * The check is saved at session start. The edit gate reads the saved result.
  * A temp directory inside a repo is not the workspace, so unit tests stay quiet.
  */
 
@@ -28,7 +28,7 @@ export function decideFreshness(input) {
     const commits = behind === 1 ? '1 commit' : `${behind} commits`;
     return {
       stale: true,
-      reason: `Codex 70: checkout is ${commits} behind origin/main. Fetch and fast-forward before editing. Diff a stash against that main before anything is dropped.`,
+      reason: `Codex 70: this copy is ${commits} behind main. Update before you edit. Compare set-aside work to main before you throw it away.`,
     };
   }
   const repoVersion = input.repoName === '0xray' ? input.repoVersion || null : null;
@@ -38,7 +38,7 @@ export function decideFreshness(input) {
   if (target && worn && compareVersions(worn, target) < 0) {
     return {
       stale: true,
-      reason: `Codex 70: worn 0xray@${worn} is older than ${target}. Install the latest npm before editing.`,
+      reason: `Codex 70: package ${worn} is older than ${target}. Install the current one before you edit.`,
     };
   }
   return { stale: false, reason: '' };
@@ -46,11 +46,11 @@ export function decideFreshness(input) {
 
 export function describeFreshness(input) {
   const behind = Number(input.behind) || 0;
-  const parts = [behind > 0 ? `behind ${behind}` : 'git even'];
-  if (input.wornSuit) parts.push(`worn 0xray@${input.wornSuit}`);
-  if (input.publishedSuit) parts.push(`npm ${input.publishedSuit}`);
+  const parts = [behind > 0 ? `${behind} behind main` : 'up to date'];
+  if (input.wornSuit) parts.push(`package ${input.wornSuit}`);
+  if (input.publishedSuit) parts.push(`published ${input.publishedSuit}`);
   const stashCount = Number(input.stashCount) || 0;
-  if (stashCount > 0) parts.push(`stashes ${stashCount} (compare before drop)`);
+  if (stashCount > 0) parts.push(`${stashCount} set aside, compare before drop`);
   return `Fresh: ${parts.join('. ')}.`;
 }
 

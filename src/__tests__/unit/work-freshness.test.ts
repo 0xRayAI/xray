@@ -27,7 +27,7 @@ describe('Codex 70 freshness', () => {
     expect(decision.reason).toMatch(/4\.0\.9/);
   });
 
-  it('treats this 0xray repo as the worn suit when no install is recorded', () => {
+  it('treats this 0xray repo as the package when no install is recorded', () => {
     const decision = decideFreshness({
       behind: 0,
       wornSuit: null,
@@ -63,7 +63,7 @@ describe('Codex 70 freshness', () => {
 
   it('names a stash so it is compared before a drop', () => {
     const line = describeFreshness({ behind: 0, wornSuit: '4.0.34', publishedSuit: '4.0.34', stashCount: 5 });
-    expect(line).toMatch(/stashes 5/);
+    expect(line).toMatch(/5 set aside/);
     expect(line).toMatch(/compare before drop/);
   });
 });
