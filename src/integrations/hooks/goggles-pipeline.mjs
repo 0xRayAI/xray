@@ -4,7 +4,11 @@
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
  * On this host a search is grep, glob, or a shell that runs one.
+ * A shell that reads a project source file is a search.
  * The lens file stays open. One later read may go on, then the next read stops.
+ * An opened source file that no lens lists is remembered.
+ * The next search stops until that file is on a lens and its plate is on disk.
+ * The hook does not author the plate.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -787,11 +791,117 @@ function opensLensFile(text) {
   return mapFiles().some((file) => spoken.includes(file));
 }
 
+const SOURCE_FILE = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot)\/[\w./-]*\.[A-Za-z0-9]+)(?=$|[^A-Za-z0-9_./-])/g;
+const SOURCE_READER = /(?:^|[^A-Za-z0-9_])(?:python3|node|cat|head|tail|sed|less|more|bat|awk)(?=$|[^A-Za-z0-9_])/;
+const STAMP_TARGET = /docs-site\/docs\/plates\/[a-z0-9-]+\.md|goggles-planes\.json|\.agents\/skills\/[a-z0-9-]+\/SKILL\.md|src\/memory-routing\/plates\.ts|src\/integrations\/hooks\/plates\.cjs|docs-site\/sidebars\.ts|docs-site\/docs\/plates\/index\.md/;
+
+function isStampPath(file) {
+  return STAMP_TARGET.test(String(file || '').replace(/\\/g, '/'));
+}
+
+function openedSourcePaths(text) {
+  const spoken = `\n${String(text || '').replace(/\\/g, '/')}`;
+  const found = [];
+  for (const match of spoken.matchAll(SOURCE_FILE)) {
+    const file = match[1];
+    if (!file || isStampPath(file) || found.includes(file)) continue;
+    found.push(file);
+  }
+  return found;
+}
+
+function shellReadsSource(text) {
+  const spoken = String(text || '');
+  return SOURCE_READER.test(spoken) && openedSourcePaths(spoken).length > 0;
+}
+
+function isLensWrite(toolName) {
+  return /write|edit|replace/i.test(String(toolName || ''));
+}
+
+function debtFile(root) {
+  return join(root, '.xray', 'state', 'goggles-lens-debt.json');
+}
+
+function loadDebt(root) {
+  try {
+    const data = JSON.parse(readFileSync(debtFile(root), 'utf8'));
+    return Array.isArray(data.paths) ? data.paths.filter((file) => typeof file === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDebt(root, paths) {
+  const unique = [];
+  for (const file of paths) {
+    if (!unique.includes(file)) unique.push(file);
+  }
+  const dest = debtFile(root);
+  if (!unique.length) {
+    try {
+      unlinkSync(dest);
+    } catch {
+      /* already clear */
+    }
+    return;
+  }
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify({ paths: unique })}\n`);
+}
+
+function lensRecords() {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const records = [];
+    if (!data || typeof data !== 'object') return records;
+    for (const [name, entry] of Object.entries(data)) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      if (!Array.isArray(entry.files)) continue;
+      records.push([name, entry.files.filter((file) => typeof file === 'string')]);
+    }
+    return records;
+  } catch {
+    return [];
+  }
+}
+
+function plateIsOnDisk(root, name) {
+  const beside = findPlatesDir(HERE);
+  if (beside && existsSync(join(beside, `${name}.md`))) return true;
+  return existsSync(join(root, 'docs-site', 'docs', 'plates', `${name}.md`));
+}
+
+function lensCovers(root, file) {
+  for (const [name, files] of lensRecords()) {
+    if (!files.includes(file)) continue;
+    if (name === 'ground' || plateIsOnDisk(root, name)) return true;
+  }
+  return false;
+}
+
+function unsettledDebt(root) {
+  const prior = loadDebt(root);
+  const kept = prior.filter((file) => !lensCovers(root, file));
+  if (kept.length !== prior.length) saveDebt(root, kept);
+  return kept;
+}
+
+function rememberOpened(root, text) {
+  const fresh = openedSourcePaths(text).filter((file) => !lensCovers(root, file));
+  if (!fresh.length) return;
+  saveDebt(root, [...loadDebt(root), ...fresh]);
+}
+
+function debtReason(paths) {
+  return `Opened ${paths.join(', ')} has no lens.`;
+}
+
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken))) return true;
+  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
   if (/^(grep|glob)$/i.test(tool)) return true;
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
@@ -851,10 +961,19 @@ function stampPlane(root, id) {
 /** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
-  if (!researchCall(toolName, spoken)) return null;
+  const openDebt = unsettledDebt(root);
+  const research = researchCall(toolName, spoken);
+  if (openDebt.length && research) {
+    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  }
+  if (openDebt.length && isLensWrite(toolName) && !isStampPath(spoken)) {
+    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  }
+  if (!research) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
   if (names.length === 1) {
     stampPlane(root, names[0]);
+    rememberOpened(root, spoken);
     return null;
   }
   if (/^read_file$/i.test(String(toolName || ''))) {
