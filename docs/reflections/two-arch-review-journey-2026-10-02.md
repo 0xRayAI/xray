@@ -97,6 +97,8 @@ I was worse at the comparison than I wanted to be. Same model, and I still reach
 
 Main moved under the station card while I was still describing yesterday's tips. 180 through 201 are on main. 202 is the open one. The card will be stale again by the time you read this, if I put the list on it. The reflection can hold the list. The card should hold the ticket.
 
+The costume paragraph, corrected after the merge, is in [costume-correction-2026-10-02.md](./costume-correction-2026-10-02.md). The action plan is there.
+
 ## Key Takeaways
 
 - **Same model, two leads** -- A better patch is a property of the diff and the test. It is not a property of which arch wrote it.
