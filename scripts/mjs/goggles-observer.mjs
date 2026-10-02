@@ -52,7 +52,13 @@ try {
     check('ordinary sentence does not drop the hold', Boolean(stayed && stayed.decision === 'deny'));
     const search = lensBeforeResearch(held, 'grep', 'open the boot plane');
     check('a grep is a search', Boolean(search && search.decision === 'deny' && String(search.reason).includes('boot-orchestrator')));
+    check('a shell rg is a search', lensBeforeResearch(held, 'bash', 'rg plane src')?.decision === 'deny');
+    check('git and npm stay open', lensBeforeResearch(held, 'bash', 'git status') === null && lensBeforeResearch(held, 'bash', 'npm test') === null);
     check('the lens file stays open', lensBeforeResearch(held, 'read_file', 'src/core/boot-orchestrator.ts') === null);
+    const other = 'src/integrations/hooks/goggles-pipeline.mjs';
+    check('the first other read stops', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
+    check('one later read goes on', lensBeforeResearch(held, 'read_file', other) === null);
+    check('the read after that stops', lensBeforeResearch(held, 'read_file', other)?.reason === 'Name one plane.');
   } finally {
     rmSync(held, { recursive: true, force: true });
   }

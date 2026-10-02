@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -202,6 +202,18 @@ describe('goggles MCP', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('a symlinked server still speaks', async () => {
+    const root = tempRoot();
+    const link = join(root, 'goggles-mcp.mjs');
+    try {
+      symlinkSync(fileURLToPath(new URL('../../integrations/hooks/goggles-mcp.mjs', import.meta.url)), link);
+      const listed = await stdioTools(link, root);
+      expect(listed).toEqual(['look', 'status_lens']);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 function stdioTools(script: string, cwd: string): Promise<string[]> {
@@ -212,10 +224,20 @@ function stdioTools(script: string, cwd: string): Promise<string[]> {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     let out = '';
+    let err = '';
     let asked = false;
-    const timer = setTimeout(() => {
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const finish = (error: Error | null, names?: string[]) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve(names ?? []);
+    };
+    timer = setTimeout(() => {
       proc.kill();
-      reject(new Error(`stdio timeout: ${out.slice(0, 400)}`));
+      finish(new Error(`stdio timeout: ${out.slice(0, 400)} ${err.slice(0, 200)}`));
     }, 8000);
     proc.stdout.on('data', (chunk) => {
       out += chunk.toString();
@@ -229,17 +251,19 @@ function stdioTools(script: string, cwd: string): Promise<string[]> {
       if (!lines.some((line) => line.includes('"id":2') || line.includes('"id": 2'))) return;
       const listed = lines.find((line) => line.includes('status_lens'));
       if (!listed) return;
-      clearTimeout(timer);
-      proc.kill();
       try {
         const message = JSON.parse(listed);
-        resolve(message.result.tools.map((tool: { name: string }) => tool.name));
-      } catch (err) {
-        reject(err);
+        finish(null, message.result.tools.map((tool: { name: string }) => tool.name));
+      } catch (error) {
+        finish(error instanceof Error ? error : new Error(String(error)));
       }
+      proc.kill();
     });
-    proc.on('exit', () => {
-      clearTimeout(timer);
+    proc.stderr.on('data', (chunk) => {
+      err += chunk.toString();
+    });
+    proc.on('exit', (code) => {
+      finish(new Error(`launcher exited ${code} before tools/list: ${err.slice(0, 300)} ${out.slice(0, 200)}`));
     });
     proc.stdin.write(`${JSON.stringify({
       jsonrpc: '2.0',

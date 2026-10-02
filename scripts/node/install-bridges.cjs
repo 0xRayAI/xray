@@ -228,10 +228,10 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
 }
 
 function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
-  const script = path.join(packageRoot, "dist", "integrations", "grok", "hooks", scriptName);
+  const script = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
   const extra = extraArgs ? ` ${extraArgs}` : "";
   // JSON.stringify quotes so spaces/$ in install paths still exec (Grok fail-opens on crash).
-  return `XRAY_AI_PATH=${JSON.stringify(packageRoot)} node ${JSON.stringify(script)}${extra}`;
+  return `XRAY_AI_PATH=${JSON.stringify(packageRoot)} node ${JSON.stringify(script)} ${scriptName}${extra}`;
 }
 
 function patchGrokHookEntry(hook, packageRoot, targetDir, scriptName, extraArgs) {
@@ -260,7 +260,7 @@ function ensureGrokHookEvent(hooks, eventName) {
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
-  const hookScript = path.join(packageRoot, "dist", "integrations", "grok", "hooks", "pre-tool-use.js");
+  const hookScript = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
   if (!fs.existsSync(hooksPath)) {
     if (!fs.existsSync(hooksDir)) fs.mkdirSync(hooksDir, { recursive: true });
     if (!fs.existsSync(hooksPath)) return;

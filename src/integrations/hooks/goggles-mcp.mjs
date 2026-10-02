@@ -2,7 +2,7 @@
  * Goggles MCP. Stdio. Server name `goggles`.
  * Tools: look, status_lens. Same organ as the CLI.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -328,9 +328,16 @@ async function main() {
   await server.connect(transport);
 }
 
+function sameInvoked(argvPath, modulePath) {
+  try {
+    return realpathSync(argvPath) === realpathSync(modulePath);
+  } catch {
+    return resolve(argvPath) === resolve(modulePath);
+  }
+}
+
 const thisFile = fileURLToPath(import.meta.url);
-const invoked = process.argv[1] ? resolve(process.argv[1]) : '';
-if (invoked && resolve(thisFile) === invoked) {
+if (process.argv[1] && sameInvoked(process.argv[1], thisFile)) {
   main().catch((err) => {
     process.stderr.write(`goggles MCP failed: ${err instanceof Error ? err.message : String(err)}\n`);
     process.exit(1);
