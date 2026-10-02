@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mockReadFile = vi.hoisted(() => vi.fn());
 const mockExistsSync = vi.hoisted(() => vi.fn());
+const mockStatSync = vi.hoisted(() => vi.fn());
 const mockResolveCodexPath = vi.hoisted(() => vi.fn());
 const mockLogger = vi.hoisted(() => ({ log: vi.fn() }));
 
@@ -15,6 +16,7 @@ vi.mock('../../core/config-paths.js', () => ({
 
 vi.mock('fs', () => ({
   existsSync: mockExistsSync,
+  statSync: mockStatSync,
 }));
 
 vi.mock('fs/promises', () => ({
@@ -42,6 +44,7 @@ describe('CodexPolicyService', () => {
     vi.clearAllMocks();
     mockResolveCodexPath.mockReturnValue(['/fake/codex.json']);
     mockExistsSync.mockReturnValue(true);
+    mockStatSync.mockReturnValue({ isFile: () => true, mtimeMs: 10, size: 100 });
     mockReadFile.mockResolvedValue(JSON.stringify(SAMPLE_CODEX));
     service = new CodexPolicyService();
   });
@@ -139,6 +142,44 @@ describe('CodexPolicyService', () => {
 
       const snapshot = await service.getCurrentCodex();
       expect(snapshot.is_fallback).toBe(true);
+    });
+
+    it('does not re-read an unchanged codex', async () => {
+      await service.getCurrentCodex(true);
+      const count = await service.getTermCount();
+      expect(count).toBe(3);
+      expect(mockReadFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('parses again when the codex file changes', async () => {
+      await service.getTermCount();
+      mockStatSync.mockReturnValue({ isFile: () => true, mtimeMs: 20, size: 101 });
+      mockReadFile.mockResolvedValue(JSON.stringify({
+        version: '2',
+        terms: [{ number: 1, title: 'T1' }],
+      }));
+      const count = await service.getTermCount();
+      expect(count).toBe(1);
+      expect(mockReadFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('loads a higher-priority codex that appears later', async () => {
+      mockResolveCodexPath.mockReturnValue(['/missing.json', '/exists.json']);
+      mockExistsSync.mockImplementation((candidate: string) => candidate === '/exists.json');
+      await service.getTermCount();
+
+      mockExistsSync.mockImplementation((candidate: string) =>
+        candidate === '/missing.json' || candidate === '/exists.json');
+      mockReadFile.mockImplementation(async (candidate: string) => {
+        if (candidate === '/missing.json') {
+          return JSON.stringify({ version: '9', terms: [{ number: 1 }, { number: 2 }] });
+        }
+        return JSON.stringify(SAMPLE_CODEX);
+      });
+
+      const count = await service.getTermCount();
+      expect(count).toBe(2);
+      expect(mockReadFile).toHaveBeenCalledWith('/missing.json', 'utf-8');
     });
   });
 
