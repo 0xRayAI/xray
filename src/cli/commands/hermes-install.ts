@@ -3,22 +3,29 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'node:url';
-import { frameworkLogger } from '../../core/framework-logger.js';
-import { syncBuiltinSkills } from './skill-install.js';
-import { mintAfterWear } from './foundry-mint-wear.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const packageRoot = path.join(__dirname, '..', '..', '..');
-const millSuit = require(path.join(packageRoot, 'scripts', 'foundry', 'mint-suit.cjs')) as {
+
+type MillSuit = {
   isIsolatedHome: () => boolean;
   machineHome: () => string;
 };
-const wiring = require(path.join(packageRoot, 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
+
+type HermesWiring = {
   wireHermesBridge: (targetDir: string) => { count: number };
   copyHermesFindProjectRootHelper: (packageRoot: string, targetPluginDir: string) => boolean;
   copyHermesHookRuntimes: (packageRoot: string) => boolean;
 };
+
+function loadMillSuit(): MillSuit {
+  return require(path.join(packageRoot, 'scripts', 'foundry', 'mint-suit.cjs')) as MillSuit;
+}
+
+function loadWiring(): HermesWiring {
+  return require(path.join(packageRoot, 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as HermesWiring;
+}
 
 export function registerHermesCommands(hermesCmd: Command) {
   hermesCmd
@@ -37,6 +44,11 @@ interface HermesInstallOptions {
 }
 
 async function installForHermes(options: HermesInstallOptions = {}): Promise<void> {
+  const { frameworkLogger } = await import('../../core/framework-logger.js');
+  const { syncBuiltinSkills } = await import('./skill-install.js');
+  const { mintAfterWear } = await import('./foundry-mint-wear.js');
+  const millSuit = loadMillSuit();
+  const wiring = loadWiring();
   frameworkLogger.log('hermes-integration', 'install-start', 'info', { options });
 
   const isolated = millSuit.isIsolatedHome();
