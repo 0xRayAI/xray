@@ -132,7 +132,16 @@ describe('goggles plate', () => {
       expect(firstRead?.decision).toBe('deny');
       expect(firstRead?.reason).toBe('Name one plane.');
       expect(lensBeforeResearch(root, 'read_file', other)).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', other)?.reason).toBe('Name one plane.');
       expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'glob', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'rg plane src')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'grep plane src')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'find . -name plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'git grep plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'echo find the file')).toBeNull();
       const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
       expect(first?.decision).toBe('deny');
       expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
@@ -189,6 +198,15 @@ describe('goggles plate', () => {
     });
     expect(cardStop(root, 'read_file', plate[0], plate)?.decision).toBe('deny');
     expect(cardStop(root, 'read_file', 'stay on dichotomy in src/nucleus/thin-dispatch.ts', ['src/nucleus/thin-dispatch.ts'])).toEqual({
+      gate: 'goggles',
+      decision: 'allow',
+    });
+    expect(cardStop(root, 'read_file', 'src/nucleus/synthesis.ts', ['src/nucleus/synthesis.ts'])).toEqual({
+      gate: 'goggles',
+      decision: 'deny',
+      reason: 'The reading is dichotomy. The action is synthesis.',
+    });
+    expect(cardStop(root, 'read_file', 'src/foo/synthesis-notes.md', ['src/foo/synthesis-notes.md'])).toEqual({
       gate: 'goggles',
       decision: 'allow',
     });
@@ -316,21 +334,22 @@ describe('goggles plate', () => {
     expect(execFileSync(process.execPath, [bin, 'kind', '0'], { encoding: 'utf8' })).toBe('\n');
   });
 
-  it('keeps a field the pipe already wrote, and still returns a plane with no plate', () => {
+  it('drops a field the plate no longer has, and still returns a plane with no plate', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-view-'));
     const plates = mkdtempSync(join(tmpdir(), 'goggles-plates-'));
     const previous = process.env.GOGGLES_ROOT;
+    const previousPlanes = process.env.GOGGLES_PLANES_PATH;
     try {
       mkdirSync(join(root, '.xray', 'state'), { recursive: true });
       writeFileSync(join(root, '.xray', 'state', 'goggles-views.json'), `${JSON.stringify({
         routing: { setup: 'bench is up' },
       }, null, 2)}\n`);
       const grown = growPlane('routing', plates, root);
-      expect(grown.setup).toBe('bench is up');
+      expect(grown.setup).toBe('');
       expect(grown.digest).toBe('');
       expect(grown.plate).toBe('');
       const saved = JSON.parse(readFileSync(join(root, '.xray', 'state', 'goggles-views.json'), 'utf8'));
-      expect(saved.routing.setup).toBe('bench is up');
+      expect(saved.routing.setup).toBe('');
       expect(saved.routing.entry).toBe('');
       writeFileSync(join(root, '.xray', 'state', 'goggles-views.json'), `${JSON.stringify({
         boot: { files: ['src/missing.ts'] },
@@ -338,9 +357,21 @@ describe('goggles plate', () => {
       const boot = growPlane('boot', findPlatesDir(fileURLToPath(new URL('.', import.meta.url))), root);
       expect(boot.files).toContain('src/core/boot-orchestrator.ts');
       expect(boot.files).not.toContain('src/missing.ts');
+      const planesFile = join(root, 'planes.json');
+      const live = JSON.parse(readFileSync(fileURLToPath(new URL('../../integrations/hooks/goggles-planes.json', import.meta.url)), 'utf8'));
+      live.routing = { files: ['src/no-such-plane.ts'] };
+      writeFileSync(planesFile, `${JSON.stringify(live)}\n`);
+      process.env.GOGGLES_PLANES_PATH = planesFile;
+      process.env.GOGGLES_ROOT = root;
+      expect(look(['digest', 'routing']).text).toContain('Drift: src/no-such-plane.ts is not there');
+      expect(look(['digest', 'ground']).text).not.toContain('Drift:');
+      expect(look(['digest', 'house']).text).toContain('Entry: EMPTY');
+      expect(look(['digest', 'house']).text).toContain('Exit: DOCTOR · House: PASS?');
     } finally {
       if (previous === undefined) delete process.env.GOGGLES_ROOT;
       else process.env.GOGGLES_ROOT = previous;
+      if (previousPlanes === undefined) delete process.env.GOGGLES_PLANES_PATH;
+      else process.env.GOGGLES_PLANES_PATH = previousPlanes;
       rmSync(root, { recursive: true, force: true });
       rmSync(plates, { recursive: true, force: true });
     }

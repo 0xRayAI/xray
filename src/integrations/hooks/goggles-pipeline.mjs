@@ -3,7 +3,8 @@
  * A named plane returns its view. Field pipes fill what they can see.
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
- * On this host a search is grep. The lens file stays open.
+ * On this host a search is grep, glob, or a shell that runs one.
+ * The lens file stays open. One later read may go on, then the next read stops.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -73,9 +74,12 @@ export function organStop(held, action) {
   const text = String(action?.text || '');
   const paths = (action?.paths || []).map(String).filter(Boolean);
   const tool = String(action?.tool || '');
-  if (/docs-site\/docs\/plates\/[a-z0-9-]+\.md/i.test([text, ...paths].join('\n'))) {
+  const spoken = [text, ...paths].join('\n');
+  if (/docs-site\/docs\/plates\/[a-z0-9-]+\.md/i.test(spoken)) {
     return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
   }
+  const otherFile = otherPlaneFile(plane, spoken);
+  if (otherFile) return organDeny(`The reading is ${plane}. The action is ${otherFile}.`);
   const stripped = withoutPaths(text);
   const others = acceptedPlanes().filter((name) => name !== plane && planeWord(name, stripped));
   const namesThis = planeWord(plane, stripped);
@@ -256,10 +260,10 @@ function cardView(plane, scope, flavor, root) {
     teardown: plane.teardown || '',
     worn: plane.worn || '',
   };
+  view.exam = examinePlane(plane, root).text;
   if (flavor === 'triage') {
     const filled = new Set(filledOf(plane));
     view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
-    view.exam = examinePlane(plane, root).text;
   }
   return view;
 }
@@ -284,6 +288,8 @@ function formatCardText(view) {
     if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
     lines.push(view.exam);
     text = `${text}\n${lines.join('\n')}`;
+  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+    text = `${text}\n${view.exam}`;
   }
   return text;
 }
@@ -305,6 +311,8 @@ export function formatCardPane(view) {
   if (view.flavor === 'triage') {
     if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
     if (view.exam) rows.push(['', view.exam]);
+  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+    rows.push(['', view.exam]);
   }
   const body = rows.map(([label, value]) => (label ? `${label.padEnd(8)} ${value}` : value).trimEnd());
   const title = `${view.flavor} · ${view.plane}`;
@@ -686,6 +694,33 @@ export function suitHint(text) {
 
 const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
 const HOLDS_ON_NAME = new Set(['dichotomy', 'syncopate', 'synthesis']);
+const SHELL_SEARCH = /(?:^|&&|\|\||[;&|`(\n])\s*(?:(?:\/[\w.+/-]+\/)|(?:npx\s+))?(?:rg|grep|ag|ack|fd|find)\b|\bgit\s+grep\b/;
+
+function shellSearches(text) {
+  return SHELL_SEARCH.test(String(text || ''));
+}
+
+function mappedPlaneFiles(name) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[name];
+    if (!entry || typeof entry !== 'object') return [];
+    const candidates = [entry.file, entry.worn, entry.skills];
+    if (Array.isArray(entry.files)) candidates.push(...entry.files);
+    return candidates.filter((file) => typeof file === 'string' && file.includes('.') && file.includes('/'));
+  } catch {
+    return [];
+  }
+}
+
+function otherPlaneFile(held, spoken) {
+  const text = String(spoken || '');
+  for (const name of acceptedPlanes()) {
+    if (name === held) continue;
+    if (mappedPlaneFiles(name).some((file) => text.includes(file))) return name;
+  }
+  return '';
+}
 
 function mapFiles() {
   try {
@@ -715,8 +750,8 @@ function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken))) return true;
-  if (/^grep$/i.test(tool)) return true;
+  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken))) return true;
+  if (/^(grep|glob)$/i.test(tool)) return true;
   return /^read_file$/i.test(tool) && !opensLensFile(spoken);
 }
 
@@ -727,16 +762,17 @@ function passPath(root) {
 function loadReadPass(root) {
   try {
     const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
-    return Boolean(data && data.read === true);
+    if (!data || data.read !== true) return null;
+    return data.spent === true ? 'spent' : 'armed';
   } catch {
-    return false;
+    return null;
   }
 }
 
-function saveReadPass(root) {
+function saveReadPass(root, spent) {
   const file = passPath(root);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ read: true })}\n`);
+  writeFileSync(file, `${JSON.stringify({ read: true, spent: Boolean(spent) })}\n`);
 }
 
 /** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
@@ -771,15 +807,20 @@ function stampPlane(root, id) {
   }
 }
 
-/** A search stays stopped. The lens file stays open. One later read may go on. */
+/** A search stays stopped. The lens file stays open. One later read may go on, then the next read stops. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   if (!researchCall(toolName, spoken)) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
   if (/^read_file$/i.test(String(toolName || ''))) {
-    if (loadReadPass(root)) return null;
-    if (names.length === 1) stampPlane(root, names[0]);
-    saveReadPass(root);
+    if (loadReadPass(root) === 'armed') {
+      saveReadPass(root, true);
+      return null;
+    }
+    if (loadReadPass(root) !== 'spent') {
+      if (names.length === 1) stampPlane(root, names[0]);
+      saveReadPass(root, false);
+    }
     return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
   }
   if (names.length === 1) stampPlane(root, names[0]);
@@ -825,22 +866,17 @@ function seenFields(plane, root) {
   };
 }
 
-function kept(stored, seen, key) {
-  if (key === 'files') {
-    if (Array.isArray(seen.files) && seen.files.length) return seen.files.map(String);
-    return Array.isArray(stored.files) ? stored.files.map(String) : [];
-  }
-  if (seen[key]) return seen[key];
-  return stored[key] || '';
+function freshField(seen, key) {
+  if (key === 'files') return Array.isArray(seen.files) ? seen.files.map(String) : [];
+  return seen[key] || '';
 }
 
 export function growPlane(id, platesDir, root) {
   const seen = seenFields(assemblePlane(id, platesDir), sourceRoot(platesDir));
   const views = loadViews(root);
-  const stored = views[id] && typeof views[id] === 'object' ? views[id] : {};
   const grown = { id };
-  for (const key of VIEW_KEYS) grown[key] = kept(stored, seen, key);
-  if (id === 'ground') grown.from = stored.from || '';
+  for (const key of VIEW_KEYS) grown[key] = freshField(seen, key);
+  if (id === 'ground') grown.from = '';
   views[id] = {};
   for (const key of VIEW_KEYS) views[id][key] = grown[key];
   saveViews(root, views);

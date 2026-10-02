@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { spawnSync } from 'child_process';
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
 import { tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -45,12 +47,12 @@ describe('Grok hooks.json command strings', () => {
     for (const hook of commands) {
       expect(hook.args).toBeUndefined();
       expect(String(hook.command)).toContain('node ');
-      expect(String(hook.command)).toContain('dist/integrations/grok/hooks/');
+      expect(String(hook.command)).toContain('scripts/mjs/run-grok-hook.mjs');
       expect(String(hook.command)).toMatch(
         /XRAY_AI_PATH="\$\{XRAY_AI_PATH:-node_modules\/0xray\}"/,
       );
       expect(String(hook.command)).toMatch(
-        /node "\$\{XRAY_AI_PATH:-node_modules\/0xray\}\/dist\//,
+        /node "\$\{XRAY_AI_PATH:-node_modules\/0xray\}\/scripts\/mjs\/run-grok-hook\.mjs"/,
       );
       expect(hook.timeout).toBe(30);
     }
@@ -103,9 +105,56 @@ describe('Grok hooks.json command strings', () => {
     const cmd = grokHookShellCommand(spaced, 'pre-tool-use.js', '--hook-event=pre_compact');
     expect(cmd).toBe(
       `XRAY_AI_PATH=${JSON.stringify(spaced)} node ${JSON.stringify(
-        path.join(spaced, 'dist', 'integrations', 'grok', 'hooks', 'pre-tool-use.js'),
-      )} --hook-event=pre_compact`,
+        path.join(spaced, 'scripts', 'mjs', 'run-grok-hook.mjs'),
+      )} pre-tool-use.js --hook-event=pre_compact`,
     );
+  });
+
+  it('resolveGrokHook uses src when dist is gone', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'xray-hook-resolve-'));
+    const srcHook = path.join(root, 'src', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
+    const distHook = path.join(root, 'dist', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
+    try {
+      mkdirSync(path.dirname(srcHook), { recursive: true });
+      writeFileSync(srcHook, 'export {}\n');
+      expect(resolveGrokHook(root, 'pre-tool-use.js')).toBe(srcHook);
+      expect(resolveGrokHook(root, '../pre-tool-use.js')).toBe('');
+      mkdirSync(path.dirname(distHook), { recursive: true });
+      writeFileSync(distHook, 'export {}\n');
+      expect(resolveGrokHook(root, 'pre-tool-use.js')).toBe(distHook);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('the launcher runs src after dist is gone and allows a missing hook', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'xray-hook-launch-'));
+    const launcherDir = path.join(root, 'scripts', 'mjs');
+    const srcHook = path.join(root, 'src', 'integrations', 'grok', 'hooks', 'pre-tool-use.js');
+    const launcher = path.join(launcherDir, 'run-grok-hook.mjs');
+    try {
+      mkdirSync(launcherDir, { recursive: true });
+      mkdirSync(path.dirname(srcHook), { recursive: true });
+      copyFileSync(path.join(packageRoot, 'scripts', 'mjs', 'run-grok-hook.mjs'), launcher);
+      writeFileSync(
+        srcHook,
+        'process.stdout.write(\'{"decision":"deny","reason":"src"}\\n\');\nprocess.exit(0);\n',
+      );
+      const fromSrc = spawnSync(process.execPath, [launcher, 'pre-tool-use.js'], { encoding: 'utf8' });
+      expect(fromSrc.status).toBe(0);
+      expect(fromSrc.stdout.trim()).toBe('{"decision":"deny","reason":"src"}');
+
+      const missing = spawnSync(process.execPath, [launcher, 'gone.js'], { encoding: 'utf8' });
+      expect(missing.status).toBe(0);
+      expect(missing.stdout.trim()).toBe('{"decision":"allow"}');
+
+      writeFileSync(srcHook, 'throw new Error("boom");\n');
+      const broken = spawnSync(process.execPath, [launcher, 'pre-tool-use.js'], { encoding: 'utf8' });
+      expect(broken.status).toBe(0);
+      expect(broken.stdout.trim()).toBe('{"decision":"allow"}');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it('patchGrokHooks rewires stale args[] smoke hooks and adds compact events', () => {
@@ -208,6 +257,8 @@ describe('Grok hooks.json command strings', () => {
       );
       mkdirSync(path.join(tmp, 'dist/integrations/grok/hooks'), { recursive: true });
       writeFileSync(path.join(tmp, 'dist/integrations/grok/hooks/pre-tool-use.js'), '');
+      mkdirSync(path.join(tmp, 'scripts/mjs'), { recursive: true });
+      writeFileSync(path.join(tmp, 'scripts/mjs/run-grok-hook.mjs'), '#!/usr/bin/env node\n');
       mkdirSync(path.join(tmp, '.xray'), { recursive: true });
       writeFileSync(
         path.join(tmp, '.xray', 'features.json'),
