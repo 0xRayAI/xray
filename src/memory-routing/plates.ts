@@ -28,6 +28,14 @@ export const PLATE_IDS = [
   'session-capture',
   'suit-wear',
   'suit-organs',
+  'station-card',
+  'notes-page',
+  'reflection-page',
+  'site-manual',
+  'package-face',
+  'suit-settings',
+  'trail-state',
+  'inference-files',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

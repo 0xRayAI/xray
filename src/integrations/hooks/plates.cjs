@@ -28,6 +28,14 @@ const PLATE_IDS = Object.freeze([
   "session-capture",
   "suit-wear",
   "suit-organs",
+  "station-card",
+  "notes-page",
+  "reflection-page",
+  "site-manual",
+  "package-face",
+  "suit-settings",
+  "trail-state",
+  "inference-files",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -137,6 +145,38 @@ const CUES = {
   "suit-organs": [
     [/suit organs/i, 6],
     [/plates\/suit-organs/i, 6],
+  ],
+  "station-card": [
+    [/station card/i, 6],
+    [/plates\/station-card/i, 6],
+  ],
+  "notes-page": [
+    [/notes page/i, 6],
+    [/plates\/notes-page/i, 6],
+  ],
+  "reflection-page": [
+    [/reflection page/i, 6],
+    [/plates\/reflection-page/i, 6],
+  ],
+  "site-manual": [
+    [/site manual/i, 6],
+    [/plates\/site-manual/i, 6],
+  ],
+  "package-face": [
+    [/package face/i, 6],
+    [/plates\/package-face/i, 6],
+  ],
+  "suit-settings": [
+    [/suit settings/i, 6],
+    [/plates\/suit-settings/i, 6],
+  ],
+  "trail-state": [
+    [/trail state/i, 6],
+    [/plates\/trail-state/i, 6],
+  ],
+  "inference-files": [
+    [/inference files/i, 6],
+    [/plates\/inference-files/i, 6],
   ],
 };
 

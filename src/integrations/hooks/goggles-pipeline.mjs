@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs'];
+const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files'];
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
@@ -56,6 +56,25 @@ function readingLine(name, scope) {
 
 function organDeny(reason) {
   return { gate: 'goggles', decision: 'deny', reason };
+}
+
+function plateIdsIn(spoken) {
+  const ids = [];
+  const re = /docs-site\/docs\/plates\/([a-z0-9-]+)\.md/ig;
+  let match;
+  while ((match = re.exec(String(spoken || '')))) ids.push(match[1]);
+  return ids;
+}
+
+function associatedPlates(plane) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[plane];
+    const listed = entry && Array.isArray(entry.plates) ? entry.plates.map(String) : [];
+    return new Set([plane, ...listed]);
+  } catch {
+    return new Set([plane]);
+  }
 }
 
 function planeWord(name, text) {
@@ -276,6 +295,7 @@ function cardView(plane, scope, flavor, root) {
     from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
     digest: plane.digest || '',
     plate: plane.plate || '',
+    plates: Array.isArray(plane.plates) ? plane.plates : [],
     entry: plane.entry || '',
     exit: plane.exit || '',
     files: listed,
@@ -292,12 +312,15 @@ function cardView(plane, scope, flavor, root) {
   return view;
 }
 
-function formatCardText(view) {
+function cardRows(view) {
   const rows = [
     ['Plane', view.plane],
     ['From', view.from],
     ['Digest', view.digest],
     ['Plate', view.plate],
+  ];
+  if (Array.isArray(view.plates) && view.plates.length) rows.push(['Plates', view.plates.join(', ')]);
+  rows.push(
     ['Entry', view.entry],
     ['Exit', view.exit],
     ['Files', view.files.join(', ')],
@@ -305,7 +328,12 @@ function formatCardText(view) {
     ['Setup', view.setup],
     ['Teardown', view.teardown],
     ['Worn', view.worn],
-  ];
+  );
+  return rows;
+}
+
+function formatCardText(view) {
+  const rows = cardRows(view);
   let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
   if (view.flavor === 'triage') {
     const lines = [];
@@ -319,19 +347,7 @@ function formatCardText(view) {
 }
 
 export function formatCardPane(view) {
-  const rows = [
-    ['Plane', view.plane],
-    ['From', view.from],
-    ['Digest', view.digest],
-    ['Plate', view.plate],
-    ['Entry', view.entry],
-    ['Exit', view.exit],
-    ['Files', view.files.join(', ')],
-    ['Skills', view.skills],
-    ['Setup', view.setup],
-    ['Teardown', view.teardown],
-    ['Worn', view.worn],
-  ];
+  const rows = cardRows(view);
   if (view.flavor === 'triage') {
     if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
     if (view.exam) rows.push(['', view.exam]);
@@ -548,6 +564,7 @@ export function assemblePlane(id, platesDir) {
     files,
     unpathed: extra.unpathed || null,
     skills: extra.skills || '',
+    plates: Array.isArray(extra.plates) ? extra.plates.map(String) : [],
     setup: extra.setup || sectionOf(src.body, 'Setup') || (flow && flow.setup) || '',
     teardown: extra.teardown || sectionOf(src.body, 'Teardown') || (flow && flow.teardown) || '',
     worn: extra.worn || '',

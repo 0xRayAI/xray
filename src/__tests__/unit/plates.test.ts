@@ -39,6 +39,14 @@ describe('pipeline plates', () => {
       'session-capture',
       'suit-wear',
       'suit-organs',
+      'station-card',
+      'notes-page',
+      'reflection-page',
+      'site-manual',
+      'package-face',
+      'suit-settings',
+      'trail-state',
+      'inference-files',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -160,6 +168,14 @@ describe('pipeline plates', () => {
     expect(recallPlate('session capture')?.id).toBe('session-capture');
     expect(recallPlate('suit wear')?.id).toBe('suit-wear');
     expect(recallPlate('suit organs')?.id).toBe('suit-organs');
+    expect(recallPlate('station card')?.id).toBe('station-card');
+    expect(recallPlate('notes page')?.id).toBe('notes-page');
+    expect(recallPlate('reflection page')?.id).toBe('reflection-page');
+    expect(recallPlate('site manual')?.id).toBe('site-manual');
+    expect(recallPlate('package face')?.id).toBe('package-face');
+    expect(recallPlate('suit settings')?.id).toBe('suit-settings');
+    expect(recallPlate('trail state')?.id).toBe('trail-state');
+    expect(recallPlate('inference files')?.id).toBe('inference-files');
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();

@@ -90,7 +90,7 @@ describe('goggles plate', () => {
     }
     expect(set).not.toContain('Plane: dichotomy');
     const triage = look(['triage', 'routing']).text;
-    expect(triage).toContain('Empty: skills, setup, teardown');
+    expect(triage).toContain('Empty: setup, teardown');
     expect(triage).toContain('Holds.');
     const boot = look(['triage', 'boot']).text;
     expect(boot).toContain('Entry: process start · SIGINT / SIGTERM');
@@ -278,6 +278,16 @@ describe('goggles plate', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('allows the plane plate and the plates listed on the lens', () => {
+    const own = 'docs-site/docs/plates/routing.md';
+    expect(organStop({ plane: 'routing' }, { tool: 'read_file', text: own, paths: [own] })).toBeNull();
+    const related = 'docs-site/docs/plates/write-home.md';
+    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: related, paths: [related] })).toBeNull();
+    const other = 'docs-site/docs/plates/house.md';
+    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: other, paths: [other] })?.reason)
+      .toBe('The reading is activity-log. That drawing is not the plane.');
+  });
+
   it('compact writes the lens and does not replace the notes body', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-'));
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
@@ -332,7 +342,7 @@ describe('goggles plate', () => {
     expect(routing).toHaveLength(1);
     const triagePane = formatCardPane(routing[0]);
     expect(triagePane).toContain('Empty');
-    expect(triagePane).toContain('skills, setup, teardown');
+    expect(triagePane).toContain('setup, teardown');
     expect(triagePane).toContain('Holds.');
     const zoom = lookCards(['digest', 'routing', 'one', 'artifact']);
     expect(zoom).toHaveLength(1);
