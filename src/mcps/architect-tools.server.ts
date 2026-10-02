@@ -15,6 +15,7 @@ import {
   codebaseStructure as architectCodebaseStructure,
   dependencyAnalysis as architectDependencyAnalysis,
   architectureAssessment as architectArchitectureAssessment,
+  formatConferArchitectureText,
 } from "../architect/architect-tools.js";
 
 interface DirectoryNode {
@@ -28,6 +29,29 @@ interface FileNode {
   name: string;
   type: "file";
   extension: string;
+}
+
+export async function renderArchitectureAssessment(
+  args: Record<string, unknown> | undefined,
+): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  const projectRoot = typeof args?.projectRoot === "string" ? args.projectRoot : "";
+  const assessmentType =
+    args?.assessmentType === "quick" || args?.assessmentType === "comprehensive"
+      ? args.assessmentType
+      : "comprehensive";
+  const conferPrompt = typeof args?.conferPrompt === "string" ? args.conferPrompt : "";
+
+  frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
+
+  const result = await architectArchitectureAssessment(projectRoot, assessmentType);
+  return {
+    content: [
+      {
+        type: "text",
+        text: formatConferArchitectureText(conferPrompt, result),
+      },
+    ],
+  };
 }
 
 class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
@@ -233,26 +257,7 @@ class XrayArchitectToolsServer extends XrayKnowledgeSkillBase {
   }
 
   private async architectureAssessment(args: Record<string, unknown> | undefined) {
-    const projectRoot = (args?.projectRoot as string) || "";
-    const assessmentType = (args?.assessmentType as "quick" | "comprehensive") || "comprehensive";
-    const conferPrompt = typeof args?.conferPrompt === "string" ? args.conferPrompt : "";
-
-    frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
-
-    const result = await architectArchitectureAssessment(projectRoot, assessmentType);
-    const assessmentJson = JSON.stringify(result, null, 2);
-    const text = conferPrompt.trim()
-      ? `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: CONDITIONAL\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`
-      : assessmentJson;
-
-    return {
-      content: [
-        {
-          type: "text",
-          text,
-        },
-      ],
-    };
+    return renderArchitectureAssessment(args);
   }
 
 
