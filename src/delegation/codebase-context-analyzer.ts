@@ -1,6 +1,11 @@
+import { createHash } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+
+function bytesHash(bytes: string | Buffer): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
 
 const JS_IMPORT_PATTERNS = [
   /import\s+.*?\s+from\s+['"]([^'"]+)['"]/g,
@@ -137,6 +142,8 @@ export interface CodebaseAnalysisCacheData {
   exports: string[];
   content?: string;
   lastModified?: Date;
+  size?: number;
+  contentHash?: string;
   timestamp: number;
 }
 
@@ -305,10 +312,21 @@ export class CodebaseContextAnalyzer {
     if (filePath) {
       try {
         const currentStats = fs.statSync(filePath);
-        const cachedMtime = cached.lastModified?.getTime() || 0;
+        const cachedMtime = cached.lastModified?.getTime();
+        const sameMeta =
+          cachedMtime !== undefined &&
+          currentStats.mtime.getTime() === cachedMtime &&
+          cached.size !== undefined &&
+          currentStats.size === cached.size;
 
-        if (currentStats.mtime.getTime() !== cachedMtime) {
-          // File has changed, invalidate cache
+        if (!sameMeta) {
+          this.analysisCache.delete(cacheKey);
+          return null;
+        }
+
+        // mtime and size collided. Identity includes the bytes.
+        const hash = bytesHash(fs.readFileSync(filePath, "utf8"));
+        if (cached.contentHash !== hash) {
           this.analysisCache.delete(cacheKey);
           return null;
         }
@@ -400,13 +418,12 @@ export class CodebaseContextAnalyzer {
       try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
-        // One listing decides module vs tree. Root is not classified as a module.
+        // Names decide module vs tree. Do not walk this snapshot.
         if (checkModule && this.isModuleNames(entries.map((entry) => entry.name))) {
           const moduleInfo = await this.analyzeModule(
             dirPath,
             relativePath,
             jobId,
-            entries,
           );
           modules.set(relativePath, moduleInfo);
           return;
@@ -591,7 +608,7 @@ export class CodebaseContextAnalyzer {
       let exports: string[] = [];
 
       try {
-        // Check cache first for performance
+        // Same path and mtime still miss when size or bytes change.
         const cacheKey = `file:${filePath}:${stats.mtime.getTime()}`;
         const cached = this.getCachedAnalysis(cacheKey);
         if (cached) {
@@ -634,6 +651,8 @@ export class CodebaseContextAnalyzer {
             exports,
             content,
             lastModified: stats.mtime,
+            size: stats.size,
+            contentHash: bytesHash(content),
             timestamp: Date.now(),
           });
         }
@@ -696,7 +715,6 @@ export class CodebaseContextAnalyzer {
     dirPath: string,
     relativePath: string,
     jobId: string,
-    prefetched?: fs.Dirent[],
   ): Promise<ModuleInfo> {
     const files: FileInfo[] = [];
     const dependencies = new Set<string>();
@@ -705,10 +723,10 @@ export class CodebaseContextAnalyzer {
     const scanModuleFiles = async (
       modulePath: string,
       moduleRelativePath: string,
-      initial?: fs.Dirent[],
     ): Promise<void> => {
       try {
-        const entries = initial ?? fs.readdirSync(modulePath, { withFileTypes: true });
+        // List at the walk so a file created after classification is included.
+        const entries = fs.readdirSync(modulePath, { withFileTypes: true });
 
         for (const entry of entries) {
           const entryPath = path.join(modulePath, entry.name);
@@ -746,7 +764,7 @@ export class CodebaseContextAnalyzer {
       }
     };
 
-    await scanModuleFiles(dirPath, relativePath, prefetched);
+    await scanModuleFiles(dirPath, relativePath);
 
     // Determine module type
     const moduleType = this.classifyModule(relativePath, files);

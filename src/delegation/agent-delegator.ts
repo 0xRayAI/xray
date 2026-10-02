@@ -9,6 +9,7 @@
  * @since 2026-01-07
  */
 
+import { createHash } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import * as nodePath from "path";
@@ -149,7 +150,7 @@ export class AgentDelegator {
   /** Minimum confidence for a learned mapping to override hardcoded routing. */
   private static readonly MAPPING_CONFIDENCE_THRESHOLD = 0.7;
 
-  /** Parsed routing file. Key is path + mtime + size so a tuner rewrite is re-read. */
+  /** Parsed routing file. Identity is path, mtime, size, and a hash of the bytes. */
   private routingMappingsCache: { key: string; mappings: RoutingMapping[] } | null = null;
 
   constructor(
@@ -165,7 +166,7 @@ export class AgentDelegator {
 
   /**
    * Load routing-mappings.json. First file among .xray/, xray/, then cwd.
-   * Re-reads when path, mtime, or size changes so tuner writes still apply.
+   * Same path, mtime, and size still re-reads when the bytes change.
    */
   private loadRoutingMappings(): RoutingMapping[] {
     const candidates = [
@@ -177,11 +178,13 @@ export class AgentDelegator {
       try {
         const stat = fs.statSync(candidate);
         if (!stat.isFile()) continue;
-        const key = `${candidate}\0${stat.mtimeMs}\0${stat.size}`;
+        const bytes = fs.readFileSync(candidate);
+        const hash = createHash("sha256").update(bytes).digest("hex");
+        const key = `${candidate}\0${stat.mtimeMs}\0${stat.size}\0${hash}`;
         if (this.routingMappingsCache?.key === key) {
           return this.routingMappingsCache.mappings;
         }
-        const parsed: unknown = JSON.parse(fs.readFileSync(candidate, "utf-8"));
+        const parsed: unknown = JSON.parse(bytes.toString("utf-8"));
         if (!Array.isArray(parsed)) continue;
 
         const valid: RoutingMapping[] = [];
