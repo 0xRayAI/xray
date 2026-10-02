@@ -152,21 +152,17 @@ describe('CodexPolicyService', () => {
     });
 
     it('does not pin a codex read that raced the file', async () => {
-      let stamps = 0;
-      mockStatSync.mockImplementation(() => {
-        stamps += 1;
-        // The second stat is the only one that moves. A stamp taken only after
-        // the read stores 10, and the next call still sees 10, so a pin would hit.
-        const mtimeMs = stamps === 2 ? 20 : 10;
-        return { isFile: () => true, mtimeMs, size: 100 };
+      let mtimeMs = 10;
+      mockStatSync.mockImplementation(() => ({ isFile: () => true, mtimeMs, size: 100 }));
+      mockReadFile.mockImplementation(async () => {
+        const version = mtimeMs === 10 ? '1' : '2';
+        const terms = version === '1' ? { a: {} } : { a: {}, b: {} };
+        mtimeMs = 20;
+        return JSON.stringify({ version, terms });
       });
-      mockReadFile
-        .mockResolvedValueOnce(JSON.stringify({ version: '1', terms: { a: {} } }))
-        .mockResolvedValueOnce(JSON.stringify({ version: '2', terms: { a: {}, b: {} } }));
 
       const raced = await service.getCurrentCodex();
       expect(raced.version).toBe('1');
-      expect(stamps).toBe(2);
       expect(mockReadFile).toHaveBeenCalledTimes(1);
 
       const settled = await service.getCurrentCodex();
