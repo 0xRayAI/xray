@@ -30,7 +30,7 @@ export class FrameworkReportingSystem {
   private logRetentionHours = 24;
   private reportCache = new Map<
     string,
-    { data: ReportData; timestamp: Date }
+    { data: ReportData; formatted: string; timestamp: Date }
   >();
 
   async generateReport(config: ReportConfig): Promise<string> {
@@ -38,13 +38,12 @@ export class FrameworkReportingSystem {
     const cached = this.getCachedReport(reportId);
 
     if (cached && this.isCacheValid(cached.timestamp)) {
-      return formatReport(cached.data, config.outputFormat);
+      return cached.formatted;
     }
 
     const reportData = await this.collectReportData(config);
-    this.cacheReport(reportId, reportData);
-
     const formattedReport = formatReport(reportData, config.outputFormat);
+    this.cacheReport(reportId, reportData, formattedReport);
 
     if (config.outputPath) {
       await this.saveReportToFile(formattedReport, config.outputPath);
@@ -99,12 +98,12 @@ export class FrameworkReportingSystem {
     ];
     const recentActivity = parsedLogs.slice(0, 10);
 
-    const errorCount = recentLogs.filter(
-      (log) => log.status === "error",
-    ).length;
-    const successCount = recentLogs.filter(
-      (log) => log.status === "success",
-    ).length;
+    let errorCount = 0;
+    let successCount = 0;
+    for (const log of recentLogs) {
+      if (log.status === "error") errorCount++;
+      else if (log.status === "success") successCount++;
+    }
     const healthScore =
       recentLogs.length > 0
         ? (successCount / (successCount + errorCount)) * 100
@@ -147,7 +146,7 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
   private getCachedReport(
     reportId: string,
-  ): { data: ReportData; timestamp: Date } | null {
+  ): { data: ReportData; formatted: string; timestamp: Date } | null {
     return this.reportCache.get(reportId) || null;
   }
 
@@ -157,8 +156,16 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
     return cacheAgeMs < maxCacheAgeMs;
   }
 
-  private cacheReport(reportId: string, data: ReportData): void {
-    this.reportCache.set(reportId, { data, timestamp: new Date() });
+  private cacheReport(
+    reportId: string,
+    data: ReportData,
+    formatted: string,
+  ): void {
+    this.reportCache.set(reportId, {
+      data,
+      formatted,
+      timestamp: new Date(),
+    });
 
     if (this.reportCache.size > 10) {
       const keys = Array.from(this.reportCache.keys());
