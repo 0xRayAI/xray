@@ -108,26 +108,45 @@ export function hasValidSynthesisConsultReceipt(
   return validateSynthesisConsultReceipt(receipt, todoId, expected);
 }
 
-export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
-  const normalized = text.toUpperCase();
-  const decisionMatch = text.match(/\bDECISION:\s*(\w+)/i);
-  if (decisionMatch) {
-    const decision = decisionMatch[1]!.toLowerCase();
-    if (decision === 'approve' || decision === 'approved' || decision === 'pass') {
-      return 'PASS';
-    }
-    if (decision === 'reject' || decision === 'rejected' || decision === 'fail') {
-      return 'FAIL';
-    }
-    if (
-      decision === 'abstain' ||
-      decision === 'needs_revision' ||
-      decision === 'conditional' ||
-      decision === 'revise'
-    ) {
-      return 'CONDITIONAL';
-    }
+function verdictFromToken(token: string): SynthesisConsultVerdict | null {
+  const value = token.toLowerCase();
+  if (value === 'approve' || value === 'approved' || value === 'pass') return 'PASS';
+  if (value === 'reject' || value === 'rejected' || value === 'fail') return 'FAIL';
+  if (
+    value === 'abstain' ||
+    value === 'needs_revision' ||
+    value === 'conditional' ||
+    value === 'revise'
+  ) {
+    return 'CONDITIONAL';
   }
+  return null;
+}
+
+/** The last single Verdict or DECISION line wins. A menu line that lists every word does not. */
+function lastExplicitVerdict(text: string): SynthesisConsultVerdict | null {
+  let found: SynthesisConsultVerdict | null = null;
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim().replace(/^[-*•]\s*/, '');
+    const match = trimmed.match(/^(?:Verdict|DECISION):\s*(\w+)/i);
+    const token = match?.[1];
+    if (!token || trimmed.includes('|')) continue;
+    const verdict = verdictFromToken(token);
+    if (verdict) found = verdict;
+  }
+  return found;
+}
+
+export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
+  const explicit = lastExplicitVerdict(text);
+  if (explicit) return explicit;
+
+  const decisionToken = text.match(/\bDECISION:\s*(\w+)/i)?.[1];
+  if (decisionToken) {
+    const mapped = verdictFromToken(decisionToken);
+    if (mapped) return mapped;
+  }
+  const normalized = text.toUpperCase();
   if (/\bCONDITIONAL(\s+PASS)?\b/.test(normalized)) return 'CONDITIONAL';
   if (/\b(?:PASS|SHIP|APPROVE)\b/.test(normalized)) return 'PASS';
   if (/\b(?:FAIL|REJECT)\b/.test(normalized)) return 'FAIL';
