@@ -807,24 +807,24 @@ function stampPlane(root, id) {
   }
 }
 
-/** A search stays stopped. The lens file stays open. One later read may go on, then the next read stops. */
+/** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
   if (!researchCall(toolName, spoken)) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
+  if (names.length === 1) {
+    stampPlane(root, names[0]);
+    return null;
+  }
   if (/^read_file$/i.test(String(toolName || ''))) {
     if (loadReadPass(root) === 'armed') {
       saveReadPass(root, true);
       return null;
     }
-    if (loadReadPass(root) !== 'spent') {
-      if (names.length === 1) stampPlane(root, names[0]);
-      saveReadPass(root, false);
-    }
-    return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
+    if (loadReadPass(root) !== 'spent') saveReadPass(root, false);
+    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
   }
-  if (names.length === 1) stampPlane(root, names[0]);
-  return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
+  return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
 }
 
 function seenFields(plane, root) {
