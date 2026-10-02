@@ -368,6 +368,88 @@ describe("AgentMetricsSystem", () => {
       expect(aggregated.summary.totalInvocations).toBe(0);
       expect(aggregated.byAgent).toEqual({});
     });
+
+    it("should keep averages and period buckets on a large batch", () => {
+      const { system } = createMetricsSystem();
+      system.updateRetentionConfig({ maxEntries: 4000, enableAutoCleanup: false });
+      const total = 4000;
+      for (let i = 0; i < total; i++) {
+        system.trackInvocation({
+          agentName: i % 2 === 0 ? "a" : "b",
+          agentType: "custom",
+          operation: "bulk",
+          success: i % 4 !== 0,
+          duration: i,
+          complexityScore: 10,
+          complexityLevel: "simple",
+        });
+      }
+
+      const aggregated = system.aggregateMetrics();
+      const again = system.aggregateMetrics();
+
+      expect(aggregated.summary.totalInvocations).toBe(total);
+      expect(aggregated.summary.averageDuration).toBe((total - 1) / 2);
+      expect(aggregated.summary.overallSuccessRate).toBe(75);
+      expect(aggregated.byAgent.a?.totalInvocations).toBe(total / 2);
+      expect(aggregated.byAgent.a?.averageDuration).toBe((total - 2) / 2);
+      expect(aggregated.byAgent.a?.successRate).toBe(50);
+      expect(aggregated.byAgent.b?.totalInvocations).toBe(total / 2);
+      expect(aggregated.byAgent.b?.averageDuration).toBe(total / 2);
+      expect(aggregated.byAgent.b?.successRate).toBe(100);
+      expect(aggregated.byComplexity.simple?.totalInvocations).toBe(total);
+      expect(again.summary.averageDuration).toBe(aggregated.summary.averageDuration);
+      expect(again.byAgent.a?.successRate).toBe(50);
+      expect(system.getStatistics().averageDuration).toBe((total - 1) / 2);
+      expect(system.getStatistics().successRate).toBe(75);
+
+      system.destroy();
+    });
+
+    it("should move period buckets when a stored timestamp changes", () => {
+      const previousTz = process.env.TZ;
+      // UTC midnight Monday is still Sunday in Chicago, so the local week is not the UTC week.
+      process.env.TZ = "America/Chicago";
+      const { system, mockState } = createMetricsSystem();
+      try {
+        system.trackInvocation({
+          agentName: "mover",
+          agentType: "custom",
+          operation: "move",
+          success: true,
+          duration: 40,
+          complexityScore: 10,
+          complexityLevel: "simple",
+        });
+
+        const first = system.aggregateMetrics();
+        const today = new Date().toISOString().slice(0, 10);
+        expect(first.byTimePeriod[today]?.totalInvocations).toBe(1);
+
+        const stored = mockState.get<AgentInvocation[]>("agent_invocations");
+        expect(stored).toBeDefined();
+        const stamp = Date.parse("2020-06-15T00:00:00.000Z");
+        stored![0]!.timestamp = stamp;
+
+        const second = system.aggregateMetrics();
+        expect(second.byTimePeriod["2020-06-15"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-06-15T00:00"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-06"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod[today]).toBeUndefined();
+        expect(system.getTimePeriodSummary("2020-06-15T00:00", "hour")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06-15", "day")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06", "month")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06-15", "hour")).toBeNull();
+        expect(system.getStatistics().oldestInvocation).toBe(stamp);
+        expect(second.byTimePeriod["2020-W24"]?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-W24", "week")?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-W25"]).toBeUndefined();
+      } finally {
+        system.destroy();
+        if (previousTz === undefined) delete process.env.TZ;
+        else process.env.TZ = previousTz;
+      }
+    });
   });
 
   describe("getAgentSummary", () => {
