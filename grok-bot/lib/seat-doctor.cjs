@@ -66,6 +66,104 @@ function millPlantFromInventory(inventory) {
   };
 }
 
+function xrayPackageInstalled(cwd) {
+  return isFile(path.join(cwd, 'node_modules', '0xray', 'package.json'));
+}
+
+function shellTokens(command) {
+  const tokens = [];
+  let current = '';
+  let quote = '';
+  for (let i = 0; i < command.length; i += 1) {
+    const ch = command[i];
+    if (quote) {
+      if (ch === quote) quote = '';
+      else current += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += ch;
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+// ${NAME:-fallback}rest is the path when the variable is unset. A token with no slash is a PATH name (node, npx).
+function literalPathToken(token) {
+  let value = token;
+  const eq = value.indexOf('=');
+  if (eq > 0 && value.slice(0, eq).indexOf('/') === -1) value = value.slice(eq + 1);
+  const fallback = /^\$\{[A-Za-z_][A-Za-z0-9_]*:-([^}]*)\}(.*)$/.exec(value);
+  if (fallback) value = `${fallback[1]}${fallback[2]}`;
+  if (value.indexOf('/') === -1) return null;
+  // @scope/name is an npm package on PATH, not a file under cwd.
+  if (/^@[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) return null;
+  if (value.indexOf('$') !== -1 || value.indexOf('`') !== -1) return null;
+  return value;
+}
+
+function commandStrings(node, out) {
+  if (Array.isArray(node)) {
+    for (const item of node) commandStrings(item, out);
+    return;
+  }
+  if (!node || typeof node !== 'object') return;
+  if (typeof node.command === 'string') out.push(node.command);
+  if (Array.isArray(node.args)) {
+    for (const arg of node.args) {
+      if (typeof arg === 'string') out.push(arg);
+      else commandStrings(arg, out);
+    }
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'command' || key === 'args') continue;
+    if (value && typeof value === 'object') commandStrings(value, out);
+  }
+}
+
+function deadHookPaths(cwd) {
+  const dir = path.join(cwd, '.grok', 'hooks');
+  let names = [];
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const dead = [];
+  const seen = new Set();
+  const files = names.filter((entry) => entry.endsWith('.json')).sort();
+  for (const name of files) {
+    const file = path.join(dir, name);
+    const json = readJson(file);
+    if (!json) continue;
+    const commands = [];
+    commandStrings(json, commands);
+    for (const command of commands) {
+      for (const token of shellTokens(command)) {
+        const literal = literalPathToken(token);
+        if (!literal) continue;
+        const resolved = path.resolve(cwd, literal);
+        if (fs.existsSync(resolved)) continue;
+        const key = `${file}\n${resolved}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        dead.push({ file, path: resolved });
+      }
+    }
+  }
+  return dead;
+}
+
 function probeRepertoire(cwd) {
   const pkgPath = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json');
   if (!fs.existsSync(pkgPath)) {
@@ -314,11 +412,20 @@ function migrateHouse({ seatRoot, srcDir, destDir, names }) {
 
 function nextSteps(report) {
   const steps = [];
-  if (!report.plant.ok) {
+  const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
+  if (!report.plant.installed) steps.push(installStep);
+  const millReady = report.plant.mill && report.plant.inspect;
+  if (!millReady) {
     steps.push('Fasten mill+inspect: npm i 0xray && npx @0xray/foundry mint --skip-live');
     steps.push('Prove plant: npx @0xray/foundry inspect --skip-live (expect mill + inspect, costume false)');
-  } else {
+  } else if (report.plant.ok) {
     steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
+  } else if (report.plant.deadHooks.length > 0) {
+    for (const dead of report.plant.deadHooks) {
+      steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);
+    }
+  } else if (report.plant.installed) {
+    steps.push(installStep);
   }
   if (!walletStepsOff(report)) {
     steps.push('Hangar shops: npx groover-hangar (extract / witness / pin)');
@@ -348,7 +455,9 @@ function diagnoseSeat(opts = {}) {
   const fromInventory = millPlantFromInventory(inventory);
   const mill = Boolean(millFile) || fromInventory.mill;
   const inspect = Boolean(inspectFile) || fromInventory.inspect;
-  const plantOk = Boolean(seat) && mill && inspect;
+  const installed = xrayPackageInstalled(cwd);
+  const deadHooks = deadHookPaths(cwd);
+  const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0;
   const house = probeHouse(cwd, opts.env || process.env);
   const report = {
     ok: plantOk && house.status !== 'fail',
@@ -356,6 +465,8 @@ function diagnoseSeat(opts = {}) {
     seat,
     plant: {
       ok: plantOk,
+      installed,
+      deadHooks,
       mill,
       inspect,
       millFile,
@@ -375,6 +486,18 @@ function diagnoseSeat(opts = {}) {
   return report;
 }
 
+function plantLine(report) {
+  if (report.plant.ok) return 'Plant: PASS — mill+inspect fastened';
+  const parts = [];
+  if (!report.plant.mill || !report.plant.inspect) parts.push('mill+inspect not fastened');
+  if (!report.plant.installed) parts.push('missing node_modules/0xray/package.json');
+  for (const dead of report.plant.deadHooks) {
+    parts.push(`${dead.file} missing ${dead.path}`);
+  }
+  if (parts.length === 0) parts.push('mill+inspect not fastened');
+  return `Plant: FAIL — ${parts.join('; ')}`;
+}
+
 function formatDoctor(report) {
   const lines = [];
   lines.push('@0xray/grok-bot doctor — seat plant check');
@@ -387,7 +510,7 @@ function formatDoctor(report) {
     lines.push(`Root: ${report.cwd}`);
   }
   lines.push('');
-  lines.push(`Plant: ${report.plant.ok ? 'PASS' : 'FAIL'} — mill+inspect ${report.plant.ok ? 'fastened' : 'not fastened'}`);
+  lines.push(plantLine(report));
   lines.push(`  mill: ${report.plant.mill ? 'yes' : 'miss'}${report.plant.millFile ? ` (${report.plant.millFile})` : ''}`);
   lines.push(
     `  inspect: ${report.plant.inspect ? 'yes' : 'miss'}${report.plant.inspectFile ? ` (${report.plant.inspectFile})` : ''}`,
