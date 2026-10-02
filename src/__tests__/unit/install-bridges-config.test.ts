@@ -614,7 +614,9 @@ describe("repeat fasten", () => {
       `${JSON.stringify({ version: 1, hooks: { preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }] } })}\n`,
     );
     for (const name of CURSOR_HOOK_SCRIPTS) {
-      fs.writeFileSync(path.join(hooksDir, name), `#!/bin/sh\necho ${name}\n`);
+      const script = path.join(hooksDir, name);
+      fs.writeFileSync(script, `#!/bin/sh\necho ${name}\n`);
+      fs.chmodSync(script, 0o755);
     }
     const { deployManagedAgents } = require("../../../scripts/node/postinstall.cjs") as {
       deployManagedAgents: (pkg: string, target: string, log: () => void) => void;
@@ -633,6 +635,21 @@ describe("repeat fasten", () => {
       resetWearIo();
       wear();
       expect(readWearIo().writes).toBeGreaterThan(0);
+
+      const configPath = path.join(consumer, ".xray", "config.json");
+      const parsedConfig = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
+      const canonical = `${JSON.stringify(parsedConfig, null, 2)}\n`;
+      fs.writeFileSync(configPath, JSON.stringify(parsedConfig, null, 4));
+      resetWearIo();
+      deployXrayConfig(consumer, packageRoot, () => {});
+      expect(fs.readFileSync(configPath, "utf8")).toBe(canonical);
+      expect(readWearIo().writes).toBeGreaterThan(0);
+
+      fs.writeFileSync(configPath, canonical.slice(0, -1));
+      resetWearIo();
+      deployXrayConfig(consumer, packageRoot, () => {});
+      expect(fs.readFileSync(configPath, "utf8")).toBe(canonical);
+
       const before = snapshot(consumer);
       const agentsStamp = fs.statSync(path.join(consumer, "AGENTS.md")).mtimeMs;
 
@@ -648,7 +665,32 @@ describe("repeat fasten", () => {
       }
       expect(fs.statSync(path.join(consumer, "AGENTS.md")).mtimeMs).toBe(agentsStamp);
 
-      const configPath = path.join(consumer, ".xray", "config.json");
+      const hermesBridge = path.join(consumer, ".hermes", "plugins", "xray-hermes", "bridge.mjs");
+      const grokMcp = path.join(consumer, ".grok", "plugins", "0xray", ".mcp.json");
+      const cursorHook = path.join(consumer, ".cursor", "hooks", "pre-tool-use.sh");
+      const modeOf = (file: string) => fs.statSync(file).mode & 0o777;
+      expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(grokMcp)).toBe(0o644);
+      expect(modeOf(cursorHook)).toBe(0o755);
+      fs.chmodSync(hermesBridge, 0o600);
+      fs.chmodSync(grokMcp, 0o700);
+      fs.chmodSync(cursorHook, 0o600);
+      const hermesBytes = fs.readFileSync(hermesBridge);
+      const grokBytes = fs.readFileSync(grokMcp);
+      const cursorBytes = fs.readFileSync(cursorHook);
+      resetWearIo();
+      wear();
+      expect(fs.readFileSync(hermesBridge).equals(hermesBytes)).toBe(true);
+      expect(fs.readFileSync(grokMcp).equals(grokBytes)).toBe(true);
+      expect(fs.readFileSync(cursorHook).equals(cursorBytes)).toBe(true);
+      expect(modeOf(hermesBridge)).toBe(0o644);
+      expect(modeOf(grokMcp)).toBe(0o644);
+      expect(modeOf(cursorHook)).toBe(0o755);
+
+      resetWearIo();
+      wear();
+      expect(readWearIo().writes).toBe(0);
+
       const parsed = JSON.parse(fs.readFileSync(configPath, "utf8")) as Record<string, unknown>;
       const removed = Object.keys(parsed)[0];
       const saved = parsed[removed];

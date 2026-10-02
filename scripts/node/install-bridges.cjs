@@ -67,6 +67,24 @@ function writeFileIfChanged(filePath, body) {
   return true;
 }
 
+function fileMode(filePath) {
+  try {
+    return fs.statSync(filePath).mode & 0o777;
+  } catch {
+    return null;
+  }
+}
+
+/** Node copyFileSync/cpSync still copy mode when the bytes already match. */
+function adoptSourceMode(src, dest) {
+  const srcMode = fileMode(src);
+  const destMode = fileMode(dest);
+  if (srcMode === null || destMode === null || srcMode === destMode) return false;
+  fs.chmodSync(dest, srcMode);
+  wearIo.writes += 1;
+  return true;
+}
+
 function copyFileIfChanged(src, dest) {
   let srcBytes;
   try {
@@ -77,6 +95,7 @@ function copyFileIfChanged(src, dest) {
     return true;
   }
   if (sameFileBytes(dest, srcBytes)) {
+    if (adoptSourceMode(src, dest)) return true;
     wearIo.skips += 1;
     return false;
   }
@@ -115,14 +134,6 @@ function chmodIfNeeded(filePath, mode) {
     fs.chmodSync(filePath, mode);
     wearIo.writes += 1;
     return true;
-  } catch {
-    return false;
-  }
-}
-
-function jsonFileMatches(filePath, data) {
-  try {
-    return jsonDeepEqual(JSON.parse(fs.readFileSync(filePath, "utf8")), data);
   } catch {
     return false;
   }
@@ -562,6 +573,10 @@ function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
     const abs = destFiles.get(rel);
     if (!abs || !sameFileBytes(abs, body)) return false;
   }
+  for (const [rel, abs] of sourceFiles) {
+    const destAbs = destFiles.get(rel);
+    if (destAbs) adoptSourceMode(abs, destAbs);
+  }
   return true;
 }
 
@@ -790,8 +805,7 @@ function readPackageVersion(packageRoot) {
 
 function writeJsonFile(filePath, data) {
   const body = `${JSON.stringify(data, null, 2)}\n`;
-  // Shipped JSON can match and still lack the trailing newline stringify adds.
-  if (sameFileBytes(filePath, body) || jsonFileMatches(filePath, data)) {
+  if (sameFileBytes(filePath, body)) {
     wearIo.skips += 1;
     return false;
   }
