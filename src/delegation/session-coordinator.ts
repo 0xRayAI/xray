@@ -471,11 +471,11 @@ export class SessionCoordinator {
         break;
 
       case "consensus":
-        // All values must be the same
+        // All values must be the same. Stringify the anchor once.
         const firstValue = sharedData[0]?.value;
+        const firstKey = JSON.stringify(firstValue);
         const allSame = sharedData.every(
-          (item: SharedContextEntry) =>
-            JSON.stringify(item.value) === JSON.stringify(firstValue),
+          (item: SharedContextEntry) => JSON.stringify(item.value) === firstKey,
         );
         resolved = allSame ? firstValue : undefined;
         break;
