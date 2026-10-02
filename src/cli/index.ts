@@ -182,6 +182,17 @@ program
   });
 
 program
+  .command("monitor")
+  .description("Current picture of the worn suit (activity, inference state, repertoire, version)")
+  .option("-n, --lines <count>", "Activity lines to show", "8")
+  .action(async (options: { lines?: string }) => {
+    const { printSuitMonitor } = await import("./commands/suit-monitor.js");
+    const parsed = Number(options.lines);
+    const lines = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 8;
+    await printSuitMonitor(process.cwd(), packageRoot, lines);
+  });
+
+program
   .command("validate")
   .description("Validate consumer wear (pack paths, Cursor hooks, mill plant) — not leftover init.sh")
   .action(async () => {
@@ -1222,6 +1233,7 @@ Examples:
     $ npx 0xray capabilities  # Show all available capabilities
     $ npx 0xray health        # Check framework health and status
     $ npx 0xray report        # Generate activity and health reports
+    $ npx 0xray monitor       # Current picture of the worn suit
     $ npx 0xray fix           # Automatically restore missing config files
     $ npx 0xray doctor        # Diagnose issues (does not fix them)
     $ npx 0xray analytics     # Pattern analytics and insights
