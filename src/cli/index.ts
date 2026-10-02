@@ -12,7 +12,6 @@ import { join, resolve } from "path";
 import { fileURLToPath } from "node:url";
 
 import { readFileSync, existsSync } from "fs";
-
 async function loadFrameworkLogger() {
   const { frameworkLogger } = await import("../core/framework-logger.js");
   return frameworkLogger;
@@ -489,6 +488,14 @@ program
       );
       process.exit(1);
     }
+  });
+
+program
+  .command("pulse")
+  .description("Print one line: worn CLI, repertoire, inference age, activity, lens, plant")
+  .action(async () => {
+    const { readSuitPulse } = await import("./suit-pulse.js");
+    process.stdout.write(`${readSuitPulse(process.cwd()).line}\n`);
   });
 
 program
@@ -1234,6 +1241,7 @@ Examples:
     $ npx 0xray health        # Check framework health and status
     $ npx 0xray report        # Generate activity and health reports
     $ npx 0xray monitor       # Current picture of the worn suit
+    $ npx 0xray pulse         # One line: worn, repertoire, inference, activity, lens, plant
     $ npx 0xray fix           # Automatically restore missing config files
     $ npx 0xray doctor        # Diagnose issues (does not fix them)
     $ npx 0xray analytics     # Pattern analytics and insights
