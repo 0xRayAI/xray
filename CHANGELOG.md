@@ -42,6 +42,22 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.35] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: wear rewrites a checkout dist/cli launch to node_modules/0xray (aa44ae462)
+
+### 📚 Documentation
+- docs: point the trim restore at 601cdafc0 (be2a4e91d)
+- docs: say what each chat can actually do (0c70532a6)
+
+### 🔧 Maintenance
+- chore: drop unused modules and wait for the registry before tagging (3a29409a8)
+
+---
+
 ## [4.0.34] - 2026-10-01
 
 ### 🔄 Changes
