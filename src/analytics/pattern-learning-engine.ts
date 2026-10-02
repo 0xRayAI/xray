@@ -122,17 +122,7 @@ export class PatternLearningEngine {
 
     // Detect emerging patterns for new additions
     if (this.config.enableAutoAddition) {
-      const emergentResult = emergingPatternDetector.detectEmergingPatterns(
-        outcomes.map(o => ({
-          taskId: o.taskId,
-          taskDescription: o.taskDescription,
-          routedAgent: o.routedAgent,
-          routedSkill: o.routedSkill,
-          confidence: o.confidence,
-          timestamp: new Date(),
-          success: o.success
-        }))
-      );
+      const emergentResult = emergingPatternDetector.detectEmergingPatterns(outcomes);
 
       result.newPatterns = this.generateNewPatterns(
         emergentResult.emergentPatterns,
