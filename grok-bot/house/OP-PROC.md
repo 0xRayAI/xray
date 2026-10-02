@@ -98,7 +98,7 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 
 Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to these instead of repeating status in chat.
 
-**Repo watchers (issue + PR cadence):** the house keeps event-driven watchers on org repos named in `house/` for issues and pull requests (open, review, CI, merge). No timer polls when a GitHub event trigger exists. Quiet when nothing changed. CoS owns the board digest; forge owns eng PR/CI cadence. A watcher wake resumes the same seat (and the same `bc-…` when the work is heavy). No new clouds without Blaze's yes.
+**Repo watchers (issue + PR cadence):** the house keeps event-driven watchers on org repos named in `house/WATCHERS.md` for issues and pull requests (open, review, CI, merge). No timer polls when a GitHub event trigger exists. Quiet when nothing changed. CoS owns the board digest; forge owns eng PR/CI cadence. A watcher wake resumes the same seat (and the same `bc-…` when the work is heavy). No new clouds without Blaze's yes.
 
 ## Relationship to pack files
 
