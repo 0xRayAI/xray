@@ -106,6 +106,8 @@ function literalPathToken(token) {
   const fallback = /^\$\{[A-Za-z_][A-Za-z0-9_]*:-([^}]*)\}(.*)$/.exec(value);
   if (fallback) value = `${fallback[1]}${fallback[2]}`;
   if (value.indexOf('/') === -1) return null;
+  // @scope/name is an npm package on PATH, not a file under cwd.
+  if (/^@[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) return null;
   if (value.indexOf('$') !== -1 || value.indexOf('`') !== -1) return null;
   return value;
 }

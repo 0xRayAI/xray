@@ -245,6 +245,21 @@ describe('grok-bot seat doctor — diagnose', () => {
     }
   });
 
+  it('does not treat an npm scope as a hook file', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeHook(dir, '0xray.json', 'npx @0xray/foundry inspect --skip-live');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.installed).toBe(true);
+      expect(report.plant.deadHooks).toEqual([]);
+      expect(report.plant.ok).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('passes when 0xray is installed and hook targets exist', () => {
     const dir = scratch();
     try {
