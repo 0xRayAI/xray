@@ -407,46 +407,48 @@ describe("AgentMetricsSystem", () => {
     });
 
     it("should move period buckets when a stored timestamp changes", () => {
+      const previousTz = process.env.TZ;
+      // UTC midnight Monday is still Sunday in Chicago, so the local week is not the UTC week.
+      process.env.TZ = "America/Chicago";
       const { system, mockState } = createMetricsSystem();
-      system.trackInvocation({
-        agentName: "mover",
-        agentType: "custom",
-        operation: "move",
-        success: true,
-        duration: 40,
-        complexityScore: 10,
-        complexityLevel: "simple",
-      });
+      try {
+        system.trackInvocation({
+          agentName: "mover",
+          agentType: "custom",
+          operation: "move",
+          success: true,
+          duration: 40,
+          complexityScore: 10,
+          complexityLevel: "simple",
+        });
 
-      const first = system.aggregateMetrics();
-      const today = new Date().toISOString().slice(0, 10);
-      expect(first.byTimePeriod[today]?.totalInvocations).toBe(1);
+        const first = system.aggregateMetrics();
+        const today = new Date().toISOString().slice(0, 10);
+        expect(first.byTimePeriod[today]?.totalInvocations).toBe(1);
 
-      const stored = mockState.get<AgentInvocation[]>("agent_invocations");
-      expect(stored).toBeDefined();
-      stored![0]!.timestamp = Date.UTC(2020, 5, 15, 12, 30, 0);
+        const stored = mockState.get<AgentInvocation[]>("agent_invocations");
+        expect(stored).toBeDefined();
+        const stamp = Date.parse("2020-06-15T00:00:00.000Z");
+        stored![0]!.timestamp = stamp;
 
-      const second = system.aggregateMetrics();
-      expect(second.byTimePeriod["2020-06-15"]?.totalInvocations).toBe(1);
-      expect(second.byTimePeriod["2020-06-15T12:00"]?.totalInvocations).toBe(1);
-      expect(second.byTimePeriod["2020-06"]?.totalInvocations).toBe(1);
-      expect(second.byTimePeriod[today]).toBeUndefined();
-      expect(system.getTimePeriodSummary("2020-06-15T12:00", "hour")?.totalInvocations).toBe(1);
-      expect(system.getTimePeriodSummary("2020-06-15", "day")?.totalInvocations).toBe(1);
-      expect(system.getTimePeriodSummary("2020-06", "month")?.totalInvocations).toBe(1);
-      expect(system.getTimePeriodSummary("2020-06-15", "hour")).toBeNull();
-      expect(system.getStatistics().oldestInvocation).toBe(Date.UTC(2020, 5, 15, 12, 30, 0));
-
-      const weekKeys = Object.keys(second.byTimePeriod).filter((key) => key.includes("W"));
-      expect(weekKeys).toHaveLength(1);
-      const weekKey = weekKeys[0];
-      expect(weekKey).toBeDefined();
-      if (weekKey) {
-        expect(second.byTimePeriod[weekKey]?.totalInvocations).toBe(1);
-        expect(system.getTimePeriodSummary(weekKey, "week")?.totalInvocations).toBe(1);
+        const second = system.aggregateMetrics();
+        expect(second.byTimePeriod["2020-06-15"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-06-15T00:00"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-06"]?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod[today]).toBeUndefined();
+        expect(system.getTimePeriodSummary("2020-06-15T00:00", "hour")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06-15", "day")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06", "month")?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-06-15", "hour")).toBeNull();
+        expect(system.getStatistics().oldestInvocation).toBe(stamp);
+        expect(second.byTimePeriod["2020-W24"]?.totalInvocations).toBe(1);
+        expect(system.getTimePeriodSummary("2020-W24", "week")?.totalInvocations).toBe(1);
+        expect(second.byTimePeriod["2020-W25"]).toBeUndefined();
+      } finally {
+        system.destroy();
+        if (previousTz === undefined) delete process.env.TZ;
+        else process.env.TZ = previousTz;
       }
-
-      system.destroy();
     });
   });
 
