@@ -25,7 +25,9 @@ describe('pipeline plates', () => {
       'processor',
       'reporting',
       'memory-recall',
+      'stamp-plate',
       'house',
+      'review',
       'goggles',
       'suit',
       'kits',
@@ -64,6 +66,9 @@ describe('pipeline plates', () => {
 
   it('does not recall house from a bare house word or when other plates tie', () => {
     expect(recallPlate('in-house tooling review')).toBeNull();
+    expect(recallPlate('review plate')?.id).toBe('review');
+    expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
+    expect(recallPlate('re-review that head')?.id).toBe('review');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
@@ -147,6 +152,8 @@ describe('pipeline plates', () => {
     expect(recallPlate('outer plane')).toBeNull();
     expect(recallPlate('kind 0')).toBeNull();
     expect(recallPlate('wear the suit')).toBeNull();
+    expect(recallPlate('stamp plate')?.id).toBe('stamp-plate');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     const goggles = loadPlate('goggles');
     expect(goggles.body).toContain('it views one plane');
     expect(goggles.body).not.toMatch(/ACTUALITY|DICHOTOMY|SYNCOPATE|OUTER PLANES/);

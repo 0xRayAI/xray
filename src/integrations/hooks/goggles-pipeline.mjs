@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting'];
+const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate'];
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
@@ -66,6 +66,25 @@ function withoutPaths(text) {
   return String(text || '').replace(/(?:[\w.@~-]+\/)+[\w.-]+/g, ' ');
 }
 
+function plateIdsIn(spoken) {
+  const ids = [];
+  const re = /docs-site\/docs\/plates\/([a-z0-9-]+)\.md/ig;
+  let match;
+  while ((match = re.exec(String(spoken || '')))) ids.push(match[1]);
+  return ids;
+}
+
+function associatedPlates(plane) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[plane];
+    const listed = entry && Array.isArray(entry.plates) ? entry.plates.map(String) : [];
+    return new Set([plane, ...listed]);
+  } catch {
+    return new Set([plane]);
+  }
+}
+
 export function organStop(held, action) {
   if (!held) return null;
   if (held.drift) return organDeny(held.drift);
@@ -75,8 +94,13 @@ export function organStop(held, action) {
   const paths = (action?.paths || []).map(String).filter(Boolean);
   const tool = String(action?.tool || '');
   const spoken = [text, ...paths].join('\n');
-  if (/docs-site\/docs\/plates\/[a-z0-9-]+\.md/i.test(spoken)) {
-    return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
+  const drawn = plateIdsIn(spoken);
+  if (drawn.length) {
+    const allowed = associatedPlates(plane);
+    const foreign = drawn.filter((id) => !allowed.has(id));
+    if (foreign.length) {
+      return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
+    }
   }
   const otherFile = otherPlaneFile(plane, spoken);
   if (otherFile) return organDeny(`The reading is ${plane}. The action is ${otherFile}.`);

@@ -14,7 +14,9 @@ const PLATE_IDS = Object.freeze([
   "processor",
   "reporting",
   "memory-recall",
+  "stamp-plate",
   "house",
+  "review",
   "goggles",
   "suit",
   "kits",
@@ -73,6 +75,13 @@ const CUES = {
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
   ],
+  review: [
+    [/review plate/i, 6],
+    [/plates\/review\b/i, 6],
+    [/re-review/i, 5],
+    [/critic\s+FAIL/i, 5],
+    [/critic\s+PASS/i, 5],
+  ],
   goggles: [
     [/\bgoggles\b/i, 6],
   ],
@@ -90,6 +99,10 @@ const CUES = {
   ],
   glossary: [
     [/\bglossary\b/i, 6],
+  ],
+  "stamp-plate": [
+    [/stamp plate/i, 6],
+    [/plates\/stamp-plate/i, 6],
   ],
 };
 
