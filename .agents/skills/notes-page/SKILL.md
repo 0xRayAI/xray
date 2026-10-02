@@ -15,3 +15,4 @@ The page is `.xray/state/NOTES.md`. The default depth is the working notes: enou
 2. Under the pickup line, keep a short index and a Working notes body. The body holds the point, what is already on a lens, the library table, the open pull requests and their heads, the rituals, the standing orders, and the next cut. A one-line resume is the index, not the page.
 3. When the job moves, rewrite that body in the same change. A stale body is the bug this skill exists to close.
 4. Do not commit this file. Do not feed it to Repertoire. Do not mint a law from it.
+5. Compact sets the station line `Notes: THIN` or `Notes: present` and does not rewrite this body.

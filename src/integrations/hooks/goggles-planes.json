@@ -70,7 +70,7 @@
   "record-map": {
     "files": ["docs-site/docs/plates/record-map.md"],
     "skills": ".agents/skills/record-map/SKILL.md",
-    "plates": ["station-card", "notes-page", "reflection-page", "site-manual", "package-face", "write-home", "activity-log", "session-capture"]
+    "plates": ["station-card", "notes-page", "reflection-page", "site-manual", "package-face", "write-home", "activity-log", "session-capture", "lens-page"]
   },
   "write-home": {
     "files": ["src/integrations/hooks/write-home.cjs"],
@@ -204,6 +204,12 @@
     "mark": "function extractFromEvent",
     "skills": ".agents/skills/pre-tool/SKILL.md",
     "plates": ["lens-gate"]
+  },
+  "lens-page": {
+    "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
+    "mark": "export function formatCardPane",
+    "skills": ".agents/skills/lens-page/SKILL.md",
+    "plates": ["record-map", "lens-gate"]
   }
 }
 

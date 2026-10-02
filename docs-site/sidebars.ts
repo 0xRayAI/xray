@@ -90,6 +90,7 @@ const sidebars: SidebarsConfig = {
         'plates/kept-line',
         'plates/lens-gate',
         'plates/pre-tool',
+        'plates/lens-page',
         'plates/grokbot',
       ],
     },

@@ -45,6 +45,7 @@ const PLATE_IDS = Object.freeze([
   "kept-line",
   "lens-gate",
   "pre-tool",
+  "lens-page",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -223,6 +224,10 @@ const CUES = {
   "pre-tool": [
     [/pre tool/i, 6],
     [/plates\/pre-tool/i, 6],
+  ],
+  "lens-page": [
+    [/lens page/i, 6],
+    [/plates\/lens-page/i, 6],
   ],
 };
 

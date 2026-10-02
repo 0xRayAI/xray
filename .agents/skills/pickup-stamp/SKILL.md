@@ -10,5 +10,6 @@ The function is `stampNotesPickup` in `src/integrations/hooks/station-hook-runti
 
 1. It replaces the pickup line and leaves the rest of NOTES.md alone.
 2. It does not check that the working notes are present.
-3. The plate that stays with this lens is notes-page. The seat writes the body before this runs.
+3. Compact sets `Notes: THIN` or `Notes: present` on the station card. This function does not write that body.
+4. The plate that stays with this lens is notes-page. The seat writes the body before this runs.
 

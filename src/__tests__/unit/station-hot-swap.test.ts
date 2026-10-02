@@ -1363,6 +1363,72 @@ describe('station hot-swap', () => {
     expect(kept(mergeStationMarkdown(refreshed, twice))).toEqual(['Fresh: 1 behind main.']);
   });
 
+  it('compact marks a thin notes page and leaves the body', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-notes-mark-'));
+    try {
+      const notes = path.join(tmp, '.xray', 'state', 'NOTES.md');
+      fs.mkdirSync(path.dirname(notes), { recursive: true });
+      const thin = '**Pickup line:** keep this\n\nThe body stays.\n\nNo working section here.\n';
+      fs.writeFileSync(notes, thin);
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { hookEvent: 'pre_compact', intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(heat.notesLine).toBe('Notes: THIN');
+      const afterThin = fs.readFileSync(notes, 'utf8');
+      expect(afterThin).toContain('The body stays.');
+      expect(afterThin).toContain('No working section here.');
+      expect(afterThin).not.toContain('## Working notes');
+      const md = formatStationMarkdown({
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: heat.intent,
+        planLine: heat.planLine,
+        git: heat.git,
+        repertoireResume: heat.repertoireResume,
+        notesLine: heat.notesLine,
+      });
+      expect(md).toContain('Notes: THIN');
+      expect(md).toContain('Library: record-map — .agents/skills/record-map/SKILL.md');
+      const kept = mergeStationMarkdown(
+        formatStationMarkdown({
+          host: 'grok',
+          suit_profile: 'frontier',
+          intent: 'keep this',
+          planLine: 'next',
+          git: { branch: 'main', head: 'abc1234' },
+          repertoireResume: 'Repertoire: on — 1 signal',
+        }),
+        md,
+      );
+      expect(kept.split('\n').filter((line) => line.startsWith('Notes:'))).toEqual(['Notes: THIN']);
+
+      const thickBody = '**Pickup line:** keep this\n\n## Working notes\n\nThe body stays.\n';
+      fs.writeFileSync(notes, thickBody);
+      const thick = applyStationHeat(
+        tmp,
+        'grok',
+        { hookEvent: 'pre_compact', intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(thick.notesLine).toBe('Notes: present');
+      expect(fs.readFileSync(notes, 'utf8')).toContain('The body stays.');
+      expect(fs.readFileSync(notes, 'utf8')).toContain('## Working notes');
+
+      const wake = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(wake.notesLine).toBeUndefined();
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('heat drops torn footer scraps instead of pasting them back', () => {
     const stock = formatStationMarkdown({
       host: 'grok',
