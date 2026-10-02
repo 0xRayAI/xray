@@ -460,15 +460,16 @@ export class StorytellingTriggerProcessor extends PostProcessor {
 
   private getCommitsBetween(from: string, to: string, limit?: number): CommitInfo[] {
     try {
-      // Newest-first log, so -n is the same commits as slice(0, limit) without walking history.
+      // Newest-first, so -n matches slice(0, limit). %x1e starts every commit, including
+      // one with no shortstat — a blank-line split would glue that header to the next.
       const limitArg = typeof limit === "number" && limit > 0 ? `-n ${Math.floor(limit)} ` : "";
       const log = this.git(
-        `git log ${limitArg}${from}..${to} --format="%H||%s||%an||%aI" --shortstat --no-merges`,
+        `git log ${limitArg}${from}..${to} --format="%x1e%H||%s||%an||%aI" --shortstat --no-merges`,
       );
       if (!log) return [];
 
       const namesByHash = this.fileNamesByCommit(from, to, limit);
-      const commitBlocks = log.split(/\n{2,}/).filter((b) => b.trim().length > 0 && b.includes("||"));
+      const commitBlocks = log.split("\x1e").filter((b) => b.includes("||"));
 
       return commitBlocks.map((block) => {
         const lines = block.trim().split("\n");
