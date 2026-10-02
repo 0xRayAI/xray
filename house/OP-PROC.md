@@ -75,7 +75,7 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 
 - New house rules that belong in the suit go upstream to `0xRayAI/xray` (compute/dark: **#164**; constitution mount: **#163**; board Done-when/Stops-at: **#165**) with a `[suit: …]` tag so the suit can absorb them. Pull from upstream before starting work.
 - Organ gate, CAP, lens, and plate definitions live in the house **Lexicon** (and brand LEXICON when stamped). Do not expand them here.
-- House changes are committed in git under `grok-bot/house/`. Profiles point here instead of copying it.
+- House changes are committed in git under `house/`. Profiles point here instead of copying it.
 
 ---
 
@@ -105,10 +105,10 @@ Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to
 | File | Role after v2 lands |
 |------|---------------------|
 | `grok-bot/OP-PROC.md` | Pack template (generic roles). Keep short; point houses here for the five principles shape. |
-| `grok-bot/house/OP-PROC.md` | **This document** (our fleet). |
+| `house/OP-PROC.md` | **This document** (our fleet). |
 | `grok-bot/CADENCE.md` | Confer spend cadence + board drift + RACI — keep; do not duplicate the five principles. |
 | `house/AUTO-REVIEW.md` | Only Ask first / Allow enforcement surface. |
 
 ## Done when
 
-- This file replaces `grok-bot/house/OP-PROC.md` on main after critic Normal (docs). No Dist.
+- This file is `house/OP-PROC.md` on main after critic Normal (docs). No Dist.

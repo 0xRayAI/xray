@@ -19,7 +19,7 @@ Before parent handoff: read [`ATTENTION_STATE.md`](ATTENTION_STATE.md). If PR al
 
 Quiet-when-unchanged still applies to ATTENTION + empty digests.
 
-SSOT miss: [`MISS-CHAT-WAKE-2026-09-16.md`](../ops/MISS-CHAT-WAKE-2026-09-16.md).
+SSOT miss: [`MISS-CHAT-WAKE-2026-09-16.md`](../grok-bot/ops/MISS-CHAT-WAKE-2026-09-16.md).
 
 ## QUIET MODE 2026-09-16
 Blaze: ~89% utilization — silent unless capital / FAIL / Blaze poke. Rearm watches when util cools.
