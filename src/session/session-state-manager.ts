@@ -51,6 +51,10 @@ export class SessionStateManager {
   private dependencies = new Map<string, SessionDependency>();
   private sessionGroups = new Map<string, SessionGroup>();
   private failoverConfigs = new Map<string, FailoverConfig>();
+  /** Stable store records. A field write patches one key instead of cloning the map. */
+  private dependencyRecord: Record<string, SessionDependency> = {};
+  private groupRecord: Record<string, SessionGroup> = {};
+  private failoverRecord: Record<string, FailoverConfig> = {};
 
   constructor(
     stateManager: XrayStateManager,
@@ -161,11 +165,13 @@ export class SessionStateManager {
           metadata: {},
         };
         this.dependencies.set(depId, dep);
+        this.trackDependency(depId);
       }
       dep.dependedBy.push(sessionId);
     }
 
     this.dependencies.set(sessionId, dependency);
+    this.trackDependency(sessionId);
     this.persistDependencies();
 
     frameworkLogger.log(
@@ -244,6 +250,7 @@ export class SessionStateManager {
     };
 
     this.sessionGroups.set(groupId, group);
+    this.trackGroup(groupId);
     this.persistSessionGroups();
 
     for (const sessionId of sessionIds) {
@@ -572,6 +579,7 @@ export class SessionStateManager {
                   coordinatorId: plan.targetCoordinator,
                 };
                 this.sessionGroups.set(groupId, updatedGroup);
+                this.trackGroup(groupId);
                 this.persistSessionGroups();
                 break;
               }
@@ -641,6 +649,7 @@ export class SessionStateManager {
     };
 
     this.failoverConfigs.set(sessionId, config);
+    this.trackFailover(sessionId);
     this.persistFailoverConfigs();
 
     frameworkLogger.log(
@@ -696,15 +705,19 @@ export class SessionStateManager {
     activeGroups: number;
     failoverConfigs: number;
   } {
+    let activeDependencies = 0;
+    for (const dependency of this.dependencies.values()) {
+      if (dependency.state === "active") activeDependencies += 1;
+    }
+    let activeGroups = 0;
+    for (const group of this.sessionGroups.values()) {
+      if (group.state === "active") activeGroups += 1;
+    }
     return {
       totalDependencies: this.dependencies.size,
-      activeDependencies: Array.from(this.dependencies.values()).filter(
-        (d) => d.state === "active",
-      ).length,
+      activeDependencies,
       totalGroups: this.sessionGroups.size,
-      activeGroups: Array.from(this.sessionGroups.values()).filter(
-        (g) => g.state === "active",
-      ).length,
+      activeGroups,
       failoverConfigs: this.failoverConfigs.size,
     };
   }
@@ -766,10 +779,12 @@ export class SessionStateManager {
             }
             if (backup.dependencies) {
               this.dependencies.set(plan.sessionId, backup.dependencies);
+              this.trackDependency(plan.sessionId);
               this.persistDependencies();
             }
             if (backup.group) {
               this.sessionGroups.set(backup.group.groupId, backup.group);
+              this.trackGroup(backup.group.groupId);
               this.persistSessionGroups();
             }
             break;
@@ -799,19 +814,34 @@ export class SessionStateManager {
     }
   }
 
+  private trackDependency(sessionId: string): void {
+    const dependency = this.dependencies.get(sessionId);
+    if (dependency) this.dependencyRecord[sessionId] = dependency;
+    else delete this.dependencyRecord[sessionId];
+  }
+
+  private trackGroup(groupId: string): void {
+    const group = this.sessionGroups.get(groupId);
+    if (group) this.groupRecord[groupId] = group;
+    else delete this.groupRecord[groupId];
+  }
+
+  private trackFailover(sessionId: string): void {
+    const config = this.failoverConfigs.get(sessionId);
+    if (config) this.failoverRecord[sessionId] = config;
+    else delete this.failoverRecord[sessionId];
+  }
+
   private persistDependencies(): void {
-    const deps = Object.fromEntries(this.dependencies);
-    this.stateManager.set("state_manager:dependencies", deps);
+    this.stateManager.set("state_manager:dependencies", this.dependencyRecord);
   }
 
   private persistSessionGroups(): void {
-    const groups = Object.fromEntries(this.sessionGroups);
-    this.stateManager.set("state_manager:groups", groups);
+    this.stateManager.set("state_manager:groups", this.groupRecord);
   }
 
   private persistFailoverConfigs(): void {
-    const configs = Object.fromEntries(this.failoverConfigs);
-    this.stateManager.set("state_manager:failover", configs);
+    this.stateManager.set("state_manager:failover", this.failoverRecord);
   }
 
   shutdown(): void {
