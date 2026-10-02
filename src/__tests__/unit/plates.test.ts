@@ -33,6 +33,30 @@ describe('pipeline plates', () => {
       'kits',
       'host-pack',
       'glossary',
+      'record-map',
+      'write-home',
+      'activity-log',
+      'session-capture',
+      'suit-wear',
+      'suit-organs',
+      'station-card',
+      'notes-page',
+      'reflection-page',
+      'site-manual',
+      'package-face',
+      'suit-settings',
+      'trail-state',
+      'inference-files',
+      'grok-compact',
+      'payload-heat',
+      'station-heat',
+      'pickup-stamp',
+      'cursor-compact',
+      'work-fresh',
+      'kept-line',
+      'lens-gate',
+      'pre-tool',
+      'lens-page',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -147,6 +171,32 @@ describe('pipeline plates', () => {
     expect(recallPlate('kits')?.id).toBe('kits');
     expect(recallPlate('host pack')?.id).toBe('host-pack');
     expect(recallPlate('open the glossary')?.id).toBe('glossary');
+
+    expect(recallPlate('record map')?.id).toBe('record-map');
+    expect(recallPlate('write home')?.id).toBe('write-home');
+    expect(recallPlate('activity log pipeline')?.id).toBe('activity-log');
+    expect(recallPlate('session capture')?.id).toBe('session-capture');
+    expect(recallPlate('suit wear')?.id).toBe('suit-wear');
+    expect(recallPlate('suit organs')?.id).toBe('suit-organs');
+    expect(recallPlate('station card')?.id).toBe('station-card');
+    expect(recallPlate('notes page')?.id).toBe('notes-page');
+    expect(recallPlate('reflection page')?.id).toBe('reflection-page');
+    expect(recallPlate('site manual')?.id).toBe('site-manual');
+    expect(recallPlate('package face')?.id).toBe('package-face');
+    expect(recallPlate('suit settings')?.id).toBe('suit-settings');
+    expect(recallPlate('trail state')?.id).toBe('trail-state');
+    expect(recallPlate('inference files')?.id).toBe('inference-files');
+    expect(recallPlate('grok compact')?.id).toBe('grok-compact');
+    expect(recallPlate('payload heat')?.id).toBe('payload-heat');
+    expect(recallPlate('station heat')?.id).toBe('station-heat');
+    expect(recallPlate('pickup stamp')?.id).toBe('pickup-stamp');
+    expect(recallPlate('cursor compact')?.id).toBe('cursor-compact');
+    expect(recallPlate('work fresh')?.id).toBe('work-fresh');
+    expect(recallPlate('kept line')?.id).toBe('kept-line');
+    expect(recallPlate('lens gate')?.id).toBe('lens-gate');
+    expect(recallPlate('pre tool')?.id).toBe('pre-tool');
+    expect(recallPlate('lens page')?.id).toBe('lens-page');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();

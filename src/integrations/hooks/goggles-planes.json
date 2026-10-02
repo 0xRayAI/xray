@@ -23,35 +23,193 @@
     "worn": "dist/nucleus/thin-dispatch.js",
     "mark": "export function scoreAndRoute",
     "wornMark": "function scoreAndRoute",
-    "pick": "resolveThinDispatch"
+    "pick": "resolveThinDispatch",
+    "skills": ".agents/skills/routing/SKILL.md",
+    "plates": ["orchestration", "processor"]
   },
   "house": {
-    "files": ["grok-bot/lib/seat-doctor.cjs"]
+    "files": ["grok-bot/lib/seat-doctor.cjs"],
+    "skills": ".agents/skills/house/SKILL.md",
+    "plates": ["suit-wear"]
   },
   "boot": {
     "files": ["src/core/boot-orchestrator.ts"],
-    "skills": "src/skills/boot-orchestrator/SKILL.md"
+    "skills": "src/skills/boot-orchestrator/SKILL.md",
+    "plates": ["suit-wear"]
   },
   "governance": {
-    "files": ["src/governance/governance-service.ts"]
+    "files": ["src/governance/governance-service.ts"],
+    "skills": ".agents/skills/governance/SKILL.md"
   },
   "memory-recall": {
-    "files": ["src/integrations/hooks/plates.cjs"]
+    "files": ["src/integrations/hooks/plates.cjs"],
+    "skills": ".agents/skills/memory-recall/SKILL.md",
+    "plates": ["record-map"]
   },
   "orchestration": {
-    "files": ["src/mcps/orchestrator/server.ts"]
+    "files": ["src/mcps/orchestrator/server.ts"],
+    "skills": ".agents/skills/orchestration/SKILL.md",
+    "plates": ["routing", "processor"]
   },
   "processor": {
     "files": ["src/processors/processor-manager.ts"],
-    "skills": "src/skills/processor-pipeline/SKILL.md"
+    "skills": "src/skills/processor-pipeline/SKILL.md",
+    "plates": ["orchestration"]
   },
   "reporting": {
-    "files": ["src/reporting/framework-reporting-system.ts"]
+    "files": ["src/reporting/framework-reporting-system.ts"],
+    "skills": ".agents/skills/reporting/SKILL.md",
+    "plates": ["activity-log", "suit-organs"]
   },
   "stamp-plate": {
     "files": [".agents/skills/stamp-plate/SKILL.md"],
     "mark": "Stamp a plate or a lens",
     "skills": ".agents/skills/stamp-plate/SKILL.md",
     "plates": ["review"]
+  },
+  "record-map": {
+    "files": ["docs-site/docs/plates/record-map.md"],
+    "skills": ".agents/skills/record-map/SKILL.md",
+    "plates": ["station-card", "notes-page", "reflection-page", "site-manual", "package-face", "write-home", "activity-log", "session-capture", "lens-page"]
+  },
+  "write-home": {
+    "files": ["src/integrations/hooks/write-home.cjs"],
+    "mark": "function activityLog",
+    "skills": ".agents/skills/write-home/SKILL.md",
+    "plates": ["activity-log", "session-capture", "inference-files", "trail-state", "suit-wear"]
+  },
+  "activity-log": {
+    "files": ["src/core/activity-logger.ts"],
+    "mark": "activity.log",
+    "skills": ".agents/skills/activity-log/SKILL.md",
+    "plates": ["write-home", "reporting", "suit-organs"]
+  },
+  "session-capture": {
+    "files": ["src/inference/session-capture.ts"],
+    "mark": "saveSessionInference",
+    "skills": ".agents/skills/session-capture/SKILL.md",
+    "plates": ["write-home", "inference-files", "suit-organs"]
+  },
+  "suit-wear": {
+    "files": ["src/core/features-config.ts"],
+    "mark": "log_path",
+    "skills": ".agents/skills/suit-wear/SKILL.md",
+    "plates": ["suit-settings", "write-home", "package-face"]
+  },
+  "suit-organs": {
+    "files": ["src/reporting/framework-reporting-system.ts"],
+    "mark": "activity.log",
+    "skills": ".agents/skills/suit-organs/SKILL.md",
+    "plates": ["activity-log", "session-capture", "inference-files", "trail-state"]
+  },
+  "station-card": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "formatStationMarkdown",
+    "skills": ".agents/skills/station-card/SKILL.md",
+    "plates": ["notes-page", "record-map", "kept-line"]
+  },
+  "notes-page": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "stampNotesPickup",
+    "skills": ".agents/skills/notes-page/SKILL.md",
+    "plates": ["station-card", "record-map"]
+  },
+  "reflection-page": {
+    "files": ["src/inference/inference-accumulator.ts"],
+    "mark": "loadReflectionInferences",
+    "skills": ".agents/skills/reflection-page/SKILL.md",
+    "plates": ["record-map"]
+  },
+  "site-manual": {
+    "files": ["docs-site/docs/introduction.md"],
+    "mark": "survives the context window",
+    "skills": ".agents/skills/site-manual/SKILL.md",
+    "plates": ["record-map"]
+  },
+  "package-face": {
+    "files": ["package.json"],
+    "mark": "\"name\": \"0xray\"",
+    "skills": ".agents/skills/package-face/SKILL.md",
+    "plates": ["record-map", "suit-wear"]
+  },
+  "suit-settings": {
+    "files": ["xray/features.json"],
+    "mark": "log_path",
+    "skills": ".agents/skills/suit-settings/SKILL.md",
+    "plates": ["suit-wear", "record-map"]
+  },
+  "trail-state": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "session-boot.json",
+    "skills": ".agents/skills/trail-state/SKILL.md",
+    "plates": ["write-home", "suit-organs"]
+  },
+  "inference-files": {
+    "files": ["src/inference/inference-accumulator.ts"],
+    "mark": "loadSessionInferences",
+    "skills": ".agents/skills/inference-files/SKILL.md",
+    "plates": ["session-capture", "write-home", "suit-organs"]
+  },
+  "grok-compact": {
+    "files": ["src/integrations/grok/hooks/session-start.js"],
+    "mark": "pre_compact",
+    "skills": ".agents/skills/grok-compact/SKILL.md",
+    "plates": ["payload-heat", "cursor-compact", "work-fresh"]
+  },
+  "payload-heat": {
+    "files": ["src/integrations/grok/hooks/grok-hook-utils.js"],
+    "mark": "function buildSessionBootPayload",
+    "skills": ".agents/skills/payload-heat/SKILL.md",
+    "plates": ["station-heat", "pickup-stamp"]
+  },
+  "station-heat": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "function applyStationHeat",
+    "skills": ".agents/skills/station-heat/SKILL.md",
+    "plates": ["pickup-stamp", "notes-page"]
+  },
+  "pickup-stamp": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "One pickup line",
+    "skills": ".agents/skills/pickup-stamp/SKILL.md",
+    "plates": ["notes-page"]
+  },
+  "cursor-compact": {
+    "files": ["src/integrations/cursor/hooks/pre-compact.js"],
+    "mark": "cannot block",
+    "skills": ".agents/skills/cursor-compact/SKILL.md",
+    "plates": ["payload-heat", "station-heat"]
+  }
+,
+  "work-fresh": {
+    "files": ["src/nucleus/work-freshness.mjs"],
+    "mark": "export function refreshFreshness",
+    "skills": ".agents/skills/work-fresh/SKILL.md",
+    "plates": ["station-card", "grok-compact"]
+  },
+  "kept-line": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "function withOneFreshLine",
+    "skills": ".agents/skills/kept-line/SKILL.md",
+    "plates": ["station-card", "work-fresh"]
+  },
+  "lens-gate": {
+    "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
+    "mark": "export function lensBeforeResearch",
+    "skills": ".agents/skills/lens-gate/SKILL.md",
+    "plates": ["pre-tool"]
+  },
+  "pre-tool": {
+    "files": ["src/integrations/grok/hooks/pre-tool-use.js"],
+    "mark": "function extractFromEvent",
+    "skills": ".agents/skills/pre-tool/SKILL.md",
+    "plates": ["lens-gate"]
+  },
+  "lens-page": {
+    "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
+    "mark": "export function formatCardPane",
+    "skills": ".agents/skills/lens-page/SKILL.md",
+    "plates": ["record-map", "lens-gate"]
   }
 }
+

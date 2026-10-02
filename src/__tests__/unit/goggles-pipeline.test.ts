@@ -16,6 +16,7 @@ import {
   growPlane,
   examinePlane,
   lensBeforeResearch,
+  planesFile,
   lookCards,
   maintainLens,
   organStop,
@@ -90,7 +91,7 @@ describe('goggles plate', () => {
     }
     expect(set).not.toContain('Plane: dichotomy');
     const triage = look(['triage', 'routing']).text;
-    expect(triage).toContain('Empty: skills, setup, teardown');
+    expect(triage).toContain('Empty: setup, teardown');
     expect(triage).toContain('Holds.');
     const boot = look(['triage', 'boot']).text;
     expect(boot).toContain('Entry: process start · SIGINT / SIGTERM');
@@ -128,7 +129,10 @@ describe('goggles plate', () => {
       expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
       expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
       expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
-      const other = 'src/integrations/hooks/goggles-pipeline.mjs';
+      const lensFile = 'src/integrations/hooks/goggles-pipeline.mjs';
+      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
+      expect(lensBeforeResearch(root, 'read_file', lensFile)).toBeNull();
+      const other = 'src/core/config-paths.ts';
       const firstRead = lensBeforeResearch(root, 'read_file', other);
       expect(firstRead?.decision).toBe('deny');
       expect(firstRead?.reason).toBe('Name one plane.');
@@ -157,6 +161,71 @@ describe('goggles plate', () => {
       expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
     } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('an opened source file stops the next search until a lens and a plate exist', () => {
+    const root = mkdtempSync(join(tmpdir(), 'goggles-lens-debt-'));
+    const planesCopy = join(root, 'planes.json');
+    const previousPlanes = process.env.GOGGLES_PLANES_PATH;
+    const opened = 'src/core/config-paths.ts';
+    try {
+      writeFileSync(planesCopy, readFileSync(planesFile()));
+      process.env.GOGGLES_PLANES_PATH = planesCopy;
+
+      expect(lensBeforeResearch(root, 'bash', 'rg boot src')).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `echo ${opened}`)).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
+
+      const unnamed = lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened}`);
+      expect(unnamed?.decision).toBe('deny');
+      expect(unnamed?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'bash', `node -e 1 ${opened}`)?.reason).toBe('Name one plane.');
+
+      expect(lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened} # ground`)).toBeNull();
+      const again = lensBeforeResearch(root, 'bash', `python3 -c "print(1)" ${opened} # ground`);
+      expect(again?.decision).toBe('deny');
+      expect(again?.reason).toContain(opened);
+
+      expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
+      expect(lensBeforeResearch(root, 'bash', `echo ${opened}`)).toBeNull();
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.reason).toContain(opened);
+
+      const edit = lensBeforeResearch(root, 'search_replace', opened);
+      expect(edit?.decision).toBe('deny');
+      expect(edit?.reason).toContain(opened);
+      expect(
+        lensBeforeResearch(root, 'search_replace', `docs-site/docs/plates/config-paths.md\n${opened}`),
+      ).toBeNull();
+
+      const passRoot = mkdtempSync(join(tmpdir(), 'goggles-lens-debt-pass-'));
+      const bare = 'src/core/not-a-lens.ts';
+      expect(lensBeforeResearch(passRoot, 'read_file', bare)?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(passRoot, 'read_file', bare)).toBeNull();
+      expect(lensBeforeResearch(passRoot, 'read_file', bare)?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(passRoot, 'grep', 'open the boot plane')).toBeNull();
+      rmSync(passRoot, { recursive: true, force: true });
+
+      const live = JSON.parse(readFileSync(planesCopy, 'utf8'));
+      live['config-paths'] = {
+        files: [opened],
+        skills: '.agents/skills/config-paths/SKILL.md',
+        plates: [],
+      };
+      writeFileSync(planesCopy, `${JSON.stringify(live)}\n`);
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.reason).toContain(opened);
+
+      mkdirSync(join(root, 'docs-site', 'docs', 'plates'), { recursive: true });
+      writeFileSync(join(root, 'docs-site', 'docs', 'plates', 'config-paths.md'), '# Config paths\n\nA plate.\n');
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+    } finally {
+      if (previousPlanes === undefined) delete process.env.GOGGLES_PLANES_PATH;
+      else process.env.GOGGLES_PLANES_PATH = previousPlanes;
       rmSync(root, { recursive: true, force: true });
     }
   });
@@ -278,6 +347,16 @@ describe('goggles plate', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
+  it('allows the plane plate and the plates listed on the lens', () => {
+    const own = 'docs-site/docs/plates/routing.md';
+    expect(organStop({ plane: 'routing' }, { tool: 'read_file', text: own, paths: [own] })).toBeNull();
+    const related = 'docs-site/docs/plates/write-home.md';
+    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: related, paths: [related] })).toBeNull();
+    const other = 'docs-site/docs/plates/house.md';
+    expect(organStop({ plane: 'activity-log' }, { tool: 'read_file', text: other, paths: [other] })?.reason)
+      .toBe('The reading is activity-log. That drawing is not the plane.');
+  });
+
   it('compact writes the lens and does not replace the notes body', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-'));
     mkdirSync(join(root, '.xray', 'state'), { recursive: true });
@@ -332,7 +411,7 @@ describe('goggles plate', () => {
     expect(routing).toHaveLength(1);
     const triagePane = formatCardPane(routing[0]);
     expect(triagePane).toContain('Empty');
-    expect(triagePane).toContain('skills, setup, teardown');
+    expect(triagePane).toContain('setup, teardown');
     expect(triagePane).toContain('Holds.');
     const zoom = lookCards(['digest', 'routing', 'one', 'artifact']);
     expect(zoom).toHaveLength(1);
