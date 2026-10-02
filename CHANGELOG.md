@@ -42,6 +42,16 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.36] - 2026-10-02
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #178 from 0xRayAI/fix/goggles-robust (21c8f30d9)
+- fix(goggles): hold the stop through search, read, and a dist wipe (abe603265)
+
+---
+
 ## [4.0.35] - 2026-10-02
 
 ### 🔄 Changes
