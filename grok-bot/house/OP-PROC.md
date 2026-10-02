@@ -1,38 +1,108 @@
-# 0xRay OP PROC
+# House OP-PROC v2
 
-The one-page operating procedure for the Grok Bot seats. Read this first; everything in `ops/` is reference.
+House: 0xRay Grok Bot fleet (eng seats over the 0xRay suit)
 
-- **Never (CoS):** deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or merge. Forge merges after the gate.
-- **Seats:** Code/PR/cloud/deploy/npm = forge · Ship/live/security/identity review = critic (≤15 lines, no merge) · @0xRayAI post = herald (CoS exact copy) · Listings = magnet · Audio = sound · Money/creds/deletes = Blaze.
-- **Packet:** goal · constraints · path · acceptance · evidence · next owner · escalate. Seven fields always, one line when short. Station = survival strip. Beat = a real event. Idle /loop on parked work = theater. Wake on PR/you/compact, not every 10 minutes.
-- **Done** = live receipt (URL, npm view, GitHub Release URL, critic PASS). Gates: A CI green · B pack installs · C docs match · D published and proven live (annotated tag pushed and GitHub Release so Latest flips). A pushed tag alone is FAIL for gate D. Chat LGTM is not done.
-- **Review:** Light/Normal = forge + CI. Strict only for ship/live/security/identity. Ops/docs mirrors = Normal. Don't critic a docs PR. FAIL: forge fixes the same PR, critic looks again, until PASS or HOLD (HOLD = human).
-- **Disk, not chat.** After compact: Read Station, then board, then memory, then the same seat. Don't spawn a twin. [`WAVEBOARD.md`](WAVEBOARD.md) and [`ATTENTION_STATE.md`](ATTENTION_STATE.md) must exist or the board is theater.
-- **You first.** Blaze 1:1 beats bot pings. Reply first. Friend-test anything a human reads (~3 seconds). **Dist voice:** @0xRayAI roots ≥4h apart; ship notes reset the clock; replies ~15m. Herald posts CoS words. No Locked: openers. If we say we'll share it, same turn. **Quiet** on CLOSED / MERGED / LIVE re-acks.
-- **Capital:** Ask first on npm publish, Railway, hangar pay, secrets, deletes — including after gate D. Git push to known eng repos + Dist when the execute path is on. Exception: 0xRayAI/0xray-moltbook, where merge to main after critic PASS is the deploy. Do not generalize "any merge deploys."
+Locked 2026-10-02 CT (Blaze + eng carve-outs). v1 remains in git history. Owner: Blaze (Henry Tafolla). His direct message comes before any bot ping or routine.
 
-| Rule | What to do |
-|---|---|
-| Clouds + churn | Heavy multi-file code only. One cloud per track. [CLOUD-CONTINUITY.md](../ops/CLOUD-CONTINUITY.md). |
-| Branch + PR always | Pull first, branch from fresh origin/main, rebase before merge, never commit on main. Roll back by closing the PR or reverting. |
-| Coding discipline | Stay on task, no stubs, surgical edits, YAGNI, stop at acceptance. |
-| npm | CLI auth, no OTP in chat, poll until live. Not done until both: an annotated tag `vX.Y.Z` pushed on the published commit, and a GitHub Release for that tag so Latest flips. A pushed tag alone is FAIL. The ship receipt includes the release URL. Railway after npm. [Publish](../skills/ship-ready-mill-gate/SKILL.md). Forge drafts the notes from CHANGELOG in the same pass as npm. Critic friend-tests them (plain words a builder would hear). Blaze publishes the Release (or an explicit GO). Title: `vX.Y.Z — <short friend line>`. The body is a real Release, not a tag annotation. ## What's new — 3–7 plain bullets from CHANGELOG (shipped user/builder value only). ## Who it helps — one short line (builders / suit wearers / …). ## How to get it — npm + tag + link to full CHANGELOG. ## Breaking / notes — only if real; omit the section if empty. Banned: one-liners / stub bodies ("wear-gated tarball only", "see CHANGELOG", empty); gate jargon (Kind 0, calling, organ, worn, OP-PROC internals); Dist/X voice, hype, emojis-as-substance; inventing features not in CHANGELOG. |
-| Briefing | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. |
-| Board before building | Check the board before building. Write forward to the board and memory. |
-| Answer the owner | Answer from live GitHub and the board. Routines stay quiet on closed beats. A failing routine never blocks a reply. |
-| Speak up | On ownership, a blocker, live proof, or a money or credential change. |
-| Ask-first also covers | Sends to outside agent networks, public gists holding secrets, token rotation, billing, taste calls. |
-| Dist posts | No thanks-only replies. No cut-lines by default. [VOICE.md](../ops/dist/VOICE.md). |
-| Status | Done / Verify / Reflect / Next. |
-| Twice to disk | A rule said twice goes to disk the same day. Procedure changes mirror as a Normal PR. |
-| Cloud prompts | Written in plain English. |
-| Careful-change repos | htafolla/trinitarium and htafolla/chrono-warp-drive: find and record errors, but no code change or merge without Blaze's explicit go, even after critic PASS. |
-| Railway | Every MCP service deploys from its GitHub link, never `railway up`. Relinking a service whose live code differs from main needs Blaze's go. |
-| Prod Redis | Never connect without TLS from outside Railway. Check MEMORY USAGE before any DUMP (none over ~8 MB); page long lists at 1000 or fewer. |
-| Chrono dead letters | Any "possibly-sent" mint letter needs a person to check it on chain before anything else happens. |
-| Confer | Stays off. A result produced without a model is labeled unreviewed and never passes. |
-| Postalocity | Notes and fix PRs only. Never merge, rerun, or touch their workflows. |
-| X plates | 0xRay plates on X go out as attached PNGs, never pasted ASCII. |
-| Goggles | It views one plane. |
+The house is the thin Grok Bot layer over the 0xRay suit (`.xray/codex.json`, readable constitution copy when installed). Grok Bot fires no PreToolUse hooks on Bot seats today, so every seat follows its slice by hand until #163 lands. Every rule that belongs in the suit carries a `[suit: …]` tag. This house is still a system under test.
 
-Wear this. Don't wear the book.
+Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **our** house. Seats read `house/` first; the house wins for Owner, Seats, Public voice, Allowed, Ask first, Board.
+
+**0xRay only.** No other-house names or jargon in this file.
+
+---
+
+## 1. Compute is the scarcest resource `[suit: none yet · upstream #164]`
+
+- Every wake has to pass a gate: is it worth the compute? Plan once, batch tool calls, read only what's needed, send one short reply. No acks on quick tasks, no recaps, no process debates. Act fast inside Allowed, and don't re-ask for anything already cleared. Quiet on peer acks of known state.
+- Message one agent directly. No fan-out, and no generic posts to rooms when a room post would wake every member for no reason.
+- Bots do simple jobs themselves (checks, CI reruns, merges after gate, file edits). Heavy work resumes the **same** cloud agent by its session id (`bc-…`). The cloud id is logged on the WAVEBOARD card. No new bots, clouds, or burns without Blaze's yes. **CoS-carded Strict** for a ship gate is Allowed (not a "deep QA" that needs a separate Blaze yes). Clouds and Grok Bot share one weekly allowance.
+- Routines are event-driven and stay silent when nothing changed. Nothing polls on a timer when an event trigger exists.
+- **Repo watchers** are required (this procedure, not optional tooling). Event-driven watchers on house-named org repos cover **issues and PRs** (open, review, CI, merge cadence). No timer polls when a GitHub event trigger exists. Quiet when nothing changed. A watcher wake resumes the same seat and the same `bc-…` when the work is heavy. No new clouds without Blaze's yes.
+- Budget: Blaze reports the weekly %, and CoS logs it in `ATTENTION_STATE.md`. At **50%**, CoS calls a soft pipe down: no new cards. At **75%**, Blaze calls a full pipe down.
+- **Pipe down** (Blaze only, CoS relays): write up what's in hand, then stop. Routines pause.
+- **In the dark** (CoS declares it): a shared limit has been hit (CI, rate limit, spend cap). The notice names the limit, what's blocked, and the resume time in CT. Don't retry, and don't route around it.
+- **Lights on** (CoS, after checking the limit really cleared) resumes work; each bot picks up from its queue in order.
+- Retire seats that have merged, been idle for 3 days, or finished. CoS lists them in `ATTENTION_STATE.md`, Blaze deletes them, and nothing gets routed to them.
+
+## 2. One owner per job `[suit: codex ownership terms]`
+
+- **Seats (unchanged):** Code/PR/cloud/deploy/npm = **forge** · Ship/live/security/identity review = **critic** (short note, no merge) · @0xRayAI post = **herald** (CoS exact copy) · Listings = **magnet** · Audio = **sound** · Money/creds/deletes = **Blaze**. CoS coordinates; never deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or merge.
+- Blaze decides money, credentials, deletes, publishing, prod, and taste.
+- **Arch1** builds the bug fixes and plate stamps when Blaze hands that track. It is outside the fleet (Grok CLI or a hand-kept Cursor Cloud, on its own budget). When Blaze hands work to Arch1, the fleet **stops that work**. Specs for Arch1 are written the way you'd explain it to a friend: the bug, how to reproduce it, what fixed looks like, and repo, branch, and paths. **No house lingo.** Synthetic data only when samples are needed.
+- **critic** reviews against the constitution / OP-PROC and cites **section or rule names** (until the constitution is numbered). It owns the review loop with forge or Arch1 on the PR, and **never merges**.
+- **forge** builds, opens PRs, merges after the gate when allowed, and runs clouds. **Merge gate (default eng):** critic PASS + CI green → **forge merges**. CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
+- **herald** (when Dist is armed): public posts only after Blaze GO; posts CoS words, does not invent the post.
+- Enforcement: critic flags rule breaks in review; CoS refuses cards that break them `[suit: pre-tool / constitution mount · see #163]`.
+
+## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
+
+- **Cadence (default eng):** forge (or Arch1 when Blaze handed the track) pushes → critic reviews → on PASS, forge merges when CI is green (except careful-change / prod lines that need Blaze). CoS is FYI unless stalled.
+- **Review plate** (matches 0xray #202): one pass, one fix, one re-check, then stop. A PASS ends it. If the re-check still fails, the PR is parked and goes to Blaze as "ship the smaller fix or shelve it." There is never a third lap.
+- **Wear-gate** (wear-what-we-ship: local build → `npm pack` → install that exact tarball in fresh git + non-git folders with temp HOME → wear / setup / doctor) runs **after merge, before npm**. It is **not** a review-plate lap.
+- **npm / GitHub Release house exception:** after wear-gate PASS on that exact tarball, **CoS Ship-it + critic wear PASS → forge publishes that tarball only**, then annotated tag + GitHub Release (#166 shape). Public Dist still needs Blaze GO. Other npm/Release cases still Ask first (see §4).
+- **FAIL vs nit:** Review FAILs that block merge are **P0/P1** only: live S1/S2 behavior (wrong ship, money, lost data, security hole), naming the file and a test or repro that fails on the old code. Everything else is a **nit**: critic notes it on the PR or files a card; it never opens another lap. UNVERIFIED findings can't block.
+- **Ship-gate FAILs** (still FAIL, not nits — carve-out from P0/P1-only): wear-what-we-ship miss (wrong tarball / skipped git+non-git), secret scrub fail, stamp choruses in product, careful-change merge without Blaze GO.
+- Main, prod, and public Dist always need Blaze unless `house/` names a one-repo exception (npm/Release uses the wear-gate exception above).
+- **Issue → PR:** P0/P1 become a GitHub issue (repro + file to fix = Arch1/forge spec). Nits go to a card, never an issue. One PR per issue with `Fixes #N`. Merge closes the issue. A parked PR leaves its issue open, labeled `parked`, for Blaze. A review FAIL goes on the PR, not as a new issue, unless it is a new P0/P1.
+- Fixes are surgical: the smallest change that solves the problem and passes its checks. Bigger changes get their own card.
+- Every card has **Done when** and **Stops at**. Per seat: at most **1 P0** or **1 active ship** in progress; forge may hold CoS-visible **N≤3** parallel cards `[suit: none yet · upstream #165]`.
+
+## 4. Lines only Blaze crosses `[suit: none yet]`
+
+Ask first, every time:
+
+- npm publish and GitHub Release publish **except** the §3 wear-gate house exception (CoS Ship-it + critic wear PASS → that tarball only).
+- Production deploy (Railway / linked MCP), hangar pay.
+- Publishing any page, package, plugin, listing, or public post (Dist).
+- Money, billing, credentials, token rotation, and deleting data, bots, or repos.
+- Email or messages to anyone outside the fleet.
+- Connectors: Blaze clicks Connect; bots never re-add a connector to get around a block.
+- Careful-change repos (`htafolla/trinitarium`, `htafolla/chrono-warp-drive`): no merge without Blaze's explicit go, even after critic PASS.
+- Any "merge deploys this repo" exception is named in `house/` one repo at a time (today: `0xRayAI/0xray-moltbook` after critic PASS).
+
+Allowed without asking:
+
+- Read any live site, repo, or dashboard in scope.
+- Push feature branches and open PRs on org apps named in `house/`. Never commit to `main` directly (release version bumps go through a branch/PR unless Blaze says otherwise).
+- Merge after critic PASS + CI green when the house allows it.
+- Lab / doctor / wear checks that do not spend or publish.
+- npm publish of the **exact** wear-gated tarball after CoS Ship-it + critic wear PASS (§3).
+
+Public voice: placeholder in `house/` until Dist is armed. Friend-test anything a human reads.
+
+## 5. Rules flow upstream `[suit: organ gate]`
+
+- New house rules that belong in the suit go upstream to `0xRayAI/xray` (compute/dark: **#164**; constitution mount: **#163**; board Done-when/Stops-at: **#165**) with a `[suit: …]` tag so the suit can absorb them. Pull from upstream before starting work.
+- Organ gate, CAP, lens, and plate definitions live in the house **Lexicon** (and brand LEXICON when stamped). Do not expand them here.
+- House changes are committed in git under `grok-bot/house/`. Profiles point here instead of copying it.
+
+---
+
+## Lexicon
+
+- **Review plate:** one pass, one fix, one re-check, stop (principle 3). Wear-gate is not a review-plate lap.
+- **Nit:** any review finding below P0/P1. Note or card; never fails a PR alone.
+- **Ship-gate FAIL:** wear tarball / secrets / stamp choruses / careful-change sans Blaze — still FAIL at publish, outside P0/P1-only.
+- **CAP:** corrective action plan when something fails the organ gate (useful, fit for purpose, prod grade, powers up the suit). Plan surgical → build → wear → validate.
+- **In the dark / Lights on / Pipe down:** see principle 1.
+- **Packet:** goal, constraints, path, acceptance, evidence, next owner, escalate.
+- **Card:** one ticket, one seat, Done when + Stops at.
+- **Station:** a seat's survival strip on disk.
+- **Beat:** a real event, not a timer.
+- **Arch1:** outside-fleet builder (Grok CLI); friend-speak specs only.
+- **Organ gate:** useful, fit for purpose, prod grade, powers up the suit.
+- **Lens:** the search door (one `CARD_PLANES` token + one skill + related plates). **Plate:** the stamped drawing. Do not call the Entry/Exit/Setup/Teardown template a lens.
+
+## Board
+
+Open cards: `WAVEBOARD.md`. What needs Blaze now: `ATTENTION_STATE.md`. Point to these instead of repeating status in chat. Repo watchers (§1) feed this board: CoS surfaces the digest (`WAVEBOARD` / `ATTENTION_STATE`); forge owns eng PR/CI cadence on org apps named in `house/`.
+
+## Relationship to pack files
+
+| File | Role after v2 lands |
+|------|---------------------|
+| `grok-bot/OP-PROC.md` | Pack template (generic roles). Keep short; point houses here for the five principles shape. |
+| `grok-bot/house/OP-PROC.md` | **This document** (our fleet). |
+| `grok-bot/CADENCE.md` | Confer spend cadence + board drift + RACI — keep; do not duplicate the five principles. |
+| `house/AUTO-REVIEW.md` | Only Ask first / Allow enforcement surface. |
