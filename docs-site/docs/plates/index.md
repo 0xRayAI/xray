@@ -40,3 +40,9 @@ These six are the file ref. Each one is a search lens. The pipeline drawings abo
 [Station card](./station-card.md) · [Notes page](./notes-page.md) · [Reflection page](./reflection-page.md) · [Site manual](./site-manual.md) · [Package face](./package-face.md) · [Suit settings](./suit-settings.md) · [Trail state](./trail-state.md) · [Inference files](./inference-files.md)
 
 These eight are the pages the file ref names. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
+
+## Compact path
+
+[Grok compact](./grok-compact.md) · [Payload heat](./payload-heat.md) · [Station heat](./station-heat.md) · [Pickup stamp](./pickup-stamp.md) · [Cursor compact](./cursor-compact.md)
+
+These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.

@@ -36,6 +36,11 @@ export const PLATE_IDS = [
   'suit-settings',
   'trail-state',
   'inference-files',
+  'grok-compact',
+  'payload-heat',
+  'station-heat',
+  'pickup-stamp',
+  'cursor-compact',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

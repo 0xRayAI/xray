@@ -36,6 +36,11 @@ const PLATE_IDS = Object.freeze([
   "suit-settings",
   "trail-state",
   "inference-files",
+  "grok-compact",
+  "payload-heat",
+  "station-heat",
+  "pickup-stamp",
+  "cursor-compact",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -177,6 +182,26 @@ const CUES = {
   "inference-files": [
     [/inference files/i, 6],
     [/plates\/inference-files/i, 6],
+  ],
+  "grok-compact": [
+    [/grok compact/i, 6],
+    [/plates\/grok-compact/i, 6],
+  ],
+  "payload-heat": [
+    [/payload heat/i, 6],
+    [/plates\/payload-heat/i, 6],
+  ],
+  "station-heat": [
+    [/station heat/i, 6],
+    [/plates\/station-heat/i, 6],
+  ],
+  "pickup-stamp": [
+    [/pickup stamp/i, 6],
+    [/plates\/pickup-stamp/i, 6],
+  ],
+  "cursor-compact": [
+    [/cursor compact/i, 6],
+    [/plates\/cursor-compact/i, 6],
   ],
 };
 

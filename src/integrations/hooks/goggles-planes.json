@@ -149,5 +149,35 @@
     "mark": "loadSessionInferences",
     "skills": ".agents/skills/inference-files/SKILL.md",
     "plates": ["session-capture", "write-home", "suit-organs"]
+  },
+  "grok-compact": {
+    "files": ["src/integrations/grok/hooks/session-start.js"],
+    "mark": "pre_compact",
+    "skills": ".agents/skills/grok-compact/SKILL.md",
+    "plates": ["payload-heat", "cursor-compact"]
+  },
+  "payload-heat": {
+    "files": ["src/integrations/grok/hooks/grok-hook-utils.js"],
+    "mark": "function buildSessionBootPayload",
+    "skills": ".agents/skills/payload-heat/SKILL.md",
+    "plates": ["station-heat", "pickup-stamp"]
+  },
+  "station-heat": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "function applyStationHeat",
+    "skills": ".agents/skills/station-heat/SKILL.md",
+    "plates": ["pickup-stamp", "notes-page"]
+  },
+  "pickup-stamp": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "One pickup line",
+    "skills": ".agents/skills/pickup-stamp/SKILL.md",
+    "plates": ["notes-page"]
+  },
+  "cursor-compact": {
+    "files": ["src/integrations/cursor/hooks/pre-compact.js"],
+    "mark": "cannot block",
+    "skills": ".agents/skills/cursor-compact/SKILL.md",
+    "plates": ["payload-heat", "station-heat"]
   }
 }

@@ -47,6 +47,11 @@ describe('pipeline plates', () => {
       'suit-settings',
       'trail-state',
       'inference-files',
+      'grok-compact',
+      'payload-heat',
+      'station-heat',
+      'pickup-stamp',
+      'cursor-compact',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -176,6 +181,11 @@ describe('pipeline plates', () => {
     expect(recallPlate('suit settings')?.id).toBe('suit-settings');
     expect(recallPlate('trail state')?.id).toBe('trail-state');
     expect(recallPlate('inference files')?.id).toBe('inference-files');
+    expect(recallPlate('grok compact')?.id).toBe('grok-compact');
+    expect(recallPlate('payload heat')?.id).toBe('payload-heat');
+    expect(recallPlate('station heat')?.id).toBe('station-heat');
+    expect(recallPlate('pickup stamp')?.id).toBe('pickup-stamp');
+    expect(recallPlate('cursor compact')?.id).toBe('cursor-compact');
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();
