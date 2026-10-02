@@ -168,11 +168,17 @@ export class SessionMonitor {
   async performHealthCheck(sessionId: string): Promise<SessionHealth> {
     const jobId = `session-health-check-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const startTime = Date.now();
-    const health = this.healthChecks.get(sessionId);
+    const current = this.healthChecks.get(sessionId);
 
-    if (!health) {
+    if (!current) {
       throw new Error(`Session ${sessionId} not registered for monitoring`);
     }
+
+    // Readers keep the last published session until every field is ready.
+    const health: SessionHealth = {
+      ...current,
+      issues: [...current.issues],
+    };
 
     const issues: string[] = [];
     let status: SessionHealth["status"] = "healthy";
@@ -202,7 +208,8 @@ export class SessionMonitor {
       } else {
         health.activeAgents = sessionStatus.agentCount;
 
-        this.performComprehensiveHealthChecks(sessionId, health, issues, sessionStatus);
+        const checked = this.performComprehensiveHealthChecks(sessionId, issues, sessionStatus);
+        if (status === "healthy") status = checked;
 
         if (health.errorCount > 10) {
           issues.push(`High error count: ${health.errorCount} errors detected`);
@@ -271,6 +278,7 @@ export class SessionMonitor {
     health.responseTime = responseTime;
     health.issues = issues;
 
+    this.healthChecks.set(sessionId, health);
     this.persistHealth(sessionId);
 
     if (issues.length > 0 && this.config.enableAlerts) {
@@ -502,6 +510,21 @@ export class SessionMonitor {
         this.activeAlerts.set(alertId, alert);
       }
     }
+
+    const interactionData =
+      this.stateManager.get<Record<string, InteractionRecord[]>>("monitor:interactions");
+    if (
+      interactionData &&
+      typeof interactionData === "object" &&
+      !Array.isArray(interactionData)
+    ) {
+      this.interactionRecord = interactionData;
+      for (const [sessionId, history] of Object.entries(interactionData)) {
+        if (!Array.isArray(history)) continue;
+        this.interactionHistory.set(sessionId, history);
+        this.seedInteractionTotals(sessionId, history);
+      }
+    }
   }
 
   private persistHealth(sessionId: string): void {
@@ -536,8 +559,8 @@ export class SessionMonitor {
     if (!interactions) {
       interactions = [];
       this.interactionHistory.set(sessionId, interactions);
-      this.interactionRecord[sessionId] = interactions;
     }
+    this.interactionRecord[sessionId] = interactions;
     interactions.push(interaction);
 
     let outcomes = this.outcomeTotals.get(sessionId);
@@ -572,7 +595,47 @@ export class SessionMonitor {
       this.sessionErrors.set(sessionId, currentErrors + 1);
     }
 
+    this.persistInteractions();
+  }
+
+  private persistInteractions(): void {
+    this.interactionRecord = this.adoptStoreRecord(
+      "monitor:interactions",
+      this.interactionRecord,
+    );
     this.stateManager.set("monitor:interactions", this.interactionRecord);
+  }
+
+  private seedInteractionTotals(sessionId: string, history: InteractionRecord[]): void {
+    let success = 0;
+    let failed = 0;
+    let sum = 0;
+    for (const item of history) {
+      if (item.success) success += 1;
+      else failed += 1;
+      sum += item.duration;
+    }
+    this.outcomeTotals.set(sessionId, { success, failed });
+    this.responseTotals.set(sessionId, { sum, count: history.length });
+  }
+
+  private adoptStoreRecord<T>(
+    key: string,
+    record: Record<string, T>,
+  ): Record<string, T> {
+    const existing = this.stateManager.get<Record<string, T>>(key);
+    if (
+      !existing ||
+      typeof existing !== "object" ||
+      Array.isArray(existing) ||
+      existing === record
+    ) {
+      return record;
+    }
+    for (const [id, value] of Object.entries(record)) {
+      existing[id] = value;
+    }
+    return existing;
   }
 
   /**
@@ -588,13 +651,13 @@ export class SessionMonitor {
    */
   private performComprehensiveHealthChecks(
     sessionId: string,
-    health: SessionHealth,
     issues: string[],
     sessionStatus: { active: boolean; agentCount: number },
-  ): void {
+  ): SessionHealth["status"] {
+    let status: SessionHealth["status"] = "healthy";
     if (!sessionStatus.active) {
       issues.push("Session is not active");
-      health.status = "degraded";
+      status = "degraded";
     }
 
     const interactions = this.interactionHistory.get(sessionId);
@@ -608,7 +671,7 @@ export class SessionMonitor {
 
       if (timeSinceLastInteraction > staleThreshold) {
         issues.push(`Stale session: no activity for ${Math.round(timeSinceLastInteraction / 1000)}s`);
-        health.status = "degraded";
+        status = "degraded";
       }
     }
 
@@ -620,8 +683,10 @@ export class SessionMonitor {
     const coordinationEfficiency = this.calculateCoordinationEfficiency(sessionId, interactions ?? []);
     if (coordinationEfficiency < this.config.alertThresholds.minCoordinationEfficiency) {
       issues.push(`Low coordination efficiency: ${(coordinationEfficiency * 100).toFixed(0)}%`);
-      health.status = "degraded";
+      status = "degraded";
     }
+
+    return status;
   }
 
   /**

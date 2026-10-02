@@ -62,6 +62,7 @@ export class SessionStateManager {
   ) {
     this.stateManager = stateManager;
     this.sessionCoordinator = sessionCoordinator;
+    this.loadPersistedRecords();
   }
 
   /**
@@ -833,15 +834,72 @@ export class SessionStateManager {
   }
 
   private persistDependencies(): void {
+    this.dependencyRecord = this.adoptStoreRecord(
+      "state_manager:dependencies",
+      this.dependencyRecord,
+    );
     this.stateManager.set("state_manager:dependencies", this.dependencyRecord);
   }
 
   private persistSessionGroups(): void {
+    this.groupRecord = this.adoptStoreRecord(
+      "state_manager:groups",
+      this.groupRecord,
+    );
     this.stateManager.set("state_manager:groups", this.groupRecord);
   }
 
   private persistFailoverConfigs(): void {
+    this.failoverRecord = this.adoptStoreRecord(
+      "state_manager:failover",
+      this.failoverRecord,
+    );
     this.stateManager.set("state_manager:failover", this.failoverRecord);
+  }
+
+  private loadPersistedRecords(): void {
+    const dependencies = this.readStoreRecord<SessionDependency>("state_manager:dependencies");
+    if (dependencies) {
+      this.dependencyRecord = dependencies;
+      for (const [sessionId, dependency] of Object.entries(dependencies)) {
+        this.dependencies.set(sessionId, dependency);
+      }
+    }
+
+    const groups = this.readStoreRecord<SessionGroup>("state_manager:groups");
+    if (groups) {
+      this.groupRecord = groups;
+      for (const [groupId, group] of Object.entries(groups)) {
+        this.sessionGroups.set(groupId, group);
+      }
+    }
+
+    const failover = this.readStoreRecord<FailoverConfig>("state_manager:failover");
+    if (failover) {
+      this.failoverRecord = failover;
+      for (const [sessionId, config] of Object.entries(failover)) {
+        this.failoverConfigs.set(sessionId, config);
+      }
+    }
+  }
+
+  private readStoreRecord<T>(key: string): Record<string, T> | undefined {
+    const existing = this.stateManager.get<Record<string, T>>(key);
+    if (!existing || typeof existing !== "object" || Array.isArray(existing)) return undefined;
+    return existing;
+  }
+
+  /** Patch the stored object so a pre-seeded key survives the first write. */
+  private adoptStoreRecord<T>(
+    key: string,
+    record: Record<string, T>,
+  ): Record<string, T> {
+    const existing = this.readStoreRecord<T>(key);
+    if (!existing || existing === record) return record;
+    for (const [id, value] of Object.entries(record)) {
+      existing[id] = value;
+    }
+    return existing;
   }
 
   shutdown(): void {
