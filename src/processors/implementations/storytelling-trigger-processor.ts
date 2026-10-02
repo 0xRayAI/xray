@@ -213,8 +213,12 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     if (diff.uniqueDirs.length > 0) {
       lines.push("## Areas Touched");
       lines.push("");
+      const touched = diff.filesAdded.concat(diff.filesModified);
       for (const dir of diff.uniqueDirs.slice(0, 15)) {
-        const count = [...diff.filesAdded, ...diff.filesModified].filter(f => f.startsWith(dir)).length;
+        let count = 0;
+        for (const fileName of touched) {
+          if (fileName.startsWith(dir)) count++;
+        }
         lines.push(`- \`${dir}\` (${count} files)`);
       }
       lines.push("");
@@ -454,13 +458,16 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     return inferences;
   }
 
-  private getCommitsBetween(from: string, to: string): CommitInfo[] {
+  private getCommitsBetween(from: string, to: string, limit?: number): CommitInfo[] {
     try {
+      // Newest-first log, so -n is the same commits as slice(0, limit) without walking history.
+      const limitArg = typeof limit === "number" && limit > 0 ? `-n ${Math.floor(limit)} ` : "";
       const log = this.git(
-        `git log ${from}..${to} --format="%H||%s||%an||%aI" --shortstat --no-merges`,
+        `git log ${limitArg}${from}..${to} --format="%H||%s||%an||%aI" --shortstat --no-merges`,
       );
       if (!log) return [];
 
+      const namesByHash = this.fileNamesByCommit(from, to, limit);
       const commitBlocks = log.split(/\n{2,}/).filter((b) => b.trim().length > 0 && b.includes("||"));
 
       return commitBlocks.map((block) => {
@@ -472,15 +479,20 @@ export class StorytellingTriggerProcessor extends PostProcessor {
         const insertions = parseInt(statsLine.match(/(\d+) insertion/)?.[1] || "0", 10);
         const deletions = parseInt(statsLine.match(/(\d+) deletion/)?.[1] || "0", 10);
 
+        const fullHash = (hash || "").trim();
         let fileNames: string[] = [];
-        try {
-          const shortHash = (hash || "").slice(0, 7);
-          const namesOutput = this.git(`git diff --name-only ${shortHash}~1 ${shortHash} 2>/dev/null`);
-          fileNames = namesOutput ? namesOutput.split("\n").filter(Boolean) : [];
-        } catch { /* empty */ }
+        if (namesByHash?.has(fullHash)) {
+          fileNames = namesByHash.get(fullHash) ?? [];
+        } else {
+          try {
+            const shortHash = fullHash.slice(0, 7);
+            const namesOutput = this.git(`git diff --name-only ${shortHash}~1 ${shortHash} 2>/dev/null`);
+            fileNames = namesOutput ? namesOutput.split("\n").filter(Boolean) : [];
+          } catch { /* empty */ }
+        }
 
         return {
-          hash: (hash || "").slice(0, 7),
+          hash: fullHash.slice(0, 7),
           message: message || "",
           author: author || "",
           date: date || "",
@@ -495,12 +507,41 @@ export class StorytellingTriggerProcessor extends PostProcessor {
     }
   }
 
+  /**
+   * One `git log --name-only` for the range. Same paths as `git diff --name-only HASH~1 HASH`
+   * for non-merge commits. Null means the caller should fall back per commit.
+   */
+  private fileNamesByCommit(from: string, to: string, limit?: number): Map<string, string[]> | null {
+    const limitArg = typeof limit === "number" && limit > 0 ? `-n ${Math.floor(limit)} ` : "";
+    const out = this.git(
+      `git log ${limitArg}${from}..${to} --no-merges --name-only --pretty=format:%x1e%H`,
+    );
+    if (!out) return null;
+
+    const names = new Map<string, string[]>();
+    for (const chunk of out.split("\x1e")) {
+      if (chunk.trim().length === 0) continue;
+      let hash = "";
+      const files: string[] = [];
+      for (const line of chunk.split("\n")) {
+        if (!hash) {
+          if (/^[0-9a-f]{40}$/.test(line)) hash = line;
+          continue;
+        }
+        if (line.length > 0) files.push(line);
+      }
+      if (hash) names.set(hash, files);
+    }
+    return names;
+  }
+
   private getRecentCommits(count: number): CommitInfo[] {
     try {
+      if (!(count > 0)) return [];
       const hash = this.git("git rev-list --max-parents=0 HEAD");
       if (!hash) return [];
       const firstCommit = hash.split("\n")[0]!.trim();
-      return this.getCommitsBetween(firstCommit, "HEAD").slice(0, count);
+      return this.getCommitsBetween(firstCommit, "HEAD", count);
     } catch {
       return [];
     }
@@ -539,13 +580,15 @@ export class StorytellingTriggerProcessor extends PostProcessor {
       }
     }
 
-    const uniqueDirs = [...new Set(
-      [...filesAdded, ...filesModified, ...filesDeleted]
-        .map((f) => {
-          const parts = f.split("/");
-          return parts.length > 1 ? parts.slice(0, -1).join("/") : ".";
-        })
-    )].sort();
+    const dirSet = new Set<string>();
+    const addDir = (fileName: string): void => {
+      const slash = fileName.lastIndexOf("/");
+      dirSet.add(slash >= 0 ? fileName.slice(0, slash) : ".");
+    };
+    for (const fileName of filesAdded) addDir(fileName);
+    for (const fileName of filesModified) addDir(fileName);
+    for (const fileName of filesDeleted) addDir(fileName);
+    const uniqueDirs = [...dirSet].sort();
 
     return {
       totalCommits: commits.length,
