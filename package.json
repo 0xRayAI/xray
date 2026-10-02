@@ -213,7 +213,8 @@
     ".xray/config.json",
     ".gitignore.default",
     "LICENSE",
-    "vendor/@0xray/repertoire/"
+    "vendor/@0xray/repertoire/",
+    "!vendor/**/*.map"
   ],
   "dependencies": {
     "@0xray/blip": "^0.1.2",
