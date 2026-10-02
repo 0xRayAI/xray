@@ -1,4 +1,12 @@
+import { fileURLToPath } from "node:url";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { describe, expect, it } from "vitest";
+import { frameworkLogger } from "../../core/framework-logger.js";
+import {
+  getLoggingConfig,
+  setLoggingConfig,
+} from "../../core/logging-config.js";
 import { FrameworkReportingSystem } from "../../reporting/framework-reporting-system.js";
 import { formatAsMarkdown } from "../../reporting/report-formatter.js";
 import {
@@ -33,6 +41,33 @@ function row(
     ...(over.sessionId !== undefined ? { sessionId: over.sessionId } : {}),
     ...(over.details !== undefined ? { details: over.details } : {}),
   };
+}
+
+function activityLogPath(): string {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../../logs/framework/activity.log",
+  );
+}
+
+function totalEvents(report: string): number {
+  const match = report.match(/\*\*Total Events\*\*: (\d+)/);
+  if (!match || !match[1]) {
+    throw new Error("report missing total events");
+  }
+  return Number(match[1]);
+}
+
+function dropPendingLogFlush(): void {
+  const pending = frameworkLogger as unknown as {
+    buffer: string[];
+    flushTimer?: ReturnType<typeof setTimeout>;
+  };
+  pending.buffer.length = 0;
+  if (pending.flushTimer) {
+    clearTimeout(pending.flushTimer);
+    pending.flushTimer = undefined;
+  }
 }
 
 function sampleLogs(): ParsedLogEntry[] {
@@ -244,7 +279,7 @@ describe("reporting counts", () => {
     ]);
   });
 
-  it("returns the same report text on a second read", async () => {
+  it("returns a new total when a log line is appended", async () => {
     const reporting = new FrameworkReportingSystem();
     const config = {
       type: "full-analysis" as const,
@@ -252,9 +287,140 @@ describe("reporting counts", () => {
       timeRange: { lastHours: 1 },
     };
     const first = await reporting.generateReport(config);
-    const second = await reporting.generateReport(config);
-    expect(second).toBe(first);
-    expect(first).toContain("# Framework Report");
+    const repeat = await reporting.generateReport(config);
+    expect(repeat).toBe(first);
+
+    const logFile = activityLogPath();
+    const existed = fs.existsSync(logFile);
+    const before = existed ? fs.readFileSync(logFile) : null;
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const line = `${new Date().toISOString()} [job-append-${stamp}] [cache-append-${stamp}] appended-${stamp} - INFO`;
+
+    try {
+      fs.mkdirSync(path.dirname(logFile), { recursive: true });
+      fs.appendFileSync(logFile, `\n${line}\n`);
+      const next = await reporting.generateReport(config);
+      expect(totalEvents(next)).toBe(totalEvents(first) + 1);
+    } finally {
+      if (before) {
+        fs.writeFileSync(logFile, before);
+      } else if (!existed && fs.existsSync(logFile)) {
+        fs.unlinkSync(logFile);
+      }
+    }
+  });
+
+  it("does not share a formatted report across session, job, or window filters", async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const sessionA = `sess-a-${stamp}`;
+    const sessionB = `sess-b-${stamp}`;
+    const jobA = `job-a-${stamp}`;
+    const jobB = `job-b-${stamp}`;
+    const windowA = Date.parse("2001-01-01T00:00:00.000Z");
+    const windowB = Date.parse("2001-06-01T00:00:00.000Z");
+    const componentA = `cache-window-a-${stamp}`;
+    const componentB = `cache-window-b-${stamp}`;
+    const previousLogging = getLoggingConfig();
+    setLoggingConfig({ enabled: true, level: "info" });
+
+    const logFile = activityLogPath();
+    const existed = fs.existsSync(logFile);
+    const before = existed ? fs.readFileSync(logFile) : null;
+
+    try {
+      await frameworkLogger.log(
+        "cache-probe",
+        `alpha-one-${stamp}`,
+        "info",
+        undefined,
+        sessionA,
+        jobA,
+      );
+      await frameworkLogger.log(
+        "cache-probe",
+        `alpha-two-${stamp}`,
+        "info",
+        undefined,
+        sessionA,
+        jobA,
+      );
+      await frameworkLogger.log(
+        "cache-probe",
+        `beta-one-${stamp}`,
+        "info",
+        undefined,
+        sessionB,
+        jobB,
+      );
+      dropPendingLogFlush();
+
+      fs.mkdirSync(path.dirname(logFile), { recursive: true });
+      const lineA = `${new Date(windowA).toISOString()} [${jobA}] [${componentA}] tick-a-${stamp} - INFO`;
+      const lineB = `${new Date(windowB).toISOString()} [${jobB}] [${componentB}] tick-b-${stamp} - INFO`;
+      fs.appendFileSync(logFile, `\n${lineA}\n${lineB}\n`);
+
+      const reporting = new FrameworkReportingSystem();
+      const base = {
+        type: "full-analysis" as const,
+        outputFormat: "markdown" as const,
+        timeRange: { lastHours: 1 },
+      };
+
+      const sessionReportA = await reporting.generateReport({
+        ...base,
+        sessionId: sessionA,
+      });
+      const sessionRepeat = await reporting.generateReport({
+        ...base,
+        sessionId: sessionA,
+      });
+      const sessionReportB = await reporting.generateReport({
+        ...base,
+        sessionId: sessionB,
+      });
+      expect(sessionRepeat).toBe(sessionReportA);
+      expect(totalEvents(sessionReportA)).toBe(2);
+      expect(totalEvents(sessionReportB)).toBe(1);
+      expect(sessionReportB).not.toBe(sessionReportA);
+
+      const jobReportA = await reporting.generateReport({
+        ...base,
+        jobId: jobA,
+      });
+      const jobReportB = await reporting.generateReport({
+        ...base,
+        jobId: jobB,
+      });
+      expect(totalEvents(jobReportA)).toBe(2);
+      expect(totalEvents(jobReportB)).toBe(1);
+      expect(jobReportB).not.toBe(jobReportA);
+
+      const startReport = await reporting.generateReport({
+        type: "full-analysis",
+        outputFormat: "markdown",
+        timeRange: { start: new Date(windowA), end: new Date(windowA) },
+      });
+      const endReport = await reporting.generateReport({
+        type: "full-analysis",
+        outputFormat: "markdown",
+        timeRange: { start: new Date(windowB), end: new Date(windowB) },
+      });
+      expect(totalEvents(startReport)).toBe(1);
+      expect(totalEvents(endReport)).toBe(1);
+      expect(startReport).toContain(componentA);
+      expect(startReport).not.toContain(componentB);
+      expect(endReport).toContain(componentB);
+      expect(endReport).not.toContain(componentA);
+      expect(endReport).not.toBe(startReport);
+    } finally {
+      dropPendingLogFlush();
+      setLoggingConfig(previousLogging);
+      if (before) {
+        fs.writeFileSync(logFile, before);
+      } else if (!existed && fs.existsSync(logFile)) {
+        fs.unlinkSync(logFile);
+      }
+    }
   });
 
   it("ties the peak minute to the first row that reaches the max", () => {
