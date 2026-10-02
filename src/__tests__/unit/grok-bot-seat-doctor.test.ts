@@ -240,6 +240,9 @@ describe('grok-bot seat doctor — diagnose', () => {
       expect(text).toMatch(/Plant: FAIL/);
       expect(text).toContain(file);
       expect(text).toContain(path.join(dir, 'tools', 'missing.js'));
+      const missing = path.join(dir, 'tools', 'missing.js');
+      expect(report.next.some((step) => step.includes(file) && step.includes(missing))).toBe(true);
+      expect(report.next.some((step) => step.startsWith('npm i 0xray'))).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

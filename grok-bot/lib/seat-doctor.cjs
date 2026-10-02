@@ -420,6 +420,10 @@ function nextSteps(report) {
     steps.push('Prove plant: npx @0xray/foundry inspect --skip-live (expect mill + inspect, costume false)');
   } else if (report.plant.ok) {
     steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
+  } else if (report.plant.deadHooks.length > 0) {
+    for (const dead of report.plant.deadHooks) {
+      steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);
+    }
   } else if (report.plant.installed) {
     steps.push(installStep);
   }
