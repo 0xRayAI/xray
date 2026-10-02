@@ -27,16 +27,25 @@ Work from a new branch and worktree off current `origin/main`. One plate, one fi
 5. Add the doc to `docs-site/sidebars.ts` and the matching section of `docs-site/docs/plates/index.md`.
 6. Run `npx vitest run src/__tests__/unit/plates.test.ts`.
 
+The lens with the same id is the door. Stamp it in the same change. It lists one skill.
+
 `stampPlateIfMissing` copies that file to `.xray/state/plates/<id>.md` only when the copy is missing.
 
 ## Lens
 
-A search lens is one token in `CARD_PLANES` inside `src/integrations/hooks/goggles-pipeline.mjs`. A hyphenated name is one word (`memory-recall`).
+A search lens is one token in `CARD_PLANES` inside `src/integrations/hooks/goggles-pipeline.mjs`. A hyphenated name is one word (`memory-recall`). A new token must not sit inside an existing token, and an existing token must not sit inside the new one.
+
+The lens is the door. It lists one skill. Read the lens and the skill is already there.
 
 1. Add the token to `CARD_PLANES`.
-2. Add a `<token>` entry with `files` in `src/integrations/hooks/goggles-planes.json`, beside `routing` and `house`.
+2. Add a `<token>` entry in `src/integrations/hooks/goggles-planes.json`, beside `routing` and `house`.
+   - `files`: the file this lens stands for.
+   - `skills`: `.agents/skills/<token>/SKILL.md`. One path. That file is in the same change. Do not add `src/skills/<token>/SKILL.md`.
+   - `plates`: the other plate ids that belong with this lens. Do not repeat `<token>`. The lens's own drawing is `docs-site/docs/plates/<token>.md`.
 3. Leave the top-level `planes` array as it is. That array is the worn set, not the search lens.
-4. A pipeline lens also gets a plate, type omitted, with `INPUT` and `OUTPUT`. `ground` is a lens with no plate file.
-5. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts`.
+4. Write `.agents/skills/<token>/SKILL.md` in the same change. Short steps for this one artifact.
+5. A pipeline lens also gets a plate, type omitted, with `INPUT` and `OUTPUT`. `ground` lists `SKILLS.md` and has no plate file.
+6. Opening the lens's own drawing, or a plate named in `plates`, stays on the plane. Any other drawing is refused: `The reading is <token>. That drawing is not the plane.`
+7. Run `npx vitest run src/__tests__/unit/goggles-pipeline.test.ts` from the worktree. The worktree needs `dist` or the worn build drifts.
 
 Naming exactly one plane lets the search continue. Zero planes, or more than one, stops it with `Name one plane.`
