@@ -3,23 +3,28 @@ import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'node:url';
-import { frameworkLogger } from '../../core/framework-logger.js';
-import { syncBuiltinSkills } from './skill-install.js';
-import { mintAfterWear } from './foundry-mint-wear.js';
-import { OpenClawConfigLoader } from '../../integrations/openclaw/config.js';
-import { writeSuitSessionBoot } from '../../nucleus/suit-temperament.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const millSuit = require(path.join(__dirname, '..', '..', '..', 'scripts', 'foundry', 'mint-suit.cjs')) as {
+
+type MillSuit = {
   isIsolatedHome: () => boolean;
   machineHome: () => string;
 };
-const wiring = require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as {
+
+type OpenClawWiring = {
   wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
   installOpenClawHostWear: (packageRoot: string) => string | null;
   maybeWriteOpenClawCliBackend: () => boolean;
 };
+
+function loadMillSuit(): MillSuit {
+  return require(path.join(__dirname, '..', '..', '..', 'scripts', 'foundry', 'mint-suit.cjs')) as MillSuit;
+}
+
+function loadWiring(): OpenClawWiring {
+  return require(path.join(__dirname, '..', '..', '..', 'scripts', 'node', 'bridge-mcp-wiring.cjs')) as OpenClawWiring;
+}
 
 export function registerOpenClawCommands(openclawCmd: Command) {
   openclawCmd
@@ -38,6 +43,13 @@ interface OpenClawInstallOptions {
 }
 
 async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise<void> {
+  const { frameworkLogger } = await import('../../core/framework-logger.js');
+  const { syncBuiltinSkills } = await import('./skill-install.js');
+  const { mintAfterWear } = await import('./foundry-mint-wear.js');
+  const { OpenClawConfigLoader } = await import('../../integrations/openclaw/config.js');
+  const { writeSuitSessionBoot } = await import('../../nucleus/suit-temperament.js');
+  const millSuit = loadMillSuit();
+  const wiring = loadWiring();
   frameworkLogger.log('openclaw-integration', 'install-start', 'info', { options });
 
   const configPath = path.join(process.cwd(), '.xray', 'config', 'openclaw.json');

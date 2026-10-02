@@ -12,9 +12,11 @@ import { join, resolve } from "path";
 import { fileURLToPath } from "node:url";
 
 import { readFileSync, existsSync } from "fs";
-import { getConfigDir } from "../core/config-paths.js";
-import { frameworkLogger } from "../core/framework-logger.js";
-import { inferenceRunMayEnter } from "../inference/inference-run-gate.js";
+
+async function loadFrameworkLogger() {
+  const { frameworkLogger } = await import("../core/framework-logger.js");
+  return frameworkLogger;
+}
 
 // Get package root relative to this script location
 const packageRoot = resolve(fileURLToPath(new URL("../..", import.meta.url)));
@@ -69,7 +71,8 @@ function runNodeScript(scriptName: string, args: string[] = []): void {
 program
   .command("install")
   .description("Install xray framework in the current project")
-  .action(() => {
+  .action(async () => {
+    const frameworkLogger = await loadFrameworkLogger();
     frameworkLogger.log('cli', 'install', 'info', { message: 'nothing written' });
     process.stdout.write("nothing written\n");
   });
@@ -78,12 +81,13 @@ program
   .command("setup")
   .description("Set up .mcp.json and the OpenCode, Grok, Hermes, and OpenClaw bridges")
   .option("--git-hooks", "also install git hooks")
-  .action((opts: { gitHooks?: boolean }) => {
+  .action(async (opts: { gitHooks?: boolean }) => {
     const args = ["setup"];
     if (opts.gitHooks) args.push("--git-hooks");
     try {
       runNodeScript("install-bridges.cjs", args);
     } catch (error) {
+      const frameworkLogger = await loadFrameworkLogger();
       frameworkLogger.log("cli", "setup-error", "error", {
         error: error instanceof Error ? error.message : String(error),
       });
@@ -135,10 +139,11 @@ program
 program
   .command("wear")
   .description("Wear the 0xray suit in this git checkout")
-  .action(() => {
+  .action(async () => {
     try {
       runNodeScript("wear-cursor-hooks.cjs");
     } catch (error) {
+      const frameworkLogger = await loadFrameworkLogger();
       frameworkLogger.log('cli', 'wear-error', 'error', {
         error: error instanceof Error ? error.message : String(error),
       });
@@ -149,10 +154,11 @@ program
 program
   .command("unwear")
   .description("Remove the 0xray suit and restore the pre-wear hooks file")
-  .action(() => {
+  .action(async () => {
     try {
       runNodeScript("unwear-cursor-hooks.cjs");
     } catch (error) {
+      const frameworkLogger = await loadFrameworkLogger();
       frameworkLogger.log('cli', 'unwear-error', 'error', {
         error: error instanceof Error ? error.message : String(error),
       });
@@ -604,6 +610,7 @@ program
         process.stdout.write("not worn\n");
       }
       const opencodeConfigPath = path.join(cwd, "opencode.json");
+      const { getConfigDir } = await import("../core/config-paths.js");
       const xrayDir = getConfigDir(cwd);
       const opencodeExists = fs.existsSync(opencodeConfigPath);
       const configDirExists = fs.existsSync(xrayDir);
@@ -869,6 +876,7 @@ program
      }
 
      const features = featuresConfigLoader.loadConfig();
+    const { inferenceRunMayEnter } = await import('../inference/inference-run-gate.js');
     if (!inferenceRunMayEnter(features.inference, options.force === true)) {
       if (options.json) {
         console.log(JSON.stringify({ triggered: false, reason: 'Inference feature disabled in features.json' }));
@@ -1115,25 +1123,37 @@ program
     child.on('exit', (code) => process.exit(code ?? 0));
   });
 
+function argvSelects(name: string): boolean {
+  return process.argv.slice(2).includes(name);
+}
+
 // Grok CLI integration
 const grokCmd = program.command('grok').description('Grok CLI integration commands');
-const { registerGrokCommands } = await import('./commands/grok-install.js');
-registerGrokCommands(grokCmd);
+if (argvSelects('grok')) {
+  const { registerGrokCommands } = await import('./commands/grok-install.js');
+  registerGrokCommands(grokCmd);
+}
 
 // Hermes Agent integration
 const hermesCmd = program.command('hermes').description('Hermes Agent integration commands');
-const { registerHermesCommands } = await import('./commands/hermes-install.js');
-registerHermesCommands(hermesCmd);
+if (argvSelects('hermes')) {
+  const { registerHermesCommands } = await import('./commands/hermes-install.js');
+  registerHermesCommands(hermesCmd);
+}
 
 // OpenClaw integration
 const openclawCmd = program.command('openclaw').description('OpenClaw integration commands');
-const { registerOpenClawCommands } = await import('./commands/openclaw-install.js');
-registerOpenClawCommands(openclawCmd);
+if (argvSelects('openclaw')) {
+  const { registerOpenClawCommands } = await import('./commands/openclaw-install.js');
+  registerOpenClawCommands(openclawCmd);
+}
 
 // OpenCode integration
 const opencodeCmd = program.command('opencode').description('OpenCode integration commands');
-const { registerOpencodeCommands } = await import('./commands/opencode-install.js');
-registerOpencodeCommands(opencodeCmd);
+if (argvSelects('opencode')) {
+  const { registerOpencodeCommands } = await import('./commands/opencode-install.js');
+  registerOpencodeCommands(opencodeCmd);
+}
 
 // Analytics enable command
 
