@@ -117,15 +117,13 @@ describe('goggles plate', () => {
     expect(suitHint('read the readme')).toBe('');
   });
 
-  it('keeps a search stopped and lets the file through', () => {
+  it('lets a named plane continue and stops an unnamed search', () => {
     const root = mkdtempSync(join(tmpdir(), 'goggles-lens-gate-'));
     try {
       expect(lensBeforeResearch(root, 'read_file', 'src/core/boot-orchestrator.ts')).toBeNull();
-      const search = lensBeforeResearch(root, 'grep', 'open the boot plane');
-      expect(search?.decision).toBe('deny');
-      expect(search?.gate).toBe('lens');
-      expect(search?.reason).toContain('src/core/boot-orchestrator.ts');
-      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
+      expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
+      expect(lensBeforeResearch(root, 'grep', 'open the boot plane')).toBeNull();
       expect(lensBeforeResearch(root, 'explore', 'open the boot plane')).toBeNull();
       const other = 'src/integrations/hooks/goggles-pipeline.mjs';
       const firstRead = lensBeforeResearch(root, 'read_file', other);
@@ -133,28 +131,27 @@ describe('goggles plate', () => {
       expect(firstRead?.reason).toBe('Name one plane.');
       expect(lensBeforeResearch(root, 'read_file', other)).toBeNull();
       expect(lensBeforeResearch(root, 'read_file', other)?.reason).toBe('Name one plane.');
+      expect(lensBeforeResearch(root, 'read_file', 'read the boot file')).toBeNull();
       expect(lensBeforeResearch(root, 'grep', 'still searching')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'grep', 'still searching')?.reason).toBe('Name one plane.');
       expect(lensBeforeResearch(root, 'glob', 'still searching')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'bash', 'rg plane src')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'bash', 'grep plane src')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'bash', 'find . -name plane')?.decision).toBe('deny');
       expect(lensBeforeResearch(root, 'bash', 'git grep plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'rg boot src')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'git status')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'npm test')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'echo find the file')).toBeNull();
-      const first = lensBeforeResearch(root, 'xray-researcher', 'open the boot plane');
-      expect(first?.decision).toBe('deny');
-      expect(first?.reason).toContain('src/core/boot-orchestrator.ts');
-      expect(readFileSync(join(root, '.xray', 'state', 'plates', 'boot.md'), 'utf8')).toContain('INPUT');
-      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'search_codebase', 'open the boot plane')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'find_implementation', 'open the boot plane')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'get_documentation', 'open the boot plane')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'xray-researcher', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'search_codebase', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'find_implementation', 'open the boot plane')).toBeNull();
+      expect(lensBeforeResearch(root, 'get_documentation', 'open the boot plane')).toBeNull();
       const unnamed = lensBeforeResearch(root, 'explorer', 'learn the code');
       expect(unnamed?.decision).toBe('deny');
       expect(unnamed?.reason).toBe('Name one plane.');
       expect(lensBeforeResearch(root, 'explorer', 'learn the code')?.decision).toBe('deny');
-      expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')?.decision).toBe('deny');
+      expect(lensBeforeResearch(root, 'bash', 'search_codebase boot')).toBeNull();
       expect(lensBeforeResearch(root, 'bash', 'ls')).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
