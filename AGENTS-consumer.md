@@ -21,7 +21,7 @@ A peer lead continues from this card + Repertoire + the `orchestrator` skill. Du
 `npm install 0xray` runs `install-bridges.cjs` and:
 
 - Copies this file → **`AGENTS.md`** in your project root
-- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
+- Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. Does **not** dump 46/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**
 - Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) is first-class with mill plant. Extra shops: `foundry.json` `"shopPlant"`. Not costume.
 - Seeds **`.gitignore`** (from template, if absent)
 - Deploys **`.xray/`** (`codex.json`, `features.json`, `config.json`) then overlays **your** mill SSOT (`xray/codex.json`, `xray/features.json`, `src/skills`, `src/opencode/agents`; remap with `foundry.json`)
@@ -37,7 +37,7 @@ All seven servers use `npx -y 0xray mcp <cmd>` — configured in your project `.
 | Server | Role |
 |--------|------|
 | `xray-governance` | Proposal governance, codex snapshot, quality gates |
-| `xray-skills` | Skill invocation, 45 knowledge skills |
+| `xray-skills` | Skill invocation, 46 knowledge skills |
 | `xray-orchestrator` | thinDispatch routing, AsideContext, confidence gate |
 | `xray-enforcer` | Codex compliance enforcement, rule validation |
 | `xray-researcher` | Codebase exploration, memory-routing enrichment |

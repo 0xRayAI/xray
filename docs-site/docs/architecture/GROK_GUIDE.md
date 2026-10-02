@@ -23,7 +23,7 @@ Installs:
 - Plugin project `.grok/plugins/0xray` (shared HOME does not last-wins clobber machine `~/.grok/plugins/0xray`)
 - Isolated HOME may wear `$HOME/.grok/plugins/0xray` and must not write the passwd machine plugin
 - Seven MCP servers via `npx -y 0xray mcp <cmd>`
-- Mill+inspect skills on the project plugin floor (not a 45-skill dump)
+- Mill+inspect skills on the project plugin floor (not a 46-skill dump)
 - `autonomy-command` as the default operating model
 
 ## Station card

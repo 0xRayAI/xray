@@ -12,7 +12,7 @@ This page is the north star. Mechanism lives in [suit temperament](../guides/v3-
 
 ## What 4.0 is (roots)
 
-4.0 is **not** 42 agents, 45 skills, or 7 MCP servers. Those are organs. The product is the **skeleton you wear**.
+4.0 is **not** 42 agents, 46 skills, or 7 MCP servers. Those are organs. The product is the **skeleton you wear**.
 
 | Layer | What it is |
 |---|---|

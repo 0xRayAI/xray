@@ -22,7 +22,7 @@ xray provides intelligent multi-agent orchestration with automatic delegation an
 - **External Governance** — Dynamo Solar SSOT, 69-term Codex
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
-Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 45-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
+Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 46-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
 
 ## Consumer MCP surface (7 servers)
 
@@ -31,7 +31,7 @@ Registered in `.mcp.json`, invoked via `npx -y 0xray mcp <cmd>`:
 | Server | Role |
 |--------|------|
 | `xray-governance` | Proposal governance, codex snapshot, quality gates |
-| `xray-skills` | 45 knowledge skills + `invoke-skill` |
+| `xray-skills` | 46 knowledge skills + `invoke-skill` |
 | `xray-orchestrator` | thinDispatch, AsideContext, confidence gate |
 | `xray-enforcer` | Codex compliance, rule validation |
 | `xray-researcher` | Codebase exploration, memory-routing enrichment |
@@ -45,7 +45,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 `postinstall.cjs` → `installAllBridges()`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
-2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 46-skill costume dump unless `foundry.json` `"costume": true`
 3. `.gitignore.default` → `.gitignore` (if absent)
 4. `.xray/` config (`codex.json`, `features.json`, `config.json`) then overlay their plant
 5. `.mcp.json` (7 servers)

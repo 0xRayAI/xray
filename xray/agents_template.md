@@ -9,7 +9,7 @@ All seven use `npx -y 0xray mcp <cmd>`:
 | Server | Role |
 |--------|------|
 | `xray-governance` | Proposal governance, codex snapshot, quality gates |
-| `xray-skills` | Skill invocation, 45 knowledge skills |
+| `xray-skills` | Skill invocation, 46 knowledge skills |
 | `xray-orchestrator` | thinDispatch routing, AsideContext, confidence gate |
 | `xray-enforcer` | Codex compliance enforcement, rule validation |
 | `xray-researcher` | Codebase exploration, memory-routing enrichment |

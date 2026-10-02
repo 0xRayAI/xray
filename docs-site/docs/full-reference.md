@@ -115,7 +115,7 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | Command | Description |
 |---------|-------------|
 | `mcp governance` | Proposal governance, codex snapshot |
-| `mcp skills` | 45 knowledge skills + skill invocation (13 tools) |
+| `mcp skills` | 46 knowledge skills + skill invocation (13 tools) |
 | `mcp orchestrator` | thinDispatch 7-flow, task delegation |
 | `mcp enforcer` | Codex compliance enforcement |
 | `mcp researcher` | Codebase exploration |
@@ -229,7 +229,7 @@ The governance pipeline works in three stages:
 
 **Seven** consumer servers via `npx -y 0xray mcp <cmd>`. Extra `*.server.ts` files in the repo are not an 8th consumer MCP (Codex 69). See [MCP](./mcp/README.md).
 
-## Skills (45)
+## Skills (46)
 
 Knowledge skills (`src/skills/*/SKILL.md`) loaded by `xray-skills`. Includes `xray-orchestrator`. `autonomy-command` is the default operating model (orchestrator skill + `lead_dev_mode`), not a 46th skill dir.
 

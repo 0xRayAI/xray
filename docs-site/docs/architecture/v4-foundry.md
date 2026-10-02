@@ -25,7 +25,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 
 ## What a stranger actually gets
 
-`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only; `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill declares. PPE stays worn. `"costume": true` dumps 45/42. Default plant is mill+inspect, not a 45-skill sync. Agent map: repo-root `llms.txt`.
+`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only; `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill declares. PPE stays worn. `"costume": true` dumps 46/42. Default plant is mill+inspect, not a 46-skill sync. Agent map: repo-root `llms.txt`.
 
 ```
 npm i 0xray
@@ -38,7 +38,7 @@ npm i 0xray
           → four floors: OpenCode, Grok, Hermes, OpenClaw
 ```
 
-Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
+Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 46/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
 **Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips; a consumer `npm i 0xray` still fastens mill+inspect.
 
@@ -80,7 +80,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | `scripts/node/install-bridges.cjs` | Unified 4-floor copy + hook patch |
 | `scripts/node/bridge-mcp-wiring.cjs` | Generated MCP / Hermes yaml / OpenClaw hooks |
 | `src/cli/commands/{grok,hermes,opencode,openclaw}-install.ts` | Idempotent re-wear |
-| `src/cli/commands/skill-install.ts` `syncBuiltinSkills` | Copy 45 `SKILL.md` into host skill dirs |
+| `src/cli/commands/skill-install.ts` `syncBuiltinSkills` | Copy 46 `SKILL.md` into host skill dirs |
 | `AGENTS-consumer.md` | Slim card copied to consumer `AGENTS.md` |
 | `xray/{codex,features,config}.json` | Plant templates → consumer `.xray/` |
 
@@ -92,9 +92,9 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 
 **Shop plant (not costume).** Plant-vs-worn allowlists mill plant (`mill` + `inspect`), their `src/skills`, prior inventory, and factory shop plant worn from groover-hangar. Hangar **catalog** is Clearing `GET /v1/catalog` — listed hangars (Groover DID + pin, plus Dynamo solar + a live shop), not a hardcoded `/v1/extract` `/v1/witness` `/v1/pin` route table. Groover MCP `list_hangars` reads that catalog. Worn shop skills are first-class; inspect does not require `"costume": true`. Extra shop names or a plant dir go in `foundry.json` `"shopPlant"` (array, path string, or `{ skills, dir }`). The field is `shopPlant`, not `hangarPlant`: mill plant copy forbids the word hangar. Unknown leftovers (including undeclared `shop-*`) still fail as costume dump.
 
-**Sound plant (not costume).** Mill `@0xray/blip`. Alias `foundry.json` `"plant": "sound"` fastens whatever that mill declares (`sound` + `sound-inspect` + `sound-mixer` today) and turns mill off. Inspect allowlists the mill-declared worn names. Last bed receipt (`.xray/sound-bed-receipt.json`) is PASS/FAIL with chop / levels / peak / hum. `sound mix` levels every genre × tempo × motif (hats / plate / glue). Render is a crystal mill of Rippel membrane/metal/mixer chains (prototype lineage, not a 3-sine toy). Mixer organ lives in the mill. CLI shim `foundry sound` remains (0.1.11+). Not a copy of mill inspect. Not 45/42.
+**Sound plant (not costume).** Mill `@0xray/blip`. Alias `foundry.json` `"plant": "sound"` fastens whatever that mill declares (`sound` + `sound-inspect` + `sound-mixer` today) and turns mill off. Inspect allowlists the mill-declared worn names. Last bed receipt (`.xray/sound-bed-receipt.json`) is PASS/FAIL with chop / levels / peak / hum. `sound mix` levels every genre × tempo × motif (hats / plate / glue). Render is a crystal mill of Rippel membrane/metal/mixer chains (prototype lineage, not a 3-sine toy). Mixer organ lives in the mill. CLI shim `foundry sound` remains (0.1.11+). Not a copy of mill inspect. Not 46/42.
 
-**Blip plant (not costume).** Product mill `@0xray/blip` — sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "@0xray/blip"` (alias `"plant": "blip"`) fastens whatever that mill declares (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker` today) and turns mill off. `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Motions live in a dynamic registry. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2 motions are Rippel `VisualConfig.circles` at ≥720p — seed-selected `focus` (solid disc + satellites) or `cage` (Wu hairline + field) + tempo/frequency animation on all five — with a mandatory 4.44s audio bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + mesh + field are the fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Last blip receipt (`.xray/blip/receipt.json`) is PASS/FAIL with duration 4.44s, mode id, audio stream, file present. Organs live in `@0xray/blip`; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12` (foundry-plant/0). CLI shims `foundry blip|sound` remain (0.1.11+). Not 45/42.
+**Blip plant (not costume).** Product mill `@0xray/blip` — sibling to mill + sound (not a mill copy). Hangar shop pair later. `foundry.json` `"plant": "@0xray/blip"` (alias `"plant": "blip"`) fastens whatever that mill declares (`blip` + `blip-inspect` + `blip-vibe` + `blip-looker` today) and turns mill off. `blip vibe` scores stamp density; `blip look` is the friend hitting replay (ship bar 8). Motions live in a dynamic registry. v0: still + Rippel five. `kapow` is a design opt (two-tier stamp on the stanza). Rippel v2 motions are Rippel `VisualConfig.circles` at ≥720p — seed-selected `focus` (solid disc + satellites) or `cage` (Wu hairline + field) + tempo/frequency animation on all five — with a mandatory 4.44s audio bed that syncopates to the motion grid. Receipt `visualConfig.lookKind` + mesh + field are the fingerprints. `still` is the Power Plant ident (plate dissolves, not a frozen poster). Last blip receipt (`.xray/blip/receipt.json`) is PASS/FAIL with duration 4.44s, mode id, audio stream, file present. Organs live in `@0xray/blip`; adding one is a mill publish, not an xray catalog PR. Nested mill `@0xray/foundry@0.1.12` (foundry-plant/0). CLI shims `foundry blip|sound` remain (0.1.11+). Not 46/42.
 
 ### 3. Pre / post processors (two stacks)
 
@@ -121,7 +121,7 @@ If you extract exo with the mill: mill still copies a costume; the host fail-ope
 | Inference engine | `src/inference`, `inference:run` (0xRay package only) | `.xray/inference/*` heat (**gitignored**) |
 | Organ | `vendor/@0xray/repertoire`, postinstall enable, MCP launcher | `memory_routing` + `.xray/state/repertoire/` |
 | Suit attest | `vendor/.../verify-*-suit.mjs`, `scripts/mjs/verify-*`, `release-gate` | worn `.xray` + 7 MCP + 4 bridges |
-| Agents/skills SSOT | `src/opencode/agents/*.yml` (42), `src/skills/*/SKILL.md` (45) | `.opencode/`, host skill dirs |
+| Agents/skills SSOT | `src/opencode/agents/*.yml` (42), `src/skills/*/SKILL.md` (46) | `.opencode/`, host skill dirs |
 | Config | `xray/*.json` | `.xray/*.json` (runtime reads only this) |
 
 TS `AGENT_REGISTRY` is a parallel mill muscle. It is **not** checked against YML. Drift risk.

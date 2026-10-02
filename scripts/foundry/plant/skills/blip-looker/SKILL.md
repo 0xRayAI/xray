@@ -9,7 +9,7 @@ This plant **fastens** the replay seat. Inspect quotes file / duration. Vibe quo
 
 It is not a model. It paints hook, turn, and tag, then scores the Short. Fail closed under 8.
 
-**Seat:** fastened with `blip` + `blip-inspect` + `blip-vibe` when `foundry.json` `"plant": "blip"`. Not a 45-skill dump.
+**Seat:** fastened with `blip` + `blip-inspect` + `blip-vibe` when `foundry.json` `"plant": "blip"`. Not a 46-skill dump.
 
 **Types:** `still` · `orb` · `swirl` · `snap` · `waves` · `spark` · `kapow`. Same agent. Same bar.
 

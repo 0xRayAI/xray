@@ -49,7 +49,7 @@ Project `.mcp.json` (written on postinstall):
 | Server | Command | Role |
 |--------|---------|------|
 | **xray-governance** | `mcp governance` | Proposal governance, codex snapshot, Dynamo deliberation |
-| **xray-skills** | `mcp skills` | 45 knowledge skills + `invoke-skill`, `list-skills` |
+| **xray-skills** | `mcp skills` | 46 knowledge skills + `invoke-skill`, `list-skills` |
 | **xray-orchestrator** | `mcp orchestrator` | thinDispatch 7-flow, delegation, confidence gate |
 | **xray-enforcer** | `mcp enforcer` | Codex compliance, rule validation |
 | **xray-researcher** | `mcp researcher` | Codebase exploration, implementation lookup |
@@ -60,7 +60,7 @@ Project `.mcp.json` (written on postinstall):
 
 13 MCP tools including: `skill-code-review`, `skill-security-audit`, `skill-api-design`, `skill-database-design`, `skill-testing-strategy`, `skill-performance-optimization`, `list-skills`, `invoke-skill`, and more.
 
-**45 knowledge skills** (`SKILL.md`) for chat-based development assistance. No external services or API keys required for the skills server.
+**46 knowledge skills** (`SKILL.md`) for chat-based development assistance. No external services or API keys required for the skills server.
 
 ### Governance deliberation
 

@@ -15,7 +15,7 @@ npm install 0xray
 Postinstall **automatically** (via `install-bridges.cjs`):
 
 - Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
-- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
+- Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 46-skill costume dump unless `foundry.json` `"costume": true`
 - Seeds **`.gitignore`** (if absent)
 - Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 - Writes **`.mcp.json`** with **7 MCP servers** (`npx -y 0xray mcp …`)
@@ -56,7 +56,7 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 - **42 YML agent surfaces** (organs, not the product)
 - **69 Codex terms** — constitution always on
 - **7 MCP servers** on the consumer surface (`npx -y 0xray mcp`)
-- **Mill plant** `mill` + `inspect` (default). 45-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
+- **Mill plant** `mill` + `inspect` (default). 46-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
 - **4 platform bridges** installed on postinstall
 - **Repertoire is preferred** (vendored 0.2.8 ships on; dest = named laws)
 
@@ -83,7 +83,7 @@ See [MCP Servers](../mcp/README.md) for details.
 | Concept | Description |
 |---------|-------------|
 | Agents | 42 YML surfaces in `src/opencode/agents/` |
-| Skills | 45 reusable capability modules (`SKILL.md`) |
+| Skills | 46 reusable capability modules (`SKILL.md`) |
 | MCP Servers | 7 consumer servers via `npx -y 0xray mcp` |
 | Codex | 69-term error prevention rules |
 | Governance | 3-layer deliberation pipeline (Dynamo SSOT) |
