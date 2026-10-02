@@ -35,6 +35,99 @@ const {
   XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
+const wearIo = { writes: 0, skips: 0 };
+
+function resetWearIo() {
+  wearIo.writes = 0;
+  wearIo.skips = 0;
+}
+
+function readWearIo() {
+  return { writes: wearIo.writes, skips: wearIo.skips };
+}
+
+function sameFileBytes(filePath, body) {
+  let current;
+  try {
+    current = fs.readFileSync(filePath);
+  } catch {
+    return false;
+  }
+  const next = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  return current.length === next.length && current.equals(next);
+}
+
+function writeFileIfChanged(filePath, body) {
+  if (sameFileBytes(filePath, body)) {
+    wearIo.skips += 1;
+    return false;
+  }
+  fs.writeFileSync(filePath, body);
+  wearIo.writes += 1;
+  return true;
+}
+
+function copyFileIfChanged(src, dest) {
+  let srcBytes;
+  try {
+    srcBytes = fs.readFileSync(src);
+  } catch {
+    fs.copyFileSync(src, dest);
+    wearIo.writes += 1;
+    return true;
+  }
+  if (sameFileBytes(dest, srcBytes)) {
+    wearIo.skips += 1;
+    return false;
+  }
+  fs.copyFileSync(src, dest);
+  wearIo.writes += 1;
+  return true;
+}
+
+/** cpSync without rewriting files whose bytes already match. Extra dest files stay. */
+function copyEntryIfChanged(src, dest) {
+  const srcStat = fs.lstatSync(src);
+  if (srcStat.isDirectory()) {
+    if (fs.existsSync(dest) && !fs.lstatSync(dest).isDirectory()) {
+      fs.rmSync(dest, { recursive: true, force: true });
+    }
+    fs.mkdirSync(dest, { recursive: true });
+    for (const name of fs.readdirSync(src)) {
+      copyEntryIfChanged(path.join(src, name), path.join(dest, name));
+    }
+    return;
+  }
+  if (!srcStat.isFile()) {
+    fs.cpSync(src, dest, { force: true });
+    wearIo.writes += 1;
+    return;
+  }
+  copyFileIfChanged(src, dest);
+}
+
+function chmodIfNeeded(filePath, mode) {
+  try {
+    if ((fs.statSync(filePath).mode & 0o777) === mode) {
+      wearIo.skips += 1;
+      return false;
+    }
+    fs.chmodSync(filePath, mode);
+    wearIo.writes += 1;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function jsonFileMatches(filePath, data) {
+  try {
+    return jsonDeepEqual(JSON.parse(fs.readFileSync(filePath, "utf8")), data);
+  } catch {
+    return false;
+  }
+}
+
 const SKIP_DIRS = new Set(["node_modules", "logs"]);
 const MERGE_FILES = new Set(["enforcer-config.json"]);
 const KEEP_IF_EXISTS = new Set([".yml", ".yaml", ".md"]);
@@ -116,9 +209,11 @@ function syncBuiltinSkills(targetSkillsDir, packageRoot) {
       const destMd = path.join(targetSkillsDir, entry.name, "SKILL.md");
       const destDir = path.dirname(destMd);
       if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-      if (fs.existsSync(destMd) && fs.statSync(skillMd).mtime <= fs.statSync(destMd).mtime) continue;
-      fs.copyFileSync(skillMd, destMd);
-      copied++;
+      if (fs.existsSync(destMd) && fs.statSync(skillMd).mtime <= fs.statSync(destMd).mtime) {
+        wearIo.skips += 1;
+        continue;
+      }
+      if (copyFileIfChanged(skillMd, destMd)) copied++;
     }
   } catch {
     // best-effort
@@ -146,17 +241,17 @@ function copyTree(src, dest, relPath = "") {
         const srcData = JSON.parse(fs.readFileSync(srcPath, "utf8"));
         if (fs.existsSync(destPath)) {
           const destData = JSON.parse(fs.readFileSync(destPath, "utf8"));
-          fs.writeFileSync(destPath, JSON.stringify(deepMerge(srcData, destData), null, 2));
+          writeFileIfChanged(destPath, JSON.stringify(deepMerge(srcData, destData), null, 2));
         } else {
-          fs.copyFileSync(srcPath, destPath);
+          copyFileIfChanged(srcPath, destPath);
         }
       } catch {
-        fs.copyFileSync(srcPath, destPath);
+        copyFileIfChanged(srcPath, destPath);
       }
     } else if (KEEP_IF_EXISTS.has(path.extname(srcPath)) && fs.existsSync(destPath)) {
       continue;
     } else {
-      fs.copyFileSync(srcPath, destPath);
+      copyFileIfChanged(srcPath, destPath);
     }
   }
 }
@@ -168,11 +263,13 @@ function copyPluginDir(src, dest) {
       fs.rmSync(dest, { recursive: true, force: true });
     }
     fs.cpSync(src, dest, { recursive: true, force: true });
+    wearIo.writes += 1;
     return true;
   } catch (e) {
     try {
       fs.rmSync(dest, { recursive: true, force: true });
       fs.cpSync(src, dest, { recursive: true, force: true });
+      wearIo.writes += 1;
       return true;
     } catch {
       throw e;
@@ -182,9 +279,8 @@ function copyPluginDir(src, dest) {
 
 function writePluginMcpJson(pluginDir, targetDir, log, label) {
   if (!fs.existsSync(pluginDir)) return;
-  const { buildPluginMcpJson } = require("./bridge-mcp-wiring.cjs");
   const dest = path.join(pluginDir, ".mcp.json");
-  fs.writeFileSync(dest, JSON.stringify(buildPluginMcpJson(targetDir), null, 2) + "\n");
+  writeFileIfChanged(dest, pluginMcpBody(targetDir));
   log(label, "plugin .mcp.json patched for consumer", "info");
 }
 
@@ -269,33 +365,7 @@ function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
   try {
     const hooks = JSON.parse(fs.readFileSync(hooksPath, "utf8"));
     if (!fs.existsSync(hookScript)) return;
-    patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js");
-    patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js");
-    patchGrokHookEntry(
-      hooks.hooks?.UserPromptSubmit?.[0]?.hooks?.[0],
-      packageRoot,
-      targetDir,
-      "session-start.js",
-      "--hook-event=user_prompt_submit",
-    );
-    patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
-    ensureGrokHookEvent(hooks, "PreCompact");
-    ensureGrokHookEvent(hooks, "PostCompact");
-    patchGrokHookEntry(
-      hooks.hooks?.PreCompact?.[0]?.hooks?.[0],
-      packageRoot,
-      targetDir,
-      "session-start.js",
-      "--hook-event=pre_compact",
-    );
-    patchGrokHookEntry(
-      hooks.hooks?.PostCompact?.[0]?.hooks?.[0],
-      packageRoot,
-      targetDir,
-      "session-start.js",
-      "--hook-event=post_compact",
-    );
-    fs.writeFileSync(hooksPath, JSON.stringify(hooks, null, 2) + "\n");
+    writeFileIfChanged(hooksPath, patchedGrokHooksBody(hooks, packageRoot, targetDir));
     writeGrokDiscoveredHooks(targetDir, hooksPath, log, label);
     log(label, "hooks.json patched → Grok command-string enforcement gate", "info");
   } catch (e) {
@@ -310,7 +380,7 @@ function writeGrokDiscoveredHooks(targetDir, hooksPath, log, label) {
     const destDir = path.join(targetDir, ".grok", "hooks");
     fs.mkdirSync(destDir, { recursive: true });
     const dest = path.join(destDir, "0xray.json");
-    fs.copyFileSync(hooksPath, dest);
+    copyFileIfChanged(hooksPath, dest);
     log(label, "Grok discovered hooks → .grok/hooks/0xray.json", "info", { dest });
   } catch (e) {
     log(label, "Grok discovered hooks copy failed", "warn", { error: e.message });
@@ -325,10 +395,10 @@ function copyOpencodePlugin(packageRoot, opencodeDest, log) {
   if (!fs.existsSync(pluginDestDir)) fs.mkdirSync(pluginDestDir, { recursive: true });
   const scopePkg = path.join(opencodeDest, "package.json");
   if (!fs.existsSync(scopePkg)) {
-    fs.writeFileSync(scopePkg, `${JSON.stringify({ type: "module" })}\n`);
+    writeFileIfChanged(scopePkg, `${JSON.stringify({ type: "module" })}\n`);
   }
   const shim = `export { default } from ${JSON.stringify(pluginSource)};\n`;
-  fs.writeFileSync(pluginDest, shim);
+  writeFileIfChanged(pluginDest, shim);
   log("opencode-bridge", "plugin shim written", "info");
 }
 
@@ -411,6 +481,90 @@ function registerGrokMcpServers(targetDir, log, pluginDirs) {
   }
 }
 
+
+function pluginMcpBody(targetDir) {
+  const { buildPluginMcpJson } = require("./bridge-mcp-wiring.cjs");
+  return JSON.stringify(buildPluginMcpJson(targetDir), null, 2) + "\n";
+}
+
+function patchedGrokHooksBody(hooks, packageRoot, targetDir) {
+  patchGrokHookEntry(hooks.hooks?.PreToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "pre-tool-use.js");
+  patchGrokHookEntry(hooks.hooks?.SessionStart?.[0]?.hooks?.[0], packageRoot, targetDir, "session-start.js");
+  patchGrokHookEntry(
+    hooks.hooks?.UserPromptSubmit?.[0]?.hooks?.[0],
+    packageRoot,
+    targetDir,
+    "session-start.js",
+    "--hook-event=user_prompt_submit",
+  );
+  patchGrokHookEntry(hooks.hooks?.PostToolUse?.[0]?.hooks?.[0], packageRoot, targetDir, "post-tool-use.js");
+  ensureGrokHookEvent(hooks, "PreCompact");
+  ensureGrokHookEvent(hooks, "PostCompact");
+  patchGrokHookEntry(
+    hooks.hooks?.PreCompact?.[0]?.hooks?.[0],
+    packageRoot,
+    targetDir,
+    "session-start.js",
+    "--hook-event=pre_compact",
+  );
+  patchGrokHookEntry(
+    hooks.hooks?.PostCompact?.[0]?.hooks?.[0],
+    packageRoot,
+    targetDir,
+    "session-start.js",
+    "--hook-event=post_compact",
+  );
+  return JSON.stringify(hooks, null, 2) + "\n";
+}
+
+function listTreeFiles(root) {
+  if (!fs.existsSync(root)) return null;
+  const files = new Map();
+  const stack = [""];
+  while (stack.length) {
+    const rel = stack.pop();
+    const abs = rel ? path.join(root, rel) : root;
+    let entries;
+    try {
+      entries = fs.readdirSync(abs, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+    for (const entry of entries) {
+      const next = rel ? `${rel}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) stack.push(next);
+      else if (entry.isFile()) files.set(next, path.join(abs, entry.name));
+      else return null;
+    }
+  }
+  return files;
+}
+
+/** Dest already holds the post-patch plugin, so a repeat wear must not rm+cp it. */
+function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
+  const sourceFiles = listTreeFiles(sourceDir);
+  const destFiles = listTreeFiles(dest);
+  if (!sourceFiles || !destFiles) return false;
+  const desired = new Map();
+  for (const [rel, abs] of sourceFiles) desired.set(rel, fs.readFileSync(abs));
+  desired.set(".mcp.json", Buffer.from(pluginMcpBody(targetDir)));
+  const hookScript = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
+  if (desired.has("hooks/hooks.json") && fs.existsSync(hookScript)) {
+    try {
+      const hooks = JSON.parse(desired.get("hooks/hooks.json").toString("utf8"));
+      desired.set("hooks/hooks.json", Buffer.from(patchedGrokHooksBody(hooks, packageRoot, targetDir)));
+    } catch {
+      return false;
+    }
+  }
+  if (desired.size !== destFiles.size) return false;
+  for (const [rel, body] of desired) {
+    const abs = destFiles.get(rel);
+    if (!abs || !sameFileBytes(abs, body)) return false;
+  }
+  return true;
+}
+
 function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -440,8 +594,16 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
       });
       continue;
     }
-    if (copyPluginDir(sourceDir, dest)) {
-      const rel = dest.startsWith(machine) ? dest.replace(machine, "~") : path.relative(targetDir, dest);
+    const rel = dest.startsWith(machine) ? dest.replace(machine, "~") : path.relative(targetDir, dest);
+    const settled = grokPluginSettled(sourceDir, dest, packageRoot, targetDir);
+    let placed = false;
+    if (settled) {
+      wearIo.skips += 1;
+      placed = true;
+    } else {
+      placed = copyPluginDir(sourceDir, dest);
+    }
+    if (placed) {
       log("grok-bridge", "plugin copied", "info", { path: rel || dest });
       writePluginMcpJson(dest, targetDir, log, "grok-bridge");
       patchGrokHooks(dest, packageRoot, targetDir, log, "grok-bridge");
@@ -483,16 +645,20 @@ function installHermesBridge(targetDir, packageRoot, log) {
     log("hermes-bridge", "skip machine ~/.hermes plugin — isolated HOME", "info");
   }
   fs.mkdirSync(targetPluginDir, { recursive: true });
+  const hermesMcp = pluginMcpBody(targetDir);
   for (const entry of fs.readdirSync(sourceDir)) {
     const src = path.join(sourceDir, entry);
     const dst = path.join(targetPluginDir, entry);
-    if (fs.statSync(src).isDirectory()) {
-      fs.cpSync(src, dst, { recursive: true, force: true });
-    } else {
-      fs.copyFileSync(src, dst);
+    if (entry === ".mcp.json" && sameFileBytes(dst, hermesMcp)) {
+      wearIo.skips += 1;
+      continue;
     }
+    copyEntryIfChanged(src, dst);
   }
-  copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+  const helperSrc = path.join(packageRoot, "scripts", "helpers", "find-project-root.mjs");
+  const helperDst = path.join(targetPluginDir, "scripts", "helpers", "find-project-root.mjs");
+  if (!fs.existsSync(helperDst)) copyHermesFindProjectRootHelper(packageRoot, targetPluginDir);
+  else if (fs.existsSync(helperSrc)) copyFileIfChanged(helperSrc, helperDst);
   if (!ephemeral && !isolated && copyHermesHookRuntimes(packageRoot)) {
     log("hermes-bridge", "hook runtimes copied", "info", { path: "~/.hermes/plugins/hooks" });
   }
@@ -510,7 +676,7 @@ function installHermesBridge(targetDir, packageRoot, log) {
 
   const rootMarker = path.join(targetPluginDir, "xray-consumer-root.txt");
   if (!isEphemeralInstallRoot(targetDir)) {
-    fs.writeFileSync(rootMarker, targetDir + "\n");
+    writeFileIfChanged(rootMarker, targetDir + "\n");
     log("hermes-bridge", "consumer root marker written", "info");
   } else {
     log("hermes-bridge", "skip machine consumer marker — ephemeral consumer", "info");
@@ -555,7 +721,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
       debug: false,
       logLevel: "info",
     };
-    fs.writeFileSync(configPath, JSON.stringify(sampleConfig, null, 2) + "\n");
+    writeFileIfChanged(configPath, JSON.stringify(sampleConfig, null, 2) + "\n");
     log("openclaw-bridge", "config created", "info", { path: ".xray/config/openclaw.json" });
   }
 
@@ -623,31 +789,41 @@ function readPackageVersion(packageRoot) {
 }
 
 function writeJsonFile(filePath, data) {
-  fs.writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`);
+  const body = `${JSON.stringify(data, null, 2)}\n`;
+  // Shipped JSON can match and still lack the trailing newline stringify adds.
+  if (sameFileBytes(filePath, body) || jsonFileMatches(filePath, data)) {
+    wearIo.skips += 1;
+    return false;
+  }
+  fs.writeFileSync(filePath, body);
+  wearIo.writes += 1;
+  return true;
 }
 
 function applyResolvedMemoryRouting(dst, targetDir) {
   try {
     const features = JSON.parse(fs.readFileSync(dst, "utf8"));
     const next = enableMemoryRoutingIfResolves(features, targetDir);
-    if (next.changed) writeJsonFile(dst, next.features);
+    if (!next.changed) return false;
+    return writeJsonFile(dst, next.features);
   } catch {
     /* leftover default stays off when features.json is unreadable */
+    return false;
   }
 }
 
 function deployXrayConfigFile(file, src, dst, packageRoot, targetDir) {
   if (!fs.existsSync(dst)) {
-    fs.copyFileSync(src, dst);
+    copyFileIfChanged(src, dst);
     if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
     return true;
   }
 
   if (file === "features.schema.json") {
     if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
-      fs.copyFileSync(src, dst);
-      return true;
+      return copyFileIfChanged(src, dst);
     }
+    wearIo.skips += 1;
     return false;
   }
 
@@ -672,26 +848,26 @@ function deployXrayConfigFile(file, src, dst, packageRoot, targetDir) {
             profile: "guided",
           };
         }
-        writeJsonFile(dst, merged);
-        applyResolvedMemoryRouting(dst, targetDir);
-        return true;
+        const wroteMerged = writeJsonFile(dst, merged);
+        const wroteRouting = applyResolvedMemoryRouting(dst, targetDir);
+        return wroteMerged || wroteRouting;
       }
-      writeJsonFile(dst, merged);
-      return true;
+      return writeJsonFile(dst, merged);
     } catch {
       if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
-        fs.copyFileSync(src, dst);
+        const wrote = copyFileIfChanged(src, dst);
         if (file === "features.json") applyResolvedMemoryRouting(dst, targetDir);
-        return true;
+        return wrote;
       }
+      wearIo.skips += 1;
       return false;
     }
   }
 
   if (fs.statSync(src).mtime > fs.statSync(dst).mtime) {
-    fs.copyFileSync(src, dst);
-    return true;
+    return copyFileIfChanged(src, dst);
   }
+  wearIo.skips += 1;
   return false;
 }
 
@@ -816,12 +992,8 @@ function fastenCursorHookScripts(targetDir, packageRoot, log) {
     const src = path.join(srcDir, name);
     if (!fs.existsSync(src)) continue;
     const dest = path.join(destDir, name);
-    fs.copyFileSync(src, dest);
-    try {
-      fs.chmodSync(dest, 0o755);
-    } catch {
-      // chmod is best-effort on hosts that ignore mode
-    }
+    copyFileIfChanged(src, dest);
+    chmodIfNeeded(dest, 0o755);
     copied++;
   }
   return copied;
@@ -888,7 +1060,7 @@ function fastenCursorHooksAtUnsafe(targetDir, packageRoot, log) {
   if (previousText !== body) {
     saveCursorWearSnapshot(targetDir, previousText, body);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, body);
+    writeFileIfChanged(dest, body);
   }
   log("cursor-bridge", existing ? "hooks.json rewritten cloud-safe" : "hooks.json fastened", "info", {
     path: dest,
@@ -1784,7 +1956,7 @@ function removeWearExcludeLine(targetDir) {
   const lines = fs.readFileSync(excludeFile, "utf8").split("\n");
   const next = lines.filter((line) => line.trim() !== pattern);
   if (next.length === lines.length) return;
-  fs.writeFileSync(excludeFile, next.join("\n"));
+  writeFileIfChanged(excludeFile, next.join("\n"));
 }
 
 function saveCursorWearSnapshot(targetDir, previousText, writtenBody) {
@@ -1804,17 +1976,17 @@ function saveCursorWearSnapshot(targetDir, previousText, writtenBody) {
     cursorDirExisted = fs.existsSync(path.join(targetDir, ".cursor"));
   }
   const backup = existed ? userBytesBeforeWear(previousText) : null;
-  if (backup != null) fs.writeFileSync(paths.backup, backup);
+  if (backup != null) writeFileIfChanged(paths.backup, backup);
   else if (fs.existsSync(paths.backup)) fs.unlinkSync(paths.backup);
   const meta = { version: 1, existed, cursorDirExisted, also };
-  fs.writeFileSync(paths.written, writtenBody);
-  fs.writeFileSync(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
+  writeFileIfChanged(paths.written, writtenBody);
+  writeFileIfChanged(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
   return { paths, meta };
 }
 
 function saveWearState(paths, meta) {
   fs.mkdirSync(paths.dir, { recursive: true });
-  fs.writeFileSync(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
+  writeFileIfChanged(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
 }
 
 /** git prints the physical path. Node's tmpdir is the /var symlink. Compare the same file. */
@@ -1931,7 +2103,7 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   }
   if (changed) {
     fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
-    fs.writeFileSync(hooksPath, body);
+    writeFileIfChanged(hooksPath, body);
   } else if (!snap) {
     write("cursor-bridge", "hooks.json already runs these hooks", "info", { path: hooksPath });
   }
@@ -2157,6 +2329,9 @@ function installAllBridges(opts) {
 module.exports = {
   installAllBridges,
   installGrokBridge,
+  installHermesBridge,
+  resetWearIo,
+  readWearIo,
   resolveGrokPluginDests,
   resolveConsumerTargetDir,
   isInstallPrefixTarget,

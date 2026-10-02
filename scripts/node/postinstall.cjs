@@ -52,19 +52,30 @@ function outsideRegionEdited(parts) {
   return parts.before.trim() !== "" || parts.after.trim() !== "";
 }
 
+function writeTextIfChanged(filePath, body) {
+  try {
+    if (fs.readFileSync(filePath, "utf8") === body) return false;
+  } catch {
+    /* absent */
+  }
+  fs.writeFileSync(filePath, body);
+  return true;
+}
+
 function deployManagedAgents(packageRoot, targetDir, log) {
   const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
   const agentsDest = path.join(targetDir, "AGENTS.md");
   if (!fs.existsSync(agentsConsumer)) return;
   const next = renderManagedAgents(packageRoot, targetDir);
   if (!fs.existsSync(agentsDest)) {
-    fs.writeFileSync(agentsDest, next);
+    writeTextIfChanged(agentsDest, next);
     return;
   }
   const current = fs.readFileSync(agentsDest, "utf8");
   const parts = managedRegion(current);
   if (!parts || outsideRegionEdited(parts)) {
-    fs.writeFileSync(path.join(targetDir, "AGENTS.md.0xray-new"), next);
+    const side = path.join(targetDir, "AGENTS.md.0xray-new");
+    writeTextIfChanged(side, next);
     log("postinstall", "AGENTS.md left in place; wrote AGENTS.md.0xray-new", "info");
     return;
   }
@@ -72,7 +83,7 @@ function deployManagedAgents(packageRoot, targetDir, log) {
   const endAt = next.indexOf(XRAY_MANAGED_AGENTS_END);
   const interior = next.slice(beginAt, endAt + XRAY_MANAGED_AGENTS_END.length);
   const updated = `${parts.before}${interior}${parts.after}`;
-  if (updated !== current) fs.writeFileSync(agentsDest, updated);
+  writeTextIfChanged(agentsDest, updated);
 }
 
 /** npm install links vendored @0xray/repertoire and does not write `.mcp.json`. `npx 0xray wear` rewrites a checkout `dist/cli` launch to `node_modules/0xray`. */
