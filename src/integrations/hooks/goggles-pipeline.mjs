@@ -89,25 +89,6 @@ function withoutPaths(text) {
   return String(text || '').replace(/(?:[\w.@~-]+\/)+[\w.-]+/g, ' ');
 }
 
-function plateIdsIn(spoken) {
-  const ids = [];
-  const re = /docs-site\/docs\/plates\/([a-z0-9-]+)\.md/ig;
-  let match;
-  while ((match = re.exec(String(spoken || '')))) ids.push(match[1]);
-  return ids;
-}
-
-function associatedPlates(plane) {
-  try {
-    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
-    const entry = data[plane];
-    const listed = entry && Array.isArray(entry.plates) ? entry.plates.map(String) : [];
-    return new Set([plane, ...listed]);
-  } catch {
-    return new Set([plane]);
-  }
-}
-
 export function organStop(held, action) {
   if (!held) return null;
   if (held.drift) return organDeny(held.drift);
