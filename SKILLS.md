@@ -2,9 +2,9 @@
 
 **4.0** — a suit that survives the context window
 
-**45 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 45 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not this catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Agent map: [llms.txt](llms.txt).
+**46 skills** in this exo catalog. Default consumer plant is **`mill` + `inspect`**, not this dump. `npm install 0xray` does **not** sync 46 skills unless `foundry.json` `"costume": true`. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) coexists with mill plant when a hangar wears those shops. Extra shops: `foundry.json` `shopPlant`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not this catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Agent map: [llms.txt](llms.txt).
 
-xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. **Repertoire is preferred** for long-term judgment (vendored 0.2.8, dest = named laws). Station is the compact ticket, not a skill and not a keyword store. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
+xray ships 46 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume / self-plant catalog**. Lead-dev operating model lives in **`orchestrator`** skill + `multi_agent_orchestration.lead_dev_mode` in features.json. **Repertoire is preferred** for long-term judgment (vendored 0.2.8, dest = named laws). Station is the compact ticket, not a skill and not a keyword store. Skills load on demand via the **xray-skills** MCP server (`npx -y 0xray mcp skills`) or when you plant them. This file is the exo catalog — mill does **not** write it to the consumer root.
 
 ---
 
@@ -111,6 +111,7 @@ xray ships 45 knowledge skills (`src/skills/<name>/SKILL.md`) as the **costume /
 | Skill | Agent | Description |
 |-------|-------|-------------|
 | `git-workflow` | — | Git workflow and collaboration |
+| `npm-auth` | — | Open npm's browser approval when publish or login has no terminal |
 | `hermes-agent` | @hermes-agent | Hermes Agent bridge operations |
 
 ---
@@ -162,6 +163,6 @@ npx 0xray skill:install <source>
 
 Docs: [AGENTS.md](AGENTS.md) · [README.md](README.md) · [Docusaurus guides](docs-site/docs/guides/)
 
-## Complete catalog (45)
+## Complete catalog (46)
 
-`api-design` · `architect-tools` · `architecture-patterns` · `auto-format` · `backend-engineer` · `boot-orchestrator` · `bug-triage` · `code-analyzer` · `code-review` · `content-creator` · `database-engineer` · `devops-engineer` · `enforcer` · `framework-compliance-audit` · `frontend-engineer` · `frontend-ui-ux-engineer` · `git-workflow` · `growth-strategist` · `hermes-agent` · `inference-improve` · `lint` · `log-monitor` · `mobile-developer` · `model-health-check` · `multimodal-looker` · `orchestrator` · `performance-analysis` · `performance-engineer` · `performance-optimization` · `processor-pipeline` · `project-analysis` · `refactoring-strategies` · `researcher` · `security-audit` · `security-scan` · `seo-consultant` · `session-management` · `state-manager` · `storyteller` · `strategist` · `tech-writer` · `testing-best-practices` · `testing-strategy` · `ui-ux-design` · `xray-orchestrator`
+`api-design` · `architect-tools` · `architecture-patterns` · `auto-format` · `backend-engineer` · `boot-orchestrator` · `bug-triage` · `code-analyzer` · `code-review` · `content-creator` · `database-engineer` · `devops-engineer` · `enforcer` · `framework-compliance-audit` · `frontend-engineer` · `frontend-ui-ux-engineer` · `git-workflow` · `growth-strategist` · `hermes-agent` · `inference-improve` · `lint` · `log-monitor` · `mobile-developer` · `model-health-check` · `multimodal-looker` · `npm-auth` · `orchestrator` · `performance-analysis` · `performance-engineer` · `performance-optimization` · `processor-pipeline` · `project-analysis` · `refactoring-strategies` · `researcher` · `security-audit` · `security-scan` · `seo-consultant` · `session-management` · `state-manager` · `storyteller` · `strategist` · `tech-writer` · `testing-best-practices` · `testing-strategy` · `ui-ux-design` · `xray-orchestrator`

@@ -1,11 +1,11 @@
 ---
 name: inspect
-description: Inspect AI work — diffs, tool traces, mill receipts, CI. Factory mill plant. Not 45/42 costume.
+description: Inspect AI work — diffs, tool traces, mill receipts, CI. Factory mill plant. Not 46/42 costume.
 ---
 
 # Inspect
 
-This mill **fastens** a suit for **inspecting AI work**. Not an empty suit. Not a copy of 0xRay's 45/42 costume.
+This mill **fastens** a suit for **inspecting AI work**. Not an empty suit. Not a copy of 0xRay's 46/42 costume.
 
 Mill **does** these checks (`npx @0xray/foundry inspect`). Mint fails on a costume dump. Live PUT GETs the `.tgz`. Isolated HOME refuses `~/.grok/plugins/0xray`. Not an 8th MCP.
 

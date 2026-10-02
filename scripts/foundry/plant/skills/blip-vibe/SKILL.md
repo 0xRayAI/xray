@@ -9,7 +9,7 @@ This plant **fastens** the appeal seat. Inspect quotes duration / mode / file. T
 
 videoReview can see and cannot hear. Do not sign a mix from this seat. Quote the score. Fail closed under 8.
 
-**Seat:** fastened with `blip` + `blip-inspect` when `foundry.json` `"plant": "blip"`. Not a 45-skill dump.
+**Seat:** fastened with `blip` + `blip-inspect` when `foundry.json` `"plant": "blip"`. Not a 46-skill dump.
 
 **Types:** `still` · `orb` · `swirl` · `snap` · `waves` · `spark` · `kapow`. Same agent. Same bar.
 

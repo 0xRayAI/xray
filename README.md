@@ -107,7 +107,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 On `npm install 0xray` in a consumer project, postinstall automatically:
 
 1. Copies **`AGENTS-consumer.md` → `AGENTS.md`**. Does **not** write consumer-root **`SKILLS.md`**.
-2. Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not an xray catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
+2. Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares — organs (looker, vibe, mixer) live in the mill, not an xray catalog. Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Not a 46-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump.
 3. Seeds **`.gitignore`** from `.gitignore.default` (if absent)
 4. Deploys **`.xray/`** config (`codex.json`, `features.json`, `config.json`) then overlays **their** plant
 5. Writes project **`.mcp.json`** with 7 MCPs servers (`npx -y 0xray mcp …`)
@@ -115,7 +115,7 @@ On `npm install 0xray` in a consumer project, postinstall automatically:
 7. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin` from groover-hangar) may coexist when worn. Extra shops: `foundry.json` `shopPlant`. Not costume.
 8. Installs git pre-commit hook (non-blocking if not a git repo)
 
-See [llms.txt](llms.txt) for the agent map. Catalog of 45 skills lives in [SKILLS.md](SKILLS.md) — that is the exo catalog, not default consumer wear.
+See [llms.txt](llms.txt) for the agent map. Catalog of 46 skills lives in [SKILLS.md](SKILLS.md) — that is the exo catalog, not default consumer wear.
 
 ## Seven MCP Servers (consumer)
 
@@ -124,7 +124,7 @@ All registered via `npx -y 0xray mcp <cmd>` — no brittle `dist/` paths:
 | Server | Command | Role |
 |--------|---------|------|
 | `xray-governance` | `mcp governance` | Proposal governance, codex snapshot, quality gates |
-| `xray-skills` | `mcp skills` | 45 knowledge skills + skill invocation |
+| `xray-skills` | `mcp skills` | 46 knowledge skills + skill invocation |
 | `xray-orchestrator` | `mcp orchestrator` | Complexity analysis, lead-dev plan, task delegation |
 | `xray-enforcer` | `mcp enforcer` | Codex compliance, rule validation |
 | `xray-researcher` | `mcp researcher` | Codebase exploration, implementation lookup |

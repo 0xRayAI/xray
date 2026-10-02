@@ -67,7 +67,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - Inspect / mint plant-vs-worn allow factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) alongside mill plant
 - `foundry.json` `shopPlant` names more shops (array / dir / `{ skills, dir }`). Not `"costume": true`
 - Field is `shopPlant` (mill plant copy cannot say hangar). Costume dump of leftovers still fails
-- Default consumer plant is mill+inspect, not 45-skill sync. Root `llms.txt` is the exo agent map
+- Default consumer plant is mill+inspect, not 46-skill sync. Root `llms.txt` is the exo agent map
 - `npm run pack:tmp-proof` — pack tgz → tmp install → `foundry mint --skip-live` → hangar factory shops → inspect (no costume dump). Playwright n/a (CLI)
 - Nested mill **0.1.12** (foundry-plant/0). Inspect dest matches `resolveGrokPluginDests` (project path on shared HOME). Blip/sound mill is `@0xray/blip`. CLI shims remain from 0.1.11.
 - **Station vs Repertoire 0.1** — Station is survive-the-cut; 0.1.0–0.1.8 are the same judgment organ; do not pin 0.1.8. Guide: [station-vs-repertoire](./station-vs-repertoire.md)
@@ -77,7 +77,7 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 - Postinstall does **not** mill npm global prefix (Homebrew `lib`, `/usr/local/lib`) or `_npx` cache as a consumer
 - Prefix without `package.json` → mill `INIT_CWD` if it is a project, else mill the 0xray package (dogfood skip)
 - Isolated HOME still skips machine `~/.grok` / Hermes / OpenClaw
-- Mill plant stays `mill` + `inspect`. Not 45/42 costume. Nested mill stays **0.1.9**
+- Mill plant stays `mill` + `inspect`. Not 46/42 costume. Nested mill stays **0.1.9**
 
 ## 4.0.1 — Patch (CLI, host e2e, release gate, docs)
 

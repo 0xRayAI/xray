@@ -28,7 +28,7 @@ npm run confirm:suit:all # install + verify + Grok harness + trap-routing e2e
 
 1. Deploy `.xray/` (`codex.json`, `features.json`, `config.json`) then overlay their plant
 2. Write project `.mcp.json` (7 servers)
-3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Not a 42-YML / 45-skill costume dump unless `foundry.json` `"costume": true`
+3. Fasten mill plant (`mill` + `inspect`) on OpenCode. Not a 42-YML / 46-skill costume dump unless `foundry.json` `"costume": true`
 4. Install Grok plugin + PPE hooks (mill plant, not costume skill dump)
 5. Install Hermes plugin + `xray-consumer-root.txt` marker
 6. Create OpenClaw config (mill plant)

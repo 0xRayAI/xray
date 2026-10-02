@@ -9,7 +9,7 @@ This plant **fastens** the mixer seat. Inspect quotes the last bed. This organ *
 
 videoReview cannot hear. Do not sign a mix from a picture pass. Run the matrix. Quote the numbers. Fail closed.
 
-**Seat:** fastened with `sound` + `sound-inspect` when `foundry.json` `"plant": "sound"`. Not a 45-skill dump.
+**Seat:** fastened with `sound` + `sound-inspect` when `foundry.json` `"plant": "sound"`. Not a 46-skill dump.
 
 ## Spine
 

@@ -1,11 +1,11 @@
 ---
 name: mill
-description: Fasten their plant as the suit. Factory Repertoire. Inspect is the mill discipline. Not 45/42 costume.
+description: Fasten their plant as the suit. Factory Repertoire. Inspect is the mill discipline. Not 46/42 costume.
 ---
 
 # Mill
 
-The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI work) plus this mill card. Not empty. Not 0xRay's 45-skill / 42-agent costume unless they opt in.
+The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI work) plus this mill card. Not empty. Not 0xRay's 46-skill / 42-agent costume unless they opt in.
 
 **Plant (their SSOT):** `xray/codex.json`, `xray/features.json`, `xray/config.json`, `src/skills/<name>/SKILL.md`, `src/opencode/agents/*.yml`. Remap with `foundry.json`.
 
@@ -13,7 +13,7 @@ The mill **fastens** a suit. Default mill plant is **inspect** (inspecting AI wo
 
 **Factory:** **Repertoire is preferred** (vendored 0.2.8 ships on; dest = named laws). Seven generated MCP. Constitution (PPE) stays worn. Not a fifth MCP. Not 5.0.
 
-**Costume:** `foundry.json` `"costume": true` copies the 45/42 mill costume.
+**Costume:** `foundry.json` `"costume": true` copies the 46/42 mill costume.
 
 ```bash
 npx @0xray/foundry mint
