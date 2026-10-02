@@ -42,6 +42,21 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.37] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: a naked checkout wakes with repertoire on (7b75bedbc)
+
+### ⚡ Performance
+- perf: cut repeated work on the processor data path (baadb4d35)
+
+### 📚 Documentation
+- docs: move fleet house SSOT out of the kit (7dcf08e94)
+
+---
+
 ## [4.0.36] - 2026-10-02
 
 ### 🔄 Changes
