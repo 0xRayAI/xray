@@ -28,3 +28,9 @@ Plates have a type. A domain model plate shows how named parts fit. A state flow
 [Routing](./routing.md) · [Governance](./governance.md) · [Boot](./boot.md) · [Orchestration](./orchestration.md) · [Processor](./processor.md) · [Reporting](./reporting.md) · [Memory recall](./memory-recall.md) · [Stamp plate](./stamp-plate.md)
 
 Each of these is a lens plane. Each drawing is an input layer, a processing layer, and an output layer. Ground has no plate file.
+
+## Write home
+
+[Record map](./record-map.md) · [Write home](./write-home.md) · [Activity log](./activity-log.md) · [Session capture](./session-capture.md) · [Suit wear](./suit-wear.md) · [Suit organs](./suit-organs.md)
+
+These six are the file ref. Each one is a search lens. The pipeline drawings above stay the lens planes for those machines.

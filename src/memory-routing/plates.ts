@@ -22,6 +22,12 @@ export const PLATE_IDS = [
   'kits',
   'host-pack',
   'glossary',
+  'record-map',
+  'write-home',
+  'activity-log',
+  'session-capture',
+  'suit-wear',
+  'suit-organs',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];

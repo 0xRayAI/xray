@@ -33,6 +33,12 @@ describe('pipeline plates', () => {
       'kits',
       'host-pack',
       'glossary',
+      'record-map',
+      'write-home',
+      'activity-log',
+      'session-capture',
+      'suit-wear',
+      'suit-organs',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -147,6 +153,13 @@ describe('pipeline plates', () => {
     expect(recallPlate('kits')?.id).toBe('kits');
     expect(recallPlate('host pack')?.id).toBe('host-pack');
     expect(recallPlate('open the glossary')?.id).toBe('glossary');
+
+    expect(recallPlate('record map')?.id).toBe('record-map');
+    expect(recallPlate('write home')?.id).toBe('write-home');
+    expect(recallPlate('activity log pipeline')?.id).toBe('activity-log');
+    expect(recallPlate('session capture')?.id).toBe('session-capture');
+    expect(recallPlate('suit wear')?.id).toBe('suit-wear');
+    expect(recallPlate('suit organs')?.id).toBe('suit-organs');
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();

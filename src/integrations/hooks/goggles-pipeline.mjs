@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate'];
+const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs'];
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 

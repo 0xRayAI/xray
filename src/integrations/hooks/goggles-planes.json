@@ -53,5 +53,28 @@
     "mark": "Stamp a plate or a lens",
     "skills": ".agents/skills/stamp-plate/SKILL.md",
     "plates": ["review"]
+  },
+  "record-map": {
+    "files": ["docs-site/docs/plates/record-map.md"]
+  },
+  "write-home": {
+    "files": ["src/integrations/hooks/write-home.cjs"],
+    "mark": "function activityLog"
+  },
+  "activity-log": {
+    "files": ["src/core/activity-logger.ts"],
+    "mark": "activity.log"
+  },
+  "session-capture": {
+    "files": ["src/inference/session-capture.ts"],
+    "mark": "saveSessionInference"
+  },
+  "suit-wear": {
+    "files": ["src/core/features-config.ts"],
+    "mark": "log_path"
+  },
+  "suit-organs": {
+    "files": ["src/reporting/framework-reporting-system.ts"],
+    "mark": "activity.log"
   }
 }

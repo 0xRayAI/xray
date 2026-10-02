@@ -22,6 +22,12 @@ const PLATE_IDS = Object.freeze([
   "kits",
   "host-pack",
   "glossary",
+  "record-map",
+  "write-home",
+  "activity-log",
+  "session-capture",
+  "suit-wear",
+  "suit-organs",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -103,6 +109,34 @@ const CUES = {
   "stamp-plate": [
     [/stamp plate/i, 6],
     [/plates\/stamp-plate/i, 6],
+  ],
+  "record-map": [
+    [/record map/i, 6],
+    [/five pages the agent/i, 6],
+    [/plates\/record-map/i, 6],
+  ],
+  "write-home": [
+    [/write home/i, 6],
+    [/\.xray\/logs/i, 6],
+    [/plates\/write-home/i, 6],
+  ],
+  "activity-log": [
+    [/activity log pipeline/i, 6],
+    [/plates\/activity-log/i, 6],
+  ],
+  "session-capture": [
+    [/session capture/i, 6],
+    [/latest-session\.json/i, 5],
+    [/plates\/session-capture/i, 6],
+  ],
+  "suit-wear": [
+    [/suit wear/i, 6],
+    [/consumer gitignore/i, 5],
+    [/plates\/suit-wear/i, 6],
+  ],
+  "suit-organs": [
+    [/suit organs/i, 6],
+    [/plates\/suit-organs/i, 6],
   ],
 };
 
