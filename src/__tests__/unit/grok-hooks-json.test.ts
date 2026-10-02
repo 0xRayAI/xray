@@ -280,6 +280,51 @@ describe('Grok hooks.json command strings', () => {
     }
   });
 
+  it('dogfood wear materializes a missing features file and repertoire signals', () => {
+    const parent = mkdtempSync(path.join(tmpdir(), 'xray-dogfood-missing-features-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      mkdirSync(tmp, { recursive: true });
+      const pluginSrc = path.join(tmp, 'src/integrations/grok/plugin/0xray/hooks');
+      mkdirSync(pluginSrc, { recursive: true });
+      writeFileSync(
+        path.join(pluginSrc, 'hooks.json'),
+        readFileSync(
+          path.join(packageRoot, 'src/integrations/grok/plugin/0xray/hooks/hooks.json'),
+          'utf8',
+        ),
+      );
+      mkdirSync(path.join(tmp, 'dist/integrations/grok/hooks'), { recursive: true });
+      writeFileSync(path.join(tmp, 'dist/integrations/grok/hooks/pre-tool-use.js'), '');
+      mkdirSync(path.join(tmp, 'scripts/mjs'), { recursive: true });
+      writeFileSync(path.join(tmp, 'scripts/mjs/run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      mkdirSync(path.join(tmp, 'xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, 'xray', 'features.json'),
+        JSON.stringify({ memory_routing: { enabled: false, provider: 'null' } }),
+      );
+      mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+      writeFileSync(path.join(repertoire, 'data', 'curated_signals.json'), '[{"name":"kept"}]\n');
+
+      installAllBridges({ packageRoot: tmp, targetDir: tmp, log: () => {} });
+
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray', 'features.json'), 'utf8'));
+      expect(features.memory_routing.enabled).toBe(true);
+      expect(features.memory_routing.provider).toBe('repertoire');
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'inference-state.json'))).toBe(true);
+      expect(existsSync(path.join(tmp, '.grok', 'hooks', '0xray.json'))).toBe(true);
+      const discovered = readFileSync(path.join(tmp, '.grok', 'hooks', '0xray.json'), 'utf8');
+      expect(discovered).toContain(path.join(tmp, 'scripts', 'mjs', 'run-grok-hook.mjs'));
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('isEphemeralInstallRoot skips machine ~/.grok for temp consumers', () => {
     expect(isEphemeralInstallRoot('/var/folders/jx/abc/T/opencode-0xray-e2e-1')).toBe(true);
     expect(isEphemeralInstallRoot('/tmp/hermes-0xray-e2e-1')).toBe(true);
