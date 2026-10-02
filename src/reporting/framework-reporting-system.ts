@@ -1,6 +1,7 @@
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "node:url";
 import {
   type ReportConfig,
   type ReportData,
@@ -30,7 +31,7 @@ export class FrameworkReportingSystem {
   private logRetentionHours = 24;
   private reportCache = new Map<
     string,
-    { data: ReportData; timestamp: Date }
+    { data: ReportData; formatted: string; timestamp: Date }
   >();
 
   async generateReport(config: ReportConfig): Promise<string> {
@@ -38,13 +39,12 @@ export class FrameworkReportingSystem {
     const cached = this.getCachedReport(reportId);
 
     if (cached && this.isCacheValid(cached.timestamp)) {
-      return formatReport(cached.data, config.outputFormat);
+      return cached.formatted;
     }
 
     const reportData = await this.collectReportData(config);
-    this.cacheReport(reportId, reportData);
-
     const formattedReport = formatReport(reportData, config.outputFormat);
+    this.cacheReport(reportId, reportData, formattedReport);
 
     if (config.outputPath) {
       await this.saveReportToFile(formattedReport, config.outputPath);
@@ -99,12 +99,12 @@ export class FrameworkReportingSystem {
     ];
     const recentActivity = parsedLogs.slice(0, 10);
 
-    const errorCount = recentLogs.filter(
-      (log) => log.status === "error",
-    ).length;
-    const successCount = recentLogs.filter(
-      (log) => log.status === "success",
-    ).length;
+    let errorCount = 0;
+    let successCount = 0;
+    for (const log of recentLogs) {
+      if (log.status === "error") errorCount++;
+      else if (log.status === "success") successCount++;
+    }
     const healthScore =
       recentLogs.length > 0
         ? (successCount / (successCount + errorCount)) * 100
@@ -141,13 +141,56 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
   }
 
   private generateReportId(config: ReportConfig): string {
-    const timeKey = config.timeRange?.lastHours || "all";
-    return `${config.type}-${config.outputFormat}-${timeKey}`;
+    const range = config.timeRange;
+    const file = this.currentLogStamp();
+    return JSON.stringify([
+      config.type,
+      config.outputFormat,
+      range?.lastHours ?? null,
+      range?.start?.toISOString() ?? null,
+      range?.end?.toISOString() ?? null,
+      config.sessionId ?? null,
+      config.jobId ?? null,
+      file.size,
+      file.mtimeMs,
+      this.memoryLogStamp(),
+    ]);
+  }
+
+  // Same activity.log path readCurrentLogFile rebuilds from size and mtime.
+  private activityLogFile(): string {
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
+    return path.join(projectRoot, "logs", "framework", "activity.log");
+  }
+
+  private currentLogStamp(): { size: number; mtimeMs: number } {
+    try {
+      const stat = fs.statSync(this.activityLogFile());
+      return { size: stat.size, mtimeMs: stat.mtimeMs };
+    } catch {
+      return { size: -1, mtimeMs: -1 };
+    }
+  }
+
+  private memoryLogStamp(): string {
+    const recent = frameworkLogger.getRecentLogs(1000);
+    const last = recent[recent.length - 1];
+    if (!last) return "0";
+    return [
+      recent.length,
+      last.timestamp,
+      last.component,
+      last.action,
+      last.status,
+      last.sessionId ?? "",
+      last.jobId ?? "",
+    ].join("\0");
   }
 
   private getCachedReport(
     reportId: string,
-  ): { data: ReportData; timestamp: Date } | null {
+  ): { data: ReportData; formatted: string; timestamp: Date } | null {
     return this.reportCache.get(reportId) || null;
   }
 
@@ -157,8 +200,16 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
     return cacheAgeMs < maxCacheAgeMs;
   }
 
-  private cacheReport(reportId: string, data: ReportData): void {
-    this.reportCache.set(reportId, { data, timestamp: new Date() });
+  private cacheReport(
+    reportId: string,
+    data: ReportData,
+    formatted: string,
+  ): void {
+    this.reportCache.set(reportId, {
+      data,
+      formatted,
+      timestamp: new Date(),
+    });
 
     if (this.reportCache.size > 10) {
       const keys = Array.from(this.reportCache.keys());
