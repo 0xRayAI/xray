@@ -9,7 +9,7 @@ description: >
 
 The page is `.xray/state/NOTES.md`. The default depth is the working notes: enough that a compact or a host change continues the job with no paste.
 
-`stampNotesPickup` in `src/integrations/hooks/station-hook-runtime.cjs` updates only the pickup line. It does not write the body. The seat writes the body, at this depth, before the compact.
+`stampNotesPickup` in `src/integrations/hooks/station-hook-runtime.cjs` updates only the pickup line. PreCompact calls it. Grok runs `session-start.js --hook-event=pre_compact`. Cursor runs `pre-compact.js`. Both go through `applyStationHeat`, and on a compact event the pickup line is stamped and the rest of the page is left alone. Cursor cannot block the compact. Grok ignores hook stdout. The hook does not check that the working notes are present. The seat writes the body, at this depth, before that hook runs.
 
 1. The pickup line equals the station intent. Leave both alone unless the job on the table changed.
 2. Under the pickup line, keep a short index and a Working notes body. The body holds the point, what is already on a lens, the library table, the open pull requests and their heads, the rituals, the standing orders, and the next cut. A one-line resume is the index, not the page.

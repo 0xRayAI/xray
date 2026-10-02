@@ -30,6 +30,6 @@ Notes are the body the station card cannot hold.
 └────────────────────────────────────────────────────────────┘
 ```
 
-The page is `.xray/state/NOTES.md`. The pickup line equals the station intent. The default depth is the working notes: the point, the coverage, the library, the open pull requests, the rituals, and the next cut. A pickup line alone does not survive a compact. `stampNotesPickup` updates only that line. The seat writes the body. Do not commit this file. Do not feed it to Repertoire.
+The page is `.xray/state/NOTES.md`. The pickup line equals the station intent. The default depth is the working notes: the point, the coverage, the library, the open pull requests, the rituals, and the next cut. A pickup line alone does not survive a compact. PreCompact calls `stampNotesPickup`, which updates only that line and leaves the body alone. The hook does not check the body. The seat writes it before the compact. Do not commit this file. Do not feed it to Repertoire.
 
 stamped · 0xray 4.0.36
