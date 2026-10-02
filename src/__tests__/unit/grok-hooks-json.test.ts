@@ -325,6 +325,42 @@ describe('Grok hooks.json command strings', () => {
     }
   });
 
+  it('dogfood wear plants an empty signals document when no source exists', () => {
+    const parent = mkdtempSync(path.join(tmpdir(), 'xray-dogfood-empty-signals-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      mkdirSync(tmp, { recursive: true });
+      mkdirSync(path.join(tmp, '.xray'), { recursive: true });
+      writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({ memory_routing: { enabled: false, provider: 'null' } }),
+      );
+      mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+
+      installAllBridges({ packageRoot: tmp, targetDir: tmp, log: () => {} });
+
+      const features = JSON.parse(readFileSync(path.join(tmp, '.xray', 'features.json'), 'utf8')) as {
+        memory_routing: { provider: string };
+      };
+      expect(features.memory_routing.provider).toBe('repertoire');
+      const written = JSON.parse(
+        readFileSync(path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'), 'utf8'),
+      ) as { description?: string; schema_version?: string; signals?: unknown };
+      expect(Array.isArray(written)).toBe(false);
+      expect(written).toEqual({
+        description: 'Curated high-signal primitives for Repertoire',
+        schema_version: '1.1',
+        signals: [],
+      });
+      expect(Array.isArray(written.signals)).toBe(true);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('isEphemeralInstallRoot skips machine ~/.grok for temp consumers', () => {
     expect(isEphemeralInstallRoot('/var/folders/jx/abc/T/opencode-0xray-e2e-1')).toBe(true);
     expect(isEphemeralInstallRoot('/tmp/hermes-0xray-e2e-1')).toBe(true);

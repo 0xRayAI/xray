@@ -2121,7 +2121,14 @@ function materializeDogfoodFeatures(packageRoot, log) {
     ];
     const src = candidates.find((candidate) => fs.existsSync(candidate));
     if (src) fs.copyFileSync(src, signalsPath);
-    else writeJsonFile(signalsPath, []);
+    else {
+      // CuratedSignalsManager.load() reads document.signals, not a bare array.
+      writeJsonFile(signalsPath, {
+        description: "Curated high-signal primitives for Repertoire",
+        schema_version: "1.1",
+        signals: [],
+      });
+    }
     log("grok-dogfood", "repertoire signals materialized", "info");
   }
   const inferenceState = path.join(stateDir, "inference-state.json");
