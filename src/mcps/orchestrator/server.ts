@@ -13,12 +13,10 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as fs from 'fs';
 import { frameworkLogger } from '../../core/framework-logger.js';
-import { XrayStateManager } from '../../state/state-manager.js';
-import { MultiAgentOrchestrationCoordinator } from '../../orchestrator/multi-agent-orchestration-coordinator.js';
 
-import { TaskHandler } from './handlers/task-handler.js';
-import { ComplexityHandler } from './handlers/complexity-handler.js';
 import { StatusHandler } from './handlers/status-handler.js';
+import type { TaskHandler } from './handlers/task-handler.js';
+import type { ComplexityHandler } from './handlers/complexity-handler.js';
 import type { OrchestrationTask, OrchestrationResult } from './types.js';
 import {
   spawnAside,
@@ -46,22 +44,12 @@ export class OrchestratorServer {
     timestamp: string;
   }> = [];
   
-  // Handlers
-  private taskHandler: TaskHandler;
-  private complexityHandler: ComplexityHandler;
+  // Task and complexity handlers import the planner and nucleus. Load on tool call.
+  private taskHandlerPromise: Promise<TaskHandler> | null = null;
+  private complexityHandlerPromise: Promise<ComplexityHandler> | null = null;
   private statusHandler: StatusHandler;
-  
-  // Actual orchestration coordinator
-  private coordinator: MultiAgentOrchestrationCoordinator;
 
   constructor() {
-    // Initialize actual coordinator
-    const stateManager = new XrayStateManager();
-    this.coordinator = new MultiAgentOrchestrationCoordinator(stateManager);
-    
-    // Initialize handlers
-    this.taskHandler = new TaskHandler();
-    this.complexityHandler = new ComplexityHandler();
     this.statusHandler = new StatusHandler();
 
     // Create MCP server
@@ -83,6 +71,30 @@ export class OrchestratorServer {
     frameworkLogger.log('orchestrator.server', 'initialize', 'info', {
       message: '0xRay Orchestrator MCP Server initialized',
     });
+  }
+
+  private loadTaskHandler(): Promise<TaskHandler> {
+    if (!this.taskHandlerPromise) {
+      this.taskHandlerPromise = import('./handlers/task-handler.js')
+        .then(({ TaskHandler }) => new TaskHandler())
+        .catch((error: unknown) => {
+          this.taskHandlerPromise = null;
+          throw error;
+        });
+    }
+    return this.taskHandlerPromise;
+  }
+
+  private loadComplexityHandler(): Promise<ComplexityHandler> {
+    if (!this.complexityHandlerPromise) {
+      this.complexityHandlerPromise = import('./handlers/complexity-handler.js')
+        .then(({ ComplexityHandler }) => new ComplexityHandler())
+        .catch((error: unknown) => {
+          this.complexityHandlerPromise = null;
+          throw error;
+        });
+    }
+    return this.complexityHandlerPromise;
   }
 
   /**
@@ -317,7 +329,8 @@ export class OrchestratorServer {
               inheritedContext: { taskCount: orchArgs.tasks?.length ?? 0, executionMode: orchArgs.executionMode ?? 'optimized' },
             });
             try {
-              const result = await this.taskHandler.handleOrchestrateTask(
+              const taskHandler = await this.loadTaskHandler();
+              const result = await taskHandler.handleOrchestrateTask(
                 orchArgs,
                 { taskHistory: this.taskHistory, activeTasks: this.activeTasks, asideId: aside.asideId },
               );
@@ -432,7 +445,8 @@ export class OrchestratorServer {
               inheritedContext,
             });
             try {
-              const result = await this.complexityHandler.handleAnalyzeComplexity(
+              const complexityHandler = await this.loadComplexityHandler();
+              const result = await complexityHandler.handleAnalyzeComplexity(
                 {
                   ...complexityArgs,
                   ...(sessionId ? { sessionId } : {}),
