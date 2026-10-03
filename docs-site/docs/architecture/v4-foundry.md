@@ -106,7 +106,6 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 | Station heat | `station-hook-runtime.cjs` | **EXO** |
 | `grok_postprocessor_light` | Grok PostToolUse write tools | **EXO light** (not constitution) |
 | ProcessorManager (25 implementations) | OpenCode plugin + Hermes `pre-process`/`post-process` | **Worn mill catalog** on those floors; Grok live hooks do **not** run this loop |
-| `enforcement-gate.ts` ValidatorRegistry | Public API / e2e | **Not** the OS gate |
 | Git pre-commit / post-commit | `scripts/hooks/` | **EXO git**, installed by mill |
 | `inference/session-capture.ts` | post-commit | **EXO git** |
 | `hooks.json` template + `patchGrokHooks` | postinstall | **FOUNDRY** |

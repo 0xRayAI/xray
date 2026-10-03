@@ -25,12 +25,38 @@ describe('pipeline plates', () => {
       'processor',
       'reporting',
       'memory-recall',
+      'stamp-plate',
       'house',
+      'review',
       'goggles',
       'suit',
       'kits',
       'host-pack',
       'glossary',
+      'record-map',
+      'write-home',
+      'activity-log',
+      'session-capture',
+      'suit-wear',
+      'suit-organs',
+      'station-card',
+      'notes-page',
+      'reflection-page',
+      'site-manual',
+      'package-face',
+      'suit-settings',
+      'trail-state',
+      'inference-files',
+      'grok-compact',
+      'payload-heat',
+      'station-heat',
+      'pickup-stamp',
+      'cursor-compact',
+      'work-fresh',
+      'kept-line',
+      'lens-gate',
+      'pre-tool',
+      'lens-page',
     ]);
     for (const id of PLATE_IDS) {
       const plate = loadPlate(id);
@@ -64,6 +90,9 @@ describe('pipeline plates', () => {
 
   it('does not recall house from a bare house word or when other plates tie', () => {
     expect(recallPlate('in-house tooling review')).toBeNull();
+    expect(recallPlate('review plate')?.id).toBe('review');
+    expect(recallPlate('critic FAIL on the head')?.id).toBe('review');
+    expect(recallPlate('re-review that head')?.id).toBe('review');
     expect(recallPlate('house processor boot')?.id).not.toBe('house');
   });
 
@@ -77,7 +106,7 @@ describe('pipeline plates', () => {
       const stamped = readFileSync(first.path, 'utf8');
       expect(stamped).toMatch(BOX);
       expect(stamped).toContain('INPUT');
-      expect(stamped).toContain('speech grades');
+      expect(stamped).toContain('stampPlateIfMissing');
       writeFileSync(first.path, 'worn edit stays\n');
       const second = stampPlateIfMissing(root, id);
       expect(second.written).toBe(false);
@@ -106,7 +135,7 @@ describe('pipeline plates', () => {
       const processor = runtime.loadPlate('processor');
       expect(memory.id).toBe('memory-recall');
       expect(memory.body).toContain('INPUT');
-      expect(memory.body).toContain('speech grades');
+      expect(memory.body).toContain('stampPlateIfMissing');
       expect(processor.id).toBe('processor');
       expect(processor.body).toContain('INPUT');
       expect(runtime.plateStockLine('execute pre processors')).toBe(
@@ -142,11 +171,39 @@ describe('pipeline plates', () => {
     expect(recallPlate('kits')?.id).toBe('kits');
     expect(recallPlate('host pack')?.id).toBe('host-pack');
     expect(recallPlate('open the glossary')?.id).toBe('glossary');
+
+    expect(recallPlate('record map')?.id).toBe('record-map');
+    expect(recallPlate('write home')?.id).toBe('write-home');
+    expect(recallPlate('activity log pipeline')?.id).toBe('activity-log');
+    expect(recallPlate('session capture')?.id).toBe('session-capture');
+    expect(recallPlate('suit wear')?.id).toBe('suit-wear');
+    expect(recallPlate('suit organs')?.id).toBe('suit-organs');
+    expect(recallPlate('station card')?.id).toBe('station-card');
+    expect(recallPlate('notes page')?.id).toBe('notes-page');
+    expect(recallPlate('reflection page')?.id).toBe('reflection-page');
+    expect(recallPlate('site manual')?.id).toBe('site-manual');
+    expect(recallPlate('package face')?.id).toBe('package-face');
+    expect(recallPlate('suit settings')?.id).toBe('suit-settings');
+    expect(recallPlate('trail state')?.id).toBe('trail-state');
+    expect(recallPlate('inference files')?.id).toBe('inference-files');
+    expect(recallPlate('grok compact')?.id).toBe('grok-compact');
+    expect(recallPlate('payload heat')?.id).toBe('payload-heat');
+    expect(recallPlate('station heat')?.id).toBe('station-heat');
+    expect(recallPlate('pickup stamp')?.id).toBe('pickup-stamp');
+    expect(recallPlate('cursor compact')?.id).toBe('cursor-compact');
+    expect(recallPlate('work fresh')?.id).toBe('work-fresh');
+    expect(recallPlate('kept line')?.id).toBe('kept-line');
+    expect(recallPlate('lens gate')?.id).toBe('lens-gate');
+    expect(recallPlate('pre tool')?.id).toBe('pre-tool');
+    expect(recallPlate('lens page')?.id).toBe('lens-page');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     expect(recallPlate('house init')?.id).toBe('house');
     expect(recallPlate('what is actuality')).toBeNull();
     expect(recallPlate('outer plane')).toBeNull();
     expect(recallPlate('kind 0')).toBeNull();
     expect(recallPlate('wear the suit')).toBeNull();
+    expect(recallPlate('stamp plate')?.id).toBe('stamp-plate');
+    expect(recallPlate('in-house tooling review')).toBeNull();
     const goggles = loadPlate('goggles');
     expect(goggles.body).toContain('it views one plane');
     expect(goggles.body).not.toMatch(/ACTUALITY|DICHOTOMY|SYNCOPATE|OUTER PLANES/);

@@ -40,7 +40,6 @@
     "src/integrations/**/*",
     "src/circuit-breaker/**/*",
     "src/enterprise-monitoring.ts",
-    "src/infrastructure/**/*",
     "src/reporting/**/*",
     "src/validation/**/*"
   ]

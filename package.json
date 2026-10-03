@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.0.34",
+  "version": "4.0.37",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -73,7 +73,7 @@
     "test": "vitest run",
     "test:batch": "npm test",
     "test:unit": "npm test -- src/__tests__/unit/config-loader.test.ts src/__tests__/unit/state-manager.test.ts src/__tests__/unit/state-manager-persistence.test.ts src/__tests__/unit/context-loader.test.ts src/__tests__/unit/pattern-analyzer.test.ts src/__tests__/unit/complexity-calibrator.test.ts",
-    "test:core-framework": "npm test -- src/__tests__/unit/self-direction-activation.test.ts src/__tests__/unit/ast-code-parser.test.ts src/__tests__/unit/v2-deletion-protection.test.ts",
+    "test:core-framework": "npm test -- src/__tests__/unit/v2-deletion-protection.test.ts",
     "test:security": "npm test -- src/__tests__/unit/security/security-hardener.test.ts src/__tests__/unit/security/security-headers.test.ts src/__tests__/unit/security/security-auditor.test.ts",
     "test:performance": "npm test -- src/__tests__/unit/monitoring.test.ts src/__tests__/unit/benchmark.test.ts src/__tests__/unit/analytics.test.ts",
     "test:session-management": "npm test -- src/__tests__/unit/session-state-manager.test.ts src/__tests__/unit/session-security-validator.test.ts src/__tests__/unit/session-coordination-validator.test.ts src/__tests__/unit/session-migration-validator.test.ts src/__tests__/unit/session-migration-logic.test.ts",
@@ -171,6 +171,7 @@
     "scripts/mjs/verify-four-floor-compact.mjs",
     "scripts/mjs/run-repertoire-mcp.mjs",
     "scripts/mjs/run-goggles-mcp.mjs",
+    "scripts/mjs/run-grok-hook.mjs",
     "scripts/mjs/verify-delegation-gate-core.mjs",
     "scripts/mjs/delegation-gate-fixture.mjs",
     "src/opencode/",
@@ -212,7 +213,8 @@
     ".xray/config.json",
     ".gitignore.default",
     "LICENSE",
-    "vendor/@0xray/repertoire/"
+    "vendor/@0xray/repertoire/",
+    "!vendor/**/*.map"
   ],
   "dependencies": {
     "@0xray/blip": "^0.1.2",

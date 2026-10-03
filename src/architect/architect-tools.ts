@@ -363,6 +363,38 @@ export async function architectureAssessment(
   return result;
 }
 
+/** Confer text follows the assessment. A critical coupling issue is FAIL. */
+export function conferVerdictFromAssessment(
+  assessment: ArchitectureAssessment,
+): "PASS" | "CONDITIONAL" | "FAIL" {
+  const criticalIssue = assessment.issues.some((issue) => issue.type === "critical");
+  if (
+    criticalIssue ||
+    assessment.overallHealth === "critical" ||
+    assessment.overallHealth === "poor"
+  ) {
+    return "FAIL";
+  }
+  if (
+    assessment.overallHealth === "fair" ||
+    assessment.issues.some((issue) => issue.type === "major")
+  ) {
+    return "CONDITIONAL";
+  }
+  return "PASS";
+}
+
+export function formatConferArchitectureText(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+): string {
+  const assessmentJson = JSON.stringify(assessment, null, 2);
+  const prompt = conferPrompt.trim();
+  if (!prompt) return assessmentJson;
+  const verdict = conferVerdictFromAssessment(assessment);
+  return `${prompt}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`;
+}
+
 // Helper functions
 
 function identifyArchitecturalPatterns(

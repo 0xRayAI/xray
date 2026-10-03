@@ -206,6 +206,171 @@ describe('bridge-mcp-wiring', () => {
     }
   });
 
+  it('uses node_modules/xray only when that legacy tree is the install', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-legacy-'));
+    const cli = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(cli), { recursive: true });
+    writeFileSync(cli, '#!/usr/bin/env node\n');
+    try {
+      const launch = wiring.pinnedMcpLaunch(targetDir, 'governance');
+      expect(launch.args).toEqual([cli, 'mcp', 'governance']);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('prefers node_modules/0xray when both install trees exist', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-both-'));
+    const current = path.join(targetDir, 'node_modules', '0xray', 'dist', 'cli', 'index.js');
+    const legacy = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(current), { recursive: true });
+    mkdirSync(path.dirname(legacy), { recursive: true });
+    writeFileSync(current, '#!/usr/bin/env node\n');
+    writeFileSync(legacy, '#!/usr/bin/env node\n');
+    try {
+      expect(wiring.pinnedMcpLaunch(targetDir, 'skills').args[0]).toBe(current);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('replaces a checkout dist/cli launch with the installed package CLI', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-dist-'));
+    const dest = path.join(targetDir, '.mcp.json');
+    const cli = path.join(targetDir, 'node_modules', '0xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(cli), { recursive: true });
+    writeFileSync(cli, '#!/usr/bin/env node\n');
+    writeFileSync(
+      dest,
+      `${JSON.stringify({
+        mcpServers: {
+          'xray-governance': {
+            command: 'node',
+            args: ['dist/cli/index.js', 'mcp', 'governance'],
+            env: { L1_MARKER_ENV: 'kept', XRAY_FORCE_MCP_GOVERNANCE: 'true' },
+          },
+        },
+      })}\n`,
+    );
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(dest, 'utf8')) as {
+        mcpServers: Record<string, { command: string; args: string[]; env?: Record<string, string> }>;
+      };
+      expect(mcp.mcpServers['xray-governance'].command).toBe('node');
+      expect(innerAfterScoped(mcp.mcpServers['xray-governance'].args)).toEqual([
+        'node',
+        cli,
+        'mcp',
+        'governance',
+      ]);
+      expect(mcp.mcpServers['xray-governance'].env?.L1_MARKER_ENV).toBe('kept');
+      expect(mcp.mcpServers['xray-governance'].env?.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
+      const again = readFileSync(dest, 'utf8');
+      wiring.deployPortableProjectMcpJson(targetDir);
+      expect(readFileSync(dest, 'utf8')).toBe(again);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('replaces a checkout dist/cli launch with a version pin when no package is installed', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-dist-pin-'));
+    const dest = path.join(targetDir, '.mcp.json');
+    writeFileSync(
+      dest,
+      `${JSON.stringify({
+        mcpServers: {
+          'xray-researcher': {
+            command: 'node',
+            args: ['./dist/cli/index.js', 'mcp', 'researcher'],
+          },
+        },
+      })}\n`,
+    );
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(dest, 'utf8')) as {
+        mcpServers: Record<string, { args: string[] }>;
+      };
+      expect(innerAfterScoped(mcp.mcpServers['xray-researcher'].args)).toEqual([
+        'npx',
+        '-y',
+        `0xray@${installedVersion}`,
+        'mcp',
+        'researcher',
+      ]);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps a legacy node_modules/xray CLI when that is the only install', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-keep-legacy-'));
+    const dest = path.join(targetDir, '.mcp.json');
+    const cli = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(cli), { recursive: true });
+    writeFileSync(cli, '#!/usr/bin/env node\n');
+    writeFileSync(
+      dest,
+      `${JSON.stringify({
+        mcpServers: {
+          'xray-skills': {
+            command: 'node',
+            args: [cli, 'mcp', 'skills'],
+            enabled: false,
+          },
+        },
+      })}\n`,
+    );
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(dest, 'utf8')) as {
+        mcpServers: Record<string, { args: string[]; enabled?: boolean }>;
+      };
+      expect(innerAfterScoped(mcp.mcpServers['xray-skills'].args)).toEqual(['node', cli, 'mcp', 'skills']);
+      expect(mcp.mcpServers['xray-skills'].enabled).toBe(false);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
+  it('upgrades a legacy node_modules/xray CLI when node_modules/0xray is installed', () => {
+    const targetDir = mkdtempSync(path.join(os.tmpdir(), 'xray-mcp-upgrade-'));
+    const dest = path.join(targetDir, '.mcp.json');
+    const current = path.join(targetDir, 'node_modules', '0xray', 'dist', 'cli', 'index.js');
+    const legacy = path.join(targetDir, 'node_modules', 'xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(current), { recursive: true });
+    mkdirSync(path.dirname(legacy), { recursive: true });
+    writeFileSync(current, '#!/usr/bin/env node\n');
+    writeFileSync(legacy, '#!/usr/bin/env node\n');
+    writeFileSync(
+      dest,
+      `${JSON.stringify({
+        mcpServers: {
+          'xray-enforcer': {
+            command: 'node',
+            args: [legacy, 'mcp', 'enforcer'],
+          },
+        },
+      })}\n`,
+    );
+    try {
+      wiring.deployPortableProjectMcpJson(targetDir);
+      const mcp = JSON.parse(readFileSync(dest, 'utf8')) as {
+        mcpServers: Record<string, { args: string[] }>;
+      };
+      expect(innerAfterScoped(mcp.mcpServers['xray-enforcer'].args)).toEqual([
+        'node',
+        current,
+        'mcp',
+        'enforcer',
+      ]);
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
   it('builds OpenClaw mcp servers with XRAY_ROOT for consumer cwd', () => {
     const targetDir = '/tmp/openclaw-consumer';
     const servers = wiring.buildOpenClawMcpServers(targetDir);

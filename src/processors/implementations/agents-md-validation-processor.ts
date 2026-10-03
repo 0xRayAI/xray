@@ -252,18 +252,7 @@ export class AgentsMdValidationProcessor {
     return Math.ceil((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  private getPackageVersion(): string {
-    try {
-      const pkgPath = path.join(this.projectRoot, "package.json");
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-      return pkg.version || "0.0.0";
-    } catch {
-      return "0.0.0";
-    }
-  }
-
   private getSectionTemplate(section: string): string {
-    const version = this.getPackageVersion();
     const now = new Date().toISOString().split("T")[0];
     const templates: Record<string, string> = {
       "## Available Agents": [

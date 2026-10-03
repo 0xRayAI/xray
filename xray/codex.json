@@ -557,8 +557,8 @@
     },
     "70": {
       "number": 70,
-      "title": "Current Source and Worn Package Before Edits",
-      "description": "Before the first edit, the git checkout is not behind origin/main and the worn 0xray npm is the published one. Fetch first. Fast-forward or rebase onto that main. If a stash is required, diff it against that main and say whether any work would be discarded before anything is dropped. House procedure is not this constitution. Grok Bot has no pre-tool hooks, so seat rules stay in house/ and point here. PreToolUse denies edits while the checkout is behind or the worn package is older.",
+      "title": "Current Copy Before Edits",
+      "description": "Before an edit, be on the latest main and run the current package. If this repo is 0xray, this repo is that package. An older package waits. Compare set-aside work to main before you throw it away.",
       "category": "process",
       "zeroTolerance": true,
       "enforcementLevel": "blocking"

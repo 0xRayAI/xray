@@ -14,12 +14,38 @@ const PLATE_IDS = Object.freeze([
   "processor",
   "reporting",
   "memory-recall",
+  "stamp-plate",
   "house",
+  "review",
   "goggles",
   "suit",
   "kits",
   "host-pack",
   "glossary",
+  "record-map",
+  "write-home",
+  "activity-log",
+  "session-capture",
+  "suit-wear",
+  "suit-organs",
+  "station-card",
+  "notes-page",
+  "reflection-page",
+  "site-manual",
+  "package-face",
+  "suit-settings",
+  "trail-state",
+  "inference-files",
+  "grok-compact",
+  "payload-heat",
+  "station-heat",
+  "pickup-stamp",
+  "cursor-compact",
+  "work-fresh",
+  "kept-line",
+  "lens-gate",
+  "pre-tool",
+  "lens-page",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -73,6 +99,13 @@ const CUES = {
     [/GROK_BOT_HOUSE/i, 4],
     [/setup-house/i, 4],
   ],
+  review: [
+    [/review plate/i, 6],
+    [/plates\/review\b/i, 6],
+    [/re-review/i, 5],
+    [/critic\s+FAIL/i, 5],
+    [/critic\s+PASS/i, 5],
+  ],
   goggles: [
     [/\bgoggles\b/i, 6],
   ],
@@ -90,6 +123,111 @@ const CUES = {
   ],
   glossary: [
     [/\bglossary\b/i, 6],
+  ],
+  "stamp-plate": [
+    [/stamp plate/i, 6],
+    [/plates\/stamp-plate/i, 6],
+  ],
+  "record-map": [
+    [/record map/i, 6],
+    [/five pages the agent/i, 6],
+    [/plates\/record-map/i, 6],
+  ],
+  "write-home": [
+    [/write home/i, 6],
+    [/\.xray\/logs/i, 6],
+    [/plates\/write-home/i, 6],
+  ],
+  "activity-log": [
+    [/activity log pipeline/i, 6],
+    [/plates\/activity-log/i, 6],
+  ],
+  "session-capture": [
+    [/session capture/i, 6],
+    [/latest-session\.json/i, 5],
+    [/plates\/session-capture/i, 6],
+  ],
+  "suit-wear": [
+    [/suit wear/i, 6],
+    [/consumer gitignore/i, 5],
+    [/plates\/suit-wear/i, 6],
+  ],
+  "suit-organs": [
+    [/suit organs/i, 6],
+    [/plates\/suit-organs/i, 6],
+  ],
+  "station-card": [
+    [/station card/i, 6],
+    [/plates\/station-card/i, 6],
+  ],
+  "notes-page": [
+    [/notes page/i, 6],
+    [/plates\/notes-page/i, 6],
+  ],
+  "reflection-page": [
+    [/reflection page/i, 6],
+    [/plates\/reflection-page/i, 6],
+  ],
+  "site-manual": [
+    [/site manual/i, 6],
+    [/plates\/site-manual/i, 6],
+  ],
+  "package-face": [
+    [/package face/i, 6],
+    [/plates\/package-face/i, 6],
+  ],
+  "suit-settings": [
+    [/suit settings/i, 6],
+    [/plates\/suit-settings/i, 6],
+  ],
+  "trail-state": [
+    [/trail state/i, 6],
+    [/plates\/trail-state/i, 6],
+  ],
+  "inference-files": [
+    [/inference files/i, 6],
+    [/plates\/inference-files/i, 6],
+  ],
+  "grok-compact": [
+    [/grok compact/i, 6],
+    [/plates\/grok-compact/i, 6],
+  ],
+  "payload-heat": [
+    [/payload heat/i, 6],
+    [/plates\/payload-heat/i, 6],
+  ],
+  "station-heat": [
+    [/station heat/i, 6],
+    [/plates\/station-heat/i, 6],
+  ],
+  "pickup-stamp": [
+    [/pickup stamp/i, 6],
+    [/plates\/pickup-stamp/i, 6],
+  ],
+  "cursor-compact": [
+    [/cursor compact/i, 6],
+    [/plates\/cursor-compact/i, 6],
+  ],
+  "work-fresh": [
+    [/work fresh/i, 6],
+    [/freshness line/i, 6],
+    [/plates\/work-fresh/i, 6],
+  ],
+  "kept-line": [
+    [/kept line/i, 6],
+    [/plates\/kept-line/i, 6],
+  ],
+  "lens-gate": [
+    [/lens gate/i, 6],
+    [/plates\/lens-gate/i, 6],
+  ],
+  "pre-tool": [
+    [/pre tool/i, 6],
+    [/plates\/pre-tool/i, 6],
+  ],
+  "lens-page": [
+    [/lens page/i, 6],
+    [/plates\/lens-page/i, 6],
   ],
 };
 

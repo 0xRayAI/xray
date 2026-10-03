@@ -526,6 +526,19 @@ function stampNotesPickup(root, line) {
   return text;
 }
 
+function notesMark(root) {
+  let body = "";
+  const dest = notesPath(root);
+  if (existsSync(dest)) {
+    try {
+      body = readFileSync(dest, "utf8");
+    } catch {
+      body = "";
+    }
+  }
+  return /^## Working notes\b/m.test(body) ? "Notes: present" : "Notes: THIN";
+}
+
 function readLatestSessionApproaches(root) {
   const latest = join(root, "docs", "inference", "latest-session.json");
   if (!existsSync(latest)) return null;
@@ -995,9 +1008,13 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
-  if (isCompactHook(extra) && intent && (readStationTicketField(root, "Intent") || pickup || clipIntent(extra.intent))) {
-    const stamped = stampNotesPickup(root, intent);
-    if (stamped) pickup = stamped;
+  let notesLine = null;
+  if (isCompactHook(extra)) {
+    if (intent && (readStationTicketField(root, "Intent") || pickup || clipIntent(extra.intent))) {
+      const stamped = stampNotesPickup(root, intent);
+      if (stamped) pickup = stamped;
+    }
+    notesLine = notesMark(root);
   }
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
@@ -1089,6 +1106,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     repertoireResume,
     workingLine,
     stationLine,
+    ...(notesLine ? { notesLine } : {}),
     ...compactHold,
   };
 }
@@ -1099,9 +1117,12 @@ const STOCK_STATION_PREFIXES = [
   "intent:",
   "plan:",
   "git:",
+  "fresh:",
   "repertoire:",
   "working:",
   "plate:",
+  "library:",
+  "notes:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1222,10 +1243,45 @@ function extractPreservedStationLines(existing) {
   return preserved;
 }
 
-function mergeStationMarkdown(stockMd, existingMd) {
-  const preserved = extractPreservedStationLines(existingMd);
-  if (!preserved.length) return stockMd;
+function latestFreshLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Fresh:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneFreshLine(stockMd, existingMd) {
   const stock = String(stockMd || "");
+  if (/^Fresh:/m.test(stock)) return stock;
+  const fresh = latestFreshLine(existingMd);
+  if (!fresh) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Repertoire:"));
+  if (at >= 0) rows.splice(at, 0, fresh);
+  else rows.splice(Math.min(rows.length, 6), 0, fresh);
+  return rows.join("\n");
+}
+
+function latestNotesLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Notes:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneNotesLine(stockMd, existingMd) {
+  const stock = String(stockMd || "");
+  if (/^Notes:/m.test(stock)) return stock;
+  const notes = latestNotesLine(existingMd);
+  if (!notes) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Library:"));
+  if (at >= 0) rows.splice(at + 1, 0, notes);
+  else rows.splice(Math.min(rows.length, 8), 0, notes);
+  return rows.join("\n");
+}
+
+function mergeStationMarkdown(stockMd, existingMd) {
+  const stockWithFresh = withOneNotesLine(withOneFreshLine(stockMd, existingMd), existingMd);
+  const preserved = extractPreservedStationLines(existingMd);
+  if (!preserved.length) return stockWithFresh;
+  const stock = stockWithFresh;
   const block = preserved.join("\n");
   const marker = "Continue this card.";
   const idx = stock.indexOf(marker);
@@ -1261,6 +1317,8 @@ function formatStationMarkdown(fields) {
   }
   const plateLine = plateStockLine(fields.intent);
   if (plateLine) lines.push(plateLine);
+  lines.push("Library: record-map — .agents/skills/record-map/SKILL.md");
+  if (fields.notesLine) lines.push(fields.notesLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
   lines.push("");

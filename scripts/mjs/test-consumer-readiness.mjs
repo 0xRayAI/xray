@@ -213,6 +213,7 @@ class ConsumerReadinessCheck {
 async function runPathVerification() {
   const isConsumerEnv = process.cwd().includes('test-') || 
                         process.cwd().includes('tmp') ||
+                        fs.existsSync('node_modules/0xray') ||
                         fs.existsSync('node_modules/xray');
   
   if (isConsumerEnv) {

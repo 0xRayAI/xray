@@ -138,7 +138,7 @@ Automatic in `inference-cycle.ts` + `governance-service.ts`.
 | StringRay / strray-ai branding | Retired (3.1.1) |
 | `hermes bridge` CLI | Removed — use `hermes install` |
 | `.opencode/xray/` fallback | Removed (3.1.1) |
-| `advanced-features/` on boot path | Decoupled — not consumer install |
+| `advanced-features/` | Removed |
 | PostProcessor default | Soft-deprecated (`enablePostProcessor: false`) |
 
 ## No breaking changes for basic users

@@ -41,6 +41,7 @@ export interface SecurityHeadersConfig {
 
 export class SecurityHeadersMiddleware {
   private config: SecurityHeadersConfig;
+  private headerPairs: Array<[string, string]> = [];
 
   constructor(config: Partial<SecurityHeadersConfig> = {}) {
     this.config = {
@@ -56,6 +57,7 @@ export class SecurityHeadersMiddleware {
       hstsPreload: false,
       ...config,
     };
+    this.rebuildHeaders();
   }
 
   /**
@@ -67,16 +69,22 @@ export class SecurityHeadersMiddleware {
       return;
     }
 
-    const headers: Record<string, string> = {};
+    for (const [key, value] of this.headerPairs) {
+      response.setHeader(key, value);
+    }
+  }
 
-    // Content Security Policy
+  private rebuildHeaders(): void {
+    const headers: Array<[string, string]> = [];
+
     if (this.config.enableCSP) {
-      headers["Content-Security-Policy"] =
+      headers.push([
+        "Content-Security-Policy",
         this.config.customCSP ||
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'";
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'",
+      ]);
     }
 
-    // HTTP Strict Transport Security
     if (this.config.enableHSTS) {
       let hstsValue = `max-age=${this.config.hstsMaxAge}`;
       if (this.config.hstsIncludeSubdomains) {
@@ -85,39 +93,33 @@ export class SecurityHeadersMiddleware {
       if (this.config.hstsPreload) {
         hstsValue += "; preload";
       }
-      headers["Strict-Transport-Security"] = hstsValue;
+      headers.push(["Strict-Transport-Security", hstsValue]);
     }
 
-    // X-Frame-Options
     if (this.config.enableFrameOptions) {
-      headers["X-Frame-Options"] = "DENY";
+      headers.push(["X-Frame-Options", "DENY"]);
     }
 
-    // X-XSS-Protection
     if (this.config.enableXSSProtection) {
-      headers["X-XSS-Protection"] = "1; mode=block";
+      headers.push(["X-XSS-Protection", "1; mode=block"]);
     }
 
-    // X-Content-Type-Options
     if (this.config.enableContentTypeOptions) {
-      headers["X-Content-Type-Options"] = "nosniff";
+      headers.push(["X-Content-Type-Options", "nosniff"]);
     }
 
-    // Referrer-Policy
     if (this.config.enableReferrerPolicy) {
-      headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+      headers.push(["Referrer-Policy", "strict-origin-when-cross-origin"]);
     }
 
-    // Permissions-Policy
     if (this.config.enablePermissionsPolicy) {
-      headers["Permissions-Policy"] =
-        "geolocation=(), microphone=(), camera=()";
+      headers.push([
+        "Permissions-Policy",
+        "geolocation=(), microphone=(), camera=()",
+      ]);
     }
 
-    // Set headers on response
-    Object.entries(headers).forEach(([key, value]) => {
-      response.setHeader(key, value);
-    });
+    this.headerPairs = headers;
   }
 
   /**
@@ -152,6 +154,7 @@ export class SecurityHeadersMiddleware {
    */
   updateConfig(newConfig: Partial<SecurityHeadersConfig>): void {
     this.config = { ...this.config, ...newConfig };
+    this.rebuildHeaders();
   }
 
   /**

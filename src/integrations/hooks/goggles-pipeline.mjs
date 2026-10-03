@@ -3,6 +3,12 @@
  * A named plane returns its view. Field pipes fill what they can see.
  * The view keeps every field for the next look.
  * A held plane stays quiet. A leave is denied.
+ * On this host a search is grep, glob, or a shell that runs one.
+ * A shell that reads a project source file is a search.
+ * The lens file stays open. One later read may go on, then the next read stops.
+ * An opened source file that no lens lists is remembered.
+ * The next search stops until that file is on a lens and its plate is on disk.
+ * The hook does not author the plate.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -12,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting'];
+const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files', 'grok-compact', 'payload-heat', 'station-heat', 'pickup-stamp', 'cursor-compact', 'work-fresh', 'kept-line', 'lens-gate', 'pre-tool', 'lens-page'];
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
@@ -56,6 +62,25 @@ function organDeny(reason) {
   return { gate: 'goggles', decision: 'deny', reason };
 }
 
+function plateIdsIn(spoken) {
+  const ids = [];
+  const re = /docs-site\/docs\/plates\/([a-z0-9-]+)\.md/ig;
+  let match;
+  while ((match = re.exec(String(spoken || '')))) ids.push(match[1]);
+  return ids;
+}
+
+function associatedPlates(plane) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[plane];
+    const listed = entry && Array.isArray(entry.plates) ? entry.plates.map(String) : [];
+    return new Set([plane, ...listed]);
+  } catch {
+    return new Set([plane]);
+  }
+}
+
 function planeWord(name, text) {
   return new RegExp(`(?:^|[^A-Za-z0-9-])${String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^A-Za-z0-9-]|$)`, 'i').test(String(text || ''));
 }
@@ -72,9 +97,17 @@ export function organStop(held, action) {
   const text = String(action?.text || '');
   const paths = (action?.paths || []).map(String).filter(Boolean);
   const tool = String(action?.tool || '');
-  if (/docs-site\/docs\/plates\/[a-z0-9-]+\.md/i.test([text, ...paths].join('\n'))) {
-    return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
+  const spoken = [text, ...paths].join('\n');
+  const drawn = plateIdsIn(spoken);
+  if (drawn.length) {
+    const allowed = associatedPlates(plane);
+    const foreign = drawn.filter((id) => !allowed.has(id));
+    if (foreign.length) {
+      return organDeny(`The reading is ${plane}. That drawing is not the plane.`);
+    }
   }
+  const otherFile = otherPlaneFile(plane, spoken);
+  if (otherFile) return organDeny(`The reading is ${plane}. The action is ${otherFile}.`);
   const stripped = withoutPaths(text);
   const others = acceptedPlanes().filter((name) => name !== plane && planeWord(name, stripped));
   const namesThis = planeWord(plane, stripped);
@@ -247,6 +280,7 @@ function cardView(plane, scope, flavor, root) {
     from: plane.id === 'ground' ? '' : (plane.from || 'ground'),
     digest: plane.digest || '',
     plate: plane.plate || '',
+    plates: Array.isArray(plane.plates) ? plane.plates : [],
     entry: plane.entry || '',
     exit: plane.exit || '',
     files: listed,
@@ -255,20 +289,23 @@ function cardView(plane, scope, flavor, root) {
     teardown: plane.teardown || '',
     worn: plane.worn || '',
   };
+  view.exam = examinePlane(plane, root).text;
   if (flavor === 'triage') {
     const filled = new Set(filledOf(plane));
     view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
-    view.exam = examinePlane(plane, root).text;
   }
   return view;
 }
 
-function formatCardText(view) {
+function cardRows(view) {
   const rows = [
     ['Plane', view.plane],
     ['From', view.from],
     ['Digest', view.digest],
     ['Plate', view.plate],
+  ];
+  if (Array.isArray(view.plates) && view.plates.length) rows.push(['Plates', view.plates.join(', ')]);
+  rows.push(
     ['Entry', view.entry],
     ['Exit', view.exit],
     ['Files', view.files.join(', ')],
@@ -276,34 +313,31 @@ function formatCardText(view) {
     ['Setup', view.setup],
     ['Teardown', view.teardown],
     ['Worn', view.worn],
-  ];
+  );
+  return rows;
+}
+
+function formatCardText(view) {
+  const rows = cardRows(view);
   let text = rows.map(([key, value]) => `${key}: ${value}`.trimEnd()).join('\n');
   if (view.flavor === 'triage') {
     const lines = [];
     if (view.empty.length) lines.push(`Empty: ${view.empty.join(', ')}`);
     lines.push(view.exam);
     text = `${text}\n${lines.join('\n')}`;
+  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+    text = `${text}\n${view.exam}`;
   }
   return text;
 }
 
 export function formatCardPane(view) {
-  const rows = [
-    ['Plane', view.plane],
-    ['From', view.from],
-    ['Digest', view.digest],
-    ['Plate', view.plate],
-    ['Entry', view.entry],
-    ['Exit', view.exit],
-    ['Files', view.files.join(', ')],
-    ['Skills', view.skills],
-    ['Setup', view.setup],
-    ['Teardown', view.teardown],
-    ['Worn', view.worn],
-  ];
+  const rows = cardRows(view);
   if (view.flavor === 'triage') {
     if (Array.isArray(view.empty) && view.empty.length) rows.push(['Empty', view.empty.join(', ')]);
     if (view.exam) rows.push(['', view.exam]);
+  } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
+    rows.push(['', view.exam]);
   }
   const body = rows.map(([label, value]) => (label ? `${label.padEnd(8)} ${value}` : value).trimEnd());
   const title = `${view.flavor} · ${view.plane}`;
@@ -515,6 +549,7 @@ export function assemblePlane(id, platesDir) {
     files,
     unpathed: extra.unpathed || null,
     skills: extra.skills || '',
+    plates: Array.isArray(extra.plates) ? extra.plates.map(String) : [],
     setup: extra.setup || sectionOf(src.body, 'Setup') || (flow && flow.setup) || '',
     teardown: extra.teardown || sectionOf(src.body, 'Teardown') || (flow && flow.teardown) || '',
     worn: extra.worn || '',
@@ -684,12 +719,192 @@ export function suitHint(text) {
 }
 
 const DEEP_SEARCH = /search_codebase|find_implementation|get_documentation/i;
+const HOLDS_ON_NAME = new Set(['dichotomy', 'syncopate', 'synthesis']);
+const SHELL_SEARCH = /(?:^|&&|\|\||[;&|`(\n])\s*(?:(?:\/[\w.+/-]+\/)|(?:npx\s+))?(?:rg|grep|ag|ack|fd|find)\b|\bgit\s+grep\b/;
+
+function shellSearches(text) {
+  return SHELL_SEARCH.test(String(text || ''));
+}
+
+function mappedPlaneFiles(name) {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const entry = data[name];
+    if (!entry || typeof entry !== 'object') return [];
+    const candidates = [entry.file, entry.worn, entry.skills];
+    if (Array.isArray(entry.files)) candidates.push(...entry.files);
+    return candidates.filter((file) => typeof file === 'string' && file.includes('.') && file.includes('/'));
+  } catch {
+    return [];
+  }
+}
+
+function otherPlaneFile(held, spoken) {
+  const text = String(spoken || '');
+  for (const name of acceptedPlanes()) {
+    if (name === held) continue;
+    if (mappedPlaneFiles(name).some((file) => text.includes(file))) return name;
+  }
+  return '';
+}
+
+function mapFiles() {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const files = [];
+    for (const name of [...CARD_PLANES, ...WORN_PLANES]) {
+      const entry = data[name];
+      if (!entry || typeof entry !== 'object') continue;
+      const candidates = [entry.file, entry.worn, entry.skills];
+      if (Array.isArray(entry.files)) candidates.push(...entry.files);
+      for (const file of candidates) {
+        if (typeof file === 'string' && file.includes('.') && file.includes('/')) files.push(file);
+      }
+    }
+    return files;
+  } catch {
+    return [];
+  }
+}
+
+function opensLensFile(text) {
+  const spoken = String(text || '');
+  return mapFiles().some((file) => spoken.includes(file));
+}
+
+const SOURCE_FILE = /(?:^|[^A-Za-z0-9_])((?:src|scripts|docs-site|\.agents|grok-bot)\/[\w./-]*\.[A-Za-z0-9]+)(?=$|[^A-Za-z0-9_./-])/g;
+const SOURCE_READER = /(?:^|[^A-Za-z0-9_])(?:python3|node|cat|head|tail|sed|less|more|bat|awk)(?=$|[^A-Za-z0-9_])/;
+const STAMP_TARGET = /docs-site\/docs\/plates\/[a-z0-9-]+\.md|goggles-planes\.json|\.agents\/skills\/[a-z0-9-]+\/SKILL\.md|src\/memory-routing\/plates\.ts|src\/integrations\/hooks\/plates\.cjs|docs-site\/sidebars\.ts|docs-site\/docs\/plates\/index\.md/;
+
+function isStampPath(file) {
+  return STAMP_TARGET.test(String(file || '').replace(/\\/g, '/'));
+}
+
+function openedSourcePaths(text) {
+  const spoken = `\n${String(text || '').replace(/\\/g, '/')}`;
+  const found = [];
+  for (const match of spoken.matchAll(SOURCE_FILE)) {
+    const file = match[1];
+    if (!file || isStampPath(file) || found.includes(file)) continue;
+    found.push(file);
+  }
+  return found;
+}
+
+function shellReadsSource(text) {
+  const spoken = String(text || '');
+  return SOURCE_READER.test(spoken) && openedSourcePaths(spoken).length > 0;
+}
+
+function isLensWrite(toolName) {
+  return /write|edit|replace/i.test(String(toolName || ''));
+}
+
+function debtFile(root) {
+  return join(root, '.xray', 'state', 'goggles-lens-debt.json');
+}
+
+function loadDebt(root) {
+  try {
+    const data = JSON.parse(readFileSync(debtFile(root), 'utf8'));
+    return Array.isArray(data.paths) ? data.paths.filter((file) => typeof file === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDebt(root, paths) {
+  const unique = [];
+  for (const file of paths) {
+    if (!unique.includes(file)) unique.push(file);
+  }
+  const dest = debtFile(root);
+  if (!unique.length) {
+    try {
+      unlinkSync(dest);
+    } catch {
+      /* already clear */
+    }
+    return;
+  }
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify({ paths: unique })}\n`);
+}
+
+function lensRecords() {
+  try {
+    const data = JSON.parse(readFileSync(planesFile(), 'utf8'));
+    const records = [];
+    if (!data || typeof data !== 'object') return records;
+    for (const [name, entry] of Object.entries(data)) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      if (!Array.isArray(entry.files)) continue;
+      records.push([name, entry.files.filter((file) => typeof file === 'string')]);
+    }
+    return records;
+  } catch {
+    return [];
+  }
+}
+
+function plateIsOnDisk(root, name) {
+  const beside = findPlatesDir(HERE);
+  if (beside && existsSync(join(beside, `${name}.md`))) return true;
+  return existsSync(join(root, 'docs-site', 'docs', 'plates', `${name}.md`));
+}
+
+function lensCovers(root, file) {
+  for (const [name, files] of lensRecords()) {
+    if (!files.includes(file)) continue;
+    if (name === 'ground' || plateIsOnDisk(root, name)) return true;
+  }
+  return false;
+}
+
+function unsettledDebt(root) {
+  const prior = loadDebt(root);
+  const kept = prior.filter((file) => !lensCovers(root, file));
+  if (kept.length !== prior.length) saveDebt(root, kept);
+  return kept;
+}
+
+function rememberOpened(root, text) {
+  const fresh = openedSourcePaths(text).filter((file) => !lensCovers(root, file));
+  if (!fresh.length) return;
+  saveDebt(root, [...loadDebt(root), ...fresh]);
+}
+
+function debtReason(paths) {
+  return `Opened ${paths.join(', ')} has no lens.`;
+}
 
 function researchCall(toolName, text) {
   const tool = String(toolName || '');
   const spoken = String(text || '');
   if (/researcher|explorer|deep[- ]?research/i.test(tool) || DEEP_SEARCH.test(tool)) return true;
-  return /bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken));
+  if (/bash|shell/i.test(tool) && (/researcher|explorer|deep[- ]?research/i.test(spoken) || DEEP_SEARCH.test(spoken) || shellSearches(spoken) || shellReadsSource(spoken))) return true;
+  if (/^(grep|glob)$/i.test(tool)) return true;
+  return /^read_file$/i.test(tool) && !opensLensFile(spoken);
+}
+
+function passPath(root) {
+  return join(root, '.xray', 'state', 'goggles-lens-pass.json');
+}
+
+function loadReadPass(root) {
+  try {
+    const data = JSON.parse(readFileSync(passPath(root), 'utf8'));
+    if (!data || data.read !== true) return null;
+    return data.spent === true ? 'spent' : 'armed';
+  } catch {
+    return null;
+  }
+}
+
+function saveReadPass(root, spent) {
+  const file = passPath(root);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ read: true, spent: Boolean(spent) })}\n`);
 }
 
 /** One plane: the files the suit continues with. A look with no plane stops. Two planes stay quiet. */
@@ -724,13 +939,33 @@ function stampPlane(root, id) {
   }
 }
 
-/** A search stays stopped. The next move is the file on the lens, not the same search again. */
+/** Name one plane and the tool continues. Name none, or more than one, and the search stops. */
 export function lensBeforeResearch(root, toolName, text) {
   const spoken = String(text || '');
-  if (!researchCall(toolName, spoken)) return null;
+  const openDebt = unsettledDebt(root);
+  const research = researchCall(toolName, spoken);
+  if (openDebt.length && research) {
+    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  }
+  if (openDebt.length && isLensWrite(toolName) && !isStampPath(spoken)) {
+    return { gate: 'lens', decision: 'deny', reason: debtReason(openDebt) };
+  }
+  if (!research) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
-  if (names.length === 1) stampPlane(root, names[0]);
-  return { gate: 'lens', decision: 'deny', reason: lensPage(root, names) };
+  if (names.length === 1) {
+    stampPlane(root, names[0]);
+    rememberOpened(root, spoken);
+    return null;
+  }
+  if (/^read_file$/i.test(String(toolName || ''))) {
+    if (loadReadPass(root) === 'armed') {
+      saveReadPass(root, true);
+      return null;
+    }
+    if (loadReadPass(root) !== 'spent') saveReadPass(root, false);
+    return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
+  }
+  return { gate: 'lens', decision: 'deny', reason: 'Name one plane.' };
 }
 
 function seenFields(plane, root) {
@@ -772,22 +1007,17 @@ function seenFields(plane, root) {
   };
 }
 
-function kept(stored, seen, key) {
-  if (key === 'files') {
-    if (Array.isArray(seen.files) && seen.files.length) return seen.files.map(String);
-    return Array.isArray(stored.files) ? stored.files.map(String) : [];
-  }
-  if (seen[key]) return seen[key];
-  return stored[key] || '';
+function freshField(seen, key) {
+  if (key === 'files') return Array.isArray(seen.files) ? seen.files.map(String) : [];
+  return seen[key] || '';
 }
 
 export function growPlane(id, platesDir, root) {
   const seen = seenFields(assemblePlane(id, platesDir), sourceRoot(platesDir));
   const views = loadViews(root);
-  const stored = views[id] && typeof views[id] === 'object' ? views[id] : {};
   const grown = { id };
-  for (const key of VIEW_KEYS) grown[key] = kept(stored, seen, key);
-  if (id === 'ground') grown.from = stored.from || '';
+  for (const key of VIEW_KEYS) grown[key] = freshField(seen, key);
+  if (id === 'ground') grown.from = '';
   views[id] = {};
   for (const key of VIEW_KEYS) views[id][key] = grown[key];
   saveViews(root, views);
@@ -876,17 +1106,13 @@ function isGogglesWork(text) {
 
 
 export function cardStop(root, toolName, text, paths = []) {
-  const spoken = String(text || '');
-  if (spoken.length <= 200 && isGogglesWork(spoken) && !(paths || []).some((item) => /goggles/i.test(String(item)))) {
-    clearReading(root);
-    clearCardLine(root);
-    return null;
-  }
   const held = loadReading(root);
   if (!held) return null;
   const drift = actualityLine();
   if (drift) return organDeny(drift);
-  return organStop(held, { tool: toolName, text, paths });
+  const stopped = organStop(held, { tool: toolName, text, paths });
+  if (stopped) return stopped;
+  return { gate: 'goggles', decision: 'allow' };
 }
 
 function stationFile(root) {
@@ -928,14 +1154,16 @@ export function handCard(root, intent) {
       clearCardLine(root);
       return null;
     }
-    if (!lookVerb(words)) return null;
+    const asked = lookVerb(words);
+    const planes = acceptedPlanes().filter((name) => words.includes(name));
+    if (!asked && planes.length === 0) return null;
+    if (!asked && planes.length === 1 && !HOLDS_ON_NAME.has(planes[0])) return null;
     clearCardLine(root);
     const looked = readGoggles(words);
     if (looked.text.startsWith('Actuality. Drift')) {
       saveReading(root, { drift: looked.text });
       return null;
     }
-    const planes = acceptedPlanes().filter((name) => words.includes(name));
     if (planes.length !== 1) {
       clearReading(root);
       return null;

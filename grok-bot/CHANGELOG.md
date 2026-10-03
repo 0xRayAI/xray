@@ -10,6 +10,13 @@
 - **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
 - groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
 
+## 0.1.9
+
+- Kit is not the fleet. Fleet house SSOT is repo-root `house/` in 0xRayAI/xray, not inside this package (#205).
+- Pack `OP-PROC.md` stays generic and does not name fleet seats. Your five principles live in your `house/OP-PROC.md` after init.
+- Pack check rejects a `grok-bot/house` tree so the fleet OP-PROC cannot ship in the kit.
+- Watcher allowlist for issue and PR cadence is `house/WATCHERS.md` in the xray repo (#205).
+
 ## 0.1.8
 
 - OP-PROC: Syncopate six rules, Confer cadence, Board rules and RACI moved into CADENCE.md (#144)

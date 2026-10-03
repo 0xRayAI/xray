@@ -12,6 +12,17 @@ import * as path from "path";
 import { execSync } from "child_process";
 import { frameworkLogger } from "../core/framework-logger.js";
 
+const CONTROL_FLOW_RE = /\b(?:if|else|for|while|do|switch|case|catch)\b/g;
+const AMP_RE = /\b&&\b/g;
+const QMARK_RE = /\b\?\b/g;
+
+function countPattern(re: RegExp, content: string): number {
+  re.lastIndex = 0;
+  let count = 0;
+  while (re.exec(content) !== null) count++;
+  return count;
+}
+
 export interface ASTPattern {
   name: string;
   pattern: string;
@@ -120,6 +131,9 @@ export interface CodeMetrics {
 export class ASTCodeParser {
   private astGrepPath: string | null = null;
   private astGrepAvailable: boolean = false;
+  private compiledPatterns = new Map<string, RegExp>();
+  private newlineFor: string | null = null;
+  private newlineStarts: number[] | null = null;
   private patterns: ASTPattern[] = [
     // TypeScript/JavaScript patterns - direct regex for fallback
     {
@@ -643,12 +657,14 @@ export class ASTCodeParser {
     content: string,
     pattern: string,
   ): RegExpMatchArray[] {
-    // For fallback, patterns are already regex strings
-    const regexPattern = pattern;
-
-    const regex = new RegExp(regexPattern, "g");
+    let regex = this.compiledPatterns.get(pattern);
+    if (!regex) {
+      regex = new RegExp(pattern, "g");
+      this.compiledPatterns.set(pattern, regex);
+    }
+    regex.lastIndex = 0;
     const matches: RegExpMatchArray[] = [];
-    let match;
+    let match: RegExpExecArray | null;
 
     while ((match = regex.exec(content)) !== null) {
       matches.push(match);
@@ -1050,29 +1066,7 @@ export class ASTCodeParser {
   }
 
   private calculateFunctionComplexity(content: string): number {
-    let complexity = 1; // Base complexity
-
-    // +1 for each control flow statement
-    const controlFlowKeywords = [
-      "if",
-      "else",
-      "for",
-      "while",
-      "do",
-      "switch",
-      "case",
-      "catch",
-    ];
-    for (const keyword of controlFlowKeywords) {
-      if (!keyword) continue; // Skip empty keywords
-      const regex = new RegExp(`\\b${keyword}\\b`, "g");
-      const matches = content.match(regex);
-      if (matches) {
-        complexity += matches.length;
-      }
-    }
-
-    return complexity;
+    return 1 + countPattern(CONTROL_FLOW_RE, content);
   }
 
   private parseImportNames(importStr: string): string[] {
@@ -1111,30 +1105,15 @@ export class ASTCodeParser {
   }
 
   private calculateCyclomaticComplexity(content: string): number {
-    let complexity = 1;
-    const patterns = [
-      "if",
-      "else",
-      "for",
-      "while",
-      "do",
-      "switch",
-      "case",
-      "catch",
-      "&&",
-      "||",
-      "\\?",
-    ];
-
-    for (const pattern of patterns) {
-      const regex = new RegExp(`\\b${pattern}\\b`, "g");
-      const matches = content.match(regex);
-      if (matches) {
-        complexity += matches.length;
-      }
-    }
-
-    return complexity;
+    // `||` is interpolated into `\b||\b`, an empty alternation: one match per index.
+    return (
+      1 +
+      countPattern(CONTROL_FLOW_RE, content) +
+      countPattern(AMP_RE, content) +
+      content.length +
+      1 +
+      countPattern(QMARK_RE, content)
+    );
   }
 
   private calculateCognitiveComplexity(functions: FunctionInfo[]): number {
@@ -1177,8 +1156,31 @@ export class ASTCodeParser {
     return maxNesting;
   }
 
+  private newlineIndex(content: string): number[] {
+    if (this.newlineFor === content && this.newlineStarts) return this.newlineStarts;
+    const starts: number[] = [0];
+    for (let i = 0; i < content.length; i++) {
+      if (content.charCodeAt(i) === 10) starts.push(i + 1);
+    }
+    this.newlineFor = content;
+    this.newlineStarts = starts;
+    return starts;
+  }
+
+  private lineNumberAt(starts: number[], index: number): number {
+    let lo = 0;
+    let hi = starts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      const start = starts[mid];
+      if (start !== undefined && start <= index) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo + 1;
+  }
+
   private getLineNumber(content: string, index: number): number {
-    return content.substring(0, index).split("\n").length;
+    return this.lineNumberAt(this.newlineIndex(content), index);
   }
 
   private calculateMaintainabilityIndex(
