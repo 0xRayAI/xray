@@ -13,7 +13,13 @@ Those laws stay on everywhere else. This page does not edit them.
 
 **u do ~ dont spawn subagent.**
 
-Do all the work in the parent session. One continuous session. Never call Task. Never spawn a subagent, explore helper, researcher, or general-purpose agent. A Task call or a subagent spawn **voids that arm**. Log it and stop scoring that arm.
+Do all the work in the parent session. One continuous session. The parent session keeps reading and writing itself until the assigned corpus is finished. Never call Task. Never spawn a subagent, explore helper, researcher, or general-purpose agent.
+
+These void that arm. Log it and stop scoring that arm.
+
+- Declaring done, `DONE-*`, or asking the operator to confirm, choose chunk size, or allow placeholders.
+- A shell for-loop, sed, or script that summarizes files for the model. That is not a fill.
+- A Task call or a spawned helper, even if the helper keeps running.
 
 Prompt text that only says "don't spawn" is not this law. The on-disk page is the law, because a plain arm that reads the repo still meets autonomy-command.
 

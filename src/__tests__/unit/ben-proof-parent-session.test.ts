@@ -102,9 +102,22 @@ describe('BEN dual parent-session override', () => {
     expect(BENCH).toContain('even if the helper keeps running');
     expect(BENCH).toContain('subagentStart');
     expect(BENCH).toContain('is not the block');
-    expect(read('house/OP-PROC.md')).toContain('examples/ben-proof/OP-PROC.md');
-    expect(read('house/OP-PROC.md')).toContain('wins');
-    expect(read('house/OP-PROC.md')).toContain('even if the helper keeps running');
+    const house = read('house/OP-PROC.md');
+    const houseBench = house.slice(house.indexOf('## Bench (compaction survival / BEN dual)'));
+    for (const page of [BENCH, houseBench]) {
+      expect(page).toContain('keeps reading and writing itself until the assigned corpus is finished');
+      expect(page).toContain('Declaring done, `DONE-*`');
+      expect(page).toContain('confirm');
+      expect(page).toContain('chunk size');
+      expect(page).toContain('placeholders');
+      expect(page).toContain('for-loop, sed, or script');
+      expect(page).toContain('not a fill');
+      expect(page).toContain('voids that arm');
+      expect(page).toContain('Task call');
+    }
+    expect(house).toContain('examples/ben-proof/OP-PROC.md');
+    expect(house).toContain('wins');
+    expect(houseBench.startsWith('## Bench (compaction survival / BEN dual)')).toBe(true);
     expect(read('grok-bot/OP-PROC.md')).not.toContain('examples/ben-proof/OP-PROC.md');
     expect(read('grok-bot/OP-PROC.md')).not.toContain('BEN dual');
     expect(read('AGENTS.md')).toContain('autonomy-command');
