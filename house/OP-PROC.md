@@ -48,6 +48,14 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 - Fixes are surgical: the smallest change that solves the problem and passes its checks. Bigger changes get their own card.
 - Every card has **Done when** and **Stops at**. Per seat: at most **1 P0** or **1 active ship** in progress; forge may hold CoS-visible **N≤3** parallel cards `[suit: none yet · upstream #165]`.
 
+**Evidence before grade**
+
+1. Agree the check before the run.
+2. The check must come out different if the thing is broken.
+3. Nobody writes their own proof.
+4. No grade until that check has happened.
+5. Missing evidence stays unverified, not FAIL.
+
 ## 4. Lines only Blaze crosses `[suit: none yet]`
 
 Ask first, every time:
