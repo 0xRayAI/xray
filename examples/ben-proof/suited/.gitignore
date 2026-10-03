@@ -92,3 +92,7 @@ strray/
 .opencode/triage/
 logs/framework/
 # --- end 0xray suit ---
+
+# Bench overlay stays tracked. Wear leaves a hand file with no managed-region comment.
+!AGENTS.md
+AGENTS.md.0xray-new

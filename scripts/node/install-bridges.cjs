@@ -1241,6 +1241,48 @@ function commandAlreadyRunsXrayHook(command, targetDir) {
   }
 }
 
+/**
+ * Stock event runner: shebang, optional HERE=, and one exec of xray-cloud-hook.sh.
+ * Wear repoints that command at the installed dist script. A script with any
+ * other line stays a user command.
+ */
+function isStockXrayDelegate(command, targetDir) {
+  const match = /^(?:\.\/)?\.cursor\/hooks\/([\w.-]+\.sh)$/.exec(String(command || "").trim());
+  if (!match || !targetDir) return false;
+  const shipped = new Set(CURSOR_HOOK_EVENTS.map(([, script]) => script));
+  if (!shipped.has(match[1])) return false;
+  let text;
+  try {
+    text = fs.readFileSync(path.join(path.resolve(targetDir), ".cursor", "hooks", match[1]), "utf8");
+  } catch {
+    return false;
+  }
+  const lines = shellWithoutComments(text)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (!lines.some((line) => line.includes("xray-cloud-hook.sh"))) return false;
+  return lines.every((line) => {
+    if (line.startsWith("#!")) return true;
+    if (line.startsWith("HERE=")) return true;
+    return /^exec\b/.test(line) && line.includes("xray-cloud-hook.sh");
+  });
+}
+
+function readPackageName(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    return pkg && typeof pkg.name === "string" ? pkg.name : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Factory dogfood checkout. Wear must not point its hooks at node_modules. */
+function isFactoryNamedCheckout(dir) {
+  return readPackageName(dir) === "0xray";
+}
+
 function scanJsonc(text) {
   let hasComments = false;
   let i = 0;
@@ -1567,17 +1609,37 @@ function editJsoncHooks(text, xrayByEvent, targetDir) {
     if (tokens[pair.valIdx].type !== "[") throw new Error(`${event} is not an array`);
     const elements = arrayElements(tokens, pair.valIdx, pair.valEnd);
     const owned = [];
+    const delegates = [];
     let coveredByRunner = false;
     for (const el of elements) {
       if (tokens[el.startIdx].type !== "{") continue;
       const cmd = commandOfObject(tokens, el.startIdx);
       if (!cmd) continue;
       if (isXrayHookCommand(cmd.value)) owned.push({ el, cmd });
+      else if (isStockXrayDelegate(cmd.value, targetDir)) delegates.push({ el, cmd });
       else if (commandAlreadyRunsXrayHook(cmd.value, targetDir)) coveredByRunner = true;
     }
     if (coveredByRunner) {
-      if (owned.length > 0) edits.push(...ownedDeletionEdits(tokens, owned.map((item) => item.el)));
+      const drop = owned.map((item) => item.el).concat(delegates.map((item) => item.el));
+      if (drop.length > 0) edits.push(...ownedDeletionEdits(tokens, drop));
       continue;
+    }
+    if (delegates.length > 0 && owned.length === 0) {
+      const first = delegates[0];
+      if (first.cmd.value !== command) {
+        edits.push({
+          start: first.cmd.token.start,
+          end: first.cmd.token.end,
+          insert: JSON.stringify(command),
+        });
+      }
+      if (delegates.length > 1) {
+        edits.push(...ownedDeletionEdits(tokens, delegates.slice(1).map((item) => item.el)));
+      }
+      continue;
+    }
+    if (delegates.length > 0) {
+      edits.push(...ownedDeletionEdits(tokens, delegates.map((item) => item.el)));
     }
     if (owned.length === 0) {
       edits.push({
@@ -1990,8 +2052,11 @@ function saveCursorWearSnapshot(targetDir, previousText, writtenBody) {
     cursorDirExisted = fs.existsSync(path.join(targetDir, ".cursor"));
   }
   const backup = existed ? userBytesBeforeWear(previousText) : null;
-  if (backup != null) writeFileIfChanged(paths.backup, backup);
-  else if (fs.existsSync(paths.backup)) fs.unlinkSync(paths.backup);
+  // The first pre-wear copy stays. A later wear sees the repointed command
+  // and cannot recover that stock delegate by stripping dist entries.
+  if (backup != null) {
+    if (!fs.existsSync(paths.backup)) writeFileIfChanged(paths.backup, backup);
+  } else if (fs.existsSync(paths.backup)) fs.unlinkSync(paths.backup);
   const meta = { version: 1, existed, cursorDirExisted, also };
   writeFileIfChanged(paths.written, writtenBody);
   writeFileIfChanged(paths.meta, `${JSON.stringify(meta, null, 2)}\n`);
@@ -2073,10 +2138,14 @@ function assertWearSnapshotReusable(resolvedTarget, hooksPath) {
 
 /**
  * Merge the five shipped Cursor hooks into the target project's
- * `.cursor/hooks.json`. Writes only `targetDir`. An event whose command
- * already runs xray-cloud-hook.sh is left alone, so a committed suited
- * hooks.json is not given a second copy. Pass `{ outerRoots: true }` to also
- * write outer paths; each one is printed.
+ * `.cursor/hooks.json`. Writes only `targetDir`. A stock
+ * `.cursor/hooks/<event>.sh` that only execs xray-cloud-hook.sh is repointed
+ * at the installed dist runner. Any other command that already runs that
+ * hook is left alone, so a custom script is not given a second copy.
+ * A checkout whose package.json name is `0xray` is factory dogfood: this
+ * function does not point its hooks at node_modules.
+ * Pass `{ outerRoots: true }` to also write outer paths that are not that
+ * factory checkout; each write is printed.
  * The snapshot is `<project>/.xray/state/cursor-hook-wear/` (gitignored, not packed).
  * An already-worn file is never stored as the pre-wear backup.
  * A second wear reuses the snapshot only when hooks.json still matches the last write.
@@ -2091,6 +2160,10 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
     return;
   }
   assertCursorWearGit(resolvedTarget);
+  if (isFactoryNamedCheckout(resolvedTarget) && resolvedPackage !== resolvedTarget) {
+    write("cursor-bridge", "factory dogfood hooks left on src", "info", { target: resolvedTarget });
+    return null;
+  }
   if (options.suit !== false) {
     if (!installConsumerProjectFiles(resolvedPackage, resolvedTarget, write)) {
       syncSetupSkillsAndRootLinks(resolvedPackage, resolvedTarget);
@@ -2124,8 +2197,13 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
 
   if (options.outerRoots === true) {
     if (!snap) snap = saveCursorWearSnapshot(resolvedTarget, originalText, body);
-    snap.meta.also = linkedWearRoots(resolvedTarget);
+    const linked = linkedWearRoots(resolvedTarget);
+    const factoryRoots = linked.filter((extra) => isFactoryNamedCheckout(extra));
+    snap.meta.also = linked.filter((extra) => !isFactoryNamedCheckout(extra));
     saveWearState(snap.paths, snap.meta);
+    for (const extra of factoryRoots) {
+      process.stdout.write(`cursor-wear: left factory dogfood hooks at ${extra}\n`);
+    }
     for (const extra of snap.meta.also) {
       wearCursorHooks(extra, resolvedPackage, write, { outerRoots: false, suit: false });
       process.stdout.write(`cursor-wear: wrote outer hooks at ${extra}\n`);
