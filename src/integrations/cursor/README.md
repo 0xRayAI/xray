@@ -15,11 +15,11 @@ Repertoire is preferred (vendored, dest = named laws). Station + Codex gates sti
 
 Copy the consumer template from `src/integrations/cursor/hooks/hooks.json` and the sibling `.sh` runners. This exo repo's own `.cursor/hooks.json` stays on `.cursor/hooks/*.sh` so dogfood can run `src/integrations/cursor/hooks/*.js` before `npm run build`.
 
-Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries, unless that event already runs `xray-cloud-hook.sh` (the committed `.cursor/hooks/*.sh` runners). A suited bench that already commits those runners is left byte for byte. The new command, when one is added, is a relative path to the installed package:
+Consumer wear (`installCursorBridge` / `wearCursorHooks`, including `npm run wear` in a suited bench) writes only that consumer project's `.cursor/hooks.json`. It does not rewrite a parent checkout's committed hooks, `CURSOR_PROJECT_DIR`, or a `repos/xray` directory above the project. Those outer paths are written only when `wearCursorHooks` is called with `{ outerRoots: true }`, and each one is printed as `cursor-wear: wrote outer hooks at <path>`. A checkout whose `package.json` name is `0xray` is factory dogfood: wear leaves its hooks on `src/` and prints `cursor-wear: left factory dogfood hooks at <path>` instead of writing them. The five shipped events (`preToolUse`, `preCompact`, `afterFileEdit`, `beforeShellExecution`, `beforeReadFile`) are added beside existing user entries. A stock `.cursor/hooks/<event>.sh` that only execs `xray-cloud-hook.sh` is repointed at the installed dist runner, so the command is not given a second copy. Any other command that already runs that hook is left alone. The installed command is a relative path:
 
 `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`
 
-Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays as it is, including when the name matches a shipped script, and wear adds the dist command beside it. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
+With cwd equal to that consumer, the runner's node argv is `node_modules/0xray/dist/integrations/cursor/hooks/<event>.js`. Wear does not copy scripts into `.cursor/hooks/`. A user's `.cursor/hooks/<name>.sh` stays on disk, including when the name matches a shipped script. A `hooks.json` that contains `//` comments is merged in place. A duplicate `hooks` key, or any other file that cannot be parsed safely, makes wear stop and write nothing.
 
 Install the package first (`npm install`), then `npx 0xray wear`. Postinstall writes nothing. Wearing again writes the same bytes and takes a fresh snapshot every time. The pre-wear copy is `<project>/.xray/state/cursor-hook-wear/` (gitignored, and left out of the npm package), so removing `node_modules` does not delete it. When wear creates that folder and the path is not already ignored, it appends the path to `$GIT_DIR/info/exclude`. Wear stores the user bytes, never an already-worn `hooks.json`. Restore with `npx 0xray unwear` (or `node node_modules/0xray/scripts/node/unwear-cursor-hooks.cjs`). Unwear prints `restored` only when the file bytes match that snapshot exactly. If the file changed or cannot be parsed, unwear exits non-zero, says what differs, and leaves the snapshot in place. Wear refuses, and writes nothing, when git is missing, the directory is not a work tree, `GIT_DIR` is bare, or `hooks.json` cannot be parsed.
 
@@ -29,6 +29,18 @@ Install the package first (`npm install`), then `npx 0xray wear`. Postinstall wr
 2. Sibling `${JS}` when the runner itself lives under `node_modules/0xray`.
 3. `$XRAY_AI_PATH` `src/` then `dist/` (explicit mill).
 4. Dogfood `src/` at cwd, `../xray`, `repos/xray`, and `$CURSOR_PROJECT_DIR/repos/xray`, then dist at cwd, then `cwd/node_modules/0xray`.
+
+## Arm A workspace (BEN suited cloud)
+
+Dual fill stays blocked. This is the wear layout only.
+
+The suited cloud workspace is a consumer git root. It is not the factory checkout whose package name is `0xray`. Cursor loads `.cursor/hooks.json` from the workspace root and runs those commands with that cwd. The factory root keeps `src/integrations/cursor/hooks/pre-compact.js`. A nested `examples/ben-proof/suited` inside a factory clone does not move that root.
+
+1. The workspace git toplevel is the consumer (`git rev-parse --show-toplevel` equals that directory). The package name is not `0xray`. The suited bench is that root only when the bench directory itself is the checkout, not a subdirectory of the factory clone.
+2. From that root: `npm install 0xray@<version> @0xray/repertoire@0.2.8`, then `npx 0xray wear`. The bench `npm run wear` calls the same wear on this root only.
+3. After wear, `preCompact.command` is `node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.sh`. With cwd equal to this workspace, the node argv is `node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.js`. Matching bytes with factory `src/integrations/cursor/hooks/pre-compact.js` is not the pass. The path is the pass.
+
+Both arms get the same chat task. The task does not mention NOTES or compact. The operator does not seed NOTES. The suited seat records on its own while working. Quiz only after a host preCompact receipt. No hook dump.
 
 ## Contracts
 
