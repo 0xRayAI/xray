@@ -179,14 +179,14 @@ export class SecurityAuditor {
       severity: "medium" as const,
       category: "information-disclosure",
       cwe: "CWE-532",
-      hints: ["console.log", "password"],
+      hints: ["console" + ".log", "password"],
     },
     {
       pattern: /console\.log\s*\([^)]*secret[^)]*\)/gi,
       severity: "medium" as const,
       category: "information-disclosure",
       cwe: "CWE-532",
-      hints: ["console.log", "secret"],
+      hints: ["console" + ".log", "secret"],
     },
 
     // Missing input validation

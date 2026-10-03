@@ -195,7 +195,7 @@ async function main() {
       /* non-blocking pipeline facets */
     }
 
-    if (!compact) console.log(JSON.stringify(payload));
+    if (!compact) process.stdout.write(`${JSON.stringify(payload)}\n`);
     process.exit(0);
   } catch (err) {
     appendHookActivity(root, 'grok-session-start', 'session-boot-error', 'error', {
