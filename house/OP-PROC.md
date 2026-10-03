@@ -93,6 +93,11 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 - **Arch1:** outside-fleet builder (Grok CLI); friend-speak specs only.
 - **Organ gate:** useful, fit for purpose, prod grade, powers up the suit.
 - **Lens:** the search door (one `CARD_PLANES` token + one skill + related plates). **Plate:** the stamped drawing. Do not call the Entry/Exit/Setup/Teardown template a lens.
+- **u do ~ dont spawn subagent:** compaction-survival / BEN dual only. Parent session. Law: `examples/ben-proof/OP-PROC.md`.
+
+## Bench (compaction survival / BEN dual)
+
+For that path only, `examples/ben-proof/OP-PROC.md` **wins** over the constitution principle Use Best Subagents and over `AGENTS.md` autonomy-command Task dispatch. Do the work in the parent session. Never Task / spawn / explore helpers. A Task call or a spawned helper voids the arm even if the helper keeps running. The suited hooks deny Task. This house does not ban subagents on any other seat.
 
 ## Board
 

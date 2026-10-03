@@ -4,6 +4,11 @@
     "preToolUse": [
       {
         "command": ".cursor/hooks/pre-tool-use.sh"
+      },
+      {
+        "command": ".cursor/hooks/deny-task-tool.sh",
+        "failClosed": true,
+        "matcher": "Task"
       }
     ],
     "preCompact": [
@@ -24,6 +29,12 @@
     "beforeReadFile": [
       {
         "command": ".cursor/hooks/before-read-file.sh"
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": ".cursor/hooks/deny-subagent.sh",
+        "failClosed": true
       }
     ]
   }

@@ -10,7 +10,9 @@ Two Cursor cloud agents. Both Composer 2.5. The window is 200000 tokens. A count
 
 The rerun instructions are in `prompts/README.md`.
 
-Mint the code word before you fill the window. Read real source in slices of at most 400 lines. Do not generate files to fill the window. Do not spawn subagents during the fill.
+Mint the code word before you fill the window. Read real source in slices of at most 400 lines. Do not generate files to fill the window.
+
+Parent session is the law for this bench. `OP-PROC.md` wins over constitution Use Best Subagents and over `AGENTS.md` autonomy-command. u do ~ dont spawn subagent. A Task call or a spawned helper voids that arm even if the helper keeps running. The suited hooks deny Task when `suited/` is the workspace root. A `subagentStart` report of deny is not the block.
 
 A cut counts only when that same session has both of these, and both say the model is `composer-2.5` with a nonzero token count:
 
