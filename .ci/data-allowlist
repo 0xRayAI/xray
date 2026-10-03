@@ -1,6 +1,9 @@
 # Private docs site, not a published package. The docs CI job installs from this lock.
 docs-site/package-lock.json
 
+# Byte-for-byte restored reflection. Not a run log.
+docs/reflections/restored/kernel-integration-journey-reflection.log
+
 # Earlier recall cited in examples/ben-proof/README.md. It printed no lessons.
 examples/ben-proof/suited/proof/recall.out
 
