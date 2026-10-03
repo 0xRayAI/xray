@@ -601,6 +601,66 @@ describe('cursor wear wires installed dist hooks', () => {
     }
   });
 
+  it('keeps bench deny commands across wear and unwear while retargeting stock runners', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-deny-'));
+    const packageRoot = path.join(project, 'node_modules', '0xray');
+    const original = [
+      '{',
+      '  "version": 1,',
+      '  "hooks": {',
+      '    "preToolUse": [',
+      '      { "command": ".cursor/hooks/pre-tool-use.sh" },',
+      '      { "command": ".cursor/hooks/deny-task-tool.sh", "failClosed": true, "matcher": "Task" }',
+      '    ],',
+      '    "preCompact": [ { "command": ".cursor/hooks/pre-compact.sh" } ],',
+      '    "afterFileEdit": [ { "command": ".cursor/hooks/after-file-edit.sh" } ],',
+      '    "beforeShellExecution": [ { "command": ".cursor/hooks/before-shell-execution.sh" } ],',
+      '    "beforeReadFile": [ { "command": ".cursor/hooks/before-read-file.sh" } ],',
+      '    "subagentStart": [ { "command": ".cursor/hooks/deny-subagent.sh", "failClosed": true } ]',
+      '  }',
+      '}',
+      '',
+    ].join('\n');
+    try {
+      gitInit(project);
+      writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'recall-bench' })}\n`);
+      mkdirSync(path.join(project, '.cursor', 'hooks'), { recursive: true });
+      writeFileSync(path.join(project, '.cursor', 'hooks.json'), original);
+      for (const [event, script] of CURSOR_HOOK_EVENTS) {
+        writeFileSync(
+          path.join(project, '.cursor', 'hooks', script),
+          `#!/bin/sh\nHERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"\nexec /bin/sh "\${HERE}/xray-cloud-hook.sh" ${event} x.js\n`,
+        );
+      }
+      writeFileSync(path.join(project, '.cursor', 'hooks', 'deny-subagent.sh'), '#!/bin/sh\nprintf deny\n');
+      writeFileSync(path.join(project, '.cursor', 'hooks', 'deny-task-tool.sh'), '#!/bin/sh\nprintf deny-task\n');
+      plantDistHooks(packageRoot, 'dist');
+
+      wearCursorHooks(project, packageRoot, () => {});
+      const worn = JSON.parse(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')) as {
+        hooks: Record<string, Array<{ command: string; failClosed?: boolean; matcher?: string }>>;
+      };
+      for (const [event, script] of CURSOR_HOOK_EVENTS) {
+        const commands = worn.hooks[event].map((entry) => entry.command);
+        expect(commands).toContain(`node_modules/0xray/dist/integrations/cursor/hooks/${script}`);
+        expect(commands).not.toContain(`.cursor/hooks/${script}`);
+      }
+      expect(worn.hooks.preToolUse).toContainEqual({
+        command: '.cursor/hooks/deny-task-tool.sh',
+        failClosed: true,
+        matcher: 'Task',
+      });
+      expect(worn.hooks.subagentStart).toEqual([
+        { command: '.cursor/hooks/deny-subagent.sh', failClosed: true },
+      ]);
+
+      expect(unwearCursorHooks(project)).toBe(true);
+      expect(readFileSync(path.join(project, '.cursor', 'hooks.json'), 'utf8')).toBe(original);
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
   it('merges hooks.json comments and writes nothing when the file cannot be parsed', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-wear-jsonc-'));
     const packageRoot = path.join(project, 'node_modules', '0xray');
