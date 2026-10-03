@@ -90,7 +90,7 @@ function assertOrganRequire(tmpRoot) {
   if (organPkg.name !== "@0xray/repertoire") {
     throw new Error(`required organ name ${organPkg.name}`);
   }
-  if (organPkg.version !== "0.2.8") {
+  if (organPkg.version !== "0.2.9") {
     throw new Error(`required organ version ${organPkg.version}`);
   }
   if (fs.existsSync(path.join(tmpRoot, "vendor"))) {
@@ -163,8 +163,8 @@ function assertFreshInstallDefaults(tmpRoot, version) {
     throw new Error("vendored @0xray/repertoire missing from fresh tarball install");
   }
   const organ = JSON.parse(fs.readFileSync(organPkg, "utf-8"));
-  if (organ.version !== "0.2.8") {
-    throw new Error(`expected organ 0.2.8, got ${organ.version}`);
+  if (organ.version !== "0.2.9") {
+    throw new Error(`expected organ 0.2.9, got ${organ.version}`);
   }
   console.log("  ✅ .xray/features.json fresh-install defaults (opt-in off)");
   return { consumerFeaturesPath, features };

@@ -24,6 +24,11 @@ export declare class SignalInjector {
      */
     adjustComplexityScore(baseScore: number, context: RepertoireRoutingContext, confidenceContext?: ReturnType<typeof getConfidenceForTask>): number;
     private resolveSynthesisReportPath;
+    /**
+     * A dry or UNREVIEWED report is not inference. It must not become an excerpt
+     * or a routing flag.
+     */
+    private consumableSynthesisPath;
     private getSynthesisExcerpt;
     private readCodexExcerpt;
     private readPlanExcerpt;

@@ -100,11 +100,17 @@ export interface CuratedSignalsFile {
     };
     signals: CuratedSignal[];
 }
+/** Clock for skipping another hermes call after a failed meta-inference run. */
+export interface ModelBackoffState {
+    failedAt: string;
+    failures: number;
+}
 export interface InferenceState {
     processedCommentIds: string[];
     processedSessionIds: string[];
     processedPostIds: string[];
     lastRun: string | null;
+    modelBackoff?: ModelBackoffState;
 }
 export interface SynthesisReport {
     entriesProcessed: number;

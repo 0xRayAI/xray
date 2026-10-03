@@ -36,12 +36,12 @@ describe("suit monitor", () => {
     expect(picture.activityLines).toEqual(["two", "three"]);
     expect(picture.inferenceStatePresent).toBe(true);
     expect(picture.inferenceLastRun).toBe("2026-10-02T00:00:00.000Z");
-    expect(picture.repertoireVersion).toBe("0.2.8");
+    expect(picture.repertoireVersion).toBe("0.2.9");
     expect(picture.xrayVersion).toBe("9.9.9");
     expect(formatSuitPicture(picture)).toBe([
       "suit monitor",
       "xray: 9.9.9",
-      "repertoire: 0.2.8",
+      "repertoire: 0.2.9",
       "inference state: present lastRun 2026-10-02T00:00:00.000Z",
       "activity:",
       "  two",

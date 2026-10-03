@@ -150,6 +150,38 @@ function isSpeechMint(signal) {
     return signal.status === 'proposed' && signal.tags.includes('learned');
 }
 const FIELD_PRIMITIVE_NAME = /^[A-Za-z][A-Za-z0-9_-]{2,119}$/;
+/** A content word after a spaced law extends the id. A function word is the sentence. */
+const PROSE_TAIL = new Set([
+    'a', 'an', 'the', 'as', 'and', 'or', 'but', 'if', 'of', 'to', 'for', 'in', 'on', 'at', 'by',
+    'with', 'from', 'into', 'over', 'after', 'before', 'about', 'than', 'then', 'that', 'this',
+    'these', 'those', 'it', 'its', 'is', 'are', 'was', 'were', 'be', 'been', 'not', 'no', 'so',
+    'when', 'while', 'where', 'which', 'who', 'what', 'how', 'also', 'only', 'just', 'still',
+    'never', 'today',
+]);
+/** A longer id does not count. Spaced prose may continue after a hyphenated id. */
+function boundedId(text, id, spaced) {
+    if (!id)
+        return false;
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(?:^|[^a-z0-9-])${escaped}`, 'g');
+    let match;
+    while ((match = re.exec(text)) !== null) {
+        const after = text.slice(match.index + match[0].length);
+        if (spaced ? spacedTailIsProse(after) : !/^[a-z0-9-]/.test(after))
+            return true;
+        if (match.index === re.lastIndex)
+            re.lastIndex += 1;
+    }
+    return false;
+}
+function spacedTailIsProse(after) {
+    if (/^-[a-z0-9]/.test(after) || /^[a-z0-9]/.test(after))
+        return false;
+    const word = /^\s*([a-z0-9]+)/.exec(after);
+    if (!word || !/^\s/.test(after))
+        return true;
+    return PROSE_TAIL.has(word[1]);
+}
 /**
  * The diary names a law only when it contains the signal id, or the id with
  * hyphens read as spaces. A repo tail, leftover tokens, and two definition
@@ -160,10 +192,10 @@ export function signalNameInText(text, name) {
     const id = name.toLowerCase();
     if (!id)
         return false;
-    if (normalized.includes(id))
+    if (boundedId(normalized, id, false))
         return true;
     const spaced = id.replace(/-/g, ' ');
-    return spaced !== id && normalized.includes(spaced);
+    return spaced !== id && boundedId(normalized, spaced, true);
 }
 const GROOVER_EXPERIMENT_NAMES = new Set([
     'criteria_selection_gap',
