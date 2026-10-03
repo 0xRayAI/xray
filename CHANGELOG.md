@@ -42,6 +42,19 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.38] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #171 from 0xRayAI/fix/solar-verdict-decides (7b6ac081a)
+- Merge remote-tracking branch 'origin/main' into fix/solar-verdict-decides (a342e0b0d)
+- fix(types): declare work-freshness so the Codex 70 import typechecks (16b2db194)
+- feat(codex): term 70 requires current source and worn npm (dacecc916)
+- fix(governance): honor Dynamo's recommendation (968cd6a14)
+
+---
+
 ## [4.0.37] - 2026-10-02
 
 ### 🔄 Changes
