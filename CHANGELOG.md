@@ -42,6 +42,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.39] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Keep the seven stack laws already worn in the suit. (427b0538e)
+- Vendor repertoire 0.2.9. (b45ed22f9)
+- Merge pull request #209 from 0xRayAI/cursor/evidence-before-grade-d703 (92a4d6dd9)
+- house: add Evidence before grade rules under §3 (0fa229981)
+
+---
+
 ## [4.0.38] - 2026-10-03
 
 ### 🔄 Changes
