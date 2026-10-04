@@ -48,7 +48,7 @@ Blaze locked this set the same day. It is house law, not chat.
 
 ## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
 
-- **Cadence (default eng):** forge (or Arch1 when Blaze handed the track) pushes → critic reviews → on PASS, forge merges when CI is green (except careful-change / prod lines that need Blaze). CoS is FYI unless stalled.
+- **Cadence (default eng):** mill pushes (or Arch1 when Blaze handed the track) → critic reviews → on PASS, forge merges when CI is green (except careful-change / prod lines that need Blaze). Forge does not implement. CoS is FYI unless stalled.
 - **Review plate** (matches 0xray #202): one pass, one fix, one re-check, then stop. A PASS ends it. If the re-check still fails, the PR is parked and goes to Blaze as "ship the smaller fix or shelve it." There is never a third lap.
 - **Wear-gate** (wear-what-we-ship: local build → `npm pack` → install that exact tarball in fresh git + non-git folders with temp HOME → wear / setup / doctor) runs **after merge, before npm**. It is **not** a review-plate lap.
 - **npm / GitHub Release house exception:** after wear-gate PASS on that exact tarball, **CoS Ship-it + critic wear PASS → forge publishes that tarball only**, then annotated tag + GitHub Release (#166 shape). Public Dist still needs Blaze GO. Other npm/Release cases still Ask first (see §4).
