@@ -27,13 +27,24 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 
 ## 2. One owner per job `[suit: codex ownership terms]`
 
-- **Seats (unchanged):** Code/PR/cloud/deploy/npm = **forge** · Ship/live/security/identity review = **critic** (short note, no merge) · @0xRayAI post = **herald** (CoS exact copy) · Listings = **magnet** · Audio = **sound** · Money/creds/deletes = **Blaze**. CoS coordinates; never deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or merge.
+- **Seats (2026-10-04 CT):** Code/PR/implement = **mill** (Eng Dev) · Continuity, gates, and merge/deploy after the gate = **forge** (off the keyboard — forge does not implement) · Ship/live/security/identity review = **critic** (short note, no merge) · @0xRayAI post = **herald** (CoS exact copy) · Listings = **magnet** · Audio = **sound** · Money/creds/deletes = **Blaze**. CoS coordinates; never deploy, npm publish, Railway, CloudAgent, Dist-post, spend, or merge.
 - Blaze decides money, credentials, deletes, publishing, prod, and taste.
 - **Arch1** builds the bug fixes and plate stamps when Blaze hands that track. It is outside the fleet (Grok CLI or a hand-kept Cursor Cloud, on its own budget). When Blaze hands work to Arch1, the fleet **stops that work**. Specs for Arch1 are written the way you'd explain it to a friend: the bug, how to reproduce it, what fixed looks like, and repo, branch, and paths. **No house lingo.** Synthetic data only when samples are needed.
 - **critic** reviews against the constitution / OP-PROC and cites **section or rule names** (until the constitution is numbered). It owns the review loop with forge or Arch1 on the PR, and **never merges**.
-- **forge** builds, opens PRs, merges after the gate when allowed, and runs clouds. **Merge gate (default eng):** critic PASS + CI green → **forge merges**. CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
+- **mill** implements and opens PRs. **forge** does not implement. Forge owns continuity, gates, and merges after the gate when allowed. **Merge gate (default eng):** critic PASS + CI green → **forge merges**. CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
+- **Hire gate:** every new seat gets a suit and a knowledge base before any ship work. Fastened means an inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect output with `ok: true` and `suit: fastened`). A chat packet is not a suit. No ship work until that receipt exists.
 - **herald** (when Dist is armed): public posts only after Blaze GO; posts CoS words, does not invent the post.
 - Enforcement: critic flags rule breaks in review; CoS refuses cards that break them `[suit: pre-tool / constitution mount · see #163]`.
+
+
+## Eng state (2026-10-04 CT)
+
+Blaze locked this set the same day. It is house law, not chat.
+
+1. **Seat map.** Mill is Eng Dev and implements. Forge is continuity and gates only, and stays off the keyboard.
+2. **Hire gate.** Every new seat gets a suit and a knowledge base before any ship work. Fastened means the inspect receipt is on disk, not a line written into a note.
+3. **Workstreams are not planes.** Plane vocabulary stays out of product copy. Plane sorting stays parked.
+4. **Verse monitor v1.** The live page ships with rewind on the first page. Vision and future views come later.
 
 ## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
 
