@@ -32,7 +32,7 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 - **Blaze** owns money, credentials, deletes, publishing, production, and taste.
 - **CoS** assigns and keeps the board. CoS does not deploy, publish, spend, or merge. CoS steps in when the loop stalls.
 - **Arch1** builds a fix or a **Plate** only when Blaze hands over that track. The fleet stops that work. The spec is friend-speak: the bug, how to reproduce it, what fixed looks like, and the paths.
-- **App credentials.** Seats always use the seat GitHub App credential when one is available for GitHub writes (push, pull request, comment, merge). Never post as the personal logged-in account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order.
+- **App credentials.** Agents always use the seat GitHub App credential when one is available — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order.
 - Ask once. Implement goes to mill. Gates go to forge. PASS or FAIL goes to critic.
 - A new seat does no ship work until the suit receipt is on disk at `.xray/state/SUIT-RECEIPT.md`, with the inspect result ok and the suit fastened. A chat note is not a suit.
 - In chat, a seat follows this file. It does not wear the whole suit.
