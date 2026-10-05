@@ -81,6 +81,10 @@ How we act — not a product, not a ticket type.
 | wear ≠ plant (verb) | wear = run suited; plant = fasten the suit/organs onto a project |
 | wear ≠ costume | files on disk without live hooks/inspect = theater |
 | chime ≠ reflexive ack | needed interrupt / soft override — not Cadence HARD refuse-all |
+| packet ≠ ack | structured order ≠ reflexive chime |
+| pass-along ≠ rewrite | relay ownership stays with receiver |
+| sync ≠ Dist | seat mem/board align ≠ public post |
+| EXECUTE ≠ draft | armed ship ≠ proposed copy |
 
 Locked 2026-09-14 with Blaze — categorized.
 
@@ -103,4 +107,13 @@ Locked 2026-09-14 with Blaze — categorized.
 | Term | Bucket | Plain |
 |------|--------|-------|
 | **chime** | Practices | Needed interrupt that **supersedes** a gentle redirect (soft override). Use when the soft redirect isn't enough. Not a reflexive ack / ping — those stay refused under Cadence HARD. |
+
+## Lexicon add (2026-10-05 — inter-bot)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **packet** | Workstream | Structured seat→seat handoff: exact copy, gates, links, Done·Verify·Next. Not a chat ack. CoS/owner writes; executor seat runs. |
+| **pass-along** | Workstream | Relay of Blaze/seat correction to the owning seat — keep ownership; don't rewrite the ask. |
+| **sync** | Workstream | Align mem/board/scope across seats on one locked fact (supersedes prior wording). |
+| **EXECUTE** | Practices | Armed Dist/action order with exact copy + gates; herald/seat ships only on EXECUTE (not draft/FYI). |
+| **handoff** | Workstream | File or message that carries a packet between seats (ops/handoffs/…). |
 
