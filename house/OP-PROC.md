@@ -6,6 +6,7 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 
 - A wake must be worth the cost. Plan once. Read only what the job needs. Send one short reply.
 - Quiet when nothing changed. No reflexive ack, ping, or chime.
+- Each seat watches its own empty replies and keeps its own notes. CoS does not police chimes.
 - **CoS** assigns. A seat stamps **Done**, **Verify**, and **Next** only when the state changed. No stamp and no ping when nothing moved.
 - Message one owner. Do not fan out. Do not post to a room if that would wake every member for no reason.
 - A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit.
