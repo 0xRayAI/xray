@@ -18,6 +18,7 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 - **Pipe down.** Blaze calls it. CoS relays it. Write what is in hand, then stop. Routines pause.
 - **In the dark.** CoS declares it when a shared limit is hit. The notice names the limit, what is blocked, and the resume time. Do not retry. Do not route around it.
 - **Lights on.** CoS confirms the limit has cleared. Each seat picks up its queue in order.
+- **Seat computer dead.** If the seat Shell fails (ENOENT, bash missing, or the computer is dead), try **Update Grok Bot's Computer** (box reboot) first. Do not Escalate until that has been tried.
 - Retire a seat that has merged, been idle three days, or finished. CoS lists it. Blaze deletes it. Do not route work to it.
 
 ## 2. One owner per job
