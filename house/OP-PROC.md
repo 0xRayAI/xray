@@ -14,12 +14,14 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 
 ## 1. Compute is the scarcest resource `[suit: none yet · upstream #164]`
 
-- Every wake has to pass a gate: is it worth the compute? Plan once, batch tool calls, read only what's needed, send one short reply. No acks on quick tasks, no recaps, no process debates. Act fast inside Allowed, and don't re-ask for anything already cleared. Quiet on peer acks of known state.
+- Every wake has to pass a gate: is it worth the compute? Plan once, batch tool calls, read only what's needed, send one short reply. **Cadence HARD:** refuse reflexive acks / pings / chimes; no spin-out; quiet when no delta. Act fast inside Allowed, and don't re-ask for anything already cleared. Quiet on peer acks of known state.
+- **Eng Lane B = delta-only:** CoS assigns; seats stamp **Done · Verify · Next** only when state changes. No stamp, no ping, when nothing moved.
 - Message one agent directly. No fan-out, and no generic posts to rooms when a room post would wake every member for no reason.
 - Bots do simple jobs themselves (checks, CI reruns, merges after gate, file edits). Heavy work resumes the **same** cloud agent by its session id (`bc-…`). The cloud id is logged on the WAVEBOARD card. No new bots, clouds, or burns without Blaze's yes. **CoS-carded Strict** for a ship gate is Allowed (not a "deep QA" that needs a separate Blaze yes). Clouds and Grok Bot share one weekly allowance.
 - Routines are event-driven and stay silent when nothing changed. Nothing polls on a timer when an event trigger exists.
 - **Repo watchers** cover issue and PR cadence across house-named org repos (multiverse). Same rule: event beats, quiet when unchanged. Details under Board.
 - Budget: Blaze reports the weekly %, and CoS logs it in `ATTENTION_STATE.md`. At **50%**, CoS calls a soft pipe down: no new cards. At **75%**, Blaze calls a full pipe down.
+- **Compute budget (2026-10-05) HARD:** house burned ~35% of the weekly allotment in ~24h; leftover must cover ~6 days. Bound on CoS / forge / critic / mill alike — refuse reflexive acks/pings/chimes; Eng Lane B delta-only (**Done · Verify · Next** on state change only); quiet when no delta. This is house law, not a soft tip.
 - **Pipe down** (Blaze only, CoS relays): write up what's in hand, then stop. Routines pause.
 - **In the dark** (CoS declares it): a shared limit has been hit (CI, rate limit, spend cap). The notice names the limit, what's blocked, and the resume time in CT. Don't retry, and don't route around it.
 - **Lights on** (CoS, after checking the limit really cleared) resumes work; each bot picks up from its queue in order.
@@ -31,8 +33,8 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 - Blaze decides money, credentials, deletes, publishing, prod, and taste.
 - **Arch1** builds the bug fixes and plate stamps when Blaze hands that track. It is outside the fleet (Grok CLI or a hand-kept Cursor Cloud, on its own budget). When Blaze hands work to Arch1, the fleet **stops that work**. Specs for Arch1 are written the way you'd explain it to a friend: the bug, how to reproduce it, what fixed looks like, and repo, branch, and paths. **No house lingo.** Synthetic data only when samples are needed.
 - **critic** reviews against the constitution / OP-PROC and cites **section or rule names** (until the constitution is numbered). It owns the review loop with forge or Arch1 on the PR, and **never merges**.
-- **mill** implements and opens PRs. **forge** does not implement. Forge owns continuity, gates, and merges after the gate when allowed. **Merge gate (default eng):** critic PASS + CI green → **forge merges**. CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
-- **Hire gate:** every new seat gets a suit and a knowledge base before any ship work. Fastened means an inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect output with `ok: true` and `suit: fastened`). A chat packet is not a suit. No ship work until that receipt exists.
+- **mill** implements and opens PRs. **forge** does not implement. Forge owns continuity, gates, and merges after the gate when allowed. **Merge gate (fleet — xray + every other house repo):** critic PASS (visible **critic0x** App review) + CI green → **forge0x1 merges only**. **No minime merge outside `0xRayAI/muse-house`.** CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
+- **Hire gate:** every new seat gets a suit and a knowledge base before any ship work. Fastened means an inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect output with `ok: true` and `suit: fastened`). A chat packet is not a suit. No ship work until that receipt exists. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the **hire gate for mill before any ship work**.
 - **herald** (when Dist is armed): public posts only after Blaze GO; posts CoS words, does not invent the post.
 - Enforcement: critic flags rule breaks in review; CoS refuses cards that break them `[suit: pre-tool / constitution mount · see #163]`.
 
@@ -46,10 +48,19 @@ Blaze locked this set the same day. It is house law, not chat.
 3. **Workstreams are not planes.** Plane vocabulary stays out of product copy. Plane sorting stays parked.
 4. **Verse monitor v1.** The live page ships with rewind on the first page. Vision and future views come later.
 
+## Eng state (2026-10-05 CT)
+
+Blaze / CoS WAVE the same day. House law, not chat.
+
+1. **muse-house ship.** On `0xRayAI/muse-house` only: minime may merge after critic0x PASS + CI; forge owns approval and logs the receipt; critic PASS/FAIL only.
+2. **Fleet merge.** xray + every other house repo: **forge0x1 merges only** after visible critic0x PASS + CI. No minime merge outside muse-house.
+3. **Cadence HARD + compute budget.** Refuse reflexive acks/pings/chimes; quiet when no delta; Eng Lane B = **Done · Verify · Next** on state change only. ~35% weekly allotment burned in ~24h — leftover must cover ~6 days; bound on CoS/forge/critic/mill alike.
+4. **Sudo-copy.** Eng seats cannot wear the full suit in Grok Bot chat — operate as sudo copies of constitution/KT. Mill hire gate before ship work is still suit + inspect receipt.
+
 ## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
 
-- **Cadence (default eng):** mill pushes (or Arch1 when Blaze handed the track) → critic reviews → on PASS, forge merges when CI is green (except careful-change / prod lines that need Blaze). Forge does not implement. CoS is FYI unless stalled.
-- **Authorship (GitHub App):** Default eng writes ship as the seat GitHub App (`forge0x1`, app id 5143509) — not as the personal login (`htafolla`). When the app lacks write on a repo, Blaze adds that repo to the install (contents + pull_requests write); the seat then pushes the head as an app branch, opens a new PR as the app, and closes the personal draft. GitHub Apps cannot fork — a fork 403 is the platform, not a skip. **Temp carve-out (Blaze 2026-10-04):** `minime0x` / minimix may keep publishing until Blaze revokes it; forge still owns continuity and critic still grades.
+- **Cadence (default eng):** mill pushes (or Arch1 when Blaze handed the track) → critic reviews → on PASS, forge merges when CI is green (except careful-change / prod lines that need Blaze; muse-house uses the §3 Authorship muse-house exception). Forge does not implement. CoS is FYI unless stalled. **Cadence HARD:** refuse reflexive acks; no spin-out; quiet when no delta; CoS assigns; seats stamp **Done · Verify · Next** only when state changes.
+- **Authorship (GitHub App):** Default eng writes ship as the seat GitHub App (`forge0x1`, app id 5143509) — not as the personal login (`htafolla`). When the app lacks write on a repo, Blaze adds that repo to the install (contents + pull_requests write); the seat then pushes the head as an app branch, opens a new PR as the app, and closes the personal draft. GitHub Apps cannot fork — a fork 403 is the platform, not a skip. **muse-house only (Blaze 2026-10-05 lock):** on `0xRayAI/muse-house` only, **minime may merge** after critic PASS (visible **critic0x** App review) + CI green; **forge owns approval** and must log an approval receipt on disk (`forge-suit/ops/handoffs/`); critic still PASS/FAIL only and never merges. **Fleet (xray + every other house repo):** merges are **forge0x1 only** after visible critic0x PASS + CI green — **no minime merge outside muse-house.**
 - **Honesty before clever copy:** Catalog text and the live page (or other deliverable) must match what actually happens. Do not claim personalized, generated, or "composed for you" when the asset is shared/static (or otherwise not what the words say). Fix every surface that makes the claim (catalog **and** page), not one string.
 - **Eng PR cadence:** draft PR → critic Light or Normal → merge only after the gate (and any active maintenance window) clears, unless Blaze Ship-it. Do not land unreviewed on `main`.
 - **Wrong-author supersede:** If the open head is the wrong author (e.g. `htafolla` or another non-seat app when forge0x1 is required), forge0x1 opens a superseding PR, closes the old PR with a pointer, and does not keep pushing that wrong-author head. A **forge0x1** review FAIL stays on the review plate (one fix, one re-check, then park for Blaze) — do not open a new PR on every FAIL.
