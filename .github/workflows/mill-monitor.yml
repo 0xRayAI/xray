@@ -21,6 +21,10 @@ permissions:
 
 jobs:
   mill-ci-report:
+    # Replay pushes already ran Deploy Docs. Skip the npm report on that branch.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.head_branch != 'live-wire'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
