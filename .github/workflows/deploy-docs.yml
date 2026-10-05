@@ -2,7 +2,9 @@ name: Deploy Docs
 
 on:
   push:
-    branches: [main]
+    # live-wire is the replay branch the local tripwire force-updates.
+    # Pushes happen only when the feed hash changes, so this is not a cron.
+    branches: [main, live-wire]
     paths:
       - "docs-site/**"
       - "scripts/foundry/docs-build.mjs"
