@@ -94,7 +94,10 @@ export class RepertoireOrchestratorBridge {
         const repertoireContext = this.buildRoutingContext(operation);
         const adjustedScore = this.injector.adjustComplexityScore(complexityScore, repertoireContext, confidenceContext);
         let agent = baseAgent;
-        if (confidenceContext.highConfidenceTrapPresent && adjustedScore >= 26) {
+        // Trap name alone must not change the agent. Crossing the architect line
+        // (debug / investigate / redesign / explicit architect) may route to architect.
+        const crossesArchitectLine = /\b(debug|investigate|redesign|architect)\b/i.test(operation);
+        if (confidenceContext.highConfidenceTrapPresent && adjustedScore >= 26 && crossesArchitectLine) {
             agent = 'architect';
         }
         else if (repertoireContext.matchedTags.includes('provenance-failure') &&

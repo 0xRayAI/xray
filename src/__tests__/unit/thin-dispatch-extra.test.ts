@@ -170,19 +170,19 @@ describe('thinDispatch — organ after a yield', () => {
     const matched = scoreAndRoute('attestation-as-map', {});
     expect(matched.memoryRouting?.providerId).toBe('repertoire');
     expect(matched.memoryRouting?.signals).toContain('attestation-as-map');
-    if (matched.score.score >= 26) {
-      expect(matched.agent).toBe('architect');
-      expect(matched.memoryRouting?.overridden).toBe(true);
-    } else {
-      expect(matched.agent).toBe('code-reviewer');
-      expect(matched.memoryRouting?.overridden).toBe(false);
-    }
+    // Trap name alone keeps the complexity agent even when score is boosted.
+    expect(matched.agent).toBe('code-reviewer');
+    expect(matched.memoryRouting?.overridden).toBe(false);
 
-    const routed = scoreAndRoute('attestation-as-map', { files: ['a.ts', 'b.ts'] });
+    const crossed = scoreAndRoute('debug attestation-as-map', {});
+    expect(crossed.agent).toBe('architect');
+    expect(crossed.memoryRouting?.overridden).toBe(true);
+
+    const routed = scoreAndRoute('debug attestation-as-map', { files: ['a.ts', 'b.ts'] });
     expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
     expect(routed.agent).toBe('architect');
     expect(routed.score.score).toBeGreaterThanOrEqual(26);
-    expect(routed.memoryRouting?.overridden).toBe(true);
+    // Base complexity may already be architect with file context; override flag is optional.
     expect(recordLesson).not.toHaveBeenCalled();
   });
 });
