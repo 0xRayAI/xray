@@ -35,6 +35,9 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 - A new seat does no ship work until the suit receipt is on disk at `.xray/state/SUIT-RECEIPT.md`, with the inspect result ok and the suit fastened. A chat note is not a suit.
 - In chat, a seat follows this file. It does not wear the whole suit.
 
+- **Confer.** Confer and Calling stay **off** unless Blaze turns them on. An unreviewed result with no model in the loop must not pass.
+- **Dist.** When Dist is armed: one idea per public post, no double-post, no thanks-only replies. Friend-test before send. Blaze's go is still required.
+
 ## 3. Nothing ships unproven
 
 - **Review plate.** One pass, one fix, one re-check, then stop. A PASS ends it. A failed re-check is parked for Blaze. There is no third lap.
@@ -54,7 +57,7 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 2. **Stamp.** The version tool writes the changelog note for this cut. It updates the current-version words in the guides. It leaves old changelog headings as they are. It leaves the guide of older versions as it is. It leaves files under `.xray/state` as they are.
 3. **Plates.** Each Plate in `docs-site/docs/plates/` shows the version being cut. The release tool does not edit those files. The cut does, before the pack.
 4. **Docs check.** The docs check passes before the pack.
-5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check.
+5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check.
 6. **Release page.** After the wear-gate and the ship go: publish that exact package, push the annotated tag, then open the GitHub release page. The tweet file the tool writes is not a post. A public post still needs Blaze's go.
 
 **Wear-gate.** After merge and before publish: build, pack, and install that exact package in a fresh git folder and a fresh non-git folder, with a temporary home. Then run wear, setup, and doctor. This is not a Review plate.
