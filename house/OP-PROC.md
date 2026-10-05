@@ -1,8 +1,8 @@
 # House OP-PROC
 
-These rules apply to every house. This file names no house. Blaze owns it. His direct message comes before a bot ping.
+House: 0xRay Grok Bot fleet. Blaze owns it. His direct message comes before a bot ping.
 
-OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`), then this house adds ours on top (`house/OP-PROC.md`). Seats read `house/` first; the house wins for Owner, Seats, Public voice, Allowed, Ask first, Board — not by erasing the pack.
+OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (`house/OP-PROC.md`). Seats read house/ first; house wins for Owner, Seats, Public voice, Allowed, Ask first, Board — not by erasing the pack.
 
 ## 1. Compute is the scarcest resource
 
@@ -42,12 +42,6 @@ OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`
 
 - **Confer.** Confer and Calling stay **off** unless Blaze turns them on. An unreviewed result with no model in the loop must not pass.
 - **Dist.** When Dist is armed: one idea per public post, no double-post, no thanks-only replies. Friend-test before send. Blaze's go is still required.
-
-### Eng hire rules (house law)
-
-1. **Hire gate.** Suit + KB + employee orientation + KT ack before any ship work; standing ROLE card when Dist announced the seat; quiet until CoS cards work. Inspect receipt on disk — not a chat line. (See Hire gate above.)
-2. **Sudo-copy.** Eng seats cannot wear the full suit in Grok Bot chat — operate as sudo copies of constitution/KT. Mill hire gate before ship work is still suit + inspect receipt.
-3. **New-hire OP-PROC (rule 5).** Document as we go: pack base + house layer both carry the hire gate (suit, KB, orientation, ROLE card, quiet until carded). Example seat: Nibbler feed scout.
 
 ## 3. Nothing ships unproven
 
@@ -137,4 +131,4 @@ Watchers follow Beats on the repos named in `house/WATCHERS.md`. They cover issu
 
 ## Done when
 
-This file is the procedure for every house. It names no house. The details above are the rules, not a diary.
+This file is house/OP-PROC.md for our fleet. Pack stays generic; this file is the house layer.
