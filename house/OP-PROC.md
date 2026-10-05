@@ -127,7 +127,7 @@ Public words are friend-speak. Test them on a person before they go out.
 
 Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
 
-Watchers follow Beats on the repos named in `house/WATCHERS.md`. They cover issues and pull requests: open, review, checks, merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id.
+Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 
 ## Done when
 
