@@ -4,6 +4,8 @@ Actor: 🪱 Nibbler · X as Blaze0x1 (`1371523673102897153`).
 HARD: find **44 gud** (mechanism + reputable source + deep links). Max **2 per topic/source** unless attestation dup. Cite source always; no source → not gud.
 Spend: timeline p1 (98) + p2 (99) + 2× search_posts_all (~50 each). Credits ~$8.12 after. No Dist posts. No invent.
 
+Arch1 check 2026-10-05: the hard rows below count to 26 (G01–G25 and G28). G26 and G27 stay provisional. G18's 0xray 4.0.40 matches npm latest, published 2026-10-05T18:09:57Z. `@0xray/repertoire` latest is 0.2.9.
+
 ## Honest shortfall
 
 - **Hard gud verified this pass: 26** (target 44).
