@@ -35,6 +35,16 @@ npm run recall -- "compaction memory bench suited arm"
 
 The copied `suited/package.json` records what the last proof used: `0xray` 4.0.26 and `@0xray/repertoire` 0.2.8. A rerun should install those pinned versions before `npm run wear`.
 
+### Arm A workspace
+
+Dual fill stays blocked. Wear layout only. The full contract is `src/integrations/cursor/README.md` (Arm A workspace).
+
+The suited cloud cwd is this bench as its own git root, not the factory checkout named `0xray`. Cursor binds hooks at the workspace root. A nested `examples/ben-proof/suited` inside a factory clone still runs the factory `src/` hook.
+
+From that consumer root, install `0xray` and `@0xray/repertoire`, then `npm run wear`. After wear, `preCompact` argv is `node_modules/0xray/dist/integrations/cursor/hooks/pre-compact.js`. The factory root is left on `src/`.
+
+Both arms get the same chat task. The task does not mention NOTES or compact. The operator does not seed NOTES. The suited seat records on its own while working. Quiz only after a host preCompact receipt. No hook dump.
+
 ### Dummy (plain app)
 
 From `dummy/`:
