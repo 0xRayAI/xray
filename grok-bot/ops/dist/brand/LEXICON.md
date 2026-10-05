@@ -113,3 +113,11 @@ Locked 2026-09-14 with Blaze — categorized.
 | **packet** | Workstream | The **pass-along / sync** unit between seats. One word for the handoff object: locked scope, exact copy, gates, Done·Verify·Next. CoS/owner writes; owning seat runs. Not a chat ack. Pass-along and sync name the same act — they are not peer terms beside packet. |
 | **EXECUTE** | Practices | Armed Dist/action order with exact copy + gates; herald/seat ships only on EXECUTE (not draft/FYI). Distinct from a packet (the packet may *carry* an EXECUTE). |
 | **handoff** | Workstream | The channel or file that *carries* a packet (`ops/handoffs/…` or a seat message). The packet is the content; the handoff is the pipe. |
+
+## Lexicon add (2026-10-05 — watchers)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **watcher** | Workstream | Signal→ticket queue: watches git/X activity and opens or bumps a board card. Does not ship or merge. |
+| **workstream** | Workstream | Card/seat lane on the board (how work runs). ≠ product SKU. ≠ planes. |
+
+Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
