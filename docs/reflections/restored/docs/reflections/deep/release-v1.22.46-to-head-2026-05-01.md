@@ -1,0 +1,648 @@
+# Release Reflection: 1.22.46 → HEAD
+
+**Generated:** 2026-05-01T10:49:59.164Z
+**Cadence:** release (since tag v1.22.46)
+**Commits examined:** 12
+**Span:** v1.22.46..HEAD
+
+## Scope
+
+- **12 commits** with **823 file changes**
+- **+28367 insertions / -67514 deletions**
+- **59 files added, 291 modified, 451 deleted**
+
+## Areas Touched
+
+- `.` (23 files)
+- `.opencode` (15 files)
+- `.opencode/command` (2 files)
+- `.opencode/commands` (1 files)
+- `.opencode/core` (2 files)
+- `.opencode/enforcement` (0 files)
+- `.opencode/enforcement/core` (0 files)
+- `.opencode/enforcement/loaders` (0 files)
+- `.opencode/enforcement/validators` (0 files)
+- `.opencode/skills` (1 files)
+- `.opencode/strray` (4 files)
+- `.strray` (6 files)
+- `.strray/inference` (1 files)
+- `.strray/state` (1 files)
+- `Users/blaze/dev/stringray/.strray/inference` (11 files)
+
+## Commit Chronicle
+
+- **feat: unify governance — wire WeightedVotingAggregator, expand agents, connect orchestrator** (191536d)
+  0 files: dist/delegation/index.d.ts, dist/delegation/index.d.ts.map, dist/delegation/index.js, dist/delegation/index.js.map, dist/delegation/voting-coordinator.d.ts +15 more
+
+- **docs: governance unification saga — deep reflection on wiring four systems into one loop** (9cd5b8b)
+  20 files: docs/reflections/deep/governance-unification-saga-2026-04-30.md
+
+- **feat: lower inference thresholds to trigger on real data, keep raw problem text** (c7c09a4)
+  1 files: dist/inference/inference-accumulator.js, dist/inference/inference-accumulator.js.map, dist/inference/inference-cycle.d.ts.map, dist/inference/inference-cycle.js, dist/inference/inference-cycle.js.map +6 more
+
+- **feat: production-ready inference governance — CLI, real agents, DI, learning loop** (501eb8d)
+  11 files: .opencode/activity-report.json, .strray/inference/latest-workflow.json, .strray/inference/workflow-status.json, .strray/state/state.json, AGENTS.md +82 more
+
+- **feat: inference layer — semantic patterns, session capture, accumulator, governance cycle, deploy verifier** (5963ce1)
+  87 files: .strray/inference/latest-workflow.json, .strray/inference/workflow-status.json, dist/CHANGELOG.md, dist/inference/deploy-verifier.d.ts, dist/inference/deploy-verifier.d.ts.map +50 more
+
+- **fix: increase timeout for processor auto-discovery tests to prevent flaky failures** (baae755)
+  55 files: src/__tests__/unit/processor-auto-discovery.test.ts
+
+- **fix: inference processor double-joining absolute path created bogus Users/ dir** (a795635)
+  1 files: .opencode/.strrayrc.json, .opencode/AGENTS-consumer.md, .opencode/activity-report.json, .opencode/codex.codex, .opencode/command/dependency-audit.md +577 more
+
+- **chore: v1.22.48, add prepublishOnly to strip source maps and declarations** (112ef89)
+  582 files: .opencode/.strrayrc.json, .opencode/AGENTS-consumer.md, .opencode/activity-report.json, .opencode/codex.codex, .opencode/command/dependency-audit.md +303 more
+
+- **chore: v1.22.47, add .npmignore to strip .d.ts and source maps from package** (e2f7225)
+  308 files: .npmignore, .opencode/.strrayrc.json, .opencode/AGENTS-consumer.md, .opencode/activity-report.json, .opencode/codex.codex +248 more
+
+- **chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore** (22f9ddf)
+  253 files: .gitignore, .opencode/activity-report.json, .opencode/core/activity-logger.d.ts.map, .opencode/core/adaptive-kernel.d.ts.map, .opencode/core/boot-orchestrator.d.ts.map +59 more
+
+- **docs: the engine that built the engine — deep reflection on the meta-system, consumer tweet, release reflection** (522c28b)
+  64 files: AGENTS.md, docs/reflections/deep/release-v1.22.46-to-head-2026-04-29.md, docs/reflections/deep/the-engine-that-built-the-engine-saga-2026-04-29.md, tweets/v1.22.46.md
+
+- **chore: rebuild dist after path fix** (4453c41)
+  4 files: .strray/codex.json, .strray/config.json, .strray/features.json, .strray/integrations.json, dist/AGENTS.md
+
+## Files Added
+
+- `.strray/inference/workflow-1777493262474.json`
+- `.strray/state/state.json`
+- `backups/version-manager-backup-2026-04-29T19-55-43-041Z/CHANGELOG.md`
+- `backups/version-manager-backup-2026-04-29T20-00-52-740Z/CHANGELOG.md`
+- `backups/version-manager-backup-2026-04-29T20-08-28-153Z/CHANGELOG.md`
+- `dist/inference/deploy-verifier.d.ts`
+- `dist/inference/deploy-verifier.d.ts.map`
+- `dist/inference/deploy-verifier.js`
+- `dist/inference/deploy-verifier.js.map`
+- `dist/inference/index.d.ts`
+- `dist/inference/index.d.ts.map`
+- `dist/inference/index.js`
+- `dist/inference/index.js.map`
+- `dist/inference/inference-accumulator.d.ts`
+- `dist/inference/inference-accumulator.d.ts.map`
+- `dist/inference/inference-accumulator.js`
+- `dist/inference/inference-accumulator.js.map`
+- `dist/inference/inference-cycle.d.ts`
+- `dist/inference/inference-cycle.d.ts.map`
+- `dist/inference/inference-cycle.js`
+- `dist/inference/inference-cycle.js.map`
+- `dist/inference/semantic-patterns.d.ts`
+- `dist/inference/semantic-patterns.d.ts.map`
+- `dist/inference/semantic-patterns.js`
+- `dist/inference/semantic-patterns.js.map`
+- `dist/inference/session-capture.d.ts`
+- `dist/inference/session-capture.d.ts.map`
+- `dist/inference/session-capture.js`
+- `dist/inference/session-capture.js.map`
+- `dist/processors/implementations/session-capture-processor.d.ts`
+- `dist/processors/implementations/session-capture-processor.d.ts.map`
+- `dist/processors/implementations/session-capture-processor.js`
+- `dist/processors/implementations/session-capture-processor.js.map`
+- `docs/inference/latest-session.json`
+- `docs/inference/session-2026-04-30-1777571921561.json`
+- `docs/inference/session-2026-04-30T00-06-24.json`
+- `docs/inference/session-2026-04-30T00-08-03.json`
+- `docs/reflections/deep/governance-unification-saga-2026-04-30.md`
+- `docs/reflections/deep/release-v1.22.46-to-head-2026-04-29.md`
+- `docs/reflections/deep/release-v1.22.46-to-head-2026-04-30.md`
+- `docs/reflections/deep/the-engine-that-built-the-engine-saga-2026-04-29.md`
+- `docs/reflections/deep/the-moment-0xray-watched-itself-saga-2026-04-30.md`
+- `scripts/test-real-governance.ts`
+- `src/__tests__/e2e/inference-e2e.test.ts`
+- `src/__tests__/integration/inference-pipeline.test.ts`
+- `src/__tests__/unit/inference/deploy-verifier.test.ts`
+- `src/__tests__/unit/inference/inference-accumulator.test.ts`
+- `src/__tests__/unit/inference/inference-cycle.test.ts`
+- `src/__tests__/unit/inference/semantic-patterns.test.ts`
+- `src/__tests__/unit/inference/session-capture.test.ts`
+- `src/inference/deploy-verifier.ts`
+- `src/inference/index.ts`
+- `src/inference/inference-accumulator.ts`
+- `src/inference/inference-cycle.ts`
+- `src/inference/semantic-patterns.ts`
+- `src/inference/session-capture.ts`
+- `src/processors/implementations/session-capture-processor.ts`
+- `tweets/v1.22.46.md`
+- `vitest.config.ts`
+
+## Files Modified
+
+- `.gitignore`
+- `.npmignore`
+- `.opencode/.strrayrc.json`
+- `.opencode/AGENTS-consumer.md`
+- `.opencode/activity-report.json`
+- `.opencode/codex.codex`
+- `.opencode/command/dependency-audit.md`
+- `.opencode/commands/pre-commit-introspection.sh`
+- `.opencode/core/boot-orchestrator.js`
+- `.opencode/core/features-config.js`
+- `.opencode/enforcer-config.json`
+- `.opencode/package.json`
+- `.opencode/skills/registry.json`
+- `.opencode/strray/codex.json`
+- `.opencode/strray/config.json`
+- `.opencode/strray/features.json`
+- `.opencode/strray/integrations.json`
+- `.strray/codex.json`
+- `.strray/config.json`
+- `.strray/features.json`
+- ... and 271 more
+
+## Files Deleted
+
+- `.opencode/core/activity-logger.d.ts.map`
+- `.opencode/core/adaptive-kernel.d.ts.map`
+- `.opencode/core/boot-orchestrator.d.ts.map`
+- `.opencode/core/boot-phases.d.ts.map`
+- `.opencode/core/codex-formatter.d.ts.map`
+- `.opencode/core/codex-injector.d.ts.map`
+- `.opencode/core/config-loader.d.ts.map`
+- `.opencode/core/config-paths.d.ts.map`
+- `.opencode/core/context-loader.d.ts.map`
+- `.opencode/core/context-validator.d.ts.map`
+- `.opencode/core/features-config.d.ts.map`
+- `.opencode/core/framework-logger.d.ts.map`
+- `.opencode/core/index.d.ts.map`
+- `.opencode/core/kernel-patterns.d.ts.map`
+- `.opencode/core/logging-config.d.ts.map`
+- `.opencode/core/memory-monitor-setup.d.ts.map`
+- `.opencode/core/model-router.d.ts.map`
+- `.opencode/core/orchestrator.d.ts.map`
+- `.opencode/core/strray-activation.d.ts.map`
+- `.opencode/core/strray-init.d.ts.map`
+- `.opencode/core/system-prompt-generator.d.ts.map`
+- `.opencode/core/tool-event-emitter.d.ts.map`
+- `.opencode/enforcement/core/index.d.ts.map`
+- `.opencode/enforcement/core/rule-executor.d.ts.map`
+- `.opencode/enforcement/core/rule-hierarchy.d.ts.map`
+- `.opencode/enforcement/core/rule-registry.d.ts.map`
+- `.opencode/enforcement/core/violation-fixer.d.ts.map`
+- `.opencode/enforcement/enforcer-tools.d.ts.map`
+- `.opencode/enforcement/index.d.ts.map`
+- `.opencode/enforcement/loaders/agent-triage-loader.d.ts.map`
+- `.opencode/enforcement/loaders/agents-md-validation-loader.d.ts.map`
+- `.opencode/enforcement/loaders/base-loader.d.ts.map`
+- `.opencode/enforcement/loaders/codex-loader.d.ts.map`
+- `.opencode/enforcement/loaders/index.d.ts.map`
+- `.opencode/enforcement/loaders/loader-orchestrator.d.ts.map`
+- `.opencode/enforcement/loaders/processor-loader.d.ts.map`
+- `.opencode/enforcement/rule-enforcer.d.ts.map`
+- `.opencode/enforcement/test-auto-healing.d.ts.map`
+- `.opencode/enforcement/types.d.ts.map`
+- `.opencode/enforcement/validators/architecture-validators.d.ts.map`
+- `.opencode/enforcement/validators/base-validator.d.ts.map`
+- `.opencode/enforcement/validators/code-quality-validators.d.ts.map`
+- `.opencode/enforcement/validators/index.d.ts.map`
+- `.opencode/enforcement/validators/security-validators.d.ts.map`
+- `.opencode/enforcement/validators/testing-validators.d.ts.map`
+- `.opencode/enforcement/validators/validator-registry.d.ts.map`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406309959.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406350412.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406356199.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406385947.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406391102.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406403269.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406424606.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406429850.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406449517.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406455190.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406475329.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406480726.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406498165.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406509554.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406652049.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406657607.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406695926.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406704870.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406766654.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406772527.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406786420.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777406791395.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407025291.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407030846.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407041736.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407046662.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407143757.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407148910.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407409036.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407414513.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407436134.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407441462.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407453795.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407459526.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407499213.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407505325.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407519903.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407525902.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407546077.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407551613.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407570155.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407575558.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407748384.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407753755.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407777431.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407783654.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407795056.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407800896.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407814500.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407819742.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407840942.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407873824.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407899059.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407904919.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407917239.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407923292.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407935530.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407941306.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777407979382.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408011027.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408091612.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408127243.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408175830.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408213135.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408264160.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408299303.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408346490.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408387663.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408434583.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408477543.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408532408.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408562661.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408600137.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408625820.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408659940.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408683166.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408766116.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408798862.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408874386.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408910918.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777408992397.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777409078853.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777409102790.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777461290909.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777461298231.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777461375000.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777461382205.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462321304.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462327104.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462350162.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462355626.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462382007.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462413408.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462420922.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462491432.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462498799.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462542663.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462548472.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462567951.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462596742.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462603496.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462632190.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462879549.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462888140.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462907745.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462914454.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462933483.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777462941920.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463011754.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463018663.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463056341.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463061713.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463073394.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463109037.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463126842.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463132976.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463161390.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463183246.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463188860.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463200108.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463260929.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777463265753.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464322439.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464329570.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464697890.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464839480.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464965127.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777464990291.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465094600.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465119980.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465186927.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465193848.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465248753.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465255616.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465284388.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465303261.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465325649.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465355095.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465369077.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465382726.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465412104.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465419090.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465434452.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465450370.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465490088.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465548832.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777465554183.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467627615.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467637250.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467850276.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467857441.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467904850.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467911957.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467957231.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777467964354.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777468016969.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777468024087.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777468085338.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777468159153.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777468166307.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469195081.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469200140.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469376132.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469381255.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469626952.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469633040.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469742478.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469748803.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469773000.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469778763.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469847556.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469852992.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469891653.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469896179.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469958541.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469991951.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777469997915.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470010399.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470015879.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470041025.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470048163.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470085309.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470090052.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470108213.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470112924.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470125377.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470131071.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470181494.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470186094.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470234577.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470239076.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470255578.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470261234.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777470287589.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471314450.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471343912.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471443353.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471484173.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471548538.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471590086.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471640518.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471663574.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471675358.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471680689.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471693349.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471698958.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471712137.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471717966.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471733765.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471739520.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471751839.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471757529.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471768839.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471774301.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471795528.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471801408.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471819658.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471824298.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471837133.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471842110.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471864855.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471869394.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471904107.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471908565.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471985054.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777471990874.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472013415.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472021529.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472053173.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472057631.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472074187.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472078417.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472120882.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472125982.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472148380.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472152978.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472233810.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472253581.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472270196.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472284541.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472299465.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472325647.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472336319.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472357413.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472463315.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472468369.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472727070.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777472847507.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473567628.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473567772.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473567799.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473567837.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473567965.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473568097.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473568545.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473568752.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473568927.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473569759.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473570102.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473615560.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473616473.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473617331.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473617829.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473617893.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473618180.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473618224.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473618406.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473619302.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473619759.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473621182.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473732216.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473732567.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473732785.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473732870.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473732966.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473733037.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473733220.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473738252.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473738479.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473785724.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805317.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805376.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805410.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805498.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805583.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473805611.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473806390.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473898303.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473900041.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473900143.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473924210.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473924685.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777473924882.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474011286.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474034527.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474135407.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474149179.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474170205.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474183350.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474204905.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474218148.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474238618.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474251659.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474270438.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474283634.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474303157.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474316474.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474337813.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474352338.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474373531.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474386803.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474433448.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474487605.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474499838.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474539031.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474551461.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474576572.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474588837.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474626845.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474639408.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474664837.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474677020.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474711846.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474751579.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474764110.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474793947.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474806464.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474863846.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777474876513.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475113072.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475125020.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475166201.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475178439.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475250145.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475262927.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475283498.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475295892.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475319291.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475331825.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475352061.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475379392.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475417768.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475437462.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777475537066.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777484455269.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777484468453.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777484505484.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777484543637.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777484556702.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777485466458.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777485478646.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777485513011.json`
+- `Users/blaze/dev/stringray/.strray/inference/workflow-1777485532344.json`
+- `dist/cli/commands/dashboard.d.ts`
+- `dist/cli/commands/dashboard.d.ts.map`
+- `dist/cli/commands/dashboard.js.map`
+- `dist/dashboard/dashboard-renderer.d.ts`
+- `dist/dashboard/dashboard-renderer.d.ts.map`
+- `dist/dashboard/dashboard-renderer.js.map`
+- `dist/dashboard/dashboard-types.d.ts`
+- `dist/dashboard/dashboard-types.d.ts.map`
+- `dist/dashboard/dashboard-types.js.map`
+- `dist/dashboard/index.d.ts`
+- `dist/dashboard/index.d.ts.map`
+- `dist/dashboard/index.js.map`
+- `dist/dashboard/metrics-collector.d.ts`
+- `dist/dashboard/metrics-collector.d.ts.map`
+- `dist/dashboard/metrics-collector.js.map`
+- `dist/plugin/strray-codex-injection.d.ts`
+- `dist/plugin/strray-codex-injection.d.ts.map`
+- `dist/plugin/strray-codex-injection.js.map`
+- `dist/processors/agents-md-validation-processor.d.ts`
+- `dist/processors/agents-md-validation-processor.d.ts.map`
+- `dist/processors/agents-md-validation-processor.js.map`
+- `dist/processors/async-pattern-processor.d.ts`
+- `dist/processors/async-pattern-processor.d.ts.map`
+- `dist/processors/async-pattern-processor.js.map`
+- `dist/processors/console-log-guard-processor.d.ts`
+- `dist/processors/console-log-guard-processor.d.ts.map`
+- `dist/processors/console-log-guard-processor.js.map`
+- `dist/processors/performance-budget-processor.d.ts`
+- `dist/processors/performance-budget-processor.d.ts.map`
+- `dist/processors/performance-budget-processor.js.map`
+- `dist/processors/postprocessor-chain-validator.d.ts`
+- `dist/processors/postprocessor-chain-validator.d.ts.map`
+- `dist/processors/postprocessor-chain-validator.js.map`
+- `dist/processors/processor-rule-fixes.d.ts.map`
+- `dist/processors/processor-rule-fixes.js.map`
+- `dist/processors/processor-test-executor.d.ts.map`
+- `dist/processors/processor-test-executor.js.map`
+- `dist/processors/refactoring-logging-processor.d.ts`
+- `dist/processors/refactoring-logging-processor.d.ts.map`
+- `dist/processors/refactoring-logging-processor.js.map`
+- `dist/processors/spawn-governance-processor.d.ts`
+- `dist/processors/spawn-governance-processor.d.ts.map`
+- `dist/processors/spawn-governance-processor.js.map`
+- `dist/processors/test-auto-creation-processor.d.ts`
+- `dist/processors/test-auto-creation-processor.d.ts.map`
+- `dist/processors/test-auto-creation-processor.js.map`
+- `dist/processors/typescript-compilation-processor.d.ts`
+- `dist/processors/typescript-compilation-processor.d.ts.map`
+- `dist/processors/typescript-compilation-processor.js.map`
+- `dist/processors/version-compliance-processor.d.ts`
+- `dist/processors/version-compliance-processor.d.ts.map`
+- `dist/processors/version-compliance-processor.js.map`
+
+## Patterns Observed
+
+- New processor implementations added — system extensibility increasing
+- New test files created — test coverage expanding
+- 451 files deleted — dead code removal or refactoring
+- Net code reduction: 39147 lines removed — simplification effort
+- Processor system modified — pipeline architecture evolving
+- Security-related changes detected
+- Bug fixes present — stability improvement
+- Version bumps/releases present — release cadence active
+- Processor manager core modified — orchestration layer changing
+- AGENTS.md updated — agent documentation evolving
+- Integration layer modified — external system interfaces changing
+
+## Key Decisions
+
+- Fix: fix: increase timeout for processor auto-discovery tests to prevent flaky failures
+- Fix: fix: inference processor double-joining absolute path created bogus Users/ dir
+- Removal: chore: remove 92 build artifacts (.d.ts, .d.ts.map) from .opencode git tracking, add to .gitignore
+- Fix: chore: rebuild dist after path fix
+
+## Inference Notes
+
+- Extract Method pattern detected [95%]: Methods extracted from monolithic modules into dedicated files in the same directory. Classic decomposition pattern: one large file sheds responsibilities into focused modules. (1 new files + 7 modified in dist/processors/implementations/)
+- Test Coverage Expansion pattern detected [95%]: 7 new test files added. Test-first or test-alongside development — covering new code as it ships. (+ src/__tests__/e2e/inference-e2e.test.ts)
+- Dead Code Removal pattern detected [90%]: 462 files deleted — unused code eliminated. Reduces maintenance burden, removes misleading signals for new readers. (- .opencode/core/activity-logger.d.ts.map)
+- Stability Sprint pattern detected [75%]: Focus on removal and fixing over feature addition. Technical debt being paid down — a sign of mature development practice. (462 files deleted)
+- Structured inference captured → session-2026-05-01-1777632619848.json
+- Extract Method pattern: 2 new processor files suggest methods extracted from a monolithic module
+- Code reduction effort: processor-manager had 67514 deletions vs 28367 insertions — simplification in progress
+- Registry Pattern: factory/registry changes suggest switch-to-Map refactoring
+- Convention over Configuration: new implementations + discovery code suggest auto-registration pattern
+- Release pipeline investment: changes to release/publish scripts suggest automation of manual process
+- Self-awareness layer: reflection/storytelling changes suggest the system is learning to observe itself
+- Net code reduction: 39147 lines removed — technical debt being paid down
+- Test coverage expansion: 7 new test files added
+
+---
+*Generated by StorytellingTriggerProcessor — release cadence — 2026-05-01T10:49:59.164Z*
