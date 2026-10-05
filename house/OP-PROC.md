@@ -2,6 +2,8 @@
 
 These rules apply to every house. This file names no house. Blaze owns it. His direct message comes before a bot ping.
 
+OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`), then this house adds ours on top (`house/OP-PROC.md`). Seats read `house/` first; the house wins for Owner, Seats, Public voice, Allowed, Ask first, Board — not by erasing the pack.
+
 ## 1. Compute is the scarcest resource
 
 - A wake must be worth the cost. Plan once. Read only what the job needs. Send one short reply.
@@ -35,11 +37,17 @@ These rules apply to every house. This file names no house. Blaze owns it. His d
 - **Arch1** builds a fix or a **Plate** only when Blaze hands over that track. The fleet stops that work. The spec is friend-speak: the bug, how to reproduce it, what fixed looks like, and the paths.
 - **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order.
 - Ask once. Implement goes to mill. Gates go to forge. PASS or FAIL goes to critic.
-- A new seat does no ship work until the suit receipt is on disk at `.xray/state/SUIT-RECEIPT.md`, with the inspect result ok and the suit fastened. A chat note is not a suit.
+- **Hire gate (new employee / seat):** before any ship work — (1) CoS creates the agent with a clear role description + hire packet; (2) fasten suit at `/workspace/<seat>-suit` (mill+inspect) with inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect `ok: true`, `suit: fastened`, costume false); (3) employee orientation + KB (`kb/EMPLOYEE-ORIENTATION.md`, scope, mem-grow, `kb/ROLE-CARD.md` when Dist announced the role); (4) seat reads KT and acks `KT read · suit fastened · quiet until carded`; (5) if Dist announced the role, board gets a standing **ROLE** card matching that announcement and CoS cards first work under it — seat does not freelance. A chat packet is not a suit. Profile alone is not a hire. **Example (2026-10-05):** 🪱 Nibbler — Dist hire + `NIBBLER-ROLE` + first gobble card. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the hire gate for mill before any ship work.
 - In chat, a seat follows this file. It does not wear the whole suit.
 
 - **Confer.** Confer and Calling stay **off** unless Blaze turns them on. An unreviewed result with no model in the loop must not pass.
 - **Dist.** When Dist is armed: one idea per public post, no double-post, no thanks-only replies. Friend-test before send. Blaze's go is still required.
+
+### Eng hire rules (house law)
+
+1. **Hire gate.** Suit + KB + employee orientation + KT ack before any ship work; standing ROLE card when Dist announced the seat; quiet until CoS cards work. Inspect receipt on disk — not a chat line. (See Hire gate above.)
+2. **Sudo-copy.** Eng seats cannot wear the full suit in Grok Bot chat — operate as sudo copies of constitution/KT. Mill hire gate before ship work is still suit + inspect receipt.
+3. **New-hire OP-PROC (rule 5).** Document as we go: pack base + house layer both carry the hire gate (suit, KB, orientation, ROLE card, quiet until carded). Example seat: Nibbler feed scout.
 
 ## 3. Nothing ships unproven
 
@@ -112,6 +120,7 @@ Public words are friend-speak. Test them on a person before they go out.
 - **Lights on.** The limit has cleared. Pick up the queue in order.
 - **Packet.** Goal, constraints, path, acceptance, evidence, next owner, escalate.
 - **Card.** One ticket, one seat, Done when, Stops at.
+- **Role card.** Standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
 - **Station.** A seat's short survival note on disk.
 - **Ping-pong.** Seat to seat on a pull request or an issue: review, fix, check again, merge. Not a public post.
 - **Beat.** A real event, not a timer.
