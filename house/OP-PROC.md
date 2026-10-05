@@ -118,6 +118,18 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 - **Arch1:** outside-fleet builder (Grok CLI); friend-speak specs only.
 - **Organ gate:** useful, fit for purpose, prod grade, powers up the suit.
 - **Lens:** the search door (one `CARD_PLANES` token + one skill + related plates). **Plate:** the stamped drawing. Do not call the Entry/Exit/Setup/Teardown template a lens.
+- **u do ~ dont spawn subagent:** compaction-survival / BEN dual only. Parent session. Law: `examples/ben-proof/OP-PROC.md`.
+
+## Bench (compaction survival / BEN dual)
+
+For that path only, `examples/ben-proof/OP-PROC.md` **wins** over the constitution principle Use Best Subagents and over `AGENTS.md` autonomy-command Task dispatch. The suited hooks deny Task. This house does not ban subagents on any other seat.
+
+Hard rules for the compaction dual:
+
+- The parent session keeps reading and writing itself until the assigned corpus is finished.
+- Declaring done, `DONE-*`, or asking the operator to confirm, choose chunk size, or allow placeholders voids that arm.
+- A shell for-loop, sed, or script that summarizes files for the model is not a fill and voids that arm.
+- A Task call or a spawned helper voids that arm even if the helper keeps running.
 
 ## Board
 
