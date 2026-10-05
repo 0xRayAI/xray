@@ -2,11 +2,14 @@
 """Live mesh feed: poll GitHub for the ping-pong volley and write live-events.json.
 
 Ping-pong = the PR/issue volley between seats (open, review, fix, re-Light, merge).
-X is optional wake/chatter, merged in only from an existing feed file (--merge-x).
+Also: muse-house Deployments (deploy/deploy_fail), a mymuse.house /health probe that emits on
+state change (health_ok/health_fail), and X both ways from herald's JSONL ledger (--x-ledger) or,
+as an interim hand log, an existing feed file (--merge-x). No X API calls; nothing is posted.
 
 Output keeps the capture shape the mesh renderer already reads:
   {title, sources, repo, repos, seats, services, notes, generated_at, event_count,
-   events: [{id, t_ct, from, to, kind, label, source, src_file, repo?, number?, note?}]}
+   events: [{id, t_ct, from, to, kind, direction, label, source, src_file,
+             repo?, number?, post_id?, handle?, in_reply_to?, note?, reported_by?}]}
 
 Stdlib only (urllib). Auth: GITHUB_TOKEN or GH_TOKEN (any token that can read the repos).
 
@@ -121,8 +124,10 @@ def short(repo: str) -> str:
 
 def ev(eid, t, frm, to, kind, label, source, repo, number, note=None):
     e = {"id": eid, "t_ct": to_ct(t) if t.endswith("Z") else t, "from": frm, "to": to,
-         "kind": kind, "label": clean(label)[:54], "source": source,
-         "src_file": "github-api", "repo": repo, "number": number}
+         "kind": kind, "direction": "internal", "label": clean(label)[:54], "source": source,
+         "src_file": "github-api", "repo": repo}
+    if number is not None:
+        e["number"] = number
     if note:
         e["note"] = note
     return e
@@ -269,28 +274,249 @@ def light_note_events(path: Path, since: datetime) -> list[dict]:
         e = ev(f"{repo}#{n}:light:{t.isoformat()}", t.astimezone(CT).isoformat(), "critic",
                rec.get("to", "mill"), f"critic_{v.lower()}", f"critic {v} · {short(repo)} #{n}",
                f"https://github.com/{repo}/pull/{n}", repo, n, note=rec.get("note") or "in-room Light")
-        e["src_file"] = path.name
+        e["src_file"] = "light-notes.jsonl"
+        out.append(e)
+    return out
+
+
+# ---------------------------------------------------------------- kinds, direction, order
+
+ENG_KINDS = ["pr_open", "pr_update", "supersede", "critic_fail", "critic_pass", "ci_pass", "ci_fail",
+             "review", "comment", "merged", "pr_close", "issue_open", "issue_close"]
+SITE_KINDS = ["deploy", "deploy_fail", "health_ok", "health_fail"]
+X_IN = ["x_in_mention", "x_in_reply"]
+X_OUT = ["x_out_reply", "x_out_root", "x_like"]
+KINDS = ENG_KINDS + SITE_KINDS + X_IN + X_OUT
+LEGACY = {"fix": "pr_update", "probe": "health_ok", "x_root": "x_out_root"}
+# Ties at the same instant: cause before effect.
+_RANK_ORDER = [["pr_open"], ["pr_update"], ["ci_pass", "ci_fail"], ["critic_pass", "critic_fail"],
+               ["supersede"], ["review", "comment"], ["merged"], ["pr_close"], ["issue_open"], ["issue_close"],
+               ["deploy", "deploy_fail"], ["health_ok", "health_fail"], X_IN, ["x_out_reply", "x_out_root"],
+               ["x_like"]]
+KIND_RANK = {k: i for i, ks in enumerate(_RANK_ORDER) for k in ks}
+# Dedupe precedence when two sources give the same id (lower wins).
+SRC_RANK = {"github-api": 0, "github-deployments": 0, "x-api": 0, "health-probe": 0,
+            "x-ledger.jsonl": 1, "light-notes.jsonl": 2}
+MERGE_X_RANK = 3
+HERALD_HANDLES = {"0xRayAI", "herald"}
+
+
+def normalize_kind(kind: str, frm: str = "") -> str:
+    """Legacy kinds are accepted on read and written in canonical form."""
+    if kind == "x_reply":
+        return "x_out_reply" if frm in HERALD_HANDLES else "x_in_reply"
+    return LEGACY.get(kind, kind)
+
+
+def direction_of(kind: str) -> str:
+    if kind in X_IN:
+        return "in"
+    if kind in X_OUT:
+        return "out"
+    return "internal"
+
+
+def instant(t_ct: str) -> datetime:
+    return datetime.fromisoformat(t_ct.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def order_key(e: dict):
+    return (instant(e["t_ct"]), KIND_RANK.get(e["kind"], 99), e["id"])
+
+
+def src_rank(e: dict) -> int:
+    return SRC_RANK.get(e.get("src_file", ""), MERGE_X_RANK)
+
+
+# ---------------------------------------------------------------- site: deployments + /health
+
+DEPLOY_CACHE: dict = {}  # deployment id -> event (terminal states only)
+
+
+def deploy_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
+    """GitHub Deployments (Railway posts them) -> deploy / deploy_fail on a terminal status."""
+    out = []
+    for d in gh.pages(f"/repos/{repo}/deployments", limit=2):
+        if datetime.fromisoformat(d["created_at"].replace("Z", "+00:00")) < since:
+            break  # newest first
+        if d["id"] in DEPLOY_CACHE:
+            out.append(DEPLOY_CACHE[d["id"]])
+            continue
+        statuses = gh.get(f"/repos/{repo}/deployments/{d['id']}/statuses", {"per_page": 30})
+        final = next((s for s in statuses if s["state"] in ("success", "failure", "error")), None)
+        if not final:
+            continue  # queued / in_progress: picked up on a later pass
+        ok = final["state"] == "success"
+        sha7 = d["sha"][:7]
+        e = ev(f"{repo}:deploy:{d['id']}", final["created_at"], "GitHub", "mymuse.house",
+               "deploy" if ok else "deploy_fail",
+               f"deploy · {short(repo)} {sha7}" if ok else f"deploy FAIL · {short(repo)} {sha7}",
+               final.get("target_url") or final.get("environment_url") or d["url"], repo, None,
+               note=f"env {d.get('environment')}; sha {d['sha'][:8]}")
+        e["src_file"] = "github-deployments"
+        DEPLOY_CACHE[d["id"]] = e
+        out.append(e)
+    return out
+
+
+def probe(url: str) -> tuple[bool, str]:
+    req = urllib.request.Request(url, headers={"User-Agent": "xray-live-mesh-feed"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            body = r.read(4096).decode(errors="replace")
+            try:
+                status = json.loads(body).get("status", "ok")
+            except (ValueError, AttributeError):
+                status = "ok"
+            return (status == "ok", "200" if status == "ok" else f"status {status}"[:20])
+    except urllib.error.HTTPError as e:
+        return False, str(e.code)
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        return False, "unreachable"
+
+
+def health_events(args, state_path: Path, deploys: list[dict], since: datetime) -> list[dict]:
+    """Probe /health; emit only on a state change, or the first ok after a newer deploy.
+    Emitted events live in health-state.json so later passes keep them in the window."""
+    st = json.loads(state_path.read_text()) if state_path.exists() else {"events": []}
+    now = time.time()
+    due = now - st.get("last_probe_unix", 0) >= args.health_every or st.get("url") != args.health
+    if due:
+        ok, code = probe(args.health)
+        state = "ok" if ok else "fail"
+        last_t = st.get("last_emit_t")
+        newest_deploy = max((instant(d["t_ct"]) for d in deploys if d["kind"] == "deploy"), default=None)
+        after_deploy = ok and newest_deploy and (not last_t or newest_deploy > instant(last_t))
+        if state != st.get("state") or st.get("url") != args.health or after_deploy:
+            t = datetime.now(CT).replace(microsecond=0)
+            e = {"id": f"health:{state}:{t.strftime('%Y-%m-%dT%H:%M')}", "t_ct": t.isoformat(),
+                 "from": "mymuse.house", "to": "blinky", "kind": f"health_{state}",
+                 "direction": "internal", "label": "/health ok" if ok else f"/health FAIL {code}",
+                 "source": args.health, "src_file": "health-probe"}
+            st["events"].append(e)
+            st["last_emit_t"] = e["t_ct"]
+        st.update(state=state, url=args.health, last_probe_unix=now,
+                  last_probe_t=datetime.now(CT).replace(microsecond=0).isoformat())
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = state_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(st, indent=2) + "\n")
+        os.replace(tmp, state_path)
+    return [e for e in st["events"] if instant(e["t_ct"]) >= since]
+
+
+# ---------------------------------------------------------------- X: ledger + merge-x
+
+def x_label(kind: str, handle: str, tag: str | None) -> str:
+    sfx = f" · {tag}" if tag else ""
+    return {"x_in_mention": f"IN @{handle} · mention", "x_in_reply": f"IN @{handle} · reply in",
+            "x_out_reply": f"HERALD reply on X{sfx}", "x_out_root": f"HERALD root{sfx}",
+            "x_like": f"LIKE @{handle}{sfx}"}[kind]
+
+
+def x_id(kind: str, post_id: str) -> str:
+    return f"x:like:{post_id}" if kind == "x_like" else f"x:{post_id}:{kind}"
+
+
+def handle_from_url(url: str) -> str | None:
+    m = re.search(r"x\.com/([^/]+)/status/", url or "")
+    return m.group(1) if m else None
+
+
+def x_nodes(kind: str, handle: str) -> tuple[str, str]:
+    if kind in X_IN:
+        return (handle if handle not in HERALD_HANDLES else "X"), "herald"
+    return "herald", "X"
+
+
+def ledger_events(path: Path, since: datetime) -> list[dict]:
+    """herald appends one line per X action: {"t","kind","post_id","handle","in_reply_to"?,"url","tag"?,"note"?}.
+    Inbound handle = author; outbound = 0xRayAI; likes = author of the liked post."""
+    out = []
+    if not path.exists():
+        return out
+    for k, line in enumerate(path.read_text().splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            rec = json.loads(line)
+            t = datetime.fromisoformat(rec["t"].replace("Z", "+00:00"))
+            handle = str(rec["handle"]).lstrip("@")
+            kind = normalize_kind(rec["kind"], handle)
+            post_id = str(rec["post_id"])
+        except (ValueError, KeyError) as err:
+            log(f"{path.name}:{k} skipped ({err})")
+            continue
+        if kind not in X_IN + X_OUT:
+            log(f"{path.name}:{k} skipped (kind {kind})")
+            continue
+        if t < since:
+            continue
+        frm, to = x_nodes(kind, handle)
+        url = rec.get("url") or (f"https://x.com/0xRayAI/status/{post_id}" if kind in ("x_out_reply", "x_out_root")
+                                 else f"https://x.com/{handle}/status/{post_id}")
+        e = {"id": x_id(kind, post_id), "t_ct": t.astimezone(CT).isoformat(), "from": frm, "to": to,
+             "kind": kind, "direction": direction_of(kind),
+             "label": clean(x_label(kind, handle, rec.get("tag")))[:54], "source": url,
+             "src_file": "x-ledger.jsonl", "post_id": post_id, "handle": handle}
+        if rec.get("in_reply_to"):
+            e["in_reply_to"] = str(rec["in_reply_to"])
+        if rec.get("note"):
+            e["note"] = rec["note"]
         out.append(e)
     return out
 
 
 def x_events(path: Path, since: datetime) -> list[dict]:
-    """Optional X wake/chatter: copy x_* events from an existing feed (no X API here)."""
+    """Interim X input: copy x_* events from a hand-built feed (e.g. herald v2) and normalize
+    legacy kinds. This is a hand log, not a live X read."""
     if not path.exists():
         return []
     out = []
     for e in json.loads(path.read_text()).get("events", []):
         if not str(e.get("kind", "")).startswith("x_"):
             continue
-        if datetime.fromisoformat(e["t_ct"]) < since:
+        if instant(e["t_ct"]) < since:
             continue
         e = dict(e)
-        e.setdefault("id", f"x:{e.get('source', e['t_ct'])}")
+        e["kind"] = normalize_kind(e["kind"], e.get("from", ""))
+        post_id = e.get("post_id") or (re.search(r"/status/(\d+)", e.get("source", "")) or [None, None])[1]
+        if post_id:
+            e["post_id"] = str(post_id)
+        handle = handle_from_url(e.get("source", ""))
+        if e["kind"] in X_IN:
+            e["from"] = e.get("from") if e.get("from") not in (None, "X") else (handle or "X")
+            e["to"] = "herald"
+        else:
+            e["from"], e["to"] = "herald", "X"
+        if handle:
+            e.setdefault("handle", handle)
+        e["direction"] = direction_of(e["kind"])
+        e["label"] = clean(e.get("label", x_label(e["kind"], handle or "?", None)))[:54]
+        e.setdefault("id", x_id(e["kind"], e["post_id"]) if post_id else f"x:{e['t_ct']}:{e['kind']}")
+        e["src_file"] = path.name
         out.append(e)
     return out
 
 
 PR_CACHE: dict = {}  # (repo, number) -> (signature, fetched_at, events); watch mode only
+
+
+def merge(events: list[dict]) -> list[dict]:
+    """Dedupe by id keeping the higher-precedence source; fill optional fields the winner lacks."""
+    best: dict[str, dict] = {}
+    for e in events:
+        e["kind"] = normalize_kind(e["kind"], e.get("from", ""))
+        e.setdefault("direction", direction_of(e["kind"]))
+        cur = best.get(e["id"])
+        if cur is None:
+            best[e["id"]] = e
+            continue
+        win, lose = (e, cur) if src_rank(e) < src_rank(cur) else (cur, e)
+        for k, v in lose.items():
+            win.setdefault(k, v)
+        best[e["id"]] = win
+    return sorted(best.values(), key=order_key)
 
 
 def build(args, gh: GitHub) -> dict:
@@ -317,32 +543,49 @@ def build(args, gh: GitHub) -> dict:
             events.extend(got)
         if not args.no_issues:
             events.extend(issue_events(gh, repo, since))
+    deploys: list[dict] = []
+    if args.deploy_repo:
+        deploys = deploy_events(gh, args.deploy_repo, since)
+        events.extend(deploys)
+    if args.health:
+        events.extend(health_events(args, Path(args.health_state), deploys, since))
+    # allow --deploy-repo '' / --health '' to disable
     events.extend(light_note_events(Path(args.light_notes), since))
-    if args.merge_x:
-        events.extend(x_events(Path(args.merge_x), since))
-    seen, uniq = set(), []
-    for e in sorted(events, key=lambda e: (e["t_ct"], e["id"])):
-        if e["id"] not in seen:
-            seen.add(e["id"])
-            uniq.append(e)
+    x_ledger = ledger_events(Path(args.x_ledger), since)
+    events.extend(x_ledger)
+    x_merged = x_events(Path(args.merge_x), since) if args.merge_x else []
+    events.extend(x_merged)
+    uniq = merge(events)
     kinds = sorted({e["kind"] for e in uniq})
+    x_note = ("X events: none in window." if not (x_ledger or x_merged) else
+              "X events: " + ", ".join(filter(None, [
+                  f"{len(x_ledger)} from x-ledger.jsonl (herald's machine ledger)" if x_ledger else "",
+                  f"{len(x_merged)} from {Path(args.merge_x).name} via --merge-x (hand log, not a live X read)"
+                  if x_merged else ""])) + ".")
     return {
         "title": "muse / 0xRay ping-pong live events",
         # Local inputs are recorded by file name only (no box paths in a committed feed).
         "sources": [f"https://github.com/{r}" for r in args.repos]
-                   + [Path(args.light_notes).name] + ([Path(args.merge_x).name] if args.merge_x else []),
+                   + ([f"https://github.com/{args.deploy_repo}/deployments"] if args.deploy_repo else [])
+                   + ([args.health] if args.health else [])
+                   + [Path(args.light_notes).name, Path(args.x_ledger).name]
+                   + ([Path(args.merge_x).name] if args.merge_x else []),
         "repo": args.repos[0],
         "repos": args.repos,
         "seats": SEATS,
         "services": SERVICES,
         "notes": [
-            "Generated by house/live-mesh/fetch_feed.py from the GitHub REST API; no markdown paste.",
+            "Generated by house/live-mesh/fetch_feed.py: GitHub REST (PRs, issues, deployments), "
+            "a /health probe, and JSONL ledgers. No markdown is read.",
             f"Window: events at or after {since.astimezone(CT).isoformat()}.",
             "critic_* events come from: critic App reviews/check runs, critic comments with Light PASS/FAIL, "
             "light-notes.jsonl (in-room Lights), or a seat comment that states a Light verdict "
             "(reported_by set; time = when reported).",
             "PR author seat: mill/* branch -> mill even when the PR rides the forge0x1 App.",
-            "X events (x_*) only appear when --merge-x points at a feed that already has them.",
+            "/health events are emitted on a state change (or first ok after a deploy) at probe time.",
+            x_note,
+            "Order: (UTC instant, kind rank, id). Same id from two sources: "
+            "API > x-ledger > light-notes > --merge-x.",
         ],
         "generated_at": datetime.now(CT).isoformat(),
         "kinds": kinds,
@@ -377,11 +620,24 @@ def main() -> int:
     p.add_argument("--repos", nargs="+", default=DEFAULT_REPOS)
     p.add_argument("--hours", type=float, default=48.0, help="lookback window (default 48h)")
     p.add_argument("--since", help="ISO start time; overrides --hours (naive = CT)")
-    p.add_argument("--light-notes", default=str(here / "feed" / "light-notes.jsonl"))
-    p.add_argument("--merge-x", help="feed JSON to copy x_* wake/chatter events from (optional)")
+    p.add_argument("--light-notes", help="in-room critic Lights JSONL (default: <out dir>/light-notes.jsonl)")
+    p.add_argument("--x-ledger", help="herald X ledger JSONL (default: <out dir>/x-ledger.jsonl)")
+    p.add_argument("--merge-x", help="interim: copy + normalize x_* events from a hand-built feed JSON")
+    p.add_argument("--deploy-repo", default="0xRayAI/muse-house", help="repo whose Deployments map to deploy*; '' = off")
+    p.add_argument("--health", default="https://mymuse.house/health", help="/health URL to probe; '' = off")
+    p.add_argument("--health-every", type=float, default=60, help="min seconds between probes")
+    p.add_argument("--health-state", help="probe state file (default: <out dir>/health-state.json)")
     p.add_argument("--no-issues", action="store_true")
     p.add_argument("--watch", type=float, default=0, help="poll every N seconds (0 = one pass)")
     args = p.parse_args()
+    out_dir = Path(args.out).parent
+    args.light_notes = args.light_notes or str(out_dir / "light-notes.jsonl")
+    args.x_ledger = args.x_ledger or str(out_dir / "x-ledger.jsonl")
+    args.health_state = args.health_state or str(out_dir / "health-state.json")
+    args.deploy_repo = args.deploy_repo or None
+    args.health = args.health or None
+    if os.environ.get("X_BEARER_TOKEN"):
+        log("X_BEARER_TOKEN is set but the X API adapter is not built; X still comes from the ledger / --merge-x")
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if not token:
         log("no GITHUB_TOKEN/GH_TOKEN: private repos will 404 and the rate limit is 60/h")
