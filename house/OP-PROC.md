@@ -113,6 +113,7 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 - **Packet:** goal, constraints, path, acceptance, evidence, next owner, escalate.
 - **Card:** one ticket, one seat, Done when + Stops at.
 - **Station:** a seat's survival strip on disk.
+- **Ping-pong:** the volley between swarms of agents collaborating on PRs and issues (seat↔seat review, fix, re-Light, merge — not X Dist threads).
 - **Beat:** a real event, not a timer.
 - **Arch1:** outside-fleet builder (Grok CLI); friend-speak specs only.
 - **Organ gate:** useful, fit for purpose, prod grade, powers up the suit.
