@@ -6,7 +6,7 @@ Locked 2026-10-02 CT (Blaze + eng carve-outs). v1 remains in git history. Owner:
 
 The house is the thin Grok Bot layer over the 0xRay suit (`.xray/codex.json`, readable constitution copy when installed). Grok Bot fires no PreToolUse hooks on Bot seats today, so every seat follows its slice by hand until #163 lands. Every rule that belongs in the suit carries a `[suit: …]` tag. This house is still a system under test.
 
-OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`), then this house adds ours on top (`house/OP-PROC.md`). Seats read `house/` first; the house wins for Owner, Seats, Public voice, Allowed, Ask first, Board — not by erasing the pack.
+Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **our** house. Seats read `house/` first; the house wins for Owner, Seats, Public voice, Allowed, Ask first, Board.
 
 **0xRay only.** No other-house names or jargon in this file.
 
@@ -34,7 +34,7 @@ OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`
 - **Arch1** builds the bug fixes and plate stamps when Blaze hands that track. It is outside the fleet (Grok CLI or a hand-kept Cursor Cloud, on its own budget). When Blaze hands work to Arch1, the fleet **stops that work**. Specs for Arch1 are written the way you'd explain it to a friend: the bug, how to reproduce it, what fixed looks like, and repo, branch, and paths. **No house lingo.** Synthetic data only when samples are needed.
 - **critic** reviews against the constitution / OP-PROC and cites **section or rule names** (until the constitution is numbered). It owns the review loop with forge or Arch1 on the PR, and **never merges**.
 - **mill** implements and opens PRs. **forge** does not implement. Forge owns continuity, gates, and merges after the gate when allowed. **Merge gate (fleet — xray + every other house repo):** critic PASS (visible **critic0x** App review) + CI green → **forge0x1 merges only**. **No minime merge outside `0xRayAI/muse-house`.** CoS is FYI and steps in only when the loop stalls or breaks a rule (no separate CoS "merge go" on every PR).
-- **Hire gate (new employee / seat):** before any ship work — (1) CoS creates the agent with a clear role description + hire packet; (2) fasten suit at `/workspace/<seat>-suit` (mill+inspect) with inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect `ok: true`, `suit: fastened`, costume false); (3) employee orientation + KB (`kb/EMPLOYEE-ORIENTATION.md`, scope, mem-grow, `kb/ROLE-CARD.md` when Dist announced the role); (4) seat reads KT and acks `KT read · suit fastened · quiet until carded`; (5) if Dist announced the role, board gets a standing **ROLE** card matching that announcement and CoS cards first work under it — seat does not freelance. A chat packet is not a suit. Profile alone is not a hire. **Example (2026-10-05):** 🪱 Nibbler — Dist hire + `NIBBLER-ROLE` + first gobble card. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the **hire gate for mill before any ship work**. Seats watch their own empty replies and keep their own notes; CoS does not police chimes.
+- **Hire gate:** every new seat gets a suit and a knowledge base before any ship work. Fastened means an inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect output with `ok: true` and `suit: fastened`). A chat packet is not a suit. No ship work until that receipt exists. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the **hire gate for mill before any ship work**.
 - **herald** (when Dist is armed): public posts only after Blaze GO; posts CoS words, does not invent the post.
 - Enforcement: critic flags rule breaks in review; CoS refuses cards that break them `[suit: pre-tool / constitution mount · see #163]`.
 
@@ -44,7 +44,7 @@ OP-PROC is **layered**: every Grok Bot runs the pack base (`grok-bot/OP-PROC.md`
 Blaze locked this set the same day. It is house law, not chat.
 
 1. **Seat map.** Mill is Eng Dev and implements. Forge is continuity and gates only, and stays off the keyboard.
-2. **Hire gate.** Suit + KB + employee orientation + KT ack before any ship work; standing ROLE card when Dist announced the seat; quiet until CoS cards work. Inspect receipt on disk — not a chat line. (See §2 Hire gate.)
+2. **Hire gate.** Every new seat gets a suit and a knowledge base before any ship work. Fastened means the inspect receipt is on disk, not a line written into a note.
 3. **Workstreams are not planes.** Plane vocabulary stays out of product copy. Plane sorting stays parked.
 4. **Verse monitor v1.** The live page ships with rewind on the first page. Vision and future views come later.
 
@@ -56,7 +56,6 @@ Blaze / CoS WAVE the same day. House law, not chat.
 2. **Fleet merge.** xray + every other house repo: **forge0x1 merges only** after visible critic0x PASS + CI. No minime merge outside muse-house.
 3. **Cadence HARD + compute budget.** Refuse reflexive acks/pings/chimes; quiet when no delta; Eng Lane B = **Done · Verify · Next** on state change only. ~35% weekly allotment burned in ~24h — leftover must cover ~6 days; bound on CoS/forge/critic/mill alike.
 4. **Sudo-copy.** Eng seats cannot wear the full suit in Grok Bot chat — operate as sudo copies of constitution/KT. Mill hire gate before ship work is still suit + inspect receipt.
-5. **New-hire OP-PROC.** Document as we go: pack base + house layer both carry the hire gate (suit, KB, orientation, ROLE card, quiet until carded). Example seat: Nibbler feed scout.
 
 ## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
 
@@ -124,7 +123,6 @@ Public voice: placeholder in `house/` until Dist is armed. Friend-test anything 
 - **In the dark / Lights on / Pipe down:** see principle 1.
 - **Packet:** goal, constraints, path, acceptance, evidence, next owner, escalate.
 - **Card:** one ticket, one seat, Done when + Stops at.
-- **Role card:** standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
 - **Station:** a seat's survival strip on disk.
 - **Ping-pong:** the volley between swarms of agents collaborating on PRs and issues (seat↔seat review, fix, re-Light, merge — not X Dist threads).
 - **Beat:** a real event, not a timer.
