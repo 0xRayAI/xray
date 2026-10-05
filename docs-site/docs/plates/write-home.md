@@ -35,4 +35,4 @@ The path table is `src/integrations/hooks/write-home.cjs`. Writers use it. Reade
 
 Still on the old path until each caller is rewired: the activity logger, the framework logger, the pipeline hook, the Grok hook, the Hermes bridge, station capture, `saveSessionInference`, reporting, pulse, monitor, and `features.json` `log_path`.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

@@ -42,6 +42,19 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.40] - 2026-10-05
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- house/live-mesh: full loop — feed watch, mesh render, direction, deploy, `/health`, X ledger both ways (#214, #215).
+- house: define Ping-pong in OP-PROC lexicon (#213).
+- house: OP-PROC cadence cleanup — muse-house lock, fleet forge0x1-merge, quiet/budget, sudo-copy seats (#216).
+- house: OP-PROC eng PR coach stack + 2026-10-04 eng state lock (#210, #212).
+- docs/dist: Dist packet note for 0xray 4.0.39 / repertoire 0.2.9 (#211).
+
+---
+
 ## [4.0.39] - 2026-10-03
 
 ### 🔄 Changes

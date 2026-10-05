@@ -38,4 +38,4 @@ Trail: state and logs under `.xray`. Codex is already loaded. This plate is the 
 
 The published manual is `docs-site/docs/`. The rule sheet is `grok-bot/OP-PROC.md`. Neither is one of the five pages.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

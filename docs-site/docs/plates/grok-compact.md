@@ -32,4 +32,4 @@ Grok PreCompact runs session-start.js with the pre_compact event.
 
 The hook is `session-start.js --hook-event=pre_compact`. It calls `buildSessionBootPayload`, writes the station card, and prints nothing. It does not match the conversation. Grok ignores hook stdout. The plates that belong here are payload-heat, cursor-compact, and work-fresh.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

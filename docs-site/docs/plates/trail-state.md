@@ -32,4 +32,4 @@ The suit writes its trail under .xray.
 
 Session boot, the lens match line, and the station card are state. The agent reads them. Do not commit `.xray/state`.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

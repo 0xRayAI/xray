@@ -1,6 +1,6 @@
 {
   "name": "0xray",
-  "version": "4.0.39",
+  "version": "4.0.40",
   "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
   "readme": "README.md",
   "license": "MIT",
@@ -226,6 +226,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.55.0",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.2",

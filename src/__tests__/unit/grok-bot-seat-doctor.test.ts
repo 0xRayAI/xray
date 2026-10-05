@@ -601,9 +601,23 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(packed.status).toBe(0);
       const tgz = readdirSync(packDir).find((name) => name.endsWith('.tgz'));
       expect(tgz).toBeTruthy();
-      const installed = spawnSync('npm', ['install', path.join(packDir, tgz as string)], {
+      writeFileSync(path.join(app, 'package.json'), `${JSON.stringify({ name: 'seat-doctor-pack', version: '0.0.0', private: true })}\n`);
+      const installEnv: NodeJS.ProcessEnv = {
+        ...process.env,
+        npm_config_cache: path.join(app, '.npm-cache'),
+        npm_config_fund: 'false',
+        npm_config_audit: 'false',
+        npm_config_update_notifier: 'false',
+      };
+      for (const key of Object.keys(installEnv)) {
+        if (/^npm_/i.test(key) && !['npm_config_cache', 'npm_config_fund', 'npm_config_audit', 'npm_config_update_notifier'].includes(key)) {
+          delete installEnv[key];
+        }
+      }
+      const installed = spawnSync('npm', ['install', path.join(packDir, tgz as string), '--no-fund', '--no-audit'], {
         cwd: app,
         encoding: 'utf8',
+        env: installEnv,
       });
       expect(installed.status).toBe(0);
       const packedBin = path.join(app, 'node_modules', '@0xray', 'grok-bot', 'bin', 'grok-bot.js');

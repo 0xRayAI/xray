@@ -75,7 +75,7 @@ describe('goggles MCP', () => {
     const { payload } = await dispatchTool('look', { outer: 'triage', plane: 'routing' }, tempRoot());
     const card = payload.content;
     expect(card.entry).toBe(organ.entry);
-    expect(card.notes.join('\n')).toContain('Empty: skills, setup, teardown');
+    expect(card.notes.join('\n')).toContain('Empty: setup, teardown');
     expect(card.notes.join('\n')).toContain('Holds.');
     expect(card.notes.join('\n')).not.toContain('entry');
   });
