@@ -80,6 +80,7 @@ How we act — not a product, not a ticket type.
 | heat ≠ fastened | Station “Repertoire: on” ≠ live `node_modules` organ |
 | wear ≠ plant (verb) | wear = run suited; plant = fasten the suit/organs onto a project |
 | wear ≠ costume | files on disk without live hooks/inspect = theater |
+| chime ≠ reflexive ack | needed interrupt / soft override — not Cadence HARD refuse-all |
 
 Locked 2026-09-14 with Blaze — categorized.
 
@@ -97,3 +98,9 @@ Locked 2026-09-14 with Blaze — categorized.
 | **organ** | Practices | Optional module in the suit/plant |
 | **repertoire** | Products (organ) | Optional compact/memory organ — fasten to claim |
 | **wear** | Practices | Run with a fastened suit; inspect = wear check |
+
+## Lexicon add (2026-10-05 — chime)
+| Term | Bucket | Plain |
+|------|--------|-------|
+| **chime** | Practices | Needed interrupt that **supersedes** a gentle redirect (soft override). Use when the soft redirect isn't enough. Not a reflexive ack / ping — those stay refused under Cadence HARD. |
+
