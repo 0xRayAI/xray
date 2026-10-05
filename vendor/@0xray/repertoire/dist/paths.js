@@ -421,6 +421,9 @@ export function reloadOpProc(cwd = process.cwd()) {
 }
 function mergeProjectOverlays(destPath) {
     mergeStackOverlay(destPath);
+    // Suit wake / REPERTOIRE_SUBJECT_OVERLAY=0 keeps repo-* subject flesh off the project file.
+    if (process.env.REPERTOIRE_SUBJECT_OVERLAY === '0')
+        return;
     mergeSubjectOverlay(destPath);
 }
 export function hydrateWritableSignals(seedPath, cwd = process.cwd()) {

@@ -102,6 +102,13 @@ function assertOnlyRepertoireLinkAdded(project: string, before: string[]) {
   );
 }
 
+
+function gitInit(project: string) {
+  execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.email', 'host-install@test'], { cwd: project, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.name', 'host-install'], { cwd: project, stdio: 'ignore' });
+}
+
 function writeRel(root: string, rel: string, body: string) {
   const dest = path.join(root, rel);
   mkdirSync(path.dirname(dest), { recursive: true });
@@ -112,7 +119,7 @@ describe('host install leaves tracked files alone', () => {
   it('git status --porcelain is empty after postinstall on a committed consumer tree', () => {
     const project = mkdtempSync(path.join(homedir(), 'xray-host-install-'));
     try {
-      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      gitInit(project);
       writeRel(project, '.gitignore', GITIGNORE);
       writeRel(
         project,
@@ -137,7 +144,7 @@ describe('host install leaves tracked files alone', () => {
       );
       writeRel(project, '.cursor/hooks/pre-compact.sh', '#!/bin/sh\necho user-pre-compact\n');
       execFileSync('git', ['add', '-f', '--', ...TRACKED], { cwd: project, stdio: 'ignore' });
-      execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'consumer files'], {
+      execFileSync('git', ['-c', 'user.email=host-install@test', '-c', 'user.name=host-install', '-c', 'commit.gpgsign=false', 'commit', '-m', 'consumer files'], {
         cwd: project,
         stdio: 'ignore',
       });
@@ -156,14 +163,14 @@ describe('host install leaves tracked files alone', () => {
   it('a bad hooks.json does not fail postinstall and changes nothing', () => {
     const project = mkdtempSync(path.join(homedir(), 'xray-host-install-bad-'));
     try {
-      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      gitInit(project);
       writeRel(project, 'package.json', `${JSON.stringify({ name: 'acme' })}\n`);
       writeRel(project, '.cursor/hooks.json', '{ "hooks": { "hooks": \n');
       execFileSync('git', ['add', '-f', '--', 'package.json', '.cursor/hooks.json'], {
         cwd: project,
         stdio: 'ignore',
       });
-      execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'bad hooks'], {
+      execFileSync('git', ['-c', 'user.email=host-install@test', '-c', 'user.name=host-install', '-c', 'commit.gpgsign=false', 'commit', '-m', 'bad hooks'], {
         cwd: project,
         stdio: 'ignore',
       });
@@ -185,10 +192,10 @@ describe('host install leaves tracked files alone', () => {
   it('postinstall in a fresh repo adds only the vendored repertoire link', () => {
     const project = mkdtempSync(path.join(homedir(), 'xray-host-install-fresh-'));
     try {
-      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      gitInit(project);
       writeRel(project, 'package.json', `${JSON.stringify({ name: 'acme' })}\n`);
       execFileSync('git', ['add', '--', 'package.json'], { cwd: project, stdio: 'ignore' });
-      execFileSync('git', ['-c', 'commit.gpgsign=false', 'commit', '-m', 'init'], {
+      execFileSync('git', ['-c', 'user.email=host-install@test', '-c', 'user.name=host-install', '-c', 'commit.gpgsign=false', 'commit', '-m', 'init'], {
         cwd: project,
         stdio: 'ignore',
       });
@@ -227,7 +234,7 @@ describe('setup installs bridges without git hooks unless asked', () => {
   it('setup without the flag leaves .git/hooks unchanged and writes .mcp.json', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-bridges-'));
     try {
-      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      gitInit(project);
       const before = gitHookBytes(project);
       setupProjectBridges({ packageRoot: repoRoot, targetDir: project, log: () => {} });
       const after = gitHookBytes(project);
@@ -248,7 +255,7 @@ describe('setup installs bridges without git hooks unless asked', () => {
   it('setup with --git-hooks installs the hooks', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-setup-githooks-'));
     try {
-      execFileSync('git', ['init'], { cwd: project, stdio: 'ignore' });
+      gitInit(project);
       expect(existsSync(path.join(project, '.git', 'hooks', 'pre-commit'))).toBe(false);
       setupProjectBridges({ packageRoot: repoRoot, targetDir: project, gitHooks: true, log: () => {} });
       const hook = readFileSync(path.join(project, '.git', 'hooks', 'pre-commit'), 'utf8');

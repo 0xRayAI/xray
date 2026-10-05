@@ -125,3 +125,10 @@ backups/
 .env.*
 *.local
 **/auth.json
+
+# Playwright / coverage artifacts
+coverage/
+test-results/
+playwright-report/
+tests/config/coverage/
+tests/config/test-results/

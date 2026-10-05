@@ -8,7 +8,7 @@
       "src",
       "grok-bot/OP-PROC.md",
       "src/opencode/agents",
-      "Agents.md",
+      "AGENTS.md",
       "src/integrations",
       "package.json",
       "scripts/foundry"
