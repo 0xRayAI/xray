@@ -26,6 +26,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -53,7 +54,10 @@ LOGIN_SEAT = {
 BRANCH_SEAT = {"mill/": "mill", "forge/": "forge", "critic/": "critic",
                "herald/": "herald", "blinky/": "blinky", "minime/": "minime0x"}
 
-VERDICT_RE = re.compile(r"\b(?:Light|Verify|critic|gate)\b[^\n]{0,48}?\b(PASS|FAIL)\b", re.I)
+# A verdict is "Light PASS/FAIL" (optionally "critic"/"Verify" before Light) or "critic PASS/FAIL",
+# with at most a separator between the words. Verdict must be uppercase so prose like
+# "critic Light gates every PR ... pass" does not count.
+VERDICT_RE = re.compile(r"(?i:\b(?:(?:critic|verify)\s+)?light|\bcritic)\s*[:\-\u2014\u00b7]?\s*(PASS|FAIL)\b")
 SUPERSEDE_RE = re.compile(r"\bsupersed(?:e|ed|es|ing)\b", re.I)
 BANNED = ("Dist", "emergence", "compaction")  # never shown on the mesh
 
@@ -70,7 +74,8 @@ class GitHub:
     def get(self, path: str, params: dict | None = None):
         url = path if path.startswith("http") else API + path
         if params:
-            url += ("&" if "?" in url else "?") + "&".join(f"{k}={v}" for k, v in params.items())
+            # urlencode so "+00:00" in since= becomes %2B00:00 (a raw "+" decodes to a space).
+            url += ("&" if "?" in url else "?") + urllib.parse.urlencode(params)
         req = urllib.request.Request(url, headers={
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
@@ -165,7 +170,8 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
     # Issue comments: critic Light notes, supersede notes, other seat chatter on the PR.
     for c in gh.pages(f"/repos/{repo}/issues/{n}/comments", {"since": t_since}, limit=2):
         out.extend(comment_events(repo, n, tag, author, c))
-    # Check runs on head: any critic App run is a Light verdict; CI Summary is CI.
+    # Check runs on head: any critic App run is a Light verdict. Only the "CI Summary" roll-up
+    # becomes ci_*, on purpose: one CI event per head instead of one per job.
     try:
         runs = gh.get(f"/repos/{repo}/commits/{pr['head']['sha']}/check-runs", {"per_page": 100})
     except urllib.error.HTTPError:
@@ -322,8 +328,9 @@ def build(args, gh: GitHub) -> dict:
     kinds = sorted({e["kind"] for e in uniq})
     return {
         "title": "muse / 0xRay ping-pong live events",
+        # Local inputs are recorded by file name only (no box paths in a committed feed).
         "sources": [f"https://github.com/{r}" for r in args.repos]
-                   + [args.light_notes] + ([args.merge_x] if args.merge_x else []),
+                   + [Path(args.light_notes).name] + ([Path(args.merge_x).name] if args.merge_x else []),
         "repo": args.repos[0],
         "repos": args.repos,
         "seats": SEATS,

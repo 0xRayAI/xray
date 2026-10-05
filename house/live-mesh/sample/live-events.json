@@ -3,8 +3,8 @@
   "sources": [
     "https://github.com/0xRayAI/muse-house",
     "https://github.com/0xRayAI/xray",
-    "/workspace/dist-media/ping-pong/live-mesh-feed/feed/light-notes.jsonl",
-    "/workspace/dist-media/ping-pong/live-events.json"
+    "light-notes.jsonl",
+    "live-events.json"
   ],
   "repo": "0xRayAI/muse-house",
   "repos": [
@@ -31,7 +31,7 @@
     "PR author seat: mill/* branch -> mill even when the PR rides the forge0x1 App.",
     "X events (x_*) only appear when --merge-x points at a feed that already has them."
   ],
-  "generated_at": "2026-10-05T06:22:52.236992-05:00",
+  "generated_at": "2026-10-05T06:32:50.624988-05:00",
   "kinds": [
     "ci_pass",
     "comment",
@@ -45,7 +45,7 @@
     "x_reply",
     "x_root"
   ],
-  "event_count": 84,
+  "event_count": 86,
   "events": [
     {
       "id": "0xRayAI/muse-house#3:open",
@@ -1046,6 +1046,30 @@
       "src_file": "github-api",
       "repo": "0xRayAI/xray",
       "number": 213
+    },
+    {
+      "id": "0xRayAI/xray#214:open",
+      "t_ct": "2026-10-05T06:26:26-05:00",
+      "from": "mill",
+      "to": "GitHub",
+      "kind": "pr_open",
+      "label": "xray #214 opened · house: live mesh feed for the ping-",
+      "source": "https://github.com/0xRayAI/xray/pull/214",
+      "src_file": "github-api",
+      "repo": "0xRayAI/xray",
+      "number": 214
+    },
+    {
+      "id": "0xRayAI/xray#214:ci:111740532723",
+      "t_ct": "2026-10-05T06:28:47-05:00",
+      "from": "GitHub",
+      "to": "mill",
+      "kind": "ci_pass",
+      "label": "CI pass · xray #214",
+      "source": "https://github.com/0xRayAI/xray/actions/runs/37302946867/job/111740532723",
+      "src_file": "github-api",
+      "repo": "0xRayAI/xray",
+      "number": 214
     }
   ]
 }

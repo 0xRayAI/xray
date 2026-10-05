@@ -11,7 +11,7 @@ X is wake/chatter, not the sport. X events show up only when you merge them in f
 | `fetch_feed.py` | Poller. Reads the GitHub REST API for `0xRayAI/muse-house` and `0xRayAI/xray` (PRs, PR commits, reviews, issue comments, check runs, issues) and writes the feed. Python 3.9+, stdlib only. |
 | `render_mesh.py` | Mesh renderer, forked from `dist-media/ping-pong/render_muse_live.py` (same layout, seats, and colors). Reads the feed and writes an mp4 and/or PNG frames. Needs Pillow + ffmpeg. |
 | `schema.json` | JSON Schema for the feed. |
-| `sample/live-events.json` | Real feed written by `fetch_feed.py` on 2026-10-05 (window from 2026-10-04 10:00 CT; X events merged from the old hand feed). |
+| `sample/live-events.json` | Real feed written by `fetch_feed.py` on 2026-10-05 with a UTC `--since 2026-10-04T15:00:00+00:00` (= 10:00 CT); X events merged from the old hand feed. Local inputs are listed by file name only. |
 | `light-notes.example.jsonl` | Format for in-room critic Lights that never touch GitHub. |
 | `feed/` | Default live output dir (git-ignored). |
 
@@ -42,7 +42,7 @@ python3 render_mesh.py --feed feed/live-events.json --out feed/mesh-10s.mp4 --fo
 
 Each pass writes `live-events.json` to a temp file and renames it into place, so readers never see a half-written file. Events seen for the first time are also appended to `live-events.jsonl`, one JSON object per line.
 
-Cost: the first pass makes about 5 API calls per PR updated in the window (the 2026-10-04 10:00 CT → now sample took 100 calls, about 60 s). In watch mode, unchanged closed PRs are cached and open PRs are re-read every 10 min, so a quiet pass costs about 4 calls. At `--watch 120` that is well under the 5000/h token limit.
+Cost: the first pass makes about 5 API calls per PR updated in the window (the 2026-10-04 10:00 CT → now sample took about 104 calls, about 70 s). In watch mode, unchanged closed PRs are cached and open PRs are re-read every 10 min, so a quiet pass costs about 4 calls. At `--watch 120` that is well under the 5000/h token limit.
 
 ## How the watcher reads it
 
@@ -86,8 +86,8 @@ The top-level shape is the same as the hand-built `dist-media/ping-pong/live-eve
 | `pr_update` | each PR commit after the first (fix / re-push) |
 | `merged` / `pr_close` | PR `merged_at` / `closed_at` when not merged |
 | `supersede` | PR or issue comment that says supersede |
-| `critic_pass` / `critic_fail` | critic App review or check run; critic comment with `Light PASS/FAIL`; a `light-notes.jsonl` line; or another seat's comment that states a Light verdict (`reported_by` set, time = when reported) |
-| `ci_pass` / `ci_fail` | `CI Summary` check run on the PR head |
+| `critic_pass` / `critic_fail` | critic App review or check run; critic comment with `Light PASS/FAIL` or `critic PASS/FAIL` (verdict in caps, right after the word); a `light-notes.jsonl` line; or another seat's comment that states a Light verdict (`reported_by` set, time = when reported) |
+| `ci_pass` / `ci_fail` | the `CI Summary` check run on the PR head only (one CI event per head, not one per job) |
 | `review`, `comment` | other reviews and comments |
 | `issue_open`, `issue_close` | non-PR issues |
 | `x_root`, `x_reply` | only via `--merge-x` |
