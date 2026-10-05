@@ -77,34 +77,46 @@ EDGES = [
 ALIAS = {"Blaze0x1": "X", "grok": "X"}
 GIT_KINDS = {"pr_open", "pr_update", "pr_close", "merged", "fix", "supersede", "review", "comment",
              "critic_fail", "critic_pass", "ci_pass", "ci_fail", "issue_open", "issue_close",
-             "deploy", "probe"}
+             "deploy", "deploy_fail", "health_ok", "health_fail", "probe"}
 KIND_WORD = {"pr_open": "open", "pr_update": "fix / update", "merged": "merge", "pr_close": "close",
              "supersede": "supersede", "critic_pass": "Light PASS", "critic_fail": "Light FAIL",
              "ci_pass": "CI pass", "ci_fail": "CI fail", "review": "review", "comment": "comment",
-             "issue_open": "issue open", "issue_close": "issue close", "fix": "fix"}
+             "issue_open": "issue open", "issue_close": "issue close", "fix": "fix",
+             "deploy": "deploy", "deploy_fail": "deploy FAIL", "health_ok": "/health ok",
+             "health_fail": "/health FAIL", "x_in_mention": "IN mention", "x_in_reply": "IN reply",
+             "x_out_reply": "OUT reply", "x_out_root": "OUT root", "x_like": "LIKE",
+             "x_root": "OUT root", "x_reply": "X reply"}
+LEGACY_KIND = {"fix": "pr_update", "probe": "health_ok", "x_root": "x_out_root"}
 BANNED = ("Dist", "emergence", "compaction")
 PING_DUR = 1.1
 
 
 def resolve_nodes(e):
-    kind = e["kind"]
-    # Blaze / grok only sit on the X rail for X events; on git events they act through GitHub.
-    alias = ALIAS if kind.startswith("x_") else {k: "GitHub" for k in ALIAS}
+    """SPEC §5 ping mapping. X accounts sit on the X rail only for x_* kinds."""
+    kind = LEGACY_KIND.get(e["kind"], e["kind"])
+    if kind == "x_reply":
+        kind = "x_out_reply" if e.get("from") in ("herald", "0xRayAI") else "x_in_reply"
+    if kind in ("x_in_mention", "x_in_reply"):
+        return "X", "herald"
+    if kind in ("x_out_reply", "x_out_root", "x_like"):
+        return "herald", "X"
+    if kind in ("deploy", "deploy_fail"):
+        return "GitHub", "mymuse.house"
+    if kind in ("health_ok", "health_fail", "probe"):
+        return "mymuse.house", "blinky"
+    alias = {k: "GitHub" for k in ALIAS}  # Blaze/grok act through GitHub on eng kinds
     src = alias.get(e["from"], e["from"])
     dst = alias.get(e["to"], e["to"])
     if src not in SATS:
         src = "GitHub" if kind in GIT_KINDS else "X"
     if dst not in SATS:
-        if kind.startswith("x_"):
-            dst = "X"
-        elif kind in ("deploy", "probe"):
-            dst = "mymuse.house"
-        else:
-            dst = "GitHub"
+        dst = "GitHub"
     if kind in ("critic_fail", "critic_pass"):
         src = "critic"
         if dst == "critic":
             dst = "GitHub"
+    if kind in ("ci_pass", "ci_fail"):
+        src = "GitHub"
     if src == dst:
         dst = "GitHub" if src != "GitHub" else "forge"
     return src, dst
@@ -133,8 +145,14 @@ class Clip:
             for b in BANNED:
                 label = label.replace(b, "…")
             col = COLOR.get(e["from"], (180, 190, 210))
-            if e["kind"].startswith("critic_"):
-                col = (255, 110, 90) if e["kind"] == "critic_fail" else (120, 230, 150)
+            if e["kind"] in ("critic_fail", "ci_fail", "deploy_fail", "health_fail"):
+                col = (255, 110, 90)
+            elif e["kind"] in ("critic_pass", "ci_pass", "health_ok", "deploy"):
+                col = (120, 230, 150)
+            elif e["kind"].startswith(("x_out", "x_like")) or e["kind"] in ("x_root",):
+                col = COLOR["herald"]
+            elif e["kind"].startswith("x_"):
+                col = COLOR["X"]
             self.log.append((ct, e["from"] if not e["kind"].startswith("critic_") else "critic", label, col))
             src, dst = resolve_nodes(e)
             self.pk.append((ct, ct + PING_DUR, src, dst, col))
@@ -152,9 +170,9 @@ class Clip:
         self.stack = [
             ("GitHub", "PR open / fix / merge", at("pr_open", "pr_update", "merged", "pr_close")),
             ("critic gate", "Light PASS / FAIL", at("critic_pass", "critic_fail")),
-            ("CI", "checks on the head", at("ci_pass", "ci_fail")),
-            ("supersede", "honest re-draft", at("supersede")),
-            ("X", "wake / chatter (optional)", at("x_root", "x_reply")),
+            ("deploy /health", "site after merge", at("deploy", "deploy_fail", "health_ok", "health_fail")),
+            ("X IN", "mentions / replies → herald", at("x_in_mention", "x_in_reply")),
+            ("X OUT", "herald replies / roots / likes", at("x_out_reply", "x_out_root", "x_like")),
         ]
         self.span = (raw[0]["t_ct"][:16].replace("T", " "), raw[-1]["t_ct"][:16].replace("T", " "))
 
@@ -234,7 +252,7 @@ def render(clip: Clip, i: int) -> Image.Image:
         d.line([(0, y), (W, y)], fill=(10, 14, 22))
     d.rectangle([0, 0, W, 44], fill=(8, 10, 18))
     d.text((14, 10), "BLAZE DESK", font=FT, fill=(230, 235, 255))
-    d.text((14 + FT.getlength("BLAZE DESK") + 12, 14), "· PING-PONG MESH  ·  live feed: PRs + Light" + (" + X" if clip.has_x else ""),
+    d.text((14 + FT.getlength("BLAZE DESK") + 12, 14), "· PING-PONG MESH  ·  live feed: PRs + Light" + (" + X both ways" if clip.has_x else ""),
            font=FS, fill=(120, 130, 160))
     d.text((W - 72, 14), f"{t:04.1f}s", font=FS, fill=(100, 110, 140))
 
@@ -299,7 +317,7 @@ def render(clip: Clip, i: int) -> Image.Image:
     d.text((18, 536), "ACTIVITY · from feed", font=FS, fill=(140, 150, 175))
     for j, (et, who, text, col) in enumerate([e for e in clip.log if e[0] <= t][-6:]):
         yy = 556 + j * 24
-        d.text((18, yy), WHO_LOG.get(who, who.upper()[:8]), font=FX, fill=col)
+        d.text((18, yy), WHO_LOG.get(who, who.lstrip("@").upper()[:8]), font=FX, fill=col)
         d.text((100, yy), text[:64], font=FS, fill=(210, 220, 235))
 
     d.rounded_rectangle([736, 528, W - 8, H - 8], radius=8, fill=(8, 12, 20), outline=(35, 45, 70), width=1)
