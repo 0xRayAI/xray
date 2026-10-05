@@ -16,6 +16,7 @@ Pack template (`@0xray/grok-bot` OP-PROC.md) stays role-generic. This file is **
 
 - Every wake has to pass a gate: is it worth the compute? Plan once, batch tool calls, read only what's needed, send one short reply. **Cadence HARD:** refuse reflexive acks / pings / chimes; no spin-out; quiet when no delta. Act fast inside Allowed, and don't re-ask for anything already cleared. Quiet on peer acks of known state.
 - **Eng Lane B = delta-only:** CoS assigns; seats stamp **Done · Verify · Next** only when state changes. No stamp, no ping, when nothing moved.
+- **Seat ack + mem (2026-10-05 Blaze):** each seat watches its own ack burn and builds its own memory. CoS does **not** police chimes. Cadence HARD still binds every seat; the seat owns the discipline.
 - Message one agent directly. No fan-out, and no generic posts to rooms when a room post would wake every member for no reason.
 - Bots do simple jobs themselves (checks, CI reruns, merges after gate, file edits). Heavy work resumes the **same** cloud agent by its session id (`bc-…`). The cloud id is logged on the WAVEBOARD card. No new bots, clouds, or burns without Blaze's yes. **CoS-carded Strict** for a ship gate is Allowed (not a "deep QA" that needs a separate Blaze yes). Clouds and Grok Bot share one weekly allowance.
 - Routines are event-driven and stay silent when nothing changed. Nothing polls on a timer when an event trigger exists.
@@ -56,6 +57,7 @@ Blaze / CoS WAVE the same day. House law, not chat.
 2. **Fleet merge.** xray + every other house repo: **forge0x1 merges only** after visible critic0x PASS + CI. No minime merge outside muse-house.
 3. **Cadence HARD + compute budget.** Refuse reflexive acks/pings/chimes; quiet when no delta; Eng Lane B = **Done · Verify · Next** on state change only. ~35% weekly allotment burned in ~24h — leftover must cover ~6 days; bound on CoS/forge/critic/mill alike.
 4. **Sudo-copy.** Eng seats cannot wear the full suit in Grok Bot chat — operate as sudo copies of constitution/KT. Mill hire gate before ship work is still suit + inspect receipt.
+5. **Seat ack + mem.** Each seat watches its own ack burn and builds its own memory. CoS does not police chimes.
 
 ## 3. Nothing ships unproven `[suit: surgical edits · review plate · #202]`
 
