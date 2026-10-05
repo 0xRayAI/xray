@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/0xRayAI/xray/house/live-mesh/schema.json",
+  "title": "ping-pong live mesh feed",
+  "description": "Same capture shape as dist-media/ping-pong/live-events.json, plus optional id/repo/number on events. Written by fetch_feed.py; read by render_mesh.py.",
+  "type": "object",
+  "required": ["title", "seats", "services", "event_count", "events"],
+  "properties": {
+    "title": {"type": "string"},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "repo": {"type": "string", "description": "first repo polled (kept for older readers)"},
+    "repos": {"type": "array", "items": {"type": "string"}},
+    "seats": {"type": "array", "items": {"type": "string"}},
+    "services": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "array", "items": {"type": "string"}},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "kinds": {"type": "array", "items": {"type": "string"}},
+    "event_count": {"type": "integer", "minimum": 0},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}}
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "required": ["t_ct", "from", "to", "kind", "label", "source"],
+      "properties": {
+        "id": {"type": "string", "description": "stable dedupe key, e.g. 0xRayAI/xray#213:merged"},
+        "t_ct": {"type": "string", "format": "date-time", "description": "America/Chicago with offset"},
+        "from": {"type": "string", "description": "seat (blinky, mill, forge, critic, herald, minime0x), rail (GitHub, X, mymuse.house), or Blaze0x1 / grok"},
+        "to": {"type": "string"},
+        "kind": {
+          "type": "string",
+          "description": "git volley kinds from fetch_feed.py, plus legacy kinds the renderer still accepts",
+          "examples": ["pr_open", "pr_update", "merged", "pr_close", "supersede", "review", "comment",
+                       "critic_pass", "critic_fail", "ci_pass", "ci_fail", "issue_open", "issue_close",
+                       "x_root", "x_reply", "fix", "deploy", "probe"]
+        },
+        "label": {"type": "string", "maxLength": 64},
+        "source": {"type": "string", "description": "URL of the GitHub object (PR, comment, check run) or X post"},
+        "src_file": {"type": "string", "description": "github-api, light-notes.jsonl, or the legacy markdown file"},
+        "repo": {"type": "string"},
+        "number": {"type": "integer"},
+        "reported_by": {"type": "string", "description": "set when a Light verdict was stated in another seat's comment"},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}
