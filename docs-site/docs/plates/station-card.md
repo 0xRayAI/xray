@@ -32,4 +32,4 @@ The station card is the one-line ticket at .xray/state/STATION.md.
 
 Read it after a compact. Leave Intent alone. The plan is the next cut. The long body belongs in notes.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

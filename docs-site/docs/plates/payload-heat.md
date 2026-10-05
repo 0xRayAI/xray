@@ -32,4 +32,4 @@ buildSessionBootPayload calls applyStationHeat and writes the station card.
 
 The function is in `src/integrations/grok/hooks/grok-hook-utils.js`. The plates that belong here are station-heat and pickup-stamp.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

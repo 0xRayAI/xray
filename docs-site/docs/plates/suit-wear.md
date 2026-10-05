@@ -34,4 +34,4 @@ Wear copies hooks, features.json, and the consumer gitignore into the project, a
 
 A worn project is a consumer. Its writes go to its own `.xray/logs` and `.xray/inference`, not into `docs/` and not into `.opencode/logs`.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

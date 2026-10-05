@@ -32,4 +32,4 @@ A reflection is one episode written under docs/reflections.
 
 The loader is `loadReflectionInferences` in `src/inference/inference-accumulator.ts`. A reflection is not a repertoire law.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40

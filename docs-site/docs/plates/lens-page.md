@@ -32,4 +32,4 @@ The lens page is the card for one plane.
 
 `formatCardPane` in `src/integrations/hooks/goggles-pipeline.mjs` draws the card. Read the card instead of searching the tree. The plates that belong here are record-map and lens-gate.
 
-stamped · 0xray 4.0.36
+stamped · 0xray 4.0.40
