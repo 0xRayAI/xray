@@ -32,4 +32,4 @@ A release writes the package face, and the agent reads it.
 
 The face is `README.md`, `package.json`, `AGENTS.md`, `llms.txt`, `CHANGELOG.md`, and `SKILLS.md`. Do not hand-bump the version.
 
-stamped · 0xray 4.0.40
+stamped · 0xray 4.0.41

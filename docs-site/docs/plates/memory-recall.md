@@ -38,3 +38,5 @@ Intent names one plate. Equal top scores recall nothing. A missing worn copy is 
 │   └────────────────────┘        └────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+stamped · 0xray 4.0.41

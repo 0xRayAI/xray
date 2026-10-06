@@ -32,4 +32,4 @@ Inference cycle state already lives under .xray/inference.
 
 Cycle state, history, graded ids, and governance state are already there. Session files still fall back to `docs/inference` until the writers move.
 
-stamped · 0xray 4.0.40
+stamped · 0xray 4.0.41

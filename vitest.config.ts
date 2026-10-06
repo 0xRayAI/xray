@@ -15,6 +15,7 @@ const base = {
     "coverage",
     "src/__tests__/plugins/marketplace-service.test.ts",
     "src/__tests__/performance/enterprise-performance-tests.ts",
+    "src/__tests__/playwright/**",
   ],
   silent: true,
   reporters: process.env.CI ? ["verbose"] : ["default"],

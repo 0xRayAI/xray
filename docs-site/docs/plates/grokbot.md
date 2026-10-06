@@ -38,4 +38,4 @@ Give your bots a house: shared rules, one board for the work, and memory that st
   code links: suit → memory, house → doctor, memory → station. Other lines show reading order only.
 ```
 
-stamped · 0xray 4.0.40 · @0xray/grok-bot 0.1.8
+stamped · 0xray 4.0.41 · @0xray/grok-bot 0.1.8

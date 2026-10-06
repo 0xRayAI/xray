@@ -42,6 +42,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
+## [4.0.41] - 2026-10-06
+
+### 🔄 Changes
+
+- Wake cascade. Station and the notes page stay on the station module. Heat writes `Cascade: record-map · notes N current` on the card. A memory-recall look returns that plane, the matched law names, and the current lines from the session-note index beside the laws.
+
+### 🐛 Fixes
+
+- The Playwright release-gate smoke stays on the Playwright battery. The unit runner does not load that spec.
+
+---
+
 ## [4.0.40] - 2026-10-05
 
 ### 🔄 Changes

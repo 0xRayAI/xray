@@ -50,3 +50,5 @@ These eight are the pages the file ref names. Each one is a search lens. Each le
 [Work fresh](./work-fresh.md) · [Kept line](./kept-line.md) · [Lens gate](./lens-gate.md) · [Pre tool](./pre-tool.md) · [Lens page](./lens-page.md)
 
 These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
+
+stamped · 0xray 4.0.41
