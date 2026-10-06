@@ -64,6 +64,52 @@
   var BANNED = ['Dist', 'emergence', 'compaction'];
 
   function toSet(list) { var s = {}; list.forEach(function (k) { s[k] = 1; }); return s; }
+  /* Own-key lookup so a feed name like "constructor" never hits Object.prototype. */
+  function own(obj, key) { return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined; }
+
+  /* Seat images: bots/<seat>.png, one file per seat (drop a replacement in by filename).
+     Rails (squares) have none; a seat whose file is missing gets a lettered badge. */
+  function botImage(key) { return SEAT_NAMES.indexOf(key) >= 0 ? 'bots/' + key + '.png' : null; }
+  function badgeLetter(key) { return String(own(LABEL, key) || key || '?').charAt(0).toUpperCase(); }
+
+  /* Subtle motion: each seat bobs a few px on its own phase; a fired event pulses 0..1..0.
+     Reduced motion returns zero offset / no pulse. */
+  var ENTRY_MS = 1500, PULSE_MS = 900;
+  function phaseOf(key) {
+    var h = 0;
+    for (var i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 997;
+    return h / 997 * Math.PI * 2;
+  }
+  function bob(key, tMs, reduced) {
+    if (reduced) return [0, 0];
+    var ph = phaseOf(String(key)), t = tMs / 1000;
+    return [Math.sin(t * 0.7 + ph * 1.3) * 1.5, Math.sin(t * (0.9 + ph / 20) + ph) * 3];
+  }
+  function pulse(ageMs, reduced) {
+    if (reduced || !(ageMs >= 0) || ageMs > PULSE_MS) return 0;
+    return Math.sin(Math.PI * ageMs / PULSE_MS);
+  }
+  /* Entry: 0..1 ease-out over ENTRY_MS from page start; seats stagger in by index. */
+  function entry(elapsedMs, index, reduced) {
+    if (reduced) return 1;
+    var p = Math.min(1, Math.max(0, (elapsedMs - (index || 0) * 90) / ENTRY_MS));
+    return 1 - Math.pow(1 - p, 3);
+  }
+
+  /* 0xRay wordmark, drawn from the house recipe (dist-media logo_glyphs word_ink/orange crops,
+     measured from the final stamp) resampled to a W x H cell grid: rows split by '/', runs of
+     <value><base36 count>, value 0 void, 1 stencil white #EBEBEB, 2 orange #DC5812. */
+  var MARK = { w: 112, h: 44, rle: '061401140v1701170z0g/041601160t1701190z0e/031701170s17011b0z0c/021801180r17011c0z0b/011901190q17011c0z0b/011901190q17041a0z0a/1805170q1706180z0a/1707170p1707170z0a/1707170p1707170b110x/170716032312220617031708160815011407160816/17071703221123110516041708170517011605160717/170717041222120417041708160518011704170617/170713021105112313031605170717051801180317061601/1707120212062214021705170717041901180416061601/170a14052116011606170618041704170416061601/170816061602150617011c051606160417041602/170717061702130717011c051606160417041602/170717071602130717011b0i170416041602/170717071702110817011a0j160516041602/17071708170a1701190f1302160516031603/17071709160a1703170c1602160616021603/1707170917091703170a1802160616021603/1707170a1609170417081a01160616021504/1707170712011708170417071a02160715021504/1707170712021608170417061805160716011504/221507170614011707170517051706160716011504/221507170614021607170517051607160716021305/1707170516011706170617041607160816011305/1707170516021606170617041607160816011305/011705170517021705170617041706160816021106/01190119032216041704170717031b02170815021106/01190119032117041704170717031b02160916011106/02180118032216061703170718031a0217081608/03170117032217061703170817041a0117081608/04160116032201172304170217081705180217091508/061401140z0z0d1707/0z0z0s1707/0z0z0s1608/0z0z0q1808/0z0z0n1a09/0z0z0n1a09/0z0z0n190a/0z0z0n180b/0z0z0n170c' };
+  function markCells() {
+    return MARK.rle.split('/').map(function (row) {
+      var out = [];
+      for (var i = 0; i < row.length; i += 2) {
+        var v = +row[i], n = parseInt(row[i + 1], 36);
+        while (n--) out.push(v);
+      }
+      return out;
+    });
+  }
 
   /* Same mapping as render_mesh.resolve_nodes: which two nodes a ping travels between. */
   function resolveNodes(e) {
@@ -73,10 +119,10 @@
     if (kind === 'x_out_reply' || kind === 'x_out_root' || kind === 'x_like') return ['herald', 'X'];
     if (kind === 'deploy' || kind === 'deploy_fail') return ['GitHub', 'mymuse.house'];
     if (kind === 'health_ok' || kind === 'health_fail' || kind === 'probe') return ['mymuse.house', 'blinky'];
-    var src = ALIAS[e.from] ? 'GitHub' : e.from;
-    var dst = ALIAS[e.to] ? 'GitHub' : e.to;
-    if (!SATS[src]) src = GIT_KINDS[kind] ? 'GitHub' : 'X';
-    if (!SATS[dst]) dst = 'GitHub';
+    var src = own(ALIAS, e.from) ? 'GitHub' : e.from;
+    var dst = own(ALIAS, e.to) ? 'GitHub' : e.to;
+    if (!own(SATS, src)) src = own(GIT_KINDS, kind) ? 'GitHub' : 'X';
+    if (!own(SATS, dst)) dst = 'GitHub';
     if (kind === 'critic_fail' || kind === 'critic_pass') {
       src = 'critic';
       if (dst === 'critic') dst = 'GitHub';
@@ -92,7 +138,7 @@
     if (k === 'critic_pass' || k === 'ci_pass' || k === 'health_ok' || k === 'deploy') return [120, 230, 150];
     if (k.indexOf('x_out') === 0 || k.indexOf('x_like') === 0 || k === 'x_root') return COLOR.herald;
     if (k.indexOf('x_') === 0) return COLOR.X;
-    return COLOR[e.from] || [180, 190, 210];
+    return own(COLOR, e.from) || [180, 190, 210];
   }
 
   function cleanLabel(s) {
@@ -103,7 +149,7 @@
 
   function whoTag(e) {
     var who = e.kind.indexOf('critic_') === 0 ? 'critic' : e.from;
-    return WHO_LOG[who] || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
+    return own(WHO_LOG, who) || String(who).replace(/^@/, '').toUpperCase().slice(0, 8);
   }
 
   function headline(e) {
@@ -167,7 +213,7 @@
   function hotNodes(pings) {
     var hot = {};
     pings.forEach(function (pk) {
-      [pk.src, pk.dst, pk.e.from, pk.e.to].forEach(function (n) { if (SATS[n]) hot[n] = 1; });
+      [pk.src, pk.dst, pk.e.from, pk.e.to].forEach(function (n) { if (own(SATS, n)) hot[n] = 1; });
     });
     return hot;
   }
@@ -254,6 +300,8 @@
     resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
-    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed
+    bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
+    own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
+    ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
