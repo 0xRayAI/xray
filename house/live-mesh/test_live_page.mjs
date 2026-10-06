@@ -2,7 +2,7 @@
 // Run: node --test house/live-mesh/test_live_page.mjs   (Node 18+, no deps)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -132,4 +132,50 @@ test('page has no external scripts and no longer depends on the mp4', () => {
   assert.ok(!/mesh-live\.mp4|<video/i.test(html));
   assert.ok(!/<(script|link)[^>]+(src|href)="(https?:)?\/\//i.test(html));
   assert.match(html, /<script src="live\.js"><\/script>/);
+});
+
+test('seat images map to bots/<seat>.png, rails get none, badges are one letter', () => {
+  for (const k of L.SEAT_NAMES) assert.equal(L.botImage(k), `bots/${k}.png`);
+  for (const k of ['GitHub', 'X', 'mymuse.house', 'constructor', 'stranger']) assert.equal(L.botImage(k), null);
+  assert.equal(L.badgeLetter('mill'), 'M');
+  assert.equal(L.badgeLetter('critic'), 'C');
+  assert.equal(L.badgeLetter('mymuse.house'), 'M');
+  const bots = path.join(liveDir, 'bots');
+  for (const f of readdirSync(bots)) {
+    assert.ok(L.SEAT_NAMES.includes(f.replace(/\.png$/, '')) && f.endsWith('.png'), `${f} is named for a seat`);
+    assert.ok(statSync(path.join(bots, f)).size < 20000, `${f} stays small`);
+  }
+});
+
+test('reduced motion turns off bob, pulse and the entry ease', () => {
+  assert.deepEqual([...L.bob('forge', 12345, true)], [0, 0]);
+  assert.equal(L.pulse(L.PULSE_MS / 2, true), 0);
+  assert.equal(L.entry(0, 3, true), 1);
+  const [dx, dy] = L.bob('forge', 12345, false);
+  assert.ok(Math.abs(dx) <= 1.5 && Math.abs(dy) <= 3, 'bob stays within a few px');
+  assert.notDeepEqual([...L.bob('forge', 12345, false)], [...L.bob('critic', 12345, false)], 'own phase per seat');
+  assert.ok(Math.abs(L.pulse(L.PULSE_MS / 2, false) - 1) < 1e-9);
+  assert.equal(L.pulse(L.PULSE_MS + 1, false), 0);
+  assert.equal(L.entry(0, 0, false), 0);
+  assert.equal(L.entry(L.ENTRY_MS + 9 * 90, 9, false), 1, 'mesh fully in within ~1.5 s (+ stagger)');
+});
+
+test('wordmark cells decode to the recipe grid; no stamp PNG on the page', () => {
+  const cells = L.markCells();
+  assert.equal(cells.length, L.MARK.h);
+  assert.ok(cells.every((r) => r.length === L.MARK.w));
+  const flat = cells.flat();
+  assert.ok(flat.includes(1) && flat.includes(2), 'stencil white and orange both present');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.ok(!/stamp[-\w]*\.(png|jpe?g)|<img/i.test(html + readFileSync(path.join(liveDir, 'live.js'), 'utf8')));
+  assert.match(html, /prefers-reduced-motion: reduce/);
+});
+
+test('prototype names in the feed never reach Object.prototype', () => {
+  const e = { kind: 'comment', from: 'constructor', to: '__proto__' };
+  assert.deepEqual([...L.resolveNodes(e)], ['GitHub', 'forge']);
+  assert.deepEqual([...L.eventColor(e)], [180, 190, 210]);
+  assert.equal(L.whoTag(e), 'CONSTRUC');
+  const hot = L.hotNodes([{ src: 'GitHub', dst: 'forge', e }]);
+  assert.deepEqual(Object.keys(hot).sort(), ['GitHub', 'forge']);
 });
