@@ -179,3 +179,29 @@ test('prototype names in the feed never reach Object.prototype', () => {
   const hot = L.hotNodes([{ src: 'GitHub', dst: 'forge', e }]);
   assert.deepEqual(Object.keys(hot).sort(), ['GitHub', 'forge']);
 });
+
+test('transport: Live shows as playing; a slider pick plays from there', () => {
+  assert.equal(L.isPlaying(true, false), true, 'Live = playing, before and after new events');
+  assert.equal(L.isPlaying(false, true), true);
+  assert.equal(L.isPlaying(false, false), false, 'paused only when rewound and stopped');
+  const b = [1000e3, 2000e3];
+  assert.equal(L.sliderAction(1500e3, b), 'play');
+  assert.equal(L.sliderAction(b[0], b), 'play');
+  assert.equal(L.sliderAction(b[1], b), 'live');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /sliderAction\(v, b\) === 'live'\) goLive\(\); else \{ rewindTo\(v\); playing = true; \}/);
+  assert.match(html, /L\.isPlaying\(state\.live, playing\) \? '&#10074;&#10074; Pause'/);
+});
+
+test('quiet edges are still: dots only ride an edge with a ping in flight', () => {
+  assert.equal(L.edgeTraffic(false), null);
+  assert.ok(L.edgeTraffic(true).count > 0);
+  assert.equal(L.orbitStep(16, [], false), 0, 'hub orbit still on a quiet feed');
+  assert.equal(L.orbitStep(16, [{}], true), 0, 'and under reduced motion');
+  assert.ok(L.orbitStep(16, [{}], false) > 0);
+  const ev = L.mergeEvents([], feed.events);
+  const quiet = L.pingsAt(ev, ev.at(-1)._t + 60e3, 1100);
+  assert.equal(quiet.length, 0, 'an hour-old feed has nothing in the recent window');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /var tr = L\.edgeTraffic\(burst\);\s+if \(!tr\) return;/);
+});

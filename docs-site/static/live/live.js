@@ -96,6 +96,16 @@
     return 1 - Math.pow(1 - p, 3);
   }
 
+  /* Transport. Live counts as playing (the view runs at real time), so the button shows Pause.
+     A slider click/drag plays from that point; at the right end it goes Live. */
+  function isPlaying(live, playing) { return !!(live || playing); }
+  function sliderAction(v, b) { return v >= b[1] - 1000 ? 'live' : 'play'; }
+  /* Edge traffic: dots run only on an edge with a ping in flight (a real event in the recent
+     window); a quiet edge is a still line. */
+  function edgeTraffic(burst) { return burst ? { count: 8, speed: 0.9, size: 3, alpha: 0.95 } : null; }
+  /* Hub orbit turns only while something is in flight, and never under reduced motion. */
+  function orbitStep(dtMs, pings, reduced) { return pings && pings.length && !reduced ? dtMs / 1000 * 0.25 : 0; }
+
   /* 0xRay wordmark, drawn from the house recipe (dist-media logo_glyphs word_ink/orange crops,
      measured from the final stamp) resampled to a W x H cell grid: rows split by '/', runs of
      <value><base36 count>, value 0 void, 1 stencil white #EBEBEB, 2 orange #DC5812. */
@@ -302,6 +312,7 @@
     eventsUpTo: eventsUpTo, pingsAt: pingsAt, hotNodes: hotNodes, applyFeed: applyFeed,
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
-    ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells
+    ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
+    isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
