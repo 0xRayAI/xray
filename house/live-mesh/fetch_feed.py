@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import http.client
 import json
 import os
 import re
@@ -133,7 +134,7 @@ class AppToken:
                 resp = json.loads(r.read().decode())
         except urllib.error.HTTPError as e:
             raise MintError(f"access_tokens HTTP {e.code}") from None
-        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as e:
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError) as e:
             raise MintError(f"access_tokens {type(e).__name__}") from None
         if not resp.get("token"):
             raise MintError("access_tokens response had no token")
@@ -461,7 +462,7 @@ def probe(url: str) -> tuple[bool, str]:
             return (status == "ok", "200" if status == "ok" else f"status {status}"[:20])
     except urllib.error.HTTPError as e:
         return False, str(e.code)
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
         return False, "unreachable"
 
 
@@ -752,8 +753,9 @@ def main() -> int:
             log(f"App token mint failed: {e}; no fallback token, keeping last feed, retry next poll")
             if not args.watch:
                 return 1
-        except (urllib.error.URLError, TimeoutError) as e:
-            log(f"GitHub unreachable ({type(e).__name__}); keeping last feed")
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError) as e:
+            # OSError covers ConnectionError/RemoteDisconnected; HTTPException covers IncompleteRead etc.
+            log(f"network error ({type(e).__name__}); keeping last feed")
             if not args.watch:
                 return 1
         if not args.watch:
