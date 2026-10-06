@@ -94,6 +94,45 @@ The README and the server register the same four tools. The server constructor i
 
 `GET https://mymuse.house/health` returned 200 at 2026-10-06T08:56:57Z. Body: `status` ok, `service` muse-house, `version` 0.1.0, `tools` 11, `stateless` true. Dist may cite that health URL. Do not invent other paths.
 
+
+## Nibbler research — taken 2026-10-06
+
+Read the sources. No model download. No API key. No Dist post. The score numbers in the chomp log that are not repeated here were not on the page I opened.
+
+### Memory lane. Ahead on laws. Do not adopt a memory product.
+
+[MEMOIR](https://github.com/olira-ai/memoir-benchmark) is a benchmark, not a product to install. The README says 117 synthetic patients, 3,617 questions, four tasks (factual, needle, compilation, trajectory). It says chatbot-memory tools were built to remember a dialogue, and a long record is a different shape. The 0.923 / 0.832 / 0.823 / 0.612 scores are the scout's cite. They are not in the README I read, so they stay unverified.
+
+[Hindsight](https://github.com/vectorize-io/hindsight) is a memory server: retain, recall, reflect, over a bank. It wants an LLM key and a database. That is a product beside the suit, not a law inside it.
+
+Graphiti, Mem0, and Letta stay contrasts. Graphiti is a temporal graph. Mem0 extracts and embeds facts. Letta lets the agent decide what to keep. None of them is the repertoire organ.
+
+What 0xRay needs from this lane: nothing installed. Repertoire 0.2.9 already keeps named laws. The gap is still a cleaner for session notes. It is not Mem0, Hindsight, or a vector store.
+
+### Decision lane. Not behind. Do not add a second judge.
+
+[JEV-9B](https://huggingface.co/autotrust/JEV-9B) is on Hugging Face under Apache 2.0. It is a frozen Qwen3.5-9B plus a small decision head. It answers yes/no, a choice, or a score, and returns probabilities. The card says it is not TypeSafe, not affiliated with TypeSafe, and shares no weights with the closed Jev model. Say that if anyone cites it.
+
+[d1](https://www.liquid.ai/blog/d1-decision-model) is hosted. It reads text or an image and returns probabilities with no output tokens. The blog prices it on input tokens and points at an API key. Do not spend a key. Vision is the only thing it has that JEV-9B's card also now claims in its own demos.
+
+[GEV-26B-Decide](https://huggingface.co/autotrust/GEV-26B-Decide) is the same family on a Gemma backbone. Its Decision Index 62.48 is AutoTrust's own scoring, and the card says so. Adaptive thinking helps puzzles. The card says keep thinking off for classification, retrieval, and tool routing.
+
+What 0xRay needs: the constitution, the confidence gate, and a critic who writes PASS or FAIL. A decision model would be a second judge. Do not call one from mill or inspect.
+
+### Weights lane. Not this race.
+
+Beam weights are still not released. Kolibri-1 weights are on Hugging Face, Apache 2.0. 0xRay does not ship a model. Do not pull Kolibri. Do not say Beam is downloadable.
+
+### The rest of the feed. Not a suit hole.
+
+Hermes [user stories](https://hermes-agent.nousresearch.com/docs/user-stories) are a gallery. One of them is a person's 3am cron that rereads the day's chats. That is their timer. 0xRay's cadence stays event beats. Do not copy the cron. The idea of a cleaner is already in the memory map.
+
+The Aleph OS page I opened, [agentcommunity.org/m/aleph-os](https://agentcommunity.org/m/aleph-os), is a community listing. It does not describe a context broker. It is not Aleph Alpha. Hold the broker claim until a product README is opened.
+
+Polymarket, the Gemma tuner, and the Allora worker guide are not 0xRay's job. Archive them. Brancher forks a live database. 0xRay already uses a git worktree per seat. Do not install it.
+
+The "280 official MCP servers" line is still a tweet. I did not open a vendor list, so that number stays unverified. Do not post it.
+
 ## Tier 4 — Strategic (Dist / product spine)
 
 ### T4-1 · Lead Dist on **agent identity** with three receipt-backed models
@@ -125,17 +164,17 @@ The README and the server register the same four tools. The server constructor i
 | ID | Goal | Action | Deep link |
 |----|------|--------|-----------|
 | O01 | Identity spike | Closed 2026-10-06. Do not wire AgentHook or an Ethos badge. Receipt above. | https://docs.alien.org/agent-id-guide/introduction |
-| O02 | Ethos contrast note | One-pager: Ethos vouch/slash vs Alien human-back — for Dist, not ship. | https://whitepaper.ethos.network/ethos-mechanisms/vouch |
+| O02 | Ethos contrast note | Closed 2026-10-06. Alien is a human key. Ethos is a 0–2800 review score. Not a badge. | https://whitepaper.ethos.network/ethos-mechanisms/credibility-score |
 | O03 | AMR ↔ Repertoire ADR | Closed 2026-10-06. Map is in the receipts. No new tool. | https://cognition.com/agent-memory-repo |
-| O04 | Dreaming cron rhyme | Compare Hermes Dreaming user-story cron to house mill cadence — doc only. | https://hermes-agent.nousresearch.com/docs/user-stories |
+| O04 | Dreaming cron rhyme | Closed 2026-10-06. Their 3am cron stays theirs. Our cadence stays event beats. | https://hermes-agent.nousresearch.com/docs/user-stories |
 | O05 | Beam watch card | Closed for 2026-10-06. Weights still unreleased. Dist stays blocked. | https://reflection.ai/blog/introducing-beam |
 | O06 | Kolibri smoke | Optional: pull Kolibri-1 card + aleph-alpha-inference serve notes into ops/scratch. | https://huggingface.co/Aleph-Alpha/Kolibri-1 |
 | O07 | JEV-9B local smoke | If GPU box free: `hf download autotrust/JEV-9B` + vLLM decide path from card. | https://huggingface.co/autotrust/JEV-9B |
-| O08 | d1 hosted contrast | Doc: when hosted d1 beats open JEV (vision/latency) — no key spend without Blaze OK. | https://www.liquid.ai/blog/d1-decision-model |
-| O09 | GEV attestation | Read GEV-26B card adaptive-thinking limits; file under decision lane. | https://huggingface.co/autotrust/GEV-26B-Decide |
-| O10 | MEMOIR skim | Skim MEMOIR results table; note materialization win for trajectory Qs. | https://github.com/olira-ai/memoir-benchmark |
-| O11 | Hindsight pin | Pin vectorize-io/hindsight as Dist receipt for “memory that learns”. | https://github.com/vectorize-io/hindsight |
-| O12 | Aleph OS name-collision note | Doc: agentcommunity Aleph OS ≠ Hmbown/aleph ≠ docs.heyaleph.com. | https://agentcommunity.org/m/aleph-os |
+| O08 | d1 hosted contrast | Closed 2026-10-06. Hosted, vision, input-billed. No key. Do not wire. | https://www.liquid.ai/blog/d1-decision-model |
+| O09 | GEV attestation | Closed 2026-10-06. Thinking helps puzzles. Keep it off for routing. Not our judge. | https://huggingface.co/autotrust/GEV-26B-Decide |
+| O10 | MEMOIR skim | Closed 2026-10-06. README confirms 117 / 3,617. Score table not on that page. | https://github.com/olira-ai/memoir-benchmark |
+| O11 | Hindsight pin | Closed 2026-10-06. Retain/recall/reflect server. Cite only. Do not install. | https://github.com/vectorize-io/hindsight |
+| O12 | Aleph OS name-collision note | Closed 2026-10-06. The page opened is a community listing, not a broker and not Aleph Alpha. | https://agentcommunity.org/m/aleph-os |
 | O13 | Brancher eval | Try brancher install on box OR write why not (EULA/OS); agent-DB branch pattern. | https://www.baseshift.com/blog/database-branching-without-branching-databases |
 | O14 | Polymarket V2 watch | If house touches prediction markets: read V2 migration; else archive. | https://poly.market/v2-migration |
 | O15 | Gemma tuner note | Apple Silicon multimodal LoRA path for local experiments. | https://github.com/mattmireles/gemma-tuner-multimodal |
@@ -144,13 +183,13 @@ The README and the server register the same four tools. The server constructor i
 | O18 | muse-house health | Closed 2026-10-06. Live /health is 200, tools 11. Cite that URL only. | https://mymuse.house/health |
 | O19 | Account toggle enforcement | Eng bots: Dist=@0xRayAI; eng likes=Blaze0x1; sidebar check — already packeted. | https://x.com/Blaze0x1 |
 | O20 | Noise filter library | Codify spit patterns (farm/politics/dunk/hype) into nibbler ROLE-CARD. | file:///workspace/nibbler-suit/ops/handoffs/2026-10-05-nibbler-chomp-44-log.md |
-| O21 | Graphiti cite | Keep Graphiti as temporal-KG contrast under MEMOIR — no Dist lead. | https://github.com/getzep/graphiti |
-| O22 | Mem0 cite | Keep Mem0 as vector-extract baseline under MEMOIR. | https://github.com/mem0ai/mem0 |
-| O23 | Letta cite | Keep Letta as agent-managed memory contrast (weak MEMOIR). | https://www.letta.com |
+| O21 | Graphiti cite | Closed 2026-10-06. Temporal graph contrast. Not the organ. | https://github.com/getzep/graphiti |
+| O22 | Mem0 cite | Closed 2026-10-06. Extract-and-embed contrast. Not the organ. | https://github.com/mem0ai/mem0 |
+| O23 | Letta cite | Closed 2026-10-06. Agent-managed memory contrast. Not the organ. | https://www.letta.com |
 | O24 | Allora recipe archive | Archive Forge triple-barrier guide if ML ops asked later. | https://www.allora.network/blog/build-and-deploy-a-triple-barrier-worker-for-gold-silver-and-oil-on-allora-forge |
 | O25 | Ollama Beam tag watch | When Ollama tags Beam, Dist distribution chapter unlocks. | https://x.com/ollama/status/2107193986482126883 |
-| O26 | Ethos name collision | Never confuse ask.ethos.network with AskEthos.com (a16z expert net). | https://ask.ethos.network |
-| O27 | JEV vs TypeSafe disclaimer | Any Dist: AutoTrust ≠ TypeSafe; cite HF affiliation blurb. | https://huggingface.co/autotrust/JEV-9B |
+| O26 | Ethos name collision | Closed 2026-10-06. ask.ethos.network is the score. AskEthos.com is a different site. | https://ask.ethos.network |
+| O27 | JEV vs TypeSafe disclaimer | Closed 2026-10-06. The model card says AutoTrust is not TypeSafe. | https://huggingface.co/autotrust/JEV-9B |
 | O28 | No invent endpoints | muse-house only advertise GET /health + POST /mcp until README grows. | https://github.com/0xRayAI/muse-house |
 | O29 | Private repo hygiene | Never Dist-post private moltbook/skills as OSS. | https://github.com/0xRayAI/0xray-moltbook |
 | O30 | Credit budget | Nibbler X pulls: prefer bookmark+follow links; space chomps — feed stale ~30/39 repeats. | n/a |
@@ -215,6 +254,6 @@ Blaze HARD: chase 44 source-backed gud. Timeline mostly spam; **26 hard gud** ve
 
 **Dist lead today:** Alien Agent ID (human-backed) vs Ethos (stake) — cite product/whitepaper. Memory = Cognition Dreaming/AMR + house Repertoire rhyme. Beam weights soon (TC+Reflection); Kolibri already HF. Decision lane = JEV-9B open vs Liquid d1 hosted.
 
-**Eng start:** O01, O03, O05, O16, O17, and O18 are closed in the Arch1 receipts (2026-10-06). The other rows stay a source list. Bots stay dark until Sunday 2026-10-11. No Dist posts from this pull request. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
+**Eng start:** Research rows O02, O04, O08–O12, O21–O23, O26, and O27 are closed in the Nibbler research section (2026-10-06), with O01, O03, O05, and O16–O18. GPU pulls, Brancher, and the unverified MCP count stay open. Bots stay dark until Sunday 2026-10-11. No Dist posts from this pull request. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
 
 **Do not:** invent endpoints; Dist private repos; claim Beam weights live; confuse AskEthos.com with Ethos.
