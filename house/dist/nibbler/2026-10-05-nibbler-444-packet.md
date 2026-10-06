@@ -38,7 +38,7 @@ The chomp log has **26** hard rows: G01–G25 and G28. G26 and G27 are provision
 
 **Identity. Not behind.** [Alien Agent ID](https://docs.alien.org/agent-id-guide/introduction) is a real product: an Ed25519 key for the agent, an optional human binding through Alien SSO, signed git commits, and a credential vault. [Ethos](https://whitepaper.ethos.network/ethos-mechanisms/credibility-score) is a different thing: a 0–2800 stake-and-review score for crypto accounts, with [ask.ethos.network](https://ask.ethos.network) answering trust questions. 0xRay already names each seat by its GitHub App. That is the identity this house needed. It does not prove a biometric human to someone who does not trust GitHub. Alien is a watch, not a build, unless that outside proof is asked for. Ethos is a citation, not a badge on the suit.
 
-**Memory. Ahead on laws. Missing a cleaner.** Cognition shipped [Agent Memory Repo](https://cognition.com/agent-memory-repo) today: a git repo, a short `MEMORY.md` loaded at session start, notes the agent writes while it works, and a separate dreaming pass that adds patterns and drops stale notes. That is the industry arriving at "memory is files in git, not a vector dump." Repertoire 0.2.9 is already that shape for **laws**: named invariants, loaded with the suit, not a vector store. [MEMOIR](https://www.olira.ai/blog/the-wrong-shape-of-memory) says a materialized record beats extract-and-embed for a trajectory. That agrees with repertoire. It is not a reason to adopt Mem0. The gap is smaller: 0xRay has no dreaming pass that turns a day's sessions into short notes and deletes the stale ones. The organ keeps laws. It does not yet keep a cleaned session index beside those laws.
+**Memory. The one real gap.** Cognition shipped [Agent Memory Repo](https://cognition.com/agent-memory-repo) today: a git repo, a short `MEMORY.md` loaded at session start, notes the agent writes while it works, and a separate dreaming pass that adds patterns and drops stale notes. That is the industry arriving at "memory is files in git, not a vector dump." Repertoire 0.2.9 is already that shape for **laws**: named invariants, loaded with the suit, not a vector store. [MEMOIR](https://www.olira.ai/blog/the-wrong-shape-of-memory) says a materialized record beats extract-and-embed for a trajectory. That agrees with repertoire. It is not a reason to adopt Mem0. The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store.
 
 **Weights. Not this race.** [Beam](https://reflection.ai/blog/introducing-beam) was announced today: 501B total, 23B active, claims unverified, weights **not released**. Reflection says Apache 2.0 weights later this month, after a waitlist. An Ollama post is not a tag you can pull. [Kolibri-1](https://huggingface.co/Aleph-Alpha/Kolibri-1) is different: the weights are on Hugging Face now, Apache 2.0, 78B total, about 3.46B active, English and German. 0xRay does not ship weights. The host is the model the seat is already wearing. Do not say Beam is downloadable.
 
@@ -46,9 +46,9 @@ The chomp log has **26** hard rows: G01–G25 and G28. G26 and G27 are provision
 
 ### What 0xRay needs
 
-1. Seats keep writing as their GitHub App. That is the live identity gap. Alien and Ethos do not close it.
+1. Seats keep writing as their GitHub App. Alien stays a watch. Ethos stays a citation.
 2. Do not adopt Beam, Kolibri, JEV, d1, Mem0, or an Ethos badge this week.
-3. The one product gap next to today's memory post is a short session-note index with a cleaner, beside repertoire's laws. Not a vector store. Not a new tool name. The map is in the receipts below. The cleaner is not a build.
+3. The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store.
 4. Dist install lines use the two commands above and the versions in the table. Nothing newer.
 5. The 44 rows below stay a source list. They are not a build order while the fleet is dark.
 
@@ -74,9 +74,9 @@ Repertoire **0.2.9** is the law store, read from the worn package. A signal has 
 | one note file | one signal: `name` + `definition` |
 | `[source:]` on the line | `first_seen`, `evaluation_criteria`, `observation_stats` |
 | the agent writes a preference during the session | `ingest_feedback` records a routing outcome. It does not store a chat preference |
-| dreaming pass cleans notes | no cleaner |
+| dreaming pass drops stale notes | no session-note index, no cleanup pass |
 
-Do not add a tool to imitate `MEMORY.md`. The missing piece is a cleaner for session notes beside the laws. It is not this pull request.
+The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store.
 
 ### O05 — Beam watch. Closed for today. Still blocked.
 
@@ -107,7 +107,7 @@ Read the sources. No model download. No API key. No Dist post. The score numbers
 
 Graphiti, Mem0, and Letta stay contrasts. Graphiti is a temporal graph. Mem0 extracts and embeds facts. Letta lets the agent decide what to keep. None of them is the repertoire organ.
 
-What 0xRay needs from this lane: nothing installed. Repertoire 0.2.9 already keeps named laws. The gap is still a cleaner for session notes. It is not Mem0, Hindsight, or a vector store.
+What 0xRay needs from this lane: nothing installed. Repertoire 0.2.9 already keeps named laws. The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store.
 
 ### Decision lane. Not behind. Do not add a second judge.
 
@@ -125,7 +125,7 @@ Beam weights are still not released. Kolibri-1 weights are on Hugging Face, Apac
 
 ### The rest of the feed. Not a suit hole.
 
-Hermes [user stories](https://hermes-agent.nousresearch.com/docs/user-stories) are a gallery. One of them is a person's 3am cron that rereads the day's chats. That is their timer. 0xRay's cadence stays event beats. Do not copy the cron. The idea of a cleaner is already in the memory map.
+Hermes [user stories](https://hermes-agent.nousresearch.com/docs/user-stories) are a gallery. One of them is a person's 3am cron that rereads the day's chats. That is their timer. 0xRay's cadence stays event beats. Do not copy the cron. The index and the cleanup pass are the memory gap above.
 
 The Aleph OS page I opened, [agentcommunity.org/m/aleph-os](https://agentcommunity.org/m/aleph-os), is a community listing. It does not describe a context broker. It is not Aleph Alpha. Hold the broker claim until a product README is opened.
 
@@ -165,7 +165,7 @@ The "280 official MCP servers" line is still a tweet. I did not open a vendor li
 |----|------|--------|-----------|
 | O01 | Identity spike | Closed 2026-10-06. Do not wire AgentHook or an Ethos badge. Receipt above. | https://docs.alien.org/agent-id-guide/introduction |
 | O02 | Ethos contrast note | Closed 2026-10-06. Alien is a human key. Ethos is a 0–2800 review score. Not a badge. | https://whitepaper.ethos.network/ethos-mechanisms/credibility-score |
-| O03 | AMR ↔ Repertoire ADR | Closed 2026-10-06. Map is in the receipts. No new tool. | https://cognition.com/agent-memory-repo |
+| O03 | AMR ↔ Repertoire ADR | Closed 2026-10-06. Map is in the receipts. The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store. | https://cognition.com/agent-memory-repo |
 | O04 | Dreaming cron rhyme | Closed 2026-10-06. Their 3am cron stays theirs. Our cadence stays event beats. | https://hermes-agent.nousresearch.com/docs/user-stories |
 | O05 | Beam watch card | Closed for 2026-10-06. Weights still unreleased. Dist stays blocked. | https://reflection.ai/blog/introducing-beam |
 | O06 | Kolibri smoke | Optional: pull Kolibri-1 card + aleph-alpha-inference serve notes into ops/scratch. | https://huggingface.co/Aleph-Alpha/Kolibri-1 |
@@ -254,6 +254,6 @@ Blaze HARD: chase 44 source-backed gud. Timeline mostly spam; **26 hard gud** ve
 
 **Dist lead today:** Alien Agent ID (human-backed) vs Ethos (stake) — cite product/whitepaper. Memory = Cognition Dreaming/AMR + house Repertoire rhyme. Beam weights soon (TC+Reflection); Kolibri already HF. Decision lane = JEV-9B open vs Liquid d1 hosted.
 
-**Eng start:** Research rows O02, O04, O08–O12, O21–O23, O26, and O27 are closed in the Nibbler research section (2026-10-06), with O01, O03, O05, and O16–O18. GPU pulls, Brancher, and the unverified MCP count stay open. Bots stay dark until Sunday 2026-10-11. No Dist posts from this pull request. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
+**Eng start:** Research rows O02, O04, O08–O12, O21–O23, O26, and O27 are closed in the Nibbler research section (2026-10-06), with O01, O03, O05, and O16–O18. The one real gap is memory. We need a short index of session notes plus a cleanup pass that drops stale ones, sitting next to repertoire's laws. That's not a vector store. GPU pulls, Brancher, and the unverified MCP count stay open. Bots stay dark until Sunday 2026-10-11. No Dist posts from this pull request. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
 
 **Do not:** invent endpoints; Dist private repos; claim Beam weights live; confuse AskEthos.com with Ethos.
