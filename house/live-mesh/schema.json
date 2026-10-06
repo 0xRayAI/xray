@@ -33,6 +33,7 @@
         "review", "comment", "merged", "pr_close", "issue_open", "issue_close",
         "deploy", "deploy_fail", "health_ok", "health_fail",
         "x_in_mention", "x_in_reply", "x_out_reply", "x_out_root", "x_like",
+        "push", "feed_push",
         "fix", "probe", "x_root", "x_reply"
       ]
     },

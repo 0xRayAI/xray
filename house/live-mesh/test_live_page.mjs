@@ -327,3 +327,14 @@ test('nibbler seat: on the mesh and strip, wired to X and blinky, its events lan
   assert.equal(L.SEAT_NAMES.length, 7);
   assert.equal(L.fleetLine({ nibbler: 1 }), 'Fleet: 1 live / 6 idle');
 });
+
+test('push and feed_push ride from the seat to GitHub with their own words', () => {
+  assert.deepEqual([...L.resolveNodes({ kind: 'push', from: 'mill', to: 'GitHub' })], ['mill', 'GitHub']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'feed_push', from: 'mill', to: 'GitHub' })], ['mill', 'GitHub']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'push', from: 'someone', to: 'GitHub' })], ['GitHub', 'forge'], 'unknown pusher falls back to the GitHub rail');
+  assert.equal(L.KIND_WORD.push, 'push');
+  assert.equal(L.KIND_WORD.feed_push, 'live-wire push');
+  assert.deepEqual([...L.eventColor({ kind: 'push', from: 'forge' })], [...L.COLOR.forge]);
+  assert.deepEqual([...L.eventColor({ kind: 'feed_push', from: 'mill' })], [88, 210, 180]);
+  assert.equal(L.headline({ repo: '0xRayAI/xray', kind: 'feed_push' }), 'xray \u00b7 live-wire push');
+});

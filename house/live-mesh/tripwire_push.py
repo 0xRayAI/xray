@@ -9,6 +9,11 @@ cut from origin/main and pushes that branch so Deploy Docs rebuilds GitHub Pages
 The JSON fingerprint is the events payload. A rewrite that only bumps
 generated_at does not push. The mp4 fingerprint is a byte hash. No Actions cron.
 
+Each real push is itself a packet: the published snapshot carries a feed_push event
+(--seat -> GitHub) and the same event is appended to --ledger, which fetch_feed.py folds
+back into the local feed. feed_push events are left out of the fingerprint, so a
+feed_push-only change never trips another push (no self-loop); it rides the next real one.
+
   python3 tripwire_push.py                 # loop every 5 min
   python3 tripwire_push.py --once          # one check, then exit
   python3 tripwire_push.py --dry-run --once
@@ -49,6 +54,13 @@ def scrub(text: str) -> str:
     return TOKEN_RE.sub("https://", text)
 
 
+def _real_events(events):
+    """Events that count toward a push: everything except the tripwire's own feed_push records."""
+    if not isinstance(events, list):
+        return events
+    return [e for e in events if not (isinstance(e, dict) and e.get("kind") == "feed_push")]
+
+
 def fingerprint_bytes(name: str, data: bytes) -> str:
     if name.endswith(".json"):
         try:
@@ -57,7 +69,9 @@ def fingerprint_bytes(name: str, data: bytes) -> str:
             return "raw:" + hashlib.sha256(data).hexdigest()
         if not isinstance(parsed, dict):
             return "raw:" + hashlib.sha256(data).hexdigest()
-        payload = {"event_count": parsed.get("event_count"), "events": parsed.get("events")}
+        events = _real_events(parsed.get("events"))
+        payload = {"event_count": len(events) if isinstance(events, list) else parsed.get("event_count"),
+                   "events": events}
         blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
         return "events:" + hashlib.sha256(blob).hexdigest()
     return "raw:" + hashlib.sha256(data).hexdigest()
@@ -164,7 +178,38 @@ def fetch_refs(repo: Path, branch: str, branch_sha: str | None) -> None:
         )
 
 
-def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: str | None) -> None:
+def push_event(now: datetime, seat: str, branch: str, n_events: int) -> dict:
+    return {"id": f"{branch}:push:{now:%Y%m%dT%H%M%S}", "t_ct": now.isoformat(timespec="seconds"),
+            "from": seat, "to": "GitHub", "kind": "feed_push", "direction": "internal",
+            "label": f"{seat} pushed {branch} · {n_events} events"[:54],
+            "source": f"https://github.com/0xRayAI/xray/commits/{branch}",
+            "src_file": "feed-pushes.jsonl", "repo": "0xRayAI/xray"}
+
+
+def snapshot_bytes(data: bytes, event: dict | None) -> bytes:
+    """The feed as published: local feed plus this push's own feed_push event."""
+    if event is None:
+        return data
+    try:
+        feed = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return data
+    if not isinstance(feed, dict) or not isinstance(feed.get("events"), list):
+        return data
+    feed["events"] = [e for e in feed["events"] if not (isinstance(e, dict) and e.get("id") == event["id"])] + [event]
+    feed["event_count"] = len(feed["events"])
+    return (json.dumps(feed, indent=2, ensure_ascii=False) + "\n").encode()
+
+
+def record_push(ledger: Path, event: dict) -> None:
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    with ledger.open("a") as f:
+        f.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+
+def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: str | None,
+            event: dict | None = None) -> bool:
+    """Returns True when a snapshot commit was pushed (a real push)."""
     work = Path(tempfile.mkdtemp(prefix="xray-live-wire-"))
     added = False
     try:
@@ -176,11 +221,14 @@ def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: s
                 continue
             dest = work / DEST[key]
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dest)
+            if key == "feed":
+                dest.write_bytes(snapshot_bytes(src.read_bytes(), event))
+            else:
+                shutil.copyfile(src, dest)
             rels.append(DEST[key])
         if not rels:
             log("no local artifacts to copy")
-            return
+            return False
         run(["git", "add", "--", *rels], work)
         diff = run(["git", "diff", "--cached", "--quiet"], work, check=False)
         if diff.returncode == 0:
@@ -198,7 +246,7 @@ def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: s
                 )
             else:
                 log("replay bytes already match main; no branch to move")
-            return
+            return False
         if diff.returncode != 1:
             err = scrub(diff.stderr.decode("utf-8", "replace")).strip()
             raise RuntimeError(f"git diff -> {diff.returncode} {err}")
@@ -229,13 +277,15 @@ def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: s
         else:
             run(["git", "push", "origin", f"HEAD:refs/heads/{branch}"], work)
         log(f"pushed {branch}")
+        return True
     finally:
         if added:
             run(["git", "worktree", "remove", "--force", str(work)], repo, check=False)
         shutil.rmtree(work, ignore_errors=True)
 
 
-def tick(repo: Path, branch: str, feed: Path, mesh: Path, *, dry_run: bool) -> None:
+def tick(repo: Path, branch: str, feed: Path, mesh: Path, *, dry_run: bool,
+         seat: str = "mill", ledger: Path | None = None) -> None:
     local_paths = {"feed": feed, "mesh": mesh}
     local = {key: fingerprint_file(path) for key, path in local_paths.items()}
     if not any(fp is not None for fp in local.values()):
@@ -260,7 +310,14 @@ def tick(repo: Path, branch: str, feed: Path, mesh: Path, *, dry_run: bool) -> N
     if dry_run:
         log(f"dry-run; would push {branch}")
         return
-    publish(repo, branch, local_paths, branch_sha)
+    n = 0
+    try:
+        n = len(_real_events(json.loads(feed.read_text()).get("events")) or [])
+    except (OSError, ValueError, AttributeError):
+        pass
+    event = push_event(datetime.now(CT), seat, branch, n)
+    if publish(repo, branch, local_paths, branch_sha, event) and ledger is not None:
+        record_push(ledger, event)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -272,6 +329,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--interval", type=int, default=300, help="seconds between checks (default 300)")
     parser.add_argument("--once", action="store_true", help="check once and exit")
     parser.add_argument("--dry-run", action="store_true", help="report the decision without pushing")
+    parser.add_argument("--seat", default="mill", help="seat that owns the live-wire watch (packet source)")
+    parser.add_argument("--ledger", type=Path, help="feed_push ledger (default: <feed dir>/feed-pushes.jsonl)")
     return parser.parse_args(argv)
 
 
@@ -287,7 +346,8 @@ def main(argv: list[str] | None = None) -> int:
     log("site lag is about 5 min (this interval plus the Pages build)")
     while True:
         try:
-            tick(repo, branch, feed, mesh, dry_run=args.dry_run)
+            tick(repo, branch, feed, mesh, dry_run=args.dry_run, seat=args.seat,
+                 ledger=args.ledger or feed.parent / "feed-pushes.jsonl")
         except KeyboardInterrupt:
             log("stopped")
             return 0
