@@ -205,3 +205,24 @@ test('quiet edges are still: dots only ride an edge with a ping in flight', () =
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   assert.match(html, /var tr = L\.edgeTraffic\(burst\);\s+if \(!tr\) return;/);
 });
+
+test('seat status follows the dots: LIVE in flight and one window after landing, rewound and now', () => {
+  const ev = L.mergeEvents([], [{ id: 'a', t_ct: '2026-10-06T03:00:00-05:00', kind: 'merged', from: 'forge', to: 'GitHub' }]);
+  const t = ev[0]._t, span = 1100 * 600;
+  const at = (x) => L.activeSeats(L.recentItems(ev, x, 2 * span), x, span, false);
+  // rewound view (feed clock)
+  assert.equal(at(t - 1).forge, undefined, 'not before the event');
+  assert.equal(at(t + span / 2).forge, 1, 'dot in flight');
+  assert.equal(at(t + span * 1.5).forge, 1, 'landed, window not passed');
+  assert.equal(at(t + span * 2).forge, undefined, 'idle after the window');
+  // now (wall clock flashes, staggered)
+  const fl = [{ e: ev[0], start: 10_000 }];
+  assert.equal(L.activeSeats(fl, 9_000, 1600, true).forge, 1, 'queued flash already counts');
+  assert.equal(L.activeSeats(fl, 10_800, 1600, true).forge, 1);
+  assert.equal(L.activeSeats(fl, 12_000, 1600, true).forge, 1, 'landed, window not passed');
+  assert.equal(L.activeSeats(fl, 13_200, 1600, true).forge, undefined);
+  assert.equal(L.activeSeats(fl, 10_800, 1600, true).GitHub, 1, 'both ends of the dot');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /var hot = state\.live \? L\.activeSeats\(flashes/);
+  assert.match(html, /nowWall - f\.start < 2 \* FLASH_MS/);
+});

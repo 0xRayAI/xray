@@ -228,6 +228,27 @@
     return hot;
   }
 
+  /* Seat status from the same events that drive the dots. items: [{ e, start }] (start in the
+     view's clock). A seat is LIVE while a dot is in flight to/from it and for one more flight
+     window after the dot lands; pending (queued live flashes) counts too. Same rule at now and
+     on a rewound view. */
+  function activeSeats(items, nowMs, flightMs, pending) {
+    var hot = {};
+    items.forEach(function (it) {
+      var age = nowMs - it.start;
+      if ((age < 0 && !pending) || age >= 2 * flightMs) return;
+      var n = resolveNodes(it.e);
+      [n[0], n[1], it.e.from, it.e.to].forEach(function (k) { if (own(SATS, k)) hot[k] = 1; });
+    });
+    return hot;
+  }
+  /* Replay items for activeSeats: events in (tMs - backMs, tMs], start = event time. */
+  function recentItems(events, tMs, backMs) {
+    var out = [];
+    for (var i = countUpTo(events, tMs) - 1; i >= 0 && tMs - events[i]._t < backMs; i--) out.push({ e: events[i], start: events[i]._t });
+    return out;
+  }
+
   /* Fold a fetched feed into page state. Live mode follows the newest event; a rewound
      view keeps its time. Returns { state, added } where added lists new event ids. */
   function applyFeed(state, feed, nowMs) {
@@ -313,6 +334,7 @@
     bounds: bounds, fmtCt: fmtCt, ago: ago, feedUrl: feedUrl, fetchFeed: fetchFeed,
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
-    isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep
+    isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
+    activeSeats: activeSeats, recentItems: recentItems
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
