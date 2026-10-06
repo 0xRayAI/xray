@@ -21,36 +21,37 @@
 
   var AGENTS = [
     ['blinky', 'CoS'], ['mill', 'Eng Dev'], ['forge', 'merge'],
-    ['critic', 'gate'], ['herald', 'voice'], ['minime0x', 'muse']
+    ['critic', 'gate'], ['herald', 'voice'], ['minime0x', 'muse'], ['nibbler', 'feed scout']
   ];
   var SEAT_NAMES = AGENTS.map(function (a) { return a[0]; });
   var COLOR = {
     blinky: [88, 210, 180], mill: [120, 220, 140], forge: [110, 170, 255],
-    critic: [255, 150, 90], herald: [200, 140, 255], minime0x: [255, 180, 100],
+    critic: [255, 150, 90], herald: [200, 140, 255], minime0x: [255, 180, 100], nibbler: [240, 120, 190],
     GitHub: [200, 210, 230], X: [140, 180, 255], 'mymuse.house': [255, 200, 90],
     Blaze0x1: [255, 120, 100], grok: [180, 190, 200]
   };
   var LABEL = { blinky: 'blinky', mill: 'mill', forge: 'forge', critic: 'critic', herald: 'herald',
-    minime0x: 'minime0x', GitHub: '', X: '', 'mymuse.house': '' };
+    minime0x: 'minime0x', nibbler: 'nibbler', GitHub: '', X: '', 'mymuse.house': '' };
   /* Nodes drawn as a glyph instead of a box (the glyph is the name, so the label drops it). */
-  var GLYPH = { X: '\uD835\uDD4F', 'mymuse.house': '\uD83C\uDFE0' };
+  var GLYPH = { X: '\uD835\uDD4F', 'mymuse.house': '\uD83C\uDFE0', mill: '\u2699\uFE0F', nibbler: '\uD83E\uDEB1' };
   /* Nodes drawn as a vector mark (viewBox 0 0 16 16): GitHub = Octicons mark-github-16 (primer/octicons). */
   var MARK_PATH = { GitHub: 'M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656' };
   var SUB = { blinky: 'CoS seat', mill: 'Eng Dev', forge: 'continuity', critic: 'gate',
-    herald: 'replies', minime0x: 'muse bot', GitHub: 'PRs', X: '@0xRayAI', 'mymuse.house': 'live site' };
+    herald: 'replies', minime0x: 'muse bot', nibbler: 'feed scout', GitHub: 'PRs', X: '@0xRayAI', 'mymuse.house': 'live site' };
   var SQUARE = { GitHub: 1, X: 1, 'mymuse.house': 1 };
   var WHO_LOG = { 'mymuse.house': 'MYMUSE', Blaze0x1: 'BLAZE', minime0x: 'MINIME', GitHub: 'GITHUB',
-    grok: 'GROK', blinky: 'BLINKY', mill: 'MILL', forge: 'FORGE', critic: 'CRITIC', herald: 'HERALD', X: 'X' };
+    grok: 'GROK', blinky: 'BLINKY', mill: 'MILL', forge: 'FORGE', critic: 'CRITIC', herald: 'HERALD', nibbler: 'NIBBLER', X: 'X' };
   // render_mesh.py SATS, shifted by (-140, -110) to drop the mp4's header rows.
   var HUB = [500, 200];
   var SATS = { blinky: [80, 90], mill: [220, 50], forge: [380, 50], critic: [540, 50],
-    herald: [80, 270], minime0x: [220, 330], GitHub: [840, 90], X: [840, 210], 'mymuse.house': [840, 330] };
+    herald: [80, 270], minime0x: [220, 330], nibbler: [540, 330], GitHub: [840, 90], X: [840, 210], 'mymuse.house': [840, 330] };
   var EDGES = [
     ['blinky', 'forge'], ['blinky', 'critic'], ['blinky', 'herald'], ['blinky', 'mill'],
     ['mill', 'forge'], ['forge', 'critic'], ['minime0x', 'GitHub'], ['forge', 'GitHub'],
     ['mill', 'GitHub'], ['critic', 'GitHub'], ['herald', 'X'], ['blinky', 'X'],
     ['GitHub', 'mymuse.house'], ['mymuse.house', 'blinky'], ['minime0x', 'critic'],
-    ['forge', 'mymuse.house'], ['critic', 'mill'], ['critic', 'forge']
+    ['forge', 'mymuse.house'], ['critic', 'mill'], ['critic', 'forge'],
+    ['nibbler', 'X'], ['blinky', 'nibbler']
   ];
   var ALIAS = { Blaze0x1: 'X', grok: 'X' };
   var GIT_KINDS = toSet(['pr_open', 'pr_update', 'pr_close', 'merged', 'fix', 'supersede', 'review', 'comment',

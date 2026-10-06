@@ -270,16 +270,41 @@ test('glyph nodes: X draws the 𝕏 glyph instead of a box and drops "X" from it
   const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   assert.match(page, /ctx\.fill\(new Path2D\(mark\)\)/);
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
-  assert.match(html, /var glyph = L\.GLYPH\[key\], mark = L\.MARK_PATH\[key\];[\s\S]*?else if \(glyph\) \{/);
+  assert.match(html, /glyph = L\.GLYPH\[key\], mark = L\.MARK_PATH\[key\];[\s\S]*?else if \(glyph\) \{/);
 });
 
 test('image seats draw bare (no ring); only letter seats keep circle + ring; blackout line is amber bold', () => {
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
-  assert.match(html, /bare = !sq && !!\(img && img\.complete && img\.naturalWidth\)/);
+  assert.match(html, /bare = !sq && \(!!glyph \|\| !!\(img && img\.complete && img\.naturalWidth\)\)/);
   assert.match(html, /if \(isHot && !bare\) \{/, 'no concentric rings around image seats');
   const letter = html.slice(html.indexOf('if (bare) {'), html.indexOf('if (!sq) r = 18;'));
   const [imgPart, letterPart] = letter.split('} else {');
   assert.ok(!/\.stroke\(\)/.test(imgPart), 'image branch strokes nothing');
   assert.match(letterPart, /badgeLetter[\s\S]*ctx\.arc\(x, y, r, 0, 7\); ctx\.stroke\(\)/, 'letter seat keeps its ring');
   assert.match(html, /#blackout \{ color: #ffb347; font-weight: 700;/);
+});
+
+test('glyph seats: mill is the gear, nibbler the earthworm; no letter seats left but the fallback stays', () => {
+  assert.equal(L.GLYPH.mill, '\u2699\uFE0F');
+  assert.equal(L.GLYPH.nibbler, '\u{1FAB1}');
+  const lettered = [...L.SEAT_NAMES].filter((k) => !L.GLYPH[k] && !L.BOT_IMAGES.includes(k));
+  assert.deepEqual(lettered, [], 'every seat has an image or a glyph');
+  assert.equal(L.badgeLetter('newseat'), 'N', 'letter fallback kept for future seats');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /if \(!sq && isHot\) \{ ctx\.fillStyle = rgb\(c, 0\.22\)/, 'glyph seats keep the LIVE glow');
+});
+
+test('nibbler seat: on the mesh and strip, wired to X and blinky, its events land on it, fleet counts it', () => {
+  assert.ok(L.SEAT_NAMES.includes('nibbler'));
+  assert.deepEqual([...L.AGENTS.find((a) => a[0] === 'nibbler')], ['nibbler', 'feed scout']);
+  assert.ok(L.SATS.nibbler && L.COLOR.nibbler);
+  const taken = Object.entries(L.SATS).filter(([k]) => k !== 'nibbler').map(([, v]) => v.join());
+  assert.ok(!taken.includes(L.SATS.nibbler.join()), 'free spot');
+  assert.ok(!Object.entries(L.COLOR).some(([k, v]) => k !== 'nibbler' && v.join() === L.COLOR.nibbler.join()), 'distinct colour');
+  const edges = [...L.EDGES].filter((e) => e.includes('nibbler')).map((e) => e.join('-'));
+  assert.deepEqual(edges, ['nibbler-X', 'blinky-nibbler']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'comment', from: 'nibbler', to: 'GitHub' })], ['nibbler', 'GitHub']);
+  assert.equal(L.whoTag({ kind: 'comment', from: 'nibbler' }), 'NIBBLER');
+  assert.equal(L.SEAT_NAMES.length, 7);
+  assert.equal(L.fleetLine({ nibbler: 1 }), 'Fleet: 1 live / 6 idle');
 });

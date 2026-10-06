@@ -33,7 +33,7 @@
     .status b { color: var(--text); font-weight: 600; }
     .note { color: var(--dim); font-size: 12px; margin: 2px 0 10px; }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
-    .seats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+    .seats { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
     .seat { display: flex; gap: 8px; align-items: center; min-width: 0; }
     .dot { width: 14px; height: 14px; border-radius: 50%; background: #283246; flex: none; }
     .seat .nm { font-weight: 700; font-size: 13px; }
@@ -62,7 +62,7 @@
     footer { color: var(--dim); font-size: 12px; }
     footer a { color: #3de0e8; }
     @media (max-width: 720px) {
-      .seats { grid-template-columns: repeat(3, 1fr); }
+      .seats { grid-template-columns: repeat(4, 1fr); }
       #log li { grid-template-columns: 9ch 1fr; }
       #log .who { display: none; }
     }
@@ -273,7 +273,8 @@
 
   function drawNode(key, isHot, fs, pul) {
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
-    var img = imgs[key], bare = !sq && !!(img && img.complete && img.naturalWidth);   // image seats: no ring
+    var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
+    var bare = !sq && (!!glyph || !!(img && img.complete && img.naturalWidth));   // image / glyph seats: no ring
     if (isHot && !bare) {
       for (var k = 3; k >= 1; k--) {
         var rr = r + k * 5; ctx.strokeStyle = rgb(c, 1 / (k + 1)); ctx.lineWidth = 2;
@@ -282,12 +283,12 @@
       }
     }
     ctx.fillStyle = '#0c101c'; ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
-    var glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     if (mark && typeof Path2D !== 'undefined') {   // vector mark, light fill (no font, no fetch)
       ctx.save(); ctx.translate(x - 15, y - 15); ctx.scale(30 / 16, 30 / 16);
       ctx.fillStyle = '#f0f5ff'; ctx.fill(new Path2D(mark)); ctx.restore();
     }
     else if (glyph) {
+      if (!sq && isHot) { ctx.fillStyle = rgb(c, 0.22); ctx.beginPath(); ctx.arc(x, y, r + 6, 0, 7); ctx.fill(); }   // seat glow, no circle
       ctx.fillStyle = '#f0f5ff'; ctx.font = 'bold 30px system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Math", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyph, x, y + 1);
     }
