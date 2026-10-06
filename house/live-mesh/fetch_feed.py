@@ -11,7 +11,11 @@ Output keeps the capture shape the mesh renderer already reads:
    events: [{id, t_ct, from, to, kind, direction, label, source, src_file,
              repo?, number?, post_id?, handle?, in_reply_to?, note?, reported_by?}]}
 
-Stdlib only (urllib). Auth: GITHUB_TOKEN or GH_TOKEN (any token that can read the repos).
+Stdlib only (urllib; openssl CLI signs the App JWT). Auth, one of:
+  - GitHub App (preferred for --watch): GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID and
+    GITHUB_APP_PRIVATE_KEY_PATH. The poller mints its own installation token, re-mints before
+    it is 55 min old and on a 401, and ignores GITHUB_TOKEN/GH_TOKEN. No other fallback.
+  - GITHUB_TOKEN or GH_TOKEN (any token that can read the repos; not refreshed).
 
   python3 fetch_feed.py --out feed/live-events.json              # one pass
   python3 fetch_feed.py --out feed/live-events.json --watch 120  # poll every 120s
@@ -23,9 +27,12 @@ watcher can either re-read the JSON or `tail -f` the JSONL stream.
 from __future__ import annotations
 
 import argparse
+import base64
+import http.client
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -69,9 +76,80 @@ def log(msg: str) -> None:
     print(f"[live-mesh {datetime.now(CT):%H:%M:%S} CT] {msg}", file=sys.stderr, flush=True)
 
 
+def b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+class MintError(RuntimeError):
+    pass
+
+
+class AppToken:
+    """GitHub App installation token: App JWT (RS256, signed by the openssl CLI) ->
+    POST /app/installations/{id}/access_tokens. Installation tokens live 1h; re-mint at 55 min,
+    or 5 min before expires_at if sooner. The token is never logged."""
+    REMINT_AFTER = 55 * 60
+    ENV = ("GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY_PATH")
+
+    def __init__(self, app_id: str, installation_id: str, key_path: str):
+        self.app_id, self.installation_id, self.key_path = app_id, installation_id, key_path
+        self.token: str | None = None
+        self.minted_at = 0.0
+        self.expires_at = 0.0
+
+    @classmethod
+    def from_env(cls) -> "AppToken | None":
+        vals = [os.environ.get(k, "").strip() for k in cls.ENV]
+        if not any(vals):
+            return None
+        if not all(vals):
+            missing = [k for k, v in zip(cls.ENV, vals) if not v]
+            raise SystemExit(f"App auth needs {', '.join(cls.ENV)}; missing {', '.join(missing)}")
+        return cls(*vals)
+
+    def stale(self, now: float | None = None) -> bool:
+        now = time.time() if now is None else now
+        return (not self.token or now - self.minted_at >= self.REMINT_AFTER
+                or bool(self.expires_at and self.expires_at - now < 300))
+
+    def jwt(self) -> str:
+        now = int(time.time())
+        head = b64url(json.dumps({"alg": "RS256", "typ": "JWT"}).encode())
+        body = b64url(json.dumps({"iat": now - 60, "exp": now + 540, "iss": self.app_id}).encode())
+        signing = f"{head}.{body}".encode()
+        try:
+            sig = subprocess.run(["openssl", "dgst", "-sha256", "-sign", self.key_path], input=signing,
+                                 capture_output=True, check=True, timeout=30).stdout
+        except (OSError, subprocess.SubprocessError) as e:
+            raise MintError(f"JWT sign failed ({type(e).__name__})") from None
+        return f"{head}.{body}.{b64url(sig)}"
+
+    def mint(self) -> str:
+        req = urllib.request.Request(
+            f"{API}/app/installations/{self.installation_id}/access_tokens", data=b"", method="POST",
+            headers={"Authorization": f"Bearer {self.jwt()}", "Accept": "application/vnd.github+json",
+                     "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "xray-live-mesh-feed"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                resp = json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            raise MintError(f"access_tokens HTTP {e.code}") from None
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError) as e:
+            raise MintError(f"access_tokens {type(e).__name__}") from None
+        if not resp.get("token"):
+            raise MintError("access_tokens response had no token")
+        self.token, self.minted_at = resp["token"], time.time()
+        exp = resp.get("expires_at")
+        self.expires_at = datetime.fromisoformat(exp.replace("Z", "+00:00")).timestamp() if exp else 0.0
+        log(f"minted App installation token (expires {datetime.fromtimestamp(self.expires_at, CT):%H:%M} CT)"
+            if exp else "minted App installation token")
+        return self.token
+
+
 class GitHub:
-    def __init__(self, token: str | None):
+    def __init__(self, token: str | None, app: AppToken | None = None):
         self.token = token
+        self.app = app
         self.calls = 0
 
     def get(self, path: str, params: dict | None = None):
@@ -79,6 +157,19 @@ class GitHub:
         if params:
             # urlencode so "+00:00" in since= becomes %2B00:00 (a raw "+" decodes to a space).
             url += ("&" if "?" in url else "?") + urllib.parse.urlencode(params)
+        if self.app and self.app.stale():
+            self.token = self.app.mint()
+        try:
+            return self._get(url)
+        except urllib.error.HTTPError as e:
+            # A 401 on a token older than a minute: re-mint once and retry this request.
+            if e.code != 401 or not self.app or time.time() - self.app.minted_at < 60:
+                raise
+            log("GitHub HTTP 401; re-minting App token")
+            self.token = self.app.mint()
+            return self._get(url)
+
+    def _get(self, url: str):
         req = urllib.request.Request(url, headers={
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
@@ -371,7 +462,7 @@ def probe(url: str) -> tuple[bool, str]:
             return (status == "ok", "200" if status == "ok" else f"status {status}"[:20])
     except urllib.error.HTTPError as e:
         return False, str(e.code)
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
         return False, "unreachable"
 
 
@@ -638,10 +729,15 @@ def main() -> int:
     args.health = args.health or None
     if os.environ.get("X_BEARER_TOKEN"):
         log("X_BEARER_TOKEN is set but the X API adapter is not built; X still comes from the ledger / --merge-x")
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if not token:
+    app = AppToken.from_env()
+    token = None if app else (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
+    if app:
+        log(f"App auth (installation {app.installation_id}): self-minting tokens; GITHUB_TOKEN/GH_TOKEN ignored")
+    elif not token:
         log("no GITHUB_TOKEN/GH_TOKEN: private repos will 404 and the rate limit is 60/h")
-    gh = GitHub(token)
+    elif args.watch:
+        log("static GITHUB_TOKEN/GH_TOKEN: not refreshed; set GITHUB_APP_* to self-mint")
+    gh = GitHub(token, app)
     out = Path(args.out)
     while True:
         try:
@@ -651,6 +747,15 @@ def main() -> int:
             log(f"{feed['event_count']} events ({n_new} new) -> {out} [{gh.calls} API calls]")
         except urllib.error.HTTPError as e:
             log(f"GitHub HTTP {e.code} on {e.url}; keeping last feed")
+            if not args.watch:
+                return 1
+        except MintError as e:
+            log(f"App token mint failed: {e}; no fallback token, keeping last feed, retry next poll")
+            if not args.watch:
+                return 1
+        except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError) as e:
+            # OSError covers ConnectionError/RemoteDisconnected; HTTPException covers IncompleteRead etc.
+            log(f"network error ({type(e).__name__}); keeping last feed")
             if not args.watch:
                 return 1
         if not args.watch:
