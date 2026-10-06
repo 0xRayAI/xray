@@ -9,6 +9,7 @@ import {
   clearPendingDelegationsForSessionChange,
   ensureSessionBoot,
   readStdinJson,
+  resolveGrokHookEvent,
   resolveSessionId,
   normalizeWorkspaceRoot,
   workspaceRoot,
@@ -24,25 +25,6 @@ import {
 } from '../../hooks/pipeline-hook-runtime.mjs';
 import { maintainLens } from '../../hooks/goggles-pipeline.mjs';
 import { readSavedFreshness, refreshFreshness } from '../../../nucleus/work-freshness.mjs';
-
-function resolveHookEvent(event) {
-  if (process.env.GROK_HOOK_EVENT) return process.env.GROK_HOOK_EVENT;
-  const flag = process.argv.find((a) => a.startsWith('--hook-event='));
-  if (flag) return flag.slice('--hook-event='.length);
-  const named = event.hookEventName || event.hook;
-  if (named === 'PreCompact' || named === 'pre_compact') return 'pre_compact';
-  if (named === 'PostCompact' || named === 'post_compact') return 'post_compact';
-  if (
-    event.prompt != null ||
-    event.userMessage != null ||
-    event.user_prompt != null ||
-    named === 'UserPromptSubmit' ||
-    named === 'user_prompt_submit'
-  ) {
-    return 'user_prompt_submit';
-  }
-  return 'session_start';
-}
 
 function extractIntent(event) {
   return event.prompt || event.userMessage || event.user_prompt || event.compactContext || null;
@@ -117,7 +99,7 @@ async function main() {
   let HOOK_EVENT = 'session_start';
   try {
     const event = await readStdinJson();
-    HOOK_EVENT = resolveHookEvent(event);
+    HOOK_EVENT = resolveGrokHookEvent(event);
     const eventRoot = normalizeWorkspaceRoot(event.workspaceRoot || event.cwd || root);
     const sessionId = resolveSessionId(event);
     if (HOOK_EVENT === 'user_prompt_submit' && sessionId) {

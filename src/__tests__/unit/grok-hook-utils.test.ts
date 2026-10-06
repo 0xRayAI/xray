@@ -2,11 +2,13 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import {
   buildRepertoireResume,
   buildSessionBootPayload,
   ensureSessionBoot,
   loadFeatures,
+  resolveGrokHookEvent,
   resolveSiblingWorkspaceRoots,
   sessionBootNeedsRefresh,
 } from '../../integrations/grok/hooks/grok-hook-utils.js';
@@ -228,6 +230,64 @@ describe('grok-hook-utils', () => {
       expect(buildRepertoireResume(consumer)).toBe('Repertoire: on — 2 signals');
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps SessionStart a session start when the opening prompt is present', () => {
+    const argv = ['node', 'session-start.js'];
+    const env = {};
+    expect(resolveGrokHookEvent({ hookEventName: 'SessionStart', prompt: 'goggles' }, argv, env)).toBe(
+      'session_start',
+    );
+    expect(resolveGrokHookEvent({ hookEventName: 'session-start', prompt: 'goggles' }, argv, env)).toBe(
+      'session_start',
+    );
+    expect(resolveGrokHookEvent({ hook: 'PreCompact', prompt: 'goggles' }, argv, env)).toBe('pre_compact');
+    expect(resolveGrokHookEvent({ hookEventName: 'UserPromptSubmit', prompt: 'goggles' }, argv, env)).toBe(
+      'user_prompt_submit',
+    );
+    expect(resolveGrokHookEvent({ prompt: 'goggles' }, argv, env)).toBe('user_prompt_submit');
+    expect(
+      resolveGrokHookEvent({ hookEventName: 'SessionStart', prompt: 'goggles' }, ['node', 'session-start.js', '--hook-event=user_prompt_submit'], env),
+    ).toBe('user_prompt_submit');
+  });
+
+  it('runs the mill on SessionStart before the card when the opening prompt is present', () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-session-start-'));
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-session-home-'));
+    const machine = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-session-machine-'));
+    try {
+      fs.writeFileSync(path.join(project, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+      const hook = path.join(path.dirname(new URL(import.meta.url).pathname), '../../integrations/grok/hooks/session-start.js');
+      const ran = spawnSync(process.execPath, [hook], {
+        cwd: project,
+        input: JSON.stringify({
+          workspaceRoot: project,
+          cwd: project,
+          hookEventName: 'SessionStart',
+          prompt: 'goggles',
+        }),
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          HOME: home,
+          USERPROFILE: home,
+          FOUNDRY_MACHINE_HOME: machine,
+        },
+      });
+      expect(ran.status).toBe(0);
+      const boot = JSON.parse(fs.readFileSync(path.join(project, '.xray/state/session-boot.json'), 'utf8')) as {
+        hookEvent?: string;
+      };
+      expect(boot.hookEvent).toBe('session_start');
+      expect(fs.existsSync(path.join(project, '.xray/state/sleeve-mill.json'))).toBe(true);
+      const card = fs.readFileSync(path.join(project, '.xray/state/STATION.md'), 'utf8');
+      expect(card).toContain('Working: last session_start');
+      expect(card).toContain('Intent: goggles');
+    } finally {
+      fs.rmSync(project, { recursive: true, force: true });
+      fs.rmSync(home, { recursive: true, force: true });
+      fs.rmSync(machine, { recursive: true, force: true });
     }
   });
 });

@@ -282,6 +282,25 @@ export function loadConferPending(root = workspaceRoot(), sessionId = null) {
   }
 }
 
+export function resolveGrokHookEvent(event = {}, argv = process.argv, env = process.env) {
+  if (env && env.GROK_HOOK_EVENT) return env.GROK_HOOK_EVENT;
+  const flag = (argv || []).find((arg) => String(arg).startsWith('--hook-event='));
+  if (flag) return String(flag).slice('--hook-event='.length);
+  const named = String((event && (event.hookEventName || event.hook)) || '')
+    .toLowerCase()
+    .replace(/[-_\s]/g, '');
+  if (named === 'precompact') return 'pre_compact';
+  if (named === 'postcompact') return 'post_compact';
+  if (named === 'sessionstart') return 'session_start';
+  if (
+    (event && (event.prompt != null || event.userMessage != null || event.user_prompt != null)) ||
+    named === 'userpromptsubmit'
+  ) {
+    return 'user_prompt_submit';
+  }
+  return 'session_start';
+}
+
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
   const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
