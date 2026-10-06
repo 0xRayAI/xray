@@ -111,6 +111,39 @@ Order: `(UTC instant of t_ct, kind_rank, id)`. Same id from two sources: API / d
 - **`--merge-x`:** interim hand log of herald v2 kinds; labeled as such in `notes`.
 - **light-notes:** in-room Lights.
 
+## Pages replay (tripwire)
+
+GitHub Pages serves one snapshot, not a socket. The public page lags the box by about **5 minutes** (this interval plus the Pages build).
+
+| | |
+|---|---|
+| Page | https://0xrayai.github.io/xray/live/ |
+| Feed | https://0xrayai.github.io/xray/live/live-events.json |
+| Clip | https://0xrayai.github.io/xray/live/mesh-live.mp4 |
+
+`tripwire_push.py` checks every **5 minutes**. It hashes the local feed and pushes only when that hash changes. The JSON hash is the events payload, so a `generated_at` rewrite does not push. The mp4 hash is the file bytes. Actions runs only after that push. Unchanged ticks stay on the box.
+
+Watchers stay in their own processes. Point the renderer at `feed/mesh-live.mp4`:
+
+```bash
+cd house/live-mesh
+python3 fetch_feed.py --out feed/live-events.json --watch 120
+python3 render_mesh.py --feed feed/live-events.json --out feed/mesh-live.mp4 --follow 30
+
+# start the tripwire (uses gh / git credentials already on the box)
+python3 tripwire_push.py
+
+# one check, no loop
+python3 tripwire_push.py --once
+
+# report only
+python3 tripwire_push.py --dry-run --once
+```
+
+Stop the tripwire with Ctrl-C or by killing that process. `fetch_feed.py` and `render_mesh.py` keep running.
+
+The push target is the `live-wire` branch, cut from `origin/main` plus `docs-site/static/live/live-events.json` and `mesh-live.mp4`. Deploy Docs builds `main` and `live-wire`. The script pushes `live-wire` only. The `github-pages` environment must allow `live-wire`.
+
 ## Honesty
 
 - Many critic Lights never reach GitHub; use `light-notes.jsonl` for those.
