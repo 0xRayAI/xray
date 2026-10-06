@@ -14,6 +14,8 @@
     #mark { width: 112px; height: 44px; flex: none; }
     .pill { font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--teal); color: #b8ffe9; background: #12382f; }
     .pill::before { content: "\25CF  "; color: #ff5a4f; animation: blink 1.6s ease-in-out infinite; }
+    .fleet { margin-left: auto; text-align: right; font-size: 11px; line-height: 1.5; color: var(--dim); font-variant-numeric: tabular-nums; }
+    .fleet b { color: var(--text); font-weight: 600; }
     .pill.off { border-color: var(--line); color: var(--dim); background: #10182a; }
     .pill.off::before { color: var(--dim); animation: none; }
     #mesh { opacity: 0; transition: opacity 1.2s ease-out; }
@@ -72,6 +74,7 @@
       <canvas id="mark" width="112" height="44" role="img" aria-label="0xRay"></canvas>
       <h1>BLAZE DESK <span>ping-pong mesh · live feed: PRs + Light + X both ways</span></h1>
       <span class="pill" id="pill">LIVE</span>
+      <div class="fleet" aria-live="off"><b id="fleet">Fleet: …</b><br><span id="blackout"></span></div>
     </div>
     <p class="status" id="status">Loading feed…</p>
     <p class="note">About 1 minute behind the box: the box pushes the feed to GitHub every 60 s and this page reads it from GitHub every 60 s. If GitHub's hourly limit for your network runs out, the page falls back to a cached copy that can be up to about 5 minutes old, and the line above says so.</p>
@@ -130,7 +133,7 @@
 
   // seat images: bots/<seat>.png; a missing file falls back to a lettered badge
   var imgs = {};
-  L.SEAT_NAMES.forEach(function (k) {
+  L.BOT_IMAGES.forEach(function (k) {
     var img = new Image();
     img.onerror = function () { imgs[k] = null; };
     img.src = L.botImage(k);
@@ -212,11 +215,15 @@
       pos[k] = [L.SATS[k][0] + o[0], L.SATS[k][1] + o[1]];
     });
     // edges + ambient traffic
+    var dash = L.wireDash(nowWall, reduced);
     L.EDGES.forEach(function (ed) {
       var a = pos[ed[0]], b = pos[ed[1]], m = edgeMid(a, b);
       var burst = pings.some(function (pk) { return sameEdge(pk, ed[0], ed[1]); });
       ctx.strokeStyle = burst ? '#375a78' : '#162032'; ctx.lineWidth = burst ? 2 : 1;
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(m[0], m[1], b[0], b[1]); ctx.stroke();
+      if (dash != null) {   // idle wire flow (not packets)
+        ctx.save(); ctx.setLineDash([4, 10]); ctx.lineDashOffset = dash; ctx.strokeStyle = 'rgba(120,150,200,0.28)'; ctx.stroke(); ctx.restore();
+      }
       var ca = L.COLOR[ed[0]], cb = L.COLOR[ed[1]];
       var col = [0, 1, 2].map(function (i) { return (ca[i] + cb[i]) >> 1; });
       var tr = L.edgeTraffic(burst);
@@ -273,7 +280,12 @@
       }
     }
     ctx.fillStyle = '#0c101c'; ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
-    if (sq) { roundRect(x - r, y - r, r * 2, r * 2, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = rgb(c); ctx.fillRect(x - 5, y - 5, 10, 10); }
+    var glyph = L.GLYPH[key];
+    if (glyph) {
+      ctx.fillStyle = '#f0f5ff'; ctx.font = 'bold 30px system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Math", sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyph, x, y + 1);
+    }
+    else if (sq) { roundRect(x - r, y - r, r * 2, r * 2, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = rgb(c); ctx.fillRect(x - 5, y - 5, 10, 10); }
     else {
       if (pul > 0) { ctx.fillStyle = rgb(c, 0.25 * pul); ctx.beginPath(); ctx.arc(x, y, r + 8 * pul, 0, 7); ctx.fill(); ctx.fillStyle = '#0c101c'; }
       ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
@@ -292,12 +304,12 @@
     ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif';
     var tw = ctx.measureText(title).width;
     ctx.font = 11 * fs + 'px system-ui, sans-serif';
-    var w = Math.max(tw, ctx.measureText(sub).width) + 16, h = 30 * fs, top = y + r + 4;
+    var w = Math.max(tw, ctx.measureText(sub).width) + 16, h = (title ? 30 : 17) * fs, top = y + r + 4;
     ctx.fillStyle = '#101420'; ctx.strokeStyle = rgb(c); ctx.lineWidth = 2;
     roundRect(x - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillStyle = rgb(c); ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif'; ctx.fillText(title, x, top + 2 * fs);
-    ctx.fillStyle = '#96a0b4'; ctx.font = 11 * fs + 'px system-ui, sans-serif'; ctx.fillText(sub, x, top + 17 * fs);
+    ctx.fillStyle = '#96a0b4'; ctx.font = 11 * fs + 'px system-ui, sans-serif'; ctx.fillText(sub, x, top + (title ? 17 : 3) * fs);
   }
 
   var lastText = 0, lastLogKey = '';
@@ -325,6 +337,8 @@
     $('live').classList.toggle('on', state.live);
     $('pill').textContent = state.live ? 'LIVE' : 'REWOUND';
     $('pill').classList.toggle('off', !state.live);
+    $('fleet').textContent = L.fleetLine(hot);
+    $('blackout').textContent = L.blackoutLine(now);
     $('play').innerHTML = L.isPlaying(state.live, playing) ? '&#10074;&#10074; Pause' : '&#9654; Play';
     var st = state.generatedAt ? 'Feed updated <b>' + L.ago(now - state.generatedAt) + '</b> (' + L.fmtCt(state.generatedAt) + ')' : 'Waiting for feed';
     st += ' · ' + state.events.length + ' events';

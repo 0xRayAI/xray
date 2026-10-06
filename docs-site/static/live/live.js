@@ -31,7 +31,9 @@
     Blaze0x1: [255, 120, 100], grok: [180, 190, 200]
   };
   var LABEL = { blinky: 'blinky', mill: 'mill', forge: 'forge', critic: 'critic', herald: 'herald',
-    minime0x: 'minime0x', GitHub: 'GitHub', X: 'X', 'mymuse.house': 'mymuse' };
+    minime0x: 'minime0x', GitHub: 'GitHub', X: '', 'mymuse.house': '' };
+  /* Nodes drawn as a glyph instead of a box (the glyph is the name, so the label drops it). */
+  var GLYPH = { X: '\uD835\uDD4F', 'mymuse.house': '\uD83C\uDFE0' };
   var SUB = { blinky: 'CoS seat', mill: 'Eng Dev', forge: 'continuity', critic: 'gate',
     herald: 'replies', minime0x: 'muse bot', GitHub: 'PRs', X: '@0xRayAI', 'mymuse.house': 'live site' };
   var SQUARE = { GitHub: 1, X: 1, 'mymuse.house': 1 };
@@ -67,9 +69,29 @@
   /* Own-key lookup so a feed name like "constructor" never hits Object.prototype. */
   function own(obj, key) { return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined; }
 
-  /* Seat images: bots/<seat>.png, one file per seat (drop a replacement in by filename).
-     Rails (squares) have none; a seat whose file is missing gets a lettered badge. */
-  function botImage(key) { return SEAT_NAMES.indexOf(key) >= 0 ? 'bots/' + key + '.png' : null; }
+  /* Seat images: bots/<seat>.png for seats in this manifest only (no 404s for the rest).
+     Add a seat here when its file lands; any other seat draws a lettered badge. */
+  var BOT_IMAGES = ['blinky', 'forge', 'critic', 'herald', 'minime0x'];
+  function botImage(key) { return BOT_IMAGES.indexOf(key) >= 0 ? 'bots/' + key + '.png' : null; }
+
+  /* Blackout countdown (one constant). */
+  var BLACKOUT_UNTIL = '2026-10-11T09:08:00-05:00';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function countdown(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    return Math.floor(s / 86400) + 'd ' + pad2(Math.floor(s / 3600) % 24) + 'h ' + pad2(Math.floor(s / 60) % 60) + 'm ' + pad2(s % 60) + 's';
+  }
+  function blackoutLine(nowMs) {
+    var left = Date.parse(BLACKOUT_UNTIL) - nowMs;
+    return left > 0 ? 'BLACKOUT until Sun Oct 11, 9:08 AM CT \u00b7 ' + countdown(left) : 'Blackout lifted';
+  }
+  /* Fleet line from the same seat status as the strip (activeSeats). */
+  function fleetLine(hot) {
+    var live = SEAT_NAMES.filter(function (k) { return own(hot, k); }).length;
+    return 'Fleet: ' + live + ' live / ' + (SEAT_NAMES.length - live) + ' idle';
+  }
+  /* Wires: slow dashed flow on every edge, even idle (not packets). null under reduced motion. */
+  function wireDash(tMs, reduced) { return reduced ? null : -(tMs / 1000 * 8) % 14; }
   function badgeLetter(key) { return String(own(LABEL, key) || key || '?').charAt(0).toUpperCase(); }
 
   /* Subtle motion: each seat bobs a few px on its own phase; a fired event pulses 0..1..0.
@@ -335,6 +357,7 @@
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
-    activeSeats: activeSeats, recentItems: recentItems
+    GLYPH: GLYPH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
+    countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireDash: wireDash
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
