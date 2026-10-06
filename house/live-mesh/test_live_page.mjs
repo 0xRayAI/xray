@@ -267,3 +267,14 @@ test('glyph nodes: X draws the 𝕏 glyph instead of a box and drops "X" from it
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   assert.match(html, /var glyph = L\.GLYPH\[key\];\s+if \(glyph\) \{/);
 });
+
+test('image seats draw bare (no ring); only letter seats keep circle + ring; blackout line is amber bold', () => {
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /bare = !sq && !!\(img && img\.complete && img\.naturalWidth\)/);
+  assert.match(html, /if \(isHot && !bare\) \{/, 'no concentric rings around image seats');
+  const letter = html.slice(html.indexOf('if (bare) {'), html.indexOf('if (!sq) r = 18;'));
+  const [imgPart, letterPart] = letter.split('} else {');
+  assert.ok(!/\.stroke\(\)/.test(imgPart), 'image branch strokes nothing');
+  assert.match(letterPart, /badgeLetter[\s\S]*ctx\.arc\(x, y, r, 0, 7\); ctx\.stroke\(\)/, 'letter seat keeps its ring');
+  assert.match(html, /#blackout \{ color: #ffb347; font-weight: 700;/);
+});
