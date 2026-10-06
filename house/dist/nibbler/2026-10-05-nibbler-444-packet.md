@@ -48,10 +48,51 @@ The chomp log has **26** hard rows: G01–G25 and G28. G26 and G27 are provision
 
 1. Seats keep writing as their GitHub App. That is the live identity gap. Alien and Ethos do not close it.
 2. Do not adopt Beam, Kolibri, JEV, d1, Mem0, or an Ethos badge this week.
-3. The one product gap next to today's memory post is a short session-note index with a cleaner, beside repertoire's laws. Not a vector store. Not a new tool name. Write that map after Sunday if it is still wanted.
+3. The one product gap next to today's memory post is a short session-note index with a cleaner, beside repertoire's laws. Not a vector store. Not a new tool name. The map is in the receipts below. The cleaner is not a build.
 4. Dist install lines use the two commands above and the versions in the table. Nothing newer.
 5. The 44 rows below stay a source list. They are not a build order while the fleet is dark.
 
+
+
+## Arch1 receipts — 2026-10-06
+
+Taken while the fleet is dark. Docs only. No new tool. No Dist post.
+
+### O01 — identity. Closed. Do not wire.
+
+[Alien Agent ID](https://docs.alien.org/agent-id-guide/introduction) is a real product: an Ed25519 key for the agent, an optional human binding through Alien SSO, and signed git commits. [Ethos](https://whitepaper.ethos.network/ethos-mechanisms/credibility-score) is a 0–2800 review score for crypto accounts. It is not a commit identity. 0xRay seats already write as their GitHub App. Do not add an AgentHook or an Ethos badge to the suit.
+
+### O03 — repertoire beside Agent Memory Repo. Closed. Map only.
+
+[Agent Memory Repo](https://cognition.com/agent-memory-repo) loads a short `MEMORY.md` at session start. Notes are markdown files. A line can carry `[source: …; added: …]`. The agent writes notes while it works. A separate dreaming pass adds patterns and drops stale notes.
+
+Repertoire **0.2.9** is the law store, read from the worn package. A signal has `name`, `definition`, `tags`, `priority`, `status`, `first_seen`, `evaluation_criteria`, and `observation_stats`. The package seed is read-only. A project copy lives under `.xray/state/repertoire/`. Four tools match the README and `dist/mcp/server.js`: `get_task_confidence`, `search_primitives`, `get_high_confidence_signals`, `ingest_feedback`. Grok shows them as `repertoire__…`.
+
+| Agent Memory Repo | Repertoire 0.2.9 |
+|---|---|
+| `MEMORY.md` loaded at start | high-confidence signals from the project copy |
+| one note file | one signal: `name` + `definition` |
+| `[source:]` on the line | `first_seen`, `evaluation_criteria`, `observation_stats` |
+| the agent writes a preference during the session | `ingest_feedback` records a routing outcome. It does not store a chat preference |
+| dreaming pass cleans notes | no cleaner |
+
+Do not add a tool to imitate `MEMORY.md`. The missing piece is a cleaner for session notes beside the laws. It is not this pull request.
+
+### O05 — Beam watch. Closed for today. Still blocked.
+
+Rechecked 2026-10-06. [Reflection's post](https://reflection.ai/blog/introducing-beam) still says the weights, the technical report, and the model card come later this month, Apache 2.0 planned. There is a waitlist. There is no Hugging Face weight URL. Do not say Beam is downloadable. An Ollama post is not a tag.
+
+### O16 — install. Closed again.
+
+npm latest on 2026-10-06 is still `0xray` **4.0.40** and `@0xray/repertoire` **0.2.9**.
+
+### O17 — tool table. Closed. One stale stamp.
+
+The README and the server register the same four tools. The server constructor in `dist/mcp/server.js` still says version `0.2.5` while the package is 0.2.9. The tools are present. The stamp is old. This docs pull request does not patch the package.
+
+### O18 — muse-house health. Closed.
+
+`GET https://mymuse.house/health` returned 200 at 2026-10-06T08:56:57Z. Body: `status` ok, `service` muse-house, `version` 0.1.0, `tools` 11, `stateless` true. Dist may cite that health URL. Do not invent other paths.
 
 ## Tier 4 — Strategic (Dist / product spine)
 
@@ -83,11 +124,11 @@ The chomp log has **26** hard rows: G01–G25 and G28. G26 and G27 are provision
 
 | ID | Goal | Action | Deep link |
 |----|------|--------|-----------|
-| O01 | Identity spike | Spike Alien AgentHook verify path against alien.org/agent-id docs; write PASS/FAIL receipt. | https://alien.org/agent-id |
+| O01 | Identity spike | Closed 2026-10-06. Do not wire AgentHook or an Ethos badge. Receipt above. | https://docs.alien.org/agent-id-guide/introduction |
 | O02 | Ethos contrast note | One-pager: Ethos vouch/slash vs Alien human-back — for Dist, not ship. | https://whitepaper.ethos.network/ethos-mechanisms/vouch |
-| O03 | AMR ↔ Repertoire ADR | Draft ADR linking MEMORY.md fields to repertoire primitives; no new tools. | https://cognition.com/agent-memory-repo |
+| O03 | AMR ↔ Repertoire ADR | Closed 2026-10-06. Map is in the receipts. No new tool. | https://cognition.com/agent-memory-repo |
 | O04 | Dreaming cron rhyme | Compare Hermes Dreaming user-story cron to house mill cadence — doc only. | https://hermes-agent.nousresearch.com/docs/user-stories |
-| O05 | Beam watch card | Watchcard: Beam weights Apache ETA; block Dist until URL. | https://reflection.ai/beam |
+| O05 | Beam watch card | Closed for 2026-10-06. Weights still unreleased. Dist stays blocked. | https://reflection.ai/blog/introducing-beam |
 | O06 | Kolibri smoke | Optional: pull Kolibri-1 card + aleph-alpha-inference serve notes into ops/scratch. | https://huggingface.co/Aleph-Alpha/Kolibri-1 |
 | O07 | JEV-9B local smoke | If GPU box free: `hf download autotrust/JEV-9B` + vLLM decide path from card. | https://huggingface.co/autotrust/JEV-9B |
 | O08 | d1 hosted contrast | Doc: when hosted d1 beats open JEV (vision/latency) — no key spend without Blaze OK. | https://www.liquid.ai/blog/d1-decision-model |
@@ -98,9 +139,9 @@ The chomp log has **26** hard rows: G01–G25 and G28. G26 and G27 are provision
 | O13 | Brancher eval | Try brancher install on box OR write why not (EULA/OS); agent-DB branch pattern. | https://www.baseshift.com/blog/database-branching-without-branching-databases |
 | O14 | Polymarket V2 watch | If house touches prediction markets: read V2 migration; else archive. | https://poly.market/v2-migration |
 | O15 | Gemma tuner note | Apple Silicon multimodal LoRA path for local experiments. | https://github.com/mattmireles/gemma-tuner-multimodal |
-| O16 | xray wear truth | Checked 2026-10-05: npm latest is 0xray 4.0.40 (18:09Z) and @0xray/repertoire 0.2.9. Seven MCP names stay the README list. | https://github.com/0xRayAI/xray |
-| O17 | Repertoire MCP wire | Verify repertoire__* tool table still matches README 0.2.9. | https://github.com/0xRayAI/repertoire |
-| O18 | muse-house health | GET live /health before any Dist MCP URL claim. | https://github.com/0xRayAI/muse-house |
+| O16 | xray wear truth | Closed. Rechecked 2026-10-06: npm latest is still 0xray 4.0.40 and @0xray/repertoire 0.2.9. | https://github.com/0xRayAI/xray |
+| O17 | Repertoire MCP wire | Closed 2026-10-06. Four tools match. Server stamp still says 0.2.5. | https://github.com/0xRayAI/repertoire |
+| O18 | muse-house health | Closed 2026-10-06. Live /health is 200, tools 11. Cite that URL only. | https://mymuse.house/health |
 | O19 | Account toggle enforcement | Eng bots: Dist=@0xRayAI; eng likes=Blaze0x1; sidebar check — already packeted. | https://x.com/Blaze0x1 |
 | O20 | Noise filter library | Codify spit patterns (farm/politics/dunk/hype) into nibbler ROLE-CARD. | file:///workspace/nibbler-suit/ops/handoffs/2026-10-05-nibbler-chomp-44-log.md |
 | O21 | Graphiti cite | Keep Graphiti as temporal-KG contrast under MEMOIR — no Dist lead. | https://github.com/getzep/graphiti |
@@ -174,6 +215,6 @@ Blaze HARD: chase 44 source-backed gud. Timeline mostly spam; **26 hard gud** ve
 
 **Dist lead today:** Alien Agent ID (human-backed) vs Ethos (stake) — cite product/whitepaper. Memory = Cognition Dreaming/AMR + house Repertoire rhyme. Beam weights soon (TC+Reflection); Kolibri already HF. Decision lane = JEV-9B open vs Liquid d1 hosted.
 
-**Eng start:** parked until Sunday 2026-10-11. O16's version check is done in the digest above. O01, O03, O05, O17, and O18 are not started. No Dist posts from eng. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
+**Eng start:** O01, O03, O05, O16, O17, and O18 are closed in the Arch1 receipts (2026-10-06). The other rows stay a source list. Bots stay dark until Sunday 2026-10-11. No Dist posts from this pull request. Toggle: Dist=@0xRayAI, likes=Blaze0x1.
 
 **Do not:** invent endpoints; Dist private repos; claim Beam weights live; confuse AskEthos.com with Ethos.
