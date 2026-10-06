@@ -151,8 +151,26 @@ class GitHub:
         self.token = token
         self.app = app
         self.calls = 0
+        self.not_modified = 0   # conditional 304s (free against the rate limit when authenticated)
+        self.etags: dict[str, tuple[str, object]] = {}
 
-    def get(self, path: str, params: dict | None = None):
+    def get_cached(self, path: str, params: dict | None = None):
+        """GET with If-None-Match; a 304 returns the body cached from the last 200."""
+        url = (path if path.startswith("http") else API + path) + (
+            "?" + urllib.parse.urlencode(params) if params else "")
+        hit = self.etags.get(url)
+        try:
+            data, etag = self.get(url, etag=hit[0] if hit else "")
+        except urllib.error.HTTPError as e:
+            if e.code == 304 and hit:
+                self.not_modified += 1
+                return hit[1]
+            raise
+        if etag:
+            self.etags[url] = (etag, data)
+        return data
+
+    def get(self, path: str, params: dict | None = None, etag: str | None = None):
         url = path if path.startswith("http") else API + path
         if params:
             # urlencode so "+00:00" in since= becomes %2B00:00 (a raw "+" decodes to a space).
@@ -160,25 +178,27 @@ class GitHub:
         if self.app and self.app.stale():
             self.token = self.app.mint()
         try:
-            return self._get(url)
+            return self._get(url, etag)
         except urllib.error.HTTPError as e:
             # A 401 on a token older than a minute: re-mint once and retry this request.
             if e.code != 401 or not self.app or time.time() - self.app.minted_at < 60:
                 raise
             log("GitHub HTTP 401; re-minting App token")
             self.token = self.app.mint()
-            return self._get(url)
+            return self._get(url, etag)
 
-    def _get(self, url: str):
+    def _get(self, url: str, etag: str | None = None):
         req = urllib.request.Request(url, headers={
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "xray-live-mesh-feed",
             **({"Authorization": f"Bearer {self.token}"} if self.token else {}),
+            **({"If-None-Match": etag} if etag else {}),   # etag "" = no condition, but return the ETag
         })
         self.calls += 1
         with urllib.request.urlopen(req, timeout=30) as r:
-            return json.loads(r.read().decode())
+            data = json.loads(r.read().decode())
+            return (data, r.headers.get("ETag")) if etag is not None else data
 
     def pages(self, path: str, params: dict | None = None, limit: int = 5):
         params = dict(params or {}, per_page=100)
@@ -244,6 +264,10 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
                       f"{tag} opened · {title}", url, repo, n))
     # Pushes after open = fix / update volley.
     commits = list(gh.pages(f"/repos/{repo}/pulls/{n}/commits", limit=3))
+    rep = REPRESENTED.setdefault(repo, set())
+    rep.update(c["sha"] for c in commits)   # pr_open (first) + pr_update (rest) already show these
+    if pr.get("merged_at") and pr.get("merge_commit_sha"):
+        rep.add(pr["merge_commit_sha"])      # the merge/squash commit is the merged event
     for c in commits[1:]:
         t = c["commit"]["committer"]["date"]
         if recent(t) and t > pr["created_at"]:
@@ -377,17 +401,18 @@ ENG_KINDS = ["pr_open", "pr_update", "supersede", "critic_fail", "critic_pass", 
 SITE_KINDS = ["deploy", "deploy_fail", "health_ok", "health_fail"]
 X_IN = ["x_in_mention", "x_in_reply"]
 X_OUT = ["x_out_reply", "x_out_root", "x_like"]
-KINDS = ENG_KINDS + SITE_KINDS + X_IN + X_OUT
+PUSH_KINDS = ["push", "feed_push"]
+KINDS = ENG_KINDS + SITE_KINDS + X_IN + X_OUT + PUSH_KINDS
 LEGACY = {"fix": "pr_update", "probe": "health_ok", "x_root": "x_out_root"}
 # Ties at the same instant: cause before effect.
-_RANK_ORDER = [["pr_open"], ["pr_update"], ["ci_pass", "ci_fail"], ["critic_pass", "critic_fail"],
+_RANK_ORDER = [["push"], ["pr_open"], ["pr_update"], ["ci_pass", "ci_fail"], ["critic_pass", "critic_fail"],
                ["supersede"], ["review", "comment"], ["merged"], ["pr_close"], ["issue_open"], ["issue_close"],
                ["deploy", "deploy_fail"], ["health_ok", "health_fail"], X_IN, ["x_out_reply", "x_out_root"],
-               ["x_like"]]
+               ["x_like"], ["feed_push"]]
 KIND_RANK = {k: i for i, ks in enumerate(_RANK_ORDER) for k in ks}
 # Dedupe precedence when two sources give the same id (lower wins).
 SRC_RANK = {"github-api": 0, "github-deployments": 0, "x-api": 0, "health-probe": 0,
-            "x-ledger.jsonl": 1, "light-notes.jsonl": 2}
+            "x-ledger.jsonl": 1, "light-notes.jsonl": 2, "feed-pushes.jsonl": 1}
 MERGE_X_RANK = 3
 HERALD_HANDLES = {"0xRayAI", "herald"}
 
@@ -592,6 +617,67 @@ def x_events(path: Path, since: datetime) -> list[dict]:
 
 PR_CACHE: dict = {}  # (repo, number) -> (signature, fetched_at, events); watch mode only
 
+# ---------------------------------------------------------------- pushes
+
+REPRESENTED: dict[str, set[str]] = {}  # repo -> commit SHAs already shown by pr_open/pr_update/merged
+PUSH_MSG: dict[tuple[str, str], str] = {}  # (repo, sha) -> first line of the commit message
+# The tripwire's replay branch never becomes a push event: its pushes come in as feed_push from
+# the tripwire's own ledger, and a push event for it would change the feed and trip another push.
+PUSH_SKIP_BRANCHES = {"live-wire"}
+
+
+def push_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
+    """Fleet pushes from the repo events feed (one conditional call per pass; a 304 costs nothing
+    against the rate limit). One event per push, skipped when its head is already on the mesh as a
+    PR open/update/merge, so a merge never counts twice."""
+    out = []
+    rep = REPRESENTED.get(repo, set())
+    for e in gh.get_cached(f"/repos/{repo}/events", {"per_page": 100}) or []:
+        if e.get("type") != "PushEvent":
+            continue
+        t = e["created_at"]
+        if datetime.fromisoformat(t.replace("Z", "+00:00")) < since:
+            continue
+        p = e.get("payload") or {}
+        ref = p.get("ref") or ""
+        branch = ref[len("refs/heads/"):] if ref.startswith("refs/heads/") else ""
+        head = p.get("head") or ""
+        seat = seat_of((e.get("actor") or {}).get("login"), branch)
+        if not branch or branch in PUSH_SKIP_BRANCHES or not head or seat not in SEATS:
+            continue
+        if head in rep:
+            continue
+        commits = p.get("commits") or []
+        msg = next((c.get("message") for c in commits if c.get("sha") == head), None) or \
+            (commits[-1].get("message") if commits else None)
+        if msg is None:
+            if (repo, head) not in PUSH_MSG:
+                PUSH_MSG[(repo, head)] = gh.get(f"/repos/{repo}/commits/{head}")["commit"]["message"]
+            msg = PUSH_MSG[(repo, head)]
+        msg = (msg or "").splitlines()[0] if msg else ""
+        out.append(ev(f"{repo}:push:{e['id']}", t, seat, "GitHub", "push",
+                      f"pushed {short(repo)} {branch} · {msg}", f"https://github.com/{repo}/commit/{head}",
+                      repo, None, note=f"{branch} {head[:8]}"))
+    return out
+
+
+def feed_push_events(path: Path, since: datetime) -> list[dict]:
+    """Real live-wire pushes, recorded by tripwire_push.py one JSON event per line after each push.
+    The tripwire ignores feed_push events when deciding to push, so folding these in never loops."""
+    out = []
+    if not path.exists():
+        return out
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        rec = json.loads(line)
+        if rec.get("kind") != "feed_push" or instant(rec["t_ct"]) < since:
+            continue
+        rec["src_file"] = "feed-pushes.jsonl"
+        out.append(rec)
+    return out
+
 
 def merge(events: list[dict]) -> list[dict]:
     """Dedupe by id keeping the higher-precedence source; fill optional fields the winner lacks."""
@@ -634,6 +720,8 @@ def build(args, gh: GitHub) -> dict:
             events.extend(got)
         if not args.no_issues:
             events.extend(issue_events(gh, repo, since))
+        if not args.no_pushes:
+            events.extend(push_events(gh, repo, since))
     deploys: list[dict] = []
     if args.deploy_repo:
         deploys = deploy_events(gh, args.deploy_repo, since)
@@ -642,6 +730,7 @@ def build(args, gh: GitHub) -> dict:
         events.extend(health_events(args, Path(args.health_state), deploys, since))
     # allow --deploy-repo '' / --health '' to disable
     events.extend(light_note_events(Path(args.light_notes), since))
+    events.extend(feed_push_events(Path(args.feed_pushes), since))
     x_ledger = ledger_events(Path(args.x_ledger), since)
     events.extend(x_ledger)
     x_merged = x_events(Path(args.merge_x), since) if args.merge_x else []
@@ -719,12 +808,15 @@ def main() -> int:
     p.add_argument("--health-every", type=float, default=60, help="min seconds between probes")
     p.add_argument("--health-state", help="probe state file (default: <out dir>/health-state.json)")
     p.add_argument("--no-issues", action="store_true")
+    p.add_argument("--no-pushes", action="store_true", help="skip fleet push events (repo events feed)")
+    p.add_argument("--feed-pushes", help="tripwire live-wire push ledger (default: <out dir>/feed-pushes.jsonl)")
     p.add_argument("--watch", type=float, default=0, help="poll every N seconds (0 = one pass)")
     args = p.parse_args()
     out_dir = Path(args.out).parent
     args.light_notes = args.light_notes or str(out_dir / "light-notes.jsonl")
     args.x_ledger = args.x_ledger or str(out_dir / "x-ledger.jsonl")
     args.health_state = args.health_state or str(out_dir / "health-state.json")
+    args.feed_pushes = args.feed_pushes or str(out_dir / "feed-pushes.jsonl")
     args.deploy_repo = args.deploy_repo or None
     args.health = args.health or None
     if os.environ.get("X_BEARER_TOKEN"):
@@ -741,10 +833,10 @@ def main() -> int:
     out = Path(args.out)
     while True:
         try:
-            gh.calls = 0
+            gh.calls = gh.not_modified = 0
             feed = build(args, gh)
             n_new = write(feed, out)
-            log(f"{feed['event_count']} events ({n_new} new) -> {out} [{gh.calls} API calls]")
+            log(f"{feed['event_count']} events ({n_new} new) -> {out} [{gh.calls} API calls, {gh.not_modified} 304]")
         except urllib.error.HTTPError as e:
             log(f"GitHub HTTP {e.code} on {e.url}; keeping last feed")
             if not args.watch:

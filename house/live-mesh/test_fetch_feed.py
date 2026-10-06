@@ -276,5 +276,106 @@ class Secrets(unittest.TestCase):
         self.assertIn('subprocess.run(["openssl"', src)
 
 
+
+class PushEventTests(unittest.TestCase):
+    """Fleet push events: seat mapping, dedupe against PR events, live-wire never loops."""
+    SINCE = ff.datetime(2026, 10, 6, 0, 0, tzinfo=ff.timezone.utc)
+
+    class FakeGH:
+        def __init__(self, events, msgs=None):
+            self.events, self.msgs, self.lookups = events, msgs or {}, 0
+
+        def get_cached(self, path, params=None):
+            return self.events
+
+        def get(self, path, params=None):
+            self.lookups += 1
+            return {"commit": {"message": self.msgs[path.rsplit("/", 1)[1]]}}
+
+    @staticmethod
+    def push(eid, login, branch, head, commits=None, t="2026-10-06T11:00:00Z"):
+        p = {"ref": f"refs/heads/{branch}", "head": head}
+        if commits is not None:
+            p["commits"] = commits
+        return {"id": eid, "type": "PushEvent", "created_at": t, "actor": {"login": login}, "payload": p}
+
+    def setUp(self):
+        ff.REPRESENTED.clear()
+        ff.PUSH_MSG.clear()
+
+    def test_push_maps_seat_and_labels(self):
+        gh = self.FakeGH([
+            self.push("1", "forge0x1[bot]", "mill/live-feed-pushes", "a" * 40, [{"sha": "a" * 40, "message": "feed: pushes\n\nbody"}]),
+            self.push("2", "forge0x1[bot]", "main", "b" * 40),
+            {"id": "3", "type": "IssuesEvent", "created_at": "2026-10-06T11:00:00Z"},
+            self.push("4", "htafolla", "main", "c" * 40),                         # not a fleet seat
+            self.push("5", "forge0x1[bot]", "main", "d" * 40, t="2026-10-05T01:00:00Z"),  # before window
+        ], msgs={"b" * 40: "chore: bump"})
+        out = ff.push_events(gh, "0xRayAI/xray", self.SINCE)
+        self.assertEqual([(e["from"], e["to"], e["kind"]) for e in out], [("mill", "GitHub", "push"), ("forge", "GitHub", "push")])
+        self.assertEqual(out[0]["label"], "pushed xray mill/live-feed-pushes · feed: pushes")
+        self.assertEqual(out[1]["label"], "pushed xray main · chore: bump")
+        self.assertEqual(gh.lookups, 1, "message looked up only when the payload has no commits")
+        ff.push_events(gh, "0xRayAI/xray", self.SINCE)
+        self.assertEqual(gh.lookups, 1, "looked-up message is cached")
+
+    def test_dedupe_against_pr_commits_and_merge(self):
+        ff.REPRESENTED["0xRayAI/xray"] = {"e" * 40, "f" * 40}   # a PR commit, a merge commit
+        gh = self.FakeGH([
+            self.push("1", "forge0x1[bot]", "mill/x", "e" * 40, [{"sha": "e" * 40, "message": "fix"}]),
+            self.push("2", "forge0x1[bot]", "main", "f" * 40, [{"sha": "f" * 40, "message": "squash (#1)"}]),
+            self.push("3", "forge0x1[bot]", "main", "9" * 40, [{"sha": "9" * 40, "message": "direct"}]),
+        ])
+        out = ff.push_events(gh, "0xRayAI/xray", self.SINCE)
+        self.assertEqual([e["id"] for e in out], ["0xRayAI/xray:push:3"], "PR update and merge are not double-counted")
+
+    def test_pr_events_mark_commits_and_merge_sha_represented(self):
+        pr = {"number": 7, "title": "t", "html_url": "u", "user": {"login": "forge0x1[bot]"},
+              "head": {"ref": "mill/x", "sha": "2" * 40}, "created_at": "2026-10-06T10:00:00Z",
+              "merged_at": "2026-10-06T10:30:00Z", "merged_by": {"login": "forge0x1[bot]"},
+              "merge_commit_sha": "3" * 40}
+        gh = mock.Mock()
+        gh.pages.side_effect = lambda path, *a, **k: iter(
+            [{"sha": "1" * 40, "commit": {"committer": {"date": "2026-10-06T10:00:00Z"}, "message": "a"}},
+             {"sha": "2" * 40, "commit": {"committer": {"date": "2026-10-06T10:10:00Z"}, "message": "b"}}]
+            if path.endswith("/commits") else [])
+        gh.get.return_value = {"check_runs": []}
+        ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
+        self.assertEqual(ff.REPRESENTED["0xRayAI/xray"], {"1" * 40, "2" * 40, "3" * 40})
+
+    def test_live_wire_push_never_becomes_an_event(self):
+        gh = self.FakeGH([self.push("1", "forge0x1[bot]", "live-wire", "7" * 40, [{"sha": "7" * 40, "message": "live-wire: replay snapshot"}])])
+        self.assertEqual(ff.push_events(gh, "0xRayAI/xray", self.SINCE), [])
+
+    def test_feed_push_ledger_folds_in(self):
+        led = Path(TMP.name) / "feed-pushes.jsonl"
+        rec = {"id": "live-wire:push:20261006T110000", "t_ct": "2026-10-06T06:00:00-05:00", "from": "mill",
+               "to": "GitHub", "kind": "feed_push", "direction": "internal", "label": "mill pushed live-wire · 3 events",
+               "source": "https://github.com/0xRayAI/xray/commits/live-wire", "src_file": "x", "repo": "0xRayAI/xray"}
+        old = dict(rec, id="old", t_ct="2026-10-01T06:00:00-05:00")
+        led.write_text(json.dumps(old) + "\n" + json.dumps(rec) + "\n")
+        out = ff.feed_push_events(led, self.SINCE)
+        self.assertEqual([e["id"] for e in out], [rec["id"]])
+        self.assertEqual(out[0]["src_file"], "feed-pushes.jsonl")
+
+    def test_events_poll_is_conditional_and_304_reuses_body(self):
+        seen = []
+
+        def fake(req, timeout=None):
+            seen.append(req.headers.get("If-none-match"))
+            if len(seen) == 1:
+                r = Resp(json.dumps([{"id": "1"}]).encode())
+                r.headers = {"ETag": '"v1"'}
+                return r
+            raise urllib.error.HTTPError(req.full_url, 304, "nm", {}, io.BytesIO(b""))
+
+        gh = ff.GitHub("tok")
+        with mock.patch.object(ff.urllib.request, "urlopen", fake):
+            self.assertEqual(gh.get_cached("/repos/o/r/events", {"per_page": 100}), [{"id": "1"}])
+            self.assertEqual(gh.get_cached("/repos/o/r/events", {"per_page": 100}), [{"id": "1"}])
+        self.assertEqual(seen, [None, '"v1"'])
+        self.assertEqual(gh.not_modified, 1)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

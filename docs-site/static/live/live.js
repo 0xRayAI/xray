@@ -56,7 +56,7 @@
   var ALIAS = { Blaze0x1: 'X', grok: 'X' };
   var GIT_KINDS = toSet(['pr_open', 'pr_update', 'pr_close', 'merged', 'fix', 'supersede', 'review', 'comment',
     'critic_fail', 'critic_pass', 'ci_pass', 'ci_fail', 'issue_open', 'issue_close',
-    'deploy', 'deploy_fail', 'health_ok', 'health_fail', 'probe']);
+    'deploy', 'deploy_fail', 'health_ok', 'health_fail', 'probe', 'push', 'feed_push']);
   var KIND_WORD = { pr_open: 'open', pr_update: 'fix / update', merged: 'merge', pr_close: 'close',
     supersede: 'supersede', critic_pass: 'Light PASS', critic_fail: 'Light FAIL',
     ci_pass: 'CI pass', ci_fail: 'CI fail', review: 'review', comment: 'comment',
@@ -64,7 +64,7 @@
     deploy: 'deploy', deploy_fail: 'deploy FAIL', health_ok: '/health ok',
     health_fail: '/health FAIL', x_in_mention: 'IN mention', x_in_reply: 'IN reply',
     x_out_reply: 'OUT reply', x_out_root: 'OUT root', x_like: 'LIKE',
-    x_root: 'OUT root', x_reply: 'X reply' };
+    x_root: 'OUT root', x_reply: 'X reply', push: 'push', feed_push: 'live-wire push' };
   var LEGACY_KIND = { fix: 'pr_update', probe: 'health_ok', x_root: 'x_out_root' };
   var BANNED = ['Dist', 'emergence', 'compaction'];
 
@@ -174,6 +174,7 @@
     if (k === 'critic_pass' || k === 'ci_pass' || k === 'health_ok' || k === 'deploy') return [120, 230, 150];
     if (k.indexOf('x_out') === 0 || k.indexOf('x_like') === 0 || k === 'x_root') return COLOR.herald;
     if (k.indexOf('x_') === 0) return COLOR.X;
+    if (k === 'feed_push') return [88, 210, 180];   // live-wire push: teal, like the Live control
     return own(COLOR, e.from) || [180, 190, 210];
   }
 
@@ -190,7 +191,7 @@
 
   function headline(e) {
     var repo = (e.repo || '').split('/').pop();
-    var head = repo + ' #' + (e.number == null ? '' : e.number) + ' \u00b7 ' + (KIND_WORD[e.kind] || e.kind);
+    var head = repo + (e.number == null ? '' : ' #' + e.number) + ' \u00b7 ' + (KIND_WORD[e.kind] || e.kind);
     return head.replace(/^[ \u00b7#]+|[ \u00b7#]+$/g, '');
   }
 

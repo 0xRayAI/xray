@@ -98,5 +98,44 @@ class DecisionTests(unittest.TestCase):
             tw.check_branch("main")
 
 
+
+class NoLoopTests(unittest.TestCase):
+    """A real push is a feed_push packet; folding it back into the feed never trips another push."""
+
+    def test_feed_push_only_change_does_not_trip(self) -> None:
+        base = [{"id": "a", "kind": "merged"}]
+        fp = {"id": "live-wire:push:1", "kind": "feed_push"}
+        self.assertEqual(_fp(base, "t1"), _fp(base + [fp], "t2"))
+        self.assertNotEqual(_fp(base, "t1"), _fp(base + [{"id": "b", "kind": "push"}], "t1"), "a fleet push still trips")
+
+    def test_push_then_fold_back_is_quiet(self) -> None:
+        import tempfile
+        from datetime import datetime
+        import fetch_feed as ff
+        local = json.dumps({"generated_at": "t1", "event_count": 1, "events": [{"id": "a", "kind": "merged"}]}).encode()
+        ev = tw.push_event(datetime(2026, 10, 6, 6, 30, tzinfo=tw.CT), "mill", "live-wire", 1)
+        self.assertEqual((ev["from"], ev["to"], ev["kind"]), ("mill", "GitHub", "feed_push"))
+        published = tw.snapshot_bytes(local, ev)
+        self.assertIn(ev["id"], [e["id"] for e in json.loads(published)["events"]], "the push carries its own packet")
+        with tempfile.TemporaryDirectory() as d:
+            led = Path(d) / "feed-pushes.jsonl"
+            tw.record_push(led, ev)
+            folded = ff.feed_push_events(led, datetime(2026, 10, 6, tzinfo=tw.CT))
+        regenerated = json.loads(local)
+        regenerated["generated_at"] = "t2"
+        regenerated["events"] = regenerated["events"] + folded
+        regenerated["event_count"] = len(regenerated["events"])
+        local2 = tw.fingerprint_bytes("live-events.json", json.dumps(regenerated).encode())
+        remote = tw.fingerprint_bytes("live-events.json", published)
+        self.assertFalse(tw.needs_publish({"feed": local2, "mesh": None}, {"feed": remote, "mesh": None},
+                                          {"feed": None, "mesh": None}, branch_exists=True, main_incorporated=True),
+                         "fetcher folding the feed_push back in must not trigger another push")
+
+    def test_unchanged_feed_stays_quiet(self) -> None:
+        f = _fp([{"id": "a", "kind": "merged"}], "t")
+        self.assertFalse(tw.needs_publish({"feed": f, "mesh": None}, {"feed": f, "mesh": None},
+                                          {"feed": None, "mesh": None}, branch_exists=True, main_incorporated=True))
+
+
 if __name__ == "__main__":
     unittest.main()
