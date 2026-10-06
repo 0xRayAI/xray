@@ -19,7 +19,10 @@ X is wake/chatter, not the sport. X events come from herald's JSONL ledger (`--x
 ## Run
 
 ```bash
-export GITHUB_TOKEN=...   # App installation token that can read both repos
+# preferred for --watch: the poller mints its own App installation token, re-mints before
+# 55 min and on a 401, and ignores GITHUB_TOKEN/GH_TOKEN (no other fallback)
+export GITHUB_APP_ID=... GITHUB_APP_INSTALLATION_ID=... GITHUB_APP_PRIVATE_KEY_PATH=/path/to/app.pem
+# or: export GITHUB_TOKEN=...   # any token that can read both repos (not refreshed; 1h if an App token)
 cd house/live-mesh
 
 # preferred: herald's live x-ledger (mentions + posts/likes append here)
