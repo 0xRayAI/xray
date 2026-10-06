@@ -31,9 +31,11 @@
     Blaze0x1: [255, 120, 100], grok: [180, 190, 200]
   };
   var LABEL = { blinky: 'blinky', mill: 'mill', forge: 'forge', critic: 'critic', herald: 'herald',
-    minime0x: 'minime0x', GitHub: 'GitHub', X: '', 'mymuse.house': '' };
+    minime0x: 'minime0x', GitHub: '', X: '', 'mymuse.house': '' };
   /* Nodes drawn as a glyph instead of a box (the glyph is the name, so the label drops it). */
   var GLYPH = { X: '\uD835\uDD4F', 'mymuse.house': '\uD83C\uDFE0' };
+  /* Nodes drawn as a vector mark (viewBox 0 0 16 16): GitHub = Octicons mark-github-16 (primer/octicons). */
+  var MARK_PATH = { GitHub: 'M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656' };
   var SUB = { blinky: 'CoS seat', mill: 'Eng Dev', forge: 'continuity', critic: 'gate',
     herald: 'replies', minime0x: 'muse bot', GitHub: 'PRs', X: '@0xRayAI', 'mymuse.house': 'live site' };
   var SQUARE = { GitHub: 1, X: 1, 'mymuse.house': 1 };
@@ -357,7 +359,7 @@
     own: own, botImage: botImage, badgeLetter: badgeLetter, bob: bob, pulse: pulse, entry: entry,
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
-    GLYPH: GLYPH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
+    GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireDash: wireDash
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

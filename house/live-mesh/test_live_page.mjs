@@ -263,9 +263,14 @@ test('glyph nodes: X draws the 𝕏 glyph instead of a box and drops "X" from it
   assert.equal(L.GLYPH['mymuse.house'], '\u{1F3E0}', 'muse node is the house emoji');
   assert.equal(L.LABEL['mymuse.house'], '');
   assert.equal(L.SUB['mymuse.house'], 'live site');
-  assert.equal(L.GLYPH.GitHub, undefined, 'GitHub keeps its box');
+  assert.equal(L.GLYPH.GitHub, undefined, 'GitHub is a vector mark, not a font glyph');
+  assert.match(L.MARK_PATH.GitHub, /^M6\.766 11\.328c[-0-9.,c lsCvVhHaAzZ]+$/, 'Octicons mark-github-16 path');
+  assert.equal(L.LABEL.GitHub, '', 'GitHub name dropped');
+  assert.equal(L.SUB.GitHub, 'PRs', 'sublabel kept');
+  const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(page, /ctx\.fill\(new Path2D\(mark\)\)/);
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
-  assert.match(html, /var glyph = L\.GLYPH\[key\];\s+if \(glyph\) \{/);
+  assert.match(html, /var glyph = L\.GLYPH\[key\], mark = L\.MARK_PATH\[key\];[\s\S]*?else if \(glyph\) \{/);
 });
 
 test('image seats draw bare (no ring); only letter seats keep circle + ring; blackout line is amber bold', () => {

@@ -282,8 +282,12 @@
       }
     }
     ctx.fillStyle = '#0c101c'; ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
-    var glyph = L.GLYPH[key];
-    if (glyph) {
+    var glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
+    if (mark && typeof Path2D !== 'undefined') {   // vector mark, light fill (no font, no fetch)
+      ctx.save(); ctx.translate(x - 15, y - 15); ctx.scale(30 / 16, 30 / 16);
+      ctx.fillStyle = '#f0f5ff'; ctx.fill(new Path2D(mark)); ctx.restore();
+    }
+    else if (glyph) {
       ctx.fillStyle = '#f0f5ff'; ctx.font = 'bold 30px system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Noto Sans Math", sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(glyph, x, y + 1);
     }
