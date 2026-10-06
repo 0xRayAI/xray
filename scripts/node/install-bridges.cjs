@@ -1846,26 +1846,29 @@ function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
 }
 
-function setupSkillMirrorNames(packageRoot) {
-  const skillsSource = fs.existsSync(path.join(packageRoot, "src", "skills"))
+/** A byte-identical package skill is the old mirror. A different body still throws. */
+function wornSkillMatchesPackage(packageRoot, targetDir, name) {
+  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
     ? path.join(packageRoot, "src", "skills")
     : path.join(packageRoot, "dist", "skills");
-  if (!fs.existsSync(skillsSource)) return new Set();
-  const names = new Set();
-  for (const entry of fs.readdirSync(skillsSource, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    if (fs.existsSync(path.join(skillsSource, entry.name, "SKILL.md"))) names.add(entry.name);
+  const packaged = path.join(source, name, "SKILL.md");
+  if (!fs.existsSync(packaged)) return false;
+  const packagedBytes = fs.readFileSync(packaged);
+  let saw = false;
+  for (const parts of ROLE_SKILL_DIRS) {
+    const worn = path.join(targetDir, ...parts, name, "SKILL.md");
+    if (!fs.existsSync(worn)) continue;
+    saw = true;
+    if (!packagedBytes.equals(fs.readFileSync(worn))) return false;
   }
-  return names;
+  return saw;
 }
 
-/** The 4.0.28 skill mirror is not a consumer costume. Any other extra name still throws. */
-function isSetupSkillMirrorDump(err, packageRoot) {
+function isSetupSkillMirrorDump(err, packageRoot, targetDir) {
   if (!err || err.code !== "FOUNDRY_COSTUME_DUMP") return false;
   if (!Array.isArray(err.extraSkills) || err.extraSkills.length === 0) return false;
   if (Array.isArray(err.extraAgents) && err.extraAgents.length > 0) return false;
-  const mirrored = setupSkillMirrorNames(packageRoot);
-  return err.extraSkills.every((name) => mirrored.has(name));
+  return err.extraSkills.every((name) => wornSkillMatchesPackage(packageRoot, targetDir, name));
 }
 
 function packageShipsConsumerSuit(packageRoot) {
@@ -1930,7 +1933,7 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   try {
     mintConsumerSuit(packageRoot, targetDir, write);
   } catch (err) {
-    if (!isSetupSkillMirrorDump(err, packageRoot)) throw err;
+    if (!isSetupSkillMirrorDump(err, packageRoot, targetDir)) throw err;
   }
   syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   return true;

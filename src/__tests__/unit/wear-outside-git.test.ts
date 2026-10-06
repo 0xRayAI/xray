@@ -219,6 +219,18 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, ".opencode", "skills", "mill", "SKILL.md"))).toBe(true);
       const reinspected = runInspect(project, home);
       expect(reinspected.status, `${reinspected.stdout}\n${reinspected.stderr}`).toBe(0);
+      const editedSkill = path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md");
+      mkdirSync(path.dirname(editedSkill), { recursive: true });
+      writeFileSync(
+        editedSkill,
+        `${readFileSync(path.join(repoRoot, "src", "skills", "orchestrator", "SKILL.md"), "utf8")}\nlocal edit\n`,
+      );
+      const edited = runNode(wearScript, [project], project, home);
+      expect(edited.status).not.toBe(0);
+      expect(readFileSync(editedSkill, "utf8")).toContain("local edit");
+      rmSync(path.dirname(editedSkill), { recursive: true, force: true });
+      const restored = runNode(wearScript, [project], project, home);
+      expect(restored.status).toBe(0);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);
