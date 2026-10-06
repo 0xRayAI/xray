@@ -179,3 +179,50 @@ test('prototype names in the feed never reach Object.prototype', () => {
   const hot = L.hotNodes([{ src: 'GitHub', dst: 'forge', e }]);
   assert.deepEqual(Object.keys(hot).sort(), ['GitHub', 'forge']);
 });
+
+test('transport: Live shows as playing; a slider pick plays from there', () => {
+  assert.equal(L.isPlaying(true, false), true, 'Live = playing, before and after new events');
+  assert.equal(L.isPlaying(false, true), true);
+  assert.equal(L.isPlaying(false, false), false, 'paused only when rewound and stopped');
+  const b = [1000e3, 2000e3];
+  assert.equal(L.sliderAction(1500e3, b), 'play');
+  assert.equal(L.sliderAction(b[0], b), 'play');
+  assert.equal(L.sliderAction(b[1], b), 'live');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /sliderAction\(v, b\) === 'live'\) goLive\(\); else \{ rewindTo\(v\); playing = true; \}/);
+  assert.match(html, /L\.isPlaying\(state\.live, playing\) \? '&#10074;&#10074; Pause'/);
+});
+
+test('quiet edges are still: dots only ride an edge with a ping in flight', () => {
+  assert.equal(L.edgeTraffic(false), null);
+  assert.ok(L.edgeTraffic(true).count > 0);
+  assert.equal(L.orbitStep(16, [], false), 0, 'hub orbit still on a quiet feed');
+  assert.equal(L.orbitStep(16, [{}], true), 0, 'and under reduced motion');
+  assert.ok(L.orbitStep(16, [{}], false) > 0);
+  const ev = L.mergeEvents([], feed.events);
+  const quiet = L.pingsAt(ev, ev.at(-1)._t + 60e3, 1100);
+  assert.equal(quiet.length, 0, 'an hour-old feed has nothing in the recent window');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /var tr = L\.edgeTraffic\(burst\);\s+if \(!tr\) return;/);
+});
+
+test('seat status follows the dots: LIVE in flight and one window after landing, rewound and now', () => {
+  const ev = L.mergeEvents([], [{ id: 'a', t_ct: '2026-10-06T03:00:00-05:00', kind: 'merged', from: 'forge', to: 'GitHub' }]);
+  const t = ev[0]._t, span = 1100 * 600;
+  const at = (x) => L.activeSeats(L.recentItems(ev, x, 2 * span), x, span, false);
+  // rewound view (feed clock)
+  assert.equal(at(t - 1).forge, undefined, 'not before the event');
+  assert.equal(at(t + span / 2).forge, 1, 'dot in flight');
+  assert.equal(at(t + span * 1.5).forge, 1, 'landed, window not passed');
+  assert.equal(at(t + span * 2).forge, undefined, 'idle after the window');
+  // now (wall clock flashes, staggered)
+  const fl = [{ e: ev[0], start: 10_000 }];
+  assert.equal(L.activeSeats(fl, 9_000, 1600, true).forge, 1, 'queued flash already counts');
+  assert.equal(L.activeSeats(fl, 10_800, 1600, true).forge, 1);
+  assert.equal(L.activeSeats(fl, 12_000, 1600, true).forge, 1, 'landed, window not passed');
+  assert.equal(L.activeSeats(fl, 13_200, 1600, true).forge, undefined);
+  assert.equal(L.activeSeats(fl, 10_800, 1600, true).GitHub, 1, 'both ends of the dot');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /var hot = state\.live \? L\.activeSeats\(flashes/);
+  assert.match(html, /nowWall - f\.start < 2 \* FLASH_MS/);
+});
