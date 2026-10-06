@@ -32,4 +32,5 @@ The station card is the one-line ticket at .xray/state/STATION.md.
 
 Read it after a compact. Leave Intent alone. The plan is the next cut. The long body belongs in notes.
 
-stamped · 0xray 4.0.40
+The station module writes this card. Heat adds `Cascade: record-map · notes N current`. The count is the current index. The body stays on the notes page.
+stamped · 0xray 4.0.41

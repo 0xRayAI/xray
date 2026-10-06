@@ -32,4 +32,4 @@ A stamped plate is one drawing for one plane.
 
 The file is `docs-site/docs/plates/<id>.md`. Each opened segue gets its own plate. The hook does not author this file. The plate that belongs here is review.
 
-stamped · 0xray 4.0.40
+stamped · 0xray 4.0.41

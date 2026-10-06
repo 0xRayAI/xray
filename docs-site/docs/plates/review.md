@@ -54,4 +54,4 @@ A state flow plate: one critic pass, one fix, one re-review, then stop.
 
 A FAIL names the file and a test that fails on the old code. One author fixes that hole. A second session waits while the verdict is open. Re-review that new head. A hole the new test did not lock returns to ONE FIX. A PASS ends the plate. A note stays a note and does not open another lap.
 
-stamped · 0xray 4.0.40
+stamped · 0xray 4.0.41

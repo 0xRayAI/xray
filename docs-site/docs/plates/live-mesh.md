@@ -38,4 +38,4 @@ Ping-pong eng events become one ordered JSON feed, then a mesh render. Markdown 
 
 Paths live under `house/live-mesh/`. Schema is `schema.json`. The plate that belongs here is house.
 
-stamped · 0xray 4.0.40
+stamped · 0xray 4.0.41

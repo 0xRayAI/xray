@@ -16,3 +16,5 @@ It views one plane.
   │ · not every plane at once                                  │
   └────────────────────────────────────────────────────────────┘
 ```
+
+stamped · 0xray 4.0.41

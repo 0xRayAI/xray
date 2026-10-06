@@ -68,7 +68,7 @@
     "plates": ["review"]
   },
   "record-map": {
-    "files": ["docs-site/docs/plates/record-map.md"],
+    "files": ["docs-site/docs/plates/record-map.md", "src/integrations/hooks/wake-cascade.cjs", "src/integrations/hooks/session-note-index.cjs"],
     "skills": ".agents/skills/record-map/SKILL.md",
     "plates": ["station-card", "notes-page", "reflection-page", "site-manual", "package-face", "write-home", "activity-log", "session-capture", "lens-page"]
   },
@@ -103,13 +103,13 @@
     "plates": ["activity-log", "session-capture", "inference-files", "trail-state"]
   },
   "station-card": {
-    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs", "src/integrations/hooks/wake-cascade.cjs"],
     "mark": "formatStationMarkdown",
     "skills": ".agents/skills/station-card/SKILL.md",
     "plates": ["notes-page", "record-map", "kept-line"]
   },
   "notes-page": {
-    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs", "src/integrations/hooks/session-note-index.cjs"],
     "mark": "stampNotesPickup",
     "skills": ".agents/skills/notes-page/SKILL.md",
     "plates": ["station-card", "record-map"]

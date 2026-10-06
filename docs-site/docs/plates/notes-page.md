@@ -32,4 +32,5 @@ Notes are the body the station card cannot hold.
 
 The page is `.xray/state/NOTES.md`. The pickup line equals the station intent. The default depth is the working notes: the point, the coverage, the library, the open pull requests, the rituals, and the next cut. A pickup line alone does not survive a compact. PreCompact calls `stampNotesPickup`, which updates only that line and leaves the body alone. The hook does not check the body. The seat writes it before the compact. Do not commit this file. Do not feed it to Repertoire.
 
-stamped · 0xray 4.0.40
+The station module writes this page. Heat keeps the current lines in `.xray/state/repertoire/session-notes.json` beside the laws. The wake cascade reads that index and does not write a law.
+stamped · 0xray 4.0.41

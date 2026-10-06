@@ -211,7 +211,7 @@ function namesTheSet(lower) {
   return planes.length === 1 && planes[0] === 'loop' && findScopes(lower).length === 0;
 }
 
-function gogglesAnswer(argv) {
+function gogglesAnswer(argv, projectRoot) {
   const words = [];
   for (const raw of argv || []) {
     const arg = String(raw || '').trim();
@@ -234,14 +234,14 @@ function gogglesAnswer(argv) {
   if (flavors.length === 1) {
     const others = acceptedPlanes().filter((name) => name !== flavors[0] && lower.includes(name));
     if (others.length) return none('');
-    const cards = collectCards(flavors[0], lower);
+    const cards = collectCards(flavors[0], lower, projectRoot);
     if (!cards) return none('');
     return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
   }
   const planes = acceptedPlanes().filter((name) => lower.includes(name));
   if (planes.length !== 1) {
     if (!planes.length && cardPlanesNamed(lower).length) {
-      const cards = collectCards('digest', lower);
+      const cards = collectCards('digest', lower, projectRoot);
       if (cards && cards.length) {
         return { text: cards.map((card) => formatCardText(card)).join('\n\n'), cards };
       }
@@ -255,12 +255,12 @@ function gogglesAnswer(argv) {
   return none(file ? `${line} File: ${file}` : line);
 }
 
-export function readGoggles(argv) {
-  return ok(gogglesAnswer(argv).text);
+export function readGoggles(argv, projectRoot) {
+  return ok(gogglesAnswer(argv, projectRoot).text);
 }
 
-export function lookCards(argv) {
-  return gogglesAnswer(argv).cards;
+export function lookCards(argv, projectRoot) {
+  return gogglesAnswer(argv, projectRoot).cards;
 }
 
 function cardPlanesNamed(lower) {
@@ -271,7 +271,11 @@ function listedFiles(plane) {
   return Array.isArray(plane.files) ? plane.files.map(String) : [];
 }
 
-function cardView(plane, scope, flavor, root) {
+function cascadeApi() {
+  return createRequire(import.meta.url)('./wake-cascade.cjs');
+}
+
+function cardView(plane, scope, flavor, root, cascadeRoot) {
   const listed = listedFiles(plane);
   const view = {
     plane: plane.id,
@@ -290,6 +294,13 @@ function cardView(plane, scope, flavor, root) {
     worn: plane.worn || '',
   };
   view.exam = examinePlane(plane, root).text;
+  if (cascadeApi().isCascadePlane(plane.id)) {
+    try {
+      view.cascade = cascadeApi().readWakeCascade(cascadeRoot || stateRoot());
+    } catch {
+      view.cascade = null;
+    }
+  }
   if (flavor === 'triage') {
     const filled = new Set(filledOf(plane));
     view.empty = FIELD_ORDER.filter((name) => !filled.has(name));
@@ -328,6 +339,7 @@ function formatCardText(view) {
   } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
     text = `${text}\n${view.exam}`;
   }
+  if (view.cascade) text = `${text}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
   return text;
 }
 
@@ -345,10 +357,12 @@ export function formatCardPane(view) {
   const top = `┌ ${title} ${'─'.repeat(Math.max(0, width - title.length - 1))}┐`;
   const mid = body.map((line) => `│ ${line.padEnd(width)} │`);
   const bot = `└${'─'.repeat(width + 2)}┘`;
-  return [top, ...mid, bot].join('\n');
+  const pane = [top, ...mid, bot].join('\n');
+  if (!view.cascade) return pane;
+  return `${pane}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
 }
 
-function collectCards(flavor, lower) {
+function collectCards(flavor, lower, projectRoot) {
   const named = cardPlanesNamed(lower);
   const scopes = findScopes(lower.filter((word) => word !== flavor && !named.includes(word)));
   if (scopes.length > 1) return null;
@@ -359,7 +373,7 @@ function collectCards(flavor, lower) {
   const cards = [];
   for (const id of ids) {
     const plane = growPlane(id, platesDir, stateRoot());
-    cards.push(cardView(plane, scope, flavor, root));
+    cards.push(cardView(plane, scope, flavor, root, projectRoot));
   }
   return cards;
 }
@@ -1095,8 +1109,8 @@ export function examinePlane(plane, root) {
 }
 
 
-export function look(argv) {
-  return readGoggles(argv);
+export function look(argv, projectRoot) {
+  return readGoggles(argv, projectRoot);
 }
 
 
