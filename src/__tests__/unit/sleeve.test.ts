@@ -126,13 +126,13 @@ describe("sleeve", () => {
       expect(first.sleeveLine).toBeUndefined();
       const opened = readSleeve(root);
       expect(opened.on).toBe(false);
-      expect(opened.missing).toEqual(["loop", "foundry"]);
-      expect(atOf(opened, "domain")).toEqual(["goggles"]);
-      expect(atOf(opened, "state")).toEqual([".xray/state/STATION.md"]);
-      expect(atOf(opened, "foundry")).toEqual([]);
       expect(first.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
-        "Sleeve: off loop, foundry",
+        "Sleeve: off loop, domain, state, foundry",
       ]);
+      expect(opened.missing).toEqual(["loop", "state", "foundry"]);
+      expect(atOf(opened, "domain")).toEqual(["goggles"]);
+      expect(atOf(opened, "state")).toEqual([]);
+      expect(atOf(opened, "foundry")).toEqual([]);
 
       const kept = heatCard(root, {
         hookEvent: "pre_compact",
@@ -187,6 +187,15 @@ describe("sleeve", () => {
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(ranAt);
+      fs.mkdirSync(path.join(root, ".opencode", "skills", "orchestrator"), { recursive: true });
+      fs.writeFileSync(path.join(root, ".opencode", "skills", "orchestrator", "SKILL.md"), "# extra\n");
+      expect(atOf(readSleeve(root), "foundry")).toEqual(["stale"]);
+      expect(
+        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
+      ).toBe(ranAt);
+      fs.rmSync(path.join(root, ".opencode", "skills", "orchestrator"), { recursive: true, force: true });
+      expect(atOf(readSleeve(root), "foundry")).toEqual(["inspect --skip-live"]);
+
       fs.writeFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "stale plate body\n");
       expect(atOf(readSleeve(root), "domain")).toEqual([]);
       const refreshed = heatCard(root, {
@@ -194,12 +203,19 @@ describe("sleeve", () => {
         intent: "another compact summary that stays off the ticket",
       });
       expect(refreshed.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
-        "Sleeve: on",
+        "Sleeve: off domain",
       ]);
       const worn = fs.readFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "utf8");
       expect(worn).toContain("It views one plane");
       expect(refreshed.card).not.toContain("It views one plane");
       expect(atOf(readSleeve(root), "domain")).toEqual(["goggles"]);
+      const restored = heatCard(root, {
+        hookEvent: "pre_compact",
+        intent: "a third compact summary that stays off the ticket",
+      });
+      expect(restored.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
+        "Sleeve: on",
+      ]);
       const afterMill = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
       ).ranAt;
@@ -210,8 +226,9 @@ describe("sleeve", () => {
       });
       const after = readSleeve(root);
       expect(after.on).toBe(false);
-      expect(after.missing).toContain("loop");
+      expect(after.missing).toEqual(["loop", "domain", "state"]);
       expect(atOf(after, "loop")).toEqual([]);
+      expect(atOf(after, "foundry")).toEqual(["inspect --skip-live"]);
       expect(replaced.card).toContain("Intent: paint the hangar door blue");
       expect(replaced.card).not.toContain("Sleeve: on");
       expect(

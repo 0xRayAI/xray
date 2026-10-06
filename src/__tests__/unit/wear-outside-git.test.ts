@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
+  copyFileSync,
   existsSync,
   lstatSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -200,6 +202,23 @@ describe('wear and setup outside a git checkout', () => {
       expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(false);
       const inspected = runInspect(project, home);
       expect(inspected.status, `${inspected.stdout}\n${inspected.stderr}`).toBe(0);
+      mkdirSync(path.join(project, ".opencode", "skills", "orchestrator"), { recursive: true });
+      copyFileSync(
+        path.join(repoRoot, "src", "skills", "orchestrator", "SKILL.md"),
+        path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"),
+      );
+      mkdirSync(path.join(project, ".opencode", "skills", "local-note"), { recursive: true });
+      writeFileSync(path.join(project, ".opencode", "skills", "local-note", "SKILL.md"), "local\n");
+      const again = runNode(wearScript, [project], project, home);
+      expect(again.status).not.toBe(0);
+      expect(existsSync(path.join(project, ".opencode", "skills", "orchestrator", "SKILL.md"))).toBe(false);
+      expect(readFileSync(path.join(project, ".opencode", "skills", "local-note", "SKILL.md"), "utf8")).toBe("local\n");
+      rmSync(path.join(project, ".opencode", "skills", "local-note"), { recursive: true, force: true });
+      const cleared = runNode(wearScript, [project], project, home);
+      expect(cleared.status).toBe(0);
+      expect(existsSync(path.join(project, ".opencode", "skills", "mill", "SKILL.md"))).toBe(true);
+      const reinspected = runInspect(project, home);
+      expect(reinspected.status, `${reinspected.stdout}\n${reinspected.stderr}`).toBe(0);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);

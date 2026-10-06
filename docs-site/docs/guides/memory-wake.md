@@ -2,7 +2,7 @@
 
 Station stays a ticket. This page is the join. Not a new organ.
 
-Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when the wake returned, the worn plate is the work, the ticket reads back as that wake, and inspect has passed in this process's home. Session start and compact run that mill. A look reads the report.
+Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. A change to the worn skills drops the pass until the next session start or compact.
 
 ## Thesis
 

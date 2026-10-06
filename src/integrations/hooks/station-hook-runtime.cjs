@@ -114,6 +114,12 @@ function isStockTicket(value) {
   return !text || text === "(none)" || text === "(none yet)";
 }
 
+function readStationHostToken(root) {
+  const md = readExistingStationMarkdown(root);
+  const match = md.match(/^Host:\s*(\S+)/m);
+  return match ? match[1] : "";
+}
+
 function readStationTicketField(root, field) {
   const md = readExistingStationMarkdown(root);
   const re = field === "Plan" ? /^Plan:\s*(.*)$/im : /^Intent:\s*(.*)$/im;
@@ -1011,6 +1017,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       : null;
   const hotSwap = nextSwap || keptSwap;
   const priorIntent = readStationTicketField(root, "Intent");
+  const priorHost = readStationHostToken(root);
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
@@ -1068,6 +1075,11 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     host,
     intent,
     priorIntent: priorIntent || null,
+    priorHost: priorHost || null,
+    priorWorkingIntent: priorWorking && typeof priorWorking.intent === "string" ? priorWorking.intent : null,
+    priorWorkingHost: priorWorking && typeof priorWorking.host === "string"
+      ? (priorWorking.host.split(/\s+/)[0] || null)
+      : null,
     git,
     hotSwap,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
@@ -1107,12 +1119,6 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     const latePrune = pruneKeywordDest(root);
     if (latePrune.kept) workingSnapshot.destCount = latePrune.kept;
   }
-  try {
-    const entered = recallPlate(intent);
-    if (entered) ensureWornPlate(root, entered.id);
-  } catch {
-    /* a missed plate leaves the domain empty */
-  }
   const working = persistRepertoireWorking(root, workingSnapshot);
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
@@ -1129,6 +1135,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     cascadeLine,
     ...(notesLine ? { notesLine } : {}),
     ...compactHold,
+    arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
   };
 }
 
@@ -1367,14 +1374,11 @@ function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
-    try {
-      const plate = recallPlate(fields && fields.intent);
-      if (plate) ensureWornPlate(root, plate.id);
-    } catch {
-      /* a missing plate doc must not block the card */
-    }
-    const wake = String((fields && (fields.hookEvent || fields.source)) || "");
-    if (/compact|session_start|session-start/i.test(wake)) {
+    const arrivedKnown = Boolean(fields && Object.prototype.hasOwnProperty.call(fields, "arrivedHook"));
+    const wake = arrivedKnown
+      ? String(fields.arrivedHook || "")
+      : String((fields && fields.hookEvent) || "");
+    if (/^(session_start|session-start|pre_compact|post_compact)$/i.test(wake)) {
       try {
         runFoundryMill(root);
       } catch {
@@ -1411,6 +1415,12 @@ function writeStationMarkdown(root, fields) {
         readExistingStationMarkdown(root),
       ),
     );
+    try {
+      const plate = recallPlate(fields && fields.intent);
+      if (plate) ensureWornPlate(root, plate.id);
+    } catch {
+      /* a missing plate doc must not block the card */
+    }
     return dest;
   } catch {
     return null;

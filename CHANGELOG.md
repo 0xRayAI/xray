@@ -7,7 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Features
-- **Sleeve.** `Sleeve: on` means the wake returned, the worn plate is the work, the ticket reads back as that wake, and `inspect --skip-live` has passed in this process's home. Session start and compact run that mill. A prompt and a look read the report. The look lists the four. The card names a stitch only when it is missing.
+- **Sleeve.** `Sleeve: on` means the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. A change to the worn skills drops the pass until the next session start or compact. The look lists the four. The card names a stitch only when it is missing.
 - **Wear.** A fresh wear fastens mill and inspect and leaves the role-skill mirror in the package, so `inspect --skip-live` can pass on that consumer.
 - **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
@@ -15,6 +15,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed
+- **Sleeve.** The card counts the plate and the ticket only when they were already on disk. A change to the worn skills drops the mill pass until the next session start or compact. A prompt after a compact reads the saved mill report. Wear removes a copied role skill that still matches the package.
 - **Session start.** A SessionStart event that carries the opening prompt stays a session start, so the mill runs before that first card is read.
 - **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
 - **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.

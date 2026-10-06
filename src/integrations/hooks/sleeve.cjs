@@ -1,10 +1,11 @@
 /**
- * Sleeve: on means this root's wake returned, the plate is the work,
- * the ticket reads back as that wake, and inspect has run in this process's home.
- * The look reads that report. Session start and compact run the mill.
+ * Sleeve: on means the previous ticket came back, the worn plate already
+ * matched the package, that ticket already matched the working record,
+ * and inspect has passed for the skills on disk.
+ * Session start and compact run the mill. A later prompt reads the report.
  */
 const { execFileSync } = require("child_process");
-const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
+const { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } = require("fs");
 const { dirname, join } = require("path");
 
 const STITCHES = ["loop", "domain", "state", "foundry"];
@@ -117,10 +118,18 @@ function stateStitch(root) {
   const card = ticketIntent(root);
   const host = ticketHost(root);
   const working = workingFile(root);
-  const kept = working && typeof working.intent === "string" ? working.intent : "";
-  const heldHost = working && typeof working.host === "string" ? working.host : "";
-  const same = Boolean(card && kept && host && heldHost && card === kept && host === heldHost);
-  return stitch("state", same, same ? [".xray/state/STATION.md"] : []);
+  const priorCard = working && typeof working.priorIntent === "string" ? working.priorIntent : "";
+  const priorHost = working && typeof working.priorHost === "string" ? working.priorHost : "";
+  const priorKept = working && typeof working.priorWorkingIntent === "string" ? working.priorWorkingIntent : "";
+  const priorHeld = working && typeof working.priorWorkingHost === "string" ? working.priorWorkingHost : "";
+  const agreed = Boolean(
+    priorCard && priorHost && priorKept && priorHeld
+    && priorCard === priorKept
+    && priorHost === priorHeld
+    && card === priorCard
+    && host === priorHost,
+  );
+  return stitch("state", agreed, agreed ? [".xray/state/STATION.md"] : []);
 }
 
 function foundryDir(root) {
@@ -163,8 +172,35 @@ function gitHead(root) {
   }
 }
 
+function wornSkillFingerprint(root) {
+  const homes = [
+    ".opencode/skills",
+    ".grok/plugins/0xray/skills",
+    ".hermes/plugins/xray-hermes/skills",
+    ".openclaw/skills",
+  ];
+  const names = [];
+  for (const rel of homes) {
+    const dir = join(root, rel);
+    if (!existsSync(dir)) continue;
+    let entries = [];
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (!existsSync(join(dir, entry.name, "SKILL.md"))) continue;
+      names.push(`${rel}/${entry.name}`);
+    }
+  }
+  names.sort();
+  return names.join(",");
+}
+
 function millStamp(root, dir) {
-  return `${packageVersion(dir)}|${gitHead(root)}`;
+  return `${packageVersion(dir)}|${gitHead(root)}|${wornSkillFingerprint(root)}`;
 }
 
 function runInspect(root, cli) {

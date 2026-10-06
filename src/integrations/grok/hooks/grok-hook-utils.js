@@ -337,6 +337,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ...extra,
     ...heat,
     ...compactHold,
+    arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
     hook: source,
     source,
     timestamp: new Date().toISOString(),

@@ -1879,6 +1879,35 @@ function packageShipsConsumerSuit(packageRoot) {
  * Does not install Cursor hooks or git hooks.
  * Existing user files follow the 4.0.28 guards inside those functions.
  */
+
+const ROLE_SKILL_KEEP = new Set(["mill", "inspect"]);
+const ROLE_SKILL_DIRS = [
+  [".opencode", "skills"],
+  [".grok", "plugins", "0xray", "skills"],
+  [".hermes", "plugins", "xray-hermes", "skills"],
+  [".openclaw", "skills"],
+];
+
+function removeCopiedRoleSkills(packageRoot, targetDir) {
+  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
+    ? path.join(packageRoot, "src", "skills")
+    : path.join(packageRoot, "dist", "skills");
+  if (!fs.existsSync(source)) return;
+  for (const parts of ROLE_SKILL_DIRS) {
+    const dir = path.join(targetDir, ...parts);
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || ROLE_SKILL_KEEP.has(entry.name)) continue;
+      const packaged = path.join(source, entry.name, "SKILL.md");
+      const worn = path.join(dir, entry.name, "SKILL.md");
+      if (!fs.existsSync(packaged) || !fs.existsSync(worn)) continue;
+      const same = fs.readFileSync(packaged).equals(fs.readFileSync(worn));
+      if (!same) continue;
+      fs.rmSync(path.join(dir, entry.name), { recursive: true, force: true });
+    }
+  }
+}
+
 function installConsumerProjectFiles(packageRoot, targetDir, log) {
   const write = typeof log === "function" ? log : () => {};
   if (!isConsumerInstall(packageRoot, targetDir) || !packageShipsConsumerSuit(packageRoot)) {
@@ -1897,6 +1926,7 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   installGrokBridge(targetDir, packageRoot, write);
   installHermesBridge(targetDir, packageRoot, write);
   installOpenclawBridge(targetDir, packageRoot, write);
+  removeCopiedRoleSkills(packageRoot, targetDir);
   try {
     mintConsumerSuit(packageRoot, targetDir, write);
   } catch (err) {

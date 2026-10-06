@@ -7,6 +7,7 @@ import {
   buildRepertoireResume,
   buildSessionBootPayload,
   ensureSessionBoot,
+  writeSessionBoot,
   loadFeatures,
   resolveGrokHookEvent,
   resolveSiblingWorkspaceRoots,
@@ -101,8 +102,61 @@ describe('grok-hook-utils', () => {
       hookEvent: 'lead-heat',
     });
     expect(payload.hookEvent).toBe('pre_compact');
+    expect(payload.arrivedHook).toBe('lead-heat');
     expect(payload.event_class).toBe('cursor-host-precompact');
     expect(payload.conversation_id).toBe('bc-compact-hold');
+  });
+
+  it('a prompt after compact reads the mill report', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({ multi_agent_orchestration: { lead_dev_mode: true } }),
+    );
+    fs.writeFileSync(path.join(tmp, 'package.json'), `${JSON.stringify({ name: 'acme' })}\n`);
+    const mill = path.join(tmp, '.xray', 'state', 'sleeve-mill.json');
+    writeSessionBoot(
+      tmp,
+      buildSessionBootPayload(tmp, '0xray/grok-compact', {
+        host: 'grok',
+        hookEvent: 'pre_compact',
+        intent: 'goggles',
+      }),
+    );
+    expect(fs.existsSync(mill)).toBe(true);
+    const saved = JSON.parse(fs.readFileSync(mill, 'utf8')) as { ranAt?: string };
+    saved.ranAt = 'sentinel-ran';
+    fs.writeFileSync(mill, `${JSON.stringify(saved)}\n`);
+    const prompt = buildSessionBootPayload(tmp, '0xray/grok-user-prompt-submit', {
+      host: 'grok',
+      hookEvent: 'user_prompt_submit',
+      intent: 'goggles',
+    });
+    expect(prompt.hookEvent).toBe('pre_compact');
+    expect(prompt.arrivedHook).toBe('user_prompt_submit');
+    writeSessionBoot(tmp, prompt);
+    const lead = buildSessionBootPayload(tmp, '0xray/cursor-pre-tool-use-boot', {
+      host: 'cursor',
+      hookEvent: 'lead-heat',
+    });
+    expect(lead.arrivedHook).toBe('lead-heat');
+    writeSessionBoot(tmp, lead);
+    const channel = buildSessionBootPayload(tmp, '0xray/grok-session-start', {
+      host: 'grok',
+      intent: 'goggles',
+    });
+    expect(channel.arrivedHook).toBe('');
+    expect(channel.hookEvent).toBe('pre_compact');
+    writeSessionBoot(tmp, channel);
+    expect(JSON.parse(fs.readFileSync(mill, 'utf8')).ranAt).toBe('sentinel-ran');
+    writeSessionBoot(
+      tmp,
+      buildSessionBootPayload(tmp, '0xray/grok-session-start', {
+        host: 'grok',
+        hookEvent: 'session_start',
+        intent: 'goggles',
+      }),
+    );
+    expect(JSON.parse(fs.readFileSync(mill, 'utf8')).ranAt).not.toBe('sentinel-ran');
   });
 
   it('sessionBootNeedsRefresh when workspaceRoot or host is stale', () => {
