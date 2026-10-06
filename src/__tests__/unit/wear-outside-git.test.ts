@@ -89,23 +89,35 @@ function listFiles(root: string): string[] {
   return out.sort();
 }
 
-function suitWithSkillsAndLinks(): string[] {
-  const skills = readdirSync(path.join(repoRoot, 'src/skills'))
-    .filter((name) => existsSync(path.join(repoRoot, 'src/skills', name, 'SKILL.md')))
-    .map((name) => `.opencode/skills/${name}/SKILL.md`);
-  return [...new Set([...SUIT_WITHOUT_CURSOR_HOOKS, ...skills, 'dist', 'scripts'])].sort();
+function wornSuit(): string[] {
+  return [...new Set([...SUIT_WITHOUT_CURSOR_HOOKS, 'dist', 'scripts'])].sort();
 }
 
-function skillLinkStdout(): string {
-  const copied = readdirSync(path.join(repoRoot, 'src/skills')).filter((name) =>
-    existsSync(path.join(repoRoot, 'src/skills', name, 'SKILL.md')),
-  ).length;
-  return [
-    `✅ Skills: ${copied} updated, 0 community skills preserved`,
-    '✅ Scripts symlink: created',
-    '✅ Dist symlink: created',
-    '',
-  ].join('\n');
+function linkStdout(): string {
+  return ['✅ Scripts symlink: created', '✅ Dist symlink: created', ''].join('\n');
+}
+
+function runInspect(project: string, home: string) {
+  const machine = mkdtempSync(path.join(tmpdir(), 'xray-wear-machine-'));
+  try {
+    return spawnSync(
+      process.execPath,
+      [path.join(repoRoot, 'scripts/foundry/cli.mjs'), 'inspect', '--skip-live'],
+      {
+        cwd: project,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          HOME: home,
+          USERPROFILE: home,
+          FOUNDRY_MACHINE_HOME: machine,
+          FOUNDRY_ROOT: project,
+        },
+      },
+    );
+  } finally {
+    rmSync(machine, { recursive: true, force: true });
+  }
 }
 
 function freshHome(): string {
@@ -131,9 +143,9 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(skillLinkStdout());
+      expect(ran.stdout).toBe(linkStdout());
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json' && rel !== 'keep.txt');
-      expect(wrote).toEqual(suitWithSkillsAndLinks());
+      expect(wrote).toEqual(wornSuit());
       expect(wrote.some((rel) => rel === '.cursor' || rel.startsWith('.cursor/'))).toBe(false);
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
       expect(readFileSync(path.join(project, 'keep.txt'), 'utf8')).toBe('stay\n');
@@ -155,15 +167,15 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(setupScript, ['setup'], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe(`${SKIPPED}\n`);
-      expect(ran.stdout).toBe(`${skillLinkStdout()}setup: wrote .mcp.json and chat bridges\n`);
+      expect(ran.stdout).toBe(`${linkStdout()}setup: wrote .mcp.json and chat bridges\n`);
       const wrote = listFiles(project).filter((rel) => rel !== 'package.json');
-      expect(wrote).toEqual(suitWithSkillsAndLinks());
+      expect(wrote).toEqual(wornSuit());
       expect(existsSync(path.join(project, '.cursor'))).toBe(false);
       expect(listFiles(home).filter((rel) => !homeBefore.includes(rel))).toEqual(HOME_FROM_428);
       const again = runNode(wearScript, [project], project, home);
       expect(again.status).toBe(0);
       expect(again.stderr).toBe(`${SKIPPED}\n`);
-      expect(listFiles(project).filter((rel) => rel !== 'package.json')).toEqual(suitWithSkillsAndLinks());
+      expect(listFiles(project).filter((rel) => rel !== 'package.json')).toEqual(wornSuit());
     } finally {
       rmSync(project, { recursive: true, force: true });
       rmSync(home, { recursive: true, force: true });
@@ -180,10 +192,14 @@ describe('wear and setup outside a git checkout', () => {
       const ran = runNode(wearScript, [project], project, home);
       expect(ran.status).toBe(0);
       expect(ran.stderr).toBe('');
-      expect(ran.stdout).toBe(skillLinkStdout());
+      expect(ran.stdout).toBe(linkStdout());
       expect(existsSync(path.join(project, '.cursor', 'hooks.json'))).toBe(true);
       expect(existsSync(path.join(project, '.cursor', 'hooks', 'pre-tool-use.sh'))).toBe(true);
-      expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(project, '.opencode', 'skills', 'mill', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(project, '.opencode', 'skills', 'inspect', 'SKILL.md'))).toBe(true);
+      expect(existsSync(path.join(project, '.opencode', 'skills', 'orchestrator', 'SKILL.md'))).toBe(false);
+      const inspected = runInspect(project, home);
+      expect(inspected.status, `${inspected.stdout}\n${inspected.stderr}`).toBe(0);
       expect(lstatSync(path.join(project, 'dist')).isSymbolicLink()).toBe(true);
       expect(lstatSync(path.join(project, 'scripts')).isSymbolicLink()).toBe(true);
       expect(existsSync(path.join(project, 'AGENTS.md'))).toBe(true);

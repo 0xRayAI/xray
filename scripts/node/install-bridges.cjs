@@ -1873,9 +1873,10 @@ function packageShipsConsumerSuit(packageRoot) {
 }
 
 /**
- * 4.0.28 consumer postinstall files: AGENTS.md, .gitignore, repertoire link,
- * .xray config, bridges, mill plant, then the setup.cjs skill mirror and
- * dist/scripts links. Does not install Cursor hooks or git hooks.
+ * Consumer wear files: AGENTS.md, .gitignore, repertoire link, .xray config,
+ * bridges, mill plant (mill + inspect), and the scripts and dist links.
+ * The role-skill mirror stays in the package.
+ * Does not install Cursor hooks or git hooks.
  * Existing user files follow the 4.0.28 guards inside those functions.
  */
 function installConsumerProjectFiles(packageRoot, targetDir, log) {
