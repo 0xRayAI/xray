@@ -1086,13 +1086,6 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     notes: cascade.notes.length,
   };
   const cascadeLine = formatCascadePointer(cascade);
-  const sleeve = readSleeve(root);
-  workingSnapshot.sleeve = {
-    on: sleeve.on,
-    missing: sleeve.missing,
-    stitches: sleeve.stitches,
-  };
-  const sleeveLine = formatSleevePointer(sleeve);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
@@ -1112,7 +1105,21 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     const latePrune = pruneKeywordDest(root);
     if (latePrune.kept) workingSnapshot.destCount = latePrune.kept;
   }
+  try {
+    const entered = recallPlate(intent);
+    if (entered) stampPlateIfMissing(root, entered.id);
+  } catch {
+    /* a missed plate leaves the domain empty */
+  }
+  persistRepertoireWorking(root, workingSnapshot);
+  const sleeve = readSleeve(root, { intent });
+  workingSnapshot.sleeve = {
+    on: sleeve.on,
+    missing: sleeve.missing,
+    stitches: sleeve.stitches,
+  };
   const working = persistRepertoireWorking(root, workingSnapshot);
+  const sleeveLine = formatSleevePointer(sleeve);
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
   const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;

@@ -1,9 +1,11 @@
 /**
- * One sleeve, four stitches, one record each: name, on, at.
- * Loop is in the outer set. Domain and state are plate ids.
- * Foundry is scripts/foundry. The card says on, or the missing names.
+ * Sleeve: on means this root is in a loop, inside a domain,
+ * holding state, and standing in the foundry.
+ * Loop is a held plane. Domain is a plate this root has entered.
+ * State is the ticket or the working file. Foundry is the mill answering here.
  */
-const { existsSync, readdirSync, readFileSync } = require("fs");
+const { execFileSync } = require("child_process");
+const { existsSync, readFileSync } = require("fs");
 const { join } = require("path");
 
 const STITCHES = ["loop", "domain", "state", "foundry"];
@@ -17,13 +19,10 @@ const SLEEVE_PLANES = [
   "suit-settings",
   "trail-state",
 ];
+const FOUNDRY_FILES = ["cli.mjs", "mill-root.mjs", "inspect.mjs", "reconcile-version.mjs"];
 
 function isSleevePlane(id) {
   return SLEEVE_PLANES.includes(String(id || ""));
-}
-
-function suitHome() {
-  return join(__dirname, "..", "..", "..");
 }
 
 function stitch(name, on, at) {
@@ -34,104 +33,152 @@ function stitch(name, on, at) {
   };
 }
 
-function frontMatter(text) {
-  const body = String(text || "");
-  if (!body.startsWith("---")) return "";
-  const end = body.indexOf("\n---", 3);
-  if (end < 0) return "";
-  return body.slice(0, end);
+function readJson(file) {
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
 }
 
-function plateIds(dir, type) {
-  if (!dir || !existsSync(dir)) return [];
-  let names = [];
+function planeMap() {
+  return readJson(join(__dirname, "goggles-planes.json")) || {};
+}
+
+function loopStitch(root) {
+  const data = readJson(join(root, ".xray", "state", "goggles-reading.json"));
+  const plane = data && typeof data.plane === "string" ? data.plane : "";
+  if (!plane || (data && data.drift)) return stitch("loop", false, []);
+  const entry = planeMap()[plane];
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) return stitch("loop", false, []);
+  const scope = typeof data.scope === "string" && data.scope ? data.scope : "";
+  return stitch("loop", true, [scope ? `${plane} · ${scope}` : plane]);
+}
+
+function plateBody(raw) {
+  return String(raw || "").replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, "").trim();
+}
+
+function plateIdFromCard(root) {
+  const file = join(root, ".xray", "state", "STATION.md");
+  if (!existsSync(file)) return "";
+  let text = "";
   try {
-    names = readdirSync(dir);
+    text = readFileSync(file, "utf8");
   } catch {
-    return [];
+    return "";
   }
+  const line = text.split(/\r?\n/).find((row) => row.startsWith("Plate: "));
+  if (!line) return "";
+  const id = line.slice("Plate: ".length).split("—")[0].trim();
+  return /^[a-z0-9-]+$/.test(id) ? id : "";
+}
+
+function domainIds(root, opts) {
   const ids = [];
-  for (const name of names) {
-    if (!name.endsWith(".md")) continue;
-    let text = "";
+  const fromCard = plateIdFromCard(root);
+  if (fromCard) ids.push(fromCard);
+  if (opts && opts.intent) {
     try {
-      text = readFileSync(join(dir, name), "utf8");
+      const plate = require("./plates.cjs").recallPlate(opts.intent);
+      if (plate && plate.id && !ids.includes(plate.id)) ids.push(plate.id);
     } catch {
-      continue;
+      /* a missed plate leaves the domain empty */
     }
-    const line = frontMatter(text).split(/\r?\n/).find((row) => row.startsWith("plate_type:"));
-    if (!line) continue;
-    if (line.slice("plate_type:".length).trim() !== type) continue;
-    ids.push(name.slice(0, -3));
   }
-  ids.sort();
   return ids;
 }
 
-function clothAt(home) {
-  const plates = join(home, "docs-site", "docs", "plates");
-  const foundry = existsSync(join(home, "scripts", "foundry", "cli.mjs"));
-  return {
-    domain: plateIds(plates, "domain model"),
-    state: plateIds(plates, "state flow"),
-    foundry: foundry ? "scripts/foundry" : "",
-  };
-}
-
-function homesFor(root, opts) {
-  if (opts && opts.home) return [opts.home];
-  const homes = [];
-  if (root) homes.push(root);
-  homes.push(suitHome());
-  if (root) homes.push(join(root, "node_modules", "0xray"));
-  const seen = new Set();
-  const out = [];
-  for (const home of homes) {
-    if (!home || seen.has(home)) continue;
-    seen.add(home);
-    out.push(home);
-  }
-  return out;
-}
-
-function pickCloth(homes) {
-  let partial = null;
-  for (const home of homes) {
-    const cloth = clothAt(home);
-    const any = cloth.domain.length || cloth.state.length || cloth.foundry;
-    if (!partial && any) partial = cloth;
-    if (cloth.domain.length && cloth.state.length && cloth.foundry) return cloth;
-  }
-  return partial || { domain: [], state: [], foundry: "" };
-}
-
-function loopStitch(planesFile) {
+function domainStitch(root, opts) {
+  let plates = null;
   try {
-    const data = JSON.parse(readFileSync(planesFile, "utf8"));
-    const names = Array.isArray(data.planes) ? data.planes.map((name) => String(name)) : [];
-    const entry = data.loop;
-    const file = entry && typeof entry === "object" && typeof entry.file === "string" ? entry.file : "";
-    return stitch("loop", names.includes("loop"), file ? [file] : []);
+    plates = require("./plates.cjs");
   } catch {
-    return stitch("loop", false, []);
+    return stitch("domain", false, []);
+  }
+  for (const id of domainIds(root, opts)) {
+    const worn = join(root, ".xray", "state", "plates", `${id}.md`);
+    if (!existsSync(worn)) continue;
+    let raw = "";
+    try {
+      raw = readFileSync(worn, "utf8");
+    } catch {
+      continue;
+    }
+    if (!plateBody(raw)) continue;
+    try {
+      const loaded = plates.loadPlate(id);
+      if (!loaded || !loaded.body) continue;
+    } catch {
+      continue;
+    }
+    return stitch("domain", true, [id]);
+  }
+  return stitch("domain", false, []);
+}
+
+function stateStitch(root) {
+  const held = [];
+  const station = join(root, ".xray", "state", "STATION.md");
+  if (existsSync(station)) {
+    try {
+      const text = readFileSync(station, "utf8");
+      if (/^Intent: /m.test(text)) held.push(".xray/state/STATION.md");
+    } catch {
+      /* unreadable ticket is not held */
+    }
+  }
+  const working = join(root, ".xray", "state", "repertoire-working.json");
+  const data = existsSync(working) ? readJson(working) : null;
+  if (data && typeof data.host === "string" && data.host) {
+    held.push(".xray/state/repertoire-working.json");
+  }
+  return stitch("state", held.length > 0, held);
+}
+
+function foundryDir(root) {
+  const candidates = [
+    join(root, "scripts", "foundry"),
+    join(root, "node_modules", "0xray", "scripts", "foundry"),
+  ];
+  for (const dir of candidates) {
+    if (FOUNDRY_FILES.every((name) => existsSync(join(dir, name)))) return dir;
+  }
+  return "";
+}
+
+function foundryAt(root, dir) {
+  if (dir === join(root, "scripts", "foundry")) return "scripts/foundry";
+  return "node_modules/0xray/scripts/foundry";
+}
+
+function foundryStitch(root) {
+  const dir = foundryDir(root);
+  if (!dir) return stitch("foundry", false, []);
+  try {
+    const out = execFileSync(process.execPath, [join(dir, "cli.mjs"), "help"], {
+      cwd: root,
+      env: { ...process.env, FOUNDRY_ROOT: root },
+      encoding: "utf8",
+      timeout: 8000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    if (!String(out).includes("FOUNDRY_ROOT")) return stitch("foundry", false, []);
+    return stitch("foundry", true, [foundryAt(root, dir)]);
+  } catch {
+    return stitch("foundry", false, []);
   }
 }
 
 function readSleeve(root, opts = {}) {
-  const planesFile = (opts && opts.planesFile) || join(__dirname, "goggles-planes.json");
-  const cloth = pickCloth(homesFor(root, opts));
   const stitches = [
-    loopStitch(planesFile),
-    stitch("domain", cloth.domain.length > 0, cloth.domain),
-    stitch("state", cloth.state.length > 0, cloth.state),
-    stitch("foundry", Boolean(cloth.foundry), cloth.foundry ? [cloth.foundry] : []),
+    loopStitch(root),
+    domainStitch(root, opts),
+    stateStitch(root),
+    foundryStitch(root),
   ];
   const missing = stitches.filter((row) => !row.on).map((row) => row.name);
-  return {
-    on: missing.length === 0,
-    missing,
-    stitches,
-  };
+  return { on: missing.length === 0, missing, stitches };
 }
 
 function rowsOf(sleeve) {
