@@ -21,6 +21,7 @@ const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
 const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
+const { rememberSessionNote, retainProjectNotes } = require("./session-note-index.cjs");
 
 const INTENT_MAX = 240;
 
@@ -520,6 +521,7 @@ function stampNotesPickup(root, line) {
     : body
       ? `${marker}\n\n${body.replace(/^\n+/, "")}`
       : `${marker}\n`;
+  rememberSessionNote(root, text, { source: "NOTES.md" });
   if (next === body) return text;
   mkdirSync(join(root, ".xray", "state"), { recursive: true });
   writeFileSync(dest, next.endsWith("\n") ? next : `${next}\n`);
@@ -973,6 +975,7 @@ function buildRepertoireResume(root) {
 }
 
 function applyStationHeat(root, host, extra = {}, existing = {}) {
+  retainProjectNotes(root);
   const mr = readMemoryRoutingConfig(root);
   const memoryOff = isExplicitMemoryRoutingOptOut(mr);
   const promptHook = isPromptHook(extra);
