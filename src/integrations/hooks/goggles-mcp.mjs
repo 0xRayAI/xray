@@ -162,6 +162,16 @@ function publicCard(view) {
     if (view.exam) notes.push(view.exam);
   }
   const skills = view.skills ? basename(String(view.skills)) : '';
+  const cascade = view.cascade
+    ? {
+      plane: view.cascade.plane,
+      station: view.cascade.station,
+      notesPage: view.cascade.notesPage,
+      index: view.cascade.index,
+      laws: Array.isArray(view.cascade.laws) ? view.cascade.laws : [],
+      notes: Array.isArray(view.cascade.notes) ? view.cascade.notes : [],
+    }
+    : null;
   if (view.narrow) {
     return {
       plane: view.plane,
@@ -169,6 +179,7 @@ function publicCard(view) {
       digest: view.digest || '',
       files: Array.isArray(view.files) ? view.files : [],
       notes,
+      ...(cascade ? { cascade } : {}),
     };
   }
   return {
@@ -185,6 +196,7 @@ function publicCard(view) {
     teardown: view.teardown || '',
     worn: view.worn || '',
     notes,
+    ...(cascade ? { cascade } : {}),
   };
 }
 
@@ -205,9 +217,9 @@ export async function answerLook(raw, root) {
     return { ok: true, quiet: false, mode: 'kind0', content: line };
   }
   const argv = argvFrom(args);
-  const text = api.look(argv).text;
+  const text = api.look(argv, here).text;
   if (text === 'Name one plane.') return deny('name_one', 'Name one plane.');
-  const cards = api.lookCards(argv);
+  const cards = api.lookCards(argv, here);
   if (Array.isArray(cards) && cards.length) {
     const shown = cards.map(publicCard);
     return {
