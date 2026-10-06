@@ -128,10 +128,10 @@ function rememberSessionNote(root, text, opts = {}) {
   if (existing) {
     existing.last_seen = now;
     if (source) existing.source = source;
-    if (slot) {
+    // A notes page can still show the old line. That sighting must not
+    // revive it or demote the line that replaced it.
+    if (slot && !existing.superseded_by) {
       existing.slot = slot;
-      delete existing.superseded_by;
-      delete existing.superseded_at;
       closeSlot(loaded.notes, slot, existing.id, now);
     }
     const wrote = writeIndex(root, loaded.notes);
@@ -181,7 +181,7 @@ function supersedeSessionNote(root, previousText, nextText, opts = {}) {
   if (next.id === previous.id) return { kept: false };
   previous.superseded_by = next.id;
   previous.superseded_at = now;
-  if (previous.slot) closeSlot(loaded.notes, previous.slot, next.id, now);
+  if (next.slot) closeSlot(loaded.notes, next.slot, next.id, now);
   const wrote = writeIndex(root, loaded.notes);
   return { kept: wrote, id: next.id, supersededId: previous.id, corrupt: false };
 }

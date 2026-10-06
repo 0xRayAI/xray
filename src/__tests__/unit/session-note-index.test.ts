@@ -246,4 +246,50 @@ describe("session note index", () => {
     }
   });
 
+
+  it("a later heat does not revive a superseded pickup from the notes page", () => {
+    const root = tempRoot("xray-notes-no-revive-");
+    try {
+      const notes = path.join(root, ".xray", "state", "NOTES.md");
+      fs.mkdirSync(path.dirname(notes), { recursive: true });
+      fs.writeFileSync(notes, "**Pickup line:** old pickup\n\nThe body stays.\n");
+      retainProjectNotes(root, { now: "2026-10-01T00:00:00.000Z" });
+      supersedeSessionNote(root, "old pickup", "new pickup", { now: "2026-10-06T00:00:00.000Z" });
+      retainProjectNotes(root, { now: "2026-10-06T01:00:00.000Z" });
+      applyStationHeat(
+        root,
+        "grok",
+        { hookEvent: "preToolUse", intent: "old pickup" },
+        { host: "grok", intent: "old pickup" },
+      );
+      expect(shortSessionIndex(root).map((note) => note.text).sort()).toEqual([
+        "The body stays.",
+        "new pickup",
+      ]);
+      const stored = JSON.parse(fs.readFileSync(sessionNotesPath(root), "utf8")) as {
+        notes: Array<{ text: string; superseded_by?: string }>;
+      };
+      expect(stored.notes.find((note) => note.text === "old pickup")?.superseded_by).toBeTruthy();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("reviving a superseded pickup leaves one current line in that slot", () => {
+    const root = tempRoot("xray-notes-one-slot-");
+    try {
+      rememberSessionNote(root, "alpha", { now: "2026-10-01T00:00:00.000Z", slot: "pickup" });
+      supersedeSessionNote(root, "alpha", "beta", { now: "2026-10-02T00:00:00.000Z" });
+      rememberSessionNote(root, "gamma", { now: "2026-10-03T00:00:00.000Z" });
+      supersedeSessionNote(root, "gamma", "alpha", { now: "2026-10-04T00:00:00.000Z" });
+      expect(shortSessionIndex(root).map((note) => note.text).sort()).toEqual(["alpha"]);
+      const stored = JSON.parse(fs.readFileSync(sessionNotesPath(root), "utf8")) as {
+        notes: Array<{ text: string; slot?: string; superseded_by?: string }>;
+      };
+      const pickupCurrent = stored.notes.filter((note) => note.slot === "pickup" && !note.superseded_by);
+      expect(pickupCurrent.map((note) => note.text)).toEqual(["alpha"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
