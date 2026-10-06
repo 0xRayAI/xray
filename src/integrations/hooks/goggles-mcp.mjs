@@ -172,6 +172,19 @@ function publicCard(view) {
       notes: Array.isArray(view.cascade.notes) ? view.cascade.notes : [],
     }
     : null;
+  const sleeve = view.sleeve
+    ? {
+      on: Boolean(view.sleeve.on),
+      missing: Array.isArray(view.sleeve.missing) ? view.sleeve.missing : [],
+      stitches: Array.isArray(view.sleeve.stitches)
+        ? view.sleeve.stitches.map((row) => ({
+          name: String(row && row.name || ''),
+          on: Boolean(row && row.on),
+          at: Array.isArray(row && row.at) ? row.at.map((item) => String(item)) : [],
+        }))
+        : [],
+    }
+    : null;
   if (view.narrow) {
     return {
       plane: view.plane,
@@ -180,6 +193,7 @@ function publicCard(view) {
       files: Array.isArray(view.files) ? view.files : [],
       notes,
       ...(cascade ? { cascade } : {}),
+      ...(sleeve ? { sleeve } : {}),
     };
   }
   return {
@@ -197,6 +211,7 @@ function publicCard(view) {
     worn: view.worn || '',
     notes,
     ...(cascade ? { cascade } : {}),
+    ...(sleeve ? { sleeve } : {}),
   };
 }
 

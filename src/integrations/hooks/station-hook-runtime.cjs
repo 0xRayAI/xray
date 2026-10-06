@@ -23,6 +23,7 @@ const HOOKS_DIR = __dirname;
 const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
 const { rememberSessionNote, retainProjectNotes } = require("./session-note-index.cjs");
 const { formatCascadePointer, readWakeCascade } = require("./wake-cascade.cjs");
+const { formatSleevePointer, readSleeve } = require("./sleeve.cjs");
 
 const INTENT_MAX = 240;
 
@@ -1085,6 +1086,13 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     notes: cascade.notes.length,
   };
   const cascadeLine = formatCascadePointer(cascade);
+  const sleeve = readSleeve(root);
+  workingSnapshot.sleeve = {
+    on: sleeve.on,
+    missing: sleeve.missing,
+    stitches: sleeve.stitches,
+  };
+  const sleeveLine = formatSleevePointer(sleeve);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
@@ -1118,6 +1126,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     workingLine,
     stationLine,
     cascadeLine,
+    sleeveLine,
     ...(notesLine ? { notesLine } : {}),
     ...compactHold,
   };
@@ -1135,6 +1144,7 @@ const STOCK_STATION_PREFIXES = [
   "plate:",
   "library:",
   "cascade:",
+  "sleeve:",
   "notes:",
 ];
 
@@ -1332,6 +1342,7 @@ function formatStationMarkdown(fields) {
   if (plateLine) lines.push(plateLine);
   lines.push("Library: record-map — .agents/skills/record-map/SKILL.md");
   if (fields.cascadeLine) lines.push(fields.cascadeLine);
+  if (fields.sleeveLine) lines.push(fields.sleeveLine);
   if (fields.notesLine) lines.push(fields.notesLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
