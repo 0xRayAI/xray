@@ -11,8 +11,10 @@ import {
   lawsPath,
   rememberSessionNote,
   retainProjectNotes,
+  sessionNoteHistory,
   sessionNotesPath,
   shortSessionIndex,
+  supersedeSessionNote,
 } from "../../integrations/hooks/session-note-index.mjs";
 
 function tempRoot(name: string): string {
@@ -187,4 +189,61 @@ describe("session note index", () => {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("keeps a replaced line on disk and returns only the current line", () => {
+    const root = tempRoot("xray-notes-supersede-");
+    try {
+      rememberSessionNote(root, "use vitest", { now: "2026-01-01T00:00:00.000Z" });
+      const saved = supersedeSessionNote(root, "use vitest", "use node:test", {
+        now: "2026-10-06T00:00:00.000Z",
+      });
+      expect(saved.kept).toBe(true);
+      const view = shortSessionIndex(root).map((note) => note.text);
+      expect(view).toEqual(["use node:test"]);
+      const stored = JSON.parse(fs.readFileSync(sessionNotesPath(root), "utf8")) as {
+        notes: Array<{ text: string; superseded_by?: string }>;
+      };
+      expect(stored.notes).toHaveLength(2);
+      const older = stored.notes.find((note) => note.text === "use vitest");
+      expect(older?.superseded_by).toBe(saved.id);
+      expect(sessionNoteHistory(root, "use node:test").map((note) => note.text)).toEqual(["use vitest"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("a new pickup supersedes the old pickup and leaves the body current", () => {
+    const root = tempRoot("xray-notes-pickup-slot-");
+    try {
+      rememberSessionNote(root, "first pickup", { now: "2026-10-01T00:00:00.000Z", slot: "pickup" });
+      rememberSessionNote(root, "the body stays", { now: "2026-10-01T00:00:00.000Z" });
+      rememberSessionNote(root, "second pickup", { now: "2026-10-06T00:00:00.000Z", slot: "pickup" });
+      expect(shortSessionIndex(root).map((note) => note.text).sort()).toEqual([
+        "second pickup",
+        "the body stays",
+      ]);
+      expect(sessionNoteHistory(root, "second pickup").map((note) => note.text)).toEqual(["first pickup"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("does not drop a superseded line when the stale window passes", () => {
+    const root = tempRoot("xray-notes-keep-history-");
+    try {
+      rememberSessionNote(root, "old decision", { now: "2020-01-01T00:00:00.000Z" });
+      supersedeSessionNote(root, "old decision", "new decision", { now: "2026-10-06T00:00:00.000Z" });
+      rememberSessionNote(root, "lone stale", { now: "2020-01-01T00:00:00.000Z" });
+      const cleaned = dropStaleSessionNotes(root, { now: "2026-10-06T00:00:00.000Z" });
+      expect(cleaned.dropped).toBe(1);
+      const stored = JSON.parse(fs.readFileSync(sessionNotesPath(root), "utf8")) as {
+        notes: Array<{ text: string }>;
+      };
+      expect(stored.notes.map((note) => note.text).sort()).toEqual(["new decision", "old decision"]);
+      expect(shortSessionIndex(root).map((note) => note.text)).toEqual(["new decision"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
 });

@@ -521,7 +521,7 @@ function stampNotesPickup(root, line) {
     : body
       ? `${marker}\n\n${body.replace(/^\n+/, "")}`
       : `${marker}\n`;
-  rememberSessionNote(root, text, { source: "NOTES.md" });
+  rememberSessionNote(root, text, { source: "NOTES.md", slot: "pickup" });
   if (next === body) return text;
   mkdirSync(join(root, ".xray", "state"), { recursive: true });
   writeFileSync(dest, next.endsWith("\n") ? next : `${next}\n`);
