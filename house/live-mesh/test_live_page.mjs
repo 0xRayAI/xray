@@ -247,12 +247,31 @@ test('blackout countdown formats d h m s and flips to lifted; fleet line counts 
   assert.equal(L.fleetLine({ forge: 1, GitHub: 1, critic: 1 }), `Fleet: 2 live / ${L.SEAT_NAMES.length - 2} idle`, 'rails do not count');
 });
 
-test('wires flow when idle, packets still need a real event, reduced motion stills wires', () => {
-  assert.notEqual(L.wireDash(1000, false), L.wireDash(1500, false), 'idle wire moves');
-  assert.equal(L.wireDash(1000, true), null, 'no flow under reduced motion');
+// Check 3 (amended, Blaze 04:21 CT "show wires with basic motion, the wires are moving just not packets"):
+// no packets or dots without real traffic; faint idle wire flow allowed.
+test('check 3: no packets or dots without real traffic; faint idle wire flow allowed (Blaze 04:21)', () => {
+  // With the wire-glow phase and bob frozen, a quiet frame has no other moving part: no edge dots
+  // (edgeTraffic null), hub orbit still (orbitStep 0), no pings in the window, no pulse.
+  const ev = L.mergeEvents([], feed.events);
+  const quietT = ev.at(-1)._t + 3600e3;
+  assert.equal(L.pingsAt(ev, quietT, 1100).length, 0);
+  assert.equal(L.orbitStep(16, L.pingsAt(ev, quietT, 1100), false), 0);
+  assert.equal(L.pulse(-1, false), 0);
+  const frozen = { glow: L.wireGlow(0, 0.3, true), bob: [...L.bob('mill', 0, true)] };
+  assert.deepEqual(frozen, { glow: null, bob: [0, 0] });
+  for (const t of [0, 16, 1000, 60000]) {
+    assert.deepEqual([...L.bob('mill', t, true)], frozen.bob);
+    assert.equal(L.wireGlow(t, 0.3, true), frozen.glow);
+  }
+  const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(page, /\.pill \{ display: inline-block; width: 11ch; text-align: center; white-space: nowrap;/, 'LIVE/REWOUND pill fixed width, no wrap');
+  assert.notEqual(L.wireGlow(1000, 0, false), L.wireGlow(1500, 0, false), 'idle glow travels');
+  assert.ok(L.wireGlow(1e9, 0.5, false) >= 0 && L.wireGlow(1e9, 0.5, false) < 1);
+  assert.equal(L.wireGlow(1000, 0, true), null, 'glow stops under reduced motion');
   assert.equal(L.edgeTraffic(false), null, 'no packets on a quiet edge (#233 check 3)');
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
-  assert.match(html, /if \(dash != null\) \{[^\n]*\n\s+ctx\.save\(\); ctx\.setLineDash/);
+  assert.ok(!/setLineDash|lineDashOffset/.test(html), 'solid wires: no dash gaps');
+  assert.match(html, /var gp = L\.wireGlow\(nowWall, [^;]+, reduced\);\s+if \(gp != null\) \{/);
 });
 
 test('glyph nodes: X draws the 𝕏 glyph instead of a box and drops "X" from its label', () => {

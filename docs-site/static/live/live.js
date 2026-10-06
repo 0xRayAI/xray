@@ -93,8 +93,9 @@
     var live = SEAT_NAMES.filter(function (k) { return own(hot, k); }).length;
     return 'Fleet: ' + live + ' live / ' + (SEAT_NAMES.length - live) + ' idle';
   }
-  /* Wires: slow dashed flow on every edge, even idle (not packets). null under reduced motion. */
-  function wireDash(tMs, reduced) { return reduced ? null : -(tMs / 1000 * 8) % 14; }
+  /* Wires: solid line with a soft 'current' glow travelling along it, even idle (not packets).
+     Returns the glow position 0..1 for an edge with offset off; null under reduced motion. */
+  function wireGlow(tMs, off, reduced) { return reduced ? null : (tMs / 1000 * 0.12 + (off || 0)) % 1; }
   function badgeLetter(key) { return String(own(LABEL, key) || key || '?').charAt(0).toUpperCase(); }
 
   /* Subtle motion: each seat bobs a few px on its own phase; a fired event pulses 0..1..0.
@@ -361,6 +362,6 @@
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
-    countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireDash: wireDash
+    countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireGlow: wireGlow
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
