@@ -151,6 +151,15 @@ describe("sleeve", () => {
       ]);
       expect(kept.card).toContain("Intent: goggles");
       expect(kept.card).not.toContain("It views one plane");
+      const resumed = heatCard(root, {
+        hookEvent: "session_start",
+        intent: "a new opening prompt",
+      });
+      expect(resumed.card).toContain("Intent: goggles");
+      expect(resumed.card).not.toContain("a new opening prompt");
+      expect(resumed.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
+        "Sleeve: on",
+      ]);
       expect(kept.card).not.toContain("Loop:");
       expect(kept.card).not.toContain("Domain:");
       expect(kept.card).not.toContain("Foundry:");
@@ -190,6 +199,10 @@ describe("sleeve", () => {
       fs.mkdirSync(path.join(root, ".opencode", "skills", "orchestrator"), { recursive: true });
       fs.writeFileSync(path.join(root, ".opencode", "skills", "orchestrator", "SKILL.md"), "# extra\n");
       expect(atOf(readSleeve(root), "foundry")).toEqual(["stale"]);
+      const stalled = heatCard(root, { hookEvent: "user_prompt_submit", intent: "goggles" });
+      expect(stalled.card).toContain("Intent: goggles");
+      expect(stalled.card).toContain("Plan: The work is the mill.");
+      expect(stalled.card).toContain("Sleeve: off foundry");
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(ranAt);
@@ -205,6 +218,7 @@ describe("sleeve", () => {
       expect(refreshed.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
         "Sleeve: off domain",
       ]);
+      expect(refreshed.card).toContain("Plan: The work is the plate.");
       const worn = fs.readFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "utf8");
       expect(worn).toContain("It views one plane");
       expect(refreshed.card).not.toContain("It views one plane");
@@ -216,6 +230,8 @@ describe("sleeve", () => {
       expect(restored.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
         "Sleeve: on",
       ]);
+      expect(restored.card).not.toContain("The work is the plate.");
+      expect(restored.card).toContain("Plan: (none)");
       const afterMill = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
       ).ranAt;

@@ -348,8 +348,8 @@ export function writeSessionBoot(root, payload) {
   try {
     const stateDir = path.join(root, '.xray', 'state');
     fs.mkdirSync(stateDir, { recursive: true });
-    fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
+    fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     const hook = String((payload && (payload.hookEvent || payload.source)) || "");
     if (!/compact/i.test(hook)) {
       try {

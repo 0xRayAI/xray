@@ -145,9 +145,20 @@ function resolveHeatIntent(root, extra, existing) {
   const pickup = clipIntent(readNotesPickup(root));
   const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
   const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
-  const hook = String(extra.hookEvent || extra.source || "");
-  const keepsTicket = /user_prompt|compact/i.test(hook);
-  const compact = /compact/i.test(hook);
+  const named = String(extra.hookEvent || "");
+  const channel = String(extra.hookEvent || extra.source || "");
+  const keepsTicket = /user_prompt|compact/i.test(channel);
+  const compact = /compact/i.test(channel);
+  let receipt = null;
+  try {
+    receipt = readSleeve(root);
+  } catch {
+    receipt = null;
+  }
+  // A proved receipt keeps the ticket. A new session must not restate it.
+  if (receipt && receipt.on && card && /^(session_start|session-start)$/i.test(named)) {
+    return { intent: card, rematch: false, kept: true };
+  }
   // A chat sentence or a compact summary does not replace a ticket already on disk.
   if (incoming && !(keepsTicket && (card || pickup))) {
     return { intent: incoming, rematch: true };
@@ -1031,7 +1042,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   }
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
-  const planLine = resolveHeatPlan(root, extra, existing);
+  let planLine = resolveHeatPlan(root, extra, existing);
+  if (priorIntent && intent && intent !== priorIntent && !(extra.plan || extra.planLine)) {
+    planLine = null;
+  }
   // A passed string is the previous card. Count the project file after this wake.
   const repertoireResume = buildRepertoireResume(root);
   const swapBit = hotSwap ? `hot-swap ${hotSwap.from} → ${hotSwap.to}` : `host ${host}`;
@@ -1068,6 +1082,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   }
   if (!matchedSignals.length && priorWorking) {
     matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
+  }
+  if (resolved.kept) {
+    matchedSignals = preferLawHits(priorWorking && priorWorking.matchedSignals, 8);
   }
   const compactHold = retainCompactFields(existing, extra);
   const nextHook = compactHold.hookEvent || extra.hookEvent || extra.source || null;
@@ -1370,6 +1387,47 @@ function readExistingStationMarkdown(root) {
   }
 }
 
+
+function isMissPlan(line) {
+  return typeof line === "string" && line.startsWith("The work is ");
+}
+
+function missWork(missing) {
+  const words = { loop: "the ticket", domain: "the plate", state: "the record", foundry: "the mill" };
+  const parts = (Array.isArray(missing) ? missing : []).map((name) => words[name]).filter(Boolean);
+  if (parts.length === 1) return `The work is ${parts[0]}.`;
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    return `The work is ${parts.slice(0, -1).join(", ")} and ${last}.`;
+  }
+  return "The work is the suit.";
+}
+
+function wakeOrder(saved, proved, fields) {
+  const missing = proved && Array.isArray(proved.missing) ? proved.missing : [];
+  const sameJob = Boolean(saved && saved.priorIntent && saved.intent === saved.priorIntent);
+  const suitMiss = missing.some((name) => name === "domain" || name === "foundry" || name === "state");
+  if (proved && proved.on) {
+    const paused = saved && typeof saved.pausedPlan === "string" ? saved.pausedPlan : "";
+    if (isMissPlan(fields && fields.planLine) && saved && Object.prototype.hasOwnProperty.call(saved, "pausedPlan")) {
+      return { wake: "continue", planLine: paused, pausedPlan: undefined };
+    }
+    return { wake: "continue", pausedPlan: undefined };
+  }
+  if (!saved || !saved.priorIntent) return { wake: "start" };
+  if (saved.intent && saved.priorIntent && saved.intent !== saved.priorIntent) {
+    return { wake: "stop", pausedPlan: undefined };
+  }
+  if (sameJob && !missing.includes("loop") && suitMiss) {
+    const current = fields && fields.planLine ? String(fields.planLine) : "";
+    const paused = isMissPlan(current)
+      ? (typeof saved.pausedPlan === "string" ? saved.pausedPlan : "")
+      : current;
+    return { wake: "repair", planLine: missWork(missing), pausedPlan: paused };
+  }
+  return { wake: "start" };
+}
+
 function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
@@ -1397,6 +1455,14 @@ function writeStationMarkdown(root, fields) {
       if (existsSync(workingPath)) {
         const saved = JSON.parse(readFileSync(workingPath, "utf8"));
         if (saved && typeof saved === "object") {
+          const order = wakeOrder(saved, proved, fields);
+          fields.wake = order.wake;
+          if (Object.prototype.hasOwnProperty.call(order, "planLine")) {
+            fields.planLine = order.planLine;
+          }
+          saved.wake = order.wake;
+          if (order.pausedPlan !== undefined) saved.pausedPlan = order.pausedPlan;
+          else delete saved.pausedPlan;
           saved.sleeve = {
             on: proved.on,
             missing: proved.missing,
