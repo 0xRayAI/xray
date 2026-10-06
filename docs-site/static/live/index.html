@@ -3,27 +3,335 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live wire</title>
+  <title>Live wire · ping-pong mesh</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #08090b;
-      color: #f5f7fa;
-      margin: 2rem auto;
-      max-width: 52rem;
-      padding: 0 1rem;
-      line-height: 1.45;
+    :root { --bg: #04060c; --panel: #080c14; --line: #23304a; --dim: #8c96b4; --text: #e6ebff; --teal: #58d2b4; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 1100px; margin: 0 auto; padding: 12px; }
+    header h1 { font-size: 20px; margin: 0; letter-spacing: .04em; }
+    header h1 span { color: var(--dim); font-size: 13px; font-weight: 400; letter-spacing: 0; margin-left: 8px; }
+    .status { color: var(--dim); font-size: 13px; margin: 4px 0 0; }
+    .status b { color: var(--text); font-weight: 600; }
+    .note { color: var(--dim); font-size: 12px; margin: 2px 0 10px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+    .seats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+    .seat { display: flex; gap: 8px; align-items: center; min-width: 0; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: #283246; flex: none; }
+    .seat .nm { font-weight: 700; font-size: 13px; }
+    .seat .st { color: var(--dim); font-size: 11px; white-space: nowrap; }
+    .seat.live .st { color: var(--text); }
+    .lens-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--dim); }
+    #head { color: var(--teal); font-weight: 700; font-size: 15px; }
+    #headTime { color: var(--dim); font-size: 12px; }
+    canvas { display: block; width: 100%; height: auto; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button, select { background: #10182a; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font: inherit; cursor: pointer; }
+    button:hover { border-color: #3a4c72; }
+    #live.on { background: #12382f; border-color: var(--teal); color: #b8ffe9; }
+    #live.on::before { content: "\25CF  "; color: #ff5a4f; }
+    #slider { flex: 1 1 260px; accent-color: var(--teal); }
+    #tLabel { font-variant-numeric: tabular-nums; color: var(--dim); font-size: 12px; min-width: 15ch; }
+    #log { list-style: none; margin: 0; padding: 0; }
+    #log li { display: grid; grid-template-columns: 11ch 7ch 1fr; gap: 8px; padding: 3px 0; border-top: 1px solid #111a2a; cursor: pointer; }
+    #log li:first-child { border-top: 0; }
+    #log li:hover { background: #0c1322; }
+    #log .when { color: var(--dim); font-variant-numeric: tabular-nums; font-size: 12px; }
+    #log .who { font-size: 11px; font-weight: 700; padding-top: 1px; }
+    #log a { color: #d2dcf0; text-decoration: none; overflow-wrap: anywhere; }
+    #log a:hover { text-decoration: underline; }
+    .legend { color: var(--dim); font-size: 11px; }
+    footer { color: var(--dim); font-size: 12px; }
+    footer a { color: #3de0e8; }
+    @media (max-width: 720px) {
+      .seats { grid-template-columns: repeat(3, 1fr); }
+      #log li { grid-template-columns: 9ch 1fr; }
+      #log .who { display: none; }
     }
-    a { color: #3de0e8; }
-    video { width: 100%; background: #000; margin-top: 1rem; }
-    .note { color: #c5c9d1; }
   </style>
 </head>
 <body>
-  <h1>Live wire</h1>
-  <p class="note">Snapshot replay for 0xRay. Not a continuous stream. The site lags the box by about 5 minutes and updates only when the feed changes.</p>
-  <p><a href="live-events.json">live-events.json</a></p>
-  <p><a href="mesh-live.mp4">mesh-live.mp4</a></p>
-  <video controls playsinline preload="metadata" src="mesh-live.mp4"></video>
+<main>
+  <header>
+    <h1>BLAZE DESK <span>ping-pong mesh · live feed: PRs + Light + X both ways</span></h1>
+    <p class="status" id="status">Loading feed…</p>
+    <p class="note">About 1 minute behind the box: the box pushes the feed to GitHub every 60 s and this page reads it from GitHub every 60 s. If GitHub's hourly limit for your network runs out, the page falls back to a cached copy that can be up to about 5 minutes old, and the line above says so.</p>
+  </header>
+
+  <section class="panel seats" id="seats" aria-label="Seats"></section>
+
+  <section class="panel">
+    <div class="lens-head">
+      <span>THE LENS · PING-PONG VOLLEY</span>
+      <span class="legend">pings = handoffs · circles = seats · squares = rails</span>
+    </div>
+    <div id="head">&nbsp;</div>
+    <div id="headTime">&nbsp;</div>
+    <canvas id="mesh" width="920" height="400" aria-label="Mesh of seats and rails with handoff pings"></canvas>
+  </section>
+
+  <section class="panel controls" aria-label="Timeline">
+    <button id="play" type="button" title="Play from the slider position (from Live, starts 2 h back)">&#9654; Play</button>
+    <select id="speed" aria-label="Replay speed">
+      <option value="1">1× real time</option>
+      <option value="60">1 min / s</option>
+      <option value="600" selected>10 min / s</option>
+      <option value="3600">1 h / s</option>
+    </select>
+    <button id="live" type="button" class="on">Live</button>
+    <input id="slider" type="range" min="0" max="1" step="1000" value="1" aria-label="Timeline">
+    <span id="tLabel"></span>
+  </section>
+
+  <section class="panel" aria-label="Activity">
+    <div class="lens-head"><span>ACTIVITY · from feed (newest first, CT) · tap a row to rewind there</span></div>
+    <ul id="log"></ul>
+  </section>
+
+  <footer>Feed: <a href="live-events.json">live-events.json</a> (Pages copy) · source of truth is the <code>live-wire</code> branch.</footer>
+</main>
+<script src="live.js"></script>
+<script>
+(function () {
+  'use strict';
+  var L = window.LiveMesh;
+  var W = 920, H = 400;
+  var canvas = document.getElementById('mesh');
+  var ctx = canvas.getContext('2d');
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { events: [], live: true, t: Date.now(), generatedAt: null };
+  var playing = false, speed = 600, source = '', fetchError = '', lastFrame = performance.now();
+  var flashes = [];            // live-mode pings: { e, start } in wall ms
+  var mem = {};                // fetchFeed etag / rate-limit memory
+  var FLASH_MS = 1600, STAGGER_MS = 450;
+
+  function rgb(c, a) { return a == null ? 'rgb(' + c.join(',') + ')' : 'rgba(' + c.join(',') + ',' + a + ')'; }
+
+  // seats strip
+  var seatEls = {};
+  L.AGENTS.forEach(function (a) {
+    var el = document.createElement('div');
+    el.className = 'seat';
+    el.innerHTML = '<span class="dot"></span><span><div class="nm"></div><div class="st"></div></span>';
+    el.querySelector('.nm').textContent = a[0].toUpperCase();
+    el.querySelector('.nm').style.color = rgb(L.COLOR[a[0]]);
+    $('seats').appendChild(el);
+    seatEls[a[0]] = { el: el, dot: el.querySelector('.dot'), st: el.querySelector('.st'), role: a[1] };
+  });
+
+  function fitCanvas() {
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || W;
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssW * H / W * dpr);
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  function edgeMid(a, b) { return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 20]; }
+  function bez(p0, p1, p2, p) {
+    var q = 1 - p;
+    return [q * q * p0[0] + 2 * q * p * p1[0] + p * p * p2[0], q * q * p0[1] + 2 * q * p * p1[1] + p * p * p2[1]];
+  }
+  function sameEdge(pk, a, b) { return (pk.src === a && pk.dst === b) || (pk.src === b && pk.dst === a); }
+
+  function currentPings(nowWall) {
+    if (state.live) {
+      flashes = flashes.filter(function (f) { return nowWall - f.start < FLASH_MS; });
+      return flashes.filter(function (f) { return nowWall >= f.start; }).map(function (f) {
+        var n = L.resolveNodes(f.e);
+        return { e: f.e, src: n[0], dst: n[1], p: (nowWall - f.start) / FLASH_MS, col: L.eventColor(f.e) };
+      });
+    }
+    return L.pingsAt(state.events, state.t, L.PING_MS * speed);
+  }
+
+  function draw(nowWall, pings) {
+    var s = canvas.width / W;
+    var fs = Math.max(1, 0.55 / (canvas.clientWidth / W));   // keep labels readable on phones
+    var tt = nowWall / 1000;
+    ctx.setTransform(s, 0, 0, s, 0, 0);
+    ctx.fillStyle = '#04060c'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#0a0e16'; ctx.lineWidth = 1;
+    for (var gx = 0; gx < W; gx += 24) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+    for (var gy = 0; gy < H; gy += 24) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+    // hub orbit
+    ctx.fillStyle = '#283750';
+    for (var n = 0; n < 40; n++) {
+      var ang = n / 40 * Math.PI * 2 + tt * 0.25, rr = 30 + (n % 6) * 12;
+      ctx.fillRect(L.HUB[0] + Math.cos(ang) * rr, L.HUB[1] + Math.sin(ang) * rr * 0.6, 1.5, 1.5);
+    }
+    var hot = L.hotNodes(pings);
+    // edges + ambient traffic
+    L.EDGES.forEach(function (ed) {
+      var a = L.SATS[ed[0]], b = L.SATS[ed[1]], m = edgeMid(a, b);
+      var burst = pings.some(function (pk) { return sameEdge(pk, ed[0], ed[1]); });
+      ctx.strokeStyle = burst ? '#375a78' : '#162032'; ctx.lineWidth = burst ? 2 : 1;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(m[0], m[1], b[0], b[1]); ctx.stroke();
+      var ca = L.COLOR[ed[0]], cb = L.COLOR[ed[1]];
+      var col = [0, 1, 2].map(function (i) { return (ca[i] + cb[i]) >> 1; });
+      var count = burst ? 8 : 4, sp = burst ? 0.9 : 0.35, size = burst ? 3 : 1.5;
+      var off = ((a[0] + b[0] * 3 + a[1] * 7) % 97) / 97;
+      for (var i = 0; i < count; i++) {
+        var p = (tt * sp + off + i / count) % 1, q = bez(a, m, b, p);
+        ctx.fillStyle = rgb(col, burst ? 0.95 : 0.55);
+        ctx.beginPath(); ctx.arc(q[0], q[1], size, 0, 7); ctx.fill();
+      }
+    });
+    // pings in flight
+    pings.forEach(function (pk) {
+      var a = L.SATS[pk.src], b = L.SATS[pk.dst], m = edgeMid(a, b);
+      var p = Math.min(1, Math.max(0, pk.p)); p = p * p * (3 - 2 * p);
+      for (var k = 5; k >= 1; k--) {
+        var tq = bez(a, m, b, Math.max(0, p - k * 0.04));
+        ctx.fillStyle = rgb(pk.col, (6 - k) / 6); ctx.beginPath(); ctx.arc(tq[0], tq[1], 6 - k, 0, 7); ctx.fill();
+      }
+      var q = bez(a, m, b, p);
+      ctx.fillStyle = rgb(pk.col); ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0], q[1], 3, 0, 7); ctx.fill();
+    });
+    // hub
+    ctx.fillStyle = '#121622'; ctx.strokeStyle = '#e6ebff'; ctx.lineWidth = 3;
+    roundRect(L.HUB[0] - 30, L.HUB[1] - 24, 60, 48, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#f0f5ff'; ctx.font = 'bold ' + 16 * fs + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('mesh', L.HUB[0], L.HUB[1]);
+    // nodes
+    Object.keys(L.SATS).forEach(function (key) { drawNode(key, !!hot[key], fs); });
+    return hot;
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function drawNode(key, isHot, fs) {
+    var xy = L.SATS[key], x = xy[0], y = xy[1], r = 15, c = L.COLOR[key], sq = !!L.SQUARE[key];
+    if (isHot) {
+      for (var k = 3; k >= 1; k--) {
+        var rr = r + k * 5; ctx.strokeStyle = rgb(c, 1 / (k + 1)); ctx.lineWidth = 2;
+        if (sq) { roundRect(x - rr, y - rr, rr * 2, rr * 2, 6); } else { ctx.beginPath(); ctx.arc(x, y, rr, 0, 7); }
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = '#0c101c'; ctx.strokeStyle = rgb(c); ctx.lineWidth = isHot ? 3 : 2;
+    if (sq) { roundRect(x - r, y - r, r * 2, r * 2, 5); ctx.fill(); ctx.stroke(); ctx.fillStyle = rgb(c); ctx.fillRect(x - 5, y - 5, 10, 10); }
+    else {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = rgb(c);
+      ctx.beginPath(); ctx.arc(x - 3, y - 1, 2, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(x + 3, y - 1, 2, 0, 7); ctx.fill();
+    }
+    var title = L.LABEL[key], sub = L.SUB[key];
+    ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif';
+    var tw = ctx.measureText(title).width;
+    ctx.font = 11 * fs + 'px system-ui, sans-serif';
+    var w = Math.max(tw, ctx.measureText(sub).width) + 16, h = 30 * fs, top = y + r + 4;
+    ctx.fillStyle = '#101420'; ctx.strokeStyle = rgb(c); ctx.lineWidth = 2;
+    roundRect(x - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillStyle = rgb(c); ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif'; ctx.fillText(title, x, top + 2 * fs);
+    ctx.fillStyle = '#96a0b4'; ctx.font = 11 * fs + 'px system-ui, sans-serif'; ctx.fillText(sub, x, top + 17 * fs);
+  }
+
+  var lastText = 0, lastLogKey = '';
+  function updateText(nowWall, hot) {
+    var shown = L.countUpTo(state.events, state.t);
+    var cur = shown ? state.events[shown - 1] : null;
+    $('head').textContent = cur ? L.headline(cur) : '\u00a0';
+    $('headTime').textContent = cur ? L.fmtCt(cur._t) + (state.live ? '' : ' · rewound') : '\u00a0';
+    L.AGENTS.forEach(function (a) {
+      var s = seatEls[a[0]], on = !!hot[a[0]], c = L.COLOR[a[0]];
+      s.el.classList.toggle('live', on);
+      s.dot.style.background = on ? rgb(c) : '#283246';
+      s.dot.style.boxShadow = on ? '0 0 0 2px #04060c, 0 0 0 4px ' + rgb(c) : 'none';
+      s.st.textContent = s.role + ' · ' + (on ? 'LIVE' : 'IDLE');
+    });
+    var logKey = shown + ':' + state.events.length;
+    if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
+    if (nowWall - lastText < 500) return;
+    lastText = nowWall;
+    var now = Date.now(), b = L.bounds(state.events, now);
+    var slider = $('slider');
+    slider.min = b[0]; slider.max = b[1];
+    if (document.activeElement !== slider || state.live) slider.value = state.live ? b[1] : state.t;
+    $('tLabel').textContent = state.live ? 'now · ' + L.fmtCt(now) : L.fmtCt(state.t);
+    $('live').classList.toggle('on', state.live);
+    $('play').innerHTML = playing ? '&#10074;&#10074; Pause' : '&#9654; Play';
+    var st = state.generatedAt ? 'Feed updated <b>' + L.ago(now - state.generatedAt) + '</b> (' + L.fmtCt(state.generatedAt) + ')' : 'Waiting for feed';
+    st += ' · ' + state.events.length + ' events';
+    if (source) st += ' · via ' + source;
+    if (fetchError) st += ' · <span style="color:#ff6e5a">' + fetchError + '</span>';
+    $('status').innerHTML = st;
+  }
+
+  function renderLog(shown) {
+    var ul = $('log'); ul.textContent = '';
+    for (var i = shown - 1; i >= Math.max(0, shown - 14); i--) {
+      var e = state.events[i];
+      var li = document.createElement('li');
+      li.dataset.t = e._t;
+      var when = document.createElement('span'); when.className = 'when'; when.textContent = L.fmtCt(e._t).replace(' CT', '');
+      var who = document.createElement('span'); who.className = 'who'; who.textContent = L.whoTag(e); who.style.color = rgb(L.eventColor(e));
+      var a = document.createElement('a'); a.textContent = L.cleanLabel(e.label);
+      if (/^https:\/\//.test(e.source || '')) { a.href = e.source; a.target = '_blank'; a.rel = 'noopener'; }
+      li.appendChild(when); li.appendChild(who); li.appendChild(a);
+      ul.appendChild(li);
+    }
+  }
+
+  function goLive() { state.live = true; playing = false; state.t = Date.now(); lastText = 0; }
+  function rewindTo(t) { state.live = false; flashes = []; state.t = t; lastText = 0; }
+
+  $('live').addEventListener('click', goLive);
+  $('play').addEventListener('click', function () {
+    if (playing) { playing = false; lastText = 0; return; }
+    if (state.live) rewindTo(Math.max(L.bounds(state.events, Date.now())[0], Date.now() - 2 * 3600e3));
+    playing = true; lastText = 0;
+  });
+  $('speed').addEventListener('change', function (ev) { speed = Number(ev.target.value) || 600; });
+  $('slider').addEventListener('input', function (ev) {
+    var v = Number(ev.target.value), b = L.bounds(state.events, Date.now());
+    if (v >= b[1] - 1000) goLive(); else rewindTo(v);
+  });
+  $('log').addEventListener('click', function (ev) {
+    if (ev.target.tagName === 'A' && ev.target.href) return;
+    var li = ev.target.closest('li');
+    if (li) { rewindTo(Number(li.dataset.t)); playing = false; }
+  });
+
+  function frame(nowWall) {
+    var dt = Math.min(250, nowWall - lastFrame); lastFrame = nowWall;
+    if (state.live) state.t = Date.now();
+    else if (playing) {
+      state.t += dt * speed;
+      if (state.t >= Date.now()) goLive();
+    }
+    var pings = currentPings(nowWall);
+    var hot = draw(nowWall, pings);
+    updateText(nowWall, hot);
+    requestAnimationFrame(frame);
+  }
+
+  var first = true;
+  function poll() {
+    if (document.hidden && !first) return;
+    L.fetchFeed(window.fetch.bind(window), Date.now(), mem).then(function (r) {
+      source = r.source; fetchError = '';
+      if (!r.feed) return;
+      var out = L.applyFeed(state, r.feed, Date.now());
+      state = out.state;
+      var fresh = first ? state.events.slice(-6) : state.events.filter(function (e) { return out.added.indexOf(e.id) >= 0; }).slice(-12);
+      if (state.live) {
+        var t0 = performance.now();
+        fresh.forEach(function (e, i) { flashes.push({ e: e, start: t0 + i * STAGGER_MS }); });
+      }
+      first = false; lastText = 0; lastLogKey = '';
+    }).catch(function (err) { fetchError = 'feed fetch failed, retrying'; lastText = 0; console.warn(err); });
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+  poll();
+  setInterval(poll, L.POLL_MS);
+  requestAnimationFrame(frame);
+})();
+</script>
 </body>
 </html>

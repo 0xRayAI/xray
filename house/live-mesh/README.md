@@ -10,6 +10,7 @@ X is wake/chatter, not the sport. X events come from herald's JSONL ledger (`--x
 |---|---|
 | `fetch_feed.py` | Poller (Python 3.9+, stdlib). GitHub REST for `0xRayAI/muse-house` + `0xRayAI/xray`, Deployments → `deploy`/`deploy_fail`, `/health` state-change probe, light-notes, X ledger / `--merge-x`. |
 | `test_fetch_feed.py` | Unit tests (stdlib, mocked network, throwaway key): App token mint/re-mint, no fallback, `--watch` survives dropped connections. |
+| `test_live_page.mjs` | Node tests for the public live page logic (`docs-site/static/live/live.js`): merge/dedupe by id, rewind replay, Live vs rewound polling, ping mapping parity, API → raw → Pages fallback. |
 | `render_mesh.py` | Mesh renderer (Pillow + ffmpeg). Reads the feed; `--follow` re-renders on new events. |
 | `schema.json` | Kind / direction / node enums. Legacy kinds (`fix`, `probe`, `x_root`, `x_reply`) allowed on read. |
 | `sample/live-events.json` | Regenerated feed (GitHub + deploy + health + X from the live `x-ledger`). Basenames only. |
@@ -48,6 +49,8 @@ Each pass rewrites `live-events.json` atomically and appends only new ids to `li
 The App key file should be `chmod 600`. In `--watch`, a failed mint, an HTTP error, or a dropped connection (`RemoteDisconnected`, timeouts, other `OSError`) logs one line, keeps the last feed, and retries next poll.
 
 Tests: `cd house/live-mesh && python3 -m unittest -v test_fetch_feed`
+
+Live page: `docs-site/static/live/index.html` draws the mesh in the browser from `live-events.json` (no video, no build step). It polls the `live-wire` branch through the GitHub contents API every 60 s and falls back to raw.githubusercontent, then the Pages copy, when the unauthenticated limit (60/h per viewer IP) runs out. Page tests: `node --test house/live-mesh/test_live_page.mjs`. Preview: `cd docs-site/static/live && python3 -m http.server`.
 
 ### Run it detached
 
