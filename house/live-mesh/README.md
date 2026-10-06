@@ -9,6 +9,7 @@ X is wake/chatter, not the sport. X events come from herald's JSONL ledger (`--x
 | Path | What |
 |---|---|
 | `fetch_feed.py` | Poller (Python 3.9+, stdlib). GitHub REST for `0xRayAI/muse-house` + `0xRayAI/xray`, Deployments → `deploy`/`deploy_fail`, `/health` state-change probe, light-notes, X ledger / `--merge-x`. |
+| `test_fetch_feed.py` | Unit tests (stdlib, mocked network, throwaway key): App token mint/re-mint, no fallback, `--watch` survives dropped connections. |
 | `render_mesh.py` | Mesh renderer (Pillow + ffmpeg). Reads the feed; `--follow` re-renders on new events. |
 | `schema.json` | Kind / direction / node enums. Legacy kinds (`fix`, `probe`, `x_root`, `x_reply`) allowed on read. |
 | `sample/live-events.json` | Regenerated feed (GitHub + deploy + health + X from the live `x-ledger`). Basenames only. |
@@ -43,6 +44,30 @@ python3 render_mesh.py --feed feed/live-events.json --out feed/mesh-10s.mp4 --fo
 Defaults: `--deploy-repo 0xRayAI/muse-house`, `--health https://mymuse.house/health` (probe every 60 s, emit on state change), `--x-ledger <out-dir>/x-ledger.jsonl`. Pass `--deploy-repo ''` or `--health ''` to turn either off.
 
 Each pass rewrites `live-events.json` atomically and appends only new ids to `live-events.jsonl`.
+
+The App key file should be `chmod 600`. In `--watch`, a failed mint, an HTTP error, or a dropped connection (`RemoteDisconnected`, timeouts, other `OSError`) logs one line, keeps the last feed, and retries next poll.
+
+Tests: `cd house/live-mesh && python3 -m unittest -v test_fetch_feed`
+
+### Run it detached
+
+Start it with `setsid nohup` so it outlives the shell that launched it, and send stderr to the log:
+
+```bash
+cd house/live-mesh && mkdir -p logs
+setsid nohup python3 -u fetch_feed.py --out feed/live-events.json --watch 60 \
+  --x-ledger feed/x-ledger.jsonl >> logs/fetch_feed.watch.log 2>&1 < /dev/null &
+echo $! > logs/fetch_feed.pid
+```
+
+Belt and braces: a restart loop, also started with `setsid nohup … &`:
+
+```bash
+while true; do
+  python3 -u fetch_feed.py --out feed/live-events.json --watch 60 --x-ledger feed/x-ledger.jsonl
+  echo "[supervisor $(date +%H:%M:%S)] fetch_feed exited rc=$?; restarting in 10s"; sleep 10
+done >> logs/fetch_feed.watch.log 2>&1
+```
 
 ## Watch path
 
