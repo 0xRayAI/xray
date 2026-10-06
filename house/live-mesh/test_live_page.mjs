@@ -135,7 +135,7 @@ test('page has no external scripts and no longer depends on the mp4', () => {
 });
 
 test('seat images map to bots/<seat>.png, rails get none, badges are one letter', () => {
-  for (const k of L.SEAT_NAMES) assert.equal(L.botImage(k), `bots/${k}.png`);
+  for (const k of L.BOT_IMAGES) assert.equal(L.botImage(k), `bots/${k}.png`);
   for (const k of ['GitHub', 'X', 'mymuse.house', 'constructor', 'stranger']) assert.equal(L.botImage(k), null);
   assert.equal(L.badgeLetter('mill'), 'M');
   assert.equal(L.badgeLetter('critic'), 'C');
@@ -225,4 +225,105 @@ test('seat status follows the dots: LIVE in flight and one window after landing,
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   assert.match(html, /var hot = state\.live \? L\.activeSeats\(flashes/);
   assert.match(html, /nowWall - f\.start < 2 \* FLASH_MS/);
+});
+
+test('image manifest: only listed seats are requested, and every listed file exists (no 404s)', () => {
+  const files = new Set(readdirSync(path.join(liveDir, 'bots')));
+  for (const k of L.BOT_IMAGES) assert.ok(L.SEAT_NAMES.includes(k) && files.has(`${k}.png`), `${k}.png committed`);
+  for (const k of L.SEAT_NAMES.filter((s) => !L.BOT_IMAGES.includes(s))) assert.equal(L.botImage(k), null, `${k} draws a letter, no request`);
+  assert.equal(L.botImage('mill'), null);
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /L\.BOT_IMAGES\.forEach\(function \(k\) \{\n\s+var img/);
+});
+
+test('blackout countdown formats d h m s and flips to lifted; fleet line counts seat status', () => {
+  const end = Date.parse(L.BLACKOUT_UNTIL);
+  assert.equal(L.BLACKOUT_UNTIL, '2026-10-11T09:08:00-05:00');
+  assert.equal(L.countdown(((2 * 24 + 3) * 3600 + 4 * 60 + 5) * 1000), '2d 03h 04m 05s');
+  assert.equal(L.blackoutLine(end - 61e3), 'BLACKOUT until Sun Oct 11, 9:08 AM CT \u00b7 0d 00h 01m 01s');
+  assert.equal(L.blackoutLine(end), 'Blackout lifted');
+  assert.equal(L.blackoutLine(end + 1), 'Blackout lifted');
+  assert.equal(L.fleetLine({}), `Fleet: 0 live / ${L.SEAT_NAMES.length} idle`);
+  assert.equal(L.fleetLine({ forge: 1, GitHub: 1, critic: 1 }), `Fleet: 2 live / ${L.SEAT_NAMES.length - 2} idle`, 'rails do not count');
+});
+
+// Check 3 (amended, Blaze 04:21 CT "show wires with basic motion, the wires are moving just not packets"):
+// no packets or dots without real traffic; faint idle wire flow allowed.
+test('check 3: no packets or dots without real traffic; faint idle wire flow allowed (Blaze 04:21)', () => {
+  // With the wire-glow phase and bob frozen, a quiet frame has no other moving part: no edge dots
+  // (edgeTraffic null), hub orbit still (orbitStep 0), no pings in the window, no pulse.
+  const ev = L.mergeEvents([], feed.events);
+  const quietT = ev.at(-1)._t + 3600e3;
+  assert.equal(L.pingsAt(ev, quietT, 1100).length, 0);
+  assert.equal(L.orbitStep(16, L.pingsAt(ev, quietT, 1100), false), 0);
+  assert.equal(L.pulse(-1, false), 0);
+  const frozen = { glow: L.wireGlow(0, 0.3, true), bob: [...L.bob('mill', 0, true)] };
+  assert.deepEqual(frozen, { glow: null, bob: [0, 0] });
+  for (const t of [0, 16, 1000, 60000]) {
+    assert.deepEqual([...L.bob('mill', t, true)], frozen.bob);
+    assert.equal(L.wireGlow(t, 0.3, true), frozen.glow);
+  }
+  const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(page, /\.pill \{ display: inline-block; width: 11ch; text-align: center; white-space: nowrap;/, 'LIVE/REWOUND pill fixed width, no wrap');
+  assert.notEqual(L.wireGlow(1000, 0, false), L.wireGlow(1500, 0, false), 'idle glow travels');
+  assert.ok(L.wireGlow(1e9, 0.5, false) >= 0 && L.wireGlow(1e9, 0.5, false) < 1);
+  assert.equal(L.wireGlow(1000, 0, true), null, 'glow stops under reduced motion');
+  assert.equal(L.edgeTraffic(false), null, 'no packets on a quiet edge (#233 check 3)');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.ok(!/setLineDash|lineDashOffset/.test(html), 'solid wires: no dash gaps');
+  assert.match(html, /var gp = L\.wireGlow\(nowWall, [^;]+, reduced\);\s+if \(gp != null\) \{/);
+});
+
+test('glyph nodes: X draws the 𝕏 glyph instead of a box and drops "X" from its label', () => {
+  assert.equal(L.GLYPH.X, '\u{1D54F}');
+  assert.equal(L.LABEL.X, '');
+  assert.equal(L.SUB.X, '@0xRayAI');
+  assert.ok(L.SATS.X, 'X is still a drawn node and keeps its wires');
+  assert.equal(L.GLYPH['mymuse.house'], '\u{1F3E0}', 'muse node is the house emoji');
+  assert.equal(L.LABEL['mymuse.house'], '');
+  assert.equal(L.SUB['mymuse.house'], 'live site');
+  assert.equal(L.GLYPH.GitHub, undefined, 'GitHub is a vector mark, not a font glyph');
+  assert.match(L.MARK_PATH.GitHub, /^M6\.766 11\.328c[-0-9.,c lsCvVhHaAzZ]+$/, 'Octicons mark-github-16 path');
+  assert.equal(L.LABEL.GitHub, '', 'GitHub name dropped');
+  assert.equal(L.SUB.GitHub, 'PRs', 'sublabel kept');
+  const page = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(page, /ctx\.fill\(new Path2D\(mark\)\)/);
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /glyph = L\.GLYPH\[key\], mark = L\.MARK_PATH\[key\];[\s\S]*?else if \(glyph\) \{/);
+});
+
+test('image seats draw bare (no ring); only letter seats keep circle + ring; blackout line is amber bold', () => {
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /bare = !sq && \(!!glyph \|\| !!\(img && img\.complete && img\.naturalWidth\)\)/);
+  assert.match(html, /if \(isHot && !bare\) \{/, 'no concentric rings around image seats');
+  const letter = html.slice(html.indexOf('if (bare) {'), html.indexOf('if (!sq) r = 18;'));
+  const [imgPart, letterPart] = letter.split('} else {');
+  assert.ok(!/\.stroke\(\)/.test(imgPart), 'image branch strokes nothing');
+  assert.match(letterPart, /badgeLetter[\s\S]*ctx\.arc\(x, y, r, 0, 7\); ctx\.stroke\(\)/, 'letter seat keeps its ring');
+  assert.match(html, /#blackout \{ color: #ffb347; font-weight: 700;/);
+});
+
+test('glyph seats: mill is the gear, nibbler the earthworm; no letter seats left but the fallback stays', () => {
+  assert.equal(L.GLYPH.mill, '\u2699\uFE0F');
+  assert.equal(L.GLYPH.nibbler, '\u{1FAB1}');
+  const lettered = [...L.SEAT_NAMES].filter((k) => !L.GLYPH[k] && !L.BOT_IMAGES.includes(k));
+  assert.deepEqual(lettered, [], 'every seat has an image or a glyph');
+  assert.equal(L.badgeLetter('newseat'), 'N', 'letter fallback kept for future seats');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /if \(!sq && isHot\) \{ ctx\.fillStyle = rgb\(c, 0\.22\)/, 'glyph seats keep the LIVE glow');
+});
+
+test('nibbler seat: on the mesh and strip, wired to X and blinky, its events land on it, fleet counts it', () => {
+  assert.ok(L.SEAT_NAMES.includes('nibbler'));
+  assert.deepEqual([...L.AGENTS.find((a) => a[0] === 'nibbler')], ['nibbler', 'feed scout']);
+  assert.ok(L.SATS.nibbler && L.COLOR.nibbler);
+  const taken = Object.entries(L.SATS).filter(([k]) => k !== 'nibbler').map(([, v]) => v.join());
+  assert.ok(!taken.includes(L.SATS.nibbler.join()), 'free spot');
+  assert.ok(!Object.entries(L.COLOR).some(([k, v]) => k !== 'nibbler' && v.join() === L.COLOR.nibbler.join()), 'distinct colour');
+  const edges = [...L.EDGES].filter((e) => e.includes('nibbler')).map((e) => e.join('-'));
+  assert.deepEqual(edges, ['nibbler-X', 'blinky-nibbler']);
+  assert.deepEqual([...L.resolveNodes({ kind: 'comment', from: 'nibbler', to: 'GitHub' })], ['nibbler', 'GitHub']);
+  assert.equal(L.whoTag({ kind: 'comment', from: 'nibbler' }), 'NIBBLER');
+  assert.equal(L.SEAT_NAMES.length, 7);
+  assert.equal(L.fleetLine({ nibbler: 1 }), 'Fleet: 1 live / 6 idle');
 });
