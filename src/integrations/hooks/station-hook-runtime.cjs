@@ -20,10 +20,10 @@ const {
 const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
-const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
+const { ensureWornPlate, plateStockLine, recallPlate } = require("./plates.cjs");
 const { rememberSessionNote, retainProjectNotes } = require("./session-note-index.cjs");
 const { formatCascadePointer, readWakeCascade } = require("./wake-cascade.cjs");
-const { formatSleevePointer, readSleeve } = require("./sleeve.cjs");
+const { formatSleevePointer, readSleeve, runFoundryMill } = require("./sleeve.cjs");
 
 const INTENT_MAX = 240;
 
@@ -1109,7 +1109,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   }
   try {
     const entered = recallPlate(intent);
-    if (entered) stampPlateIfMissing(root, entered.id);
+    if (entered) ensureWornPlate(root, entered.id);
   } catch {
     /* a missed plate leaves the domain empty */
   }
@@ -1369,9 +1369,17 @@ function writeStationMarkdown(root, fields) {
     mkdirSync(dir, { recursive: true });
     try {
       const plate = recallPlate(fields && fields.intent);
-      if (plate) stampPlateIfMissing(root, plate.id);
+      if (plate) ensureWornPlate(root, plate.id);
     } catch {
       /* a missing plate doc must not block the card */
+    }
+    const wake = String((fields && (fields.hookEvent || fields.source)) || "");
+    if (/compact|session_start|session-start/i.test(wake)) {
+      try {
+        runFoundryMill(root);
+      } catch {
+        /* the card still writes when the mill does not */
+      }
     }
     const dest = stationMarkdownPath(root);
     const base = { ...(fields || {}) };

@@ -317,6 +317,21 @@ function stampPlateIfMissing(projectRoot, id) {
   return { id, path, written: true };
 }
 
+function ensureWornPlate(projectRoot, id) {
+  const path = wornPlatePath(projectRoot, id);
+  const source = readFileSync(plateSourcePath(id), "utf8");
+  if (existsSync(path)) {
+    try {
+      if (readFileSync(path, "utf8") === source) return { id, path, written: false };
+    } catch {
+      /* rewrite a plate the process cannot keep */
+    }
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, source);
+  return { id, path, written: true };
+}
+
 function organFile(intent) {
   try {
     const { suitHint } = require("./goggles-pipeline.mjs");
@@ -342,6 +357,7 @@ module.exports = {
   loadPlate,
   recallPlate,
   stampPlateIfMissing,
+  ensureWornPlate,
   plateStockLine,
   wornPlatePath,
 };

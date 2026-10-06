@@ -1,11 +1,11 @@
 /**
  * Sleeve: on means this root's wake returned, the plate is the work,
- * the ticket reads back as that wake, and inspect ran here.
+ * the ticket reads back as that wake, and inspect has run in this process's home.
+ * The look reads that report. Session start and compact run the mill.
  */
 const { execFileSync } = require("child_process");
-const { existsSync, mkdtempSync, readFileSync, rmSync } = require("fs");
-const { tmpdir } = require("os");
-const { join } = require("path");
+const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("fs");
+const { dirname, join } = require("path");
 
 const STITCHES = ["loop", "domain", "state", "foundry"];
 const SLEEVE_PLANES = [
@@ -19,7 +19,6 @@ const SLEEVE_PLANES = [
   "trail-state",
 ];
 const FOUNDRY_FILES = ["cli.mjs", "mill-root.mjs", "inspect.mjs", "reconcile-version.mjs"];
-const millMemo = new Map();
 
 function isSleevePlane(id) {
   return SLEEVE_PLANES.includes(String(id || ""));
@@ -135,47 +134,101 @@ function foundryDir(root) {
   return "";
 }
 
-function runInspect(root, cli) {
-  const home = mkdtempSync(join(tmpdir(), "xray-sleeve-home-"));
-  const machine = mkdtempSync(join(tmpdir(), "xray-sleeve-machine-"));
+function millPath(root) {
+  return join(root, ".xray", "state", "sleeve-mill.json");
+}
+
+function packageVersion(dir) {
+  let current = dir;
+  for (let depth = 0; depth < 6; depth += 1) {
+    const pkg = readJson(join(current, "package.json"));
+    if (pkg && typeof pkg.version === "string" && pkg.version) return pkg.version;
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return "";
+}
+
+function gitHead(root) {
   try {
-    let out = "";
-    try {
-      out = execFileSync(process.execPath, [cli, "inspect", "--skip-live"], {
-        cwd: root,
-        env: {
-          ...process.env,
-          HOME: home,
-          FOUNDRY_MACHINE_HOME: machine,
-          FOUNDRY_ROOT: root,
-        },
-        encoding: "utf8",
-        timeout: 20000,
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-    } catch (err) {
-      out = err && err.stdout ? String(err.stdout) : "";
-    }
-    const report = JSON.parse(out);
-    if (report && report.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
-    const failed = report && Array.isArray(report.failed) ? report.failed.map(String) : [];
-    return stitch("foundry", false, failed);
+    return execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 2000,
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
   } catch {
-    return stitch("foundry", false, []);
-  } finally {
-    rmSync(home, { recursive: true, force: true });
-    rmSync(machine, { recursive: true, force: true });
+    return "";
   }
 }
 
-function foundryStitch(root) {
+function millStamp(root, dir) {
+  return `${packageVersion(dir)}|${gitHead(root)}`;
+}
+
+function runInspect(root, cli) {
+  let out = "";
+  try {
+    out = execFileSync(process.execPath, [cli, "inspect", "--skip-live"], {
+      cwd: root,
+      env: {
+        ...process.env,
+        FOUNDRY_ROOT: root,
+      },
+      encoding: "utf8",
+      timeout: 20000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (err) {
+    if (err && (err.killed || err.signal === "SIGTERM")) {
+      return stitch("foundry", false, ["inspect-timeout"]);
+    }
+    out = err && err.stdout ? String(err.stdout) : "";
+  }
+  try {
+    const report = JSON.parse(out);
+    if (report && report.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
+    const failed = report && Array.isArray(report.failed) ? report.failed.map(String) : [];
+    return stitch("foundry", false, failed.length ? failed : ["inspect"]);
+  } catch {
+    return stitch("foundry", false, ["inspect"]);
+  }
+}
+
+function writeMill(root, result, stamp) {
+  const dest = millPath(root);
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify({
+    ok: result.on,
+    failed: result.on ? [] : result.at,
+    stamp,
+    ranAt: new Date().toISOString(),
+  })}\n`);
+}
+
+function runFoundryMill(root) {
   const dir = foundryDir(root);
-  if (!dir) return stitch("foundry", false, []);
-  const key = `${root}\n${dir}`;
-  if (millMemo.has(key)) return millMemo.get(key);
+  if (!dir) {
+    const missing = stitch("foundry", false, []);
+    writeMill(root, missing, "");
+    return missing;
+  }
+  const stamp = millStamp(root, dir);
   const result = runInspect(root, join(dir, "cli.mjs"));
-  millMemo.set(key, result);
+  writeMill(root, result, stamp);
   return result;
+}
+
+function foundryStitch(root) {
+  const saved = readJson(millPath(root));
+  if (!saved || typeof saved !== "object") return stitch("foundry", false, []);
+  const dir = foundryDir(root);
+  const stamp = dir ? millStamp(root, dir) : "";
+  if (!stamp || saved.stamp !== stamp) return stitch("foundry", false, saved.stamp ? ["stale"] : []);
+  if (saved.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
+  const failed = Array.isArray(saved.failed) ? saved.failed.map(String) : [];
+  return stitch("foundry", false, failed);
 }
 
 function readSleeve(root) {
@@ -226,6 +279,7 @@ module.exports = {
   SLEEVE_PLANES,
   isSleevePlane,
   readSleeve,
+  runFoundryMill,
   formatSleevePointer,
   formatSleeveReading,
 };

@@ -12,5 +12,6 @@ export const STITCHES = impl.STITCHES;
 export const SLEEVE_PLANES = impl.SLEEVE_PLANES;
 export const isSleevePlane = impl.isSleevePlane;
 export const readSleeve = impl.readSleeve;
+export const runFoundryMill = impl.runFoundryMill;
 export const formatSleevePointer = impl.formatSleevePointer;
 export const formatSleeveReading = impl.formatSleeveReading;

@@ -12,6 +12,7 @@ import {
   formatSleevePointer,
   formatSleeveReading,
   readSleeve,
+  runFoundryMill,
 } from "../../integrations/hooks/sleeve.mjs";
 
 const SUIT = path.resolve(__dirname, "..", "..", "..");
@@ -101,12 +102,17 @@ describe("sleeve", () => {
     const root = tempRoot("xray-sleeve-receipt-");
     try {
       linkFoundry(root);
+      const before = readSleeve(root);
+      expect(atOf(before, "foundry")).toEqual([]);
+      expect(formatSleeveReading(before)).toContain("Foundry: off");
+      runFoundryMill(root);
       const sleeve = readSleeve(root);
       expect(sleeve.on).toBe(false);
       expect(sleeve.missing).toContain("foundry");
       expect(atOf(sleeve, "foundry")).toEqual(["receipt"]);
       expect(formatSleeveReading(sleeve)).toContain("Foundry: receipt");
-      expect(formatSleevePointer(sleeve)).toBe("Sleeve: off loop, domain, state, foundry");
+      const again = readSleeve(root);
+      expect(atOf(again, "foundry")).toEqual(["receipt"]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -120,12 +126,12 @@ describe("sleeve", () => {
       expect(first.sleeveLine).toBeUndefined();
       const opened = readSleeve(root);
       expect(opened.on).toBe(false);
-      expect(opened.missing).toEqual(["loop"]);
+      expect(opened.missing).toEqual(["loop", "foundry"]);
       expect(atOf(opened, "domain")).toEqual(["goggles"]);
       expect(atOf(opened, "state")).toEqual([".xray/state/STATION.md"]);
-      expect(atOf(opened, "foundry")).toEqual(["inspect --skip-live"]);
+      expect(atOf(opened, "foundry")).toEqual([]);
       expect(first.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
-        "Sleeve: off loop",
+        "Sleeve: off loop, foundry",
       ]);
 
       const kept = heatCard(root, {
@@ -174,6 +180,30 @@ describe("sleeve", () => {
       const loop = await dispatchTool("look", { outer: "loop" }, root);
       expect(loop.payload.content).toBe("The reading is loop.");
 
+      const ranAt = JSON.parse(
+        fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
+      ).ranAt;
+      look(["digest", "memory-recall"], root);
+      expect(
+        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
+      ).toBe(ranAt);
+      fs.writeFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "stale plate body\n");
+      expect(atOf(readSleeve(root), "domain")).toEqual([]);
+      const refreshed = heatCard(root, {
+        hookEvent: "pre_compact",
+        intent: "another compact summary that stays off the ticket",
+      });
+      expect(refreshed.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
+        "Sleeve: on",
+      ]);
+      const worn = fs.readFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "utf8");
+      expect(worn).toContain("It views one plane");
+      expect(refreshed.card).not.toContain("It views one plane");
+      expect(atOf(readSleeve(root), "domain")).toEqual(["goggles"]);
+      const afterMill = JSON.parse(
+        fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
+      ).ranAt;
+
       const replaced = heatCard(root, {
         hookEvent: "pre_tool",
         intent: "paint the hangar door blue",
@@ -184,6 +214,9 @@ describe("sleeve", () => {
       expect(atOf(after, "loop")).toEqual([]);
       expect(replaced.card).toContain("Intent: paint the hangar door blue");
       expect(replaced.card).not.toContain("Sleeve: on");
+      expect(
+        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
+      ).toBe(afterMill);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
