@@ -1010,6 +1010,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       ? existing.hotSwap
       : null;
   const hotSwap = nextSwap || keptSwap;
+  const priorIntent = readStationTicketField(root, "Intent");
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
@@ -1066,6 +1067,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const workingSnapshot = {
     host,
     intent,
+    priorIntent: priorIntent || null,
     git,
     hotSwap,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
@@ -1111,15 +1113,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   } catch {
     /* a missed plate leaves the domain empty */
   }
-  persistRepertoireWorking(root, workingSnapshot);
-  const sleeve = readSleeve(root, { intent });
-  workingSnapshot.sleeve = {
-    on: sleeve.on,
-    missing: sleeve.missing,
-    stitches: sleeve.stitches,
-  };
   const working = persistRepertoireWorking(root, workingSnapshot);
-  const sleeveLine = formatSleevePointer(sleeve);
   const workingLine = formatWorkingLine(working);
   const workingBit = workingLine ? workingLine : "working: (none)";
   const stationLine = `${swapBit}. ${intentBit}. ${planBit}. ${gitBit}. ${repertoireResume}. ${workingBit}`;
@@ -1133,7 +1127,6 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     workingLine,
     stationLine,
     cascadeLine,
-    sleeveLine,
     ...(notesLine ? { notesLine } : {}),
     ...compactHold,
   };
@@ -1381,8 +1374,35 @@ function writeStationMarkdown(root, fields) {
       /* a missing plate doc must not block the card */
     }
     const dest = stationMarkdownPath(root);
-    const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
-    writeFileSync(dest, next);
+    const base = { ...(fields || {}) };
+    delete base.sleeveLine;
+    writeFileSync(dest, mergeStationMarkdown(formatStationMarkdown(base), readExistingStationMarkdown(root)));
+    let sleeveLine = "Sleeve: off loop, domain, state, foundry";
+    try {
+      const proved = readSleeve(root);
+      sleeveLine = formatSleevePointer(proved);
+      const workingPath = join(root, ".xray", "state", "repertoire-working.json");
+      if (existsSync(workingPath)) {
+        const saved = JSON.parse(readFileSync(workingPath, "utf8"));
+        if (saved && typeof saved === "object") {
+          saved.sleeve = {
+            on: proved.on,
+            missing: proved.missing,
+            stitches: proved.stitches,
+          };
+          writeFileSync(workingPath, `${JSON.stringify(saved)}\n`);
+        }
+      }
+    } catch {
+      /* the card still writes; the sleeve stays off */
+    }
+    writeFileSync(
+      dest,
+      mergeStationMarkdown(
+        formatStationMarkdown({ ...(fields || {}), sleeveLine }),
+        readExistingStationMarkdown(root),
+      ),
+    );
     return dest;
   } catch {
     return null;

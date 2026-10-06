@@ -29,35 +29,34 @@ function atOf(sleeve: SleeveFile, name: string): string[] {
   return row?.at ?? [];
 }
 
-function standHere(root: string): void {
+function linkFoundry(root: string): void {
   fs.mkdirSync(path.join(root, "scripts"), { recursive: true });
   fs.symlinkSync(path.join(SUIT, "scripts", "foundry"), path.join(root, "scripts", "foundry"));
 }
 
-function holdPlane(root: string, plane: string): void {
-  const dir = path.join(root, ".xray", "state");
-  fs.mkdirSync(dir, { recursive: true });
+function standExo(root: string): void {
   fs.writeFileSync(
-    path.join(dir, "goggles-reading.json"),
-    `${JSON.stringify({ plane })}\n`,
+    path.join(root, "package.json"),
+    `${JSON.stringify({ name: "0xray", version: "0.0.0" })}\n`,
   );
+  fs.symlinkSync(path.join(SUIT, "docs-site"), path.join(root, "docs-site"));
+  linkFoundry(root);
 }
 
-function enterGoggles(root: string): void {
-  const source = path.join(SUIT, "docs-site", "docs", "plates", "goggles.md");
-  const dest = path.join(root, ".xray", "state", "plates", "goggles.md");
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(source, dest);
-  fs.writeFileSync(
-    path.join(root, ".xray", "state", "STATION.md"),
-    "# Station\n\nIntent: goggles\nPlate: goggles — .xray/state/plates/goggles.md\n",
-  );
-}
-
-function holdWorking(root: string): void {
-  const dest = path.join(root, ".xray", "state", "repertoire-working.json");
-  fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.writeFileSync(dest, `${JSON.stringify({ host: "grok" })}\n`);
+function heatCard(
+  root: string,
+  extra: { hookEvent: string; intent: string },
+): { card: string; sleeveLine: unknown } {
+  const heat = applyStationHeat(root, "grok", extra, {});
+  const dest = writeStationMarkdown(root, {
+    ...heat,
+    host: "grok",
+    suit_profile: "frontier",
+  });
+  return {
+    card: fs.readFileSync(dest || "", "utf8"),
+    sleeveLine: (heat as { sleeveLine?: unknown }).sleeveLine,
+  };
 }
 
 describe("sleeve", () => {
@@ -74,7 +73,7 @@ describe("sleeve", () => {
     expect(look(["digest", "house"]).text).not.toContain("Sleeve:");
   });
 
-  it("is off when this root is not in those four places", () => {
+  it("is off when this root has no wake, no plate, no ticket, and no mill", () => {
     const root = tempRoot("xray-sleeve-off-");
     try {
       const sleeve = readSleeve(root);
@@ -98,59 +97,69 @@ describe("sleeve", () => {
     }
   });
 
-  it("turns on when the plane is held, the plate is worn, state is on disk, and the mill answers", () => {
-    const root = tempRoot("xray-sleeve-on-");
+  it("names the failed mill check when inspect runs and the root is not the exo", () => {
+    const root = tempRoot("xray-sleeve-receipt-");
     try {
-      standHere(root);
-      holdPlane(root, "routing");
-      enterGoggles(root);
-      holdWorking(root);
+      linkFoundry(root);
       const sleeve = readSleeve(root);
-      expect(sleeve.on).toBe(true);
-      expect(sleeve.missing).toEqual([]);
-      expect(atOf(sleeve, "loop")).toEqual(["routing"]);
-      expect(atOf(sleeve, "domain")).toEqual(["goggles"]);
-      expect(atOf(sleeve, "state")).toEqual([
-        ".xray/state/STATION.md",
-        ".xray/state/repertoire-working.json",
-      ]);
-      expect(atOf(sleeve, "foundry")).toEqual(["scripts/foundry"]);
-      expect(formatSleeveReading(sleeve)).toContain("Loop: routing");
-      expect(formatSleeveReading(sleeve)).toContain("Domain: goggles");
-      expect(formatSleeveReading(sleeve)).toContain("Foundry: scripts/foundry");
-      holdPlane(root, "loop");
-      expect(readSleeve(root).missing).toContain("loop");
+      expect(sleeve.on).toBe(false);
+      expect(sleeve.missing).toContain("foundry");
+      expect(atOf(sleeve, "foundry")).toEqual(["receipt"]);
+      expect(formatSleeveReading(sleeve)).toContain("Foundry: receipt");
+      expect(formatSleevePointer(sleeve)).toBe("Sleeve: off loop, domain, state, foundry");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it("writes Sleeve: on only after heat has entered the four", async () => {
-    const root = tempRoot("xray-sleeve-heat-");
+  it("turns on only after the wake returns, the plate is the work, the ticket reads back, and inspect passes", async () => {
+    const root = tempRoot("xray-sleeve-on-");
     try {
-      standHere(root);
-      holdPlane(root, "routing");
-      const heat = applyStationHeat(
-        root,
-        "grok",
-        { hookEvent: "pre_tool", intent: "goggles" },
-        { host: "grok", intent: "goggles" },
-      );
-      expect(heat.sleeveLine).toBe("Sleeve: on");
-      const dest = writeStationMarkdown(root, {
-        ...heat,
-        host: "grok",
-        suit_profile: "frontier",
+      standExo(root);
+      const first = heatCard(root, { hookEvent: "pre_tool", intent: "goggles" });
+      expect(first.sleeveLine).toBeUndefined();
+      const opened = readSleeve(root);
+      expect(opened.on).toBe(false);
+      expect(opened.missing).toEqual(["loop"]);
+      expect(atOf(opened, "domain")).toEqual(["goggles"]);
+      expect(atOf(opened, "state")).toEqual([".xray/state/STATION.md"]);
+      expect(atOf(opened, "foundry")).toEqual(["inspect --skip-live"]);
+      expect(first.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
+        "Sleeve: off loop",
+      ]);
+
+      const kept = heatCard(root, {
+        hookEvent: "pre_compact",
+        intent: "a compact summary that must stay off the ticket",
       });
-      const card = fs.readFileSync(dest || "", "utf8");
-      expect(card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual(["Sleeve: on"]);
-      expect(card).not.toContain("Loop:");
-      expect(card).not.toContain("scripts/foundry");
+      expect(kept.sleeveLine).toBeUndefined();
+      const sleeve = readSleeve(root);
+      expect(sleeve.on).toBe(true);
+      expect(sleeve.missing).toEqual([]);
+      expect(atOf(sleeve, "loop")).toEqual(["goggles"]);
+      expect(atOf(sleeve, "domain")).toEqual(["goggles"]);
+      expect(atOf(sleeve, "state")).toEqual([".xray/state/STATION.md"]);
+      expect(atOf(sleeve, "foundry")).toEqual(["inspect --skip-live"]);
+      expect(kept.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
+        "Sleeve: on",
+      ]);
+      expect(kept.card).toContain("Intent: goggles");
+      expect(kept.card).not.toContain("It views one plane");
+      expect(kept.card).not.toContain("Loop:");
+      expect(kept.card).not.toContain("Domain:");
+      expect(kept.card).not.toContain("Foundry:");
       const text = look(["digest", "memory-recall"], root).text;
-      expect(text).toContain("Loop: routing");
+      expect(text).toContain("Loop: goggles");
       expect(text).toContain("Domain: goggles");
-      expect(text).toContain("Foundry: scripts/foundry");
-      expect(text).toContain(".xray/state/repertoire-working.json");
+      expect(text).toContain("State: .xray/state/STATION.md");
+      expect(text).toContain("Foundry: inspect --skip-live");
+
+      const working = JSON.parse(
+        fs.readFileSync(path.join(root, ".xray", "state", "repertoire-working.json"), "utf8"),
+      );
+      expect(working.priorIntent).toBe("goggles");
+      expect(working.intent).toBe("goggles");
+      expect(working.sleeve?.on).toBe(true);
 
       const looked = await dispatchTool(
         "look",
@@ -164,8 +173,19 @@ describe("sleeve", () => {
       expect((plain.payload.content as LookCard).sleeve).toBeUndefined();
       const loop = await dispatchTool("look", { outer: "loop" }, root);
       expect(loop.payload.content).toBe("The reading is loop.");
+
+      const replaced = heatCard(root, {
+        hookEvent: "pre_tool",
+        intent: "paint the hangar door blue",
+      });
+      const after = readSleeve(root);
+      expect(after.on).toBe(false);
+      expect(after.missing).toContain("loop");
+      expect(atOf(after, "loop")).toEqual([]);
+      expect(replaced.card).toContain("Intent: paint the hangar door blue");
+      expect(replaced.card).not.toContain("Sleeve: on");
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 90000);
 });

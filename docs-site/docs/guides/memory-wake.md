@@ -2,7 +2,7 @@
 
 Station stays a ticket. This page is the join. Not a new organ.
 
-Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when this root is in a held plane, inside a worn plate, holding the ticket, and standing where the mill answers.
+Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when the wake returned, the worn plate is the work, the ticket reads back as that wake, and inspect passed at this root.
 
 ## Thesis
 
@@ -40,7 +40,7 @@ applyStationHeat(root, host, extra, existing)
  7. opProcNames = reloadOpProc() factory ∪ stack only
  8. persist repertoire-working { pickup, subjectHits, opProcNames, destCount }
  9. Station projection stays thin Intent / Working ≤4 / Cascade count / Sleeve on / Unfinished path
- 10. A memory-recall look reads the same current index, the matched law names, and where the four stitches actually are
+ 10. A memory-recall look reads the same current index, the matched law names, and the four stitches: the returned wake, the plate, the readback, and the mill job
 ```
 
 `cursorBootNeedsRefresh` already refreshes when `repertoireResume` count changes. Hydrate first, then the count moves, then heat rewrites. Do not add a hook.
