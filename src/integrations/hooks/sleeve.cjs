@@ -264,7 +264,12 @@ function foundryStitch(root) {
   if (!stamp || saved.stamp !== stamp) return stitch("foundry", false, saved.stamp ? ["stale"] : []);
   if (saved.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
   const failed = Array.isArray(saved.failed) ? saved.failed.map(String) : [];
-  return stitch("foundry", false, failed);
+  // The wear leaves ~/.grok/plugins/0xray in place and scrubs it. That check is not the mill.
+  const blocking = failed.filter((id) => id !== "machinePlugin");
+  if (failed.length > 0 && blocking.length === 0) {
+    return stitch("foundry", true, ["inspect --skip-live"]);
+  }
+  return stitch("foundry", false, blocking.length ? blocking : failed);
 }
 
 function readSleeve(root) {

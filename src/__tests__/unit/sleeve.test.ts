@@ -88,6 +88,42 @@ describe("sleeve", () => {
     expect(look(["digest", "house"]).text).not.toContain("Sleeve:");
   });
 
+  it("counts a machine plugin as a passed mill", () => {
+    const root = tempRoot("xray-sleeve-plugin-");
+    try {
+      standExo(root);
+      const version = JSON.parse(
+        fs.readFileSync(path.join(root, "scripts", "foundry", "package.json"), "utf8"),
+      ).version as string;
+      fs.mkdirSync(path.join(root, ".xray", "state"), { recursive: true });
+      fs.writeFileSync(
+        path.join(root, ".xray", "state", "sleeve-mill.json"),
+        `${JSON.stringify({
+          ok: false,
+          failed: ["machinePlugin"],
+          stamp: `${version}||`,
+          ranAt: "2026-10-07T00:00:00.000Z",
+        })}\n`,
+      );
+      const passed = readSleeve(root);
+      expect(passed.missing).not.toContain("foundry");
+      expect(atOf(passed, "foundry")).toEqual(["inspect --skip-live"]);
+      const raw = JSON.parse(
+        fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
+      ) as { failed?: string[] };
+      raw.failed = ["machinePlugin", "receipt"];
+      fs.writeFileSync(
+        path.join(root, ".xray", "state", "sleeve-mill.json"),
+        `${JSON.stringify(raw)}\n`,
+      );
+      const blocked = readSleeve(root);
+      expect(blocked.missing).toContain("foundry");
+      expect(atOf(blocked, "foundry")).toEqual(["receipt"]);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("is off when this root has no wake, no plate, no ticket, and no mill", () => {
     const root = tempRoot("xray-sleeve-off-");
     try {
@@ -238,6 +274,9 @@ describe("sleeve", () => {
       expect(stalled.card).toContain("Plan: The work is the mill.");
       expect(stalled.card).toContain("Sleeve: off foundry");
       expect(stalled.card).toContain("Judgement: retry 1");
+      const held = heatCard(root, { hookEvent: "user_prompt_submit", intent: "goggles" });
+      expect(held.card).toContain("Judgement: retry 1");
+      expect(held.card).toContain("Sleeve: off foundry");
       expect(stalled.card).toContain("Payments: off");
       expect(stalled.card).toContain("Plane: ground");
       expect(
