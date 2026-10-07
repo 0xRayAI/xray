@@ -139,11 +139,32 @@ function enableMemoryRoutingIfResolves(features, targetDir) {
   };
 }
 
+function isDogfoodXrayPackage(targetDir) {
+  try {
+    const pkgPath = path.join(targetDir, "package.json");
+    if (!fs.existsSync(pkgPath)) return false;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    return pkg && pkg.name === "0xray";
+  } catch {
+    return false;
+  }
+}
+
 function resolveGogglesMcp(targetDir) {
-  const candidates = [
-    path.join(targetDir, "node_modules", "0xray", "scripts", "mjs", "run-goggles-mcp.mjs"),
-    path.join(targetDir, "scripts", "mjs", "run-goggles-mcp.mjs"),
-  ];
+  const installed = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "scripts",
+    "mjs",
+    "run-goggles-mcp.mjs",
+  );
+  const checkout = path.join(targetDir, "scripts", "mjs", "run-goggles-mcp.mjs");
+  // The factory package is not installed into its own node_modules. npm upgrade
+  // removes that folder, and a recorded node_modules path then fails the handshake.
+  const candidates = isDogfoodXrayPackage(targetDir)
+    ? [checkout, installed]
+    : [installed, checkout];
   return candidates.find((file) => fs.existsSync(file)) || null;
 }
 
