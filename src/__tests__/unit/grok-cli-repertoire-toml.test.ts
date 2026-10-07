@@ -60,6 +60,25 @@ describe('writeProjectGogglesMcp', () => {
     }
   });
 
+  it('records the checkout launcher when the project is the 0xray package', () => {
+    const project = mkdtempSync(path.join(tmpdir(), 'xray-grok-goggles-dogfood-'));
+    const checkout = path.join(project, 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    const installed = path.join(project, 'node_modules', '0xray', 'scripts', 'mjs', 'run-goggles-mcp.mjs');
+    try {
+      writeFileSync(path.join(project, 'package.json'), JSON.stringify({ name: '0xray', version: '0.0.0' }));
+      mkdirSync(path.dirname(checkout), { recursive: true });
+      mkdirSync(path.dirname(installed), { recursive: true });
+      writeFileSync(checkout, '#!/usr/bin/env node\n');
+      writeFileSync(installed, '#!/usr/bin/env node\n');
+      const tomlPath = writeProjectGogglesMcp(project);
+      const toml = readFileSync(tomlPath as string, 'utf8');
+      expect(toml).toContain(JSON.stringify(checkout));
+      expect(toml).not.toContain('node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs');
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
   it('returns null when the launcher is not installed', () => {
     const project = mkdtempSync(path.join(tmpdir(), 'xray-grok-goggles-none-'));
     try {
