@@ -92,6 +92,7 @@ const sidebars: SidebarsConfig = {
         'plates/lens-gate',
         'plates/pre-tool',
         'plates/lens-page',
+        'plates/centrifuge',
         'plates/grokbot',
       ],
     },

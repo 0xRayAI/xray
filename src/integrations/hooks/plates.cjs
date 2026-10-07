@@ -46,6 +46,7 @@ const PLATE_IDS = Object.freeze([
   "lens-gate",
   "pre-tool",
   "lens-page",
+  "centrifuge",
 ]);
 
 /** Id token, then extra phrases. Equal top scores recall nothing. */
@@ -228,6 +229,11 @@ const CUES = {
   "lens-page": [
     [/lens page/i, 6],
     [/plates\/lens-page/i, 6],
+  ],
+  centrifuge: [
+    [/centrifuge plate/i, 6],
+    [/the centrifuge/i, 5],
+    [/plates\/centrifuge/i, 6],
   ],
 };
 

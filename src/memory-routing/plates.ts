@@ -46,6 +46,7 @@ export const PLATE_IDS = [
   'lens-gate',
   'pre-tool',
   'lens-page',
+  'centrifuge',
 ] as const;
 
 export type PlateId = (typeof PLATE_IDS)[number];
