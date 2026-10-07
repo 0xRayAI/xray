@@ -1408,15 +1408,34 @@ function readHeldPlane(root) {
   }
 }
 
-function judgementLine(order, saved) {
+function missKey(proved) {
+  const missing = proved && Array.isArray(proved.missing) ? proved.missing.slice() : [];
+  const rows = proved && Array.isArray(proved.stitches) ? proved.stitches : [];
+  const at = {};
+  for (const row of rows) {
+    if (!row || !missing.includes(row.name)) continue;
+    at[row.name] = Array.isArray(row.at) ? row.at.slice() : [];
+  }
+  return JSON.stringify({ missing, at });
+}
+
+function judgementLine(order, saved, proved) {
   const wake = order && order.wake ? order.wake : "start";
   if (wake === "repair") {
     const prior = saved && Number.isFinite(saved.retries) ? saved.retries : 0;
+    const key = missKey(proved);
+    if (saved && saved.missKey === key && prior > 0) return `retry ${prior}`;
     const next = prior + 1;
-    saved.retries = next;
+    if (saved) {
+      saved.retries = next;
+      saved.missKey = key;
+    }
     return `retry ${next}`;
   }
-  if (saved) saved.retries = 0;
+  if (saved) {
+    saved.retries = 0;
+    delete saved.missKey;
+  }
   if (wake === "continue" || wake === "stop" || wake === "start") return wake;
   return "start";
 }
@@ -1496,7 +1515,7 @@ function writeStationMarkdown(root, fields) {
           if (Object.prototype.hasOwnProperty.call(order, "planLine")) {
             fields.planLine = order.planLine;
           }
-          fields.judgement = judgementLine(order, saved);
+          fields.judgement = judgementLine(order, saved, proved);
           saved.wake = order.wake;
           saved.retries = saved.retries || 0;
           saved.judgement = fields.judgement;
