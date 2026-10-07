@@ -210,6 +210,12 @@
     "mark": "export function formatCardPane",
     "skills": ".agents/skills/lens-page/SKILL.md",
     "plates": ["record-map", "lens-gate"]
+  },
+  "centrifuge": {
+    "files": ["src/integrations/hooks/station-hook-runtime.cjs"],
+    "mark": "function wakeOrder",
+    "skills": ".agents/skills/centrifuge/SKILL.md",
+    "plates": ["station-card", "goggles"]
   }
 }
 
