@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const {
   patchGrokHooks,
   grokHookShellCommand,
+  scrubEphemeralMachineGrokPins,
   isEphemeralInstallRoot,
   isIsolatedHome,
   installAllBridges,
@@ -152,6 +153,95 @@ describe('Grok hooks.json command strings', () => {
       else process.env.FOUNDRY_MACHINE_HOME = prev;
       rmSync(home, { recursive: true, force: true });
       rmSync(pkg, { recursive: true, force: true });
+    }
+  });
+
+  it('drops a dead ephemeral XRAY_ROOT from the machine plugin', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-scrub-home-'));
+    const durable = path.join(home, '.grok', 'wears', '0xray');
+    const dead = path.join(tmpdir(), 'xray-setup-nogit-dead');
+    try {
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      mkdirSync(path.join(durable, 'scripts', 'node'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'), '#!/usr/bin/env node\n');
+      const plugin = path.join(home, '.grok', 'plugins', '0xray');
+      mkdirSync(path.join(plugin, 'hooks'), { recursive: true });
+      const deadCmd = `XRAY_AI_PATH=${JSON.stringify(dead)} node ${JSON.stringify(
+        path.join(dead, 'scripts', 'mjs', 'run-grok-hook.mjs'),
+      )} post-tool-use.js`;
+      writeFileSync(
+        path.join(plugin, 'hooks', 'hooks.json'),
+        `${JSON.stringify(
+          {
+            hooks: {
+              PostToolUse: [
+                {
+                  hooks: [
+                    {
+                      type: 'command',
+                      command: deadCmd,
+                      env: { XRAY_ROOT: dead, XRAY_AI_PATH: dead, KEEP: 'yes' },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      writeFileSync(
+        path.join(plugin, '.mcp.json'),
+        `${JSON.stringify(
+          {
+            mcpServers: {
+              'xray-enforcer': {
+                command: 'node',
+                args: [
+                  path.join(dead, 'scripts', 'node', 'mcp-launch.cjs'),
+                  '--keep',
+                  'PATH,HOME,XRAY_ROOT',
+                  '--',
+                  'npx',
+                ],
+                env: { XRAY_ROOT: dead, XRAY_FORCE_MCP_GOVERNANCE: 'true' },
+              },
+            },
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(2);
+      const hook = JSON.parse(readFileSync(path.join(plugin, 'hooks', 'hooks.json'), 'utf8')).hooks
+        .PostToolUse[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(hook.command).toContain(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      expect(hook.command).not.toContain(dead);
+      expect(hook.env.XRAY_AI_PATH).toBe(durable);
+      expect(hook.env.XRAY_ROOT).toBeUndefined();
+      expect(hook.env.KEEP).toBe('yes');
+      const server = JSON.parse(readFileSync(path.join(plugin, '.mcp.json'), 'utf8')).mcpServers[
+        'xray-enforcer'
+      ] as { args: string[]; env: Record<string, string> };
+      expect(server.args[0]).toBe(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'));
+      expect(server.env.XRAY_ROOT).toBeUndefined();
+      expect(server.env.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(0);
+      writeFileSync(
+        path.join(plugin, '.mcp.json'),
+        `${JSON.stringify({
+          mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: '/home/box/other-seat' } } },
+        })}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(0);
+      const kept = JSON.parse(readFileSync(path.join(plugin, '.mcp.json'), 'utf8')) as {
+        mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: string } } };
+      };
+      expect(kept.mcpServers['xray-enforcer'].env.XRAY_ROOT).toBe('/home/box/other-seat');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
     }
   });
 

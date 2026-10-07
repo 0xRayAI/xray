@@ -603,6 +603,83 @@ function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
   return true;
 }
 
+/** Absolute paths under a temp checkout. Longest match wins so a script path is retargeted before its root. */
+function retargetEphemeralText(text, durableRoot) {
+  if (typeof text !== "string" || !isEphemeralInstallRoot(text)) return text;
+  const re = /(?:\/private\/var\/folders\/|\/var\/folders\/|\/private\/tmp\/|\/tmp\/|\/Temp\/)[^\s"']*/g;
+  const tokens = [...new Set(text.match(re) || [])].sort((a, b) => b.length - a.length);
+  let out = text;
+  for (const token of tokens) {
+    const scriptsAt = token.indexOf("/scripts/");
+    if (scriptsAt > 0) {
+      const repl = path.join(durableRoot, token.slice(scriptsAt + 1));
+      if (fs.existsSync(repl)) out = out.split(token).join(repl);
+      continue;
+    }
+    const runner = path.join(durableRoot, "scripts", "mjs", "run-grok-hook.mjs");
+    if (
+      !fs.existsSync(token) &&
+      fs.existsSync(runner) &&
+      (out.includes("run-grok-hook") || out.includes("mcp-launch.cjs"))
+    ) {
+      out = out.split(token).join(durableRoot);
+    }
+  }
+  return out;
+}
+
+function scrubEphemeralPins(node, durableRoot) {
+  if (Array.isArray(node)) return node.map((item) => scrubEphemeralPins(item, durableRoot));
+  if (!node || typeof node !== "object") {
+    return typeof node === "string" ? retargetEphemeralText(node, durableRoot) : node;
+  }
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    if ((key === "env" || key === "environment") && value && typeof value === "object" && !Array.isArray(value)) {
+      const env = {};
+      for (const [envKey, envValue] of Object.entries(value)) {
+        if (typeof envValue === "string" && isEphemeralInstallRoot(envValue)) {
+          if (envKey === "XRAY_AI_PATH") env[envKey] = durableRoot;
+          continue;
+        }
+        env[envKey] = scrubEphemeralPins(envValue, durableRoot);
+      }
+      out[key] = env;
+      continue;
+    }
+    out[key] = scrubEphemeralPins(value, durableRoot);
+  }
+  return out;
+}
+
+/**
+ * Shared HOME does not wear the machine plugin, but Grok still loads a stale
+ * `~/.grok/plugins/0xray`. Drop temp XRAY_ROOT pins and retarget dead launch
+ * paths onto the durable wear. A real project root on that plugin is left alone.
+ */
+function scrubEphemeralMachineGrokPins(machine, durablePackageRoot) {
+  if (!machine || !durablePackageRoot) return 0;
+  const runner = path.join(durablePackageRoot, "scripts", "mjs", "run-grok-hook.mjs");
+  if (!fs.existsSync(runner)) return 0;
+  const plugin = path.join(machine, ".grok", "plugins", "0xray");
+  const files = [path.join(plugin, "hooks", "hooks.json"), path.join(plugin, ".mcp.json")];
+  let changed = 0;
+  for (const file of files) {
+    if (!fs.existsSync(file)) continue;
+    let data;
+    try {
+      data = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      continue;
+    }
+    const next = scrubEphemeralPins(data, durablePackageRoot);
+    if (JSON.stringify(data) === JSON.stringify(next)) continue;
+    writeFileIfChanged(file, `${JSON.stringify(next, null, 2)}\n`);
+    changed += 1;
+  }
+  return changed;
+}
+
 function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -622,6 +699,7 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
     log("grok-bridge", "skip machine ~/.grok plugin — isolated HOME", "info");
   } else {
     log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear", "info");
+    scrubEphemeralMachineGrokPins(machine, settlePackageRoot(packageRoot, targetDir));
   }
 
   for (const dest of targets) {
@@ -2460,6 +2538,7 @@ module.exports = {
   patchGrokHooks,
   grokHookShellCommand,
   settlePackageRoot,
+  scrubEphemeralMachineGrokPins,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,
