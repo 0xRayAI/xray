@@ -959,6 +959,15 @@ function lensPage(root, names) {
   return parts.join('\n\n');
 }
 
+
+export function holdPlane(root, id) {
+  const plane = String(id || "").trim();
+  if (!plane || plane.includes(" ")) return;
+  const dest = join(root, ".xray", "state", "goggles-plane.json");
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify({ plane })}\n`);
+}
+
 function stampPlane(root, id) {
   try {
     const plates = createRequire(import.meta.url)('./plates.cjs');
@@ -983,6 +992,7 @@ export function lensBeforeResearch(root, toolName, text) {
   if (!research) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
   if (names.length === 1) {
+    holdPlane(root, names[0]);
     stampPlane(root, names[0]);
     rememberOpened(root, spoken);
     return null;

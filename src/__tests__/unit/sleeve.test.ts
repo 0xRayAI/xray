@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { dispatchTool } from "../../integrations/hooks/goggles-mcp.mjs";
-import { look } from "../../integrations/hooks/goggles-pipeline.mjs";
+import { holdPlane, look } from "../../integrations/hooks/goggles-pipeline.mjs";
 import {
   applyStationHeat,
   writeStationMarkdown,
@@ -61,6 +61,20 @@ function heatCard(
 }
 
 describe("sleeve", () => {
+  it("holds one plane name and ignores a name with a space", () => {
+    const root = tempRoot("xray-sleeve-plane-");
+    try {
+      holdPlane(root, "memory recall");
+      expect(fs.existsSync(path.join(root, ".xray", "state", "goggles-plane.json"))).toBe(false);
+      holdPlane(root, "memory-recall");
+      expect(
+        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
+      ).toBe("memory-recall");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("keeps the outer readings and leaves ground, routing, and house alone", () => {
     expect(look(["loop"]).text).toBe("The reading is loop.");
     expect(look(["domain"]).text).toBe("");
@@ -129,6 +143,9 @@ describe("sleeve", () => {
       expect(first.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
         "Sleeve: off loop, domain, state, foundry",
       ]);
+      expect(first.card).toContain("Plane: (none)");
+      expect(first.card).toContain("Judgement: start");
+      expect(first.card).toContain("Payments: off");
       expect(opened.missing).toEqual(["loop", "state", "foundry"]);
       expect(atOf(opened, "domain")).toEqual(["goggles"]);
       expect(atOf(opened, "state")).toEqual([]);
@@ -149,14 +166,24 @@ describe("sleeve", () => {
       expect(kept.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
         "Sleeve: on",
       ]);
+      expect(kept.card).toContain("Plane: (none)");
+      expect(kept.card).toContain("Judgement: continue");
+      expect(kept.card).toContain("Payments: off");
       expect(kept.card).toContain("Intent: goggles");
       expect(kept.card).not.toContain("It views one plane");
+      fs.writeFileSync(
+        path.join(root, ".xray", "state", "goggles-plane.json"),
+        `${JSON.stringify({ plane: "memory-recall" })}\n`,
+      );
       const resumed = heatCard(root, {
         hookEvent: "session_start",
         intent: "a new opening prompt",
       });
       expect(resumed.card).toContain("Intent: goggles");
       expect(resumed.card).not.toContain("a new opening prompt");
+      expect(resumed.card).toContain("Plane: memory-recall");
+      expect(resumed.card).toContain("Judgement: continue");
+      expect(resumed.card).toContain("Payments: off");
       expect(resumed.card.split("\n").filter((line) => line.startsWith("Sleeve:"))).toEqual([
         "Sleeve: on",
       ]);
@@ -175,6 +202,10 @@ describe("sleeve", () => {
       expect(working.priorIntent).toBe("goggles");
       expect(working.intent).toBe("goggles");
       expect(working.sleeve?.on).toBe(true);
+      expect(working.judgement).toBe("continue");
+      expect(working.payments).toBe("off");
+      expect(working.plane).toBe("memory-recall");
+      expect(working.retries).toBe(0);
 
       const looked = await dispatchTool(
         "look",
@@ -186,6 +217,9 @@ describe("sleeve", () => {
       expect(atOf(payload.sleeve || {}, "domain")).toEqual(["goggles"]);
       const plain = await dispatchTool("look", { outer: "digest", plane: "ground" }, root);
       expect((plain.payload.content as LookCard).sleeve).toBeUndefined();
+      expect(
+        JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "goggles-plane.json"), "utf8")).plane,
+      ).toBe("ground");
       const loop = await dispatchTool("look", { outer: "loop" }, root);
       expect(loop.payload.content).toBe("The reading is loop.");
 
@@ -203,6 +237,9 @@ describe("sleeve", () => {
       expect(stalled.card).toContain("Intent: goggles");
       expect(stalled.card).toContain("Plan: The work is the mill.");
       expect(stalled.card).toContain("Sleeve: off foundry");
+      expect(stalled.card).toContain("Judgement: retry 1");
+      expect(stalled.card).toContain("Payments: off");
+      expect(stalled.card).toContain("Plane: ground");
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(ranAt);
@@ -219,6 +256,8 @@ describe("sleeve", () => {
         "Sleeve: off domain",
       ]);
       expect(refreshed.card).toContain("Plan: The work is the plate.");
+      expect(refreshed.card).toContain("Judgement: retry 2");
+      expect(refreshed.card).toContain("Payments: off");
       const worn = fs.readFileSync(path.join(root, ".xray", "state", "plates", "goggles.md"), "utf8");
       expect(worn).toContain("It views one plane");
       expect(refreshed.card).not.toContain("It views one plane");
@@ -232,6 +271,12 @@ describe("sleeve", () => {
       ]);
       expect(restored.card).not.toContain("The work is the plate.");
       expect(restored.card).toContain("Plan: (none)");
+      expect(restored.card).toContain("Judgement: continue");
+      const aside = heatCard(root, { hookEvent: "user_prompt_submit", intent: "pay the invoice" });
+      expect(aside.card).toContain("Intent: goggles");
+      expect(aside.card).not.toContain("pay the invoice");
+      expect(aside.card).toContain("Payments: off");
+      expect(aside.card).toContain("Judgement: continue");
       const afterMill = JSON.parse(
         fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8"),
       ).ranAt;
@@ -247,6 +292,13 @@ describe("sleeve", () => {
       expect(atOf(after, "foundry")).toEqual(["inspect --skip-live"]);
       expect(replaced.card).toContain("Intent: paint the hangar door blue");
       expect(replaced.card).not.toContain("Sleeve: on");
+      expect(replaced.card).toContain("Judgement: stop");
+      expect(replaced.card).toContain("Payments: off");
+      const paying = heatCard(root, { hookEvent: "pre_tool", intent: "pay the invoice" });
+      expect(paying.card).toContain("Intent: pay the invoice");
+      expect(paying.card).toContain("Payments: on");
+      expect(paying.card).toContain("Judgement: stop");
+      expect(paying.card).not.toContain("Payments: off");
       expect(
         JSON.parse(fs.readFileSync(path.join(root, ".xray", "state", "sleeve-mill.json"), "utf8")).ranAt,
       ).toBe(afterMill);

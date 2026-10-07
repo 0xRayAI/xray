@@ -1170,6 +1170,9 @@ const STOCK_STATION_PREFIXES = [
   "cascade:",
   "sleeve:",
   "notes:",
+  "plane:",
+  "judgement:",
+  "payments:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1367,6 +1370,9 @@ function formatStationMarkdown(fields) {
   lines.push("Library: record-map — .agents/skills/record-map/SKILL.md");
   if (fields.cascadeLine) lines.push(fields.cascadeLine);
   if (fields.sleeveLine) lines.push(fields.sleeveLine);
+  lines.push(`Plane: ${fields.plane || "(none)"}`);
+  lines.push(`Judgement: ${fields.judgement || "start"}`);
+  lines.push(`Payments: ${fields.payments === "on" ? "on" : "off"}`);
   if (fields.notesLine) lines.push(fields.notesLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
@@ -1387,6 +1393,33 @@ function readExistingStationMarkdown(root) {
   }
 }
 
+
+
+function ticketIsPayment(intent) {
+  return /\b(pay|payment|payments|x402|invoice)\b/i.test(String(intent || ""));
+}
+
+function readHeldPlane(root) {
+  try {
+    const data = JSON.parse(readFileSync(join(root, ".xray", "state", "goggles-plane.json"), "utf8"));
+    return data && typeof data.plane === "string" ? data.plane : "";
+  } catch {
+    return "";
+  }
+}
+
+function judgementLine(order, saved) {
+  const wake = order && order.wake ? order.wake : "start";
+  if (wake === "repair") {
+    const prior = saved && Number.isFinite(saved.retries) ? saved.retries : 0;
+    const next = prior + 1;
+    saved.retries = next;
+    return `retry ${next}`;
+  }
+  if (saved) saved.retries = 0;
+  if (wake === "continue" || wake === "stop" || wake === "start") return wake;
+  return "start";
+}
 
 function isMissPlan(line) {
   return typeof line === "string" && line.startsWith("The work is ");
@@ -1447,6 +1480,9 @@ function writeStationMarkdown(root, fields) {
     const base = { ...(fields || {}) };
     delete base.sleeveLine;
     writeFileSync(dest, mergeStationMarkdown(formatStationMarkdown(base), readExistingStationMarkdown(root)));
+    // Solar phase is not this judgement. The moral overlay cannot pass alone.
+    fields.plane = readHeldPlane(root);
+    fields.payments = ticketIsPayment(fields.intent) ? "on" : "off";
     let sleeveLine = "Sleeve: off loop, domain, state, foundry";
     try {
       const proved = readSleeve(root);
@@ -1460,7 +1496,12 @@ function writeStationMarkdown(root, fields) {
           if (Object.prototype.hasOwnProperty.call(order, "planLine")) {
             fields.planLine = order.planLine;
           }
+          fields.judgement = judgementLine(order, saved);
           saved.wake = order.wake;
+          saved.retries = saved.retries || 0;
+          saved.judgement = fields.judgement;
+          saved.plane = fields.plane;
+          saved.payments = fields.payments;
           if (order.pausedPlan !== undefined) saved.pausedPlan = order.pausedPlan;
           else delete saved.pausedPlan;
           saved.sleeve = {

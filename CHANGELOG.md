@@ -8,6 +8,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### Features
 - **Sleeve.** `Sleeve: on` means the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. A change to the worn skills drops the pass until the next session start or compact. The look lists the four. The card names a stitch only when it is missing.
+- **Card.** The station card keeps the named plane. Judgement is continue, retry N, stop, or start. A miss on the same job counts another retry. A changed ticket stops. Payments is on only when the ticket is a payment. Solar phase is not this judgement.
 - **Wear.** A fresh wear fastens mill and inspect and leaves the role-skill mirror in the package, so `inspect --skip-live` can pass on that consumer.
 - **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
