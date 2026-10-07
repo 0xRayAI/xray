@@ -1,0 +1,76 @@
+{
+  "active": false,
+  "rules": [
+    "Phased plan + detailed todos; assign best subagent; monitor output; iterate fully",
+    "Lead dev takes helm — loop test fix until complete; no permission pings",
+    "Per-suite test triage after major changes; full suite only when individuals pass",
+    "Lead stays main thread; subagents execute; update todos continuously",
+    "Read all console and test output; triage fix rerun",
+    "Never defer errors as pre-existing — add todo and resolve",
+    "Resolve all errors before phase completion"
+  ],
+  "codexTerms": [
+    59,
+    67,
+    68,
+    69
+  ],
+  "description": "Full briefing on factory-blip / kapow product: xray 4.0.15 plant, Railway blip-plant, Clearing hangar, blips.rippel.ai mint front, NFT/minter — current live state and remaining gaps",
+  "complexity": 60,
+  "requiresPhasedPlan": true,
+  "recommendedStrategy": "single-agent",
+  "mandatoryConsults": [],
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Research & architecture",
+      "goal": "Understand scope before edits",
+      "definitionOfDone": "researcher + architect-tools + code-review consulted",
+      "todos": []
+    },
+    {
+      "id": "phase-2",
+      "name": "Implementation",
+      "goal": "Execute with best subagent per todo",
+      "definitionOfDone": "Affected per-suite tests green",
+      "todos": [
+        {
+          "id": "2.1",
+          "task": "Full briefing on factory-blip / kapow product: xray 4.0.15 plant, Railway blip-plant, Clearing hangar, blips.rippel.ai mint front, NFT/minter — current live state and remaining gaps",
+          "subagent": "researcher",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Verification",
+      "goal": "Per-suite triage then full suite gate",
+      "definitionOfDone": "Full test suite green; zero open errors",
+      "todos": [
+        {
+          "id": "3.1",
+          "task": "Run affected test files individually; triage and fix",
+          "subagent": "bug-triage",
+          "status": "pending"
+        },
+        {
+          "id": "3.2",
+          "task": "Run full test suite gate",
+          "subagent": "bug-triage",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "testProtocol": {
+    "perSuiteFirst": true,
+    "fullSuiteGate": true,
+    "hint": "After major changes: npm test -- path/to/file.test.ts → fix → repeat → full npm test last"
+  },
+  "persistedAt": "2026-09-17T17:56:36.790Z",
+  "sessionId": "analyze-1789667796789",
+  "planGeneration": 1,
+  "archivedAt": "2026-09-18T08:51:26.380Z",
+  "archiveReason": "stale-unstarted-todos"
+}

@@ -1,0 +1,137 @@
+{
+  "planes": {
+    "goggles": {
+      "facet": "a pop stores one chosen kind. a hit returns it and the plane stays closed."
+    },
+    "hands": {
+      "feat": "hit the stored line. do not open the plane."
+    },
+    "suit-fit": {
+      "fix": "facet, feat, and fix are not ordered and not mandatory."
+    },
+    "routing": {
+      "facet": "From ground, task text → @agent → scoreAndRoute → TaskSkillRouter → keyword facade into the route → thinDispatch → ≤15 single agent → ≤25 single agent with tools → ≤50 multi-agent → >50 orchestrator-led → Repertoire resolveThinDispatch → wo",
+      "card": {
+        "from": "ground",
+        "digest": "Task text becomes an agent.",
+        "filled": [
+          "plate",
+          "files",
+          "worn"
+        ]
+      },
+      "fields": {
+        "files": "src/nucleus/thin-dispatch.ts",
+        "worn": "dist/nucleus/thin-dispatch.js"
+      },
+      "opened": true
+    },
+    "ground": {
+      "facet": "From ground, src, grok-bot/OP-PROC.md, src/opencode/agents, Agents.md, src/integrations, package.json. SKILLS.md.",
+      "card": {
+        "from": "ground",
+        "digest": "Home. The dev plane.",
+        "filled": [
+          "files",
+          "skills"
+        ]
+      },
+      "fields": {
+        "files": "src, grok-bot/OP-PROC.md, src/opencode/agents, Agents.md, src/integrations, package.json, mill",
+        "skills": "SKILLS.md"
+      }
+    },
+    "boot": {
+      "facet": "From ground, process start → SIGINT / SIGTERM → load .xray config → orchestrator + delegation session → session management · activity log → activateProcessors (PROCESSOR_DEFS) → legacy boot list, then agents and plugins → enforcement · code",
+      "card": {
+        "from": "ground",
+        "digest": "`BootOrchestrator.executeBootSequence` brings the framework up.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/boot.md"
+      }
+    },
+    "governance": {
+      "facet": "From ground, drawing only.",
+      "card": {
+        "from": "ground",
+        "digest": "A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/governance.md"
+      }
+    },
+    "house": {
+      "fix": "From ground, no house/HOUSE.md, run setup-house is not in grok-bot/lib/seat-doctor.cjs.",
+      "card": {
+        "from": "ground",
+        "digest": "A state flow plate: the stages a house goes through before doctor says House: PASS.",
+        "filled": [
+          "plate",
+          "files"
+        ]
+      },
+      "fields": {
+        "files": "grok-bot/lib/seat-doctor.cjs"
+      }
+    },
+    "memory-recall": {
+      "facet": "From ground, drawing only.",
+      "card": {
+        "from": "ground",
+        "digest": "Speech becomes a lesson.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/memory-recall.md"
+      }
+    },
+    "orchestration": {
+      "facet": "From ground, drawing only.",
+      "card": {
+        "from": "ground",
+        "digest": "Multi-step work is planned, run, and closed.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/orchestration.md"
+      }
+    },
+    "processor": {
+      "facet": "From ground, drawing only.",
+      "card": {
+        "from": "ground",
+        "digest": "Three pipelines run in parallel.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/processor.md"
+      }
+    },
+    "reporting": {
+      "facet": "From ground, drawing only.",
+      "card": {
+        "from": "ground",
+        "digest": "Logs become a report.",
+        "filled": [
+          "plate"
+        ]
+      },
+      "fields": {
+        "plate": "docs-site/docs/plates/reporting.md"
+      }
+    }
+  }
+}
