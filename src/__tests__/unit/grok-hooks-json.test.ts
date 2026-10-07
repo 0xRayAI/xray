@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
-import { tmpdir } from 'os';
+import { homedir, tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -108,6 +108,51 @@ describe('Grok hooks.json command strings', () => {
         path.join(spaced, 'scripts', 'mjs', 'run-grok-hook.mjs'),
       )} pre-tool-use.js --hook-event=pre_compact`,
     );
+  });
+
+  it('pins an ephemeral package at a durable wear for a real project', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-durable-home-'));
+    const project = path.join(home, 'project');
+    const pkg = mkdtempSync(path.join(tmpdir(), 'xray-ephemeral-pkg-'));
+    const prev = process.env.FOUNDRY_MACHINE_HOME;
+    process.env.FOUNDRY_MACHINE_HOME = home;
+    try {
+      mkdirSync(path.join(pkg, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node');
+      mkdirSync(path.join(pkg, 'scripts', 'node'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'node', 'mcp-launch.cjs'), '#!/usr/bin/env node');
+      mkdirSync(path.join(pkg, 'node_modules', 'skip'), { recursive: true });
+      writeFileSync(path.join(pkg, 'node_modules', 'skip', 'nope.js'), 'nope');
+      const pluginDir = path.join(project, 'plugin');
+      mkdirSync(path.join(pluginDir, 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(pluginDir, 'hooks', 'hooks.json'),
+        readFileSync(path.join(packageRoot, 'src/integrations/grok/plugin/0xray/hooks/hooks.json'), 'utf8'),
+      );
+      patchGrokHooks(pluginDir, pkg, project, () => {}, 'test');
+      const durable = path.join(home, '.grok', 'wears', '0xray');
+      const patched = readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8');
+      expect(patched).toContain(JSON.stringify(durable));
+      expect(patched).not.toContain(pkg);
+      expect(existsSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'))).toBe(true);
+      expect(existsSync(path.join(durable, 'node_modules'))).toBe(false);
+      const { buildPluginMcpJson, pinLauncherPackageRoot } = require(
+        path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs'),
+      );
+      pinLauncherPackageRoot(durable);
+      try {
+        const mcp = JSON.stringify(buildPluginMcpJson(project));
+        expect(mcp).toContain(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'));
+        expect(mcp).not.toContain(pkg);
+      } finally {
+        pinLauncherPackageRoot('');
+      }
+    } finally {
+      if (prev === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
+      else process.env.FOUNDRY_MACHINE_HOME = prev;
+      rmSync(home, { recursive: true, force: true });
+      rmSync(pkg, { recursive: true, force: true });
+    }
   });
 
   it('resolveGrokHook uses src when dist is gone', () => {

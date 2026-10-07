@@ -32,6 +32,7 @@ const {
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
+  pinLauncherPackageRoot,
   XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
@@ -334,6 +335,27 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
   }
 }
 
+function settlePackageRoot(packageRoot, targetDir) {
+  const resolved = path.resolve(packageRoot || ".");
+  if (!targetDir || !isEphemeralInstallRoot(resolved) || isEphemeralInstallRoot(path.resolve(targetDir))) {
+    return resolved;
+  }
+  const dest = path.join(machineHome(), ".grok", "wears", "0xray");
+  if (resolved === dest) return dest;
+  fs.rmSync(dest, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.cpSync(resolved, dest, {
+    recursive: true,
+    filter(src) {
+      const rel = path.relative(resolved, src);
+      if (!rel) return true;
+      const top = rel.split(path.sep)[0];
+      return top !== "node_modules" && top !== ".git";
+    },
+  });
+  return dest;
+}
+
 function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
   const script = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
   const extra = extraArgs ? ` ${extraArgs}` : "";
@@ -365,6 +387,7 @@ function ensureGrokHookEvent(hooks, eventName) {
 }
 
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
+  packageRoot = settlePackageRoot(packageRoot, targetDir);
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
   const hookScript = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
@@ -2119,7 +2142,9 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
-  const resolvedPackage = path.resolve(packageRoot);
+  const resolvedPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
+  pinLauncherPackageRoot(resolvedPackage);
+  try {
   if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
     wearSuitSkippingCursorHooks(resolvedPackage, resolvedTarget, write);
     return;
@@ -2171,6 +2196,9 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   }
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
+  } finally {
+    pinLauncherPackageRoot("");
+  }
 }
 
 /**
@@ -2378,15 +2406,16 @@ function installFrameworkDogfoodWear(packageRoot, log) {
  * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
  */
 function installAllBridges(opts) {
-  const packageRoot = path.resolve(opts.packageRoot);
   const targetDir = path.resolve(opts.targetDir);
+  const packageRoot = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
+  pinLauncherPackageRoot(packageRoot);
   const logFn = opts.log;
   const log =
     logFn ||
     ((_component, _action, _status, _details) => {
       /* noop */
     });
-
+  try {
   wearVendoredRepertoire(packageRoot, targetDir, log);
 
   if (!isConsumerInstall(packageRoot, targetDir)) {
@@ -2407,6 +2436,9 @@ function installAllBridges(opts) {
   installCursorBridge(targetDir, packageRoot, log);
 
   log("install-bridges", "4-platform + cursor wear complete", "success");
+  } finally {
+    pinLauncherPackageRoot("");
+  }
 }
 
 module.exports = {
@@ -2427,6 +2459,7 @@ module.exports = {
   MERGE_CONFIG_FILES,
   patchGrokHooks,
   grokHookShellCommand,
+  settlePackageRoot,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,
