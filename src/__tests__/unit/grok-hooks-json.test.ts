@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
-import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
 import { homedir, tmpdir } from 'os';
 import path from 'path';
@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const {
   patchGrokHooks,
   grokHookShellCommand,
+  settlePackageRoot,
   scrubEphemeralMachineGrokPins,
   isEphemeralInstallRoot,
   isIsolatedHome,
@@ -149,6 +150,50 @@ describe('Grok hooks.json command strings', () => {
         pinLauncherPackageRoot('');
       }
     } finally {
+      if (prev === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
+      else process.env.FOUNDRY_MACHINE_HOME = prev;
+      rmSync(home, { recursive: true, force: true });
+      rmSync(pkg, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the live wear until the staged copy exists', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-wear-swap-'));
+    const project = path.join(home, 'project');
+    const pkg = mkdtempSync(path.join(tmpdir(), 'xray-wear-swap-pkg-'));
+    const prev = process.env.FOUNDRY_MACHINE_HOME;
+    process.env.FOUNDRY_MACHINE_HOME = home;
+    const fsMod = require('fs') as { rmSync: typeof rmSync; cpSync: typeof cpSync };
+    const origRm = fsMod.rmSync;
+    const origCp = fsMod.cpSync;
+    const durable = path.join(home, '.grok', 'wears', '0xray');
+    const staging = `${durable}.next`;
+    let removedLiveBeforeCopy = false;
+    let copySawLive = false;
+    try {
+      mkdirSync(path.join(pkg, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'new');
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'old');
+      fsMod.rmSync = ((target: Parameters<typeof rmSync>[0], options?: Parameters<typeof rmSync>[1]) => {
+        if (path.resolve(String(target)) === durable && !existsSync(staging)) removedLiveBeforeCopy = true;
+        return origRm(target, options);
+      }) as typeof rmSync;
+      fsMod.cpSync = ((src: Parameters<typeof cpSync>[0], dest: Parameters<typeof cpSync>[1], options?: Parameters<typeof cpSync>[2]) => {
+        if (path.resolve(String(dest)) === staging) {
+          copySawLive = readFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'utf8') === 'old';
+        }
+        return origCp(src, dest, options);
+      }) as typeof cpSync;
+      expect(settlePackageRoot(pkg, project)).toBe(durable);
+      expect(removedLiveBeforeCopy).toBe(false);
+      expect(copySawLive).toBe(true);
+      expect(readFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'utf8')).toBe('new');
+      expect(existsSync(staging)).toBe(false);
+      expect(existsSync(`${durable}.prev`)).toBe(false);
+    } finally {
+      fsMod.rmSync = origRm;
+      fsMod.cpSync = origCp;
       if (prev === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
       else process.env.FOUNDRY_MACHINE_HOME = prev;
       rmSync(home, { recursive: true, force: true });

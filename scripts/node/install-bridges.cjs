@@ -342,9 +342,12 @@ function settlePackageRoot(packageRoot, targetDir) {
   }
   const dest = path.join(machineHome(), ".grok", "wears", "0xray");
   if (resolved === dest) return dest;
-  fs.rmSync(dest, { recursive: true, force: true });
+  // Copy beside the live wear. A hook pointed at dest keeps loading until the swap.
+  const staging = `${dest}.next`;
+  const backup = `${dest}.prev`;
+  fs.rmSync(staging, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.cpSync(resolved, dest, {
+  fs.cpSync(resolved, staging, {
     recursive: true,
     filter(src) {
       const rel = path.relative(resolved, src);
@@ -353,6 +356,10 @@ function settlePackageRoot(packageRoot, targetDir) {
       return top !== "node_modules" && top !== ".git";
     },
   });
+  fs.rmSync(backup, { recursive: true, force: true });
+  if (fs.existsSync(dest)) fs.renameSync(dest, backup);
+  fs.renameSync(staging, dest);
+  fs.rmSync(backup, { recursive: true, force: true });
   return dest;
 }
 
