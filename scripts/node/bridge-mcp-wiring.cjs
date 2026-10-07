@@ -315,7 +315,18 @@ function pinnedMcpLaunch(targetDir, mcpCmd) {
  */
 const LIVE_ENV_NAMES = ["PATH", "HOME"];
 
+let launcherPackageRoot = "";
+
+/** Wear sets this so a /tmp checkout is not the path written into a real project. */
+function pinLauncherPackageRoot(packageRoot) {
+  launcherPackageRoot = packageRoot ? path.resolve(packageRoot) : "";
+}
+
 function mcpLauncherPath() {
+  if (launcherPackageRoot) {
+    const candidate = path.join(launcherPackageRoot, "scripts", "node", "mcp-launch.cjs");
+    if (fs.existsSync(candidate)) return candidate;
+  }
   return path.join(__dirname, "mcp-launch.cjs");
 }
 
@@ -988,6 +999,7 @@ module.exports = {
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
   isIsolatedHome,
+  pinLauncherPackageRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,

@@ -2,8 +2,8 @@
  * Goggles MCP. Stdio. Server name `goggles`.
  * Tools: look, status_lens. Same organ as the CLI.
  */
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -172,6 +172,19 @@ function publicCard(view) {
       notes: Array.isArray(view.cascade.notes) ? view.cascade.notes : [],
     }
     : null;
+  const sleeve = view.sleeve
+    ? {
+      on: Boolean(view.sleeve.on),
+      missing: Array.isArray(view.sleeve.missing) ? view.sleeve.missing : [],
+      stitches: Array.isArray(view.sleeve.stitches)
+        ? view.sleeve.stitches.map((row) => ({
+          name: String(row && row.name || ''),
+          on: Boolean(row && row.on),
+          at: Array.isArray(row && row.at) ? row.at.map((item) => String(item)) : [],
+        }))
+        : [],
+    }
+    : null;
   if (view.narrow) {
     return {
       plane: view.plane,
@@ -180,6 +193,7 @@ function publicCard(view) {
       files: Array.isArray(view.files) ? view.files : [],
       notes,
       ...(cascade ? { cascade } : {}),
+      ...(sleeve ? { sleeve } : {}),
     };
   }
   return {
@@ -197,6 +211,7 @@ function publicCard(view) {
     worn: view.worn || '',
     notes,
     ...(cascade ? { cascade } : {}),
+    ...(sleeve ? { sleeve } : {}),
   };
 }
 
@@ -222,6 +237,11 @@ export async function answerLook(raw, root) {
   const cards = api.lookCards(argv, here);
   if (Array.isArray(cards) && cards.length) {
     const shown = cards.map(publicCard);
+    if (shown.length === 1 && shown[0] && typeof shown[0].plane === 'string') {
+      const dest = join(here, '.xray', 'state', 'goggles-plane.json');
+      mkdirSync(dirname(dest), { recursive: true });
+      writeFileSync(dest, `${JSON.stringify({ plane: shown[0].plane })}\n`);
+    }
     return {
       ok: true,
       quiet: false,

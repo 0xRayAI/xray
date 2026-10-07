@@ -20,9 +20,10 @@ const {
 const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
-const { plateStockLine, recallPlate, stampPlateIfMissing } = require("./plates.cjs");
+const { ensureWornPlate, plateStockLine, recallPlate } = require("./plates.cjs");
 const { rememberSessionNote, retainProjectNotes } = require("./session-note-index.cjs");
 const { formatCascadePointer, readWakeCascade } = require("./wake-cascade.cjs");
+const { formatSleevePointer, readSleeve, runFoundryMill } = require("./sleeve.cjs");
 
 const INTENT_MAX = 240;
 
@@ -113,6 +114,12 @@ function isStockTicket(value) {
   return !text || text === "(none)" || text === "(none yet)";
 }
 
+function readStationHostToken(root) {
+  const md = readExistingStationMarkdown(root);
+  const match = md.match(/^Host:\s*(\S+)/m);
+  return match ? match[1] : "";
+}
+
 function readStationTicketField(root, field) {
   const md = readExistingStationMarkdown(root);
   const re = field === "Plan" ? /^Plan:\s*(.*)$/im : /^Intent:\s*(.*)$/im;
@@ -138,9 +145,20 @@ function resolveHeatIntent(root, extra, existing) {
   const pickup = clipIntent(readNotesPickup(root));
   const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
   const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
-  const hook = String(extra.hookEvent || extra.source || "");
-  const keepsTicket = /user_prompt|compact/i.test(hook);
-  const compact = /compact/i.test(hook);
+  const named = String(extra.hookEvent || "");
+  const channel = String(extra.hookEvent || extra.source || "");
+  const keepsTicket = /user_prompt|compact/i.test(channel);
+  const compact = /compact/i.test(channel);
+  let receipt = null;
+  try {
+    receipt = readSleeve(root);
+  } catch {
+    receipt = null;
+  }
+  // A proved receipt keeps the ticket. A new session must not restate it.
+  if (receipt && receipt.on && card && /^(session_start|session-start)$/i.test(named)) {
+    return { intent: card, rematch: false, kept: true };
+  }
   // A chat sentence or a compact summary does not replace a ticket already on disk.
   if (incoming && !(keepsTicket && (card || pickup))) {
     return { intent: incoming, rematch: true };
@@ -1009,6 +1027,8 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       ? existing.hotSwap
       : null;
   const hotSwap = nextSwap || keptSwap;
+  const priorIntent = readStationTicketField(root, "Intent");
+  const priorHost = readStationHostToken(root);
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
@@ -1022,7 +1042,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   }
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
-  const planLine = resolveHeatPlan(root, extra, existing);
+  let planLine = resolveHeatPlan(root, extra, existing);
+  if (priorIntent && intent && intent !== priorIntent && !(extra.plan || extra.planLine)) {
+    planLine = null;
+  }
   // A passed string is the previous card. Count the project file after this wake.
   const repertoireResume = buildRepertoireResume(root);
   const swapBit = hotSwap ? `hot-swap ${hotSwap.from} → ${hotSwap.to}` : `host ${host}`;
@@ -1060,11 +1083,20 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (!matchedSignals.length && priorWorking) {
     matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
   }
+  if (resolved.kept) {
+    matchedSignals = preferLawHits(priorWorking && priorWorking.matchedSignals, 8);
+  }
   const compactHold = retainCompactFields(existing, extra);
   const nextHook = compactHold.hookEvent || extra.hookEvent || extra.source || null;
   const workingSnapshot = {
     host,
     intent,
+    priorIntent: priorIntent || null,
+    priorHost: priorHost || null,
+    priorWorkingIntent: priorWorking && typeof priorWorking.intent === "string" ? priorWorking.intent : null,
+    priorWorkingHost: priorWorking && typeof priorWorking.host === "string"
+      ? (priorWorking.host.split(/\s+/)[0] || null)
+      : null,
     git,
     hotSwap,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
@@ -1120,6 +1152,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     cascadeLine,
     ...(notesLine ? { notesLine } : {}),
     ...compactHold,
+    arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
   };
 }
 
@@ -1135,7 +1168,11 @@ const STOCK_STATION_PREFIXES = [
   "plate:",
   "library:",
   "cascade:",
+  "sleeve:",
   "notes:",
+  "plane:",
+  "judgement:",
+  "payments:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1332,6 +1369,10 @@ function formatStationMarkdown(fields) {
   if (plateLine) lines.push(plateLine);
   lines.push("Library: record-map — .agents/skills/record-map/SKILL.md");
   if (fields.cascadeLine) lines.push(fields.cascadeLine);
+  if (fields.sleeveLine) lines.push(fields.sleeveLine);
+  lines.push(`Plane: ${fields.plane || "(none)"}`);
+  lines.push(`Judgement: ${fields.judgement || "start"}`);
+  lines.push(`Payments: ${fields.payments === "on" ? "on" : "off"}`);
   if (fields.notesLine) lines.push(fields.notesLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
@@ -1352,19 +1393,141 @@ function readExistingStationMarkdown(root) {
   }
 }
 
+
+
+function ticketIsPayment(intent) {
+  return /\b(pay|payment|payments|x402|invoice)\b/i.test(String(intent || ""));
+}
+
+function readHeldPlane(root) {
+  try {
+    const data = JSON.parse(readFileSync(join(root, ".xray", "state", "goggles-plane.json"), "utf8"));
+    return data && typeof data.plane === "string" ? data.plane : "";
+  } catch {
+    return "";
+  }
+}
+
+function judgementLine(order, saved) {
+  const wake = order && order.wake ? order.wake : "start";
+  if (wake === "repair") {
+    const prior = saved && Number.isFinite(saved.retries) ? saved.retries : 0;
+    const next = prior + 1;
+    saved.retries = next;
+    return `retry ${next}`;
+  }
+  if (saved) saved.retries = 0;
+  if (wake === "continue" || wake === "stop" || wake === "start") return wake;
+  return "start";
+}
+
+function isMissPlan(line) {
+  return typeof line === "string" && line.startsWith("The work is ");
+}
+
+function missWork(missing) {
+  const words = { loop: "the ticket", domain: "the plate", state: "the record", foundry: "the mill" };
+  const parts = (Array.isArray(missing) ? missing : []).map((name) => words[name]).filter(Boolean);
+  if (parts.length === 1) return `The work is ${parts[0]}.`;
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    return `The work is ${parts.slice(0, -1).join(", ")} and ${last}.`;
+  }
+  return "The work is the suit.";
+}
+
+function wakeOrder(saved, proved, fields) {
+  const missing = proved && Array.isArray(proved.missing) ? proved.missing : [];
+  const sameJob = Boolean(saved && saved.priorIntent && saved.intent === saved.priorIntent);
+  const suitMiss = missing.some((name) => name === "domain" || name === "foundry" || name === "state");
+  if (proved && proved.on) {
+    const paused = saved && typeof saved.pausedPlan === "string" ? saved.pausedPlan : "";
+    if (isMissPlan(fields && fields.planLine) && saved && Object.prototype.hasOwnProperty.call(saved, "pausedPlan")) {
+      return { wake: "continue", planLine: paused, pausedPlan: undefined };
+    }
+    return { wake: "continue", pausedPlan: undefined };
+  }
+  if (!saved || !saved.priorIntent) return { wake: "start" };
+  if (saved.intent && saved.priorIntent && saved.intent !== saved.priorIntent) {
+    return { wake: "stop", pausedPlan: undefined };
+  }
+  if (sameJob && !missing.includes("loop") && suitMiss) {
+    const current = fields && fields.planLine ? String(fields.planLine) : "";
+    const paused = isMissPlan(current)
+      ? (typeof saved.pausedPlan === "string" ? saved.pausedPlan : "")
+      : current;
+    return { wake: "repair", planLine: missWork(missing), pausedPlan: paused };
+  }
+  return { wake: "start" };
+}
+
 function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
+    const arrivedKnown = Boolean(fields && Object.prototype.hasOwnProperty.call(fields, "arrivedHook"));
+    const wake = arrivedKnown
+      ? String(fields.arrivedHook || "")
+      : String((fields && fields.hookEvent) || "");
+    if (/^(session_start|session-start|pre_compact|post_compact)$/i.test(wake)) {
+      try {
+        runFoundryMill(root);
+      } catch {
+        /* the card still writes when the mill does not */
+      }
+    }
+    const dest = stationMarkdownPath(root);
+    const base = { ...(fields || {}) };
+    delete base.sleeveLine;
+    writeFileSync(dest, mergeStationMarkdown(formatStationMarkdown(base), readExistingStationMarkdown(root)));
+    // Solar phase is not this judgement. The moral overlay cannot pass alone.
+    fields.plane = readHeldPlane(root);
+    fields.payments = ticketIsPayment(fields.intent) ? "on" : "off";
+    let sleeveLine = "Sleeve: off loop, domain, state, foundry";
+    try {
+      const proved = readSleeve(root);
+      sleeveLine = formatSleevePointer(proved);
+      const workingPath = join(root, ".xray", "state", "repertoire-working.json");
+      if (existsSync(workingPath)) {
+        const saved = JSON.parse(readFileSync(workingPath, "utf8"));
+        if (saved && typeof saved === "object") {
+          const order = wakeOrder(saved, proved, fields);
+          fields.wake = order.wake;
+          if (Object.prototype.hasOwnProperty.call(order, "planLine")) {
+            fields.planLine = order.planLine;
+          }
+          fields.judgement = judgementLine(order, saved);
+          saved.wake = order.wake;
+          saved.retries = saved.retries || 0;
+          saved.judgement = fields.judgement;
+          saved.plane = fields.plane;
+          saved.payments = fields.payments;
+          if (order.pausedPlan !== undefined) saved.pausedPlan = order.pausedPlan;
+          else delete saved.pausedPlan;
+          saved.sleeve = {
+            on: proved.on,
+            missing: proved.missing,
+            stitches: proved.stitches,
+          };
+          writeFileSync(workingPath, `${JSON.stringify(saved)}\n`);
+        }
+      }
+    } catch {
+      /* the card still writes; the sleeve stays off */
+    }
+    writeFileSync(
+      dest,
+      mergeStationMarkdown(
+        formatStationMarkdown({ ...(fields || {}), sleeveLine }),
+        readExistingStationMarkdown(root),
+      ),
+    );
     try {
       const plate = recallPlate(fields && fields.intent);
-      if (plate) stampPlateIfMissing(root, plate.id);
+      if (plate) ensureWornPlate(root, plate.id);
     } catch {
       /* a missing plate doc must not block the card */
     }
-    const dest = stationMarkdownPath(root);
-    const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
-    writeFileSync(dest, next);
     return dest;
   } catch {
     return null;

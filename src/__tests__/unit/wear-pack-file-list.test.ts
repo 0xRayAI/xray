@@ -66,6 +66,23 @@ function listProject(dir: string): string[] {
   return out.filter((rel) => rel !== 'package.json' && rel !== 'package-lock.json').sort();
 }
 
+const SKILL_ROOTS = [
+  '.opencode/skills/',
+  '.grok/plugins/0xray/skills/',
+  '.hermes/plugins/xray-hermes/skills/',
+  '.openclaw/skills/',
+];
+
+/** 4.0.28 copied the role-skill mirror. Current wear fastens mill and inspect only. */
+function isDroppedRoleSkill(rel: string): boolean {
+  const pathOnly = rel.split(' -> ')[0];
+  return SKILL_ROOTS.some((root) => {
+    if (!pathOnly.startsWith(root)) return false;
+    const rest = pathOnly.slice(root.length);
+    return !rest.startsWith('mill/') && !rest.startsWith('inspect/');
+  });
+}
+
 /** Consumer setup links the package dist and scripts. 4.0.28 did not. That pair is expected. */
 function isRootSuitLink(rel: string): boolean {
   const name = rel.startsWith('dist -> ') ? 'dist' : rel.startsWith('scripts -> ') ? 'scripts' : '';
@@ -81,6 +98,7 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
     ...process.env,
     HOME: home,
     USERPROFILE: home,
+    FOUNDRY_MACHINE_HOME: home,
     npm_config_cache: path.join(home, '.npm'),
     npm_config_fund: 'false',
     npm_config_audit: 'false',
@@ -108,7 +126,7 @@ function installAndSetup(dir: string, spec: string, git: boolean, home: string):
 
 describe('packed tarball file list against 0xray@4.0.28', () => {
   it(
-    'matches 4.0.28 minus cursor hooks outside git, and 4.0.28 plus hooks inside git',
+    'matches 4.0.28 outside git except the role-skill mirror and the cursor hooks, and inside git except that mirror',
     { timeout: 240000, retry: 0 },
     () => {
       const work = mkdtempSync(path.join(tmpdir(), 'xray-pack-gate-'));
@@ -147,15 +165,16 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
           path.join(work, 'new-git-home'),
         );
 
-        const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel) && !isRootSuitLink(rel));
-        const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel) && !isRootSuitLink(rel));
+        const keep = (rel: string) => !isRootSuitLink(rel) && !isDroppedRoleSkill(rel);
+        const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel) && keep(rel));
+        const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel) && keep(rel));
         expect(plainExtra).toEqual([]);
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
         const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT])]
-          .filter((rel) => !isRootSuitLink(rel))
+          .filter(keep)
           .sort();
-        expect(packedGit.filter((rel) => !isRootSuitLink(rel))).toEqual(expectedGit);
+        expect(packedGit.filter(keep)).toEqual(expectedGit);
       } finally {
         rmSync(work, { recursive: true, force: true });
       }

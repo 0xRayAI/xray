@@ -275,6 +275,17 @@ function cascadeApi() {
   return createRequire(import.meta.url)('./wake-cascade.cjs');
 }
 
+function sleeveApi() {
+  return createRequire(import.meta.url)('./sleeve.cjs');
+}
+
+function appendLining(text, view) {
+  let next = text;
+  if (view.cascade) next = `${next}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
+  if (view.sleeve) next = `${next}\n${sleeveApi().formatSleeveReading(view.sleeve)}`;
+  return next;
+}
+
 function cardView(plane, scope, flavor, root, cascadeRoot) {
   const listed = listedFiles(plane);
   const view = {
@@ -299,6 +310,13 @@ function cardView(plane, scope, flavor, root, cascadeRoot) {
       view.cascade = cascadeApi().readWakeCascade(cascadeRoot || stateRoot());
     } catch {
       view.cascade = null;
+    }
+  }
+  if (sleeveApi().isSleevePlane(plane.id)) {
+    try {
+      view.sleeve = sleeveApi().readSleeve(cascadeRoot || stateRoot());
+    } catch {
+      view.sleeve = null;
     }
   }
   if (flavor === 'triage') {
@@ -339,8 +357,7 @@ function formatCardText(view) {
   } else if (typeof view.exam === 'string' && view.exam.startsWith('Drift:')) {
     text = `${text}\n${view.exam}`;
   }
-  if (view.cascade) text = `${text}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
-  return text;
+  return appendLining(text, view);
 }
 
 export function formatCardPane(view) {
@@ -358,8 +375,7 @@ export function formatCardPane(view) {
   const mid = body.map((line) => `│ ${line.padEnd(width)} │`);
   const bot = `└${'─'.repeat(width + 2)}┘`;
   const pane = [top, ...mid, bot].join('\n');
-  if (!view.cascade) return pane;
-  return `${pane}\n${cascadeApi().formatCascadeReading(view.cascade)}`;
+  return appendLining(pane, view);
 }
 
 function collectCards(flavor, lower, projectRoot) {
@@ -943,6 +959,15 @@ function lensPage(root, names) {
   return parts.join('\n\n');
 }
 
+
+export function holdPlane(root, id) {
+  const plane = String(id || "").trim();
+  if (!plane || plane.includes(" ")) return;
+  const dest = join(root, ".xray", "state", "goggles-plane.json");
+  mkdirSync(dirname(dest), { recursive: true });
+  writeFileSync(dest, `${JSON.stringify({ plane })}\n`);
+}
+
 function stampPlane(root, id) {
   try {
     const plates = createRequire(import.meta.url)('./plates.cjs');
@@ -967,6 +992,7 @@ export function lensBeforeResearch(root, toolName, text) {
   if (!research) return null;
   const names = CARD_PLANES.filter((name) => intentWords(spoken).includes(name));
   if (names.length === 1) {
+    holdPlane(root, names[0]);
     stampPlane(root, names[0]);
     rememberOpened(root, spoken);
     return null;

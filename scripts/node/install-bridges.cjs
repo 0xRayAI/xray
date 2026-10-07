@@ -32,6 +32,7 @@ const {
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
+  pinLauncherPackageRoot,
   XRAY_MCP_SERVERS,
 } = require("./bridge-mcp-wiring.cjs");
 
@@ -334,6 +335,34 @@ function mergeOpencodeJson(targetDir, packageRoot, log) {
   }
 }
 
+function settlePackageRoot(packageRoot, targetDir) {
+  const resolved = path.resolve(packageRoot || ".");
+  if (!targetDir || !isEphemeralInstallRoot(resolved) || isEphemeralInstallRoot(path.resolve(targetDir))) {
+    return resolved;
+  }
+  const dest = path.join(machineHome(), ".grok", "wears", "0xray");
+  if (resolved === dest) return dest;
+  // Copy beside the live wear. A hook pointed at dest keeps loading until the swap.
+  const staging = `${dest}.next`;
+  const backup = `${dest}.prev`;
+  fs.rmSync(staging, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.cpSync(resolved, staging, {
+    recursive: true,
+    filter(src) {
+      const rel = path.relative(resolved, src);
+      if (!rel) return true;
+      const top = rel.split(path.sep)[0];
+      return top !== "node_modules" && top !== ".git";
+    },
+  });
+  fs.rmSync(backup, { recursive: true, force: true });
+  if (fs.existsSync(dest)) fs.renameSync(dest, backup);
+  fs.renameSync(staging, dest);
+  fs.rmSync(backup, { recursive: true, force: true });
+  return dest;
+}
+
 function grokHookShellCommand(packageRoot, scriptName, extraArgs) {
   const script = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
   const extra = extraArgs ? ` ${extraArgs}` : "";
@@ -365,6 +394,7 @@ function ensureGrokHookEvent(hooks, eventName) {
 }
 
 function patchGrokHooks(pluginDir, packageRoot, targetDir, log, label) {
+  packageRoot = settlePackageRoot(packageRoot, targetDir);
   const hooksDir = path.join(pluginDir, "hooks");
   const hooksPath = path.join(hooksDir, "hooks.json");
   const hookScript = path.join(packageRoot, "scripts", "mjs", "run-grok-hook.mjs");
@@ -580,6 +610,83 @@ function grokPluginSettled(sourceDir, dest, packageRoot, targetDir) {
   return true;
 }
 
+/** Absolute paths under a temp checkout. Longest match wins so a script path is retargeted before its root. */
+function retargetEphemeralText(text, durableRoot) {
+  if (typeof text !== "string" || !isEphemeralInstallRoot(text)) return text;
+  const re = /(?:\/private\/var\/folders\/|\/var\/folders\/|\/private\/tmp\/|\/tmp\/|\/Temp\/)[^\s"']*/g;
+  const tokens = [...new Set(text.match(re) || [])].sort((a, b) => b.length - a.length);
+  let out = text;
+  for (const token of tokens) {
+    const scriptsAt = token.indexOf("/scripts/");
+    if (scriptsAt > 0) {
+      const repl = path.join(durableRoot, token.slice(scriptsAt + 1));
+      if (fs.existsSync(repl)) out = out.split(token).join(repl);
+      continue;
+    }
+    const runner = path.join(durableRoot, "scripts", "mjs", "run-grok-hook.mjs");
+    if (
+      !fs.existsSync(token) &&
+      fs.existsSync(runner) &&
+      (out.includes("run-grok-hook") || out.includes("mcp-launch.cjs"))
+    ) {
+      out = out.split(token).join(durableRoot);
+    }
+  }
+  return out;
+}
+
+function scrubEphemeralPins(node, durableRoot) {
+  if (Array.isArray(node)) return node.map((item) => scrubEphemeralPins(item, durableRoot));
+  if (!node || typeof node !== "object") {
+    return typeof node === "string" ? retargetEphemeralText(node, durableRoot) : node;
+  }
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    if ((key === "env" || key === "environment") && value && typeof value === "object" && !Array.isArray(value)) {
+      const env = {};
+      for (const [envKey, envValue] of Object.entries(value)) {
+        if (typeof envValue === "string" && isEphemeralInstallRoot(envValue)) {
+          if (envKey === "XRAY_AI_PATH") env[envKey] = durableRoot;
+          continue;
+        }
+        env[envKey] = scrubEphemeralPins(envValue, durableRoot);
+      }
+      out[key] = env;
+      continue;
+    }
+    out[key] = scrubEphemeralPins(value, durableRoot);
+  }
+  return out;
+}
+
+/**
+ * Shared HOME does not wear the machine plugin, but Grok still loads a stale
+ * `~/.grok/plugins/0xray`. Drop temp XRAY_ROOT pins and retarget dead launch
+ * paths onto the durable wear. A real project root on that plugin is left alone.
+ */
+function scrubEphemeralMachineGrokPins(machine, durablePackageRoot) {
+  if (!machine || !durablePackageRoot) return 0;
+  const runner = path.join(durablePackageRoot, "scripts", "mjs", "run-grok-hook.mjs");
+  if (!fs.existsSync(runner)) return 0;
+  const plugin = path.join(machine, ".grok", "plugins", "0xray");
+  const files = [path.join(plugin, "hooks", "hooks.json"), path.join(plugin, ".mcp.json")];
+  let changed = 0;
+  for (const file of files) {
+    if (!fs.existsSync(file)) continue;
+    let data;
+    try {
+      data = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      continue;
+    }
+    const next = scrubEphemeralPins(data, durablePackageRoot);
+    if (JSON.stringify(data) === JSON.stringify(next)) continue;
+    writeFileIfChanged(file, `${JSON.stringify(next, null, 2)}\n`);
+    changed += 1;
+  }
+  return changed;
+}
+
 function installGrokBridge(targetDir, packageRoot, log, opts) {
   const sourceDir = findGrokPluginSource(packageRoot);
   if (!sourceDir) {
@@ -599,6 +706,7 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
     log("grok-bridge", "skip machine ~/.grok plugin — isolated HOME", "info");
   } else {
     log("grok-bridge", "skip machine ~/.grok plugin — project-scoped wear", "info");
+    scrubEphemeralMachineGrokPins(machine, settlePackageRoot(packageRoot, targetDir));
   }
 
   for (const dest of targets) {
@@ -1846,26 +1954,29 @@ function syncSetupSkillsAndRootLinks(packageRoot, targetDir) {
   require("./setup.cjs").syncSetupSkillsAndRootLinks(packageRoot, targetDir);
 }
 
-function setupSkillMirrorNames(packageRoot) {
-  const skillsSource = fs.existsSync(path.join(packageRoot, "src", "skills"))
+/** A byte-identical package skill is the old mirror. A different body still throws. */
+function wornSkillMatchesPackage(packageRoot, targetDir, name) {
+  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
     ? path.join(packageRoot, "src", "skills")
     : path.join(packageRoot, "dist", "skills");
-  if (!fs.existsSync(skillsSource)) return new Set();
-  const names = new Set();
-  for (const entry of fs.readdirSync(skillsSource, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    if (fs.existsSync(path.join(skillsSource, entry.name, "SKILL.md"))) names.add(entry.name);
+  const packaged = path.join(source, name, "SKILL.md");
+  if (!fs.existsSync(packaged)) return false;
+  const packagedBytes = fs.readFileSync(packaged);
+  let saw = false;
+  for (const parts of ROLE_SKILL_DIRS) {
+    const worn = path.join(targetDir, ...parts, name, "SKILL.md");
+    if (!fs.existsSync(worn)) continue;
+    saw = true;
+    if (!packagedBytes.equals(fs.readFileSync(worn))) return false;
   }
-  return names;
+  return saw;
 }
 
-/** The 4.0.28 skill mirror is not a consumer costume. Any other extra name still throws. */
-function isSetupSkillMirrorDump(err, packageRoot) {
+function isSetupSkillMirrorDump(err, packageRoot, targetDir) {
   if (!err || err.code !== "FOUNDRY_COSTUME_DUMP") return false;
   if (!Array.isArray(err.extraSkills) || err.extraSkills.length === 0) return false;
   if (Array.isArray(err.extraAgents) && err.extraAgents.length > 0) return false;
-  const mirrored = setupSkillMirrorNames(packageRoot);
-  return err.extraSkills.every((name) => mirrored.has(name));
+  return err.extraSkills.every((name) => wornSkillMatchesPackage(packageRoot, targetDir, name));
 }
 
 function packageShipsConsumerSuit(packageRoot) {
@@ -1873,11 +1984,41 @@ function packageShipsConsumerSuit(packageRoot) {
 }
 
 /**
- * 4.0.28 consumer postinstall files: AGENTS.md, .gitignore, repertoire link,
- * .xray config, bridges, mill plant, then the setup.cjs skill mirror and
- * dist/scripts links. Does not install Cursor hooks or git hooks.
+ * Consumer wear files: AGENTS.md, .gitignore, repertoire link, .xray config,
+ * bridges, mill plant (mill + inspect), and the scripts and dist links.
+ * The role-skill mirror stays in the package.
+ * Does not install Cursor hooks or git hooks.
  * Existing user files follow the 4.0.28 guards inside those functions.
  */
+
+const ROLE_SKILL_KEEP = new Set(["mill", "inspect"]);
+const ROLE_SKILL_DIRS = [
+  [".opencode", "skills"],
+  [".grok", "plugins", "0xray", "skills"],
+  [".hermes", "plugins", "xray-hermes", "skills"],
+  [".openclaw", "skills"],
+];
+
+function removeCopiedRoleSkills(packageRoot, targetDir) {
+  const source = fs.existsSync(path.join(packageRoot, "src", "skills"))
+    ? path.join(packageRoot, "src", "skills")
+    : path.join(packageRoot, "dist", "skills");
+  if (!fs.existsSync(source)) return;
+  for (const parts of ROLE_SKILL_DIRS) {
+    const dir = path.join(targetDir, ...parts);
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || ROLE_SKILL_KEEP.has(entry.name)) continue;
+      const packaged = path.join(source, entry.name, "SKILL.md");
+      const worn = path.join(dir, entry.name, "SKILL.md");
+      if (!fs.existsSync(packaged) || !fs.existsSync(worn)) continue;
+      const same = fs.readFileSync(packaged).equals(fs.readFileSync(worn));
+      if (!same) continue;
+      fs.rmSync(path.join(dir, entry.name), { recursive: true, force: true });
+    }
+  }
+}
+
 function installConsumerProjectFiles(packageRoot, targetDir, log) {
   const write = typeof log === "function" ? log : () => {};
   if (!isConsumerInstall(packageRoot, targetDir) || !packageShipsConsumerSuit(packageRoot)) {
@@ -1896,10 +2037,11 @@ function installConsumerProjectFiles(packageRoot, targetDir, log) {
   installGrokBridge(targetDir, packageRoot, write);
   installHermesBridge(targetDir, packageRoot, write);
   installOpenclawBridge(targetDir, packageRoot, write);
+  removeCopiedRoleSkills(packageRoot, targetDir);
   try {
     mintConsumerSuit(packageRoot, targetDir, write);
   } catch (err) {
-    if (!isSetupSkillMirrorDump(err, packageRoot)) throw err;
+    if (!isSetupSkillMirrorDump(err, packageRoot, targetDir)) throw err;
   }
   syncSetupSkillsAndRootLinks(packageRoot, targetDir);
   return true;
@@ -2085,7 +2227,9 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   const write = typeof log === "function" ? log : () => {};
   const options = opts || {};
   const resolvedTarget = path.resolve(targetDir);
-  const resolvedPackage = path.resolve(packageRoot);
+  const resolvedPackage = settlePackageRoot(path.resolve(packageRoot), resolvedTarget);
+  pinLauncherPackageRoot(resolvedPackage);
+  try {
   if (classifyCursorWearGit(resolvedTarget) === "not-work-tree") {
     wearSuitSkippingCursorHooks(resolvedPackage, resolvedTarget, write);
     return;
@@ -2137,6 +2281,9 @@ function wearCursorHooks(targetDir, packageRoot, log, opts) {
   }
   write("cursor-bridge", "hooks.json wired to installed dist", "info", { path: hooksPath });
   return hooksPath;
+  } finally {
+    pinLauncherPackageRoot("");
+  }
 }
 
 /**
@@ -2344,15 +2491,16 @@ function installFrameworkDogfoodWear(packageRoot, log) {
  * @param {{ targetDir: string, packageRoot: string, log?: Function }} opts
  */
 function installAllBridges(opts) {
-  const packageRoot = path.resolve(opts.packageRoot);
   const targetDir = path.resolve(opts.targetDir);
+  const packageRoot = settlePackageRoot(path.resolve(opts.packageRoot), targetDir);
+  pinLauncherPackageRoot(packageRoot);
   const logFn = opts.log;
   const log =
     logFn ||
     ((_component, _action, _status, _details) => {
       /* noop */
     });
-
+  try {
   wearVendoredRepertoire(packageRoot, targetDir, log);
 
   if (!isConsumerInstall(packageRoot, targetDir)) {
@@ -2373,6 +2521,9 @@ function installAllBridges(opts) {
   installCursorBridge(targetDir, packageRoot, log);
 
   log("install-bridges", "4-platform + cursor wear complete", "success");
+  } finally {
+    pinLauncherPackageRoot("");
+  }
 }
 
 module.exports = {
@@ -2393,6 +2544,8 @@ module.exports = {
   MERGE_CONFIG_FILES,
   patchGrokHooks,
   grokHookShellCommand,
+  settlePackageRoot,
+  scrubEphemeralMachineGrokPins,
   writeGrokDiscoveredHooks,
   isEphemeralInstallRoot,
   isIsolatedHome,

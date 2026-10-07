@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
-import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { copyFileSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { resolveGrokHook } from '../../../scripts/mjs/run-grok-hook.mjs';
-import { tmpdir } from 'os';
+import { homedir, tmpdir } from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -13,6 +13,8 @@ const require = createRequire(import.meta.url);
 const {
   patchGrokHooks,
   grokHookShellCommand,
+  settlePackageRoot,
+  scrubEphemeralMachineGrokPins,
   isEphemeralInstallRoot,
   isIsolatedHome,
   installAllBridges,
@@ -108,6 +110,184 @@ describe('Grok hooks.json command strings', () => {
         path.join(spaced, 'scripts', 'mjs', 'run-grok-hook.mjs'),
       )} pre-tool-use.js --hook-event=pre_compact`,
     );
+  });
+
+  it('pins an ephemeral package at a durable wear for a real project', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-durable-home-'));
+    const project = path.join(home, 'project');
+    const pkg = mkdtempSync(path.join(tmpdir(), 'xray-ephemeral-pkg-'));
+    const prev = process.env.FOUNDRY_MACHINE_HOME;
+    process.env.FOUNDRY_MACHINE_HOME = home;
+    try {
+      mkdirSync(path.join(pkg, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node');
+      mkdirSync(path.join(pkg, 'scripts', 'node'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'node', 'mcp-launch.cjs'), '#!/usr/bin/env node');
+      mkdirSync(path.join(pkg, 'node_modules', 'skip'), { recursive: true });
+      writeFileSync(path.join(pkg, 'node_modules', 'skip', 'nope.js'), 'nope');
+      const pluginDir = path.join(project, 'plugin');
+      mkdirSync(path.join(pluginDir, 'hooks'), { recursive: true });
+      writeFileSync(
+        path.join(pluginDir, 'hooks', 'hooks.json'),
+        readFileSync(path.join(packageRoot, 'src/integrations/grok/plugin/0xray/hooks/hooks.json'), 'utf8'),
+      );
+      patchGrokHooks(pluginDir, pkg, project, () => {}, 'test');
+      const durable = path.join(home, '.grok', 'wears', '0xray');
+      const patched = readFileSync(path.join(pluginDir, 'hooks', 'hooks.json'), 'utf8');
+      expect(patched).toContain(JSON.stringify(durable));
+      expect(patched).not.toContain(pkg);
+      expect(existsSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'))).toBe(true);
+      expect(existsSync(path.join(durable, 'node_modules'))).toBe(false);
+      const { buildPluginMcpJson, pinLauncherPackageRoot } = require(
+        path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs'),
+      );
+      pinLauncherPackageRoot(durable);
+      try {
+        const mcp = JSON.stringify(buildPluginMcpJson(project));
+        expect(mcp).toContain(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'));
+        expect(mcp).not.toContain(pkg);
+      } finally {
+        pinLauncherPackageRoot('');
+      }
+    } finally {
+      if (prev === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
+      else process.env.FOUNDRY_MACHINE_HOME = prev;
+      rmSync(home, { recursive: true, force: true });
+      rmSync(pkg, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the live wear until the staged copy exists', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-wear-swap-'));
+    const project = path.join(home, 'project');
+    const pkg = mkdtempSync(path.join(tmpdir(), 'xray-wear-swap-pkg-'));
+    const prev = process.env.FOUNDRY_MACHINE_HOME;
+    process.env.FOUNDRY_MACHINE_HOME = home;
+    const fsMod = require('fs') as { rmSync: typeof rmSync; cpSync: typeof cpSync };
+    const origRm = fsMod.rmSync;
+    const origCp = fsMod.cpSync;
+    const durable = path.join(home, '.grok', 'wears', '0xray');
+    const staging = `${durable}.next`;
+    let removedLiveBeforeCopy = false;
+    let copySawLive = false;
+    try {
+      mkdirSync(path.join(pkg, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(pkg, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'new');
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'old');
+      fsMod.rmSync = ((target: Parameters<typeof rmSync>[0], options?: Parameters<typeof rmSync>[1]) => {
+        if (path.resolve(String(target)) === durable && !existsSync(staging)) removedLiveBeforeCopy = true;
+        return origRm(target, options);
+      }) as typeof rmSync;
+      fsMod.cpSync = ((src: Parameters<typeof cpSync>[0], dest: Parameters<typeof cpSync>[1], options?: Parameters<typeof cpSync>[2]) => {
+        if (path.resolve(String(dest)) === staging) {
+          copySawLive = readFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'utf8') === 'old';
+        }
+        return origCp(src, dest, options);
+      }) as typeof cpSync;
+      expect(settlePackageRoot(pkg, project)).toBe(durable);
+      expect(removedLiveBeforeCopy).toBe(false);
+      expect(copySawLive).toBe(true);
+      expect(readFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), 'utf8')).toBe('new');
+      expect(existsSync(staging)).toBe(false);
+      expect(existsSync(`${durable}.prev`)).toBe(false);
+    } finally {
+      fsMod.rmSync = origRm;
+      fsMod.cpSync = origCp;
+      if (prev === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
+      else process.env.FOUNDRY_MACHINE_HOME = prev;
+      rmSync(home, { recursive: true, force: true });
+      rmSync(pkg, { recursive: true, force: true });
+    }
+  });
+
+  it('drops a dead ephemeral XRAY_ROOT from the machine plugin', () => {
+    const home = mkdtempSync(path.join(homedir(), 'xray-scrub-home-'));
+    const durable = path.join(home, '.grok', 'wears', '0xray');
+    const dead = path.join(tmpdir(), 'xray-setup-nogit-dead');
+    try {
+      mkdirSync(path.join(durable, 'scripts', 'mjs'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'), '#!/usr/bin/env node\n');
+      mkdirSync(path.join(durable, 'scripts', 'node'), { recursive: true });
+      writeFileSync(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'), '#!/usr/bin/env node\n');
+      const plugin = path.join(home, '.grok', 'plugins', '0xray');
+      mkdirSync(path.join(plugin, 'hooks'), { recursive: true });
+      const deadCmd = `XRAY_AI_PATH=${JSON.stringify(dead)} node ${JSON.stringify(
+        path.join(dead, 'scripts', 'mjs', 'run-grok-hook.mjs'),
+      )} post-tool-use.js`;
+      writeFileSync(
+        path.join(plugin, 'hooks', 'hooks.json'),
+        `${JSON.stringify(
+          {
+            hooks: {
+              PostToolUse: [
+                {
+                  hooks: [
+                    {
+                      type: 'command',
+                      command: deadCmd,
+                      env: { XRAY_ROOT: dead, XRAY_AI_PATH: dead, KEEP: 'yes' },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      writeFileSync(
+        path.join(plugin, '.mcp.json'),
+        `${JSON.stringify(
+          {
+            mcpServers: {
+              'xray-enforcer': {
+                command: 'node',
+                args: [
+                  path.join(dead, 'scripts', 'node', 'mcp-launch.cjs'),
+                  '--keep',
+                  'PATH,HOME,XRAY_ROOT',
+                  '--',
+                  'npx',
+                ],
+                env: { XRAY_ROOT: dead, XRAY_FORCE_MCP_GOVERNANCE: 'true' },
+              },
+            },
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(2);
+      const hook = JSON.parse(readFileSync(path.join(plugin, 'hooks', 'hooks.json'), 'utf8')).hooks
+        .PostToolUse[0].hooks[0] as { command: string; env: Record<string, string> };
+      expect(hook.command).toContain(path.join(durable, 'scripts', 'mjs', 'run-grok-hook.mjs'));
+      expect(hook.command).not.toContain(dead);
+      expect(hook.env.XRAY_AI_PATH).toBe(durable);
+      expect(hook.env.XRAY_ROOT).toBeUndefined();
+      expect(hook.env.KEEP).toBe('yes');
+      const server = JSON.parse(readFileSync(path.join(plugin, '.mcp.json'), 'utf8')).mcpServers[
+        'xray-enforcer'
+      ] as { args: string[]; env: Record<string, string> };
+      expect(server.args[0]).toBe(path.join(durable, 'scripts', 'node', 'mcp-launch.cjs'));
+      expect(server.env.XRAY_ROOT).toBeUndefined();
+      expect(server.env.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(0);
+      writeFileSync(
+        path.join(plugin, '.mcp.json'),
+        `${JSON.stringify({
+          mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: '/home/box/other-seat' } } },
+        })}\n`,
+      );
+      expect(scrubEphemeralMachineGrokPins(home, durable)).toBe(0);
+      const kept = JSON.parse(readFileSync(path.join(plugin, '.mcp.json'), 'utf8')) as {
+        mcpServers: { 'xray-enforcer': { env: { XRAY_ROOT: string } } };
+      };
+      expect(kept.mcpServers['xray-enforcer'].env.XRAY_ROOT).toBe('/home/box/other-seat');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
   });
 
   it('resolveGrokHook uses src when dist is gone', () => {
