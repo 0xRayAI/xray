@@ -13,6 +13,7 @@ import {
   formatSleeveReading,
   readSleeve,
   runFoundryMill,
+  inspectStitch,
 } from "../../integrations/hooks/sleeve.mjs";
 
 const SUIT = path.resolve(__dirname, "..", "..", "..");
@@ -86,6 +87,15 @@ describe("sleeve", () => {
     expect(ground).not.toContain("Sleeve:");
     expect(look(["digest", "routing"]).text).not.toContain("Sleeve:");
     expect(look(["digest", "house"]).text).not.toContain("Sleeve:");
+  });
+
+  it("does not store a machine plugin as a mill failure", () => {
+    const only = inspectStitch({ ok: false, failed: ["machinePlugin"] }) as Stitch;
+    expect(only.on).toBe(true);
+    expect(only.at).toEqual(["inspect --skip-live"]);
+    const blocked = inspectStitch({ ok: false, failed: ["machinePlugin", "receipt"] }) as Stitch;
+    expect(blocked.on).toBe(false);
+    expect(blocked.at).toEqual(["receipt"]);
   });
 
   it("counts a machine plugin as a passed mill", () => {
