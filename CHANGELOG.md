@@ -7,18 +7,12 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Features
-- **Sleeve.** `Sleeve: on` means the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. A change to the worn skills drops the pass until the next session start or compact. The look lists the four. The card names a stitch only when it is missing.
-- **Card.** The station card keeps the named plane. Judgement is continue, retry N, stop, or start. A new miss on the same job counts another retry. The same miss stays on that count. A changed ticket stops. Payments is on only when the ticket is a payment. Solar phase is not this judgement.
-- **Wear.** A fresh wear fastens mill and inspect and leaves the role-skill mirror in the package, so `inspect --skip-live` can pass on that consumer.
 - **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
 - **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
 ### Fixed
-- **Goggles MCP.** A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs` for Grok. A consumer still records `node_modules/0xray`. An upgrade that removes the self-install no longer leaves the handshake on a missing file. Not a new skill.
-- **Sleeve.** A machine-level Grok plugin does not fail the mill and is not stored in the mill receipt. The wear leaves that directory and scrubs it. The card counts the plate and the ticket only when they were already on disk. A change to the worn skills drops the mill pass until the next session start or compact. A prompt after a compact reads the saved mill report. When the line is on, the next session keeps that ticket. When the plate or the mill is the miss, that miss is the plan until the line is on again. Wear removes a copied role skill that still matches the package. A copied skill whose text was edited still stops wear.
-- **Session start.** A SessionStart event that carries the opening prompt stays a session start, so the mill runs before that first card is read.
 - **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
 - **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.
 - **A governed proposal teaches.** A route lookup does not write a lesson. When a vote finishes, the cycle grades the signals that proposal's sessions already named. A session that names a stored signal is graded even when that name appears once. Landed approaches and no wrong turn clear the solid band. A wrong turn stays below the cutoff. Earlier rejects of other codify proposals do not pull that grade down. Approve steps those signals up by a tenth. Reject steps them down by a tenth. Needs-revision, an abstain, a governance error, and a proposal whose sessions named nothing do not write. Proposal ids stay on the signal and the sessions not yet graded, so a later cycle does not teach those sessions again. A new session is a new id. Those ids remain after the history window of 50 fills, including with empty cycles. A proposal that carries an empty name list does not fall through to matching its text. A grade that passes appends one line — the task, the decision, and the approaches, solutions, or wrong turn from the sessions that named the law — on that signal and beside the average. The same task does not append again. The route for a law above 0.55 includes the law text and those lines, and Station's lessons section is refreshed from dest. Not a new skill.
@@ -48,14 +42,18 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
-## [4.0.41] - 2026-10-06
+## [4.0.41] - 2026-10-07
 
 ### 🔄 Changes
 
 - Wake cascade. Station and the notes page stay on the station module. Heat writes `Cascade: record-map · notes N current` on the card. A memory-recall look returns that plane, the matched law names, and the current lines from the session-note index beside the laws.
-
-### 🐛 Fixes
-
+- Session notes sit in `.xray/state/repertoire/session-notes.json` beside the laws. A replaced note stays history. The short index returns the current line. A stale page does not revive a replaced line.
+- `Sleeve: on` means the previous ticket came back, the worn plate matched the package, the previous ticket matched the working record, and inspect passed. Session start and compact run that check. The card keeps the named plane. Judgement is continue, retry N, stop, or start. The same miss keeps its retry. A different ticket stops. Payments is on only when the ticket is a payment.
+- A fresh wear fastens mill and inspect. The durable copy is staged beside the live wear. Hooks and MCP launchers are not pinned at a temporary checkout.
+- Goggles. A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. A consumer records `node_modules/0xray`. An upgrade that removes a self-install no longer leaves the handshake on a missing file.
+- A machine-level Grok plugin does not fail the mill and is not stored in the mill receipt. A change to the worn skills drops that pass until the next session start or compact. When the plate or the mill is the miss, that miss is the plan until the line is on again. A copied role skill whose text was edited still stops wear.
+- A SessionStart event that carries the opening prompt stays a session start, so the check runs before that first card is read.
+- Live page. The mesh plays in the browser, with rewind and seat images. The watch survives a dropped connection. Fleet pushes go out as packets.
 - The Playwright release-gate smoke stays on the Playwright battery. The unit runner does not load that spec.
 
 ---
