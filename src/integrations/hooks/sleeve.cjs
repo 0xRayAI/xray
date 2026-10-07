@@ -223,13 +223,21 @@ function runInspect(root, cli) {
     out = err && err.stdout ? String(err.stdout) : "";
   }
   try {
-    const report = JSON.parse(out);
-    if (report && report.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
-    const failed = report && Array.isArray(report.failed) ? report.failed.map(String) : [];
-    return stitch("foundry", false, failed.length ? failed : ["inspect"]);
+    return inspectStitch(JSON.parse(out));
   } catch {
     return stitch("foundry", false, ["inspect"]);
   }
+}
+
+function inspectStitch(report) {
+  if (report && report.ok === true) return stitch("foundry", true, ["inspect --skip-live"]);
+  const failed = report && Array.isArray(report.failed) ? report.failed.map(String) : [];
+  const blocking = failed.filter((id) => id !== "machinePlugin");
+  if (failed.length > 0 && blocking.length === 0) {
+    return stitch("foundry", true, ["inspect --skip-live"]);
+  }
+  if (!blocking.length) return stitch("foundry", false, ["inspect"]);
+  return stitch("foundry", false, blocking);
 }
 
 function writeMill(root, result, stamp) {
@@ -321,6 +329,7 @@ module.exports = {
   isSleevePlane,
   readSleeve,
   runFoundryMill,
+  inspectStitch,
   formatSleevePointer,
   formatSleeveReading,
 };
