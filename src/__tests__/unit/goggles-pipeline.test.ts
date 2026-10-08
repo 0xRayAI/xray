@@ -112,7 +112,7 @@ describe('goggles plate', () => {
     expect(memory).toContain('Worn: dist/integrations/hooks/plates.cjs');
     expect(suitHint('open the boot plane')).toBe('boot: src/core/boot-orchestrator.ts');
     expect(suitHint('routing and governance')).toBe(
-      'routing: src/nucleus/thin-dispatch.ts\ngovernance: src/governance/governance-service.ts',
+      'routing: src/nucleus/thin-dispatch.ts\ngovernance: src/governance/governance-service.ts, src/governance/llm-governance-provider.ts',
     );
     expect(suitHint('look')).toBe('Name one plane.');
     expect(suitHint('read the readme')).toBe('');

@@ -72,6 +72,18 @@ The hold lasts for the work that named the plane. A sentence that does not say l
 
 Config: `features.json` → `multi_agent_orchestration.lead_dev_mode`
 
+## Confer
+
+The TUI that is wearing the suit already spawned the MCP servers. Confer uses those servers. It does not start a private server and it does not run `hermes -z`.
+
+When `.xray/state/confer-ask-s.1.json`, `confer-ask-s.2.json`, and `confer-ask-s.3.json` are on disk:
+
+1. Call the server and tool named in each ask. Researcher and code-review return evidence. Architect returns the assessment with `Verdict: UNREVIEWED`.
+2. Write one verdict line from this TUI's model: `Verdict: PASS`, `Verdict: CONDITIONAL`, or `Verdict: FAIL`, plus top risks and a hardening note.
+3. Call `record_confer_receipt` on `xray-governance` with `todoId`, `subagent`, `sessionId`, and that text.
+
+Only `Verdict: PASS` completes the todo. FAIL, CONDITIONAL, and UNREVIEWED stay open. A session id that does not match the plan does not complete the todo. Grok, OpenCode, Hermes, and OpenClaw use these same three steps. Hermes is a voter only when Hermes is the TUI, and then only as that TUI's own model.
+
 ## Lead cadence (syncopation)
 
 The seven rules are the engine. The cadence is the time signature. Disk SSOT: `grok-bot/OP-PROC.md` (team specifics live in `house/`).
