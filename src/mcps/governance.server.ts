@@ -29,6 +29,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
+import { applyConferConsultResult } from "../nucleus/confer.js";
 import { getGovernanceService } from "../governance/governance-service.js";
 import { getCodexPolicyService } from "../governance/codex-policy.service.js";
 import { initializeGovernanceIntegration, shutdownGovernanceIntegration } from "../integrations/governance/index.js";
@@ -137,6 +138,24 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
         },
       },
       {
+        name: "record_confer_receipt",
+        description:
+          "Record a confer verdict written by the wearing TUI. " +
+          "The TUI already called the seat's MCP server. This tool stores the receipt. " +
+          "Only Verdict: PASS completes the consult todo.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            todoId: { type: "string", description: "Consult todo id, such as s.1" },
+            subagent: { type: "string", description: "researcher, architect-tools, or code-review" },
+            sessionId: { type: "string", description: "Plan session id" },
+            outputText: { type: "string", description: "Host verdict text, including a Verdict line" },
+            projectRoot: { type: "string", description: "Checkout root. Defaults to XRAY_ROOT or the process cwd." },
+          },
+          required: ["todoId", "subagent", "sessionId", "outputText"],
+        },
+      },
+      {
         name: "get_active_codex",
         description:
           "Get the currently active Codex (SSOT) — returns metadata about the loaded codex terms, " +
@@ -159,6 +178,7 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       "govern_proposals": async (args) => this.handleGovernProposals(this.validateGovernProposalsArgs(args)),
       "govern_reflection": async (args) => this.handleGovernReflection(this.validateGovernReflectionArgs(args)),
       "get_active_codex": async (args) => this.handleGetActiveCodex(args as { includeRaw?: boolean }),
+      "record_confer_receipt": async (args) => this.handleRecordConferReceipt(args),
     };
     this.setupToolHandlers();
   }
@@ -210,6 +230,8 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
             return await this.handleGovernReflection(this.validateGovernReflectionArgs(args));
           case "get_active_codex":
             return await this.handleGetActiveCodex(args as { includeRaw?: boolean });
+          case "record_confer_receipt":
+            return await this.handleRecordConferReceipt(args);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -332,6 +354,33 @@ class GovernanceServer extends XrayKnowledgeSkillBase {
       context: { ...(context || {}), source: "reflection" },
       options: { require_external: true },
     });
+  }
+
+  private async handleRecordConferReceipt(args: unknown): Promise<CallToolResult> {
+    if (!args || typeof args !== "object") {
+      throw new Error("record_confer_receipt requires an object argument");
+    }
+    const obj = args as Record<string, unknown>;
+    const todoId = typeof obj.todoId === "string" ? obj.todoId.trim() : "";
+    const subagent = typeof obj.subagent === "string" ? obj.subagent.trim() : "";
+    const sessionId = typeof obj.sessionId === "string" ? obj.sessionId.trim() : "";
+    const outputText = typeof obj.outputText === "string" ? obj.outputText : "";
+    if (!todoId || !subagent || !sessionId || !outputText.trim()) {
+      throw new Error("record_confer_receipt requires todoId, subagent, sessionId, and outputText");
+    }
+    const projectRoot =
+      typeof obj.projectRoot === "string" && obj.projectRoot.trim()
+        ? obj.projectRoot
+        : process.env.XRAY_ROOT || process.cwd();
+    const result = applyConferConsultResult(todoId, subagent, sessionId, outputText, projectRoot);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(result),
+        },
+      ],
+    };
   }
 
   private async handleGetActiveCodex(args: { includeRaw?: boolean }): Promise<CallToolResult> {

@@ -44,6 +44,11 @@ describe('bridge-mcp-wiring', () => {
     const portable = wiring.buildPortableProjectMcpJson();
     const names = Object.keys(portable.mcpServers);
     expect(names.filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(names).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     const governance = portable.mcpServers['xray-governance'];
     expect(governance.command).toBe('node');
     expect(governance.args[0]).toMatch(/mcp-launch\.cjs$/);
@@ -63,11 +68,21 @@ describe('bridge-mcp-wiring', () => {
     const targetDir = '/tmp/repertoire-consumer';
     const servers = wiring.buildHermesMcpServers(targetDir);
     expect(Object.keys(servers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(Object.keys(servers)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(servers['xray-enforcer'].env.XRAY_ROOT).toBe(targetDir);
   });
 
   it('builds OpenCode mcp entries as local enabled servers pinned to the installed version', () => {
     const entries = wiring.buildOpencodeMcpEntries('/tmp/consumer');
+    expect(Object.keys(entries)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(entries['xray-skills'].type).toBe('local');
     expect(entries['xray-skills'].enabled).toBe(true);
     expect(entries['xray-skills'].command[0]).toBe('node');
@@ -375,6 +390,11 @@ describe('bridge-mcp-wiring', () => {
     const targetDir = '/tmp/openclaw-consumer';
     const servers = wiring.buildOpenClawMcpServers(targetDir);
     expect(Object.keys(servers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(Object.keys(servers)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(servers['xray-governance'].env.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
     expect(servers['xray-governance'].env.XRAY_ROOT).toBe(targetDir);
   });
