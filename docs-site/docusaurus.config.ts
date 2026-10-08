@@ -18,7 +18,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/0xRayAI/xray/tree/main/',
+          editUrl: 'https://github.com/0xRayAI/xray/tree/main/docs-site/',
           routeBasePath: 'docs',
           exclude: [
             'archive/**',

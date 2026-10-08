@@ -1,8 +1,24 @@
 import * as fs from "fs";
 import * as path from "path";
+import { createGunzip } from "zlib";
 import { fileURLToPath } from "node:url";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { type ParsedLogEntry, type ReportConfig } from "./types.js";
+
+const LOG_LINE_RE =
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+const LOG_LINE_FALLBACK_RE =
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+
+type ParsedFileCache = {
+  mtimeMs: number;
+  size: number;
+  entries: ParsedLogEntry[];
+};
+
+// Parsed rows stay cached while size and mtime stay the same.
+let currentLogCache: ParsedFileCache | null = null;
+const rotatedLogCache = new Map<string, ParsedFileCache>();
 
 export function levelToStatus(level: string): string {
   switch (level.toUpperCase()) {
@@ -33,9 +49,7 @@ export function inferAgent(component: string): string {
 }
 
 export function parseLogLine(line: string): ParsedLogEntry | null {
-  const logRegex =
-    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
-  const match = line.match(logRegex);
+  const match = line.match(LOG_LINE_RE);
 
   if (match && match[1] && match[2] && match[3] && match[4] && match[5]) {
     const timestamp = match[1];
@@ -62,9 +76,7 @@ export function parseLogLine(line: string): ParsedLogEntry | null {
     };
   }
 
-  const fallbackRegex =
-    /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
-  const fallbackMatch = line.match(fallbackRegex);
+  const fallbackMatch = line.match(LOG_LINE_FALLBACK_RE);
 
   if (
     fallbackMatch &&
@@ -116,49 +128,104 @@ export function frameworkLogToParsedEntry(
   };
 }
 
+function parseLogContent(content: string): ParsedLogEntry[] {
+  const logs: ParsedLogEntry[] = [];
+  const lines = content.split("\n");
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    try {
+      const logEntry = parseLogLine(line);
+      if (logEntry) logs.push(logEntry);
+    } catch {
+      // Continue processing other lines
+    }
+  }
+  return logs;
+}
+
+function windowOf(timeRange?: ReportConfig["timeRange"]): {
+  startTime: number;
+  endTime: number;
+} {
+  const startTime =
+    timeRange?.start?.getTime() ??
+    (timeRange?.lastHours
+      ? Date.now() - timeRange.lastHours * 60 * 60 * 1000
+      : 0);
+  const endTime = timeRange?.end?.getTime() ?? Date.now();
+  return { startTime, endTime };
+}
+
+function withinWindow(
+  logs: ParsedLogEntry[],
+  startTime: number,
+  endTime: number,
+): ParsedLogEntry[] {
+  const filtered: ParsedLogEntry[] = [];
+  for (const log of logs) {
+    if (log.timestamp >= startTime && log.timestamp <= endTime) {
+      filtered.push(log);
+    }
+  }
+  return filtered;
+}
+
+// Length prefixes keep the first timestamp + component + action row.
+function eventKey(log: ParsedLogEntry): string {
+  const component = log.component;
+  const action = log.action;
+  return `${log.timestamp}\0${component.length}\0${component}\0${action.length}\0${action}`;
+}
+
+function uniqueSorted(logs: ParsedLogEntry[]): ParsedLogEntry[] {
+  const seen = new Set<string>();
+  const unique: ParsedLogEntry[] = [];
+  for (const log of logs) {
+    const key = eventKey(log);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(log);
+  }
+  unique.sort((a, b) => a.timestamp - b.timestamp);
+  return unique;
+}
+
 export async function readCurrentLogFile(
   timeRange?: ReportConfig["timeRange"],
 ): Promise<ParsedLogEntry[]> {
-  const logs: ParsedLogEntry[] = [];
-
   const currentFilePath = fileURLToPath(import.meta.url);
   const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
-  const logDir = path.join(projectRoot, "logs", "framework");
-  const logFile = path.join(logDir, "activity.log");
+  const logFile = path.join(projectRoot, "logs", "framework", "activity.log");
 
   try {
-    const fsModule = await import("fs");
-
-    if (!fsModule.existsSync(logFile)) {
-      return logs;
+    if (!fs.existsSync(logFile)) {
+      currentLogCache = null;
+      return [];
     }
 
-    const content = fsModule.readFileSync(logFile, "utf8");
-    const lines = content.split("\n");
-
-    const startTime =
-      timeRange?.start?.getTime() ??
-      (timeRange?.lastHours
-        ? Date.now() - timeRange.lastHours * 60 * 60 * 1000
-        : 0);
-    const endTime = timeRange?.end?.getTime() ?? Date.now();
-
-    for (const line of lines) {
-      if (line.trim()) {
-        try {
-          const logEntry = parseLogLine(line);
-          if (
-            logEntry &&
-            logEntry.timestamp >= startTime &&
-            logEntry.timestamp <= endTime
-          ) {
-            logs.push(logEntry);
-          }
-        } catch {
-          // Continue processing other lines
-        }
+    const before = fs.statSync(logFile);
+    let entries: ParsedLogEntry[];
+    const hit = currentLogCache;
+    if (hit && hit.mtimeMs === before.mtimeMs && hit.size === before.size) {
+      entries = hit.entries;
+    } else {
+      const content = fs.readFileSync(logFile, "utf8");
+      const after = fs.statSync(logFile);
+      const parsed = parseLogContent(content);
+      if (before.mtimeMs === after.mtimeMs && before.size === after.size) {
+        currentLogCache = {
+          mtimeMs: after.mtimeMs,
+          size: after.size,
+          entries: parsed,
+        };
+      } else {
+        currentLogCache = null;
       }
+      entries = parsed;
     }
+
+    const { startTime, endTime } = windowOf(timeRange);
+    return withinWindow(entries, startTime, endTime);
   } catch (error) {
     await frameworkLogger.log(
       "framework-reporting-system",
@@ -168,7 +235,7 @@ export async function readCurrentLogFile(
     );
   }
 
-  return logs;
+  return [];
 }
 
 export async function parseCompressedLogFile(
@@ -178,48 +245,66 @@ export async function parseCompressedLogFile(
 ): Promise<ParsedLogEntry[]> {
   return new Promise((resolve, reject) => {
     const logs: ParsedLogEntry[] = [];
+    let buffer = "";
 
-    (async () => {
-      try {
-        const zlib = await import("zlib");
-        const fsModule = await import("fs");
+    try {
+      const readStream = fs.createReadStream(filePath);
+      readStream
+        .pipe(createGunzip())
+        .on("data", (chunk: Buffer) => {
+          buffer += chunk.toString();
 
-        const readStream = fsModule.createReadStream(filePath);
-        const gunzip = zlib.createGunzip();
-        let buffer = "";
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
-        readStream
-          .pipe(gunzip)
-          .on("data", (chunk: Buffer) => {
-            buffer += chunk.toString();
-
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (line.trim()) {
-                try {
-                  const logEntry = parseLogLine(line);
-                  if (
-                    logEntry &&
-                    logEntry.timestamp >= startTime &&
-                    logEntry.timestamp <= endTime
-                  ) {
-                    logs.push(logEntry);
-                  }
-                } catch {
-                  // Skip malformed lines
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const logEntry = parseLogLine(line);
+                if (
+                  logEntry &&
+                  logEntry.timestamp >= startTime &&
+                  logEntry.timestamp <= endTime
+                ) {
+                  logs.push(logEntry);
                 }
+              } catch {
+                // Skip malformed lines
               }
             }
-          })
-          .on("end", () => resolve(logs))
-          .on("error", reject);
-      } catch (error) {
-        reject(error);
-      }
-    })();
+          }
+        })
+        .on("end", () => resolve(logs))
+        .on("error", reject);
+    } catch (error) {
+      reject(error);
+    }
   });
+}
+
+async function cachedRotatedEntries(filePath: string): Promise<ParsedLogEntry[]> {
+  const before = fs.statSync(filePath);
+  const hit = rotatedLogCache.get(filePath);
+  if (hit && hit.mtimeMs === before.mtimeMs && hit.size === before.size) {
+    return hit.entries;
+  }
+
+  const entries = await parseCompressedLogFile(
+    filePath,
+    Number.NEGATIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+  );
+  const after = fs.statSync(filePath);
+  if (before.mtimeMs === after.mtimeMs && before.size === after.size) {
+    rotatedLogCache.set(filePath, {
+      mtimeMs: after.mtimeMs,
+      size: after.size,
+      entries,
+    });
+  } else {
+    rotatedLogCache.delete(filePath);
+  }
+  return entries;
 }
 
 export async function readRotatedLogFiles(
@@ -240,21 +325,24 @@ export async function readRotatedLogFiles(
       .sort()
       .reverse();
 
-    const startTime =
-      timeRange?.start?.getTime() ??
-      (timeRange?.lastHours
-        ? Date.now() - timeRange.lastHours * 60 * 60 * 1000
-        : 0);
-    const endTime = timeRange?.end?.getTime() ?? Date.now();
+    const keep = new Set(
+      files.slice(0, 3).map((file) => path.join(logDir, file)),
+    );
+    for (const key of rotatedLogCache.keys()) {
+      if (!keep.has(key)) rotatedLogCache.delete(key);
+    }
+
+    const { startTime, endTime } = windowOf(timeRange);
 
     for (const file of files.slice(0, 3)) {
+      const filePath = path.join(logDir, file);
       try {
-        const fileLogs = await parseCompressedLogFile(
-          path.join(logDir, file),
+        const fileLogs = withinWindow(
+          await cachedRotatedEntries(filePath),
           startTime,
           endTime,
         );
-        logs.push(...fileLogs);
+        for (const entry of fileLogs) logs.push(entry);
 
         if (logs.length > 5000) break;
       } catch (error) {
@@ -281,14 +369,15 @@ export async function readRotatedLogFiles(
 export async function getComprehensiveLogs(
   config: ReportConfig,
 ): Promise<ParsedLogEntry[]> {
+  const allLogs: ParsedLogEntry[] = [];
   const recentLogs = frameworkLogger.getRecentLogs(1000);
+  for (const entry of recentLogs) {
+    allLogs.push(frameworkLogToParsedEntry(entry));
+  }
 
-  const convertedRecent = recentLogs.map(frameworkLogToParsedEntry);
-
-  let allLogs: ParsedLogEntry[] = [...convertedRecent];
   try {
     const currentLogs = await readCurrentLogFile(config.timeRange);
-    allLogs = [...allLogs, ...currentLogs];
+    for (const entry of currentLogs) allLogs.push(entry);
   } catch (error) {
     await frameworkLogger.log(
       "framework-reporting-system",
@@ -308,7 +397,7 @@ export async function getComprehensiveLogs(
   ) {
     try {
       const rotatedLogs = await readRotatedLogFiles(config.timeRange);
-      allLogs = [...allLogs, ...rotatedLogs];
+      for (const entry of rotatedLogs) allLogs.push(entry);
     } catch (error) {
       await frameworkLogger.log(
         "framework-reporting-system",
@@ -319,73 +408,58 @@ export async function getComprehensiveLogs(
     }
   }
 
-  const uniqueLogs = allLogs.filter(
-    (log, index, self) =>
-      index ===
-      self.findIndex(
-        (l) =>
-          l.timestamp === log.timestamp &&
-          l.component === log.component &&
-          l.action === log.action,
-      ),
-  );
+  return uniqueSorted(allLogs);
+}
 
-  return uniqueLogs.sort((a, b) => a.timestamp - b.timestamp);
+function matchesReportType(
+  log: ParsedLogEntry,
+  type: ReportConfig["type"],
+): boolean {
+  switch (type) {
+    case "orchestration":
+      return (
+        log.component === "agent-delegator" ||
+        log.action.includes("delegation")
+      );
+    case "agent-usage":
+      return Boolean(log.agent) || log.component.includes("agent");
+    case "context-awareness":
+      return (
+        log.component.includes("context") || log.component.includes("ast")
+      );
+    case "performance":
+      return (
+        log.action.includes("complete") || log.action.includes("failed")
+      );
+    default:
+      return true;
+  }
 }
 
 export function filterLogsByConfig(
   logs: ParsedLogEntry[],
   config: ReportConfig,
 ): ParsedLogEntry[] {
-  let filtered = logs;
-
-  if (config.sessionId) {
-    filtered = filtered.filter((log) => log.sessionId === config.sessionId);
-  }
-
-  if (config.jobId) {
-    filtered = filtered.filter((log) => log.jobId === config.jobId);
-  }
-
+  const sessionId = config.sessionId;
+  const jobId = config.jobId;
+  let startTime = 0;
+  let endTime = 0;
+  const hasTime = Boolean(config.timeRange);
   if (config.timeRange) {
-    const startTime =
-      config.timeRange.start?.getTime() ??
-      (config.timeRange.lastHours
-        ? Date.now() - config.timeRange.lastHours * 60 * 60 * 1000
-        : 0);
-    const endTime = config.timeRange.end?.getTime() ?? Date.now();
-
-    filtered = filtered.filter(
-      (log) => log.timestamp >= startTime && log.timestamp <= endTime,
-    );
+    const window = windowOf(config.timeRange);
+    startTime = window.startTime;
+    endTime = window.endTime;
   }
 
-  switch (config.type) {
-    case "orchestration":
-      filtered = filtered.filter(
-        (log) =>
-          log.component === "agent-delegator" ||
-          log.action.includes("delegation"),
-      );
-      break;
-    case "agent-usage":
-      filtered = filtered.filter(
-        (log) => log.agent || log.component.includes("agent"),
-      );
-      break;
-    case "context-awareness":
-      filtered = filtered.filter(
-        (log) =>
-          log.component.includes("context") || log.component.includes("ast"),
-      );
-      break;
-    case "performance":
-      filtered = filtered.filter(
-        (log) =>
-          log.action.includes("complete") || log.action.includes("failed"),
-      );
-      break;
+  const filtered: ParsedLogEntry[] = [];
+  for (const log of logs) {
+    if (sessionId && log.sessionId !== sessionId) continue;
+    if (jobId && log.jobId !== jobId) continue;
+    if (hasTime && (log.timestamp < startTime || log.timestamp > endTime)) {
+      continue;
+    }
+    if (!matchesReportType(log, config.type)) continue;
+    filtered.push(log);
   }
-
   return filtered;
 }

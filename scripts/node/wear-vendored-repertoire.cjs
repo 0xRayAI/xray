@@ -122,6 +122,38 @@ function wearDestinations(packageRoot, targetDir) {
   return dests;
 }
 
+function repertoireLinkDest(targetDir) {
+  return path.join(targetDir, "node_modules", "@0xray", "repertoire");
+}
+
+function relativeRepertoireLink(vendor, dest) {
+  return path.relative(path.dirname(dest), vendor);
+}
+
+/**
+ * Create one relative symlink at <target>/node_modules/@0xray/repertoire.
+ * A real directory or a symlink that is not this link is left in place.
+ */
+function linkVendoredRepertoire(packageRoot, targetDir) {
+  const vendor = resolveVendoredRepertoire(packageRoot);
+  if (!vendor) return { linked: false, vendor: null, dest: null };
+  const dest = repertoireLinkDest(targetDir);
+  const rel = relativeRepertoireLink(vendor, dest);
+  try {
+    const st = fs.lstatSync(dest);
+    if (st.isSymbolicLink() && fs.readlinkSync(dest) === rel) {
+      return { linked: true, vendor, dest, unchanged: true };
+    }
+    return { linked: false, vendor, dest, skipped: true };
+  } catch {
+    /* dest absent */
+  }
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  const linkType = process.platform === "win32" ? "junction" : "dir";
+  fs.symlinkSync(rel, dest, linkType);
+  return { linked: true, vendor, dest, unchanged: false };
+}
+
 function wearVendoredRepertoire(packageRoot, targetDir, log) {
   const vendor = resolveVendoredRepertoire(packageRoot);
   if (!vendor) return { worn: [], vendor: null };
@@ -153,6 +185,9 @@ function hasFileProtocolDependency(pkg) {
 module.exports = {
   resolveVendoredRepertoire,
   wearVendoredRepertoire,
+  linkVendoredRepertoire,
+  relativeRepertoireLink,
+  repertoireLinkDest,
   wearDestinations,
   hasFileProtocolDependency,
 };

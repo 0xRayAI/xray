@@ -7,10 +7,36 @@
  * @since 2026-01-07
  */
 
-import { readFileSync, readdirSync, statSync } from "fs";
+import { readFileSync, readdirSync, statSync, type Dirent } from "fs";
 import { join, resolve } from "path";
 import { createHash } from "crypto";
 import { frameworkLogger } from "../core/framework-logger.js";
+
+interface DangerousPattern {
+  pattern: RegExp;
+  severity: SecurityIssue["severity"];
+  category: string;
+  cwe: string;
+  hints: readonly string[];
+}
+
+const RECOMMENDATIONS: Record<string, string> = {
+  "code-injection": "Use static code analysis and avoid dynamic code execution",
+  "command-injection":
+    "Validate and sanitize all user inputs, use parameterized commands",
+  "sql-injection": "Use parameterized queries or ORM with built-in protection",
+  "path-traversal": "Validate paths, use allowlists, resolve to absolute paths",
+  "hardcoded-secrets":
+    "Use environment variables or secure credential management",
+  "weak-cryptography": "Use cryptographically secure random number generators",
+  "information-disclosure":
+    "Avoid logging sensitive information, use proper log levels",
+  "input-validation": "Implement comprehensive input validation and sanitization",
+  deserialization: "Validate serialized data, use safe deserialization libraries",
+  "race-conditions": "Use proper synchronization primitives",
+  "dangerous-imports": "Review usage and implement proper access controls",
+  "file-permissions": "Restrict file permissions to minimum required access",
+};
 
 export interface SecurityIssue {
   severity: "critical" | "high" | "medium" | "low" | "info";
@@ -36,25 +62,28 @@ export interface SecurityAuditResult {
 }
 
 export class SecurityAuditor {
-  private readonly dangerousPatterns = [
+  private readonly dangerousPatterns: readonly DangerousPattern[] = [
     // Code injection
     {
       pattern: /eval\s*\(/g,
       severity: "critical" as const,
       category: "code-injection",
       cwe: "CWE-95",
+      hints: ["eval"],
     },
     {
       pattern: /Function\s*\(/g,
       severity: "critical" as const,
       category: "code-injection",
       cwe: "CWE-95",
+      hints: ["Function"],
     },
     {
       pattern: /new\s+Function\s*\(/g,
       severity: "critical" as const,
       category: "code-injection",
       cwe: "CWE-95",
+      hints: ["Function"],
     },
 
     // Command injection
@@ -63,18 +92,21 @@ export class SecurityAuditor {
       severity: "high" as const,
       category: "command-injection",
       cwe: "CWE-78",
+      hints: ["child_process"],
     },
     {
       pattern: /child_process\.spawn\s*\(/g,
       severity: "high" as const,
       category: "command-injection",
       cwe: "CWE-78",
+      hints: ["child_process"],
     },
     {
       pattern: /execSync\s*\(/g,
       severity: "high" as const,
       category: "command-injection",
       cwe: "CWE-78",
+      hints: ["execSync"],
     },
 
     // SQL injection (if applicable)
@@ -83,12 +115,14 @@ export class SecurityAuditor {
       severity: "high" as const,
       category: "sql-injection",
       cwe: "CWE-89",
+      hints: ["SELECT", "+"],
     },
     {
       pattern: /INSERT.*\+/g,
       severity: "high" as const,
       category: "sql-injection",
       cwe: "CWE-89",
+      hints: ["INSERT", "+"],
     },
 
     // Path traversal
@@ -97,12 +131,14 @@ export class SecurityAuditor {
       severity: "high" as const,
       category: "path-traversal",
       cwe: "CWE-22",
+      hints: [".."],
     },
     {
       pattern: /path\.join\s*\(\s*\.\./g,
       severity: "high" as const,
       category: "path-traversal",
       cwe: "CWE-22",
+      hints: ["path.join", ".."],
     },
 
     // Hardcoded secrets
@@ -111,18 +147,21 @@ export class SecurityAuditor {
       severity: "high" as const,
       category: "hardcoded-secrets",
       cwe: "CWE-798",
+      hints: ["password"],
     },
     {
       pattern: /api[_-]?key\s*[:=]\s*['"][^'"]*['"]/gi,
       severity: "high" as const,
       category: "hardcoded-secrets",
       cwe: "CWE-798",
+      hints: ["api"],
     },
     {
       pattern: /secret\s*[:=]\s*['"][^'"]*['"]/gi,
       severity: "high" as const,
       category: "hardcoded-secrets",
       cwe: "CWE-798",
+      hints: ["secret"],
     },
 
     // Insecure random
@@ -131,6 +170,7 @@ export class SecurityAuditor {
       severity: "medium" as const,
       category: "weak-cryptography",
       cwe: "CWE-338",
+      hints: ["Math.random"],
     },
 
     // Console logging sensitive data
@@ -139,12 +179,14 @@ export class SecurityAuditor {
       severity: "medium" as const,
       category: "information-disclosure",
       cwe: "CWE-532",
+      hints: ["console" + ".log", "password"],
     },
     {
       pattern: /console\.log\s*\([^)]*secret[^)]*\)/gi,
       severity: "medium" as const,
       category: "information-disclosure",
       cwe: "CWE-532",
+      hints: ["console" + ".log", "secret"],
     },
 
     // Missing input validation
@@ -153,12 +195,14 @@ export class SecurityAuditor {
       severity: "medium" as const,
       category: "input-validation",
       cwe: "CWE-20",
+      hints: ["req.body"],
     },
     {
       pattern: /req\.query\./g,
       severity: "medium" as const,
       category: "input-validation",
       cwe: "CWE-20",
+      hints: ["req.query"],
     },
 
     // Insecure deserialization
@@ -167,6 +211,7 @@ export class SecurityAuditor {
       severity: "medium" as const,
       category: "deserialization",
       cwe: "CWE-502",
+      hints: ["JSON.parse"],
     },
 
     // Race conditions
@@ -175,6 +220,7 @@ export class SecurityAuditor {
       severity: "low" as const,
       category: "race-conditions",
       cwe: "CWE-362",
+      hints: ["setTimeout", "0"],
     },
 
     // Information disclosure in errors
@@ -183,6 +229,7 @@ export class SecurityAuditor {
       severity: "low" as const,
       category: "information-disclosure",
       cwe: "CWE-209",
+      hints: ["throw", "error", "stack"],
     },
   ];
 
@@ -199,63 +246,111 @@ export class SecurityAuditor {
     "vm",
   ];
 
+  private readonly compiledImports = this.dangerousImports.map((name) => ({
+    name,
+    patterns: [
+      new RegExp(`import.*from.*['"]${name}['"]`),
+      new RegExp(`require\\s*\\(\\s*['"]${name}['"]\\s*\\)`),
+      new RegExp(`import.*${name}`),
+    ],
+  }));
+
+  private textCache: Map<string, string> | undefined;
+
   /**
    * Run comprehensive security audit
    */
   async auditProject(projectPath: string = "."): Promise<SecurityAuditResult> {
     const jobId = `security-audit-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
     const issues: SecurityIssue[] = [];
-    const files = this.getAllFiles(projectPath);
+    this.textCache = new Map();
+    try {
+      const files = this.getAllFiles(projectPath);
 
-    frameworkLogger.log("security-auditor", "scan-start", "info", {
-      jobId,
-      filesCount: files.length,
-      projectPath,
-    });
+      frameworkLogger.log("security-auditor", "scan-start", "info", {
+        jobId,
+        filesCount: files.length,
+        projectPath,
+      });
 
-    for (const file of files) {
-      if (this.shouldAuditFile(file)) {
-        const fileIssues = await this.auditFile(file);
-        issues.push(...fileIssues);
+      for (const file of files) {
+        if (this.shouldAuditFile(file)) {
+          const fileIssues = await this.auditFile(file);
+          issues.push(...fileIssues);
+        }
       }
+
+      // Additional checks
+      issues.push(...this.auditPackageJson(projectPath));
+      issues.push(...this.auditConfiguration(projectPath));
+      issues.push(...this.auditDependencies(projectPath));
+
+      const summary = this.generateSummary(issues);
+      const score = this.calculateSecurityScore(issues, files.length);
+
+      return {
+        totalFiles: files.length,
+        issues,
+        summary,
+        score,
+      };
+    } finally {
+      this.textCache = undefined;
     }
-
-    // Additional checks
-    issues.push(...this.auditPackageJson(projectPath));
-    issues.push(...this.auditConfiguration(projectPath));
-    issues.push(...this.auditDependencies(projectPath));
-
-    const summary = this.generateSummary(issues);
-    const score = this.calculateSecurityScore(issues, files.length);
-
-    return {
-      totalFiles: files.length,
-      issues,
-      summary,
-      score,
-    };
   }
 
   private getAllFiles(dirPath: string): string[] {
     const files: string[] = [];
 
     const traverse = (currentPath: string) => {
-      const items = readdirSync(currentPath);
+      // Dirent already knows file vs directory. Stat names and symlinks so the target type matches statSync.
+      const entries = readdirSync(currentPath, { withFileTypes: true }) as ReadonlyArray<
+        Dirent | string
+      >;
 
-      for (const item of items) {
-        const fullPath = join(currentPath, item);
-        const stat = statSync(fullPath);
-
-        if (stat.isDirectory() && !this.shouldSkipDirectory(item)) {
-          traverse(fullPath);
-        } else if (stat.isFile()) {
-          files.push(fullPath);
+      for (const entry of entries) {
+        if (typeof entry === "string") {
+          this.visitNamed(currentPath, entry, files, traverse);
+          continue;
         }
+        const fullPath = join(currentPath, entry.name);
+        if (typeof entry.isSymbolicLink === "function" && entry.isSymbolicLink()) {
+          this.visitNamed(currentPath, entry.name, files, traverse);
+          continue;
+        }
+        if (entry.isDirectory()) {
+          if (!this.shouldSkipDirectory(entry.name)) traverse(fullPath);
+          continue;
+        }
+        if (entry.isFile()) files.push(fullPath);
       }
     };
 
     traverse(dirPath);
     return files;
+  }
+
+  private visitNamed(
+    currentPath: string,
+    name: string,
+    files: string[],
+    traverse: (path: string) => void,
+  ): void {
+    const fullPath = join(currentPath, name);
+    const stat = statSync(fullPath);
+    if (stat.isDirectory() && !this.shouldSkipDirectory(name)) {
+      traverse(fullPath);
+    } else if (stat.isFile()) {
+      files.push(fullPath);
+    }
+  }
+
+  private readText(filePath: string): string {
+    const cached = this.textCache?.get(filePath);
+    if (cached !== undefined) return cached;
+    const text = readFileSync(filePath, "utf-8");
+    this.textCache?.set(filePath, text);
+    return text;
   }
 
   private shouldSkipDirectory(dirName: string): boolean {
@@ -287,16 +382,31 @@ export class SecurityAuditor {
     const issues: SecurityIssue[] = [];
 
     try {
-      const content = readFileSync(filePath, "utf-8");
+      const content = this.readText(filePath);
       const lines = content.split("\n");
 
       // Pattern-based security checks
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const lineNumber = i + 1;
+        let folded: string | undefined;
 
-        for (const { pattern, severity, category, cwe } of this
+        for (const { pattern, severity, category, cwe, hints } of this
           .dangerousPatterns) {
+          // lastIndex carries across lines. Skip only when the search would start at 0 and a hint is absent.
+          if (line && pattern.lastIndex === 0) {
+            const hay = pattern.flags.includes("i")
+              ? (folded ??= line.toLowerCase())
+              : line;
+            let miss = false;
+            for (const hint of hints) {
+              if (!hay.includes(hint)) {
+                miss = true;
+                break;
+              }
+            }
+            if (miss) continue;
+          }
           const matches = line?.match(pattern);
           if (matches && line) {
             // Skip false positives in security validation and test code
@@ -381,20 +491,15 @@ export class SecurityAuditor {
   private auditImports(content: string, filePath: string): SecurityIssue[] {
     const issues: SecurityIssue[] = [];
 
-    for (const dangerousImport of this.dangerousImports) {
-      const importPatterns = [
-        new RegExp(`import.*from.*['"]${dangerousImport}['"]`, "g"),
-        new RegExp(`require\\s*\\(\\s*['"]${dangerousImport}['"]\\s*\\)`, "g"),
-        new RegExp(`import.*${dangerousImport}`, "g"),
-      ];
-
-      for (const pattern of importPatterns) {
+    for (const { name, patterns } of this.compiledImports) {
+      for (const pattern of patterns) {
+        pattern.lastIndex = 0;
         if (pattern.test(content)) {
           issues.push({
             severity: "medium",
             category: "dangerous-imports",
             file: filePath,
-            description: `Potentially dangerous import detected: ${dangerousImport}`,
+            description: `Potentially dangerous import detected: ${name}`,
             recommendation:
               "Review usage and ensure proper sandboxing/validation",
             cwe: "CWE-350",
@@ -450,7 +555,7 @@ export class SecurityAuditor {
 
     try {
       const packagePath = join(projectPath, "package.json");
-      const packageJson = JSON.parse(readFileSync(packagePath, "utf-8"));
+      const packageJson = JSON.parse(this.readText(packagePath));
 
       // Check for vulnerable dependencies
       const allDeps = {
@@ -507,7 +612,7 @@ export class SecurityAuditor {
     for (const configFile of configFiles) {
       const configPath = join(projectPath, configFile);
       try {
-        const content = readFileSync(configPath, "utf-8");
+        const content = this.readText(configPath);
 
         // Check for hardcoded secrets
         const secretPatterns = [
@@ -569,33 +674,8 @@ export class SecurityAuditor {
   }
 
   private getRecommendationForCategory(category: string): string {
-    const recommendations: Record<string, string> = {
-      "code-injection":
-        "Use static code analysis and avoid dynamic code execution",
-      "command-injection":
-        "Validate and sanitize all user inputs, use parameterized commands",
-      "sql-injection":
-        "Use parameterized queries or ORM with built-in protection",
-      "path-traversal":
-        "Validate paths, use allowlists, resolve to absolute paths",
-      "hardcoded-secrets":
-        "Use environment variables or secure credential management",
-      "weak-cryptography":
-        "Use cryptographically secure random number generators",
-      "information-disclosure":
-        "Avoid logging sensitive information, use proper log levels",
-      "input-validation":
-        "Implement comprehensive input validation and sanitization",
-      deserialization:
-        "Validate serialized data, use safe deserialization libraries",
-      "race-conditions": "Use proper synchronization primitives",
-      "dangerous-imports": "Review usage and implement proper access controls",
-      "file-permissions":
-        "Restrict file permissions to minimum required access",
-    };
-
     return (
-      recommendations[category] ||
+      RECOMMENDATIONS[category] ||
       "Review and implement appropriate security measures"
     );
   }

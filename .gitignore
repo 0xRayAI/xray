@@ -32,12 +32,14 @@ rerun_*/
 
 # Station card is a projection of session-boot.json — disk contract, not git
 .xray/state/STATION.md
+.xray/state/goggles-views.json
 .xray/state/session-boot.json
 .xray/state/repertoire-working.json
 .xray/state/repertoire/
 .xray/state/cursor-precompact.json
 .xray/state/cursor-usage-receipt.json
 .xray/state/cursor-hook-invoke.log
+.xray/state/cursor-hook-wear/
 .xray/state/cursor-hook.log
 .xray/state/cursor-receipts/
 .xray/state/session-capture-stamp.json
@@ -101,8 +103,8 @@ node_modules/
 dist/
 !grok-bot/ops/dist/
 !grok-bot/ops/dist/**
-!grok-bot/house/dist/
-!grok-bot/house/dist/POSTED.md
+!house/dist/
+!house/dist/POSTED.md
 !vendor/@0xray/repertoire/dist/
 !vendor/@0xray/repertoire/dist/**
 tsconfig.tsbuildinfo
@@ -123,3 +125,10 @@ backups/
 .env.*
 *.local
 **/auth.json
+
+# Playwright / coverage artifacts
+coverage/
+test-results/
+playwright-report/
+tests/config/coverage/
+tests/config/test-results/

@@ -2,12 +2,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const {
-  installAllBridges,
-  resolveConsumerTargetDir,
-  isConsumerInstall,
-} = require("./install-bridges.cjs");
-const { applyConsumerGitignore } = require("./consumer-gitignore.cjs");
+const { resolveConsumerTargetDir } = require("./install-bridges.cjs");
+const { linkVendoredRepertoire } = require("./wear-vendored-repertoire.cjs");
 const {
   overlayConsumerTree,
   mintConsumerFromSsot,
@@ -17,12 +13,6 @@ const {
   loadFoundryParams,
   readPackageIdentity,
 } = require("../foundry/mint-suit.cjs");
-
-function structuredLog(component, action, status, details) {
-  const ts = new Date().toISOString();
-  const detailsPart = details ? ` | ${JSON.stringify(details)}` : "";
-  console.log(`${ts} [${component}] ${action} - ${String(status).toUpperCase()}${detailsPart}`);
-}
 
 const XRAY_MANAGED_AGENTS_MARKER = "<!-- 0xray-managed -->";
 const XRAY_MANAGED_AGENTS_BEGIN = "<!-- 0xray-managed:begin -->";
@@ -62,19 +52,30 @@ function outsideRegionEdited(parts) {
   return parts.before.trim() !== "" || parts.after.trim() !== "";
 }
 
+function writeTextIfChanged(filePath, body) {
+  try {
+    if (fs.readFileSync(filePath, "utf8") === body) return false;
+  } catch {
+    /* absent */
+  }
+  fs.writeFileSync(filePath, body);
+  return true;
+}
+
 function deployManagedAgents(packageRoot, targetDir, log) {
   const agentsConsumer = path.join(packageRoot, "AGENTS-consumer.md");
   const agentsDest = path.join(targetDir, "AGENTS.md");
   if (!fs.existsSync(agentsConsumer)) return;
   const next = renderManagedAgents(packageRoot, targetDir);
   if (!fs.existsSync(agentsDest)) {
-    fs.writeFileSync(agentsDest, next);
+    writeTextIfChanged(agentsDest, next);
     return;
   }
   const current = fs.readFileSync(agentsDest, "utf8");
   const parts = managedRegion(current);
   if (!parts || outsideRegionEdited(parts)) {
-    fs.writeFileSync(path.join(targetDir, "AGENTS.md.0xray-new"), next);
+    const side = path.join(targetDir, "AGENTS.md.0xray-new");
+    writeTextIfChanged(side, next);
     log("postinstall", "AGENTS.md left in place; wrote AGENTS.md.0xray-new", "info");
     return;
   }
@@ -82,56 +83,13 @@ function deployManagedAgents(packageRoot, targetDir, log) {
   const endAt = next.indexOf(XRAY_MANAGED_AGENTS_END);
   const interior = next.slice(beginAt, endAt + XRAY_MANAGED_AGENTS_END.length);
   const updated = `${parts.before}${interior}${parts.after}`;
-  if (updated !== current) fs.writeFileSync(agentsDest, updated);
+  writeTextIfChanged(agentsDest, updated);
 }
 
-function deployConsumerGitignore(packageRoot, targetDir, log) {
-  const gitignoreResult = applyConsumerGitignore(targetDir, packageRoot);
-  if (gitignoreResult === "created") {
-    log("postinstall", "Created .gitignore from template", "info");
-  } else if (gitignoreResult === "merged") {
-    log("postinstall", "Merged 0xray suit entries into .gitignore", "info");
-  }
-}
-
-/**
- * Wear bridges for consumers (full 4-platform) and the framework repo (dogfood).
- * installAllBridges already decides which path.
- */
-function runPostinstall(packageRoot, targetDir, log) {
-  const logFn = log || structuredLog;
-  const resolvedPackage = path.resolve(packageRoot);
-  const resolvedTarget = path.resolve(targetDir);
-  const consumer = isConsumerInstall(resolvedPackage, resolvedTarget);
-
-  if (consumer) {
-    deployManagedAgents(resolvedPackage, resolvedTarget, logFn);
-    deployConsumerGitignore(resolvedPackage, resolvedTarget, logFn);
-  }
-
-  try {
-    installAllBridges({
-      targetDir: resolvedTarget,
-      packageRoot: resolvedPackage,
-      log: logFn,
-    });
-    if (consumer) {
-      mintConsumerSuit(resolvedPackage, resolvedTarget, logFn);
-    }
-  } catch (e) {
-    logFn("postinstall", "Bridge install failed", "error", { error: e.message });
-    throw e;
-  }
-
-  if (consumer) {
-    logFn(
-      "postinstall",
-      "0xRay framework installed (4 bridges). Run `npx 0xray setup` for symlinks/Hermes skill extras.",
-      "success",
-    );
-  } else {
-    logFn("postinstall", "framework dogfood wear complete", "success");
-  }
+/** npm install links vendored @0xray/repertoire and does not write `.mcp.json`. `npx 0xray wear` rewrites a checkout `dist/cli` launch to `node_modules/0xray`. */
+function runPostinstall(packageRoot, targetDir, _log) {
+  linkVendoredRepertoire(packageRoot, targetDir);
+  console.log("Run `npx 0xray wear`");
 }
 
 module.exports = {

@@ -335,8 +335,13 @@ function isDirectory(p) {
   }
 }
 
-/** Passwd home. `os.homedir()` follows $HOME and cannot detect last-mile isolation. */
+/**
+ * Passwd home. `os.homedir()` follows $HOME and cannot detect last-mile isolation.
+ * Tests set FOUNDRY_MACHINE_HOME so a plugin on the real machine does not fail a seat inspect.
+ */
 function machineHome() {
+  const override = process.env.FOUNDRY_MACHINE_HOME;
+  if (typeof override === "string" && override.trim()) return path.resolve(override.trim());
   try {
     const passwd = os.userInfo().homedir;
     if (typeof passwd === "string" && passwd) return passwd;

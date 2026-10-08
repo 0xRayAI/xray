@@ -1,5 +1,7 @@
 # Dist Unicode stamps (product lexicon)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Rule:** stamp + plain name on first use. Never stamp-only. Friend-test.
 
 **Separator (name → gloss):** use middle dot `·` or em dash `—`, not `->`.  

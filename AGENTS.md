@@ -4,7 +4,7 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 **4.0** — a suit that survives the context window.
 
-**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.8, dest = laws).
+**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 
@@ -125,7 +125,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 | **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook |
 | **3.1.1** | 0xRay rename, marketplace, AGENTS/SKILLS consumer seeding |
 
-**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/` on consumer boot.
+**Removed:** `hermes bridge`, `.opencode/xray/` fallback, `advanced-features/`.
 
 ## Default operating mode: autonomy-command
 
@@ -209,10 +209,10 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 
 ## thinDispatch routing
 
-- Simple (≤15): Single agent
-- Moderate (≤25): Single agent with tools
-- Complex (≤50): Multi-agent coordination
-- Enterprise (>50): Orchestrator-led team
+- Simple (≤15): single-agent
+- Moderate (≤25): multi-agent
+- Complex (≤50): orchestrator-led
+- Enterprise (>50): orchestrator-led
 
 ## Documentation
 

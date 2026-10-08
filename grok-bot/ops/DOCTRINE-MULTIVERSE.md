@@ -1,5 +1,7 @@
 # Doctrine — we built a multiverse (Blaze 2026-09-15)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Line:** we built a multiverse!
 
 **Plain:** The agent OS is not one host or one product. It’s many plants (chat / CLI / Cursor cloud), many stack organs (0xRay · Groover · Clearing · hangar · kit), many seats — one company shape. Belief optional. Feed receipts until it’s obvious.

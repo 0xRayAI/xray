@@ -39,6 +39,7 @@ import {
 } from './governance-core.js';
 import { frameworkLogger } from '../core/framework-logger.js';
 import { featuresConfigLoader } from '../core/features-config.js';
+import { lensPlane } from '../integrations/hooks/goggles-pipeline.mjs';
 
 export class GovernanceService {
   constructor() {
@@ -239,12 +240,23 @@ export class GovernanceService {
           }
         }
 
+        const plane = lensPlane(`${proposal.title} ${proposal.description}`);
+        const about = [proposal.title, proposal.description, ...(proposal.evidence ?? [])].join('\n');
+        let reasoningSummary = merged.reasoningSummary;
+        if (
+          plane.files.length > 0 &&
+          finalDecision === 'approve' &&
+          !plane.files.some((file) => about.includes(file))
+        ) {
+          finalDecision = 'needs_revision';
+          reasoningSummary = `${reasoningSummary} Not about ${plane.files[0]}.`.trim();
+        }
         return {
           proposalId: proposal.id,
           finalDecision,
           averageConfidence,
           votes,
-          reasoningSummary: merged.reasoningSummary,
+          reasoningSummary,
           moralOverride,
           ...(metamorphosisScore != null ? { metamorphosisScore } : {}),
         };
@@ -376,7 +388,7 @@ export class GovernanceService {
           decision: result.vote === 'YES' ? 'approve' : result.vote === 'NO' ? 'reject' : 'needs_revision',
           confidence: result.governanceResponse?.confidence ?? 0.85,
           reasoning: result.reason || 'Dynamo Solar SSOT filter decision',
-          weight: 1.1,
+          weight: typeof result.weight === 'number' ? result.weight : 1.1,
           moralTension: result.moralTension,
           moralScore: result.moralScore,
           moralFusion: result.moralFusion,

@@ -8,8 +8,12 @@ import type {
   MemoryRoutingProvider,
   MemoryRoutingProviderConfig,
 } from './types.js';
+import { bindOrganFileCache } from './lookup-cache.js';
 import { createMemoryRoutingProvider as createNullProvider } from './null-provider.js';
 import { validateMemoryRoutingConfig } from './validate-config.js';
+
+// Opening the organ must not merge subject repo-* back onto the project file.
+process.env.REPERTOIRE_SUBJECT_OVERLAY ??= '0';
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -208,6 +212,7 @@ export function loadMemoryRoutingProviderSync(
       };
     };
     const provider = providerFromModule(mod, resolved.modulePath, resolved.effective);
+    bindOrganFileCache(provider);
     if (!provider.isAvailable()) return null;
     return provider;
   } catch {
@@ -275,6 +280,8 @@ export async function loadMemoryRoutingProvider(
     if (!provider?.id || typeof provider.isAvailable !== 'function') {
       throw new Error(`Invalid memory routing provider from ${modulePath}`);
     }
+
+    bindOrganFileCache(provider);
 
     const availabilityReason = resolveUnavailableReason(provider);
 

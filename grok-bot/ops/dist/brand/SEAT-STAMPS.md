@@ -1,5 +1,7 @@
 # Seat stamps (fleet voice marks)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Locked:** 2026-09-14 · Pack A (Blaze) · CoS `🖲️` kept
 
 Separate from **product** stamps (`STAMPS.md`).

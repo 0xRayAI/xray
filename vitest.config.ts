@@ -1,5 +1,9 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "path";
 import { defineConfig } from "vitest/config";
-import { resolve } from "path";
+
+const testMachineHome = mkdtempSync(join(tmpdir(), "xray-test-machine-"));
 
 const base = {
   globals: true,
@@ -11,6 +15,7 @@ const base = {
     "coverage",
     "src/__tests__/plugins/marketplace-service.test.ts",
     "src/__tests__/performance/enterprise-performance-tests.ts",
+    "src/__tests__/playwright/**",
   ],
   silent: true,
   reporters: process.env.CI ? ["verbose"] : ["default"],
@@ -36,6 +41,7 @@ export default defineConfig({
         test: {
           name: "all",
           testTimeout: 30000,
+          env: { FOUNDRY_MACHINE_HOME: testMachineHome },
           include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
           exclude: [
             ...base.exclude,
@@ -54,6 +60,7 @@ export default defineConfig({
         test: {
           name: "nucleus",
           testTimeout: 30000,
+          env: { FOUNDRY_MACHINE_HOME: testMachineHome },
           include: [
             "src/__tests__/unit/nucleus-*.test.ts",
             "src/__tests__/unit/default-plugins.test.ts",

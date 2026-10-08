@@ -5,45 +5,40 @@ sidebar_label: Memory recall
 
 # Memory recall
 
-Speech becomes a lesson. Intent names one plate. Compact points at the station card. The card names the stamp. The stamp file is the schematic.
+Intent names one plate. Equal top scores recall nothing. A missing worn copy is stamped from the docs plate. An edited copy stays.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                  │
 │                                                              │
-│   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐  │
-│   │ speech       │   │ intent       │   │ compact cut    │  │
-│   └──────┬───────┘   └──────┬───────┘   └───────┬────────┘  │
-└──────────┼──────────────────┼───────────────────┼───────────┘
-           v                  v                   v
-┌──────────┼──────────────────┼───────────────────┼───────────┐
-│ PROCESSING LAYER             │                   │           │
-│          v                  v                   v           │
-│   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐ │
-│   │ speech grades│   │ intent       │   │ compact says   │ │
-│   │ to a lesson  │   │ recalls one  │   │ Read STATION.md│ │
-│   │ on a signal  │   │ plate        │   │                │ │
-│   └──────┬───────┘   └──────┬───────┘   └───────┬────────┘ │
-│          │                  │                   │          │
-│          │                  v                   │          │
-│          │     ┌────────────────────────────┐   │          │
-│          │     │ card keeps the short       │   │          │
-│          │     │ subsystem table            │   │          │
-│          │     │ card names Plate: <id>     │   │          │
-│          │     └─────────────┬──────────────┘   │          │
-└──────────┼───────────────────┼──────────────────┼──────────┘
-           v                   v                  v
-┌──────────┴───────────────────┴──────────────────┴──────────┐
-│ OUTPUT LAYER                                               │
-│                                                            │
-│   ┌────────────────────────────┐  ┌─────────────────────┐ │
-│   │ lesson on the signal       │  │ stamp file          │ │
-│   │ an episode of what happened│  │ the schematic       │ │
-│   └────────────────────────────┘  │ docs-site/docs/     │ │
-│                                   │ plates/<id>.md      │ │
-│                                   │ worn copy only when │ │
-│                                   │ .xray/state/plates/ │ │
-│                                   │ <id>.md is missing  │ │
-│                                   └─────────────────────┘ │
+│   ┌──────────────────────────────────────────────────────┐  │
+│   │ intent                                               │  │
+│   └──────────────────────────┬───────────────────────────┘  │
+└──────────────────────────────┼──────────────────────────────┘
+                               v
+┌──────────────────────────────┼──────────────────────────────┐
+│ PROCESSING LAYER             v                              │
+│   ┌──────────────────────────────────────────────────────┐  │
+│   │ score cues                                           │  │
+│   │ one winner loads that plate                          │  │
+│   │ a tie returns nothing                                │  │
+│   └──────────────────────────┬───────────────────────────┘  │
+│                              v                              │
+│   ┌──────────────────────────────────────────────────────┐  │
+│   │ stampPlateIfMissing                                  │  │
+│   │ writes .xray/state/plates only when that file        │  │
+│   │ is missing                                           │  │
+│   └──────────────────────────┬───────────────────────────┘  │
+└──────────────────────────────┼──────────────────────────────┘
+                               v
+┌──────────────────────────────┼──────────────────────────────┐
+│ OUTPUT LAYER                 v                              │
+│   ┌────────────────────┐        ┌────────────────────────┐ │
+│   │ plate line         │        │ stamp file             │ │
+│   └────────────────────┘        └────────────────────────┘ │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+A look returns the named plane, the matched law names, and the current lines from the session-note index. It does not write a law.
+
+stamped · 0xray 4.0.41

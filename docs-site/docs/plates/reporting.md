@@ -5,7 +5,7 @@ sidebar_label: Reporting
 
 # Reporting
 
-Logs become a report. Session start can also drop a schedule marker. The marker is a side output, not a second chain through the formatter.
+Logs become a report. A valid cache returns the formatted report and does not write the file again.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -22,14 +22,9 @@ Logs become a report. Session start can also drop a schedule marker. The marker 
 │   ┌────────────────────────────────────────────────────┐  │
 │   │ FrameworkReportingSystem                           │  │
 │   │ collect logs → metrics → formatReport              │  │
-│   │ cache a fresh report, then write the file          │  │
+│   │ cache the fresh report                             │  │
+│   │ write the file when outputPath is set              │  │
 │   └──────────────────────────┬─────────────────────────┘  │
-│                              │                            │
-│   ┌──────────────────────────┼─────────────────────────┐  │
-│   │ SessionStart marker      │                         │  │
-│   │ autonomous-reporting     │  side output            │  │
-│   │ scheduled flag           │                         │  │
-│   └──────────────────────────┼─────────────────────────┘  │
 └──────────────────────────────┼────────────────────────────┘
                                v
 ┌──────────────────────────────┼────────────────────────────┐
@@ -40,3 +35,5 @@ Logs become a report. Session start can also drop a schedule marker. The marker 
 │   └──────────────────────────┘   └─────────────────────┘ │
 └────────────────────────────────────────────────────────────┘
 ```
+
+stamped · 0xray 4.0.41

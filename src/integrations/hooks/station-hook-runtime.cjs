@@ -17,10 +17,13 @@ const {
   unlinkSync,
   writeFileSync,
 } = require("fs");
-const { join } = require("path");
+const { join, resolve } = require("path");
 
 const HOOKS_DIR = __dirname;
-const { plateStockLine } = require("./plates.cjs");
+const { ensureWornPlate, plateStockLine, recallPlate } = require("./plates.cjs");
+const { rememberSessionNote, retainProjectNotes } = require("./session-note-index.cjs");
+const { formatCascadePointer, readWakeCascade } = require("./wake-cascade.cjs");
+const { formatSleevePointer, readSleeve, runFoundryMill } = require("./sleeve.cjs");
 
 const INTENT_MAX = 240;
 
@@ -111,6 +114,12 @@ function isStockTicket(value) {
   return !text || text === "(none)" || text === "(none yet)";
 }
 
+function readStationHostToken(root) {
+  const md = readExistingStationMarkdown(root);
+  const match = md.match(/^Host:\s*(\S+)/m);
+  return match ? match[1] : "";
+}
+
 function readStationTicketField(root, field) {
   const md = readExistingStationMarkdown(root);
   const re = field === "Plan" ? /^Plan:\s*(.*)$/im : /^Intent:\s*(.*)$/im;
@@ -127,16 +136,37 @@ function bootHeadMoved(root, existing) {
   return Boolean(live && live.head && bootHead && bootHead !== live.head);
 }
 
-/** Live ticket beats leftover boot. Extra spoken intent still wins. */
+/** Live ticket beats leftover boot. Chat and compact do not replace it. */
 function resolveHeatIntent(root, extra, existing) {
   const incoming = clipIntent(
     extra.intent || extra.prompt || extra.userMessage || extra.user_prompt,
   );
-  if (incoming) return { intent: incoming, rematch: true };
   const card = readStationTicketField(root, "Intent");
   const pickup = clipIntent(readNotesPickup(root));
   const bootIntent = typeof existing.intent === "string" ? clipIntent(existing.intent) : null;
   const cardIsBootEcho = Boolean(card && bootIntent && card === bootIntent);
+  const named = String(extra.hookEvent || "");
+  const channel = String(extra.hookEvent || extra.source || "");
+  const keepsTicket = /user_prompt|compact/i.test(channel);
+  const compact = /compact/i.test(channel);
+  let receipt = null;
+  try {
+    receipt = readSleeve(root);
+  } catch {
+    receipt = null;
+  }
+  // A proved receipt keeps the ticket. A new session must not restate it.
+  if (receipt && receipt.on && card && /^(session_start|session-start)$/i.test(named)) {
+    return { intent: card, rematch: false, kept: true };
+  }
+  // A chat sentence or a compact summary does not replace a ticket already on disk.
+  if (incoming && !(keepsTicket && (card || pickup))) {
+    return { intent: incoming, rematch: true };
+  }
+  // Compact copies the card. A stale pickup must not overwrite it.
+  if (compact && card && card !== incoming) {
+    return { intent: card, rematch: card !== bootIntent };
+  }
   if (pickup && cardIsBootEcho && pickup !== bootIntent) {
     return { intent: pickup, rematch: true };
   }
@@ -363,7 +393,7 @@ function destLawNameSet(root) {
   return names;
 }
 
-/** Drop hangar repo-* and git-slug keywords. Keep factory + stack laws. */
+/** Drop diary slugs. Keep factory, stack, and subject-overlay names. */
 function pruneKeywordDest(root) {
   const dest = destSignalsPath(root);
   if (!dest || !existsSync(dest)) return { removed: 0, kept: 0 };
@@ -376,12 +406,13 @@ function pruneKeywordDest(root) {
   if (!Array.isArray(data.signals)) return { removed: 0, kept: 0 };
   const factory = signalNameSet(repertoireDataFile(root, "curated_signals.json"));
   const stack = signalNameSet(repertoireDataFile(root, "stack-overlay.json"));
+  const subject = signalNameSet(repertoireDataFile(root, "subject-overlay.json"));
   const kept = [];
   let removed = 0;
   for (const signal of data.signals) {
     const name = String((signal && signal.name) || "").trim();
     if (!name) continue;
-    const protectedLaw = factory.has(name) || stack.has(name);
+    const protectedLaw = factory.has(name) || stack.has(name) || subject.has(name);
     if (!protectedLaw && (isKeywordDestName(name) || isGenericFieldObservedSignal(signal))) {
       removed += 1;
       continue;
@@ -487,6 +518,46 @@ function readNotesPickup(root) {
   } catch {
     return null;
   }
+}
+
+/** One pickup line. Leaves the rest of NOTES.md alone. */
+function stampNotesPickup(root, line) {
+  const text = clipIntent(line);
+  if (!text) return null;
+  const dest = notesPath(root);
+  const marker = `**Pickup line:** ${text}`;
+  let body = "";
+  if (existsSync(dest)) {
+    try {
+      body = readFileSync(dest, "utf8");
+    } catch {
+      body = "";
+    }
+  }
+  const hasLine = /\*\*Pickup line:\*\*/.test(body);
+  const next = hasLine
+    ? body.replace(/\*\*Pickup line:\*\*\s*[^\n]*/, marker)
+    : body
+      ? `${marker}\n\n${body.replace(/^\n+/, "")}`
+      : `${marker}\n`;
+  rememberSessionNote(root, text, { source: "NOTES.md", slot: "pickup" });
+  if (next === body) return text;
+  mkdirSync(join(root, ".xray", "state"), { recursive: true });
+  writeFileSync(dest, next.endsWith("\n") ? next : `${next}\n`);
+  return text;
+}
+
+function notesMark(root) {
+  let body = "";
+  const dest = notesPath(root);
+  if (existsSync(dest)) {
+    try {
+      body = readFileSync(dest, "utf8");
+    } catch {
+      body = "";
+    }
+  }
+  return /^## Working notes\b/m.test(body) ? "Notes: present" : "Notes: THIN";
 }
 
 function readLatestSessionApproaches(root) {
@@ -780,20 +851,28 @@ function growDestOnWake(root) {
   const helper = join(HOOKS_DIR, "station-memory-ingest.mjs");
   if (!existsSync(helper)) return null;
   try {
+    const dest = destSignalsPath(root);
+    const before = countCuratedSignals(dest) || 0;
     const out = execFileSync(process.execPath, [helper, root, "--grow"], {
       encoding: "utf8",
       timeout: 45000,
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, REPERTOIRE_FIELD_SYNC: "0", REPERTOIRE_DEST_LOCK: "held" },
+      env: {
+        ...process.env,
+        REPERTOIRE_FIELD_SYNC: "0",
+        REPERTOIRE_DEST_LOCK: "held",
+        REPERTOIRE_SUBJECT_OVERLAY: "0",
+      },
     });
     const line = String(out).trim().split("\n").filter(Boolean).at(-1) || "{}";
     const parsed = JSON.parse(line);
     const pruned = pruneKeywordDest(root);
-    const destCount = countCuratedSignals(destSignalsPath(root)) || 0;
-    if (!parsed || typeof parsed !== "object") return { pruned: pruned.removed, destCount };
+    const destCount = countCuratedSignals(dest) || 0;
+    if (!parsed || typeof parsed !== "object") return { before, pruned: pruned.removed, destCount, after: destCount };
     const heated = Array.isArray(parsed.heated) ? parsed.heated.length : 0;
     return {
       ...parsed,
+      before,
       observed: heated,
       pruned: pruned.removed,
       destCount,
@@ -827,6 +906,11 @@ function ingestCompactFeedbackSync(root, sessionId, hookEvent, signals) {
 function isCompactHook(extra) {
   const hook = String(extra.hookEvent || extra.source || "");
   return /compact/i.test(hook);
+}
+
+function isPromptHook(extra) {
+  const hook = String((extra && (extra.hookEvent || extra.source)) || "");
+  return /user_prompt/i.test(hook);
 }
 
 function isCompactEventName(value) {
@@ -910,9 +994,11 @@ function buildRepertoireResume(root) {
 }
 
 function applyStationHeat(root, host, extra = {}, existing = {}) {
+  retainProjectNotes(root);
   const mr = readMemoryRoutingConfig(root);
   const memoryOff = isExplicitMemoryRoutingOptOut(mr);
-  const live = memoryOff
+  const promptHook = isPromptHook(extra);
+  const live = memoryOff || promptHook
     ? { hydrate: { dest: null, added: 0, destCount: 0 }, captured: null, grow: null }
     : withDestLock(root, () => {
         const hydrateInner = hydrateDestOnWake(root);
@@ -929,7 +1015,7 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       : existsSync(destSignalsPath(root))
         ? countCuratedSignals(destSignalsPath(root)) || 0
         : hydrate.destCount;
-  const pickup = readNotesPickup(root);
+  let pickup = readNotesPickup(root);
   const approaches = readLatestSessionApproaches(root);
   const prevHost = typeof existing.host === "string" ? existing.host : null;
   const nextSwap = prevHost && host && prevHost !== host ? { from: prevHost, to: host } : null;
@@ -941,14 +1027,27 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
       ? existing.hotSwap
       : null;
   const hotSwap = nextSwap || keptSwap;
+  const priorIntent = readStationTicketField(root, "Intent");
+  const priorHost = readStationHostToken(root);
   const resolved = resolveHeatIntent(root, extra, existing);
   const intent = resolved.intent;
   const rematch = resolved.rematch;
+  let notesLine = null;
+  if (isCompactHook(extra)) {
+    if (intent && (readStationTicketField(root, "Intent") || pickup || clipIntent(extra.intent))) {
+      const stamped = stampNotesPickup(root, intent);
+      if (stamped) pickup = stamped;
+    }
+    notesLine = notesMark(root);
+  }
   const matchText = clipIntent([intent, pickup, approaches].filter(Boolean).join(" "));
   const git = readGitBrief(root);
-  const planLine = resolveHeatPlan(root, extra, existing);
-  const repertoireResume =
-    typeof extra.repertoireResume === "string" ? extra.repertoireResume : buildRepertoireResume(root);
+  let planLine = resolveHeatPlan(root, extra, existing);
+  if (priorIntent && intent && intent !== priorIntent && !(extra.plan || extra.planLine)) {
+    planLine = null;
+  }
+  // A passed string is the previous card. Count the project file after this wake.
+  const repertoireResume = buildRepertoireResume(root);
   const swapBit = hotSwap ? `hot-swap ${hotSwap.from} → ${hotSwap.to}` : `host ${host}`;
   const intentBit = intent ? `intent: ${intent}` : "intent: (none yet)";
   const gitBit = git ? `git ${git.branch}@${git.head}` : "git: n/a";
@@ -963,7 +1062,9 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     hydrate.destCount ||
     (existsSync(destSignalsPath(root)) ? countCuratedSignals(destSignalsPath(root)) : 0);
   if (!memoryOff && !matchedSignals.length && matchText) {
-    if (
+    if (promptHook) {
+      matchedSignals = preferLawHits(priorWorking && priorWorking.matchedSignals, 8);
+    } else if (
       !rematch &&
       priorWorking &&
       priorWorking.matchText === matchText &&
@@ -982,11 +1083,20 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   if (!matchedSignals.length && priorWorking) {
     matchedSignals = stationSafeSignals(priorWorking.matchedSignals);
   }
+  if (resolved.kept) {
+    matchedSignals = preferLawHits(priorWorking && priorWorking.matchedSignals, 8);
+  }
   const compactHold = retainCompactFields(existing, extra);
   const nextHook = compactHold.hookEvent || extra.hookEvent || extra.source || null;
   const workingSnapshot = {
     host,
     intent,
+    priorIntent: priorIntent || null,
+    priorHost: priorHost || null,
+    priorWorkingIntent: priorWorking && typeof priorWorking.intent === "string" ? priorWorking.intent : null,
+    priorWorkingHost: priorWorking && typeof priorWorking.host === "string"
+      ? (priorWorking.host.split(/\s+/)[0] || null)
+      : null,
     git,
     hotSwap,
     memoryRouting: repertoireResume.startsWith("Repertoire: on") ? "on" : "off",
@@ -1000,6 +1110,13 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
   const growReceipt = workingGrowSnapshot(grow);
   if (growReceipt) workingSnapshot.grow = growReceipt;
   if (matchedSignals.length) workingSnapshot.matchedSignals = matchedSignals.slice(0, 8);
+  const cascade = readWakeCascade(root, { laws: matchedSignals });
+  workingSnapshot.cascade = {
+    plane: cascade.plane,
+    laws: cascade.laws,
+    notes: cascade.notes.length,
+  };
+  const cascadeLine = formatCascadePointer(cascade);
   const opProcNames = readOpProcNames(root);
   if (opProcNames.length) workingSnapshot.opProcNames = opProcNames;
   const pickupChanged = Boolean(pickup && (!priorWorking || priorWorking.pickup !== pickup));
@@ -1032,7 +1149,10 @@ function applyStationHeat(root, host, extra = {}, existing = {}) {
     repertoireResume,
     workingLine,
     stationLine,
+    cascadeLine,
+    ...(notesLine ? { notesLine } : {}),
     ...compactHold,
+    arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
   };
 }
 
@@ -1042,9 +1162,17 @@ const STOCK_STATION_PREFIXES = [
   "intent:",
   "plan:",
   "git:",
+  "fresh:",
   "repertoire:",
   "working:",
   "plate:",
+  "library:",
+  "cascade:",
+  "sleeve:",
+  "notes:",
+  "plane:",
+  "judgement:",
+  "payments:",
 ];
 
 /** Stock design map. Exact lines so a later heat does not preserve a second copy. */
@@ -1085,7 +1213,7 @@ function stationBootNeedsRefresh(existing, root, host) {
   if (!existing || typeof existing !== "object") return true;
   if (host && existing.host && existing.host !== host) return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (existing.workspaceRoot && !sameWorkspaceRoot(existing.workspaceRoot, root)) return true;
   if (!existing.stationLine) return true;
   const liveGit = readGitBrief(root);
   const bootHead = existing.git && existing.git.head ? String(existing.git.head) : "";
@@ -1108,13 +1236,27 @@ function stationDurableHoldsNpm(root) {
     .some((line) => isHoldNpmLine(line));
 }
 
+function sameWorkspaceRoot(left, right) {
+  if (!left || !right) return false;
+  return resolve(String(left)) === resolve(String(right));
+}
+
+function isFooterFragment(line) {
+  const lower = String(line || "").trim().toLowerCase();
+  if (!lower || /^[.]+$/.test(lower)) return true;
+  return STOCK_STATION_FOOTERS.some((footer) => {
+    if (lower.length >= 12 && footer.includes(lower)) return true;
+    return lower.length >= 3 && lower.length < 12 && footer.endsWith(lower);
+  });
+}
+
 function isStockStationLine(line) {
   const trimmed = String(line || "").trim();
   if (!trimmed) return true;
   if (/^#\s+station\s*$/i.test(trimmed)) return true;
   if (DESIGN_MAP_LINES.includes(trimmed)) return true;
   const lower = trimmed.toLowerCase();
-  if (STOCK_STATION_FOOTERS.includes(lower)) return true;
+  if (STOCK_STATION_FOOTERS.includes(lower) || isFooterFragment(trimmed)) return true;
   return STOCK_STATION_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
@@ -1151,10 +1293,45 @@ function extractPreservedStationLines(existing) {
   return preserved;
 }
 
-function mergeStationMarkdown(stockMd, existingMd) {
-  const preserved = extractPreservedStationLines(existingMd);
-  if (!preserved.length) return stockMd;
+function latestFreshLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Fresh:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneFreshLine(stockMd, existingMd) {
   const stock = String(stockMd || "");
+  if (/^Fresh:/m.test(stock)) return stock;
+  const fresh = latestFreshLine(existingMd);
+  if (!fresh) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Repertoire:"));
+  if (at >= 0) rows.splice(at, 0, fresh);
+  else rows.splice(Math.min(rows.length, 6), 0, fresh);
+  return rows.join("\n");
+}
+
+function latestNotesLine(existingMd) {
+  const lines = String(existingMd || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => /^Notes:/.test(line));
+  return lines.length ? lines[lines.length - 1] : "";
+}
+
+function withOneNotesLine(stockMd, existingMd) {
+  const stock = String(stockMd || "");
+  if (/^Notes:/m.test(stock)) return stock;
+  const notes = latestNotesLine(existingMd);
+  if (!notes) return stock;
+  const rows = stock.split(/\r?\n/);
+  const at = rows.findIndex((row) => row.startsWith("Library:"));
+  if (at >= 0) rows.splice(at + 1, 0, notes);
+  else rows.splice(Math.min(rows.length, 8), 0, notes);
+  return rows.join("\n");
+}
+
+function mergeStationMarkdown(stockMd, existingMd) {
+  const stockWithFresh = withOneNotesLine(withOneFreshLine(stockMd, existingMd), existingMd);
+  const preserved = extractPreservedStationLines(existingMd);
+  if (!preserved.length) return stockWithFresh;
+  const stock = stockWithFresh;
   const block = preserved.join("\n");
   const marker = "Continue this card.";
   const idx = stock.indexOf(marker);
@@ -1181,12 +1358,22 @@ function formatStationMarkdown(fields) {
   } else {
     lines.push("Git: n/a");
   }
+  if (fields.freshnessLine) {
+    lines.push(fields.freshnessLine);
+  }
   lines.push(fields.repertoireResume || "Repertoire: module unresolved");
   if (fields.workingLine) {
     lines.push(fields.workingLine);
   }
   const plateLine = plateStockLine(fields.intent);
   if (plateLine) lines.push(plateLine);
+  lines.push("Library: record-map — .agents/skills/record-map/SKILL.md");
+  if (fields.cascadeLine) lines.push(fields.cascadeLine);
+  if (fields.sleeveLine) lines.push(fields.sleeveLine);
+  lines.push(`Plane: ${fields.plane || "(none)"}`);
+  lines.push(`Judgement: ${fields.judgement || "start"}`);
+  lines.push(`Payments: ${fields.payments === "on" ? "on" : "off"}`);
+  if (fields.notesLine) lines.push(fields.notesLine);
   lines.push("");
   lines.push(...DESIGN_MAP_LINES);
   lines.push("");
@@ -1206,13 +1393,160 @@ function readExistingStationMarkdown(root) {
   }
 }
 
+
+
+function ticketIsPayment(intent) {
+  return /\b(pay|payment|payments|x402|invoice)\b/i.test(String(intent || ""));
+}
+
+function readHeldPlane(root) {
+  try {
+    const data = JSON.parse(readFileSync(join(root, ".xray", "state", "goggles-plane.json"), "utf8"));
+    return data && typeof data.plane === "string" ? data.plane : "";
+  } catch {
+    return "";
+  }
+}
+
+function missKey(proved) {
+  const missing = proved && Array.isArray(proved.missing) ? proved.missing.slice() : [];
+  const rows = proved && Array.isArray(proved.stitches) ? proved.stitches : [];
+  const at = {};
+  for (const row of rows) {
+    if (!row || !missing.includes(row.name)) continue;
+    at[row.name] = Array.isArray(row.at) ? row.at.slice() : [];
+  }
+  return JSON.stringify({ missing, at });
+}
+
+function judgementLine(order, saved, proved) {
+  const wake = order && order.wake ? order.wake : "start";
+  if (wake === "repair") {
+    const prior = saved && Number.isFinite(saved.retries) ? saved.retries : 0;
+    const key = missKey(proved);
+    if (saved && saved.missKey === key && prior > 0) return `retry ${prior}`;
+    const next = prior + 1;
+    if (saved) {
+      saved.retries = next;
+      saved.missKey = key;
+    }
+    return `retry ${next}`;
+  }
+  if (saved) {
+    saved.retries = 0;
+    delete saved.missKey;
+  }
+  if (wake === "continue" || wake === "stop" || wake === "start") return wake;
+  return "start";
+}
+
+function isMissPlan(line) {
+  return typeof line === "string" && line.startsWith("The work is ");
+}
+
+function missWork(missing) {
+  const words = { loop: "the ticket", domain: "the plate", state: "the record", foundry: "the mill" };
+  const parts = (Array.isArray(missing) ? missing : []).map((name) => words[name]).filter(Boolean);
+  if (parts.length === 1) return `The work is ${parts[0]}.`;
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    return `The work is ${parts.slice(0, -1).join(", ")} and ${last}.`;
+  }
+  return "The work is the suit.";
+}
+
+function wakeOrder(saved, proved, fields) {
+  const missing = proved && Array.isArray(proved.missing) ? proved.missing : [];
+  const sameJob = Boolean(saved && saved.priorIntent && saved.intent === saved.priorIntent);
+  const suitMiss = missing.some((name) => name === "domain" || name === "foundry" || name === "state");
+  if (proved && proved.on) {
+    const paused = saved && typeof saved.pausedPlan === "string" ? saved.pausedPlan : "";
+    if (isMissPlan(fields && fields.planLine) && saved && Object.prototype.hasOwnProperty.call(saved, "pausedPlan")) {
+      return { wake: "continue", planLine: paused, pausedPlan: undefined };
+    }
+    return { wake: "continue", pausedPlan: undefined };
+  }
+  if (!saved || !saved.priorIntent) return { wake: "start" };
+  if (saved.intent && saved.priorIntent && saved.intent !== saved.priorIntent) {
+    return { wake: "stop", pausedPlan: undefined };
+  }
+  if (sameJob && !missing.includes("loop") && suitMiss) {
+    const current = fields && fields.planLine ? String(fields.planLine) : "";
+    const paused = isMissPlan(current)
+      ? (typeof saved.pausedPlan === "string" ? saved.pausedPlan : "")
+      : current;
+    return { wake: "repair", planLine: missWork(missing), pausedPlan: paused };
+  }
+  return { wake: "start" };
+}
+
 function writeStationMarkdown(root, fields) {
   try {
     const dir = join(root, ".xray", "state");
     mkdirSync(dir, { recursive: true });
+    const arrivedKnown = Boolean(fields && Object.prototype.hasOwnProperty.call(fields, "arrivedHook"));
+    const wake = arrivedKnown
+      ? String(fields.arrivedHook || "")
+      : String((fields && fields.hookEvent) || "");
+    if (/^(session_start|session-start|pre_compact|post_compact)$/i.test(wake)) {
+      try {
+        runFoundryMill(root);
+      } catch {
+        /* the card still writes when the mill does not */
+      }
+    }
     const dest = stationMarkdownPath(root);
-    const next = mergeStationMarkdown(formatStationMarkdown(fields), readExistingStationMarkdown(root));
-    writeFileSync(dest, next);
+    const base = { ...(fields || {}) };
+    delete base.sleeveLine;
+    writeFileSync(dest, mergeStationMarkdown(formatStationMarkdown(base), readExistingStationMarkdown(root)));
+    // Solar phase is not this judgement. The moral overlay cannot pass alone.
+    fields.plane = readHeldPlane(root);
+    fields.payments = ticketIsPayment(fields.intent) ? "on" : "off";
+    let sleeveLine = "Sleeve: off loop, domain, state, foundry";
+    try {
+      const proved = readSleeve(root);
+      sleeveLine = formatSleevePointer(proved);
+      const workingPath = join(root, ".xray", "state", "repertoire-working.json");
+      if (existsSync(workingPath)) {
+        const saved = JSON.parse(readFileSync(workingPath, "utf8"));
+        if (saved && typeof saved === "object") {
+          const order = wakeOrder(saved, proved, fields);
+          fields.wake = order.wake;
+          if (Object.prototype.hasOwnProperty.call(order, "planLine")) {
+            fields.planLine = order.planLine;
+          }
+          fields.judgement = judgementLine(order, saved, proved);
+          saved.wake = order.wake;
+          saved.retries = saved.retries || 0;
+          saved.judgement = fields.judgement;
+          saved.plane = fields.plane;
+          saved.payments = fields.payments;
+          if (order.pausedPlan !== undefined) saved.pausedPlan = order.pausedPlan;
+          else delete saved.pausedPlan;
+          saved.sleeve = {
+            on: proved.on,
+            missing: proved.missing,
+            stitches: proved.stitches,
+          };
+          writeFileSync(workingPath, `${JSON.stringify(saved)}\n`);
+        }
+      }
+    } catch {
+      /* the card still writes; the sleeve stays off */
+    }
+    writeFileSync(
+      dest,
+      mergeStationMarkdown(
+        formatStationMarkdown({ ...(fields || {}), sleeveLine }),
+        readExistingStationMarkdown(root),
+      ),
+    );
+    try {
+      const plate = recallPlate(fields && fields.intent);
+      if (plate) ensureWornPlate(root, plate.id);
+    } catch {
+      /* a missing plate doc must not block the card */
+    }
     return dest;
   } catch {
     return null;

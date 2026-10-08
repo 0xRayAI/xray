@@ -1,5 +1,7 @@
 # Push fleet ops to 0xRay git
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Remote home:** `0xRayAI/xray` → `grok-bot/`  
 **Working copy:** the Grok Bot computer (`ops/` + skill workflows)
 

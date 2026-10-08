@@ -1,5 +1,7 @@
 # What Grok Bot runs when
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 When work happens, call these checks. This is **not** a copy of every 0xRay processor.
 
 **A friend would hear:** Only the live gates and mill/git/release checks. Skip the old processor warehouse.

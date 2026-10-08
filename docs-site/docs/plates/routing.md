@@ -5,14 +5,14 @@ sidebar_label: Routing
 
 # Routing
 
-Task text becomes an agent. thinDispatch scores the work. Repertoire may adjust the score when the organ is worn.
+Task text becomes an agent. `scoreAndRoute` scores the work, then `routeToAgent` picks the tier agent. Repertoire may replace that agent when a law matches. Naming no plane stops before that pick and returns nobody.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                  │
 │                                                              │
 │   ┌──────────────┐   ┌──────────────┐   ┌────────────────┐  │
-│   │ task text    │   │ @agent       │   │ scoreAndRoute  │  │
+│   │ task text    │   │ context      │   │ thresholds     │  │
 │   └──────┬───────┘   └──────┬───────┘   └───────┬────────┘  │
 │          └──────────────────┴─────────┬─────────┘           │
 └────────────────────────────────────────┼─────────────────────┘
@@ -21,22 +21,30 @@ Task text becomes an agent. thinDispatch scores the work. Repertoire may adjust 
 │ PROCESSING LAYER                       │                     │
 │                                        v                     │
 │   ┌──────────────────────────────────────────────────────┐  │
-│   │ TaskSkillRouter                                      │  │
-│   │ keyword facade into the route                        │  │
+│   │ scoreComplexity                                      │  │
+│   │ ≤15 simple · single-agent                            │  │
+│   │ ≤25 moderate · multi-agent                           │  │
+│   │ ≤50 complex · orchestrator-led                       │  │
+│   │ >50 enterprise · orchestrator-led                    │  │
 │   └──────────────────────────┬───────────────────────────┘  │
 │                              v                              │
 │   ┌──────────────────────────────────────────────────────┐  │
-│   │ thinDispatch                                         │  │
-│   │ ≤15 single agent                                     │  │
-│   │ ≤25 single agent with tools                          │  │
-│   │ ≤50 multi-agent                                      │  │
-│   │ >50 orchestrator-led                                 │  │
+│   │ lensPlane                                            │  │
+│   │ no plane named stops here and the agent is empty     │  │
+│   │ one plane attaches that file                         │  │
 │   └──────────────────────────┬───────────────────────────┘  │
 │                              v                              │
 │   ┌──────────────────────────────────────────────────────┐  │
-│   │ Repertoire resolveThinDispatch                       │  │
-│   │ worn organ may change agent and score                │  │
+│   │ routeToAgent                                         │  │
+│   │ simple → code-reviewer                               │  │
+│   │ moderate, complex, enterprise → architect            │  │
+│   └──────────────────────────┬───────────────────────────┘  │
+│                              v                              │
+│   ┌──────────────────────────────────────────────────────┐  │
+│   │ resolveThinDispatch                                  │  │
+│   │ worn repertoire may change agent and score           │  │
 │   │ null provider leaves the score alone                 │  │
+│   │ a stop never reaches this step                       │  │
 │   └──────────────────────────┬───────────────────────────┘  │
 └──────────────────────────────┼──────────────────────────────┘
                                v
@@ -45,5 +53,10 @@ Task text becomes an agent. thinDispatch scores the work. Repertoire may adjust 
 │   ┌────────────┐   ┌────────────────┐   ┌────────────────┐ │
 │   │ agent      │   │ strategy       │   │ adjusted score │ │
 │   └────────────┘   └────────────────┘   └────────────────┘ │
+│   ┌────────────┐                                            │
+│   │ file       │                                            │
+│   └────────────┘                                            │
 └──────────────────────────────────────────────────────────────┘
 ```
+
+stamped · 0xray 4.0.41

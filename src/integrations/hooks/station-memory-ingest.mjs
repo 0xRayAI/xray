@@ -24,6 +24,9 @@ const UNREAD_DIARY_FILES = [
 const root = process.argv[2];
 const mode = process.argv[3] || 'station';
 
+// Project dest keeps factory and stack laws. Subject repo-* stay off it.
+process.env.REPERTOIRE_SUBJECT_OVERLAY = '0';
+
 function readRouting(projectRoot) {
   let routing = { enabled: false, provider: 'null' };
   const featuresPath = join(projectRoot, '.xray', 'features.json');

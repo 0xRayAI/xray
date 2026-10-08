@@ -64,11 +64,9 @@ function extractBarrelFromSource() {
   return keys;
 }
 
-const NON_AGENT_FILES = ['known-names'];
-
 function getAgentFilesOnDisk() {
   const dir = join(ROOT, 'src/agents');
-  const files = readdirSync(dir).filter(f => f.endsWith('.ts') && f !== 'index.ts' && f !== 'registry.ts' && f !== 'types.ts' && !NON_AGENT_FILES.includes(f.replace('.ts', '')));
+  const files = readdirSync(dir).filter(f => f.endsWith('.ts') && f !== 'index.ts' && f !== 'registry.ts' && f !== 'types.ts');
   return files.map(f => f.replace('.ts', ''));
 }
 

@@ -1,5 +1,7 @@
 # Dist Voice — 5 Rules
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 1. **Plain first.** Say it like you’d say it to a friend. Jargon only after the plain sentence.
 2. **Friend test (enforced).** If a sharp friend wouldn’t get it, care, or trust it — rewrite. CoS must include “A friend would hear: …” in the EXECUTE packet. Herald **refuses** jargon packets. See `GIBBERISH-CHECK.md`.
 3. **Show receipts / URLs when live.** Link the real thing (npm, GitHub, docs). Mark WIP honestly. No fake “shipped.”

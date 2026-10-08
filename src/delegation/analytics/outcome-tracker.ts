@@ -122,16 +122,28 @@ export class RoutingOutcomeTracker {
    */
   recordOutcome(outcome: Omit<RoutingOutcome, 'timestamp'>): void {
     if (!this.maxOutcomes) return;
+    this.appendOutcome(outcome);
+    // Persist to disk immediately (not debounced for better tracking during tests/CI)
+    this.saveToDisk();
+  }
 
+  /**
+   * Record several outcomes and stringify the buffer once.
+   * Same retained rows as calling recordOutcome per item.
+   */
+  recordOutcomes(outcomes: Array<Omit<RoutingOutcome, 'timestamp'>>): void {
+    if (!this.maxOutcomes || outcomes.length === 0) return;
+    for (const outcome of outcomes) {
+      this.appendOutcome(outcome);
+    }
+    this.saveToDisk();
+  }
+
+  private appendOutcome(outcome: Omit<RoutingOutcome, 'timestamp'>): void {
     this.outcomes.push({ ...outcome, timestamp: new Date() });
-
-    // Keep only recent outcomes (circular buffer)
     if (this.outcomes.length > this.maxOutcomes) {
       this.outcomes = this.outcomes.slice(-this.maxOutcomes);
     }
-    
-    // Persist to disk immediately (not debounced for better tracking during tests/CI)
-    this.saveToDisk();
   }
 
   /**

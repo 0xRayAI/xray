@@ -1,5 +1,7 @@
 # Three layers — suit, skills, tools
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Mixing these names creates fog. They do different jobs.
 
 | Layer | One line | Example |

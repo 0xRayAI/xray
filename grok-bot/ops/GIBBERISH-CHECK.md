@@ -1,5 +1,7 @@
 # Friend test — HARD GATE (all fleet comms)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **Law (Blaze 2026-09-14):** if a friend outside the fleet cannot get the point in ~3 seconds, **do not send**. Rewrite first.
 
 A stamped “Friend-test: PASS” with no proof is **not** a gate.

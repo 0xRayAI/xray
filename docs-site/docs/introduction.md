@@ -12,7 +12,7 @@ Not a catalog of 42 agents. The product is the skeleton you wear.
 - **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface 
 - **Temperament:** lead-dev intake / spawn-plan deny **required** for guided hosts; **lite** on frontier (warn, not deny) 
 - **Muscle:** Repertoire auto-enables when the module resolves; session-start one-line resume 
-- **Fat (trim later):** duplicate orchestrators, extra `*.server.ts`, `advanced-features/` — [trim list](./architecture/v3-museum.md)
+- **Fat still called:** duplicate orchestrators and extra `*.server.ts` — [trim list](./architecture/v3-museum.md)
 
 ## Quick Start
 
@@ -60,7 +60,7 @@ Every code change is checked against a **69-term Codex**, deliberated by **3 spe
 | **3.2.0** | AsideContext wired, SelfProposalEngine, pre-tool-use hook, typecheck hardening, Hermes/Grok E2E green. |
 | **3.1.1** | StringRay → 0xRay rename, marketplace discovery, consumer AGENTS/SKILLS seeding. |
 
-**Removed:** `hermes bridge` CLI (use `hermes install`), `.opencode/xray/` fallback, stale version JSDoc tags. `advanced-features/` decoupled from consumer boot.
+**Removed:** `hermes bridge` CLI (use `hermes install`), `.opencode/xray/` fallback, stale version JSDoc tags, `advanced-features/`.
 
 ## Why 0xRay?
 

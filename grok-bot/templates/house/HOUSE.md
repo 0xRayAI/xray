@@ -17,3 +17,21 @@
 
 ## Board
 (example) Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
+
+## Roster
+Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.
+
+Ask first and Allow are enforced only in [AUTO-REVIEW.md](AUTO-REVIEW.md).
+
+## Scope
+Optional. A line that is exactly `wallet off` skips Open Wallet, Clearing, and hangar pay steps in `grok-bot doctor`. Leave the line out to keep those steps.
+
+## Constitution
+This page is not the constitution. Grok Bot has no pre-tool hooks. The constitution is the suit's `codex.json`. Seats that wear a suit read their slice every turn:
+- Implementer: all terms. 11, 29, 69, and 70 are hard lines.
+- Reviewer: judge a Strict review against the constitution and cite term numbers.
+- Coordinator: 52-59 and 61.
+- Tester: 8, 48, 61, 62, 63, 65, and 66.
+- Non-code seats: no terms.
+
+Term 70: before an edit, be on the latest main and run the current package. Compare set-aside work to main before you throw it away. Seat rules, spend, and the board stay here.

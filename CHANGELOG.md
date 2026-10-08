@@ -7,6 +7,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ## [Unreleased]
 
 ### Features
+- **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
 - **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
 - **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
@@ -40,6 +41,150 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - Drop unused `src/mcps/shared/security-scanner.ts` and its unused validator twin. Live scanner stays `src/security/`.
 - Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
 - Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
+
+## [4.0.41] - 2026-10-07
+
+### 🔄 Changes
+
+- Wake cascade. Station and the notes page stay on the station module. Heat writes `Cascade: record-map · notes N current` on the card. A memory-recall look returns that plane, the matched law names, and the current lines from the session-note index beside the laws.
+- Session notes sit in `.xray/state/repertoire/session-notes.json` beside the laws. A replaced note stays history. The short index returns the current line. A stale page does not revive a replaced line.
+- `Sleeve: on` means the previous ticket came back, the worn plate matched the package, the previous ticket matched the working record, and inspect passed. Session start and compact run that check. The card keeps the named plane. Judgement is continue, retry N, stop, or start. The same miss keeps its retry. A different ticket stops. Payments is on only when the ticket is a payment.
+- A fresh wear fastens mill and inspect. The durable copy is staged beside the live wear. Hooks and MCP launchers are not pinned at a temporary checkout.
+- Goggles. A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. A consumer records `node_modules/0xray`. An upgrade that removes a self-install no longer leaves the handshake on a missing file.
+- A machine-level Grok plugin does not fail the mill and is not stored in the mill receipt. A change to the worn skills drops that pass until the next session start or compact. When the plate or the mill is the miss, that miss is the plan until the line is on again. A copied role skill whose text was edited still stops wear.
+- A SessionStart event that carries the opening prompt stays a session start, so the check runs before that first card is read.
+- Live page. The mesh plays in the browser, with rewind and seat images. The watch survives a dropped connection. Fleet pushes go out as packets.
+- The Playwright release-gate smoke stays on the Playwright battery. The unit runner does not load that spec.
+
+---
+
+## [4.0.40] - 2026-10-05
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- house/live-mesh: full loop — feed watch, mesh render, direction, deploy, `/health`, X ledger both ways (#214, #215).
+- house: define Ping-pong in OP-PROC lexicon (#213).
+- house: OP-PROC cadence cleanup — muse-house lock, fleet forge0x1-merge, quiet/budget, sudo-copy seats (#216).
+- house: OP-PROC eng PR coach stack + 2026-10-04 eng state lock (#210, #212).
+- docs/dist: Dist packet note for 0xray 4.0.39 / repertoire 0.2.9 (#211).
+
+---
+
+## [4.0.39] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Keep the seven stack laws already worn in the suit. (427b0538e)
+- Vendor repertoire 0.2.9. (b45ed22f9)
+- Merge pull request #209 from 0xRayAI/cursor/evidence-before-grade-d703 (92a4d6dd9)
+- house: add Evidence before grade rules under §3 (0fa229981)
+
+---
+
+## [4.0.38] - 2026-10-03
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #171 from 0xRayAI/fix/solar-verdict-decides (7b6ac081a)
+- Merge remote-tracking branch 'origin/main' into fix/solar-verdict-decides (a342e0b0d)
+- fix(types): declare work-freshness so the Codex 70 import typechecks (16b2db194)
+- feat(codex): term 70 requires current source and worn npm (dacecc916)
+- fix(governance): honor Dynamo's recommendation (968cd6a14)
+
+---
+
+## [4.0.37] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: a naked checkout wakes with repertoire on (7b75bedbc)
+
+### ⚡ Performance
+- perf: cut repeated work on the processor data path (baadb4d35)
+
+### 📚 Documentation
+- docs: move fleet house SSOT out of the kit (7dcf08e94)
+
+---
+
+## [4.0.36] - 2026-10-02
+
+### 🔄 Changes
+
+### 🔎 Other Changes
+- Merge pull request #178 from 0xRayAI/fix/goggles-robust (21c8f30d9)
+- fix(goggles): hold the stop through search, read, and a dist wipe (abe603265)
+
+---
+
+## [4.0.35] - 2026-10-02
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: wear rewrites a checkout dist/cli launch to node_modules/0xray (aa44ae462)
+
+### 📚 Documentation
+- docs: point the trim restore at 601cdafc0 (be2a4e91d)
+- docs: say what each chat can actually do (0c70532a6)
+
+### 🔧 Maintenance
+- chore: drop unused modules and wait for the registry before tagging (3a29409a8)
+
+---
+
+## [4.0.34] - 2026-10-01
+
+### 🔄 Changes
+
+### 🐛 Bug Fixes
+- fix: hold the lens on the worn build when the source is not packed (6f561ef6f)
+
+---
+
+## [4.0.33] - 2026-10-01
+
+### 🔄 Changes
+
+- Version bump
+
+---
+
+## [4.0.32] - 2026-10-01
+
+Next patch after npm `4.0.31`. Not published from this commit.
+
+Organ bolster for goggles-pipeline after #167. `0xray look` (and `goggles`) opens one plane through the organ. Digest and triage return the card pane. Status and health show the organ worn and Kind 0 quiet/match. Bot Plugin MCP `goggles` exposes lean tools `look` and `status_lens` over stdio on the same organ. Kind 0 name-checks the six outers and stays quiet on match; reading stays a dichotomy; digest/triage stay the card. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.31] - 2026-10-01
+
+Next patch after npm `4.0.30`. Not published from this commit.
+
+Goggles looks at one pipeline. Kind 0 name-checks the six outer names and stays quiet when the worn list matches the map. Digest and triage return one card. A leave is denied. Session boot hands the card through `handCard` and normalizes the workspace root, including a trailing slash. The mill path is `scripts/foundry`. Run `node dist/integrations/hooks/goggles-pipeline.mjs`. This cut also carries the plate docs and the live project-file signal count that landed on main after 4.0.30. Calling and confer stay off. Companion `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.30] - 2026-09-28
+
+Next patch after npm `4.0.29`. Released 2026-09-28.
+
+Fixes the 4.0.29 regression where `npx 0xray wear` and `npx 0xray setup` exited 1 with `cursor-wear: not a git work tree` outside a git checkout (#147). Outside a git checkout, both commands again write the 4.0.28 consumer project setup and skip only Cursor hooks, with one stderr line: `cursor-wear: hooks skipped because this folder is not a git checkout`. Inside a git checkout, `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 had dropped: managed `AGENTS.md`, `.gitignore` entries, `.xray` config, the `node_modules/@0xray/repertoire` link, the mill/inspect plant, chat bridges, the `.opencode/skills` sync, and the `dist` / `scripts` links. `wear` then adds the Cursor hooks, including the six hook scripts, and the `.xray/state/cursor-hook-wear/` snapshot. Postinstall is unchanged: it links the vendored repertoire and prints `npx 0xray wear`. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
+
+## [4.0.29] - 2026-09-28
+
+Next patch after npm `4.0.28`. Released 2026-09-28.
+
+`npm install` now only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints one line: `npx 0xray wear`. It no longer writes the suit. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json`, pointing at the installed package's dist hooks, and adds them beside existing user entries. It snapshots the pre-wear file under `.xray/state/cursor-hook-wear/`, and `npx 0xray unwear` restores it. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges. Companion package `@0xray/grok-bot` is unchanged at 0.1.8.
+
+---
 
 ## [4.0.28] - 2026-09-26
 

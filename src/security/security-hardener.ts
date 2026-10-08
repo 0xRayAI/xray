@@ -22,6 +22,7 @@ export interface SecurityHardeningConfig {
 
 export class SecurityHardener {
   private config: SecurityHardeningConfig;
+  private readonly patternCache = new Map<string, RegExp>();
 
   constructor(config: Partial<SecurityHardeningConfig> = {}) {
     this.config = {
@@ -174,7 +175,7 @@ export class SecurityHardener {
     if (
       schema.pattern &&
       typeof input === "string" &&
-      !new RegExp(schema.pattern).test(input)
+      !this.regexFor(String(schema.pattern)).test(input)
     ) {
       errors.push("String does not match required pattern");
     }
@@ -183,6 +184,17 @@ export class SecurityHardener {
       valid: errors.length === 0,
       errors,
     };
+  }
+
+  private regexFor(source: string): RegExp {
+    const cached = this.patternCache.get(source);
+    if (cached) {
+      cached.lastIndex = 0;
+      return cached;
+    }
+    const compiled = new RegExp(source);
+    this.patternCache.set(source, compiled);
+    return compiled;
   }
 
   /**
@@ -194,16 +206,26 @@ export class SecurityHardener {
     const now = Date.now();
     const windowStart = now - this.config.rateLimitWindowMs;
 
-    const userRequests = requests.get(identifier) || [];
-    const recentRequests = userRequests.filter((time) => time > windowStart);
-
-    if (recentRequests.length >= this.config.rateLimitMaxRequests) {
-      return false;
+    const userRequests = requests.get(identifier);
+    if (!userRequests) {
+      requests.set(identifier, [now]);
+      return true;
     }
 
-    recentRequests.push(now);
-    requests.set(identifier, recentRequests);
+    let recent = 0;
+    for (let i = 0; i < userRequests.length; i++) {
+      const time = userRequests[i];
+      if (time !== undefined && time > windowStart) recent++;
+    }
+    if (recent >= this.config.rateLimitMaxRequests) return false;
 
+    let write = 0;
+    for (let i = 0; i < userRequests.length; i++) {
+      const time = userRequests[i];
+      if (time !== undefined && time > windowStart) userRequests[write++] = time;
+    }
+    userRequests.length = write;
+    userRequests.push(now);
     return true;
   }
 

@@ -260,6 +260,189 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('a user sentence does not replace a maintained ticket', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-keeps-ticket-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', 'Plan: Do not push.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'did you survive the compaction how well.',
+          hookEvent: 'user_prompt_submit',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact keeps the ticket and refreshes the pickup', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-keeps-ticket-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', 'Plan: Do not push.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** stale line from before the cut.\n\n## Lens\n\nkeep this body.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'does this not happen automatically in the preCompact hook',
+          hookEvent: 'pre_compact',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      const notes = fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8');
+      expect(notes).toContain('**Pickup line:** Views grow on feat/goggles-look.');
+      expect(notes).not.toContain('stale line');
+      expect(notes).toContain('## Lens');
+      expect(notes).toContain('keep this body.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact copies the card even when the pickup is stale and the card matches boot', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-copies-card-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: Views grow on feat/goggles-look.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** stale line from before the cut.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'does this not happen automatically in the preCompact hook',
+          hookEvent: 'pre_compact',
+        },
+        { host: 'grok', intent: 'Views grow on feat/goggles-look.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact restores the pickup when the card is already the compact sentence', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-restores-pickup-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      const sentence = 'does this not happen automatically in the preCompact hook';
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', `Intent: ${sentence}`, ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: sentence, hookEvent: 'pre_compact' },
+        { host: 'grok', intent: sentence },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('pre_compact opens a ticket and a pickup only when both are empty', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-compact-opens-empty-'));
+    try {
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'COMPACT-AB-001 survive compact without wiping seed',
+          hookEvent: 'pre_compact',
+        },
+        {},
+      );
+      expect(heat.intent).toBe('COMPACT-AB-001 survive compact without wiping seed');
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toBe(
+        '**Pickup line:** COMPACT-AB-001 survive compact without wiping seed\n',
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a stamped sentence loses to the NOTES pickup', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-loses-to-pickup-'));
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state'), { recursive: true });
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'STATION.md'),
+        ['# Station', '', 'Intent: did you survive the compaction how well.', ''].join('\n'),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'NOTES.md'),
+        '**Pickup line:** Views grow on feat/goggles-look.\n',
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        {
+          intent: 'did you survive the compaction how well.',
+          hookEvent: 'user_prompt_submit',
+        },
+        { host: 'grok', intent: 'did you survive the compaction how well.' },
+      );
+      expect(heat.intent).toBe('Views grow on feat/goggles-look.');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('a sentence opens a ticket only when the card and pickup are empty', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-sentence-opens-empty-'));
+    try {
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: 'start the job', hookEvent: 'user_prompt_submit' },
+        {},
+      );
+      expect(heat.intent).toBe('start the job');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('restored Station ticket beats leftover boot extras', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-card-beats-boot-'));
     try {
@@ -453,7 +636,18 @@ describe('station hot-swap', () => {
       expect(names).toContain('three-subsystem-verifiable-os');
       expect(names).not.toContain('live-context-memory');
       expect(names).not.toContain('parallel-floor-heat');
-      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
+      const subjectNames = new Set(
+        (
+          JSON.parse(
+            fs.readFileSync(path.join(millOrgan, 'data', 'subject-overlay.json'), 'utf8'),
+          ).signals as { name: string }[]
+        ).map((signal) => signal.name),
+      );
+      expect(
+        names
+          .filter((name: string) => name.startsWith('repo-'))
+          .every((name: string) => subjectNames.has(name)),
+      ).toBe(true);
       const session = JSON.parse(
         fs.readFileSync(path.join(tmp, 'docs', 'inference', 'latest-session.json'), 'utf8'),
       );
@@ -532,7 +726,18 @@ describe('station hot-swap', () => {
       const names = dest.signals.map((signal: { name: string }) => signal.name);
       expect(names).toContain('three-subsystem-verifiable-os');
       expect(names).not.toContain('live-context-memory');
-      expect(names.every((name: string) => !name.startsWith('repo-'))).toBe(true);
+      const subjectNames = new Set(
+        (
+          JSON.parse(
+            fs.readFileSync(path.join(millOrgan, 'data', 'subject-overlay.json'), 'utf8'),
+          ).signals as { name: string }[]
+        ).map((signal) => signal.name),
+      );
+      expect(
+        names
+          .filter((name: string) => name.startsWith('repo-'))
+          .every((name: string) => subjectNames.has(name)),
+      ).toBe(true);
       expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'repertoire', 'dest.lock'))).toBe(false);
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
@@ -647,6 +852,34 @@ describe('station hot-swap', () => {
       expect(stacked.workingLine).not.toContain('repo-clearing');
     } finally {
       fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('a suit wake does not merge repo-* back onto the project file', async () => {
+    const { hydrateWritableSignals } = await import('../../../vendor/@0xray/repertoire/dist/paths.js');
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-subject-off-'));
+    const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(
+      dest,
+      JSON.stringify({
+        signals: [{ name: 'three-subsystem-verifiable-os', definition: 'The suit is three subsystems.' }],
+      }),
+    );
+    const previous = process.env.REPERTOIRE_SUBJECT_OVERLAY;
+    process.env.REPERTOIRE_SUBJECT_OVERLAY = '0';
+    try {
+      hydrateWritableSignals(dest, tmp);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toContain('three-subsystem-verifiable-os');
+      expect(names).toContain('station-survives-the-cut');
+      expect(names.some((name: string) => name.startsWith('repo-'))).toBe(false);
+    } finally {
+      if (previous == null) delete process.env.REPERTOIRE_SUBJECT_OVERLAY;
+      else process.env.REPERTOIRE_SUBJECT_OVERLAY = previous;
+      fs.rmSync(tmp, { recursive: true, force: true });
     }
   });
 
@@ -899,6 +1132,86 @@ describe('station hot-swap', () => {
     }
   });
 
+  it('pruneKeywordDest keeps subject-overlay names and still drops diary slugs', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-dest-subject-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'subject-overlay.json'),
+        JSON.stringify({ signals: [{ name: 'repo-xray', definition: 'Suit exo.' }] }),
+      );
+      const dest = path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json');
+      fs.writeFileSync(
+        dest,
+        JSON.stringify({
+          signals: [
+            { name: 'station-survives-the-cut', definition: 'Compact card holds.' },
+            { name: 'repo-xray', definition: 'Suit exo.' },
+            { name: 'stamp-package-lock-to-4-0-20', definition: 'Lockfile cut.' },
+            {
+              name: 'cleanup-is-memory',
+              definition: 'Field-observed domain primitive from diary heat.',
+            },
+          ],
+        }),
+      );
+      const pruned = pruneKeywordDest(tmp);
+      expect(pruned.removed).toBe(2);
+      expect(pruned.kept).toBe(2);
+      const names = JSON.parse(fs.readFileSync(dest, 'utf8')).signals.map(
+        (signal: { name: string }) => signal.name,
+      );
+      expect(names).toEqual(['station-survives-the-cut', 'repo-xray']);
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it('applyStationHeat ignores a passed resume and counts the project file', () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-resume-live-'));
+    const tmp = path.join(parent, 'xray');
+    const repertoire = path.join(parent, 'repertoire');
+    try {
+      fs.mkdirSync(tmp, { recursive: true });
+      gitInit(tmp);
+      fs.mkdirSync(path.join(tmp, '.xray', 'state', 'repertoire'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'dist', 'provider'), { recursive: true });
+      fs.mkdirSync(path.join(repertoire, 'data'), { recursive: true });
+      fs.writeFileSync(path.join(repertoire, 'package.json'), JSON.stringify({ name: '@0xray/repertoire' }));
+      fs.writeFileSync(path.join(repertoire, 'dist', 'provider', 'memory-routing-provider.js'), 'export {}\n');
+      fs.writeFileSync(
+        path.join(repertoire, 'data', 'curated_signals.json'),
+        JSON.stringify({ signals: [{ name: 'three-subsystem-verifiable-os' }] }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'features.json'),
+        JSON.stringify({ memory_routing: { enabled: true, provider: 'repertoire' } }),
+      );
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', 'repertoire', 'curated_signals.json'),
+        JSON.stringify({
+          signals: [
+            { name: 'three-subsystem-verifiable-os', definition: 'The suit.' },
+            { name: 'station-survives-the-cut', definition: 'The card.' },
+          ],
+        }),
+      );
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: 'count the file', repertoireResume: 'Repertoire: on — 45 signals' },
+        {},
+      );
+      expect(heat.repertoireResume).toBe('Repertoire: on — 2 signals');
+    } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
   it('retainCompactFields keeps pre_compact across later lead-heat', () => {
     expect(
       retainCompactFields(
@@ -1028,6 +1341,144 @@ describe('station hot-swap', () => {
     expect(twice).toContain('Never relaunch this bc. Continue the card.');
   });
 
+  it('a heat keeps one Fresh line', () => {
+    const fresh = 'Fresh: up to date. package 4.0.36. published 4.0.35.';
+    const fields = {
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'survive the cut after compact',
+      planLine: 'one fresh line',
+      git: { branch: 'main', head: 'abc1234' },
+      repertoireResume: 'Repertoire: on — 8 signals',
+      workingLine: 'Working: station-merge',
+    };
+    const stock = formatStationMarkdown(fields);
+    const piled = [stock.trimEnd(), '', fresh, fresh, fresh, ''].join('\n');
+    const once = mergeStationMarkdown(stock, piled);
+    const twice = mergeStationMarkdown(stock, once);
+    const kept = (md: string) => md.split('\n').filter((line) => line.startsWith('Fresh:'));
+    expect(kept(once)).toEqual([fresh]);
+    expect(kept(twice)).toEqual([fresh]);
+    const refreshed = formatStationMarkdown({ ...fields, freshnessLine: 'Fresh: 1 behind main.' });
+    expect(kept(mergeStationMarkdown(refreshed, twice))).toEqual(['Fresh: 1 behind main.']);
+  });
+
+  it('compact marks a thin notes page and leaves the body', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-notes-mark-'));
+    try {
+      const notes = path.join(tmp, '.xray', 'state', 'NOTES.md');
+      fs.mkdirSync(path.dirname(notes), { recursive: true });
+      const thin = '**Pickup line:** keep this\n\nThe body stays.\n\nNo working section here.\n';
+      fs.writeFileSync(notes, thin);
+      const heat = applyStationHeat(
+        tmp,
+        'grok',
+        { hookEvent: 'pre_compact', intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(heat.notesLine).toBe('Notes: THIN');
+      const afterThin = fs.readFileSync(notes, 'utf8');
+      expect(afterThin).toContain('The body stays.');
+      expect(afterThin).toContain('No working section here.');
+      expect(afterThin).not.toContain('## Working notes');
+      const md = formatStationMarkdown({
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: heat.intent,
+        planLine: heat.planLine,
+        git: heat.git,
+        repertoireResume: heat.repertoireResume,
+        notesLine: heat.notesLine,
+      });
+      expect(md).toContain('Notes: THIN');
+      expect(md).toContain('Library: record-map — .agents/skills/record-map/SKILL.md');
+      const kept = mergeStationMarkdown(
+        formatStationMarkdown({
+          host: 'grok',
+          suit_profile: 'frontier',
+          intent: 'keep this',
+          planLine: 'next',
+          git: { branch: 'main', head: 'abc1234' },
+          repertoireResume: 'Repertoire: on — 1 signal',
+        }),
+        md,
+      );
+      expect(kept.split('\n').filter((line) => line.startsWith('Notes:'))).toEqual(['Notes: THIN']);
+
+      const thickBody = '**Pickup line:** keep this\n\n## Working notes\n\nThe body stays.\n';
+      fs.writeFileSync(notes, thickBody);
+      const thick = applyStationHeat(
+        tmp,
+        'grok',
+        { hookEvent: 'pre_compact', intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(thick.notesLine).toBe('Notes: present');
+      expect(fs.readFileSync(notes, 'utf8')).toContain('The body stays.');
+      expect(fs.readFileSync(notes, 'utf8')).toContain('## Working notes');
+
+      const wake = applyStationHeat(
+        tmp,
+        'grok',
+        { intent: 'keep this' },
+        { host: 'grok', intent: 'keep this' },
+      );
+      expect(wake.notesLine).toBeUndefined();
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('heat drops torn footer scraps instead of pasting them back', () => {
+    const stock = formatStationMarkdown({
+      host: 'grok',
+      suit_profile: 'frontier',
+      intent: 'From: ground Digest: Home. The dev plane. Filled: files, skills',
+      planLine: '#161 is one machine over plane bodies. Worn locally. Do not merge #153.',
+      git: { branch: 'main', head: 'fbd394269' },
+      repertoireResume: 'Repertoire: on — 45 signals',
+      workingLine: 'Working: operating-planes, wake-cascade',
+    });
+    const existing = [
+      stock.trimEnd(),
+      '',
+      'Unfinished path: src/integrations/hooks/station-hook-runtime.cjs',
+      'this file — Read it. OpenCode injects. Do not thicken the Grok exo.',
+      '.',
+      '.',
+      '.',
+      'xo.',
+      '',
+    ].join('\n');
+    const merged = mergeStationMarkdown(stock, existing);
+    expect(merged).toContain('Unfinished path: src/integrations/hooks/station-hook-runtime.cjs');
+    expect(merged.split('\n')).not.toContain('xo.');
+    expect(merged).not.toMatch(/^this file —/m);
+    expect(merged).not.toMatch(/^\.$/m);
+    expect(countStationFooters(merged)).toEqual({ continueCount: 1, grokCount: 1 });
+  });
+
+  it('a plate line on the card is a file the same write stamps', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-plate-'));
+    try {
+      writeStationMarkdown(tmp, {
+        host: 'grok',
+        suit_profile: 'frontier',
+        intent: 'BootOrchestrator.executeBootSequence brings the framework up',
+        planLine: 'stamp the plate the card names',
+        git: { branch: 'main', head: 'abc1234' },
+        repertoireResume: 'Repertoire: on — 45 signals',
+        workingLine: 'Working: operating-planes',
+      });
+      const card = fs.readFileSync(path.join(tmp, '.xray', 'state', 'STATION.md'), 'utf8');
+      expect(card).toContain('Plate: boot — .xray/state/plates/boot.md');
+      const stamped = fs.readFileSync(path.join(tmp, '.xray', 'state', 'plates', 'boot.md'), 'utf8');
+      expect(stamped).toContain('Boot');
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('writeStationMarkdown merges a seeded card instead of wipe-then-write', () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-station-merge-'));
     try {
@@ -1090,9 +1541,12 @@ describe('station hot-swap', () => {
       writeSessionBoot(tmp, payload);
       const card = fs.readFileSync(dest, 'utf8');
       expect(card).toContain('Host: grok');
-      expect(card).toContain('Intent: COMPACT-AB-001 survive compact without wiping seed');
-      expect(card).not.toContain('Intent: old intent before compact');
+      expect(card).toContain('Intent: old intent before compact');
+      expect(card).not.toContain('Intent: COMPACT-AB-001 survive compact without wiping seed');
       expectCustomStationKeys(card);
+      expect(fs.readFileSync(path.join(tmp, '.xray', 'state', 'NOTES.md'), 'utf8')).toContain(
+        '**Pickup line:** old intent before compact',
+      );
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }

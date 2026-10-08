@@ -34,6 +34,14 @@
     "repertoire": {
       "command": "node",
       "args": ["scripts/mjs/run-repertoire-mcp.mjs"]
+    },
+    "goggles": {
+      "command": "node",
+      "args": ["scripts/mjs/run-goggles-mcp.mjs"],
+      "env": {
+        "GOGGLES_ROOT": ".",
+        "GOGGLES_PLANES_PATH": ""
+      }
     }
   }
 }

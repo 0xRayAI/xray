@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { homedir, tmpdir } from 'os';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
@@ -37,7 +37,14 @@ describe('4.0 host wear layout', () => {
   it('writes opencode-cli backend into a temp OpenClaw config', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'openclaw-cli-backend-'));
     const prev = process.env.OPENCLAW_CONFIG_PATH;
+    const prevPath = process.env.PATH;
     try {
+      const binDir = path.join(tmp, 'bin');
+      mkdirSync(binDir, { recursive: true });
+      const stub = path.join(binDir, 'opencode');
+      writeFileSync(stub, '#!/bin/sh\necho opencode\n');
+      chmodSync(stub, 0o755);
+      process.env.PATH = `${binDir}${path.delimiter}${prevPath || ''}`;
       const cfgPath = path.join(tmp, 'openclaw.json');
       writeFileSync(
         cfgPath,
@@ -53,6 +60,7 @@ describe('4.0 host wear layout', () => {
       expect(cfg.agents.defaults.cliBackends['opencode-cli'].command).toContain('opencode');
     } finally {
       process.env.OPENCLAW_CONFIG_PATH = prev;
+      process.env.PATH = prevPath;
       rmSync(tmp, { recursive: true, force: true });
     }
   });

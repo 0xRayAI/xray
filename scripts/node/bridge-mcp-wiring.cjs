@@ -139,31 +139,91 @@ function enableMemoryRoutingIfResolves(features, targetDir) {
   };
 }
 
+function isDogfoodXrayPackage(targetDir) {
+  try {
+    const pkgPath = path.join(targetDir, "package.json");
+    if (!fs.existsSync(pkgPath)) return false;
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    return pkg && pkg.name === "0xray";
+  } catch {
+    return false;
+  }
+}
+
+function resolveGogglesMcp(targetDir) {
+  const installed = path.join(
+    targetDir,
+    "node_modules",
+    "0xray",
+    "scripts",
+    "mjs",
+    "run-goggles-mcp.mjs",
+  );
+  const checkout = path.join(targetDir, "scripts", "mjs", "run-goggles-mcp.mjs");
+  // The factory package is not installed into its own node_modules. npm upgrade
+  // removes that folder, and a recorded node_modules path then fails the handshake.
+  const candidates = isDogfoodXrayPackage(targetDir)
+    ? [checkout, installed]
+    : [installed, checkout];
+  return candidates.find((file) => fs.existsSync(file)) || null;
+}
+
+function gogglesScopedLaunch(targetDir, launcher) {
+  return wrapScopedLaunch(
+    { command: "node", args: [launcher] },
+    mergeScopedEnv([
+      baseScopedEnv(targetDir),
+      { GOGGLES_ROOT: targetDir, GOGGLES_PLANES_PATH: "" },
+    ]),
+  );
+}
+
 function detectConsumerExtraMcpServers(targetDir) {
   const extras = { hermes: {}, opencode: {}, openclaw: {} };
   try {
     const repertoireMcp = resolveRepertoireMcp(targetDir);
-    if (!repertoireMcp) return extras;
-    const launch = wrapScopedLaunch(
-      { command: "node", args: [repertoireMcp] },
-      baseScopedEnv(targetDir),
-    );
-    extras.hermes.repertoire = {
-      command: launch.command,
-      args: launch.args,
-      env: launch.env,
-    };
-    extras.opencode.repertoire = {
-      type: "local",
-      command: launch.commandList,
-      enabled: true,
-      environment: launch.env,
-    };
-    extras.openclaw.repertoire = {
-      command: launch.command,
-      args: launch.args,
-      env: launch.env,
-    };
+    if (repertoireMcp) {
+      const launch = wrapScopedLaunch(
+        { command: "node", args: [repertoireMcp] },
+        baseScopedEnv(targetDir),
+      );
+      extras.hermes.repertoire = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.repertoire = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.repertoire = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
+    const gogglesMcp = resolveGogglesMcp(targetDir);
+    if (gogglesMcp) {
+      const launch = gogglesScopedLaunch(targetDir, gogglesMcp);
+      extras.hermes.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+      extras.opencode.goggles = {
+        type: "local",
+        command: launch.commandList,
+        enabled: true,
+        environment: launch.env,
+      };
+      extras.openclaw.goggles = {
+        command: launch.command,
+        args: launch.args,
+        env: launch.env,
+      };
+    }
   } catch {
     // best-effort
   }
@@ -179,10 +239,69 @@ function readInstalledXrayVersion() {
   return pkg.version;
 }
 
+/**
+ * npm installs the package named `0xray` at `node_modules/0xray`.
+ * `node_modules/xray` is the pre-rename folder. Use it only when that tree
+ * is the one on disk. Never prefer the old name over the real install.
+ */
+const INSTALLED_PACKAGE_DIRS = ["0xray", "xray"];
+
+function normalizeLaunchToken(token) {
+  return String(token).replace(/\\/g, "/");
+}
+
 function localXrayCli(targetDir) {
   if (!targetDir) return null;
-  const cli = path.join(targetDir, "node_modules", "0xray", "dist", "cli", "index.js");
-  return fs.existsSync(cli) ? cli : null;
+  for (const dirName of INSTALLED_PACKAGE_DIRS) {
+    const cli = path.join(targetDir, "node_modules", dirName, "dist", "cli", "index.js");
+    if (fs.existsSync(cli)) return cli;
+  }
+  return null;
+}
+
+function isInstalledPackageCli(token) {
+  const normalized = normalizeLaunchToken(token);
+  return INSTALLED_PACKAGE_DIRS.some((dirName) =>
+    normalized.includes(`node_modules/${dirName}/dist/cli/index.js`),
+  );
+}
+
+/** Project-root `dist/cli/index.js` is the factory checkout. It is gitignored and goes stale. */
+function isCheckoutDistCliLaunch(server) {
+  return launchTokens(server).some((token) => {
+    const normalized = normalizeLaunchToken(token);
+    const isDistCli =
+      normalized === "dist/cli/index.js" ||
+      normalized === "./dist/cli/index.js" ||
+      normalized.endsWith("/dist/cli/index.js");
+    return isDistCli && !isInstalledPackageCli(normalized);
+  });
+}
+
+function isLegacyXrayCliLaunch(server) {
+  return launchTokens(server).some((token) => {
+    const normalized = normalizeLaunchToken(token);
+    return normalized.includes("node_modules/xray/dist/cli/index.js");
+  });
+}
+
+function mcpSubcommand(inner) {
+  if (!inner || !Array.isArray(inner.args)) return null;
+  const idx = inner.args.indexOf("mcp");
+  if (idx >= 0 && inner.args[idx + 1]) return inner.args[idx + 1];
+  return null;
+}
+
+/**
+ * A checkout `dist/cli` launch is replaced with the installed package.
+ * A legacy `node_modules/xray` launch is replaced only when `node_modules/0xray` exists.
+ */
+function shouldRepinToInstalledCli(inner, targetDir) {
+  if (!inner || hasVersionPin(inner)) return false;
+  if (isCheckoutDistCliLaunch(inner)) return true;
+  if (!isLegacyXrayCliLaunch(inner)) return false;
+  const cli = localXrayCli(targetDir);
+  return Boolean(cli && normalizeLaunchToken(cli).includes("/node_modules/0xray/"));
 }
 
 /** Prefer the installed CLI. Else pin npx to this package version. Never bare `0xray`. */
@@ -217,7 +336,18 @@ function pinnedMcpLaunch(targetDir, mcpCmd) {
  */
 const LIVE_ENV_NAMES = ["PATH", "HOME"];
 
+let launcherPackageRoot = "";
+
+/** Wear sets this so a /tmp checkout is not the path written into a real project. */
+function pinLauncherPackageRoot(packageRoot) {
+  launcherPackageRoot = packageRoot ? path.resolve(packageRoot) : "";
+}
+
 function mcpLauncherPath() {
+  if (launcherPackageRoot) {
+    const candidate = path.join(launcherPackageRoot, "scripts", "node", "mcp-launch.cjs");
+    if (fs.existsSync(candidate)) return candidate;
+  }
   return path.join(__dirname, "mcp-launch.cjs");
 }
 
@@ -349,7 +479,7 @@ function mcpCmdFromInner(inner) {
   return inner.args.length > 0 ? inner.args[inner.args.length - 1] : null;
 }
 
-/** Framework fills gaps. User env, enabled/disabled, and version pins win. Unpinned `0xray` is repinned. Launch is `node mcp-launch.cjs --keep names -- cmd`. */
+/** Framework fills gaps. User env, enabled/disabled, and version pins win. Unpinned `0xray` and a checkout `dist/cli` launch are repinned to the installed package. Launch is `node mcp-launch.cjs --keep names -- cmd`. */
 function mergeUserWinsServer(framework, user, targetDir) {
   if (!user || typeof user !== "object") return framework;
   if (!framework || typeof framework !== "object") return user;
@@ -362,6 +492,10 @@ function mergeUserWinsServer(framework, user, targetDir) {
   }
   if (inner && isUnpinnedXrayLaunch({ command: inner.command, args: inner.args })) {
     const mcpCmd = mcpCmdFromInner(inner);
+    if (mcpCmd) inner = pinnedMcpLaunch(targetDir, mcpCmd);
+  }
+  if (inner && shouldRepinToInstalledCli(inner, targetDir)) {
+    const mcpCmd = mcpSubcommand(inner);
     if (mcpCmd) inner = pinnedMcpLaunch(targetDir, mcpCmd);
   }
   if (!inner) return framework;
@@ -619,8 +753,9 @@ function deployPortableProjectMcpJson(targetDir) {
     ...existing,
     mcpServers: mergeMcpMap(framework, existing.mcpServers || {}, targetDir),
   };
-  if (hadFile && jsonDeepEqual(merged, existing)) return;
+  if (hadFile && jsonDeepEqual(merged, existing)) return false;
   fs.writeFileSync(destPath, `${JSON.stringify(merged, null, 2)}\n`);
+  return true;
 }
 
 function enableHermesPluginBestEffort() {
@@ -879,11 +1014,13 @@ module.exports = {
   detectConsumerExtraMcpServers,
   isRepertoirePackageRoot,
   resolveRepertoireMcp,
+  resolveGogglesMcp,
   resolveRepertoireProvider,
   isDefaultMemoryRoutingOff,
   enableMemoryRoutingIfResolves,
   isEphemeralInstallRoot,
   isIsolatedHome,
+  pinLauncherPackageRoot,
   copyHermesHookRuntimes,
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,

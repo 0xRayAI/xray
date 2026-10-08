@@ -53,6 +53,47 @@ describe('InferenceGovernanceIntegration (Dynamo v2)', () => {
     const b = await integration!.checkProposals([makeProposal('f', 'fix'), makeProposal('s', 'refactor', 't', 0.8)]);
     expect(b.results.length).toBe(2);
     expect(b.results[0].reason).toMatch(/Fallback/);
+    expect(b.results[0].vote).toBe('ABSTAIN');
+    expect(b.results[0].passed).toBe(false);
+  });
+
+  it('honors a Dynamo REJECT even when the sun is quiet', async () => {
+    mockClient.governWithSolar.mockResolvedValue({
+      solarContext: {
+        solarIsotopicResonance: 0.4,
+        solarActivityLevel: 'quiet',
+        solarActivityModifier: 0.05,
+        recommendation: 'Calm solar conditions',
+      },
+      recommendation: 'REJECT',
+      adjustedVoteWeight: 1.2,
+      confidenceAdjustment: 0.05,
+      confidence: 0.81,
+      resonanceScore: 0.4,
+    });
+    const vote = await integration!.checkProposal(makeProposal('reject-quiet', 'refactor', 'Quiet reject', 0.95));
+    expect(vote.vote).toBe('NO');
+    expect(vote.passed).toBe(false);
+    expect(vote.weight).toBeCloseTo(1.2);
+    expect(vote.governanceResponse.recommendation).toBe('REJECT');
+    expect(vote.governanceResponse.resonanceScore).toBe(0.4);
+  });
+
+  it('fails closed when Dynamo omits a verdict', async () => {
+    mockClient.governWithSolar.mockResolvedValue({
+      solarContext: {
+        solarIsotopicResonance: 0.9,
+        solarActivityLevel: 'quiet',
+        solarActivityModifier: 0.05,
+        recommendation: 'Calm solar conditions',
+      },
+      adjustedVoteWeight: 1,
+      confidenceAdjustment: 0,
+    });
+    const vote = await integration!.checkProposal(makeProposal('missing', 'automate'));
+    expect(vote.vote).toBe('ABSTAIN');
+    expect(vote.passed).toBe(false);
+    expect(vote.governanceResponse.recommendation).toBe('NEEDS_REVISION');
   });
 
   it('config/stats/health/availability', () => {
