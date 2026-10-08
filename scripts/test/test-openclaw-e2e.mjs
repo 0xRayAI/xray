@@ -80,11 +80,11 @@ function isScopeError(text) {
   return /missing scope:\s*operator\.write|FORBIDDEN/i.test(String(text || ''));
 }
 
-/** 2026.8.2: token-only WS often lacks operator.write. Official CLI is the write path. */
+/** Token-only WS lacks operator.write. The CLI needs --agent and the agent's own model. */
 function agentChat(message, timeoutSec = 90) {
   try {
     const out = execSync(
-      `openclaw agent --thinking low --timeout ${timeoutSec} --model xai/grok-4.5 --message ${JSON.stringify(message)}`,
+      `openclaw agent --thinking low --timeout ${timeoutSec} --agent main --message ${JSON.stringify(message)}`,
       {
         encoding: 'utf-8',
         timeout: (timeoutSec + 20) * 1000,
@@ -95,7 +95,11 @@ function agentChat(message, timeoutSec = 90) {
     return { text: String(out || ''), error: null, toolCalls: [], agentPhases: [] };
   } catch (e) {
     const text = String(e.stdout || '');
-    const err = String(e.stderr || e.message || '');
+    const err = String(e.stderr || e.message || '')
+      .split('\n')
+      .filter((line) => !line.includes('plugins.allow is empty'))
+      .join('\n')
+      .trim();
     return { text, error: err || 'openclaw agent failed', toolCalls: [], agentPhases: [] };
   }
 }
