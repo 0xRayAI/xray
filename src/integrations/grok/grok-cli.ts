@@ -18,7 +18,6 @@
 import { frameworkLogger, type LogStatus } from '../../core/framework-logger.js';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'node:url';
 import { syncBuiltinSkills } from '../../cli/commands/skill-install.js';
@@ -40,40 +39,22 @@ const { resolveConsumerTargetDir, patchGrokHooks } = requireCjs(
     label: string,
   ) => void;
 };
-const { XRAY_MCP_SERVERS, resolveRepertoireMcp, resolveGogglesMcp } = requireCjs(
+const { resolveRepertoireMcp, resolveGogglesMcp } = requireCjs(
   path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')
 ) as {
-  XRAY_MCP_SERVERS: ReadonlyArray<{
-    name: string;
-    mcpCmd: string;
-    env: Record<string, string>;
-  }>;
   resolveRepertoireMcp: (targetDir: string) => string | null;
   resolveGogglesMcp: (targetDir: string) => string | null;
 };
 
-function registerGrokMcpServers(targetDir: string): void {
-  try {
-    execSync('which grok', { stdio: 'ignore' });
-  } catch {
-    console.log('[Grok] grok CLI not on PATH — plugin .mcp.json still configured');
-    return;
-  }
-
-  for (const s of XRAY_MCP_SERVERS) {
-    try {
-      const envEntries = { ...s.env, XRAY_ROOT: targetDir };
-      const envFlags = Object.entries(envEntries)
-        .map(([k, v]) => `--env "${k}=${v}"`)
-        .join(' ');
-      execSync(
-        `grok mcp add ${s.name} --command npx --args "-y" "0xray" "mcp" "${s.mcpCmd}" ${envFlags}`,
-        { stdio: 'pipe' }
-      );
-    } catch {
-      // already registered or grok config conflict — non-blocking
-    }
-  }
+function registerGrokMcpServers(targetDir: string, env: NodeJS.ProcessEnv): void {
+  const wiring = requireCjs(path.join(packageRoot, 'scripts/node/bridge-mcp-wiring.cjs')) as {
+    writeProjectSuitMcp: (dir: string) => string;
+    trustGrokFolder: (dir: string, env?: NodeJS.ProcessEnv) => string;
+  };
+  const tomlPath = wiring.writeProjectSuitMcp(targetDir);
+  const trustPath = wiring.trustGrokFolder(targetDir, env);
+  process.stdout.write(`Project Grok MCP written to ${tomlPath}\n`);
+  process.stdout.write(`Grok folder trust written to ${trustPath}\n`);
 }
 
 export interface GrokInstallOptions {
@@ -168,20 +149,9 @@ export async function installForGrokCLI(options: GrokInstallOptions = {}): Promi
     writeProjectGogglesMcp(targetDir);
     mintAfterWear(targetDir);
 
-    const primary = dests[0];
-    try {
-      execSync(`grok plugins trust "${primary}"`, { stdio: 'ignore' });
-      console.log('\x1b[32m✓ Auto-trusted the 0xray plugin with Grok CLI\x1b[0m');
-    } catch {
-      console.log('\nPlease run this command to fully trust the plugin:');
-      console.log(`  grok plugins trust "${primary}"`);
-    }
-
-    if (isolated) {
-      registerGrokMcpServers(targetDir);
-      console.log('\x1b[32m✓ Registered 7 xray MCP servers with Grok CLI (npx)\x1b[0m');
-    } else {
-      console.log('\x1b[32m✓ Project-scoped Grok plugin worn (machine ~/.grok/plugins/0xray not written)\x1b[0m');
+    registerGrokMcpServers(targetDir, env);
+    if (!isolated) {
+      process.stdout.write('Project-scoped Grok plugin worn (machine ~/.grok/plugins/0xray not written)\n');
     }
 
     console.log('\n✅ 0xRay is now installed as a first-class Grok CLI plugin!');
