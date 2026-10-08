@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
+import { parseConsultVerdictFromText } from "../../nucleus/synthesis-consult-receipt.js";
 
 describe("localConferVote", () => {
   it("abstains without nested LLM when no trap is present", () => {
@@ -27,6 +28,25 @@ describe("localConferVote", () => {
     expect(vote.decision).toBe("abstain");
     expect(vote.reasoning).toContain("returned no vote");
     expect(vote.reasoning).not.toContain("not configured");
+  });
+
+  it("records abstain without a model as UNREVIEWED", () => {
+    const absent = formatGovernanceVoteText(localConferVote({ role: "code-review" }));
+    expect(parseConsultVerdictFromText(absent)).toBe("UNREVIEWED");
+
+    const trap = formatGovernanceVoteText(
+      localConferVote({
+        role: "researcher",
+        highConfidenceTrapPresent: true,
+        recommendedAgent: "architect",
+      }),
+    );
+    expect(parseConsultVerdictFromText(trap)).toBe("UNREVIEWED");
+
+    const noVote = formatGovernanceVoteText(
+      localConferVote({ role: "security-audit", llmConfigured: true }),
+    );
+    expect(parseConsultVerdictFromText(noVote)).toBe("CONDITIONAL");
   });
 
   it("formats a confer receipt", () => {

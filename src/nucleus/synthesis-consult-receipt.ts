@@ -5,9 +5,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveRuntimeSuitProfile } from './suit-temperament.js';
 
 
-export type SynthesisConsultVerdict = 'PASS' | 'CONDITIONAL' | 'FAIL';
+export type SynthesisConsultVerdict = 'PASS' | 'CONDITIONAL' | 'FAIL' | 'UNREVIEWED';
 
 export interface SynthesisConsultReceipt {
   sessionId: string;
@@ -77,7 +78,23 @@ function subagentsAlign(expected: string, actual: string): boolean {
 }
 
 function isValidVerdict(value: unknown): value is SynthesisConsultVerdict {
-  return value === 'PASS' || value === 'CONDITIONAL' || value === 'FAIL';
+  return value === 'PASS' || value === 'CONDITIONAL' || value === 'FAIL' || value === 'UNREVIEWED';
+}
+
+/**
+ * FAIL always blocks consult-todo completion.
+ * UNREVIEWED blocks only when suit_temperament.profile is strict.
+ * Guided, frontier, and missing temperament still complete the todo.
+ */
+export function consultVerdictAllowsTodoCompletion(
+  verdict: SynthesisConsultVerdict,
+  projectRoot = process.cwd(),
+): boolean {
+  if (verdict === 'FAIL') return false;
+  if (verdict === 'UNREVIEWED' && resolveRuntimeSuitProfile(projectRoot) === 'strict') {
+    return false;
+  }
+  return true;
 }
 
 export function validateSynthesisConsultReceipt(
@@ -108,49 +125,109 @@ export function hasValidSynthesisConsultReceipt(
   return validateSynthesisConsultReceipt(receipt, todoId, expected);
 }
 
-function verdictFromToken(token: string): SynthesisConsultVerdict | null {
-  const value = token.toLowerCase();
-  if (value === 'approve' || value === 'approved' || value === 'pass') return 'PASS';
-  if (value === 'reject' || value === 'rejected' || value === 'fail') return 'FAIL';
+const VERDICT_LINE = /^\s*(?:[-*•]\s*)?Verdict:\s*(.+)$/i;
+const DECISION_LINE = /^\s*(?:[-*•]\s*)?DECISION:\s*(.+)$/i;
+
+function verdictsMentioned(body: string): Set<SynthesisConsultVerdict> {
+  const upper = body.toUpperCase();
+  const found = new Set<SynthesisConsultVerdict>();
+  if (/\bUNREVIEWED\b/.test(upper)) found.add('UNREVIEWED');
+  if (/\bCONDITIONAL\b/.test(upper)) found.add('CONDITIONAL');
+  if (/\b(?:FAIL|REJECT(?:ED)?)\b/.test(upper)) found.add('FAIL');
+  if (/\b(?:PASS|SHIP|APPROVED?)\b/.test(upper)) found.add('PASS');
+  return found;
+}
+
+function singleExplicitVerdict(body: string): SynthesisConsultVerdict | null {
+  if (body.includes('|')) return null;
+  const found = verdictsMentioned(body);
   if (
-    value === 'abstain' ||
-    value === 'needs_revision' ||
-    value === 'conditional' ||
-    value === 'revise'
+    found.size === 2 &&
+    found.has('CONDITIONAL') &&
+    found.has('PASS') &&
+    /\bCONDITIONAL\s+PASS\b/i.test(body)
   ) {
+    return 'CONDITIONAL';
+  }
+  if (found.size !== 1) return null;
+  return [...found][0] ?? null;
+}
+
+function isAbstainWithoutModel(text: string): boolean {
+  return /nested LLM not configured/i.test(text);
+}
+
+function verdictFromDecisionToken(
+  token: string,
+  fullText: string,
+): SynthesisConsultVerdict | null {
+  if (token === 'approve' || token === 'approved' || token === 'pass' || token === 'ship') {
+    return 'PASS';
+  }
+  if (token === 'reject' || token === 'rejected' || token === 'fail') return 'FAIL';
+  if (token === 'abstain') {
+    return isAbstainWithoutModel(fullText) ? 'UNREVIEWED' : 'CONDITIONAL';
+  }
+  if (token === 'needs_revision' || token === 'conditional' || token === 'revise') {
     return 'CONDITIONAL';
   }
   return null;
 }
 
-/** The last single Verdict or DECISION line wins. A menu line that lists every word does not. */
-function lastExplicitVerdict(text: string): SynthesisConsultVerdict | null {
+function classifyVerdictLine(line: string): SynthesisConsultVerdict | null {
+  const match = VERDICT_LINE.exec(line);
+  if (!match?.[1]) return null;
+  return singleExplicitVerdict(match[1].trim());
+}
+
+function classifyDecisionLine(line: string, fullText: string): SynthesisConsultVerdict | null {
+  const match = DECISION_LINE.exec(line);
+  if (!match?.[1]) return null;
+  const body = match[1].trim();
+  if (body.includes('|')) return null;
+  const words =
+    body
+      .match(
+        /\b(approve|approved|pass|reject|rejected|fail|abstain|needs_revision|conditional|revise|ship)\b/gi,
+      )
+      ?.map((word) => word.toLowerCase()) ?? [];
+  if (new Set(words).size !== 1) return null;
+  return verdictFromDecisionToken(words[0] ?? '', fullText);
+}
+
+/**
+ * Last explicit `Verdict:` or `DECISION:` line wins.
+ * A line that lists several options (the confer prompt echo) is not a verdict.
+ * Abstain with no governance model is UNREVIEWED; other abstains stay CONDITIONAL.
+ */
+export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
   let found: SynthesisConsultVerdict | null = null;
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim().replace(/^[-*•]\s*/, '');
-    const match = trimmed.match(/^(?:Verdict|DECISION):\s*(\w+)/i);
-    const token = match?.[1];
-    if (!token || trimmed.includes('|')) continue;
-    const verdict = verdictFromToken(token);
-    if (verdict) found = verdict;
+  for (const line of text.split('\n')) {
+    const fromVerdict = classifyVerdictLine(line);
+    if (fromVerdict) {
+      found = fromVerdict;
+      continue;
+    }
+    const fromDecision = classifyDecisionLine(line, text);
+    if (fromDecision) found = fromDecision;
   }
   return found;
 }
 
-export function parseConsultVerdictFromText(text: string): SynthesisConsultVerdict | null {
-  const explicit = lastExplicitVerdict(text);
-  if (explicit) return explicit;
-
-  const decisionToken = text.match(/\bDECISION:\s*(\w+)/i)?.[1];
-  if (decisionToken) {
-    const mapped = verdictFromToken(decisionToken);
-    if (mapped) return mapped;
+export function listUnreviewedSynthesisConsultReceipts(
+  projectRoot = process.cwd(),
+): SynthesisConsultReceipt[] {
+  const dir = path.join(projectRoot, '.xray', 'state');
+  if (!fs.existsSync(dir)) return [];
+  const receipts: SynthesisConsultReceipt[] = [];
+  for (const name of fs.readdirSync(dir)) {
+    const match = /^synthesis-consult-(s\.\d+)\.json$/.exec(name);
+    const todoId = match?.[1];
+    if (!todoId) continue;
+    const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
+    if (receipt?.verdict === 'UNREVIEWED') receipts.push(receipt);
   }
-  const normalized = text.toUpperCase();
-  if (/\bCONDITIONAL(\s+PASS)?\b/.test(normalized)) return 'CONDITIONAL';
-  if (/\b(?:PASS|SHIP|APPROVE)\b/.test(normalized)) return 'PASS';
-  if (/\b(?:FAIL|REJECT)\b/.test(normalized)) return 'FAIL';
-  return null;
+  return receipts;
 }
 
 export function extractTopRisksFromText(text: string, max = 5): string[] {

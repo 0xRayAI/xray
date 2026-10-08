@@ -20,10 +20,27 @@ describe('synthesis-consult-receipt', () => {
   const tmp = mkdtempSync(path.join(tmpdir(), 'xray-receipt-'));
   const sessionId = 'receipt-test-session';
 
-  it('parses verdict tokens from consult output', () => {
-    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBe('CONDITIONAL');
-    expect(parseConsultVerdictFromText('Code review: SHIP')).toBe('PASS');
-    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBe('FAIL');
+  it('parses an explicit final verdict line and ignores an echoed menu', () => {
+    expect(parseConsultVerdictFromText('Verdict: CONDITIONAL PASS')).toBe('CONDITIONAL');
+    expect(parseConsultVerdictFromText('Verdict: SHIP')).toBe('PASS');
+    expect(parseConsultVerdictFromText('Verdict: FAIL on security')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('Verdict: REJECT')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('Verdict: REJECTED')).toBe('FAIL');
+    expect(parseConsultVerdictFromText('Architect review: CONDITIONAL PASS')).toBeNull();
+    expect(parseConsultVerdictFromText('Code review: SHIP')).toBeNull();
+    expect(parseConsultVerdictFromText('Verdict FAIL on security')).toBeNull();
+    const echoed = '- Verdict: PASS | CONDITIONAL | FAIL';
+    expect(parseConsultVerdictFromText(echoed)).toBeNull();
+    expect(parseConsultVerdictFromText(`${echoed}\n\nVerdict: FAIL\nHardening: split`)).toBe('FAIL');
+    expect(
+      parseConsultVerdictFromText('DECISION: abstain\nREASONING: nested LLM not configured.'),
+    ).toBe('UNREVIEWED');
+    expect(
+      parseConsultVerdictFromText(
+        'DECISION: abstain\nREASONING: nested LLM configured but returned no vote.',
+      ),
+    ).toBe('CONDITIONAL');
+    expect(parseConsultVerdictFromText('DECISION: approve|reject|abstain')).toBeNull();
   });
 
   it('blocks consult todo completion without receipt', () => {
@@ -85,7 +102,7 @@ describe('synthesis-consult-receipt', () => {
       's.2',
       'architect-tools',
       sessionId,
-      'Architecture consult complete. CONDITIONAL PASS — consult receipt gate recommended.',
+      'Verdict: CONDITIONAL\n- Top risk: consult receipt gate\nHardening: keep the gate',
       tmp,
     );
     expect(receipt?.verdict).toBe('CONDITIONAL');
@@ -102,9 +119,66 @@ describe('synthesis-consult-receipt', () => {
       's.3',
       'code-review',
       sessionId,
-      'Review complete. PASS — align sessionId between seed and Grok hooks.',
+      'Verdict: PASS\nHardening: align sessionId between seed and Grok hooks.',
     );
     expect(built?.verdict).toBe('PASS');
     expect(built?.subagent).toBe('code-review');
+  });
+
+  it('UNREVIEWED completes the todo unless suit_temperament is strict', () => {
+    const strictRoot = mkdtempSync(path.join(tmpdir(), 'xray-receipt-strict-'));
+    fs.mkdirSync(path.join(strictRoot, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(strictRoot, '.xray', 'features.json'),
+      JSON.stringify({
+        suit_temperament: { profile: 'strict' },
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const plan = buildSynthesisCheckpointPlan('gate threshold', strictRoot);
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      strictRoot,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'UNREVIEWED',
+        topRisks: ['no governance LLM'],
+        hardeningNote: 'abstain is not a review',
+      },
+      strictRoot,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', strictRoot)).toBe(false);
+
+    const guidedRoot = mkdtempSync(path.join(tmpdir(), 'xray-receipt-guided-'));
+    fs.mkdirSync(path.join(guidedRoot, '.xray', 'state'), { recursive: true });
+    fs.writeFileSync(
+      path.join(guidedRoot, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
+    const guidedPlan = buildSynthesisCheckpointPlan('gate threshold', guidedRoot);
+    savePersistedLeadDevPlan(
+      { ...guidedPlan!, persistedAt: new Date().toISOString(), sessionId },
+      guidedRoot,
+    );
+    writeSynthesisConsultReceipt(
+      's.1',
+      {
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'UNREVIEWED',
+        topRisks: [],
+        hardeningNote: 'recorded',
+      },
+      guidedRoot,
+    );
+    expect(updatePlanTodoStatus('s.1', 'completed', guidedRoot)).toBe(true);
+    rmSync(strictRoot, { recursive: true, force: true });
+    rmSync(guidedRoot, { recursive: true, force: true });
   });
 });

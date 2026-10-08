@@ -363,15 +363,19 @@ export async function architectureAssessment(
   return result;
 }
 
-/** Confer text follows the assessment. A critical coupling issue is FAIL. */
-export function conferVerdictFromAssessment(
-  assessment: ArchitectureAssessment,
-): "PASS" | "CONDITIONAL" | "FAIL" {
-  const criticalIssue = assessment.issues.some((issue) => issue.type === "critical");
+export type ArchitectureConferVerdict = "PASS" | "CONDITIONAL" | "FAIL";
+
+/**
+ * Confer verdict from the assessment itself.
+ * critical/poor health or a critical issue → FAIL; fair health or a major issue → CONDITIONAL; otherwise PASS.
+ */
+export function conferVerdictFromArchitectureAssessment(
+  assessment: Pick<ArchitectureAssessment, "overallHealth" | "issues">,
+): ArchitectureConferVerdict {
   if (
-    criticalIssue ||
     assessment.overallHealth === "critical" ||
-    assessment.overallHealth === "poor"
+    assessment.overallHealth === "poor" ||
+    assessment.issues.some((issue) => issue.type === "critical")
   ) {
     return "FAIL";
   }
@@ -384,15 +388,37 @@ export function conferVerdictFromAssessment(
   return "PASS";
 }
 
+/** Same rule, under the name main already calls. */
+export function conferVerdictFromAssessment(
+  assessment: ArchitectureAssessment,
+): ArchitectureConferVerdict {
+  return conferVerdictFromArchitectureAssessment(assessment);
+}
+
+export function formatConferArchitectureAssessment(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+): string {
+  const verdict = conferVerdictFromArchitectureAssessment(assessment);
+  const riskLines = assessment.issues
+    .slice(0, 5)
+    .map((issue) => `- Top risk: ${issue.type}: ${issue.description}`);
+  const risks = riskLines.length > 0 ? riskLines.join("\n") : "Top risks: none";
+  const hardening =
+    assessment.recommendations.slice(0, 3).join("; ") ||
+    "No additional hardening noted";
+  const assessmentJson = JSON.stringify(assessment, null, 2);
+  return `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\n${risks}\nHardening: ${hardening}`;
+}
+
+/** An empty confer prompt stays the assessment JSON. A prompt gets the verdict block. */
 export function formatConferArchitectureText(
   conferPrompt: string,
   assessment: ArchitectureAssessment,
 ): string {
-  const assessmentJson = JSON.stringify(assessment, null, 2);
   const prompt = conferPrompt.trim();
-  if (!prompt) return assessmentJson;
-  const verdict = conferVerdictFromAssessment(assessment);
-  return `${prompt}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`;
+  if (!prompt) return JSON.stringify(assessment, null, 2);
+  return formatConferArchitectureAssessment(prompt, assessment);
 }
 
 // Helper functions
