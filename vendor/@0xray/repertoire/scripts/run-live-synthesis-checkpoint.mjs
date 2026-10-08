@@ -5,7 +5,8 @@
  * Usage:
  *   node scripts/run-live-synthesis-checkpoint.mjs seed [--session-id=ID]
  *   node scripts/run-live-synthesis-checkpoint.mjs status
- *   node scripts/run-live-synthesis-checkpoint.mjs complete-todo --id=s.1
+ *   node scripts/run-live-synthesis-checkpoint.mjs complete-todo
+ *     (refuses: a CLI flag must not mint PASS or clear consult todos)
  *   node scripts/run-live-synthesis-checkpoint.mjs finish
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -132,56 +133,9 @@ async function cmdStatus() {
 }
 
 async function cmdCompleteTodo() {
-  const todoId = process.argv.find((a) => a.startsWith('--id='))?.split('=')[1];
-  const verdict = process.argv.find((a) => a.startsWith('--verdict='))?.split('=')[1];
-  if (!todoId) {
-    err('Usage: complete-todo --id=s.1 --verdict=PASS|CONDITIONAL|FAIL');
-    process.exit(1);
-  }
-  if (!verdict || !['PASS', 'CONDITIONAL', 'FAIL'].includes(verdict)) {
-    err('❌ --verdict=PASS|CONDITIONAL|FAIL required (consult receipt gate)');
-    process.exit(1);
-  }
-
-  const sessionId = parseSessionId();
-  const { persistence } = await loadXray();
-  const { writeSynthesisConsultReceipt } = await import(
-    join(xrayRoot, 'dist/nucleus/synthesis-consult-receipt.js'),
-  );
-
-  const plan = persistence.loadPersistedLeadDevPlan(root);
-  const consultTodo = plan
-    ? persistence.getSynthesisConsultTodos(plan).find((t) => t.id === todoId)
-    : null;
-  if (!consultTodo) {
-    err(`❌ Consult todo ${todoId} not found in lead-dev plan`);
-    process.exit(1);
-  }
-
-  writeSynthesisConsultReceipt(
-    todoId,
-    {
-      sessionId: plan?.sessionId ?? sessionId,
-      subagent: consultTodo.subagent,
-      verdict,
-      topRisks: [],
-      hardeningNote: process.argv.find((a) => a.startsWith('--note='))?.split('=')[1] ?? '',
-    },
-    root,
-  );
-
-  const updated = persistence.updatePlanTodoStatus(todoId, 'completed', root);
-  if (!updated) {
-    err(`❌ Receipt gate blocked completion for ${todoId}`);
-    process.exit(1);
-  }
-
-  const refreshed = persistence.loadPersistedLeadDevPlan(root);
-  const todos = refreshed ? persistence.getSynthesisConsultTodos(refreshed) : [];
-  const allDone = todos.length > 0 && todos.every((t) => t.status === 'completed');
-  log(`✅ Marked ${todoId} completed (receipt: ${verdict})`);
-  log(`📊 consult todos: ${todos.map((t) => `${t.id}:${t.status}`).join(', ')}`);
-  if (allDone) log('🎉 All consult todos complete — checkpoint should clear on next gate eval');
+  err('❌ complete-todo cannot mint a PASS receipt or clear consult todos.');
+  err('A consult todo completes only when Confer records a real model approve.');
+  process.exit(1);
 }
 
 async function cmdFinish() {

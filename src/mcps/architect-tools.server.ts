@@ -10,13 +10,37 @@ import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
+import { attemptLLMGovernance, type GovernanceVote } from "../governance/llm-governance-provider.js";
 import {
   contextAnalysis as architectContextAnalysis,
   codebaseStructure as architectCodebaseStructure,
   dependencyAnalysis as architectDependencyAnalysis,
   architectureAssessment as architectArchitectureAssessment,
-  formatConferArchitectureText,
+  type ArchitectureAssessment,
 } from "../architect/architect-tools.js";
+
+export type ConferModelVerdict = "PASS" | "CONDITIONAL" | "FAIL" | "UNREVIEWED";
+
+/** A confer verdict counts only when a model vote exists. Metrics alone are UNREVIEWED. */
+export function conferVerdictFromModelVote(
+  vote: Pick<GovernanceVote, "decision"> | null,
+): ConferModelVerdict {
+  if (!vote) return "UNREVIEWED";
+  if (vote.decision === "reject") return "FAIL";
+  if (vote.decision === "approve") return "PASS";
+  return "CONDITIONAL";
+}
+
+export function formatArchitectureAssessmentConferText(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+  verdict: ConferModelVerdict = "UNREVIEWED",
+): string {
+  const assessmentJson = JSON.stringify(assessment, null, 2);
+  const trimmed = conferPrompt.trim();
+  if (!trimmed) return assessmentJson;
+  return `${trimmed}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\nTop risks: review assessment metrics above\nHardening: address high-complexity or coupling findings before resuming`;
+}
 
 interface DirectoryNode {
   name: string;
@@ -44,11 +68,22 @@ export async function renderArchitectureAssessment(
   frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
 
   const result = await architectArchitectureAssessment(projectRoot, assessmentType);
+  let verdict: ConferModelVerdict = "UNREVIEWED";
+  if (conferPrompt.trim()) {
+    const attempt = await attemptLLMGovernance(
+      "architect",
+      "Synthesis confer — architect",
+      `${conferPrompt.trim()}\n\n## Architecture assessment\n${JSON.stringify(result, null, 2)}`,
+      [],
+      "synthesis-confer",
+    );
+    verdict = conferVerdictFromModelVote(attempt.vote);
+  }
   return {
     content: [
       {
         type: "text",
-        text: formatConferArchitectureText(conferPrompt, result),
+        text: formatArchitectureAssessmentConferText(conferPrompt, result, verdict),
       },
     ],
   };

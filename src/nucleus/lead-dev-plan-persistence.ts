@@ -15,6 +15,7 @@ import {
   recordExecutionSlice,
 } from './synthesis.js';
 import {
+  consultVerdictBlocksCompletion,
   hasValidSynthesisConsultReceipt,
   isSynthesisConsultTodoId,
   loadSynthesisConsultReceipt,
@@ -335,14 +336,15 @@ export function updatePlanTodoStatus(
   }
 
   if (status === 'completed' && isSynthesisConsultTodoId(todoId)) {
-    const receiptExpected: { sessionId?: string | null; subagent?: string } = {};
+    const receiptExpected: { sessionId?: string | null; subagent?: string; cycleId?: string } = {};
     if (plan.sessionId !== undefined) receiptExpected.sessionId = plan.sessionId;
     if (targetTodo?.subagent) receiptExpected.subagent = targetTodo.subagent;
+    if (plan.consultCycleId) receiptExpected.cycleId = plan.consultCycleId;
     if (!hasValidSynthesisConsultReceipt(todoId, projectRoot, receiptExpected)) {
       return false;
     }
     const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
-    if (receipt?.verdict === 'FAIL') {
+    if (consultVerdictBlocksCompletion(receipt?.verdict)) {
       return false;
     }
   }

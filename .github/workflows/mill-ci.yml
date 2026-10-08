@@ -87,6 +87,8 @@ jobs:
         run: node scripts/check-grok-bot-pack.mjs
       - name: Curated unit suites
         run: npm run test:comprehensive
+      - name: Confer verify
+        run: npm run verify:confer
 
   smoke:
     name: Consumer smoke

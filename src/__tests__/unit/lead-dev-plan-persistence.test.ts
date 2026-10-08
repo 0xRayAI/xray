@@ -181,6 +181,7 @@ describe('lead-dev-plan-persistence', () => {
     fs.writeFileSync(
       path.join(tmp, '.xray', 'features.json'),
       JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
         synthesis: { enabled: true, every_n_gates: 1, every_n_turns: 0, every_n_todos_completed: 0 },
       }),
     );
@@ -232,6 +233,12 @@ describe('lead-dev-plan-persistence', () => {
   });
 
   it('never treats synthesis realignment plan as stale while consult todos pending', () => {
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'features.json'),
+      JSON.stringify({
+        multi_agent_orchestration: { lead_dev_mode: true, confer_on_synthesis: true },
+      }),
+    );
     const staleAt = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
     const synthesisPlan = buildSynthesisCheckpointPlan('gate threshold');
     expect(synthesisPlan).not.toBeNull();

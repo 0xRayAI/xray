@@ -12,6 +12,7 @@ import {
   persistLeadDevPlan,
 } from '../../../nucleus/autonomy-kernel.js';
 import {
+  conferFixtureAllowed,
   formatConferQuorumReport,
   isConferEnabled,
   runConferQuorum,
@@ -286,7 +287,7 @@ export class ComplexityHandler {
           collocatedText?: string;
         } = {
           dueReason: args.synthesisDueReason ?? null,
-          fixture: args.conferFixture === true,
+          fixture: conferFixtureAllowed() && args.conferFixture === true,
         };
         if (args.collocatedText) conferOpts.collocatedText = args.collocatedText;
         const conferResult = await runConferQuorum(process.cwd(), args.sessionId, conferOpts);

@@ -31,11 +31,16 @@ describe('architect confer verdict follows coupling', () => {
         conferPrompt: 'Review the change\n- Verdict: PASS | CONDITIONAL | FAIL',
       });
       const text = out.content[0]?.text ?? '';
-      expect(text).toContain('Verdict: FAIL');
-      expect(parseConsultVerdictFromText(text)).toBe('FAIL');
+      expect(text).toContain('High coupling');
+      expect(text).toContain('Verdict: UNREVIEWED');
+      expect(parseConsultVerdictFromText(text)).toBe('UNREVIEWED');
 
       const sessionId = 'confer-critical-session';
       mkdirSync(path.join(root, '.xray', 'state'), { recursive: true });
+      writeFileSync(
+        path.join(root, '.xray', 'features.json'),
+        JSON.stringify({ multi_agent_orchestration: { confer: { enabled: true } } }),
+      );
       const plan = buildSynthesisCheckpointPlan('critical coupling', root);
       expect(plan).not.toBeNull();
       if (!plan) return;
@@ -45,7 +50,7 @@ describe('architect confer verdict follows coupling', () => {
       );
 
       const applied = applyConferConsultResult('s.2', 'architect-tools', sessionId, text, root);
-      expect(applied.verdict).toBe('FAIL');
+      expect(applied.verdict).toBe('UNREVIEWED');
       expect(applied.receiptRecorded).toBe(true);
       expect(applied.todoCompleted).toBe(false);
       expect(updatePlanTodoStatus('s.2', 'completed', root, sessionId)).toBe(false);
