@@ -124,6 +124,43 @@ describe('confer quorum SSOT', () => {
     expect(seat?.status).toBe('pending');
   });
 
+  it('a completed quorum from another session is asked again', async () => {
+    saveConsultPlan();
+    const plan = loadPersistedLeadDevPlan(tmp);
+    if (!plan) throw new Error('plan missing');
+    const seats = [
+      ['s.1', 'researcher'],
+      ['s.2', 'architect-tools'],
+      ['s.3', 'code-review'],
+    ] as const;
+    for (const phase of plan.phases) {
+      for (const todo of phase.todos) {
+        if (seats.some(([id]) => id === todo.id)) todo.status = 'completed';
+      }
+    }
+    savePersistedLeadDevPlan(plan, tmp);
+    for (const [id, subagent] of seats) {
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', `synthesis-consult-${id}.json`),
+        JSON.stringify({
+          sessionId: 'other-session',
+          subagent,
+          verdict: 'PASS',
+          topRisks: [],
+          hardeningNote: 'other sitting',
+          todoId: id,
+          cycleId: plan.consultCycleId,
+        }),
+      );
+    }
+    const result = await runConferQuorum(tmp, sessionId, { host: new SessionConferHost() });
+    expect(result.status).toBe('pending');
+    expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'confer-ask-s.1.json'))).toBe(true);
+    const again = loadPersistedLeadDevPlan(tmp);
+    const open = again?.phases.flatMap((phase) => phase.todos).filter((todo) => todo.id.startsWith('s.'));
+    expect(open?.every((todo) => todo.status === 'pending')).toBe(true);
+  });
+
   it('SessionConferHost writes asks and does not spawn a server', async () => {
     saveConsultPlan();
     const spawnSpy = vi.spyOn(childProcess, 'spawn');

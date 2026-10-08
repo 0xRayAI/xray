@@ -381,7 +381,7 @@ export async function runConferQuorum(
     };
   }
 
-  if (areSynthesisConsultTodosComplete(plan) && consultReceiptsAreRealApproves(plan, projectRoot)) {
+  if (areSynthesisConsultTodosComplete(plan) && consultReceiptsAreRealApproves(plan, sessionId, projectRoot)) {
     return {
       status: 'completed',
       agents: [],
@@ -519,7 +519,7 @@ export async function runConferQuorum(
     refreshed &&
     isSynthesisRealignmentPlan(refreshed) &&
     areSynthesisConsultTodosComplete(refreshed) &&
-    consultReceiptsAreRealApproves(refreshed, projectRoot);
+    consultReceiptsAreRealApproves(refreshed, sessionId, projectRoot);
 
   state.status = done ? 'completed' : 'failed';
   if (!done) state.lastError = 'Consult todos remain after confer loop';
@@ -549,15 +549,12 @@ function consultReceiptIsRealPass(
 
 function consultReceiptsAreRealApproves(
   plan: PersistedLeadDevPlan,
+  sessionId: string,
   projectRoot: string,
 ): boolean {
   const todos = getSynthesisConsultTodos(plan);
   if (todos.length === 0) return false;
-  return todos.every((todo) => {
-    const receipt = loadSynthesisConsultReceipt(todo.id, projectRoot);
-    if (receipt?.verdict !== 'PASS') return false;
-    return !plan.consultCycleId || receipt.cycleId === plan.consultCycleId;
-  });
+  return todos.every((todo) => consultReceiptIsRealPass(todo.id, sessionId, plan, projectRoot));
 }
 
 const CONFER_AGENT_EMOJI: Record<string, string> = {
