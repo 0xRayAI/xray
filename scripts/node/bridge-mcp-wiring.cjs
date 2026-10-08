@@ -979,6 +979,102 @@ function wireOpenClawBridge(targetDir) {
   return syncOpenClawMcpRegistry(targetDir);
 }
 
+function tomlString(value) {
+  return JSON.stringify(String(value));
+}
+
+function suitServerNames() {
+  return new Set(XRAY_MCP_SERVERS.map((server) => server.name));
+}
+
+function isSuitMcpHeader(line, names) {
+  const match = /^\[([^\]]+)\]\s*$/.exec(line.trim());
+  if (!match) return false;
+  const parts = match[1].split(".");
+  return parts[0] === "mcp_servers" && names.has(parts[1]);
+}
+
+function stripSuitMcpBlocks(toml, names) {
+  const kept = [];
+  let skip = false;
+  for (const line of String(toml || "").split(/\r?\n/)) {
+    if (/^\s*\[/.test(line)) skip = isSuitMcpHeader(line, names);
+    if (!skip) kept.push(line);
+  }
+  return kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function suitMcpBlock(server, launch) {
+  const args = launch.args.map((arg) => `  ${tomlString(arg)},`).join("\n");
+  const lines = [
+    `[mcp_servers.${server.name}]`,
+    `command = ${tomlString(launch.command)}`,
+    "args = [",
+    args,
+    "]",
+    "enabled = true",
+  ];
+  const env = launch.env && typeof launch.env === "object" ? launch.env : {};
+  const envKeys = Object.keys(env);
+  if (envKeys.length > 0) {
+    lines.push("", `[mcp_servers.${server.name}.env]`);
+    for (const key of envKeys) lines.push(`${key} = ${tomlString(env[key])}`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Project `.grok/config.toml` replaces a same-named user server.
+ * The launch is the worn package, not `npx -y 0xray`.
+ */
+function writeProjectSuitMcp(targetDir) {
+  const root = path.resolve(targetDir);
+  const names = suitServerNames();
+  const blocks = XRAY_MCP_SERVERS.map((server) =>
+    suitMcpBlock(server, scopedMcpLaunch(root, server.mcpCmd, server.env)),
+  );
+  const grokDir = path.join(root, ".grok");
+  fs.mkdirSync(grokDir, { recursive: true });
+  const tomlPath = path.join(grokDir, "config.toml");
+  const existing = fs.existsSync(tomlPath) ? fs.readFileSync(tomlPath, "utf8") : "";
+  const kept = stripSuitMcpBlocks(existing, names);
+  const body = [kept, blocks.join("\n\n")].filter((part) => part && part.trim()).join("\n\n");
+  fs.writeFileSync(tomlPath, `${body.trim()}\n`);
+  return tomlPath;
+}
+
+function grokConfigHome(env) {
+  const source = env || process.env;
+  const home = source.HOME || source.USERPROFILE;
+  return home ? path.resolve(home) : os.homedir();
+}
+
+/** Grok 1.0.50 has no --trust flag. An untrusted folder skips project MCP. */
+function trustGrokFolder(targetDir, env) {
+  const home = grokConfigHome(env);
+  const grokDir = path.join(home, ".grok");
+  fs.mkdirSync(grokDir, { recursive: true });
+  const file = path.join(grokDir, "trusted_folders.toml");
+  let text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  const folders = [path.resolve(targetDir)];
+  try {
+    const real = fs.realpathSync(folders[0]);
+    if (real !== folders[0]) folders.push(real);
+  } catch {
+    /* the path is the one Grok will see */
+  }
+  const now = Math.floor(Date.now() / 1000);
+  let added = 0;
+  for (const folder of folders) {
+    const header = `[folders.${tomlString(folder)}]`;
+    if (text.includes(header)) continue;
+    text = `${text.replace(/\s*$/, "")}\n${header}\ntrusted = true\ndecided_at = ${now}\n`;
+    added += 1;
+  }
+  if (added > 0) fs.writeFileSync(file, text.endsWith("\n") ? text : `${text}\n`);
+  return file;
+}
+
 module.exports = {
   XRAY_MCP_SERVERS,
   HERMES_CONFIG_PATH,
@@ -1026,4 +1122,6 @@ module.exports = {
   resolveOpenClawPluginDir,
   installOpenClawHostWear,
   maybeWriteOpenClawCliBackend,
+  writeProjectSuitMcp,
+  trustGrokFolder,
 };

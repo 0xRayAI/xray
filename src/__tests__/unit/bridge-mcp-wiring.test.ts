@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -522,12 +522,17 @@ describe('bridge-mcp-wiring', () => {
     const packageRoot = path.join(__dirname, '..', '..', '..');
     const installSrc = readFileSync(path.join(packageRoot, 'scripts/node/install-bridges.cjs'), 'utf8');
     const grokSrc = readFileSync(path.join(packageRoot, 'src/integrations/grok/grok-cli.ts'), 'utf8');
-    expect(installSrc).toContain('XRAY_MCP_SERVERS');
+    expect(installSrc).toContain('writeProjectSuitMcp');
+    expect(installSrc).toContain('trustGrokFolder');
     expect(installSrc).toContain('bridge-mcp-wiring.cjs');
     expect(installSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
+    expect(installSrc).not.toContain('grok mcp add');
+    expect(grokSrc).toContain('writeProjectSuitMcp');
     expect(grokSrc).toContain('bridge-mcp-wiring.cjs');
     expect(grokSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
     expect(grokSrc).toContain('resolveRepertoireMcp');
+    expect(grokSrc).not.toContain('grok mcp add');
+    expect(grokSrc).not.toContain('plugins trust');
   });
 
   it('enableMemoryRoutingIfResolves only when leftover default-off and module exists', () => {
@@ -656,6 +661,58 @@ describe('bridge-mcp-wiring', () => {
       expect(wiring.resolveGogglesMcp(consumer)).toBe(launcher);
     } finally {
       rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+
+  it('writes project grok mcp for the worn cli and trusts that folder once', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-suit-mcp-'));
+    const home = mkdtempSync(path.join(os.tmpdir(), 'xray-suit-home-'));
+    const realHome = path.join(os.homedir(), '.grok', 'trusted_folders.toml');
+    const realBefore = existsSync(realHome) ? readFileSync(realHome) : null;
+    const cli = path.join(consumer, 'node_modules', '0xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(cli), { recursive: true });
+    writeFileSync(cli, '#!/usr/bin/env node\n');
+    const tomlPath = path.join(consumer, '.grok', 'config.toml');
+    mkdirSync(path.dirname(tomlPath), { recursive: true });
+    writeFileSync(
+      tomlPath,
+      [
+        '[mcp_servers.repertoire]',
+        'command = "node"',
+        'args = ["repertoire-mcp.js"]',
+        'enabled = true',
+        '',
+        '[plugins]',
+        'enabled = ["0xray"]',
+        '',
+      ].join('\n'),
+    );
+    try {
+      expect(wiring.writeProjectSuitMcp(consumer)).toBe(tomlPath);
+      const toml = readFileSync(tomlPath, 'utf8');
+      expect(toml).toContain('[mcp_servers.xray-orchestrator]');
+      expect(toml).toContain(cli);
+      expect(toml).toContain('XRAY_ROOT');
+      expect(toml).toContain('[mcp_servers.repertoire]');
+      expect(toml).toContain('[plugins]');
+      expect(toml).not.toContain('npx');
+      const headers = toml.split('\n').filter((line) => line.trim() === '[mcp_servers.xray-orchestrator]');
+      expect(headers).toHaveLength(1);
+      const again = readFileSync(wiring.writeProjectSuitMcp(consumer), 'utf8');
+      expect(again).toBe(toml);
+
+      const trustEnv = { HOME: home, USERPROFILE: home };
+      const trustFile = wiring.trustGrokFolder(consumer, trustEnv);
+      expect(trustFile).toBe(path.join(home, '.grok', 'trusted_folders.toml'));
+      const trusted = readFileSync(trustFile, 'utf8');
+      expect(trusted).toContain(`[folders.${JSON.stringify(path.resolve(consumer))}]`);
+      expect(trusted).toContain('trusted = true');
+      expect(readFileSync(wiring.trustGrokFolder(consumer, trustEnv), 'utf8')).toBe(trusted);
+      const realAfter = existsSync(realHome) ? readFileSync(realHome) : null;
+      expect(realAfter).toEqual(realBefore);
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
     }
   });
 });

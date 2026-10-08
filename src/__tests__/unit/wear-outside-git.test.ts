@@ -24,6 +24,7 @@ const SKIPPED = 'cursor-wear: hooks skipped because this folder is not a git che
 /** 4.0.28 non-git `npm i` project files, minus Cursor hooks. */
 const SUIT_WITHOUT_CURSOR_HOOKS = [
   '.gitignore',
+  '.grok/config.toml',
   '.grok/hooks/0xray.json',
   '.grok/plugins/0xray/.mcp.json',
   '.grok/plugins/0xray/hooks/hooks.json',
@@ -68,6 +69,7 @@ const SUIT_WITHOUT_CURSOR_HOOKS = [
 const HOME_FROM_428 = [
   '.grok/plugins/0xray/.mcp.json',
   '.grok/plugins/0xray/hooks/hooks.json',
+  '.grok/trusted_folders.toml',
 ];
 
 function listFiles(root: string): string[] {

@@ -45,7 +45,7 @@
         },
         "confer_on_synthesis": {
           "type": "boolean",
-          "description": "Auto-run 3-agent confer quorum at synthesis checkpoint (default true)"
+          "description": "Opt in to the 3-agent confer quorum. A missing key stays off."
         },
         "confer": {
           "type": "object",
