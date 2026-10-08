@@ -2,6 +2,18 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.30 — wear and setup work outside git again
+
+- **Non-git.** `npx 0xray wear` and `npx 0xray setup` write the 4.0.28 consumer project setup and skip only Cursor hooks. They print one line: `cursor-wear: hooks skipped because this folder is not a git checkout`.
+- **Git checkout.** `wear` and `setup` restore the 4.0.28 project setup that 4.0.29 dropped (`AGENTS.md`, `.gitignore`, `.xray` config, repertoire link, mill/inspect plant, bridges, `.opencode/skills`, `dist` / `scripts` links). `wear` adds Cursor hooks and the `.xray/state/cursor-hook-wear/` snapshot for `unwear`.
+- **Postinstall.** Unchanged: links the vendored repertoire and prints `npx 0xray wear`.
+
+## 4.0.29 — install links repertoire, wear sets up the suit
+
+- **Postinstall.** `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. It does not write the suit.
+- **Wear.** Run `npx 0xray wear` after install. It writes only the consumer project's `.cursor/hooks.json`, pointing at `node_modules/0xray/dist/integrations/cursor/hooks/<event>.sh`, beside existing user entries. The pre-wear copy is `.xray/state/cursor-hook-wear/`. `npx 0xray unwear` restores it.
+- **Setup.** `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges.
+
 ## 4.0.28 — suit edits survive install, MCP env is names only
 
 - **MCP launch.** Servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay in the env block and out of argv.

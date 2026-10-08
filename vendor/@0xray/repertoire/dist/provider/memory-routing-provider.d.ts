@@ -4,6 +4,7 @@
  * Loaded dynamically by 0xRay via features.json memory_routing.module_path.
  * Other providers can follow the same createMemoryRoutingProvider() export pattern.
  */
+import { type MetaInferenceFailureReason, type MetaInferenceModel } from '../synthesis/meta-inference-engine.js';
 /** Mirrors 0xRay memory-routing/types.ts — kept local to avoid compile-time coupling */
 export interface MemoryAgentCapability {
     capabilities: string[];
@@ -80,6 +81,14 @@ export interface OrchestratorFeedbackEntry {
     dynamoResult?: Record<string, unknown>;
     lesson?: string;
 }
+export type MetaInferenceRefreshReason = 'synthesized' | 'nothing_to_process' | MetaInferenceFailureReason;
+export interface MetaInferenceRefreshResult {
+    refreshed: boolean;
+    /** Machine-readable outcome. A failed model is never `synthesized`. */
+    reason: MetaInferenceRefreshReason;
+    /** Present when the model was missing or the call failed. */
+    error?: string;
+}
 export interface MemoryRoutingProviderConfig {
     dataDir?: string;
     signalsPath?: string;
@@ -87,6 +96,11 @@ export interface MemoryRoutingProviderConfig {
     statePath?: string;
     feedbackDir?: string;
     projectRoot?: string;
+    /**
+     * Meta-inference model. `null` means none is configured (refresh fails closed).
+     * Omit to keep the engine's hermes CLI default.
+     */
+    hermesCommand?: MetaInferenceModel | null;
 }
 export interface MemoryRoutingProvider {
     readonly id: string;
@@ -104,9 +118,7 @@ export interface MemoryRoutingProvider {
         projectRoot: string;
         dueReason?: string | null;
     }): Record<string, unknown> | null;
-    refreshMetaInference?(): Promise<{
-        refreshed: boolean;
-    }>;
+    refreshMetaInference?(): Promise<MetaInferenceRefreshResult>;
 }
 export type ProviderAvailabilityReason = 'ok' | 'empty_registry' | 'signals_unreadable' | 'signals_missing';
 export interface ProviderAvailabilityStatus {
@@ -143,9 +155,7 @@ export declare class RepertoireMemoryRoutingProvider implements MemoryRoutingPro
         projectRoot: string;
         dueReason?: string | null;
     }): Record<string, unknown> | null;
-    refreshMetaInference(): Promise<{
-        refreshed: boolean;
-    }>;
+    refreshMetaInference(): Promise<MetaInferenceRefreshResult>;
 }
 /** Factory export — 0xRay provider-loader calls this by name */
 export declare function createMemoryRoutingProvider(config?: MemoryRoutingProviderConfig): MemoryRoutingProvider;

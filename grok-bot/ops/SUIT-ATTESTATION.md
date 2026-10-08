@@ -1,5 +1,7 @@
 # Suit proof (wear check)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Chat approval is not proof. Grok Bot is not a fake tool-deny floor.
 
 ## How we know a seat is worn

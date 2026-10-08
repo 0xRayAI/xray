@@ -14,13 +14,13 @@ Not a catalog of agents. The product is the **skeleton you wear**.
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
-- **Muscle** — **Repertoire is preferred.** Vendored 0.2.8 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
+- **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
 
 ```bash
 npm install 0xray
 ```
 
-Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.8** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
+Consumer `npm install 0xray` auto-wires four chat bridges, Cursor project hooks, and seven MCP servers. **Repertoire is preferred** — vendored **0.2.9** ships on: factory + stack laws, in-process routing, extra host MCP `repertoire`. Not an eighth `xray-*` server. Dest is a judgment index. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Do not pin 0.1.8.
 
 ## Quick Start
 
@@ -52,6 +52,8 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 | Version | Highlights |
 |---------|------------|
 | **Unreleased** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). |
+| **4.0.30** | Fixes 4.0.29: `npx 0xray wear` and `setup` work outside a git checkout again. They write the 4.0.28 project setup, skip only Cursor hooks, and print one warning. Inside a git checkout they restore the 4.0.28 project setup, and `wear` adds Cursor hooks plus the unwear snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |
+| **4.0.29** | `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json` (installed dist hooks, beside user entries); `npx 0xray unwear` restores the snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |
 | **4.0.28** | MCP servers start through `scripts/node/mcp-launch.cjs` and only see PATH, HOME, XRAY_ROOT, plus names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, .mcp.json, and opencode.json. `house init` does not copy EXAMPLE.md; doctor FAILs while `house/EXAMPLE.md` exists. Inspect adds a machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit. Companion `@0xray/grok-bot` 0.1.7. Released 2026-09-27. |
 | **4.0.27** | Host compact proof needs a generation id and a numeric usage percent, and the same preCompact receipt is mirrored to nested consumer wear roots. Memory scoring: [docs/memory-scoring.md](docs/memory-scoring.md) (orchestrator links it). Companion `@0xray/grok-bot` 0.1.6: general page vs `house/` overlay, `templates/house/`, `grok-bot house init`, doctor `GROK_BOT_HOUSE` or walk-up. Released 2026-09-26. |
 | **4.0.9** | Mill target: postinstall does not mill npm global prefix or `_npx` as a consumer. Isolated HOME skips machine `~/.grok`. |
@@ -65,7 +67,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 ### Consolidations
 
-- **One consumer install path** — `postinstall.cjs` → `installAllBridges()` replaces scattered per-platform setup. Mill target is the consumer project, not npm global prefix or `_npx`.
+- **Install, then wear, then setup where needed** — `npm install` runs `postinstall.cjs`, which writes nothing and prints one line: `npx 0xray wear`. `wear` and `unwear` set up or remove the Cursor suit. `npx 0xray setup` writes `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges (`install-bridges.cjs`); git hooks only with `--git-hooks`. Mill target is the consumer project, not npm global prefix or `_npx`.
 - **7-server MCP surface** — `.mcp.json` SSOT; Grok plugin and all bridges share `XRAY_MCP_SERVERS`.
 - **Dev vs consumer AGENTS** — `AGENTS.md` (framework) vs `AGENTS-consumer.md` (copied to consumer projects on install).
 - **Release pipeline** — `npm run release:patch|minor|major` → reconcile → gate → artifacts → tag → publish.
@@ -76,7 +78,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 - **`hermes bridge`** CLI removed — use `npx 0xray hermes install`.
 - **`.opencode/xray/` fallback** removed from auto-reflection-generator (3.1.1).
 - **~180 stale `@version` JSDoc tags** and **"xray 2.0" command doc strings** cleaned (3.2.0).
-- **`advanced-features/`** decoupled from core boot — not on the consumer install path.
+- **`advanced-features/`** removed. The live Grok hook is `pre-tool-use.js`.
 - **PostProcessor** soft-deprecated since 3.0 (`enablePostProcessor: false` default).
 
 ## Three-Subsystem Architecture
@@ -194,7 +196,7 @@ Docs: [memory routing](docs-site/docs/guides/memory-routing.md) · [Repertoire](
 
 ## Governance & Codex
 
-- **69 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance (Codex 69: no new MCP/skill/handler surface)
+- **70 terms** in `.xray/codex.json` — core, architecture, testing, performance, security, operations, governance (Codex 69: no new MCP/skill/handler surface; Codex 70: current copy before edits)
 - CodexPolicyService — Governance-owned SSOT for codex loading
 - Pre-governance gate blocks non-compliant proposals
 - Active codex snapshot via `get_active_codex` MCP tool

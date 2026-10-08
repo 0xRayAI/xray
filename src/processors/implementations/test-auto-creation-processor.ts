@@ -40,62 +40,60 @@ function findRecentlyModifiedTsFile(
   }
 
   try {
-    // Recursive walk to find all .ts files
-    const files: string[] = [];
+    // One stat per source file. Dirent tells files from directories; mtime is kept
+    // on that stat so the walk does not stat the same path again.
+    // Holder avoids TS narrowing the binding to null across the closure.
+    const mostRecent: { path: string | null; mtime: number } = { path: null, mtime: 0 };
+
+    const shouldWalk = (name: string): boolean =>
+      !name.startsWith(".") && name !== "node_modules" && name !== "dist";
+
+    const isTsSource = (name: string): boolean =>
+      name.endsWith(".ts") && !name.endsWith(".test.ts") && !name.endsWith(".spec.ts");
+
+    const consider = (fullPath: string, mtimeMs: number): void => {
+      const relPath = path.relative(dir, fullPath);
+      if (mostRecent.path === null || mtimeMs > mostRecent.mtime) {
+        mostRecent.path = relPath;
+        mostRecent.mtime = mtimeMs;
+      }
+    };
 
     function walkSync(dirPath: string) {
+      let items: fs.Dirent[];
       try {
-        const items = fs.readdirSync(dirPath);
-        for (const item of items) {
-          const fullPath = path.join(dirPath, item);
-          try {
+        items = fs.readdirSync(dirPath, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const item of items) {
+        const name = item.name;
+        const fullPath = path.join(dirPath, name);
+        try {
+          // stat follows links, so a symlink to a directory is still walked.
+          if (item.isSymbolicLink()) {
             const stat = fs.statSync(fullPath);
             if (stat.isDirectory()) {
-              // Skip node_modules, dist, etc.
-              if (
-                !item.startsWith(".") &&
-                item !== "node_modules" &&
-                item !== "dist"
-              ) {
-                walkSync(fullPath);
-              }
-            } else if (
-              item.endsWith(".ts") &&
-              !item.endsWith(".test.ts") &&
-              !item.endsWith(".spec.ts")
-            ) {
-              files.push(fullPath);
+              if (shouldWalk(name)) walkSync(fullPath);
+            } else if (isTsSource(name)) {
+              consider(fullPath, stat.mtimeMs);
             }
-          } catch {
-            // Skip files we can't stat
+            continue;
           }
+          if (item.isDirectory()) {
+            if (shouldWalk(name)) walkSync(fullPath);
+          } else if (isTsSource(name)) {
+            consider(fullPath, fs.statSync(fullPath).mtimeMs);
+          }
+        } catch {
+          // Skip files we can't stat
         }
-      } catch {
-        // Skip directories we can't read
       }
     }
 
     walkSync(dir);
 
-    // Find most recently modified
-    let mostRecent: { path: string; mtime: number } | null = null;
-
-    for (const filePath of files) {
-      try {
-        const stats = fs.statSync(filePath);
-
-        // Get relative path
-        const relPath = path.relative(dir, filePath);
-
-        if (!mostRecent || stats.mtimeMs > mostRecent.mtime) {
-          mostRecent = { path: relPath, mtime: stats.mtimeMs };
-        }
-      } catch {
-        // Skip files we can't stat
-      }
-    }
-
-    const result = mostRecent?.path || null;
+    const result = mostRecent.path;
     
     // Cache the result
     fileScanCache.set(cacheKey, {

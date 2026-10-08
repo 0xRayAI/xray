@@ -31,13 +31,12 @@ The 7 consumer MCP servers are the **public face** of those three subsystems. Th
 
 Fat is **duplication and unused surface**, not the subsystems:
 
-- Extra `*.server.ts` files that are **not** the 7 consumer MCPs
-- A second and third *orchestrator class* beside nucleus + `mcps/orchestrator`
-- `advanced-features/` (already off consumer boot)
-- PostProcessor metamorphosis loop (soft-deprecated)
-- Processor implementations beyond the live OpenCode/Hermes subset
+- Extra `*.server.ts` files that are **not** the 7 consumer MCPs (`invoke-skill` still calls them)
+- A second and third *orchestrator class* beside nucleus + `mcps/orchestrator` (still imported)
+- PostProcessor metamorphosis loop (kernel and governance still score it)
+- Processor implementations beyond the live OpenCode/Hermes subset (still imported)
 
-See [v3 trim list](./v3-museum.md). First PRs **document and stop growing** that fat (Codex 69). Deletion is later and gated.
+`advanced-features/` is removed. See [v3 trim list](./v3-museum.md). Stop growing the rows that callers still import (Codex 69).
 
 ## Temperament sits *on* the engine
 

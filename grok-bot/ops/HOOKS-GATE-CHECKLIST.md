@@ -1,4 +1,7 @@
 # Hooks + gate — checklist
+
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Last pass: 2026-09-13
 
 ## Seat plants

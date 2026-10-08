@@ -44,6 +44,8 @@ export class SessionCleanupManager {
   private cleanupInterval?: NodeJS.Timeout | undefined;
   private _sessionMetadata?: Map<string, SessionMetadata>;
   private _metadataLoaded = false;
+  /** Same object the store holds, so a one-field write does not clone every session. */
+  private metadataRecord: Record<string, SessionMetadata> = {};
   private sessionMonitor: SessionMonitor | undefined;
 
   constructor(
@@ -79,6 +81,7 @@ export class SessionCleanupManager {
   private set sessionMetadata(value: Map<string, SessionMetadata>) {
     this._sessionMetadata = value;
     this._metadataLoaded = true;
+    this.metadataRecord = Object.fromEntries(value);
   }
 
   /**
@@ -297,22 +300,22 @@ export class SessionCleanupManager {
     const now = Date.now();
     let expiredCount = 0;
     let idleCount = 0;
+    let activeSessions = 0;
 
     for (const metadata of this.sessionMetadata.values()) {
       if (!metadata.isActive) continue;
+      activeSessions += 1;
 
       if (now - metadata.createdAt > metadata.ttlMs) {
-        expiredCount++;
+        expiredCount += 1;
       } else if (now - metadata.lastActivity > this.config.idleTimeoutMs) {
-        idleCount++;
+        idleCount += 1;
       }
     }
 
     return {
       totalSessions: this.sessionMetadata.size,
-      activeSessions: Array.from(this.sessionMetadata.values()).filter(
-        (m) => m.isActive,
-      ).length,
+      activeSessions,
       expiredSessions: expiredCount,
       idleSessions: idleCount,
       nextCleanup: this.cleanupInterval
@@ -369,24 +372,33 @@ export class SessionCleanupManager {
    * Load session metadata from state manager (lazy loading)
    */
   private loadSessionMetadata(): void {
+    this._sessionMetadata = new Map();
+    this.metadataRecord = {};
     try {
       const storedMetadata = this.stateManager.get<
         Record<string, SessionMetadata>
       >("cleanup:session_metadata");
-      this._sessionMetadata = new Map();
 
       if (
         storedMetadata &&
         typeof storedMetadata === "object" &&
         !Array.isArray(storedMetadata)
       ) {
+        const loaded = new Map<string, SessionMetadata>();
+        this._sessionMetadata = loaded;
+        let dropped = false;
         for (const [sessionId, metadata] of Object.entries(storedMetadata)) {
           if (metadata && typeof metadata === "object" && metadata.sessionId) {
-            this._sessionMetadata.set(sessionId, metadata as SessionMetadata);
+            loaded.set(sessionId, metadata as SessionMetadata);
+          } else {
+            dropped = true;
           }
         }
+        this.metadataRecord = dropped
+          ? Object.fromEntries(loaded)
+          : storedMetadata;
         frameworkLogger.log("session-cleanup", "load-metadata", "info", {
-          sessionsLoaded: this._sessionMetadata.size,
+          sessionsLoaded: loaded.size,
         });
       } else if (storedMetadata) {
         frameworkLogger.log("session-cleanup", "corrupted-metadata-detected", "warning", { warning: "Corrupted session metadata detected, skipping load" });
@@ -396,6 +408,7 @@ export class SessionCleanupManager {
         error,
       });
     }
+    this._metadataLoaded = true;
   }
 
   /**
@@ -405,8 +418,12 @@ export class SessionCleanupManager {
     sessionId: string,
     metadata: SessionMetadata,
   ): void {
-    const allMetadata = Object.fromEntries(this.sessionMetadata);
-    this.stateManager.set("cleanup:session_metadata", allMetadata);
+    if (this._sessionMetadata?.has(sessionId)) {
+      this.metadataRecord[sessionId] = metadata;
+    } else {
+      delete this.metadataRecord[sessionId];
+    }
+    this.stateManager.set("cleanup:session_metadata", this.metadataRecord);
   }
 
   /**

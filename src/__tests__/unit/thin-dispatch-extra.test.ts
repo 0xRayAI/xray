@@ -91,6 +91,33 @@ describe('thinDispatch — routeToAgent edge cases', () => {
     expect(result).toHaveProperty('score');
     expect(result).toHaveProperty('agent');
     expect(typeof result.agent).toBe('string');
+    expect(result.file).toBeUndefined();
+    expect(result.lens).toBeUndefined();
+  });
+
+  it('routes a named plane to its file and does not pick the researcher', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const named = scoreAndRoute('open the boot plane', {});
+    expect(named.file).toBe('src/core/boot-orchestrator.ts');
+    expect(named.agent).not.toBe('researcher');
+    expect(named.agent.length).toBeGreaterThan(0);
+    expect(named.lens).toBeUndefined();
+  });
+
+  it('stops a look that names no plane', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const stopped = scoreAndRoute('look', {});
+    expect(stopped.agent).toBe('');
+    expect(stopped.lens).toBe('Name one plane.');
+    expect(stopped.file).toBeUndefined();
+  });
+
+  it('stays quiet when two planes are named', async () => {
+    const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
+    const both = scoreAndRoute('routing and governance', {});
+    expect(both.file).toBeUndefined();
+    expect(both.lens).toBeUndefined();
+    expect(both.agent.length).toBeGreaterThan(0);
   });
 });
 
@@ -120,6 +147,7 @@ describe('thinDispatch — adjusted score updates strategy', () => {
       expect(routed.score.level).not.toBe(base.level);
       expect(routed.score.recommendedStrategy).toBe(getStrategyForLevel(routed.score.level));
       expect(routed.score.estimatedAgents).toBe(getAgentCountForLevel(routed.score.level));
+      expect(routed.memoryRouting?.overridden).toBe(false);
     } finally {
       spy.mockRestore();
     }
@@ -139,11 +167,22 @@ describe('thinDispatch — organ after a yield', () => {
     if (!existsSync(organ)) return;
     const { scoreAndRoute } = await import('../../nucleus/thin-dispatch.js');
     await new Promise((resolve) => setTimeout(resolve, 30));
-    const routed = scoreAndRoute('attestation-as-map', {});
-    expect(routed.memoryRouting?.providerId).toBe('repertoire');
+    const matched = scoreAndRoute('attestation-as-map', {});
+    expect(matched.memoryRouting?.providerId).toBe('repertoire');
+    expect(matched.memoryRouting?.signals).toContain('attestation-as-map');
+    // Trap name alone keeps the complexity agent even when score is boosted.
+    expect(matched.agent).toBe('code-reviewer');
+    expect(matched.memoryRouting?.overridden).toBe(false);
+
+    const crossed = scoreAndRoute('debug attestation-as-map', {});
+    expect(crossed.agent).toBe('architect');
+    expect(crossed.memoryRouting?.overridden).toBe(true);
+
+    const routed = scoreAndRoute('debug attestation-as-map', { files: ['a.ts', 'b.ts'] });
     expect(routed.memoryRouting?.signals).toContain('attestation-as-map');
     expect(routed.agent).toBe('architect');
     expect(routed.score.score).toBeGreaterThanOrEqual(26);
+    // Base complexity may already be architect with file context; override flag is optional.
     expect(recordLesson).not.toHaveBeenCalled();
   });
 });

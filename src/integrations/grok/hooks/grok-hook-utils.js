@@ -28,6 +28,7 @@ import {
   retainCompactFields,
   writeStationMarkdown,
 } from '../../hooks/station-hook-runtime.mjs';
+import { handCard } from '../../hooks/goggles-pipeline.mjs';
 
 export {
   checkPendingDelegationGate,
@@ -86,12 +87,18 @@ const WRITE_TOOLS = new Set([
   'EditNotebook',
 ]);
 
+export function normalizeWorkspaceRoot(root) {
+  const raw = String(root || '').trim();
+  if (!raw) return raw;
+  return path.resolve(raw);
+}
+
 export function workspaceRoot() {
-  return (
+  return normalizeWorkspaceRoot(
     process.env.GROK_WORKSPACE_ROOT ||
     process.env.CLAUDE_PROJECT_DIR ||
     process.env.XRAY_ROOT ||
-    process.cwd()
+    process.cwd(),
   );
 }
 
@@ -198,6 +205,7 @@ export function extractToolContext(event) {
 
   if (toolInput.path) paths.push(String(toolInput.path));
   if (toolInput.file_path) paths.push(String(toolInput.file_path));
+  if (toolInput.target_file) paths.push(String(toolInput.target_file));
   if (toolInput.target_notebook) paths.push(String(toolInput.target_notebook));
   if (Array.isArray(toolInput.paths)) paths.push(...toolInput.paths.map(String));
 
@@ -282,6 +290,25 @@ export function loadConferUnreviewedHint(root = workspaceRoot()) {
   }
 }
 
+export function resolveGrokHookEvent(event = {}, argv = process.argv, env = process.env) {
+  if (env && env.GROK_HOOK_EVENT) return env.GROK_HOOK_EVENT;
+  const flag = (argv || []).find((arg) => String(arg).startsWith('--hook-event='));
+  if (flag) return String(flag).slice('--hook-event='.length);
+  const named = String((event && (event.hookEventName || event.hook)) || '')
+    .toLowerCase()
+    .replace(/[-_\s]/g, '');
+  if (named === 'precompact') return 'pre_compact';
+  if (named === 'postcompact') return 'post_compact';
+  if (named === 'sessionstart') return 'session_start';
+  if (
+    (event && (event.prompt != null || event.userMessage != null || event.user_prompt != null)) ||
+    named === 'userpromptsubmit'
+  ) {
+    return 'user_prompt_submit';
+  }
+  return 'session_start';
+}
+
 export function buildSessionBootPayload(root, source = '0xray/grok-session-start', extra = {}) {
   const features = loadFeatures(root);
   const blockingTerms = loadBlockingCodexTerms();
@@ -304,13 +331,13 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ceremony: gateFeatures.ceremony ?? 'full',
     spawn_plan_mode: gateFeatures.spawn_plan_mode ?? 'deny',
     codexBlockingTermCount: blockingTerms.length,
-    codexTerms: [59, 67, 68, 69],
+    codexTerms: [59, 67, 68, 69, 70],
     rules: features.lead_dev_mode ? LEAD_DEV_RULES : [],
     mcpIntake: frontier
       ? 'xray-orchestrator analyze-complexity optional on frontier (spawn warns, does not deny)'
       : 'xray-orchestrator → analyze-complexity (required before spawn_subagent)',
     enforcement: 'PreToolUse hook — Codex constitution always on; ceremony scales by suit_temperament',
-    workspaceRoot: root,
+    workspaceRoot: normalizeWorkspaceRoot(root),
     ...heat,
     ...(siblingRoots.length > 0 ? { siblingWorkspaceRoots: siblingRoots } : {}),
     ...(conferPending ? { conferPending: true, conferTrigger: 'analyze-complexity at synthesis checkpoint' } : {}),
@@ -320,6 +347,7 @@ export function buildSessionBootPayload(root, source = '0xray/grok-session-start
     ...extra,
     ...heat,
     ...compactHold,
+    arrivedHook: extra && extra.hookEvent ? String(extra.hookEvent) : "",
     hook: source,
     source,
     timestamp: new Date().toISOString(),
@@ -330,8 +358,16 @@ export function writeSessionBoot(root, payload) {
   try {
     const stateDir = path.join(root, '.xray', 'state');
     fs.mkdirSync(stateDir, { recursive: true });
-    fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
     writeStationMarkdown(root, payload);
+    fs.writeFileSync(sessionBootPath(root), JSON.stringify(payload, null, 2));
+    const hook = String((payload && (payload.hookEvent || payload.source)) || "");
+    if (!/compact/i.test(hook)) {
+      try {
+        handCard(root, payload && (payload.cardText || payload.intent));
+      } catch {
+        /* a missed card must not fail the boot */
+      }
+    }
     return sessionBootPath(root);
   } catch {
     return null;
@@ -343,9 +379,16 @@ export function sessionBootNeedsRefresh(existing, root) {
   if (existing.lead_dev_mode === undefined) return true;
   if (existing.host !== 'grok') return true;
   if (!existing.suit_profile) return true;
-  if (existing.workspaceRoot && existing.workspaceRoot !== root) return true;
+  if (
+    existing.workspaceRoot &&
+    normalizeWorkspaceRoot(existing.workspaceRoot) !== normalizeWorkspaceRoot(root)
+  ) {
+    return true;
+  }
   if (!existing.repertoireResume) return true;
   if (!existing.stationLine) return true;
+  const liveResume = buildRepertoireResume(root);
+  if (liveResume && existing.repertoireResume !== liveResume) return true;
   return false;
 }
 

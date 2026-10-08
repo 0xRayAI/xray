@@ -1,3 +1,7 @@
+import { createRequire } from 'node:module';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { scoreAndRoute, NUCLEUS_THIN_DISPATCH_VERSION } from '../node_modules/0xray/dist/nucleus/thin-dispatch.js';
 import { recordLesson } from '../node_modules/0xray/dist/memory-routing/record-lesson.js';
 import { getOrgan } from './organ.mjs';
@@ -16,7 +20,21 @@ import { assertIngestReady, signalsForTaskLesson } from './lesson-ingest.mjs';
 import { runIntakePass } from './intake/intake-pass.mjs';
 import { runGovernancePass } from './governance/governance-pass.mjs';
 
+const require = createRequire(import.meta.url);
+const consumerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/** Point project Cursor hooks at the installed 0xray dist. No-op on older packages. */
+export function fastenInstalledCursorHooks(root = consumerRoot) {
+  const packageRoot = path.join(root, 'node_modules', '0xray');
+  const bridges = path.join(packageRoot, 'scripts', 'node', 'install-bridges.cjs');
+  if (!existsSync(bridges)) return null;
+  const mod = require(bridges);
+  if (typeof mod.wearCursorHooks !== 'function') return null;
+  return mod.wearCursorHooks(root, packageRoot);
+}
+
 export function runWear(task, options = {}) {
+  fastenInstalledCursorHooks();
   const sessionId = options.sessionId ?? `bench-wear-${Date.now()}`;
   const routed = scoreAndRoute(task, { operation: 'analyze', fileCount: 1 });
   const organ = getOrgan();

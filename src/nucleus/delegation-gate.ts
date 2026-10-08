@@ -1,7 +1,7 @@
 /**
  * Multi-host delegation gate SSOT — pending-delegations + spawn todo enforcement.
  * Grok / Hermes / OpenCode adapters call evaluatePreToolGate via delegation-gate-runtime.
- * Constitution (11/29/69 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
+ * Constitution (11/29/69/70 + destructive shell) lives here. Grok may still extra-block Codex 2/7.
  */
 
 import * as fs from 'fs';
@@ -38,6 +38,7 @@ import {
   tryRecordSynthesisConsultReceipt,
 } from './synthesis-consult-receipt.js';
 import { resolveSpawnPlan, hasValidSpawnPlanContext } from './spawn-plan-resolution.js';
+import { probeFreshness } from './work-freshness.mjs';
 import {
   isUserAsidesEnabled,
   isUserAsideTodoId,
@@ -631,7 +632,7 @@ function collectWritePaths(toolInput: ToolGateInput): string[] {
   return paths;
 }
 
-/** Codex 11 / 29 / 69 + destructive shell — always on, all hosts that call this SSOT. */
+/** Codex 11 / 29 / 69 / 70 + destructive shell — always on, all hosts that call this SSOT. */
 export function evaluateConstitutionGate(
   toolName: string,
   toolInput: ToolGateInput,
@@ -640,6 +641,17 @@ export function evaluateConstitutionGate(
   const content = collectWriteContent(toolInput);
   const paths = collectWritePaths(toolInput);
   const writing = isWriteTool(toolName, ctx.host ?? 'generic');
+
+  if (writing) {
+    const freshness = probeFreshness(ctx.projectRoot);
+    if (freshness.stale) {
+      return {
+        allow: false,
+        reason: freshness.reason,
+        gate: 'codex-70',
+      };
+    }
+  }
 
   if (writing && ctx.features.no_new_surface !== false) {
     for (const p of paths) {

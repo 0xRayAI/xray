@@ -32,7 +32,7 @@ SessionStart / UserPromptSubmit
   → PreCompact / PostCompact (station heat)
 ```
 
-Hosts: Grok `hooks.json`, Cursor `.cursor/hooks.json` (`preToolUse` / `preCompact`; no `sessionStart` on managed cloud), OpenCode plugin `tool.execute.before/after`, Hermes `onPreToolCall` / `onPostToolCall`, OpenClaw `xray-pre-tool`. Shared entry: `src/integrations/enforcement-gate.ts` + `src/integrations/hooks/delegation-gate-runtime.mjs`.
+Hosts: Grok `hooks.json`, Cursor `.cursor/hooks.json` (`preToolUse` / `preCompact`; no `sessionStart` on managed cloud), OpenCode plugin `tool.execute.before/after`, Hermes `onPreToolCall` / `onPostToolCall`, OpenClaw `xray-pre-tool`. Shared entry: `src/integrations/hooks/delegation-gate-runtime.mjs`.
 
 ### B. ProcessorManager (legacy / boot compat)
 
@@ -63,7 +63,7 @@ mint (fasten plant) → inspect (6 checks)
 
 ## 1. ProcessorManager implementations (`src/processors/`)
 
-Factories live in `ProcessorManager.registerBuiltInFactories()`. Boot registration is `PROCESSOR_DEFS` in `src/core/boot-orchestrator.ts`. Config loader: `src/postprocessor/config/ProcessorConfigLoader.ts` → `features.processors` (absent on current plant).
+Factories live in `ProcessorManager.registerBuiltInFactories()`. Boot registration is `PROCESSOR_DEFS` in `src/core/boot-orchestrator.ts`.
 
 OpenCode plugin registers a **subset**: `preValidate`, `codexCompliance`, `versionCompliance` (pre); `testAutoCreation`, `testExecution`, `coverageAnalysis` (post). See `src/plugin/plugin-helpers.ts`.
 
@@ -109,7 +109,6 @@ OpenCode plugin registers a **subset**: `preValidate`, `codexCompliance`, `versi
 
 | id | What | Path | Active |
 |----|------|------|--------|
-| `SessionCapture` | Find reflections/logs/reports for inference | `session-capture-processor.ts` | helper |
 | `DocWriteGuard` | Safe append/create for `docs/` | `src/processors/doc-write-guard.ts` | helper |
 | `ProcessorLoader` | Placeholder enforcement rules | `src/enforcement/loaders/processor-loader.ts` | shipped-legacy (always-pass) |
 
@@ -127,16 +126,14 @@ God-object CI/CD loop: commit → monitor → analyze → autofix → redeploy �
 | `GitHookTrigger` | git post | Archive/cleanup logs (called from `run-hook.js`) | `triggers/GitHookTrigger.ts` | live-side-effect via git hooks |
 | `WebhookTrigger` / `APITrigger` | unused by mill | Trigger adapters | `triggers/` | shipped-legacy |
 | `MonitoringEngine` | post | Poll after push | `monitoring/MonitoringEngine.ts` | shipped-legacy |
-| `FailureAnalysisEngine` / `CodeChangeAnalyzer` | post | Classify failures | `analysis/` | shipped-legacy |
+| `FailureAnalysisEngine` | post | Classify failures | `analysis/FailureAnalysisEngine.ts` | shipped-legacy |
 | `AutoFixEngine` / `FixValidator` | post | Confidence-gated autofix | `autofix/` | shipped-legacy |
-| `RedeployCoordinator` / `RetryHandler` | post | Canary/retry | `redeploy/` | shipped-legacy |
+| `RedeployCoordinator` | post | Canary/retry | `redeploy/RedeployCoordinator.ts` | shipped-legacy |
 | `EscalationEngine` | post | Manual / rollback thresholds | `escalation/` | shipped-legacy |
 | `SuccessHandler` | post | Cleanup + notify | `success/` | shipped-legacy |
 | `RegressionAnalysisService` | post | Regression service | `services/` | shipped-legacy |
-| `LightweightValidator` / `ComprehensiveValidator` / `HookMetricsCollector` | post | Validation + metrics | `validation/` | shipped-legacy |
+| `LightweightValidator` / `HookMetricsCollector` | post | Validation + metrics | `validation/` | shipped-legacy |
 | `SelfProposalEngine` / `MetamorphosisEngine` | post-process-complete | activity.log → governed proposals (≥0.7) | `metamorphosis/` | shipped-legacy; wired if PostProcessor constructed |
-| `ProcessorConfigLoader` | config | `features.processors` | `config/ProcessorConfigLoader.ts` | no plant key today |
-
 `enablePostProcessor`: README + `docs-site/docs/guides/consumer-migration.md` say **false**. `defaultXrayConfig.enablePostProcessor` in `xray-activation.ts` is still **true**.
 
 ---
@@ -159,7 +156,6 @@ These are the **OS gates**. Not ProcessorManager.
 | `cursor-pre-tool-use` | pre | Cursor `preToolUse` | stdin JSON → `{permission:allow\|deny}`; same gate; first-tool Station boot | `src/integrations/cursor/hooks/pre-tool-use.js` | repo `.cursor/hooks.json` | **live-gate** when project hooks load |
 | Cursor preCompact | pre | Cursor `preCompact` | Station merge + `event_class` (`cursor-host-precompact` \| `cursor-precompact-synthetic`) | `pre-compact.js` | same | **live-side-effect** |
 | OpenCode plugin | pre/post | `tool.execute.before/after` | Codex inject + ProcessorManager subset + `evaluatePreToolGate` | `src/plugin/xray-codex-injection.ts` | `package.json` `opencode.plugin` | **live-gate** when OpenCode wears 0xray |
-| `beforeToolHook` / `afterToolHook` | pre/post | all hosts | ValidatorRegistry + optional ProcessorManager + v3 PostProcessor loop + govern | `src/integrations/enforcement-gate.ts` | none | live if host calls it; after-hook is non-blocking on errors |
 | Hermes pre/post | pre/post | `onPreToolCall` / processors | `evaluatePreToolGate` + ProcessorManager if present | `src/integrations/hermes-agent/bridge.mjs` | `npx 0xray hermes install` | **live-gate** when worn |
 | OpenClaw PreToolUse | pre | host hook | Same gate → `{action:block\|allow}` | `src/integrations/openclaw/hooks/pre-tool-gate-runtime.mjs`, plugin `xray-pre-tool` | `npx 0xray openclaw install` | **live-gate** when worn |
 

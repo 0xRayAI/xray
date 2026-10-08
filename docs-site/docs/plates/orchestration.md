@@ -5,51 +5,57 @@ sidebar_label: Orchestration
 
 # Orchestration
 
-Multi-step work is planned, run, and closed. Routing picks an agent. This plate is the coordination around that pick.
+Each tool is its own call. `spawnAside` opens around `orchestrate-task`, `analyze-complexity`, and `govern-and-apply`. `closeAside` runs when that call returns.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
 │ INPUT LAYER                                                │
 │                                                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ tasks                                              │  │
-│   │ descriptions · dependencies · type                 │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-└──────────────────────────────┼────────────────────────────┘
-                               v
-┌──────────────────────────────┼────────────────────────────┐
-│ PROCESSING LAYER             v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ analyze-complexity                                 │  │
-│   │ ExecutionPlanner validates and plans               │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ orchestrate-task                                   │  │
-│   │ lead stays on the main thread                      │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ spawnAside                                         │  │
-│   │ on orchestrate-task, analyze-complexity,           │  │
-│   │ and govern-and-apply                               │  │
-│   │ observations from the three flows                  │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ confidence gate                                    │  │
-│   │ getTaskConfidence when Repertoire is worn          │  │
-│   └──────────────────────────┬─────────────────────────┘  │
-│                              v                            │
-│   ┌────────────────────────────────────────────────────┐  │
-│   │ closeAside                                         │  │
-│   └──────────────────────────┬─────────────────────────┘  │
+│   ┌──────────────────────┐      ┌──────────────────────┐  │
+│   │ tool name            │      │ arguments            │  │
+│   └──────────┬───────────┘      └──────────┬───────────┘  │
+└──────────────┼─────────────────────────────┼──────────────┘
+               v                             v
+┌──────────────┼─────────────────────────────┼──────────────┐
+│ PROCESSING LAYER                            │              │
+│              v                             v              │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ orchestrate-task                                   │ │
+│   │ spawnAside · handleOrchestrateTask · closeAside    │ │
+│   └──────────────────────────┬─────────────────────────┘ │
+│                              v                           │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ analyze-complexity                                 │ │
+│   │ a due synthesis checkpoint can return first        │ │
+│   │ spawnAside · handleAnalyzeComplexity · closeAside  │ │
+│   └──────────────────────────┬─────────────────────────┘ │
+│                              v                           │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ govern-and-apply                                   │ │
+│   │ a due synthesis checkpoint blocks first            │ │
+│   │ spawnAside · governExternalProposals · closeAside  │ │
+│   └──────────────────────────┬─────────────────────────┘ │
+│                              v                           │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ get-orchestration-status                           │ │
+│   └──────────────────────────┬─────────────────────────┘ │
+│                              v                           │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ cancel-orchestration                               │ │
+│   │ closeAside on a forced cancel or a matching session│ │
+│   └──────────────────────────┬─────────────────────────┘ │
+│                              v                           │
+│   ┌────────────────────────────────────────────────────┐ │
+│   │ optimize-orchestration                             │ │
+│   └──────────────────────────┬─────────────────────────┘ │
 └──────────────────────────────┼────────────────────────────┘
                                v
 ┌──────────────────────────────┼────────────────────────────┐
 │ OUTPUT LAYER                 v                            │
 │   ┌─────────────────────┐    ┌─────────────────────────┐ │
-│   │ execution result    │    │ aside observations      │ │
+│   │ tool result         │    │ aside id                │ │
 │   └─────────────────────┘    └─────────────────────────┘ │
 └────────────────────────────────────────────────────────────┘
 ```
+
+stamped · 0xray 4.0.41

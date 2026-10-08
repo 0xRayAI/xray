@@ -1,5 +1,7 @@
 # Lead cadence (syncopation)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Higher than grok-bot seats. Dist cadence (`dist/CADENCE.md`) is how often we post. This card is how a **peer lead** keeps the band in time.
 
 **A friend would hear:** a second copy of you should pick up the ticket from disk and keep working. The human should not have to re-teach the rules every wake. Dummy bodies prove the worn catalog. Same-sess bodies keep the suit on. Workstreams stay moving. Station done is the close — not a timer.
@@ -182,9 +184,9 @@ This is an AI OS. The lead decides. Green CI is not ship. The scripts are the ma
 | **B — Pack** | Packed tarball installs and the required dist paths exist | `npx @0xray/foundry gate` → `assert-packed-dist-cli.mjs` · consumer smoke |
 | **C — Docs** | README · CHANGELOG · `llms.txt` · `AGENTS.md` · `AGENTS-consumer.md` · `SKILLS.md` · package.json · Docusaurus headers + required guides. **Patch stamps:** `package.json` + CHANGELOG + stamped JSON only. The stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC. It does not edit Station, NOTES, dest, or node_modules. It does not publish. | `npm run release:docs-check` (`reconcile-version.mjs --check` then `validate-release-docs.mjs`) · `npm run version:sync` stamps JSON + CHANGELOG and strips every present-tense patch pin |
 | **C2 — Live docs** | HTTP 200 real content when agents must read them | `ship-ready-mill-gate` C2 |
-| **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag) |
+| **D — Release** | A+B+C · uns-draft · merge · full gate · verify-only · publish · poll live · annotated tag pushed · GitHub Release URL (Latest flips; a pushed tag alone is FAIL) | `npx @0xray/foundry release [patch\|minor\|major] --i-mean-it` (`release.mjs`: bump → stamp → `release-gate.mjs` → commit/push → `gate --verify-only` → `npm publish` → tag). The script stops at the tag. Forge still drafts the GitHub Release from CHANGELOG; critic friend-tests; Blaze publishes it (or an explicit GO). |
 
-Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
+Fail-closed: red CI, docs-check fail (including local version ≤ npm, or a guide pinning a patch), pack-path miss, critic FAIL/HOLD, subject-review miss (dest/domain leftover), friend-test fail on public/OS docs, or `foundry gate` fail, or a pushed tag with no GitHub Release. A pacer never publishes. **Subject review. Fix n ship.** sits between A and D.
 
 npm publish and Railway deploy stay Ask-first even after mill-gate **D** (`AUTO-REVIEW-POLICY.md`). A host paste is not the OS decision. Spend, credentials, deletes, taste, and mint-rotate stay Ask-first.
 
@@ -193,7 +195,7 @@ npm publish and Railway deploy stay Ask-first even after mill-gate **D** (`AUTO-
 Ask the owner before npm publish or a Railway deploy, even after gate D. The lead runs the publish after that yes. Do not hand this to a browser subagent.
 
 1. **npm CLI:** after gate PASS, every time run `npm publish --access public` (no `--auth-type=web`, no `--otp=` from chat). Stay logged in — do **not** `npm logout`. Run it in the live TTY (do not pipe through `tee`). The CLI prints `Authenticate your account at:` plus a `https://www.npmjs.com/auth/cli/…` URL. Paste that URL as a clickable link. Do **not** press Enter. Do **not** open a VM browser. Do **not** ask the human to type a 6-digit authenticator code into chat. The human approves OTP at that URL in their own session.
-2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers.
+2. Watch the same CLI until `+ <pkg>@<version>`. Then `npm view <pkg> version` (and `<pkg>@<version>`) in a loop. **Do not move on until the new version is polled live.** The `+` line can land minutes before the registry answers. Then push an annotated tag `vX.Y.Z` on that commit and create or update the GitHub Release so Latest flips. A pushed tag alone is FAIL for gate D. Forge drafts the notes from CHANGELOG in the same pass. Critic friend-tests them. Blaze publishes the Release (or an explicit GO). Title: `vX.Y.Z — <short friend line>`. Body: ## What's new (3–7 plain CHANGELOG bullets) · ## Who it helps (one short line) · ## How to get it (npm + tag + link to full CHANGELOG) · ## Breaking / notes only if real. Banned: one-liners / stub bodies ("wear-gated tarball only", "see CHANGELOG", empty), gate jargon, Dist/X voice, and features not in CHANGELOG. The receipt includes the release URL.
 3. **Registry install (live verify):** `npm view` is not an install. Prove **both** paths before moving on:
  - **Fresh:** empty temp dir → `npm init -y` → `npm install <pkg>@<version>` from the registry (not a local tgz).
  - **Upgrade:** existing consumer on the prior live version → `npm install <pkg>@<version>`. Leftover `XRAY_AI_PATH=` `.cursor/hooks.json` is rewritten to relative `.cursor/hooks/*.sh`. Wear and mill plant still present.

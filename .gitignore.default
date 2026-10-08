@@ -21,6 +21,7 @@ credentials.json
 *.key
 
 # 0xray suit artifacts (postinstall / bridge install)
+.xray/state/cursor-hook-wear/
 .grok/
 .mcp.json
 opencode.json

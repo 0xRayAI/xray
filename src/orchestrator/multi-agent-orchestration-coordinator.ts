@@ -393,9 +393,9 @@ export class MultiAgentOrchestrationCoordinator {
           // Wait for completion
           return new Promise((resolve) => {
             const checkCompletion = () => {
-              const monitoringData =
-                this.enhancedOrchestrator.getMonitoringInterface();
-              const agent = monitoringData[spawnedAgent.id];
+              const agent = this.enhancedOrchestrator.getMonitoredAgent(
+                spawnedAgent.id,
+              );
 
               if (agent?.status === "completed") {
                 resolve({

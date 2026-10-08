@@ -91,10 +91,10 @@ Removed from prior docs: `@librarian`, `@general`, `@document-writer` — not pr
 
 ## thinDispatch Routing
 
-- **Simple** (≤15): Single agent
-- **Moderate** (≤25): Single agent with tools
-- **Complex** (≤50): Multi-agent coordination
-- **Enterprise** (>50): Orchestrator-led team
+- **Simple** (≤15): single-agent
+- **Moderate** (≤25): multi-agent
+- **Complex** (≤50): orchestrator-led
+- **Enterprise** (>50): orchestrator-led
 
 ## Memory routing
 

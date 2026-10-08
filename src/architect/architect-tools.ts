@@ -388,6 +388,13 @@ export function conferVerdictFromArchitectureAssessment(
   return "PASS";
 }
 
+/** Same rule, under the name main already calls. */
+export function conferVerdictFromAssessment(
+  assessment: ArchitectureAssessment,
+): ArchitectureConferVerdict {
+  return conferVerdictFromArchitectureAssessment(assessment);
+}
+
 export function formatConferArchitectureAssessment(
   conferPrompt: string,
   assessment: ArchitectureAssessment,
@@ -402,6 +409,16 @@ export function formatConferArchitectureAssessment(
     "No additional hardening noted";
   const assessmentJson = JSON.stringify(assessment, null, 2);
   return `${conferPrompt.trim()}\n\n## Architecture assessment\n${assessmentJson}\n\nVerdict: ${verdict}\n${risks}\nHardening: ${hardening}`;
+}
+
+/** An empty confer prompt stays the assessment JSON. A prompt gets the verdict block. */
+export function formatConferArchitectureText(
+  conferPrompt: string,
+  assessment: ArchitectureAssessment,
+): string {
+  const prompt = conferPrompt.trim();
+  if (!prompt) return JSON.stringify(assessment, null, 2);
+  return formatConferArchitectureAssessment(prompt, assessment);
 }
 
 // Helper functions

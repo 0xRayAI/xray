@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs';
 import { DEFAULT_SIGNALS_PATH, defaultWritablePaths, hydrateWritableSignals, resolveReadableConfigPath, resolveWritableConfigPath, } from '../paths.js';
 import { RepertoireService } from '../RepertoireService.js';
+import { MetaInferenceModelError, } from '../synthesis/meta-inference-engine.js';
 function toRepertoireCaps(caps) {
     return {
         capabilities: caps.capabilities,
@@ -71,6 +72,9 @@ export class RepertoireMemoryRoutingProvider {
             logDir: resolveWritableConfigPath(config.logDir, cwd, writable.logDir),
             feedbackDir: resolveWritableConfigPath(config.feedbackDir, cwd, writable.feedbackDir),
         });
+        if (config.hermesCommand !== undefined) {
+            this.service.metaInference.configureModel(config.hermesCommand);
+        }
     }
     getAvailabilityStatus() {
         try {
@@ -199,8 +203,21 @@ export class RepertoireMemoryRoutingProvider {
         return this.service.buildSynthesisContext(opts.projectRoot, opts.dueReason ?? null);
     }
     async refreshMetaInference() {
-        const report = await this.service.runMetaInference();
-        return { refreshed: report !== null };
+        try {
+            const report = await this.service.runMetaInference();
+            if (report === null) {
+                return { refreshed: false, reason: 'nothing_to_process' };
+            }
+            return { refreshed: true, reason: 'synthesized' };
+        }
+        catch (error) {
+            if (error instanceof MetaInferenceModelError) {
+                return { refreshed: false, reason: error.reason, error: error.message };
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            process.stderr.write(`[meta-inference] state_error: ${message}\n`);
+            return { refreshed: false, reason: 'state_error', error: message };
+        }
     }
 }
 /** Factory export — 0xRay provider-loader calls this by name */

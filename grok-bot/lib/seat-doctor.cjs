@@ -66,6 +66,104 @@ function millPlantFromInventory(inventory) {
   };
 }
 
+function xrayPackageInstalled(cwd) {
+  return isFile(path.join(cwd, 'node_modules', '0xray', 'package.json'));
+}
+
+function shellTokens(command) {
+  const tokens = [];
+  let current = '';
+  let quote = '';
+  for (let i = 0; i < command.length; i += 1) {
+    const ch = command[i];
+    if (quote) {
+      if (ch === quote) quote = '';
+      else current += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += ch;
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+// ${NAME:-fallback}rest is the path when the variable is unset. A token with no slash is a PATH name (node, npx).
+function literalPathToken(token) {
+  let value = token;
+  const eq = value.indexOf('=');
+  if (eq > 0 && value.slice(0, eq).indexOf('/') === -1) value = value.slice(eq + 1);
+  const fallback = /^\$\{[A-Za-z_][A-Za-z0-9_]*:-([^}]*)\}(.*)$/.exec(value);
+  if (fallback) value = `${fallback[1]}${fallback[2]}`;
+  if (value.indexOf('/') === -1) return null;
+  // @scope/name is an npm package on PATH, not a file under cwd.
+  if (/^@[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) return null;
+  if (value.indexOf('$') !== -1 || value.indexOf('`') !== -1) return null;
+  return value;
+}
+
+function commandStrings(node, out) {
+  if (Array.isArray(node)) {
+    for (const item of node) commandStrings(item, out);
+    return;
+  }
+  if (!node || typeof node !== 'object') return;
+  if (typeof node.command === 'string') out.push(node.command);
+  if (Array.isArray(node.args)) {
+    for (const arg of node.args) {
+      if (typeof arg === 'string') out.push(arg);
+      else commandStrings(arg, out);
+    }
+  }
+  for (const [key, value] of Object.entries(node)) {
+    if (key === 'command' || key === 'args') continue;
+    if (value && typeof value === 'object') commandStrings(value, out);
+  }
+}
+
+function deadHookPaths(cwd) {
+  const dir = path.join(cwd, '.grok', 'hooks');
+  let names = [];
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const dead = [];
+  const seen = new Set();
+  const files = names.filter((entry) => entry.endsWith('.json')).sort();
+  for (const name of files) {
+    const file = path.join(dir, name);
+    const json = readJson(file);
+    if (!json) continue;
+    const commands = [];
+    commandStrings(json, commands);
+    for (const command of commands) {
+      for (const token of shellTokens(command)) {
+        const literal = literalPathToken(token);
+        if (!literal) continue;
+        const resolved = path.resolve(cwd, literal);
+        if (fs.existsSync(resolved)) continue;
+        const key = `${file}\n${resolved}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        dead.push({ file, path: resolved });
+      }
+    }
+  }
+  return dead;
+}
+
 function probeRepertoire(cwd) {
   const pkgPath = path.join(cwd, 'node_modules', '@0xray', 'repertoire', 'package.json');
   if (!fs.existsSync(pkgPath)) {
@@ -97,6 +195,17 @@ function probeOws(home) {
 
 // A leading `(example)` marker is unfilled. A mid-line mention is not.
 const HOUSE_EXAMPLE_LINE = /^\s*[-*]?\s*\(example\)/;
+// Opt out of wallet nags. A mid-line mention is not an opt-out.
+const WALLET_OFF_LINE = /^\s*[-*]?\s*(?:scope:\s*)?wallet\s+off\s*$/i;
+
+function scopeFromHouseText(text) {
+  const off = text.split(/\r?\n/).some((line) => WALLET_OFF_LINE.test(line));
+  return { wallet: off ? 'off' : 'on' };
+}
+
+function walletStepsOff(report) {
+  return Boolean(report.house && report.house.scope && report.house.scope.wallet === 'off');
+}
 
 function walkForHouse(start) {
   let dir = path.resolve(start);
@@ -135,16 +244,18 @@ function inspectHouseFile(file, via) {
       status: 'warn',
       file: null,
       via: null,
-      detail: 'no house/HOUSE.md, run setup-house',
+      detail: 'house is not enabled here',
     };
   }
   const exampleSibling = path.join(path.dirname(file), 'EXAMPLE.md');
+  const scope = scopeFromHouseText(text);
   if (fs.existsSync(exampleSibling)) {
     return {
       status: 'fail',
       file,
       via,
       detail: 'house/EXAMPLE.md exists — delete it',
+      scope,
     };
   }
   const unfilled = text.split(/\r?\n/).filter((line) => HOUSE_EXAMPLE_LINE.test(line));
@@ -155,9 +266,10 @@ function inspectHouseFile(file, via) {
       via,
       detail: 'HOUSE.md still has unfilled example lines',
       unfilled: unfilled.length,
+      scope,
     };
   }
-  return { status: 'pass', file, via, detail: file };
+  return { status: 'pass', file, via, detail: file, scope };
 }
 
 function probeHouse(cwd, env) {
@@ -169,7 +281,8 @@ function probeHouse(cwd, env) {
         status: 'warn',
         file: null,
         via: null,
-        detail: `GROK_BOT_HOUSE is set but HOUSE.md is missing (${path.resolve(raw)})`,
+        detail: 'house is not enabled here',
+        missing: path.resolve(raw),
       };
     }
     return inspectHouseFile(file, 'GROK_BOT_HOUSE');
@@ -180,10 +293,29 @@ function probeHouse(cwd, env) {
       status: 'warn',
       file: null,
       via: null,
-      detail: 'no house/HOUSE.md, run setup-house',
+      detail: 'house is not enabled here',
     };
   }
   return inspectHouseFile(walked, 'walk-up');
+}
+
+function isFile(file) {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function houseTemplateNames(srcDir) {
+  return fs.readdirSync(srcDir).filter((name) => {
+    if (name === 'EXAMPLE.md') return false;
+    return isFile(path.join(srcDir, name));
+  });
+}
+
+function legacyBoardPath(seatRoot) {
+  return path.join(seatRoot, 'ops', 'WAVEBOARD.md');
 }
 
 function initHouse(opts = {}) {
@@ -194,14 +326,8 @@ function initHouse(opts = {}) {
   if (!fs.existsSync(srcDir)) {
     return { ok: false, code: 1, message: `templates/house is missing (${srcDir})` };
   }
-  const names = fs.readdirSync(srcDir).filter((name) => {
-    if (name === 'EXAMPLE.md') return false;
-    try {
-      return fs.statSync(path.join(srcDir, name)).isFile();
-    } catch {
-      return false;
-    }
-  });
+  const names = houseTemplateNames(srcDir);
+  if (opts.migrate) return migrateHouse({ seatRoot, srcDir, destDir, names });
   const conflicts = [];
   for (const name of names) {
     const dest = path.join(destDir, name);
@@ -223,27 +349,95 @@ function initHouse(opts = {}) {
     code: 0,
     destDir,
     files: names.map((name) => path.join(destDir, name)),
+    moved: null,
     message: `copied templates/house to ${destDir}`,
+  };
+}
+
+function migrateHouse({ seatRoot, srcDir, destDir, names }) {
+  const legacy = legacyBoardPath(seatRoot);
+  const destBoard = path.join(destDir, 'WAVEBOARD.md');
+  if (fs.existsSync(legacy) && !isFile(legacy)) {
+    return { ok: false, code: 1, message: `refusing to migrate: ${legacy} is not a file` };
+  }
+  const legacyIsFile = isFile(legacy);
+  if (legacyIsFile && isFile(destBoard)) {
+    const templateBoard = path.join(srcDir, 'WAVEBOARD.md');
+    const templateText = isFile(templateBoard) ? fs.readFileSync(templateBoard, 'utf8') : null;
+    const destText = fs.readFileSync(destBoard, 'utf8');
+    if (templateText === null || destText !== templateText) {
+      return {
+        ok: false,
+        code: 1,
+        message: `refusing to overwrite ${destBoard} with ${legacy}`,
+      };
+    }
+  }
+  fs.mkdirSync(destDir, { recursive: true });
+  let moved = null;
+  if (legacyIsFile) {
+    fs.copyFileSync(legacy, destBoard);
+    fs.unlinkSync(legacy);
+    moved = destBoard;
+  }
+  const copied = [];
+  const skipped = [];
+  for (const name of names) {
+    if (name === 'WAVEBOARD.md' && moved) continue;
+    const dest = path.join(destDir, name);
+    if (isFile(dest)) {
+      skipped.push(dest);
+      continue;
+    }
+    fs.copyFileSync(path.join(srcDir, name), dest);
+    copied.push(dest);
+  }
+  const attention = path.join(destDir, 'ATTENTION_STATE.md');
+  const parts = [];
+  if (moved) parts.push(`moved ${legacy} to ${destBoard}`);
+  else parts.push('no ops/WAVEBOARD.md to move');
+  if (copied.includes(attention)) parts.push(`started ${attention}`);
+  if (copied.length > 0) parts.push(`copied templates/house to ${destDir}`);
+  else if (!moved) parts.push(`left existing house files in ${destDir}`);
+  return {
+    ok: true,
+    code: 0,
+    destDir,
+    files: moved ? [moved, ...copied] : copied,
+    moved,
+    skipped,
+    message: parts.join('; '),
   };
 }
 
 function nextSteps(report) {
   const steps = [];
-  if (!report.plant.ok) {
+  const installStep = 'npm i 0xray && npx @0xray/foundry inspect --skip-live';
+  if (!report.plant.installed) steps.push(installStep);
+  const millReady = report.plant.mill && report.plant.inspect;
+  if (!millReady) {
     steps.push('Fasten mill+inspect: npm i 0xray && npx @0xray/foundry mint --skip-live');
     steps.push('Prove plant: npx @0xray/foundry inspect --skip-live (expect mill + inspect, costume false)');
-  } else {
+  } else if (report.plant.ok) {
     steps.push('Prove again later: npx @0xray/foundry inspect --skip-live');
+  } else if (report.plant.deadHooks.length > 0) {
+    for (const dead of report.plant.deadHooks) {
+      steps.push(`Repair dead hook ${dead.file}: ${dead.path} is missing`);
+    }
+  } else if (report.plant.installed) {
+    steps.push(installStep);
   }
-  steps.push('Hangar shops: npx groover-hangar (extract / witness / pin)');
-  steps.push(
-    `Clearing: ${PLANT_URLS.clearing} (also ${PLANT_URLS.clearingRail}) — unpaid GET returns 402; pay USDC on Base via local Open Wallet (${report.ows.path})`,
-  );
-  steps.push(
-    'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
-  );
-  if (!report.ows.present) {
-    steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+  if (!walletStepsOff(report)) {
+    steps.push('Hangar shops: npx groover-hangar (extract / witness / pin)');
+    steps.push(
+      `Clearing: ${PLANT_URLS.clearing} (also ${PLANT_URLS.clearingRail}) — unpaid GET returns 402; pay USDC on Base via local Open Wallet (${report.ows.path})`,
+    );
+    steps.push(
+      'Signer is ZigZag (approved=true). Hosted /sign may be 410. Product MCP name is clearing — never xray-clearing. Do not mill-plant Clearing into this 0xRay suit.',
+    );
+    if (!report.ows.present) {
+      steps.push('OWS missing: create/fund a local Open Wallet under ~/.ows, then retry a 402 shop');
+    }
   }
   steps.push(
     `Identity (optional DID): Groover register → mint → pin. Suit UI: ${PLANT_URLS.suitUi} · registry: ${PLANT_URLS.registryMcp}`,
@@ -261,7 +455,9 @@ function diagnoseSeat(opts = {}) {
   const fromInventory = millPlantFromInventory(inventory);
   const mill = Boolean(millFile) || fromInventory.mill;
   const inspect = Boolean(inspectFile) || fromInventory.inspect;
-  const plantOk = Boolean(seat) && mill && inspect;
+  const installed = xrayPackageInstalled(cwd);
+  const deadHooks = deadHookPaths(cwd);
+  const plantOk = Boolean(seat) && mill && inspect && installed && deadHooks.length === 0;
   const house = probeHouse(cwd, opts.env || process.env);
   const report = {
     ok: plantOk && house.status !== 'fail',
@@ -269,6 +465,8 @@ function diagnoseSeat(opts = {}) {
     seat,
     plant: {
       ok: plantOk,
+      installed,
+      deadHooks,
       mill,
       inspect,
       millFile,
@@ -288,6 +486,18 @@ function diagnoseSeat(opts = {}) {
   return report;
 }
 
+function plantLine(report) {
+  if (report.plant.ok) return 'Plant: PASS — mill+inspect fastened';
+  const parts = [];
+  if (!report.plant.mill || !report.plant.inspect) parts.push('mill+inspect not fastened');
+  if (!report.plant.installed) parts.push('missing node_modules/0xray/package.json');
+  for (const dead of report.plant.deadHooks) {
+    parts.push(`${dead.file} missing ${dead.path}`);
+  }
+  if (parts.length === 0) parts.push('mill+inspect not fastened');
+  return `Plant: FAIL — ${parts.join('; ')}`;
+}
+
 function formatDoctor(report) {
   const lines = [];
   lines.push('@0xray/grok-bot doctor — seat plant check');
@@ -300,7 +510,7 @@ function formatDoctor(report) {
     lines.push(`Root: ${report.cwd}`);
   }
   lines.push('');
-  lines.push(`Plant: ${report.plant.ok ? 'PASS' : 'FAIL'} — mill+inspect ${report.plant.ok ? 'fastened' : 'not fastened'}`);
+  lines.push(plantLine(report));
   lines.push(`  mill: ${report.plant.mill ? 'yes' : 'miss'}${report.plant.millFile ? ` (${report.plant.millFile})` : ''}`);
   lines.push(
     `  inspect: ${report.plant.inspect ? 'yes' : 'miss'}${report.plant.inspectFile ? ` (${report.plant.inspectFile})` : ''}`,
@@ -320,20 +530,26 @@ function formatDoctor(report) {
   } else {
     lines.push(`Repertoire: miss — ${report.repertoire.detail}`);
   }
-  lines.push(
-    report.ows.present
-      ? `OWS pay: yes — ${report.ows.path}`
-      : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
-  );
+  if (walletStepsOff(report)) {
+    lines.push('OWS pay: skipped — house Scope wallet off');
+  } else {
+    lines.push(
+      report.ows.present
+        ? `OWS pay: yes — ${report.ows.path}`
+        : `OWS pay: miss — ${report.ows.path} (hangar shops return 402 until paid)`,
+    );
+  }
   if (report.house) {
     let label = 'WARN';
     if (report.house.status === 'pass') label = 'PASS';
     else if (report.house.status === 'fail') label = 'FAIL';
+    const spoken = report.house.status === 'pass' ? 'house on' : report.house.detail;
     if (report.house.file && report.house.via) {
       const tail = report.house.status === 'fail' ? ` — ${report.house.detail}` : '';
-      lines.push(`House: ${label} — ${report.house.file} (via ${report.house.via})${tail}`);
+      const lead = report.house.status === 'fail' ? '' : `${spoken} — `;
+      lines.push(`House: ${label} — ${lead}${report.house.file} (via ${report.house.via})${tail}`);
     } else {
-      lines.push(`House: ${label} — ${report.house.detail}`);
+      lines.push(`House: ${label} — ${spoken}`);
     }
   }
   lines.push('');
@@ -346,7 +562,7 @@ function formatDoctor(report) {
 }
 
 function parseDoctorArgs(argv) {
-  const out = { command: null, cwd: null, home: null, dir: null, json: false, printLlms: false };
+  const out = { command: null, cwd: null, home: null, dir: null, json: false, printLlms: false, migrate: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === 'doctor' || arg === 'ready' || arg === 'help') {
@@ -362,6 +578,10 @@ function parseDoctorArgs(argv) {
       }
       out.command = 'house-init';
       i += 1;
+      continue;
+    }
+    if (arg === '--migrate') {
+      out.migrate = true;
       continue;
     }
     if (arg === '--json') {
@@ -405,8 +625,10 @@ function usageText(kitRoot) {
   return `@0xray/grok-bot — complete setup path for Grok Bot agents
 
 Commands:
-  doctor | ready   Prove mill+inspect, warn if house/HOUSE.md is missing, fail if example lines remain
+  doctor | ready   Prove mill+inspect. Say house on, or house is not enabled here. Fail if example lines remain
   house init       Copy templates/house into ./house. Refuses if a target file exists
+  house init --migrate
+                   Move ops/WAVEBOARD.md to house/WAVEBOARD.md when that old board is a file. Start ATTENTION_STATE.md from the template when it is missing. Leave a house file you already changed. Refuse when both boards exist and the house board is not the untouched template
   (default)        Point at AGENTS.md / SKILLS.md / llms.txt
 
 Flags:
@@ -446,8 +668,13 @@ function runDoctorCli(argv, io = {}) {
     }
     return 0;
   }
+  if (parsed.migrate && parsed.command !== 'house-init') {
+    stderr.write('--migrate is only valid with house init\n');
+    stdout.write(usageText(kitRoot));
+    return 2;
+  }
   if (parsed.command === 'house-init') {
-    const result = initHouse({ dir: parsed.dir || parsed.cwd, kitRoot });
+    const result = initHouse({ dir: parsed.dir || parsed.cwd, kitRoot, migrate: parsed.migrate });
     stdout.write(`${result.message}\n`);
     return result.code;
   }

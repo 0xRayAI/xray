@@ -3,6 +3,31 @@ import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { SynthesisPromptBuilder } from './synthesis-prompt-builder.js';
 import { InferenceStateManager } from '../registry/InferenceStateManager.js';
+/** First wait after a failed model attempt. Doubles until MODEL_BACKOFF_CAP_MS. */
+export const MODEL_BACKOFF_BASE_MS = 15 * 60 * 1000;
+/** Upper bound so a dead hermes CLI cannot push the wait without limit. */
+export const MODEL_BACKOFF_CAP_MS = 4 * 60 * 60 * 1000;
+export function modelBackoffDelayMs(failures) {
+    const exponent = Math.max(0, Math.min(failures, 16) - 1);
+    const doubled = MODEL_BACKOFF_BASE_MS * 2 ** exponent;
+    return Math.min(doubled, MODEL_BACKOFF_CAP_MS);
+}
+export function formatMetaInferenceFailure(error) {
+    if (error instanceof MetaInferenceModelError) {
+        return oneLine(`meta-inference failed: ${error.reason}: ${error.message}`);
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    return oneLine(`meta-inference failed: state_error: ${message}`);
+}
+/** Raised when synthesis cannot be produced by a model. Callers must not treat it as a report. */
+export class MetaInferenceModelError extends Error {
+    reason;
+    constructor(reason, message, options) {
+        super(message, options);
+        this.name = 'MetaInferenceModelError';
+        this.reason = reason;
+    }
+}
 const DEFAULT_BATCH_SIZE = 1;
 const DEFAULT_MAX_ENTRIES = 8;
 export class MetaInferenceEngine {
@@ -12,17 +37,26 @@ export class MetaInferenceEngine {
     batchSize;
     maxEntries;
     promptBuilder = new SynthesisPromptBuilder();
-    runHermes;
+    now;
+    model;
     constructor(options = {}) {
         this.logDir = options.logDir ?? 'logs/groover-inference';
         this.stateManager = new InferenceStateManager(options.statePath ?? 'data/inference-state.json');
         this.reportPath = options.reportPath ?? 'logs/meta-inference/synthesis.md';
         this.batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
         this.maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
-        this.runHermes = options.hermesCommand ?? this.defaultHermesCommand;
+        this.now = options.now ?? (() => new Date());
+        this.model =
+            options.hermesCommand === null
+                ? null
+                : (options.hermesCommand ?? ((prompt) => this.defaultHermesCommand(prompt)));
+    }
+    /** `null` configures no model. The next run fails closed instead of calling the hermes CLI. */
+    configureModel(command) {
+        this.model = command;
     }
     async run() {
-        const state = this.stateManager.load();
+        const state = this.loadState();
         const processed = new Set([
             ...state.processedCommentIds,
             ...state.processedSessionIds,
@@ -36,6 +70,7 @@ export class MetaInferenceEngine {
             return null;
         }
         const entries = newEntries.slice(0, this.maxEntries);
+        this.throwIfBackingOff(state);
         const batchResults = [];
         let totalPass = 0;
         let totalReject = 0;
@@ -68,23 +103,13 @@ export class MetaInferenceEngine {
                     analyzedSoFar: i + batch.length,
                 },
             });
-            try {
-                batchResults.push(this.runHermes(prompt));
-            }
-            catch {
-                // Continue with remaining batches
-            }
+            batchResults.push(this.callModelOrRecord(prompt));
         }
         const avgResonance = resonanceCount > 0 ? (resonanceSum / resonanceCount).toFixed(3) : 'N/A';
         const finalPrompt = this.promptBuilder.buildFinalSynthesisPrompt(entries.length, { pass: totalPass, reject: totalReject, avgResonance }, batchResults, entries);
-        let finalReport = '';
-        try {
-            finalReport = this.runHermes(finalPrompt);
-            this.appendReport(entries.length, totalPass, resonanceCount > 0 ? resonanceSum / resonanceCount : null, finalReport);
-        }
-        catch {
-            finalReport = batchResults.join('\n\n---\n\n');
-        }
+        const finalReport = this.callModelOrRecord(finalPrompt);
+        this.stateManager.clearModelBackoff();
+        this.appendReport(entries.length, totalPass, resonanceCount > 0 ? resonanceSum / resonanceCount : null, finalReport);
         const ids = entries.map((e) => e.comment_id ?? e.post_id ?? e.session_id).filter(Boolean);
         const hasSession = entries.some((e) => e.session_id);
         this.stateManager.markProcessed(ids, hasSession ? 'session' : 'comment');
@@ -118,12 +143,95 @@ export class MetaInferenceEngine {
                         processed.add(id);
                     }
                 }
-                catch {
-                    // skip malformed
+                catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    this.logFailure('malformed_log_line', `skipped malformed log line in ${file}: ${message}`);
                 }
             }
         }
         return entries;
+    }
+    loadState() {
+        try {
+            return this.stateManager.load();
+        }
+        catch (error) {
+            throw this.fail('state_error', `meta-inference state could not be read: ${errorText(error)}`, error);
+        }
+    }
+    throwIfBackingOff(state) {
+        const backoff = state.modelBackoff;
+        if (!backoff)
+            return;
+        const failedAt = Date.parse(backoff.failedAt);
+        if (Number.isNaN(failedAt))
+            return;
+        const wait = modelBackoffDelayMs(backoff.failures);
+        if (this.now().getTime() - failedAt < wait) {
+            throw this.fail('model_backoff', `meta-inference model call skipped until backoff ends (${wait}ms)`);
+        }
+    }
+    /**
+     * A missing, failed, or junk model result must not produce a synthesis report.
+     * Entries stay unprocessed so a later run can retry them.
+     */
+    callModelOrRecord(prompt) {
+        try {
+            return this.callModel(prompt);
+        }
+        catch (error) {
+            this.noteModelFailure(error);
+            throw error;
+        }
+    }
+    callModel(prompt) {
+        if (this.model === null) {
+            throw this.fail('model_unavailable', 'meta-inference model is not configured');
+        }
+        let output;
+        try {
+            output = this.model(prompt);
+        }
+        catch (error) {
+            if (error instanceof MetaInferenceModelError) {
+                this.logFailure(error.reason, error.message);
+                throw error;
+            }
+            if (isMissingHermes(error)) {
+                throw this.fail('model_unavailable', 'meta-inference model is not available: hermes CLI not found', error);
+            }
+            throw this.fail('model_call_failed', `meta-inference model call failed: ${errorText(error)}`, error);
+        }
+        try {
+            return acceptModelOutput(output);
+        }
+        catch (error) {
+            if (error instanceof MetaInferenceModelError) {
+                this.logFailure(error.reason, error.message);
+                throw error;
+            }
+            throw error;
+        }
+    }
+    noteModelFailure(error) {
+        if (!(error instanceof MetaInferenceModelError))
+            return;
+        if (error.reason === 'model_backoff' || error.reason === 'state_error')
+            return;
+        try {
+            this.stateManager.recordModelFailure(this.now().toISOString());
+        }
+        catch (recordError) {
+            this.logFailure('state_error', `could not record model backoff: ${errorText(recordError)}`);
+        }
+    }
+    fail(reason, message, cause) {
+        const error = new MetaInferenceModelError(reason, message, cause === undefined ? undefined : { cause });
+        this.logFailure(reason, message);
+        return error;
+    }
+    logFailure(reason, message) {
+        process.stderr.write(`[meta-inference] ${reason}: ${message}\n`);
     }
     appendReport(entryCount, passCount, avgResonance, report) {
         const dir = dirname(this.reportPath);
@@ -145,5 +253,54 @@ export class MetaInferenceEngine {
             timeout: 300_000,
         }).trim();
     }
+}
+function oneLine(value) {
+    return value.replace(/\s+/g, ' ').trim();
+}
+function errorText(error) {
+    if (error instanceof Error)
+        return error.message;
+    return String(error);
+}
+function isMissingHermes(error) {
+    if (!error || typeof error !== 'object')
+        return false;
+    const record = error;
+    if (record.code === 'ENOENT')
+        return true;
+    return typeof record.message === 'string' && record.message.includes('ENOENT');
+}
+function isThenable(value) {
+    if (value === null || (typeof value !== 'object' && typeof value !== 'function'))
+        return false;
+    return typeof value.then === 'function';
+}
+/**
+ * Synthesis text is a non-empty string. A value shaped like JSON must parse.
+ * Anything else is not a model result.
+ */
+function acceptModelOutput(value) {
+    if (isThenable(value)) {
+        throw new MetaInferenceModelError('model_output_invalid', 'meta-inference model returned a Promise');
+    }
+    if (value === undefined || value === null) {
+        throw new MetaInferenceModelError('model_output_invalid', 'meta-inference model returned empty output');
+    }
+    if (typeof value !== 'string') {
+        throw new MetaInferenceModelError('model_output_invalid', 'meta-inference model returned a non-string');
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+        throw new MetaInferenceModelError('model_output_invalid', 'meta-inference model returned empty output');
+    }
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+            JSON.parse(trimmed);
+        }
+        catch (error) {
+            throw new MetaInferenceModelError('model_output_invalid', `meta-inference model returned invalid JSON: ${errorText(error)}`, { cause: error });
+        }
+    }
+    return trimmed;
 }
 //# sourceMappingURL=meta-inference-engine.js.map

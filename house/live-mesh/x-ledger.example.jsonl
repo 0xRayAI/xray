@@ -1,0 +1,5 @@
+# Herald appends one JSON object per X action. Illustrative only — not a record of a real event.
+# Fields: t (ISO), kind (x_in_mention|x_in_reply|x_out_reply|x_out_root|x_like),
+# post_id, handle (no @), url, optional in_reply_to / tag / note.
+{"t": "2026-10-04T15:15:43Z", "kind": "x_in_mention", "post_id": "2106765213160669630", "handle": "Blaze0x1", "url": "https://x.com/Blaze0x1/status/2106765213160669630", "tag": "muse"}
+{"t": "2026-10-05T11:43:28Z", "kind": "x_out_reply", "post_id": "2107074186619617305", "handle": "0xRayAI", "in_reply_to": "2107065452048638011", "url": "https://x.com/0xRayAI/status/2107074186619617305", "tag": "live-feed note"}

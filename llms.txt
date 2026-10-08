@@ -13,6 +13,8 @@ Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 4
 - Host `preCompact` writes the hook line and per-session receipt on the suit mill and on nested consumer wear roots (a bench with local `node_modules/0xray`). A counted cut needs a non-empty generation id and a numeric usage percent.
 - `@0xray/grok-bot`: the general page is `grok-bot/OP-PROC.md`. The team overlay is `house/` and is not in that npm pack. `templates/house/` ships. `grok-bot house init` copies the template and refuses to overwrite. Doctor uses `GROK_BOT_HOUSE` when set, otherwise walks up from the working directory for `house/HOUSE.md`.
 - MCP servers start through `scripts/node/mcp-launch.cjs`. They see PATH, HOME, and XRAY_ROOT, plus the names on their keep list. Tokens such as NPM_TOKEN are not inherited. User env values stay out of argv. Postinstall keeps user edits to AGENTS.md, `.mcp.json`, and `opencode.json`. `house init` does not copy EXAMPLE.md. Doctor FAILs while `house/EXAMPLE.md` exists. Inspect has a machinePlugin check. The Cursor hook defaults XRAY_ROOT to the suit directory.
+- `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. Run `npx 0xray wear` after install; it writes only the consumer project's `.cursor/hooks.json`. `npx 0xray unwear` restores the pre-wear snapshot.
+- 4.0.30: `npx 0xray wear` and `setup` also work outside a git checkout. They write the 4.0.28 project setup and skip only Cursor hooks, with one warning. In a git checkout they write the 4.0.28 project setup plus Cursor hooks.
 
 - `npx @0xray/foundry mint --skip-live` — re-fasten mill plant, then inspect.
 - `npx @0xray/foundry inspect --skip-live` — plant-vs-worn, receipt, CI. Chat is not a receipt.
@@ -39,7 +41,7 @@ Registered in `.mcp.json` as `npx -y 0xray mcp <cmd>`:
 | `xray-code-review` | Proposal quality |
 | `xray-architect-tools` | System design |
 
-Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.8 ships on (`npx @0xray/repertoire mcp`). Dest is named laws, not hangar `repo-*` or git slugs. Survive compact is **Station** (Read `.xray/state/STATION.md`). Station is the ticket, not a substitute for Repertoire. Do not pin 0.1.8.
+Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships on (`npx @0xray/repertoire mcp`). Dest is named laws, not hangar `repo-*` or git slugs. Survive compact is **Station** (Read `.xray/state/STATION.md`). Station is the ticket, not a substitute for Repertoire. Do not pin 0.1.8.
 
 ## Codex 69 (always on)
 

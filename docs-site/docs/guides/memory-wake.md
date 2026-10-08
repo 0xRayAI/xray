@@ -2,11 +2,11 @@
 
 Station stays a ticket. This page is the join. Not a new organ.
 
-Chat dies. Bookmark, index, and mind already exist. They do not meet on wake. That is the memory issue.
+Chat dies. Bookmark, index, and mind already exist. They meet on wake: the station card carries the cascade count and `Sleeve: on` when the previous ticket came back, the worn plate already matched the package, the previous ticket already matched the working record, and inspect has passed for the skills on disk. Session start and compact run that mill. A later prompt and a look read the report. When the line is on, the next session keeps that ticket. When the plate or the mill is the miss, that miss is the plan until the line is on again. A change to the worn skills drops the pass until the next session start or compact. The card keeps the named plane. Judgement is continue, retry N, stop, or start. A miss on the same job counts another retry. Payments is on only when the ticket is a payment.
 
 ## Thesis
 
-`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.8` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
+`applyStationHeat` is the hippocampus. It already runs on every floor that boots. Vendor ships `@0xray/repertoire@0.2.9` (seed + stack). Heat copies factory + stack laws onto the project list. Subject `repo-*` stay off dest. Turn Repertoire off and Station stays the memory. No new MCP. No new `SKILL.md`.
 
 ## Three areas → pieces that already exist
 
@@ -39,7 +39,8 @@ applyStationHeat(root, host, extra, existing)
  6. matchedSignals = getTaskConfidence(matchText)
  7. opProcNames = reloadOpProc() factory ∪ stack only
  8. persist repertoire-working { pickup, subjectHits, opProcNames, destCount }
- 9. Station projection stays thin Intent / Working ≤4 / Unfinished path
+ 9. Station projection stays thin Intent / Working ≤4 / Cascade count / Sleeve on / Plane / Judgement / Payments / Unfinished path
+ 10. A memory-recall look reads the same current index, the matched law names, and the four stitches: the returned wake, the plate, the readback, and the mill report
 ```
 
 `cursorBootNeedsRefresh` already refreshes when `repertoireResume` count changes. Hydrate first, then the count moves, then heat rewrites. Do not add a hook.

@@ -1,5 +1,7 @@
 # Seats (roster)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 Plain roles from `LEAN-COMPUTE.md` mapped to named agents.
 **Seat stamps:** `hangar-magnet/ops/dist/brand/SEAT-STAMPS.md` (SSOT).
 

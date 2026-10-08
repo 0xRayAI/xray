@@ -102,21 +102,23 @@ export class SimplePatternAnalyzer {
     // Fall back to activity log parsing if no outcomes
     if (entries.length === 0 && fs.existsSync(this.logPath)) {
       const content = fs.readFileSync(this.logPath, "utf-8");
-      const lines = content.split("\n").filter((l) => l.trim());
-      
-      // Filter to task completion entries
-      const completionLines = lines.filter(
-        (line) => line.includes("complex-task-completed") || 
-                  line.includes("job-completed") ||
-                  line.includes("task-completed")
-      );
+      const completionLines: string[] = [];
+      for (const line of content.split("\n")) {
+        if (!line.trim()) continue;
+        if (
+          line.includes("complex-task-completed") ||
+          line.includes("job-completed") ||
+          line.includes("task-completed")
+        ) {
+          completionLines.push(line);
+        }
+      }
 
       const entriesToAnalyze = limit ? completionLines.slice(-limit) : completionLines;
-      const parsedEntries = entriesToAnalyze
-        .map((line) => this.parseLine(line))
-        .filter((e): e is ParsedLogEntry => e !== null);
-      
-      entries.push(...parsedEntries);
+      for (const line of entriesToAnalyze) {
+        const parsed = this.parseLine(line);
+        if (parsed) entries.push(parsed);
+      }
     }
 
     if (entries.length === 0) {
@@ -269,41 +271,68 @@ export class SimplePatternAnalyzer {
       }
     }
 
-    // Calculate success rates
-    for (const [agent, stats] of agentStats) {
-      if (stats.attempts > 0) {
-        // We'll calculate in the output
-      }
+    let attempts = 0;
+    let successes = 0;
+    for (const stats of agentStats.values()) {
+      attempts += stats.attempts;
+      successes += stats.successes;
     }
-
-    for (const [taskType, stats] of taskTypeStats) {
-      const agentStatsForTask = Array.from(agentStats.values()).reduce(
-        (acc, s) => ({
-          attempts: acc.attempts + s.attempts,
-          successes: acc.successes + s.successes,
-        }),
-        { attempts: 0, successes: 0 },
-      );
-      stats.successRate =
-        agentStatsForTask.attempts > 0
-          ? (agentStatsForTask.successes / agentStatsForTask.attempts) * 100
-          : 0;
+    const successRate = attempts > 0 ? (successes / attempts) * 100 : 0;
+    for (const stats of taskTypeStats.values()) {
+      stats.successRate = successRate;
     }
-
-    const sortedEntries = [...entries].sort(
-      (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
 
     return {
       agentStats,
       taskTypeStats,
       complexityStats,
       totalEntries: entries.length,
-      dateRange: {
-        start: sortedEntries[0]?.timestamp || "",
-        end: sortedEntries[sortedEntries.length - 1]?.timestamp || "",
-      },
+      dateRange: this.entryDateRange(entries),
+    };
+  }
+
+  /**
+   * Earliest and latest timestamp. Matches a stable sort on finite times.
+   */
+  private entryDateRange(entries: ParsedLogEntry[]): { start: string; end: string } {
+    if (entries.length === 0) return { start: "", end: "" };
+
+    const first = entries[0];
+    if (!first) return { start: "", end: "" };
+
+    let start = first.timestamp;
+    let end = start;
+    let startTime = new Date(start).getTime();
+    let endTime = startTime;
+
+    if (!Number.isNaN(startTime)) {
+      let finite = true;
+      for (let i = 1; i < entries.length; i++) {
+        const entry = entries[i];
+        if (!entry) continue;
+        const time = new Date(entry.timestamp).getTime();
+        if (Number.isNaN(time)) {
+          finite = false;
+          break;
+        }
+        if (time < startTime) {
+          startTime = time;
+          start = entry.timestamp;
+        }
+        if (time >= endTime) {
+          endTime = time;
+          end = entry.timestamp;
+        }
+      }
+      if (finite) return { start, end };
+    }
+
+    const sortedEntries = [...entries].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+    return {
+      start: sortedEntries[0]?.timestamp || "",
+      end: sortedEntries[sortedEntries.length - 1]?.timestamp || "",
     };
   }
 

@@ -12,6 +12,7 @@ import type {
   GovernanceIntegrationConfig,
   GovernanceCheckResponse,
   GovernanceVoteResult,
+  SolarGovernanceCheckResponse,
   SolarGovernanceVoteResult,
   BatchGovernanceCheck,
 } from './types.js';
@@ -20,6 +21,24 @@ import { GovernanceClient } from './governance-client.js';
 import type { InferenceProposal } from '../../inference/inference-cycle.js';
 import { frameworkLogger } from '../../core/framework-logger.js';
 import { featuresConfigLoader } from '../../core/features-config.js';
+
+const SOLAR_VERDICTS = ['PASS', 'NEEDS_REVISION', 'REJECT'] as const;
+type SolarVerdict = (typeof SOLAR_VERDICTS)[number];
+
+function isSolarVerdict(value: string | undefined): value is SolarVerdict {
+  return value === 'PASS' || value === 'NEEDS_REVISION' || value === 'REJECT';
+}
+
+/**
+ * Dynamo's `recommendation` is the decision.
+ * A missing or unrecognized verdict fails closed. Solar mood is not a verdict.
+ */
+function readSolarVerdict(response: SolarGovernanceCheckResponse): SolarVerdict {
+  if (isSolarVerdict(response.recommendation)) {
+    return response.recommendation;
+  }
+  return 'NEEDS_REVISION';
+}
 
 /**
  * Main Governance Integration class
@@ -200,11 +219,20 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
     });
 
     const adjustment = solarResponse.confidenceAdjustment;
-    const recommendation = adjustment <= -0.10 ? 'NEEDS_REVISION' : 'PASS';
+    const recommendation = readSolarVerdict(solarResponse);
+    const resonanceScore = solarResponse.resonanceScore
+      ?? solarResponse.structuralResonance
+      ?? solarResponse.solarContext.solarIsotopicResonance
+      ?? solarResponse.solarContext.solarResonance
+      ?? 0;
+    const confidence = typeof solarResponse.confidence === 'number'
+      ? Math.max(0, Math.min(1, solarResponse.confidence))
+      : Math.max(0, Math.min(1, proposal.confidence));
 
     const reasons: string[] = [
       solarResponse.solarContext.recommendation,
-      `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (adjustment: ${(adjustment * 100).toFixed(0)}%, resonance: ${(solarResponse.solarContext.solarIsotopicResonance ?? solarResponse.solarContext.solarResonance ?? 0).toFixed(4)})`,
+      `Solar activity: ${solarResponse.solarContext.solarActivityLevel} (adjustment: ${(adjustment * 100).toFixed(0)}%, resonance: ${resonanceScore.toFixed(4)})`,
+      `Dynamo recommendation: ${recommendation}`,
     ];
     if (solarResponse.finalRecommendation && solarResponse.finalRecommendation !== solarResponse.originalRecommendation) {
       reasons.push(solarResponse.finalRecommendation);
@@ -222,12 +250,12 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
       success: true,
       proposalId: proposal.id,
       governanceIsotopeId: `solar-${solarResponse.solarContext.solarActivityLevel}`,
-      resonanceScore: solarResponse.solarContext.solarIsotopicResonance ?? solarResponse.solarContext.solarResonance ?? 0,
+      resonanceScore,
       isotopicRatio: 0,
       vortexVolume: 0,
       historicalCoherence: 0,
       recommendation,
-      confidence: Math.max(0, Math.min(1, proposal.confidence + adjustment)),
+      confidence,
       voteWeight: solarResponse.adjustedVoteWeight,
       reasons,
     };
@@ -374,9 +402,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
    */
   private createFallbackVote(proposal: InferenceProposal): GovernanceVoteResult {
     return {
-      vote: proposal.confidence >= 0.7 ? 'YES' : 'ABSTAIN',
+      vote: 'ABSTAIN',
       weight: 1.0,
-      reason: 'Fallback: governance endpoint unavailable',
+      reason: 'Fallback: governance endpoint unavailable — fail closed',
       governanceResponse: {
         success: false,
         proposalId: proposal.id,
@@ -388,9 +416,9 @@ export class InferenceGovernanceIntegration extends BaseIntegration {
         recommendation: 'NEEDS_REVISION',
         confidence: proposal.confidence,
         voteWeight: 1.0,
-        reasons: ['Governance endpoint unavailable, using local confidence'],
+        reasons: ['Governance endpoint unavailable — fail closed, not a local pass'],
       },
-      passed: proposal.confidence >= 0.7,
+      passed: false,
     };
   }
 

@@ -2,11 +2,24 @@
 
 ## Unreleased
 
+- `grok-bot house init --migrate` moves `ops/WAVEBOARD.md` to `house/WAVEBOARD.md` and starts `ATTENTION_STATE.md` when that file is missing. It leaves a house file you already changed, and refuses when both boards exist and the house board is not the untouched template. A HOUSE.md line that is exactly `wallet off` (or `Scope: wallet off`) skips Open Wallet, Clearing, and hangar pay steps in `grok-bot doctor`.
+- House template: every markdown file under `ops/` carries a one-line 0xRay house-example banner. `house init` also copies `AUTO-REVIEW.md` (blank Ask first and Allow; the only house file that enforces them) and optional `ROLE-MAP.md`. The Roster heading in `HOUSE.md` has no `(example)` line, so doctor still checks the six headings.
 - Lead cadence: `ops/LEAD-CADENCE.md` — dummy `SKILLS.md` tests, peer boot (four lines, no command novel), fresh and upgrade registry install, CLI auth URL then poll, branch and pull request, loop until the station card is done, live tracks not an idle timer. `npx 0xray validate` is the check, not leftover init.sh. The clock is pull-request events and the same reviewer. Dispatch is four lines. Ship gates stay with the lead. The public-post clock stays in `ops/dist/CADENCE.md`.
 - **Clean ticks every cycle** — rewrite the `/loop` prompt at the end of every live tick. `subscribe_timer` name-dedupe does not update the prompt (`created: false`). Unsubscribe then resubscribe. A tick that contradicts the repo is stale: rewrite the prompt, do not act.
 - **Idle `/loop` stop** — when the card and the board are idle, unsubscribe and do not resubscribe. Not a heartbeat on parked work.
 - **Subject review. Fix n ship.** After PASS, review the subject, close leftovers, then ship. PASS is not ship.
 - groover-hangar is live. Outside sellers can deploy a shop on Base, but paid testing and catalog listing aren't open to them yet.
+
+## 0.1.9
+
+- Kit is not the fleet. Fleet house SSOT is repo-root `house/` in 0xRayAI/xray, not inside this package (#205).
+- Pack `OP-PROC.md` stays generic and does not name fleet seats. Your five principles live in your `house/OP-PROC.md` after init.
+- Pack check rejects a `grok-bot/house` tree so the fleet OP-PROC cannot ship in the kit.
+- Watcher allowlist for issue and PR cadence is `house/WATCHERS.md` in the xray repo (#205).
+
+## 0.1.8
+
+- OP-PROC: Syncopate six rules, Confer cadence, Board rules and RACI moved into CADENCE.md (#144)
 
 ## 0.1.7
 

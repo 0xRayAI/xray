@@ -66,7 +66,7 @@ Grok plugin MCP config shares the same `XRAY_MCP_SERVERS` constant as `install-b
 
 ### v3.3 — Memory routing + Repertoire
 
-- **Repertoire is preferred.** Vendored 0.2.8 ships **on**. Dest is named laws, not hangar `repo-*`.
+- **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*`.
 - Pluggable `memory_routing` block in `features.json` (validated by `features.schema.json`).
 - Repertoire (`@0xray/repertoire`) is the default provider. Station is the compact ticket, not a substitute.
 - `MemoryRoutingProvider` contract: `enrichTasks`, `getTaskConfidence`, `resolveThinDispatch`, `ingestFeedback`.
@@ -138,7 +138,7 @@ Automatic in `inference-cycle.ts` + `governance-service.ts`.
 | StringRay / strray-ai branding | Retired (3.1.1) |
 | `hermes bridge` CLI | Removed — use `hermes install` |
 | `.opencode/xray/` fallback | Removed (3.1.1) |
-| `advanced-features/` on boot path | Decoupled — not consumer install |
+| `advanced-features/` | Removed |
 | PostProcessor default | Soft-deprecated (`enablePostProcessor: false`) |
 
 ## No breaking changes for basic users

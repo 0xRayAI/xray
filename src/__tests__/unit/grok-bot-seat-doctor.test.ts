@@ -22,6 +22,8 @@ const {
     seat: { name: string | null; version: string | null } | null;
     plant: {
       ok: boolean;
+      installed: boolean;
+      deadHooks: Array<{ file: string; path: string }>;
       mill: boolean;
       inspect: boolean;
       millFile: string | null;
@@ -32,7 +34,13 @@ const {
     };
     repertoire: { status: string; detail?: string; name?: string; version?: string; signals?: number | null };
     ows: { present: boolean; path: string };
-    house: { status: string; detail: string; file: string | null; via: string | null };
+    house: {
+      status: string;
+      detail: string;
+      file: string | null;
+      via: string | null;
+      missing?: string;
+    };
     next: string[];
     urls: { clearing: string };
   };
@@ -61,12 +69,47 @@ function writeSeat(dir: string, name = 'forge-suit'): void {
   );
 }
 
+function installXrayPkg(dir: string): void {
+  const dest = path.join(dir, 'node_modules', '0xray');
+  mkdirSync(dest, { recursive: true });
+  writeFileSync(
+    path.join(dest, 'package.json'),
+    `${JSON.stringify({ name: '0xray', version: '4.0.36' })}\n`,
+  );
+}
+
 function plantMillInspect(dir: string): void {
+  installXrayPkg(dir);
   for (const skill of ['mill', 'inspect']) {
     const dest = path.join(dir, '.opencode', 'skills', skill);
     mkdirSync(dest, { recursive: true });
     writeFileSync(path.join(dest, 'SKILL.md'), `# ${skill}\n`);
   }
+}
+
+function writeHook(dir: string, name: string, command: string): string {
+  const dest = path.join(dir, '.grok', 'hooks');
+  mkdirSync(dest, { recursive: true });
+  const file = path.join(dest, name);
+  writeFileSync(
+    file,
+    `${JSON.stringify({
+      hooks: { PreToolUse: [{ hooks: [{ type: 'command', command }] }] },
+    })}\n`,
+  );
+  return file;
+}
+
+function writeInventory(dir: string): void {
+  mkdirSync(path.join(dir, '.xray'), { recursive: true });
+  writeFileSync(
+    path.join(dir, '.xray', 'foundry-inventory.json'),
+    `${JSON.stringify({
+      suit: 'fastened',
+      dna: 'abc',
+      millPlant: { skills: ['mill', 'inspect'] },
+    })}\n`,
+  );
 }
 
 function runBin(args: string[], cwd: string, env?: Record<string, string>) {
@@ -147,19 +190,98 @@ describe('grok-bot seat doctor — diagnose', () => {
     const dir = scratch();
     try {
       writeSeat(dir);
-      mkdirSync(path.join(dir, '.xray'), { recursive: true });
-      writeFileSync(
-        path.join(dir, '.xray', 'foundry-inventory.json'),
-        `${JSON.stringify({
-          suit: 'fastened',
-          dna: 'abc',
-          millPlant: { skills: ['mill', 'inspect'] },
-        })}\n`,
-      );
+      installXrayPkg(dir);
+      writeInventory(dir);
       const report = diagnoseSeat({ cwd: dir, home: dir });
       expect(report.ok).toBe(true);
+      expect(report.plant.installed).toBe(true);
       expect(report.plant.suit).toBe('fastened');
       expect(report.plant.inventoryPresent).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when inventory has mill+inspect but 0xray is not installed', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      writeInventory(dir);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.mill).toBe(true);
+      expect(report.plant.inspect).toBe(true);
+      expect(report.plant.installed).toBe(false);
+      expect(report.plant.deadHooks).toEqual([]);
+      expect(report.plant.ok).toBe(false);
+      expect(report.ok).toBe(false);
+      const text = formatDoctor(report);
+      expect(text).toMatch(/Plant: FAIL/);
+      expect(text).toContain('missing node_modules/0xray/package.json');
+      expect(report.next).toContain('npm i 0xray && npx @0xray/foundry inspect --skip-live');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when a hook points at a missing file', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      const live = path.join(dir, 'tools', 'live.js');
+      mkdirSync(path.dirname(live), { recursive: true });
+      writeFileSync(live, '\n');
+      const file = writeHook(dir, '0xray.json', `npx node ${live} tools/missing.js`);
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.installed).toBe(true);
+      expect(report.plant.ok).toBe(false);
+      expect(report.plant.deadHooks).toEqual([{ file, path: path.join(dir, 'tools', 'missing.js') }]);
+      const text = formatDoctor(report);
+      expect(text).toMatch(/Plant: FAIL/);
+      expect(text).toContain(file);
+      expect(text).toContain(path.join(dir, 'tools', 'missing.js'));
+      const missing = path.join(dir, 'tools', 'missing.js');
+      expect(report.next.some((step) => step.includes(file) && step.includes(missing))).toBe(true);
+      expect(report.next.some((step) => step.startsWith('npm i 0xray'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does not treat an npm scope as a hook file', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      writeHook(dir, '0xray.json', 'npx @0xray/foundry inspect --skip-live');
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.installed).toBe(true);
+      expect(report.plant.deadHooks).toEqual([]);
+      expect(report.plant.ok).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('passes when 0xray is installed and hook targets exist', () => {
+    const dir = scratch();
+    try {
+      writeSeat(dir);
+      plantMillInspect(dir);
+      const live = path.join(dir, 'tools', 'live.js');
+      mkdirSync(path.dirname(live), { recursive: true });
+      writeFileSync(live, '\n');
+      const pkg = path.join(dir, 'node_modules', '0xray');
+      writeHook(
+        dir,
+        '0xray.json',
+        `XRAY_AI_PATH=${JSON.stringify(pkg)} npx node ${JSON.stringify(live)} tools/live.js`,
+      );
+      const report = diagnoseSeat({ cwd: dir, home: dir });
+      expect(report.plant.installed).toBe(true);
+      expect(report.plant.deadHooks).toEqual([]);
+      expect(report.plant.ok).toBe(true);
+      expect(formatDoctor(report)).toMatch(/Plant: PASS/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -251,9 +373,9 @@ describe('grok-bot seat doctor — CLI', () => {
       plantMillInspect(dir);
       const report = diagnoseSeat({ cwd: dir, home: dir, env: {} });
       expect(report.house.status).toBe('warn');
-      expect(report.house.detail).toBe('no house/HOUSE.md, run setup-house');
+      expect(report.house.detail).toBe('house is not enabled here');
       expect(report.ok).toBe(true);
-      expect(formatDoctor(report)).toMatch(/House: WARN — no house\/HOUSE\.md, run setup-house/);
+      expect(formatDoctor(report)).toMatch(/House: WARN — house is not enabled here/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -450,14 +572,18 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(report.house.status).toBe('pass');
       expect(report.house.via).toBe('GROK_BOT_HOUSE');
       expect(report.house.file).toBe(path.join(pointed, 'HOUSE.md'));
-      expect(formatDoctor(report)).toContain(`House: PASS — ${path.join(pointed, 'HOUSE.md')} (via GROK_BOT_HOUSE)`);
+      expect(formatDoctor(report)).toContain(
+        `House: PASS — house on — ${path.join(pointed, 'HOUSE.md')} (via GROK_BOT_HOUSE)`,
+      );
+      const missingPath = path.join(pointed, 'nope');
       const missing = diagnoseSeat({
         cwd: walked,
-        env: { GROK_BOT_HOUSE: path.join(pointed, 'nope') },
+        env: { GROK_BOT_HOUSE: missingPath },
       });
       expect(missing.house.status).toBe('warn');
       expect(missing.house.file).toBeNull();
-      expect(missing.house.detail).toMatch(/GROK_BOT_HOUSE is set but HOUSE.md is missing/);
+      expect(missing.house.detail).toBe('house is not enabled here');
+      expect(missing.house.missing).toBe(path.resolve(missingPath));
     } finally {
       rmSync(walked, { recursive: true, force: true });
       rmSync(pointed, { recursive: true, force: true });
@@ -475,9 +601,23 @@ describe('grok-bot seat doctor — CLI', () => {
       expect(packed.status).toBe(0);
       const tgz = readdirSync(packDir).find((name) => name.endsWith('.tgz'));
       expect(tgz).toBeTruthy();
-      const installed = spawnSync('npm', ['install', path.join(packDir, tgz as string)], {
+      writeFileSync(path.join(app, 'package.json'), `${JSON.stringify({ name: 'seat-doctor-pack', version: '0.0.0', private: true })}\n`);
+      const installEnv: NodeJS.ProcessEnv = {
+        ...process.env,
+        npm_config_cache: path.join(app, '.npm-cache'),
+        npm_config_fund: 'false',
+        npm_config_audit: 'false',
+        npm_config_update_notifier: 'false',
+      };
+      for (const key of Object.keys(installEnv)) {
+        if (/^npm_/i.test(key) && !['npm_config_cache', 'npm_config_fund', 'npm_config_audit', 'npm_config_update_notifier'].includes(key)) {
+          delete installEnv[key];
+        }
+      }
+      const installed = spawnSync('npm', ['install', path.join(packDir, tgz as string), '--no-fund', '--no-audit'], {
         cwd: app,
         encoding: 'utf8',
+        env: installEnv,
       });
       expect(installed.status).toBe(0);
       const packedBin = path.join(app, 'node_modules', '@0xray', 'grok-bot', 'bin', 'grok-bot.js');

@@ -151,10 +151,12 @@ export function getVotingWeight(agentName: string): number {
   return level * 10;
 }
 
+const EXPERTISE_ROSTER: readonly AgentExpertise[] = Object.values(AGENT_EXPERTISE_LEVELS);
+
 export function getAgentsWithExpertiseDomain(
   domain: string,
 ): AgentExpertise[] {
-  return Object.values(AGENT_EXPERTISE_LEVELS).filter(
+  return EXPERTISE_ROSTER.filter(
     (agent) => agent.domain === domain || agent.specialties.some((s) => domain.includes(s)),
   );
 }

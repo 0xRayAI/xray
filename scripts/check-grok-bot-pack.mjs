@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const repo = execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim();
@@ -9,9 +9,14 @@ const raw = execSync('npm pack --dry-run --json', { cwd: root, encoding: 'utf8' 
 const packed = JSON.parse(raw.slice(raw.indexOf('[')))[0].files.map((file) => file.path);
 const packedSet = new Set(packed);
 const bad = [];
+if (existsSync(path.join(root, 'house'))) bad.push('grok-bot/house exists; fleet SSOT belongs at repo-root house/');
 for (const file of packed) {
   if (file === 'house' || file.startsWith('house/')) bad.push(`packed house path: ${file}`);
   if (file === 'POSTED.md' || file.endsWith('/POSTED.md')) bad.push(`packed POSTED.md: ${file}`);
+  if (file === 'OP-PROC.md' || file.endsWith('/OP-PROC.md')) {
+    const body = readFileSync(path.join(root, file), 'utf8');
+    if (body.includes('House: 0xRay Grok Bot fleet')) bad.push(`${file}: fleet OP-PROC leaked into the kit`);
+  }
 }
 const op = readFileSync(path.join(root, 'OP-PROC.md'), 'utf8').split('\n');
 const opLines = op.at(-1) === '' ? op.length - 1 : op.length;

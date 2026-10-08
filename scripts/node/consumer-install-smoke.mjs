@@ -21,16 +21,6 @@ const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "../..");
 
-const XRAY_MCP_NAMES = [
-  "xray-governance",
-  "xray-skills",
-  "xray-orchestrator",
-  "xray-enforcer",
-  "xray-researcher",
-  "xray-code-review",
-  "xray-architect-tools",
-];
-
 function run(cmd, cwd, { inherit = false } = {}) {
   const result = execSync(cmd, {
     cwd,
@@ -70,6 +60,11 @@ const REQUIRED_TARBALL_DIST = [
   "package/dist/integrations/hooks/plates.cjs",
   "package/docs-site/docs/plates/memory-recall.md",
   "package/docs-site/docs/plates/processor.md",
+  "package/docs-site/docs/plates/goggles.md",
+  "package/docs-site/docs/plates/suit.md",
+  "package/docs-site/docs/plates/kits.md",
+  "package/docs-site/docs/plates/host-pack.md",
+  "package/docs-site/docs/plates/glossary.md",
 ];
 
 function assertPackedDistCliInTarball(tarballPath) {
@@ -95,7 +90,7 @@ function assertOrganRequire(tmpRoot) {
   if (organPkg.name !== "@0xray/repertoire") {
     throw new Error(`required organ name ${organPkg.name}`);
   }
-  if (organPkg.version !== "0.2.8") {
+  if (organPkg.version !== "0.2.9") {
     throw new Error(`required organ version ${organPkg.version}`);
   }
   if (fs.existsSync(path.join(tmpRoot, "vendor"))) {
@@ -168,8 +163,8 @@ function assertFreshInstallDefaults(tmpRoot, version) {
     throw new Error("vendored @0xray/repertoire missing from fresh tarball install");
   }
   const organ = JSON.parse(fs.readFileSync(organPkg, "utf-8"));
-  if (organ.version !== "0.2.8") {
-    throw new Error(`expected organ 0.2.8, got ${organ.version}`);
+  if (organ.version !== "0.2.9") {
+    throw new Error(`expected organ 0.2.9, got ${organ.version}`);
   }
   console.log("  ✅ .xray/features.json fresh-install defaults (opt-in off)");
   return { consumerFeaturesPath, features };
@@ -311,19 +306,12 @@ function main() {
     }
 
     const millSkillHanger = path.join(tmpRoot, ".opencode", "skills", "mill", "SKILL.md");
-    if (!fs.existsSync(millSkillHanger)) {
-      throw new Error("mill plant missing mill skill");
+    if (fs.existsSync(millSkillHanger)) {
+      throw new Error("postinstall must not fasten mill skills into the project");
     }
-    const wornSkills = path.join(tmpRoot, ".opencode", "skills");
-    const wornNames = fs.existsSync(wornSkills)
-      ? fs.readdirSync(wornSkills).filter((n) =>
-          fs.existsSync(path.join(wornSkills, n, "SKILL.md")),
-        )
-      : [];
-    if (wornNames.length > 3) {
-      throw new Error(`costume dump: ${wornNames.join(",")}`);
+    if (fs.existsSync(path.join(tmpRoot, ".mcp.json"))) {
+      throw new Error("postinstall must not write .mcp.json");
     }
-
     const installedPkg = JSON.parse(fs.readFileSync(path.join(nmRoot, "package.json"), "utf-8"));
     if (installedPkg.version !== version) {
       throw new Error(`Installed version ${installedPkg.version} != packed ${version}`);
@@ -342,57 +330,11 @@ function main() {
     }
     console.log("  ✅ consumer target resolution");
 
-    const mcpPath = path.join(tmpRoot, ".mcp.json");
-    if (!fs.existsSync(mcpPath)) {
-      throw new Error(".mcp.json not created by postinstall");
-    }
-    const mcp = JSON.parse(fs.readFileSync(mcpPath, "utf-8"));
-    const servers = Object.keys(mcp.mcpServers || {});
-    for (const name of XRAY_MCP_NAMES) {
-      if (!servers.includes(name)) {
-        throw new Error(`Missing MCP server in .mcp.json: ${name}`);
-      }
-      const entry = mcp.mcpServers[name];
-      const cli = path.join(tmpRoot, "node_modules", "0xray", "dist", "cli", "index.js");
-      const args = Array.isArray(entry.args) ? entry.args.map(String) : [];
-      const launcher = path.join(nmRoot, "scripts", "node", "mcp-launch.cjs");
-      if (entry.command !== "node" || args[0] !== launcher || args[1] !== "--keep") {
-        throw new Error(`${name} must launch via node mcp-launch.cjs --keep, got ${entry.command} ${args.join(" ")}`);
-      }
-      const dash = args.indexOf("--");
-      if (dash < 0) throw new Error(`${name} launcher args missing --`);
-      const kept = String(args[2] || "").split(",").filter(Boolean);
-      const inner = args.slice(dash + 1);
-      const pinnedNode = inner[0] === "node" && inner[1] === cli && inner[2] === "mcp";
-      const pinnedNpx =
-        inner[0] === "npx" && inner[1] === "-y" && /^0xray@\d/.test(inner[2] || "") && inner[3] === "mcp";
-      if (!pinnedNode && !pinnedNpx) {
-        throw new Error(`${name} must pin node CLI or npx 0xray@version after --, got ${inner.join(" ")}`);
-      }
-      if (inner.includes("0xray")) {
-        throw new Error(`${name} launched unpinned 0xray`);
-      }
-      for (const required of ["PATH", "HOME", "XRAY_ROOT"]) {
-        if (!kept.includes(required)) {
-          throw new Error(`${name} keep list missing ${required}`);
-        }
-      }
-      if (entry.env && (entry.env.PATH || entry.env.HOME)) {
-        throw new Error(`${name} baked PATH or HOME into the env block`);
-      }
-      for (const arg of args) {
-        if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(arg)) {
-          throw new Error(`${name} put an env assignment in argv: ${arg.split("=")[0]}`);
-        }
-      }
-      for (const banned of ["NPM_TOKEN", "CURSOR_AUTH_TOKEN", "GITHUB_TOKEN", "GH_TOKEN", "RAILWAY_TOKEN"]) {
-        if (kept.includes(banned) || (entry.env && Object.prototype.hasOwnProperty.call(entry.env, banned))) {
-          throw new Error(`${name} inherited ${banned}`);
-        }
-      }
-    }
-    console.log(`  ✅ .mcp.json has ${XRAY_MCP_NAMES.length} version-pinned MCP servers`);
-
+    fs.mkdirSync(path.join(tmpRoot, ".xray"), { recursive: true });
+    fs.copyFileSync(
+      path.join(nmRoot, "xray", "features.json"),
+      path.join(tmpRoot, ".xray", "features.json"),
+    );
     assertFreshInstallDefaults(tmpRoot, version);
     assertOrganRequire(tmpRoot);
 

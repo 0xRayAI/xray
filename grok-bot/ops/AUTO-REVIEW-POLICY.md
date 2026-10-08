@@ -1,5 +1,7 @@
 # Auto Review policy (Blaze Strategic Consulting)
 
+> 0xRay house example — not the general procedure. Your team’s rules live in `house/` after `grok-bot house init`.
+
 **LOCKED draft 2026-09-16** — paste into [Auto-review rules](grokbot://app/v1/settings?id=auto-review-rules). Critic L2 on the capital-exception section in `OPS-SPEC.md`.
 
 **A friend would hear:** Auto Review can’t tell forge from herald. So we **Ask first** on money/deploy/publish, and only **Allow** Dist posts + read-only checks + git push to known eng repos.

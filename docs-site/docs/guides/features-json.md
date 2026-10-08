@@ -97,7 +97,7 @@ Frontier profile does **not** turn this off — it only stops **denying** spawn 
 }
 ```
 
-Maps to thinDispatch routing: single agent → tools → multi-agent → orchestrator-led.
+Maps to thinDispatch routing: ≤15 single-agent, ≤25 multi-agent, ≤50 orchestrator-led, and above that orchestrator-led.
 
 ## multi_agent_orchestration
 

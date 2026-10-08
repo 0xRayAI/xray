@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/0xRayAI/xray/house/live-mesh/schema.json",
+  "title": "ping-pong live mesh feed",
+  "description": "Ordered event stream for the ping-pong mesh. Written by fetch_feed.py; read by render_mesh.py.",
+  "type": "object",
+  "required": ["title", "seats", "services", "event_count", "events"],
+  "properties": {
+    "title": {"type": "string"},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "repo": {"type": "string"},
+    "repos": {"type": "array", "items": {"type": "string"}},
+    "seats": {"type": "array", "items": {"type": "string"}},
+    "services": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "array", "items": {"type": "string"}},
+    "generated_at": {"type": "string"},
+    "kinds": {"type": "array", "items": {"type": "string"}},
+    "event_count": {"type": "integer", "minimum": 0},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}}
+  },
+  "$defs": {
+    "node": {
+      "type": "string",
+      "description": "Seat, rail, or X handle. Known seats/rails listed; other X handles are allowed as-is.",
+      "examples": ["blinky", "mill", "forge", "critic", "herald", "minime0x",
+                   "GitHub", "X", "mymuse.house", "Blaze0x1", "grok"]
+    },
+    "kind": {
+      "type": "string",
+      "description": "Canonical kinds plus legacy kinds accepted on read (fix, probe, x_root, x_reply).",
+      "enum": [
+        "pr_open", "pr_update", "supersede", "critic_fail", "critic_pass", "ci_pass", "ci_fail",
+        "review", "comment", "merged", "pr_close", "issue_open", "issue_close",
+        "deploy", "deploy_fail", "health_ok", "health_fail",
+        "x_in_mention", "x_in_reply", "x_out_reply", "x_out_root", "x_like",
+        "push", "feed_push",
+        "fix", "probe", "x_root", "x_reply"
+      ]
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "t_ct", "from", "to", "kind", "direction", "label", "source", "src_file"],
+      "properties": {
+        "id": {"type": "string"},
+        "t_ct": {"type": "string", "description": "America/Chicago with offset"},
+        "from": {"$ref": "#/$defs/node"},
+        "to": {"$ref": "#/$defs/node"},
+        "kind": {"$ref": "#/$defs/kind"},
+        "direction": {"type": "string", "enum": ["in", "out", "internal"]},
+        "label": {"type": "string", "maxLength": 54},
+        "source": {"type": "string"},
+        "src_file": {"type": "string"},
+        "repo": {"type": "string"},
+        "number": {"type": "integer"},
+        "post_id": {"type": "string"},
+        "handle": {"type": "string"},
+        "in_reply_to": {"type": "string"},
+        "reported_by": {"type": "string"},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}

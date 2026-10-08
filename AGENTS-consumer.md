@@ -6,7 +6,7 @@ Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NA
 
 **4.0** — a suit that survives the context window
 
-Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.8 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
+Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 
@@ -72,14 +72,14 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 
 xray operates under the three-subsystem model: **Inference** + **External Governance** (Dynamo Solar SSOT) + **Autonomous Engine** (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
 
-**Codex**: `.xray/codex.json` — **69 terms** across all agent interactions.
+**Codex**: `.xray/codex.json` — **70 terms** across all agent interactions.
 
 ## thinDispatch Routing
 
-- Simple (≤15): Single agent
-- Moderate (≤25): Single agent with tools
-- Complex (≤50): Multi-agent coordination
-- Enterprise (>50): Orchestrator-led team
+- Simple (≤15): single-agent
+- Moderate (≤25): multi-agent
+- Complex (≤50): orchestrator-led
+- Enterprise (>50): orchestrator-led
 
 ## AsideContext (v3.2+)
 
@@ -117,7 +117,7 @@ Tools: `repertoire__get_task_confidence`, `repertoire__get_high_confidence_signa
 
 ## Codex OS (always on — not optional)
 
-The Universal Development Codex (`.xray/codex.json`, **69 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
+The Universal Development Codex (`.xray/codex.json`, **70 terms**) is enforced by **PreToolUse** (blocks) and this section (brain). MCP enforcer is audit — not the gate.
 
 | Term | Rule | Enforcement |
 |------|------|-------------|
