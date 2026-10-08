@@ -403,7 +403,12 @@ export async function runConferQuorum(
   const agents: ConferAgentResult[] = [];
 
   for (const todo of getSynthesisConsultTodos(plan)) {
-    if (todo.status === 'completed') continue;
+    if (todo.status === 'completed' && consultReceiptIsRealPass(todo.id, sessionId, plan, projectRoot)) {
+      continue;
+    }
+    if (todo.status === 'completed') {
+      updatePlanTodoStatus(todo.id, 'pending', projectRoot);
+    }
 
     try {
       let agentResult: ConferAgentResult;
@@ -527,6 +532,19 @@ export async function runConferQuorum(
       ? 'Confer quorum complete — researcher, architect-tools, code-review consulted'
       : (state.lastError ?? 'Confer incomplete'),
   };
+}
+
+function consultReceiptIsRealPass(
+  todoId: string,
+  sessionId: string,
+  plan: PersistedLeadDevPlan,
+  projectRoot: string,
+): boolean {
+  const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
+  if (receipt?.verdict !== 'PASS') return false;
+  if (sessionId && receipt.sessionId !== sessionId) return false;
+  if (plan.consultCycleId && receipt.cycleId !== plan.consultCycleId) return false;
+  return true;
 }
 
 function consultReceiptsAreRealApproves(

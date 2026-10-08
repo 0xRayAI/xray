@@ -94,6 +94,36 @@ describe('confer quorum SSOT', () => {
     );
   }
 
+  it('a completed seat without a real PASS is asked again', async () => {
+    saveConsultPlan();
+    const plan = loadPersistedLeadDevPlan(tmp);
+    if (!plan) throw new Error('plan missing');
+    for (const phase of plan.phases) {
+      for (const todo of phase.todos) {
+        if (todo.id === 's.1') todo.status = 'completed';
+      }
+    }
+    savePersistedLeadDevPlan(plan, tmp);
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'synthesis-consult-s.1.json'),
+      JSON.stringify({
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'CONDITIONAL',
+        topRisks: [],
+        hardeningNote: 'old sitting',
+        todoId: 's.1',
+        cycleId: plan.consultCycleId,
+      }),
+    );
+    const result = await runConferQuorum(tmp, sessionId, { host: new SessionConferHost() });
+    expect(result.status).toBe('pending');
+    expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'confer-ask-s.1.json'))).toBe(true);
+    const again = loadPersistedLeadDevPlan(tmp);
+    const seat = again?.phases.flatMap((phase) => phase.todos).find((todo) => todo.id === 's.1');
+    expect(seat?.status).toBe('pending');
+  });
+
   it('SessionConferHost writes asks and does not spawn a server', async () => {
     saveConsultPlan();
     const spawnSpy = vi.spyOn(childProcess, 'spawn');
