@@ -6,7 +6,7 @@ Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NA
 
 **4.0** — a suit that survives the context window
 
-Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+Confer votes. Burst monitors the swarm.
 
 Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
 

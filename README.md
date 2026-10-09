@@ -4,7 +4,7 @@
 
 ![0xRay v4 exo — CONSTITUTION ON](docs-site/static/img/exo-skeleton-v4.jpg)
 
-Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+Confer votes. Burst monitors the swarm.
 
 Not a catalog of agents. The product is the **skeleton you wear**.
 
@@ -53,7 +53,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.0.42** | Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time. |
+| **4.0.42** | Confer votes. Burst monitors the swarm. |
 | **Unreleased** | Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill declares (looker / vibe / mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip\|sound` remain (0.1.11+). Shop plant first-class (`shop-extract`, `shop-witness`, `shop-pin` + `foundry.json` `shopPlant`). |
 | **4.0.30** | Fixes 4.0.29: `npx 0xray wear` and `setup` work outside a git checkout again. They write the 4.0.28 project setup, skip only Cursor hooks, and print one warning. Inside a git checkout they restore the 4.0.28 project setup, and `wear` adds Cursor hooks plus the unwear snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |
 | **4.0.29** | `npm install` only creates the relative `node_modules/@0xray/repertoire` link to the vendored repertoire and prints `npx 0xray wear`. Run `npx 0xray wear` after install. Wear writes only the consumer project's `.cursor/hooks.json` (installed dist hooks, beside user entries); `npx 0xray unwear` restores the snapshot. Companion `@0xray/grok-bot` 0.1.8. Released 2026-09-28. |

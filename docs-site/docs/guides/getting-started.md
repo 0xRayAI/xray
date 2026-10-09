@@ -1,7 +1,7 @@
 # Getting Started with 0xRay
 
 **4.0** — a suit that survives the context window
-Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+Confer votes. Burst monitors the swarm.
 
 
 Wear the exo. Constitution on every stroke. Temperament by host.
