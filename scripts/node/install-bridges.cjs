@@ -28,6 +28,7 @@ const {
   copyHermesFindProjectRootHelper,
   copyHermesHookRuntimes,
   installOpenClawHostWear,
+  recordOpenClawProjectPlugin,
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
@@ -850,7 +851,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
   }
 
   if (!ephemeralOpenclaw && !isolatedOpenclaw) {
-    const hook = installOpenClawHostWear(packageRoot);
+    const hook = installOpenClawHostWear(packageRoot, targetDir);
     if (hook) log("openclaw-bridge", "PreToolUse hook installed", "info", { path: hook });
     if (maybeWriteOpenClawCliBackend()) {
       log("openclaw-bridge", "opencode-cli backend written", "info");
@@ -863,6 +864,11 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
         : "skip machine PreToolUse wear — ephemeral consumer",
       "info",
     );
+  }
+
+  const recorded = recordOpenClawProjectPlugin(targetDir, packageRoot);
+  if (recorded) {
+    log("openclaw-bridge", "project plugin path recorded", "info", { path: recorded });
   }
 }
 

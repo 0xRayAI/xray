@@ -869,7 +869,125 @@ function resolveOpenClawPluginDir(packageRoot) {
   ].find((p) => fs.existsSync(path.join(p, "index.js"))) || null;
 }
 
-function installOpenClawHostWear(packageRoot) {
+function isCheckoutOpenClawPluginPath(pluginPath) {
+  const normalized = String(pluginPath || "").replace(/\\/g, "/");
+  return (
+    normalized.includes("/src/integrations/openclaw/plugin/xray-pre-tool") &&
+    !normalized.includes("/node_modules/")
+  );
+}
+
+function isInstalledOpenClawPluginPath(pluginPath) {
+  const normalized = String(pluginPath || "").replace(/\\/g, "/");
+  return (
+    normalized.includes("/node_modules/") &&
+    normalized.includes("/integrations/openclaw/plugin/xray-pre-tool")
+  );
+}
+
+/** Installed package first. A checkout src path drops once any installed plugin is present. */
+function settleOpenClawPluginPaths(paths, wornPluginDir) {
+  const list = (Array.isArray(paths) ? paths : []).map((entry) => String(entry));
+  const wornIsInstalled = Boolean(wornPluginDir && isInstalledOpenClawPluginPath(wornPluginDir));
+  const dropCheckout =
+    wornIsInstalled || list.some((entry) => isInstalledOpenClawPluginPath(entry));
+  const next = [];
+  const seen = new Set();
+  const push = (entry) => {
+    if (!entry) return;
+    const resolved = path.resolve(String(entry));
+    if (dropCheckout && isCheckoutOpenClawPluginPath(resolved)) return;
+    if (seen.has(resolved)) return;
+    seen.add(resolved);
+    next.push(resolved);
+  };
+  if (wornIsInstalled) push(wornPluginDir);
+  for (const entry of list) push(entry);
+  return next;
+}
+
+function resolveWornOpenClawPlugin(targetDir, packageRoot) {
+  const candidates = [];
+  if (targetDir) {
+    candidates.push(
+      path.join(targetDir, "node_modules", "0xray", "dist", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+      path.join(targetDir, "node_modules", "0xray", "src", "integrations", "openclaw", "plugin", "xray-pre-tool"),
+    );
+  }
+  const fromPackage = resolveOpenClawPluginDir(packageRoot);
+  if (fromPackage) candidates.push(fromPackage);
+  return candidates.find((dir) => fs.existsSync(path.join(dir, "index.js"))) || null;
+}
+
+function replaceJsonPathsArray(raw, before, next) {
+  const keyAt = raw.indexOf('"paths"');
+  if (keyAt < 0) return null;
+  const bracket = raw.indexOf("[", keyAt);
+  if (bracket < 0) return null;
+  let depth = 0;
+  let end = -1;
+  for (let i = bracket; i < raw.length; i += 1) {
+    const ch = raw[i];
+    if (ch === "[") depth += 1;
+    else if (ch === "]") {
+      depth -= 1;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+  if (end < 0) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw.slice(bracket, end + 1));
+  } catch {
+    return null;
+  }
+  if (JSON.stringify(parsed) !== JSON.stringify(before)) return null;
+  const lineStart = raw.lastIndexOf("\n", keyAt) + 1;
+  const indent = (raw.slice(lineStart, keyAt).match(/^\s*/) || [""])[0];
+  const itemIndent = `${indent}  `;
+  const body = next
+    .map((entry) => `${itemIndent}${JSON.stringify(entry)}`)
+    .join(",\n");
+  const array = `[\n${body}\n${indent}]`;
+  return `${raw.slice(0, bracket)}${array}${raw.slice(end + 1)}`;
+}
+
+/** Rewrite plugins.load.paths in place. Leaves the rest of the config file alone. */
+function pinOpenClawPluginLoad(configPath, wornPluginDir) {
+  if (!configPath || !fs.existsSync(configPath)) return null;
+  const raw = fs.readFileSync(configPath, "utf8");
+  const config = JSON.parse(raw);
+  if (!config.plugins || typeof config.plugins !== "object") return null;
+  if (!config.plugins.load || typeof config.plugins.load !== "object") config.plugins.load = {};
+  const before = Array.isArray(config.plugins.load.paths) ? config.plugins.load.paths : [];
+  const next = settleOpenClawPluginPaths(before, wornPluginDir);
+  if (JSON.stringify(before) === JSON.stringify(next)) return next;
+  const replaced = replaceJsonPathsArray(raw, before, next);
+  if (replaced == null) return null;
+  fs.writeFileSync(configPath, replaced);
+  return next;
+}
+
+function recordOpenClawProjectPlugin(targetDir, packageRoot) {
+  const pluginDir = resolveWornOpenClawPlugin(targetDir, packageRoot);
+  if (!pluginDir || !isInstalledOpenClawPluginPath(pluginDir)) return null;
+  const configPath = path.join(targetDir, ".xray", "config", "openclaw.json");
+  if (!fs.existsSync(configPath)) return null;
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  } catch {
+    return null;
+  }
+  config.pluginPath = path.resolve(pluginDir);
+  fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+  return config.pluginPath;
+}
+
+function installOpenClawHostWear(packageRoot, targetDir) {
   if (millSuit.isIsolatedHome()) return null;
   const source = resolveOpenClawPreToolHookSource(packageRoot);
   if (!source) return null;
@@ -878,6 +996,11 @@ function installOpenClawHostWear(packageRoot) {
   fs.mkdirSync(hookDir, { recursive: true });
   const dest = path.join(hookDir, "xray-pre-tool.mjs");
   fs.copyFileSync(source, dest);
+  const worn = resolveWornOpenClawPlugin(targetDir, packageRoot);
+  const hookRoot =
+    worn && isInstalledOpenClawPluginPath(worn) && targetDir
+      ? path.join(path.resolve(targetDir), "node_modules", "0xray")
+      : packageRoot;
   fs.writeFileSync(
     path.join(hookDir, "xray-pre-tool.json"),
     `${JSON.stringify(
@@ -887,17 +1010,16 @@ function installOpenClawHostWear(packageRoot) {
         args: [dest],
         stdin: "json",
         blockExitCode: 2,
-        env: { XRAY_AI_PATH: packageRoot },
+        env: { XRAY_AI_PATH: hookRoot },
       },
       null,
       2,
     )}\n`,
   );
 
-  const pluginSrc = resolveOpenClawPluginDir(packageRoot);
-  if (pluginSrc) {
+  if (worn && isInstalledOpenClawPluginPath(worn)) {
     try {
-      execFileSync("openclaw", ["plugins", "install", "-l", pluginSrc], {
+      execFileSync("openclaw", ["plugins", "install", "-l", path.resolve(worn)], {
         stdio: "pipe",
         encoding: "utf8",
         timeout: 60000,
@@ -914,6 +1036,13 @@ function installOpenClawHostWear(packageRoot) {
     } catch {
       /* enable is best-effort */
     }
+  }
+  const configPath = resolveOpenClawConfigPath();
+  if (fs.existsSync(configPath)) {
+    pinOpenClawPluginLoad(
+      configPath,
+      worn && isInstalledOpenClawPluginPath(worn) ? worn : null,
+    );
   }
   return dest;
 }
@@ -1121,6 +1250,10 @@ module.exports = {
   resolveOpenClawPreToolHookSource,
   resolveOpenClawPluginDir,
   installOpenClawHostWear,
+  settleOpenClawPluginPaths,
+  pinOpenClawPluginLoad,
+  recordOpenClawProjectPlugin,
+  resolveWornOpenClawPlugin,
   maybeWriteOpenClawCliBackend,
   writeProjectSuitMcp,
   trustGrokFolder,
