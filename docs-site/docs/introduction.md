@@ -4,7 +4,7 @@
 
 Not a catalog of 42 agents. The product is the skeleton you wear.
 
-![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst monitors the swarm.](/img/exo-skeleton-v4.jpg)
 
 Confer votes. Burst monitors the swarm.
 
