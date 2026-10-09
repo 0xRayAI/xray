@@ -38,7 +38,7 @@ export function validActivity(d, now = Date.now()) {
   if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d{1,6})?)?([+-]\d\d:\d\d|Z)$/.test(d.t_ct || '')) return 'bad t_ct';
   const t = Date.parse(d.t_ct);
   if (Number.isNaN(t) || t > now + 5 * 60000 || t < now - 24 * 3600000) return 't_ct out of range';
-  if (!ACT_SEAT.test(d.seat || '')) return 'bad seat';
+  if (d.seat != null && !ACT_SEAT.test(d.seat)) return 'bad seat';
   if (d.kind === 'cloud_agent' && !ACT_AGENT.test(d.agent || '')) return 'cloud_agent needs agent id';
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   return null;
@@ -47,8 +47,10 @@ export function validActivity(d, now = Date.now()) {
 export function acceptLine(lines, d, seat, now = Date.now()) {
   const why = validActivity(d, now);
   if (why) return { ok: false, error: why };
-  if (d.seat !== seat) return { ok: false, error: 'seat does not match caller' };
-  const line = { ...d, by: seat, seq: lines.length + 1 };
+  if (d.seat != null && d.seat.toLowerCase() !== String(seat).toLowerCase()) {
+    return { ok: false, status: 403, error: 'seat mismatch' };
+  }
+  const line = { ...d, seat, by: seat, seq: lines.length + 1 };
   lines.push(line);
   return { ok: true, seq: line.seq };
 }
@@ -154,6 +156,6 @@ export async function postActivity({ body, token, seats, lines, fetchFn, now = D
   if (!who.ok) return { status: who.status, error: who.error };
   if (!rateOk(who.seat, now)) return { status: 429, error: 'rate limit' };
   const out = acceptLine(lines, parsed, who.seat, now);
-  if (!out.ok) return { status: 400, error: out.error };
+  if (!out.ok) return { status: out.status || 400, error: out.error };
   return { status: 204, seq: out.seq };
 }

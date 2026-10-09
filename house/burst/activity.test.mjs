@@ -46,7 +46,24 @@ test('the seat stamp must match the caller', () => {
     t_ct: '2026-10-09T09:00:00-05:00', seat: 'gate', kind: 'review', action: 'pass', tag: 'pr-1',
   }, 'builder', now);
   assert.equal(out.ok, false);
+  assert.equal(out.status, 403);
+  assert.equal(out.error, 'seat mismatch');
   assert.equal(lines.length, 0);
+});
+
+test('an optional seat matches the token case-insensitively and the stored seat is the token', () => {
+  const lines = [];
+  const omitted = acceptLine(lines, {
+    t_ct: '2026-10-09T09:00:00-05:00', kind: 'turn', action: 'start', tag: 'issue-1',
+  }, 'builder', now);
+  assert.equal(omitted.ok, true);
+  assert.equal(lines[0].seat, 'builder');
+  const cased = acceptLine(lines, {
+    t_ct: '2026-10-09T09:00:01-05:00', seat: 'Builder', kind: 'turn', action: 'end', tag: 'issue-1',
+  }, 'builder', now);
+  assert.equal(cased.ok, true);
+  assert.equal(lines[1].seat, 'builder');
+  assert.equal(lines[1].by, 'builder');
 });
 
 function liveToken() {
@@ -102,7 +119,21 @@ test('post activity is write-only and has no static key', async () => {
   const out = await postActivity({ body, token: liveToken(), seats, lines, fetchFn, now });
   assert.equal(out.status, 204);
   assert.equal(lines.length, 1);
+  assert.equal(lines[0].seat, 'builder');
   assert.equal(Object.hasOwn(out, 'events'), false);
+  const mismatch = await postActivity({
+    body: JSON.stringify({ t_ct: '2026-10-09T14:00:00Z', seat: 'gate', kind: 'turn', action: 'start', tag: 'issue-1' }),
+    token: liveToken(), seats, lines, fetchFn, now,
+  });
+  assert.equal(mismatch.status, 403);
+  assert.equal(mismatch.error, 'seat mismatch');
+  assert.equal(lines.length, 1);
+  const key = await postActivity({
+    body: JSON.stringify({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', tag: 'issue-1' }),
+    token: 'static-activity-key', seats, lines, fetchFn, now,
+  });
+  assert.equal(key.status, 401);
+  assert.equal(lines.length, 1);
 });
 
 test('github 5xx is 503 and is not cached', async () => {

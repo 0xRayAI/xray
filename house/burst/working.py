@@ -25,6 +25,9 @@ CPU_HOLD_S = 120
 CPU_MIN_S = 1.0
 CHECK_WINDOW_S = 30 * 60
 ACTIVITY_HOLD_S = 60 * 60
+PROMPT_HOLD_S = 10 * 60
+MISSING_WINDOW_S = 60 * 60
+_SEAT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,40}$")
 SKIP_DIRS = {"node_modules", ".git"}
 ACTIVITY_KINDS = {"subagent", "turn", "watcher"}
 _FREE_TEXT = re.compile(r"body|text|message", re.I)
@@ -112,7 +115,116 @@ def note_check(author, merged_at, status, conclusion, started_at, completed_at):
     return {"author": author, "merged_at": merged_at, "t": t}
 
 
-def activity_working(lines, now, hold_s=ACTIVITY_HOLD_S):
+def alias_map(seats_config):
+    """Display name -> seat id. Comparison is case-insensitive. The map is names only."""
+    out = {}
+    if not isinstance(seats_config, dict):
+        return out
+    for display, sid in (seats_config.get("aliases") or {}).items():
+        if isinstance(display, str) and isinstance(sid, str) and sid:
+            out[" ".join(display.split()).casefold()] = sid
+    for seat in seats_config.get("seats") or []:
+        if not isinstance(seat, dict):
+            continue
+        sid = seat.get("id") or (seat.get("plate") or {}).get("seat")
+        if not isinstance(sid, str) or not sid:
+            continue
+        out[sid.casefold()] = sid
+        for alias in seat.get("aliases") or []:
+            if isinstance(alias, str) and alias.strip():
+                out[" ".join(alias.split()).casefold()] = sid
+    return out
+
+
+def canonical_seat(name, aliases=None):
+    """Resolve a display name. Unknown free-text names are dropped."""
+    if not isinstance(name, str):
+        return None
+    key = " ".join(name.split()).casefold()
+    if not key:
+        return None
+    table = aliases or {}
+    if key in table:
+        return table[key]
+    for sid in table.values():
+        if isinstance(sid, str) and sid.casefold() == key:
+            return sid
+    if _SEAT_ID.fullmatch(name):
+        return name
+    return None
+
+
+def _clean_line(line):
+    if not isinstance(line, dict):
+        return None
+    if any(_FREE_TEXT.search(str(key)) for key in line):
+        return None
+    if any(isinstance(val, str) and _FREE_TEXT.search(val) for val in line.values()):
+        return None
+    return line
+
+
+def read_jsonl(path):
+    """JSON objects from a file. A bad line is skipped. Text is not returned as a field."""
+    lines = []
+    for raw in Path(path).read_text(encoding="utf-8").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            lines.append(json.loads(raw))
+        except ValueError:
+            continue
+    return lines
+
+
+def prompt_pulses(lines, aliases, now):
+    """Latest SENT time per seat. Display names use the alias table."""
+    latest = {}
+    for line in lines or []:
+        row = _clean_line(line)
+        if row is None:
+            continue
+        if str(row.get("action") or "").casefold() != "sent":
+            continue
+        seat = canonical_seat(row.get("seat"), aliases)
+        t = _ts(row.get("t_ct") or row.get("t"))
+        if not seat or t is None or t > now + 120:
+            continue
+        if seat not in latest or t > latest[seat]:
+            latest[seat] = t
+    return latest
+
+
+def prompt_working(pulses, now, hold_s=PROMPT_HOLD_S):
+    """Working until 10 minutes after a SENT pulse. One time per seat."""
+    out = {}
+    for seat, t in (pulses or {}).items():
+        if now - t > hold_s:
+            continue
+        out[seat] = t + hold_s
+    return out
+
+
+def missing_activity(pulses, activity_lines, aliases, now, window_s=MISSING_WINDOW_S):
+    """Seats that SENT in the last 60 minutes and have no activity line in that window."""
+    seen = set()
+    for line in activity_lines or []:
+        row = _clean_line(line)
+        if row is None:
+            continue
+        seat = canonical_seat(row.get("seat"), aliases)
+        t = _ts(row.get("t_ct") or row.get("t"))
+        if seat and t is not None and now - window_s <= t <= now + 120:
+            seen.add(seat)
+    missing = []
+    for seat, t in (pulses or {}).items():
+        if now - t <= window_s and seat not in seen:
+            missing.append(seat)
+    return sorted(missing)
+
+
+def activity_working(lines, now, hold_s=ACTIVITY_HOLD_S, aliases=None):
     """Map seat -> until (unix). One number per seat.
 
     A start is open when no later end shares its seat, kind, and tag.
@@ -122,17 +234,15 @@ def activity_working(lines, now, hold_s=ACTIVITY_HOLD_S):
     for line in lines or []:
         if not isinstance(line, dict):
             continue
-        if any(_FREE_TEXT.search(str(key)) for key in line):
-            continue
-        if any(isinstance(val, str) and _FREE_TEXT.search(val) for val in line.values()):
+        if _clean_line(line) is None:
             continue
         kind = line.get("kind")
         action = line.get("action")
-        seat = line.get("seat")
+        seat = canonical_seat(line.get("seat"), aliases)
         tag = line.get("tag") if line.get("tag") is not None else ""
         if kind not in ACTIVITY_KINDS or action not in ("start", "end"):
             continue
-        if not isinstance(seat, str) or not seat:
+        if not seat:
             continue
         if not isinstance(tag, str) or len(tag) > 80:
             continue
@@ -159,18 +269,9 @@ def activity_working(lines, now, hold_s=ACTIVITY_HOLD_S):
     return out
 
 
-def activity_working_file(path, now, hold_s=ACTIVITY_HOLD_S):
+def activity_working_file(path, now, hold_s=ACTIVITY_HOLD_S, aliases=None):
     """Read a JSONL file. A bad line is skipped. The text is not returned."""
-    lines = []
-    for raw in Path(path).read_text(encoding="utf-8").splitlines():
-        raw = raw.strip()
-        if not raw:
-            continue
-        try:
-            lines.append(json.loads(raw))
-        except ValueError:
-            continue
-    return activity_working(lines, now, hold_s)
+    return activity_working(read_jsonl(path), now, hold_s, aliases)
 
 
 def check_working(notes, now, window_s=CHECK_WINDOW_S):

@@ -119,6 +119,46 @@ def iso_offset(ts):
     return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts))
 
 
+class PromptPulse(unittest.TestCase):
+    def aliases(self):
+        return w.alias_map({
+            "aliases": {"Chief of Staff": "CoS", "Lab Tester: Chaos": "Chaos"},
+        })
+
+    def test_sent_pulse_lights_for_10_min_and_display_names_resolve(self):
+        now = 1_700_000_000.0
+        aliases = self.aliases()
+        self.assertEqual(w.canonical_seat("Chief of Staff", aliases), "CoS")
+        self.assertEqual(w.canonical_seat("lab tester: chaos", aliases), "Chaos")
+        pulses = w.prompt_pulses([
+            {"t_ct": iso_offset(now - 30), "seat": "Chief of Staff", "kind": "prompt", "action": "SENT"},
+            {"t_ct": iso_offset(now - 11 * 60), "seat": "Lab Tester: Chaos", "action": "sent"},
+        ], aliases, now)
+        working = w.prompt_working(pulses, now)
+        self.assertEqual(set(working), {"CoS"})
+        self.assertAlmostEqual(working["CoS"], now - 30 + w.PROMPT_HOLD_S)
+        self.assertEqual(w.missing_activity(pulses, [], aliases, now), ["Chaos", "CoS"])
+
+    def test_a_recent_activity_line_clears_missing_and_an_open_start_still_holds_60(self):
+        now = 1_700_000_000.0
+        aliases = self.aliases()
+        pulses = w.prompt_pulses([
+            {"t_ct": iso_offset(now - 20 * 60), "seat": "Chief of Staff", "action": "SENT", "message": "do not keep"},
+            {"t_ct": iso_offset(now - 5 * 60), "seat": "Lab Tester: Chaos", "action": "SENT"},
+        ], aliases, now)
+        activity = [{
+            "t_ct": iso_offset(now - 4 * 60), "seat": "Chaos",
+            "kind": "turn", "action": "start", "tag": "stretch",
+        }]
+        self.assertEqual(w.missing_activity(pulses, activity, aliases, now), [])
+        # CoS pulse carried free text, so it is not a pulse and not missing.
+        self.assertNotIn("CoS", w.prompt_pulses([
+            {"t_ct": iso_offset(now - 20 * 60), "seat": "Chief of Staff", "action": "SENT", "message": "do not keep"},
+        ], aliases, now))
+        until = w.activity_working(activity, now, aliases=aliases)
+        self.assertAlmostEqual(until["Chaos"], now - 4 * 60 + w.ACTIVITY_HOLD_S)
+
+
 class SeatActivity(unittest.TestCase):
     def test_open_start_lights_until_60_min(self):
         now = 1_700_000_000.0

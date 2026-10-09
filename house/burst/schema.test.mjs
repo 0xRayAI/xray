@@ -32,7 +32,8 @@ test('prompt and cloud-agent lines match their schemas kinds', () => {
     assert.equal(validActivity(line, now), null);
   }
   assert.equal(activity.properties.tag.maxLength, 80);
-  assert.ok(activity.required.includes('seat'));
+  assert.equal(typeof activity.properties.seat, 'object');
+  assert.equal(activity.required.includes('seat'), false);
   assert.deepEqual(activity.properties.kind.enum, [
     'prompt', 'turn', 'subagent', 'watcher', 'cloud_agent', 'lab_run', 'review', 'retest', 'deploy',
   ]);

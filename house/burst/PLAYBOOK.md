@@ -37,10 +37,11 @@ timeline, not in the pill.
 | GitHub-check working | Actions runs/jobs and commit statuses (Checks is not on a fine-grained token) | every pass | working, not a packet | one until-time per author seat | automatic for a PR the seat authored |
 | /health | `probe` in `fetch_feed.py` | `--health-every` (default 60s), emit on status change | packet `health_ok` / `health_fail` | HTTP status code and time. The body is not read | `--health URL` |
 | Lab-run working | `house/burst/working.py` | every collector pass when `BURST_LABS` is set | working, not a packet | one until-time per seat. Mtimes, cwd, and CPU time only | `BURST_LABS` JSON: `[{seat, runs, folders}]` |
-| Seat activity | `fleet/activity.jsonl` on the box or laptop | one line at start, one line at end | working, not a packet | names and times only. No prompt or message text | `kind` `subagent`, `turn`, or `watcher`; `action` `start` or `end`; `tag` at most 80 characters. Off-box seats POST the same object. See [activity.schema.json](activity.schema.json) |
+| Seat activity | `fleet/activity.jsonl` and `POST /activity` | one line at start, one line at end | working while a start has no end, cap 60 min. Not a packet | names and times only. No prompt or message text | Same object. `seat` is optional on the post and must match the installation token, case-insensitive, or the post is 403 `seat mismatch`. The stored seat is the token's seat |
 | Railway deploys | the seat writes a status file; the collector does not call Railway | seat poll 180s | packet only if the seat maps a status change into the feed | id, status word, time | keep project ids in the seat's own config, not in this repo |
 | House board and merge queue | files the seat already writes | every collector pass when the seat points at them | counts and card ids | ids, status words, counts | not a second copy of the house tree |
-| prompts.jsonl / cloud-agents.jsonl | tail the seat's log | every pass the seat runs | activity lines | names, times, ids. No message text | `POST /activity` or a local line that passes `validActivity` |
+| prompts.jsonl | a SENT pulse on the seat's prompt log | every pass the file is present | working for 10 min after SENT. Not a packet | display name resolved through seats aliases. No prompt text | `BURST_PROMPTS`. `Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos` |
+| cloud-agents.jsonl | tail the seat's log | every pass the seat runs | activity lines | names, times, ids. No message text | a line that passes `validActivity` with `kind` `cloud_agent` |
 | POST /activity | `house/burst/activity.mjs` | one post at turn start; the window stays open until end | one stored line | strict short fields; seat comes from the verified token | the seat's own GitHub App installation token |
 | Laptop repo watcher | the seat's loop, off the house box | every 30s, plus a heartbeat | working while the turn is open | ids, times, counts. No command lines | `house/burst/bin` first on `PATH`. See "Seat on a laptop" |
 | Supervisor | `house/burst/supervise.py` | restarts when the feed exits; re-mint at 50 min of wall time | process start, exit 75 | no tokens in logs | `BURST_TOKEN_MINTED` from `date +%s` |
@@ -60,6 +61,10 @@ The first CPU sample is a baseline only. Folder mtime is not the signal: it chan
 ### GitHub-check working
 
 A running, queued, or failing check on a PR the seat authored, newer than that PR's last merge, within 30 minutes. Success does not light working.
+
+### Fail-safe working
+
+A seat is working for **10 minutes** after any `prompts.jsonl` line pulses it `SENT`, or while an `activity.jsonl` start has no later end for the same seat, kind, and tag, for at most **60 minutes**. Display names resolve through the seats config `aliases` (`Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos`). The feed field `fleet.missing_activity` lists seats that pulsed in the last 60 minutes and have no activity line in that window. The page does not read that list.
 
 ### Header dot
 
@@ -152,3 +157,5 @@ Set the token as the host variable `GITHUB_READ_TOKEN`. Do not put a GitHub App 
 11. **Busy seats showed idle.** A quick reply cleared the prompt signal, and background work was not logged. `fleet/activity.jsonl` records one line at the start and one at the end (`kind` `subagent`, `turn`, or `watcher`). The seat stays working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. Names and times only. Not counted in N of M. Off-box seats POST the same line with their own App token.
 
 12. **The header said IDLE while the dot blinked or the node said working.** Chip text, the blinking dot, and the node label read one state: working, then active, then idle. A working seat is working in all three. Working stays outside N of M.
+
+13. **A prompt went quiet and a post could name another seat.** `seat` on `POST /activity` is optional. When it is present it must match the installation token, case-insensitive, or the response is 403 `seat mismatch`. The stored seat is the token's seat. There is no static key. A `SENT` prompt pulse keeps the seat working for 10 minutes, after display names resolve through seats aliases. An open `activity.jsonl` start still caps at 60 minutes. `fleet.missing_activity` lists seats that pulsed in the last 60 minutes with no activity line. The page does not show that list.

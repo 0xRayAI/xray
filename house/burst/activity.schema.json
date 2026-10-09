@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "house/burst/activity.schema.json",
   "title": "Burst activity line",
-  "description": "One line an agent submits. No free text. seat is the plate stamp and must match the caller (the installation token on POST /activity). tag is at most 80 characters. t_ct is ISO-8601 with a numeric offset. Older stored lines may still use action received, sent, or tick; new lines use the enums below.",
+  "description": "One line for fleet/activity.jsonl and for POST /activity. No free text. seat is optional on the post; when present it must match the installation token case-insensitively, and the stored seat is the token's seat. There is no static key. tag is at most 80 characters. t_ct is ISO-8601 with a numeric offset. Older stored lines may still use action received, sent, or tick; new lines use the enums below.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["t_ct", "seat", "kind", "action"],
+  "required": ["t_ct", "kind", "action"],
   "properties": {
     "t_ct": {
       "type": "string",
@@ -86,7 +86,7 @@
       "description": "One start or end of background work on a box or laptop seat. Same object POST /activity accepts. Names and times only: no prompt body and no message text. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. That light is not counted in N of M.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["t_ct", "seat", "kind", "action", "tag"],
+      "required": ["t_ct", "kind", "action", "tag"],
       "properties": {
         "t_ct": { "$ref": "#/properties/t_ct" },
         "seat": { "$ref": "#/properties/seat" },

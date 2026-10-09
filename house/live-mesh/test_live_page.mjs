@@ -407,4 +407,7 @@ test('chip, dot, and node label share one seat state', () => {
   assert.match(html, /sub = seatState/);
   assert.equal(html.includes("on ? 'LIVE' : 'IDLE'"), false);
   assert.equal(html.includes('IDLE'), false);
+  const js = readFileSync(path.join(liveDir, 'live.js'), 'utf8');
+  assert.equal(js.includes('missing_activity'), false);
+  assert.equal(html.includes('missing_activity'), false);
 });

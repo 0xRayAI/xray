@@ -829,20 +829,25 @@ def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
     return out
 
 
-def _activity_box(mod, now: float):
-    """Open seat-activity lights from fleet/activity.jsonl, or None if that file is absent.
-
-    None means this pass did not recompute the box log, so the previous
-    working_box stays until each light's cap.
-    """
-    path = os.environ.get("BURST_ACTIVITY", "fleet/activity.jsonl").strip()
+def _seats_config():
+    path = os.environ.get("BURST_SEATS", "").strip()
     if not path or not Path(path).is_file():
-        return None
+        return {}
     try:
-        return mod.activity_working_file(path, now)
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log(f"BURST_SEATS not read ({type(exc).__name__})")
+        return {}
+
+
+def _jsonl_lines(path):
+    if not path or not Path(path).is_file():
+        return []
+    try:
+        return _burst_working().read_jsonl(path)
     except OSError as exc:
-        log(f"BURST_ACTIVITY not read ({type(exc).__name__})")
-        return None
+        log(f"{Path(path).name} not read ({type(exc).__name__})")
+        return []
 
 
 def _working_map(now: float) -> tuple:
@@ -857,14 +862,23 @@ def _working_map(now: float) -> tuple:
                 until[seat] = max(until.get(seat, 0), ts)
         except (OSError, ValueError) as exc:
             log(f"BURST_LABS not read ({type(exc).__name__})")
-    box = _activity_box(mod, now)
-    if box:
+    aliases = mod.alias_map(_seats_config())
+    prompts = _jsonl_lines(os.environ.get("BURST_PROMPTS", "prompts.jsonl").strip())
+    pulses = mod.prompt_pulses(prompts, aliases, now)
+    for seat, ts in mod.prompt_working(pulses, now).items():
+        until[seat] = max(until.get(seat, 0), ts)
+    activity_path = os.environ.get("BURST_ACTIVITY", "fleet/activity.jsonl").strip()
+    activity_lines = _jsonl_lines(activity_path)
+    box = None
+    if activity_path and Path(activity_path).is_file():
+        box = mod.activity_working(activity_lines, now, aliases=aliases)
         for seat, ts in box.items():
             until[seat] = max(until.get(seat, 0), ts)
+    missing = mod.missing_activity(pulses, activity_lines, aliases, now)
     iso = {seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in until.items()}
     box_iso = None if box is None else {
         seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in box.items()}
-    return iso, box_iso
+    return iso, box_iso, missing
 
 
 def build(args, gh: GitHub) -> dict:
@@ -945,8 +959,9 @@ def build(args, gh: GitHub) -> dict:
         "event_count": len(uniq),
         "events": uniq,
     }
-    working, box = _working_map(time.time())
+    working, box, missing = _working_map(time.time())
     feed["working"] = working
+    feed["fleet"] = {"missing_activity": missing}
     if box is not None:
         feed["working_box"] = box
     return feed

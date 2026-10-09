@@ -486,5 +486,31 @@ class Loud401(unittest.TestCase):
         self.assertNotIn(token, buf.getvalue())
 
 
+class FailsafeFeed(unittest.TestCase):
+    def test_missing_activity_is_on_the_feed_map(self):
+        now = time.time()
+        root = Path(tempfile.mkdtemp())
+        prompts = root / "prompts.jsonl"
+        seats = root / "seats.json"
+        when = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(now - 30))
+        prompts.write_text(json.dumps({
+            "t_ct": when, "seat": "Chief of Staff", "kind": "prompt", "action": "SENT",
+        }) + "\n", encoding="utf-8")
+        seats.write_text(json.dumps({
+            "aliases": {"Chief of Staff": "CoS", "Lab Tester: Chaos": "Chaos"},
+        }), encoding="utf-8")
+        env = {
+            "BURST_PROMPTS": str(prompts), "BURST_SEATS": str(seats),
+            "BURST_ACTIVITY": str(root / "absent.jsonl"), "BURST_LABS": "",
+        }
+        ff.CHECK_NOTES.clear()
+        with mock.patch.dict(os.environ, env, clear=False):
+            working, _box, missing = ff._working_map(now)
+        self.assertIn("CoS", working)
+        self.assertEqual(missing, ["CoS"])
+        page = Path(__file__).resolve().parents[1] / ".." / "docs-site" / "static" / "live" / "live.js"
+        self.assertNotIn("missing_activity", page.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

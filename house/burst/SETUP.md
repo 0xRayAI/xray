@@ -345,9 +345,13 @@ done
 
 ### Activity
 
-House rule: every seat logs background work. Append one line to `fleet/activity.jsonl` when the work starts, and one line when it ends. The line is `t_ct` (ISO-8601 with a numeric offset), `seat`, `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters). Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. That light is not in N of M. The shape is `$defs.seatActivity` in [activity.schema.json](activity.schema.json), the same object `POST /activity` accepts.
+House rule: every seat logs background work. Append one line to `fleet/activity.jsonl` when the work starts, and one line when it ends. `POST /activity` takes that same object and an installation token. There is no static key.
 
-Off-box seats also POST that object with their own App token. One post at start, one at end. The window stays open until `end`. Do not post on a 30-second tick.
+`seat` is optional on the post. When the body includes it, it must match the token's seat, case-insensitive. Any other seat is **403** `seat mismatch`. The stored line's `seat` is the token's seat.
+
+The line is `t_ct` (ISO-8601 with a numeric offset), `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters), plus `seat` on the file. Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. A `SENT` line in `prompts.jsonl` also keeps that seat working for 10 minutes. Display names resolve through `aliases` in the seats config (`Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos`). The feed lists `fleet.missing_activity`: seats pulsed in the last 60 minutes with no activity line in that window. The page does not read that list. The light is not in N of M. The shape is [activity.schema.json](activity.schema.json).
+
+Off-box seats POST with their own App token. One post at start, one at end. The window stays open until `end`. Do not post on a 30-second tick.
 
 ```bash
 curl -sS -o /dev/null -w '%{http_code}\n' \
@@ -448,5 +452,8 @@ Work top to bottom. Stop at the first failure.
 | Pusher will not start | An old `sleep` held the lock. `push.sh` closes fd 9 before sleep. Fixes log item 9 |
 | Commits show a human name | `use-repo` did not run, or `bin/` is after another `gh` on `PATH` |
 | Activity 401 `not a seat installation` | Bot login or bot id in the seats config does not match the token's viewer |
+| Activity 403 `seat mismatch` | The body's `seat` does not match the token's seat. Drop `seat` or send the token's seat. A static key is not accepted |
+| A seat that just sent a prompt looks idle | `prompts.jsonl` needs `action` `SENT` and a seat the aliases table knows. The light lasts 10 minutes. Fixes log item 13 |
+| `fleet.missing_activity` names a seat | That seat pulsed in the last 60 minutes and wrote no `activity.jsonl` line in that window |
 
 The fixes log in [PLAYBOOK.md](PLAYBOOK.md) is the history of those rows. When a row and the log disagree, the log's current rule is the one the code implements.

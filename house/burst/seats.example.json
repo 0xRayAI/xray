@@ -1,6 +1,10 @@
 {
   "org": "<org>",
   "repos": ["<org>/<repo>"],
+  "aliases": {
+    "Chief of Staff": "CoS",
+    "Lab Tester: Chaos": "Chaos"
+  },
   "seats": [
     {
       "id": "architect",
