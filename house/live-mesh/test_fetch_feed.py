@@ -512,5 +512,35 @@ class FailsafeFeed(unittest.TestCase):
         self.assertNotIn("missing_activity", page.read_text(encoding="utf-8"))
 
 
+class BoxEventTest(unittest.TestCase):
+    def test_box_ledger_folds_in_and_cursor_advances(self):
+        folder = tempfile.TemporaryDirectory()
+        root = Path(folder.name)
+        ledger = root / "box-events.jsonl"
+        ledger.write_text(json.dumps({
+            "id": "box:builder:turn:start:2026-10-09T15:00:00Z",
+            "t_ct": "2026-10-09T15:04:00-05:00",
+            "from": "builder",
+            "to": "Burst",
+            "kind": "turn",
+            "direction": "internal",
+            "label": "turn start",
+            "source": "burst-box",
+            "src_file": "somewhere",
+            "repo": "local",
+        }) + "\n")
+        since = __import__("datetime").datetime(2026, 10, 9, tzinfo=__import__("datetime").timezone.utc)
+        got = ff.box_events(ledger, since)
+        self.assertEqual(got[0]["src_file"], "box-events.jsonl")
+        out = root / "live-events.json"
+        first = ff.next_cursor(out)
+        second = ff.next_cursor(out)
+        epoch, seq = first.split(".")
+        epoch2, seq2 = second.split(".")
+        self.assertEqual(epoch, epoch2)
+        self.assertEqual(int(seq2), int(seq) + 1)
+        folder.cleanup()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

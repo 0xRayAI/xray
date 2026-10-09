@@ -53,6 +53,7 @@ class SuperviseTest(unittest.TestCase):
         src = Path(__file__).resolve().parent.joinpath("push.sh").read_text()
         self.assertIn("flock -n 9", src)
         self.assertIn('sleep "$CHECK" 9>&-', src)
+        self.assertIn("push-delta.mjs", src)
 
 
 if __name__ == "__main__":

@@ -33,6 +33,7 @@ import http.client
 import json
 import os
 import re
+import secrets
 import subprocess
 import sys
 import time
@@ -441,7 +442,8 @@ _RANK_ORDER = [["push"], ["pr_open"], ["pr_update"], ["ci_pass", "ci_fail"], ["c
 KIND_RANK = {k: i for i, ks in enumerate(_RANK_ORDER) for k in ks}
 # Dedupe precedence when two sources give the same id (lower wins).
 SRC_RANK = {"github-api": 0, "github-deployments": 0, "x-api": 0, "health-probe": 0,
-            "x-ledger.jsonl": 1, "light-notes.jsonl": 2, "feed-pushes.jsonl": 1}
+            "x-ledger.jsonl": 1, "light-notes.jsonl": 2, "feed-pushes.jsonl": 1,
+            "box-events.jsonl": 1}
 MERGE_X_RANK = 3
 HERALD_HANDLES = {"0xRayAI", "herald"}
 
@@ -707,6 +709,46 @@ def feed_push_events(path: Path, since: datetime) -> list[dict]:
     return out
 
 
+def box_events(path: Path, since: datetime) -> list[dict]:
+    """Local signals the box pushed. One JSON event per line. Merged by id on the next pass."""
+    out = []
+    if not path.exists():
+        return out
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(rec, dict) or not rec.get("id") or not rec.get("t_ct"):
+            continue
+        if instant(rec["t_ct"]) < since:
+            continue
+        rec["src_file"] = "box-events.jsonl"
+        out.append(rec)
+    return out
+
+
+def next_cursor(out: Path) -> str:
+    """epoch.seq for this feed file. The epoch is created once. seq increments every write."""
+    epoch_path = out.parent / "burst-epoch"
+    seq_path = out.parent / "burst-seq"
+    if not epoch_path.exists():
+        epoch_path.write_text(secrets.token_hex(4), encoding="utf-8")
+    epoch = epoch_path.read_text(encoding="utf-8").strip()
+    seq = 0
+    if seq_path.exists():
+        try:
+            seq = int(seq_path.read_text(encoding="utf-8").strip() or "0")
+        except ValueError:
+            seq = 0
+    seq += 1
+    seq_path.write_text(str(seq), encoding="utf-8")
+    return f"{epoch}.{seq}"
+
+
 def merge(events: list[dict]) -> list[dict]:
     """Dedupe by id keeping the higher-precedence source; fill optional fields the winner lacks."""
     best: dict[str, dict] = {}
@@ -918,6 +960,9 @@ def build(args, gh: GitHub) -> dict:
     # allow --deploy-repo '' / --health '' to disable
     events.extend(light_note_events(Path(args.light_notes), since))
     events.extend(feed_push_events(Path(args.feed_pushes), since))
+    box_path = getattr(args, "box_events", None)
+    if box_path:
+        events.extend(box_events(Path(box_path), since))
     x_ledger = ledger_events(Path(args.x_ledger), since)
     events.extend(x_ledger)
     x_merged = x_events(Path(args.merge_x), since) if args.merge_x else []
@@ -997,6 +1042,7 @@ def _keep_box_working(feed: dict, out: Path) -> None:
 
 def write(feed: dict, out: Path) -> int:
     _keep_box_working(feed, out)
+    feed["cursor"] = next_cursor(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     stream = out.with_suffix(".jsonl")
     old_ids: set[str] = set()
@@ -1032,6 +1078,7 @@ def main() -> int:
     p.add_argument("--no-issues", action="store_true")
     p.add_argument("--no-pushes", action="store_true", help="skip fleet push events (repo events feed)")
     p.add_argument("--feed-pushes", help="tripwire live-wire push ledger (default: <out dir>/feed-pushes.jsonl)")
+    p.add_argument("--box-events", help="box delta ledger (default: <out dir>/box-events.jsonl)")
     p.add_argument("--watch", type=float, default=0, help="poll every N seconds (0 = one pass)")
     args = p.parse_args()
     out_dir = Path(args.out).parent
@@ -1039,6 +1086,7 @@ def main() -> int:
     args.x_ledger = args.x_ledger or str(out_dir / "x-ledger.jsonl")
     args.health_state = args.health_state or str(out_dir / "health-state.json")
     args.feed_pushes = args.feed_pushes or str(out_dir / "feed-pushes.jsonl")
+    args.box_events = args.box_events or str(out_dir / "box-events.jsonl")
     args.deploy_repo = args.deploy_repo or None
     args.health = args.health or None
     if os.environ.get("X_BEARER_TOKEN"):

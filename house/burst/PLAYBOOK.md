@@ -92,7 +92,7 @@ There is no static `ACTIVITY_KEY` fallback. The verdict cache stores `sha256(tok
 
 ### Pusher lock
 
-`push.sh` holds flock on fd 9 and sleeps with `9>&-`, so a stopped pusher's orphan sleep does not keep the lock.
+`push.sh` posts one delta to `BURST_INGEST_URL` while it holds flock on fd 9. The ingest secret is the `X-Burst-Ingest` header. A 409 refetches `BURST_FEED_URL` and posts once more. The script then sleeps with `9>&-`, so a stopped pusher's orphan sleep does not keep the lock.
 
 ## Seat on a laptop (off-box seat)
 
