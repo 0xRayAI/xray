@@ -68,7 +68,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 2. **Stamp.** The version tool writes the changelog note for this cut. It updates the current-version words in the guides. It leaves old changelog headings as they are. It leaves the guide of older versions as it is. It leaves files under `.xray/state` as they are.
 3. **Plates.** Each Plate in `docs-site/docs/plates/` shows the version being cut. The release tool does not edit those files. The cut does, before the pack.
 4. **Docs check.** The docs check passes before the pack.
-5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. Forge does not confirm passage. Forge does not merge on a green CI check.
+5. **Tests.** Critic confirms passage on that same commit and writes PASS or FAIL on the pull request. Every unit test passes. The Playwright battery passes, and the coverage from that battery is part of the result. A green CI check is not passage. A lab PASS alone is not release passage. Forge does not confirm passage. Forge does not merge on a green CI check.
 6. **Release page.** After the wear-gate and the ship go: publish that exact package, push the annotated tag, then open the GitHub release page. The tweet file the tool writes is not a post. A public post still needs Blaze's go.
 
 **Wear-gate.** After merge and before publish: build, pack, and install that exact package in a fresh git folder and a fresh non-git folder, with a temporary home. Then run wear, setup, and doctor. This is not a Review plate.
@@ -138,7 +138,7 @@ Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md
 
 Each seat owns the watcher for its own job: critic watches pull requests, the lab tester watches merges. Watchers follow Beats on the repos named in `house/WATCHERS.md`. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher fires are deduped by pull request + head SHA. Nobody relays: a fire lands on the seat that does the work. A watcher does not ship Dist, and only the seat that holds the merge merges. Quiet when nothing changed. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 
-`WAVEBOARD.md` is built from the source of truth (GitHub, the retest queue, the cloud log). Hand-kept items live in one static file. Nobody hand-edits the generated board. CoS owns the board digest.
+Build `WAVEBOARD.md` from live sources (GitHub, the retest queue, the cloud log) where a generator exists, with hand-kept items in one static file. Otherwise keep it current by hand on every state change. CoS owns the board digest.
 
 **Stall sweep.** A stall sweep runs around the clock while builders run. It nudges the one owning seat directly, at most once per item per day, and says nothing when nothing is stuck. Thresholds are house settings.
 
