@@ -127,6 +127,13 @@ test('labels, CT times and fetch fallback', async () => {
   assert.match(calls.at(-1).url, /^live-events\.json\?t=\d+$/);
 });
 
+test('the center node is Burst', () => {
+  assert.equal(L.HUB_LABEL, 'Burst');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  assert.match(html, /L\.HUB_LABEL/);
+  assert.ok(!html.includes("fillText('mesh'"));
+});
+
 test('page has no external scripts and no longer depends on the mp4', () => {
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
   assert.ok(!/mesh-live\.mp4|<video/i.test(html));
