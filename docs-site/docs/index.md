@@ -10,6 +10,8 @@ Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repe
 
 ![0xRay v4 exo skeleton — CONSTITUTION ON](/img/exo-skeleton-v4.jpg)
 
+Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+
 ```bash
 npm install 0xray
 ```

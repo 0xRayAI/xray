@@ -32,4 +32,4 @@ Suit settings are features, config, and codex.
 
 There is no settings.json. The files are `.xray/features.json`, `.xray/config.json`, and `.xray/codex.json`. The package copies live under `xray/`.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

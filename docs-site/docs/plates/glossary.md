@@ -23,4 +23,4 @@ What the words mean.
   │ grok-bot · the package you install                         │
   └────────────────────────────────────────────────────────────┘
 ```
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

@@ -39,4 +39,4 @@ Trail: state and logs under `.xray`. Codex is already loaded. This plate is the 
 The published manual is `docs-site/docs/`. The rule sheet is `grok-bot/OP-PROC.md`. Neither is one of the five pages.
 
 Goggles plane `record-map` is the lens over this map. Station and the notes page belong to the station module. Repertoire laws stay in the law file. The session-note index sits beside that file.
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

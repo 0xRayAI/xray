@@ -58,4 +58,4 @@ Each tool is its own call. `spawnAside` opens around `orchestrate-task`, `analyz
 └────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

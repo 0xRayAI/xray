@@ -32,4 +32,4 @@ Refresh writes one Fresh line from git and the published package.
 
 refreshFreshness in src/nucleus/work-freshness.mjs fetches origin, reads npm view 0xray version, and returns that one line. A compact hook does not call it. The plate that belongs here is station-card.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

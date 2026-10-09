@@ -35,4 +35,4 @@ Today that file is `docs/inference/latest-session.json`. The home is `.xray/infe
 
 Station reads the file for heat. The inference accumulator reads `session-*.json` beside it. Do not mint a `session-<date>-<sha>` file for the station note.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

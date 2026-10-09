@@ -19,4 +19,4 @@ It views one plane.
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

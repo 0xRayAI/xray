@@ -41,4 +41,4 @@ Intent names one plate. Equal top scores recall nothing. A missing worn copy is 
 
 A look returns the named plane, the matched law names, and the current lines from the session-note index. It does not write a law.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42
