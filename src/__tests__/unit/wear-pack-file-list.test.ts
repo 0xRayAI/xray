@@ -168,10 +168,11 @@ describe('packed tarball file list against 0xray@4.0.28', () => {
         const keep = (rel: string) => !isRootSuitLink(rel) && !isDroppedRoleSkill(rel);
         const plainMissing = oldPlain.filter((rel) => !packedPlain.includes(rel) && keep(rel));
         const plainExtra = packedPlain.filter((rel) => !oldPlain.includes(rel) && keep(rel));
-        expect(plainExtra).toEqual([]);
+        // Current wear writes the project Grok config. 4.0.28 setup did not.
+        expect(plainExtra).toEqual(['.grok/config.toml']);
         expect(plainMissing).toEqual([...CURSOR_HOOK_FILES].sort());
 
-        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT])]
+        const expectedGit = [...new Set([...oldGit, ...CURSOR_HOOK_FILES, ...GIT_HOOK_SNAPSHOT, '.grok/config.toml'])]
           .filter(keep)
           .sort();
         expect(packedGit.filter(keep)).toEqual(expectedGit);
