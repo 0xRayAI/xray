@@ -2,6 +2,8 @@
 
 The working rhythm under [OP-PROC.md](OP-PROC.md).
 
+Seat-owned watchers, the stall sweep, the merge queue file and the live mesh lines are in [docs/opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md).
+
 House rows in `house/` override the pack rules in this file when they conflict. That includes a merge-on-critic-PASS exception (careful-change, owner's go) and the drift-check schedule when the house sets its own.
 
 ## Syncopate (the higher-level rules)
