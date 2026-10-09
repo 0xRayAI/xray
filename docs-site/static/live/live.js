@@ -113,6 +113,12 @@
     });
     return on;
   }
+  /* One state for the chip, the blinking dot, and the node label. */
+  function seatState(active, working) {
+    if (working) return 'working';
+    if (active) return 'active';
+    return 'idle';
+  }
   function burstSinceUrl(base, cursor) {
     return base + (base.indexOf('?') < 0 ? '?' : '&') + 'since=' + encodeURIComponent(cursor);
   }
@@ -411,6 +417,6 @@
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
     countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireGlow: wireGlow,
-    freshnessLabel: freshnessLabel, seatWorking: seatWorking, burstSinceUrl: burstSinceUrl, burstPoll: burstPoll
+    freshnessLabel: freshnessLabel, seatWorking: seatWorking, seatState: seatState, burstSinceUrl: burstSinceUrl, burstPoll: burstPoll
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -37,6 +37,7 @@ timeline, not in the pill.
 | GitHub-check working | Actions runs/jobs and commit statuses (Checks is not on a fine-grained token) | every pass | working, not a packet | one until-time per author seat | automatic for a PR the seat authored |
 | /health | `probe` in `fetch_feed.py` | `--health-every` (default 60s), emit on status change | packet `health_ok` / `health_fail` | HTTP status code and time. The body is not read | `--health URL` |
 | Lab-run working | `house/burst/working.py` | every collector pass when `BURST_LABS` is set | working, not a packet | one until-time per seat. Mtimes, cwd, and CPU time only | `BURST_LABS` JSON: `[{seat, runs, folders}]` |
+| Seat activity | `fleet/activity.jsonl` on the box or laptop | one line at start, one line at end | working, not a packet | names and times only. No prompt or message text | `kind` `subagent`, `turn`, or `watcher`; `action` `start` or `end`; `tag` at most 80 characters. Off-box seats POST the same object. See [activity.schema.json](activity.schema.json) |
 | Railway deploys | the seat writes a status file; the collector does not call Railway | seat poll 180s | packet only if the seat maps a status change into the feed | id, status word, time | keep project ids in the seat's own config, not in this repo |
 | House board and merge queue | files the seat already writes | every collector pass when the seat points at them | counts and card ids | ids, status words, counts | not a second copy of the house tree |
 | prompts.jsonl / cloud-agents.jsonl | tail the seat's log | every pass the seat runs | activity lines | names, times, ids. No message text | `POST /activity` or a local line that passes `validActivity` |
@@ -62,7 +63,7 @@ A running, queued, or failing check on a PR the seat authored, newer than that P
 
 ### Header dot
 
-The existing header dot blinks in the seat color while that seat is working. The chip text stays `LIVE` or `IDLE`. There is no extra word and no extra glyph.
+Chip text, the blinking dot, and the node label read one derived state: **working**, then **active**, then **idle**. The dot blinks only while that state is working. The chip cannot say idle while the dot blinks or the node says working. There is no extra glyph. Working is still outside the fleet count.
 
 ### Delta and the page poll
 
@@ -147,3 +148,7 @@ Set the token as the host variable `GITHUB_READ_TOKEN`. Do not put a GitHub App 
 9. **A stopped pusher left the lock held.** `sleep` runs with fd 9 closed (`9>&-`).
 
 10. **The board went stale when the laptop or VM paused or hung.** The GitHub watcher ran on that box, so a pause stopped every GitHub event. The collector now runs on the host next to the page and writes into the server's event store. The box only pushes local signals (prompts, cloud-agent logs, lab-run mtimes) as deltas merged by id. If the box is down, GitHub events still flow and box-sourced seat state shows stale.
+
+11. **Busy seats showed idle.** A quick reply cleared the prompt signal, and background work was not logged. `fleet/activity.jsonl` records one line at the start and one at the end (`kind` `subagent`, `turn`, or `watcher`). The seat stays working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. Names and times only. Not counted in N of M. Off-box seats POST the same line with their own App token.
+
+12. **The header said IDLE while the dot blinked or the node said working.** Chip text, the blinking dot, and the node label read one state: working, then active, then idle. A working seat is working in all three. Working stays outside N of M.

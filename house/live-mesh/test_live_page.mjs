@@ -388,9 +388,23 @@ test('a cursor poll treats 304 as unchanged and 409 as a full refetch', async ()
 
 test('the header dot blinks in the seat color and the chip gains no extra word', () => {
   const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
-  assert.match(html, /dot\.classList\.toggle\('blink'/);
+  assert.match(html, /dot\.classList\.toggle\('blink', seatState === 'working'/);
   assert.match(html, /\.dot\.blink \{ animation: blink/);
   assert.match(html, /prefers-reduced-motion: reduce\) \{[\s\S]*\.dot\.blink \{ animation: none/);
   assert.equal(html.includes('⚙'), false);
-  assert.match(html, /s\.role \+ ' · ' \+ \(on \? 'LIVE' : 'IDLE'\)/);
+  assert.match(html, /s\.role \+ ' · ' \+ seatState/);
+});
+
+test('chip, dot, and node label share one seat state', () => {
+  assert.equal(L.seatState(true, true), 'working');
+  assert.equal(L.seatState(false, true), 'working');
+  assert.equal(L.seatState(true, false), 'active');
+  assert.equal(L.seatState(false, false), 'idle');
+  const html = readFileSync(path.join(liveDir, 'index.html'), 'utf8');
+  const calls = html.match(/L\.seatState\(/g) || [];
+  assert.equal(calls.length, 2);
+  assert.match(html, /drawNode\(key, seatState/);
+  assert.match(html, /sub = seatState/);
+  assert.equal(html.includes("on ? 'LIVE' : 'IDLE'"), false);
+  assert.equal(html.includes('IDLE'), false);
 });

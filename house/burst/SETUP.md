@@ -345,7 +345,9 @@ done
 
 ### Activity
 
-One `POST /activity` when a turn starts, and one when it ends. The turn window stays open until `end`. Do not post on a 30-second tick.
+House rule: every seat logs background work. Append one line to `fleet/activity.jsonl` when the work starts, and one line when it ends. The line is `t_ct` (ISO-8601 with a numeric offset), `seat`, `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters). Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. That light is not in N of M. The shape is `$defs.seatActivity` in [activity.schema.json](activity.schema.json), the same object `POST /activity` accepts.
+
+Off-box seats also POST that object with their own App token. One post at start, one at end. The window stays open until `end`. Do not post on a 30-second tick.
 
 ```bash
 curl -sS -o /dev/null -w '%{http_code}\n' \

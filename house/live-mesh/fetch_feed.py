@@ -829,7 +829,23 @@ def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
     return out
 
 
-def _working_map(now: float) -> dict:
+def _activity_box(mod, now: float):
+    """Open seat-activity lights from fleet/activity.jsonl, or None if that file is absent.
+
+    None means this pass did not recompute the box log, so the previous
+    working_box stays until each light's cap.
+    """
+    path = os.environ.get("BURST_ACTIVITY", "fleet/activity.jsonl").strip()
+    if not path or not Path(path).is_file():
+        return None
+    try:
+        return mod.activity_working_file(path, now)
+    except OSError as exc:
+        log(f"BURST_ACTIVITY not read ({type(exc).__name__})")
+        return None
+
+
+def _working_map(now: float) -> tuple:
     mod = _burst_working()
     until = mod.check_working(list(CHECK_NOTES), now)
     CHECK_NOTES.clear()
@@ -841,7 +857,14 @@ def _working_map(now: float) -> dict:
                 until[seat] = max(until.get(seat, 0), ts)
         except (OSError, ValueError) as exc:
             log(f"BURST_LABS not read ({type(exc).__name__})")
-    return {seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in until.items()}
+    box = _activity_box(mod, now)
+    if box:
+        for seat, ts in box.items():
+            until[seat] = max(until.get(seat, 0), ts)
+    iso = {seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in until.items()}
+    box_iso = None if box is None else {
+        seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in box.items()}
+    return iso, box_iso
 
 
 def build(args, gh: GitHub) -> dict:
@@ -892,7 +915,7 @@ def build(args, gh: GitHub) -> dict:
                   f"{len(x_ledger)} from x-ledger.jsonl (herald's machine ledger)" if x_ledger else "",
                   f"{len(x_merged)} from {Path(args.merge_x).name} via --merge-x (hand log, not a live X read)"
                   if x_merged else ""])) + ".")
-    return {
+    feed = {
         "title": "muse / 0xRay ping-pong live events",
         # Local inputs are recorded by file name only (no box paths in a committed feed).
         "sources": [f"https://github.com/{r}" for r in args.repos]
@@ -921,11 +944,44 @@ def build(args, gh: GitHub) -> dict:
         "kinds": kinds,
         "event_count": len(uniq),
         "events": uniq,
-        "working": _working_map(time.time()),
     }
+    working, box = _working_map(time.time())
+    feed["working"] = working
+    if box is not None:
+        feed["working_box"] = box
+    return feed
+
+
+def _keep_box_working(feed: dict, out: Path) -> None:
+    """A host rewrite keeps box lights this pass did not recompute, until their cap."""
+    if "working_box" in feed:
+        return
+    if not out.exists():
+        return
+    try:
+        old = json.loads(out.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    now = time.time()
+    kept = {}
+    for seat, iso in (old.get("working_box") or {}).items():
+        try:
+            ts = datetime.fromisoformat(str(iso)).timestamp()
+        except (TypeError, ValueError):
+            continue
+        if ts > now:
+            kept[seat] = iso
+    if not kept:
+        return
+    feed["working_box"] = kept
+    working = dict(feed.get("working") or {})
+    for seat, iso in kept.items():
+        working.setdefault(seat, iso)
+    feed["working"] = working
 
 
 def write(feed: dict, out: Path) -> int:
+    _keep_box_working(feed, out)
     out.parent.mkdir(parents=True, exist_ok=True)
     stream = out.with_suffix(".jsonl")
     old_ids: set[str] = set()

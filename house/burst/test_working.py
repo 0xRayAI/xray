@@ -1,4 +1,5 @@
 """Lab-run and GitHub-check working signals."""
+import json
 import os
 import tempfile
 import time
@@ -112,6 +113,52 @@ class Checks(unittest.TestCase):
 
 def datetime_iso(ts):
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))
+
+
+def iso_offset(ts):
+    return time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(ts))
+
+
+class SeatActivity(unittest.TestCase):
+    def test_open_start_lights_until_60_min(self):
+        now = 1_700_000_000.0
+        out = w.activity_working([{
+            "t_ct": iso_offset(now - 120), "seat": "builder",
+            "kind": "subagent", "action": "start", "tag": "review",
+        }], now)
+        self.assertEqual(set(out), {"builder"})
+        self.assertAlmostEqual(out["builder"], now - 120 + w.ACTIVITY_HOLD_S)
+
+    def test_a_later_end_for_the_same_tag_goes_dark(self):
+        now = 1_700_000_000.0
+        self.assertEqual(w.activity_working([
+            {"t_ct": iso_offset(now - 200), "seat": "builder", "kind": "turn", "action": "start", "tag": "issue-1"},
+            {"t_ct": iso_offset(now - 50), "seat": "builder", "kind": "turn", "action": "end", "tag": "issue-1"},
+        ], now), {})
+
+    def test_another_tag_stays_open_and_a_prompt_is_ignored(self):
+        now = 1_700_000_000.0
+        out = w.activity_working([
+            {"t_ct": iso_offset(now - 61 * 60), "seat": "builder", "kind": "watcher", "action": "start", "tag": "old"},
+            {"t_ct": iso_offset(now - 30), "seat": "builder", "kind": "subagent", "action": "start", "tag": "review"},
+            {"t_ct": iso_offset(now - 10), "seat": "builder", "kind": "turn", "action": "end", "tag": "other"},
+            {"t_ct": iso_offset(now - 5), "seat": "builder", "kind": "turn", "action": "start", "tag": "issue-1", "message": "secret prompt"},
+        ], now)
+        self.assertEqual(set(out), {"builder"})
+        self.assertAlmostEqual(out["builder"], now - 30 + w.ACTIVITY_HOLD_S)
+        self.assertNotIn("secret", str(out))
+
+    def test_a_bad_jsonl_line_is_skipped(self):
+        root = Path(tempfile.mkdtemp())
+        path = root / "activity.jsonl"
+        now = 1_700_000_000.0
+        path.write_text(
+            "not-json\n"
+            + json.dumps({"t_ct": iso_offset(now - 15), "seat": "lab", "kind": "watcher", "action": "start", "tag": "repos"})
+            + "\n",
+            encoding="utf-8")
+        out = w.activity_working_file(path, now)
+        self.assertEqual(set(out), {"lab"})
 
 
 if __name__ == "__main__":

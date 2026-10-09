@@ -7,10 +7,16 @@ previous pass (stay lit 120s). Reads mtimes, cwd, and utime+stime only.
 
 GitHub checks: a running, queued, or failing check on a PR the seat
 authored, newer than that PR's last merge, within 30 minutes.
+
+Seat activity: fleet/activity.jsonl, one start or end. The seat stays lit
+while a start has no later end for the same seat, kind, and tag, for at
+most 60 minutes. The line's text is not kept.
 """
 from __future__ import annotations
 
+import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -18,7 +24,10 @@ RUN_MTIME_S = 150
 CPU_HOLD_S = 120
 CPU_MIN_S = 1.0
 CHECK_WINDOW_S = 30 * 60
+ACTIVITY_HOLD_S = 60 * 60
 SKIP_DIRS = {"node_modules", ".git"}
+ACTIVITY_KINDS = {"subagent", "turn", "watcher"}
+_FREE_TEXT = re.compile(r"body|text|message", re.I)
 CHECK_BUSY = {"queued", "in_progress", "pending", "waiting", "requested", "running"}
 CHECK_FAIL = {"failure", "timed_out", "startup_failure", "action_required", "cancelled", "error", "fail"}
 
@@ -101,6 +110,67 @@ def note_check(author, merged_at, status, conclusion, started_at, completed_at):
     if not t or not author:
         return None
     return {"author": author, "merged_at": merged_at, "t": t}
+
+
+def activity_working(lines, now, hold_s=ACTIVITY_HOLD_S):
+    """Map seat -> until (unix). One number per seat.
+
+    A start is open when no later end shares its seat, kind, and tag.
+    The light ends at that start plus 60 minutes. Names and times only.
+    """
+    groups = {}
+    for line in lines or []:
+        if not isinstance(line, dict):
+            continue
+        if any(_FREE_TEXT.search(str(key)) for key in line):
+            continue
+        if any(isinstance(val, str) and _FREE_TEXT.search(val) for val in line.values()):
+            continue
+        kind = line.get("kind")
+        action = line.get("action")
+        seat = line.get("seat")
+        tag = line.get("tag") if line.get("tag") is not None else ""
+        if kind not in ACTIVITY_KINDS or action not in ("start", "end"):
+            continue
+        if not isinstance(seat, str) or not seat:
+            continue
+        if not isinstance(tag, str) or len(tag) > 80:
+            continue
+        t = _ts(line.get("t_ct"))
+        if t is None or t > now + 120:
+            continue
+        groups.setdefault((seat, kind, tag), []).append((t, action))
+    out = {}
+    for (seat, _kind, _tag), events in groups.items():
+        events.sort()
+        open_start = None
+        for t, action in events:
+            if action == "start":
+                open_start = t
+            elif open_start is not None and t >= open_start:
+                open_start = None
+        if open_start is None:
+            continue
+        until = open_start + hold_s
+        if until <= now:
+            continue
+        if seat not in out or until > out[seat]:
+            out[seat] = until
+    return out
+
+
+def activity_working_file(path, now, hold_s=ACTIVITY_HOLD_S):
+    """Read a JSONL file. A bad line is skipped. The text is not returned."""
+    lines = []
+    for raw in Path(path).read_text(encoding="utf-8").splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            lines.append(json.loads(raw))
+        except ValueError:
+            continue
+    return activity_working(lines, now, hold_s)
 
 
 def check_working(notes, now, window_s=CHECK_WINDOW_S):

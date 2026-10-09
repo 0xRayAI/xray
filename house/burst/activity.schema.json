@@ -80,6 +80,28 @@
       "then": { "properties": { "action": { "enum": ["start", "end", "pass", "fail", "cancel"] } } }
     }
   ],
+  "$defs": {
+    "seatActivity": {
+      "title": "fleet/activity.jsonl line",
+      "description": "One start or end of background work on a box or laptop seat. Same object POST /activity accepts. Names and times only: no prompt body and no message text. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. That light is not counted in N of M.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t_ct", "seat", "kind", "action", "tag"],
+      "properties": {
+        "t_ct": { "$ref": "#/properties/t_ct" },
+        "seat": { "$ref": "#/properties/seat" },
+        "kind": { "enum": ["subagent", "turn", "watcher"] },
+        "action": { "enum": ["start", "end"] },
+        "tag": { "$ref": "#/properties/tag" }
+      },
+      "examples": [
+        { "t_ct": "2026-10-09T09:00:00-05:00", "seat": "builder", "kind": "turn", "action": "start", "tag": "issue-1" },
+        { "t_ct": "2026-10-09T09:04:00-05:00", "seat": "builder", "kind": "turn", "action": "end", "tag": "issue-1" },
+        { "t_ct": "2026-10-09T09:01:00-05:00", "seat": "builder", "kind": "subagent", "action": "start", "tag": "review" },
+        { "t_ct": "2026-10-09T09:02:00-05:00", "seat": "builder", "kind": "watcher", "action": "start", "tag": "repos" }
+      ]
+    }
+  },
   "examples": [
     { "t_ct": "2026-10-09T09:00:00-05:00", "seat": "builder", "kind": "prompt", "action": "start", "tag": "issue-1" },
     { "t_ct": "2026-10-09T09:00:01-05:00", "seat": "builder", "kind": "turn", "action": "start", "tag": "issue-1" },

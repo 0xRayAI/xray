@@ -271,7 +271,8 @@
       var pul = 0;
       pings.forEach(function (pk) { if (pk.src === key) pul = Math.max(pul, L.pulse(pk.p * L.PULSE_MS, reduced)); });
       ctx.globalAlpha = L.entry(since, i, reduced);
-      drawNode(key, !!hot[key], fs, pul);
+      var seatState = L.seatState(!!hot[key], !!L.seatWorking(state.working, Date.now())[key]);
+      drawNode(key, seatState, fs, pul);
       ctx.globalAlpha = 1;
     });
     return hot;
@@ -282,7 +283,8 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
-  function drawNode(key, isHot, fs, pul) {
+  function drawNode(key, seatState, fs, pul) {
+    var isHot = seatState === 'working' || seatState === 'active';
     var xy = pos[key], x = xy[0], y = xy[1], c = L.COLOR[key], sq = !!L.SQUARE[key], r = sq ? 15 : 18 + 3 * pul;
     var img = imgs[key], glyph = L.GLYPH[key], mark = L.MARK_PATH[key];
     var bare = !sq && (!!glyph || !!(img && img.complete && img.naturalWidth));   // image / glyph seats: no ring
@@ -318,7 +320,7 @@
       }
     }
     if (!sq) r = 18;
-    var title = L.LABEL[key], sub = L.SUB[key];
+    var title = L.LABEL[key], sub = seatState;
     ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif';
     var tw = ctx.measureText(title).width;
     ctx.font = 11 * fs + 'px system-ui, sans-serif';
@@ -338,12 +340,13 @@
     $('headTime').textContent = cur ? L.fmtCt(cur._t) + (state.live ? '' : ' · rewound') : '\u00a0';
     var working = L.seatWorking(state.working, Date.now());
     L.AGENTS.forEach(function (a) {
-      var s = seatEls[a[0]], on = !!hot[a[0]], c = L.COLOR[a[0]], busy = !!working[a[0]];
-      s.el.classList.toggle('live', on);
-      s.dot.classList.toggle('blink', busy && !reduced);
-      s.dot.style.background = (on || busy) ? rgb(c) : '#283246';
-      s.dot.style.boxShadow = (on || busy) ? '0 0 0 2px #04060c, 0 0 0 4px ' + rgb(c) : 'none';
-      s.st.textContent = s.role + ' · ' + (on ? 'LIVE' : 'IDLE');
+      var s = seatEls[a[0]], c = L.COLOR[a[0]];
+      var seatState = L.seatState(!!hot[a[0]], !!working[a[0]]);
+      s.el.classList.toggle('live', seatState !== 'idle');
+      s.dot.classList.toggle('blink', seatState === 'working' && !reduced);
+      s.dot.style.background = seatState === 'idle' ? '#283246' : rgb(c);
+      s.dot.style.boxShadow = seatState === 'idle' ? 'none' : '0 0 0 2px #04060c, 0 0 0 4px ' + rgb(c);
+      s.st.textContent = s.role + ' · ' + seatState;
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }
