@@ -46,7 +46,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 
-Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+Confer votes. Burst monitors the swarm.
 
 - Confer asks the MCP servers the wearing chat already spawned. Only a real PASS completes the consult. A PASS that belongs to another session is asked again.
 - Wear pins Grok at the installed CLI. Hermes codex-check catches a console call. OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
