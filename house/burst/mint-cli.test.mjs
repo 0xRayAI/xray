@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { exchange, planFromEnv } from './mint-cli.mjs';
+import { exchange, loadCachedToken, planFromEnv, tokenReusable } from './mint-cli.mjs';
 
 const env = {
   BURST_SEAT_ID: 'builder',
@@ -29,6 +29,18 @@ test('a drifted or oddly shaped token is discarded', async () => {
   const good = await exchange(plan, async () => ({ json: async () => ({ token: weird, permissions: plan.body.permissions }) }), 'jwt');
   assert.equal(good.ok, true);
   assert.equal(good.token, weird);
+});
+
+test('an installation token is reused until 120s before expiry', () => {
+  const now = Date.parse('2026-10-09T15:00:00Z');
+  const token = 'ghs_' + ('A'.repeat(40) + '.' + '_'.repeat(40)).repeat(5);
+  const fresh = new Date(now + 10 * 60 * 1000).toISOString();
+  const closing = new Date(now + 120 * 1000).toISOString();
+  assert.equal(tokenReusable(fresh, now), true);
+  assert.equal(tokenReusable(closing, now), false);
+  assert.equal(loadCachedToken(JSON.stringify({ token, expires_at: fresh }), now), token);
+  assert.equal(loadCachedToken(JSON.stringify({ token, expires_at: closing }), now), null);
+  assert.equal(loadCachedToken(JSON.stringify({ token: 'ghs_short', expires_at: fresh }), now), null);
 });
 
 test('wrappers take ids from the environment', () => {

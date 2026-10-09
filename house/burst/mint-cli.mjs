@@ -1,9 +1,14 @@
 // Mint plan for one seat. Ids and the key come from the environment.
 // --plan prints the request URL and permissions and does not mint.
 import { spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { mintPlan, permissionDrift, readOnlyPlan } from './seat-app.mjs';
 import { installTokenShape } from './activity.mjs';
+
+export const TOKEN_REUSE_SLACK_S = 120;
 
 export function seatFromEnv(env = process.env) {
   let permissions = { metadata: 'read', contents: 'read', pull_requests: 'read', issues: 'read', checks: 'read', statuses: 'read', actions: 'read' };
@@ -46,7 +51,28 @@ export async function exchange(plan, fetchFn, jwt) {
   const data = await res.json();
   if (permissionDrift(data.permissions, plan.body.permissions).length) return { ok: false, error: 'permission drift' };
   if (!installTokenShape(data.token)) return { ok: false, error: 'bad token shape' };
-  return { ok: true, token: data.token };
+  return { ok: true, token: data.token, expires_at: data.expires_at || null };
+}
+
+export function tokenReusable(expiresAt, nowMs = Date.now(), slackS = TOKEN_REUSE_SLACK_S) {
+  const exp = typeof expiresAt === 'number' ? expiresAt : Date.parse(expiresAt);
+  if (!Number.isFinite(exp)) return false;
+  return nowMs < exp - slackS * 1000;
+}
+
+export function cacheFile(env = process.env) {
+  return join(env.BURST_STATE || join(homedir(), '.burst'), 'installation-token.json');
+}
+
+export function loadCachedToken(text, nowMs = Date.now()) {
+  let raw;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!raw || !installTokenShape(raw.token) || !tokenReusable(raw.expires_at, nowMs)) return null;
+  return raw.token;
 }
 
 function fail(plan) {
@@ -63,10 +89,25 @@ async function main() {
   }
   const keyPath = process.env.GITHUB_APP_PRIVATE_KEY_PATH || '';
   if (!keyPath) fail({ error: 'GITHUB_APP_PRIVATE_KEY_PATH is required' });
+  const file = cacheFile();
+  try {
+    const cached = loadCachedToken(readFileSync(file, 'utf8'));
+    if (cached) {
+      process.stdout.write(cached);
+      return;
+    }
+  } catch {
+    // no cache yet
+  }
   const signed = jwtFor(plan.iss, keyPath);
   if (!signed.ok) fail(signed);
   const minted = await exchange(plan, globalThis.fetch, signed.jwt);
   if (!minted.ok) fail(minted);
+  if (minted.expires_at && tokenReusable(minted.expires_at)) {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ token: minted.token, expires_at: minted.expires_at }));
+    chmodSync(file, 0o600);
+  }
   process.stdout.write(minted.token);
 }
 

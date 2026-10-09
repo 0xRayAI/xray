@@ -38,7 +38,8 @@ timeline, not in the pill.
 | Railway deploys | the seat writes a status file; the collector does not call Railway | seat poll 180s | packet only if the seat maps a status change into the feed | id, status word, time | keep project ids in the seat's own config, not in this repo |
 | House board and merge queue | files the seat already writes | every collector pass when the seat points at them | counts and card ids | ids, status words, counts | not a second copy of the house tree |
 | prompts.jsonl / cloud-agents.jsonl | tail the seat's log | every pass the seat runs | activity lines | names, times, ids. No message text | `POST /activity` or a local line that passes `validActivity` |
-| POST /activity | `house/burst/activity.mjs` | when the seat posts | one stored line | strict short fields; seat comes from the verified token | the seat's own GitHub App installation token |
+| POST /activity | `house/burst/activity.mjs` | one post at turn start; the window stays open until end | one stored line | strict short fields; seat comes from the verified token | the seat's own GitHub App installation token |
+| Laptop repo watcher | the seat's loop, off the house box | every 30s, plus a heartbeat | working while the turn is open | ids, times, counts. No command lines | `house/burst/bin` first on `PATH`. See "Seat on a laptop" |
 | Supervisor | `house/burst/supervise.py` | restarts when the feed exits; re-mint at 50 min of wall time | process start, exit 75 | no tokens in logs | `BURST_TOKEN_MINTED` from `date +%s` |
 | Watchdog | the same restart loop | about 60s | start the feed again if it died | none | `run()` until the stop file exists |
 | Delta pusher | `house/burst/delta.mjs` + `push.sh` | mtime check 2s; cursor on each push | full or delta feed | events already in the feed | `?since=<cursor>` |
@@ -84,6 +85,26 @@ There is no static `ACTIVITY_KEY` fallback. The verdict cache stores `sha256(tok
 ### Pusher lock
 
 `push.sh` holds flock on fd 9 and sleeps with `9>&-`, so a stopped pusher's orphan sleep does not keep the lock.
+
+## Seat on a laptop (off-box seat)
+
+A seat that does not run on the house box uses its own GitHub App. App id, installation id, and the private key stay in that seat's environment. This page does not name them.
+
+Put `house/burst/bin` first on `PATH`, ahead of a system or Homebrew `gh`, so `gh` is the app wrapper.
+
+The installation token is cached and reused until 120 seconds before `expires_at`. The wrapper mints again after that. The shape check is `^ghs_[A-Za-z0-9._-]{20,1024}$`, so a long token that contains `.` and `_` is accepted and sent to GitHub.
+
+Git HTTPS uses `house/burst/bin/git-credential`. The helper answers with that app token. `use-repo` sets the commit identity to the bot: `user.name` is `<app-slug>[bot]`, and `user.email` is that bot's GitHub noreply address. Do not author commits under a human name.
+
+Push the seat's branch with:
+
+```
+git push origin HEAD:<branch>
+```
+
+The seat's repo watcher polls its repos every 30 seconds and records a heartbeat (a time). Activity is one `POST /activity` per turn, at the start (`kind` `turn`, `action` `start`). That turn window stays open until a later post with `action` `end`. Do not post on every tick.
+
+Forks: the app can push to the org's fork. Opening or merging a pull request on an upstream org needs an admin of that org.
 
 ## Fixes log
 
