@@ -4,7 +4,7 @@
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill — adding an organ is a mill publish, not an xray catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Inspect reports the last bed or blip receipt the mill exported. Nested mill `@0xray/foundry` 0.1.12. Not costume.
 

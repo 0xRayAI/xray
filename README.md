@@ -2,9 +2,9 @@
 
 **4.0** — a suit that survives the context window
 
-![0xRay 4.0.42 — Confer votes. Burst monitors the swarm.](docs-site/static/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](docs-site/static/img/exo-skeleton-v4.jpg)
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 Not a catalog of agents. The product is the **skeleton you wear**.
 
@@ -55,7 +55,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.0.42** | Confer votes. Burst monitors the swarm. |
+| **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |
 | **4.0.40** | Live mesh runs the full loop: feed watch, render, direction, deploy, health, and the ledger both ways. |
 | **4.0.39** | The seven stack laws stay worn. Repertoire in the suit is 0.2.9. |

@@ -4,9 +4,9 @@
 
 Not a catalog of 42 agents. The product is the skeleton you wear.
 
-![0xRay 4.0.42 — Confer votes. Burst monitors the swarm.](/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/exo-skeleton-v4.jpg)
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
