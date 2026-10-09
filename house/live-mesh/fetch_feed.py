@@ -315,6 +315,11 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
         if e.code == 401:
             raise AuthExpired("GitHub HTTP 401") from None
         runs = {"check_runs": []}
+        # Fine-grained host tokens have no Checks permission (403). Derive the
+        # same working signal from Actions runs/jobs and commit statuses.
+        if e.code == 403:
+            for noted in _host_ci_notes(gh, repo, pr["head"]["sha"], author, pr.get("merged_at")):
+                CHECK_NOTES.append(noted)
     for cr in runs.get("check_runs", []):
         noted = _burst_working().note_check(
             author, pr.get("merged_at"), cr.get("status"), cr.get("conclusion"),
@@ -732,6 +737,31 @@ def _burst_working():
     return mod
 
 
+def _host_ci_notes(gh: GitHub, repo: str, sha: str, author: str, merged_at):
+    """Actions runs, their jobs, and commit statuses. A 401 still fails the pass."""
+    def grab(path, params=None):
+        try:
+            return gh.get(path, params)
+        except AuthExpired:
+            raise
+        except urllib.error.HTTPError as err:
+            if err.code == 401:
+                raise AuthExpired("GitHub HTTP 401") from None
+            return {}
+
+    runs = grab(f"/repos/{repo}/actions/runs", {"head_sha": sha, "per_page": 20}) or {}
+    status = grab(f"/repos/{repo}/commits/{sha}/status") or {}
+    jobs = []
+    for run in (runs.get("workflow_runs") or [])[:5]:
+        run_id = run.get("id")
+        if not run_id:
+            continue
+        got = grab(f"/repos/{repo}/actions/runs/{run_id}/jobs", {"per_page": 20}) or {}
+        jobs.extend(got.get("jobs") or [])
+    return _burst_working().notes_from_host_ci(
+        author, merged_at, runs.get("workflow_runs"), jobs, status)
+
+
 def _supervise():
     name = "burst_supervise"
     if name in sys.modules:
@@ -942,10 +972,20 @@ def main() -> int:
     args.health = args.health or None
     if os.environ.get("X_BEARER_TOKEN"):
         log("X_BEARER_TOKEN is set but the X API adapter is not built; X still comes from the ledger / --merge-x")
-    app = AppToken.from_env()
-    token = None if app else (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
+    read_token = os.environ.get("GITHUB_READ_TOKEN", "").strip()
+    if read_token:
+        # The host collector uses a read-only fine-grained token. Do not load an
+        # App private key here: that key can mint a write token.
+        app = None
+        token = read_token
+        log("host GITHUB_READ_TOKEN: read-only; GitHub App private key is not loaded")
+    else:
+        app = AppToken.from_env()
+        token = None if app else (os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
     if app:
         log(f"App auth (installation {app.installation_id}): self-minting tokens; GITHUB_TOKEN/GH_TOKEN ignored")
+    elif read_token:
+        pass
     elif not token:
         log("no GITHUB_TOKEN/GH_TOKEN: private repos will 404 and the rate limit is 60/h")
     elif args.watch:

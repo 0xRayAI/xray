@@ -465,6 +465,26 @@ class Loud401(unittest.TestCase):
         self.assertIn("topic/not-main", out[0]["label"])
         self.assertNotIn("live-wire", out[0]["label"])
 
+    def test_read_token_does_not_load_an_app_key(self):
+        token = "github_pat_example"
+        env = {"GITHUB_READ_TOKEN": token, "GITHUB_APP_ID": "1",
+               "GITHUB_APP_INSTALLATION_ID": "2", "GITHUB_APP_PRIVATE_KEY_PATH": "/missing.pem"}
+        seen = {}
+
+        def fake_build(args, gh):
+            seen["token"] = gh.token
+            seen["app"] = gh.app
+            return {"event_count": 0, "events": []}
+
+        buf = io.StringIO()
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(ff, "build", fake_build), \
+                mock.patch.object(ff, "write", lambda f, o: 0), mock.patch("sys.stderr", buf), \
+                mock.patch.object(sys, "argv", ["fetch_feed.py", "--out", OUT]):
+            self.assertEqual(ff.main(), 0)
+        self.assertEqual(seen["token"], token)
+        self.assertIsNone(seen["app"])
+        self.assertNotIn(token, buf.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -98,6 +98,17 @@ class Checks(unittest.TestCase):
     def test_success_is_not_working(self):
         self.assertIsNone(w.note_check("mill", None, "completed", "success", "2026-10-09T14:00:00Z", "2026-10-09T14:00:00Z"))
 
+    def test_host_token_derives_checks_from_actions_and_statuses(self):
+        notes = w.notes_from_host_ci("mill", None, [
+            {"status": "in_progress", "conclusion": None, "run_started_at": "2026-10-09T14:00:00Z", "name": "CI"},
+            {"status": "completed", "conclusion": "success", "run_started_at": "2026-10-09T13:00:00Z"},
+        ], [
+            {"status": "queued", "started_at": "2026-10-09T14:01:00Z", "name": "test"},
+        ], {"state": "failure", "statuses": [{"state": "failure", "updated_at": "2026-10-09T14:02:00Z", "context": "ci"}]})
+        self.assertEqual(len(notes), 3)
+        self.assertTrue(all("name" not in n and "context" not in n for n in notes))
+        self.assertTrue(all(n["author"] == "mill" for n in notes))
+
 
 def datetime_iso(ts):
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))

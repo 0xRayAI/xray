@@ -55,6 +55,42 @@ def stat_cpu_ticks(stat_path: Path) -> int:
     return int(rest[11]) + int(rest[12])
 
 
+def notes_from_host_ci(author, merged_at, workflow_runs, jobs, commit_status):
+    """Busy or failing CI from Actions runs, their jobs, and commit statuses.
+
+    A fine-grained host token has no Checks permission. Names are not stored.
+    """
+    notes = []
+    for run in workflow_runs or []:
+        noted = note_check(
+            author, merged_at, run.get("status"), run.get("conclusion"),
+            run.get("run_started_at") or run.get("created_at"), run.get("updated_at"))
+        if noted:
+            notes.append(noted)
+    for job in jobs or []:
+        noted = note_check(
+            author, merged_at, job.get("status"), job.get("conclusion"),
+            job.get("started_at") or job.get("created_at"), job.get("completed_at"))
+        if noted:
+            notes.append(noted)
+    rollup = commit_status or {}
+    state = (rollup.get("state") or "").lower()
+    if state == "pending":
+        status, conclusion = "pending", None
+    elif state in ("failure", "error"):
+        status, conclusion = "completed", state
+    else:
+        status, conclusion = None, None
+    if status:
+        when = None
+        for item in rollup.get("statuses") or []:
+            when = item.get("updated_at") or item.get("created_at") or when
+        noted = note_check(author, merged_at, status, conclusion, when, when)
+        if noted:
+            notes.append(noted)
+    return notes
+
+
 def note_check(author, merged_at, status, conclusion, started_at, completed_at):
     """One note from a check run. The check's name is not accepted."""
     st = (status or "").lower()

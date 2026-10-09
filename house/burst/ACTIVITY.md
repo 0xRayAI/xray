@@ -1,6 +1,6 @@
 # Activity
 
-`validActivity` checks one JSON object before it is appended. Allowed fields are `t_ct`, `kind`, `action`, `to`, `agent`, and `tag`. The seat is supplied by the caller. The checker refuses unknown fields and values that carry free text.
+`validActivity` checks one JSON object before it is appended. Required fields are `t_ct`, `seat`, `kind`, and `action`. Optional fields are `to`, `agent`, and `tag` (`tag` at most 80 characters). `seat` must match the caller. The schema is [activity.schema.json](activity.schema.json). Prompt lines and cloud-agent lines have their own schemas. The checker refuses unknown fields and values that carry free text.
 
 `acceptLine` appends a passing object with `by` and `seq`.
 

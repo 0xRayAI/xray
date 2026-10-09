@@ -1,5 +1,7 @@
 # Burst watcher playbook
 
+End-to-end install: [SETUP.md](SETUP.md). This page is the watcher list and the fixes log.
+
 Burst is the live activity network. A packet is one event. Spectrum is the page
 (`docs-site/static/live`) replaying the feed; the center node reads `LiveMesh.HUB_LABEL`
 (`Burst`). Working is a light under a seat icon. It is not a packet and it is not
@@ -29,10 +31,10 @@ timeline, not in the pill.
 
 | Watcher | Source | Cadence | Emits | Privacy | How a seat plugs in |
 |---|---|---|---|---|---|
-| GitHub collector | `house/live-mesh/fetch_feed.py` | every `--watch` pass (45s when the seat asks for that) | packets: PR open/update, reviews, comment metadata, checks, merges, pushes | ids, times, status words; no commit message on branch-tip pushes | App env `GITHUB_APP_*`. `BURST_TOKEN_MINTED=$(date +%s)` so a paused VM re-mints on the wall clock |
+| GitHub collector | host process next to the page (`fetch_feed.py`) | every `--watch` pass | packets: PR open/update, reviews, comment metadata, merges, pushes | ids, times, status words; no commit message on branch-tip pushes | host variable `GITHUB_READ_TOKEN`. See "Hosted collector" |
 | Branch tips | `branch_tip_events` inside the same pass | every pass, not after a backfill gate, any branch except `live-wire` | packet `push` | branch name, short sha, author login, committer time. The commit message is not stored | nothing extra |
 | PR opens | `pr_events` on the pulls list | every pass, any base branch | packet `pr_open` | existing feed fields | nothing extra |
-| GitHub-check working | check runs on the PR head | every pass | working, not a packet | one until-time per author seat | automatic for a PR the seat authored |
+| GitHub-check working | Actions runs/jobs and commit statuses (Checks is not on a fine-grained token) | every pass | working, not a packet | one until-time per author seat | automatic for a PR the seat authored |
 | /health | `probe` in `fetch_feed.py` | `--health-every` (default 60s), emit on status change | packet `health_ok` / `health_fail` | HTTP status code and time. The body is not read | `--health URL` |
 | Lab-run working | `house/burst/working.py` | every collector pass when `BURST_LABS` is set | working, not a packet | one until-time per seat. Mtimes, cwd, and CPU time only | `BURST_LABS` JSON: `[{seat, runs, folders}]` |
 | Railway deploys | the seat writes a status file; the collector does not call Railway | seat poll 180s | packet only if the seat maps a status change into the feed | id, status word, time | keep project ids in the seat's own config, not in this repo |
@@ -106,6 +108,24 @@ The seat's repo watcher polls its repos every 30 seconds and records a heartbeat
 
 Forks: the app can push to the org's fork. Opening or merging a pull request on an upstream org needs an admin of that org.
 
+## Hosted collector
+
+Running the GitHub watcher on a laptop or VM made the board go stale whenever that box paused or hung. The GitHub collector now runs on the hosting platform (for example Railway) next to the page. It writes straight into the server's event store.
+
+The box or laptop only pushes local signals: prompt lines, cloud-agent logs, and lab-run mtimes. Those arrive as deltas and are merged by id. If the box is down, GitHub events still flow. Seat state that came from the box shows stale.
+
+### Setup
+
+Create a fine-grained personal access token. In GitHub: Settings → Developer settings → Personal access tokens → Fine-grained.
+
+- Resource owner: your org.
+- Repository access: only the watched repos.
+- Permissions, read-only: Contents, Pull requests, Issues, Actions, Commit statuses. Metadata is included automatically.
+
+Fine-grained tokens have no Checks permission. Check state is derived from Actions runs and jobs, and from commit statuses.
+
+Set the token as the host variable `GITHUB_READ_TOKEN`. Do not put a GitHub App private key on the host: that key can mint write tokens. Do not commit the token. Set an expiry and rotate it.
+
 ## Fixes log
 
 1. **Lab-run working looked idle during a test stretch.** Folder mtime changes only when a name is added or removed, and a test stretch writes no files. Working is any file mtime under the run folders in the last 150s (skip `node_modules` and `.git`) or ≥1s CPU in a lab-folder cwd (hold 120s). Read mtimes, cwd, and CPU time only. Store one time per seat. Not counted in N of M.
@@ -125,3 +145,5 @@ Forks: the app can push to the org's fork. Opening or merging a pull request on 
 8. **Real installation tokens got 401 before GitHub was asked.** The shape check was `ghs_[A-Za-z0-9]{20,255}`, which rejects `.` and `_` and anything longer than 255. Live tokens are ~380 characters and contain both. The check is `^ghs_[A-Za-z0-9._-]{20,1024}$`.
 
 9. **A stopped pusher left the lock held.** `sleep` runs with fd 9 closed (`9>&-`).
+
+10. **The board went stale when the laptop or VM paused or hung.** The GitHub watcher ran on that box, so a pause stopped every GitHub event. The collector now runs on the host next to the page and writes into the server's event store. The box only pushes local signals (prompts, cloud-agent logs, lab-run mtimes) as deltas merged by id. If the box is down, GitHub events still flow and box-sourced seat state shows stale.

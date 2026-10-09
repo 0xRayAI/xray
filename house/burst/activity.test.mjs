@@ -9,6 +9,7 @@ test('a turn start is stored under the seat the caller names', () => {
   const lines = [];
   const out = acceptLine(lines, {
     t_ct: '2026-10-09T14:00:00Z',
+    seat: 'SEAT1',
     kind: 'turn',
     action: 'start',
     tag: 'issue-212',
@@ -25,8 +26,27 @@ test('free text and unknown fields are refused', () => {
 
 test('a cloud agent line needs an agent id', () => {
   assert.equal(validActivity({
-    t_ct: '2026-10-09T14:00:00Z', kind: 'cloud_agent', action: 'launch',
+    t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'cloud_agent', action: 'launch',
   }, now), 'cloud_agent needs agent id');
+});
+
+test('a tag of 80 characters is stored and 81 is refused', () => {
+  const tag = 'a'.repeat(80);
+  assert.equal(validActivity({
+    t_ct: '2026-10-09T09:00:00-05:00', seat: 'builder', kind: 'lab_run', action: 'pass', tag,
+  }, now), null);
+  assert.equal(validActivity({
+    t_ct: '2026-10-09T09:00:00-05:00', seat: 'builder', kind: 'lab_run', action: 'pass', tag: tag + 'a',
+  }, now), 'tag too long');
+});
+
+test('the seat stamp must match the caller', () => {
+  const lines = [];
+  const out = acceptLine(lines, {
+    t_ct: '2026-10-09T09:00:00-05:00', seat: 'gate', kind: 'review', action: 'pass', tag: 'pr-1',
+  }, 'builder', now);
+  assert.equal(out.ok, false);
+  assert.equal(lines.length, 0);
 });
 
 function liveToken() {
@@ -78,7 +98,7 @@ test('post activity is write-only and has no static key', async () => {
   assert.equal(src.includes('ACTIVITY_KEY'), false);
   const lines = [];
   const { fetchFn } = ghFetch();
-  const body = JSON.stringify({ t_ct: '2026-10-09T14:00:00Z', kind: 'turn', action: 'start', tag: 'issue-1' });
+  const body = JSON.stringify({ t_ct: '2026-10-09T14:00:00Z', seat: 'builder', kind: 'turn', action: 'start', tag: 'issue-1' });
   const out = await postActivity({ body, token: liveToken(), seats, lines, fetchFn, now });
   assert.equal(out.status, 204);
   assert.equal(lines.length, 1);
