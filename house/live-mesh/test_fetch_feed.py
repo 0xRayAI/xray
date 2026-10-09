@@ -511,6 +511,31 @@ class FailsafeFeed(unittest.TestCase):
         page = Path(__file__).resolve().parents[1] / ".." / "docs-site" / "static" / "live" / "live.js"
         self.assertNotIn("missing_activity", page.read_text(encoding="utf-8"))
 
+    def test_prompts_default_to_fleet_path_and_legacy_lines_pulse(self):
+        now = time.time()
+        root = Path(tempfile.mkdtemp())
+        (root / "fleet").mkdir()
+        when = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(now - 30))
+        (root / "fleet" / "prompts.jsonl").write_text(
+            json.dumps({"t_ct": when, "from": "Blaze", "to": "Operator"}) + "\n"
+            + json.dumps({"t_ct": when, "seat": "Chief of Staff", "kind": "prompt", "action": "sent"}) + "\n",
+            encoding="utf-8")
+        seats = root / "seats.json"
+        seats.write_text(json.dumps({"aliases": {"Chief of Staff": "CoS"}}), encoding="utf-8")
+        env = {"BURST_SEATS": str(seats), "BURST_ACTIVITY": str(root / "absent.jsonl"), "BURST_LABS": ""}
+        ff.CHECK_NOTES.clear()
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            with mock.patch.dict(os.environ, env, clear=False):
+                os.environ.pop("BURST_PROMPTS", None)
+                working, _box, missing = ff._working_map(now)
+        finally:
+            os.chdir(cwd)
+        self.assertIn("Operator", working)
+        self.assertIn("CoS", working)
+        self.assertEqual(missing, ["CoS", "Operator"])
+
 
 class BoxEventTest(unittest.TestCase):
     def test_box_ledger_folds_in_and_cursor_advances(self):

@@ -392,7 +392,7 @@ No other fields. No free text.
 
 | kind | action |
 |---|---|
-| `prompt` | `start`, `end` |
+| `prompt` | `start`, `end`, `sent` |
 | `turn` | `start`, `end` |
 | `subagent` | `start`, `end` |
 | `watcher` | `start`, `end` |
@@ -405,6 +405,18 @@ No other fields. No free text.
 Examples, one per kind, are the `examples` array in `activity.schema.json`. Older stored lines may still use `received`, `sent`, or `tick`. New lines use the table.
 
 `prompts.jsonl` is prompt lines. `cloud-agents.jsonl` is cloud-agent lines, each with `agent`. One JSON object per line.
+
+### Prompt lines
+
+`prompts.jsonl` lives at `fleet/prompts.jsonl` next to `fleet/activity.jsonl`. Set `BURST_PROMPTS` to move it. Write one line when a seat gets a prompt:
+
+```json
+{"t_ct":"2026-10-09T08:59:30-05:00","seat":"builder","kind":"prompt","action":"sent"}
+```
+
+`seat` is the seat that got the prompt: a seat id, or a display name that resolves through `aliases`. `kind` is `prompt`. `action` is `sent`. That pulse keeps the seat working for 10 minutes and counts for `fleet.missing_activity`. `start` and `end` lines with a `tag` are also valid, but only `sent` pulses. Never write the prompt text. The shape is [prompts.schema.json](prompts.schema.json).
+
+Older houses wrote `{"t_ct":"…","from":"Blaze","to":"Operator"}`. The collector still reads that shape as a `sent` pulse for the `to` seat, so an old file keeps working. Write new lines in the format above. `POST /activity` takes only the new format.
 
 ## 9. Roles and the stamped plate
 
@@ -453,7 +465,7 @@ Work top to bottom. Stop at the first failure.
 | Commits show a human name | `use-repo` did not run, or `bin/` is after another `gh` on `PATH` |
 | Activity 401 `not a seat installation` | Bot login or bot id in the seats config does not match the token's viewer |
 | Activity 403 `seat mismatch` | The body's `seat` does not match the token's seat. Drop `seat` or send the token's seat. A static key is not accepted |
-| A seat that just sent a prompt looks idle | `prompts.jsonl` needs `action` `SENT` and a seat the aliases table knows. The light lasts 10 minutes. Fixes log item 13 |
+| A seat that just sent a prompt looks idle | `fleet/prompts.jsonl` (or `BURST_PROMPTS`) needs `action` `sent` (or a legacy `{from,to}` line) and a seat the aliases table knows. The light lasts 10 minutes. Fixes log item 13 |
 | `fleet.missing_activity` names a seat | That seat pulsed in the last 60 minutes and wrote no `activity.jsonl` line in that window |
 
 The fixes log in [PLAYBOOK.md](PLAYBOOK.md) is the history of those rows. When a row and the log disagree, the log's current rule is the one the code implements.

@@ -178,16 +178,39 @@ def read_jsonl(path):
     return lines
 
 
+def _prompt_seat(row):
+    """Seat a prompt line pulses, or None.
+
+    New lines: {t_ct, seat, kind: "prompt", action: "sent"}.
+    Legacy lines: {t_ct, from, to} with no seat, kind, or action. The
+    seat that got the prompt (`to`) is the one pulsed SENT.
+    """
+    if row.get("seat") is None and "action" not in row and "kind" not in row:
+        if row.get("from") is not None and row.get("to") is not None:
+            return row.get("to")
+        return None
+    if str(row.get("action") or "").casefold() != "sent":
+        return None
+    kind = row.get("kind")
+    if kind is not None and str(kind).casefold() != "prompt":
+        return None
+    return row.get("seat")
+
+
 def prompt_pulses(lines, aliases, now):
-    """Latest SENT time per seat. Display names use the alias table."""
+    """Latest SENT time per seat. Display names use the alias table.
+
+    Accepts the new line shape and legacy {t_ct, from, to} lines.
+    """
     latest = {}
     for line in lines or []:
         row = _clean_line(line)
         if row is None:
             continue
-        if str(row.get("action") or "").casefold() != "sent":
+        name = _prompt_seat(row)
+        if name is None:
             continue
-        seat = canonical_seat(row.get("seat"), aliases)
+        seat = canonical_seat(name, aliases)
         t = _ts(row.get("t_ct") or row.get("t"))
         if not seat or t is None or t > now + 120:
             continue

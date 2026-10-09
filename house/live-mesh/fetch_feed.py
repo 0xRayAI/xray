@@ -905,7 +905,7 @@ def _working_map(now: float) -> tuple:
         except (OSError, ValueError) as exc:
             log(f"BURST_LABS not read ({type(exc).__name__})")
     aliases = mod.alias_map(_seats_config())
-    prompts = _jsonl_lines(os.environ.get("BURST_PROMPTS", "prompts.jsonl").strip())
+    prompts = _jsonl_lines(os.environ.get("BURST_PROMPTS", "fleet/prompts.jsonl").strip())
     pulses = mod.prompt_pulses(prompts, aliases, now)
     for seat, ts in mod.prompt_working(pulses, now).items():
         until[seat] = max(until.get(seat, 0), ts)

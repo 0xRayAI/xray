@@ -139,6 +139,43 @@ class PromptPulse(unittest.TestCase):
         self.assertAlmostEqual(working["CoS"], now - 30 + w.PROMPT_HOLD_S)
         self.assertEqual(w.missing_activity(pulses, [], aliases, now), ["Chaos", "CoS"])
 
+    def test_new_and_legacy_prompt_lines_both_pulse(self):
+        now = 1_700_000_000.0
+        aliases = self.aliases()
+        pulses = w.prompt_pulses([
+            # New format: seat, kind prompt, action sent.
+            {"t_ct": iso_offset(now - 60), "seat": "Chief of Staff", "kind": "prompt", "action": "sent"},
+            # Legacy format: {t_ct, from, to}. The seat in `to` is pulsed.
+            {"t_ct": iso_offset(now - 120), "from": "Blaze", "to": "Lab Tester: Chaos"},
+            {"t_ct": iso_offset(now - 90), "from": "Blaze", "to": "Operator"},
+        ], aliases, now)
+        self.assertEqual(set(pulses), {"CoS", "Chaos", "Operator"})
+        self.assertAlmostEqual(pulses["Chaos"], now - 120)
+        working = w.prompt_working(pulses, now)
+        self.assertEqual(set(working), {"CoS", "Chaos", "Operator"})
+        self.assertAlmostEqual(working["Operator"], now - 90 + w.PROMPT_HOLD_S)
+
+    def test_prompt_lines_that_are_not_a_pulse_are_skipped(self):
+        now = 1_700_000_000.0
+        pulses = w.prompt_pulses([
+            {"t_ct": iso_offset(now - 60), "seat": "builder", "kind": "prompt", "action": "start"},
+            {"t_ct": iso_offset(now - 60), "seat": "builder", "kind": "turn", "action": "sent"},
+            {"t_ct": iso_offset(now - 60), "to": "builder"},
+            {"t_ct": iso_offset(now - 60), "from": "Blaze", "to": "builder", "action": "start"},
+            {"t_ct": iso_offset(now - 60), "from": "Blaze", "to": "builder", "message": "no text"},
+        ], self.aliases(), now)
+        self.assertEqual(pulses, {})
+
+    def test_schema_examples_for_both_shapes_pulse(self):
+        now = 1_700_000_000.0
+        schema = json.loads((Path(w.__file__).parent / "prompts.schema.json").read_text())
+        new_sent = [e for e in schema["examples"] if e["action"] == "sent"]
+        legacy = schema["$defs"]["legacyPrompt"]["examples"]
+        self.assertTrue(new_sent and legacy)
+        far = 1_800_000_000.0
+        pulses = w.prompt_pulses(new_sent + legacy, {}, far)
+        self.assertEqual(set(pulses), {"builder", "Operator"})
+
     def test_a_recent_activity_line_clears_missing_and_an_open_start_still_holds_60(self):
         now = 1_700_000_000.0
         aliases = self.aliases()
