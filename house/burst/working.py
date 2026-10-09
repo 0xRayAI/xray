@@ -340,7 +340,7 @@ class RunWatch:
                 continue
             pid = entry.name
             try:
-                cwd = os.readlink(entry / "cwd")
+                cwd = str(Path(entry / "cwd").resolve())
                 ticks = stat_cpu_ticks(entry / "stat")
             except OSError:
                 continue
