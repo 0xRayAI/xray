@@ -17,7 +17,7 @@ The `<reviewer seat>` owns the PR and issue watchers and the `<lab tester>` owns
 | Watcher | Owner | Fires on | Does |
 |---|---|---|---|
 | PR | `<reviewer seat>` | PR opened or pushed | first review, the single re-check after a FAIL, or a re-look after a PASS or HOLD |
-| Issue | `<reviewer seat>` | sweep of new issues every 15 minutes | gate it: S1/S2 with a repro stays an issue; anything else becomes a card |
+| Issue | `<reviewer seat>` | issue opened, with a 15-minute sweep as fallback | gate it: S1/S2 with a repro stays an issue; anything else becomes a card |
 | Merge | `<lab tester>` | merge to the integration branch | append a queue line (§4), run the lean retest once the lab shows that commit; PASS closes the issue with the merge SHA, FAIL keeps it open and sends `<env operator>` one line |
 
 Dedupe by PR + head SHA in a seat-local log (one line per routed review: time, repo#PR, sha, action). A watcher fire whose PR + SHA + action is already logged does nothing. Quiet when nothing changed.
@@ -52,9 +52,11 @@ The `<lab tester>` runs one batched lean retest (that bug plus a quick regressio
 The live page is fed by metadata and outcomes only, never PR, issue, comment or prompt bodies. Two append-only files add the human side:
 
 - `fleet/prompts.jsonl`: one pulse per direct message. `{"t_ct": "<ISO time>", "from": "<sender>", "to": "<seat or room>"}`. Written by the receiving seat for human-to-seat messages and by the sender for seat-to-seat messages. Never the message text, never a secret.
-- `fleet/activity.jsonl`: one line when a seat starts or ends background work. `{"t_ct": "<ISO time>", "seat": "<seat>", "kind": "turn|subagent|watcher", "action": "start|end", "tag": "<short label>"}`. The page shows the seat as working until the matching end, capped at 60 minutes so a missed end line cannot spin forever.
+- `fleet/activity.jsonl`: one line when a seat starts or ends background work. `{"t_ct": "<ISO time with offset>", "kind": "turn|subagent|watcher", "action": "start|end", "tag": "<short label>"}`. The page shows the seat as working until the matching end, capped at 60 minutes so a missed end line cannot spin forever.
 
-`<coder>` and cloud agents, which do not share the house box, post the same line to the feed's `POST /activity` with their own app token; the server takes the seat from the token and checks the line with `validActivity` ([house/burst/ACTIVITY.md](../house/burst/ACTIVITY.md)).
+The line is what `validActivity` accepts ([house/burst/ACTIVITY.md](../house/burst/ACTIVITY.md)). The only fields are `t_ct`, `kind`, `action`, `to`, `agent` and `tag`; any other field, including `seat`, refuses the whole line. Values are short plain strings with no free text. A `cloud_agent` line (`launch|reply|finished|cancel`) needs `agent`, the cloud agent id. The seat is never written in the line. Whoever accepts it adds `by` (the seat) and `seq`: `acceptLine` with the writing seat's name on the house box, or the feed server from the app token on `POST /activity`.
+
+`<coder>` and cloud agents, which do not share the house box, post the same line to the feed's `POST /activity` with their own app token. A prompt pulse can go the same way as `{"t_ct": "<ISO time with offset>", "kind": "prompt", "action": "sent|received", "to": "<seat>"}`.
 
 ## 6. Generated waveboard
 
@@ -68,7 +70,7 @@ For a burst of build work, split it into lanes: one cloud agent per repo area, e
 
 **PR watcher (`<reviewer seat>`):** "A PR changed on `<repo>`. Read its number and head SHA. If `<log>` already has this PR + SHA + action, stop. Otherwise decide the action: first review (no verdict yet), re-check (push after your FAIL; this is the single re-check), or re-look (push after your PASS or HOLD). Review against the house bar: only S1/S2 with a repro can FAIL; nits go on the PR as notes. Post the verdict on the PR as your own app, naming the head SHA. Append one line to `<log>`. Send no message to anyone else."
 
-**Issue sweep (`<reviewer seat>`, every 15 minutes):** "List issues opened since the last sweep that you did not file. For each, gate it: S1/S2 with a repro stays an issue as the spec; anything else becomes a card with a note on the issue. Log what you gated. If nothing is new, send nothing."
+**Issue watcher (`<reviewer seat>`, on issue opened, with a 15-minute sweep as fallback):** "An issue was opened, or the fallback sweep fired. List issues opened since the last check that you did not file and have not gated. For each, gate it: S1/S2 with a repro stays an issue as the spec; anything else becomes a card with a note on the issue. Log what you gated. If nothing is new, send nothing."
 
 **Merge watcher (`<lab tester>`):** "A PR merged to `<integration branch>`. Append one unticked line to `house/watchers/merge-queue.md` with repo, PR, merge SHA, the issue it fixes and what to retest. When the lab shows that commit, run the lean retest for all unticked lines, tick each PASS or FAIL with one note, and on PASS comment PASS with the merge SHA on the issue and close it as your own app. On FAIL leave the issue open, put the note on the PR, and send `<env operator>` one line. Send no acks."
 
