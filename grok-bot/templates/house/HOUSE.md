@@ -18,6 +18,14 @@
 ## Board
 (example) Open cards: house/WAVEBOARD.md. What needs the owner now: house/ATTENTION_STATE.md.
 
+## Cadence
+Optional. Delete this section if your house has no code loop. Defaults from [opproc-cadence.md](https://github.com/0xRayAI/xray/blob/main/docs/opproc-cadence.md); rename the roles to your seats.
+- Bots never burn or ack. Build work runs on cloud agents and the coder. Seats route, review and retest, and post results on the PR or issue.
+- Review plate: one pass, one fix, one re-check, then park for the owner. Only P0/P1 (S1/S2 with a repro) can FAIL. Nits are notes or cards.
+- The coder merges to the integration branch only when the reviewer's PASS SHA equals the PR head and CI is green. Main and production need the owner.
+- Each seat uses its own GitHub App. Each watcher belongs to the seat that acts on it: the reviewer watches PRs and new issues, the lab tester watches merges and keeps `house/watchers/merge-queue.md`. The coordinator handles exceptions only.
+- An hourly stall sweep runs every day, not business hours only. One nudge per item per day.
+
 ## Roster
 Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.
 
