@@ -4,11 +4,11 @@ Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 
 
 ## 4.0.42 — confer, the worn suit, Burst
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 - **Confer.** The wearing chat's own MCP servers vote. Only a real PASS completes the consult. A PASS from another session is asked again.
 - **Suit.** Wear pins Grok at the installed CLI, Hermes rejects a console call, and OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
-- **Burst.** The live board shows one seat state and an honest LIVE pill. The box posts one delta while it holds the lock. A 409 is retried once. The ingest secret stays in the header. A SENT prompt holds the seat for 10 minutes, and a posted seat must match the installation token.
+- **Burst.** Runs the swarm live. The board shows one seat state and an honest LIVE pill. The box posts one delta while it holds the lock. A 409 is retried once. The ingest secret stays in the header. A SENT prompt holds the seat for 10 minutes, and a posted seat must match the installation token.
 
 ## 4.0.30 — wear and setup work outside git again
 

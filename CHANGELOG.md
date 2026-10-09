@@ -46,11 +46,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 - Confer asks the MCP servers the wearing chat already spawned. Only a real PASS completes the consult. A PASS that belongs to another session is asked again.
 - Wear pins Grok at the installed CLI. Hermes codex-check catches a console call. OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
-- Burst keeps an honest LIVE pill and one seat state. The box posts one delta while `push.sh` holds the lock, retries once on 409, and keeps the ingest secret in the header.
+- Burst runs the swarm live. The board keeps an honest LIVE pill and one seat state. The box posts one delta while `push.sh` holds the lock, retries once on 409, and keeps the ingest secret in the header.
 - A SENT prompt holds that seat working for 10 minutes. A posted seat must match the installation token. Legacy prompt lines are read, and the prompts file defaults to `fleet/prompts.jsonl`.
 
 ---

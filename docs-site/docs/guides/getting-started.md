@@ -1,7 +1,7 @@
 # Getting Started with 0xRay
 
 **4.0** — a suit that survives the context window
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 
 Wear the exo. Constitution on every stroke. Temperament by host.

@@ -8,9 +8,9 @@ sidebar_label: Overview
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
-![0xRay 4.0.42 — Confer votes. Burst monitors the swarm.](/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/exo-skeleton-v4.jpg)
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 ```bash
 npm install 0xray

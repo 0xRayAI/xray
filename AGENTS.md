@@ -4,7 +4,7 @@ Quick reference for the xray AI orchestration framework (**4.0**).
 
 **4.0** — a suit that survives the context window.
 
-Confer votes. Burst monitors the swarm.
+Confer votes. Burst runs the swarm.
 
 **Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
