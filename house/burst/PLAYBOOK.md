@@ -46,7 +46,7 @@ timeline, not in the pill.
 | Laptop repo watcher | the seat's loop, off the house box | every 30s, plus a heartbeat | working while the turn is open | ids, times, counts. No command lines | `house/burst/bin` first on `PATH`. See "Seat on a laptop" |
 | Supervisor | `house/burst/supervise.py` | restarts when the feed exits; re-mint at 50 min of wall time | process start, exit 75 | no tokens in logs | `BURST_TOKEN_MINTED` from `date +%s` |
 | Watchdog | the same restart loop | about 60s | start the feed again if it died | none | `run()` until the stop file exists |
-| Delta pusher | `house/burst/delta.mjs` + `push.sh` | mtime check 2s; cursor on each push | full or delta feed | events already in the feed | `?since=<cursor>` |
+| Delta pusher | `house/burst/push.sh` + `push-delta.mjs` | one post while the lock is held, then sleep 2s | one delta to the ingest | local activity lines already written | secret is the `X-Burst-Ingest` header; a 409 posts once more |
 | Pages tripwire | `house/live-mesh/tripwire_push.py` | 300s | `feed_push` when the public snapshot changes | existing feed | unchanged |
 
 ### Lab-run working (live rule)

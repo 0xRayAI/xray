@@ -251,7 +251,7 @@ house/burst/release.sh "$HOME/burst-releases/<release-tag>"
 
 ### Supervisor and watchdog
 
-`house/burst/supervise.py` is the restart rule: start the command, and start it again when it exits, until the stop file exists. The box watchdog is that loop with 60 seconds between starts. `push.sh` holds its lock on fd 9 and sleeps with `9>&-`.
+`house/burst/supervise.py` is the restart rule: start the command, and start it again when it exits, until the stop file exists. The box watchdog is that loop with 60 seconds between starts. `push.sh` posts one delta while it holds the lock on fd 9, then sleeps with `9>&-`.
 
 ```bash
 export BURST_STATE="$HOME/.burst"
