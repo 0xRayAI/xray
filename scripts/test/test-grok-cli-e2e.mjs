@@ -19,6 +19,7 @@ import { execSync, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { proveWornHost } from './lib/worn-host.mjs';
 
 const KEEP = process.argv.includes('--keep');
 const DIR_FLAG = process.argv.indexOf('--dir');
@@ -678,6 +679,15 @@ async function main() {
   }
 
   pass('Hook OS gate pipeline exercised end-to-end (delegation + codex)');
+
+  proveWornHost({
+    host: 'grok',
+    consumerDir: testDir,
+    section,
+    pass,
+    fail,
+    keep: KEEP,
+  });
 
   // ── Cleanup ────────────────────────────────────────────────
   if (!KEEP && !CUSTOM_DIR) {

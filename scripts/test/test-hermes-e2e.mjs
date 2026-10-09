@@ -28,6 +28,7 @@ import { execSync, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { proveWornHost } from './lib/worn-host.mjs';
 
 const KEEP = process.argv.includes('--keep');
 const DIR_FLAG = process.argv.indexOf('--dir');
@@ -638,6 +639,15 @@ async function main() {
       skip('final health', 'no response (no bridge or enforce CLI available)');
     }
   }
+
+  proveWornHost({
+    host: 'hermes',
+    consumerDir: testDir,
+    section,
+    pass,
+    fail,
+    keep: KEEP,
+  });
 
   // ── Summary ───────────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

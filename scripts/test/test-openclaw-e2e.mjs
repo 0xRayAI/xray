@@ -37,11 +37,14 @@ import path from 'path';
 import { WebSocket } from 'ws';
 import { createRequire } from 'module';
 import crypto from 'crypto';
+import { proveWornHost } from './lib/worn-host.mjs';
 
 const require = createRequire(import.meta.url);
 
 const DIR_FLAG = process.argv.indexOf('--dir');
 const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
+const TARBALL_FLAG = process.argv.indexOf('--tarball');
+const TARBALL_PATH = TARBALL_FLAG !== -1 && process.argv[TARBALL_FLAG + 1] ? process.argv[TARBALL_FLAG + 1] : null;
 const KEEP = process.argv.includes('--keep');
 
 let passed = 0;
@@ -1255,6 +1258,19 @@ async function main() {
   } else {
     skip('skills directory', `not found at ${skillsDir}`);
   }
+
+  const wornConsumer = CUSTOM_DIR && fs.existsSync(path.join(CUSTOM_DIR, 'node_modules', '0xray', 'package.json'))
+    ? CUSTOM_DIR
+    : null;
+  proveWornHost({
+    host: 'openclaw',
+    consumerDir: wornConsumer,
+    tarball: TARBALL_PATH,
+    section,
+    pass,
+    fail,
+    keep: KEEP,
+  });
 
   // ── Summary ─────────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
