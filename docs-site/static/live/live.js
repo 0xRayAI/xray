@@ -353,7 +353,7 @@
   }
 
   root.LiveMesh = {
-    SOURCES: SOURCES, POLL_MS: POLL_MS, PING_MS: PING_MS, AGENTS: AGENTS, SEAT_NAMES: SEAT_NAMES, COLOR: COLOR,
+    HUB_LABEL: 'Burst', SOURCES: SOURCES, POLL_MS: POLL_MS, PING_MS: PING_MS, AGENTS: AGENTS, SEAT_NAMES: SEAT_NAMES, COLOR: COLOR,
     LABEL: LABEL, SUB: SUB, SQUARE: SQUARE, HUB: HUB, SATS: SATS, EDGES: EDGES, KIND_WORD: KIND_WORD,
     resolveNodes: resolveNodes, eventColor: eventColor, cleanLabel: cleanLabel, whoTag: whoTag,
     headline: headline, parseT: parseT, mergeEvents: mergeEvents, countUpTo: countUpTo,
