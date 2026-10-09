@@ -36,4 +36,4 @@ Logs become a report. A valid cache returns the formatted report and does not wr
 └────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

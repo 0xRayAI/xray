@@ -35,4 +35,4 @@ Today those writers append `logs/framework/activity.log`. The features default s
 
 When: on the tool hook, on framework logger flush, and on boot when file logging is on. Why: the report and the pulse read one tail, not a pile of copies.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

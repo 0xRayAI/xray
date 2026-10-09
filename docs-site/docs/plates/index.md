@@ -51,4 +51,4 @@ These eight are the pages the file ref names. Each one is a search lens. Each le
 
 These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

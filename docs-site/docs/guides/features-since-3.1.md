@@ -2,6 +2,14 @@
 
 Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
+## 4.0.42 — confer, the worn suit, Burst
+
+Confer agents vote on a proposal, the suit is validated on Grok, Cursor, Hermes, OpenCode, and OpenClaw, and Burst lets you watch the swarm talk in real time.
+
+- **Confer.** The wearing chat's own MCP servers vote. Only a real PASS completes the consult. A PASS from another session is asked again.
+- **Suit.** Wear pins Grok at the installed CLI, Hermes rejects a console call, and OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
+- **Burst.** The live board shows one seat state and an honest LIVE pill. The box posts one delta while it holds the lock. A 409 is retried once. The ingest secret stays in the header. A SENT prompt holds the seat for 10 minutes, and a posted seat must match the installation token.
+
 ## 4.0.30 — wear and setup work outside git again
 
 - **Non-git.** `npx 0xray wear` and `npx 0xray setup` write the 4.0.28 consumer project setup and skip only Cursor hooks. They print one line: `cursor-wear: hooks skipped because this folder is not a git checkout`.

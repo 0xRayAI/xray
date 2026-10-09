@@ -32,4 +32,4 @@ The tool hook is where the lens gate runs.
 
 pre-tool-use.js joins the command, the written content, and the paths, then calls lensBeforeResearch. A deny ends the hook. The plate that belongs here is lens-gate.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

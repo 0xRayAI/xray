@@ -39,4 +39,4 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
 
 Same rules in the repo. You are not locked into one app.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

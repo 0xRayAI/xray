@@ -35,4 +35,4 @@ Read it after a compact. Leave Intent alone. The plan is the next cut. The long 
 The station module writes this card. Heat adds `Cascade: record-map · notes N current`. The count is the current index. The body stays on the notes page.
 
 The card keeps the named plane. `Sleeve: on` means the previous ticket came back, the worn plate matched the package, the previous ticket matched the working record, and inspect passed. Judgement is continue, retry N, stop, or start. The same miss keeps its retry. A different ticket stops. Payments is on only when the ticket is a payment.
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

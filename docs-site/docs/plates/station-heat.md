@@ -32,4 +32,4 @@ On a compact event applyStationHeat stamps the notes pickup line.
 
 `isCompactHook` is true when the hook name contains compact. The body of NOTES.md is left alone. The plates that belong here are pickup-stamp and notes-page.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42
