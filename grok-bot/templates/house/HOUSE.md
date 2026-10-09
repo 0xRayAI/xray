@@ -23,8 +23,10 @@ Optional. Delete this section if your house has no code loop. Defaults from [opp
 - Bots never burn or ack. Build work runs on cloud agents and the coder. Seats route, review and retest, and post results on the PR or issue.
 - Review plate: one pass, one fix, one re-check, then park for the owner. Only P0/P1 (S1/S2 with a repro) can FAIL. Nits are notes or cards.
 - The coder merges to the integration branch only when the reviewer's PASS SHA equals the PR head and CI is green. Main and production need the owner.
-- Each seat uses its own GitHub App. Each watcher belongs to the seat that acts on it: the reviewer watches PRs and new issues, the lab tester watches merges and keeps `house/watchers/merge-queue.md`. The coordinator handles exceptions only.
-- An hourly stall sweep runs every day, not business hours only. One nudge per item per day.
+- Each seat uses its own GitHub App. The reviewer owns the PR watcher (first review, single re-check after a FAIL, re-look after a PASS or HOLD, deduped by PR + SHA) and sweeps new issues every 15 minutes. The lab tester owns the merge watcher: queue line in `house/watchers/merge-queue.md`, lean retest, PASS closes the issue with the merge SHA, FAIL keeps it open with one line to the env operator. The coordinator handles exceptions only: parked PRs, asks only the owner can answer, fleet mechanics, and the stall sweep.
+- Stall sweep, hourly, 24/7 (defaults): no verdict after 30m; unticked queue line or PASS unmerged after 60m; open P0/P1 with no PR after 2h; parked PR to the owner. One nudge per item per day. Lesson: a business-hours-only sweep stranded retests overnight.
+- Live mesh: `prompts.jsonl` pulses (time, from, to; never text) and `activity.jsonl` start/end lines, shown as working up to a 60-minute cap.
+- Deep burn: one cloud agent per repo area with fixed file ownership, at most 4 at once, in waves.
 
 ## Roster
 Optional. Role, seat name, and agent id: [ROLE-MAP.md](ROLE-MAP.md). Leave it blank until you have ids.
