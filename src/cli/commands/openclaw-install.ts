@@ -14,7 +14,7 @@ type MillSuit = {
 
 type OpenClawWiring = {
   wireOpenClawBridge: (targetDir: string) => { count: number; path: string; method: string };
-  installOpenClawHostWear: (packageRoot: string) => string | null;
+  installOpenClawHostWear: (packageRoot: string, targetDir?: string) => string | null;
   maybeWriteOpenClawCliBackend: () => boolean;
 };
 
@@ -99,7 +99,7 @@ async function installForOpenClaw(options: OpenClawInstallOptions = {}): Promise
     }
 
     const packageRoot = path.resolve(__dirname, '..', '..', '..');
-    const hookInstalled = isolated ? null : wiring.installOpenClawHostWear(packageRoot);
+    const hookInstalled = isolated ? null : wiring.installOpenClawHostWear(packageRoot, targetDir);
     const cliBackend = isolated ? false : wiring.maybeWriteOpenClawCliBackend();
     frameworkLogger.log('openclaw-integration', 'cli-backend', 'info', { written: cliBackend });
     if (hookInstalled) {

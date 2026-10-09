@@ -715,4 +715,51 @@ describe('bridge-mcp-wiring', () => {
       rmSync(home, { recursive: true, force: true });
     }
   });
+
+  it('drops a checkout OpenClaw plugin once an installed package is present', () => {
+    const factory = '/Users/blaze/dev/xray/src/integrations/openclaw/plugin/xray-pre-tool';
+    const clearing = '/Users/blaze/dev/clearing/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const worn = '/tmp/xray-fit/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const settled = wiring.settleOpenClawPluginPaths([factory, clearing], worn);
+    expect(settled[0]).toBe(path.resolve(worn));
+    expect(settled).toContain(path.resolve(clearing));
+    expect(settled.some((entry: string) => entry.includes('/src/integrations/openclaw/plugin/'))).toBe(false);
+
+    const kept = wiring.settleOpenClawPluginPaths([factory], null);
+    expect(kept).toEqual([path.resolve(factory)]);
+  });
+
+  it('records the installed OpenClaw plugin on the consumer and rewrites only load paths', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-oc-pin-'));
+    const plugin = path.join(consumer, 'node_modules', '0xray', 'dist', 'integrations', 'openclaw', 'plugin', 'xray-pre-tool');
+    const configPath = path.join(consumer, '.xray', 'config', 'openclaw.json');
+    const homeConfig = path.join(consumer, 'home-openclaw.json');
+    mkdirSync(plugin, { recursive: true });
+    mkdirSync(path.dirname(configPath), { recursive: true });
+    writeFileSync(path.join(plugin, 'index.js'), 'module.exports = {};\n');
+    writeFileSync(configPath, `${JSON.stringify({ gatewayUrl: 'ws://127.0.0.1:18789', enabled: true }, null, 2)}\n`);
+    const factory = '/Users/blaze/dev/xray/src/integrations/openclaw/plugin/xray-pre-tool';
+    const other = '/Users/blaze/dev/clearing/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const marker = 'keep-this-token';
+    writeFileSync(
+      homeConfig,
+      `${JSON.stringify({ auth: { marker }, plugins: { load: { paths: [factory, other] } } }, null, 2)}\n`,
+    );
+    try {
+      const recorded = wiring.recordOpenClawProjectPlugin(consumer, consumer);
+      expect(recorded).toBe(path.resolve(plugin));
+      const project = JSON.parse(readFileSync(configPath, 'utf8')) as { pluginPath?: string; gatewayUrl?: string };
+      expect(project.pluginPath).toBe(path.resolve(plugin));
+      expect(project.gatewayUrl).toBe('ws://127.0.0.1:18789');
+
+      const next = wiring.pinOpenClawPluginLoad(homeConfig, plugin);
+      expect(next[0]).toBe(path.resolve(plugin));
+      expect(next).not.toContain(path.resolve(factory));
+      const raw = readFileSync(homeConfig, 'utf8');
+      expect(raw).toContain(marker);
+      expect(raw).not.toContain('/src/integrations/openclaw/plugin/xray-pre-tool');
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
+  });
 });
