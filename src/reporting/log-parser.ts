@@ -1,14 +1,18 @@
 import * as fs from "fs";
 import * as path from "path";
 import { createGunzip } from "zlib";
-import { fileURLToPath } from "node:url";
 import { frameworkLogger } from "../core/framework-logger.js";
 import { type ParsedLogEntry, type ReportConfig } from "./types.js";
 
 const LOG_LINE_RE =
-  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)(?:\s+\|.*)?$/;
 const LOG_LINE_FALLBACK_RE =
-  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)$/;
+  /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\s+\[([^\]]+)\]\s+(.+?)\s+-\s+(\w+)(?:\s+\|.*)?$/;
+
+/** Consumer activity lives in the working directory, not inside the installed package. */
+export function activityLogPath(root = process.cwd()): string {
+  return path.join(root, "logs", "framework", "activity.log");
+}
 
 type ParsedFileCache = {
   mtimeMs: number;
@@ -193,9 +197,7 @@ function uniqueSorted(logs: ParsedLogEntry[]): ParsedLogEntry[] {
 export async function readCurrentLogFile(
   timeRange?: ReportConfig["timeRange"],
 ): Promise<ParsedLogEntry[]> {
-  const currentFilePath = fileURLToPath(import.meta.url);
-  const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
-  const logFile = path.join(projectRoot, "logs", "framework", "activity.log");
+  const logFile = activityLogPath();
 
   try {
     if (!fs.existsSync(logFile)) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -44,6 +44,11 @@ describe('bridge-mcp-wiring', () => {
     const portable = wiring.buildPortableProjectMcpJson();
     const names = Object.keys(portable.mcpServers);
     expect(names.filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(names).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     const governance = portable.mcpServers['xray-governance'];
     expect(governance.command).toBe('node');
     expect(governance.args[0]).toMatch(/mcp-launch\.cjs$/);
@@ -63,11 +68,21 @@ describe('bridge-mcp-wiring', () => {
     const targetDir = '/tmp/repertoire-consumer';
     const servers = wiring.buildHermesMcpServers(targetDir);
     expect(Object.keys(servers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(Object.keys(servers)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(servers['xray-enforcer'].env.XRAY_ROOT).toBe(targetDir);
   });
 
   it('builds OpenCode mcp entries as local enabled servers pinned to the installed version', () => {
     const entries = wiring.buildOpencodeMcpEntries('/tmp/consumer');
+    expect(Object.keys(entries)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(entries['xray-skills'].type).toBe('local');
     expect(entries['xray-skills'].enabled).toBe(true);
     expect(entries['xray-skills'].command[0]).toBe('node');
@@ -375,6 +390,11 @@ describe('bridge-mcp-wiring', () => {
     const targetDir = '/tmp/openclaw-consumer';
     const servers = wiring.buildOpenClawMcpServers(targetDir);
     expect(Object.keys(servers).filter((n: string) => n.startsWith('xray-'))).toHaveLength(7);
+    expect(Object.keys(servers)).toEqual(expect.arrayContaining([
+      'xray-researcher',
+      'xray-architect-tools',
+      'xray-code-review',
+    ]));
     expect(servers['xray-governance'].env.XRAY_FORCE_MCP_GOVERNANCE).toBe('true');
     expect(servers['xray-governance'].env.XRAY_ROOT).toBe(targetDir);
   });
@@ -502,12 +522,17 @@ describe('bridge-mcp-wiring', () => {
     const packageRoot = path.join(__dirname, '..', '..', '..');
     const installSrc = readFileSync(path.join(packageRoot, 'scripts/node/install-bridges.cjs'), 'utf8');
     const grokSrc = readFileSync(path.join(packageRoot, 'src/integrations/grok/grok-cli.ts'), 'utf8');
-    expect(installSrc).toContain('XRAY_MCP_SERVERS');
+    expect(installSrc).toContain('writeProjectSuitMcp');
+    expect(installSrc).toContain('trustGrokFolder');
     expect(installSrc).toContain('bridge-mcp-wiring.cjs');
     expect(installSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
+    expect(installSrc).not.toContain('grok mcp add');
+    expect(grokSrc).toContain('writeProjectSuitMcp');
     expect(grokSrc).toContain('bridge-mcp-wiring.cjs');
     expect(grokSrc).not.toMatch(/const XRAY_MCP_SERVERS = \[/);
     expect(grokSrc).toContain('resolveRepertoireMcp');
+    expect(grokSrc).not.toContain('grok mcp add');
+    expect(grokSrc).not.toContain('plugins trust');
   });
 
   it('enableMemoryRoutingIfResolves only when leftover default-off and module exists', () => {
@@ -634,6 +659,105 @@ describe('bridge-mcp-wiring', () => {
       expect(Object.keys(extras.hermes.goggles.env).join(',')).not.toMatch(/TOKEN|SECRET|API_KEY|WALLET/i);
       expect(extras.opencode.goggles.command.join(' ')).toContain('run-goggles-mcp.mjs');
       expect(wiring.resolveGogglesMcp(consumer)).toBe(launcher);
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+
+  it('writes project grok mcp for the worn cli and trusts that folder once', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-suit-mcp-'));
+    const home = mkdtempSync(path.join(os.tmpdir(), 'xray-suit-home-'));
+    const realHome = path.join(os.homedir(), '.grok', 'trusted_folders.toml');
+    const realBefore = existsSync(realHome) ? readFileSync(realHome) : null;
+    const cli = path.join(consumer, 'node_modules', '0xray', 'dist', 'cli', 'index.js');
+    mkdirSync(path.dirname(cli), { recursive: true });
+    writeFileSync(cli, '#!/usr/bin/env node\n');
+    const tomlPath = path.join(consumer, '.grok', 'config.toml');
+    mkdirSync(path.dirname(tomlPath), { recursive: true });
+    writeFileSync(
+      tomlPath,
+      [
+        '[mcp_servers.repertoire]',
+        'command = "node"',
+        'args = ["repertoire-mcp.js"]',
+        'enabled = true',
+        '',
+        '[plugins]',
+        'enabled = ["0xray"]',
+        '',
+      ].join('\n'),
+    );
+    try {
+      expect(wiring.writeProjectSuitMcp(consumer)).toBe(tomlPath);
+      const toml = readFileSync(tomlPath, 'utf8');
+      expect(toml).toContain('[mcp_servers.xray-orchestrator]');
+      expect(toml).toContain(cli);
+      expect(toml).toContain('XRAY_ROOT');
+      expect(toml).toContain('[mcp_servers.repertoire]');
+      expect(toml).toContain('[plugins]');
+      expect(toml).not.toContain('npx');
+      const headers = toml.split('\n').filter((line) => line.trim() === '[mcp_servers.xray-orchestrator]');
+      expect(headers).toHaveLength(1);
+      const again = readFileSync(wiring.writeProjectSuitMcp(consumer), 'utf8');
+      expect(again).toBe(toml);
+
+      const trustEnv = { HOME: home, USERPROFILE: home };
+      const trustFile = wiring.trustGrokFolder(consumer, trustEnv);
+      expect(trustFile).toBe(path.join(home, '.grok', 'trusted_folders.toml'));
+      const trusted = readFileSync(trustFile, 'utf8');
+      expect(trusted).toContain(`[folders.${JSON.stringify(path.resolve(consumer))}]`);
+      expect(trusted).toContain('trusted = true');
+      expect(readFileSync(wiring.trustGrokFolder(consumer, trustEnv), 'utf8')).toBe(trusted);
+      const realAfter = existsSync(realHome) ? readFileSync(realHome) : null;
+      expect(realAfter).toEqual(realBefore);
+    } finally {
+      rmSync(consumer, { recursive: true, force: true });
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  it('drops a checkout OpenClaw plugin once an installed package is present', () => {
+    const factory = '/Users/blaze/dev/xray/src/integrations/openclaw/plugin/xray-pre-tool';
+    const clearing = '/Users/blaze/dev/clearing/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const worn = '/tmp/xray-fit/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const settled = wiring.settleOpenClawPluginPaths([factory, clearing], worn);
+    expect(settled[0]).toBe(path.resolve(worn));
+    expect(settled).toContain(path.resolve(clearing));
+    expect(settled.some((entry: string) => entry.includes('/src/integrations/openclaw/plugin/'))).toBe(false);
+
+    const kept = wiring.settleOpenClawPluginPaths([factory], null);
+    expect(kept).toEqual([path.resolve(factory)]);
+  });
+
+  it('records the installed OpenClaw plugin on the consumer and rewrites only load paths', () => {
+    const consumer = mkdtempSync(path.join(os.tmpdir(), 'xray-oc-pin-'));
+    const plugin = path.join(consumer, 'node_modules', '0xray', 'dist', 'integrations', 'openclaw', 'plugin', 'xray-pre-tool');
+    const configPath = path.join(consumer, '.xray', 'config', 'openclaw.json');
+    const homeConfig = path.join(consumer, 'home-openclaw.json');
+    mkdirSync(plugin, { recursive: true });
+    mkdirSync(path.dirname(configPath), { recursive: true });
+    writeFileSync(path.join(plugin, 'index.js'), 'module.exports = {};\n');
+    writeFileSync(configPath, `${JSON.stringify({ gatewayUrl: 'ws://127.0.0.1:18789', enabled: true }, null, 2)}\n`);
+    const factory = '/Users/blaze/dev/xray/src/integrations/openclaw/plugin/xray-pre-tool';
+    const other = '/Users/blaze/dev/clearing/node_modules/0xray/dist/integrations/openclaw/plugin/xray-pre-tool';
+    const marker = 'keep-this-token';
+    writeFileSync(
+      homeConfig,
+      `${JSON.stringify({ auth: { marker }, plugins: { load: { paths: [factory, other] } } }, null, 2)}\n`,
+    );
+    try {
+      const recorded = wiring.recordOpenClawProjectPlugin(consumer, consumer);
+      expect(recorded).toBe(path.resolve(plugin));
+      const project = JSON.parse(readFileSync(configPath, 'utf8')) as { pluginPath?: string; gatewayUrl?: string };
+      expect(project.pluginPath).toBe(path.resolve(plugin));
+      expect(project.gatewayUrl).toBe('ws://127.0.0.1:18789');
+
+      const next = wiring.pinOpenClawPluginLoad(homeConfig, plugin);
+      expect(next[0]).toBe(path.resolve(plugin));
+      expect(next).not.toContain(path.resolve(factory));
+      const raw = readFileSync(homeConfig, 'utf8');
+      expect(raw).toContain(marker);
+      expect(raw).not.toContain('/src/integrations/openclaw/plugin/xray-pre-tool');
     } finally {
       rmSync(consumer, { recursive: true, force: true });
     }

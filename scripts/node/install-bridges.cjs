@@ -7,7 +7,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execFileSync, execSync } = require("child_process");
+const { execFileSync } = require("child_process");
 const {
   wantsCostume,
   isIsolatedHome,
@@ -22,18 +22,19 @@ const {
   wireOpencodeBridge,
   wireOpenClawBridge,
   deployPortableProjectMcpJson,
-  scopedMcpLaunch,
   mergeMcpMap,
   mergeNamedRecords,
   jsonDeepEqual,
   copyHermesFindProjectRootHelper,
   copyHermesHookRuntimes,
   installOpenClawHostWear,
+  recordOpenClawProjectPlugin,
   maybeWriteOpenClawCliBackend,
   isEphemeralInstallRoot,
   enableMemoryRoutingIfResolves,
   pinLauncherPackageRoot,
-  XRAY_MCP_SERVERS,
+  writeProjectSuitMcp,
+  trustGrokFolder,
 } = require("./bridge-mcp-wiring.cjs");
 
 const wearIo = { writes: 0, skips: 0 };
@@ -484,42 +485,11 @@ function findGrokPluginSource(packageRoot) {
   return candidates.find((p) => fs.existsSync(p));
 }
 
-function registerGrokMcpServers(targetDir, log, pluginDirs) {
-  try {
-    execSync("which grok", { stdio: "ignore" });
-  } catch {
-    log("grok-bridge", "grok CLI not on PATH — plugin .mcp.json still configured", "info");
-    return;
-  }
-
-  for (const s of XRAY_MCP_SERVERS) {
-    try {
-      const launch = scopedMcpLaunch(targetDir, s.mcpCmd, s.env);
-      const argv = ["mcp", "add", s.name, "--command", launch.command, "--args", launch.args[0], ...launch.args.slice(1)];
-      for (const [key, value] of Object.entries(launch.env)) {
-        argv.push("--env", `${key}=${value}`);
-      }
-      execFileSync("grok", argv, { stdio: "pipe" });
-      log("grok-bridge", `registered ${s.name} (mcp-launch)`, "info");
-    } catch {
-      // already registered or grok config conflict — non-blocking
-    }
-  }
-
-  const dirs =
-    Array.isArray(pluginDirs) && pluginDirs.length > 0
-      ? pluginDirs
-      : [path.join(targetDir, ".grok", "plugins", "0xray")];
-  for (const pluginDir of dirs) {
-    if (!fs.existsSync(pluginDir)) continue;
-    try {
-      execSync(`grok plugins trust "${pluginDir}"`, { stdio: "ignore" });
-      log("grok-bridge", "plugin trusted", "info", { path: pluginDir });
-      break;
-    } catch {
-      // best-effort
-    }
-  }
+function registerGrokMcpServers(targetDir, log, env) {
+  const tomlPath = writeProjectSuitMcp(targetDir);
+  log("grok-bridge", "project mcp config written", "info", { path: tomlPath });
+  const trustPath = trustGrokFolder(targetDir, env || process.env);
+  log("grok-bridge", "folder trusted", "info", { path: trustPath });
 }
 
 
@@ -742,8 +712,8 @@ function installGrokBridge(targetDir, packageRoot, log, opts) {
     if (globalCopied > 0) {
       log("grok-bridge", `global skills synced (${globalCopied})`, "info", { path: grokGlobalSkills });
     }
-    registerGrokMcpServers(targetDir, log, targets);
   }
+  registerGrokMcpServers(targetDir, log, env);
 }
 
 function installHermesBridge(targetDir, packageRoot, log) {
@@ -881,7 +851,7 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
   }
 
   if (!ephemeralOpenclaw && !isolatedOpenclaw) {
-    const hook = installOpenClawHostWear(packageRoot);
+    const hook = installOpenClawHostWear(packageRoot, targetDir);
     if (hook) log("openclaw-bridge", "PreToolUse hook installed", "info", { path: hook });
     if (maybeWriteOpenClawCliBackend()) {
       log("openclaw-bridge", "opencode-cli backend written", "info");
@@ -894,6 +864,11 @@ function installOpenclawBridge(targetDir, packageRoot, log) {
         : "skip machine PreToolUse wear — ephemeral consumer",
       "info",
     );
+  }
+
+  const recorded = recordOpenClawProjectPlugin(targetDir, packageRoot);
+  if (recorded) {
+    log("openclaw-bridge", "project plugin path recorded", "info", { path: recorded });
   }
 }
 

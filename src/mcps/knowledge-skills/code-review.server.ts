@@ -14,6 +14,7 @@ import {
   tryLLMGovernance,
 } from "../../governance/llm-governance-provider.js";
 import { formatGovernanceVoteText, localConferVote } from "../../governance/local-confer.js";
+import { buildHostConferEvidence } from "../../nucleus/confer-host.js";
 
 interface CodeReviewResult {
   file: string;
@@ -438,6 +439,13 @@ class XrayCodeReviewServer extends XrayKnowledgeSkillBase {
    */
   async analyzeProposal(args: AnalyzeProposalArgs) {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args;
+
+    if (proposalType === "synthesis-confer") {
+      const packet = [proposalTitle, proposalDescription, ...(evidence || [])].filter(Boolean).join("\n\n");
+      return {
+        content: [{ type: "text", text: buildHostConferEvidence("code-review", packet) }],
+      };
+    }
 
     const vote =
       (await tryLLMGovernance(

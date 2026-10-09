@@ -87,6 +87,24 @@ function assertJsonValid(filePath, name) {
   }
 }
 
+function argIsCli(arg, cli) {
+  if (typeof arg !== 'string') return false;
+  if (arg === cli) return true;
+  try {
+    return fs.realpathSync(arg) === fs.realpathSync(cli);
+  } catch {
+    return false;
+  }
+}
+
+function launchesWornCli(server, cli, mcpCmd) {
+  const args = Array.isArray(server?.args) ? server.args : [];
+  return server?.command === 'node'
+    && args.includes(mcpCmd)
+    && args.some((arg) => argIsCli(arg, cli))
+    && !args.includes('npx');
+}
+
 function assertContains(filePath, substring, label) {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
@@ -216,6 +234,7 @@ async function main() {
 
   const nodeModules0xray = path.join(testDir, 'node_modules', '0xray');
   const distDir = path.join(nodeModules0xray, 'dist');
+  const wornCli = path.join(distDir, 'cli', 'index.js');
 
   if (!fs.existsSync(nodeModules0xray)) {
     fail('0xray installation', `not found in ${testDir}`);
@@ -232,6 +251,33 @@ async function main() {
 
   // ── Phase 1: Grok Plugin Install ────────────────────────────
   section('Phase 1: Grok Plugin Install (`npx 0xray grok install`)');
+
+  const pinHome = fs.mkdtempSync(path.join(os.tmpdir(), 'xray-grok-e2e-home-'));
+  try {
+    execSync(`node "${path.join(distDir, 'cli', 'index.js')}" grok install --force`, {
+      cwd: testDir,
+      timeout: 60000,
+      stdio: 'pipe',
+      env: { ...process.env, HOME: pinHome, USERPROFILE: pinHome },
+    });
+    pass('project grok install wrote the worn pin');
+  } catch (e) {
+    const err = String(e.stderr || e.message || '').split('\n')[0];
+    fail('project grok install', err.slice(0, 180));
+  }
+  const projectToml = path.join(testDir, '.grok', 'config.toml');
+  if (!fs.existsSync(projectToml)) {
+    fail('project .grok/config.toml', 'missing after grok install');
+  } else {
+    const toml = fs.readFileSync(projectToml, 'utf8');
+    if (toml.includes(wornCli)) pass('project .grok/config.toml launches the worn CLI');
+    else fail('project .grok/config.toml', 'missing worn CLI');
+    const foreign = toml.split('\n').filter((line) => line.includes('dist/cli/index.js') && !line.includes(wornCli));
+    if (foreign.length === 0) pass('project .grok/config.toml has no factory CLI');
+    else fail('project .grok/config.toml', 'factory CLI still present');
+    if (toml.includes('npx')) fail('project .grok/config.toml', 'npx launch still present');
+    else pass('project .grok/config.toml has no npx launch');
+  }
 
   // Last-mile dest is project .grok/plugins/0xray (machine plugin is not last-wins).
   const isCI = process.env.CI === 'true';
@@ -259,14 +305,10 @@ async function main() {
   }
 
   // Check plugin files at project-level first (shared-HOME last-mile dest)
-  const pluginCheckDir = fs.existsSync(projectGrokPluginDir)
-    ? projectGrokPluginDir
-    : fs.existsSync(userGrokPluginDir)
-      ? userGrokPluginDir
-      : null;
+  const pluginCheckDir = fs.existsSync(projectGrokPluginDir) ? projectGrokPluginDir : null;
 
   if (!pluginCheckDir) {
-    skip('Phase 1-3', 'Grok plugin directory not found at user or project level');
+    fail('project Grok plugin', `not found at ${projectGrokPluginDir}`);
   } else {
     assertFileExists(pluginCheckDir, 'Grok plugin directory (~/.grok/plugins/0xray)');
     assertFileExists(path.join(pluginCheckDir, 'hooks'), 'hooks/ subdirectory');
@@ -297,8 +339,7 @@ async function main() {
     // ── Phase 3: .mcp.json Deep Validation ─────────────────────
     section('Phase 3: .mcp.json Deep Validation (MCP Server Registration)');
 
-    const packagedMcpJson = path.join(nodeModules0xray, 'src', 'integrations', 'grok', 'plugin', '0xray', '.mcp.json');
-    const mcpJsonPath = fs.existsSync(packagedMcpJson) ? packagedMcpJson : mcpJson;
+    const mcpJsonPath = mcpJson;
     assertJsonValid(mcpJsonPath, '.mcp.json (from package)');
     try {
       const mcp = JSON.parse(fs.readFileSync(mcpJsonPath, 'utf8'));
@@ -306,8 +347,10 @@ async function main() {
       if (servers['xray-governance']) {
         pass('xray-governance MCP server declared');
         const gov = servers['xray-governance'];
-        if (gov.command === 'npx' && gov.args?.includes('mcp') && gov.args?.includes('governance')) {
-          pass('xray-governance uses correct npx 0xray mcp governance');
+        if (launchesWornCli(gov, wornCli, 'governance')) {
+          pass('xray-governance launches the worn CLI');
+        } else {
+          fail('xray-governance', 'worn CLI launch missing');
         }
         if (gov.env?.XRAY_FORCE_MCP_GOVERNANCE || gov.env?.XRAY_FORCE_MCP_GOVERNANCE) pass('Governance force flag present');
       } else {
@@ -321,8 +364,10 @@ async function main() {
       if (servers['xray-orchestrator']) {
         pass('xray-orchestrator MCP server declared');
         const orch = servers['xray-orchestrator'];
-        if (orch.command === 'npx' && orch.args?.includes('mcp') && orch.args?.includes('orchestrator')) {
-          pass('xray-orchestrator uses correct npx 0xray mcp orchestrator');
+        if (launchesWornCli(orch, wornCli, 'orchestrator')) {
+          pass('xray-orchestrator launches the worn CLI');
+        } else {
+          fail('xray-orchestrator', 'worn CLI launch missing');
         }
       } else {
         fail('xray-orchestrator', 'missing from .mcp.json');
@@ -330,8 +375,10 @@ async function main() {
       if (servers['xray-enforcer']) {
         pass('xray-enforcer MCP server declared');
         const enf = servers['xray-enforcer'];
-        if (enf.command === 'npx' && enf.args?.includes('mcp') && enf.args?.includes('enforcer')) {
-          pass('xray-enforcer uses correct npx 0xray mcp enforcer');
+        if (launchesWornCli(enf, wornCli, 'enforcer')) {
+          pass('xray-enforcer launches the worn CLI');
+        } else {
+          fail('xray-enforcer', 'worn CLI launch missing');
         }
       } else {
         fail('xray-enforcer', 'missing from .mcp.json');
