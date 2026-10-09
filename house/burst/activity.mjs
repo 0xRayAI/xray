@@ -1,4 +1,6 @@
 // One activity line. The seat comes from the caller, never from the object.
+import { createHash } from 'node:crypto';
+
 export const ACT_KINDS = {
   prompt: ['received', 'sent'],
   turn: ['start', 'end', 'tick'],
@@ -40,4 +42,109 @@ export function acceptLine(lines, d, seat, now = Date.now()) {
   const line = { ...d, by: seat, seq: lines.length + 1 };
   lines.push(line);
   return { ok: true, seq: line.seq };
+}
+
+// Installation tokens are ~380 chars and may contain '.' and '_'.
+// A stricter [A-Za-z0-9]{20,255} check rejected real tokens before GitHub saw them.
+export const INSTALL_TOKEN_RE = /^ghs_[A-Za-z0-9._-]{20,1024}$/;
+
+export function installTokenShape(token) {
+  return typeof token === 'string' && INSTALL_TOKEN_RE.test(token);
+}
+
+const GH_CACHE_MS = 10 * 60 * 1000;
+const GH_CACHE_MAX = 2000;
+const ghCache = new Map();
+
+function remember(key, verdict, now) {
+  ghCache.set(key, { exp: now + GH_CACHE_MS, verdict });
+  if (ghCache.size > GH_CACHE_MAX) ghCache.delete(ghCache.keys().next().value);
+}
+
+export function clearTokenCache() {
+  ghCache.clear();
+}
+
+export function tokenCacheKeys() {
+  return [...ghCache.keys()];
+}
+
+export async function verifyInstallationToken(token, seats, fetchFn, now = Date.now(), api = 'https://api.github.com') {
+  if (!installTokenShape(token)) return { ok: false, status: 401, error: 'bad token shape' };
+  const key = createHash('sha256').update(token).digest('hex');
+  const hit = ghCache.get(key);
+  if (hit && hit.exp > now) return { ...hit.verdict };
+  const headers = {
+    Authorization: 'Bearer ' + token,
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'burst-activity',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  let viewerRes;
+  try {
+    viewerRes = await fetchFn(api + '/graphql', {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ viewer { login databaseId } }' }),
+    });
+  } catch {
+    return { ok: false, status: 503, error: 'github unreachable' };
+  }
+  if (viewerRes.status >= 500) return { ok: false, status: 503, error: 'github ' + viewerRes.status };
+  const body = viewerRes.ok ? await viewerRes.json().catch(() => ({})) : {};
+  const viewer = body && body.data && body.data.viewer;
+  const match = viewer && (seats || []).find((s) => s.bot === viewer.login && s.botId === viewer.databaseId);
+  if (!match) {
+    const verdict = { ok: false, status: 401, error: 'not a seat installation' };
+    remember(key, verdict, now);
+    return { ...verdict };
+  }
+  let repoRes;
+  try {
+    repoRes = await fetchFn(api + '/installation/repositories?per_page=100', { headers });
+  } catch {
+    return { ok: false, status: 503, error: 'github unreachable' };
+  }
+  if (repoRes.status >= 500) return { ok: false, status: 503, error: 'github ' + repoRes.status };
+  if (!repoRes.ok) {
+    const verdict = { ok: false, status: 401, error: 'not an installation token' };
+    remember(key, verdict, now);
+    return { ...verdict };
+  }
+  const repos = ((await repoRes.json().catch(() => ({}))).repositories) || [];
+  const good = repos.length > 0 && repos.every((r) => r && r.owner && r.owner.login === match.org);
+  const verdict = good
+    ? { ok: true, status: 200, seat: match.seat }
+    : { ok: false, status: 401, error: 'installation is outside the seat org' };
+  remember(key, verdict, now);
+  return { ...verdict };
+}
+
+const rateHits = new Map();
+
+export function rateOk(seat, now, store = rateHits) {
+  const arr = (store.get(seat) || []).filter((t) => now - t < 60000);
+  if (arr.length >= 60) {
+    store.set(seat, arr);
+    return false;
+  }
+  arr.push(now);
+  store.set(seat, arr);
+  return true;
+}
+
+export async function postActivity({ body, token, seats, lines, fetchFn, now = Date.now(), api }) {
+  if (typeof body !== 'string' || Buffer.byteLength(body) > 1024) return { status: 400, error: 'body too large' };
+  let parsed;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return { status: 400, error: 'not json' };
+  }
+  const who = await verifyInstallationToken(token, seats, fetchFn, now, api);
+  if (!who.ok) return { status: who.status, error: who.error };
+  if (!rateOk(who.seat, now)) return { status: 429, error: 'rate limit' };
+  const out = acceptLine(lines, parsed, who.seat, now);
+  if (!out.ok) return { status: 400, error: out.error };
+  return { status: 204, seq: out.seq };
 }

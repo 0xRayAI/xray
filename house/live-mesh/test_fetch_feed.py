@@ -121,17 +121,17 @@ class Remint401(unittest.TestCase):
         with mock.patch("urllib.request.urlopen", net), quiet():
             gh = ff.GitHub(None, app()); gh.get("/x")
             gh.app.minted_at -= 120
-            with self.assertRaises(urllib.error.HTTPError):
-                gh.get("/x")  # 401 -> mint -> 401 -> raise
+            with self.assertRaises(ff.AuthExpired):
+                gh.get("/x")  # 401 -> mint -> 401 -> loud fail, no write
             for _ in range(2):  # same minute: no further mint
-                with self.assertRaises(urllib.error.HTTPError):
+                with self.assertRaises(ff.AuthExpired):
                     gh.get("/x")
         self.assertEqual(net.mints, 2)
 
     def test_401_on_fresh_token_does_not_mint(self):
         net = Net(get_codes=[401])
         with mock.patch("urllib.request.urlopen", net), quiet():
-            with self.assertRaises(urllib.error.HTTPError):
+            with self.assertRaises(ff.AuthExpired):
                 ff.GitHub(None, app()).get("/x")
         self.assertEqual(net.mints, 1)  # only the initial mint
 
@@ -375,6 +375,95 @@ class PushEventTests(unittest.TestCase):
             self.assertEqual(gh.get_cached("/repos/o/r/events", {"per_page": 100}), [{"id": "1"}])
         self.assertEqual(seen, [None, '"v1"'])
         self.assertEqual(gh.not_modified, 1)
+
+
+class Loud401(unittest.TestCase):
+    def test_auth_expired_is_not_an_oserror(self):
+        self.assertFalse(issubclass(ff.AuthExpired, OSError))
+
+    def test_watch_exits_75_without_writing(self):
+        writes = []
+
+        def fake_build(args, gh):
+            raise ff.AuthExpired("GitHub HTTP 401")
+
+        with mock.patch.object(ff, "build", fake_build), mock.patch.object(ff, "write", lambda f, o: writes.append(1)), \
+                mock.patch("time.sleep", lambda s: None), mock.patch.dict(os.environ, {}, clear=True), \
+                mock.patch.object(sys, "argv", ["fetch_feed.py", "--out", OUT, "--watch", "1"]), quiet():
+            self.assertEqual(ff.main(), 75)
+        self.assertEqual(writes, [])
+
+    def test_wall_clock_mint_age_exits_75_without_writing(self):
+        writes = []
+        env = {"BURST_TOKEN_MINTED": "1000"}
+        with mock.patch.object(ff, "build", lambda a, gh: {"event_count": 0, "events": []}), \
+                mock.patch.object(ff, "write", lambda f, o: writes.append(1)), \
+                mock.patch.object(ff.time, "time", return_value=1000 + 50 * 60), \
+                mock.patch.dict(os.environ, env, clear=True), \
+                mock.patch.object(sys, "argv", ["fetch_feed.py", "--out", OUT]), quiet():
+            self.assertEqual(ff.main(), 75)
+        self.assertEqual(writes, [])
+
+    def test_probe_does_not_read_the_body(self):
+        class Resp:
+            def __init__(self):
+                self.read_called = False
+
+            def getcode(self):
+                return 200
+
+            def read(self, n=-1):
+                self.read_called = True
+                raise AssertionError("body was read")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        resp = Resp()
+        with mock.patch("urllib.request.urlopen", return_value=resp):
+            self.assertEqual(ff.probe("https://example.test/health"), (True, "200"))
+        self.assertFalse(resp.read_called)
+
+    def test_check_run_401_is_not_swallowed(self):
+        pr = {"number": 1, "title": "t", "html_url": "u", "user": {"login": "forge0x1[bot]"},
+              "head": {"ref": "mill/x", "sha": "a" * 40}, "created_at": "2026-10-09T14:00:00Z"}
+        gh = mock.Mock()
+        gh.pages.return_value = iter([])
+        gh.get.side_effect = urllib.error.HTTPError("https://api.github.com/x", 401, "no", {}, None)
+        with self.assertRaises(ff.AuthExpired):
+            ff.pr_events(gh, "0xRayAI/xray", pr, ff.datetime(2026, 10, 9, tzinfo=ff.timezone.utc))
+
+    def test_branch_tip_on_any_branch_skips_the_commit_message(self):
+        ff.BRANCH_TIPS.clear()
+        ff.REPRESENTED.clear()
+        sha1, sha2 = "a" * 40, "b" * 40
+        secret = "SECRET SUBJECT do not store"
+
+        class GH:
+            def __init__(self):
+                self.n = 0
+
+            def get_cached(self, path, params=None):
+                self.n += 1
+                sha = sha1 if self.n == 1 else sha2
+                return [{"name": "topic/not-main", "commit": {"sha": sha}}]
+
+            def get(self, path, params=None):
+                return {"author": {"login": "forge0x1[bot]"},
+                        "commit": {"message": secret, "committer": {"date": "2026-10-09T15:00:00Z"}}}
+
+        gh = GH()
+        since = ff.datetime(2026, 10, 9, tzinfo=ff.timezone.utc)
+        self.assertEqual(ff.branch_tip_events(gh, "0xRayAI/xray", since), [])
+        out = ff.branch_tip_events(gh, "0xRayAI/xray", since)
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0]["from"], "forge")
+        self.assertNotIn(secret, json.dumps(out[0]))
+        self.assertIn("topic/not-main", out[0]["label"])
+        self.assertNotIn("live-wire", out[0]["label"])
 
 
 if __name__ == "__main__":

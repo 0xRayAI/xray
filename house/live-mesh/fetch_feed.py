@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import importlib.util
 import http.client
 import json
 import os
@@ -84,6 +85,11 @@ class MintError(RuntimeError):
     pass
 
 
+class AuthExpired(Exception):
+    """GitHub returned 401. Not an OSError, so a handler that catches a dropped
+    connection cannot swallow it and then rewrite the feed as fresh."""
+
+
 class AppToken:
     """GitHub App installation token: App JWT (RS256, signed by the openssl CLI) ->
     POST /app/installations/{id}/access_tokens. Installation tokens live 1h; re-mint at 55 min,
@@ -108,6 +114,7 @@ class AppToken:
         return cls(*vals)
 
     def stale(self, now: float | None = None) -> bool:
+        # Wall clock (time.time), so a paused VM that jumps the clock re-mints.
         now = time.time() if now is None else now
         return (not self.token or now - self.minted_at >= self.REMINT_AFTER
                 or bool(self.expires_at and self.expires_at - now < 300))
@@ -180,12 +187,20 @@ class GitHub:
         try:
             return self._get(url, etag)
         except urllib.error.HTTPError as e:
-            # A 401 on a token older than a minute: re-mint once and retry this request.
-            if e.code != 401 or not self.app or time.time() - self.app.minted_at < 60:
+            if e.code != 401:
                 raise
+            # A token younger than a minute, or a token this process cannot re-mint:
+            # fail the request. Do not keep using the body-less error as a network blip.
+            if not self.app or time.time() - self.app.minted_at < 60:
+                raise AuthExpired("GitHub HTTP 401") from None
             log("GitHub HTTP 401; re-minting App token")
             self.token = self.app.mint()
-            return self._get(url, etag)
+            try:
+                return self._get(url, etag)
+            except urllib.error.HTTPError as again:
+                if again.code == 401:
+                    raise AuthExpired("GitHub HTTP 401") from None
+                raise
 
     def _get(self, url: str, etag: str | None = None):
         req = urllib.request.Request(url, headers={
@@ -294,9 +309,18 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
     # becomes ci_*, on purpose: one CI event per head instead of one per job.
     try:
         runs = gh.get(f"/repos/{repo}/commits/{pr['head']['sha']}/check-runs", {"per_page": 100})
-    except urllib.error.HTTPError:
+    except AuthExpired:
+        raise
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            raise AuthExpired("GitHub HTTP 401") from None
         runs = {"check_runs": []}
     for cr in runs.get("check_runs", []):
+        noted = _burst_working().note_check(
+            author, pr.get("merged_at"), cr.get("status"), cr.get("conclusion"),
+            cr.get("started_at"), cr.get("completed_at"))
+        if noted:
+            CHECK_NOTES.append(noted)
         t, concl = cr.get("completed_at"), cr.get("conclusion")
         if not recent(t) or concl not in ("success", "failure"):
             continue
@@ -476,15 +500,12 @@ def deploy_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
 
 
 def probe(url: str) -> tuple[bool, str]:
+    """HTTP status code only. The response body is not a signal and is not read."""
     req = urllib.request.Request(url, headers={"User-Agent": "xray-live-mesh-feed"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
-            body = r.read(4096).decode(errors="replace")
-            try:
-                status = json.loads(body).get("status", "ok")
-            except (ValueError, AttributeError):
-                status = "ok"
-            return (status == "ok", "200" if status == "ok" else f"status {status}"[:20])
+            code = r.getcode()
+            return (code == 200, str(code))
     except urllib.error.HTTPError as e:
         return False, str(e.code)
     except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError):
@@ -616,6 +637,8 @@ def x_events(path: Path, since: datetime) -> list[dict]:
 
 
 PR_CACHE: dict = {}  # (repo, number) -> (signature, fetched_at, events); watch mode only
+CHECK_NOTES: list = []  # busy/fail checks this pass; one time per seat is derived later
+BRANCH_TIPS: dict = {}  # (repo, branch) -> tip sha; first sight is a baseline, not an event
 
 # ---------------------------------------------------------------- pushes
 
@@ -696,7 +719,103 @@ def merge(events: list[dict]) -> list[dict]:
     return sorted(best.values(), key=order_key)
 
 
+def _burst_working():
+    name = "burst_working"
+    if name in sys.modules:
+        return sys.modules[name]
+    path = Path(__file__).resolve().parents[1] / "burst" / "working.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _supervise():
+    name = "burst_supervise"
+    if name in sys.modules:
+        return sys.modules[name]
+    path = Path(__file__).resolve().parents[1] / "burst" / "supervise.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def token_wall_expired(now: float | None = None) -> bool:
+    """True when BURST_TOKEN_MINTED is older than the wall-clock re-mint limit, or is not a number."""
+    raw = os.environ.get("BURST_TOKEN_MINTED", "").strip()
+    if not raw:
+        return False
+    now = time.time() if now is None else now
+    try:
+        minted = float(raw)
+    except ValueError:
+        log("BURST_TOKEN_MINTED is not a unix wall time")
+        return True
+    if _supervise().remint_due(minted, now):
+        log("token age reached on the wall clock")
+        return True
+    return False
+
+
+def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
+    """New branch tips this pass. Any branch except live-wire. The commit message is not stored.
+
+    The first time a branch is seen it is a baseline, so a restart does not replay every tip.
+    A later tip change is a push, including on a branch that is not main or develop.
+    """
+    out = []
+    branches = gh.get_cached(f"/repos/{repo}/branches", {"per_page": 100}) or []
+    for b in branches:
+        name = b.get("name") or ""
+        sha = ((b.get("commit") or {}).get("sha")) or ""
+        if not name or not sha or name in PUSH_SKIP_BRANCHES:
+            continue
+        key = (repo, name)
+        prev = BRANCH_TIPS.get(key)
+        BRANCH_TIPS[key] = sha
+        if prev is None or prev == sha or sha in REPRESENTED.get(repo, set()):
+            continue
+        commit = gh.get(f"/repos/{repo}/commits/{sha}")
+        cmt = commit.get("commit") or {}
+        when = (cmt.get("committer") or {}).get("date") or ""
+        if not when:
+            continue
+        t = datetime.fromisoformat(when.replace("Z", "+00:00"))
+        if t < since:
+            continue
+        login = ((commit.get("author") or {}).get("login"))
+        seat = seat_of(login, name)
+        out.append(ev(
+            f"{repo}:tip:{name}:{sha[:10]}", when, seat, "GitHub", "push",
+            f"pushed {short(repo)} {name} · {sha[:7]}",
+            f"https://github.com/{repo}/commit/{sha}", repo, None,
+            note=f"{name} {sha[:8]}",
+        ))
+    return out
+
+
+def _working_map(now: float) -> dict:
+    mod = _burst_working()
+    until = mod.check_working(list(CHECK_NOTES), now)
+    CHECK_NOTES.clear()
+    labs_path = os.environ.get("BURST_LABS", "").strip()
+    if labs_path:
+        try:
+            labs = json.loads(Path(labs_path).read_text())
+            for seat, ts in mod.WATCH.scan(labs, now).items():
+                until[seat] = max(until.get(seat, 0), ts)
+        except (OSError, ValueError) as exc:
+            log(f"BURST_LABS not read ({type(exc).__name__})")
+    return {seat: datetime.fromtimestamp(ts, CT).isoformat() for seat, ts in until.items()}
+
+
 def build(args, gh: GitHub) -> dict:
+    CHECK_NOTES.clear()
     since = datetime.now(timezone.utc) - timedelta(hours=args.hours)
     if args.since:
         since = datetime.fromisoformat(args.since.replace("Z", "+00:00"))
@@ -722,6 +841,7 @@ def build(args, gh: GitHub) -> dict:
             events.extend(issue_events(gh, repo, since))
         if not args.no_pushes:
             events.extend(push_events(gh, repo, since))
+            events.extend(branch_tip_events(gh, repo, since))
     deploys: list[dict] = []
     if args.deploy_repo:
         deploys = deploy_events(gh, args.deploy_repo, since)
@@ -771,6 +891,7 @@ def build(args, gh: GitHub) -> dict:
         "kinds": kinds,
         "event_count": len(uniq),
         "events": uniq,
+        "working": _working_map(time.time()),
     }
 
 
@@ -832,11 +953,17 @@ def main() -> int:
     gh = GitHub(token, app)
     out = Path(args.out)
     while True:
+        if token_wall_expired():
+            log("exiting 75 without writing")
+            return 75
         try:
             gh.calls = gh.not_modified = 0
             feed = build(args, gh)
             n_new = write(feed, out)
             log(f"{feed['event_count']} events ({n_new} new) -> {out} [{gh.calls} API calls, {gh.not_modified} 304]")
+        except AuthExpired:
+            log("GitHub HTTP 401; pass failed loudly, feed not written")
+            return 75
         except urllib.error.HTTPError as e:
             log(f"GitHub HTTP {e.code} on {e.url}; keeping last feed")
             if not args.watch:
