@@ -8,9 +8,11 @@ sidebar_label: Overview
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
-![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
+
+0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
 
 ```bash
 npm install 0xray

@@ -8,13 +8,14 @@ Wear the exo. Constitution on every stroke. Temperament by host.
 
 Wear the exo. Constitution on every stroke. Temperament by host. Four floors.
 
-## Quick Start (zero-config)
+## Quick Start
 
 ```bash
 npm install 0xray
+npx 0xray wear
 ```
 
-Postinstall **automatically** (via `install-bridges.cjs`):
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges. Wear writes the consumer suit (via `install-bridges.cjs`):
 
 - Copies **`AGENTS.md`** (from `AGENTS-consumer.md`). Does **not** write consumer-root **`SKILLS.md`**
 - Fastens **mill plant** (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer live in the mill). Nested mill `@0xray/foundry@0.1.12`. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+. Not a 45-skill costume dump unless `foundry.json` `"costume": true`
@@ -33,7 +34,7 @@ npx 0xray setup # optional: symlinks, hook extras
 
 ## Manual per-platform install
 
-Same result as postinstall — safe to re-run:
+Same bridges wear writes — safe to re-run:
 
 ```bash
 npx 0xray opencode install # OpenCode agents + opencode.json
@@ -59,7 +60,7 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 - **69 Codex terms** — constitution always on
 - **7 MCP servers** on the consumer surface (`npx -y 0xray mcp`)
 - **Mill plant** `mill` + `inspect` (default). 45-skill catalog is costume / self-plant. **`autonomy-command`** is the default operating model
-- **4 platform bridges** installed on postinstall
+- **4 platform bridges** written by `npx 0xray wear`
 - **Repertoire is preferred** (vendored 0.2.9 ships on; dest = named laws)
 
 Every code change can be reviewed by 3 specialized AI servers before it executes. Bad proposals are blocked automatically.
