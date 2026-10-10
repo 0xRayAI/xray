@@ -263,6 +263,32 @@ describe("reporting counts", () => {
     });
   });
 
+  it("parses a log line that carries a json payload", () => {
+    const parsed = parseLogLine(
+      '2026-10-08T18:50:52.564Z [auto-1] [orchestrator.server] lead-dev-plan-persisted - INFO | {"planPath":"/tmp/plan.json"}',
+    );
+    expect(parsed).toMatchObject({
+      timestamp: Date.parse("2026-10-08T18:50:52.564Z"),
+      jobId: "auto-1",
+      component: "orchestrator.server",
+      action: "lead-dev-plan-persisted",
+      message: "lead-dev-plan-persisted",
+      level: "info",
+      status: "success",
+      agent: "orchestrator",
+    });
+
+    const fallback = parseLogLine(
+      '2026-01-15T12:00:00.000Z [only-component] hello - DEBUG | {"n":1}',
+    );
+    expect(fallback).toMatchObject({
+      jobId: null,
+      component: "only-component",
+      action: "hello",
+      level: "debug",
+    });
+  });
+
   it("keeps the first three errors in order", () => {
     const logs = [1, 2, 3, 4].map((n) =>
       row({
@@ -301,6 +327,35 @@ describe("reporting counts", () => {
       fs.appendFileSync(logFile, `\n${line}\n`);
       const next = await reporting.generateReport(config);
       expect(totalEvents(next)).toBe(totalEvents(first) + 1);
+    } finally {
+      if (before) {
+        fs.writeFileSync(logFile, before);
+      } else if (!existed && fs.existsSync(logFile)) {
+        fs.unlinkSync(logFile);
+      }
+    }
+  });
+
+  it("counts a log line whose payload sits after the level", async () => {
+    const reporting = new FrameworkReportingSystem();
+    const config = {
+      type: "full-analysis" as const,
+      outputFormat: "markdown" as const,
+      timeRange: { lastHours: 1 },
+    };
+    const first = await reporting.generateReport(config);
+    const logFile = activityLogPath();
+    const existed = fs.existsSync(logFile);
+    const before = existed ? fs.readFileSync(logFile) : null;
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const line = `${new Date().toISOString()} [job-pipe-${stamp}] [orchestrator.server] lead-dev-plan-persisted - INFO | {"stamp":"${stamp}"}`;
+
+    try {
+      fs.mkdirSync(path.dirname(logFile), { recursive: true });
+      fs.appendFileSync(logFile, `\n${line}\n`);
+      const next = await reporting.generateReport(config);
+      expect(totalEvents(next)).toBe(totalEvents(first) + 1);
+      expect(next).toContain("orchestrator.server");
     } finally {
       if (before) {
         fs.writeFileSync(logFile, before);

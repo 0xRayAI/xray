@@ -46,19 +46,21 @@ describe("GovernanceServer", () => {
   });
 
   describe("constructor", () => {
-    it("registers 3 tools", () => {
-      expect(server.tools).toHaveLength(3);
+    it("registers 4 tools", () => {
+      expect(server.tools).toHaveLength(4);
       const names = server.tools.map((t: any) => t.name);
       expect(names).toContain("govern_proposals");
       expect(names).toContain("govern_reflection");
       expect(names).toContain("get_active_codex");
+      expect(names).toContain("record_confer_receipt");
     });
 
-    it("registers 3 handlers matching tool names", () => {
-      expect(Object.keys(server.handlers)).toHaveLength(3);
+    it("registers 4 handlers matching tool names", () => {
+      expect(Object.keys(server.handlers)).toHaveLength(4);
       expect(server.handlers).toHaveProperty("govern_proposals");
       expect(server.handlers).toHaveProperty("govern_reflection");
       expect(server.handlers).toHaveProperty("get_active_codex");
+      expect(server.handlers).toHaveProperty("record_confer_receipt");
     });
   });
 
@@ -493,10 +495,11 @@ describe("GovernanceServer", () => {
 
   describe("setupToolHandlers error handling", () => {
     it("handlers map has all tool names", () => {
-      expect(Object.keys(server.handlers)).toHaveLength(3);
+      expect(Object.keys(server.handlers)).toHaveLength(4);
       expect(typeof server.handlers["govern_proposals"]).toBe("function");
       expect(typeof server.handlers["govern_reflection"]).toBe("function");
       expect(typeof server.handlers["get_active_codex"]).toBe("function");
+      expect(typeof server.handlers["record_confer_receipt"]).toBe("function");
     });
   });
 

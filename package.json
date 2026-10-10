@@ -1,7 +1,7 @@
 {
   "name": "0xray",
-  "version": "4.0.41",
-  "description": "Multi-agent orchestration and Codex governance for OpenCode, Hermes, Grok Build, and OpenClaw",
+  "version": "4.0.42",
+  "description": "Three-subsystem autonomous engine. The suit powers the agent you already run: memory, judgement, payments, and the wake.",
   "readme": "README.md",
   "license": "MIT",
   "repository": {

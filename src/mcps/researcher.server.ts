@@ -22,6 +22,7 @@ import {
   formatMemoryRoutingBlock,
   resolveResearcherMemoryContext,
 } from "./researcher-confidence.js";
+import { buildHostConferEvidence } from "../nucleus/confer-host.js";
 import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 
 interface SearchResult {
@@ -463,6 +464,13 @@ class XrayLibrarianServer extends XrayKnowledgeSkillBase {
    */
   async analyzeProposal(args: AnalyzeProposalArgs): Promise<CallToolResult> {
     const { proposalTitle = "", proposalDescription = "", evidence = [], proposalType = "" } = args || {};
+
+    if (proposalType === "synthesis-confer") {
+      const packet = [proposalTitle, proposalDescription, ...(evidence || [])].filter(Boolean).join("\n\n");
+      return {
+        content: [{ type: "text", text: buildHostConferEvidence("researcher", packet) }],
+      };
+    }
 
     const memoryContext = await resolveResearcherMemoryContext({
       proposalTitle,

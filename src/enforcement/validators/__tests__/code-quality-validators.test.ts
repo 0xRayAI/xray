@@ -449,6 +449,17 @@ describe("Code Quality Validators", () => {
       expect(result.passed).toBe(true);
       expect(result.message).toBe("Console log usage follows proper guidelines");
     });
+
+    it("should fail when code calls a console method", async () => {
+      const context: RuleValidationContext = {
+        operation: "write",
+        newCode: "console." + "log(x)",
+      };
+
+      const result = await validator.validate(context);
+
+      expect(result.passed).toBe(false);
+    });
   });
 });
 

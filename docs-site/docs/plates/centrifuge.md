@@ -27,4 +27,4 @@ JUDGEMENT│   LOOP                   STATE      │PAYMENTS
 
 Loop, domain, state, foundry, and memory ride that turn. Judgement and payments stay off the rotor. Goggles looks on and does not spin. The next turn waits for the next session or compact.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

@@ -1,6 +1,14 @@
 # Features Since 3.1
 
-Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
+Complete reference of capabilities through **0xRay 4.0**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
+
+## 4.0.42 — confer, the worn suit, Burst
+
+Confer votes. Burst runs the swarm.
+
+- **Confer.** The wearing chat's own MCP servers vote. Only a real PASS completes the consult. A PASS from another session is asked again.
+- **Suit.** Wear pins Grok at the installed CLI, Hermes rejects a console call, and OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
+- **Burst.** Runs the swarm live. The board shows one seat state and an honest LIVE pill. The box posts one delta while it holds the lock. A 409 is retried once. The ingest secret stays in the header. A SENT prompt holds the seat for 10 minutes, and a posted seat must match the installation token.
 
 ## 4.0.30 — wear and setup work outside git again
 

@@ -7,6 +7,8 @@ sidebar_label: Overview
 
 A plate is one pipeline, drawn as a stamp. The drawing is the thing a person reads: an input layer, a processing layer, an output layer, and the arrows between them.
 
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. A foundry is mills and hangars. When the window closes, the next session wakes with the job.
+
 These files are the canonical stamps. The Docusaurus sidebar publishes them, and the npm package ships this directory. The worn reader walks up from `dist/integrations/hooks/plates.cjs` to `docs-site/docs/plates/`. One plate, one file.
 
 The station card stays the short subsystem table. That table is the index still on disk after compaction. When the current intent names one pipeline, the card adds a single stock line, `Plate: <id> — .xray/state/plates/<id>.md`. Recall returns that one plate, and a compact can carry its schematic. Lessons stay episodes on signals. A plate is the machine. A lesson is what happened.
@@ -51,4 +53,4 @@ These eight are the pages the file ref names. Each one is a search lens. Each le
 
 These five are the compact path that was opened. Each one is a search lens. Each lens lists one skill and the plates that belong with it.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

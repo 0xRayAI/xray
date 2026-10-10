@@ -15,12 +15,16 @@ What the words mean.
   │ suit · what the agent wears                                │
   │ power · memory, judgment, or payments                      │
   │ where it runs · the tool you already open                  │
+  │ wake · the next session has the job                        │
   │ goggles · it views one plane                               │
   │ house · shared rules, one board, memory that sticks        │
-  │ mill · the shop that builds and ships                      │
+  │ foundry · mills and hangars                                │
+  │ mill · builds and ships the plant                          │
+  │ hangar · the shop on that foundry                          │
   │ plane · one view, not the whole job                        │
   │ plate · the drawing, not the live run                      │
-  │ grok-bot · the package you install                         │
+  │ 0xray · the suit you wear                                  │
+  │ grok-bot · the house companion                             │
   └────────────────────────────────────────────────────────────┘
 ```
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

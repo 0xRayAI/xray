@@ -10,7 +10,7 @@ import { XrayKnowledgeSkillBase } from "./shared/knowledge-skill-base.js";
 import * as fs from "fs";
 import * as path from "path";
 import { frameworkLogger } from "../core/framework-logger.js";
-import { attemptLLMGovernance, type GovernanceVote } from "../governance/llm-governance-provider.js";
+import { type GovernanceVote } from "../governance/llm-governance-provider.js";
 import {
   contextAnalysis as architectContextAnalysis,
   codebaseStructure as architectCodebaseStructure,
@@ -68,22 +68,11 @@ export async function renderArchitectureAssessment(
   frameworkLogger.log("mcps/architect-tools", "architecture-assessment", "info", { projectRoot });
 
   const result = await architectArchitectureAssessment(projectRoot, assessmentType);
-  let verdict: ConferModelVerdict = "UNREVIEWED";
-  if (conferPrompt.trim()) {
-    const attempt = await attemptLLMGovernance(
-      "architect",
-      "Synthesis confer — architect",
-      `${conferPrompt.trim()}\n\n## Architecture assessment\n${JSON.stringify(result, null, 2)}`,
-      [],
-      "synthesis-confer",
-    );
-    verdict = conferVerdictFromModelVote(attempt.vote);
-  }
   return {
     content: [
       {
         type: "text",
-        text: formatArchitectureAssessmentConferText(conferPrompt, result, verdict),
+        text: formatArchitectureAssessmentConferText(conferPrompt, result, "UNREVIEWED"),
       },
     ],
   };

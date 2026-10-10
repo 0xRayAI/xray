@@ -1,6 +1,8 @@
 # 0xRay 4.0 — reference
 
 **4.0** — a suit that survives the context window
+Confer votes. Burst runs the swarm.
+
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire organ on.
 

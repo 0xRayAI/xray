@@ -36,4 +36,4 @@ A worn project is a consumer. Its writes go to its own `.xray/logs` and `.xray/i
 
 A fresh wear fastens mill and inspect. Grok's Goggles launcher stays on that install: the checkout script when the package name is `0xray`, and `node_modules/0xray` for every other project.
 
-stamped · 0xray 4.0.41
+stamped · 0xray 4.0.42

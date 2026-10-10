@@ -569,10 +569,12 @@ describe("install-bridges user-wins opencode merge and plugin shim", () => {
 describe("repeat fasten", () => {
   const previousMachine = process.env.FOUNDRY_MACHINE_HOME;
   let machine = "";
+  let home = "";
   let consumer = "";
 
   beforeEach(() => {
     machine = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-machine-"));
+    home = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-home-"));
     process.env.FOUNDRY_MACHINE_HOME = machine;
     consumer = fs.mkdtempSync(path.join(os.tmpdir(), "0xray-wear-consumer-"));
     fs.writeFileSync(
@@ -585,6 +587,7 @@ describe("repeat fasten", () => {
     if (previousMachine === undefined) delete process.env.FOUNDRY_MACHINE_HOME;
     else process.env.FOUNDRY_MACHINE_HOME = previousMachine;
     fs.rmSync(machine, { recursive: true, force: true });
+    if (home) fs.rmSync(home, { recursive: true, force: true });
     fs.rmSync(consumer, { recursive: true, force: true });
   });
 
@@ -624,7 +627,7 @@ describe("repeat fasten", () => {
     const wear = () => {
       deployXrayConfig(consumer, packageRoot, () => {});
       installGrokBridge(consumer, packageRoot, () => {}, {
-        env: process.env,
+        env: { ...process.env, HOME: home, USERPROFILE: home },
         machineHome: machine,
       });
       installHermesBridge(consumer, packageRoot, () => {});

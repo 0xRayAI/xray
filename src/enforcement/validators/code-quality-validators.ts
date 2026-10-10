@@ -469,21 +469,20 @@ export class ConsoleLogUsageValidator extends BaseValidator {
   async validate(context: RuleValidationContext): Promise<RuleValidationResult> {
     const { newCode } = context;
 
-    // Skip validation if no code to check
     if (!newCode) {
       return this.createSuccessResult(
         "No code to validate for console.log usage",
       );
     }
 
-    // Check for console.log usage
-    if (
-      newCode.includes(
-        "await frameworkLogger.log('rule-enforcer', '-return-passed-false-message-console-log-', 'info', { message: ",
-      )
-    ) {
+    const codeWithoutComments = newCode
+      .replace(/\/\/.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const consoleCall = /console\.(?:log|debug|info|warn|error|trace)\s*\(/;
+    if (consoleCall.test(codeWithoutComments)) {
       return this.createFailureResult(
-        "await frameworkLogger.log('rule-enforcer', '-', 'info', { message:  } }); detected - use frameworkLogger for production logs or remove for debugging",
+        "console method detected — use frameworkLogger",
+        ["Use frameworkLogger instead of console methods"],
       );
     }
 

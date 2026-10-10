@@ -1,6 +1,6 @@
 # 0xRay 4.0 trim list (fat, not bone)
 
-The **bone** is the v2 three-subsystem OS — Inference, External Governance, Autonomous Engine. Do not list those as disposable. See [v3 from v2](./v3-from-v2.md).
+The **bone** is the v2 three-subsystem OS — Inference, External Governance, Autonomous Engine. 4.0 wears that bone as the engine. The suit is the wear. Do not list those subsystems as disposable. See [v3 from v2](./v3-from-v2.md).
 
 This page is the **fat**: duplicate conductors and extra skill servers. Unused experiments are already gone. Do not grow what remains (Codex 69).
 
