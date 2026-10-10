@@ -2,11 +2,11 @@
 
 **4.0** — a suit that survives the context window
 
-Organs, not the product. The product is the exo.
+These are organs. The product is the suit. 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
 **42 YML surfaces** in `src/opencode/agents/*.yml`. Zero manual registration. Invoke via `@agent-name` in OpenCode.
 
-Consumer projects receive a slimmed **AGENTS.md** (from `AGENTS-consumer.md`) on `npm install 0xray`.
+Consumer projects receive a slimmed **AGENTS.md** (from `AGENTS-consumer.md`) when they run `npx 0xray wear`.
 
 ## Core governance agents
 

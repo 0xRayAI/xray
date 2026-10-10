@@ -1,4 +1,4 @@
-# xray — exo for coding agents
+# xray — a suit for coding agents
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](docs-site/static/img/readme-hero.jpg)
 
@@ -6,7 +6,9 @@
 
 Confer votes. Burst runs the swarm.
 
-0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws.
+
+Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
 
 The product is the **skeleton you wear**.
 
@@ -14,11 +16,11 @@ The product is the **skeleton you wear**.
 
 **Your AI Power ⚡️ Suit 🦾** — an exoskeleton that blocks AI slop from becoming real damage.
 
-- **Bone** — three-subsystem OS: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch)
+- **Bone** — three-subsystem engine: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch)
 - **Always on** — Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface
 - **Temperament** — `frontier` | `guided` | `strict` | `auto` — how loud the engine is, not whether governance exists
 - **Wear** — Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate
-- **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the compact-survival ticket — not a substitute for Repertoire.
+- **Muscle** — **Repertoire is preferred.** Vendored 0.2.9 ships **on**. Dest is named laws, not hangar `repo-*` or git slugs. Station is the wake ticket — not a substitute for Repertoire.
 
 ```bash
 npm install 0xray
@@ -277,4 +279,4 @@ MIT — see [LICENSE](LICENSE)
 
 ---
 
-*xray — MCP-centric, governed, autonomous. Pure v2 three-subsystem.*
+*xray — a three-subsystem autonomous engine. The suit is the wear.*

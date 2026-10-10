@@ -4,9 +4,7 @@
 Confer votes. Burst runs the swarm.
 
 
-Wear the exo. Constitution on every stroke. Temperament by host.
-
-Wear the exo. Constitution on every stroke. Temperament by host. Four floors.
+Wear the suit. Constitution on every stroke. Temperament by host. When the window closes, the next session wakes with the job.
 
 ## Quick Start
 
@@ -54,7 +52,7 @@ After `npx 0xray grok install`, agents run under **[Autonomy Command](./autonomy
 
 ## What is 0xRay?
 
-0xRay provides intelligent multi-agent orchestration with automatic governance:
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. Memory, judgement, and payments come on with the suit.
 
 - **42 YML agent surfaces** (organs, not the product)
 - **69 Codex terms** — constitution always on

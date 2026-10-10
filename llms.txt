@@ -1,12 +1,14 @@
 # 0xray
 
-> Exo for coding agents. A suit that survives the context window. Not a catalog of 45 skills.
+> A three-subsystem autonomous engine. The suit is the wear. The next session wakes with the job.
 
 **4.0** — mill+inspect plant, 7 MCPs, Codex 69. Constitution always on.
 
 Confer votes. Burst runs the swarm.
 
-0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+**4.0** — a suit that survives the context window
+
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars.
 
 Default consumer wear is **mill plant** (`mill` + `inspect`), not a 45-skill / 42-agent costume dump. `foundry.json` `"costume": true` is the opt-in dump. Do not use costume to land hangar shops. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares. Organs (looker, vibe, mixer) live in the mill — adding an organ is a mill publish, not an xray catalog PR. CLI shims `foundry blip|sound` still exist on foundry 0.1.11+; fasten is the new cut. Inspect reports the last bed or blip receipt the mill exported. Nested mill `@0xray/foundry` 0.1.12. Not costume.
 
@@ -45,7 +47,7 @@ Registered in `.mcp.json` as `npx -y 0xray mcp <cmd>`:
 | `xray-code-review` | Proposal quality |
 | `xray-architect-tools` | System design |
 
-Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships on (`npx @0xray/repertoire mcp`). Dest is named laws, not hangar `repo-*` or git slugs. Survive compact is **Station** (Read `.xray/state/STATION.md`). Station is the ticket, not a substitute for Repertoire. Do not pin 0.1.8.
+Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships on (`npx @0xray/repertoire mcp`). Dest is named laws, not hangar `repo-*` or git slugs. The wake ticket is **Station** (Read `.xray/state/STATION.md`). Station is the ticket, not a substitute for Repertoire. Do not pin 0.1.8.
 
 ## Codex 69 (always on)
 
@@ -63,7 +65,7 @@ Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships
 ## Docs
 
 - [README.md](README.md) — exo landing
-- [AGENTS.md](AGENTS.md) — framework card
+- [AGENTS.md](AGENTS.md) — suit card
 - [AGENTS-consumer.md](AGENTS-consumer.md) — consumer card (copied to `AGENTS.md` on install)
 - [SKILLS.md](SKILLS.md) — catalog (costume / self-plant, not default sync)
 - [Foundry](docs-site/docs/architecture/v4-foundry.md) — mill vs exo, foundry-plant/0, shopPlant

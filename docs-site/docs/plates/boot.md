@@ -5,7 +5,7 @@ sidebar_label: Boot
 
 # Boot
 
-`BootOrchestrator.executeBootSequence` brings the framework up. Processor registration here is the legacy boot list. The live tool gate is the suit pipeline, drawn on the processor plate.
+`BootOrchestrator.executeBootSequence` brings the engine up. Processor registration here is the legacy boot list. The live tool gate is the suit pipeline, drawn on the processor plate.
 
 ```
 ┌────────────────────────────────────────────────────────────┐
