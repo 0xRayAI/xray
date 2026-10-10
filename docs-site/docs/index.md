@@ -8,7 +8,7 @@ sidebar_label: Overview
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
-![0xRay — Confer votes. Burst runs the swarm.](/img/readme-hero.jpg)
+![0xRay — A suit for your AI agent.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 
