@@ -4,7 +4,7 @@
 
 0xRay exposes **7 consumer MCP servers** on the published package surface. All run via `npx -y 0xray mcp <cmd>` — no `dist/` path hacks.
 
-Project `.mcp.json` (written on postinstall):
+Project `.mcp.json` (written by `npx 0xray wear`):
 
 ```json
 {

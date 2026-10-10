@@ -16,7 +16,7 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 |---|---|---|
 | When | Every tool call, compact, host swap | Install, mint, stamp, gate, publish, attest |
 | What | Constitution, temperament, 7 MCP, station, thinDispatch, Repertoire muscle | Bridges, templates, version, changelog, docs facts, pack, smoke |
-| Who | The model on the job | The team that wants an OS on a repo |
+| Who | The model on the job | The team that wants an engine on a repo |
 | Failure if confused | Thick exo, agents nuke README, ceremony fights the host | Magic stays internal; strangers get a copy of *our* suit |
 
 **Do not extract constitution with the mill.** `evaluatePreToolGate` is PPE. `install-bridges.cjs` fastens the worn dirs.
@@ -25,22 +25,27 @@ Vision: [4.0 vision](./v4-vision.md). Handoff: [4.0 now](./v4-now.md). Open list
 
 ## What a stranger actually gets
 
-`npm install 0xray` **fastens mill plant** (`mill` + `inspect`), **generates host wiring**, then **overlays their plant**: constitution (`xray/codex.json`), features/temperament, config, skills, agents. Remap with `foundry.json`. Fasten is **foundry-plant/0**: builtin plant is mill+inspect only; `"plant": "@0xray/blip"` (alias `"blip"`) fastens whatever that mill declares. PPE stays worn. `"costume": true` dumps 45/42. Default plant is mill+inspect, not a 45-skill sync. Agent map: repo-root `llms.txt`.
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not fasten the plant or write the bridges. `npx 0xray wear` fastens mill plant (`mill` + `inspect`), generates host wiring, then overlays their plant: constitution (`xray/codex.json`), features, temperament, and config.
 
 ```
 npm i 0xray
   → postinstall.cjs
+      → link vendored @0xray/repertoire
+      → print npx 0xray wear
+
+npx 0xray wear
+  → installAllBridges() from install-bridges.cjs
       → AGENTS-consumer.md → AGENTS.md (if managed)
       → .gitignore merge
-      → installAllBridges()
-          → .xray/ from xray/ templates (merge; leftover temperament stays guided)
-          → generated .mcp.json (7 × npx 0xray mcp)
-          → four floors: OpenCode, Grok, Hermes, OpenClaw
+      → .xray/ from xray/ templates (merge; leftover temperament stays guided)
+      → generated .mcp.json (7 × npx 0xray mcp)
+      → four floors: OpenCode, Grok, Hermes, OpenClaw
+      → Cursor project hooks inside a git checkout
 ```
 
 Wear copies **factory** (PPE hooks, **Repertoire preferred** / vendored on, 7 MCP). Mill **fastens** mill plant: `mill` + `inspect` (inspect AI work). Overlay mints their plant on top. Not empty. Not 45/42 unless `foundry.json` `"costume": true`. Nested mill lives at `scripts/foundry/` inside the **0xray tarball**. `npx @0xray/foundry mint` reapplies overlay.
 
-**Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips; a consumer `npm i 0xray` still fastens mill+inspect.
+**Mill target:** `resolveConsumerTargetDir` does not mill npm global prefix or `_npx`. Isolated HOME skips machine `~/.grok`. Global `npm i -g 0xray` dogfood-skips. A consumer `npm i 0xray` links repertoire and prints wear. `npx 0xray wear` fastens mill+inspect.
 
 ## Mills (inventory)
 

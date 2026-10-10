@@ -1,6 +1,6 @@
 # Features Since 3.1
 
-Complete reference of capabilities through **0xRay 4.0** (temperament on the v2 three-subsystem OS). Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
+Complete reference of capabilities through **0xRay 4.0**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
 ## 4.0.42 — confer, the worn suit, Burst
 

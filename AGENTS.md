@@ -1,12 +1,12 @@
 # xray Agents
 
-Quick reference for the xray AI orchestration framework (**4.0**).
+Quick reference for the 0xRay suit (**4.0**).
 
 **4.0** — a suit that survives the context window.
 
 Confer votes. Burst runs the swarm.
 
-**Exo, not catalog.** Three-subsystem OS (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
+**The suit is the wear.** Three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine) · constitution always on · temperament by host · 4 floors · **Repertoire preferred** (vendored 0.2.9, dest = laws).
 
 **Temperament:** ceremony (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan; Codex 11/29/69 still **deny**. Missing `suit_temperament` stays guided. See `docs-site/docs/architecture/v3-from-v2.md`.
 
@@ -18,10 +18,10 @@ Before other work, Read `.xray/state/STATION.md`. Compaction and host change are
 
 ## What is xray?
 
-xray provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure v2 three-subsystem model:
+0xRay is a three-subsystem autonomous engine. The suit is the wear. The host you already run wears it. When the window closes, the next session wakes with the job.
 
 - **Inference** — proposals, reflection, memory routing (Repertoire organ on in 4.0)
-- **External Governance** — Dynamo Solar SSOT, 69-term Codex
+- **External Governance** — Dynamo Solar SSOT, 69-term Codex. Judgement stays on.
 - **Autonomous Engine** — thinDispatch 7-flow, AsideContext, confidence gate
 
 Agents are declared in `src/opencode/agents/*.yml` — the YML SSOT. Skills live in `src/skills/*/SKILL.md` — see [SKILLS.md](SKILLS.md) for the exo catalog. Consumer default plant is **mill + inspect**, not a 45-skill sync (`AGENTS-consumer.md` → `AGENTS.md`). Factory hangar shops coexist via shop plant. See [llms.txt](llms.txt).
@@ -44,7 +44,9 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Postinstall
 
-`postinstall.cjs` → `installAllBridges()`:
+`postinstall.cjs` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `.mcp.json` or the chat bridges.
+
+`npx 0xray wear` runs `installAllBridges()` from `install-bridges.cjs`:
 
 1. `AGENTS-consumer.md` → `AGENTS.md` (does **not** write consumer-root `SKILLS.md`)
 2. Fasten mill plant (`mill` + `inspect`). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (looker, vibe, mixer, blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). Not a 45-skill costume dump unless `foundry.json` `"costume": true`
@@ -63,7 +65,7 @@ Governance deliberation: **code-review**, **security-audit**, **researcher** wit
 
 ## Memory routing + Repertoire (preferred, v3.3+)
 
-**Wear Repertoire.** It is the long-term judgment organ. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. **Station is the compact ticket** (Read `.xray/state/STATION.md`) — not a substitute for Repertoire. The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
+**Wear Repertoire.** It is the long-term judgment organ. Dest is named invariants (factory + stack laws), not hangar `repo-*` or git slugs. **Station is the wake ticket** (Read `.xray/state/STATION.md`) — not a substitute for Repertoire. The worn mill reads the **project copy** under `.xray/state/repertoire/`. 0.1.0–0.1.8 were the same judgment organ; do not pin 0.1.8. Split: `docs-site/docs/guides/station-vs-repertoire.md`.
 
 `xray/features.json` → `memory_routing` (schema: `features.schema.json`):
 

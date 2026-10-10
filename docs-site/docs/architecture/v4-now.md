@@ -4,11 +4,11 @@ sidebar_label: 4.0 now (handoff)
 
 # 4.0 now — compaction handoff
 
-Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so the next session is not born amnesiac. What's still open: [4.0 left](./v4-left.md).
+Read [4.0 vision](./v4-vision.md) for why. This page is the **station card** so the next session wakes with the job. What's still open: [4.0 left](./v4-left.md).
 
 ## What 4.0 is
 
-Exo skeleton: constitution always on, temperament scales ceremony, four host floors. **Not** a catalog of 42 agents. The job: a suit that **survives the context window** (compaction). Plan → build → review → ship are **linear** handoffs; each drop is high friction. Bite-sized work resumes from wear + git + **Station**. **Repertoire is preferred** for long-term judgment (vendored 0.2.9, dest = laws). Station is the compact ticket, not a substitute. Split: [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md).
+The suit is the wear on a three-subsystem autonomous engine. Constitution always on. Temperament scales ceremony. The hosts are Grok, OpenCode, Hermes, OpenClaw, and Cursor. The job is a suit that **survives the context window**. When the window closes, the next session wakes with the job. Plan → build → review → ship stay linear handoffs. Bite-sized work resumes from wear + git + **Station**. **Repertoire is preferred** for long-term judgment (vendored 0.2.9, dest = laws). Station is the wake ticket, not a substitute. Split: [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md).
 
 **Score disk, not mind.** Chat may lose early turns. Disk must not lose the ticket. After compact the host re-feeds a session summary, the files on disk, and a “conversation was summarized” banner together — naming the ticket afterward is not separable memory proof. Station present means mill was on that machine. Station **absent** (host did not invent `.xray/state/STATION.md`) is still PASS for mill-control. Same-bc is not “the agent survived as a conversation.” Killer-dual law: `examples/killer-dual/HOST-VS-MILL.md`.
 

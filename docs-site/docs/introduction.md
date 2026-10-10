@@ -1,4 +1,4 @@
-# 0xRay — exo for coding agents
+# 0xRay — a suit for coding agents
 
 **4.0** — a suit that survives the context window
 
@@ -6,11 +6,11 @@
 
 Confer votes. Burst runs the swarm.
 
-0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens.
 
 The product is the skeleton you wear.
 
-4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
+4.0 wears the three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while a frontier host is warned. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
 - **Bone:** three subsystems, Codex PreToolUse, four chat adapters plus Cursor hooks 
 - **Always on:** Codex 11 / 29 / 69 — no `any`, no `eval`, no new MCP/skill/handler surface 

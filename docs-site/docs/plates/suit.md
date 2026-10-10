@@ -14,7 +14,7 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
   ├────────────────────────────────────────────────────────────┤
   │ · the rules stay on                                        │
   │ · you put it on once                                       │
-  │ · it builds the factories                                  │
+  │ · it builds the foundries                                  │
   └────────────────────────────────────────────────────────────┘
                                 │
                           you add powers
@@ -37,6 +37,6 @@ Give your agent a suit. The rules stay on, you add powers, and it runs in the to
     goggles views one plane
 ```
 
-Same rules in the repo. You are not locked into one app.
+A foundry is mills and hangars. The mill builds and ships. The hangar is the shop. Same rules in the repo. You are not locked into one app.
 
 stamped · 0xray 4.0.42

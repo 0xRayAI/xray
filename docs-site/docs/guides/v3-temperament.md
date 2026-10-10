@@ -4,7 +4,7 @@ sidebar_label: Suit temperament
 
 # 0xRay 4.0 — Suit temperament
 
-v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. 4.0 does not throw it away.
+v2 forged the **three-subsystem OS** (Inference · External Governance · Autonomous Engine). That is the marvel. 4.0 wears it as the engine. The suit is the wear.
 
 0xRay is **for everyone**: a free-model session in OpenCode or Hermes, and a frontier host like Grok 4.6 + Grok Build. Those are not the same creature. 4.0 **tempers ceremony** (how loudly the Autonomous Engine insists) while **Governance stays on** and the three subsystems stay the product.
 

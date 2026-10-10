@@ -1,6 +1,6 @@
 # 0xRay AI Agents
 
-Quick reference for the 0xRay AI orchestration framework (**4.0** — 7 consumer MCP servers).
+Quick reference for the 0xRay suit (**4.0** — 7 consumer MCP servers). 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
 ## Available MCP Servers
 
@@ -28,7 +28,7 @@ All seven use `npx -y 0xray mcp <cmd>`:
 
 ## Governance
 
-xray operates under the three-subsystem model: Inference + External Governance (Dynamo Solar SSOT) + Autonomous Engine (thinDispatch 7-flow in MCP orchestrator). All actions are validated against the Universal Development Codex before execution.
+0xRay is a three-subsystem autonomous engine: Inference + External Governance (Dynamo Solar SSOT) + Autonomous Engine (thinDispatch 7-flow in MCP orchestrator). The suit is the wear. All actions are validated against the Universal Development Codex before execution.
 
 **Codex**: `.xray/codex.json` — **70 terms** across all agent interactions.
 

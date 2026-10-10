@@ -2,13 +2,13 @@
 
 <!-- 0xray-managed -->
 
-Quick reference for the 0xRay AI orchestration framework worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
+Quick reference for the 0xRay suit worn on **{{CONSUMER_NAME}}**{{CONSUMER_VERSION_PAREN}}.
 
 **4.0** — a suit that survives the context window
 
 Confer votes. Burst runs the swarm.
 
-Same **three-subsystem OS** as v2 (Inference · External Governance · Autonomous Engine). Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the compact ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`. Trim fat, do not gut the design.
+0xRay is a three-subsystem autonomous engine (Inference · External Governance · Autonomous Engine). The suit is the wear. Constitution always on. Temperament scales ceremony. Four chat bridges plus Cursor project hooks. **Repertoire is preferred** — vendored 0.2.9 ships **on**. Dest is named laws, not keywords. Station is the wake ticket, not a substitute. Explicit opt-out only: `"enabled": false, "provider": "repertoire"`.
 
 **Governance always on** (Codex PreToolUse, no new surface, no `eval`). **Engine ceremony** (analyze-complexity before spawn, confer) is **guided** by default so free-model OpenCode/Hermes stay in check. Frontier hosts (Grok 4.6 class) with `suit_temperament.profile: auto` **warn** on spawn-without-plan instead of deny — the engine is still there. Existing `.xray/features.json` without `suit_temperament` stays **guided**. Docs: v3 from v2 · Suit temperament.
 
@@ -20,7 +20,9 @@ A peer lead continues from this card + Repertoire + the `orchestrator` skill. Du
 
 ## Postinstall (automatic)
 
-`npm install 0xray` runs `install-bridges.cjs` and:
+`npm install 0xray` links vendored `@0xray/repertoire` and prints `npx 0xray wear`. It does not write `AGENTS.md`, `.mcp.json`, or the chat bridges.
+
+`npx 0xray wear` writes the consumer suit:
 
 - Copies this file → **`AGENTS.md`** in your project root
 - Fastens mill plant (`mill` + `inspect`) then overlays **your** `src/skills` (same name wins). Fasten is **foundry-plant/0**: builtin plant is mill+inspect only. `foundry.json` `"plant": "@0xray/blip"` (aliases `"plant": "blip"` / `"plant": "sound"`) fastens whatever that mill package declares (blip-inspect, blip-vibe, blip-looker, sound-inspect, sound-mixer live in the mill). `npx @0xray/foundry sound mix` / `sound render` / `blip render` are CLI shims (0.1.11+). `npx @0xray/foundry inspect` runs mill-exported inspect; on a sound seat the last bed receipt; on a blip seat the last 4.44s receipt. Chat is not a receipt. Does **not** dump 45/42 costume unless `foundry.json` `"costume": true`. Does **not** write root **`SKILLS.md`**

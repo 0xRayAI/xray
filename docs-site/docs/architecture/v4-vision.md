@@ -2,9 +2,9 @@
 sidebar_label: 4.0 vision
 ---
 
-# 0xRay 4.0 — exo, not toolset
+# 0xRay 4.0 — the suit
 
-Public thesis: [temperament and synchronicity move the stack from toolsets to factories](https://x.com/Blaze0x1/status/2093318114217763225). 4.0 is the **eXo suit** for that shift.
+Public thesis: [temperament and synchronicity move the stack from toolsets to factories](https://x.com/Blaze0x1/status/2093318114217763225). 4.0 is the suit for that shift. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
 
@@ -12,21 +12,21 @@ This page is the north star. Mechanism lives in [suit temperament](../guides/v3-
 
 ## What 4.0 is (roots)
 
-4.0 is **not** 42 agents, 45 skills, or 7 MCP servers. Those are organs. The product is the **skeleton you wear**.
+42 agents, 45 skills, and 7 MCP servers are organs. The product is the **skeleton you wear**. 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
 | Layer | What it is |
 |---|---|
-| **Bone** | Three-subsystem OS: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch) |
+| **Bone** | Three-subsystem engine: Inference · External Governance (Dynamo / Codex) · Autonomous Engine (thinDispatch) |
 | **Always on** | Constitution: Codex 11 / 29 / 69, destructive shell, no new MCP/skill/handler surface |
 | **Temperament** | `frontier` \| `guided` \| `strict` \| `auto` — how loud the engine is, not whether governance exists |
-| **Wear** | Four host floors: Grok, OpenCode, Hermes, OpenClaw. One SSOT gate (`evaluatePreToolGate`) |
-| **Muscle** | **Station** is session resume (`.xray/state/STATION.md`). Repertoire 0.2 is 8 factory primitives for routing heat — not a full memory of the job, not 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md). |
+| **Wear** | Grok, OpenCode, Hermes, OpenClaw, plus Cursor project hooks. One SSOT gate (`evaluatePreToolGate`) |
+| **Muscle** | **Station** is the wake ticket (`.xray/state/STATION.md`). Repertoire 0.2 is 8 factory primitives for routing heat. It is the judgment index, and it is not 0.1.8. [Station vs Repertoire 0.1](../guides/station-vs-repertoire.md). |
 
 The exo is what the host puts on. The host still walks. Frontier models get **honesty** without a second planner. Guided hosts still get a **floor boss** because they will invent APIs.
 
 ## Where we are
 
-What is built and worn is a **tempered v2 OS with four bridges**. That bone is real.
+What is built and worn is a tempered three-subsystem engine with four bridges. The suit is the wear. That bone is real.
 
 - Constitution fires on Grok, OpenCode, Hermes, and OpenClaw through one SSOT.
 - Temperament is in `features.json`. Missing `suit_temperament` stays **guided** so upgrades do not silently frontier a consumer.
@@ -96,4 +96,4 @@ The tweet named the evolution. 4.0 is that evolution **if** we wear it as a plan
 
 ## One line
 
-**Keep the three-subsystem OS. Wear it as an exo. Survive the context window. Linear handoffs, low friction. Make the plant the install, not the catalog.**
+**Keep the three-subsystem engine. The suit is the wear. Survive the context window. Linear handoffs, low friction. The plant fastens on wear. The catalog stays opt-in.**

@@ -6,13 +6,13 @@ sidebar_label: Overview
 
 **4.0** — a suit that survives the context window
 
-Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Constitution always on. Temperament by host. Four floors. Repertoire for the laws. Station is the wake ticket.
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 
-0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+The host you already run wears the suit: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with it. When the window closes, the next session wakes with the job, the page, and the laws. A foundry is built from mills and hangars.
 
 ```bash
 npm install 0xray
@@ -21,7 +21,7 @@ npm install 0xray
 ## Wear
 
 - [Introduction](./introduction) — what the suit is
-- [Getting started](./guides/getting-started) — postinstall, four chat bridges + Cursor hooks, seven MCP
+- [Getting started](./guides/getting-started) — wear, four chat bridges + Cursor hooks, seven MCP
 - [Integrations](./guides/integrations) — Grok, OpenCode, Hermes, OpenClaw
 - [Grok floor](./architecture/GROK_GUIDE) — Read the station card; do not thicken the exo
 - [Consumer migration](./guides/consumer-migration) — upgrade from 3.x
