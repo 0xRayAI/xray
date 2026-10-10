@@ -2,7 +2,7 @@
 
 **4.0** — a suit that survives the context window
 
-![0xRay — A suit for your AI agent.](/img/readme-hero.jpg)
+![0xRay — A suit for your AI agent. The job, the page, and the laws stay.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 
