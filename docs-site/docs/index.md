@@ -8,7 +8,7 @@ sidebar_label: Overview
 
 Exo, not catalog. Constitution always on. Temperament by host. Four floors. Repertoire for handoffs.
 
-![0xRay — A suit for your AI agent. The job, the page, and the laws stay.](/img/readme-hero.jpg)
+![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 
