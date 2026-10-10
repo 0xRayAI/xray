@@ -1,6 +1,6 @@
 # xray — exo for coding agents
 
-![0xRay — A suit for your AI agent.](docs-site/static/img/readme-hero.jpg)
+![0xRay — A suit for your AI agent. The job, the page, and the laws stay.](docs-site/static/img/readme-hero.jpg)
 
 **4.0** — a suit that survives the context window
 
