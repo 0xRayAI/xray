@@ -2,11 +2,13 @@
 
 **4.0** — a suit that survives the context window
 
-Not a catalog of 42 agents. The product is the skeleton you wear.
-
-![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/exo-skeleton-v4.jpg)
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
+
+0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+
+The product is the skeleton you wear.
 
 4.0 keeps the v2 three-subsystem OS (Inference · External Governance · Autonomous Engine) and **trims fat**. Ceremony **tempers** by host so free-model OpenCode/Hermes stay fully checked while Grok 4.6 is not fought. See [4.0 vision](./architecture/v4-vision.md) · [4.0 now](./architecture/v4-now.md) · [Suit temperament](./guides/v3-temperament.md).
 
@@ -19,12 +21,13 @@ Confer votes. Burst runs the swarm.
 ## Quick Start
 
 ```bash
-npm install 0xray # auto: mill+inspect plant + 4 chat bridges + Cursor hooks + 7 MCP + AGENTS.md + .mcp.json
+npm install 0xray
+npx 0xray wear
 
 npx 0xray status # verify
 npx 0xray setup # optional extras
 
-# Per-platform (same as postinstall, idempotent)
+# Per-platform (same bridges wear writes, idempotent)
 npx 0xray opencode install
 npx 0xray grok install
 npx 0xray hermes install

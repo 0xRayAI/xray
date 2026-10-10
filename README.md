@@ -1,12 +1,14 @@
 # xray — exo for coding agents
 
-**4.0** — a suit that survives the context window
+![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](docs-site/static/img/readme-hero.jpg)
 
-![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](docs-site/static/img/exo-skeleton-v4.jpg)
+**4.0** — a suit that survives the context window
 
 Confer votes. Burst runs the swarm.
 
-Not a catalog of agents. The product is the **skeleton you wear**.
+0xRay is the exo a coding agent wears on Grok, OpenCode, Hermes, OpenClaw, or Cursor. Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. When the window closes, the job, the page, and the laws are still there.
+
+The product is the **skeleton you wear**.
 
 ## Your AI Power Suit
 

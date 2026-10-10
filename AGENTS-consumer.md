@@ -54,7 +54,7 @@ Governance deliberation uses **code-review**, **security-audit** (via enforcer/s
 |---------|-------------|
 | `npx 0xray setup` | Symlinks, hook extras, Hermes skill sync |
 | `npx 0xray status` | Verify installation |
-| `npx 0xray opencode install` | OpenCode bridge (also runs on postinstall) |
+| `npx 0xray opencode install` | OpenCode bridge. `npx 0xray wear` writes it too. |
 | `npx 0xray grok install` | Project `.grok/plugins/0xray` + 7 MCPs servers (machine plugin not last-wins) |
 | `npx 0xray hermes install` | Hermes plugin bridge |
 | `npx 0xray openclaw install` | OpenClaw config + skills |
@@ -160,7 +160,7 @@ When the suit is worn, **lead dev mode** is ON via existing config + hooks:
 
 ## Skills
 
-Full catalog in root **`SKILLS.md`** (shipped on postinstall). **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
+Full catalog in root **`SKILLS.md`**. Wear does not write a consumer-root `SKILLS.md`. **`orchestrator`** skill documents lead-dev mode. Invoke via `@orchestrator` or `xray-skills` MCP (`invoke-skill`, `list-skills`).
 
 ## File Organization
 
