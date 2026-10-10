@@ -1,6 +1,6 @@
 # xray — exo for coding agents
 
-![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](docs-site/static/img/readme-hero.jpg)
+![0xRay — Confer votes. Burst runs the swarm.](docs-site/static/img/readme-hero.jpg)
 
 **4.0** — a suit that survives the context window
 
