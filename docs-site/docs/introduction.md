@@ -2,7 +2,7 @@
 
 **4.0** — a suit that survives the context window
 
-![0xRay 4.0.42 — Confer votes. Burst runs the swarm.](/img/readme-hero.jpg)
+![0xRay — Confer votes. Burst runs the swarm.](/img/readme-hero.jpg)
 
 Confer votes. Burst runs the swarm.
 
