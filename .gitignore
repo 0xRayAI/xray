@@ -23,7 +23,10 @@ xray/inference/
 __pycache__/
 *.pyc
 fleet/activity.jsonl
+fleet/inbox/
 *.log
+# House template starters copied by grok-bot house init. Not runtime logs.
+!grok-bot/templates/house/**/*.log
 *.out
 rerun-*/
 rerun_*/
@@ -135,3 +138,4 @@ test-results/
 playwright-report/
 tests/config/coverage/
 tests/config/test-results/
+house/live/**/__pycache__/

@@ -345,6 +345,21 @@ class PushEventTests(unittest.TestCase):
         ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
         self.assertEqual(ff.REPRESENTED["0xRayAI/xray"], {"1" * 40, "2" * 40, "3" * 40})
 
+    def test_pr_body_packet_rides_the_existing_pull_without_another_read(self):
+        pr = {"number": 8, "title": "gate", "html_url": "https://github.com/org/repo/pull/8",
+              "user": {"login": "forge0x1[bot]"}, "head": {"ref": "mill/x", "sha": "a" * 40},
+              "created_at": "2026-10-06T12:00:00Z",
+              "body": "## Packet\n- goal: Ship the gate\n- acceptance: tests pass\n- next owner: reviewer\n"}
+        gh = mock.Mock()
+        gh.pages.side_effect = lambda path, *a, **k: iter([])
+        gh.get.return_value = {"check_runs": []}
+        out = ff.pr_events(gh, "org/repo", pr, self.SINCE)
+        self.assertEqual(gh.get.call_count, 1)
+        self.assertEqual(out[0]["_inbox"]["packet"]["goal"], "Ship the gate")
+        self.assertEqual(out[0]["_inbox"]["packet"]["next_owner"], "reviewer")
+        self.assertNotIn("body", out[0])
+        self.assertNotIn(pr["body"], json.dumps({k: v for k, v in out[0].items() if k != "_inbox"}))
+
     def test_live_wire_push_never_becomes_an_event(self):
         gh = self.FakeGH([self.push("1", "forge0x1[bot]", "live-wire", "7" * 40, [{"sha": "7" * 40, "message": "live-wire: replay snapshot"}])])
         self.assertEqual(ff.push_events(gh, "0xRayAI/xray", self.SINCE), [])
@@ -569,7 +584,7 @@ class FailsafeFeed(unittest.TestCase):
         (root / "fleet").mkdir()
         when = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(now - 30))
         (root / "fleet" / "prompts.jsonl").write_text(
-            json.dumps({"t_ct": when, "from": "Blaze", "to": "Operator"}) + "\n"
+            json.dumps({"t_ct": when, "from": "Lead", "to": "Operator"}) + "\n"
             + json.dumps({"t_ct": when, "seat": "Chief of Staff", "kind": "prompt", "action": "sent"}) + "\n",
             encoding="utf-8")
         seats = root / "seats.json"
@@ -617,6 +632,52 @@ class BoxEventTest(unittest.TestCase):
         self.assertEqual(epoch, epoch2)
         self.assertEqual(int(seq2), int(seq) + 1)
         folder.cleanup()
+
+
+class InboxWrite(unittest.TestCase):
+    def test_new_events_are_routed_and_private_text_is_not_written(self):
+        root = Path(tempfile.mkdtemp())
+        secret = "SECRET_BODY"
+        roles = {
+            "keep_days": 7, "stall_hours": 6, "watcher_gap_hours": 6,
+            "develop_branches": ["develop"], "watcher_seats": [],
+            "seats": {
+                "critic": {"kinds": ["pr_open", "pr_update"]},
+                "builder": {"ready": False},
+                "chaos": {"merge_bases": ["develop"]},
+                "operator": {"kinds": [], "labels": [], "needles": []},
+                "cos": {"stalls": False, "watcher_gaps": False, "labels": [], "needles": []},
+            },
+        }
+        roles_path = root / "roles.json"
+        roles_path.write_text(json.dumps(roles), encoding="utf-8")
+        feed = {"events": [{
+            "id": "org/repo#7:open",
+            "t_ct": "2026-10-09T17:50:00+00:00",
+            "from": "forge", "to": "GitHub", "kind": "pr_open", "direction": "internal",
+            "label": "opened", "source": "https://github.com/org/repo/pull/7",
+            "src_file": "github-api", "repo": "org/repo", "number": 7,
+            "_inbox": {"title": "opened", "text": secret, "sha": "a" * 40, "base": "main"},
+        }]}
+        out = root / "live-events.json"
+        env = {
+            "BURST_INBOX": str(root / "inbox"),
+            "BURST_INBOX_ROLES": str(roles_path),
+            "BURST_WAVEBOARD": "off",
+            "BURST_ACTIVITY": str(root / "absent.jsonl"),
+        }
+        with mock.patch.dict(os.environ, env, clear=False):
+            first = ff.write(feed, out)
+            second = ff.write({"events": feed["events"]}, out)
+        self.assertEqual(first, 1)
+        self.assertEqual(second, 0)
+        stored = out.read_text(encoding="utf-8")
+        self.assertNotIn(secret, stored)
+        self.assertNotIn("_inbox", stored)
+        critic = (root / "inbox" / "critic.jsonl").read_text(encoding="utf-8")
+        self.assertEqual(critic.count("\n"), 1)
+        self.assertNotIn(secret, critic)
+        self.assertIn("new or updated pr", critic)
 
 
 if __name__ == "__main__":

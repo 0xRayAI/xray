@@ -43,6 +43,9 @@ Files in this tree:
 |---|---|
 | [PLAYBOOK.md](PLAYBOOK.md) | Every watcher, active vs working, LIVE vs behind, fixes log |
 | [activity.schema.json](activity.schema.json) | Line an agent submits |
+| [inbox.schema.json](inbox.schema.json) | One routed line in `fleet/inbox/<seat>.jsonl` |
+| [card.schema.json](card.schema.json) | One waveboard card: title, url, owner, stage, state, packet, beats |
+| [inbox-roles.json](inbox-roles.json) | Which events each seat's inbox receives |
 | [prompts.schema.json](prompts.schema.json) | `prompts.jsonl` line |
 | [cloud-agent.schema.json](cloud-agent.schema.json) | `cloud-agents.jsonl` line |
 | [plate.schema.json](plate.schema.json) | Identity stamp |
@@ -334,7 +337,7 @@ Install these on the builder laptop. They are local. They are not the host colle
 
 ### Repo watcher
 
-Every 30 seconds, poll the seat's repos and write a heartbeat (a timestamp). The loop records ids and times. It does not record command lines, environment, file names, or file contents.
+Every 30 seconds, poll the seat's repos and write a heartbeat (a timestamp). The loop records ids and times. It does not record command lines, environment, file names, or file contents. That file is a local heartbeat. It is not an activity line, and it does not light working.
 
 ```bash
 while true; do
@@ -342,6 +345,83 @@ while true; do
   date +%s > "$BURST_STATE/heartbeat"
   sleep 30
 done
+```
+
+### Watchers: log only real work
+
+A watcher is a scheduled check, for example every 10 minutes. Each run looks first, and it does not write while it looks.
+
+Live work is any of these:
+
+- a cloud agent or subagent still running, including a desktop or browser run (`computerUse`)
+- a pull request or queue item this seat owns that is waiting on CI or a verdict
+- a prompt that has not been answered
+
+If none of those are true, write nothing. If this seat's last watcher line is an open `start` (no later `end` with the same tag), write one `action` `end` and stop. An idle tick must not pulse. That pulse is a false working light.
+
+If there is work, write a watcher start, do the check, then write the matching end. The same seat also logs `kind` `turn` at the start and end of each user turn, and `kind` `subagent` at the start and end of every subagent, including a desktop or browser (`computerUse`) run.
+
+### Seat inboxes
+
+The host feed loop writes one line per new event id. It does not go through the page server. `BURST_INBOX` sets the directory (default `fleet/inbox`). On the Example collector the default is `/srv/live-mesh-run/fleet/inbox`. Roles are [inbox-roles.json](inbox-roles.json). The line is [inbox.schema.json](inbox.schema.json).
+
+| Seat | File | What arrives |
+|---|---|---|
+| Critic | `critic.jsonl` | new and updated pull requests |
+| Maker | `maker.jsonl` | Critic PASS and green CI on the same head sha |
+| Chaos | `chaos.jsonl` | merges to `develop` |
+| Operator | `operator.jsonl` | Railway deploys and holds, lab issues, and issues or comments asking for Railway, lab, labtest, or cloud agents, or mentioning Operator or ops-app |
+| CoS | `cos.jsonl` | stalls (no activity on an open pull request for `stall_hours`, default 6), watcher gaps, and anything labeled or mentioning Lead or `needs-decision` |
+
+A watcher reads its own file first and records the last id. It keeps its current checks as a backup. Files are trimmed to `keep_days` (default 7).
+
+Only Maker is uploaded. `push-inbox.mjs` posts new lines from `maker.jsonl` to `BURST_INBOX_URL`. `GET /inbox/maker?since=<id>` requires the maker GitHub App installation token, the same check as `POST /activity` (bot `maker-app[bot]`). Other seats are not exposed.
+
+When a pass has new events, the loop runs the optional waveboard builder if it is configured. `BURST_WAVEBOARD` is the script path. When unset, the Example path `/srv/fleet-house/house/watchers/build_waveboard.py` is used if that file exists. The run is debounced to once a minute, in a subprocess with a timeout, and it receives only `GITHUB_READ_TOKEN`. Set `BURST_WAVEBOARD=off` to skip it. A failure does not stop the feed.
+
+### Live waveboard
+
+The Spectrum page (`docs-site/static/live/index.html`) shows the board on the left two thirds and the packet panel on the right third. Under 720px the panel is a toggle. The page uses the feed it already loads. It does not start another poll and it does not call GitHub for card bodies.
+
+During the same pass, a `## Packet` block or a single line on an issue or pull request body that the collector already fetched is stored as the seven fields (200 characters, GitHub links only). Seat inbox lines for that `repo#number` count too. The pass writes `waveboard` onto the feed and rewrites `WAVEBOARD.md` at most once a minute (`BURST_WAVEBOARD_MD`). `waveboard-static.md` (`BURST_WAVEBOARD_STATIC`) stays as pinned cards. A live card with no beat for 60 minutes is marked stall and one line is appended to the coordinator inbox (`BURST_COORDINATOR`, default `coordinator`). Closed cards drop off after 24 hours. The card shape is [card.schema.json](card.schema.json).
+
+```
+## Packet
+- goal:
+- constraints:
+- path:
+- acceptance:
+- evidence:
+- next owner:
+- escalate:
+```
+
+One line: `goal: … · constraints: … · path: … · acceptance: … · evidence: … · next owner: … · escalate: …`
+
+Routine prompt:
+
+```
+Every 10 minutes, before you write anything, check whether this seat has live work: a running cloud agent or subagent (including a desktop or browser computerUse run), an owned pull request or queue item waiting on CI or a verdict, or an unanswered prompt. If there is none, write nothing, except one watcher end if your last watcher line is an open start. If there is work, write a watcher start, do the check, then write the matching end. Never write a line just because the timer fired. Also log kind turn start and end for each user turn, and kind subagent start and end for every subagent, including computerUse.
+```
+
+Two lines when that check finds work:
+
+```json
+{"t_ct":"2026-10-09T09:02:00-05:00","seat":"builder","kind":"watcher","action":"start","tag":"repos"}
+{"t_ct":"2026-10-09T09:02:30-05:00","seat":"builder","kind":"watcher","action":"end","tag":"repos"}
+```
+
+The shape is [activity.schema.json](activity.schema.json). The same rule is in [PLAYBOOK.md](PLAYBOOK.md).
+
+Seat inbox routine prompt:
+
+```
+Read fleet/inbox/<seat>.jsonl first. Keep a cursor: the last id you already handled. Act on each newer line, using title, url, and reason. Then run your current checks as a backup in case a line was missed. Do not write a watcher line when the inbox and the backup are both empty.
+```
+
+```json
+{"id":"org/repo#1:open","t_ct":"2026-10-09T09:00:00-05:00","seat":"critic","type":"pr_open","repo":"org/repo","number":1,"title":"org/repo #1 opened","url":"https://github.com/org/repo/pull/1","reason":"new or updated pr"}
+{"id":"org/repo#1:push:abcdef012345","t_ct":"2026-10-09T09:10:00-05:00","seat":"critic","type":"pr_update","repo":"org/repo","number":1,"sha":"abcdef012345abcdef012345abcdef01234567","title":"org/repo #1 update","url":"https://github.com/org/repo/pull/1","reason":"new or updated pr"}
 ```
 
 ### Activity
@@ -352,7 +432,7 @@ House rule: every seat logs background work. Append one line to `fleet/activity.
 
 The line is `t_ct` (ISO-8601 with a numeric offset), `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters), plus `seat` on the file. Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. A `SENT` line in `prompts.jsonl` also keeps that seat working for 10 minutes. Display names resolve through `aliases` in the seats config (`Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos`). The feed lists `fleet.missing_activity`: seats pulsed in the last 60 minutes with no activity line in that window. The page does not read that list. The light is not in N of M. The shape is [activity.schema.json](activity.schema.json).
 
-Off-box seats POST with their own App token. One post at start, one at end. The window stays open until `end`. Do not post on a 30-second tick.
+Off-box seats POST with their own App token. One post at the start of a turn, a subagent, or a watcher that found work, and one post at the matching end. Do not post a watcher line on a tick that found no live work. A lone open start still expires after 60 minutes.
 
 ```bash
 curl -sS -o /dev/null -w '%{http_code}\n' \
@@ -403,7 +483,7 @@ No other fields. No free text.
 | `retest` | `start`, `end`, `pass`, `fail` |
 | `deploy` | `start`, `end`, `pass`, `fail`, `cancel` |
 
-Examples, one per kind, are the `examples` array in `activity.schema.json`. Older stored lines may still use `received`, `sent`, or `tick`. New lines use the table.
+The `examples` array in `activity.schema.json` is the accepted shape. Turn, subagent, and watcher include a start and the matching end. Older stored lines may still use `received`, `sent`, or `tick`. New lines use the table.
 
 `prompts.jsonl` is prompt lines. `cloud-agents.jsonl` is cloud-agent lines, each with `agent`. One JSON object per line.
 
@@ -417,7 +497,7 @@ Examples, one per kind, are the `examples` array in `activity.schema.json`. Olde
 
 `seat` is the seat that got the prompt: a seat id, or a display name that resolves through `aliases`. `kind` is `prompt`. `action` is `sent`. That pulse keeps the seat working for 10 minutes and counts for `fleet.missing_activity`. `start` and `end` lines with a `tag` are also valid, but only `sent` pulses. Never write the prompt text. The shape is [prompts.schema.json](prompts.schema.json).
 
-Older houses wrote `{"t_ct":"…","from":"Blaze","to":"Operator"}`. The collector still reads that shape as a `sent` pulse for the `to` seat, so an old file keeps working. Write new lines in the format above. `POST /activity` takes only the new format.
+Older houses wrote `{"t_ct":"…","from":"Lead","to":"Operator"}`. The collector still reads that shape as a `sent` pulse for the `to` seat, so an old file keeps working. Write new lines in the format above. `POST /activity` takes only the new format.
 
 ## 9. Roles and the stamped plate
 
@@ -468,5 +548,6 @@ Work top to bottom. Stop at the first failure.
 | Activity 403 `seat mismatch` | The body's `seat` does not match the token's seat. Drop `seat` or send the token's seat. A static key is not accepted |
 | A seat that just sent a prompt looks idle | `fleet/prompts.jsonl` (or `BURST_PROMPTS`) needs `action` `sent` (or a legacy `{from,to}` line) and a seat the aliases table knows. The light lasts 10 minutes. Fixes log item 13 |
 | `fleet.missing_activity` names a seat | That seat pulsed in the last 60 minutes and wrote no `activity.jsonl` line in that window |
+| A seat with no live work stays working | The watcher wrote a start on an idle tick. It must look first and write nothing, except one watcher `end` when the last watcher line is an open start. A lone open start expires after 60 minutes. Fixes log item 14 |
 
 The fixes log in [PLAYBOOK.md](PLAYBOOK.md) is the history of those rows. When a row and the log disagree, the log's current rule is the one the code implements.

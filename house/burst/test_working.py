@@ -146,8 +146,8 @@ class PromptPulse(unittest.TestCase):
             # New format: seat, kind prompt, action sent.
             {"t_ct": iso_offset(now - 60), "seat": "Chief of Staff", "kind": "prompt", "action": "sent"},
             # Legacy format: {t_ct, from, to}. The seat in `to` is pulsed.
-            {"t_ct": iso_offset(now - 120), "from": "Blaze", "to": "Lab Tester: Chaos"},
-            {"t_ct": iso_offset(now - 90), "from": "Blaze", "to": "Operator"},
+            {"t_ct": iso_offset(now - 120), "from": "Lead", "to": "Lab Tester: Chaos"},
+            {"t_ct": iso_offset(now - 90), "from": "Lead", "to": "Operator"},
         ], aliases, now)
         self.assertEqual(set(pulses), {"CoS", "Chaos", "Operator"})
         self.assertAlmostEqual(pulses["Chaos"], now - 120)
@@ -161,8 +161,8 @@ class PromptPulse(unittest.TestCase):
             {"t_ct": iso_offset(now - 60), "seat": "builder", "kind": "prompt", "action": "start"},
             {"t_ct": iso_offset(now - 60), "seat": "builder", "kind": "turn", "action": "sent"},
             {"t_ct": iso_offset(now - 60), "to": "builder"},
-            {"t_ct": iso_offset(now - 60), "from": "Blaze", "to": "builder", "action": "start"},
-            {"t_ct": iso_offset(now - 60), "from": "Blaze", "to": "builder", "message": "no text"},
+            {"t_ct": iso_offset(now - 60), "from": "Lead", "to": "builder", "action": "start"},
+            {"t_ct": iso_offset(now - 60), "from": "Lead", "to": "builder", "message": "no text"},
         ], self.aliases(), now)
         self.assertEqual(pulses, {})
 
@@ -197,6 +197,22 @@ class PromptPulse(unittest.TestCase):
 
 
 class SeatActivity(unittest.TestCase):
+    def test_a_lone_open_start_expires_at_the_hold(self):
+        now = 1_700_000_000.0
+        lone = {
+            "t_ct": iso_offset(now - w.ACTIVITY_HOLD_S),
+            "seat": "builder",
+            "kind": "watcher",
+            "action": "start",
+            "tag": "repos",
+        }
+        self.assertEqual(w.activity_working([lone], now), {})
+        still = dict(lone)
+        still["t_ct"] = iso_offset(now - w.ACTIVITY_HOLD_S + 1)
+        out = w.activity_working([still], now)
+        self.assertEqual(set(out), {"builder"})
+        self.assertAlmostEqual(out["builder"], now + 1)
+
     def test_open_start_lights_until_60_min(self):
         now = 1_700_000_000.0
         out = w.activity_working([{
