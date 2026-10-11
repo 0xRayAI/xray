@@ -150,6 +150,8 @@
   "files": [
     "dist/",
     "scripts/node/",
+    "!scripts/node/verify-restored-reflections.mjs",
+    "!scripts/node/reflection-delete-guard.mjs",
     "scripts/foundry/",
     "scripts/integrations/",
     "scripts/helpers/",

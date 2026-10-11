@@ -11,6 +11,8 @@ __tests__/
 .opencode/agents/*.d.ts
 .opencode/agents/*.d.ts.map
 docs/reflections/
+scripts/node/verify-restored-reflections.mjs
+scripts/node/reflection-delete-guard.mjs
 logs/
 backups/
 tmp/
