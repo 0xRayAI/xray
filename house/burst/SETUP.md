@@ -78,14 +78,15 @@ Builder, lab tester, and infra/operator. In GitHub: Settings → Developer setti
     "pull_requests": "write",
     "issues": "write",
     "statuses": "write",
-    "workflows": "write",
-    "actions": "write",
+    "actions": "read",
     "checks": "read",
     "metadata": "read"
   },
   "default_events": ["push", "pull_request", "issues", "issue_comment", "workflow_run", "status"]
 }
 ```
+
+Least privilege by default: `actions` is read (enough to see runs and jobs). Optional extra, only for a seat that must edit `.github/workflows/**` or re-run/cancel Actions: add `"workflows": "write"` and/or `"actions": "write"` to that one App. Leave them off otherwise.
 
 ### Gate / critic manifest
 

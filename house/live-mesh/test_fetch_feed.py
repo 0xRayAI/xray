@@ -501,6 +501,22 @@ class Loud401(unittest.TestCase):
         heads = [e["note"].split()[1] for e in passes[3]]
         self.assertEqual(sorted(heads), sorted([b[:8], c[:8]]))  # c once (events feed), not twice
 
+    def test_branch_tip_from_outside_the_fleet_is_dropped(self):
+        for d in (ff.BRANCH_TIPS, ff.REPRESENTED, ff.TIP_EVENTS, ff.PUSHED_HEADS):
+            d.clear()
+        tips = iter(["a" * 40, "b" * 40])
+
+        class GH:
+            def get_cached(self, path, params=None):
+                return [{"name": "topic/outside", "commit": {"sha": next(tips)}}]
+            def get(self, path, params=None):
+                return {"author": {"login": "some-stranger"},
+                        "commit": {"message": "m", "committer": {"date": "2026-10-09T15:00:00Z"}}}
+
+        gh, since = GH(), ff.datetime(2026, 10, 9, tzinfo=ff.timezone.utc)
+        self.assertEqual(ff.branch_tip_events(gh, "0xRayAI/xray", since), [])  # baseline
+        self.assertEqual(ff.branch_tip_events(gh, "0xRayAI/xray", since), [])  # non-fleet: no packet
+
     def test_read_token_does_not_load_an_app_key(self):
         token = "github_pat_example"
         env = {"GITHUB_READ_TOKEN": token, "GITHUB_APP_ID": "1",

@@ -866,6 +866,8 @@ def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
             continue
         login = ((commit.get("author") or {}).get("login"))
         seat = seat_of(login, name)
+        if seat not in SEATS:  # fleet-only, same rule as push_events (#236)
+            continue
         out.append(ev(
             f"{repo}:tip:{name}:{sha[:10]}", when, seat, "GitHub", "push",
             f"pushed {short(repo)} {name} · {sha[:7]}",
