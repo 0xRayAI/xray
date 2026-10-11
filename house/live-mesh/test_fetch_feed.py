@@ -301,6 +301,8 @@ class PushEventTests(unittest.TestCase):
 
     def setUp(self):
         ff.REPRESENTED.clear()
+        ff.TIP_EVENTS.clear()
+        ff.PUSHED_HEADS.clear()
         ff.PUSH_MSG.clear()
 
     def test_push_maps_seat_and_labels(self):
@@ -439,6 +441,8 @@ class Loud401(unittest.TestCase):
     def test_branch_tip_on_any_branch_skips_the_commit_message(self):
         ff.BRANCH_TIPS.clear()
         ff.REPRESENTED.clear()
+        ff.TIP_EVENTS.clear()
+        ff.PUSHED_HEADS.clear()
         sha1, sha2 = "a" * 40, "b" * 40
         secret = "SECRET SUBJECT do not store"
 
@@ -464,6 +468,38 @@ class Loud401(unittest.TestCase):
         self.assertNotIn(secret, json.dumps(out[0]))
         self.assertIn("topic/not-main", out[0]["label"])
         self.assertNotIn("live-wire", out[0]["label"])
+
+    def test_tip_push_stays_in_window_and_never_doubles_an_events_feed_push(self):
+        for d in (ff.BRANCH_TIPS, ff.REPRESENTED, ff.TIP_EVENTS, ff.PUSHED_HEADS):
+            d.clear()
+        a, b, c = "a" * 40, "b" * 40, "c" * 40
+        tips = iter([a, b, b, c])
+        events = [[], [], [], [{"id": "9", "type": "PushEvent", "created_at": "2026-10-09T15:05:00Z",
+                                "actor": {"login": "forge0x1[bot]"},
+                                "payload": {"ref": "refs/heads/topic", "head": c,
+                                            "commits": [{"sha": c, "message": "msg"}]}}]]
+
+        class GH:
+            tip = a
+            def get_cached(self, path, params=None):
+                if path.endswith("/events"):
+                    return events.pop(0)
+                self.tip = next(tips)
+                return [{"name": "topic", "commit": {"sha": self.tip}}]
+            def get(self, path, params=None):
+                return {"author": {"login": "forge0x1[bot]"},
+                        "commit": {"message": "m", "committer": {"date": "2026-10-09T15:00:00Z"}}}
+
+        gh, repo = GH(), "0xRayAI/xray"
+        since = ff.datetime(2026, 10, 9, tzinfo=ff.timezone.utc)
+        passes = []
+        for _ in range(4):  # same order as build(): events feed first, then branch tips
+            passes.append(ff.push_events(gh, repo, since) + ff.branch_tip_events(gh, repo, since))
+        self.assertEqual(passes[0], [])                      # baseline
+        self.assertEqual(len(passes[1]), 1)                  # tip a->b
+        self.assertEqual(passes[2], passes[1])               # still in the rebuilt feed next pass
+        heads = [e["note"].split()[1] for e in passes[3]]
+        self.assertEqual(sorted(heads), sorted([b[:8], c[:8]]))  # c once (events feed), not twice
 
     def test_read_token_does_not_load_an_app_key(self):
         token = "github_pat_example"

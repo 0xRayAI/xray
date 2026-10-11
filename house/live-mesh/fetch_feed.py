@@ -646,6 +646,8 @@ def x_events(path: Path, since: datetime) -> list[dict]:
 PR_CACHE: dict = {}  # (repo, number) -> (signature, fetched_at, events); watch mode only
 CHECK_NOTES: list = []  # busy/fail checks this pass; one time per seat is derived later
 BRANCH_TIPS: dict = {}  # (repo, branch) -> tip sha; first sight is a baseline, not an event
+TIP_EVENTS: dict = {}  # (repo, sha) -> tip push event; kept so the packet stays in the window
+PUSHED_HEADS: dict[str, set[str]] = {}  # repo -> heads already shown by push_events or a tip event
 
 # ---------------------------------------------------------------- pushes
 
@@ -675,8 +677,9 @@ def push_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
         seat = seat_of((e.get("actor") or {}).get("login"), branch)
         if not branch or branch in PUSH_SKIP_BRANCHES or not head or seat not in SEATS:
             continue
-        if head in rep:
+        if head in rep or (repo, head) in TIP_EVENTS:
             continue
+        PUSHED_HEADS.setdefault(repo, set()).add(head)
         commits = p.get("commits") or []
         msg = next((c.get("message") for c in commits if c.get("sha") == head), None) or \
             (commits[-1].get("message") if commits else None)
@@ -850,7 +853,8 @@ def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
         key = (repo, name)
         prev = BRANCH_TIPS.get(key)
         BRANCH_TIPS[key] = sha
-        if prev is None or prev == sha or sha in REPRESENTED.get(repo, set()):
+        if prev is None or prev == sha or sha in REPRESENTED.get(repo, set()) \
+                or sha in PUSHED_HEADS.get(repo, set()) or (repo, sha) in TIP_EVENTS:
             continue
         commit = gh.get(f"/repos/{repo}/commits/{sha}")
         cmt = commit.get("commit") or {}
@@ -868,6 +872,14 @@ def branch_tip_events(gh: GitHub, repo: str, since: datetime) -> list[dict]:
             f"https://github.com/{repo}/commit/{sha}", repo, None,
             note=f"{name} {sha[:8]}",
         ))
+        TIP_EVENTS[(repo, sha)] = out[-1]
+        PUSHED_HEADS.setdefault(repo, set()).add(sha)
+    # A tip is seen once; re-emit it each pass while it is inside the window, or it would vanish
+    # from the next rebuilt feed. A head the events feed already showed is not a second packet.
+    fresh = {id(e) for e in out}
+    for (r, _sha), e in TIP_EVENTS.items():
+        if r == repo and id(e) not in fresh and instant(e["t_ct"]) >= since:
+            out.append(e)
     return out
 
 
