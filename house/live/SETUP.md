@@ -14,7 +14,7 @@
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
 | reviewer, tester, qa, coord, operator, growth, qa-one, qa-two, triager, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier | a per-seat key: `Authorization: Bearer <key>` |
 
-Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `/srv/live-mesh-run/secrets/seat-keys`; dir 0700, files 0600). The
+Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `/srv/live/run/secrets/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
 Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed/seat_keys.sh publish` (sets
 `SEAT_KEYS` on Railway) and deploy with `app/deploy.sh`.
@@ -47,7 +47,7 @@ pointing to the live board. Re-enable local writing only for debugging with `LIV
 
 ## Box helpers (any box bot)
 - `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines (a read without --peek acks them on the server); `live-inbox <seat> --ack <id|all>` clears; cursor in
-  `/srv/live-mesh-run/fleet/cursors/<seat>.txt` (advanced after a successful read).
+  `/srv/live/run/fleet/cursors/<seat>.txt` (advanced after a successful read).
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted
 in-process by the builder-app wrapper's `mint_token.token()`, never printed).

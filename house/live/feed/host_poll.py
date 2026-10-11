@@ -11,7 +11,7 @@ import json, os, subprocess, sys, time
 from datetime import datetime, timezone
 from pathlib import Path
 
-RUN = Path(os.environ.get("MESH_RUN", "/srv/live-mesh-run"))
+RUN = Path(os.environ.get("MESH_RUN", "/srv/live/run"))
 OUT = Path(os.environ.get("LIVE_RAILWAY_FILE", RUN / "feed" / "railway-deploys.json"))
 # project name, project id, service, environments. Set LIVE_RAILWAY_TARGETS to a JSON list of
 # [project_name, project_id, service, [environments...]]; nothing is polled when it is unset.

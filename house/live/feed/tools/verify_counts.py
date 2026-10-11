@@ -2,7 +2,7 @@
 """Compare live-events.json counts with GitHub (read-only token in GH_TOKEN). Prints a table; no bodies."""
 import json, os, re, sys, time, urllib.request, urllib.error
 from collections import Counter
-FEED = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("MESH_RUN", "/srv/live-mesh-run"), "feed/live-events.json")
+FEED = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("MESH_RUN", "/srv/live/run"), "feed/live-events.json")
 T = os.environ["GH_TOKEN"]; API = "https://api.github.com"
 def req(url, data=None):
     r = urllib.request.Request(url, data=data, method="POST" if data else "GET", headers={

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # Zero-gap release of the live watcher / pusher / watchdog.
 # Usage: feed/release.sh <sha>
-# Copies feed/ at that commit into /srv/live-mesh-live/<sha>/, starts the new supervisor,
+# Copies feed/ at that commit into /srv/live/releases/<sha>/, starts the new supervisor,
 # waits until it has written the live feed once, flips `current`, then TERMs the old supervisor
 # and restarts the pusher + watchdog from the new release. Both feeds share the state files under
-# /srv/live-mesh-run; pid-suffixed temps and an flock on write keep the overlap clean.
+# /srv/live/run; pid-suffixed temps and an flock on write keep the overlap clean.
 # Dev work stays in /srv/live-mesh-repo and never touches live-events.json.
 set -euo pipefail
 export TZ=America/Chicago
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-LIVE_ROOT=/srv/live-mesh-live; RUN=/srv/live-mesh-run
+LIVE_HOME="${LIVE_HOME:-/srv/live}"; LIVE_ROOT="$LIVE_HOME/releases"; RUN="$LIVE_HOME/run"
 SHA="${1:-}"; [ -n "$SHA" ] || { echo "usage: feed/release.sh <sha>" >&2; exit 2; }
 SHA="$(cd "$REPO" && git rev-parse --verify "$SHA^{commit}")"
 SHORT="${SHA:0:12}"

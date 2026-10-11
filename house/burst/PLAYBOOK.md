@@ -125,7 +125,7 @@ There is no static `ACTIVITY_KEY` fallback. The verdict cache stores `sha256(tok
 
 ## Seat inboxes
 
-The feed loop routes each new event id into `fleet/inbox/<seat>.jsonl`. The directory is `BURST_INBOX` (default `fleet/inbox`; the Example collector uses `/srv/live-mesh-run/fleet/inbox`). Roles are JSON in [inbox-roles.json](inbox-roles.json) (`BURST_INBOX_ROLES`). The line shape is [inbox.schema.json](inbox.schema.json): `id`, `t_ct`, `seat`, `type`, `repo`, `number`, optional `sha`, `title`, `url`, `reason`. No bodies, prompt text, or secrets. Files keep the last 7 days (`keep_days`).
+The feed loop routes each new event id into `fleet/inbox/<seat>.jsonl`. The directory is `BURST_INBOX` (default `fleet/inbox`; the Example collector uses `/srv/live/run/fleet/inbox`). Roles are JSON in [inbox-roles.json](inbox-roles.json) (`BURST_INBOX_ROLES`). The line shape is [inbox.schema.json](inbox.schema.json): `id`, `t_ct`, `seat`, `type`, `repo`, `number`, optional `sha`, `title`, `url`, `reason`. No bodies, prompt text, or secrets. Files keep the last 7 days (`keep_days`).
 
 A watcher reads its inbox first, stores the last id it handled, and still runs its current checks as a backup.
 

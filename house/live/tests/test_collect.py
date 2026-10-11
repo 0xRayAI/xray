@@ -114,7 +114,7 @@ class LiveGuardTest(unittest.TestCase):
     def test_dev_refuses_live_out(self):
         import live_mesh
         with self.assertRaises(SystemExit):
-            live_mesh.guard_out("/srv/live-mesh-run/feed/live-events.json")
+            live_mesh.guard_out("/srv/live/run/feed/live-events.json")
 
 
 class IncrementalCITest(unittest.TestCase):

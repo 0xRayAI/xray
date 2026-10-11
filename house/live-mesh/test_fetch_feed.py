@@ -347,7 +347,7 @@ class PushEventTests(unittest.TestCase):
 
     def test_pr_body_packet_rides_the_existing_pull_without_another_read(self):
         pr = {"number": 8, "title": "gate", "html_url": "https://github.com/org/repo/pull/8",
-              "user": {"login": "forge0x1[bot]"}, "head": {"ref": "mill/x", "sha": "a" * 40},
+              "user": {"login": "example-bot[bot]"}, "head": {"ref": "mill/x", "sha": "a" * 40},
               "created_at": "2026-10-06T12:00:00Z",
               "body": "## Packet\n- goal: Ship the gate\n- acceptance: tests pass\n- next owner: reviewer\n"}
         gh = mock.Mock()

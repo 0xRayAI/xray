@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "routing"))
 import inbox  # noqa: E402
 
-RUN = Path(os.environ.get("MESH_RUN", "/srv/live-mesh-run"))
+RUN = Path(os.environ.get("MESH_RUN", "/srv/live/run"))
 FEED = Path(os.environ.get("FEED", RUN / "feed" / "live-events.json"))
 INBOX = Path(os.environ.get("LIVE_INBOX", RUN / "feed" / "inbox-spool"))   # ring buffer only: the server holds the inboxes
 RING = 300

@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-LIVE_INBOX = "/srv/live-mesh-run/fleet/inbox"
+LIVE_INBOX = os.path.join(os.environ.get("LIVE_HOME", "/srv/live"), "run", "fleet", "inbox")
 MIRROR_SEAT = "builder"
 _BANNED = re.compile(r"body|text|message", re.I)
 _SECRET = re.compile(r"ghs_|github_pat_|BEGIN PRIVATE|AKIA[0-9A-Z]{16}")

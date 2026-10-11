@@ -4,7 +4,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "feed"))
 sys.dont_write_bytecode = True
-SRC = os.environ.get("LIVE_MESH_SRC", "/srv/live-mesh-src/house/live-mesh")
+SRC = os.environ.get("LIVE_MESH_SRC", "/srv/live/src/house/live-mesh")
 
 
 @unittest.skipUnless(Path(SRC, "fetch_feed.py").exists(), "upstream checkout missing (feed/bootstrap.sh)")

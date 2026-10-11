@@ -10,7 +10,7 @@ Each command keeps its own cursor ($MESH_RUN/feed/nudges-<cmd>.json); a failed c
 import json, os, subprocess, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
-RUN = Path(os.environ.get("MESH_RUN", "/srv/live-mesh-run"))
+RUN = Path(os.environ.get("MESH_RUN", "/srv/live/run"))
 KEYS = Path(os.environ.get("SEAT_KEYS_DIR", RUN / "secrets" / "seat-keys"))
 BOARD = "https://live.example.com"
 GH = os.environ.get("NUDGE_GH", "/srv/bin/op/gh")

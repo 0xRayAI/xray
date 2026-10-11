@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # live-mesh watchdog (no cron on the box): one loop, checks every 60 s. Runs from a pinned release (release.sh).
-# It only ever (re)starts processes from /srv/live-mesh-live/current, resolved fresh every loop:
+# It only ever (re)starts processes from /srv/live/releases/current, resolved fresh every loop:
 #  - no live supervisor (any release) -> start current/feed/supervisor.sh (it mints the read-only token; no fallback)
 #  - feed child stalled (no write for STALL_S) -> TERM the child; its supervisor re-mints and restarts it
 #  - no live pusher (any release) -> start current/feed/push_to_host.sh
 #  - logs every feed write gap > GAP_S to logs/watchdog.log (times in CT). Never logs tokens or env.
 #  - every RW_EVERY s runs current/feed/host_poll.py (read-only `railway deployment list`, box CLI login) so the
 #    Railway login stays out of the credential-free feed process; the feed reads only its sanitized output.
-# Dev runs (repo checkout) are never seen or started here: they are not under /srv/live-mesh-live/.
+# Dev runs (repo checkout) are never seen or started here: they are not under /srv/live/releases/.
 set -u
-LIVE_ROOT=/srv/live-mesh-live; CUR_LINK="$LIVE_ROOT/current"
-RUN=/srv/live-mesh-run
+LIVE_HOME="${LIVE_HOME:-/srv/live}"; LIVE_ROOT="$LIVE_HOME/releases"; CUR_LINK="$LIVE_ROOT/current"
+RUN="$LIVE_HOME/run"
 FEED="$RUN/feed/live-events.json"; LOG="$RUN/logs/watchdog.log"
 RW_EVERY="${WATCHDOG_RAILWAY_S:-180}"; rw_last=0
 GAP_S="${WATCHDOG_GAP_S:-150}"; STALL_S="${WATCHDOG_STALL_S:-300}"; EVERY="${WATCHDOG_EVERY_S:-60}"

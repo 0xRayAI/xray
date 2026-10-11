@@ -5,13 +5,13 @@ Read: OPEN lines from the Live board server inbox for <seat>, one JSON object pe
 seat acked and lines whose card moved past the seat's step (closed card; for reviewer, a Reviewer verdict at the card's head).
 Without --peek the read is acked on the server (up to the last line shown) and the local cursor advances, so every
 reader of the seat agrees; --peek shows without acking. --ack <id> / --ack all: drop one line / everything open.
-Key: /srv/live-mesh-run/secrets/seat-keys/<seat>.key (never printed). Cursor:
-/srv/live-mesh-run/fleet/cursors/<seat>.txt."""
+Key: /srv/live/run/secrets/seat-keys/<seat>.key (never printed). Cursor:
+/srv/live/run/fleet/cursors/<seat>.txt."""
 import json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 URL = os.environ.get("LIVE_URL", "https://live.example.com").rstrip("/")
-KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "/srv/live-mesh-run/secrets/seat-keys"))
-CUR = Path(os.environ.get("LIVE_CURSORS", "/srv/live-mesh-run/fleet/cursors"))
+KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "/srv/live/run/secrets/seat-keys"))
+CUR = Path(os.environ.get("LIVE_CURSORS", "/srv/live/run/fleet/cursors"))
 argv = sys.argv[1:]
 ack = None
 if "--ack" in argv:

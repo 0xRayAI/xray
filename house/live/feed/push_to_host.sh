@@ -2,14 +2,14 @@
 # Push the box feed to the Railway live-mesh app right after each feed write: check the file's mtime/size/inode
 # every CHECK s (2), push when it changed, skip when not; a keepalive push every INTERVAL s (300) re-seeds the
 # server's in-memory feed after a Railway restart. A failed push backs off RETRY s (10) before trying again.
-# Config: $MESH_RUN/.push-env (default /srv/live-mesh-run/.push-env) (MESH_URL, INGEST_SECRET; chmod 600).
+# Config: $MESH_RUN/.push-env (default /srv/live/run/.push-env) (MESH_URL, INGEST_SECRET; chmod 600).
 # Logs only timestamps + HTTP status codes. Never prints the secret.
 # Only events new/changed since the last acknowledged push are sent (POST /ingest/delta, base = server cursor);
 # a full POST /ingest happens on first run, after a server restart (409) or against a pre-delta server.
 # Overrides (for testing): PUSH_ENV, PUSH_LOG, FEED, PUSH_STATE, INTERVAL, CHECK, RETRY, ONCE=1.
 set -u
 umask 077
-BASE="${MESH_RUN:-/srv/live-mesh-run}"
+BASE="${MESH_RUN:-/srv/live/run}"
 PUSH_ENV=${PUSH_ENV:-$BASE/.push-env}
 PUSH_LOG=${PUSH_LOG:-$BASE/logs/push.log}
 FEED=${FEED:-$BASE/feed/live-events.json}
@@ -22,9 +22,9 @@ ACT_STATE=${ACT_STATE:-$BASE/feed/activity-pulled.json}   # activity pull positi
 ACT_OUT=${ACT_OUT:-$BASE/fleet/remote-activity.jsonl}     # pulled off-box activity -> live_fleet.scan_activity
 # only a pinned release (release.sh) may push the live feed or write live state; dev/test runs from the repo never do
 case "$CODE" in
-  /srv/live-mesh-live/*/feed) ;;
+  "${LIVE_HOME:-/srv/live}"/releases/*/feed) ;;
   *) for f in "$FEED" "$STATE" "$ACT_STATE" "$ACT_OUT" "$PUSH_LOG"; do
-       case "$(readlink -m "$f")" in /srv/live-mesh-run/*)
+       case "$(readlink -m "$f")" in "${LIVE_HOME:-/srv/live}"/run/*)
          echo "refusing to push the live feed from a dev checkout ($CODE); use release.sh" >&2; exit 1 ;; esac
      done ;;
 esac

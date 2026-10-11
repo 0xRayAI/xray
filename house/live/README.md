@@ -39,7 +39,7 @@ Setup: [SETUP.md](SETUP.md). Operating rules: [PLAYBOOK.md](PLAYBOOK.md). Hostin
 | `feed/tools/verify_counts.py` | feed vs GitHub count table |
 | `tests/` | `run_tests.sh`: python unittest + node --test |
 
-Data (feed JSON, store, logs, pids, preview `www/`) lives in `$MESH_RUN` (default `/srv/live-mesh-run`), never in the repo.
+Data (feed JSON, store, logs, pids, preview `www/`) lives in `$MESH_RUN` (default `/srv/live/run`), never in the repo.
 
 ## What the feed records
 
@@ -65,7 +65,7 @@ comments are not detected; commits whose git author is not linked to a GitHub ac
 ## Run (box)
 
 ```bash
-export MESH_RUN=/srv/live-mesh-run            # data dir
+export MESH_RUN=/srv/live/run            # data dir
 setsid feed/supervisor.sh >>"$MESH_RUN/logs/fetch_feed.watch.log" 2>&1 < /dev/null &   # needs GITHUB_APP_PRIVATE_KEY in env
 setsid feed/push_to_host.sh < /dev/null >/dev/null 2>&1 &                            # needs $MESH_RUN/.push-env
 ```

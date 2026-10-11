@@ -217,8 +217,9 @@ ff.time.sleep = _cadence_sleep   # fetch_feed.main uses time.sleep(args.watch); 
 
 
 
-LIVE_ROOT = Path("/srv/live-mesh-live")      # pinned releases (release.sh); the only code allowed to write live
-LIVE_OUT = Path("/srv/live-mesh-run/feed/live-events.json")
+LIVE_HOME = Path(os.environ.get("LIVE_HOME", "/srv/live"))   # base dir: releases/, run/
+LIVE_ROOT = LIVE_HOME / "releases"      # pinned releases (release.sh); the only code allowed to write live
+LIVE_OUT = LIVE_HOME / "run" / "feed" / "live-events.json"
 
 
 def guard_out(out):

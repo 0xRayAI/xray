@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 import live_packet
 
 CT = ZoneInfo("America/Chicago")
-RUN = Path(os.environ.get("MESH_RUN", "/srv/live-mesh-run"))
+RUN = Path(os.environ.get("MESH_RUN", "/srv/live/run"))
 CACHE = Path(os.environ.get("INBOX_CACHE", RUN / "feed" / "inbox-events.json"))
 INBOX = Path(os.environ.get("LIVE_INBOX", RUN / "fleet" / "inbox"))
 HOUSE = Path(os.environ.get("LIVE_HOUSE", "/srv/fleet-house/house"))

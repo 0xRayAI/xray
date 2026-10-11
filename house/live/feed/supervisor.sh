@@ -3,16 +3,16 @@
 # (upstream fetch_feed.py --watch $LIVE_WATCH_S [45] via live_mesh.py) for 50 min, then re-mints before the 1 h expiry.
 # The private key stays in an unexported shell var and goes only to the mint child.
 # The feed process gets a scrubbed env with no gh config, no git creds and no other keys.
-#   CODE  = this directory. LIVE only from a pinned release /srv/live-mesh-live/<sha>/feed (release.sh);
+#   CODE  = this directory. LIVE only from a pinned release /srv/live/releases/<sha>/feed (release.sh);
 #           from anywhere else (the repo checkout) it is a DEV run: own data dir, writes dev-events.json, no pusher.
-#   RUN   = data dir: feed/, logs/, pid files  (live: /srv/live-mesh-run; dev: MESH_RUN, default /srv/live-mesh-dev)
+#   RUN   = data dir: feed/, logs/, pid files  (live: /srv/live/run; dev: MESH_RUN, default /srv/live/dev)
 #   UP    = repo root holding house/live-mesh/fetch_feed.py (LIVE_MESH_UPSTREAM, default: this checkout)
 set -u
 CODE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-LIVE_ROOT=/srv/live-mesh-live; LIVE_RUN=/srv/live-mesh-run
+LIVE_HOME="${LIVE_HOME:-/srv/live}"; LIVE_ROOT="$LIVE_HOME/releases"; LIVE_RUN="$LIVE_HOME/run"
 case "$CODE" in
   "$LIVE_ROOT"/*/feed) REL="$(basename "$(dirname "$CODE")")"; RUN="$LIVE_RUN"; OUT=live-events.json ;;
-  *) REL=dev; RUN="${MESH_RUN:-/srv/live-mesh-dev}"; OUT=dev-events.json
+  *) REL=dev; RUN="${MESH_RUN:-/srv/live/dev}"; OUT=dev-events.json
      [ "$(mkdir -p "$RUN" && cd "$RUN" && pwd -P)" = "$LIVE_RUN" ] && { echo "dev run may not use the live data dir $LIVE_RUN; use release.sh"; exit 1; } ;;
 esac
 UP="${LIVE_MESH_UPSTREAM:-$(cd "$CODE/../../.." && pwd -P)}"

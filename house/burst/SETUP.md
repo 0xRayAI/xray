@@ -363,7 +363,7 @@ If there is work, write a watcher start, do the check, then write the matching e
 
 ### Seat inboxes
 
-The host feed loop writes one line per new event id. It does not go through the page server. `BURST_INBOX` sets the directory (default `fleet/inbox`). On the Example collector the default is `/srv/live-mesh-run/fleet/inbox`. Roles are [inbox-roles.json](inbox-roles.json). The line is [inbox.schema.json](inbox.schema.json).
+The host feed loop writes one line per new event id. It does not go through the page server. `BURST_INBOX` sets the directory (default `fleet/inbox`). On the Example collector the default is `/srv/live/run/fleet/inbox`. Roles are [inbox-roles.json](inbox-roles.json). The line is [inbox.schema.json](inbox.schema.json).
 
 | Seat | File | What arrives |
 |---|---|---|
