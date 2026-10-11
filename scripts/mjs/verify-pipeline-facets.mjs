@@ -110,7 +110,7 @@ if (packageOnly) {
   }
 
   // P1 — autonomous reporting
-  if (features?.autonomous_reporting?.enabled === true) {
+  if (features?.autonomous_reporting?.enabled === false) {
     pass('autonomous_reporting.enabled');
   } else {
     fail('autonomous_reporting.enabled');

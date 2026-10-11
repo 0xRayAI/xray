@@ -1,6 +1,6 @@
 {
   "$schema": "./features.schema.json",
-  "version": "4.0.42",
+  "version": "4.0.43",
   "description": "0xRay Framework - Unified Feature Configuration",
   "suit_temperament": {
     "profile": "auto",
@@ -54,16 +54,16 @@
       "auto_provision_worktree": false
     }
   },
-  "grok_postprocessor_light": true,
+  "grok_postprocessor_light": false,
   "inference_session_capture": {
     "enabled": true,
     "min_commits": 3,
     "lookback_commits": 20
   },
   "autonomous_reporting": {
-    "enabled": true,
+    "enabled": false,
     "interval_minutes": 60,
-    "auto_schedule": true,
+    "auto_schedule": false,
     "include_health_assessment": true,
     "include_agent_activities": true,
     "include_pipeline_operations": true,
@@ -174,7 +174,7 @@
     "every_n_todos_completed": 0
   },
   "inference": {
-    "description": "Self-improvement cycle that grades a new named session into repertoire",
+    "description": "The cycle runs from the CLI command inference:run and the session wake does not start it.",
     "enabled": true,
     "workflow_dir": ".xray/inference",
     "reports_dir": ".xray/reports",

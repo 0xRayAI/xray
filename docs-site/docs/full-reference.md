@@ -185,7 +185,7 @@ Every subsystem is configurable via `features.json` (located at `xray/features.j
  "context_compression": { "enabled": true, "threshold_tokens": 15000, "compression_ratio": 0.4 }
  },
  "multi_agent_orchestration": { "enabled": true, "max_concurrent_agents": 3 },
- "autonomous_reporting": { "enabled": true, "interval_minutes": 60 },
+ "autonomous_reporting": { "enabled": false, "auto_schedule": false, "interval_minutes": 60 },
  "security": { "enabled": true, "vulnerability_scanning": true },
  "analytics": { "enabled": true, "default_limit": 100 },
  "pattern_learning": { "enabled": true, "learning_interval_ms": 3600000 },

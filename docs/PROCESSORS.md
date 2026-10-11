@@ -145,12 +145,13 @@ These are the **OS gates**. Not ProcessorManager.
 | id | Pre/post | Phase | What | Path | Config | Active |
 |----|----------|-------|------|------|--------|--------|
 | `evaluatePreToolGate` | pre | agent tool | Codex 11/29/69, surface-area, spawn-without-plan, leftover-plan, synthesis-due, pending-delegation. Temperament: guided=deny spawn, frontier=warn | `src/integrations/hooks/delegation-gate-runtime.mjs` (+ TS nucleus re-export) | `suit_temperament`, `multi_agent_orchestration`, `synthesis` | **live-gate** on all 4 hosts |
+| `pre-tool-speak` | pre | allow path | The lens denies an unnamed plane. The route speaks only when Repertoire changes the agent. Grok calls the lens directly. Cursor, Hermes, OpenCode, and OpenClaw call the shared module. A Cursor hook throw allows only EACCES. | `src/integrations/hooks/pre-tool-speak.mjs` | shipped with the hooks | **live-gate** |
 | `grok-pre-tool-use` | pre | Grok PreToolUse | stdin JSON → `{decision:allow\|deny}`; gate + extra Codex 2/7 on writes + full-`npm test` hint | `src/integrations/grok/hooks/pre-tool-use.js` | installed `hooks.json` | **live-gate** |
-| `grok-post-tool-use` | post | Grok PostToolUse | Auto-chain pending/clear; `runGrokPostprocessorLight` on write tools | `post-tool-use.js` | `grok_postprocessor_light: true` in current plant | **live-side-effect** |
-| `runGrokPostprocessorLight` | post | write tools | Writes `.xray/inference/postprocessor-light-latest.json` + activity.log | `src/integrations/hooks/pipeline-hook-runtime.mjs` | `features.grok_postprocessor_light` | **live-side-effect** (ON) |
+| `grok-post-tool-use` | post | Grok PostToolUse | Auto-chain pending/clear; `runGrokPostprocessorLight` on write tools | `post-tool-use.js` | `grok_postprocessor_light` opt-in | live-side-effect when opted in |
+| `runGrokPostprocessorLight` | post | write tools | Writes `.xray/inference/postprocessor-light-latest.json` + activity.log | `src/integrations/hooks/pipeline-hook-runtime.mjs` | `features.grok_postprocessor_light === true` | off on the shipped plant |
 | `maybeRunReflectionStub` | post | SessionStart | Commit-threshold reflection stub | same | `synthesis.reflection` | live-side-effect if configured |
 | `recordRoutingOutcome` | post | PostToolUse | Append `logs/framework/routing-outcomes.json` | same | none | **live-side-effect** |
-| `scheduleAutonomousReportingMarker` | post | SessionStart | `reports/.autonomous-reporting-scheduled.json` | same | `autonomous_reporting` | live-side-effect (ON) |
+| `scheduleAutonomousReportingMarker` | post | SessionStart | `reports/.autonomous-reporting-scheduled.json` | same | `autonomous_reporting.enabled` and `auto_schedule` | off on the shipped plant |
 | `runInferenceImprovementLight` | post | SessionStart | Light workflow JSON under `.xray/inference/` | same | skips if `inference_governance.enabled === false` (current plant: false) | off on current plant |
 | Grok session / compact | pre/post | SessionStart, UserPromptSubmit, PreCompact, PostCompact | Session-boot + station + synthesis turn slice | `session-start.js` | `hooks.json` | **live-side-effect** |
 | `cursor-pre-tool-use` | pre | Cursor `preToolUse` | stdin JSON → `{permission:allow\|deny}`; same gate; first-tool Station boot | `src/integrations/cursor/hooks/pre-tool-use.js` | repo `.cursor/hooks.json` | **live-gate** when project hooks load |

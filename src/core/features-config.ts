@@ -414,7 +414,7 @@ export interface FeaturesConfig {
     enabled?: boolean;
   };
   memory_routing?: MemoryRoutingConfig;
-  /** P2.2 — lightweight Grok write-tool postprocessor marker */
+  /** Marker is opt-in and the shipped default is off. */
   grok_postprocessor_light?: boolean;
   /** P2 — git post-commit session inference capture */
   inference_session_capture?: {
@@ -857,9 +857,9 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
       },
 
       autonomous_reporting: {
-        enabled: true,
+        enabled: false,
         interval_minutes: 60,
-        auto_schedule: true,
+        auto_schedule: false,
         include_health_assessment: true,
         include_agent_activities: true,
         include_pipeline_operations: true,
@@ -932,7 +932,7 @@ this.featuresPath = featuresPath || resolveConfigPath("features.json") || path.j
       },
 
       inference: {
-        description: "Self-improvement cycle that grades a new named session into repertoire",
+        description: "The cycle runs from the CLI command inference:run and the session wake does not start it.",
         enabled: true,
         workflow_dir: ".xray/inference",
         reports_dir: ".xray/reports",

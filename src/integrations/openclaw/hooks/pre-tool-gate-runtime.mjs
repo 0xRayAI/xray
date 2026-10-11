@@ -49,7 +49,7 @@ function readStdin() {
   });
 }
 
-function decide(event, gate) {
+async function decide(event, gate) {
   const projectRoot =
     event.cwd || event.workspaceRoot || event.projectRoot || process.cwd();
   const sessionId = event.sessionId || event.session_id || 'openclaw';
@@ -70,20 +70,37 @@ function decide(event, gate) {
       gate: outcome.gate,
     };
   }
-  return {
+
+  const spoken = `${toolName} ${JSON.stringify(args)}`.slice(0, 500);
+  const { lensDecision, repertoireRoute } = await import('../../hooks/pre-tool-speak.mjs');
+  const lens = lensDecision(projectRoot, toolName, spoken);
+  if (lens) {
+    return {
+      action: 'block',
+      allow: false,
+      reason: lens.reason,
+      gate: lens.gate || 'lens',
+    };
+  }
+  const route = repertoireRoute(spoken);
+  const allowed = {
     action: 'allow',
     allow: true,
     reason: outcome.reason,
     gate: outcome.gate,
     warn: Boolean(outcome.reason),
   };
+  if (route?.hookSpecificOutput) {
+    allowed.hookSpecificOutput = route.hookSpecificOutput;
+  }
+  return allowed;
 }
 
 async function main() {
   try {
     const event = await readStdin();
     const gate = resolveGate();
-    const decision = decide(event, gate);
+    const decision = await decide(event, gate);
     console.log(JSON.stringify(decision));
     process.exit(decision.action === 'block' ? 2 : 0);
   } catch (err) {

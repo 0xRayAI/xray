@@ -140,12 +140,12 @@ export class XrayConfigLoader {
     }
     const cfg = config as Record<string, unknown>;
     return {
-      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : true,
+      enabled: typeof cfg.enabled === 'boolean' ? cfg.enabled : false,
       interval_minutes: Math.max(
         5,
         Math.min(1440, typeof cfg.interval_minutes === 'number' ? cfg.interval_minutes : 60),
       ),
-      auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : true,
+      auto_schedule: typeof cfg.auto_schedule === 'boolean' ? cfg.auto_schedule : false,
       include_health_assessment: typeof cfg.include_health_assessment === 'boolean' ? cfg.include_health_assessment : true,
       include_agent_activities: typeof cfg.include_agent_activities === 'boolean' ? cfg.include_agent_activities : true,
       include_pipeline_operations: typeof cfg.include_pipeline_operations === 'boolean' ? cfg.include_pipeline_operations : true,
@@ -179,9 +179,9 @@ export class XrayConfigLoader {
         session_persistence: true,
       },
       autonomous_reporting: {
-        enabled: true,
+        enabled: false,
         interval_minutes: 60,
-        auto_schedule: true,
+        auto_schedule: false,
         include_health_assessment: true,
         include_agent_activities: true,
         include_pipeline_operations: true,
