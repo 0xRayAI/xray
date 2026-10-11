@@ -35,6 +35,13 @@ This cadence is how the room decides spend. It is not the Confer feature, which 
 13. Check before you claim. The reviewer reads or runs the code before raising a finding.
 14. Errors to GENESIS. Every confirmed error gets a GENESIS entry the same day it is confirmed.
 
+## Release gate: wear what we ship
+On 2026-09-28, 0xray 4.0.29 (#141) passed CI and critic and broke setup for non-git projects. `wear` and `setup` exited `not a git work tree`. Nobody installed the packed tarball and ran what users run. Our seat suits are non-git, so one local wear would have caught it.
+1. Before critic review and again before publish: local build, then `npm pack`. Install that tarball on the forge seat suit first, then run the command the install message tells users to run (`npx 0xray wear`), then `doctor`, then one real run. Next, one more seat. Then fresh temp folders, one git and one non-git, each with a temp HOME: run wear, setup, and doctor, and diff the files written against the previous version.
+2. The critic gives no PASS on anything that ships to npm without personally installing the packed tarball and running the user command.
+3. Only the exact tarball that passed gets published. Record its shasum in the release receipt. Seats re-wear one at a time.
+4. If a published release is broken, first move npm `latest` back to the last good version (`npm dist-tag add <pkg>@<good> latest`), then fix forward.
+
 ## Board (WAVEBOARD)
 0. A beat is a real event: a Blaze message, a PR push, a cloud round starting or finishing, a critic verdict, a merge, a deploy, a live proof. Every beat ends with its board row changed in that same turn. A beat that doesn't touch the board hasn't landed. The seat that produced the beat posts one line in the room; CoS turns it into the row change.
 - Drift check (rule 0a). Cadence owner is CoS. A drift check runs weekdays at 10:45, 12:45, 2:45 and 4:45 CT. It compares every In work and Review row to real PR heads, merges and cloud status, fixes the row, and posts in the eng room only when a row was off. It says nothing when the rows match. Any rule practiced twice goes into OP-PROC the same day (Twice to disk); the 5:35 PM digest flags any that didn't.
