@@ -39,17 +39,25 @@ export function foundryCliPath(millRoot) {
   return path.join(millRoot, "cli.js");
 }
 
-export function runFoundryCli(millRoot, consumerRoot, args) {
+/** Clean-room foundry env. The machine home is empty so a plugin on the real machine cannot fail the seat inspect. */
+export function proofFoundryEnv(consumerRoot, baseEnv = process.env) {
   const isolatedHome = path.join(consumerRoot, ".proof-home");
+  const machineHome = path.join(consumerRoot, ".proof-machine");
   fs.mkdirSync(isolatedHome, { recursive: true });
+  fs.mkdirSync(machineHome, { recursive: true });
+  return {
+    ...baseEnv,
+    FOUNDRY_ROOT: consumerRoot,
+    HOME: isolatedHome,
+    FOUNDRY_MACHINE_HOME: machineHome,
+  };
+}
+
+export function runFoundryCli(millRoot, consumerRoot, args) {
   return spawnSync(process.execPath, [foundryCliPath(millRoot), ...args], {
     cwd: consumerRoot,
     encoding: "utf8",
-    env: {
-      ...process.env,
-      FOUNDRY_ROOT: consumerRoot,
-      HOME: isolatedHome,
-    },
+    env: proofFoundryEnv(consumerRoot),
   });
 }
 

@@ -146,6 +146,18 @@ async function runHookScript(hookPath, { env: envOverrides = {}, stdin = null, c
   });
 }
 
+function decisionFromHook(stdout) {
+  const text = String(stdout || '').trim();
+  if (!text) return null;
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && (parsed.decision === 'allow' || parsed.decision === 'deny')) return parsed.decision;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function printGrokIntegrationTree() {
   const tree = `
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -415,10 +427,11 @@ async function main() {
         toolInput: { path: 'src/index.ts' },
       },
     });
-    if (hookResult.stdout.includes('"decision"') && hookResult.stdout.includes('allow')) {
+    const decision = decisionFromHook(hookResult.stdout);
+    if (decision) {
       pass('pre-tool-use hook executed and emitted governance decision JSON');
     } else {
-      skip('active hook execution', 'no structured decision output (may be env-dependent)');
+      fail('active hook execution', hookResult.stdout.slice(0, 240) || 'no decision JSON');
     }
     if (hookResult.stderr.includes('[0xRay:GrokHook]')) {
       pass('hook produced expected 0xRay log prefix');

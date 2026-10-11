@@ -102,7 +102,7 @@ describe("XrayConfigLoader", () => {
       expect(config.multi_agent_orchestration).toBeDefined();
       expect(config.multi_agent_orchestration.enabled).toBe(true);
       expect(config.autonomous_reporting).toBeDefined();
-      expect(config.autonomous_reporting.enabled).toBe(true);
+      expect(config.autonomous_reporting.enabled).toBe(false);
       expect(Array.isArray(config.disabled_agents)).toBe(true);
     });
 

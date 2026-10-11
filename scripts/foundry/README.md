@@ -17,7 +17,7 @@ npx @0xray/foundry reconcile [patch|minor|major] [--apply] [--check]
 npx @0xray/foundry stamp
 npx @0xray/foundry docs-check
 npx @0xray/foundry docs-build
-npx @0xray/foundry gate [--verify-only]
+npx @0xray/foundry gate [--verify-only|--prove-published]
 npx @0xray/foundry release [patch|minor|major] --dry-run
 npx @0xray/foundry release [patch|minor|major] --i-mean-it
 npx @0xray/foundry release --publish-only --dry-run
@@ -39,7 +39,7 @@ npx @0xray/foundry hooks
 
 `FOUNDRY_ROOT` overrides cwd (the repo being milled).
 
-`gate` is build + test + docs-check. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME) plus observational harness (Cursor/Grok hooks bound, Repertoire fastened, Station present). `--go` emits a shop-style forge GO receipt; `--require-harness=bare|suited|partial` turns that observation into a gate. Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
+`gate` is build + test + docs-check. `--skip-docs` fails the gate. `--prove-published` is Gate D and does not publish: npm lists the version, the annotated tag points at HEAD, and the GitHub Release page exists. A local gate pass is not Gate D. `docs-build` runs Docusaurus on the 0xray exo (`docs-site/`); stranger mills skip. `inspect` runs the six mill checks (diff, plant vs worn, receipt, CI, live tarball GET, isolated HOME) plus observational harness (Cursor/Grok hooks bound, Repertoire fastened, Station present). `--go` emits a shop-style forge GO receipt; `--require-harness=bare|suited|partial` turns that observation into a gate. Mint fails on a costume dump. Isolated HOME skips machine `~/.grok`. Shared HOME last-mile dest is project `.grok/plugins/0xray` (no last-wins machine plugin). `ci` reports GitHub Actions (no auto-push). `hooks` installs git pre/post hooks. GitHub `0xRay CI/CD` is the mill gate on `main`. `Deploy Docs` is the mill Pages put.
 
 `docs-check` and `gate` run **full** 0xRay corpus only when the milled `package.json` name is `0xray` and `docs-site/` exists. Otherwise **light**: `package.json` + CHANGELOG.
 

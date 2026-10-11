@@ -914,9 +914,22 @@ async function handleDelegationGate(command, projectRoot, logDir) {
         logDir,
         `[delegation-gate] deny tool=${tool} gate=${outcome.gate} reason=${outcome.reason}`,
       );
+      return { phase: "pre", ...outcome };
     }
 
-    return { phase: "pre", ...outcome };
+    const spoken = `${tool} ${JSON.stringify(args)}`.slice(0, 500);
+    const { lensDecision, repertoireRoute } = await import("../hooks/pre-tool-speak.mjs");
+    const lens = lensDecision(projectRoot, tool, spoken);
+    if (lens) {
+      return {
+        allow: false,
+        phase: "pre",
+        gate: lens.gate || "lens",
+        reason: lens.reason,
+      };
+    }
+    const route = repertoireRoute(spoken);
+    return { phase: "pre", ...outcome, ...(route || {}) };
   } catch (error) {
     const message = `delegation-gate failed: ${error.message || error}`;
     logToActivity(logDir, `[delegation-gate] error ${message}`);
