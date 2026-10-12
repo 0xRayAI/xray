@@ -78,6 +78,7 @@
     .wcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
     .wcard { border: 1px solid #22304a; border-left: 3px solid #3b82f6; border-radius: 8px; padding: 6px 8px; background: #0b1120; font-size: 12px; cursor: pointer; }
     .wcard.parked { border-left-color: #64748b; opacity: .8; }
+    .wcard.held { border-left-color: #38bdf8; }
     .wcard.closed { border-left-color: #334155; opacity: .5; }
     .wcard.nopacket { border-left-color: #f59e0b; }
     .wcard.stall { border-left-color: #ef4444; }
@@ -90,6 +91,15 @@
     .wbadge.nudge { border-color: #f472b6; color: #f9a8d4; }
     .wbeats li.nudge, .wbeats li.nudge:last-child { color: #f9a8d4; font-weight: 600; }
     .wbadge.pin { border-color: #8b5cf6; color: #c4b5fd; }
+    .wbadge.held { border-color: #38bdf8; color: #bae6fd; }
+    .wspin { width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; border: 1.5px solid #7dd3fc; border-right-color: transparent; display: inline-block; animation: wspin .8s linear infinite; flex: none; }
+    @keyframes wspin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .wspin { animation: none; border-color: #7dd3fc; background: #7dd3fc; } }
+    .pinhead, .donehead { display: block; width: 100%; text-align: left; margin: 8px 0 4px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8fa3c6; cursor: pointer; }
+    .wkids { list-style: none; margin: 2px 0 6px 14px; padding: 0 0 0 8px; border-left: 1px solid #2a3a5c; }
+    .kidhead, .isshead { display: block; margin: 2px 0 2px 14px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 10px; color: #8fa3c6; cursor: pointer; }
+    .wkids.collapsed, .wcards.issues.collapsed, .wcards.pins.collapsed, .wcards.done.collapsed { display: none; }
+    .wsub { margin: 4px 0 2px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6e82a8; }
     .wdetail { display: none; margin-top: 5px; border-top: 1px solid #1c2740; padding-top: 4px; }
     .wcard.open .wdetail { display: block; }
     .wdetail dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 1px 8px; font-size: 11px; }
@@ -371,7 +381,7 @@
   }
   // 🌊 Board panel: cards / packets / beats from the feed header (feed.board, built by the feed pass from the
   // same events; read-only). Grouped by stage; click a card for its packet and last 5 beats; a related live beat glows it.
-  var wb = { cards: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0 };
+  var wb = { cards: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {} };
   window.LIVE_WAVE = wb;
   var WB_PACKET = ['goal', 'constraints', 'path', 'acceptance', 'evidence', 'next owner', 'escalate'];
   var WB_BEAT_KINDS = /^(pr_open|issue_open|pr_commit|pr_force_push|pr_update|critic_|merged|lab_retest_|check_run|workflow_run|ci_)/;
@@ -383,32 +393,72 @@
   function wbAge(t) { if (!t) return '—'; var m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + 'm' : m < 2880 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; }
   function wbEl(tag, cls, text) { var el = document.createElement(tag); if (cls) el.className = cls; if (text != null) el.textContent = text; return el; }
   function wbSafeUrl(u) { return /^https:\/\/([a-z0-9-]+\.)*(github\.com|railway\.app|railway\.com|live\.ai)(\/|$)/i.test(u || '') ? u : ''; }
+  function cardSeat(c) {
+    var raw = (c.packet && c.packet['next owner']) || c.owner || '';
+    var k = L.liveNodeKey ? L.liveNodeKey(raw, null) : null;
+    return k || raw || 'other';
+  }
+  function cardWorking(c) {
+    if (!c || c.pinned || c.state === 'closed' || c.state === 'parked' || c.state === 'held' || c.stage === 'done') return false;
+    return fleetWorking(cardSeat(c));
+  }
+  function cleanTitle(c) { return String(c.title || '').replace(/^[\w.-]+ (issue|pr|PR) #\d+ opened · /, ''); }
+  function linkKids(cards) {
+    var byKey = {}, kids = {}, child = {};
+    cards.forEach(function (c) { byKey[c.key] = c; });
+    cards.forEach(function (c) {
+      if (c.kind !== 'issue' || c.pinned) return;
+      var m, re = /#(\d+)/g, t = cleanTitle(c);
+      while ((m = re.exec(t))) {
+        var pk = String(c.repo).toLowerCase() + '#' + Number(m[1]), p = byKey[pk];
+        if (p && p !== c && p.kind === 'pr' && p.state !== 'closed') { (kids[pk] = kids[pk] || []).push(c); child[c.key] = pk; return; }
+      }
+    });
+    return { kids: kids, child: child };
+  }
+  function byBeat(a, b) { return (b.last_beat_t || 0) - (a.last_beat_t || 0); }
   function renderWave(force) {
-    var k = wb.stamp + ':' + Math.floor(Date.now() / 30000);   // ages tick every 30 s
+    var k = wb.stamp + ':' + Math.floor(Date.now() / 30000);
     if (!force && k === wb.key) return; wb.key = k;
     var body = $('waveBody'); body.textContent = ''; wb.byKey = {};
     var S = wb.stats, strip = $('waveStats'); strip.textContent = '';
     if (S) [['issues opened', S.issues_opened_24h], ['issues closed', S.issues_closed_24h], ['PRs opened', S.prs_opened_24h],
       ['PRs merged', S.prs_merged_24h], ['PRs closed unmerged', S.prs_closed_unmerged_24h], ['open now', S.open_total]].forEach(function (x, i) {
       var d = wbEl('span', 'wstat' + (i === 5 ? ' total' : '')); d.appendChild(wbEl('b', '', String(x[1] == null ? '–' : x[1]))); d.appendChild(wbEl('small', '', x[0] + (i < 5 ? ' 24h' : ''))); strip.appendChild(d); });
-    var stages = ['open', 'review', 'fix', 'merge', 'retest', 'done'], live = 0, stalls = 0;
+    var live = 0, stalls = 0, held = 0;
+    wb.cards.forEach(function (c) {
+      if (c.pinned) return;
+      if (c.state === 'live') live++;
+      if (c.state === 'held') held++;
+      if (c.stall) stalls++;
+    });
+    var LK = linkKids(wb.cards);
     var pins = wb.cards.filter(function (c) { return c.pinned; });
+    var inWork = wb.cards.filter(cardWorking).sort(byBeat);
+    if (!inWork.length) wb.pinsOpen = false;
     function card(c) {
       var li = wbEl('li', 'wcard ' + (c.state || 'live') + (c.packet_ok === false && !c.pinned ? ' nopacket' : '') + (c.stall ? ' stall' : '') + (wb.open[c.key] ? ' open' : ''));
       li.dataset.key = c.key; wb.byKey[c.key] = li;
       var top = wbEl('div', 'wtop');
-      var it = wbEl('span', 'witem', (c.number ? '#' + c.number + ' ' : '') + (c.title || '')); it.title = (c.repo ? c.repo + ' #' + c.number + ' ' : '') + (c.title || '');
+      var it = wbEl('span', 'witem', (c.number ? '#' + c.number + ' ' : '') + cleanTitle(c)); it.title = (c.repo ? c.repo + ' #' + c.number + ' ' : '') + (c.title || '');
+      if (cardWorking(c)) { var spin = wbEl('span', 'wspin'); spin.setAttribute('aria-label', 'in work'); top.appendChild(spin); }
       top.appendChild(it); top.appendChild(wbEl('span', 'wage', c.pinned ? '' : wbAge(c.last_beat_t))); li.appendChild(top);
       var meta = wbEl('div', 'wmeta');
       meta.appendChild(wbEl('span', '', (c.owner || '-') + ' · ' + (c.pinned ? (c.section || 'pinned') : c.stage + (c.state !== 'live' ? ' · ' + c.state : ''))));
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
       else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'no packet'));
+      if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', 'HELD'));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'stall 60m+'));
       if (c.nudge) meta.appendChild(wbEl('span', 'wbadge nudge', '\u23F0 nudge L' + c.nudge));
       li.appendChild(meta);
       var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
       WB_PACKET.forEach(function (f) { var v = (c.packet || {})[f]; if (!v && !(f === 'acceptance' || f === 'next owner')) return;
         dl.appendChild(wbEl('dt', '', f)); dl.appendChild(wbEl('dd', '', v || '— missing —')); });
+      if (c.hold && (c.hold.by || c.hold.reason || c.hold.until)) {
+        dl.appendChild(wbEl('dt', '', 'held by')); dl.appendChild(wbEl('dd', '', c.hold.by || '—'));
+        dl.appendChild(wbEl('dt', '', 'reason')); dl.appendChild(wbEl('dd', '', c.hold.reason || '—'));
+        if (c.hold.until) { dl.appendChild(wbEl('dt', '', 'until')); dl.appendChild(wbEl('dd', '', c.hold.until)); }
+      }
       if (!c.pinned) det.appendChild(dl);
       var ol = wbEl('ol', 'wbeats');
       (c.beats || []).slice(-5).forEach(function (b) { ol.appendChild(wbEl('li', b.nudge ? 'nudge' : '', (b.nudge ? '\u23F0 ' : '') + wbCt(b.t) + ' · ' + b.what)); });
@@ -417,14 +467,73 @@
       li.appendChild(det);
       return li;
     }
-    if (pins.length) { body.appendChild(wbEl('div', 'wgroup', 'pinned (' + pins.length + ')')); var pu = wbEl('ul', 'wcards'); pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu); }
-    stages.forEach(function (st) {
-      var cs = wb.cards.filter(function (c) { return !c.pinned && c.stage === st; });
-      if (!cs.length) return;
-      body.appendChild(wbEl('div', 'wgroup', st + ' (' + cs.length + ')'));
-      var ul = wbEl('ul', 'wcards'); cs.forEach(function (c) { if (c.state === 'live') live++; if (c.stall) stalls++; ul.appendChild(card(c)); }); body.appendChild(ul);
+    function put(ul, c) {
+      ul.appendChild(card(c));
+      var ks = LK.kids[c.key]; if (!ks || !ks.length) return;
+      var open = !!wb.kidsOpen[c.key];
+      var kh = wbEl('button', 'kidhead', (open ? '\u25BE ' : '\u25B8 ') + ks.length + ' linked issue' + (ks.length > 1 ? 's' : ''));
+      kh.type = 'button'; kh.setAttribute('aria-expanded', open ? 'true' : 'false');
+      kh.addEventListener('click', function (ev) { ev.stopPropagation(); wb.kidsOpen[c.key] = !wb.kidsOpen[c.key]; wb.key = ''; renderWave(true); });
+      ul.appendChild(kh);
+      var ku = wbEl('ul', open ? 'wkids' : 'wkids collapsed'); ks.sort(byBeat).forEach(function (k) { ku.appendChild(card(k)); }); ul.appendChild(ku);
+    }
+    if (inWork.length) {
+      body.appendChild(wbEl('div', 'wgroup', 'in work (' + inWork.length + ')'));
+      var wu = wbEl('ul', 'wcards'); inWork.forEach(function (c) { if (!LK.child[c.key]) put(wu, c); }); body.appendChild(wu);
+    }
+    if (pins.length) {
+      var collapsed = inWork.length && !wb.pinsOpen;
+      var head = wbEl('button', 'pinhead', 'pinned (' + pins.length + ')');
+      head.type = 'button'; head.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      head.addEventListener('click', function (ev) { ev.stopPropagation(); if (!inWork.length) return; wb.pinsOpen = !wb.pinsOpen; wb.key = ''; renderWave(true); });
+      body.appendChild(head);
+      var pu = wbEl('ul', collapsed ? 'wcards pins collapsed' : 'wcards pins');
+      pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu);
+    }
+    var seats = [], bySeat = {};
+    wb.cards.forEach(function (c) {
+      if (c.pinned || cardWorking(c) || LK.child[c.key]) return;
+      var s = cardSeat(c);
+      if (!bySeat[s]) { bySeat[s] = []; seats.push(s); }
+      bySeat[s].push(c);
     });
-    $('waveCount').textContent = wb.cards.length ? live + ' live' + (stalls ? ' · ' + stalls + ' stalled' : '') : 'no cards';
+    seats.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
+    var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'held' };
+    seats.forEach(function (s) {
+      body.appendChild(wbEl('div', 'wgroup', L.LABEL[s] || s));
+      var buckets = { waiting: [], review: [], held: [], done: [] };
+      bySeat[s].forEach(function (c) {
+        var b = 'waiting';
+        if (c.state === 'closed' || c.state === 'parked' || c.stage === 'done') b = 'done';
+        else if (c.state === 'held') b = 'held';
+        else if (c.stage === 'review') b = 'review';
+        buckets[b].push(c);
+      });
+      ['waiting', 'review', 'held'].forEach(function (b) {
+        var cs = buckets[b].sort(byBeat); if (!cs.length) return;
+        body.appendChild(wbEl('div', 'wsub', bucketName[b] + ' (' + cs.length + ')'));
+        var prs = cs.filter(function (c) { return c.kind !== 'issue'; }), iss = cs.filter(function (c) { return c.kind === 'issue'; });
+        var ul = wbEl('ul', 'wcards'); prs.forEach(function (c) { put(ul, c); }); body.appendChild(ul);
+        if (!iss.length) return;
+        if (iss.length <= 3) { var su = wbEl('ul', 'wcards'); iss.forEach(function (c) { put(su, c); }); body.appendChild(su); return; }
+        var ik = s + ':' + b, io = !!wb.issuesOpen[ik];
+        var ih = wbEl('button', 'isshead', (io ? '\u25BE ' : '\u25B8 ') + iss.length + ' open issues');
+        ih.type = 'button'; ih.setAttribute('aria-expanded', io ? 'true' : 'false');
+        ih.addEventListener('click', function (ev) { ev.stopPropagation(); wb.issuesOpen[ik] = !wb.issuesOpen[ik]; wb.key = ''; renderWave(true); });
+        body.appendChild(ih);
+        var iu = wbEl('ul', io ? 'wcards issues' : 'wcards issues collapsed'); iss.forEach(function (c) { put(iu, c); }); body.appendChild(iu);
+      });
+      if (buckets.done.length) {
+        var open = !!wb.doneOpen[s];
+        var dh = wbEl('button', 'donehead', 'done (' + buckets.done.length + ')');
+        dh.type = 'button'; dh.setAttribute('aria-expanded', open ? 'true' : 'false');
+        dh.addEventListener('click', function (ev) { ev.stopPropagation(); wb.doneOpen[s] = !wb.doneOpen[s]; wb.key = ''; renderWave(true); });
+        body.appendChild(dh);
+        var du = wbEl('ul', open ? 'wcards done' : 'wcards done collapsed');
+        buckets.done.sort(byBeat).forEach(function (c) { du.appendChild(card(c)); }); body.appendChild(du);
+      }
+    });
+    $('waveCount').textContent = wb.cards.length ? live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') : 'no cards';
   }
   $('waveBody').addEventListener('click', function (ev) {
     var li = ev.target.closest('.wcard'); if (!li) return;

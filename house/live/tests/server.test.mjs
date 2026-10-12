@@ -243,8 +243,11 @@ test('inbox (xray PR #5 port): POST /inbox/builder needs the ingest secret heade
   assert.equal((await post({ lines: [line('r1')] }, {})).status, 401);
   assert.equal((await post({ lines: [line('r1')] }, { Authorization: 'Bearer ' + INGEST })).status, 401);   // header only
   assert.equal((await post({ lines: [{ ...line('c1'), seat: 'reviewer' }] })).status, 403);                  // only builder mirrored
-  const m1 = await post({ lines: [{ ...line('m1'), message: 'hi' }] });                                      // no text fields: line skipped alone
-  assert.equal(m1.status, 200); assert.deepEqual(await m1.json(), { ok: true, added: 0, rejected: ['m1'] });
+  const m1 = await post({ lines: [{ ...line('m1'), message: 'hi' }] });                                      // nothing stored
+  assert.equal(m1.status, 400);
+  const m1b = await m1.json();
+  assert.match(m1b.error, /no line stored/);
+  assert.deepEqual(m1b.rejected, ['m1']);
   const ok = await post({ lines: [line('r1'), line('r2'), line('r1')] });
   assert.equal(ok.status, 200); assert.equal((await ok.json()).added, 2);
   assert.equal((await (await post({ lines: [line('r2')] })).json()).added, 0);
@@ -254,6 +257,18 @@ test('inbox (xray PR #5 port): POST /inbox/builder needs the ingest secret heade
   assert.equal((await get(T('c'))).status, 401);                                                            // ops-app: not an activity seat
   const g = await get(T('a')); assert.equal(g.status, 200); assert.deepEqual((await g.json()).lines.map(l => l.id), ['r1', 'r2']);
   assert.deepEqual((await (await get(T('a'), '?since=r1')).json()).lines.map(l => l.id), ['r2']);
+  const kept = await post({ lines: [line('keep')] });
+  assert.equal(kept.status, 200);
+  const badReplace = await post({ replace: true, lines: [{ ...line('nope'), message: 'x' }] });
+  assert.equal(badReplace.status, 400);
+  assert.ok((await idsOf()).includes('keep'));
+  const mixed = await post({ replace: true, lines: [line('new1'), { ...line('bad'), body: 'no' }] });
+  assert.equal(mixed.status, 200);
+  const mix = await mixed.json();
+  assert.equal(mix.added, 1);
+  assert.deepEqual(mix.rejected, ['bad']);
+  assert.deepEqual(await idsOf(), ['new1']);
+  async function idsOf() { return (await (await get(T('a'))).json()).lines.map(l => l.id); }
 });
 test('GET /ingest/events: ingest secret only; events since the cursor', async () => {
   assert.equal((await fetch(BASE + '/ingest/events')).status, 401);

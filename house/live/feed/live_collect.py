@@ -9,6 +9,8 @@ import json, os, re, time, urllib.request, urllib.error, urllib.parse, http.clie
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import live_packet
+
 API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
 GQL_FLOOR = int(os.environ.get("LIVE_GQL_FLOOR", "1000"))
@@ -91,11 +93,33 @@ RESOLVED_RE = re.compile(r"\b(resolved|superseded|fixed (?:in|by) #\d+|nothing (
 def card_fields(x) -> dict:
     """Board card fields from a PR / issue object this pass already fetched: branded title, state, labels and
     the packet block (sanitized, <= 200 chars a field). The body itself is discarded here, never stored."""
-    import live_packet
     return {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
             "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
             "packet": live_packet.parse(x.get("body")) or None,
             "fixes": sorted({int(m) for m in FIXES_RE.findall(x.get("body") or "")} - {x.get("number")})[:10] or None}
+
+
+def open_numbers(c, repos, max_pages=20):
+    """{repo_lower: {numbers}} of every open issue and PR, one paged query per repo.
+    A repo whose query fails is left out, so callers fall back to stored events for it."""
+    out = {}
+    for repo in sorted({str(r).lower() for r in repos if r and "/" in str(r)}):
+        nums, url, params = set(), f"/repos/{repo}/issues", {"state": "open", "per_page": 100}
+        try:
+            for _ in range(max_pages):
+                st, data, _, nxt = c.rest(url, params, essential=False)
+                if st != 200 or not isinstance(data, list):
+                    raise ValueError(f"HTTP {st}")
+                nums.update(int(i["number"]) for i in data if isinstance(i, dict) and i.get("number") is not None)
+                if not nxt:
+                    break
+                url, params = nxt, None
+            else:
+                continue
+        except (RateLow, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
+            continue
+        out[repo] = nums
+    return out
 
 
 def iso_ct(t: str, CT) -> str:
@@ -435,6 +459,8 @@ class RepoCollector:
 
     # ---------------------------------------------------------------- incremental (REST)
     def poll_pulls(self, c):
+        if not getattr(c, "token", None):
+            return
         cur = self.st["cur"].get("pulls")
         newest = cur
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
@@ -576,12 +602,15 @@ class RepoCollector:
             n = int(cm["issue_url"].rsplit("/", 1)[1])
             is_pr = "/pull/" in cm["html_url"]
             login = (cm.get("user") or {}).get("login")
+            body = cm.get("body") or ""
+            hold = live_packet.parse_hold(body)
             k = "pr_comment" if is_pr else "issue_comment"
             to = self.pr_node(n) if is_pr else "GitHub"
             self.put(f"{self.repo}{'#' if is_pr else '!'}{n}:comment:{cm['id']}", cm["created_at"], node(login), to, k,
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
-                     actor=login, resolved=True if RESOLVED_RE.search(cm.get("body") or "") else None,   # flags only
-                     parked=True if PARKED_COMMENT_RE.match(cm.get("body") or "") else None)
+                     actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
+                     parked=True if PARKED_COMMENT_RE.match(body) else None,
+                     hold=hold)
             if is_pr and login in CRITIC_LOGINS:   # verdict word + SHA only; the body is discarded here
                 body = (cm.get("body") or "").lstrip()
                 m = CRITIC_RE.match(body)

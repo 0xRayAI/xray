@@ -35,18 +35,22 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 | `GET /cards?seat=<seat>` | that seat, or operator | cards the seat owns or is next owner on (coord / operator: all), with nudge beats |
 | `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for reviewer a verdict at head); `?all=1` = history |
 | `GET /nudges?since=<id>` | operator | `{nudges}` in creation order |
-| `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id) |
+| `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id). A batch that stores nothing is 400 with `rejected` refs. `replace: true` clears only after a line validates |
+| `POST /ingest/source` | `X-Live-Ingest` | normalized source events (`{source, events}`). Unknown fields are refused |
 | `GET/POST /inbox/builder` | as before | kept for Builder's existing reader |
 
 ## Nudge timing (server env)
-`NUDGE_L1_S` (default 3600) and `NUDGE_L2_S` (default 1800).
+`NUDGE_L1_S` (default 3600), `NUDGE_L2_S` (default 1800), `NUDGE_L3_S` (default 7200), `HELD_MAX_S` (default 72h).
+`NO_NUDGE_REPOS` unset means no repo is excluded. `GITHUB_HOLD_LABEL` default `on-hold`. `JIRA_HOLD_STATUS` default `On Hold`.
+`SEAT_PRESENCE` default `{"builder-cloud":"builder"}`; a value may be a seat name or an array of seat names.
+`UPSTREAM_REPO` (or `XRAY_REPO`) unset means the upstream watcher is off. `UPSTREAM_PINNED` and `XRAY_OURS` default empty.
 
 ## Retired local files
 `fleet/inbox/*.jsonl` were archived to `logs/inbox-retired-<date>/`; `house/BOARD.md` is frozen with a header
 pointing to the live board. Re-enable local writing only for debugging with `LIVE_BOARD_LOCAL=1`.
 
 ## Box helpers (any box bot)
-- `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines (a read without --peek acks them on the server); `live-inbox <seat> --ack <id|all>` clears; cursor in
+- `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines. A read never acks (`--peek` is the same as a plain read). `live-inbox <seat> --ack <id|all>` or `--pop <id|all>` is the receipt; the cursor still advances to the newest line seen. Cursor in
   `/srv/live/run/fleet/cursors/<seat>.txt` (advanced after a successful read).
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted

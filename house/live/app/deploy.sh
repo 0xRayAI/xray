@@ -13,7 +13,7 @@ DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 }
 # collector/ = the feed modules + house/live-mesh/fetch_feed.py from this repo (copied at deploy time, not committed)
 rm -rf "$DST/collector"; mkdir -p "$DST/collector/upstream"
-cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_board.py "$DST/collector/"
+cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_board.py "$APP"/../feed/upstream.py "$APP"/../feed/jira_source.py "$DST/collector/"
 cp "$APP/../../live-mesh/fetch_feed.py" "$DST/collector/upstream/"   # house/live-mesh in this repo
 # MESH_SEED_STORE=1 (one-time, first volume deploy): ship the box collector's store as collector/seed/ (the server
 # copies it onto the volume only where no file exists yet). Scanned for token / key patterns first.

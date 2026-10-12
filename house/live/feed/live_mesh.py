@@ -21,6 +21,7 @@ import live_collect as uc  # noqa: E402
 import live_flow  # noqa: E402
 import live_fleet  # noqa: E402
 import live_board  # noqa: E402
+import upstream  # noqa: E402
 
 ORG = "example-org"
 HEALTH_URLS = os.environ.get("LIVE_HEALTH_URLS", "https://dev.example.com/health https://app.example.com/health").split()
@@ -37,6 +38,7 @@ ff.SERVICES = ["GitHub", "dev.example.com", "app.example.com"]
 # fleet state from GitHub; no box files) or "box" (slim box pusher: fleet files, merge-queue, Railway deploy list;
 # no GitHub calls and no token). The server merges the two sources by event id.
 MODE = os.environ.get("LIVE_MODE", "all")
+UPSTREAM = {}
 if MODE not in ("all", "github", "box"):
     raise SystemExit(f"LIVE_MODE must be all, github or box (got {MODE!r})")
 COLLECTORS: dict = {}
@@ -153,6 +155,9 @@ def build(args, gh):
             ff.log(f"{repo}: {e} (token expired) -> exit {EXIT_REMINT} to re-mint; feed not written")
             raise SystemExit(EXIT_REMINT)
         events.extend(col.ev.values())
+    if MODE != "box" and upstream.enabled():
+        watcher = UPSTREAM.get("u") or UPSTREAM.setdefault("u", upstream.UpstreamCollector(out_dir / "store", token or "", uc.node, ff.log))
+        events.extend(watcher.run())
     gh_retests = {(e["repo"], e["number"]) for e in events if e["kind"].startswith("lab_retest_")}
     if MODE != "github":            # merge-queue.md lives on the box (the server drops a box retest GitHub also has)
         events.extend(queue_events(out_dir / "retest-seen.json", gh_retests))
@@ -165,6 +170,14 @@ def build(args, gh):
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
     fleet_state = fleet.fleet_state(uniq)
     wave = live_board.run(uniq) if MODE != "github" else None   # cards / packets / beats (same events)
+    if wave is not None and MODE != "box" and token:
+        repos = sorted({str(e.get("repo")).lower() for e in uniq if e.get("repo")})
+        try:
+            n = live_board.reconcile(wave, uc.open_numbers(c, repos))
+            if n:
+                ff.log(f"reconcile: closed {n} card(s) GitHub no longer lists open")
+        except (uc.RateLow, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError):
+            ff.log("reconcile: skipped (open-number query failed)")
     STATS["passes"] += 1
     gaps = sorted({f"{r}: deployments {v}" for r, col in COLLECTORS.items()
                    for k, v in col.st["gaps"].items() if k == "deployments" and v})

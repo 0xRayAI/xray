@@ -5,7 +5,11 @@ server's merged feed events pulled by the pusher). Card and packet fields come f
 the collector pass already writes (live_collect.card_fields: title, state, labels, sanitized packet).
 
 CARD   = one GitHub issue or PR (repo#number): title, url, owner seat, stage (open > review > fix > merge > retest >
-         done), state (live | parked | closed). Closed cards stop collecting beats and drop off 24 h after closing.
+         done), state (live | held | parked | closed). A merge, an issue close, or a PR close sets state closed
+         and stage done. A failed retest after merge needs a new issue. Closed cards drop off 24 h after closing.
+HOLD   = the owner posts a comment whose first line is 'Held: <reason>' (optional until:), or the issue / PR
+         carries a label in GITHUB_HOLD_LABEL (default on-hold). A Parked: comment still parks and wins over a hold.
+         Repos in NO_NUDGE_REPOS (unset means none) stay visible and are never stalled or nudged.
 PACKET = goal, constraints, path, acceptance, evidence, next owner, escalate. Missing acceptance or next owner ->
          amber 'no packet'. Evidence fills from the latest beat (CI url, Reviewer verdict url, merge sha, retest tick).
 BEAT   = one real event: PR opened/pushed, Reviewer verdict, CI result, merge, merge-queue.md tick, Lead message, blocker.
@@ -31,8 +35,9 @@ STALL_S = 60 * 60
 CLOSED_KEEP_S = 24 * 3600
 MD_EVERY_S = 60
 MAX_CARDS = 40
-# parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall)
-PARKED = re.compile(r"\b(parked|on.hold|blocked|waiting|icebox)\b", re.I)
+# parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall).
+# The hold label (default on-hold) is a hold, not a park.
+PARKED = re.compile(r"\b(parked|blocked|waiting|icebox)\b", re.I)
 _last_md = [0.0]
 
 
@@ -173,10 +178,21 @@ def model(extra_events=None, now=None):
         is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review")
         if is_comment and e.get("parked"):                 # Coord rule: a 'Parked:' comment parks the card (no nudges)
             c["_parked_c"] = True
+            c["_hold"] = None
             c["_beats"].append({"t": int(_t(e) * 1000), "what": "parked", "url": "", "id": e["id"], "_ev": ""})
+            continue
+        hold = e.get("hold") if isinstance(e.get("hold"), dict) else None
+        if is_comment and hold and str(e.get("from") or "") == str(c.get("owner") or ""):
+            c["_parked_c"] = False
+            c["_hold"] = {"reason": live_packet.clean(hold.get("reason"))[:live_packet.HOLD_MAX],
+                          "until": live_packet.clean(hold.get("until"))[:live_packet.HOLD_MAX],
+                          "by": str(e.get("from") or "")[:24], "t": _t(e)}
+            c["_beats"].append({"t": int(_t(e) * 1000), "what": "held", "url": "", "id": e["id"], "_ev": ""})
             continue
         if w or is_comment:
             c["_parked_c"] = False                         # a newer beat or a non-'Parked:' comment unparks it
+            if c.get("_hold") and str(e.get("from") or "") == str(c.get("owner") or ""):
+                c["_hold"] = None
         if not w and e.get("kind") in ("pr_comment", "issue_comment", "pr_review") and str(e.get("from")) == c["owner"]:
             w = "owner: resolved" if e.get("resolved") else "owner comment"   # the owning seat's own note is a beat
             if e.get("resolved"):
@@ -222,16 +238,16 @@ def model(extra_events=None, now=None):
         resolved = c.pop("_resolved", None) or (f"fixed by {fixed_by[c['key']]}" if c["key"] in fixed_by else None)
         if resolved:
             stage = "done"                                 # owner says resolved / a later merged PR fixes or supersedes it
-        closed = c.pop("_closed") or (merged and stage == "done") or bool(resolved)
+        explicit_close = bool(c.pop("_closed"))
+        closed = explicit_close or (merged and stage == "done") or bool(resolved)
         if c["kind"] == "issue" and closed:
             stage = "done"
-        if merged:
-            # merged: live while waiting on the merge-queue.md tick (or after a retest FAIL), for up to 24 h after
-            # the last beat; then it is done and closed (and drops off 24 h after that)
-            closed = stage == "done" or now - (last["t"] / 1000 if last else 0) > CLOSED_KEEP_S
-            closed_t = closed_t if stage == "done" else (last["t"] / 1000 if last else closed_t)
-            if closed and stage != "fix":
-                stage = "done"
+        if merged or explicit_close:
+            # A merge, an issue close, or a PR close ends the card. It does not stay live for a retest tick.
+            # A failed retest after merge needs a new issue.
+            closed = True
+            stage = "done"
+            closed_t = closed_t or (last["t"] / 1000 if last else now)
         if closed and closed_t and now - closed_t > CLOSED_KEEP_S:
             continue                                       # closed cards drop off after 24 h
         quiet = bool(last) and now - last["t"] / 1000 > 86400
@@ -267,6 +283,21 @@ def model(extra_events=None, now=None):
             pk["next owner"] = "Builder"
         elif not merged and re.search(r"tester", str(pk.get("next owner") or ""), re.I):
             c["nudge_to"], c["nudge_via"] = "builder", "unmerged (Tester only retests after merge)"
+        hold = c.pop("_hold", None)
+        label = live_packet.labels_held(c.get("labels"))
+        if hold and hold.get("reason") and not closed and not parked:
+            state, stall = "held", False
+            c.pop("nudge_to", None); c.pop("nudge_via", None)
+            c["hold"] = {"reason": hold["reason"], "until": hold["until"], "by": hold["by"],
+                         "at": int((hold["t"] or 0) * 1000)}
+        elif label and not closed and not parked:
+            state, stall = "held", False
+            c.pop("nudge_to", None); c.pop("nudge_via", None)
+            c["hold"] = {"reason": live_packet.clean(label)[:live_packet.HOLD_MAX] or "on-hold",
+                         "until": "", "by": "github", "at": int((last_t or now) * 1000)}
+        if live_packet.repo_no_nudge(c.get("repo")):
+            c.pop("nudge_to", None); c.pop("nudge_via", None)
+            stall = False
         missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
         if resolved:
             c["resolved"] = resolved
@@ -276,10 +307,37 @@ def model(extra_events=None, now=None):
         out.append(c)
     # only cards with recent life make the board: live/parked with a beat in 14 days, or closed in the last 24 h
     out = [c for c in out if c["state"] == "closed" or (c["last_beat_t"] and now - c["last_beat_t"] / 1000 < 14 * 86400)]
-    rank = {"live": 0, "parked": 1, "closed": 2}
+    rank = {"live": 0, "held": 0, "parked": 1, "closed": 2}
     out.sort(key=lambda c: (rank[c["state"]], STAGES.index(c["stage"]), -c["last_beat_t"]))
     return {"updated_ct": datetime.fromtimestamp(now, CT).isoformat(timespec="seconds"),
             "stages": list(STAGES), "stats": stats(evs, now), "cards": pinned() + out[:MAX_CARDS]}
+
+
+def reconcile(wave, open_now, now=None):
+    """Close every non-closed issue/PR card whose item GitHub reports closed or missing. Returns how many closed."""
+    if not open_now or not isinstance(wave, dict) or not isinstance(wave.get("cards"), list):
+        return 0
+    now = now or time.time()
+    n = 0
+    for c in wave["cards"]:
+        if c.get("pinned") or c.get("state") == "closed" or c.get("kind") not in ("issue", "pr"):
+            continue
+        key = str(c.get("key") or "")
+        if "#" not in key:
+            continue
+        repo, _, num = key.rpartition("#")
+        nums = open_now.get(repo.lower())
+        if nums is None:
+            continue
+        try:
+            missing = int(num) not in nums
+        except ValueError:
+            continue
+        if missing:
+            c["state"], c["stage"], c["closed_t"], c["stall"] = "closed", "done", int(now * 1000), False
+            c.pop("nudge_to", None); c.pop("nudge_via", None)
+            n += 1
+    return n
 
 
 def stats(evs, now=None):

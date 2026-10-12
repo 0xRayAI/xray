@@ -1,6 +1,6 @@
 # house/live: the 0xray install of the live board
 
-The live fleet page and the system behind it: a read-only GitHub activity feed, seat inboxes with ack, cards / packets /
+Bifrost: the live fleet page and the system behind it: a read-only GitHub activity feed, seat inboxes with ack, cards / packets /
 beats, nudges, a silent-seat check, parked state, a split card view with a stats strip, and a write-only endpoint for an
 external emitter (for example an MCP server reporting tool calls). The page is served password-gated from one Railway
 service. Seat names in this package are examples (Builder, Reviewer, Tester, QA, Operator, Coord, Lead); rename them in

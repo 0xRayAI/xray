@@ -1,10 +1,13 @@
 """Packet fields from an issue / PR body, captured in the existing feed pass (the body itself is never stored).
+Holds: a Held: comment, or a GitHub label in GITHUB_HOLD_LABEL (default on-hold).
+NO_NUDGE_REPOS (unset means none) stay on the board and are never nudged.
 
 A packet is 7 fields: goal, constraints, path, acceptance, evidence, next owner, escalate. Two forms:
   ## Packet                         single line:
   - Goal: ...                       Packet: goal: ... | constraints: ... | acceptance: ... | next owner: ...
   - Next owner: ...                 (';' also separates fields)
 Every field: emails -> [email], links whose host is not GitHub, Railway or example.com are stripped, <= 200 chars."""
+import os
 import re
 from urllib.parse import urlparse
 
@@ -29,6 +32,89 @@ def clean(s):
     s = EMAIL.sub("[email]", s)
     s = " ".join(s.replace("**", "").replace("`", "").split())
     return s[:MAX].rstrip()
+
+
+_HELD_LINE = re.compile(r"^\s*held:\s*(.+?)\s*$", re.I)
+_UNTIL_LINE = re.compile(r"^\s*until:\s*(.+?)\s*$", re.I)
+HOLD_MAX = 80
+
+
+def parse_hold(body):
+    """Held: comment -> {reason, until}. The body is not returned. None when the first line is not Held:."""
+    lines = [ln.strip() for ln in str(body or "").replace("\r\n", "\n").splitlines() if ln.strip()]
+    if not lines:
+        return None
+    m = _HELD_LINE.match(lines[0])
+    if not m:
+        return None
+    raw, until = m.group(1).strip(), ""
+    if "|" in raw:
+        left, right = raw.split("|", 1)
+        raw = left.strip()
+        um = re.match(r"until:\s*(.+)$", right.strip(), re.I)
+        until = (um.group(1) if um else right).strip()
+    for ln in lines[1:6]:
+        um = _UNTIL_LINE.match(ln)
+        if um and not until:
+            until = um.group(1).strip()
+    if not until:
+        um = re.match(r"until\s+(.+)$", raw, re.I)
+        if um:
+            until = um.group(1).strip()
+    reason = clean(raw)[:HOLD_MAX]
+    until = clean(until)[:HOLD_MAX]
+    if not reason:
+        return None
+    return {"reason": reason, "until": until}
+
+
+def _csv_env(name, default):
+    """Unset uses default. A set value is comma-separated; a blank value is an empty list."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return list(default)
+    return [part.strip() for part in str(raw).split(",") if part.strip()]
+
+
+def github_hold_labels():
+    """GitHub label names that hold a card. Unset means on-hold."""
+    return _csv_env("GITHUB_HOLD_LABEL", ["on-hold"])
+
+
+def labels_held(labels):
+    """Matching label text, or None. The comparison is exact and case-insensitive."""
+    wanted = {name.casefold() for name in github_hold_labels()}
+    if not wanted:
+        return None
+    for label in labels or []:
+        text = str(label or "").strip()
+        if text.casefold() in wanted:
+            return text
+    return None
+
+
+def no_nudge_patterns():
+    """Repo globs that stay on the board and are never nudged. Unset means none."""
+    return _csv_env("NO_NUDGE_REPOS", [])
+
+
+def repo_no_nudge(repo, patterns=None):
+    """True when repo matches owner/name or owner/* . Comparison is case-insensitive."""
+    text = str(repo or "").strip()
+    if not text:
+        return False
+    low = text.casefold()
+    for pattern in no_nudge_patterns() if patterns is None else patterns:
+        pat = str(pattern or "").strip()
+        if not pat:
+            continue
+        if pat.endswith("/*"):
+            owner = pat[:-2].casefold()
+            if owner and (low == owner or low.startswith(owner + "/")):
+                return True
+        elif low == pat.casefold():
+            return True
+    return False
 
 
 def _key(k):

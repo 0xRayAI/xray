@@ -8,6 +8,8 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { seatPresence, presentSeat } from './presence.mjs';
+import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
 const MESH_PASSWORD = process.env.MESH_PASSWORD || '';
@@ -153,9 +155,11 @@ function postInbox({ secret, headerSecret, body, lines }) {
   const incoming = parsed && Array.isArray(parsed.lines) ? parsed.lines : null;
   if (!incoming) return { status: 400, error: 'lines required' };
   if (incoming.some(l => !l || String(l.seat || '').toLowerCase() !== 'builder')) return { status: 403, error: 'inbox is not exposed' };
-  if (parsed.replace === true) lines.length = 0;   // pusher resync (e.g. after a bad seed)
+  const good = incoming.filter(validInboxLine);
+  if (!good.length && incoming.length) return { status: 400, error: 'no line stored', rejected: incoming.map((l, i) => (l && typeof l.id === 'string' && l.id) ? l.id.slice(0, 120) : '#' + i) };
+  if (parsed.replace === true && good.length) lines.length = 0;   // resync only after a line validates
   const known = new Set(lines.map(l => l.id)); let added = 0;
-  for (const l of incoming) { if (!validInboxLine(l)) continue; if (known.has(l.id)) continue; known.add(l.id); lines.push(l); added++; }
+  for (const l of good) { if (known.has(l.id)) continue; known.add(l.id); lines.push(l); added++; }
   return { status: 200, added };
 }
 // ---- Live board: the server is the source of truth for seat inboxes, cards and nudges ---------------------------------
@@ -168,6 +172,91 @@ const SEAT_IDS = ['builder', 'reviewer', 'tester', 'qa', 'coord', 'operator', 'g
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
 const CARD_SEAT = { 'builder-cloud': 'builder' };
 const SEAT_KEY_HASH = (() => { try { const o = JSON.parse(process.env.SEAT_KEYS || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } })();
+// Inbox wake. SEAT_WEBHOOKS is JSON {seat: {url, key_env, header?}}. The key is process.env[key_env], sent as
+// Authorization: Bearer <key> unless header names a different header (then the raw key). A quiet seat sends after
+// WAKE_COALESCE_MS (default 50) so a short burst is one POST. Further lines within WAKE_DEBOUNCE_S (default 60)
+// wait and share the next POST's ids. Three attempts with backoff. The inbox write never waits on this.
+const envNonNeg = (name, fallback) => { const n = Number(process.env[name]); return Number.isFinite(n) && n >= 0 ? n : fallback; };
+const WAKE_DEBOUNCE_MS = envNonNeg('WAKE_DEBOUNCE_S', 60) * 1000;
+const WAKE_COALESCE_MS = envNonNeg('WAKE_COALESCE_MS', 50);
+const WAKE_RETRY_MS = envNonNeg('WAKE_RETRY_MS', 400);
+const WAKE_ATTEMPTS = 3;
+function loadSeatWebhooks() {
+  const raw = process.env.SEAT_WEBHOOKS;
+  if (!raw) return {};
+  let parsed; try { parsed = JSON.parse(raw); } catch { console.log('wake: SEAT_WEBHOOKS is not json'); return {}; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+  const out = {};
+  for (const [seat, cfg] of Object.entries(parsed)) {
+    const id = String(seat || '').toLowerCase();
+    if (!SEAT_IDS.includes(id) || !cfg || typeof cfg !== 'object' || Array.isArray(cfg)) continue;
+    const url = typeof cfg.url === 'string' ? cfg.url : '', keyEnv = typeof cfg.key_env === 'string' ? cfg.key_env : '';
+    const header = typeof cfg.header === 'string' && cfg.header.trim() ? cfg.header.trim() : 'Authorization';
+    let okUrl = false; try { const u = new URL(url); okUrl = u.protocol === 'http:' || u.protocol === 'https:'; } catch { okUrl = false; }
+    if (!okUrl || !/^[A-Za-z_][A-Za-z0-9_]{0,80}$/.test(keyEnv) || !/^[A-Za-z0-9-]{1,64}$/.test(header)) { console.log('wake: skip bad config for ' + id); continue; }
+    out[id] = { url, keyEnv, header, bearer: header.toLowerCase() === 'authorization' };
+  }
+  return out;
+}
+const SEAT_WEBHOOKS = loadSeatWebhooks();
+const wakeQ = new Map();
+function noteWake(seat, line) {
+  try {
+    const cfg = SEAT_WEBHOOKS[seat];
+    if (!cfg || !line) return;
+    let st = wakeQ.get(seat);
+    if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(seat, st); }
+    st.pending.push({ id: String(line.id || '').slice(0, 300), type: String(line.type || '').slice(0, 64), repo: String(line.repo || '').slice(0, 200),
+      number: Number.isInteger(line.number) ? line.number : 0, title: String(line.title || '').slice(0, 200), url: String(line.url || '').slice(0, 500), reason: String(line.reason || '').slice(0, 300) });
+    armWake(seat);
+  } catch { /* keep the inbox write */ }
+}
+function armWake(seat) {
+  const st = wakeQ.get(seat);
+  if (!st || st.timer || st.inflight || !st.pending.length) return;
+  const remain = st.lastSent ? WAKE_DEBOUNCE_MS - (Date.now() - st.lastSent) : 0;
+  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, remain > 0 ? remain : WAKE_COALESCE_MS);
+  if (t.unref) t.unref();
+  st.timer = t;
+}
+function wakePayload(seat, batch) {
+  const last = batch[batch.length - 1];
+  return { seat, inbox_id: last.id, ids: batch.map(l => l.id), type: last.type, repo: last.repo, number: last.number, title: last.title, url: last.url, reason: last.reason };
+}
+function wakeErr(e) {
+  if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) return 'timeout';
+  const code = e && e.cause && e.cause.code;
+  return typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,40}$/.test(code) ? code : 'network';
+}
+async function deliverWake(cfg, body) {
+  const key = process.env[cfg.keyEnv];
+  if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key' };
+  const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bifrost-live' };
+  if (cfg.bearer) headers.Authorization = 'Bearer ' + key; else headers[cfg.header] = key;
+  let error = 'network';
+  for (let i = 1; i <= WAKE_ATTEMPTS; i++) {
+    try {
+      const res = await fetch(cfg.url, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(8000) });
+      await res.arrayBuffer().catch(() => {});
+      if (res.ok) return { ok: true, attempts: i };
+      error = 'http_' + res.status;
+    } catch (e) { error = wakeErr(e); }
+    if (i < WAKE_ATTEMPTS) await new Promise(r => { const t = setTimeout(r, WAKE_RETRY_MS * (2 ** (i - 1))); if (t.unref) t.unref(); });
+  }
+  return { ok: false, attempts: WAKE_ATTEMPTS, error };
+}
+async function flushWake(seat) {
+  const st = wakeQ.get(seat), cfg = SEAT_WEBHOOKS[seat];
+  if (!st || st.inflight || !st.pending.length || !cfg) return;
+  const batch = st.pending.splice(0, st.pending.length);
+  st.inflight = true; st.lastSent = Date.now();
+  let result; try { result = await deliverWake(cfg, JSON.stringify(wakePayload(seat, batch))); }
+  catch { result = { ok: false, attempts: WAKE_ATTEMPTS, error: 'network' }; }
+  st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
+  if (!result.ok) st.status.error = result.error || 'network';
+  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}`);
+  st.inflight = false; armWake(seat);
+}
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const bearerOf = req => { const h = req.headers.authorization || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; };
 async function seatOf(req) {   // -> seat id | null; throws when GitHub can't verify an installation token (caller: 503)
@@ -181,6 +270,8 @@ const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[
   for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (w === 'lab') return 'qa'; } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
 const NUDGE_L1_MS = (Number(process.env.NUDGE_L1_S) || 3600) * 1000, NUDGE_L2_MS = (Number(process.env.NUDGE_L2_S) || 1800) * 1000;
+const NUDGE_L3_MS = (Number(process.env.NUDGE_L3_S) > 0 ? Number(process.env.NUDGE_L3_S) : 7200) * 1000;
+const HELD_MAX_MS = (Number(process.env.HELD_MAX_S) > 0 ? Number(process.env.HELD_MAX_S) : 72 * 3600) * 1000;
 const seatInbox = {};   // seat -> [lines]
 for (const s of SEAT_IDS) { try { seatInbox[s] = fs.readFileSync(path.join(STATE_DIR, 'inbox', s + '.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch { seatInbox[s] = []; } }
 if (!seatInbox.builder.length && inboxLines.length) seatInbox.builder = inboxLines.slice();   // carry the builder mirror over
@@ -211,17 +302,58 @@ function lineDone(seat, l) {
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
 function saveSeatInbox(s) { const cut = Date.now() - 7 * 86400000; seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000); bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n'); }
 function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
+function inboxLineError(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return 'line must be an object';
+  const keys = Object.keys(d);
+  const banned = keys.filter(k => INBOX_BANNED.test(k)).sort();
+  const unknown = keys.filter(k => !INBOX_KEYS.has(k) && !INBOX_BANNED.test(k)).sort();
+  const parts = [];
+  if (banned.length) parts.push('field names must not include body, text, or message: ' + banned.join(', '));
+  if (unknown.length) parts.push('unknown fields: ' + unknown.join(', '));
+  const seat = typeof d.seat === 'string' ? d.seat.toLowerCase() : '';
+  if (!SEAT_IDS.includes(seat)) parts.push('seat must be a seat id');
+  if (typeof d.id !== 'string' || !d.id) parts.push('id required');
+  if (typeof d.t_ct !== 'string' || !d.t_ct) parts.push('t_ct required');
+  if (typeof d.type !== 'string' || !d.type) parts.push('type required');
+  if (typeof d.reason !== 'string' || !d.reason) parts.push('reason required');
+  for (const k of ['repo', 'title', 'url']) if (typeof d[k] !== 'string') parts.push(k + ' must be a string');
+  if (typeof d.number !== 'number' || !Number.isInteger(d.number)) parts.push('number must be an integer');
+  if (d.sha != null && typeof d.sha !== 'string') parts.push('sha must be a string');
+  return parts.length ? parts.join('; ') : null;
+}
+function rejectedRef(l, i) {
+  if (l && typeof l.id === 'string' && l.id) return l.id.slice(0, 120);
+  return '#' + i;
+}
 function postSeatLines(parsed, onlySeat) {
   const incoming = parsed && Array.isArray(parsed.lines) ? parsed.lines : null;
   if (!incoming || incoming.length > 5000) return { status: 400, error: 'lines required' };
   if (onlySeat && incoming.some(l => !l || String(l.seat || '').toLowerCase() !== onlySeat)) return { status: 403, error: 'inbox is not exposed' };
-  const touched = new Set(); let added = 0; const rejected = [];   // a bad line is skipped alone, never the whole batch
-  for (const l of incoming) { if (!validSeatLine(l)) { rejected.push(l && typeof l.id === 'string' ? l.id.slice(0, 120) : null); continue; }
-    const s = l.seat.toLowerCase(), arr = seatInbox[s]; if (arr.some(x => x.id === l.id)) continue; arr.push({ ...l, seat: s }); touched.add(s); added++;
-    if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { c.push({ ...l, seat: 'builder-cloud' }); touched.add('builder-cloud'); } } }
-  for (const s of touched) saveSeatInbox(s);
+  const rejected = []; const good = [];
+  for (let i = 0; i < incoming.length; i++) {
+    const l = incoming[i];
+    const err = inboxLineError(l);
+    if (err || !validSeatLine(l)) { rejected.push({ ref: rejectedRef(l, i), error: err || 'line refused' }); continue; }
+    good.push(l);
+  }
+  const refs = rejected.map(r => r.ref);
   if (rejected.length) console.log(`inbox: rejected ${rejected.length} bad line(s)`);
-  return { status: 200, added, rejected };
+  if (!good.length && rejected.length) {
+    const why = rejected.slice(0, 8).map(r => r.ref + ': ' + r.error).join('; ');
+    return { status: 400, error: ('no line stored: ' + why).slice(0, 800), rejected: refs };
+  }
+  const touched = new Set(); let added = 0; const fresh = [];
+  if (parsed.replace === true && onlySeat && good.length && seatInbox[onlySeat]) {
+    seatInbox[onlySeat].length = 0;
+    touched.add(onlySeat);
+  }
+  for (const l of good) {
+    const s = l.seat.toLowerCase(), arr = seatInbox[s]; if (arr.some(x => x.id === l.id)) continue;
+    const stored = { ...l, seat: s }; arr.push(stored); touched.add(s); added++; fresh.push(stored);
+    if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...l, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
+  for (const s of touched) saveSeatInbox(s);
+  for (const l of fresh) noteWake(l.seat, l);
+  return { status: 200, added, rejected: refs };
 }
 // ---- Assistant / emitter: the Example MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
 // 'assistant' seat key, checked against SEAT_KEYS.assistant). Write-only and strict: tool name, time, ok, client class,
@@ -250,31 +382,89 @@ function dotsFleet(fleet, now = Date.now()) {   // Assistant node state, merged 
   if (working) f.working.Assistant = { via: 'emitter', since_ct: iso(emitter.last), tool: last.tool, client: last.client, ok: last.ok };
   return f;
 }
-// cards: the box feed pass's model (header.board on every push) is stored here; nudges are made from it
-let bfCards = []; let nudges = [];
-try { bfCards = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'cards.json'), 'utf8')).cards || []; } catch {}
+// cards: the collector waveboard, plus one card per accepted source item. A collector pass replaces only the wave cards.
+let waveCards = []; let bfCards = []; let nudges = []; let waveSig = ''; let boardSig = '';
+try { bfCards = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'cards.json'), 'utf8')).cards || []; waveCards = bfCards.slice(); } catch {}
 try { nudges = fs.readFileSync(path.join(STATE_DIR, 'nudges.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 const saveNudges = () => { nudges = nudges.slice(-3000); bfWrite('nudges.jsonl', nudges.map(n => JSON.stringify(n)).join('\n') + '\n'); };
+const parsedAllow = parseAllowlist(process.env.SOURCE_ALLOWLIST, '');
+if (parsedAllow.badJson) console.log('source: SOURCE_ALLOWLIST is not json');
+const SOURCE_ALLOW = parsedAllow.allow;
+const work = new Map();
+const WORK_MAX = 5000;
 function nudgeToCloud(n) {   // a nudge to Builder is also an inbox line for Builder-cloud (either seat can pick it up)
   const l = { id: n.id, t_ct: n.t_ct, seat: 'builder-cloud', type: 'nudge', repo: n.repo, number: n.number, title: n.title, url: n.url, reason: `nudge L${n.level} (${n.via})` };
   if (!validInboxLine({ ...l, seat: 'builder' })) l.title = '';
   if (!validInboxLine({ ...l, seat: 'builder' }) || seatInbox['builder-cloud'].some(x => x.id === l.id)) return;
-  seatInbox['builder-cloud'].push(l); saveSeatInbox('builder-cloud');
+  seatInbox['builder-cloud'].push(l); saveSeatInbox('builder-cloud'); noteWake('builder-cloud', l);
+}
+function itemsFromWork() {
+  const latest = new Map();
+  for (const e of work.values()) {
+    if (e.source !== 'jira' && !projectAllowed(SOURCE_ALLOW, e.source, e.project)) continue;
+    const item = workEventToItem(e);
+    if (!item || validateItem(item)) continue;
+    const id = item.source + '\0' + item.key;
+    const prev = latest.get(id);
+    if (!prev || workItemNewer(prev, item)) latest.set(id, item);
+  }
+  return [...latest.values()];
+}
+function publishBoard(updatedCt) {
+  const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
+  const sig = JSON.stringify(merged);
+  if (sig === boardSig) return;
+  boardSig = sig;
+  bfCards = merged;
+  bfWrite('cards.json', JSON.stringify({ updated_ct: updatedCt || new Date().toISOString(), cards: bfCards }));
 }
 function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
-  const sig = JSON.stringify(wb.cards); if (sig === JSON.stringify(bfCards)) return;
-  bfCards = wb.cards.slice(0, 200); bfWrite('cards.json', JSON.stringify({ updated_ct: wb.updated_ct || null, cards: bfCards }));
+  const sliced = wb.cards.slice(0, 200);
+  const sig = JSON.stringify(sliced);
+  if (sig === waveSig) return;
+  waveSig = sig;
+  waveCards = sliced;
+  publishBoard(wb.updated_ct);
+}
+function holdOwner(c) {
+  const owner = seatIdOf(c.owner);
+  if (owner && SEAT_IDS.includes(owner)) return owner;
+  const by = seatIdOf(c.hold && c.hold.by);
+  if (by && SEAT_IDS.includes(by)) return by;
+  return 'builder';
 }
 // NUDGE: a live card with no beat for 60 min -> level 1 to the packet's next owner (else the card owner); still no
-// beat 30 min after that -> level 2 to Coord. One open nudge per card per level (keyed by the card's last beat);
-// a new beat closes them.
+// beat 30 min after that -> level 2 to Coord. Level 3 then repeats to that same owner every 2h until a beat lands.
+// Repos in NO_NUDGE_REPOS (unset means none) are shown and never nudged. A held card raises no L1/L2/L3. It nudges
+// the owner once if it stays held with no beat past HELD_MAX_S (default 72h), unless the repo is in that list.
 function evalNudges(now = Date.now()) {
   let changed = false; const byKey = new Map(bfCards.map(c => [c.key, c]));
-  for (const n of nudges) { if (n.closed_at || n.kind === 'silent') continue; const c = byKey.get(n.card);
-    if (!c || c.state !== 'live' || c.last_beat_t !== n.beat_t) { n.closed_at = new Date(now).toISOString(); changed = true; } }
+  for (const n of nudges) {
+    if (n.closed_at || n.kind === 'silent') continue;
+    const c = byKey.get(n.card);
+    if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card })) {
+      n.closed_at = new Date(now).toISOString(); changed = true; continue;
+    }
+    if (n.kind === 'held') {
+      if (!c || c.state !== 'held' || c.last_beat_t !== n.beat_t) { n.closed_at = new Date(now).toISOString(); changed = true; }
+      continue;
+    }
+    if (!c || c.state !== 'live' || c.waiting || c.last_beat_t !== n.beat_t) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  }
   for (const c of bfCards) {
-    if (c.pinned || c.state !== 'live' || !c.last_beat_t || now - c.last_beat_t < NUDGE_L1_MS) continue;
+    if (cardNoNudge(c)) continue;
+    if (c.state === 'held' && !c.pinned && c.last_beat_t && now - c.last_beat_t >= HELD_MAX_MS) {
+      const nid = `nudge:${c.key}:held:${c.last_beat_t}`;
+      if (!nudges.some(n => n.id === nid)) {
+        const seat = holdOwner(c);
+        nudges.push({ id: nid, kind: 'held', t: now, t_ct: new Date(now).toISOString(), card: c.key, repo: c.repo || '', number: c.number || 0,
+          title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: 0, seat, via: 'held past max', beat_t: c.last_beat_t });
+        changed = true;
+        if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]);
+      }
+    }
+    if (c.pinned || c.state !== 'live' || c.waiting || !c.last_beat_t || now - c.last_beat_t < NUDGE_L1_MS) continue;
     const id = lvl => `nudge:${c.key}:L${lvl}:${c.last_beat_t}`, has = lvl => nudges.find(n => n.id === id(lvl));
     const mk = (lvl, seat, via, nid = id(lvl)) => { nudges.push({ id: nid, t: now, t_ct: new Date(now).toISOString(), card: c.key, repo: c.repo || '', number: c.number || 0,
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
@@ -284,10 +474,16 @@ function evalNudges(now = Date.now()) {
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }
-    else if (!l1.closed_at && l1.seat !== tgt) {   // the card's owner logic moved (e.g. Reviewer PASS at head -> Builder): retarget
+    else if (!l1.closed_at && l1.seat !== tgt) {
       l1.closed_at = new Date(now).toISOString(); changed = true;
       if (!l1s.some(n => n.seat === tgt)) { mk(1, tgt, via, id(1) + ':' + tgt); l1 = nudges[nudges.length - 1]; } }
     if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, 'coord', 'escalation');
+    const l2 = has(2);
+    if (l2 && !l2.closed_at) {
+      const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
+      const prev = reps.length ? reps[reps.length - 1].t : l2.t;
+      if (now - prev >= NUDGE_L3_MS) mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
+    }
   }
   if (changed) saveNudges();
   return changed;
@@ -299,11 +495,16 @@ const SILENT_MS = (Number(process.env.SILENT_S) || 7200) * 1000;
 function evalSilent(fleet, now = Date.now()) {
   if (!fleet || !fleet.seats) return false;
   let changed = false; const silentIds = new Map();
+  const presence = seatPresence();
   for (const [name, o] of Object.entries(fleet.seats)) {
     const id = seatIdOf(name); if (!id || !SEAT_IDS.includes(id)) continue;   // bot seats only (not Lead)
     const owns = bfCards.some(c => !c.pinned && c.state === 'live' && cardSeats(c).includes(id)) ||
       nudges.some(n => !n.closed_at && n.kind !== 'silent' && n.seat === id);
-    const last = tsOf(o.last_ct);
+    const folded = presentSeat(fleet.seats, name, presence);
+    let last = folded.last;
+    if (last > tsOf(o.last_ct)) { o.last_ct = iso(last); o.via = 'presence'; o.active = now - last <= (fleet.window_min || 15) * 60000; }
+    if (folded.working && !o.working) { o.working = true; o.working_via = 'presence'; }
+    if (folded.working) continue;
     if (owns && (!last || now - last > SILENT_MS)) { o.silent = true; o.silent_since = iso(last || null); silentIds.set(id, { name, last }); }
   }
   for (const n of nudges) if (n.kind === 'silent' && !n.closed_at) {
@@ -409,6 +610,8 @@ function since(c) {  // null -> client must refetch the full feed
 // env is built from scratch: no ingest secret, session secret or mesh password, and the token is never logged.
 const DATA_DIR = process.env.MESH_DATA_DIR || '/data';
 const GH_FEED = path.join(DATA_DIR, 'feed', 'github-events.json');
+const JIRA_FEED = path.join(DATA_DIR, 'feed', 'jira-events.json');
+const jira = { pid: null, restarts: 0, lastWrite: 0, sig: '' };
 const COLLECTOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 const COLLECTOR_REPOS = (process.env.COLLECTOR_REPOS || 'example-org/app example-org/mcp').split(/\s+/).filter(Boolean);
 const collector = { pid: null, restarts: 0, lastExit: null, lastWrite: 0, sig: '' };
@@ -422,6 +625,9 @@ function startCollector() {
     TZ: 'America/Chicago', PYTHONDONTWRITEBYTECODE: '1', LIVE_MODE: 'github', LIVE_NO_CHECKS: '1', GH_TOKEN: tok,
     LIVE_MESH_SRC: path.join(COLLECTOR_DIR, 'upstream'),
     LIVE_HEALTH_URLS: process.env.COLLECTOR_HEALTH_URLS || 'https://dev.example.com/health https://app.example.com/health' };
+  if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
+  if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
+  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE']) if (process.env[k] != null) env[k] = process.env[k];
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...COLLECTOR_REPOS, '--deploy-repo', '', '--health', 'https://dev.example.com/health'];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -462,6 +668,177 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
   collector.sig = sig; collector.lastWrite = Date.now();
   ingestSrc('github', f.events, headerOf(f));
+}
+function jiraScript() {
+  const beside = path.join(COLLECTOR_DIR, 'jira_source.py');
+  if (fs.existsSync(beside)) return beside;
+  const feed = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'jira_source.py');
+  return fs.existsSync(feed) ? feed : '';
+}
+function jiraAllowlist() {
+  const raw = process.env.JIRA_PROJECTS;
+  if (raw == null || !String(raw).trim()) return null;
+  const skip = new Set(String(process.env.JIRA_EXCLUDE || '').split(/[\s,]+/).map(s => s.trim().toUpperCase()).filter(Boolean));
+  const set = new Set();
+  for (const part of String(raw).split(/[\s,]+/)) {
+    const key = part.trim().toUpperCase();
+    if (!key || skip.has(key) || !/^[A-Z][A-Z0-9]{1,9}$/.test(key)) continue;
+    set.add(key);
+  }
+  return set;
+}
+function jiraOn() {
+  const list = jiraAllowlist();
+  return process.env.JIRA_SOURCE !== 'off' && !!process.env.JIRA_SITE && !!process.env.JIRA_EMAIL && !!process.env.JIRA_API_TOKEN && !!list && list.size > 0;
+}
+function jiraKeyProject(key) {
+  const m = /^([A-Z][A-Z0-9]{1,9})-\d+$/.exec(String(key || '').toUpperCase());
+  return m ? m[1] : '';
+}
+function jiraAllowed(e) {
+  const fromKey = jiraKeyProject(e.key);
+  if (!fromKey) return false;
+  const skip = new Set(String(process.env.JIRA_EXCLUDE || '').split(/[\s,]+/).map(s => s.trim().toUpperCase()).filter(Boolean));
+  if (skip.has(fromKey)) return false;
+  if (e.project != null && String(e.project).toUpperCase() !== fromKey) return false;
+  const list = jiraAllowlist();
+  if (list && !list.has(fromKey)) return false;
+  return true;
+}
+const WORK_KEYS = new Set(['id', 'source', 't', 'kind', 'key', 'title', 'url', 'state', 'status', 'project', 'actor']);
+const WORK_KINDS = new Set(['opened', 'updated', 'closed', 'reopened']);
+function validWork(e) {
+  if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+  for (const k of Object.keys(e)) if (!WORK_KEYS.has(k)) return null;
+  if (typeof e.id !== 'string' || !/^[A-Za-z0-9:._#+/-]{1,200}$/.test(e.id)) return null;
+  if (typeof e.source !== 'string' || !/^[a-z][a-z0-9_-]{0,31}$/.test(e.source)) return null;
+  if (typeof e.t !== 'string' || !Number.isFinite(Date.parse(e.t))) return null;
+  if (!WORK_KINDS.has(e.kind)) return null;
+  if (typeof e.key !== 'string' || e.key.length < 1 || e.key.length > 80 || e.key.includes('@')) return null;
+  if (e.source === 'jira' && !jiraAllowed(e)) return null;
+  const out = { id: e.id, source: e.source, t: e.t, kind: e.kind, key: e.source === 'jira' ? e.key.toUpperCase() : e.key };
+  if (e.title != null) {
+    if (typeof e.title !== 'string' || e.title.length > 200 || e.title.includes('@')) return null;
+    out.title = e.title;
+  }
+  if (e.url != null) {
+    if (typeof e.url !== 'string' || e.url.length > 300 || !/^https:\/\/\S+$/.test(e.url)) return null;
+    out.url = e.url;
+  }
+  if (e.state != null) {
+    if (e.state !== 'open' && e.state !== 'closed') return null;
+    out.state = e.state;
+  }
+  if (e.status != null) {
+    if (typeof e.status !== 'string' || e.status.length > 80 || e.status.includes('@')) return null;
+    out.status = e.status;
+  }
+  if (e.source === 'jira') out.project = jiraKeyProject(e.key);
+  else if (e.project != null) {
+    if (typeof e.project !== 'string' || e.project.length > 80 || e.project.includes('@')) return null;
+    out.project = e.project;
+  }
+  if (e.actor != null) {
+    if (typeof e.actor !== 'string' || e.actor.length > 80 || e.actor.includes('@')) return null;
+    out.actor = e.actor;
+  }
+  return out;
+}
+function loadFeedEvents() {
+  try {
+    const f = JSON.parse(fs.readFileSync(JIRA_FEED, 'utf8'));
+    if (!f || !Array.isArray(f.events)) return [];
+    return f.events.filter(e => e && typeof e === 'object' && typeof e.id === 'string');
+  } catch { return []; }
+}
+function persistWork() {
+  const disk = loadFeedEvents();
+  const byId = new Map();
+  for (const raw of disk) { const n = validWork(raw); if (n) byId.set(n.id, n); }
+  for (const e of work.values()) byId.set(e.id, e);
+  let events = [...byId.values()].sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
+  if (events.length > WORK_MAX) events = events.slice(events.length - WORK_MAX);
+  work.clear();
+  for (const e of events) work.set(e.id, e);
+  const payload = JSON.stringify({ source: 'jira', generated_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), events });
+  fs.mkdirSync(path.dirname(JIRA_FEED), { recursive: true });
+  const tmp = `${JIRA_FEED}.tmp.${process.pid}`;
+  fs.writeFileSync(tmp, payload);
+  fs.renameSync(tmp, JIRA_FEED);
+  try { const st = fs.statSync(JIRA_FEED); jira.sig = `${st.ino}:${st.size}:${st.mtimeMs}`; } catch {}
+}
+function acceptWork(list) {
+  let accepted = 0, rejected = 0, changed = false;
+  for (const e of list || []) {
+    const n = validWork(e);
+    if (!n) { rejected++; continue; }
+    const prev = work.get(n.id);
+    if (!prev || JSON.stringify(prev) !== JSON.stringify(n)) changed = true;
+    work.set(n.id, n);
+    accepted++;
+  }
+  if (work.size > WORK_MAX) {
+    const drop = [...work.values()].sort((a, b) => (a.t < b.t ? -1 : 1)).slice(0, work.size - WORK_MAX);
+    for (const e of drop) work.delete(e.id);
+    changed = true;
+  }
+  if (changed) {
+    try { persistWork(); } catch { console.log('source: save failed'); }
+    publishBoard();
+  }
+  return { accepted, rejected };
+}
+function readJiraFeed() {
+  let st; try { st = fs.statSync(JIRA_FEED); } catch { return; }
+  const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
+  if (sig === jira.sig) return;
+  let f; try { f = JSON.parse(fs.readFileSync(JIRA_FEED, 'utf8')); } catch { return; }
+  if (!f || !Array.isArray(f.events)) { jira.sig = sig; console.log('jira: feed file invalid; ignored'); return; }
+  jira.lastWrite = Date.now();
+  const source = typeof f.source === 'string' ? f.source : '';
+  const events = f.events.map(e => (e && typeof e === 'object' && e.source == null && source ? { ...e, source } : e));
+  const before = jira.sig;
+  const r = acceptWork(events);
+  if (jira.sig === before) jira.sig = sig;
+  if (r.accepted || r.rejected) console.log(`jira: file ${r.accepted} accepted, ${r.rejected} rejected`);
+}
+function startJira() {
+  if (jira.pid) return;
+  if (!jiraOn()) {
+    const any = process.env.JIRA_SITE || process.env.JIRA_EMAIL || process.env.JIRA_API_TOKEN || String(process.env.JIRA_PROJECTS || '').trim();
+    if (any && process.env.JIRA_SOURCE !== 'off') console.log('jira: off (set JIRA_SITE, JIRA_EMAIL, JIRA_API_TOKEN, and JIRA_PROJECTS)');
+    return;
+  }
+  const script = jiraScript();
+  if (!script) { console.log('jira: code missing; off'); return; }
+  fs.mkdirSync(path.dirname(JIRA_FEED), { recursive: true });
+  fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true });
+  const token = process.env.JIRA_API_TOKEN, email = process.env.JIRA_EMAIL;
+  const env = {
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
+    TZ: 'UTC', PYTHONDONTWRITEBYTECODE: '1', JIRA_SITE: process.env.JIRA_SITE, JIRA_PROJECTS: process.env.JIRA_PROJECTS || '',
+    JIRA_EMAIL: email, JIRA_API_TOKEN: token,
+  };
+  if (process.env.JIRA_API_BASE) env.JIRA_API_BASE = process.env.JIRA_API_BASE;
+  if (process.env.JIRA_EXCLUDE) env.JIRA_EXCLUDE = process.env.JIRA_EXCLUDE;
+  if (process.env.JIRA_HOLD_STATUS) env.JIRA_HOLD_STATUS = process.env.JIRA_HOLD_STATUS;
+  const redact = line => line.replaceAll(token, '[redacted]').replaceAll(email, '[redacted]').slice(0, 400);
+  const child = spawn('python3', ['-B', '-u', script, 'pull', '--out', JIRA_FEED], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  jira.pid = child.pid;
+  console.log(`jira: started pid ${child.pid}`);
+  for (const st of [child.stdout, child.stderr]) {
+    let buf = '';
+    st.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { console.log('jira: ' + redact(buf.slice(0, i).replace(/^jira: /, ''))); buf = buf.slice(i + 1); } });
+  }
+  child.on('error', e => console.log('jira: spawn failed (' + e.code + ')'));
+  child.on('exit', (code, sig) => {
+    jira.pid = null; jira.restarts++;
+    if (stopping || code === 0) return;
+    const wait = Math.min(300, 15 * 2 ** Math.min(jira.restarts - 1, 4)) * 1000;
+    console.log(`jira: exited ${code ?? sig}; restart in ${wait / 1000}s`);
+    setTimeout(startJira, wait).unref();
+  });
+  process.on('exit', () => { try { child.kill('SIGTERM'); } catch {} });
 }
 
 const validEvent = e => e && typeof e === 'object' && !Array.isArray(e) &&
@@ -703,7 +1080,22 @@ async function handle(req, res) {
     if (typeof hs !== 'string' || !hs || !safeEq(hs, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
     let parsed; try { parsed = JSON.parse((await readBody(req, 4 << 20)).toString('utf8')); } catch { return json(req, res, 400, { error: 'not json' }); }
     const r = postSeatLines(parsed, null);
-    return json(req, res, r.status, r.status === 200 ? { ok: true, added: r.added, rejected: r.rejected } : { error: r.error });
+    return json(req, res, r.status, r.status === 200 ? { ok: true, added: r.added, rejected: r.rejected } : { error: r.error, ...(r.rejected ? { rejected: r.rejected } : {}) });
+  }
+  if (p === '/ingest/source') {
+    if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+    const hs = req.headers['x-live-ingest'];
+    if (typeof hs !== 'string' || !hs || !safeEq(hs, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
+    let parsed;
+    try { parsed = JSON.parse((await readBody(req, 1 << 20)).toString('utf8')); }
+    catch (e) { return json(req, res, e && e.code === 413 ? 413 : 400, { error: e && e.code === 413 ? 'too large' : 'not json' }); }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !Array.isArray(parsed.events) || parsed.events.length > 500) {
+      return json(req, res, 422, { error: 'events must be a list of at most 500' });
+    }
+    const source = typeof parsed.source === 'string' ? parsed.source : '';
+    const events = parsed.events.map(e => (e && typeof e === 'object' && e.source == null && source ? { ...e, source } : e));
+    const r = acceptWork(events);
+    return json(req, res, 200, { ok: true, accepted: r.accepted, rejected: r.rejected });
   }
   const inboxM = /^\/inbox\/([a-z0-9-]{2,16})$/.exec(p);
   if (inboxM && m === 'GET') {   // a seat reads its own inbox: GET /inbox/<seat>?since=<id>
@@ -752,9 +1144,8 @@ async function handle(req, res) {
       const hs = req.headers['x-live-ingest'];
       if (typeof hs !== 'string' || !hs || !safeEq(hs, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
       let parsed; try { parsed = JSON.parse((await readBody(req, 1 << 20)).toString('utf8')); } catch { return json(req, res, 400, { error: 'not json' }); }
-      if (parsed && parsed.replace === true) seatInbox.builder.length = 0;
       const r = postSeatLines(parsed, 'builder');
-      return json(req, res, r.status, r.status === 200 ? { ok: true, added: r.added, rejected: r.rejected } : { error: r.error });
+      return json(req, res, r.status, r.status === 200 ? { ok: true, added: r.added, rejected: r.rejected } : { error: r.error, ...(r.rejected ? { rejected: r.rejected } : {}) });
     }
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET, POST' });
     const h = req.headers.authorization || '';
@@ -835,3 +1226,6 @@ if (process.env.COLLECTOR !== 'off') {
   setInterval(readCollectorFeed, 2000).unref();
   startCollector();
 }
+readJiraFeed();
+setInterval(readJiraFeed, 2000).unref();
+startJira();

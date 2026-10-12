@@ -88,9 +88,10 @@ class Model(unittest.TestCase):
     def card(self, evs, n=20):
         return [c for c in self.w.model(evs)["cards"] if c.get("number") == n][0]
 
-    def test_retest_nudges_chaos_not_author(self):
+    def test_merge_closes_the_card(self):
         c = self.card(self.merged_card())
-        self.assertEqual((c["stage"], c["state"], c["nudge_to"], c["packet"]["next owner"]), ("retest", "live", "tester", "Tester"))
+        self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
+        self.assertNotIn("nudge_to", c)
         self.assertEqual(c["owner"], "Builder")
 
     def test_done_on_pass_or_fail_tick(self):
@@ -103,14 +104,18 @@ class Model(unittest.TestCase):
         evs = self.merged_card(20) + [self.ev(21, "pr_open", 900, title="fix", fixes=[20]), self.ev(21, "merged", 600)]
         c = self.card(evs)
         self.assertEqual((c["stage"], c["state"], c["resolved"]), ("done", "closed", "fixed by #21"))
-        evs = self.merged_card(20) + [self.ev(21, "pr_open", 900, title="fix", fixes=[20])]          # not merged yet
-        self.assertEqual(self.card(evs)["stage"], "retest")
+        evs = self.merged_card(20) + [self.ev(21, "pr_open", 900, title="fix", fixes=[20])]          # fixing PR not merged; the merged card is already done
+        self.assertEqual(self.card(evs)["stage"], "done")
 
     def test_done_when_owner_says_resolved(self):
         c = self.card(self.merged_card(20, dict(self.ev(20, "pr_comment", 300), resolved=True)))
         self.assertEqual((c["stage"], c["state"], c["beats"][-1]["what"]), ("done", "closed", "owner: resolved"))
         c = self.card(self.merged_card(20, dict(self.ev(20, "pr_comment", 300), **{"from": "Others", "resolved": True})))
-        self.assertEqual(c["stage"], "retest")                                                     # only the owner
+        self.assertEqual((c["stage"], c["state"]), ("done", "closed"))                             # merge already closed it
+        plain = [self.ev(22, "pr_open", 9000, title="u"), dict(self.ev(22, "pr_comment", 300), **{"from": "Others", "resolved": True})]
+        self.assertNotEqual(self.card(plain, 22)["stage"], "done")                                 # only the owner
+        own = [self.ev(23, "pr_open", 9000, title="u"), dict(self.ev(23, "pr_comment", 300), resolved=True)]
+        self.assertEqual((self.card(own, 23)["stage"], self.card(own, 23)["state"]), ("done", "closed"))
 
     def test_parked_comment_parks_until_a_newer_beat(self):
         import live_collect as uc
@@ -122,12 +127,13 @@ class Model(unittest.TestCase):
         c = self.card(base + [park], 30)
         self.assertEqual((c["state"], c["stall"], c["beats"][-1]["what"]), ("parked", False, "parked"))
         for later in (self.ev(30, "pr_commit", 100), self.ev(30, "ci_pass", 100, conclusion="success"),
-                      self.ev(30, "critic_pass", 100), self.ev(30, "merged", 100),
+                      self.ev(30, "critic_pass", 100),
                       dict(self.ev(30, "pr_comment", 100), **{"from": "Others"})):
             self.assertEqual(self.card(base + [park, later], 30)["state"], "live", later["kind"])
+        self.assertEqual(self.card(base + [park, self.ev(30, "merged", 100)], 30)["state"], "closed")
         self.assertEqual(self.card(base + [self.ev(30, "pr_commit", 6000), park], 30)["state"], "parked")   # older beat: stays parked
         merged = self.merged_card(31, dict(self.ev(31, "pr_comment", 300), **{"from": "Coord", "parked": True}))
-        c = self.card(merged, 31); self.assertEqual(c["state"], "parked"); self.assertNotIn("nudge_to", c)   # no retest nudge
+        c = self.card(merged, 31); self.assertEqual(c["state"], "closed"); self.assertNotIn("nudge_to", c)
 
     def test_critic_pass_at_head_next_owner_builder_not_chaos(self):
         import live_collect as uc
@@ -146,8 +152,9 @@ class Model(unittest.TestCase):
         c = self.card([op, push, ci, crit, newer], 40)
         self.assertFalse(c["reviewer"]["at_head"]); self.assertEqual(c["nudge_to"], "builder")   # never Tester before merge
         self.assertNotEqual(c["packet"]["next owner"], "Builder")
-        c = self.card([op, push, ci, crit, self.ev(40, "merged", 4000)], 40)    # after merge Tester owns the retest
-        self.assertEqual((c["stage"], c["nudge_to"]), ("retest", "tester"))
+        c = self.card([op, push, ci, crit, self.ev(40, "merged", 4000)], 40)    # merge closes; a later retest needs a new issue
+        self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
+        self.assertNotIn("nudge_to", c)
 
     def test_collector_flags(self):
         import re, live_collect as uc
@@ -158,6 +165,28 @@ class Model(unittest.TestCase):
     def test_unknown_state_quiet_card_hidden(self):
         e = self.ev(7, "pr_open", 200000, title="pre-capture"); e.pop("pr_state")
         self.assertEqual([c for c in self.w.model([e])["cards"] if not c.get("pinned")], [])
+
+    def test_hold_label_comment_and_no_nudge(self):
+        import live_packet as p
+        os.environ.pop("NO_NUDGE_REPOS", None)
+        os.environ.pop("GITHUB_HOLD_LABEL", None)
+        self.assertEqual(p.no_nudge_patterns(), [])
+        self.assertFalse(p.repo_no_nudge(R))
+        self.assertEqual(p.parse_hold("Held: waiting on a decision\nuntil: Monday"), {"reason": "waiting on a decision", "until": "Monday"})
+        held = self.card([self.ev(50, "pr_open", 1000, title="h", labels=["on-hold"])], 50)
+        self.assertEqual(held["state"], "held")
+        self.assertFalse(held["stall"]); self.assertNotIn("nudge_to", held)
+        comment = dict(self.ev(52, "pr_comment", 100), **{"from": "Builder", "hold": {"reason": "waiting", "until": "monday"}})
+        c = self.card([self.ev(52, "pr_open", 1000, title="h2"), comment], 52)
+        self.assertEqual((c["state"], c["hold"]["reason"], c["hold"]["by"]), ("held", "waiting", "Builder"))
+        parked = dict(self.ev(51, "pr_comment", 100), **{"from": "Builder", "parked": True})
+        self.assertEqual(self.card([self.ev(51, "pr_open", 1000, title="p", labels=["on-hold"]), parked], 51)["state"], "parked")
+        os.environ["NO_NUDGE_REPOS"] = "example-org/*"
+        try:
+            quiet = self.card([self.ev(53, "pr_open", 5000, title="q")], 53)
+            self.assertFalse(quiet["stall"]); self.assertNotIn("nudge_to", quiet)
+        finally:
+            os.environ.pop("NO_NUDGE_REPOS", None)
 
     def test_closed_drops_after_24h(self):
         evs = [self.ev(5, "pr_open", 200000, title="old"), self.ev(5, "merged", 190000), self.ev(5, "lab_retest_pass", 180000)]
