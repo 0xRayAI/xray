@@ -152,6 +152,69 @@ class NodeMapEnv(unittest.TestCase):
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True).stdout.strip()
         self.assertEqual(out, "Others")
 
+
+def _sub(code, **env):
+    import subprocess
+    e = dict(os.environ); e.pop("LIVE_SHOW_UNMAPPED", None); e.pop("LIVE_NODE_MAP", None); e.update(env)
+    pre = "import sys, json, tempfile; from pathlib import Path; sys.path.insert(0, %r); import live_collect as c\nclass FF: CT = None\n" % str(FEED_DIR)
+    return subprocess.run([sys.executable, "-c", pre + code], env=e, capture_output=True, text=True, check=True).stdout.strip()
+
+
+class FleetOnly(unittest.TestCase):
+    """Logins outside the node map never reach the feed (login + title leak) unless LIVE_SHOW_UNMAPPED=1."""
+    PUT = ("rc = c.RepoCollector('acme-org/app', Path(tempfile.mkdtemp()), FF(), lambda m: None)\n"
+           "rc.commit_event('a'*40, '2026-10-12T10:00:00-05:00', 'secret title', 'stranger', 'main')\n"
+           "rc.commit_event('b'*40, '2026-10-12T10:00:00-05:00', 'ok', 'builder-app[bot]', 'main')\n"
+           "print(sorted(e['from'] for e in rc.ev.values()))")
+
+    def test_unmapped_dropped_by_default(self):
+        self.assertEqual(_sub(self.PUT), "['Builder']")
+
+    def test_opt_in_shows_others(self):
+        self.assertEqual(_sub(self.PUT, LIVE_SHOW_UNMAPPED="1"), "['Builder', 'Others']")
+
+    def test_stored_unmapped_dropped_on_load(self):
+        code = ("d = Path(tempfile.mkdtemp()); (d / 'app.json').write_text(json.dumps({'events': {"
+                "'x': {'id': 'x', 'from': 'Others', 'to': 'GitHub', 'actor': 'stranger'},"
+                "'y': {'id': 'y', 'from': 'Builder', 'to': 'GitHub'}}}))\n"
+                "rc = c.RepoCollector('acme-org/app', d, FF(), lambda m: None); print(sorted(rc.ev))")
+        self.assertEqual(_sub(code), "['y']")
+
+    def test_fleet_only_covers_hops_and_upstream(self):
+        code = ("ev = [{'from': 'Builder', 'to': 'GitHub', 'hops': ['Builder', 'Others', 'GitHub']},"
+                " {'from': 'Upstream', 'to': 'GitHub', 'external': 'upstream', 'actor': 'stranger'},"
+                " {'from': 'Upstream', 'to': 'GitHub', 'external': 'upstream', 'kind': 'merged'},"
+                " {'from': 'Builder', 'to': 'GitHub'}]\n"
+                "print(len(c.fleet_only(ev)))")
+        self.assertEqual(_sub(code), "2")
+        self.assertEqual(_sub(code, LIVE_SHOW_UNMAPPED="1"), "4")
+
+    def test_non_string_map_values_ignored(self):
+        code = "print(c.node('x[bot]'), c.node('y[bot]'))"
+        self.assertEqual(_sub(code, LIVE_NODE_MAP='{"x[bot]": null, "y[bot]": 5}').split(), ["Others", "Others"])
+
+    def test_feed_pass_filters_before_board(self):
+        src = (FEED_DIR / "live_mesh.py").read_text()
+        self.assertLess(src.index("uc.fleet_only(uniq)"), src.index("live_board.run(uniq)"))
+
+
+class DeployKit(unittest.TestCase):
+    APP = HERE.parent / "app"
+
+    def test_deploy_ships_every_server_import(self):
+        imports = set(__import__("re").findall(r"from '\./([\w.-]+\.mjs)'", (self.APP / "server.mjs").read_text()))
+        self.assertTrue(imports)
+        dep, dock = (self.APP / "deploy.sh").read_text(), (self.APP / "Dockerfile").read_text()
+        for f in imports:
+            self.assertIn(f, dep); self.assertIn(f, dock)
+        for f in __import__("re").findall(r'"\$APP"/([\w.-]+)', dep):
+            self.assertTrue((self.APP / f).exists(), f"deploy.sh copies missing {f}")
+
+    def test_server_passes_fleet_env_to_collector(self):
+        src = (self.APP / "server.mjs").read_text()
+        for k in ("LIVE_NODE_MAP", "LIVE_BRAND", "LIVE_BRAND_RE", "LIVE_SHOW_UNMAPPED"):
+            self.assertIn(f"'{k}'", src)
+
 if __name__ == "__main__":
     unittest.main()
 

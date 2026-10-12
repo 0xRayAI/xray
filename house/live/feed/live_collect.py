@@ -34,7 +34,7 @@ def _node_map_env() -> dict:
         m = json.loads(Path(raw).read_text() if not raw.startswith("{") else raw)
     except (OSError, ValueError):
         return {}
-    return {str(k): str(v) for k, v in m.items()} if isinstance(m, dict) else {}
+    return {str(k): v for k, v in m.items() if isinstance(v, str) and v} if isinstance(m, dict) else {}
 
 
 NODE.update(_node_map_env())
@@ -49,6 +49,9 @@ MERGE_BASES = ("develop", "main")
 # check suite (check_suite_id) and every job is its check run (job id == check run id). Lost: suites/runs of other
 # apps (railway-app, cursor/Bugbot); Railway deploys still arrive as commit statuses.
 NO_CHECKS = os.environ.get("LIVE_NO_CHECKS") == "1"
+# Logins not in NODE/LIVE_NODE_MAP would publish as 'Others' with their login + commit/PR title. Dropped by default
+# (privacy: outside contributors stay off the page); LIVE_SHOW_UNMAPPED=1 opts back in.
+SHOW_UNMAPPED = os.environ.get("LIVE_SHOW_UNMAPPED") == "1"
 JOBS_WINDOW_S = 2 * 3600       # jobs are fetched for runs created in the last 2 h (ETag'd until completed)
 
 
@@ -119,6 +122,21 @@ def open_numbers(c, repos, max_pages=20):
         except (RateLow, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError):
             continue
         out[repo] = nums
+    return out
+
+
+def fleet_only(events: list) -> list:
+    """Drop events that would show a login outside the fleet map (collector, upstream, flow hops), so the
+    board, packets and page never see them. LIVE_SHOW_UNMAPPED=1 keeps them."""
+    if SHOW_UNMAPPED:
+        return events
+    out = []
+    for e in events:
+        if "Others" in (e.get("from"), e.get("to")) or "Others" in (e.get("hops") or []):
+            continue
+        if e.get("external") == "upstream" and e.get("actor") and e.get("from") == "Upstream":   # not in XRAY_OURS
+            continue
+        out.append(e)
     return out
 
 
@@ -233,6 +251,8 @@ class RepoCollector:
             for k in ("label", "message"):
                 if isinstance(e.get(k), str) and (BRAND_RE.search(e[k]) or EMAIL_RE.search(e[k])):
                     e[k] = brand(e[k])
+        if not SHOW_UNMAPPED:   # stored events from before the filter
+            self.ev = {k: e for k, e in self.ev.items() if "Others" not in (e.get("from"), e.get("to"))}
         self.st: dict = s.get("state", {})
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
@@ -247,6 +267,9 @@ class RepoCollector:
 
     def put(self, eid, t, frm, to, kind, label, source, number=None, **extra):
         if not t:
+            return
+        if not SHOW_UNMAPPED and "Others" in (frm, to):
+            self.ev.pop(eid, None)
             return
         if frm == to:
             to = "GitHub" if frm != "GitHub" else "Example"

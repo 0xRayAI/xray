@@ -627,7 +627,7 @@ function startCollector() {
     LIVE_HEALTH_URLS: process.env.COLLECTOR_HEALTH_URLS || 'https://dev.example.com/health https://app.example.com/health' };
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
-  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE']) if (process.env[k] != null) env[k] = process.env[k];
+  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED']) if (process.env[k] != null) env[k] = process.env[k];
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...COLLECTOR_REPOS, '--deploy-repo', '', '--health', 'https://dev.example.com/health'];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });

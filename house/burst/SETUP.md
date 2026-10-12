@@ -153,6 +153,12 @@ GitHub: Settings → Developer settings → Personal access tokens → Fine-grai
 2. Repository access: only the watched repos. The token must cover every repo in the watch list. A repo it does not cover returns 404 and that repo's backfill never completes.
 3. Permissions, read-only: Contents, Pull requests, Issues, Actions, Commit statuses. Metadata is included automatically.
 
+### Fleet seats (login map)
+
+`LIVE_NODE_MAP` (Railway variable) maps your fleet's GitHub logins to seats on the page: a JSON object such as `{"my-builder[bot]":"Builder"}`, or a path to a JSON file. Values must be non-empty strings; anything else is ignored. The server passes it to the collector.
+
+Logins that are not in the map are hidden by default: their events (commits, PRs, comments, upstream items) are not published, and they never reach the board. Set `LIVE_SHOW_UNMAPPED=1` to show them as `Others` instead (this publishes those logins and titles).
+
 Fine-grained tokens have no Checks permission. The collector derives check state from Actions runs and jobs, and from commit statuses.
 
 Set the token as the host variable `GITHUB_READ_TOKEN`. Keep it out of the repo, out of logs, and off the laptop. Set an expiry and rotate it.
@@ -377,7 +383,7 @@ A watcher reads its own file first and records the last id. It keeps its current
 
 Only Maker is uploaded. `push-inbox.mjs` posts new lines from `maker.jsonl` to `BURST_INBOX_URL`. `GET /inbox/maker?since=<id>` requires the maker GitHub App installation token, the same check as `POST /activity` (bot `maker-app[bot]`). Other seats are not exposed.
 
-When a pass has new events, the loop runs the optional waveboard builder if it is configured. `BURST_WAVEBOARD` is the script path. When unset, the Example path `/srv/fleet-house/house/watchers/build_waveboard.py` is used if that file exists. The run is debounced to once a minute, in a subprocess with a timeout, and it receives only `GITHUB_READ_TOKEN`. Set `BURST_WAVEBOARD=off` to skip it. A failure does not stop the feed.
+The board is built in the feed pass by `house/live/feed/live_board.py` (see [DEPLOY.md](DEPLOY.md)). There is no separate waveboard builder script.
 
 ### Live waveboard
 

@@ -168,6 +168,7 @@ def build(args, gh):
         events.extend(fleet.scan())     # lab bugs/runs + board cards from local files (no API, no LLM)
     uniq = ff.merge([dict(e) for e in events])
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
+    uniq = uc.fleet_only(uniq)   # unmapped logins never reach fleet state, board, packets or the feed
     fleet_state = fleet.fleet_state(uniq)
     wave = live_board.run(uniq) if MODE != "github" else None   # cards / packets / beats (same events)
     if wave is not None and MODE != "box" and token:

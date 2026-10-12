@@ -49,7 +49,6 @@ timeline, not in the pill.
 | Delta pusher | `house/burst/push.sh` + `push-delta.mjs` | one post while the lock is held, then sleep 2s | one delta to the ingest | local activity lines already written | secret is the `X-Burst-Ingest` header; a 409 posts once more |
 | Pages tripwire | `house/live-mesh/tripwire_push.py` | 300s | `feed_push` when the public snapshot changes | existing feed | unchanged |
 | Seat inbox | `house/burst/inbox.py` inside the feed pass | every pass, one line per new event id | `fleet/inbox/<seat>.jsonl` | id, time, seat, type, repo, number, sha, title, url, reason. No bodies | read the inbox first and keep a cursor. See "Seat inboxes" |
-| Waveboard | `build_waveboard.py` subprocess from the same pass | at most once a minute, only when the pass has new events | `WAVEBOARD.md` | the builder sees the read-only GitHub token | `BURST_WAVEBOARD` path, or off. A failure does not stop the feed |
 
 ### Lab-run working (live rule)
 
@@ -139,7 +138,7 @@ A watcher reads its inbox first, stores the last id it handled, and still runs i
 
 Only Maker is mirrored. The pusher posts new `maker.jsonl` lines to `BURST_INBOX_URL`. The server answers `GET /inbox/maker?since=<id>` after the same installation-token check as `POST /activity` (the maker seat, bot `maker-app[bot]`). No other inbox is served.
 
-When the pass has new events, the loop may run an optional waveboard builder (`BURST_WAVEBOARD`, default `/srv/fleet-house/house/watchers/build_waveboard.py` when that file exists). It runs at most once a minute, as a subprocess with a timeout, with the read-only GitHub token. If the builder is missing, off, or fails, the feed pass still finishes.
+The board is built in the feed pass by `house/live/feed/live_board.py`. There is no separate waveboard builder.
 
 The live page also carries a waveboard split: cards on the left two thirds, the packet and the last five beats on the right third. Narrow screens turn that panel into a toggle. The page does not poll again. The feed pass reads the events it already collected, including a `## Packet` block on an issue or pull request body it already fetched, and the seat inbox files, then stores `waveboard` on the same feed. `WAVEBOARD.md` is rewritten from that model at most once a minute. Items in `waveboard-static.md` stay pinned. A live card with no beat for 60 minutes is a red stall in the coordinator inbox. A closed card drops off after 24 hours. A card missing acceptance or next owner is amber, badge `no packet`.
 
