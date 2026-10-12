@@ -575,7 +575,8 @@ function mergedHeader(now = Date.now()) {
     github: g ? { generated_at: g.generated_at ?? null, received_at: iso(SRCS.github.at) } : null,
     box: b ? { generated_at: b.generated_at ?? null, received_at: iso(SRCS.box.at), stale } : null,
   };
-  if (b?.board) { setCards(b.board); evalNudges(now); h.board = { ...b.board, cards: cardsView(), source: 'server' }; }
+  const bd = b?.board || g?.board;   // box pass board, else the host collector's (host-only installs)
+  if (bd) { setCards(bd); evalNudges(now); h.board = { ...bd, cards: cardsView(), source: 'server' }; }
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;

@@ -236,6 +236,28 @@ class BoardCacheFleetOnly(unittest.TestCase):
     def test_cache_opt_in_shows(self):
         self.assertIn("SECRET", _sub(self.CODE, LIVE_SHOW_UNMAPPED="1"))
 
+
+class HostModeBoard(unittest.TestCase):
+    """Host-only installs (LIVE_MODE=github, no box pass) still get a board from the GitHub events they collect."""
+    def test_feed_pass_builds_board_in_github_mode(self):
+        src = (FEED_DIR / "live_mesh.py").read_text()
+        line = next(l for l in src.splitlines() if "live_board.run(uniq)" in l)
+        self.assertNotIn('MODE != "github"', line)
+
+    def test_server_uses_collector_board_without_box(self):
+        src = (HERE.parent / "app" / "server.mjs").read_text()
+        self.assertIn("b?.board || g?.board", src)
+
+    def test_board_from_github_events(self):
+        code = ("import os; os.environ['INBOX_CACHE'] = str(Path(tempfile.mkdtemp()) / 'none.json')\n"
+                "import live_board\n"
+                "ev = [{'id': 'acme-org/app#5:open', 'repo': 'acme-org/app', 'number': 5, 'kind': 'pr_open', 'from': 'Builder',"
+                " 'to': 'GitHub', 'title': 'fleet PR five', 'source': 'https://github.com/acme-org/app/pull/5',"
+                " 't_ct': '2026-10-12T10:00:00-05:00', 'pr_state': 'open'}]\n"
+                "m = live_board.run(ev, write=False)\n"
+                "print(json.dumps([c['title'] for c in m['cards']]))")
+        self.assertIn("fleet PR five", _sub(code))
+
 if __name__ == "__main__":
     unittest.main()
 

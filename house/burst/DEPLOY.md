@@ -76,7 +76,7 @@ Railway service (`server.mjs`):
 | `UPSTREAM_PINNED`, `XRAY_OURS` | optional | `owner/name#N` list; logins that count as this fleet. Both unset means nothing is tracked |
 
 One Node process (`server.mjs`) serves the page and supervises the collector child. There is no second page service.
-The board is the `board` object on the feed header, built by `feed/live_board.py` in the feed pass.
+The board is the `board` object on the feed header, built by `feed/live_board.py` in the feed pass (the host collector builds it too, so a host-only install has a board; a box pass board wins when present).
 
 Collector child: its env is built from scratch by the server and holds only `GH_TOKEN` (= `GITHUB_READ_TOKEN`), `HOME`,
 `PATH`, `TZ`, `LIVE_MODE=github`, `LIVE_NO_CHECKS=1`, `LIVE_HEALTH_URLS`, `LIVE_MESH_SRC`, and, only when you set them,
