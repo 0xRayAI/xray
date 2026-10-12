@@ -134,6 +134,24 @@ class BackfillMissingBranch(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "404"):
                 rc.backfill(C(), time.time() + 30)
 
+
+class NodeMapEnv(unittest.TestCase):
+    """LIVE_NODE_MAP maps a fleet's logins to its own seats without editing the kit."""
+    def test_env_map_applies(self):
+        import importlib, subprocess
+        code = ("import sys; sys.path.insert(0, %r); import live_collect as c; "
+                "print(c.node('Forge0x1[bot]'), c.node('builder-app[bot]'), c.node('stranger'))") % str(FEED_DIR)
+        env = dict(os.environ, LIVE_NODE_MAP='{"forge0x1[bot]": "forge"}')
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True).stdout.split()
+        self.assertEqual(out, ["forge", "Builder", "Others"])
+
+    def test_bad_map_ignored(self):
+        import subprocess
+        code = "import sys; sys.path.insert(0, %r); import live_collect as c; print(c.node('forge0x1[bot]'))" % str(FEED_DIR)
+        env = dict(os.environ, LIVE_NODE_MAP='{not json')
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, check=True).stdout.strip()
+        self.assertEqual(out, "Others")
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -22,6 +22,20 @@ CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FAIL|HOLD)\b| re-check:\s*(?:\*
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
+# Per-fleet login -> node map, merged over the Example defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
+# (JSON object, or a path to a JSON file). Keeps a fleet's seats out of the kit.
+def _node_map_env() -> dict:
+    raw = os.environ.get("LIVE_NODE_MAP", "").strip()
+    if not raw:
+        return {}
+    try:
+        m = json.loads(Path(raw).read_text() if not raw.startswith("{") else raw)
+    except (OSError, ValueError):
+        return {}
+    return {str(k): str(v) for k, v in m.items()} if isinstance(m, dict) else {}
+
+
+NODE.update(_node_map_env())
 NODE_LC = {k.lower(): v for k, v in NODE.items()}   # logins are case-insensitive (lead-alt / lead-alt)
 ALIAS = {"lead-alt": "Lead", "lead-login": "Lead"}   # stored node names from before the fold
 # Cursor cloud agents (cursoragent, cursor-agent, ...); Bugbot (cursor[bot]) is NOT one of them
