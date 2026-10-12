@@ -25,8 +25,6 @@ __pycache__/
 fleet/activity.jsonl
 fleet/inbox/
 *.log
-# House template starters copied by grok-bot house init. Not runtime logs.
-!grok-bot/templates/house/**/*.log
 *.out
 rerun-*/
 rerun_*/

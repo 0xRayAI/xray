@@ -496,14 +496,34 @@ function houseTemplateNames(srcDir) {
     }
   };
   walk(srcDir, '');
+  for (const name of Object.keys(RUNTIME_STARTERS)) {
+    if (!names.includes(name)) names.push(name);
+  }
+  names.sort((a, b) => a.localeCompare(b));
   return names;
 }
+
+// Watcher logs are written at init time, not shipped: the repo rejects committed *.log files.
+const RUNTIME_STARTERS = {
+  [path.join('watchers', 'review-sent.log')]:
+    '# review-sent.log — one line per routed review. Format: <UTC time> <repo>#<PR> sha=<sha> action=first-review|recheck|relook to=<seat>\n'
+    + '# The reviewer appends the line. A repeat of the same PR + SHA + action does nothing.\n',
+  [path.join('watchers', 'stall-sweep.log')]:
+    '# stall-sweep.log — one line per nudge (item + time). Never nudge the same item twice in one day.\n'
+    + '# A sweep that finds nothing writes one quiet line and sends nothing.\n'
+    + '# Example quiet line: 2026-10-09T14:09:00Z quiet\n',
+};
 
 function copyMissingHouseFile(srcDir, destDir, name) {
   const dest = path.join(destDir, name);
   if (fs.existsSync(dest)) return { dest, copied: false };
   fs.mkdirSync(path.dirname(dest), { recursive: true });
-  fs.copyFileSync(path.join(srcDir, name), dest);
+  const src = path.join(srcDir, name);
+  if (!fs.existsSync(src) && Object.prototype.hasOwnProperty.call(RUNTIME_STARTERS, name)) {
+    fs.writeFileSync(dest, RUNTIME_STARTERS[name]);
+  } else {
+    fs.copyFileSync(src, dest);
+  }
   return { dest, copied: true };
 }
 
