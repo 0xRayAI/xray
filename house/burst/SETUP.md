@@ -150,7 +150,7 @@ Least privilege by default: `actions` is read (enough to see runs and jobs). Opt
 GitHub: Settings → Developer settings → Personal access tokens → Fine-grained.
 
 1. Resource owner: your org.
-2. Repository access: only the watched repos.
+2. Repository access: only the watched repos. The token must cover every repo in the watch list. A repo it does not cover returns 404 and that repo's backfill never completes.
 3. Permissions, read-only: Contents, Pull requests, Issues, Actions, Commit statuses. Metadata is included automatically.
 
 Fine-grained tokens have no Checks permission. The collector derives check state from Actions runs and jobs, and from commit statuses.
