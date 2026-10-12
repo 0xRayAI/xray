@@ -128,7 +128,7 @@ class Model(unittest.TestCase):
         self.assertEqual((c["state"], c["stall"], c["beats"][-1]["what"]), ("parked", False, "parked"))
         for later in (self.ev(30, "pr_commit", 100), self.ev(30, "ci_pass", 100, conclusion="success"),
                       self.ev(30, "critic_pass", 100),
-                      dict(self.ev(30, "pr_comment", 100), **{"from": "Others"})):
+                      dict(self.ev(30, "pr_comment", 100), **{"from": "Reviewer"})):   # Others is hidden by default (fleet-only)
             self.assertEqual(self.card(base + [park, later], 30)["state"], "live", later["kind"])
         self.assertEqual(self.card(base + [park, self.ev(30, "merged", 100)], 30)["state"], "closed")
         self.assertEqual(self.card(base + [self.ev(30, "pr_commit", 6000), park], 30)["state"], "parked")   # older beat: stays parked

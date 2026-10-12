@@ -215,6 +215,27 @@ class DeployKit(unittest.TestCase):
         for k in ("LIVE_NODE_MAP", "LIVE_BRAND", "LIVE_BRAND_RE", "LIVE_SHOW_UNMAPPED"):
             self.assertIn(f"'{k}'", src)
 
+
+class BoardCacheFleetOnly(unittest.TestCase):
+    """The board's inbox event cache never expires; old unmapped entries must not become cards."""
+    CODE = ("import os; d = Path(tempfile.mkdtemp()); f = d / 'inbox-events.json'\n"
+            "f.write_text(json.dumps({'events': {"
+            "'a': {'id': 'a', 'repo': 'acme-org/app', 'number': 1, 'kind': 'pr_open', 'from': 'Others', 'to': 'GitHub',"
+            " 'title': 'SECRET stranger PR', 't_ct': '2026-10-12T10:00:00-05:00', 'actor': 'stranger'},"
+            "'b': {'id': 'b', 'repo': 'acme-org/app', 'number': 2, 'kind': 'pr_open', 'from': 'Builder', 'to': 'GitHub',"
+            " 'title': 'fleet PR', 't_ct': '2026-10-12T10:00:00-05:00'}}}))\n"
+            "os.environ['INBOX_CACHE'] = str(f)\n"
+            "import live_board\n"
+            "print(json.dumps([e.get('title') for e in live_board._events([])]))")
+
+    def test_cache_unmapped_hidden(self):
+        out = _sub(self.CODE)
+        self.assertNotIn("SECRET", out)
+        self.assertIn("fleet PR", out)
+
+    def test_cache_opt_in_shows(self):
+        self.assertIn("SECRET", _sub(self.CODE, LIVE_SHOW_UNMAPPED="1"))
+
 if __name__ == "__main__":
     unittest.main()
 

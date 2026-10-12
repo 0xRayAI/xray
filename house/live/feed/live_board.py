@@ -101,7 +101,8 @@ def _events(extra):
     for e in extra or []:
         if isinstance(e, dict) and isinstance(e.get("id"), str):
             ev[e["id"]] = e
-    return sorted(ev.values(), key=_t)
+    import live_collect   # same fleet-only rule as the feed: the cache never expires, so old unmapped entries stay out
+    return sorted(live_collect.fleet_only(list(ev.values())), key=_t)
 
 
 def _key(e, sha_num):

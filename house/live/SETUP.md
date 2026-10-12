@@ -8,6 +8,10 @@
   (`POST /inbox`). Locally it keeps only a ring buffer (`$MESH_RUN/feed/inbox-spool/<seat>.jsonl`, 300 lines a seat)
   for when the server can't be reached.
 
+## Fleet seats and unmapped logins (server env)
+
+`LIVE_NODE_MAP` maps your fleet's GitHub logins to page seats (JSON object, or a path to a JSON file; non-string values are ignored). Logins not in the map are hidden by default everywhere: feed, board (including the inbox event cache), packets, upstream items. `LIVE_SHOW_UNMAPPED=1` shows them as `Others` instead, which publishes those logins and titles. The server passes both to the collector.
+
 ## Seat auth
 | Seat | Credential |
 |---|---|
