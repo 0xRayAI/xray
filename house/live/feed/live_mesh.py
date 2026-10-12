@@ -170,7 +170,7 @@ def build(args, gh):
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
     uniq = uc.fleet_only(uniq)   # unmapped logins never reach fleet state, board, packets or the feed
     fleet_state = fleet.fleet_state(uniq)
-    wave = live_board.run(uniq)   # cards / packets / beats from the same (fleet-only) events; host mode too
+    wave = live_board.run(uniq, write=MODE != "github")   # host mode: model only, never local board files; cards / packets / beats from the same (fleet-only) events; host mode too
     if wave is not None and MODE != "box" and token:
         repos = sorted({str(e.get("repo")).lower() for e in uniq if e.get("repo")})
         try:

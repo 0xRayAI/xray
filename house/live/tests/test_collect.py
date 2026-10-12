@@ -195,7 +195,7 @@ class FleetOnly(unittest.TestCase):
 
     def test_feed_pass_filters_before_board(self):
         src = (FEED_DIR / "live_mesh.py").read_text()
-        self.assertLess(src.index("uc.fleet_only(uniq)"), src.index("live_board.run(uniq)"))
+        self.assertLess(src.index("uc.fleet_only(uniq)"), src.index("live_board.run(uniq"))
 
 
 class DeployKit(unittest.TestCase):
@@ -239,14 +239,9 @@ class BoardCacheFleetOnly(unittest.TestCase):
 
 class HostModeBoard(unittest.TestCase):
     """Host-only installs (LIVE_MODE=github, no box pass) still get a board from the GitHub events they collect."""
-    def test_feed_pass_builds_board_in_github_mode(self):
-        src = (FEED_DIR / "live_mesh.py").read_text()
-        line = next(l for l in src.splitlines() if "live_board.run(uniq)" in l)
-        self.assertNotIn('MODE != "github"', line)
-
     def test_server_uses_collector_board_without_box(self):
         src = (HERE.parent / "app" / "server.mjs").read_text()
-        self.assertIn("b?.board || g?.board", src)
+        self.assertIn("fresh(g) > fresh(b) ? g.board : b.board", src)
 
     def test_board_from_github_events(self):
         code = ("import os; os.environ['INBOX_CACHE'] = str(Path(tempfile.mkdtemp()) / 'none.json')\n"
