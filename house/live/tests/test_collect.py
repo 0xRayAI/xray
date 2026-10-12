@@ -241,7 +241,7 @@ class HostModeBoard(unittest.TestCase):
     """Host-only installs (LIVE_MODE=github, no box pass) still get a board from the GitHub events they collect."""
     def test_server_uses_collector_board_without_box(self):
         src = (HERE.parent / "app" / "server.mjs").read_text()
-        self.assertIn("fresh(g) > fresh(b) ? g.board : b.board", src)
+        self.assertIn("BOARD_BOX_STALE_MS", src)
 
     def test_board_from_github_events(self):
         code = ("import os; os.environ['INBOX_CACHE'] = str(Path(tempfile.mkdtemp()) / 'none.json')\n"

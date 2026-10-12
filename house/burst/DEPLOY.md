@@ -65,6 +65,7 @@ Railway service (`server.mjs`):
 | `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; health URLs; default 45 |
 | `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S`, `HELD_MAX_S` | optional | 3600, 1800, 7200, 7200, 259200 |
 | `EMITTER_WORKING_S`, `BOX_STALE_S` | optional | 120, 180 |
+| `BOARD_BOX_STALE_S` | optional | 900. The box pass board is shown while the box pushed within this many seconds; after that the host collector's board is used |
 | `GITHUB_HOLD_LABEL` | optional | label that holds a card; default `on-hold` |
 | `NO_NUDGE_REPOS` | optional | comma list of `owner/name` or `owner/*`; unset means every repo can be nudged |
 | `SEAT_PRESENCE` | optional | JSON `{source seat: dest seat or [dest, ...]}`; default `{"builder-cloud":"builder"}` |

@@ -90,7 +90,8 @@ const EMPTY_FEED = { title: 'Example live mesh', generated_at: null, event_count
 const EPOCH = crypto.randomBytes(6).toString('base64url');
 const STARTED = Date.now();
 const MAX_REMOVED = 20000;
-const BOX_STALE_MS = (Number(process.env.BOX_STALE_S) || 180) * 1000;   // box pushes every ~45 s while alive
+const BOX_STALE_MS = (Number(process.env.BOX_STALE_S) || 180) * 1000;
+const BOARD_BOX_STALE_MS = (Number(process.env.BOARD_BOX_STALE_S) || 900) * 1000;   // box board wins while this fresh   // box pushes every ~45 s while alive
 let seq = 0, header = {}, floorSeq = 0;
 const evs = new Map();          // id -> { e, h, s }  (merged view)
 const removed = [];             // [{ id, s }] (ids dropped from the merged view)
@@ -575,8 +576,9 @@ function mergedHeader(now = Date.now()) {
     github: g ? { generated_at: g.generated_at ?? null, received_at: iso(SRCS.github.at) } : null,
     box: b ? { generated_at: b.generated_at ?? null, received_at: iso(SRCS.box.at), stale } : null,
   };
-  const fresh = x => Date.parse(x?.generated_at || '') || 0;   // two boards: the fresher feed's wins (a stale box board never masks the host's)
-  const bd = b?.board && g?.board ? (fresh(g) > fresh(b) ? g.board : b.board) : (b?.board || g?.board);
+  // board: the box pass board while the box pushed within BOARD_BOX_STALE_S (default 900 s), else the host collector's
+  const boxBoardLive = !!b?.board && SRCS.box.at > 0 && now - SRCS.box.at <= BOARD_BOX_STALE_MS;
+  const bd = boxBoardLive ? b.board : (g?.board || b?.board);
   if (bd) { setCards(bd); evalNudges(now); h.board = { ...bd, cards: cardsView(), source: 'server' }; }
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
