@@ -348,12 +348,12 @@ class StoredNodeMap(unittest.TestCase):
             "'w':{'id':'w','from':'Builder','to':'GitHub','author':'my-builder[bot]','src_file':'github-api'}}}))\n"
             "class FF: CT=None\n"
             "rc=c.RepoCollector('acme-org/app', d, FF(), lambda m: None)\n"
-            "print(rc.ev['x']['from'], rc.ev['y']['from'], rc.ev['z']['from'], rc.ev['w']['from'])"
+            "print(' '.join(sorted(rc.ev)), rc.ev['x']['from'], rc.ev['z']['from'], rc.ev['w']['from'])"
         ) % str(FEED_DIR)
         env = dict(os.environ, LIVE_NODE_MAP='{"my-builder[bot]":"Maker"}')
         out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertEqual(out.stdout.split(), ["Maker", "Others", "GitHub", "Maker"])
+        self.assertEqual(out.stdout.split(), ["w", "x", "z", "Maker", "GitHub", "Maker"])
 
 
 class GithubModeBoard(unittest.TestCase):
