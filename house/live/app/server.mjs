@@ -628,12 +628,13 @@ function startCollector() {
   const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
     TZ: 'America/Chicago', PYTHONDONTWRITEBYTECODE: '1', LIVE_MODE: 'github', LIVE_NO_CHECKS: '1', GH_TOKEN: tok,
     LIVE_MESH_SRC: path.join(COLLECTOR_DIR, 'upstream'),
-    LIVE_HEALTH_URLS: process.env.COLLECTOR_HEALTH_URLS || 'https://dev.example.com/health https://app.example.com/health' };
+    LIVE_HEALTH_URLS: (process.env.COLLECTOR_HEALTH_URLS || '').trim() };
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
-  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED']) if (process.env[k] != null) env[k] = process.env[k];
+  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
+  const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
-    '--repos', ...COLLECTOR_REPOS, '--deploy-repo', '', '--health', 'https://dev.example.com/health'];
+    '--repos', ...COLLECTOR_REPOS, '--deploy-repo', '', '--health', healthArg];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
   collector.pid = child.pid;
   console.log(`collector: started pid ${child.pid}`);

@@ -126,15 +126,17 @@ def open_numbers(c, repos, max_pages=20):
 
 
 def fleet_only(events: list) -> list:
-    """Drop events that would show a login outside the fleet map (collector, upstream, flow hops), so the
-    board, packets and page never see them. LIVE_SHOW_UNMAPPED=1 keeps them."""
+    """Drop GitHub-sourced events that would show a login outside the fleet map.
+    Local events (lab bugs, prompts) stay even when from or to is Others.
+    A GitHub-sourced event has src_file github-api or an actor. LIVE_SHOW_UNMAPPED=1 keeps everything."""
     if SHOW_UNMAPPED:
         return events
     out = []
     for e in events:
-        if "Others" in (e.get("from"), e.get("to")) or "Others" in (e.get("hops") or []):
+        github = e.get("src_file") == "github-api" or bool(e.get("actor"))
+        if github and ("Others" in (e.get("from"), e.get("to")) or "Others" in (e.get("hops") or [])):
             continue
-        if e.get("external") == "upstream" and e.get("actor") and e.get("from") == "Upstream":   # not in XRAY_OURS
+        if github and e.get("external") == "upstream" and e.get("actor") and e.get("from") == "Upstream":   # not in XRAY_OURS
             continue
         out.append(e)
     return out
@@ -246,6 +248,12 @@ class RepoCollector:
             for k in ("from", "to"):    # and the current node mapping (lead-alt -> Lead)
                 if isinstance(e.get(k), str) and e[k].lower() in ALIAS:
                     e[k] = ALIAS[e[k].lower()]
+            login = e.get("actor") if isinstance(e.get("actor"), str) and e.get("actor") else None
+            if not login and isinstance(e.get("author"), str) and e.get("author"):
+                login = e.get("author")
+            # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
+            if login and e.get("from") not in ("GitHub", "Example"):
+                e["from"] = node(login)
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             for k in ("label", "message"):

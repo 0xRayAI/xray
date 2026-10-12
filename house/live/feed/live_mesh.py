@@ -31,12 +31,13 @@ QUEUE_RE = re.compile(r"^- \[(.)\] (\S+) #(\d+) ([0-9a-f]{7,40})\b")
 for k in ff.AppToken.ENV:
     os.environ.pop(k, None)
 ff.AppToken.from_env = classmethod(lambda cls: None)
-ff.SEATS = ["Builder", "Reviewer", "Operator", "Tester", "Coord"]
+ff.SEATS = list(live_fleet.BOARD_SEATS)
 ff.SERVICES = ["GitHub", "dev.example.com", "app.example.com"]
 
 # LIVE_MODE: "all" (box, everything; the pre-split default), "github" (Railway collector: GitHub + /health +
-# fleet state from GitHub; no box files) or "box" (slim box pusher: fleet files, merge-queue, Railway deploy list;
-# no GitHub calls and no token). The server merges the two sources by event id.
+# fleet state and the board from those GitHub events; no box files) or "box" (slim box pusher: fleet files,
+# merge-queue, Railway deploy list; no GitHub calls and no token). The server merges the two sources by event id.
+# Host mode still builds a board. A fresh box board wins (BOARD_BOX_STALE_S, default 900 s); the host board is the fallback.
 MODE = os.environ.get("LIVE_MODE", "all")
 UPSTREAM = {}
 if MODE not in ("all", "github", "box"):

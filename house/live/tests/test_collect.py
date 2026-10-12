@@ -1,5 +1,5 @@
 """Unit tests for the Example adapter (stdlib, no network). Run: python3 -m unittest -v tests/test_collect.py"""
-import json, os, sys, tempfile, threading, time, unittest, http.server
+import json, os, subprocess, sys, tempfile, threading, time, unittest, http.server
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
 FEED_DIR = Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed"))
@@ -181,13 +181,15 @@ class FleetOnly(unittest.TestCase):
         self.assertEqual(_sub(code), "['y']")
 
     def test_fleet_only_covers_hops_and_upstream(self):
-        code = ("ev = [{'from': 'Builder', 'to': 'GitHub', 'hops': ['Builder', 'Others', 'GitHub']},"
+        code = ("ev = [{'from': 'Builder', 'to': 'GitHub', 'hops': ['Builder', 'Others', 'GitHub'], 'src_file': 'github-api'},"
                 " {'from': 'Upstream', 'to': 'GitHub', 'external': 'upstream', 'actor': 'stranger'},"
                 " {'from': 'Upstream', 'to': 'GitHub', 'external': 'upstream', 'kind': 'merged'},"
-                " {'from': 'Builder', 'to': 'GitHub'}]\n"
+                " {'from': 'Builder', 'to': 'GitHub'},"
+                " {'from': 'Others', 'to': 'GitHub', 'kind': 'lab_bug', 'src_file': 'lab'},"
+                " {'from': 'Builder', 'to': 'Others', 'kind': 'prompt_message'}]\n"
                 "print(len(c.fleet_only(ev)))")
-        self.assertEqual(_sub(code), "2")
-        self.assertEqual(_sub(code, LIVE_SHOW_UNMAPPED="1"), "4")
+        self.assertEqual(_sub(code), "4")
+        self.assertEqual(_sub(code, LIVE_SHOW_UNMAPPED="1"), "6")
 
     def test_non_string_map_values_ignored(self):
         code = "print(c.node('x[bot]'), c.node('y[bot]'))"
@@ -239,9 +241,10 @@ class BoardCacheFleetOnly(unittest.TestCase):
 
 class HostModeBoard(unittest.TestCase):
     """Host-only installs (LIVE_MODE=github, no box pass) still get a board from the GitHub events they collect."""
-    def test_server_uses_collector_board_without_box(self):
+    def test_server_prefers_box_board(self):
         src = (HERE.parent / "app" / "server.mjs").read_text()
         self.assertIn("BOARD_BOX_STALE_MS", src)
+        self.assertNotIn("fresh(g) > fresh(b)", src)
 
     def test_board_from_github_events(self):
         code = ("import os; os.environ['INBOX_CACHE'] = str(Path(tempfile.mkdtemp()) / 'none.json')\n"
@@ -330,3 +333,52 @@ class AuthExpiryTest(unittest.TestCase):
             self.assertEqual(cm.exception.code, live_mesh.EXIT_REMINT)
         with mock.patch.dict(os.environ, {"LIVE_TOKEN_MINTED": str(int(time.time()) - 60)}):
             live_mesh.token_check()   # fresh: no exit
+
+
+class StoredNodeMap(unittest.TestCase):
+    """A LIVE_NODE_MAP change relabels events already in the store."""
+
+    def test_stored_actor_follows_current_map(self):
+        code = (
+            "import json,sys,tempfile; from pathlib import Path; sys.path.insert(0,%r); import live_collect as c\n"
+            "d=Path(tempfile.mkdtemp()); (d/'app.json').write_text(json.dumps({'events':{"
+            "'x':{'id':'x','from':'Others','to':'GitHub','actor':'my-builder[bot]','src_file':'github-api'},"
+            "'y':{'id':'y','from':'Others','to':'GitHub','author':'stranger','src_file':'github-api'},"
+            "'z':{'id':'z','from':'GitHub','to':'Example','actor':'my-builder[bot]','src_file':'github-api'},"
+            "'w':{'id':'w','from':'Builder','to':'GitHub','author':'my-builder[bot]','src_file':'github-api'}}}))\n"
+            "class FF: CT=None\n"
+            "rc=c.RepoCollector('acme-org/app', d, FF(), lambda m: None)\n"
+            "print(rc.ev['x']['from'], rc.ev['y']['from'], rc.ev['z']['from'], rc.ev['w']['from'])"
+        ) % str(FEED_DIR)
+        env = dict(os.environ, LIVE_NODE_MAP='{"my-builder[bot]":"Maker"}')
+        out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(out.stdout.split(), ["Maker", "Others", "GitHub", "Maker"])
+
+
+class GithubModeBoard(unittest.TestCase):
+    def test_github_mode_builds_board_from_events(self):
+        code = (
+            "import os,sys,tempfile; from pathlib import Path\n"
+            "os.environ['LIVE_MODE']='github'; os.environ['GH_TOKEN']='t'\n"
+            "sys.path.insert(0,%r)\n"
+            "import live_mesh\n"
+            "ev={'id':'1','t_ct':'2026-10-12T10:00:00-05:00','from':'Builder','to':'GitHub','kind':'pr_open',"
+            "'direction':'internal','label':'opened','source':'https://github.com/acme-org/app/pull/1',"
+            "'src_file':'github-api','repo':'acme-org/app','number':1,'title':'ship','pr_state':'open'}\n"
+            "class Col:\n"
+            "    def __init__(self):\n"
+            "        self.ev={'1':ev}; self.st={'prs':{},'gaps':{}}\n"
+            "    def run(self,c,deadline):\n"
+            "        return True\n"
+            "live_mesh.COLLECTORS['acme-org/app']=Col()\n"
+            "live_mesh.uc.open_numbers=lambda *a, **k: {}\n"
+            "class A:\n"
+            "    repos=['acme-org/app']; health=None; health_every=60; health_state='/tmp/unused-health.json'\n"
+            "A.out=str(Path(tempfile.mkdtemp())/'github-events.json')\n"
+            "feed=live_mesh.build(A(), None)\n"
+            "print(any(c.get('number')==1 for c in (feed.get('board') or {}).get('cards') or []))\n"
+        ) % str(FEED_DIR)
+        out = subprocess.run([sys.executable, "-c", code], env=dict(os.environ), capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(out.stdout.strip(), "True")
