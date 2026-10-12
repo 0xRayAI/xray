@@ -358,7 +358,13 @@ class RepoCollector:
             while not bf.get(k + ":done") and time.time() < deadline:
                 d = c.gql(Q_HISTORY, {"owner": self.owner, "name": self.name, "ref": f"refs/heads/{b}",
                                       "after": bf.get(k + ":cursor")})
-                h = d["repository"]["ref"]["target"]["history"]
+                if d.get("repository") is None:
+                    raise RuntimeError(f"{self.repo} not visible to token (404)")
+                ref = d["repository"].get("ref")
+                if not ref:   # branch absent in this repo (e.g. no develop): nothing to backfill
+                    bf[k + ":done"] = True
+                    break
+                h = ref["target"]["history"]
                 bf[k + ":total"] = h["totalCount"]
                 for cm in h["nodes"]:
                     self.commit_event(cm["oid"], cm["committedDate"], cm["messageHeadline"], commit_login(cm), b)

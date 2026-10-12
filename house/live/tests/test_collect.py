@@ -106,6 +106,34 @@ class Stream(unittest.TestCase):
             self.assertEqual(len(out.with_suffix(".jsonl").read_text().splitlines()), 2)
 
 
+
+class BackfillMissingBranch(unittest.TestCase):
+    """A repo without `develop` (GraphQL ref: null) must not pause backfill forever."""
+    def test_missing_branch_completes(self):
+        class FF: CT = None
+        class C:
+            def gql(self, q, v):
+                if "ref" in v:
+                    if v["ref"] == "refs/heads/develop":
+                        return {"repository": {"ref": None}}
+                    return {"repository": {"ref": {"target": {"history": {
+                        "totalCount": 0, "pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": []}}}}}
+                return {"repository": {"pullRequests": {"pageInfo": {"hasNextPage": False, "endCursor": None},
+                                                        "nodes": []}}}
+        with tempfile.TemporaryDirectory() as d:
+            rc = uc.RepoCollector("acme-org/app", Path(d), FF(), lambda m: None)
+            self.assertTrue(rc.backfill(C(), time.time() + 30))
+
+    def test_repo_not_visible_raises_clearly(self):
+        class FF: CT = None
+        class C:
+            def gql(self, q, v):
+                return {"repository": None}
+        with tempfile.TemporaryDirectory() as d:
+            rc = uc.RepoCollector("acme-org/app", Path(d), FF(), lambda m: None)
+            with self.assertRaisesRegex(RuntimeError, "404"):
+                rc.backfill(C(), time.time() + 30)
+
 if __name__ == "__main__":
     unittest.main()
 
