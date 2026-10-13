@@ -40,9 +40,10 @@ test('archived, 403 and 404 org repos are skipped; the server keeps serving', as
   assert.ok(!JSON.stringify(j).includes('forbidden'));
 });
 test('/healthz (no auth): repo count + oldest/newest collected time, no repo names', async () => {
+  const recent = new Date(Date.now() - 60 * 1000).toISOString();
   const feed = { generated_at: '2026-10-13T07:00:00-05:00', events: [
-    { id: 'a', repo: 'acme/one', t_ct: '2026-10-13T06:50:00-05:00', label: 'secret-ish label' },
-    { id: 'b', repo: 'acme/one', t_ct: '2026-10-13T06:55:00-05:00', label: 'x' }] };
+    { id: 'a', repo: 'acme/one', t_ct: recent, label: 'secret-ish label' },
+    { id: 'b', repo: 'acme/one', t_ct: recent, label: 'x' }] };
   fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
   fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
   let h;

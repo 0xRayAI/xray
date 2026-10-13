@@ -56,6 +56,12 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 - **Cause:** There is no switch to drop those events.
 - **Fix:** Drop them unless `LIVE_SHOW_UNMAPPED=1`.
 
+### The pill says building, or the wave header says building or empty
+
+- **Symptom:** There is no feed stamp yet, and the pill used to read a huge "behind" count. Or the board panel has no cards.
+- **Cause:** With no `generatedAt`, the pill was treating the age as enormous. A wave header with no stamp is not a duration, and a board that was built with zero cards is not the same as a board that has not been built.
+- **Fix:** No `generatedAt` shows **building**. The wave header says **building** until a stamp exists, **empty** when that board has zero cards, and the live counts otherwise. An old `generatedAt` still says "behind N min".
+
 ### The board says no cards
 
 - **Symptom:** The page, the collector, and the pusher are up. The board says "no cards".

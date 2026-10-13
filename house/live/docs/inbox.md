@@ -119,7 +119,7 @@ Any 2xx is success. The response body is ignored.
 
 `GET /healthz` (no auth) has `wakes`: `{seat: "ok" | "fail" | "no_key" | "idle"}` for each configured seat. `idle` means a key is set but nothing has been sent since the server started. It shows no URL or key. To verify, POST one ack-only packet per seat, check that each seat shows `ok`, and check that each ack comes back.
 
-`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (last collector feed write) and `card_age` (last board card change). If `box_age` keeps growing, the box status reporter has stalled, so restart it.
+`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (last collector feed write), `card_age` (last board card change), and `data_age` (newest GitHub event `t_ct`, not the collector write). `board` is `building` (no board yet), `empty` (a board with zero cards), or `live`. `origin` is the pinned public origin, or null. `ok` is false when a numeric `card_age` exceeds `CARD_STALE_S` (default 600) or a numeric `data_age` exceeds `DATA_STALE_S` (default 21600). The HTTP status stays 200. If `box_age` keeps growing, the box status reporter has stalled, so restart it.
 
 ### No webhook set (fallback)
 
