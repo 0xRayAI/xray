@@ -35,7 +35,8 @@
     "SEO Researcher": "seo-researcher",
     "SEO Writer": "seo-writer",
     "Offsite Copier": "offsite-copier",
-    "Builder-cloud": "builder-cloud"
+    "Builder-cloud": "builder-cloud",
+    "Arch1": "arch1"
   },
   "seats": {
     "reviewer": {
@@ -127,7 +128,16 @@
     },
     "seo-researcher": {},
     "seo-writer": {},
-    "offsite-copier": {}
+    "offsite-copier": {},
+    "arch1": {
+      "needles": [
+        "arch1",
+        "deep-review",
+        "deep review",
+        "gate b"
+      ],
+      "reason": "deep-review / Gate B ask for Arch1"
+    }
   },
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); SEO seats have keys but no routes yet",
   "_note_builder_cloud": "builder-cloud gets every builder line (mirrored server-side in app/server.mjs) plus nudges to builder; no routes of its own"
