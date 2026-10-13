@@ -28,13 +28,22 @@ For a seat in `SEAT_WEBHOOKS`, the webhook is the wake: the server fires it on e
 Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (leave `SEAT_WEBHOOKS` empty), which left packets unread until someone opened the inbox.
 
 - Each seat creates a webhook-triggered inbox wake routine. The routine reads the seat's inbox, handles open lines, and acks them (see [Ack route](#ack-route)).
-- burst-live's `SEAT_WEBHOOKS` points at those routines, one entry per seat, and each key lives in its own `key_env` variable.
+- burst-live's `SEAT_WEBHOOKS` points at those routines, one entry per seat, and each key lives in its own variable: `WAKE_KEY_<SEAT>` (for example `WAKE_KEY_MILL`), or the variable named by `key_env`.
 - When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
 
 D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
+
+**Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
+
+1. **Coordinator fallback.** If an actionable event has no owner seat, or only `arch1` / `arch1-cloud` own it (they have no webhook), blinky also gets a line. The seat and the list come from `fallback` in `inbox-roles.json`.
+2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
+3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`).
+4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
+5. **Idempotent.** Each event id is routed once, also across restarts (see above).
+6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only.
 
 ### Configure
 
@@ -49,7 +58,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 |---|---|
 | seat (key) | lowercased; must be a known seat id, otherwise skipped |
 | `url` | `http:` or `https:` URL |
-| `key_env` | name of an env var holding the key (`[A-Za-z_][A-Za-z0-9_]{0,80}`). The key itself is never in the JSON |
+| `key_env` | optional: name of an env var holding the key (`[A-Za-z_][A-Za-z0-9_]{0,80}`). If it's unset or empty, the server uses `WAKE_KEY_<SEAT>` (seat upper-cased, `-` becomes `_`), so `{"mill": {"url": "..."}}` plus `WAKE_KEY_MILL` is enough. The key itself is never in the JSON |
 | `header` | optional, `[A-Za-z0-9-]{1,64}`; default `Authorization` |
 
 Invalid JSON logs `wake: SEAT_WEBHOOKS is not json` and disables all wakes. A bad entry logs `wake: skip bad config for <seat>` and only that seat is skipped. The config is read once at startup, so restart the server after changing it.
@@ -76,8 +85,14 @@ Any 2xx is success. The response body is ignored.
 
 - A quiet seat sends after `WAKE_COALESCE_MS` (default 50 ms), so a burst is one POST.
 - After a send, further lines wait until `WAKE_DEBOUNCE_S` (default 60 s) since the last send, then go out together in one POST.
-- 3 attempts per POST, backoff `WAKE_RETRY_MS` (default 400 ms) then double. After the third failure the batch is dropped (the lines stay in the inbox). The server logs `wake: <seat> ok|fail attempts=<n> [error]`; errors are `http_<status>`, `timeout`, a network code, or `no_key` (the `key_env` variable is empty or unset; no request is sent).
+- 3 attempts per POST, backoff `WAKE_RETRY_MS` (default 400 ms) then double. After the third failure the batch is dropped (the lines stay in the inbox). The server logs `wake: <seat> ok|fail attempts=<n> [error]`; errors are `http_<status>`, `timeout`, a network code, or `no_key` (neither the `key_env` variable nor `WAKE_KEY_<SEAT>` is set; no request is sent).
 - The inbox write never waits on the webhook, and a wake failure never fails the write.
+
+### Verify on /healthz
+
+`GET /healthz` (no auth) has `wakes`: `{seat: "ok" | "fail" | "no_key" | "idle"}` for each configured seat. `idle` means a key is set but nothing has been sent since the server started. It shows no URL or key. To verify, POST one ack-only packet per seat, check that each seat shows `ok`, and check that each ack comes back.
+
+`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (last collector feed write) and `card_age` (last board card change). If `box_age` keeps growing, the box status reporter has stalled, so restart it.
 
 ### No webhook set (fallback)
 

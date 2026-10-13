@@ -655,6 +655,7 @@ class Fleet:
         del_old = sorted(self.cloud["agents"].items(), key=lambda kv: kv[1][1])[:-200]
         for k, _ in del_old:
             del self.cloud["agents"][k]
+            self.cloud.get("by", {}).pop(k, None)
         self.seeded.add("cloud")
 
     def _cloud_line(self, d, first, now, src="fleet/cloud-agents"):
@@ -664,10 +665,11 @@ class Fleet:
         if t is None or action not in CLOUD_ACTIONS or not CLOUD_AGENT_ID.fullmatch(agent):
             return
         by = str(d.get("by", ""))
-        by = by if by in CLOUD_SEATS else "Others"
+        by = by if by in CLOUD_SEATS else (seat_of(by) or "Others")   # #275: fleet seats (forge, mill, ...) too
         repo = re.sub(r"[^A-Za-z0-9._-]", "", str(d.get("repo", "")).split("/")[-1])[:32] or "repo"
         tag = re.sub(r"\s+", " ", str(d.get("tag", ""))).strip()[:40] or "-"
         self.cloud["agents"][agent] = [action, t]
+        self.cloud.setdefault("by", {})[agent] = by   # the launching seat counts as working while this agent runs
         by_t = self.cloud.setdefault("by_t", {})
         by_t[by] = max(by_t.get(by, 0), t)   # a cloud line is activity from `by` (clears their prompt spinner)
         if first and now - t > CLOUD_RECENT_S:
@@ -1116,6 +1118,11 @@ class Fleet:
         for seat, info in self._pr_check_working(feed_events, now).items():
             if seat not in working:          # log signal wins if already set; either turns the gear on
                 working[seat] = info
+        for agent, (actn, t) in self.cloud.get("agents", {}).items():   # #275, lowest priority: the seat that launched
+            by = self.cloud.get("by", {}).get(agent)                       # a running cloud agent counts as working
+            b = BOARD.get(by, by)
+            if actn in ("launch", "reply") and now - t <= WORKING_CLOUD_S and b in BOARD_SEATS and b not in working:
+                working[b] = {"via": "cloud", "since_ct": _ct(t, self.CT), "agent": agent}
         return working
 
     def fleet_state(self, feed_events, now=None):

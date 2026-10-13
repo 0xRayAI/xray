@@ -31,3 +31,17 @@ The page groups cards that a seat is working on, then pinned cards, then one gro
 ## Ghost cards
 
 Each feed pass asks GitHub which issue and pull request numbers are still open. A card that is not closed and not pinned, whose repo answered, and whose number is absent, is closed. A repo whose query fails is left alone.
+
+## Seat activity (#275)
+
+Every seat must log these lines, or it goes dark on the board even while it's busy. The box status reporter pushes these files to the server. The server never reads chats.
+
+| What | Where (box, under the run dir) | Line |
+|---|---|---|
+| Turn start / end, background task start / end (desktop runs too), watcher start / stop | `fleet/activity.jsonl` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
+| Owner → seat message, seat → seat or room message (a pulse) | `fleet/prompts.jsonl` | `{"t_ct","from","to"}` only. Never the text, never a secret |
+| Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent"}` |
+
+Seats off the box (for example Arch1) POST the same shapes to `/activity` with their seat key (`kind: prompt|turn|subagent|watcher|cloud_agent`). A seat counts as working while it has an open turn or task, or one of its cloud agents is running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
+
+Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are real events on a card, and they reset its idle clock. **Pulses** are liveness signals only. **Packets** are tracked asks in an inbox, and **acks** close them. **Nudges** are packets the server creates after 60 min with no beat. **Wakes** are content-free webhook doorbells that follow packets. **Seat status** is the working or idle light.
