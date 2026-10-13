@@ -30,7 +30,7 @@ The lead runs the CLI. A browser subagent is the wrong seat.
 4. Wait on the same CLI for `+ <name>@<version>`.
 5. Poll `npm view <name> version` until it equals the published version. The plus-line can precede the registry by minutes. Deploy Railway only after npm is live.
 6. Push an annotated tag `v<version>` on the exact published commit if it is missing. A pushed tag alone is not done. Do not start the next cut on a stale `npm view`.
-7. Create or update the GitHub Release for that tag so Latest flips. Forge drafts the notes from CHANGELOG in the same pass as npm. Critic friend-tests them (plain words a builder would hear). After the wear-gate, Blaze's ship go and critic's wear PASS, forge publishes the package, pushes the tag and publishes the Release (house OP-PROC §3); any other publish still asks Blaze first. Title: `vX.Y.Z — <short friend line>`. The body is a real Release, not a tag annotation. Required pattern:
+7. Create or update the GitHub Release for that tag so Latest flips. Forge drafts the notes from CHANGELOG in the same pass as npm. Critic friend-tests them (plain words a builder would hear). Blaze publishes the Release (or an explicit GO). Title: `vX.Y.Z — <short friend line>`. The body is a real Release, not a tag annotation. Required pattern:
 
 ```markdown
 ## What's new
