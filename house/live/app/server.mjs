@@ -699,6 +699,16 @@ async function refreshOrgRepos() {
   console.log(`collector: repos ${next.join(' ')}`);
   if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
 }
+// Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
+// LIVE_FLEET_SEATS is set); fleet-nodes.json maps seat logins to seats, under any LIVE_NODE_MAP entries (the var wins).
+function fleetConfig(e, dir = COLLECTOR_DIR) {
+  const out = {}, roster = path.join(dir, 'fleet-roster.json');
+  if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
+  let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
+  let extra = {}; try { extra = e.LIVE_NODE_MAP ? JSON.parse(e.LIVE_NODE_MAP) : {}; } catch {}
+  if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...nodes, ...extra });
+  return out;
+}
 async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
@@ -718,6 +728,7 @@ async function startCollector() {
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
   for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
+  Object.assign(env, fleetConfig(process.env));
   const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];
