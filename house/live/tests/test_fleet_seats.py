@@ -95,9 +95,6 @@ class FleetSeats(unittest.TestCase):
         self.assertEqual(sorted(got), ["blinky"])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class FleetRoster(unittest.TestCase):
     """burst-live roster is committed (fleet-roster.json + fleet-nodes.json, shipped by deploy.sh), never a hand-set var."""
@@ -120,3 +117,7 @@ class FleetRoster(unittest.TestCase):
     def test_deploy_ships_the_roster(self):
         sh = (FEED.parent / "app" / "deploy.sh").read_text()
         self.assertIn("fleet-roster.json", sh); self.assertIn("fleet-nodes.json", sh)
+
+
+if __name__ == "__main__":
+    unittest.main()

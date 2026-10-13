@@ -204,6 +204,9 @@ def cmd_pass(now=None):
     if len(seen) > MAX_SEEN:
         seen = dict(sorted(seen.items(), key=lambda kv: kv[1])[-MAX_SEEN:])
     lines = 0
+    bad = sum(1 for e in new if not _t(e))
+    if bad:
+        print(f"inbox_pass: {bad} event(s) with missing/bad t_ct marked seen, not delivered", file=sys.stderr)
     new = [e for e in new if _t(e) >= floor]   # history (pre-seed or late backfill) is marked seen, never delivered
     if not first and new:
         acts = []

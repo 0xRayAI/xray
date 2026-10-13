@@ -615,17 +615,43 @@ function full() {   // built lazily: only the first full GET after a change pays
 // text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
 const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
 const HEADER_RAW = ['fleet', 'board'];
-// fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten
+// fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten.
+// One compiled pattern, rebuilt only when the private set grows (not per string per GET).
 const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+let privRe = null, privReN = -1;
+function privPattern() {
+  if (privReN !== privateRepos.size) { privReN = privateRepos.size; privRe = privReN ? new RegExp([...privateRepos].sort((a, b) => b.length - a.length).map(reEsc).join('|'), 'gi') : null; }
+  return privRe;
+}
 function scrub(v) {
   if (!privateRepos.size || v === null) return v;
-  if (typeof v === 'string') { let t = v; for (const r of privateRepos) t = t.replace(new RegExp(reEsc(r), 'gi'), 'private repo'); return t; }
+  if (typeof v === 'string') return v.replace(privPattern(), 'private repo');
   if (Array.isArray(v)) return v.map(scrub);
   if (typeof v !== 'object') return v;
   const o = {}; for (const k of Object.keys(v)) o[k] = scrub(v[k]); return o;
 }
-function maskHeader(h) { const o = mask(h); for (const k of HEADER_RAW) if (h && k in h) o[k] = scrub(h[k]); return o; }
-function isPrivate(o) { return o && typeof o.repo === 'string' && privateRepos.has(o.repo.toLowerCase()); }
+// A header repo name is shown only when confirmed public (read OK and private:false); anything else is a placeholder.
+// The header is never collapsed like a private event: every field is kept, repo / repos are mapped, the rest masked + scrubbed.
+function maskHeader(h) {
+  if (!privateRepos.size || !h || typeof h !== 'object') return h;
+  const pub = new Set([...readable].map(x => x.toLowerCase()).filter(x => !privateRepos.has(x)));
+  const publicRepo = r => typeof r === 'string' && pub.has(r.toLowerCase());
+  const o = {};
+  for (const k of Object.keys(h)) {
+    if (HEADER_RAW.includes(k)) o[k] = scrub(h[k]);
+    else if (k === 'repo') o[k] = publicRepo(h[k]) ? h[k] : 'private repo';
+    else if (k === 'repos' && Array.isArray(h[k])) o[k] = h[k].map(r => publicRepo(r) ? r : 'private repo');
+    else o[k] = scrub(mask(h[k]));
+  }
+  return o;
+}
+// Short names are for matching only (an event whose repo is a bare name); scrub never rewrites bare short names.
+const privateShort = new Set();
+function isPrivate(o) {
+  if (!o || typeof o.repo !== 'string') return false;
+  const r = o.repo.toLowerCase();
+  return privateRepos.has(r) || (!r.includes('/') && privateShort.has(r));
+}
 function mask(v) {
   if (!privateRepos.size || v === null || typeof v !== 'object') return v;
   if (Array.isArray(v)) return v.map(mask);
@@ -678,7 +704,7 @@ async function readableRepos(list, tok) {
       if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); skipped.add(full); continue; }
       skipped.delete(full);
       const d = await r.json().catch(() => ({}));
-      if (d.private !== false) { privateRepos.add(full.toLowerCase()); seq++; floorSeq = seq; fullDirty = true; }
+      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateShort.add(full.toLowerCase().split('/').pop()); seq++; floorSeq = seq; fullDirty = true; }
       readable.add(full);
     }
     ok.push(full);
@@ -705,7 +731,10 @@ function fleetConfig(e, dir = COLLECTOR_DIR) {
   const out = {}, roster = path.join(dir, 'fleet-roster.json');
   if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
   let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
-  let extra = {}; try { extra = e.LIVE_NODE_MAP ? JSON.parse(e.LIVE_NODE_MAP) : {}; } catch {}
+  let extra = {}; try {   // the var wins, inline JSON or a path (as live_fleet accepts)
+    const raw = String(e.LIVE_NODE_MAP || '').trim();
+    extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
+  } catch {}
   if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...nodes, ...extra });
   return out;
 }

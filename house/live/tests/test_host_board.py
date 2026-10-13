@@ -42,7 +42,6 @@ class HostBoard(unittest.TestCase):
     def test_host_mode_opt_in(self):
         r = run(LIVE_SHOW_UNMAPPED="1"); print("\nopt-in:", r["titles"])
         self.assertIn("SECRET unmapped live", r["blob"])
-if __name__ == "__main__": unittest.main()
 
 
 DEDUPE = r'''
@@ -65,3 +64,7 @@ class GithubModeDedupe(unittest.TestCase):
         r = subprocess.run([sys.executable, "-B", "-c", DEDUPE % FEED], capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False])
+
+
+if __name__ == "__main__":
+    unittest.main()
