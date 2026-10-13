@@ -18,7 +18,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Work moves on a **Beat**. Do not poll on a timer when an event exists.
 - **Server, not seats.** Scripted services (collection, cards, dispatcher, nudges, inbox writes, push wakes, health checks) run on the server. AI seats do judgment work only, because an AI turn is expensive. A seat never runs a loop a script can run.
 - Blaze reports the weekly spend. CoS logs it in `ATTENTION_STATE.md`. At 50 percent, **Pipe down** is soft: no new Cards. At 75 percent, Pipe down is full.
-- **Compute budget (HARD).** The house burned about 35 percent of the weekly allotment in about 24 hours. What is left must cover about six days. That bound sits on CoS, forge, critic, and mill alike.
+- **Compute budget (HARD).** Live spend and what is left this week are in `ATTENTION_STATE.md`; check it before heavy work. That bound sits on CoS, forge, critic, and mill alike.
 - **Pipe down.** Blaze calls it. CoS relays it. Write what is in hand, then stop. Routines pause.
 - **In the dark.** CoS declares it when a shared limit is hit. The notice names the limit, what is blocked, and the resume time. Do not retry. Do not route around it.
 - **Lights on.** CoS confirms the limit has cleared. Each seat picks up its queue in order.
@@ -51,11 +51,11 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 - **Review plate.** One pass, one fix, one re-check, then stop. A PASS ends it. A failed re-check is parked for Blaze. There is no third lap.
 - The words must match the live thing. Do not say personalized, generated, or composed for one person when the asset is the same for everyone. Fix the catalog and the page.
-- Open as a draft. Critic reviews Light or Normal. Merge only after the gate. Do not land unreviewed work on main.
+- Open as a draft. Critic reviews by tier (Light, Normal, or Strict; see section 3). Merge only after the gate. Do not land unreviewed work on main.
 - **Wrong-author supersede.** If the open head is not forge0x1 when forge0x1 is required, forge0x1 opens one replacement pull request and closes the old one with a pointer. A forge0x1 FAIL stays on that Review plate. Do not open a new pull request for every FAIL.
 - A **Nit** is noted on the pull request or on a **Card**. A Nit does not block by itself. An unverified finding does not block.
 - A blocking FAIL is a live break: wrong ship, money, lost data, or a security hole. Name the file and the check that fails on the old code.
-- A **Ship-gate FAIL** still blocks: the packed install was skipped or used the wrong package, a secret remains, stamp choruses are in the product, or a careful-change merged without Blaze's go.
+- A **Ship-gate FAIL** still blocks: the packed install was skipped or used the wrong package, a secret remains, stamp choruses are in the product, or an Arch1-gated tier merged without Arch1's yes.
 - A blocking FAIL becomes an issue with the repro and the file to fix. A Nit becomes a Card, not an issue. One pull request per issue, with `Fixes #N`. Merge closes the issue. A parked pull request leaves the issue open and labeled parked. A review FAIL stays on the pull request unless it is a new blocking break.
 - A fix is the smallest change that solves the problem and passes its checks. Bigger work gets its own Card.
 - **Docs follow code.** After every merged change, update the docs site in the same track. Every deploy or run issue becomes a generic Symptom / Cause / Fix entry in the troubleshooting FAQ.
@@ -112,7 +112,7 @@ Public words are friend-speak. Test them on a person before they go out.
 
 - A rule that belongs in the product goes upstream. Pull from upstream before starting work.
 - Upstream, the fleet page and its system are called **Bifrost**, not "live". Nothing private goes upstream: no house data, no seat names, no internal URLs, no secrets.
-- The generic board lives upstream. We build and triage; upstream's fleet reviews, merges and owns the code. Show the human anything before it posts upstream (PR, issue, or comment).
+- The generic board lives upstream. We build and triage; we own Bifrost and fold fixes in ourselves; Arch1's yes is the gate into main. Show the human anything before it posts upstream (PR, issue, or comment).
 - **Organ gate**, **CAP**, **Lens**, and **Plate** stay defined in the Lexicon. Do not expand them here.
 - Changes to this file are committed in git. Do not keep a second copy.
 
@@ -120,13 +120,13 @@ Public words are friend-speak. Test them on a person before they go out.
 
 - **Review plate.** One pass, one fix, one re-check, then stop. Wear-gate is not a Review plate.
 - **Nit.** A review finding below a blocking FAIL. Note it on a Card. It does not fail a pull request by itself.
-- **Ship-gate FAIL.** A missed or wrong packed install, a secret left in, stamp choruses in the product, or a careful-change without Blaze. It still fails at publish.
+- **Ship-gate FAIL.** A missed or wrong packed install, a secret left in, stamp choruses in the product, or an Arch1-gated tier without Arch1 yes. It still fails at publish.
 - **CAP.** The plan when something fails the Organ gate. Plan, build, wear, validate.
 - **Pipe down.** Write what is in hand, then stop. Routines pause.
 - **In the dark.** A shared limit is hit. Name it. Do not route around it.
 - **Lights on.** The limit has cleared. Pick up the queue in order.
-- **Packet.** Goal, constraints, path, acceptance, evidence, next owner, escalate.
-- **Handoff = packet + wake.** Every handoff to a seat is two things: (1) the packet on that seat's Bifrost board inbox, which is the tracked record (ack, board, nudges); (2) a one-line message through the fleet's own internal messaging that points to the packet, which is the wake. Never one without the other. A webhook is the wake only when a fleet has no internal messaging.
+- **Packet.** Goal, constraints, path, acceptance, gates, evidence, next owner, escalate (the same eight fields as the pack).
+- **Handoff = packet + wake.** Every handoff to a seat is two things: (1) the packet on that seat's Bifrost board inbox, which is the tracked record (ack, board, nudges); (2) a one-line message through the fleet's own internal messaging that points to the packet, which is the wake. Never one without the other. Until a seat has an inbox key, the fallback is a PR comment plus the room. A webhook is the wake only when a fleet has no internal messaging.
 - **Card.** One ticket, one seat, Done when, Stops at.
 - **Role card.** Standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
 - **Station.** A seat's short survival note on disk.
@@ -146,5 +146,7 @@ Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 
 ## Done when
+
+A Card is done when its receipt is on the PR and its board card is closed.
 
 This file is house/OP-PROC.md for our fleet. Pack stays generic; this file is the house layer.
