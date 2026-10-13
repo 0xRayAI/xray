@@ -63,7 +63,7 @@ Railway service (`server.mjs`):
 | `SESSION_SECRET` | required, 32+ chars | cookie HMAC |
 | `INGEST_SECRET` | required, 32+ chars | box pusher |
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |
-| `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only |
+| `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only. Today it covers public repos only: private-repo reads (including CI/check reads) return 403 and the collector logs `skip ... (403)`. Widening the token's repo scope needs Blaze's GO |
 | `MESH_DATA_DIR` | optional | default `/data` |
 | `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_ORG`, `COLLECTOR_ORG_REFRESH_S`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; org whose repos are all watched (unioned with `COLLECTOR_REPOS`); org re-list seconds, default 3600; space-separated app `/health` URLs (unset means the collector probes no host); default 45 |
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |

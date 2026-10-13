@@ -145,6 +145,28 @@ Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md
 
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 
+## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
+
+Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it." Seats run on it now; this section is binding once Arch1 approves.
+
+1. **Clock.** CoS sets the lap time (default 2 min) with a time per seat. A seat that misses says what blocks it in one line.
+2. **Build.** Mill builds one branch per lap with everything folded in: code, docs, maintainer notes, skills, earlier nits.
+3. **Push.** Forge opens one PR; late docs commits go into that same PR.
+4. **Merge.** Forge merges as soon as CI passes. No mid-run review hold; nits never block.
+5. **Deploy.** One deploy per lap. Broken production: roll back to the last good deploy first (by deployment id), then fix forward. After a rollback, say in the room which deploy is live.
+6. **Test.** Critic runs one final pass on the live build: a real wake round trip, an ack with no approval card, UI, history, docs. One result.
+7. **Room.** Only the merge-and-deploy receipt, the final result, or a blocker.
+8. **Log.** CoS logs refinements as they happen and folds them into one OP-PROC PR.
+
+**P1 lane (needs Arch1's approval).** A P1 fix goes to `dev` (quick checks only: `.github/workflows/dev-lane.yml` runs lint + `house/live/tests/run_tests.sh`), then deploy from `dev`, then a `dev` → `main` PR with full CI and critic's pass. `main`'s CI is unchanged.
+
+**Drill refinements.**
+- Wakes ack only with `live-inbox <seat> --ack <id>`, never a hand-written POST (no approval card for a routine ack).
+- A wake change is tested against a real seat routine (2xx and the routine runs), not unit stubs alone. A wake test sends a well-formed inbox line; receipt = `200 added:1` + `wake: <seat> ok` + the seat confirms.
+- Waveboard history lives on the `/data` volume; rollbacks and redeploys keep it. Confirm a diff does not touch `/data`.
+- Our install is public (no password, no masking); other installs stay gated and masked unless they opt in.
+- Seats ask Blaze yes/no questions in his 1:1. Webhook and key links go only in the owner's 1:1.
+
 ## Done when
 
 A Card is done when its receipt is on the PR and its board card is closed.

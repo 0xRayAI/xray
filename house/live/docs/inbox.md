@@ -32,6 +32,13 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 - When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
 
+**Adding the missing seat webhooks (magnet, nibbler, sound, herald, arch1).** These five have no `SEAT_WEBHOOKS` entry yet, so they get no wake POST. For each:
+1. The seat creates its webhook-triggered inbox wake routine (reads with `live-inbox <seat>`, acks with `live-inbox <seat> --ack <id>`).
+2. The seat sends its owner the webhook URL, key and header links in the owner's 1:1 only.
+3. The owner adds `"<seat>": {"url": "<webhook url>", "key_env": "WAKE_KEY_<SEAT>"}` (plus `header` if the routine needs one) to `SEAT_WEBHOOKS`, and puts the key in `WAKE_KEY_<SEAT>` on the service. Values never go in a room, repo, PR or log.
+4. Restart burst-live (config is read at startup) and verify one real wake: `wake: <seat> ok` in the log and the seat confirms its routine ran.
+Until then blinky's fallback line and sweep cover them (arch1 has no webhook by design today; see guardrail 1).
+
 D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
