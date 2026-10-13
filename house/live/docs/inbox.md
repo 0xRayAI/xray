@@ -13,9 +13,9 @@
 
 Any field name containing `body`, `text`, or `message` is refused (so is any unknown field). Put the ask in `title`.
 
-A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
+A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. The cursor dir defaults to `/srv/live/run/fleet/cursors`, which is not writable on the box or a Mac; set `LIVE_CURSORS` to a writable dir (e.g. `~/.burst/cursors`).
+`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. It runs on its defaults with no env: `LIVE_URL` = burst-live, keys in `~/.burst/seat-keys` (`SEAT_KEYS_DIR`), cursors in `~/.burst/cursors` (`LIVE_CURSORS`). Set those only to override.
 
 ## Seat wake URLs and webhooks
 
@@ -32,25 +32,51 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 - When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
 
+**Adding the missing seat webhooks (magnet, nibbler, sound, herald, arch1).** These five have no `SEAT_WEBHOOKS` entry yet, so they get no wake POST. For each:
+1. The seat creates its webhook-triggered inbox wake routine (reads with `live-inbox <seat>`, acks with `live-inbox <seat> --ack <id>`).
+2. The seat sends its owner the webhook URL, key and header links in the owner's 1:1 only.
+3. The owner adds `"<seat>": {"url": "<webhook url>", "key_env": "WAKE_KEY_<SEAT>"}` (plus `header` if the routine needs one) to `SEAT_WEBHOOKS`, and puts the key in `WAKE_KEY_<SEAT>` on the service. Values never go in a room, repo, PR or log.
+4. Restart burst-live (config is read at startup) and verify one real wake: `wake: <seat> ok` in the log and the seat confirms its routine ran.
+Until then blinky's fallback line and sweep cover them (arch1 has no webhook by design today; see guardrail 1). The seated turn that reads those lines must drain them that turn.
+
 D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
+**Route table (our 9 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 9 seats (`feed/fleet-roster.json`: blinky, critic, forge, mill, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name.
+
+| Event | Seat(s) | Rule |
+|---|---|---|
+| New issue (`issue_open`) | blinky | `extra_seats.blinky.kinds` |
+| Issue / PR / review comment | blinky; PR comments also the PR author's seat | `comment_watch` |
+| New PR, new head (push to a PR) | critic (re-Light ask) and blinky (heads-up) | `pr_heads`, one line per head |
+| Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
+| Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
+| Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
+| needs-decision / lead label or ask | blinky | `seats.coord.seat` |
+| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@arch1`) | that seat | `extra_seats.<seat>.needles` |
+| Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |
+| Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
+
+An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
+
+`seats` holds the kit's role rules (reviewer / builder / tester / operator / coord, read by `routing/inbox.py`); each names one of our seats in `"seat"` (or `"off"`, as reviewer is, since `pr_heads` covers it) and `feed/inbox_pass.py` rewrites every line to that seat. The kit defaults stay in `inbox.py`; this file is our install's config. Sample seats (reviewer, tester, qa, coord, operator, triager, growth, qa-one, qa-two, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier) are gone from the routes, the server's seat list and the seat key defaults. The server keeps the kit's `builder` / `builder-cloud` plumbing (installation-token auth, mirror), but nothing routes to it. Server nudges and silent-seat lines go to blinky (was coord), `/nudges` is forge's (was operator).
+
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
 
-1. **Coordinator fallback.** If an actionable event has no owner seat, or only `arch1` / `arch1-cloud` own it (they have no webhook), blinky also gets a line. The seat and the list come from `fallback` in `inbox-roles.json`.
+1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
 3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`).
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
 5. **Idempotent.** Each event id is routed once, also across restarts (see above).
-6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only.
+6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only. The watcher log is not a wake either, so a seat cannot wait for one.
 
 ### Configure
 
 `SEAT_WEBHOOKS` (server env, `app/server.mjs` `loadSeatWebhooks`) is a JSON object keyed by seat id:
 
 ```json
-{"reviewer": {"url": "https://wake.example.com/hook", "key_env": "REVIEWER_WAKE_KEY"},
+{"critic": {"url": "https://wake.example.com/hook", "key_env": "CRITIC_WAKE_KEY"},
  "qa":       {"url": "https://example.com/qa-wake", "key_env": "QA_WAKE_KEY", "header": "X-Wake-Key"}}
 ```
 
@@ -75,7 +101,7 @@ Every inbox line newly stored for a configured seat queues a wake: lines from `P
 - Body (string fields truncated server-side; values come from the newest line in the batch, `ids` lists every line in it):
 
 ```json
-{"seat": "reviewer", "inbox_id": "<newest line id>", "ids": ["<id>", "<id>"],
+{"seat": "critic", "inbox_id": "<newest line id>", "ids": ["<id>", "<id>"],
  "type": "<line type>", "repo": "owner/repo", "number": 12, "title": "...", "url": "https://example.com/...", "reason": "..."}
 ```
 
@@ -97,11 +123,15 @@ Any 2xx is success. The response body is ignored.
 
 ### No webhook set (fallback)
 
-A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack).
+A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack). The seated turn must drain what it just read: a non-empty read is the work, not a reason to wait.
 
 ### Ack route
 
-Reading never acks. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
+Reading never acks, but a non-empty read is the work. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
+
+### Key folder on our box
+
+`live-inbox` defaults to `~/.burst` (`~/.burst/seat-keys`, `~/.burst/cursors`) and the burst-live URL. On our box the seats keep their keys elsewhere and set the folder variables in their wake routine: `SEAT_KEYS_DIR` (key files, `<seat>.key`) and `LIVE_CURSORS` (read positions), both under `/home/box/burst-run`. `LIVE_URL` overrides the server. Never put a key's value in a routine, room or repo; the routine names the folder only.
 
 ### Reading the inbox after a wake
 
@@ -120,7 +150,7 @@ tools/live-inbox <seat> --ack all       # receipt for everything open
 ```js
 import http from 'node:http';
 import crypto from 'node:crypto';
-const KEY = process.env.REVIEWER_WAKE_KEY;
+const KEY = process.env.CRITIC_WAKE_KEY;
 const ok = h => { const a = Buffer.from(h || ''), b = Buffer.from('Bearer ' + KEY); return a.length === b.length && crypto.timingSafeEqual(a, b); };
 http.createServer((req, res) => {
   if (req.method !== 'POST' || !ok(req.headers.authorization)) { res.writeHead(401); return res.end(); }
@@ -138,11 +168,19 @@ For your own receiver only (never a seat's Cursor webhook, and never from a wake
 
 ```sh
 curl -i -X POST https://wake.example.com/hook \
-  -H "Authorization: Bearer $REVIEWER_WAKE_KEY" -H 'Content-Type: application/json' -H 'User-Agent: bifrost-live' \
-  -d '{"seat":"reviewer","inbox_id":"test-1","ids":["test-1"],"type":"test","repo":"owner/repo","number":0,"title":"wake test","url":"","reason":"manual"}'
+  -H "Authorization: Bearer $CRITIC_WAKE_KEY" -H 'Content-Type: application/json' -H 'User-Agent: bifrost-live' \
+  -d '{"seat":"critic","inbox_id":"test-1","ids":["test-1"],"type":"test","repo":"owner/repo","number":0,"title":"wake test","url":"","reason":"manual"}'
 ```
 
 End to end: post a line for the seat with `POST /inbox` (ingest secret) and watch the server log for `wake: <seat> ok`.
+
+### Sending a test wake
+
+A test wake is one properly formed inbox line, sent with `POST /inbox` and the `X-Live-Ingest` header (the ingest secret). Body: `{"lines": [ {...} ]}` where each line has `id` (unique, e.g. `test:<seat>:<time>`), `seat`, `t_ct` (ISO time with offset), `type` (`test`), `repo` (`owner/name`), `number` (0 if none), `title`, `url` (may be empty) and `reason` (name the sender, e.g. `test wake from forge`). No `body`, `text` or `message`. A malformed line returns 400 and proves nothing about the wake (forge's 10:22 test on 2026-10-13).
+
+Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then the seat confirms its routine ran and acks with `live-inbox <seat> --ack <id>`.
+
+**Who can send one.** Today only forge can: it holds the ingest secret (`INGEST_SECRET`) on the box, and seat keys can only read and ack their own inbox. For another seat (or critic's final pass) to send test wakes, Blaze has to approve either sharing the ingest secret with that seat in its owner's 1:1, or a new per-seat send key with a `/inbox` route that accepts `type: test` lines only (not built yet).
 
 ### Unclear in the code
 
@@ -150,6 +188,44 @@ End to end: post a line for the seat with `POST /inbox` (ingest secret) and watc
 - Pending wakes live in memory only; a restart drops them (the inbox lines persist).
 - Once the 3 attempts fail, the batch is not retried later. A newer line starts a fresh batch.
 
+## Arch1 / CLI seats (Grok CLI)
+
+Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`); actionable events owned only by arch1 also fall back to blinky (CoS), because nothing can push to it.
+
+**Getting woken (local poll, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Instead Arch1 polls locally:
+
+Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. For launchd, use the template `bin/com.burst.live-inbox-watch.plist` (see the install steps below). Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The watcher never acks and never starts the work; the Grok turn that sees the lines does.
+
+**Install on Blaze's Mac.**
+1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
+2. Copy `house/live/tools/live-inbox` and `house/live/bin/live-inbox-watch` from the repo into `~/.burst/bin/`, then `chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/live-inbox-watch`.
+3. Set the variables (or rely on the defaults): `export LIVE_URL=https://burst-live-production.up.railway.app SEAT_KEYS_DIR=~/.burst/seat-keys LIVE_CURSORS=~/.burst/cursors`.
+4. Place `arch1.key` in `~/.burst/seat-keys/` (delivered only through Blaze's 1:1), then `chmod 600 ~/.burst/seat-keys/arch1.key`.
+5. Check `python3 --version` (live-inbox needs Python 3).
+6. Run it once by hand: `LIVE_WATCH_ONCE=1 ~/.burst/bin/live-inbox-watch arch1`. No output means an empty inbox; "key not registered" means the server's `SEAT_KEYS` has no arch1 entry yet.
+7. Copy `house/live/bin/com.burst.live-inbox-watch.plist` to `~/Library/LaunchAgents/`, replace `USERNAME`, then `launchctl load ~/Library/LaunchAgents/com.burst.live-inbox-watch.plist`. The log goes to `~/.burst/live-inbox-watch.log`. The watcher is the wake only; tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
+
+**Exception to the no-local-watchers rule.** This poll is an approved exception, approved by Blaze on 2026-10-13 at 11:52 CT. The approval covers Arch1's inbox poll on Blaze's Mac.
+
+**Variables (names only; the defaults already match, so set them only to override).**
+- `LIVE_URL=https://burst-live-production.up.railway.app`
+- `SEAT_KEYS_DIR=~/.burst/seat-keys`
+- `LIVE_CURSORS=~/.burst/cursors`
+
+The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delivers it only through his 1:1, never in a chat room, a repo or a routine. The server checks it against the `arch1` entry in the `SEAT_KEYS` Railway variable (sha256 of the key); if that entry is missing, every read returns 401 and the fix needs Blaze's GO for the variable change.
+
+**Acking.** After Arch1 posts its receipt on the PR (envs, exit codes, tarball sha), run `live-inbox arch1 --ack <id>` for that line, or `live-inbox arch1 --ack all`.
+
+**Round-trip test.**
+1. forge sends a test wake for `seat: arch1` with `POST /inbox` (see [Sending a test wake](#sending-a-test-wake)); expect 200 with `added: 1`.
+2. Arch1 runs `live-inbox arch1` and sees the test line.
+3. Arch1 runs `live-inbox arch1 --ack <id>`.
+4. The board shows arch1's inbox read and ack (and arch1 goes active for 15 minutes). A 401 at step 2 means the key isn't registered in `SEAT_KEYS`.
+
+**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The lap 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
+
 ## Presence
 
 `SEAT_PRESENCE` maps a seat whose activity also counts as another seat. A value is a seat name or an array of seat names. A top-level array of pairs is accepted. The default is `{"builder-cloud":"builder"}`. Blank JSON maps nothing. Invalid JSON keeps the default.
+
+Fleet seat mapping (inbox-roles.json, kit defaults, Seat: credit): [fleet-setup.md](fleet-setup.md).

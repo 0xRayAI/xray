@@ -1,4 +1,4 @@
-"""Example full-history GitHub collector (read-only token; metadata only, never bodies).
+"""Bifrost full-history GitHub collector (read-only token; metadata only, never bodies).
 
 Backfill once (GraphQL for PR commits/reviews/CI and develop/main history+CI; paged REST for lists),
 then poll incrementally (REST page 1 with ETag; a 304 does not count against the rate limit).
@@ -10,12 +10,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import live_packet
+import live_site
 
 API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
 GQL_FLOOR = int(os.environ.get("LIVE_GQL_FLOOR", "1000"))
 BACKFILL_SECONDS = float(os.environ.get("LIVE_BACKFILL_SECONDS", "150"))   # per pass
-BRAND = os.environ.get("LIVE_BRAND", "Example")   # display name the product names below are relabelled to
+BRAND = os.environ.get("LIVE_BRAND") or live_site.SITE["name"]   # display name the product names below are relabelled to
 BRAND_RE = re.compile(os.environ.get("LIVE_BRAND_RE", r"(?i)(?:acmeco|acme)(?![-/])"))   # repo names stay as identifiers
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")   # never ship addresses
 CRITIC = "reviewer-app[bot]"
@@ -34,7 +35,7 @@ def mentions(body: str | None) -> list | None:
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
-# Per-fleet login -> node map, merged over the Example defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
+# Per-fleet login -> node map, merged over the template defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
 # (JSON object, or a path to a JSON file). Keeps a fleet's seats out of the kit.
 def _node_map_env() -> dict:
     raw = os.environ.get("LIVE_NODE_MAP", "").strip()
@@ -73,6 +74,33 @@ def _brand_sub(m) -> str:
 
 def brand(s: str | None) -> str:
     return EMAIL_RE.sub("[email]", BRAND_RE.sub(_brand_sub, " ".join((s or "").split())))
+
+
+SEAT_TRAILER_RE = re.compile(r"(?im)^Seat:\s*([a-z0-9-]{2,16})\s*$")
+
+
+def seat_trailer(msg: str | None) -> str | None:
+    """`Seat: <seat>` trailer in a commit message (last one wins); it overrides the login map for credit."""
+    found = SEAT_TRAILER_RE.findall(msg or "")
+    return found[-1].lower() if found else None
+
+
+def credit(login: str | None) -> str | None:
+    """Seat an event is credited to: the login -> seat map (fleet-nodes.json via LIVE_NODE_MAP, over NODE), else
+    "other" for any unknown login. None when there is no login (GitHub-originated). forge0x1[bot] commits cannot be
+    told apart from mill's work (mill commits through forge's identity), so they credit forge."""
+    if not login:
+        return None
+    if CLOUD_AGENT_RE.match(login):
+        return "CloudAgents"
+    n = NODE_LC.get(login.lower())
+    if n:
+        return CREDIT_ALIAS.get(n.lower(), n)
+    return "github" if login.lower().endswith("[bot]") else "other"   # unmapped bot / CI -> the github node
+
+
+CREDIT_ALIAS = {"ci": "github", "github": "github", "blaze0x1": "Blaze", "blaze": "Blaze", "lead": "Blaze"}
+LOGIN_KEYS = ("actor", "author", "sender", "triggering_actor", "merged_by", "user")
 
 
 def node(login: str | None) -> str:
@@ -262,8 +290,9 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            if login and e.get("from") not in ("GitHub", "Example"):
+            if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
                 e["from"] = node(login)
+            pass
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             for k in ("label", "message"):
@@ -275,6 +304,11 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
+        self._sha_who = {}
+        for e in self.ev.values():
+            self._index_sha(e)
+        for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
+            e["credit"] = self.credit_of(e)
 
     # ---------------------------------------------------------------- helpers
     def save(self):
@@ -290,7 +324,7 @@ class RepoCollector:
             self.ev.pop(eid, None)
             return
         if frm == to:
-            to = "GitHub" if frm != "GitHub" else "Example"
+            to = "GitHub" if frm != "GitHub" else live_site.SITE["node"]
         e = {"id": eid, "t_ct": iso_ct(t, self.CT) if (t.endswith("Z") or "+" in t[10:]) else t, "from": frm,
              "to": to, "kind": kind, "direction": "internal", "label": brand(label)[:54], "source": source,
              "src_file": "github-api", "repo": self.repo}
@@ -299,7 +333,33 @@ class RepoCollector:
         for k, v in extra.items():
             if v is not None:
                 e[k] = v
+        self._index_sha(e)
+        e["credit"] = self.credit_of(e)
         self.ev[eid] = e
+
+    def _index_sha(self, e):   # sha -> (commit author login, Seat: trailer) for check / workflow / deploy fallbacks
+        sha = e.get("sha")
+        if isinstance(sha, str) and len(sha) >= 7 and (e.get("author") or e.get("seat_trailer")):
+            self._sha_who[sha[:7]] = (e.get("author"), e.get("seat_trailer"))
+
+    def credit_of(self, e) -> str:
+        """Seat credited for an event, never blank: Seat: trailer > actor / sender login > the PR's author >
+        the commit's author login > that commit's Seat: trailer > the github node (CI, bots, rails with no seat)."""
+        if e.get("seat_trailer"):
+            return e["seat_trailer"]
+        for k in LOGIN_KEYS:
+            v = e.get(k)
+            if isinstance(v, str) and v:
+                return credit(v)
+        n = e.get("number")
+        p = self.st.get("prs", {}).get(str(n)) if n is not None and hasattr(self, "st") else None
+        if p and p.get("author"):
+            return credit(p["author"])
+        sha = e.get("sha") or e.get("head_sha") or e.get("merge_sha")
+        if isinstance(sha, str) and sha[:7] in getattr(self, "_sha_who", {}):
+            login, trailer = self._sha_who[sha[:7]]
+            return trailer or credit(login) or "github"
+        return "github"
 
     def pr_node(self, n):
         p = self.st["prs"].get(str(n))
@@ -372,7 +432,7 @@ class RepoCollector:
         lab = (f"deploy{'' if state == 'success' else ' ' + state.upper()} · {self.short} {sha[:7]}" if railway
                else f"status {context} {state} · {sha[:7]}")
         self.put(f"{self.repo}:status:{sha}:{context}", t, "GitHub" if railway else node(creator),
-                 "Example" if railway else "GitHub", kind, lab, f"https://github.com/{self.repo}/commit/{sha}",
+                 live_site.SITE["node"] if railway else "GitHub", kind, lab, f"https://github.com/{self.repo}/commit/{sha}",
                  None, sha=sha, context=brand(context), state=state, creator=creator)
 
     def ci_rest(self, c, sha):
@@ -484,13 +544,13 @@ class RepoCollector:
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
         self.put(eid, date, node(login), "GitHub", "commit", f"{'/'.join(branches)} {sha[:7]} · {m}",
                  f"https://github.com/{self.repo}/commit/{sha}", None, sha=sha, branches=branches, message=m,
-                 author=login)
+                 author=login, seat_trailer=seat_trailer(msg))
 
     def pr_commit_event(self, n, sha, date, msg, login):
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
         self.put(f"{self.repo}#{n}:commit:{sha}", date, node(login), "GitHub", "pr_commit",
                  f"{self.short} #{n} push {sha[:7]} · {m}", f"https://github.com/{self.repo}/pull/{n}/commits/{sha}",
-                 n, sha=sha, message=m, author=login)
+                 n, sha=sha, message=m, author=login, seat_trailer=seat_trailer(msg))
 
     def review_event(self, n, rid, state, t, login, url):
         if not t or state == "PENDING":
@@ -807,7 +867,7 @@ class RepoCollector:
                 if sha not in self.st["tag_time"]:
                     _, cm, _, _ = c.rest(f"/repos/{self.repo}/commits/{sha}")
                     self.st["tag_time"][sha] = cm["commit"]["committer"]["date"]
-                self.put(f"{self.repo}:tag:{tg['name']}", self.st["tag_time"][sha], "GitHub", "Example", "tag",
+                self.put(f"{self.repo}:tag:{tg['name']}", self.st["tag_time"][sha], "GitHub", live_site.SITE["node"], "tag",
                          f"tag {tg['name']} · {sha[:7]}", f"https://github.com/{self.repo}/releases/tag/{tg['name']}",
                          None, tag=brand(tg["name"]), sha=sha, time_basis="tagged commit date")
             if etag:

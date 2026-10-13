@@ -110,9 +110,11 @@ class FleetRoster(unittest.TestCase):
 
     def test_node_map_targets_roster_seats_only(self):
         nodes = json.loads((FEED / "fleet-nodes.json").read_text())
-        self.assertTrue(set(nodes.values()) <= set(self.ROSTER) | {"CI"}, nodes)
+        self.assertTrue(set(nodes.values()) <= set(self.ROSTER) | {"CI", "Blaze"}, nodes)   # Blaze = the owner (htafolla), not a seat
         self.assertNotIn("Blaze0x1", nodes.values())
         self.assertEqual(nodes["forge0x1[bot]"], "forge"); self.assertEqual(nodes["arch10x[bot]"], "arch1")
+        self.assertEqual((nodes["critic0x[bot]"], nodes["htafolla"]), ("critic", "Blaze"))
+        self.assertNotIn("minime0x[bot]", nodes)   # workflow-run bot, not arch1: credits github unless a Seat: trailer says otherwise
 
     def test_deploy_ships_the_roster(self):
         sh = (FEED.parent / "app" / "deploy.sh").read_text()

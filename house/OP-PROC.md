@@ -15,13 +15,14 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - A seat does a small job itself: a check, a rerun, a merge after the gate, a file edit.
 - Cloud work goes as a follow-up to the existing cloud agent session that holds the context; log its id on the Card. Launch a new agent only when (a) no session has context for that repo, or (b) **all three** hold: the context-holding agent already has 2+ jobs queued, the new job touches different files, and the job can be briefed from the docs alone. Otherwise, queue it as a follow-up on the existing session.
 - A strict review that is already on a Card does not need a second yes.
-- Work moves on a **Beat**. Do not poll on a timer when an event exists.
-- **Server, not seats.** Scripted services (collection, cards, dispatcher, nudges, inbox writes, push wakes, health checks) run on the server. AI seats do judgment work only, because an AI turn is expensive. A seat never runs a loop a script can run.
+- Work moves on a **Beat**. Do not poll on a timer when an event exists. A script may poll; the seat may not. Seeing a line starts the work.
+- **Queue.** A non-empty live-inbox read is the queue, in order, this turn. A non-empty read is the work; a seat never reads open lines and then waits.
+- **Server, not seats.** Scripted services (collection, cards, dispatcher, nudges, inbox writes, push wakes, health checks) run on the server. AI seats do judgment work only, because an AI turn is expensive. A seat never runs a loop a script can run. A script may poll; the seat may not, and a line the script already found is the seat's work the turn it sees it.
 - Blaze reports the weekly spend. CoS logs it in `ATTENTION_STATE.md`. At 50 percent, **Pipe down** is soft: no new Cards. At 75 percent, Pipe down is full.
 - **Compute budget (HARD).** Live spend and what is left this week are in `ATTENTION_STATE.md`; check it before heavy work. That bound sits on CoS, forge, critic, and mill alike.
 - **Pipe down.** Blaze calls it. CoS relays it. Write what is in hand, then stop. Routines pause.
 - **In the dark.** CoS declares it when a shared limit is hit. The notice names the limit, what is blocked, and the resume time. Do not retry. Do not route around it.
-- **Lights on.** CoS confirms the limit has cleared. Each seat picks up its queue in order.
+- **Lights on.** CoS confirms the limit has cleared. Seats resume the normal Queue rule above.
 - **Seat computer dead.** If the seat Shell fails (ENOENT, bash missing, or the computer is dead), try **Update Grok Bot's Computer** (box reboot) first. Do not Escalate until that has been tried.
 - Retire a seat that has merged, been idle three days, or finished. CoS lists it. Blaze deletes it. Do not route work to it.
 
@@ -30,7 +31,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - Pack roles map here: **mill** = implementer, **forge** = publisher/merge seat, **critic** = reviewer.
 - **mill** implements and opens the pull request.
 - **forge** keeps continuity and the gates. Forge does not implement. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). **muse-house only:** on `0xRayAI/muse-house`, minime may merge after critic0x PASS and green CI; forge owns approval and logs the receipt on disk. Critic never merges.
-- **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes.
+- **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes. An inbox yes/no from Arch1 is that decision, and it must name the PR. A hold on one PR does not hold the next ask; any "wait for Blaze" or "wait for Arch1" must name the PR.
 - Eng seats ship as **forge0x1**, not the personal login. If the open head is the wrong author, forge0x1 opens one replacement pull request, closes the old one with a pointer, and does not keep pushing that wrong-author head.
 - **critic** writes PASS or FAIL, cites the section, and never merges. Nobody writes their own proof.
 - **herald** posts only after Blaze's go, and only the words CoS handed over. Herald does not invent the post.
@@ -38,7 +39,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - **Blaze** owns money, credentials, deletes, publishing, production, and taste.
 - **CoS** assigns and keeps the board. CoS does not deploy, publish, spend, or merge. CoS steps in when the loop stalls.
 - **Arch1** builds a fix or a **Plate** only when Blaze hands over that track. The fleet stops that work. The spec is friend-speak: the bug, how to reproduce it, what fixed looks like, and the paths.
-- **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order. Asks **to** Arch1 (Gate B runs, deep-review asks): forge files them into Arch1's Bifrost inbox; Arch1 wakes and runs locally on Blaze's machine (Grok CLI) and posts the receipt on the PR. A PR or issue comment is the fallback. Forge sends the packet to CoS.
+- **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order. An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask. Asks **to** Arch1 (Gate B runs, deep-review asks): forge files them into Arch1's Bifrost inbox; Arch1 wakes and runs locally on Blaze's machine (Grok CLI) and posts the receipt on the PR. A PR or issue comment is the fallback. Forge sends the packet to CoS. Arch1's inbox yes/no on an ask is the decision and must name the PR; a hold on one pull does not hold the next ask.
 - Ask once. Implement goes to mill. Gates go to forge. PASS or FAIL goes to critic.
 - **Hire gate (new employee / seat):** before any ship work — (1) CoS creates the agent with a clear role description + hire packet; (2) fasten suit at `/workspace/<seat>-suit` (mill+inspect) with inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect `ok: true`, `suit: fastened`, costume false); (3) employee orientation + KB (`kb/EMPLOYEE-ORIENTATION.md`, scope, mem-grow, `kb/ROLE-CARD.md` when Dist announced the role); (4) seat reads KT and acks `KT read · suit fastened · quiet until carded`; (5) if Dist announced the role, board gets a standing **ROLE** card matching that announcement and CoS cards first work under it — seat does not freelance. A chat packet is not a suit. Profile alone is not a hire. **Example (2026-10-05):** 🪱 Nibbler — Dist hire + `NIBBLER-ROLE` + first gobble card. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the hire gate for mill before any ship work.
 - **Auto-review.** Never pick Always-allow for an App PEM, an install-token mint, or a review Shell command. Approve once per ask.
@@ -124,9 +125,10 @@ Public words are friend-speak. Test them on a person before they go out.
 - **CAP.** The plan when something fails the Organ gate. Plan, build, wear, validate.
 - **Pipe down.** Write what is in hand, then stop. Routines pause.
 - **In the dark.** A shared limit is hit. Name it. Do not route around it.
-- **Lights on.** The limit has cleared. Pick up the queue in order.
+- **Lights on.** The limit has cleared. The normal Queue rule applies again.
+- **Queue.** A non-empty live-inbox read is the queue, in order, this turn.
 - **Packet.** Goal, constraints, path, acceptance, gates, evidence, next owner, escalate (the same eight fields as the pack).
-- **Handoff = packet + wake.** Every handoff to a seat is two things: (1) the packet on that seat's Bifrost board inbox, which is the tracked record (ack, board, nudges); (2) a one-line message through the fleet's own internal messaging that points to the packet, which is the wake. Never one without the other. Until a seat has an inbox key, the fallback is a PR comment plus the room. A webhook is the wake only when a fleet has no internal messaging.
+- **Handoff = packet + wake.** Every handoff to a seat is two things: (1) the packet on that seat's Bifrost board inbox, which is the tracked record (ack, board, nudges); (2) a one-line message through the fleet's own internal messaging that points to the packet, which is the wake. Never one without the other. Until a seat has an inbox key, the fallback is a PR comment plus the room. A webhook is the wake only when a fleet has no internal messaging. If the wake did not fire, the open inbox lines are still the handoff: the next turn works them.
 - **Card.** One ticket, one seat, Done when, Stops at.
 - **Role card.** Standing board ticket (+ `kb/ROLE-CARD.md`) that makes a Dist hire announcement operational for that seat.
 - **Station.** A seat's short survival note on disk.
@@ -144,6 +146,37 @@ The board is useful and obvious: find a need, fill a need, don't make the human 
 Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md`. Do not repeat that status in chat.
 
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
+
+## Ship cadence (proposed 2026-10-13, needs Arch1's approval)
+
+Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it." Seats run on it now; this section is binding once Arch1 approves.
+
+1. **Clock.** CoS sets the lap time (default 2 min) with a time per seat. A seat that misses says what blocks it in one line.
+2. **Build.** Mill builds one branch per lap with everything folded in: code, docs, maintainer notes, skills, earlier nits.
+3. **Push.** Forge opens one PR; late docs commits go into that same PR.
+4. **Merge.** Forge merges as soon as CI passes. No mid-run review hold; nits never block.
+5. **Deploy.** One deploy per lap. Broken production: roll back to the last good deploy first (by deployment id), then fix forward. After a rollback, say in the room which deploy is live.
+6. **Test.** Critic runs one final pass on the live build: a real wake round trip (a well-formed inbox line, the seat's webhook answers 2xx, `wake: <seat> ok` in the log and the seat confirms its routine ran), an ack with no approval card, a seat-by-seat board-data check (each of the 9 seats: its chip, Lens node, active state and Board group match the feed and `/cards?seat=<seat>`), UI, history, docs. One result.
+7. **Room.** Only the merge-and-deploy receipt, the final result, or a blocker.
+8. **Log.** CoS logs refinements as they happen and folds them into one OP-PROC PR.
+
+**P1 path (needs Arch1's approval).** Broken production: roll back to the last good deploy first (by deployment id; it took ~20 s on 2026-10-13), then fix forward with only the fix. The fix goes to `dev` (quick checks only: `.github/workflows/dev-lane.yml` runs lint + `house/live/tests/run_tests.sh`). Forge deploys the tip before merging, with the rollback deployment id ready; forge merges `dev` → `main` when the full CI is green. Critic gives yes/no on the hotfix change only; the full final pass runs once after merge and deploy. The normal cadence resumes afterward. `main`'s CI is unchanged.
+
+**Approval blocks (2026-10-13).** Auto-review asks for approval on any `git push` to GitHub (block reason: "push commits to a GitHub repository … requires user approval"). A push to a PR branch never skips CI, because the push is what starts it. When a step the room runs is blocked, the seat that hit it posts the exact block reason in the room. The standing way past a block is a narrow allow rule that Blaze sets himself (for example, forge0x1 pushes to non-main branches in one repo). Until that rule exists, the step stays on hold. Retrying from the seat's own 1:1, which puts a yes/no card in front of Blaze, is used only when Blaze has said he wants that card. Never split, rename or rework a command to get past the check, and never always-allow PEM or token minting.
+
+**Drill refinements.**
+- Wakes ack only with `live-inbox <seat> --ack <id>`, never a hand-written POST (no approval card for a routine ack).
+- A wake change is tested against a real seat routine (2xx and the routine runs), not unit stubs alone. A wake test sends a well-formed inbox line; receipt = `200 added:1` + `wake: <seat> ok` + the seat confirms.
+- Waveboard history lives on the `/data` volume; rollbacks and redeploys keep it. Confirm a diff does not touch `/data`.
+- Our install is public (no password, no masking); other installs stay gated and masked unless they opt in.
+- Seats ask Blaze yes/no questions in his 1:1. Webhook and key links go only in the owner's 1:1.
+- One PR per lap: follow-ups and nits fold into the open PR, never a new one.
+- Critic reviews the branch before forge pushes it. A rebase with byte-identical files gets a re-stamp in seconds.
+- Blaze: land the changes first, then one final test pass after they're live.
+- Production may run an older build than `main` after a rollback; the room says which deploy is live.
+- Critic owns validating the live board: the final pass checks the data each seat shows (step 6), not just the page title and `/healthz` (Blaze caught example names and every seat idle on 2026-10-13).
+- Verify routing with a real GitHub-created event (an issue, a PR, a push), not only wakes we send ourselves: issue #281 (11:22 CT) routed to the kit's sample seat `triager`, an inbox nobody reads, while our test wakes passed.
+- Closed in lap 2: `live-inbox` runs on its defaults (no hand-passed URL or folders; our box sets the folder variables, see `house/live/docs/inbox.md`), and `/cards` is readable without a key in public mode.
 
 ## Done when
 

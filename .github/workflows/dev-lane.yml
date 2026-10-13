@@ -1,0 +1,38 @@
+name: Dev lane (quick checks)
+
+# P1 lane: pushes and PRs to `dev` run only these quick checks (no Foundry mill, Comprehensive or Consumer jobs).
+# P1 flow: fix -> dev (this lane) -> deploy -> PR dev -> main (full 0xRay CI/CD). main's CI is unchanged.
+# Needs Arch1's approval (OP-PROC "Ship cadence").
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-lane-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quick:
+    name: Quick checks (lint + house/live tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci --ignore-scripts
+      - name: ESLint
+        run: npm run lint
+      - name: house/live tests
+        run: bash house/live/tests/run_tests.sh

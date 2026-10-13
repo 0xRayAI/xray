@@ -2,6 +2,7 @@
 import json, os, sys, tempfile, time, unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 from zoneinfo import ZoneInfo
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed"))))
@@ -31,6 +32,7 @@ class Packet(unittest.TestCase):
 class Model(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.TemporaryDirectory(); root = Path(self.d.name)
+        env = mock.patch.dict(os.environ); env.start(); self.addCleanup(env.stop)   # isolate: later suites inherit os.environ
         os.environ.update(MESH_RUN=str(root), INBOX_CACHE=str(root / "none.json"), LIVE_INBOX=str(root / "inbox"),
                           LIVE_BOARD=str(root / "BOARD.md"), LIVE_BOARD_STATIC=str(root / "static.md"))
         (root / "static.md").write_text("## Waiting on Lead\n- **Prod promotion.** only on Lead's word, mail a@b.com\n")

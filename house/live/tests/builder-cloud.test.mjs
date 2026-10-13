@@ -17,7 +17,7 @@ let srv;
 before(async () => {
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), MESH_PASSWORD: PW, PATH: process.env.PATH,
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
-    SEAT_KEYS: JSON.stringify({ 'builder-cloud': H(AKEY), reviewer: H(CKEY) }) }, stdio: 'ignore' });
+    SEAT_KEYS: JSON.stringify({ 'builder-cloud': H(AKEY), critic: H(CKEY) }) }, stdio: 'ignore' });
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
 });
 after(() => { srv.kill(); fs.rmSync(DATA, { recursive: true, force: true }); });
@@ -63,8 +63,8 @@ test('cards + nudges: Builder cards visible to builder-cloud; a nudge to builder
 
 test('inbox privacy checks field NAMES: type prompt_message ok, a message/body/text key rejected alone (batch still lands)', async () => {
   const mk = (id, o = {}) => ({ id, t_ct: new Date().toISOString(), seat: 'builder', type: 'ready', repo: 'example-org/x', number: 8, sha: 's', title: 'PR 8', url: '', reason: 'merge-ready', ...o });
-  const lines = [mk('pm:1', { seat: 'coord', type: 'prompt_message', reason: 'prompt message to coord' }), mk('bad:body', { body: 'secret' }),
-    mk('bad:message', { seat: 'coord', message: 'x' }), mk('bad:text', { text: 'x' }), mk('ready:x#8:s')];
+  const lines = [mk('pm:1', { seat: 'blinky', type: 'prompt_message', reason: 'prompt message to blinky' }), mk('bad:body', { body: 'secret' }),
+    mk('bad:message', { seat: 'blinky', message: 'x' }), mk('bad:text', { text: 'x' }), mk('ready:x#8:s')];
   const r = await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } });
   assert.equal(r.status, 200);
   const j = await r.json(); assert.equal(j.added, 2); assert.deepEqual(j.rejected, ['bad:body', 'bad:message', 'bad:text']);
@@ -90,10 +90,10 @@ test("parked card ('Parked:' comment): its open nudge closes, no new nudge, card
 
 test('inbox ack: --ack id / upto / all hide lines for that seat only; reviewer lines drop once a Reviewer verdict lands at the card head', async () => {
   const CK = { Authorization: 'Bearer ' + CKEY }, R = 'example-org/q', t0 = new Date(Date.now() - 600000).toISOString();
-  const mk = (id, n) => ({ id, t_ct: t0, seat: 'reviewer', type: 'pr_update', repo: R, number: n, sha: null, title: 'PR', url: '', reason: 'new or updated pr' });
+  const mk = (id, n) => ({ id, t_ct: t0, seat: 'critic', type: 'pr_update', repo: R, number: n, sha: null, title: 'PR', url: '', reason: 'new or updated pr' });
   await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines: [mk('c:1', 1), mk('c:2', 2), mk('c:3', 3), mk('c:4', 4)] }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } });
-  const open = async () => (await (await fetch(BASE + '/inbox/reviewer', { headers: CK })).json()).lines.map(l => l.id);
-  const ack = (b, h = CK) => fetch(BASE + '/inbox/reviewer/ack', { method: 'POST', body: JSON.stringify(b), headers: { ...h, 'Content-Type': 'application/json' } });
+  const open = async () => (await (await fetch(BASE + '/inbox/critic', { headers: CK })).json()).lines.map(l => l.id);
+  const ack = (b, h = CK) => fetch(BASE + '/inbox/critic/ack', { method: 'POST', body: JSON.stringify(b), headers: { ...h, 'Content-Type': 'application/json' } });
   assert.deepEqual(await open(), ['c:1', 'c:2', 'c:3', 'c:4']);
   assert.equal((await ack({ id: 'c:1' }, A(AKEY))).status, 403);                       // another seat cannot ack
   assert.equal((await ack({ id: 'nope' })).status, 404);
@@ -107,7 +107,7 @@ test('inbox ack: --ack id / upto / all hide lines for that seat only; reviewer l
   assert.deepEqual(await open(), ['c:3', 'c:4']);
   assert.equal((await ack({ upto: 'c:3' })).status, 200); assert.deepEqual(await open(), ['c:4']);
   const r = await (await ack({ all: true })).json(); assert.equal(r.open, 0); assert.deepEqual(await open(), []);
-  assert.equal((await (await fetch(BASE + '/inbox/reviewer?all=1', { headers: CK })).json()).lines.length, 4);   // history kept
+  assert.equal((await (await fetch(BASE + '/inbox/critic?all=1', { headers: CK })).json()).lines.length, 4);   // history kept
 });
 
 test('nudge retarget: an open L1 to the old owner closes and a new L1 goes to the current owner (Reviewer PASS at head -> Builder)', async () => {

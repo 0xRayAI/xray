@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Example live mesh: password-gated page with push-only feed ingest",
+  "description": "Bifrost live mesh: public or password-gated page with push-only feed ingest",
   "main": "server.mjs",
   "scripts": {
     "start": "node server.mjs"

@@ -2,66 +2,48 @@
   "keep_days": 7,
   "stall_hours": 6,
   "watcher_gap_hours": 6,
-  "mirror_seat": "builder",
+  "mirror_seat": "forge",
   "develop_branches": [
     "develop"
   ],
-  "watcher_seats": [
-    "reviewer",
-    "builder",
-    "tester",
-    "operator",
-    "coord"
-  ],
+  "watcher_seats": [],
   "aliases": {
-    "Reviewer": "reviewer",
-    "Builder": "builder",
-    "Tester": "tester",
-    "Operator": "operator",
-    "Coord": "coord",
-    "QA": "qa",
-    "blinky": "blinky",
-    "Growth": "growth",
-    "QaOne": "qa-one",
-    "Lab Tester: QaOne": "qa-one",
-    "QaTwo": "qa-two",
-    "Lab Tester: QA two": "qa-two",
-    "Triager": "triager",
-    "Ticket Triager": "triager",
-    "Seat-C": "seat-c",
-    "Chat Bot": "chatbot",
-    "ChatBot": "chatbot",
-    "SEO Researcher": "seo-researcher",
-    "SEO Writer": "seo-writer",
-    "Offsite Copier": "offsite-copier",
-    "Builder-cloud": "builder-cloud",
     "Arch1": "arch1",
+    "arch1": "arch1",
     "forge": "forge",
+    "Forge": "forge",
     "critic": "critic",
+    "Critic": "critic",
     "mill": "mill",
+    "Mill": "mill",
+    "blinky": "blinky",
     "Blinky": "blinky",
     "herald": "herald",
+    "Herald": "herald",
     "Nibbler": "nibbler",
     "nibbler": "nibbler",
     "sound": "sound",
-    "magnet": "magnet"
+    "Sound": "sound",
+    "magnet": "magnet",
+    "Magnet": "magnet"
   },
   "seats": {
     "reviewer": {
-      "kinds": [
-        "pr_open",
-        "pr_update"
-      ]
+      "off": true,
+      "_note": "pr_heads sends critic + blinky one line per new PR / head"
     },
     "builder": {
+      "seat": "forge",
       "ready": true
     },
     "tester": {
+      "seat": "forge",
       "merge_bases": [
         "develop"
       ]
     },
     "operator": {
+      "seat": "forge",
       "kinds": [
         "deploy",
         "deploy_fail",
@@ -82,8 +64,9 @@
       ]
     },
     "coord": {
+      "seat": "blinky",
       "stalls": false,
-      "watcher_gaps": true,
+      "watcher_gaps": false,
       "labels": [
         "needs-decision",
         "lead"
@@ -94,49 +77,7 @@
       ]
     }
   },
-  "_note_stalls": "coord stall lines come from the board model (live card, no beat for 60 min: feed/live_board.py), not the 6 h PR#5 scan",
   "extra_seats": {
-    "qa-one": {
-      "merge_bases": [
-        "develop"
-      ],
-      "reason": "merge to develop (qa-one retest)"
-    },
-    "qa-two": {
-      "merge_bases": [
-        "develop"
-      ],
-      "reason": "merge to develop (qa two retest)"
-    },
-    "triager": {
-      "kinds": [
-        "issue_open"
-      ],
-      "reason": "new issue to triage"
-    },
-    "growth": {
-      "needles": [
-        "growth",
-        "go-to-market"
-      ],
-      "reason": "mentions growth"
-    },
-    "seat-c": {
-      "needles": [
-        "seat-c"
-      ],
-      "reason": "mentions seat-c"
-    },
-    "chatbot": {
-      "needles": [
-        "chat bot",
-        "chatbot"
-      ],
-      "reason": "mentions chat bot"
-    },
-    "seo-researcher": {},
-    "seo-writer": {},
-    "offsite-copier": {},
     "arch1": {
       "needles": [
         "@arch1",
@@ -148,6 +89,10 @@
       "reason": "deep-review / Gate B ask for Arch1"
     },
     "forge": {
+      "kinds": [
+        "ci_fail",
+        "deploy_fail"
+      ],
       "merge_bases": [
         "main",
         "bifrost/main"
@@ -158,7 +103,7 @@
         "deploy ask",
         "run gate b"
       ],
-      "reason": "merge / deploy / Gate B run ask, or merge into main or bifrost/main"
+      "reason": "CI / deploy failure, merge / deploy / Gate B run ask, or merge into main or bifrost/main"
     },
     "critic": {
       "kinds": [
@@ -181,10 +126,13 @@
       "reason": "implement / rebase ask for mill"
     },
     "blinky": {
+      "kinds": [
+        "issue_open"
+      ],
       "needles": [
         "@blinky"
       ],
-      "reason": "CoS / board ask for blinky"
+      "reason": "new issue or CoS / board ask for blinky"
     },
     "herald": {
       "needles": [
@@ -212,21 +160,40 @@
     }
   },
   "pr_heads": {
-    "kinds": ["pr_open", "pr_update"],
-    "seats": {"critic": "review ask: new PR or new head", "blinky": "heads-up: new PR or new head"}
+    "kinds": [
+      "pr_open",
+      "pr_update"
+    ],
+    "seats": {
+      "critic": "review ask: new PR or new head",
+      "blinky": "heads-up: new PR or new head"
+    }
   },
   "_note_pr_heads": "every PR open / new head on a watched repo, mention or not; one line per seat per repo#number@sha (inbox_pass.py)",
-  "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); SEO seats have keys but no routes yet",
-  "_note_builder_cloud": "builder-cloud gets every builder line (mirrored server-side in app/server.mjs) plus nudges to builder; no routes of its own",
+  "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 9 seats (feed/fleet-roster.json)",
+  "_note_builder_cloud": "builder / builder-cloud are kit plumbing in app/server.mjs (installation-token auth, mirror); no route writes to them",
   "fallback": {
     "seat": "blinky",
     "from": [
-      "arch1",
-      "arch1-cloud"
+      "arch1"
     ]
   },
-  "_note_fallback": "#275: actionable events (ACTIONABLE in inbox_pass.py) with no owner seat, or owned only by arch1 / arch1-cloud (no webhook), also go to blinky (CoS). Pulses (prompt, turn, subagent, watcher, cloud agents) never route.",
-  "comment_watch": {"kinds": ["pr_comment", "review_comment", "issue_comment"], "author_kinds": ["pr_comment", "review_comment"],
-                    "author_reason": "comment on your PR", "seats": {"blinky": "comment watch (CoS)"}},
-  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR comments also to the PR author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies)."
+  "_note_fallback": "#275 + lap 2: actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) or only to fallback.from (arch1, no webhook) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route.",
+  "comment_watch": {
+    "kinds": [
+      "pr_comment",
+      "review_comment",
+      "issue_comment"
+    ],
+    "author_kinds": [
+      "pr_comment",
+      "review_comment"
+    ],
+    "author_reason": "comment on your PR",
+    "seats": {
+      "blinky": "comment watch (CoS)"
+    }
+  },
+  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR comments also to the PR author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
+  "_note_seats": "seats: the kit's role rules (reviewer / builder / tester / operator / coord, read by routing/inbox.py), each mapped to one of our 9 by \"seat\" (or \"off\"); inbox_pass.py rewrites every line to that seat. Kit defaults stay in inbox.py."
 }

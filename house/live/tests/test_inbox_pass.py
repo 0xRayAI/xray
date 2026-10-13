@@ -39,11 +39,14 @@ class InboxPass(unittest.TestCase):
             self.assertEqual(out[0], "6")
             box = run / "feed" / "inbox-spool"
             rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()]
-            self.assertEqual({l["id"] for l in rd("reviewer")}, {f"{R}#2:open", f"{R}#2:commit:{sha[:14]}"})
-            self.assertEqual([l["reason"] for l in rd("tester")], ["merge to develop"])
-            self.assertEqual([l["seat"] for l in rd("operator")], ["operator"])
-            arch = rd("builder"); self.assertEqual(arch[0]["type"], "ready"); self.assertEqual(arch[0]["number"], 2)
-            self.assertNotIn("SECRET", (box / "reviewer.jsonl").read_text())
+            heads = {f"pr:{R}#2@{R}#2:open", f"pr:{R}#2@{sha[:12]}"}   # one line per new PR / new head (pr_heads)
+            self.assertEqual({l["id"] for l in rd("critic")}, heads)
+            self.assertEqual({l["id"] for l in rd("blinky")}, heads)
+            forge = rd("forge")   # kit roles tester / operator / builder all map to forge
+            self.assertEqual(sorted(l["reason"] for l in forge if l["type"] != "ready"), ["merge to develop", "railway deploy"])
+            ready = [l for l in forge if l["type"] == "ready"]; self.assertEqual(ready[0]["number"], 2)
+            self.assertEqual(set(os.listdir(box)), {"critic.jsonl", "blinky.jsonl", "forge.jsonl"})   # no sample seat inbox
+            self.assertNotIn("SECRET", (box / "critic.jsonl").read_text())
             self.assertEqual(self.run_pass(env, "pass"), "0 0")                       # idempotent
             n = int(self.run_pass(env, "unsent", str(run / "a.json")))
             self.assertEqual(n, sum(len((box / f).read_text().splitlines()) for f in os.listdir(box)))   # every seat goes to the server
@@ -71,7 +74,7 @@ class ResetPullSeeds(unittest.TestCase):
             (run / "p.json").write_text(json.dumps({"cursor": "E.2", "events": [{"id": f"{R}#99:open", "t_ct": ct(5), "kind": "pr_open", "repo": R, "number": 99, "label": "new"}]}))
             go("pull", str(run / "p.json"))
             self.assertEqual(go("pass").split()[0], "1")
-            crit = [json.loads(x) for x in (run / "feed" / "inbox-spool" / "reviewer.jsonl").read_text().splitlines()]
+            crit = [json.loads(x) for x in (run / "feed" / "inbox-spool" / "critic.jsonl").read_text().splitlines()]
             self.assertEqual([l["number"] for l in crit], [99])                 # only the real new event
 
 

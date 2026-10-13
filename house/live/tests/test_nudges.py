@@ -2,13 +2,15 @@
 import io, json, os, sys, tempfile, time, unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed"))))
 
 
 class Nudges(unittest.TestCase):
     def setUp(self):
-        self.d = tempfile.TemporaryDirectory(); os.environ["MESH_RUN"] = self.d.name
+        self.d = tempfile.TemporaryDirectory()
+        env = mock.patch.dict(os.environ, MESH_RUN=self.d.name); env.start(); self.addCleanup(env.stop)   # no MESH_RUN leak
         import importlib, nudges
         self.n = importlib.reload(nudges)
         now = int(time.time() * 1000)

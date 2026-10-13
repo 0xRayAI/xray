@@ -25,7 +25,7 @@ function boot(extra) {
   s.until = async re => { for (let i = 0; i < 80 && !re.test(s.logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(s.logs); };
   return s;
 }
-const FEED = { generated_at: '2026-10-13T10:30:00-05:00', events: [
+const FEED = { title: 'Example live mesh', generated_at: '2026-10-13T10:30:00-05:00', events: [
   { id: 's1', repo: 'acme/secret', number: 7, kind: 'pr_open', t_ct: '2026-10-13T10:21:00-05:00', label: 'secret #7 opened · Top plan', title: 'Top plan', url: 'https://github.com/acme/secret/pull/7' }] };
 async function feedOf(s, headers = {}) {
   fs.mkdirSync(path.join(s.data, 'feed'), { recursive: true });
@@ -48,6 +48,12 @@ test('public mode (LIVE_PUBLIC=1): no password needed, page + feed open, real re
   const e = f.j.events.find(x => x.id === 's1');
   assert.deepEqual([e.repo, e.title, e.url], ['acme/secret', 'Top plan', 'https://github.com/acme/secret/pull/7']);
   assert.equal((await (await fetch(s.base + '/healthz')).json()).mode, 'public');
+  assert.equal(f.j.title, 'Bifrost live mesh');
+  assert.ok(f.j.events.every(x => typeof x.credit === 'string' && x.credit), 'no blank credits');   // server fills any source's gaps   // a collector header saying Example never reaches the feed
+  assert.ok([200, 204].includes((await fetch(s.base + '/favicon.ico')).status));   // public: no 401
+  const c = await fetch(s.base + '/cards'); assert.equal(c.status, 200);
+  assert.deepEqual([(await c.json()).seat], ['all']);
+  const cm = await fetch(s.base + '/cards?seat=mill'); assert.equal(cm.status, 200); assert.equal((await cm.json()).seat, 'mill');
 });
 
 test('gated mode (default): missing MESH_PASSWORD refuses to start; with it, login page titled Bifrost and private repos masked', async () => {
@@ -64,10 +70,17 @@ test('gated mode (default): missing MESH_PASSWORD refuses to start; with it, log
   const f = await feedOf(s, { Cookie: String(lr.headers.get('set-cookie')).split(';')[0] });
   assert.ok(!/secret|Top plan/.test(JSON.stringify(f.j)));
   assert.equal((await (await fetch(s.base + '/healthz')).json()).mode, 'gated');
+  assert.equal((await fetch(s.base + '/cards')).status, 401);
+  assert.equal((await fetch(s.base + '/favicon.ico')).status, 401);   // gated stays gated
+  assert.equal((await fetch(s.base + '/cards?seat=coord')).status, 401);
 });
 
-test('our deploy: committed feed/site.json is public + Bifrost, and deploy.sh ships it beside the collector', () => {
+test('our deploy: committed feed/site.json is public + Bifrost, and deploy.sh ships it beside the collector', async () => {
   const site = JSON.parse(fs.readFileSync(path.join(LIVE, 'feed', 'site.json'), 'utf8'));
+  assert.equal(site.title, 'Bifrost live fleet');
+  const s = boot({ LIVE_PUBLIC: '1', LIVE_SITE_TITLE: site.title });   // same value the deployed collector/site.json gives
+  assert.ok(await s.until(/listening on/), s.logs);
+  const f = await feedOf(s); assert.equal(f.j.title, 'Bifrost live fleet');
   assert.deepEqual([site.public, site.name], [true, 'Bifrost']);
   assert.match(fs.readFileSync(path.join(APP, 'deploy.sh'), 'utf8'), /feed\/site\.json "\$DST\/collector\/"/);
 });

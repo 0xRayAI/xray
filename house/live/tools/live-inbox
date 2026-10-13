@@ -6,13 +6,13 @@ seat acked and lines whose card moved past the seat's step (closed card; for rev
 A read never acks. The ack is the receipt (the pop) and a seat sends it after it handles the line, with
 --ack or --pop <id> (one line) or --ack all / --pop all (everything open). --peek means the same as a plain read.
 The local cursor still advances to the newest line seen.
-Key: /srv/live/run/secrets/seat-keys/<seat>.key (never printed). Cursor:
-/srv/live/run/fleet/cursors/<seat>.txt."""
+Defaults (no env needed): LIVE_URL=https://burst-live-production.up.railway.app, key
+~/.burst/seat-keys/<seat>.key (SEAT_KEYS_DIR, never printed), cursor ~/.burst/cursors/<seat>.txt (LIVE_CURSORS)."""
 import json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
-URL = os.environ.get("LIVE_URL", "https://live.example.com").rstrip("/")
-KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "/srv/live/run/secrets/seat-keys"))
-CUR = Path(os.environ.get("LIVE_CURSORS", "/srv/live/run/fleet/cursors"))
+URL = os.environ.get("LIVE_URL", "https://burst-live-production.up.railway.app").rstrip("/")
+KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "~/.burst/seat-keys")).expanduser()
+CUR = Path(os.environ.get("LIVE_CURSORS", "~/.burst/cursors")).expanduser()
 argv = sys.argv[1:]
 ack = None
 for flag in ("--ack", "--pop"):

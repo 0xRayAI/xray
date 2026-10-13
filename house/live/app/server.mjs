@@ -8,7 +8,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
@@ -21,7 +21,8 @@ function siteConfig(env, dir) {
   const ev = String(env.LIVE_PUBLIC ?? '').trim().toLowerCase();
   const pub = ['1', 'true', 'yes', 'on'].includes(ev) ? true : ['0', 'false', 'no', 'off'].includes(ev) ? false : f.public === true;
   const name = String(env.LIVE_SITE_NAME || (typeof f.name === 'string' && f.name) || 'Bifrost').replace(/[<>&"']/g, '').slice(0, 60) || 'Bifrost';
-  return { public: pub, name };
+  const title = String(env.LIVE_SITE_TITLE || (typeof f.title === 'string' && f.title) || `${name} live mesh`).replace(/[<>&"']/g, '').slice(0, 80);
+  return { public: pub, name, title };
 }
 const SITE = siteConfig(process.env, path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector'));
 const PUBLIC = SITE.public;
@@ -99,7 +100,7 @@ if (STATIC.has('/index.html')) STATIC.set('/', STATIC.get('/index.html'));
 // Sources: "github" = the Railway collector child (read-only token, file on the volume), "box" = the box pusher
 // (POST /ingest, /ingest/delta; box-only signals). Same id in both -> the github copy wins. Each source has its own
 // ack cursor "<epoch>_<source>.<n>" so a collector write never invalidates the box pusher's delta base.
-const EMPTY_FEED = { title: `${SITE.name} live mesh`, generated_at: null, event_count: 0, events: [] };
+const EMPTY_FEED = { title: SITE.title, generated_at: null, event_count: 0, events: [] };
 const EPOCH = crypto.randomBytes(6).toString('base64url');
 const STARTED = Date.now();
 const MAX_REMOVED = 20000;
@@ -117,7 +118,18 @@ const srcCursor = n => `${EPOCH}_${n}.${SRCS[n].seq}`;
 const evHash = e => crypto.createHash('sha1').update(JSON.stringify(e)).digest('base64url');
 function headerOf(f) { const h = {}; for (const k of Object.keys(f)) if (k !== 'events' && k !== 'cursor') h[k] = f[k]; return h; }
 function dropId(id) { evs.delete(id); removed.push({ id, s: seq }); if (removed.length > MAX_REMOVED) floorSeq = removed.splice(0, removed.length - MAX_REMOVED).pop().s; }
-function upsert(e) { const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
+// Every served event carries a credit (never blank): the collector sets it from logins; anything else (box, Jira, health,
+// emitter, older collectors) is credited by its sender node: a roster seat, Blaze (Lead / Blaze0x1), else the github node.
+let rosterSeats = null;
+function creditOf(e) {
+  if (typeof e.credit === 'string' && e.credit) return e.credit;
+  if (!rosterSeats) { try { rosterSeats = new Set((JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector', 'fleet-roster.json'), 'utf8')).seats || []).map(x => String(x).toLowerCase())); } catch { rosterSeats = new Set(); } }
+  const f = String(e.from || '').toLowerCase();
+  if (f === 'coord') return 'blinky';
+  if (['lead', 'blaze', 'blaze0x1', 'htafolla'].includes(f)) return 'Blaze';
+  return rosterSeats.has(f) ? f : 'github';
+}
+function upsert(e) { if (!e.credit) e = { ...e, credit: creditOf(e) }; const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
 // Fleet-only (same rule as feed/live_collect.fleet_only): a GitHub-sourced event that shows a login outside the fleet
 // map is never served, whichever source sent it (box /ingest included). LIVE_SHOW_UNMAPPED=1 keeps them.
 const SHOW_UNMAPPED = process.env.LIVE_SHOW_UNMAPPED === '1';
@@ -189,8 +201,12 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // ---- Live board: the server is the source of truth for seat inboxes, cards and nudges ---------------------------------
 // Seat auth: Builder = its builder-app installation token (ghVerify, unchanged); every other seat = its own key, checked
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
-const SEAT_IDS = ['builder', 'reviewer', 'tester', 'qa', 'coord', 'operator', 'growth', 'qa-one', 'qa-two', 'triager', 'seat-c',
-  'chatbot', 'seo-researcher', 'seo-writer', 'offsite-copier', 'builder-cloud', 'arch1',
+// Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
+// no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
+// jobs map to ours (coord -> blinky, operator / tester / qa -> forge, reviewer -> critic), see SEAT_ALIAS.
+const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
+const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
+const SEAT_IDS = ['builder', 'builder-cloud', 'arch1',
   'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
@@ -294,8 +310,13 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
+  if (result.ok) touchSeat(seat);
   st.inflight = false; armWake(seat);
 }
+// Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
+// In memory: after a restart a seat is active again on its next wake, read or ack.
+const seatTouch = {};
+const touchSeat = (seat, t = Date.now()) => { if (seat) seatTouch[seat] = Math.max(seatTouch[seat] || 0, t); };
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const bearerOf = req => { const h = req.headers.authorization || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; };
 async function seatOf(req) {   // -> seat id | null; throws when GitHub can't verify an installation token (caller: 503)
@@ -306,7 +327,7 @@ async function seatOf(req) {   // -> seat id | null; throws when GitHub can't ve
   return null;
 }
 const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[^a-z0-9 -]/g, ' ');
-  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (w === 'lab') return 'qa'; } return null; };
+  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (SEAT_ALIAS[w]) return SEAT_ALIAS[w]; } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
 const NUDGE_L1_MS = (Number(process.env.NUDGE_L1_S) || 3600) * 1000, NUDGE_L2_MS = (Number(process.env.NUDGE_L2_S) || 1800) * 1000;
 const NUDGE_L3_MS = (Number(process.env.NUDGE_L3_S) > 0 ? Number(process.env.NUDGE_L3_S) : 7200) * 1000;
@@ -335,7 +356,7 @@ function lineDone(seat, l) {
   if (!c) return false;
   if (c.state === 'closed') return true;
   const lt = Date.parse(l.t_ct) || 0;
-  if (seat === 'reviewer' && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
+  if (seat === REVIEW && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
   return false;
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
@@ -394,7 +415,7 @@ function postSeatLines(parsed, onlySeat) {
   for (const l of fresh) noteWake(l.seat, l);
   return { status: 200, added, rejected: refs };
 }
-// ---- Assistant / emitter: the Example MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
+// ---- Assistant / emitter: the sample MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
 // 'assistant' seat key, checked against SEAT_KEYS.assistant). Write-only and strict: tool name, time, ok, client class,
 // latency, kind; any other field (addresses, content, emails, user ids) is refused. Not a reading seat (no inbox/cards).
 const EMITTER_WORK_MS = (Number(process.env.EMITTER_WORKING_S) || 120) * 1000;   // a run of calls = working until 2 min after the last
@@ -472,7 +493,7 @@ function holdOwner(c) {
   if (owner && SEAT_IDS.includes(owner)) return owner;
   const by = seatIdOf(c.hold && c.hold.by);
   if (by && SEAT_IDS.includes(by)) return by;
-  return 'builder';
+  return COS;
 }
 // NUDGE: a live card with no beat for 60 min -> level 1 to the packet's next owner (else the card owner); still no
 // beat 30 min after that -> level 2 to Coord. Level 3 then repeats to that same owner every 2h until a beat lands.
@@ -510,14 +531,14 @@ function evalNudges(now = Date.now()) {
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
       if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
-    const tgt = nx || seatIdOf(c.owner) || 'coord', via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
+    const tgt = nx || seatIdOf(c.owner) || COS, via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }
     else if (!l1.closed_at && l1.seat !== tgt) {
       l1.closed_at = new Date(now).toISOString(); changed = true;
       if (!l1s.some(n => n.seat === tgt)) { mk(1, tgt, via, id(1) + ':' + tgt); l1 = nudges[nudges.length - 1]; } }
-    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, 'coord', 'escalation');
+    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, COS, 'escalation');
     const l2 = has(2);
     if (l2 && !l2.closed_at) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
@@ -555,7 +576,7 @@ function evalSilent(fleet, now = Date.now()) {
     const nid = `silent:${id}:${last}`;
     if (nudges.some(n => n.id === nid)) continue;
     nudges.push({ id: nid, kind: 'silent', t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0,
-      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: 'coord', via: 'silent seat', about: id, beat_t: last });
+      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: COS, via: 'silent seat', about: id, beat_t: last });
     changed = true;
   }
   if (changed) saveNudges();
@@ -607,6 +628,7 @@ function mergedHeader(now = Date.now()) {
   const h = { ...(b || {}), ...(g || {}) };
   if (!g && !b) Object.assign(h, headerOf(EMPTY_FEED));
   delete h.source; delete h.fleet;
+  h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
@@ -622,6 +644,7 @@ function mergedHeader(now = Date.now()) {
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;
+  const tf = foldSeatTouch(h.fleet, seatTouch, now); if (tf) h.fleet = tf;   // wake / read / ack activity
   return h;
 }
 // active windows and box staleness move with the clock: re-merge every 15 s, publish only on a real change
@@ -641,7 +664,7 @@ function full() {   // built lazily: only the first full GET after a change pays
 // Private repos (D18): on the login-page feed an event or header object of a private repo keeps only its id, times, kind and
 // mesh hops (plus number / sha so replay can link packets); repo becomes 'private repo' and title / label / url / branch
 // text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
-const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
+const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'credit', 'state', 'status', 'number', 'sha', 'active']);
 const HEADER_RAW = ['fleet', 'board'];
 // fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten.
 // One compiled pattern, rebuilt only when the private set grows (not per string per GET).
@@ -774,19 +797,8 @@ async function refreshOrgRepos() {
   console.log(`collector: repos ${next.map(repoTag).join(' ')}`);
   if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
 }
-// Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
-// LIVE_FLEET_SEATS is set); fleet-nodes.json maps seat logins to seats, under any LIVE_NODE_MAP entries (the var wins).
-function fleetConfig(e, dir = COLLECTOR_DIR) {
-  const out = {}, roster = path.join(dir, 'fleet-roster.json');
-  if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
-  let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
-  let extra = {}; try {   // the var wins, inline JSON or a path (as live_fleet accepts)
-    const raw = String(e.LIVE_NODE_MAP || '').trim();
-    extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
-  } catch {}
-  if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...nodes, ...extra });
-  return out;
-}
+// fleetConfig (presence.mjs): committed fleet-roster.json / fleet-nodes.json shipped beside the collector.
+const fleetConfig = (e, dir = COLLECTOR_DIR) => fleetConfigOf(e, dir);
 async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
@@ -1318,7 +1330,7 @@ async function handle(req, res) {
     return json(req, res, 202, { ok: true });
   }
 
-  if (p === '/emit') {   // write-only Assistant / emitter events from the Example MCP server; answers {ok} or an error, never data
+  if (p === '/emit') {   // write-only Assistant / emitter events from the sample MCP server; answers {ok} or an error, never data
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     const ip = clientIp(req), now = Date.now();
     const bad = (actFails.get(ip) || []).filter(t => now - t < RL_WINDOW_MS);
@@ -1373,7 +1385,7 @@ async function handle(req, res) {
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
     const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(openLines(who, all).map(l => l.id));
+    const keep = new Set(openLines(who, all).map(l => l.id)); touchSeat(who);
     return json(req, res, 200, { seat: who, lines: base.filter(l => keep.has(l.id)).slice(0, 1000) });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
@@ -1385,25 +1397,26 @@ async function handle(req, res) {
     let d; try { d = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
     const what = d && d.all === true ? 'all' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
     if (!what) return json(req, res, 400, { error: 'id or all required' });
-    const n = ackLines(who, what);
+    const n = ackLines(who, what); touchSeat(who);
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
   }
-  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (Operator may read any seat); coord / operator see all
+  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
+    // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
-    if (!who) return json(req, res, 401, { error: 'unauthorized' });
-    const want = String(url.searchParams.get('seat') || who).toLowerCase();
-    if (want !== who && who !== 'operator') return json(req, res, 403, { error: 'not your seat' });
-    const all = want === 'coord' || want === 'operator';
+    if (!who && !PUBLIC) return json(req, res, 401, { error: 'unauthorized' });   // public mode: cards are readable without a key
+    const want = String(url.searchParams.get('seat') || who || 'all').toLowerCase();
+    if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
+    const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
     const cs = CARD_SEAT[want] || want;
     return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });
   }
-  if (p === '/nudges') {   // GET /nudges?since=<id>: Operator key only (the Operator routine delivers them)
+  if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
-    if (who !== 'operator') return json(req, res, 403, { error: 'operator only' });
+    if (who !== OPS) return json(req, res, 403, { error: 'forge only' });
     evalNudges();
     return json(req, res, 200, { nudges: linesAfter(nudges, url.searchParams.get('since')).slice(0, 500) });
   }
@@ -1459,6 +1472,10 @@ async function handle(req, res) {
 
   if (m !== 'GET' && m !== 'HEAD') return send(req, res, 405, 'text/plain', 'method not allowed', { Allow: 'GET, HEAD' });
 
+  if (p === '/favicon.ico' && (PUBLIC || validSession(req))) {   // public mode: open like the page (was a 401)
+    const fi = STATIC.get('/favicon.png');
+    return fi ? send(req, res, 200, fi.type, fi.body) : send(req, res, 204, 'image/png', Buffer.alloc(0));
+  }
   if (!validSession(req)) {
     if (p === '/live-events.json') return json(req, res, 401, { error: 'login required' });
     return send(req, res, 401, 'text/html; charset=utf-8', loginPage());

@@ -1,4 +1,4 @@
-/* Example overlay for the upstream live page (live.js is served unmodified apart from the feed URL).
+/* Kit overlay for the upstream live page (live.js is served unmodified apart from the feed URL).
    Feed = this server's own live-events.json only. */
 (function (L) {
   'use strict';
@@ -42,9 +42,9 @@
     ['QA', 'lab testers'], ['Operator', 'infra'], ['blinky', 'Coordinator'], ['CloudAgents', 'cloud agents'], ['Assistant', 'emitter']);
   // Cloud agents is a header seat (ACTIVE/IDLE) but not one of the bots counted in 'N of M bots active'.
   L.SEAT_NAMES.splice(0, L.SEAT_NAMES.length, 'Builder', 'Builder-cloud', 'Reviewer', 'Tester', 'QA', 'Operator', 'blinky');
-  // Nodes (920 x 400 canvas, hub at 500,200). One Example node (product + dev / labtest / prod instances; the
+  // Nodes (920 x 400 canvas, hub at 500,200). One product node (product + dev / labtest / prod instances; the
   // instance is a tag on the event label). 'mymuse.house' / 'blinky' / 'X' are upstream's fixed keys,
-  // shown as Example / Coord / Others.
+  // shown as the product / Coord / Others.
   // Lead = lead-login and lead-alt (his renamed login): one node. CI is folded into GitHub.
   reset(L.SATS, { Builder: [90, 50], 'Builder-cloud': [190, 125], Reviewer: [280, 50], X: [470, 50], GitHub: [680, 55], Railway: [850, 55],
     Lead: [110, 200], Operator: [300, 200], blinky: [690, 200], 'mymuse.house': [850, 200],
@@ -55,7 +55,7 @@
     'mymuse.house': [255, 200, 90], blinky: [88, 210, 180] });
   reset(L.LABEL, { CloudAgents: 'Cloud agents', Builder: 'Builder', 'Builder-cloud': 'Builder-cloud', Reviewer: 'Reviewer', Tester: 'Tester', QA: 'QA', Operator: 'Operator',
     Lead: 'Lead', X: 'Others', GitHub: 'GitHub', Railway: 'Railway',
-    'mymuse.house': 'Example', blinky: 'Coord', Assistant: 'Assistant / emitter' });
+    'mymuse.house': 'Product', blinky: 'Coord', Assistant: 'Assistant / emitter' });
   reset(L.SUB, { CloudAgents: 'cursor agents', Builder: 'builder', 'Builder-cloud': 'builder (cloud)', Reviewer: 'gate', Tester: 'lab tester', QA: 'qa-one · qa two',
     Operator: 'infra', Lead: 'Architect', X: 'other actors',
     GitHub: 'PRs · commits · checks', Railway: 'deploys', 'mymuse.house': 'dev · labtest · prod', blinky: 'Coordinator', Assistant: 'MCP tool calls' });
@@ -67,7 +67,7 @@
     ['blinky', 'mymuse.house'], ['Assistant', 'mymuse.house'], ['Operator', 'blinky'], ['Operator', 'GitHub']);
   // Avatars: avatars/<file>.png when present; a missing file falls back to the normal drawing (onerror).
   // builder-app[bot] -> builder, reviewer-app(/[bot]) -> reviewer, ops-app[bot] -> operator, Tester app -> tester,
-  // The Example node -> live (mailbox mark). lead-login and lead-alt (Lead's renamed login) -> the Lead node.
+  // The product node -> live (mailbox mark). lead-login and lead-alt (Lead's renamed login) -> the Lead node.
   // lead-login (Lead, the Architect) uses lead.png; the merged QA seat uses qa.
   var AVATAR = { Lead: 'lead', Builder: 'builder', Reviewer: 'reviewer', Tester: 'tester', QA: 'qa',
     Operator: 'operator', blinky: 'coord', 'mymuse.house': 'live' };
@@ -87,8 +87,8 @@
   var MAX = Math.max(100, Number(q.get('n')) || 3000);
   var KINDS = (q.get('kinds') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   // Every feed from/to maps onto a drawn node key (L.SATS). Feed names -> node keys; anything else -> fallback.
-  var NODE_KEY = { CI: 'GitHub', forge: 'GitHub', Others: 'X', 'Example': 'mymuse.house', Coord: 'blinky', reviewer: 'Reviewer',
-    'dev.example.com': 'mymuse.house', 'app.example.com': 'mymuse.house', labtest: 'mymuse.house',
+  var NODE_KEY = { Blaze: 'Lead', CI: 'GitHub', forge: 'GitHub', Others: 'X', Coord: 'blinky', reviewer: 'Reviewer',
+    labtest: 'mymuse.house',
     'QA': 'QA', QaOne: 'QA', QaTwo: 'QA', 'QA two': 'QA',
     lead-alt: 'Lead', lead-alt: 'Lead', lead-login: 'Lead', 'Cloud agents': 'CloudAgents', cursoragent: 'CloudAgents' };
   function nodeKey(v, fallback) {
@@ -117,6 +117,9 @@
   L.liveHopKeys = hopKeys;
   var applyFeed = L.applyFeed;
   L.applyFeed = function (state, feed, nowMs) {
+    // the feed header names the product node, its instance hosts and services (feed/site.json); they all draw as
+    // the one product node, so the kit page carries no install's names
+    if (feed && Array.isArray(feed.product_nodes)) feed.product_nodes.forEach(function (n) { if (typeof n === 'string' && n && !(n in L.SATS)) NODE_KEY[n] = 'mymuse.house'; });
     if (feed && Array.isArray(feed.events)) {
       window.LIVE_FEED_TOTAL = typeof feed.event_count === 'number' ? feed.event_count : feed.events.length;
       var ev = feed.events;
@@ -124,7 +127,7 @@
       ev = ev.slice().sort(function (a, b) { return Date.parse(a.t_ct) - Date.parse(b.t_ct); }).slice(-MAX);
       ev = ev.map(function (e) {
         var f = nodeKey(e.from, 'X'), t = nodeKey(e.to, 'GitHub');
-        if (f === t && t === 'mymuse.house') f = 'Railway';   // no Example -> Example self-hop
+        if (f === t && t === 'mymuse.house') f = 'Railway';   // no product -> product self-hop
         return Object.assign({}, e, { from: f, to: t, hops: hopKeys(e.hops) });
       });
       if (feed.fleet && typeof feed.fleet === 'object') window.LIVE_FLEET = feed.fleet;

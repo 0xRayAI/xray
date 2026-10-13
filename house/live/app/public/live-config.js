@@ -1,4 +1,4 @@
-/* Example overlay for the upstream live page (live.js is served unmodified apart from the feed URL).
+/* Kit overlay for the upstream live page (live.js is served unmodified apart from the feed URL).
    Feed = this server's own live-events.json only. */
 (function (L) {
   'use strict';
@@ -42,9 +42,9 @@
     ['QA', 'lab testers'], ['Operator', 'infra'], ['blinky', 'Coordinator'], ['CloudAgents', 'cloud agents'], ['Assistant', 'emitter']);
   // Cloud agents is a header seat (ACTIVE/IDLE) but not one of the bots counted in 'N of M bots active'.
   L.SEAT_NAMES.splice(0, L.SEAT_NAMES.length, 'Builder', 'Builder-cloud', 'Reviewer', 'Tester', 'QA', 'Operator', 'blinky');
-  // Nodes (920 x 400 canvas, hub at 500,200). One Example node (product + dev / labtest / prod instances; the
+  // Nodes (920 x 400 canvas, hub at 500,200). One product node (product + dev / labtest / prod instances; the
   // instance is a tag on the event label). 'mymuse.house' / 'blinky' / 'X' are upstream's fixed keys,
-  // shown as Example / Coord / Others.
+  // shown as the product / Coord / Others.
   // Lead = lead-login and lead-alt (his renamed login): one node. CI is folded into GitHub.
   reset(L.SATS, { Builder: [90, 50], 'Builder-cloud': [190, 125], Reviewer: [280, 50], X: [470, 50], GitHub: [680, 55], Railway: [850, 55],
     Lead: [110, 200], Operator: [300, 200], blinky: [690, 200], 'mymuse.house': [850, 200],
@@ -55,7 +55,7 @@
     'mymuse.house': [255, 200, 90], blinky: [88, 210, 180] });
   reset(L.LABEL, { CloudAgents: 'Cloud agents', Builder: 'Builder', 'Builder-cloud': 'Builder-cloud', Reviewer: 'Reviewer', Tester: 'Tester', QA: 'QA', Operator: 'Operator',
     Lead: 'Lead', X: 'Others', GitHub: 'GitHub', Railway: 'Railway',
-    'mymuse.house': 'Example', blinky: 'Coord', Assistant: 'Assistant / emitter' });
+    'mymuse.house': 'Product', blinky: 'Coord', Assistant: 'Assistant / emitter' });
   reset(L.SUB, { CloudAgents: 'cursor agents', Builder: 'builder', 'Builder-cloud': 'builder (cloud)', Reviewer: 'gate', Tester: 'lab tester', QA: 'qa-one · qa two',
     Operator: 'infra', Lead: 'Architect', X: 'other actors',
     GitHub: 'PRs · commits · checks', Railway: 'deploys', 'mymuse.house': 'dev · labtest · prod', blinky: 'Coordinator', Assistant: 'MCP tool calls' });
@@ -67,13 +67,18 @@
     ['blinky', 'mymuse.house'], ['Assistant', 'mymuse.house'], ['Operator', 'blinky'], ['Operator', 'GitHub']);
   // Avatars: avatars/<file>.png when present; a missing file falls back to the normal drawing (onerror).
   // builder-app[bot] -> builder, reviewer-app(/[bot]) -> reviewer, ops-app[bot] -> operator, Tester app -> tester,
-  // The Example node -> live (mailbox mark). lead-login and lead-alt (Lead's renamed login) -> the Lead node.
+  // The product node -> live (mailbox mark). lead-login and lead-alt (Lead's renamed login) -> the Lead node.
   // lead-login (Lead, the Architect) uses lead.png; the merged QA seat uses qa.
-  var AVATAR = { Lead: 'lead', Builder: 'builder', Reviewer: 'reviewer', Tester: 'tester', QA: 'qa',
-    Operator: 'operator', blinky: 'coord', 'mymuse.house': 'live' };
-  L.BOT_IMAGES.splice(0, L.BOT_IMAGES.length);
-  Object.keys(AVATAR).forEach(function (k) { L.BOT_IMAGES.push(k); });
-  L.botImage = function (key) { return AVATAR[key] ? 'avatars/' + AVATAR[key] + '.png' : null; };
+  // The kit ships no avatar files, so it maps none (no /avatars/*.png 404s); a fleet's overlay (site-config.js) sets
+  // L.setAvatars({node: file}) for the images it ships in avatars/. Unmapped nodes use the drawn fallback.
+  L.AVATAR = {};
+  L.setAvatars = function (m) {
+    L.AVATAR = m || {};
+    L.BOT_IMAGES.splice(0, L.BOT_IMAGES.length);
+    Object.keys(L.AVATAR).forEach(function (k) { L.BOT_IMAGES.push(k); });
+  };
+  L.setAvatars({});
+  L.botImage = function (key) { return L.AVATAR[key] ? 'avatars/' + L.AVATAR[key] + '.png' : null; };
   var W = { lab_bug: 'lab bug', lab_bug_update: 'lab bug', lab_issue: 'lab issue', lab_run: 'lab test run',
     lab_calls: 'lab calls', board_card: 'board card', board_status: 'board', lab_retest_pass: 'lab retest PASS', lab_retest_fail: 'lab retest FAIL', critic_pass: 'reviewer PASS',
     critic_fail: 'reviewer FAIL', critic_hold: 'reviewer HOLD', critic_recheck: 'reviewer re-check', pr_commit: 'PR push',
@@ -87,10 +92,12 @@
   var MAX = Math.max(100, Number(q.get('n')) || 3000);
   var KINDS = (q.get('kinds') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   // Every feed from/to maps onto a drawn node key (L.SATS). Feed names -> node keys; anything else -> fallback.
-  var NODE_KEY = { CI: 'GitHub', forge: 'GitHub', Others: 'X', 'Example': 'mymuse.house', Coord: 'blinky', reviewer: 'Reviewer',
-    'dev.example.com': 'mymuse.house', 'app.example.com': 'mymuse.house', labtest: 'mymuse.house',
+  var NODE_KEY = { Blaze: 'Lead', CI: 'GitHub', forge: 'GitHub', Others: 'X', Coord: 'blinky', reviewer: 'Reviewer',
+    labtest: 'mymuse.house',
     'QA': 'QA', QaOne: 'QA', QaTwo: 'QA', 'QA two': 'QA',
     'lead-alt': 'Lead', 'lead-login': 'Lead', 'Cloud agents': 'CloudAgents', cursoragent: 'CloudAgents' };
+  L.NODE_KEY = NODE_KEY;   // a fleet overlay may add or remap feed names
+  L.FROM_FALLBACK = 'X';   // node for an unmapped sender ('Others'); an overlay without X points it elsewhere
   function nodeKey(v, fallback) {
     if (/^(lead-alt|lead-login)$/i.test(String(v))) v = 'Lead';   // any alias of Lead's logins
     var k = Object.prototype.hasOwnProperty.call(NODE_KEY, v) ? NODE_KEY[v] : v;
@@ -117,14 +124,17 @@
   L.liveHopKeys = hopKeys;
   var applyFeed = L.applyFeed;
   L.applyFeed = function (state, feed, nowMs) {
+    // the feed header names the product node, its instance hosts and services (feed/site.json); they all draw as
+    // the one product node, so the kit page carries no install's names
+    if (feed && Array.isArray(feed.product_nodes)) feed.product_nodes.forEach(function (n) { if (typeof n === 'string' && n && !(n in L.SATS)) NODE_KEY[n] = 'mymuse.house'; });
     if (feed && Array.isArray(feed.events)) {
       window.LIVE_FEED_TOTAL = typeof feed.event_count === 'number' ? feed.event_count : feed.events.length;
       var ev = feed.events;
       if (KINDS.length) ev = ev.filter(function (e) { return KINDS.some(function (p) { return String(e.kind).indexOf(p) === 0; }); });
       ev = ev.slice().sort(function (a, b) { return Date.parse(a.t_ct) - Date.parse(b.t_ct); }).slice(-MAX);
       ev = ev.map(function (e) {
-        var f = nodeKey(e.from, 'X'), t = nodeKey(e.to, 'GitHub');
-        if (f === t && t === 'mymuse.house') f = 'Railway';   // no Example -> Example self-hop
+        var f = nodeKey(e.from, L.FROM_FALLBACK), t = nodeKey(e.to, 'GitHub');
+        if (f === t && t === 'mymuse.house') f = 'Railway';   // no product -> product self-hop
         return Object.assign({}, e, { from: f, to: t, hops: hopKeys(e.hops) });
       });
       if (feed.fleet && typeof feed.fleet === 'object') window.LIVE_FLEET = feed.fleet;
@@ -135,6 +145,43 @@
     return out;
   };
   L.blackoutLine = function () { return ''; };
+  L.SITE_FOOT = '';   // footer line; the kit shows none (a fleet overlay sets its own)
+  // Lens label box: centred on the node, shifted so it never runs off the canvas edge.
+  L.labelX = function (x, w, width) { return Math.min(Math.max(x, w / 2 + 2), width - w / 2 - 2); };
+  // Board as of a timeline point (rewound / replay): only cards that existed then (first beat at or before t), with
+  // beats up to t. Live (t == null) = every card. Pinned cards always show.
+  L.boardAt = function (cards, t) {
+    if (t == null) return cards;
+    var out = [];
+    (cards || []).forEach(function (c) {
+      if (c.pinned) { out.push(c); return; }
+      var bs = (c.beats || []).filter(function (b) { return b.t <= t; });
+      var first = (c.beats || []).length ? c.beats[0].t : c.last_beat_t;
+      if (first != null && first > t) return;
+      out.push(bs.length === (c.beats || []).length ? c : Object.assign({}, c, { beats: bs, last_beat_t: bs.length ? bs[bs.length - 1].t : c.last_beat_t }));
+    });
+    return out;
+  };
+  // Board bucket for a card under its seat.
+  L.cardBucket = function (c) {
+    if (c.state === 'closed' || c.state === 'parked' || c.stage === 'done') return 'done';
+    if (c.state === 'held') return 'held';
+    if (c.stage === 'review') return 'review';
+    return 'waiting';
+  };
+  // Seat groups for the board: each card under its seat (next owner, else owner); a card in review is ALSO waiting
+  // on the review seat (L.REVIEW_SEAT, e.g. critic), so the reviewer's group shows its queue, not only its done cards.
+  L.REVIEW_SEAT = null;
+  L.boardGroups = function (cards, seatOf) {
+    var by = {}, order = [];
+    function add(s, c) { if (!by[s]) { by[s] = []; order.push(s); } by[s].push(c); }
+    (cards || []).forEach(function (c) {
+      var s = seatOf(c); add(s, c);
+      if (L.REVIEW_SEAT && s !== L.REVIEW_SEAT && L.cardBucket(c) === 'review') add(L.REVIEW_SEAT, Object.assign({}, c, { _bucket: 'waiting' }));
+    });
+    order.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
+    return order.map(function (s) { return { name: s, cards: by[s] }; });
+  };
   // ONE derived seat state, used by the header chip text, its dot and the canvas node alike:
   //   working (in-flight spinner) > live (a ping on the board right now) > active (fleet, last 15 min) > idle
   L.seatState = function (working, live, active) {

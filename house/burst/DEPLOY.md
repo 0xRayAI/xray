@@ -49,6 +49,7 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
   `railway up --service <service> --detach` from that dir. If you deploy from GitHub instead, set the root directory to
   a dir laid out the same way.
 - `deploy.sh` names: `LIVE_RAILWAY_PROJECT` (default `live-board`), `LIVE_RAILWAY_SERVICE` (default `live-mesh`), `MESH_APP_DEPLOY_DIR` (default `/srv/live/deploy`). These are the project, the service, and the railway-linked directory. They are not Railway variables on the service.
+- `house/live/site/public/` (committed, ours) is copied over the kit `public/` first: our seats, Lens nodes, `avatars/` (blinky, critic, forge, herald from the repo; arch1 from minime0x; Blaze from his X profile @Blaze0x1; others drawn, see [board.md](../live/docs/board.md#avatars)) and `favicon.png` (served at `/favicon.ico`, open in public mode). Another install deletes `house/live/site/`.
 - `LIVE_PUBLIC_OVERLAY` is a directory on the machine that runs `deploy.sh`. After the kit `public/` is copied, that directory is copied on top, so a fleet's `live-config.js` and `avatars/` survive the next deploy. Unset means the kit page only.
 - `railway.json` (Config as Code) is still read until **2026-12-01**. The replacement is `house/live/app/.railway/railway.ts`: `start` `node server.mjs`, `healthcheck` `/healthz`, one replica. `deploy.sh` copies that directory into the deploy dir. Do not `railway config apply` while `railway.json` is still the service config. Before the cutoff, from the deploy dir: `railway config plan`, then `railway config apply`. Rename `service()` and `project()` in that file to match `LIVE_RAILWAY_SERVICE` and `LIVE_RAILWAY_PROJECT`. Put no secrets in the file.
 
@@ -63,7 +64,7 @@ Railway service (`server.mjs`):
 | `SESSION_SECRET` | required, 32+ chars | cookie HMAC |
 | `INGEST_SECRET` | required, 32+ chars | box pusher |
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |
-| `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only |
+| `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only. Today it covers public repos only: private-repo reads (including CI/check reads) return 403 and the collector logs `skip ... (403)`. Widening the token's repo scope needs Blaze's GO |
 | `MESH_DATA_DIR` | optional | default `/data` |
 | `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_ORG`, `COLLECTOR_ORG_REFRESH_S`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; org whose repos are all watched (unioned with `COLLECTOR_REPOS`); org re-list seconds, default 3600; space-separated app `/health` URLs (unset means the collector probes no host); default 45 |
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |
@@ -94,6 +95,8 @@ Stored collector events are relabeled with the current `LIVE_NODE_MAP` when the 
 Box (feed pass, `feed/supervisor.sh`): `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID` (read-only
 mint only), `MESH_RUN`, `LIVE_HEALTH_URLS`, `LIVE_MERGE_QUEUE`, `LIVE_REST_FLOOR`, `LIVE_GQL_FLOOR`, `LIVE_BACKFILL_SECONDS`, `LIVE_RAILWAY_TARGETS` (optional deploy poller; JSON list, ids from your own Railway projects).
 Box pusher (`house/live/feed/push_to_host.sh`, not `house/burst/push.sh`): `LIVE_HOME` (default `/srv/live`), `MESH_RUN` (default `/srv/live/run`), `FEED` (default `$MESH_RUN/feed/live-events.json`), plus `MESH_URL` and `INGEST_SECRET` in `$MESH_RUN/.push-env` (mode 0600).
+`LIVE_NODE_MAP` (service var) only adds logins: the committed `feed/fleet-nodes.json` (shipped to `collector/`) wins for every login it names, so a stale var (it mapped htafolla to "Blaze0x1") can't override it. The server sets the feed `title` from `site.json` (`title`), whatever the collector or box header says.
+
 Seat helpers and emitter: `LIVE_URL`, `LIVE_KEY`, `SEAT_KEYS_DIR`.
 Seat keys (`feed/seat_keys.sh`): `SEAT_KEYS_SEATS` or `SEATS_JSON` for the seat list, `LIVE_RAILWAY_SERVICE`, `MESH_APP_DEPLOY_DIR`, `SEAT_KEYS_DIR`. Unset seats keep the example list. New keys are `<seat>.key`. A legacy bare `builder-cloud` file is still read.
 

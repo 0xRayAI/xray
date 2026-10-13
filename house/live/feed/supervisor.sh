@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Example live-mesh watcher supervisor. Mints a READ-ONLY ops-app token, runs the feed
+# Live-mesh watcher supervisor. Mints a READ-ONLY ops-app token, runs the feed
 # (upstream fetch_feed.py --watch $LIVE_WATCH_S [45] via live_mesh.py) for 50 min, then re-mints before the 1 h expiry.
 # The private key stays in an unexported shell var and goes only to the mint child.
 # The feed process gets a scrubbed env with no gh config, no git creds and no other keys.

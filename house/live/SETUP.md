@@ -9,6 +9,10 @@
   Locally it keeps only a ring buffer (`$MESH_RUN/feed/inbox-spool/<seat>.jsonl`, 300 lines a seat)
   for when the server can't be reached.
 
+## Seat credit and avatars
+
+Logins map to seats in the committed `feed/fleet-nodes.json`, which beats the `LIVE_NODE_MAP` variable (the variable only adds logins). Full fallback order, the `Seat:` commit trailer and the Blaze node: [docs/board.md](docs/board.md#seat-credit). Avatars and how to add one: [docs/board.md](docs/board.md#avatars).
+
 ## Fleet seats and unmapped logins (server env)
 
 `LIVE_NODE_MAP` maps your fleet's GitHub logins to page seats (JSON object, or a path to a JSON file; non-string values are ignored). Logins not in the map are hidden by default everywhere: feed, board (including the inbox event cache), packets, upstream items. `LIVE_SHOW_UNMAPPED=1` shows them as `Others` instead, which publishes those logins and titles. The server passes both to the collector.
@@ -19,9 +23,9 @@
 | Seat | Credential |
 |---|---|
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
-| reviewer, tester, qa, coord, operator, growth, qa-one, qa-two, triager, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier | a per-seat key: `Authorization: Bearer <key>` |
+| forge, critic, mill, blinky, herald, nibbler, sound, magnet | a per-seat key: `Authorization: Bearer <key>`. Our 9 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
 
-Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `/srv/live/run/secrets/seat-keys`; dir 0700, files 0600). The
+Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `~/.burst/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
 Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed/seat_keys.sh publish` (sets
 `SEAT_KEYS` on Railway) and deploy with `app/deploy.sh`. Seat list: `SEAT_KEYS_SEATS` or `SEATS_JSON`. Service and deploy dir: `LIVE_RAILWAY_SERVICE`, `MESH_APP_DEPLOY_DIR`.
@@ -36,7 +40,7 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 | nibbler | a per-seat key (`seat-keys/nibbler.key`). `GET /inbox/nibbler` = asks to `@nibbler`; read with `tools/live-inbox nibbler`. Key delivered 1:1 by Blaze, never in room/repo |
 | sound | a per-seat key (`seat-keys/sound.key`). `GET /inbox/sound` = asks to `@sound`; read with `tools/live-inbox sound`. Key delivered 1:1 by Blaze, never in room/repo |
 | magnet | a per-seat key (`seat-keys/magnet.key`). `GET /inbox/magnet` = hangar / listing asks (`@magnet`); read with `tools/live-inbox magnet`. Key delivered 1:1 by Blaze, never in room/repo |
-| assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the Example MCP server (env `LIVE_KEY`) |
+| assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the sample MCP server (env `LIVE_KEY`) |
 
 Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox.md#seat-wake-urls-and-webhooks).
 
@@ -44,12 +48,12 @@ Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox
 
 - **Key:** `~/.burst/seat-keys/arch1.key` (dir 700, file 600). Blaze delivers it 1:1, never in a room or repo.
 - **Script:** `~/.burst/bin/live-inbox` (Python 3), fetched from raw `bifrost/main` `house/live/tools/live-inbox`.
-- **Env:** `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`. `LIVE_CURSORS` is required: the default (`/srv/live/run/fleet/cursors`) is not writable on the box or a Mac.
+- **Env:** none needed. Defaults are `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`; set them only to override.
 - **Commands:** `live-inbox arch1` reads and never acks (`--peek` is the same); `live-inbox arch1 --ack <id>`; `live-inbox arch1 --ack all`.
-- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback.
+- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. If `live-inbox arch1` prints lines, those lines are the current job: a non-empty read is the work. The 60-second watcher never acks and never starts the work; the Grok turn that sees the lines does. No webhook yet, so Arch1 polls; PR comments are the fallback. Full setup, polling timer, ack and round-trip test: [docs/inbox.md](docs/inbox.md#arch1--cli-seats-grok-cli). Watcher `bin/live-inbox-watch` + launchd template `bin/com.burst.live-inbox-watch.plist`; install steps: [Install on Blaze's Mac](docs/inbox.md#arch1--cli-seats-grok-cli).
 
 ## Assistant / emitter node
-The Example MCP server (example-org/mcp, env `LIVE_URL` + `LIVE_KEY`) posts one event per tool call and
+The sample MCP server (example-org/mcp, env `LIVE_URL` + `LIVE_KEY`) posts one event per tool call and
 per OAuth sign-in to `POST /emit`: `{kind: tool|oauth, tool, t, ok, client: assistant|other, latency_ms}`. Any other field
 is refused (422), so no customer data (addresses, content, emails, user ids) can land here. The `Assistant / emitter` node is
 **working** until `EMITTER_WORKING_S` (default 120 s) after the last event, active for the fleet window, then idle.
@@ -58,9 +62,9 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 | Method + path | Auth | Returns |
 |---|---|---|
 | `GET /inbox/<seat>?since=<id>` | that seat | `{seat, lines}` after `<id>` (all when omitted / unknown) |
-| `GET /cards?seat=<seat>` | that seat, or operator | cards the seat owns or is next owner on (coord / operator: all), with nudge beats |
-| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for reviewer a verdict at head); `?all=1` = history |
-| `GET /nudges?since=<id>` | operator | `{nudges}` in creation order |
+| `GET /cards?seat=<seat>` | that seat, or blinky / forge | cards the seat owns or is next owner on (`all`, blinky or forge: all), with nudge beats |
+| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for critic a verdict at head); `?all=1` = history |
+| `GET /nudges?since=<id>` | forge | `{nudges}` in creation order |
 | `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id). A batch that stores nothing is 400 with `rejected` refs. `replace: true` clears only after a line validates |
 | `POST /ingest/source` | `X-Live-Ingest` | normalized source events (`{source, events}`). Unknown fields are refused |
 | `GET/POST /inbox/builder` | as before | kept for Builder's existing reader |
@@ -77,12 +81,18 @@ pointing to the live board. Re-enable local writing only for debugging with `LIV
 
 ## Box helpers (any box bot)
 - `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines. A read never acks (`--peek` is the same as a plain read). `live-inbox <seat> --ack <id|all>` or `--pop <id|all>` is the receipt; the cursor still advances to the newest line seen. Cursor in
-  `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default, `/srv/live/run/fleet/cursors`, is not writable on the box or a Mac, so set `LIVE_CURSORS` to a writable folder (for example `~/.burst/cursors`) or every read fails.
+  `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default is `~/.burst/cursors` (override with `LIVE_CURSORS`).
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
+- **Folders on our box:** the defaults are `~/.burst/seat-keys` and `~/.burst/cursors`; our box seats set `SEAT_KEYS_DIR` and `LIVE_CURSORS` to folders under `/home/box/burst-run` in their wake routines (variable names only; key values never go in a routine). See [docs/inbox.md](docs/inbox.md#key-folder-on-our-box).
+- **Activity:** a wake that lands, a read and an ack each mark the seat active ([docs/board.md](docs/board.md#what-makes-a-seat-active)). Desktop-only work does not report yet (lap 3: heartbeat from `live-inbox`).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted
 in-process by the builder-app wrapper's `mint_token.token()`, never printed).
 
 ## Silent seats
 A bot seat with no activity / prompt / beat for > 2 h (`SILENT_S`, default 7200) while it owns live work (owner, next
-owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and Coord gets one
+owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and blinky (CoS) gets one
 nudge (`kind: silent`, `about: <seat>`) per quiet stretch. Humans (Lead) are never flagged.
+
+## Fleet setup
+
+Every file a new fleet edits to map its seats: [docs/fleet-setup.md](docs/fleet-setup.md).

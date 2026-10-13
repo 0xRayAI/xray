@@ -1,0 +1,42 @@
+"""bin/live-inbox-watch: bash syntax, plist parses, prints asks, 401 says 'key not registered', never acks or prints the key.
+Also: the /live-events.json methodology note carries no template brand."""
+import os, plistlib, subprocess, tempfile, unittest
+from pathlib import Path
+
+LIVE = Path(__file__).resolve().parent.parent
+W = LIVE / "bin" / "live-inbox-watch"
+
+
+class Watch(unittest.TestCase):
+    def run_with(self, body):
+        with tempfile.TemporaryDirectory() as d:
+            fake = Path(d) / "live-inbox"; log = Path(d) / "calls"
+            fake.write_text("#!/usr/bin/env bash\necho \"$@\" >> %s\n%s\n" % (log, body)); fake.chmod(0o755)
+            env = {"PATH": os.environ["PATH"], "HOME": d, "LIVE_INBOX": str(fake), "LIVE_WATCH_ONCE": "1"}
+            r = subprocess.run(["bash", str(W), "arch1", "60"], env=env, capture_output=True, text=True)
+            return r, log.read_text()
+
+    def test_syntax_exec_plist(self):
+        subprocess.run(["bash", "-n", str(W)], check=True)
+        self.assertTrue(os.access(W, os.X_OK))
+        pl = plistlib.loads((LIVE / "bin" / "com.burst.live-inbox-watch.plist").read_bytes())
+        self.assertEqual(pl["ProgramArguments"][1:], ["arch1", "60"])
+
+    def test_prints_asks_never_acks(self):
+        r, calls = self.run_with("echo '{\"id\":\"wake-test-1\"}'")
+        self.assertEqual(r.returncode, 0); self.assertIn("1 open ask", r.stdout); self.assertIn("wake-test-1", r.stdout)
+        self.assertEqual(calls.strip(), "arch1"); self.assertNotIn("--ack", calls)
+
+    def test_401_key_not_registered(self):
+        r, _ = self.run_with("echo 'live-inbox: HTTP 401 {\"error\":\"unauthorized\"}' >&2; exit 1")
+        self.assertNotEqual(r.returncode, 0); self.assertIn("key not registered", r.stderr)
+
+
+class MethodologyNote(unittest.TestCase):
+    def test_no_template_brand_in_notes(self):
+        src = (LIVE / "feed" / "live_mesh.py").read_text()
+        self.assertNotIn("Example branding", src); self.assertIn("relabeled for {live_site.SITE['name']}", src)
+
+
+if __name__ == "__main__":
+    unittest.main()
