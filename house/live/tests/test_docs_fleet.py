@@ -17,3 +17,8 @@ class FleetSetupDoc(unittest.TestCase):
         root = os.path.join(D, "..", "..", "..")
         self.assertTrue(os.path.isfile(os.path.join(root, "grok-bot/skills/draw-seat-emoji/SKILL.md")))
         for f in ("../SETUP.md", "inbox.md"): self.assertIn("fleet-setup.md", open(os.path.join(D, f)).read())
+class NonEmptyReadIsWork(unittest.TestCase):
+    def test_phrase(self):
+        root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        for f in ("house/live/docs/inbox.md", "house/live/SETUP.md", "grok-bot/OP-PROC.md", "house/OP-PROC.md"):
+            self.assertIn("a non-empty read is the work", open(os.path.join(root, f)).read().lower(), f)

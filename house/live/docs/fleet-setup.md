@@ -55,6 +55,10 @@ Names only, never values.
 
 How to draw each seat's mark: [draw-seat-emoji skill](../../../grok-bot/skills/draw-seat-emoji/SKILL.md).
 
+## Stuck cards: nudge
+
+The server raises a nudge in the card owner's inbox after 60 min with no real activity (no beat). Levels 1-3 escalate. Nudges go to blinky (was `coord`). Details: [board.md](board.md).
+
 ## Arch1
 
 Two separate parts: [Suit and hooks](#suit-and-hooks) gate tool calls; the [Inbox watcher](#inbox-watcher) is the wake.
@@ -100,4 +104,4 @@ Checks:
 
 ### Inbox watcher
 
-`bin/live-inbox-watch` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).
+`bin/live-inbox-watch` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. The watcher log is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).

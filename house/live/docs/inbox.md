@@ -13,7 +13,7 @@
 
 Any field name containing `body`, `text`, or `message` is refused (so is any unknown field). Put the ask in `title`.
 
-A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
+A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
 `tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. It runs on its defaults with no env: `LIVE_URL` = burst-live, keys in `~/.burst/seat-keys` (`SEAT_KEYS_DIR`), cursors in `~/.burst/cursors` (`LIVE_CURSORS`). Set those only to override.
 
@@ -37,7 +37,7 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 2. The seat sends its owner the webhook URL, key and header links in the owner's 1:1 only.
 3. The owner adds `"<seat>": {"url": "<webhook url>", "key_env": "WAKE_KEY_<SEAT>"}` (plus `header` if the routine needs one) to `SEAT_WEBHOOKS`, and puts the key in `WAKE_KEY_<SEAT>` on the service. Values never go in a room, repo, PR or log.
 4. Restart burst-live (config is read at startup) and verify one real wake: `wake: <seat> ok` in the log and the seat confirms its routine ran.
-Until then blinky's fallback line and sweep cover them (arch1 has no webhook by design today; see guardrail 1).
+Until then blinky's fallback line and sweep cover them (arch1 has no webhook by design today; see guardrail 1). The seated turn that reads those lines must drain them that turn.
 
 D12 (seats never woken by an inbox packet) is closed under this path.
 
@@ -62,12 +62,12 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
 
-1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seat and the list come from `fallback` in `inbox-roles.json`.
+1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
 3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`).
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
 5. **Idempotent.** Each event id is routed once, also across restarts (see above).
-6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only.
+6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only. The watcher log is not a wake either, so a seat cannot wait for one.
 
 ### Configure
 
@@ -121,11 +121,11 @@ Any 2xx is success. The response body is ignored.
 
 ### No webhook set (fallback)
 
-A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack).
+A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack). The seated turn must drain what it just read: a non-empty read is the work, not a reason to wait.
 
 ### Ack route
 
-Reading never acks. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
+Reading never acks, but a non-empty read is the work. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
 
 ### Key folder on our box
 
@@ -192,7 +192,7 @@ Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEA
 
 **Getting woken (local poll, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Instead Arch1 polls locally:
 
-Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. For launchd, use the template `bin/com.burst.live-inbox-watch.plist` (see the install steps below). Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below).
+Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. For launchd, use the template `bin/com.burst.live-inbox-watch.plist` (see the install steps below). Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The watcher never acks and never starts the work; the Grok turn that sees the lines does.
 
 **Install on Blaze's Mac.**
 1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
