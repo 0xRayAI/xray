@@ -1389,12 +1389,13 @@ async function handle(req, res) {
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
   }
-  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (Operator may read any seat); coord / operator see all
+  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (Operator may read any seat); coord / operator see all.
+    // Public mode: no key needed, any ?seat= (default coord = all cards); a key that is sent still limits to its own seat.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
-    if (!who) return json(req, res, 401, { error: 'unauthorized' });
-    const want = String(url.searchParams.get('seat') || who).toLowerCase();
-    if (want !== who && who !== 'operator') return json(req, res, 403, { error: 'not your seat' });
+    if (!who && !PUBLIC) return json(req, res, 401, { error: 'unauthorized' });   // public mode: cards are readable without a key
+    const want = String(url.searchParams.get('seat') || who || 'coord').toLowerCase();
+    if (who && want !== who && who !== 'operator') return json(req, res, 403, { error: 'not your seat' });
     const all = want === 'coord' || want === 'operator';
     const cs = CARD_SEAT[want] || want;
     return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });

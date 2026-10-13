@@ -48,6 +48,9 @@ test('public mode (LIVE_PUBLIC=1): no password needed, page + feed open, real re
   const e = f.j.events.find(x => x.id === 's1');
   assert.deepEqual([e.repo, e.title, e.url], ['acme/secret', 'Top plan', 'https://github.com/acme/secret/pull/7']);
   assert.equal((await (await fetch(s.base + '/healthz')).json()).mode, 'public');
+  const c = await fetch(s.base + '/cards'); assert.equal(c.status, 200);
+  assert.deepEqual([(await c.json()).seat], ['coord']);
+  const cm = await fetch(s.base + '/cards?seat=mill'); assert.equal(cm.status, 200); assert.equal((await cm.json()).seat, 'mill');
 });
 
 test('gated mode (default): missing MESH_PASSWORD refuses to start; with it, login page titled Bifrost and private repos masked', async () => {
@@ -64,6 +67,8 @@ test('gated mode (default): missing MESH_PASSWORD refuses to start; with it, log
   const f = await feedOf(s, { Cookie: String(lr.headers.get('set-cookie')).split(';')[0] });
   assert.ok(!/secret|Top plan/.test(JSON.stringify(f.j)));
   assert.equal((await (await fetch(s.base + '/healthz')).json()).mode, 'gated');
+  assert.equal((await fetch(s.base + '/cards')).status, 401);
+  assert.equal((await fetch(s.base + '/cards?seat=coord')).status, 401);
 });
 
 test('our deploy: committed feed/site.json is public + Bifrost, and deploy.sh ships it beside the collector', () => {
