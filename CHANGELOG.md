@@ -53,8 +53,6 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - OpenCode mill install copies the plugin and leaves leftover init.sh uncopied.
 - Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists. A local gate pass is not that proof.
 
-### 🔄 Changes
-
 ### 🐛 Bug Fixes
 - fix: stop the vendored complete-todo command from minting PASS (39c88c8fa)
 - fix: bind Confer receipts to a synthesis cycle (5134c5d05)
@@ -65,6 +63,8 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🧪 Tests
 - test: lock no-LLM confer votes out of a PASS merge (e30628fef)
+
+---
 
 ## [4.0.42] - 2026-10-09
 
