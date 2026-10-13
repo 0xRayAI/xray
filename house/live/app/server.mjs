@@ -177,7 +177,7 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // Seat auth: Builder = its builder-app installation token (ghVerify, unchanged); every other seat = its own key, checked
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
 const SEAT_IDS = ['builder', 'reviewer', 'tester', 'qa', 'coord', 'operator', 'growth', 'qa-one', 'qa-two', 'triager', 'seat-c',
-  'chatbot', 'seo-researcher', 'seo-writer', 'offsite-copier', 'builder-cloud'];
+  'chatbot', 'seo-researcher', 'seo-writer', 'offsite-copier', 'builder-cloud', 'arch1'];
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
