@@ -70,8 +70,8 @@ test('private repo: masked on the login-page feed (no name, no title), real for 
 test('private repo: header.fleet / header.board and seats active survive masking; masked events keep number and sha', async () => {
   const now = new Date().toISOString();
   const feed = { generated_at: now, events: [{ id: 's2', repo: 'acme/secret', number: 9, sha: 'abc1234', kind: 'pr_open', t_ct: now, title: 'Hidden', url: 'https://github.com/acme/secret/pull/9' }],
-    fleet: { window_min: 15, seats: { forge: { last_ct: now, via: 'github' } }, working: { forge: { via: 'github', repo: 'acme/secret', number: 9 } } },
-    board: { waves: [{ repo: 'acme/secret', number: 9, title: 'Wave' }] } };
+    fleet: { window_min: 15, seats: { forge: { last_ct: now, via: 'github' } }, working: { forge: { via: 'github', repo: 'acme/secret', number: 9, url: 'https://github.com/Acme/Secret/pull/9' } } },
+    board: { waves: [{ repo: 'acme/secret', number: 9, title: 'Wave', note: 'see acme/secret#9' }] } };
   fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
   const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
   const ck = String(lr.headers.get('set-cookie')).split(';')[0];
@@ -81,11 +81,13 @@ test('private repo: header.fleet / header.board and seats active survive masking
   assert.deepEqual([e.repo, e.number, e.sha, e.title, e.url], ['private repo', 9, 'abc1234', undefined, undefined]);
   assert.equal(f.fleet.seats.forge.active, true, JSON.stringify(f.fleet));
   // revert check: masking the header again turns these into 'private repo' and drops number / active
-  assert.equal(f.fleet.working.forge.repo, 'acme/secret');
-  assert.equal(f.fleet.working.forge.number, 9);
-  assert.ok(f.board, 'board dropped');
-  assert.ok(!JSON.stringify(f.board).includes('private repo'), JSON.stringify(f.board));
+  assert.deepEqual([f.fleet.working.forge.via, f.fleet.working.forge.number, f.fleet.working.forge.repo], ['github', 9, 'private repo']);
+  assert.equal(f.board?.waves?.[0]?.title, 'Wave', JSON.stringify(f.board));
+  assert.equal(f.board.waves[0].number, 9);
+  // a private repo's full name never appears anywhere in the signed-in JSON (repo fields, URLs, free text)
+  assert.ok(!/acme\/secret/i.test(JSON.stringify(f)), JSON.stringify(f));
   // delta keeps the header too
   const d = await (await fetch(BASE + '/live-events.json?since=' + encodeURIComponent(f.cursor.replace(/\d+$/, n => String(Math.max(0, n - 1)))), { headers: { Cookie: ck } })).json();
-  if (d.delta) assert.equal(d.fleet.working.forge.repo, 'acme/secret');
+  assert.ok(!/acme\/secret/i.test(JSON.stringify(d)), JSON.stringify(d));
+  if (d.delta) assert.equal(d.fleet.working.forge.via, 'github');
 });

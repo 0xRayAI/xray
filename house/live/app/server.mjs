@@ -615,7 +615,16 @@ function full() {   // built lazily: only the first full GET after a change pays
 // text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
 const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
 const HEADER_RAW = ['fleet', 'board'];
-function maskHeader(h) { const o = mask(h); for (const k of HEADER_RAW) if (h && k in h) o[k] = h[k]; return o; }
+// fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten
+const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function scrub(v) {
+  if (!privateRepos.size || v === null) return v;
+  if (typeof v === 'string') { let t = v; for (const r of privateRepos) t = t.replace(new RegExp(reEsc(r), 'gi'), 'private repo'); return t; }
+  if (Array.isArray(v)) return v.map(scrub);
+  if (typeof v !== 'object') return v;
+  const o = {}; for (const k of Object.keys(v)) o[k] = scrub(v[k]); return o;
+}
+function maskHeader(h) { const o = mask(h); for (const k of HEADER_RAW) if (h && k in h) o[k] = scrub(h[k]); return o; }
 function isPrivate(o) { return o && typeof o.repo === 'string' && privateRepos.has(o.repo.toLowerCase()); }
 function mask(v) {
   if (!privateRepos.size || v === null || typeof v !== 'object') return v;
