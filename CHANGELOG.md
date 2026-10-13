@@ -47,6 +47,7 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 ### 🔄 Changes
 
 - A Cursor pre-tool error denies the tool unless that error is EACCES. A cloud wrapper that cannot write dest still allows the tool.
+- Cursor gate events (preToolUse, beforeShellExecution, beforeReadFile) fail closed. A crashed gate, empty or malformed input, or a missing node or hook file denies the tool. The one exception is EACCES when a cloud wrapper cannot write dest, which still allows the tool. Wear and re-wear set failClosed on those events.
 - Hermes, OpenCode, OpenClaw, and Cursor run the lens and the repertoire route on the pre-tool allow path. The lens sees the tool path. A research call with no named plane stops. One named plane allows.
 - The shipped plant does not write the autonomous-reporting schedule or the post-tool light marker. Turn either switch on and the writer still runs. The inference cycle still starts from `inference:run`.
 - Consumer smoke inspects an empty machine home, so a Grok plugin on the real machine does not fail that seat.

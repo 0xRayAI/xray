@@ -4,10 +4,10 @@ Complete reference of capabilities through **0xRay 4.0**. 0xRay is a three-subsy
 
 ## 4.0.43 — real confer PASS, hooks fail closed
 
-Confer completes only on a real PASS. Hooks fail closed.
+Confer completes only on a real PASS. Cursor gate events fail closed.
 
 - **Confer.** It stays off unless it is explicitly enabled. Only a real approve completes it, ambiguous text counts as UNREVIEWED, and receipts are bound to one synthesis cycle. The vendored complete-todo command cannot mint a PASS.
-- **Hooks.** A Cursor pre-tool error denies the tool unless the error is EACCES, and gate events fail closed. Hermes, OpenCode, OpenClaw and Cursor run the lens and the repertoire route on the pre-tool allow path.
+- **Hooks.** Cursor gate events (preToolUse, beforeShellExecution, beforeReadFile) fail closed: a crashed gate, bad input, or a missing node or hook file denies the tool. The one exception is EACCES when a cloud wrapper cannot write dest, which still allows it. Hermes, OpenCode, OpenClaw and Cursor run the lens and the repertoire route on the pre-tool allow path.
 - **Release.** Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists.
 
 ## 4.0.42 — confer, the worn suit, Burst
