@@ -169,6 +169,48 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 - Pending wakes live in memory only; a restart drops them (the inbox lines persist).
 - Once the 3 attempts fail, the batch is not retried later. A newer line starts a fresh batch.
 
+## Arch1 / CLI seats (Grok CLI)
+
+Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`); actionable events owned only by arch1 also fall back to blinky (CoS), because nothing can push to it.
+
+**Getting woken (local poll, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Instead Arch1 polls locally:
+
+```bash
+# plain loop (in a terminal or the Grok CLI session)
+while true; do ~/.burst/bin/live-inbox arch1; sleep 60; done
+```
+
+or a launchd agent, `~/Library/LaunchAgents/com.bifrost.arch1-inbox.plist`:
+
+```xml
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.bifrost.arch1-inbox</string>
+  <key>ProgramArguments</key><array><string>/bin/sh</string><string>-c</string><string>$HOME/.burst/bin/live-inbox arch1 >> $HOME/.burst/arch1-inbox.log 2>&amp;1</string></array>
+  <key>StartInterval</key><integer>60</integer>
+</dict></plist>
+```
+
+Load it with `launchctl load ~/Library/LaunchAgents/com.bifrost.arch1-inbox.plist`. Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below).
+
+**Exception to the no-local-watchers rule.** This poll is the single documented exception, pending Blaze's yes. It covers only Arch1's inbox poll on Blaze's Mac; no other seat or machine runs a local watcher.
+
+**Variables (names only; the defaults already match, so set them only to override).**
+- `LIVE_URL=https://burst-live-production.up.railway.app`
+- `SEAT_KEYS_DIR=~/.burst/seat-keys`
+- `LIVE_CURSORS=~/.burst/cursors`
+
+The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delivers it only through his 1:1, never in a chat room, a repo or a routine. The server checks it against the `arch1` entry in the `SEAT_KEYS` Railway variable (sha256 of the key); if that entry is missing, every read returns 401 and the fix needs Blaze's GO for the variable change.
+
+**Acking.** After Arch1 posts its receipt on the PR (envs, exit codes, tarball sha), run `live-inbox arch1 --ack <id>` for that line, or `live-inbox arch1 --ack all`.
+
+**Round-trip test.**
+1. forge sends a test wake for `seat: arch1` with `POST /inbox` (see [Sending a test wake](#sending-a-test-wake)); expect 200 with `added: 1`.
+2. Arch1 runs `live-inbox arch1` and sees the test line.
+3. Arch1 runs `live-inbox arch1 --ack <id>`.
+4. The board shows arch1's inbox read and ack (and arch1 goes active for 15 minutes). A 401 at step 2 means the key isn't registered in `SEAT_KEYS`.
+
+**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The lap 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
+
 ## Presence
 
 `SEAT_PRESENCE` maps a seat whose activity also counts as another seat. A value is a seat name or an array of seat names. A top-level array of pairs is accepted. The default is `{"builder-cloud":"builder"}`. Blank JSON maps nothing. Invalid JSON keeps the default.

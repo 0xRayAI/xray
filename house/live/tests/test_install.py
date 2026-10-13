@@ -135,7 +135,7 @@ class DeployLayoutLoadsOurConfig(unittest.TestCase):
                 code = ("import json, live_collect as c, live_site as s; print(json.dumps([c.credit('htafolla'), c.credit('Blaze0x1'), "
                         "c.credit('minime0x[bot]'), c.credit('forge0x1[bot]'), s.SITE['title'], c.BRAND]))")
                 out = json.loads(subprocess.run([sys.executable, "-B", "-c", code], cwd=col, env=penv, capture_output=True, text=True, check=True).stdout)
-                self.assertEqual(out, ["Blaze", "Blaze", "arch1", "forge", "Bifrost live fleet", "Bifrost"])
+                self.assertEqual(out, ["Blaze", "Blaze", "github", "forge", "Bifrost live fleet", "Bifrost"])
         finally:
             if created:
                 lock.unlink(missing_ok=True)

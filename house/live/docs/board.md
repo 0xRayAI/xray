@@ -74,7 +74,7 @@ Our pictures live in `house/live/site/public/avatars/` (copied over the kit page
 | Node | File | Source |
 |---|---|---|
 | blinky, critic, forge, herald | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
-| arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (arch1's bot is minime0x) |
+| arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (image reused; the `minime0x[bot]` login runs workflows and credits `github`, not arch1) |
 | Blaze | `blaze.png` | his X profile picture (@Blaze0x1) |
 
 Every other seat (mill, magnet, nibbler, sound) shows the drawn letter badge; there is no 404. To add one: commit a square PNG as `site/public/avatars/<seat>.png`, add `<seat>: '<seat>'` to `L.setAvatars` in `site/public/site-config.js`, and deploy. The kit maps no avatars.
