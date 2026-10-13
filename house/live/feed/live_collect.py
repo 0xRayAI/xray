@@ -1,4 +1,4 @@
-"""Example full-history GitHub collector (read-only token; metadata only, never bodies).
+"""Bifrost full-history GitHub collector (read-only token; metadata only, never bodies).
 
 Backfill once (GraphQL for PR commits/reviews/CI and develop/main history+CI; paged REST for lists),
 then poll incrementally (REST page 1 with ETag; a 304 does not count against the rate limit).
@@ -15,7 +15,15 @@ API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
 GQL_FLOOR = int(os.environ.get("LIVE_GQL_FLOOR", "1000"))
 BACKFILL_SECONDS = float(os.environ.get("LIVE_BACKFILL_SECONDS", "150"))   # per pass
-BRAND = os.environ.get("LIVE_BRAND", "Example")   # display name the product names below are relabelled to
+def _site_name() -> str:   # feed/site.json (shipped beside the collector by deploy.sh) names the site; no file = "Example"
+    try:
+        n = json.loads((Path(__file__).resolve().parent / "site.json").read_text()).get("name")
+        return n if isinstance(n, str) and n.strip() else "Example"
+    except (OSError, ValueError, AttributeError):
+        return "Example"
+
+
+BRAND = os.environ.get("LIVE_BRAND") or _site_name()   # display name the product names below are relabelled to
 BRAND_RE = re.compile(os.environ.get("LIVE_BRAND_RE", r"(?i)(?:acmeco|acme)(?![-/])"))   # repo names stay as identifiers
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")   # never ship addresses
 CRITIC = "reviewer-app[bot]"

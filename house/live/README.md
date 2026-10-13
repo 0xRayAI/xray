@@ -102,7 +102,7 @@ Box: `GITHUB_APP_PRIVATE_KEY` (mint only), `GITHUB_APP_ID`, `GITHUB_APP_INSTALLA
 - The private key stays in an unexported variable in the supervisor and goes only to the mint child; the feed
   runs with a scrubbed env (empty `HOME`/`GH_CONFIG_DIR`, no git credentials).
 - No bodies of any kind (comments, reviews, issues, PRs, `/health`) are stored; `/health` keeps the status code and time.
-- Titles and messages can be relabeled to one display name (`LIVE_BRAND`, `LIVE_BRAND_RE`).
+- Titles and messages can be relabeled to one display name (`LIVE_BRAND`, `LIVE_BRAND_RE`). `LIVE_BRAND` defaults to the `name` in `feed/site.json` (ours: Bifrost), or `Example` when there is no site.json.
 - Secrets (`.push-env`, `.railway-secrets`, keys, tokens) and all feed data, state, logs and archives stay out of the
   repo (`.gitignore`). The pusher passes the ingest secret to curl on stdin, never argv or logs.
 - `/ingest` requires `Authorization: Bearer $INGEST_SECRET`; the page and feed are behind the `MESH_PASSWORD` login (gated mode, the default).
