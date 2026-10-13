@@ -11,14 +11,15 @@ const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d)
 await new Promise(r => sink.listen(0, '127.0.0.1', r));
 const W = `http://127.0.0.1:${sink.address().port}`;
 const hooks = Object.fromEntries(['forge', 'critic', 'mill', 'blinky'].map(s => [s, { url: `${W}/${s}`, key_env: `K_${s.toUpperCase()}` }]));
-let srv = null, logs = '';
+delete hooks.mill.key_env;   // #275: mill uses the per-seat WAKE_KEY_MILL
+let srv = null, logs = '', srvPort = 0;
 function start() {
-  const PORT = 24000 + Math.floor(Math.random() * 1000);
+  const PORT = 24000 + Math.floor(Math.random() * 1000); srvPort = PORT;
   logs = '';
   srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH,
     MESH_PASSWORD: 'x' + crypto.randomBytes(4).toString('hex'), SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA, SEAT_WEBHOOKS: JSON.stringify(hooks),
-    K_FORGE: 'kf', K_CRITIC: 'kc', K_MILL: 'km', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
+    K_FORGE: 'kf', WAKE_KEY_MILL: 'km', WAKE_KEY_FORGE: 'ignored', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
   srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 }
 async function stop() { if (!srv) return; const p = new Promise(r => srv.once('exit', r)); srv.kill(); await p; srv = null; }
@@ -63,6 +64,18 @@ test('new events route by inbox-roles.json rules and wake the seat', async () =>
   assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
 });
 
+test('#275: WAKE_KEY_<SEAT> works without key_env (key_env still wins); /healthz has wakes + liveness ages, no url or key', async () => {
+  assert.equal(wakes.find(w => w.path === '/mill').auth, 'Bearer km');
+  assert.equal(wakes.find(w => w.path === '/forge').auth, 'Bearer kf');
+  const h = await (await fetch(`http://127.0.0.1:${srvPort}/healthz`)).json();
+  assert.deepEqual(h.wakes, { forge: 'ok', critic: 'no_key', mill: 'ok', blinky: 'ok' });
+  for (const k of ['box_age', 'collector_age', 'card_age']) assert.ok(k in h, k);
+  assert.equal(h.box_age, null);   // no box push in this test
+  assert.ok(Number.isInteger(h.collector_age) && h.collector_age >= 0);
+  const raw = JSON.stringify(h);
+  for (const bad of [W, 'kf', 'km', 'kb', 'K_FORGE', 'WAKE_KEY']) assert.ok(!raw.includes(bad), bad);
+});
+
 test('same events again, and after a restart: nothing routed twice, no second wake', async () => {
   const before = wakes.length, n = ['forge', 'mill', 'blinky'].map(s => inbox(s).length);
   writeFeed([...old, ...fresh]);
@@ -90,3 +103,4 @@ test('a stored-but-unmarked line (crash between store and sent) is not stored or
   assert.deepEqual(['forge', 'mill', 'blinky'].map(x => inbox(x).length), n);
   assert.equal(wakes.length, before);
 });
+

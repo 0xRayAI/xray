@@ -121,3 +121,45 @@ class FleetRoster(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Guardrails275(unittest.TestCase):
+    """#275: pulses never route; unowned / arch1-only actionable events reach blinky; no self or double wakes."""
+    def ev(self, kind, label="x", **kw):
+        return {"kind": kind, "label": label, "repo": "example-org/x", "number": 275, "t_ct": "2026-10-13T09:00:00-05:00",
+                "id": f"{kind}:{label}", **kw}
+
+    def routed(self, e):
+        return sorted({l["seat"] for l in inbox._direct(e, ROLES) if l})
+
+    def test_pulses_never_route(self):
+        for k in ("prompt_message", "prompt", "turn", "subagent", "watcher", "cloud_agent", "cloud_launch"):
+            self.assertEqual(self.routed(self.ev(k, "@forge @blinky merge ask", **{"from": "Lead", "to": "forge"})), [], k)
+
+    def test_unowned_review_goes_to_coordinator(self):
+        self.assertEqual(self.routed(self.ev("review", "looks fine")), ["blinky"])
+
+    def test_push_and_ci_unowned_stay_quiet(self):
+        self.assertEqual(self.routed(self.ev("ci_pass", "green")), [])
+
+    def test_arch1_only_also_reaches_coordinator(self):
+        roles = {k: v for k, v in ROLES.items() if k != "comment_watch"}   # so blinky can only come from the fallback
+        lines = inbox._direct(self.ev("issue_comment", "@arch1 deep-review"), roles)
+        self.assertEqual(sorted(l["seat"] for l in lines), ["arch1", "blinky"])
+        self.assertEqual([l["reason"] for l in lines if l["seat"] == "blinky"], ["no owner seat with a wake"])
+
+    def test_no_self_wake_by_bot_login(self):
+        self.assertNotIn("forge", self.routed(self.ev("pr_comment", "@forge merge ask", actor="forge0x1[bot]")))
+        os.environ["SEAT_BOTS"] = json.dumps({"mill": ["mill-bot"]})
+        try:
+            self.assertNotIn("mill", self.routed(self.ev("pr_comment", "@mill rebase ask", actor="mill-bot")))
+        finally:
+            del os.environ["SEAT_BOTS"]
+
+    def test_no_double_wake_when_seat_watches(self):
+        os.environ["SEAT_WATCHERS"] = json.dumps({"critic": {"repos": ["example-org/x"], "kinds": ["pr_comment"]}})
+        try:
+            self.assertNotIn("critic", self.routed(self.ev("pr_comment", "@critic re-Light")))
+            self.assertIn("critic", self.routed(self.ev("issue_comment", "@critic re-Light")))
+        finally:
+            del os.environ["SEAT_WATCHERS"]

@@ -184,7 +184,8 @@ const SEAT_IDS = ['builder', 'reviewer', 'tester', 'qa', 'coord', 'operator', 'g
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
 const CARD_SEAT = { 'builder-cloud': 'builder' };
 const SEAT_KEY_HASH = (() => { try { const o = JSON.parse(process.env.SEAT_KEYS || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } })();
-// Inbox wake. SEAT_WEBHOOKS is JSON {seat: {url, key_env, header?}}. The key is process.env[key_env], sent as
+// Inbox wake. SEAT_WEBHOOKS is JSON {seat: {url, key_env?, header?}}. The key is process.env[key_env], else
+// process.env.WAKE_KEY_<SEAT> (seat upper-cased, '-' -> '_'; key_env may be omitted), sent as
 // Authorization: Bearer <key> unless header names a different header (then the raw key). A quiet seat sends after
 // WAKE_COALESCE_MS (default 50) so a short burst is one POST. Further lines within WAKE_DEBOUNCE_S (default 60)
 // wait and share the next POST's ids. Three attempts with backoff. The inbox write never waits on this.
@@ -202,11 +203,12 @@ function loadSeatWebhooks() {
   for (const [seat, cfg] of Object.entries(parsed)) {
     const id = String(seat || '').toLowerCase();
     if (!SEAT_IDS.includes(id) || !cfg || typeof cfg !== 'object' || Array.isArray(cfg)) continue;
-    const url = typeof cfg.url === 'string' ? cfg.url : '', keyEnv = typeof cfg.key_env === 'string' ? cfg.key_env : '';
+    const seatKeyEnv = 'WAKE_KEY_' + id.toUpperCase().replace(/-/g, '_');
+    const url = typeof cfg.url === 'string' ? cfg.url : '', keyEnv = typeof cfg.key_env === 'string' ? cfg.key_env : seatKeyEnv;
     const header = typeof cfg.header === 'string' && cfg.header.trim() ? cfg.header.trim() : 'Authorization';
     let okUrl = false; try { const u = new URL(url); okUrl = u.protocol === 'http:' || u.protocol === 'https:'; } catch { okUrl = false; }
     if (!okUrl || !/^[A-Za-z_][A-Za-z0-9_]{0,80}$/.test(keyEnv) || !/^[A-Za-z0-9-]{1,64}$/.test(header)) { console.log('wake: skip bad config for ' + id); continue; }
-    out[id] = { url, keyEnv, header, bearer: header.toLowerCase() === 'authorization' };
+    out[id] = { url, keyEnv, seatKeyEnv, header, bearer: header.toLowerCase() === 'authorization' };
   }
   return out;
 }
@@ -241,7 +243,7 @@ function wakeErr(e) {
   return typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,40}$/.test(code) ? code : 'network';
 }
 async function deliverWake(cfg, body) {
-  const key = process.env[cfg.keyEnv];
+  const key = process.env[cfg.keyEnv] || process.env[cfg.seatKeyEnv];
   if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key' };
   const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bifrost-live' };
   if (cfg.bearer) headers.Authorization = 'Bearer ' + key; else headers[cfg.header] = key;
@@ -422,12 +424,13 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
+let cardsAt = 0;
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const sig = JSON.stringify(merged);
   if (sig === boardSig) return;
   boardSig = sig;
-  bfCards = merged;
+  bfCards = merged; cardsAt = Date.now();
   bfWrite('cards.json', JSON.stringify({ updated_ct: updatedCt || new Date().toISOString(), cards: bfCards }));
 }
 function setCards(wb) {
@@ -825,10 +828,20 @@ function repoTimes(f) {
     repoSeen.set(full, { last_collected: at, newest_event: t });
   }
 }
-function healthBody() {   // public: a count and two times, no repo names
+const ageS = t => (t > 0 ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
+function wakeHealth() {   // seat -> ok | fail | no_key | idle (configured, nothing sent yet); never a url or key
+  const out = {};
+  for (const [seat, cfg] of Object.entries(SEAT_WEBHOOKS)) {
+    const st = wakeQ.get(seat)?.status;
+    out[seat] = st ? (st.ok ? 'ok' : st.error === 'no_key' ? 'no_key' : 'fail') : (process.env[cfg.keyEnv] || process.env[cfg.seatKeyEnv] ? 'idle' : 'no_key');
+  }
+  return out;
+}
+function healthBody() {   // public: counts, times, ages (s) and wake states; no repo names, urls or keys
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
   return JSON.stringify({ ok: true, collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
-    oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null });
+    oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
+    box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: ageS(cardsAt), wakes: wakeHealth() });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
@@ -859,6 +872,7 @@ function routePy(script, args) {
     TZ: process.env.TZ || 'America/Chicago', MESH_RUN: ROUTE_DIR, FEED: GH_FEED, LIVE_INBOX: path.join(ROUTE_DIR, 'spool'),
     INBOX_STATE: path.join(ROUTE_DIR, 'inbox-state.json'), INBOX_CACHE: path.join(ROUTE_DIR, 'inbox-events.json'),
     LIVE_ACTIVITY: path.join(ROUTE_DIR, 'activity.jsonl'), LIVE_BOARD: 'off', PYTHONDONTWRITEBYTECODE: '1' };
+  for (const k of ['SEAT_BOTS', 'SEAT_WATCHERS']) if (process.env[k]) env[k] = process.env[k];   // routing config only, no secrets
   return new Promise(resolve => {
     let out = '', err = '';
     const c = spawn('python3', ['-B', script, ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });

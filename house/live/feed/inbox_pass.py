@@ -86,12 +86,48 @@ def adapt(events):
 
 
 _direct_core = inbox._direct
+NODES = HERE / "fleet-nodes.json"
+# #275 guardrails. Pulses (owner / seat-to-seat messages, turns, tasks, cloud agents) show on the board only: never
+# an inbox line, never a wake. Actionable kinds with no owner seat, or owned only by a seat with no webhook
+# (roles.fallback.from, e.g. arch1), also go to the coordinator (roles.fallback.seat).
+PULSE_KINDS = ("prompt", "turn", "subagent", "watcher", "cloud_agent", "cloud_", "board_", "lab_")
+ACTIONABLE = ("pr_open", "review", "pr_comment", "review_comment", "issue_comment", "comment", "issue_open",
+              "review_requested", "nudge", "packet")
+
+
+def _env_json(name):
+    try:
+        v = json.loads(os.environ.get(name) or "{}")
+        return v if isinstance(v, dict) else {}
+    except ValueError:
+        return {}
+
+
+def bot_logins():
+    """login -> seat: fleet-nodes.json (seat logins) plus SEAT_BOTS {seat: login | [logins]}."""
+    m = {k.removesuffix("[bot]").casefold(): v for k, v in _load(NODES, {}).items() if isinstance(v, str)}
+    for seat, v in _env_json("SEAT_BOTS").items():
+        for login in [v] if isinstance(v, str) else v if isinstance(v, list) else []:
+            if isinstance(login, str) and login:
+                m[login.removesuffix("[bot]").casefold()] = str(seat).lower()
+    return m
+
+
+def watched_by_seat(seat, event):
+    """SEAT_WATCHERS {seat: {repos: [...], kinds: [...]}}: the seat runs its own watcher there, so the server skips it."""
+    w = _env_json("SEAT_WATCHERS").get(seat)
+    if not isinstance(w, dict):
+        return False
+    repos, kinds = w.get("repos") or ["*"], w.get("kinds") or ["*"]
+    return ("*" in repos or str(event.get("repo") or "") in repos) and ("*" in kinds or inbox._kind(event) in kinds)
 
 
 def _direct_all(event, roles):
     """PR #5 routes plus the extra Chat Bot seats (roles.extra_seats: kinds / merge_bases / needles)."""
-    out = _direct_core(event, roles)
     kind = inbox._kind(event)
+    if kind.startswith(PULSE_KINDS) or str(event.get("from") or "") == "Lead" and kind.startswith("prompt"):
+        return []   # a pulse is never a packet or a wake
+    out = _direct_core(event, roles)
     hay = str(event.get("label") or "")
     tagged = [m for m in event.get("mentions") or [] if isinstance(m, str)]
     if tagged:   # @handles the collector read from the body (handles only, the body is never carried)
@@ -127,6 +163,11 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, reason + merged)
             if line:
                 out.append(line)
+    fb = roles.get("fallback") or {}
+    if fb.get("seat") and kind in ACTIONABLE and all(l.get("seat") in (fb.get("from") or []) for l in out):
+        line = inbox._line(event, fb["seat"], "no owner seat with a wake" if out else "unowned: coordinator routes")
+        if line:
+            out.append(line)
     me = actor_seat(event, roles)
     seen, uniq = set(), []
     for l in out:   # one line per seat per event
@@ -134,7 +175,7 @@ def _direct_all(event, roles):
         if k not in seen:
             seen.add(k); uniq.append(l)
     out = uniq
-    return [l for l in out if not me or l.get("seat") != me]   # a seat's own action never lands in its own inbox
+    return [l for l in out if (not me or l.get("seat") != me) and not watched_by_seat(l.get("seat"), event)]   # no self-wakes, no double wakes
 
 
 def alias_seat(name, roles):
@@ -154,7 +195,7 @@ def actor_seat(event, roles):
         for name in (v, v.removesuffix("[bot]")):
             if name in aliases:
                 return aliases[name]
-    return None
+    return bot_logins().get(str(event.get("actor") or event.get("author") or "").removesuffix("[bot]").casefold())
 
 
 inbox._direct = _direct_all

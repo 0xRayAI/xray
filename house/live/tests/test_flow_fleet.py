@@ -276,7 +276,9 @@ class WorkingSpinnerTest(unittest.TestCase):
             # Operator answered Lead's prompt (sent + cloud by): no longer 'prompt'; it SENT a pulse 30 s ago, so the
             # fail-safe rule keeps it working (via pulse) for 10 min after that, then it stops
             self.assertEqual(fs["seats"]["Operator"]["working_via"], "pulse")
-            self.assertFalse(f.fleet_state([], now + 11 * 60)["seats"]["Operator"]["working"])
+            # #275: then its own open cloud agent (bc-spin0001) keeps it working until the 60 min cloud window ends
+            self.assertEqual(f.fleet_state([], now + 11 * 60)["seats"]["Operator"]["working_via"], "cloud")
+            self.assertFalse(f.fleet_state([], now + 61 * 60)["seats"]["Operator"]["working"])
             self.assertTrue(fs["cloud"]["working"] and fs["working"]["CloudAgents"]["via"] == "cloud")
             self.assertEqual(fs["active"], sum(1 for v in fs["seats"].values() if v["active"]))  # working not counted
             self.assertNotIn(SECRET[3], json.dumps(fs) + (root / "feed/fleet-state.json").read_text())
@@ -284,6 +286,27 @@ class WorkingSpinnerTest(unittest.TestCase):
             gh = [{"src_file": "github-api", "from": "Builder", "t_ct": iso(now - 5)}]
             self.assertFalse(f.fleet_state(gh, now)["seats"]["Builder"]["working"])
 
+
+    def test_cloud_agent_keeps_its_seat_working(self):
+        """#275: a seat counts as working while one of its cloud agents runs; finished clears it."""
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "fleet").mkdir(); (root / "feed").mkdir()
+            iso = lambda t: datetime.fromtimestamp(t, CT).replace(microsecond=0).isoformat()
+            now = time.time()
+            log = root / "fleet" / "cloud-agents.jsonl"
+            log.write_text(json.dumps({"t_ct": iso(now - 120), "by": "Tester", "action": "launch", "agent": "bc-seat0001"}) + "\n")
+            live_fleet.WS, live_fleet.OP_REPO = root, root / "none"
+            live_fleet.HOUSE, live_fleet.LABTEST, live_fleet.LABQA = root / "h", root / "l", root / "q"
+            f = live_fleet.Fleet(root / "feed" / "fleet-state.json", CT)
+            list(f.scan())
+            fs = f.fleet_state([], now)
+            self.assertEqual(fs["working"]["Tester"]["via"], "cloud")
+            with log.open("a") as fh:
+                fh.write(json.dumps({"t_ct": iso(now - 10), "by": "Tester", "action": "finished", "agent": "bc-seat0001"}) + "\n")
+            list(f.scan())
+            self.assertNotIn("Tester", f.fleet_state([], now)["working"])
+            self.assertEqual(live_fleet.seat_of("tester"), "Tester")   # lower-case fleet names map to the seat
 
     def test_pr_check_spinner(self):
         """Open PR with failing/queued check in the last 30 min spins the author; merge clears it."""
@@ -460,7 +483,9 @@ class RemoteActivityTest(unittest.TestCase):
             self.assertEqual([(e["from"], e["to"]) for e in ev], [("Builder", "Reviewer")])
             self.assertEqual(f.fleet_state([], now)["working"]["Builder"]["via"], "subagent")
             # stale open items stop spinning after 30 min
-            self.assertFalse(f.fleet_state([], now + 31 * 60)["seats"]["Builder"]["working"])
+            # #275: Builder's own open cloud agent keeps it working after the activity window, until the cloud window ends
+            self.assertEqual(f.fleet_state([], now + 31 * 60)["seats"]["Builder"]["working_via"], "cloud")
+            self.assertFalse(f.fleet_state([], now + 61 * 60)["seats"]["Builder"]["working"])
 
 
 class LabWorkTest(unittest.TestCase):
