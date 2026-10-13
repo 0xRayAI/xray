@@ -31,4 +31,4 @@ Run it in the tool you already open. Same suit. No new app.
 
 These six already run.
 
-stamped · 0xray 4.0.42
+stamped · 0xray 4.0.43
