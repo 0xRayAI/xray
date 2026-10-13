@@ -73,7 +73,7 @@ Railway service (`server.mjs`):
 | `GITHUB_HOLD_LABEL` | optional | label that holds a card; default `on-hold` |
 | `NO_NUDGE_REPOS` | optional | comma list of `owner/name` or `owner/*`; unset means every repo can be nudged |
 | `SEAT_PRESENCE` | optional | JSON `{source seat: dest seat or [dest, ...]}`; default `{"builder-cloud":"builder"}` |
-| `SEAT_WEBHOOKS` | optional | JSON `{seat: {url, key_env, header?}}`; the key is `process.env[key_env]`, never this JSON |
+| `SEAT_WEBHOOKS` | set for Grok Bot seats | JSON `{seat: {url, key_env, header?}}` pointing at each seat's inbox wake routine; the key is `process.env[key_env]`, never this JSON. The owner pastes URL, key and header from the seat's 1:1 links. See [inbox.md](../live/docs/inbox.md#grok-bot-seats-use-webhooks) |
 | `WAKE_DEBOUNCE_S`, `WAKE_COALESCE_MS`, `WAKE_RETRY_MS` | optional | 60, 50, 400 |
 | `JIRA_SITE`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECTS` | optional | all four turn the Jira pull child on; the token stays in that child |
 | `JIRA_HOLD_STATUS`, `JIRA_EXCLUDE`, `JIRA_SOURCE`, `SOURCE_ALLOWLIST` | optional | hold status default `On Hold`; `off` disables the pull; allowlist for other sources |

@@ -19,7 +19,20 @@ A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST 
 
 ## Seat wake URLs and webhooks
 
-**Protocol rule.** A handoff is two things: a packet on the seat's inbox (the record) plus a wake through the fleet's own messaging. The webhook below is the wake only for seats that have no messaging of their own. It never replaces the inbox line; the line is the record, the wake only says "look now".
+**Protocol rule.** A handoff is two things: a packet on the seat's inbox (the record) plus a wake. Every handoff is `POST /inbox` plus a one-line `SendToAgent` to that seat that points at the packet. Never one without the other. The webhook never replaces the inbox line; the line is the record, the wake only says "look now".
+
+### Grok Bot seats use webhooks
+
+Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (leave `SEAT_WEBHOOKS` empty), which left packets unread until someone opened the inbox.
+
+- Each seat creates a webhook-triggered inbox wake routine. The routine reads the seat's inbox, handles open lines, and acks them (see [Ack route](#ack-route)).
+- burst-live's `SEAT_WEBHOOKS` points at those routines, one entry per seat, and each key lives in its own `key_env` variable.
+- When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
+- Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.
+
+D12 (seats never woken by an inbox packet) is closed under this path.
+
+**Known gap.** The server collector gathers GitHub events but does not route them into seat inboxes yet. Only the box pusher does that today, and it is paused. Until server-side routing lands (the next PR), collector events wake no one; packets posted with `POST /inbox` do.
 
 ### Configure
 
@@ -66,7 +79,11 @@ Any 2xx is success. The response body is ignored.
 
 ### No webhook set (fallback)
 
-A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work by polling its inbox or by the fleet's own messaging.
+A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line `SendToAgent`, from blinky's sweep, or by reading its inbox (`GET /inbox/<seat>`, then ack).
+
+### Ack route
+
+Reading never acks. Read with `GET /inbox/<seat>`, handle each line, then ack with `POST /inbox/<seat>/ack` and one of `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
 
 ### Reading the inbox after a wake
 

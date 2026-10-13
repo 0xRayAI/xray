@@ -237,17 +237,11 @@ Details of the laptop seat are also in [GITHUB-APP.md](GITHUB-APP.md) and in [PL
 
 Install these on the builder laptop. They are local. They are not the host collector.
 
-### Repo watcher
+### Local watchers and the server collector
 
-Every 30 seconds, poll the seat's repos and write a heartbeat (a timestamp). The loop records ids and times. It does not record command lines, environment, file names, or file contents. That file is a local heartbeat. It is not an activity line, and it does not light working.
+The burst-live server collector (`COLLECTOR_ORG`) is the only GitHub watcher. A local watcher never polls GitHub. It sends only connector data the server can't see (for example X mentions) to seat inboxes through `/ingest`, each watcher with its own inbox-only key, never the shared ingest secret. Its events pass the same field allowlist and private-repo masking as server events. Until per-watcher keys are live, every local watcher stays paused. See OP-PROC (#270).
 
-```bash
-while true; do
-  gh api /installation/repositories --jq '.repositories | length' >/dev/null
-  date +%s > "$BURST_STATE/heartbeat"
-  sleep 30
-done
-```
+Seat wakes (webhooks, `SendToAgent`, the ack route) are in [inbox.md](../live/docs/inbox.md#seat-wake-urls-and-webhooks).
 
 ### Watchers: log only real work
 
