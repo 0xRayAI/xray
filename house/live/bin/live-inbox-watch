@@ -3,7 +3,7 @@
 # Runs `live-inbox <seat>` every interval (default arch1, 60s) and prints any open asks. Never acks: ack with
 # `live-inbox <seat> --ack <id|all>` after the PR receipt. Env (defaults): LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys,
 # LIVE_CURSORS=~/.burst/cursors, LIVE_INBOX=live-inbox beside this script. The key is never read or printed here.
-# The single documented exception to the no-local-watchers rule (Arch1's inbox poll only; pending Blaze's yes).
+# The single documented exception to the no-local-watchers rule (Arch1's inbox poll only; approved by Blaze 2026-10-13).
 set -u
 SEAT="${1:-arch1}"
 INTERVAL="${2:-60}"

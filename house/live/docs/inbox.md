@@ -186,7 +186,7 @@ Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1
 6. Run it once by hand: `LIVE_WATCH_ONCE=1 ~/.burst/bin/live-inbox-watch arch1`. No output means an empty inbox; "key not registered" means the server's `SEAT_KEYS` has no arch1 entry yet.
 7. Copy `house/live/bin/com.burst.live-inbox-watch.plist` to `~/Library/LaunchAgents/`, replace `USERNAME`, then `launchctl load ~/Library/LaunchAgents/com.burst.live-inbox-watch.plist`. The log goes to `~/.burst/live-inbox-watch.log`.
 
-**Exception to the no-local-watchers rule.** This poll is the single documented exception, pending Blaze's yes. It covers only Arch1's inbox poll on Blaze's Mac; no other seat or machine runs a local watcher.
+**Exception to the no-local-watchers rule.** This poll is the single documented exception, approved by Blaze on 2026-10-13 at 11:52 CT. It covers only Arch1's inbox poll on Blaze's Mac; no other seat or machine runs a local watcher.
 
 **Variables (names only; the defaults already match, so set them only to override).**
 - `LIVE_URL=https://burst-live-production.up.railway.app`
