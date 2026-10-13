@@ -59,6 +59,7 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
+| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |
 | **4.0.40** | Live mesh runs the full loop: feed watch, render, direction, deploy, health, and the ledger both ways. |
