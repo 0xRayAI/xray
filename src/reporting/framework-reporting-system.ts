@@ -1,7 +1,6 @@
 import { frameworkLogger } from "../core/framework-logger.js";
 import * as fs from "fs";
 import * as path from "path";
-import { fileURLToPath } from "node:url";
 import {
   type ReportConfig,
   type ReportData,
@@ -13,6 +12,7 @@ import {
   getComprehensiveLogs,
   filterLogsByConfig,
   frameworkLogToParsedEntry,
+  activityLogPath,
 } from "./log-parser.js";
 import {
   calculateTimeRange,
@@ -159,9 +159,7 @@ const report = await reportingSystem.generateCustomReport('${template.name}');
 
   // Same activity.log path readCurrentLogFile rebuilds from size and mtime.
   private activityLogFile(): string {
-    const currentFilePath = fileURLToPath(import.meta.url);
-    const projectRoot = path.resolve(path.dirname(currentFilePath), "../../");
-    return path.join(projectRoot, "logs", "framework", "activity.log");
+    return activityLogPath();
   }
 
   private currentLogStamp(): { size: number; mtimeMs: number } {

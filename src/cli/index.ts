@@ -136,6 +136,18 @@ program
   });
 
 program
+  .command("confer")
+  .argument("<state>", "on or off")
+  .description("Turn confer on or off in .xray/features.json. A missing key stays off until this runs.")
+  .action((state: string) => {
+    try {
+      runNodeScript("confer-switch.cjs", [state]);
+    } catch {
+      process.exit(1);
+    }
+  });
+
+program
   .command("wear")
   .description("Wear the 0xray suit in this git checkout")
   .action(async () => {

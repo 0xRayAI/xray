@@ -5,7 +5,7 @@
 
 ## What is 0xRay?
 
-0xRay provides intelligent multi-agent orchestration with automatic delegation and Codex compliance validation under the pure three-subsystem model (Inference + External Governance via Dynamo + Autonomous Engine via thinDispatch 7-flow in MCP orchestrator). Agents operate via YML surfaces and MCP skill servers.
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it. When the window closes, the next session wakes with the job. Agents operate via YML surfaces and MCP skill servers.
 
 ## Available MCP Servers
 

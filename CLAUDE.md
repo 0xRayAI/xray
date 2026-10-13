@@ -1,6 +1,6 @@
-# xray — MCP-Centric AI Governance OS
+# xray — three-subsystem autonomous engine
 
-xray is a pure v2 three-subsystem AI orchestration framework with MCP-centric governance.
+0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it. When the window closes, the next session wakes with the job.
 
 ## Commands
 

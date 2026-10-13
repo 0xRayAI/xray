@@ -26,10 +26,13 @@ import { execSync, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { proveWornHost } from './lib/worn-host.mjs';
 
 const KEEP = process.argv.includes('--keep');
 const DIR_FLAG = process.argv.indexOf('--dir');
 const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
+const TARBALL_FLAG = process.argv.indexOf('--tarball');
+const TARBALL_PATH = TARBALL_FLAG !== -1 && process.argv[TARBALL_FLAG + 1] ? process.argv[TARBALL_FLAG + 1] : null;
 
 let passed = 0;
 let failed = 0;
@@ -162,14 +165,19 @@ async function main() {
       pass('Test directory created');
     }
 
-    const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 30000 });
-    const tarballMatch = packResult.match(/(0xray-\d+\.\d+\.\d+\.tgz)/);
-    if (!tarballMatch) {
-      fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
-      process.exit(1);
+    let tarball = TARBALL_PATH;
+    if (tarball) {
+      pass(`Using tarball: ${tarball}`);
+    } else {
+      const packResult = run(`cd "${projectRoot}" && npm pack`, { timeout: 30000 });
+      const tarballMatch = packResult.match(/(0xray-\d+\.\d+\.\d+\.tgz)/);
+      if (!tarballMatch) {
+        fail('npm pack', `could not find tarball in: ${packResult.substring(0, 200)}`);
+        process.exit(1);
+      }
+      tarball = path.join(projectRoot, tarballMatch[1]);
+      pass(`npm pack: ${tarballMatch[1]}`);
     }
-    const tarball = path.join(projectRoot, tarballMatch[1]);
-    pass(`npm pack: ${tarballMatch[1]}`);
 
     run('git init', { cwd: testDir });
     run('git config user.email "test@test.com"', { cwd: testDir });
@@ -481,6 +489,15 @@ const pluginPath = path.join(testDir, 'node_modules', '0xray', 'dist', 'plugin',
       fail('E2E flow', e.message);
     }
   }
+
+  proveWornHost({
+    host: 'opencode',
+    consumerDir: testDir,
+    section,
+    pass,
+    fail,
+    keep: KEEP,
+  });
 
   // ── Summary ───────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);

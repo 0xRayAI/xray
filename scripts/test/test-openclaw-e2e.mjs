@@ -37,11 +37,14 @@ import path from 'path';
 import { WebSocket } from 'ws';
 import { createRequire } from 'module';
 import crypto from 'crypto';
+import { proveWornHost } from './lib/worn-host.mjs';
 
 const require = createRequire(import.meta.url);
 
 const DIR_FLAG = process.argv.indexOf('--dir');
 const CUSTOM_DIR = DIR_FLAG !== -1 && process.argv[DIR_FLAG + 1] ? process.argv[DIR_FLAG + 1] : null;
+const TARBALL_FLAG = process.argv.indexOf('--tarball');
+const TARBALL_PATH = TARBALL_FLAG !== -1 && process.argv[TARBALL_FLAG + 1] ? process.argv[TARBALL_FLAG + 1] : null;
 const KEEP = process.argv.includes('--keep');
 
 let passed = 0;
@@ -80,11 +83,11 @@ function isScopeError(text) {
   return /missing scope:\s*operator\.write|FORBIDDEN/i.test(String(text || ''));
 }
 
-/** 2026.8.2: token-only WS often lacks operator.write. Official CLI is the write path. */
+/** Token-only WS lacks operator.write. The CLI needs --agent and the agent's own model. */
 function agentChat(message, timeoutSec = 90) {
   try {
     const out = execSync(
-      `openclaw agent --thinking low --timeout ${timeoutSec} --model xai/grok-4.5 --message ${JSON.stringify(message)}`,
+      `openclaw agent --thinking low --timeout ${timeoutSec} --agent main --message ${JSON.stringify(message)}`,
       {
         encoding: 'utf-8',
         timeout: (timeoutSec + 20) * 1000,
@@ -95,7 +98,11 @@ function agentChat(message, timeoutSec = 90) {
     return { text: String(out || ''), error: null, toolCalls: [], agentPhases: [] };
   } catch (e) {
     const text = String(e.stdout || '');
-    const err = String(e.stderr || e.message || '');
+    const err = String(e.stderr || e.message || '')
+      .split('\n')
+      .filter((line) => !line.includes('plugins.allow is empty'))
+      .join('\n')
+      .trim();
     return { text, error: err || 'openclaw agent failed', toolCalls: [], agentPhases: [] };
   }
 }
@@ -1251,6 +1258,19 @@ async function main() {
   } else {
     skip('skills directory', `not found at ${skillsDir}`);
   }
+
+  const wornConsumer = CUSTOM_DIR && fs.existsSync(path.join(CUSTOM_DIR, 'node_modules', '0xray', 'package.json'))
+    ? CUSTOM_DIR
+    : null;
+  proveWornHost({
+    host: 'openclaw',
+    consumerDir: wornConsumer,
+    tarball: TARBALL_PATH,
+    section,
+    pass,
+    fail,
+    keep: KEEP,
+  });
 
   // ── Summary ─────────────────────────────────────────────
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
