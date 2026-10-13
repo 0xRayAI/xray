@@ -29,6 +29,8 @@ ACTIVITY = Path(os.environ.get("LIVE_ACTIVITY", RUN / "fleet" / "activity.jsonl"
 ROLES = HERE / "routing" / "inbox-roles.json"
 KEEP_S = 3 * 86400
 MAX_SEEN = 60000
+SEED_GRACE_S = 600   # events stamped this long before the seed pass still count as live
+ROUTE_MAX_AGE_S = int(os.environ.get("ROUTE_MAX_AGE_S", 6 * 3600))   # an id first seen this late is backfill: never delivered
 KIND_MAP = {"pr_commit": "pr_update", "pr_force_push": "pr_update", "pr_ready": "pr_update"}
 
 
@@ -195,11 +197,17 @@ def cmd_pass(now=None):
     ids = sorted(ev, key=lambda k: _t(ev[k]))
     new = [ev[k] for k in ids if k not in seen]
     first = not st.get("seeded")
+    seeded_at = now if first else float(st.get("seeded_at") or 0)
+    floor = max(seeded_at - SEED_GRACE_S, now - ROUTE_MAX_AGE_S)
     for e in new:
         seen[e["id"]] = int(_t(e))
     if len(seen) > MAX_SEEN:
         seen = dict(sorted(seen.items(), key=lambda kv: kv[1])[-MAX_SEEN:])
     lines = 0
+    bad = sum(1 for e in new if not _t(e))
+    if bad:
+        print(f"inbox_pass: {bad} event(s) with missing/bad t_ct marked seen, not delivered", file=sys.stderr)
+    new = [e for e in new if _t(e) >= floor]   # history (pre-seed or late backfill) is marked seen, never delivered
     if not first and new:
         acts = []
         if ACTIVITY.is_file():
@@ -213,7 +221,7 @@ def cmd_pass(now=None):
                                 now=datetime.fromtimestamp(now, timezone.utc), activity=acts)
         lines = sum(written.values())
         inbox.maybe_board(len(new), log=lambda m: print(m, file=sys.stderr))
-    _save(STATE, {"seeded": True, "seen": seen, "sent": st.get("sent") or []})
+    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or []})
     ring()
     _save(CACHE, c)
     print(f"{0 if first else len(new)} {lines}")

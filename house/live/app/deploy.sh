@@ -24,6 +24,8 @@ cp "$APP/../../live-mesh/fetch_feed.py" "$DST/collector/upstream/"   # house/liv
 # server inbox routing (same rules as the box pusher): inbox_pass.py + routing/ beside it
 mkdir -p "$DST/collector/routing"
 cp "$APP"/../feed/inbox_pass.py "$DST/collector/"
+# fleet roster (counted seats) + seat login map: committed, so burst-live never depends on hand-set Railway vars
+cp "$APP"/../feed/fleet-roster.json "$APP"/../feed/fleet-nodes.json "$DST/collector/"
 cp "$APP"/../feed/routing/inbox.py "$APP"/../feed/routing/board.py "$APP"/../feed/routing/inbox-roles.json "$DST/collector/routing/"
 # MESH_SEED_STORE=1 (one-time, first volume deploy): ship the box collector's store as collector/seed/ (the server
 # copies it onto the volume only where no file exists yet). Scanned for token / key patterns first.

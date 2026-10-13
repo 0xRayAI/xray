@@ -95,5 +95,29 @@ class FleetSeats(unittest.TestCase):
         self.assertEqual(sorted(got), ["blinky"])
 
 
+
+class FleetRoster(unittest.TestCase):
+    """burst-live roster is committed (fleet-roster.json + fleet-nodes.json, shipped by deploy.sh), never a hand-set var."""
+    ROSTER = ["blinky", "critic", "forge", "mill", "herald", "magnet", "nibbler", "sound", "arch1"]
+
+    def test_roster_is_the_nine_seats_and_blaze_is_not_one(self):
+        import live_fleet
+        seats, fold, board = live_fleet.load_seat_config(str(FEED / "fleet-roster.json"))
+        self.assertEqual(sorted(board), sorted(self.ROSTER))
+        self.assertEqual(sorted(seats), sorted(self.ROSTER))
+        self.assertEqual(len(board), 9)
+        self.assertNotIn("Blaze0x1", seats + board)
+
+    def test_node_map_targets_roster_seats_only(self):
+        nodes = json.loads((FEED / "fleet-nodes.json").read_text())
+        self.assertTrue(set(nodes.values()) <= set(self.ROSTER) | {"CI"}, nodes)
+        self.assertNotIn("Blaze0x1", nodes.values())
+        self.assertEqual(nodes["forge0x1[bot]"], "forge"); self.assertEqual(nodes["arch10x[bot]"], "arch1")
+
+    def test_deploy_ships_the_roster(self):
+        sh = (FEED.parent / "app" / "deploy.sh").read_text()
+        self.assertIn("fleet-roster.json", sh); self.assertIn("fleet-nodes.json", sh)
+
+
 if __name__ == "__main__":
     unittest.main()

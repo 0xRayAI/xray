@@ -605,15 +605,53 @@ setInterval(() => {
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
-    feedBody = Buffer.from(JSON.stringify({ ...mask(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
+    feedBody = Buffer.from(JSON.stringify({ ...maskHeader(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
     feedGz = zlib.gzipSync(feedBody, { level: 6 }); feedEtag = `"${cursor()}"`; fullDirty = false;
   }
   return { body: feedBody, gz: feedGz, etag: feedEtag };
 }
 // Private repos (D18): on the login-page feed an event or header object of a private repo keeps only its id, times, kind and
-// mesh hops; repo becomes 'private repo' and title / label / url / branch text are dropped.
-const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status']);
-function isPrivate(o) { return o && typeof o.repo === 'string' && privateRepos.has(o.repo.toLowerCase()); }
+// mesh hops (plus number / sha so replay can link packets); repo becomes 'private repo' and title / label / url / branch
+// text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
+const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
+const HEADER_RAW = ['fleet', 'board'];
+// fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten.
+// One compiled pattern, rebuilt only when the private set grows (not per string per GET).
+const reEsc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+let privRe = null, privReN = -1;
+function privPattern() {
+  if (privReN !== privateRepos.size) { privReN = privateRepos.size; privRe = privReN ? new RegExp([...privateRepos].sort((a, b) => b.length - a.length).map(reEsc).join('|'), 'gi') : null; }
+  return privRe;
+}
+function scrub(v) {
+  if (!privateRepos.size || v === null) return v;
+  if (typeof v === 'string') return v.replace(privPattern(), 'private repo');
+  if (Array.isArray(v)) return v.map(scrub);
+  if (typeof v !== 'object') return v;
+  const o = {}; for (const k of Object.keys(v)) o[k] = scrub(v[k]); return o;
+}
+// A header repo name is shown only when confirmed public (read OK and private:false); anything else is a placeholder.
+// The header is never collapsed like a private event: every field is kept, repo / repos are mapped, the rest masked + scrubbed.
+function maskHeader(h) {
+  if (!privateRepos.size || !h || typeof h !== 'object') return h;
+  const pub = new Set([...readable].map(x => x.toLowerCase()).filter(x => !privateRepos.has(x)));
+  const publicRepo = r => typeof r === 'string' && pub.has(r.toLowerCase());
+  const o = {};
+  for (const k of Object.keys(h)) {
+    if (HEADER_RAW.includes(k)) o[k] = scrub(h[k]);
+    else if (k === 'repo') o[k] = publicRepo(h[k]) ? h[k] : 'private repo';
+    else if (k === 'repos' && Array.isArray(h[k])) o[k] = h[k].map(r => publicRepo(r) ? r : 'private repo');
+    else o[k] = scrub(mask(h[k]));
+  }
+  return o;
+}
+// Short names are for matching only (an event whose repo is a bare name); scrub never rewrites bare short names.
+const privateShort = new Set();
+function isPrivate(o) {
+  if (!o || typeof o.repo !== 'string') return false;
+  const r = o.repo.toLowerCase();
+  return privateRepos.has(r) || (!r.includes('/') && privateShort.has(r));
+}
 function mask(v) {
   if (!privateRepos.size || v === null || typeof v !== 'object') return v;
   if (Array.isArray(v)) return v.map(mask);
@@ -628,7 +666,7 @@ function since(c, raw = false) {   // raw: unmasked (ingest-secret inbox routing
   if (s > seq || s < floorSeq) return null;
   if (s === seq) return 'same';
   const events = []; for (const v of evs.values()) if (v.s > s) events.push(mk(v.e));
-  return { ...mk(header), delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
+  return { ...(raw ? header : maskHeader(header)), delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
 }
 
 // ---- GitHub collector (Railway): python child with ONLY the read-only token; writes a feed file on the volume ----
@@ -666,7 +704,7 @@ async function readableRepos(list, tok) {
       if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); skipped.add(full); continue; }
       skipped.delete(full);
       const d = await r.json().catch(() => ({}));
-      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateRepos.add(full.toLowerCase().split("/").pop()); seq++; floorSeq = seq; fullDirty = true; }
+      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateShort.add(full.toLowerCase().split('/').pop()); seq++; floorSeq = seq; fullDirty = true; }
       readable.add(full);
     }
     ok.push(full);
@@ -687,6 +725,19 @@ async function refreshOrgRepos() {
   console.log(`collector: repos ${next.join(' ')}`);
   if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
 }
+// Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
+// LIVE_FLEET_SEATS is set); fleet-nodes.json maps seat logins to seats, under any LIVE_NODE_MAP entries (the var wins).
+function fleetConfig(e, dir = COLLECTOR_DIR) {
+  const out = {}, roster = path.join(dir, 'fleet-roster.json');
+  if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
+  let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
+  let extra = {}; try {   // the var wins, inline JSON or a path (as live_fleet accepts)
+    const raw = String(e.LIVE_NODE_MAP || '').trim();
+    extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
+  } catch {}
+  if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...nodes, ...extra });
+  return out;
+}
 async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
@@ -706,6 +757,7 @@ async function startCollector() {
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
   for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
+  Object.assign(env, fleetConfig(process.env));
   const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];

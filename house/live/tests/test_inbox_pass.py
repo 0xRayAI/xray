@@ -73,3 +73,25 @@ class ResetPullSeeds(unittest.TestCase):
             self.assertEqual(go("pass").split()[0], "1")
             crit = [json.loads(x) for x in (run / "feed" / "inbox-spool" / "reviewer.jsonl").read_text().splitlines()]
             self.assertEqual([l["number"] for l in crit], [99])                 # only the real new event
+
+
+class HistoryNeverRouted(unittest.TestCase):
+    def test_clean_volume_backfill_after_seed_is_history(self):
+        """Deploy on a clean route dir: the seed pass sees a partial feed, then the collector's next pass adds old ids."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            go = lambda *a: subprocess.run([sys.executable, "-B", str(FEED / "inbox_pass.py"), *a], env=env, capture_output=True, text=True, check=True).stdout.strip()
+            R = "example-org/app"
+            (run / "feed" / "live-events.json").write_text(json.dumps({"events": [{"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1, "label": "x"}]}))
+            self.assertEqual(go("pass"), "0 0")
+            old = [{"id": f"{R}#{n}:open", "t_ct": ct(2 * 86400 + n), "kind": "pr_open", "repo": R, "number": n, "label": "@critic old ask"} for n in range(2, 7)]
+            fresh = {"id": f"{R}#99:open", "t_ct": ct(5), "kind": "pr_open", "repo": R, "number": 99, "label": "new"}
+            (run / "feed" / "live-events.json").write_text(json.dumps({"events": old + [fresh]}))
+            self.assertEqual(go("pass").split()[0], "1")
+            spool = run / "feed" / "inbox-spool"
+            blob = "".join(f.read_text() for f in spool.glob("*.jsonl"))
+            self.assertIn(fresh["id"], blob)
+            for n in range(2, 7):
+                self.assertNotIn(f"{R}#{n}:open", blob)                       # none of the five old ids reach any seat
+            self.assertEqual(go("pass"), "0 0")

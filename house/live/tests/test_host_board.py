@@ -42,4 +42,29 @@ class HostBoard(unittest.TestCase):
     def test_host_mode_opt_in(self):
         r = run(LIVE_SHOW_UNMAPPED="1"); print("\nopt-in:", r["titles"])
         self.assertIn("SECRET unmapped live", r["blob"])
-if __name__ == "__main__": unittest.main()
+
+
+DEDUPE = r'''
+import sys, os, json, tempfile; from pathlib import Path
+root = Path(tempfile.mkdtemp()); (root/"feed").mkdir()
+os.environ.update(LIVE_MODE="github", GH_TOKEN="x", MESH_RUN=str(root))
+sys.path.insert(0, %r)
+import live_mesh as lm
+out = root/"feed"/"github-events.json"
+ev = [{"id": f"e{i}", "t_ct": "2026-10-13T09:00:00-05:00", "kind": "pr_open"} for i in range(5)]
+n1 = lm._write({"events": ev}, out); n2 = lm._write({"events": ev}, out)
+ev[0] = dict(ev[0], label="changed"); n3 = lm._write({"events": ev}, out)
+print(json.dumps([n1, n2, n3, (root/"feed"/"live-events.jsonl").exists()]))
+'''
+
+
+class GithubModeDedupe(unittest.TestCase):
+    def test_second_pass_counts_only_new_or_changed(self):
+        """burst-live logged 26440 (26440 new) every pass: github mode never persisted the seen hashes."""
+        r = subprocess.run([sys.executable, "-B", "-c", DEDUPE % FEED], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False])
+
+
+if __name__ == "__main__":
+    unittest.main()

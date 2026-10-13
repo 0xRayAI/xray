@@ -537,6 +537,27 @@ class FleetSeatsConfig(unittest.TestCase):
         finally:
             live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = old
 
+    def test_node_map_seats_when_fleet_seats_unset(self):
+        """burst-live sets LIVE_NODE_MAP only: its mapped nodes are the counted seats (was Example 0/7 forever)."""
+        old = os.environ.get("LIVE_NODE_MAP")
+        os.environ["LIVE_NODE_MAP"] = json.dumps({"forge0x1[bot]": "forge", "critic0x[bot]": "critic", "github-actions[bot]": "CI"})
+        try:
+            seats, fold, board = live_fleet.load_seat_config("")
+        finally:
+            if old is None: os.environ.pop("LIVE_NODE_MAP", None)
+            else: os.environ["LIVE_NODE_MAP"] = old
+        self.assertEqual((seats, fold, board), (["critic", "forge"], {}, ["critic", "forge"]))
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = seats, fold, board
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                now = time.time()
+                ev = {"src_file": "github-api", "from": "forge", "t_ct": datetime.fromtimestamp(now - 60, CT).isoformat()}
+                fs = live_fleet.Fleet(Path(d) / "state.json", CT).fleet_state([ev], now=now)
+            self.assertEqual((fs["active"], fs["total"]), (1, 2))
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
     def test_bad_json_keeps_the_example_list(self):
         seats, fold, board = live_fleet.load_seat_config("{not json")
         self.assertEqual(board, ["Builder", "Builder-cloud", "Reviewer", "Tester", "QA", "Operator", "Coord"])

@@ -67,3 +67,58 @@ test('private repo: masked on the login-page feed (no name, no title), real for 
   const ie = await (await fetch(BASE + '/ingest/events', { headers: { Authorization: 'Bearer ' + ING } })).json();
   assert.equal(ie.events.find(e => e.id === 's1').repo, 'acme/secret');
 });
+test('private repo: header.fleet / header.board and seats active survive masking; masked events keep number and sha', async () => {
+  const now = new Date().toISOString();
+  const feed = { generated_at: now, events: [{ id: 's2', repo: 'acme/secret', number: 9, sha: 'abc1234', kind: 'pr_open', t_ct: now, title: 'Hidden', url: 'https://github.com/acme/secret/pull/9' }],
+    fleet: { window_min: 15, seats: { forge: { last_ct: now, via: 'github' } }, working: { forge: { via: 'github', repo: 'acme/secret', number: 9, url: 'https://github.com/Acme/Secret/pull/9' } } },
+    board: { waves: [{ repo: 'acme/secret', number: 9, title: 'Wave', note: 'see acme/secret#9' }] } };
+  fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
+  const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  const ck = String(lr.headers.get('set-cookie')).split(';')[0];
+  let f;
+  for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.events?.some(e => e.id === 's2')) break; await new Promise(r => setTimeout(r, 100)); }
+  const e = f.events.find(x => x.id === 's2');
+  assert.deepEqual([e.repo, e.number, e.sha, e.title, e.url], ['private repo', 9, 'abc1234', undefined, undefined]);
+  assert.equal(f.fleet.seats.forge.active, true, JSON.stringify(f.fleet));
+  // revert check: masking the header again turns these into 'private repo' and drops number / active
+  assert.deepEqual([f.fleet.working.forge.via, f.fleet.working.forge.number, f.fleet.working.forge.repo], ['github', 9, 'private repo']);
+  assert.equal(f.board?.waves?.[0]?.title, 'Wave', JSON.stringify(f.board));
+  assert.equal(f.board.waves[0].number, 9);
+  // a private repo's full name never appears anywhere in the signed-in JSON (repo fields, URLs, free text)
+  assert.ok(!/acme\/secret/i.test(JSON.stringify(f)), JSON.stringify(f));
+  // delta keeps the header too
+  const d = await (await fetch(BASE + '/live-events.json?since=' + encodeURIComponent(f.cursor.replace(/\d+$/, n => String(Math.max(0, n - 1)))), { headers: { Cookie: ck } })).json();
+  assert.ok(!/acme\/secret/i.test(JSON.stringify(d)), JSON.stringify(d));
+  if (d.delta) assert.equal(d.fleet.working.forge.via, 'github');
+});
+for (const order of [['acme/one', 'acme/secret'], ['acme/secret', 'acme/one']]) {
+  test(`header with repos [${order[0] === 'acme/one' ? 'public' : 'private'} first]: never collapsed, private names become 'private repo'`, async () => {
+    const now = new Date().toISOString(), id = 'h' + order[0].length + order[0][5];
+    const feed = { generated_at: now, kinds: ['pr_open'], sources: ['github'], notes: ['watching acme/secret'], repo: order[0], repos: [...order, 'other/unconfirmed'],
+      events: [{ id, repo: 'acme/one', kind: 'pr_open', t_ct: now, title: 'Open' }], fleet: { window_min: 15, seats: {} }, board: { waves: [] } };
+    fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
+    fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
+    const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const ck = String(lr.headers.get('set-cookie')).split(';')[0];
+    let f;
+    for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.generated_at === now && f.events?.some(e => e.id === id)) break; await new Promise(r => setTimeout(r, 100)); }
+    assert.equal(f.generated_at, now, JSON.stringify(f));
+    assert.equal(typeof f.event_count, 'number');
+    assert.ok(f.kinds.includes('pr_open')); assert.ok(f.sources?.github, JSON.stringify(f.sources)); assert.deepEqual(f.notes, ['watching private repo']);
+    assert.ok(f.fleet && f.board, JSON.stringify(f));
+    assert.equal(f.repo, order[0] === 'acme/one' ? 'acme/one' : 'private repo');
+    assert.deepEqual(f.repos, order.map(r => r === 'acme/one' ? r : 'private repo').concat('private repo'));
+    assert.ok(!/acme\/secret|other\/unconfirmed/i.test(JSON.stringify(f)), JSON.stringify(f));
+  });
+}
+test('N1: an event whose repo is the bare short name of a private repo is masked too', async () => {
+  const now = new Date().toISOString();
+  fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify({ generated_at: now,
+    events: [{ id: 'sh1', repo: 'secret', number: 3, kind: 'pr_open', t_ct: now, title: 'Bare hidden' }] }));
+  const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  const ck = String(lr.headers.get('set-cookie')).split(';')[0];
+  let f;
+  for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.events?.some(e => e.id === 'sh1')) break; await new Promise(r => setTimeout(r, 100)); }
+  const e = f.events.find(x => x.id === 'sh1');
+  assert.deepEqual([e.repo, e.number, e.title], ['private repo', 3, undefined]);
+});
