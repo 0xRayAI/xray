@@ -663,7 +663,8 @@ async function readableRepos(list, tok) {
     if (!readable.has(full)) {
       const r = await fetch(`${GITHUB_API}/repos/${full}`, { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' },
         signal: AbortSignal.timeout(15000) }).catch(() => null);
-      if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); continue; }
+      if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); skipped.add(full); continue; }
+      skipped.delete(full);
       const d = await r.json().catch(() => ({}));
       if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateRepos.add(full.toLowerCase().split("/").pop()); seq++; floorSeq = seq; fullDirty = true; }
       readable.add(full);
@@ -672,7 +673,7 @@ async function readableRepos(list, tok) {
   }
   return ok;
 }
-const readable = new Set(), privateRepos = new Set();
+const readable = new Set(), privateRepos = new Set(), skipped = new Set();   // listed or pinned but unreadable (token scope)
 async function collectorRepos(tok) {
   const org = (process.env.COLLECTOR_ORG || '').trim();
   if (!org) return COLLECTOR_REPOS;
@@ -754,7 +755,7 @@ function repoTimes(f) {
 }
 function healthBody() {   // public: a count and two times, no repo names
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
-  return JSON.stringify({ ok: true, collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length,
+  return JSON.stringify({ ok: true, collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)

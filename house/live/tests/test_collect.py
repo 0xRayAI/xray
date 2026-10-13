@@ -406,3 +406,11 @@ class GithubModeBoard(unittest.TestCase):
         out = subprocess.run([sys.executable, "-c", code], env=dict(os.environ), capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertEqual(out.stdout.strip(), "True")
+
+
+class Mentions(unittest.TestCase):
+    def test_handles_only_code_skipped(self):
+        import live_collect as lc
+        self.assertEqual(lc.mentions("hi @Forge and @critic0x[bot], not `@mill` or a@b.com"), ["critic0x[bot]", "forge"])
+        self.assertIsNone(lc.mentions(None))
+

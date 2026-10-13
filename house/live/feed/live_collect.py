@@ -21,6 +21,16 @@ EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-
 CRITIC = "reviewer-app[bot]"
 CRITIC_LOGINS = {CRITIC, "reviewer-app"}   # any Reviewer seat identity
 CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FAIL)?\b)")
+MENTION_RE = re.compile(r"(?<![\w`/.])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?)(?![\w-])")
+
+
+def mentions(body: str | None) -> list | None:
+    """@handles in a body (lower-cased, max 10, code spans skipped); the body itself is never stored."""
+    text = re.sub(r"```.*?```|`[^`]*`", " ", body or "", flags=re.S)
+    out = sorted({m.lower() for m in MENTION_RE.findall(text)})[:10]
+    return out or None
+
+
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
@@ -490,6 +500,10 @@ class RepoCollector:
                  n, state=state, actor=login)
 
     # ---------------------------------------------------------------- incremental (REST)
+    def pr_merged(self, n):
+        p = self.st["prs"].get(str(n))
+        return True if p and p.get("merged_at") else None
+
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
             return
@@ -504,7 +518,7 @@ class RepoCollector:
             url = p["html_url"]
             self.put(f"{self.repo}#{n}:open", p["created_at"], node(login), "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login,
-                     draft=p.get("draft"), **card_fields(p))
+                     draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, base=p["base"]["ref"],
@@ -614,7 +628,8 @@ class RepoCollector:
                 continue
             n, login = i["number"], (i.get("user") or {}).get("login")
             self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
-                     f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login, **card_fields(i))
+                     f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
+                     mentions=mentions(i.get("body")), **card_fields(i))
         self.st["cur"]["issues"] = newest
         if self._etag_new:
             self.st["etags"]["issues"] = self._etag_new
@@ -642,7 +657,7 @@ class RepoCollector:
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
                      parked=True if PARKED_COMMENT_RE.match(body) else None,
-                     hold=hold)
+                     hold=hold, mentions=mentions(body), pr_merged=self.pr_merged(n) if is_pr else None)
             if is_pr and login in CRITIC_LOGINS:   # verdict word + SHA only; the body is discarded here
                 body = (cm.get("body") or "").lstrip()
                 m = CRITIC_RE.match(body)
@@ -676,7 +691,7 @@ class RepoCollector:
             login = (cm.get("user") or {}).get("login")
             self.put(f"{self.repo}#{n}:rcomment:{cm['id']}", cm["created_at"], node(login), self.pr_node(n),
                      "review_comment", f"{login or '?'} review comment · {self.short} #{n}", cm["html_url"], n,
-                     actor=login)
+                     actor=login, mentions=mentions(cm.get("body")), pr_merged=self.pr_merged(n))
         if newest is None and self._etag_new:   # empty list: pin so a later 200 cannot re-walk history
             newest = "1970-01-01T00:00:00Z"
         self.st["cur"]["rcomments"] = newest
