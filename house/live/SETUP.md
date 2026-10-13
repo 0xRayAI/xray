@@ -13,7 +13,7 @@
 
 `LIVE_NODE_MAP` maps your fleet's GitHub logins to page seats (JSON object, or a path to a JSON file; non-string values are ignored). Logins not in the map are hidden by default everywhere: feed, board (including the inbox event cache), packets, upstream items. `LIVE_SHOW_UNMAPPED=1` shows them as `Others` instead, which publishes those logins and titles. The server passes both to the collector.
 
-**Private repos (D18, #267).** With `COLLECTOR_ORG` set, each repo's `private` flag comes from `GET /repos/<org>/<repo>`. A private repo is still collected: inboxes (`/ingest/events`) and `/cards` behind seat keys keep its real name and titles. The login page and `/live-events.json` show it only as `private repo`, with no title, label or link. The login map (`LIVE_NODE_MAP`, `LIVE_SHOW_UNMAPPED=1`) must never be used to bring private titles back onto the page. Public `/healthz` carries a repo count and two times, never repo names.
+**Private repos (D18, #267).** With `COLLECTOR_ORG` set, each repo's `private` flag comes from `GET /repos/<org>/<repo>`. A private repo is still collected: inboxes (`/ingest/events`) and `/cards` behind seat keys keep its real name and titles. In gated mode the login page and `/live-events.json` show it only as `private repo`, with no title, label or link; in public mode (`feed/site.json` `"public": true`) nothing is masked and the real name shows. The login map (`LIVE_NODE_MAP`, `LIVE_SHOW_UNMAPPED=1`) must never be used to bring private titles back onto the page. Public `/healthz` carries a repo count and two times, never repo names.
 
 ## Seat auth
 | Seat | Credential |

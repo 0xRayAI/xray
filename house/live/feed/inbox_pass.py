@@ -103,20 +103,34 @@ def _env_json(name):
         return {}
 
 
+_BOT_CACHE = {}
+
+
 def bot_logins():
-    """login -> seat: fleet-nodes.json (seat logins) plus SEAT_BOTS {seat: login | [logins]}."""
+    """login -> seat: fleet-nodes.json (seat logins) plus SEAT_BOTS {seat: login | [logins]}.
+    Cached per (fleet-nodes.json mtime, SEAT_BOTS value): one build per pass, not one per event."""
+    try:
+        mt = NODES.stat().st_mtime_ns
+    except OSError:
+        mt = None
+    key = (str(NODES), mt, os.environ.get("SEAT_BOTS") or "")
+    if key in _BOT_CACHE:
+        return _BOT_CACHE[key]
     m = {k.removesuffix("[bot]").casefold(): v for k, v in _load(NODES, {}).items() if isinstance(v, str)}
     for seat, v in _env_json("SEAT_BOTS").items():
         for login in [v] if isinstance(v, str) else v if isinstance(v, list) else []:
             if isinstance(login, str) and login:
                 m[login.removesuffix("[bot]").casefold()] = str(seat).lower()
+    _BOT_CACHE.clear()
+    _BOT_CACHE[key] = m
     return m
 
 
 def watched_by_seat(seat, event):
-    """SEAT_WATCHERS {seat: {repos: [...], kinds: [...]}}: the seat runs its own watcher there, so the server skips it."""
+    """SEAT_WATCHERS {seat: {repos: [...], kinds: [...]}}: the seat runs its own watcher there, so the server skips it.
+    An empty entry ({} or both lists empty) skips nothing; name repos and/or kinds (or "*") to skip."""
     w = _env_json("SEAT_WATCHERS").get(seat)
-    if not isinstance(w, dict):
+    if not isinstance(w, dict) or not (w.get("repos") or w.get("kinds")):
         return False
     repos, kinds = w.get("repos") or ["*"], w.get("kinds") or ["*"]
     return ("*" in repos or str(event.get("repo") or "") in repos) and ("*" in kinds or inbox._kind(event) in kinds)
@@ -125,7 +139,7 @@ def watched_by_seat(seat, event):
 def _direct_all(event, roles):
     """PR #5 routes plus the extra Chat Bot seats (roles.extra_seats: kinds / merge_bases / needles)."""
     kind = inbox._kind(event)
-    if kind.startswith(PULSE_KINDS) or str(event.get("from") or "") == "Lead" and kind.startswith("prompt"):
+    if kind.startswith(PULSE_KINDS):   # covers Lead prompts too ("prompt" is a pulse kind)
         return []   # a pulse is never a packet or a wake
     out = _direct_core(event, roles)
     hay = str(event.get("label") or "")
