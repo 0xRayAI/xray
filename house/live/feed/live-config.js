@@ -87,7 +87,7 @@
   var MAX = Math.max(100, Number(q.get('n')) || 3000);
   var KINDS = (q.get('kinds') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   // Every feed from/to maps onto a drawn node key (L.SATS). Feed names -> node keys; anything else -> fallback.
-  var NODE_KEY = { CI: 'GitHub', forge: 'GitHub', Others: 'X', 'Example': 'mymuse.house', Coord: 'blinky', reviewer: 'Reviewer',
+  var NODE_KEY = { Blaze: 'Lead', CI: 'GitHub', forge: 'GitHub', Others: 'X', 'Example': 'mymuse.house', Coord: 'blinky', reviewer: 'Reviewer',
     'dev.example.com': 'mymuse.house', 'app.example.com': 'mymuse.house', labtest: 'mymuse.house',
     'QA': 'QA', QaOne: 'QA', QaTwo: 'QA', 'QA two': 'QA',
     lead-alt: 'Lead', lead-alt: 'Lead', lead-login: 'Lead', 'Cloud agents': 'CloudAgents', cursoragent: 'CloudAgents' };

@@ -83,6 +83,17 @@ def brand(s: str | None) -> str:
     return EMAIL_RE.sub("[email]", BRAND_RE.sub(_brand_sub, " ".join((s or "").split())))
 
 
+def credit(login: str | None) -> str | None:
+    """Seat an event is credited to: the login -> seat map (fleet-nodes.json via LIVE_NODE_MAP, over NODE), else
+    "other" for any unknown login. None when there is no login (GitHub-originated). forge0x1[bot] commits cannot be
+    told apart from mill's work (mill commits through forge's identity), so they credit forge."""
+    if not login:
+        return None
+    if CLOUD_AGENT_RE.match(login):
+        return "CloudAgents"
+    return NODE_LC.get(login.lower()) or "other"
+
+
 def node(login: str | None) -> str:
     """Mesh node for an actor. Unknown actors (e.g. Tester's new App) are kept as 'Others' + actor=login."""
     if login and CLOUD_AGENT_RE.match(login):
@@ -272,6 +283,8 @@ class RepoCollector:
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
             if login and e.get("from") not in ("GitHub", "Example"):
                 e["from"] = node(login)
+            if login:
+                e["credit"] = credit(login)
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             for k in ("label", "message"):
@@ -307,6 +320,9 @@ class RepoCollector:
         for k, v in extra.items():
             if v is not None:
                 e[k] = v
+        who = credit(e.get("actor") or e.get("author"))
+        if who:
+            e["credit"] = who
         self.ev[eid] = e
 
     def pr_node(self, n):

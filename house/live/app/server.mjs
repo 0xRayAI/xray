@@ -647,7 +647,7 @@ function full() {   // built lazily: only the first full GET after a change pays
 // Private repos (D18): on the login-page feed an event or header object of a private repo keeps only its id, times, kind and
 // mesh hops (plus number / sha so replay can link packets); repo becomes 'private repo' and title / label / url / branch
 // text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
-const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
+const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'credit', 'state', 'status', 'number', 'sha', 'active']);
 const HEADER_RAW = ['fleet', 'board'];
 // fleet / board stay whole, but every string naming a private repo (repo field, full name, URL) is rewritten.
 // One compiled pattern, rebuilt only when the private set grows (not per string per GET).

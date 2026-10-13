@@ -41,6 +41,17 @@ class Branding(unittest.TestCase):
         self.assertEqual(uc.brand("bump pkg@1.2.3 and @types/node"), "bump pkg@1.2.3 and @types/node")
 
 
+class Credit(unittest.TestCase):
+    def test_every_login_credits_a_seat_or_other(self):
+        old = dict(uc.NODE_LC)
+        try:
+            uc.NODE_LC.update({"forge0x1[bot]": "forge", "critic0x[bot]": "critic", "minime0x[bot]": "arch1", "htafolla": "Blaze"})
+            self.assertEqual([uc.credit(x) for x in ("forge0x1[bot]", "Critic0x[bot]", "minime0x[bot]", "htafolla", "rando", None)],
+                             ["forge", "critic", "arch1", "Blaze", "other", None])
+        finally:
+            uc.NODE_LC.clear(); uc.NODE_LC.update(old)
+
+
 class Logins(unittest.TestCase):
     def test_graphql_bot_suffix(self):
         self.assertEqual(uc.gql_login({"login": "railway-app", "__typename": "Bot"}), "railway-app[bot]")
