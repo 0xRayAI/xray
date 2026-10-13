@@ -8,7 +8,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
@@ -294,8 +294,13 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
+  if (result.ok) touchSeat(seat);
   st.inflight = false; armWake(seat);
 }
+// Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
+// In memory: after a restart a seat is active again on its next wake, read or ack.
+const seatTouch = {};
+const touchSeat = (seat, t = Date.now()) => { if (seat) seatTouch[seat] = Math.max(seatTouch[seat] || 0, t); };
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const bearerOf = req => { const h = req.headers.authorization || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; };
 async function seatOf(req) {   // -> seat id | null; throws when GitHub can't verify an installation token (caller: 503)
@@ -622,6 +627,7 @@ function mergedHeader(now = Date.now()) {
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;
+  const tf = foldSeatTouch(h.fleet, seatTouch, now); if (tf) h.fleet = tf;   // wake / read / ack activity
   return h;
 }
 // active windows and box staleness move with the clock: re-merge every 15 s, publish only on a real change
@@ -1373,7 +1379,7 @@ async function handle(req, res) {
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
     const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(openLines(who, all).map(l => l.id));
+    const keep = new Set(openLines(who, all).map(l => l.id)); touchSeat(who);
     return json(req, res, 200, { seat: who, lines: base.filter(l => keep.has(l.id)).slice(0, 1000) });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
@@ -1385,7 +1391,7 @@ async function handle(req, res) {
     let d; try { d = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
     const what = d && d.all === true ? 'all' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
     if (!what) return json(req, res, 400, { error: 'id or all required' });
-    const n = ackLines(who, what);
+    const n = ackLines(who, what); touchSeat(who);
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
   }
