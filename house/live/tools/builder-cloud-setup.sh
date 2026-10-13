@@ -1,7 +1,8 @@
 # ---- Live board (Builder-cloud, the cloud Builder seat) ---------------------------------------------------------------
 # Source into bash/zsh. No secrets in this file: the seat key comes from $LIVE_KEY (env / bot secret), is sent only
 # in the Authorization header, and is never printed.
-#   live_act start|end turn|subagent|watcher <tag>   -> POST /activity (202 = recorded), seat Builder-cloud
+#   live_act start|tick|end turn|subagent|watcher <tag>, received|sent prompt <seat>, launch|reply|finished cloud_agent <bc-id>
+#                                                    -> POST /activity (202 = recorded), seat Builder-cloud
 #   live_inbox                                       -> GET /inbox/builder-cloud?since=<cursor>, JSON lines on stdout;
 #                                                          cursor kept in ~/.live/builder-cloud.cursor. Gets every
 #                                                          Builder line (merge-ready, Reviewer PASS) + nudges to Builder.
@@ -28,15 +29,20 @@ def call(method, path, body=None):
         return 0, f"unreachable: {e}"
 cmd = sys.argv[1]
 if cmd == "act":
-    action, kind, tag = (sys.argv[2:5] + ["", "", ""])[:3]
-    if kind not in ("turn", "subagent", "watcher") or action not in ("start", "end") or not re.fullmatch(r"[A-Za-z0-9 ._:@#+/-]{1,40}", tag):
-        sys.exit("usage: live_act start|end turn|subagent|watcher <tag: 1-40 chars of A-Za-z0-9 ._:@#+/->")
+    action, kind, arg = (sys.argv[2:5] + ["", "", ""])[:3]
+    ACTS = {"turn": ("start", "tick", "end"), "subagent": ("start", "tick", "end"), "watcher": ("start", "tick", "end"),
+            "prompt": ("received", "sent"), "cloud_agent": ("launch", "reply", "finished", "cancel")}   # #281
+    if action not in ACTS.get(kind, ()) or not re.fullmatch(r"[A-Za-z0-9 ._:@#+/-]{1,40}", arg) or \
+            (kind == "cloud_agent" and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{2,40}", arg)):
+        sys.exit("usage: live_act start|tick|end turn|subagent|watcher <tag> | received|sent prompt <from|to seat>"
+                 " | launch|reply|finished|cancel cloud_agent <agent id>")
+    extra = {"prompt": {"received": "from", "sent": "to"}.get(action), "cloud_agent": "agent"}.get(kind, "tag")
     try:
         from zoneinfo import ZoneInfo
         now = datetime.datetime.now(ZoneInfo("America/Chicago"))
     except Exception:
         now = datetime.datetime.now().astimezone()
-    line = json.dumps({"t_ct": now.isoformat(timespec="seconds"), "kind": kind, "action": action, "tag": tag, "seat": "Builder-cloud"})
+    line = json.dumps({"t_ct": now.isoformat(timespec="seconds"), "kind": kind, "action": action, extra: arg, "seat": "Builder-cloud"})
     code, out = call("POST", "/activity", line.encode())
     print(code, out)
     sys.exit(0 if code == 202 else 1)
