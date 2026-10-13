@@ -90,18 +90,30 @@ def _direct_all(event, roles):
     """PR #5 routes plus the extra Chat Bot seats (roles.extra_seats: kinds / merge_bases / needles)."""
     out = _direct_core(event, roles)
     kind = inbox._kind(event)
-    hay = str(event.get("label") or "").casefold()
+    hay = str(event.get("label") or "")
     for seat, r in (roles.get("extra_seats") or {}).items():
         if not isinstance(r, dict) or not r:
             continue
         hit = kind in (r.get("kinds") or [])
         hit = hit or (kind == "merged" and str(event.get("base") or "").casefold() in [b.casefold() for b in r.get("merge_bases") or []])
-        hit = hit or (kind.startswith("issue") or "comment" in kind) and any(n in hay for n in r.get("needles") or [])
+        hit = hit or (kind.startswith("issue") or "comment" in kind) and any(inbox._has(hay, n) for n in r.get("needles") or [])
         if hit:
             line = inbox._line(event, seat, r.get("reason") or "routed")
             if line:
                 out.append(line)
-    return out
+    me = actor_seat(event, roles)
+    return [l for l in out if not me or l.get("seat") != me]   # a seat's own action never lands in its own inbox
+
+
+def actor_seat(event, roles):
+    """Seat id of who did this (roles.aliases maps display names / node names to seat ids), or None."""
+    aliases = roles.get("aliases") or {}
+    for key in ("from", "actor"):
+        v = str(event.get(key) or "")
+        for name in (v, v.removesuffix("[bot]")):
+            if name in aliases:
+                return aliases[name]
+    return None
 
 
 inbox._direct = _direct_all

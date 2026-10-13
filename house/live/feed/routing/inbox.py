@@ -92,8 +92,6 @@ def _has(hay: str, needle: str) -> bool:
     want = needle.casefold()
     if not want:
         return False
-    if any(ch in want for ch in " -"):
-        return want in folded
     return re.search(r"(?<![a-z0-9])" + re.escape(want) + r"(?![a-z0-9])", folded) is not None
 
 
