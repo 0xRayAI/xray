@@ -5,8 +5,8 @@
   'use strict';
   function reset(obj, next) { Object.keys(obj).forEach(function (k) { delete obj[k]; }); for (var k in next) obj[k] = next[k]; }
   var SEATS = ['blinky', 'forge', 'mill', 'critic', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
-  var ROLE = { blinky: 'chief of staff', forge: 'eng primary', mill: 'builder', critic: 'reviewer', herald: 'dist',
-    magnet: 'growth', nibbler: 'triage', sound: 'audio', arch1: 'architect' };
+  var ROLE = { blinky: 'chief of staff', forge: 'eng primary', mill: 'implementer', critic: 'reviewer', herald: 'Dist as @0xRayAI',
+    magnet: 'directory listings + Hangar board', nibbler: 'feed scout', sound: 'sound engineer', arch1: 'architect' };
   L.AGENTS.splice.apply(L.AGENTS, [0, L.AGENTS.length].concat(SEATS.map(function (s) { return [s, ROLE[s]]; })));
   L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(SEATS));
   // 920 x 400 canvas: seats on the top and bottom rows, rails + burst-live in the middle row (labels kept inside).

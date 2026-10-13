@@ -76,6 +76,15 @@ def brand(s: str | None) -> str:
     return EMAIL_RE.sub("[email]", BRAND_RE.sub(_brand_sub, " ".join((s or "").split())))
 
 
+SEAT_TRAILER_RE = re.compile(r"(?im)^Seat:\s*([a-z0-9-]{2,16})\s*$")
+
+
+def seat_trailer(msg: str | None) -> str | None:
+    """`Seat: <seat>` trailer in a commit message (last one wins); it overrides the login map for credit."""
+    found = SEAT_TRAILER_RE.findall(msg or "")
+    return found[-1].lower() if found else None
+
+
 def credit(login: str | None) -> str | None:
     """Seat an event is credited to: the login -> seat map (fleet-nodes.json via LIVE_NODE_MAP, over NODE), else
     "other" for any unknown login. None when there is no login (GitHub-originated). forge0x1[bot] commits cannot be
@@ -277,7 +286,7 @@ class RepoCollector:
             if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
                 e["from"] = node(login)
             if login:
-                e["credit"] = credit(login)
+                e["credit"] = e.get("seat_trailer") or credit(login)
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             for k in ("label", "message"):
@@ -313,7 +322,7 @@ class RepoCollector:
         for k, v in extra.items():
             if v is not None:
                 e[k] = v
-        who = credit(e.get("actor") or e.get("author"))
+        who = e.get("seat_trailer") or credit(e.get("actor") or e.get("author"))
         if who:
             e["credit"] = who
         self.ev[eid] = e
@@ -501,13 +510,13 @@ class RepoCollector:
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
         self.put(eid, date, node(login), "GitHub", "commit", f"{'/'.join(branches)} {sha[:7]} · {m}",
                  f"https://github.com/{self.repo}/commit/{sha}", None, sha=sha, branches=branches, message=m,
-                 author=login)
+                 author=login, seat_trailer=seat_trailer(msg))
 
     def pr_commit_event(self, n, sha, date, msg, login):
         m = brand((msg or "").splitlines()[0] if msg else "")[:72]
         self.put(f"{self.repo}#{n}:commit:{sha}", date, node(login), "GitHub", "pr_commit",
                  f"{self.short} #{n} push {sha[:7]} · {m}", f"https://github.com/{self.repo}/pull/{n}/commits/{sha}",
-                 n, sha=sha, message=m, author=login)
+                 n, sha=sha, message=m, author=login, seat_trailer=seat_trailer(msg))
 
     def review_event(self, n, rid, state, t, login, url):
         if not t or state == "PENDING":

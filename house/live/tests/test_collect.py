@@ -52,6 +52,24 @@ class Credit(unittest.TestCase):
             uc.NODE_LC.clear(); uc.NODE_LC.update(old)
 
 
+class SeatTrailer(unittest.TestCase):
+    def test_trailer_overrides_login_map(self):
+        self.assertEqual(uc.seat_trailer("fix x\n\nbody\nSeat: mill\n"), "mill")
+        self.assertIsNone(uc.seat_trailer("fix x\n\nno seat here"))
+        with tempfile.TemporaryDirectory() as d:
+            from zoneinfo import ZoneInfo
+            from unittest import mock
+            ff = type("FF", (), {"CT": ZoneInfo("America/Chicago")})
+            self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", True))
+            self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}))
+            col = uc.RepoCollector("acme/app", Path(d), ff, lambda *a: None)
+            col.commit_event("a" * 40, "2026-10-13T15:00:00Z", "feat: y\n\nSeat: mill", "forge0x1[bot]", "main")
+            col.commit_event("b" * 40, "2026-10-13T15:01:00Z", "feat: z", "rando-login", "main")
+            got = {e["sha"][:1]: e.get("credit") for e in col.ev.values()}
+            self.assertEqual(got["a"], "mill")
+            self.assertEqual(got["b"], "other")
+
+
 class Logins(unittest.TestCase):
     def test_graphql_bot_suffix(self):
         self.assertEqual(uc.gql_login({"login": "railway-app", "__typename": "Bot"}), "railway-app[bot]")
