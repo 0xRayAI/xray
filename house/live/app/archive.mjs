@@ -11,7 +11,7 @@ const FIELDS = {
   inbox: ['t_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason'],
   nudges: ['kind', 't', 't_ct', 'card', 'repo', 'number', 'title', 'url', 'stage', 'level', 'seat', 'via', 'beat_t', 'closed_at', 'about'],
   acks: ['seat', 'line', 't_ct'],
-  activity: ['seq', 'seat', 't_ct', 'kind', 'action', 'to', 'agent', 'tag'],
+  activity: ['seq', 'seat', 't_ct', 'kind', 'action', 'from', 'to', 'agent', 'tag'],
 };
 
 const seen = new Set();
@@ -43,6 +43,7 @@ function clip(v, depth = 0) {
 export function recordId(kind, row) {
   if (!row || typeof row !== 'object') return '';
   if (kind === 'cards') return `${row.key}|${row.stage}|${row.state}`;
+  if (kind === 'inbox') return row.id == null ? '' : `${row.seat ?? ''}:${row.id}`;   // ids repeat across seats (builder-cloud copy, multi-seat route)
   if (kind === 'acks') return `${row.seat}:${row.line ?? row.lineId ?? ''}`;
   return row.id == null ? '' : String(row.id);
 }
@@ -50,7 +51,7 @@ export function recordId(kind, row) {
 /** Fields the board already shows. Drops body, text, message, secret, token, password, authorization. */
 export function project(kind, row) {
   const src = row && typeof row === 'object' ? row : {};
-  const out = { id: recordId(kind, src) };
+  const out = { id: kind === 'inbox' ? String(src.id ?? '') : recordId(kind, src) };   // inbox keeps the line id; seat is its own field
   for (const k of FIELDS[kind] || []) {
     if (!(k in src) || DROP.test(k)) continue;
     out[k] = clip(src[k]);
@@ -92,7 +93,8 @@ function loadSeen() {
         if (!line) continue;
         try {
           const row = JSON.parse(line);
-          if (row && row.id) seen.add(kind + '\0' + row.id);
+          const id = kind === 'inbox' ? recordId(kind, row) : row && row.id;
+          if (row && row.id && id) seen.add(kind + '\0' + id);
         } catch { /* truncated or corrupt line */ }
       }
     }
@@ -151,11 +153,11 @@ export function backfillArchive(parts = {}) {
   const mark = path.join(root, '.backfill-done');
   try { if (fs.existsSync(mark)) return false; }
   catch (e) { logRead(e); }
-  for (const lines of Object.values(parts.inboxes || {})) {
+  for (const [seat, lines] of Object.entries(parts.inboxes || {})) {
     if (!Array.isArray(lines)) continue;
-    for (const l of lines) appendArchive('inbox', l);
+    for (const l of lines) if (l) appendArchive('inbox', { ...l, seat: l.seat ?? seat });
   }
-  for (const l of parts.extraInbox || []) appendArchive('inbox', l);
+  for (const l of parts.extraInbox || []) if (l) appendArchive('inbox', { ...l, seat: l.seat ?? 'builder' });
   for (const n of parts.nudges || []) {
     if (!n) continue;
     appendArchive('nudges', n);

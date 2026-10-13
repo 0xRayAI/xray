@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, readArchive, project, validArchiveDate } from '../app/archive.mjs';
+import { initArchive, readArchive, project, validArchiveDate, appendArchive } from '../app/archive.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
@@ -185,4 +185,17 @@ test('401 without the key; 400 for a bad date or kind; archive survives restart;
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
   }
+});
+
+test('one inbox line id on two seats (builder + builder-cloud) archives both; a repeat per seat is deduped', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch-2seat-'));
+  initArchive(data);
+  const line = { id: 'L1', t_ct: '2026-10-13T01:00:00Z', type: 'review', repo: 'o/r', number: 1 };
+  assert.equal(appendArchive('inbox', { ...line, seat: 'builder' }), true);
+  assert.equal(appendArchive('inbox', { ...line, seat: 'builder-cloud' }), true);
+  assert.equal(appendArchive('inbox', { ...line, seat: 'builder' }), false);
+  initArchive(data);   // restart: dedupe survives
+  assert.equal(appendArchive('inbox', { ...line, seat: 'builder-cloud' }), false);
+  const seats = readArchive('2026-10-13', 'inbox').lines.map(r => r.seat).sort();
+  assert.deepEqual(seats, ['builder', 'builder-cloud']);
 });

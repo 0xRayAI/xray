@@ -178,7 +178,7 @@ const INBOX_FILE = path.join(process.env.MESH_DATA_DIR || '/data', 'inbox', 'bui
 let inboxLines = [];
 try { inboxLines = fs.readFileSync(INBOX_FILE, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 function saveInbox() {
-  for (const l of inboxLines) appendArchive('inbox', l);
+  for (const l of inboxLines) appendArchive('inbox', { ...l, seat: l.seat ?? 'builder' });
   const cut = Date.now() - 7 * 86400000;
   inboxLines = inboxLines.filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   try { fs.mkdirSync(path.dirname(INBOX_FILE), { recursive: true }); fs.writeFileSync(INBOX_FILE + '.tmp', inboxLines.map(l => JSON.stringify(l)).join('\n') + '\n'); fs.renameSync(INBOX_FILE + '.tmp', INBOX_FILE); } catch (e) { console.log('inbox: save failed ' + e.code); }
@@ -369,7 +369,7 @@ function lineDone(seat, l) {
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
 function saveSeatInbox(s) {
-  for (const l of seatInbox[s]) appendArchive('inbox', l);
+  for (const l of seatInbox[s]) appendArchive('inbox', { ...l, seat: l.seat ?? s });
   const cut = Date.now() - 7 * 86400000;
   seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n');

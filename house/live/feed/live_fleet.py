@@ -677,7 +677,7 @@ class Fleet:
         if not prev or t >= prev[1]:        # out-of-order older line never reopens a finished agent
             self.cloud["agents"][agent] = [action, t]
         if action == "launch" or agent not in self.cloud.setdefault("by", {}):
-            self.cloud.setdefault("by", {})[agent] = by   # the launching seat stays credited for this agent   # the launching seat counts as working while this agent runs
+            self.cloud.setdefault("by", {})[agent] = by   # the launching seat stays credited for this agent
         by_t = self.cloud.setdefault("by_t", {})
         by_t[by] = max(by_t.get(by, 0), t)   # a cloud line is activity from `by` (clears their prompt spinner)
         if first and now - t > CLOUD_RECENT_S:
