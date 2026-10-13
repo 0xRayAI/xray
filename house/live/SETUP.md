@@ -9,6 +9,10 @@
   Locally it keeps only a ring buffer (`$MESH_RUN/feed/inbox-spool/<seat>.jsonl`, 300 lines a seat)
   for when the server can't be reached.
 
+## Seat credit and avatars
+
+Logins map to seats in the committed `feed/fleet-nodes.json`, which beats the `LIVE_NODE_MAP` variable (the variable only adds logins). Full fallback order, the `Seat:` commit trailer and the Blaze node: [docs/board.md](docs/board.md#seat-credit). Avatars and how to add one: [docs/board.md](docs/board.md#avatars).
+
 ## Fleet seats and unmapped logins (server env)
 
 `LIVE_NODE_MAP` maps your fleet's GitHub logins to page seats (JSON object, or a path to a JSON file; non-string values are ignored). Logins not in the map are hidden by default everywhere: feed, board (including the inbox event cache), packets, upstream items. `LIVE_SHOW_UNMAPPED=1` shows them as `Others` instead, which publishes those logins and titles. The server passes both to the collector.
@@ -79,6 +83,8 @@ pointing to the live board. Re-enable local writing only for debugging with `LIV
 - `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines. A read never acks (`--peek` is the same as a plain read). `live-inbox <seat> --ack <id|all>` or `--pop <id|all>` is the receipt; the cursor still advances to the newest line seen. Cursor in
   `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default is `~/.burst/cursors` (override with `LIVE_CURSORS`).
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
+- **Folders on our box:** the defaults are `~/.burst/seat-keys` and `~/.burst/cursors`; our box seats set `SEAT_KEYS_DIR` and `LIVE_CURSORS` to folders under `/home/box/burst-run` in their wake routines (variable names only; key values never go in a routine). See [docs/inbox.md](docs/inbox.md#key-folder-on-our-box).
+- **Activity:** a wake that lands, a read and an ack each mark the seat active ([docs/board.md](docs/board.md#what-makes-a-seat-active)). Desktop-only work does not report yet (lap 3: heartbeat from `live-inbox`).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted
 in-process by the builder-app wrapper's `mint_token.token()`, never printed).
 

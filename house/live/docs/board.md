@@ -53,3 +53,42 @@ Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are re
 - Rewound or replaying, the Board shows the cards as of the timeline point (cards whose first beat is at or before it, beats up to it). Cards carry their last few beats only, so very old points are approximate.
 - Packets fly for 2.6 s with a halo and a fading path, so each hop is visible seat to seat. The REPLAY badge shows once: on the pill during a replay pass, beside it only for the ambient replay loop.
 - Lens labels are kept inside the canvas. The kit maps no avatars (it ships none); a fleet overlay maps the images it ships, the rest use the drawn badge.
+
+## Seat credit
+
+Each event's `credit` is set by the collector (`feed/live_collect.py` `credit_of`), never blank, first match wins:
+
+1. a `Seat: <seat>` trailer in the commit message (a line on its own, e.g. `Seat: mill`);
+2. the event's actor / sender login (`actor`, `author`, `sender`, `triggering_actor`, `merged_by`, `user`);
+3. the PR's author (events with a PR number);
+4. the commit author's login for that sha (checks, workflow runs, deploys);
+5. that commit's `Seat:` trailer;
+6. `github` (CI, unmapped `[bot]` logins, Railway / rails with no seat).
+
+A login maps to a seat through the committed `feed/fleet-nodes.json` (shipped to `collector/` by `app/deploy.sh`). It wins over the `LIVE_NODE_MAP` service variable, which can only add logins the file doesn't name. An unmapped person credits `other`. `htafolla`, `Blaze0x1` and `Lead` credit **Blaze**, who has a node on the Lens and a group on the Board. Events from other sources (box, Jira, health, emitter) are credited by the server from their sender node: a roster seat, Blaze, else `github`.
+
+## Avatars
+
+Our pictures live in `house/live/site/public/avatars/` (copied over the kit page by `app/deploy.sh`) and are mapped in `site/public/site-config.js` (`L.setAvatars`):
+
+| Node | File | Source |
+|---|---|---|
+| blinky, critic, forge, herald | `<seat>.png` | the repo's `docs-site/static/live/bots/` |
+| arch1 | `arch1.png` | `docs-site/static/live/bots/minime0x.png` (arch1's bot is minime0x) |
+| Blaze | `blaze.png` | his X profile picture (@Blaze0x1) |
+
+Every other seat (mill, magnet, nibbler, sound) shows the drawn letter badge; there is no 404. To add one: commit a square PNG as `site/public/avatars/<seat>.png`, add `<seat>: '<seat>'` to `L.setAvatars` in `site/public/site-config.js`, and deploy. The kit maps no avatars.
+
+## What makes a seat active
+
+A seat shows ACTIVE when, within the fleet window (15 min), any of these happened:
+
+- a GitHub event by one of its logins (via the credit map above);
+- an owned box file changed or an activity line (turn, task, watcher) was logged (see Seat activity above);
+- a wake to its webhook landed (2xx);
+- it read its inbox (`live-inbox <seat>`);
+- it acked a line (`live-inbox <seat> --ack <id>`).
+
+The wake / read / ack times are kept in server memory (`app/presence.mjs` `foldSeatTouch`), so after a restart they rebuild on each seat's next wake, read or ack.
+
+**Known gap.** Work a seat does on its own computer (a desktop turn with no wake, read or ack) does not report yet, so the seat can look idle while busy. Lap 3 fix: `live-inbox` sends a heartbeat on every wake and every task start.

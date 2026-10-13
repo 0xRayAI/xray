@@ -110,6 +110,10 @@ A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line 
 
 Reading never acks. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
 
+### Key folder on our box
+
+`live-inbox` defaults to `~/.burst` (`~/.burst/seat-keys`, `~/.burst/cursors`) and the burst-live URL. On our box the seats keep their keys elsewhere and set the folder variables in their wake routine: `SEAT_KEYS_DIR` (key files, `<seat>.key`) and `LIVE_CURSORS` (read positions), both under `/home/box/burst-run`. `LIVE_URL` overrides the server. Never put a key's value in a routine, room or repo; the routine names the folder only.
+
 ### Reading the inbox after a wake
 
 The wake carries no secrets and is not the record. The wake routine runs the committed tool and nothing else: it never builds an inbox or ack request by hand with curl.
@@ -150,6 +154,14 @@ curl -i -X POST https://wake.example.com/hook \
 ```
 
 End to end: post a line for the seat with `POST /inbox` (ingest secret) and watch the server log for `wake: <seat> ok`.
+
+### Sending a test wake
+
+A test wake is one properly formed inbox line, sent with `POST /inbox` and the `X-Live-Ingest` header (the ingest secret). Body: `{"lines": [ {...} ]}` where each line has `id` (unique, e.g. `test:<seat>:<time>`), `seat`, `t_ct` (ISO time with offset), `type` (`test`), `repo` (`owner/name`), `number` (0 if none), `title`, `url` (may be empty) and `reason` (name the sender, e.g. `test wake from forge`). No `body`, `text` or `message`. A malformed line returns 400 and proves nothing about the wake (forge's 10:22 test on 2026-10-13).
+
+Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then the seat confirms its routine ran and acks with `live-inbox <seat> --ack <id>`.
+
+**Who can send one.** Today only forge can: it holds the ingest secret (`INGEST_SECRET`) on the box, and seat keys can only read and ack their own inbox. For another seat (or critic's final pass) to send test wakes, Blaze has to approve either sharing the ingest secret with that seat in its owner's 1:1, or a new per-seat send key with a `/inbox` route that accepts `type: test` lines only (not built yet).
 
 ### Unclear in the code
 

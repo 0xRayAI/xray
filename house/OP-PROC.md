@@ -158,7 +158,7 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 7. **Room.** Only the merge-and-deploy receipt, the final result, or a blocker.
 8. **Log.** CoS logs refinements as they happen and folds them into one OP-PROC PR.
 
-**P1 lane (needs Arch1's approval).** A P1 fix goes to `dev` (quick checks only: `.github/workflows/dev-lane.yml` runs lint + `house/live/tests/run_tests.sh`), then deploy from `dev`, then a `dev` → `main` PR with full CI and critic's pass. `main`'s CI is unchanged.
+**P1 path (needs Arch1's approval).** Broken production: roll back to the last good deploy first (by deployment id; it took ~20 s on 2026-10-13), then fix forward with only the fix. The fix goes to `dev` (quick checks only: `.github/workflows/dev-lane.yml` runs lint + `house/live/tests/run_tests.sh`). Forge deploys the tip before merging, with the rollback deployment id ready; forge merges `dev` → `main` when the full CI is green. Critic gives yes/no on the hotfix change only; the full final pass runs once after merge and deploy. The normal cadence resumes afterward. `main`'s CI is unchanged.
 
 **Drill refinements.**
 - Wakes ack only with `live-inbox <seat> --ack <id>`, never a hand-written POST (no approval card for a routine ack).
@@ -166,6 +166,12 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 - Waveboard history lives on the `/data` volume; rollbacks and redeploys keep it. Confirm a diff does not touch `/data`.
 - Our install is public (no password, no masking); other installs stay gated and masked unless they opt in.
 - Seats ask Blaze yes/no questions in his 1:1. Webhook and key links go only in the owner's 1:1.
+- One PR per lap: follow-ups and nits fold into the open PR, never a new one.
+- Critic reviews the branch before forge pushes it. A rebase with byte-identical files gets a re-stamp in seconds.
+- Blaze: land the changes first, then one final test pass after they're live.
+- Production may run an older build than `main` after a rollback; the room says which deploy is live.
+- Critic owns validating the live board: the final pass checks the data each seat shows (step 6), not just the page title and `/healthz` (Blaze caught example names and every seat idle on 2026-10-13).
+- Closed in lap 2: `live-inbox` runs on its defaults (no hand-passed URL or folders; our box sets the folder variables, see `house/live/docs/inbox.md`), and `/cards` is readable without a key in public mode.
 
 ## Done when
 
