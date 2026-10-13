@@ -4,6 +4,7 @@ The live board: one Node process serves the page and supervises the collector. S
 
 - [Board](board.md) — cards, holds, nudges, layout, ghost reconcile
 - [Inbox](inbox.md) — post, reject, read, ack
+- [Seat wake URLs and webhooks](inbox.md#seat-wake-urls-and-webhooks) — `SEAT_WEBHOOKS`, request shape, debounce, fallback
 - [Sources](sources.md) — Jira and `POST /ingest/source`
 - [Upstream](upstream.md) — one pinned repo and the logins that count as this fleet
 - [Deploy FAQ](faq.md) — Symptom, Cause, and Fix for install blockers
