@@ -13,6 +13,8 @@
 
 `LIVE_NODE_MAP` maps your fleet's GitHub logins to page seats (JSON object, or a path to a JSON file; non-string values are ignored). Logins not in the map are hidden by default everywhere: feed, board (including the inbox event cache), packets, upstream items. `LIVE_SHOW_UNMAPPED=1` shows them as `Others` instead, which publishes those logins and titles. The server passes both to the collector.
 
+**Private repos (D18, #267).** With `COLLECTOR_ORG` set, each repo's `private` flag comes from `GET /repos/<org>/<repo>`. A private repo is still collected: inboxes (`/ingest/events`) and `/cards` behind seat keys keep its real name and titles. The login page and `/live-events.json` show it only as `private repo`, with no title, label or link. The login map (`LIVE_NODE_MAP`, `LIVE_SHOW_UNMAPPED=1`) must never be used to bring private titles back onto the page. Public `/healthz` carries a repo count and two times, never repo names.
+
 ## Seat auth
 | Seat | Credential |
 |---|---|
@@ -73,7 +75,7 @@ pointing to the live board. Re-enable local writing only for debugging with `LIV
 
 ## Box helpers (any box bot)
 - `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines. A read never acks (`--peek` is the same as a plain read). `live-inbox <seat> --ack <id|all>` or `--pop <id|all>` is the receipt; the cursor still advances to the newest line seen. Cursor in
-  `/srv/live/run/fleet/cursors/<seat>.txt` (advanced after a successful read).
+  `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default, `/srv/live/run/fleet/cursors`, is not writable on the box or a Mac, so set `LIVE_CURSORS` to a writable folder (for example `~/.burst/cursors`) or every read fails.
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted
 in-process by the builder-app wrapper's `mint_token.token()`, never printed).
