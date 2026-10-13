@@ -7,6 +7,7 @@
 - `house init --migrate` appends the template Cadence block when `HOUSE.md` has no `## Cadence` heading, starts missing `watchers/` and `fleet/` files, and never overwrites an existing ledger.
 - `grok-bot doctor` warns, and does not fail the plant, when a Cadence section is present and `review-sent.log` or `stall-sweep.log` is missing or older than 2 hours, when the activity log's last line is not JSON with `t_ct`, `kind`, `action`, and `seat`, or when the suit `.xray/codex.json` term count or `lastUpdated` differs from `node_modules/0xray`. When `watchers/` exists and Cadence is missing, doctor hints `grok-bot house init --migrate`.
 - Live-mesh lines follow the #248 box reader: box lines carry `seat`, and prompt pulses are `{t_ct, seat, kind: "prompt", action: "sent"}`.
+- OP-PROC merge tiers: gates A and C on every merge; B and D set per PR in a new packet `gates:` field (raise-only, locked at review). Gate B runs locally on the owner's machine across TUI environments. Adds proof, review-round, App-only identity, release-order, stacked-fix, fold-watch and stuck-tool rules.
 - Lexicon and pack notes since the 0.1.9 publish: chime, packet, EXECUTE, handoff (#221), the pack OP-PROC new-seat gate (#224), and watcher and workstream (#225).
 
 ## 0.1.9

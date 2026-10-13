@@ -32,24 +32,19 @@ One line, when the job is short: `goal: … · constraints: … · path: … · 
 
 | Rule | What to do |
 |---|---|
-| Clouds + churn | Heavy multi-file code only. Cloud work goes as a follow-up to the existing cloud agent session that holds the context; log its id on the Card. Launch a new agent only when (a) no session has context for that repo, or (b) **all three** hold: the context-holding agent already has 2+ jobs queued, the new job touches different files, and the job can be briefed from the docs alone. Otherwise, queue it as a follow-up on the existing session. [CLOUD-CONTINUITY.md](ops/CLOUD-CONTINUITY.md). |
+| Clouds + churn | Heavy multi-file code only. Cloud work goes as a follow-up to the existing cloud agent session that holds the context; log its id on the Card. Launch a new agent only when (a) no session has context for that repo, or (b) **all three** hold: the context-holding agent already has 2+ jobs queued, the new job touches different files, and the job can be briefed from the docs alone. Otherwise, queue it as a follow-up on the existing session. [CLOUD-CONTINUITY.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/CLOUD-CONTINUITY.md). |
 | Branch + PR always | Pull first, branch from fresh origin/main, rebase before merge, never commit on main. Roll back by closing the PR or reverting. |
 | Coding discipline | Stay on task, no stubs, surgical edits, YAGNI, stop at acceptance. |
 | npm | CLI auth, no OTP in chat, poll until live. Not done until both: an annotated tag `vX.Y.Z` pushed on the published commit, and a GitHub Release for that tag so Latest flips. A pushed tag alone is FAIL. The ship receipt includes the release URL. Railway after npm. [Publish](skills/ship-ready-mill-gate/SKILL.md). The implementer drafts the notes from CHANGELOG in the same pass as npm. The reviewer friend-tests them (plain words a builder would hear). The human owner publishes the Release (or an explicit GO). Title: `vX.Y.Z — <short friend line>`. The body is a real Release, not a tag annotation. ## What's new — 3–7 plain bullets from CHANGELOG (shipped user/builder value only). ## Who it helps — one short line (builders / suit wearers / …). ## How to get it — npm + tag + link to full CHANGELOG. ## Breaking / notes — only if real; omit the section if empty. Banned: one-liners / stub bodies ("wear-gated tarball only", "see CHANGELOG", empty); gate jargon (Kind 0, calling, organ, worn, OP-PROC internals); Dist/X voice, hype, emojis-as-substance; inventing features not in CHANGELOG. |
-| Proof | Every fix ships with a test that fails when the fix is reverted. |
-| Seat identity | Post, push and review only through the seat's own GitHub App. Never a personal token or a `GITHUB_TOKEN` fallback. Keys are never pasted. |
+| Proof + seat identity | Every fix ships with a test that fails when the fix is reverted. Post, push and review only through the seat's own GitHub App. Never a personal token or a `GITHUB_TOKEN` fallback. Keys are never pasted. |
 | Release order | Bump, stamp (`version-manager --artifacts-only`), docs-check (hard gate), pack, Strict, CI, merge, wear. Only the tested tarball ships. |
 | Stacked fixes | A fix to another seat's or fleet's PR goes as a stacked PR from the seat's App, on a base branch at that PR's tip, plus a fold-ask comment. Never push to their branch. |
-| Fold watch | When an awaited PR is folded or gets a new tip, the watcher posts it to the room at once. |
-| Stuck tools | If Shell or tools break, reboot the seat computer first, then re-probe. |
-| Briefing | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. |
-| Board before building | Check the board before building. Write forward to the board and memory. |
+| Fold watch + stuck tools | When an awaited PR is folded or gets a new tip, the watcher posts it to the room at once. If Shell or tools break, reboot the seat computer first, then re-probe. |
+| Briefing + board before building | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. Check the board before building. Write forward to the board and memory. |
 | Answer the owner | Answer from live GitHub and the board. Routines stay quiet on closed beats. A failing routine never blocks a reply. |
-| Speak up | On ownership, a blocker, live proof, or a money or credential change. |
-| Ask-first also covers | Sends to outside agent networks, public gists holding secrets, token rotation, billing, taste calls. |
+| Speak up + ask-first also covers | On ownership, a blocker, live proof, or a money or credential change. Sends to outside agent networks, public gists holding secrets, token rotation, billing, taste calls. |
 | Dist | No thanks-only replies. No cut-lines by default. [VOICE.md](https://github.com/0xRayAI/xray/blob/main/grok-bot/ops/dist/VOICE.md). |
-| Status | Done / Verify / Reflect / Next. |
+| Status + cloud prompts | Done / Verify / Reflect / Next. Written in plain English. |
 | Twice to disk | A rule said twice goes to disk the same day. Procedure changes mirror as a Normal PR. |
-| Cloud prompts | Written in plain English. |
 
 **House.** The page above is the same for every team. Yours is `house/`: **Owner**, **Seats**, **Public voice**, **Allowed**, **Ask first**, **Board** (`house/WAVEBOARD.md`, `house/ATTENTION_STATE.md`). Seats read `house/` first; the house wins only for those six. Your five principles live in your `house/OP-PROC.md` after init. Optional roster (role, seat name, agent id): `house/ROLE-MAP.md`. Ask first and Allow are enforced only in `house/AUTO-REVIEW.md`. Setup: `grok-bot house init`, fill HOUSE.md, show the owner (nothing in Allowed counts until they approve), run `grok-bot doctor`. Change the house when the owner says a rule twice. The six higher-level rules, the Confer cadence, the Board rules and the RACI table are in [CADENCE.md](CADENCE.md). Goggles views one plane.

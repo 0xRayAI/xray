@@ -24,7 +24,9 @@
     "README.md",
     "AGENTS.md",
     "SKILLS.md",
-    "llms.txt"
+    "llms.txt",
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "start": "node bin/grok-bot.js"
