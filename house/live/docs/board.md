@@ -45,3 +45,11 @@ Every seat must log these lines, or it goes dark on the board even while it's bu
 Seats off the box (for example Arch1) POST the same shapes to `/activity` with their seat key (`kind: prompt|turn|subagent|watcher|cloud_agent`). A seat counts as working while it has an open turn or task, or one of its cloud agents is running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
 Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are real events on a card, and they reset its idle clock. **Pulses** are liveness signals only. **Packets** are tracked asks in an inbox, and **acks** close them. **Nudges** are packets the server creates after 60 min with no beat. **Wakes** are content-free webhook doorbells that follow packets. **Seat status** is the working or idle light.
+
+## Page behaviour (lap2)
+
+- The header "N of M bots active" counts the strip's seats with the same seat state the chips show (working > live > active > idle), so the two always agree. Server-side, a wake that lands, an inbox read or an ack also makes a seat active.
+- Board grouping: each card sits under its seat (next owner, else owner). A card in review also shows as waiting under the review seat (`L.REVIEW_SEAT`; ours is critic), so the reviewer's group shows its queue, not only its done cards.
+- Rewound or replaying, the Board shows the cards as of the timeline point (cards whose first beat is at or before it, beats up to it). Cards carry their last few beats only, so very old points are approximate.
+- Packets fly for 2.6 s with a halo and a fading path, so each hop is visible seat to seat. The REPLAY badge shows once: on the pill during a replay pass, beside it only for the ambient replay loop.
+- Lens labels are kept inside the canvas. The kit maps no avatars (it ships none); a fleet overlay maps the images it ships, the rest use the drawn badge.

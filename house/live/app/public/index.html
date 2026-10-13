@@ -183,11 +183,12 @@
     <ul id="log"></ul>
   </section>
 
-  <footer>Example</footer>
+  <footer id="siteFoot"></footer>
 </main>
 <script>window.LIVE_FEED_URL = '/live-events.json';</script>
 <script src="live.js"></script>
 <script src="live-config.js"></script>
+<script src="site-config.js"></script>
 <script>
 (function () {
   'use strict';
@@ -196,12 +197,13 @@
   var canvas = document.getElementById('mesh');
   var ctx = canvas.getContext('2d');
   var $ = function (id) { return document.getElementById(id); };
+  if ($('siteFoot')) $('siteFoot').textContent = L.SITE_FOOT || '';
   var state = { events: [], live: true, t: Date.now(), generatedAt: null };
   var playing = false, speed = 600, source = '', fetchError = '', lastFrame = performance.now();
   var orbit = 0, lastDraw = null, dragging = false;
   var flashes = [];            // live-mode pings: { e, start } in wall ms
   var mem = {};                // fetchFeed etag / rate-limit memory
-  var FLASH_MS = 1600, STAGGER_MS = 450;
+  var FLASH_MS = 2600, STAGGER_MS = 450;   // long enough to watch a packet cross seat to seat
   var reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var t0Page = performance.now();
   var pos = {};                // per-frame node positions (SATS + bob)
@@ -296,9 +298,10 @@
   }
   // Fleet state from the feed: seat active = owned file changed or GitHub activity in the last 15 min
   function fleetActive(k) {
-    var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
+    var f = window.LIVE_FLEET, name = k === 'blinky' && !(f && f.seats && f.seats.blinky) ? 'Coord' : k;
     if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.active);   // open agent or cursoragent on GitHub
-    return !!(f && f.seats && f.seats[name] && f.seats[name].active);
+    var s = f && f.seats && (f.seats[name] || f.seats[String(name).toLowerCase()]);
+    return !!(s && s.active);
   }
   // the one seat state for chip + node; views recorded for tests/debug (window.LIVE_SEAT_VIEWS)
   var chipView = {}, nodeView = {}; window.LIVE_SEAT_VIEWS = { chip: chipView, node: nodeView };
@@ -418,13 +421,17 @@
   }
   function byBeat(a, b) { return (b.last_beat_t || 0) - (a.last_beat_t || 0); }
   function renderWave(force) {
-    var k = wb.stamp + ':' + Math.floor(Date.now() / 30000);
+    var asOf = state.live ? null : state.t;   // rewound / replay: the board shows the cards as of the timeline
+    var k = wb.stamp + ':' + Math.floor(Date.now() / 30000) + ':' + (asOf == null ? 'live' : Math.floor(asOf / 60000));
     if (!force && k === wb.key) return; wb.key = k;
     var body = $('waveBody'); body.textContent = ''; wb.byKey = {};
     var S = wb.stats, strip = $('waveStats'); strip.textContent = '';
     if (S) [['issues opened', S.issues_opened_24h], ['issues closed', S.issues_closed_24h], ['PRs opened', S.prs_opened_24h],
       ['PRs merged', S.prs_merged_24h], ['PRs closed unmerged', S.prs_closed_unmerged_24h], ['open now', S.open_total]].forEach(function (x, i) {
       var d = wbEl('span', 'wstat' + (i === 5 ? ' total' : '')); d.appendChild(wbEl('b', '', String(x[1] == null ? '–' : x[1]))); d.appendChild(wbEl('small', '', x[0] + (i < 5 ? ' 24h' : ''))); strip.appendChild(d); });
+    var cards = L.boardAt(wb.allCards || wb.cards, asOf);
+    wb.cards = cards;
+    var head0 = $('waveCount'); if (head0) head0.dataset.asof = asOf == null ? '' : L.fmtCt(asOf);
     var live = 0, stalls = 0, held = 0;
     wb.cards.forEach(function (c) {
       if (c.pinned) return;
@@ -491,24 +498,15 @@
       pins.forEach(function (c) { pu.appendChild(card(c)); }); body.appendChild(pu);
     }
     var seats = [], bySeat = {};
-    wb.cards.forEach(function (c) {
-      if (c.pinned || cardWorking(c) || LK.child[c.key]) return;
-      var s = cardSeat(c);
-      if (!bySeat[s]) { bySeat[s] = []; seats.push(s); }
-      bySeat[s].push(c);
+    L.boardGroups(wb.cards.filter(function (c) { return !(c.pinned || cardWorking(c) || LK.child[c.key]); }), cardSeat).forEach(function (g) {
+      seats.push(g.name); bySeat[g.name] = g.cards;
     });
     seats.sort(function (a, b) { return String(L.LABEL[a] || a).localeCompare(String(L.LABEL[b] || b)); });
     var bucketName = { waiting: 'waiting on this seat', review: 'in review', held: 'held' };
     seats.forEach(function (s) {
       body.appendChild(wbEl('div', 'wgroup', L.LABEL[s] || s));
       var buckets = { waiting: [], review: [], held: [], done: [] };
-      bySeat[s].forEach(function (c) {
-        var b = 'waiting';
-        if (c.state === 'closed' || c.state === 'parked' || c.stage === 'done') b = 'done';
-        else if (c.state === 'held') b = 'held';
-        else if (c.stage === 'review') b = 'review';
-        buckets[b].push(c);
-      });
+      bySeat[s].forEach(function (c) { buckets[c._bucket || L.cardBucket(c)].push(c); });
       ['waiting', 'review', 'held'].forEach(function (b) {
         var cs = buckets[b].sort(byBeat); if (!cs.length) return;
         body.appendChild(wbEl('div', 'wsub', bucketName[b] + ' (' + cs.length + ')'));
@@ -611,7 +609,7 @@
     });
     // pings in flight: dimmed ambient replay underneath, real live pings on top at full brightness
     var ghosts = ambientPings(nowWall); ambientStats.drawing = ghosts.length;
-    var tagOn = !!ambient || !!replay;   // replay pass running: tag beside the pill (the pill itself is untouched)
+    var tagOn = !!ambient && !replay;   // ambient loop only: a replay pass already says REPLAY on the pill (no duplicate badge)
     if (tagOn !== specTagOn) { specTagOn = tagOn; $('specTag').classList.toggle('on', tagOn); }
     if (!reduced) { ghosts.forEach(function (g) { g.live = true; }); if (replay) pings.forEach(function (g) { g.live = true; }); }
     if (ghosts.length) { ctx.globalAlpha = AMBIENT_ALPHA; ghosts.forEach(drawPing); ctx.globalAlpha = 1; }
@@ -629,9 +627,12 @@
         var tq = bez(a, m, b, Math.max(0, p - k * 0.04));
         ctx.fillStyle = rgb(pk.col, (6 - k) / 6); ctx.beginPath(); ctx.arc(tq[0], tq[1], 6 - k, 0, 7); ctx.fill();
       }
+      ctx.strokeStyle = rgb(pk.col, 0.35 * (1 - p)); ctx.lineWidth = 2;   // the path it travels, fading as it lands
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(m[0], m[1], b[0], b[1]); ctx.stroke();
       var q = bez(a, m, b, p);
-      ctx.fillStyle = rgb(pk.col); ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, 7); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0], q[1], 3, 0, 7); ctx.fill();
+      ctx.fillStyle = rgb(pk.col, 0.25); ctx.beginPath(); ctx.arc(q[0], q[1], 18, 0, 7); ctx.fill();   // halo
+      ctx.fillStyle = rgb(pk.col); ctx.beginPath(); ctx.arc(q[0], q[1], 11, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(q[0], q[1], 4, 0, 7); ctx.fill();
       if (pk.late) { ctx.font = '600 9px ui-monospace, monospace'; ctx.fillStyle = 'rgba(255,214,120,.85)'; ctx.fillText('late', q[0] + 8, q[1] - 13); }
     }
     // hub
@@ -721,11 +722,12 @@
       ctx.restore();
       top += 14;
     }
+    var lx = L.labelX(x, w, W);   // never clipped at the canvas edge
     ctx.fillStyle = '#101420'; ctx.strokeStyle = silentNow ? '#f59e0b' : rgb(c); ctx.lineWidth = 2;
-    roundRect(x - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
+    roundRect(lx - w / 2, top, w, h, 6); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillStyle = rgb(c); ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif'; ctx.fillText(title, x, top + 2 * fs);
-    ctx.fillStyle = '#96a0b4'; ctx.font = 11 * fs + 'px system-ui, sans-serif'; ctx.fillText(sub, x, top + (title ? 17 : 3) * fs);
+    ctx.fillStyle = rgb(c); ctx.font = 'bold ' + 14 * fs + 'px system-ui, sans-serif'; ctx.fillText(title, lx, top + 2 * fs);
+    ctx.fillStyle = '#96a0b4'; ctx.font = 11 * fs + 'px system-ui, sans-serif'; ctx.fillText(sub, lx, top + (title ? 17 : 3) * fs);
   }
 
   var lastText = 0, lastLogKey = '';
@@ -781,8 +783,9 @@
     $('fleet').textContent = L.fleetLine(hot);
     $('blackout').textContent = L.blackoutLine(now);
     $('play').innerHTML = L.isPlaying(state.live, playing) ? '&#10074;&#10074; Pause' : '&#9654; Play';
-    var seatNames = (window.LIVE_FLEET && window.LIVE_FLEET.seats) ? Object.keys(window.LIVE_FLEET.seats) : L.SEAT_NAMES;
-    var bots = seatNames.filter(function (k) { return L.own(hot, k) || fleetActive(k); }).length;
+    var seatNames = L.SEAT_NAMES;   // the strip's seats: header count and chips read the same seatState
+    var bots = seatNames.filter(function (k) { return seatState(k, hot) !== 'idle'; }).length;
+    window.LIVE_HEADER_ACTIVE = [bots, seatNames.length];
     var total = window.LIVE_FEED_TOTAL != null ? window.LIVE_FEED_TOTAL : state.events.length;
     var st = state.generatedAt ? 'Updated <b title="' + L.fmtCt(state.generatedAt) + '">' + L.ago(now - state.generatedAt) + '</b>' : 'Waiting for feed';
     st += ' · ' + Number(total).toLocaleString('en-US') + ' events · ' + bots + ' of ' + seatNames.length + ' bots active';
@@ -855,7 +858,7 @@
       if (!r.feed) return;
       var out = L.applyFeed(state, r.feed, Date.now());
       state = out.state;
-      if (r.feed.board && Array.isArray(r.feed.board.cards)) { var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats); if (ws !== wb.stamp) { wb.cards = r.feed.board.cards; wb.stamp = ws; wb.key = ''; } }
+      if (r.feed.board && Array.isArray(r.feed.board.cards)) { var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats); if (ws !== wb.stamp) { wb.cards = wb.allCards = r.feed.board.cards; wb.stamp = ws; wb.key = ''; } }
       var isNew = {}; out.added.forEach(function (id) { isNew[id] = 1; });
       var fresh = first ? state.events.slice(-6) : state.events.filter(function (e) { return isNew[e.id]; });
       if (first && !reduced && startReplay()) fresh = [];   // live replaces the first-load flashes

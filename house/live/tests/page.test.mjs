@@ -54,7 +54,7 @@ test('board: every feed name maps to a drawn node; instances -> Example, QaOne/Q
   assert.deepEqual(L.liveColor({ kind: 'commit_status', state: 'pending' }), [165, 175, 190]);
   assert.equal(L.liveColor({ kind: 'merged' }), null);
 
-  assert.equal(L.LABEL.Lead, 'Lead'); assert.equal(L.SUB.Lead, 'Architect'); assert.equal(L.botImage('Lead'), 'avatars/lead.png');
+  assert.equal(L.LABEL.Lead, 'Lead'); assert.equal(L.SUB.Lead, 'Architect'); assert.equal(L.botImage('Lead'), null);   // kit ships no avatar files, maps none
   assert.equal(L.LABEL['mymuse.house'], 'Example'); assert.equal(L.LABEL.QA, 'QA');
   for (const ed of L.EDGES) assert.ok(ed[0] in L.SATS && ed[1] in L.SATS, ed.join('-'));
   const names = ['Builder', 'Reviewer', 'reviewer', 'Tester', 'QaOne', 'QaTwo', 'QA', 'Operator', 'Coord', 'CI', 'Others',
@@ -220,7 +220,7 @@ test('Live board: rainbow trail only on replay pings, REPLAY tag beside (never r
   assert.match(html, /<span class="pill" id="pill">LIVE<\/span><span class="spec-tag" id="specTag" aria-hidden="true">\u{1FA9E} REPLAY<\/span>/u);
   assert.match(html, /\.spec-tag \{[^}]*opacity: 0;[^}]*transition: opacity \.3s/);
   assert.match(html, /prefers-reduced-motion: reduce\) \{ \.spec-tag, \.spec-tag\.on \{ transition: none; \} \}/);
-  assert.match(html, /var tagOn = !!ambient \|\| !!replay;/);
+  assert.match(html, /var tagOn = !!ambient && !replay;/);
   assert.match(html, /if \(!reduced\) \{ ghosts\.forEach\(function \(g\) \{ g\.live = true; \}\); if \(replay\) pings\.forEach/);
   assert.match(html, /if \(pk\.live\) replayTrail\(a, m, b, p, nowWall\);\n      else for \(var k = 5;/);
   // the tag code never writes the pill
@@ -264,4 +264,63 @@ test('silent seat: amber "silent 2h" on node and chip from fleet.seats[name].sil
   assert.match(html, /var silentNow = !spinning && fleetSilent\(key\);/);
   assert.match(html, /ctx\.fillText\('silent 2h', x, top\)/);
   assert.match(html, /var sil = !v\.blink && fleetSilent\(a\[0\]\); if \(sil\) s\.st\.textContent \+= ' · silent 2h';/);
+});
+
+// ---- lap2 UI review: helpers + our overlay ------------------------------------------------------------------------
+function loadCfg(withSite) {
+  const L = { SOURCES: [], AGENTS: [], SEAT_NAMES: [], SATS: {}, COLOR: {}, LABEL: {}, SUB: {}, GLYPH: {}, SQUARE: {},
+    EDGES: [], BOT_IMAGES: [], KIND_WORD: {}, applyFeed: (st, feed) => ({ state: { events: feed.events } }) };
+  new Function('window', 'location', fs.readFileSync(path.join(APP, 'public', 'live-config.js'), 'utf8'))({ LiveMesh: L }, { search: '' });
+  new Function('window', fs.readFileSync(path.join(APP, 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
+  if (withSite) new Function('window', fs.readFileSync(path.join(APP, '..', 'site', 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
+  return L;
+}
+test('our overlay: 9 seats on strip and Lens, no Lead / Others node, no Example label, avatars only for shipped files', () => {
+  const L = loadCfg(true);
+  const ours = ['blinky', 'forge', 'mill', 'critic', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
+  assert.deepEqual(L.SEAT_NAMES, ours); assert.deepEqual(L.AGENTS.map(a => a[0]), ours);
+  for (const s of ours) assert.ok(s in L.SATS, s);
+  for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
+  assert.ok(!JSON.stringify([L.LABEL, L.SUB]).includes('Example'));
+  assert.equal(L.LABEL['mymuse.house'], 'burst-live');
+  for (const e of L.EDGES) assert.ok(e[0] in L.SATS && e[1] in L.SATS, String(e));
+  for (const k of L.BOT_IMAGES) assert.ok(fs.existsSync(path.join(APP, '..', 'site', 'public', L.botImage(k))), k);
+  assert.equal(L.botImage('mill'), null);
+  const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
+    { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' }] }).state.events;
+  assert.deepEqual(ev.map(e => [e.from, e.to]), [['GitHub', 'GitHub'], ['GitHub', 'mymuse.house'], ['forge', 'GitHub']]);
+  for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));
+  assert.match(L.SITE_FOOT, /Bifrost/);
+});
+test('kit without overlay: template roles kept, no avatars mapped (no 404s), empty footer', () => {
+  const L = loadCfg(false);
+  assert.deepEqual(L.SEAT_NAMES, ['Builder', 'Builder-cloud', 'Reviewer', 'Tester', 'QA', 'Operator', 'blinky']);
+  assert.deepEqual(L.BOT_IMAGES, []); assert.equal(L.SITE_FOOT, '');
+  assert.ok(!/<footer>Example<\/footer>/.test(html)); assert.match(html, /<script src="site-config.js"><\/script>/);
+});
+test('Lens label stays inside the canvas', () => {
+  const L = loadCfg(false);
+  assert.equal(L.labelX(860, 150, 920), 920 - 75 - 2); assert.equal(L.labelX(30, 100, 920), 52); assert.equal(L.labelX(400, 100, 920), 400);
+  assert.match(html, /var lx = L\.labelX\(x, w, W\);/);
+});
+test('header active count and chips read one source (seatState over L.SEAT_NAMES)', () => {
+  assert.match(html, /var seatNames = L\.SEAT_NAMES;/);
+  assert.match(html, /seatNames\.filter\(function \(k\) \{ return seatState\(k, hot\) !== 'idle'; \}\)/);
+});
+test('board: review cards also wait on the review seat; grouping by seat; board follows the timeline', () => {
+  const L = loadCfg(true);
+  const cards = [{ key: 'a', owner: 'forge', stage: 'review', state: 'live', beats: [{ t: 100 }, { t: 300 }] },
+    { key: 'b', owner: 'critic', stage: 'done', state: 'closed', beats: [{ t: 50 }] },
+    { key: 'c', owner: 'mill', stage: 'open', state: 'live', beats: [{ t: 500 }] }];
+  const g = Object.fromEntries(L.boardGroups(cards, c => c.owner).map(x => [x.name, x.cards]));
+  assert.deepEqual(g.critic.map(c => [c.key, c._bucket || L.cardBucket(c)]), [['a', 'waiting'], ['b', 'done']]);
+  assert.deepEqual(g.forge.map(c => L.cardBucket(c)), ['review']);
+  assert.deepEqual(L.boardAt(cards, 200).map(c => [c.key, c.beats.length]), [['a', 1], ['b', 1]]);
+  assert.equal(L.boardAt(cards, null), cards);
+  assert.match(html, /var cards = L\.boardAt\(wb\.allCards \|\| wb\.cards, asOf\);/);
+});
+test('packets: longer flight, halo + path so a hop is visible seat to seat; one REPLAY badge', () => {
+  assert.match(html, /var FLASH_MS = 2600/);
+  assert.match(html, /arc\(q\[0\], q\[1\], 18, 0, 7\)/);
+  assert.match(html, /var tagOn = !!ambient && !replay;/);
 });

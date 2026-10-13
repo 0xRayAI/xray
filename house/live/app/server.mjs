@@ -1466,6 +1466,10 @@ async function handle(req, res) {
 
   if (m !== 'GET' && m !== 'HEAD') return send(req, res, 405, 'text/plain', 'method not allowed', { Allow: 'GET, HEAD' });
 
+  if (p === '/favicon.ico' && (PUBLIC || validSession(req))) {   // public mode: open like the page (was a 401)
+    const fi = STATIC.get('/favicon.png');
+    return fi ? send(req, res, 200, fi.type, fi.body) : send(req, res, 204, 'image/png', Buffer.alloc(0));
+  }
   if (!validSession(req)) {
     if (p === '/live-events.json') return json(req, res, 401, { error: 'login required' });
     return send(req, res, 401, 'text/html; charset=utf-8', loginPage());
