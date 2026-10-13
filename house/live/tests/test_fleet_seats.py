@@ -12,9 +12,11 @@ ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please", "
         "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch1 deep-review #262"}
 
 
-def seats(label, kind="issue_comment", **kw):
+def seats(label, kind="issue_comment", watch=False, **kw):
+    """Seats an event routes to; watch=False leaves out the blanket comment-watch line (blinky) so asks are checked alone."""
     ev = {"kind": kind, "label": label, "repo": "example-org/x", "number": 262, "t_ct": "2026-10-13T05:00:00-05:00", "id": label + kind, **kw}
-    return sorted({l.get("seat") for l in inbox._direct(ev, ROLES) if l})
+    return sorted({l.get("seat") for l in inbox._direct(ev, ROLES)
+                   if l and (watch or not str(l.get("reason") or "").startswith("comment watch"))})
 
 
 class FleetSeats(unittest.TestCase):
@@ -73,6 +75,24 @@ class FleetSeats(unittest.TestCase):
         ids = lambda e: {l["id"] for l in inbox._direct(e, ROLES) if l["seat"] == "critic"}
         self.assertEqual(ids(ev("a", "abc123def4567")), ids(ev("b", "abc123def4567")))
         self.assertNotEqual(ids(ev("a", "abc123def4567")), ids(ev("c", "fff123def4567")))
+
+    def test_comment_on_merged_pr_reaches_author_seat_and_blinky_without_mention(self):
+        got = seats("someone comment · xray #266", watch=True, kind="pr_comment", to="forge", pr_merged=True, **{"from": "Others"})
+        self.assertEqual(got, ["blinky", "forge"])
+        lines = [l for l in inbox._direct({"kind": "pr_comment", "label": "x comment · xray #266", "repo": "o/x", "number": 266,
+                 "t_ct": "2026-10-13T05:00:00-05:00", "id": "c1", "to": "forge", "pr_merged": True}, ROLES)]
+        self.assertTrue(all("merged PR" in l["reason"] for l in lines), lines)
+        self.assertEqual(seats("x review comment · xray #266", watch=True, kind="review_comment", to="critic"), ["blinky", "critic"])
+
+    def test_issue_comment_reaches_blinky_and_body_mentions_route(self):
+        self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment"), ["blinky"])
+        self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", mentions=["mill"]), ["blinky", "mill"])
+        self.assertIn("forge", seats("xray #9 opened", kind="issue_open", mentions=["forge"]))
+
+    def test_own_comment_not_routed_to_self_and_one_line_per_seat(self):
+        got = [l["seat"] for l in inbox._direct({"kind": "pr_comment", "label": "c", "repo": "o/x", "number": 1, "id": "c2",
+               "t_ct": "2026-10-13T05:00:00-05:00", "to": "forge", "from": "forge", "mentions": ["blinky"]}, ROLES)]
+        self.assertEqual(sorted(got), ["blinky"])
 
 
 if __name__ == "__main__":

@@ -217,5 +217,8 @@
   },
   "_note_pr_heads": "every PR open / new head on a watched repo, mention or not; one line per seat per repo#number@sha (inbox_pass.py)",
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); SEO seats have keys but no routes yet",
-  "_note_builder_cloud": "builder-cloud gets every builder line (mirrored server-side in app/server.mjs) plus nudges to builder; no routes of its own"
+  "_note_builder_cloud": "builder-cloud gets every builder line (mirrored server-side in app/server.mjs) plus nudges to builder; no routes of its own",
+  "comment_watch": {"kinds": ["pr_comment", "review_comment", "issue_comment"], "author_kinds": ["pr_comment", "review_comment"],
+                    "author_reason": "comment on your PR", "seats": {"blinky": "comment watch (CoS)"}},
+  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR comments also to the PR author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies)."
 }

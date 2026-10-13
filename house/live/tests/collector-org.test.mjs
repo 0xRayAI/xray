@@ -35,7 +35,9 @@ test('org repos unioned with COLLECTOR_REPOS at start; a repo new to the org is 
 test('archived, 403 and 404 org repos are skipped; the server keeps serving', async () => {
   assert.ok(await until(/collector: skip acme\/forbidden \(403\)/) && await until(/collector: skip acme\/gone \(404\)/), logs);
   assert.ok(!/collector: repos .*acme\/(old|forbidden|gone)/.test(logs), logs);
-  assert.equal((await fetch(BASE + '/healthz')).status, 200);
+  const h = await fetch(BASE + '/healthz'); assert.equal(h.status, 200);
+  const j = await h.json(); assert.equal(j.repos_unreadable, 2, JSON.stringify(j));
+  assert.ok(!JSON.stringify(j).includes('forbidden'));
 });
 test('/healthz (no auth): repo count + oldest/newest collected time, no repo names', async () => {
   const feed = { generated_at: '2026-10-13T07:00:00-05:00', events: [

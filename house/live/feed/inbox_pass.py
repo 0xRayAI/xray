@@ -91,6 +91,9 @@ def _direct_all(event, roles):
     out = _direct_core(event, roles)
     kind = inbox._kind(event)
     hay = str(event.get("label") or "")
+    tagged = [m for m in event.get("mentions") or [] if isinstance(m, str)]
+    if tagged:   # @handles the collector read from the body (handles only, the body is never carried)
+        hay += " " + " ".join("@" + m for m in tagged)
     for seat, r in (roles.get("extra_seats") or {}).items():
         if not isinstance(r, dict) or not r:
             continue
@@ -109,8 +112,36 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, reason, line_id=key)
             if line:
                 out.append(line)
+    cw = roles.get("comment_watch") or {}
+    if kind in (cw.get("kinds") or []) and event.get("number") is not None:
+        # every comment on a PR (open, closed or merged) reaches the PR author's seat and the watch seats, mention or not
+        author = alias_seat(event.get("to"), roles) if kind in (cw.get("author_kinds") or []) else None
+        merged = " (merged PR)" if event.get("pr_merged") else ""
+        if author:
+            line = inbox._line(event, author, (cw.get("author_reason") or "comment on your PR") + merged)
+            if line:
+                out.append(line)
+        for seat, reason in (cw.get("seats") or {}).items():
+            line = inbox._line(event, seat, reason + merged)
+            if line:
+                out.append(line)
     me = actor_seat(event, roles)
+    seen, uniq = set(), []
+    for l in out:   # one line per seat per event
+        k = (l.get("seat"), l.get("id"))
+        if k not in seen:
+            seen.add(k); uniq.append(l)
+    out = uniq
     return [l for l in out if not me or l.get("seat") != me]   # a seat's own action never lands in its own inbox
+
+
+def alias_seat(name, roles):
+    aliases = roles.get("aliases") or {}
+    v = str(name or "")
+    for n in (v, v.removesuffix("[bot]")):
+        if n in aliases:
+            return aliases[n]
+    return None
 
 
 def actor_seat(event, roles):
