@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { definePluginEntry } from 'openclaw/plugin-sdk/plugin-entry';
 
 const require = createRequire(import.meta.url);
@@ -39,7 +39,7 @@ export default definePluginEntry({
   register(api) {
     api.on(
       'before_tool_call',
-      (event, ctx) => {
+      async (event, ctx) => {
         try {
           const xrayRoot = resolveXrayRoot();
           if (!xrayRoot) {
@@ -60,6 +60,21 @@ export default definePluginEntry({
           });
           if (!outcome.allow) {
             return { block: true, blockReason: outcome.reason || '0xRay constitution' };
+          }
+          const spoken = `${event.toolName} ${JSON.stringify(event.params || {})}`.slice(0, 500);
+          const speakPath = [
+            join(xrayRoot, 'dist/integrations/hooks/pre-tool-speak.mjs'),
+            join(xrayRoot, 'src/integrations/hooks/pre-tool-speak.mjs'),
+          ].find((candidate) => existsSync(candidate));
+          if (!speakPath) return undefined;
+          const speak = await import(pathToFileURL(speakPath).href);
+          const lens = speak.lensDecision(projectRoot, event.toolName, spoken);
+          if (lens) {
+            return { block: true, blockReason: lens.reason };
+          }
+          const route = speak.repertoireRoute(spoken);
+          if (route?.hookSpecificOutput) {
+            return { block: false, hookSpecificOutput: route.hookSpecificOutput };
           }
           return undefined;
         } catch (err) {

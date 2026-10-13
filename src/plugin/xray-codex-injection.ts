@@ -179,6 +179,36 @@ export default async function xrayCodexPlugin(input: {
         throw new Error(`DELEGATION GATE: ${delegationGate.reason}`);
       }
 
+      type PreToolSpeak = {
+        lensDecision: (
+          root: string,
+          toolName: string,
+          spoken: string,
+        ) => { gate?: string; reason?: string } | null;
+        repertoireRoute: (operation: string) => {
+          hookSpecificOutput?: { additionalContext?: string };
+        } | null;
+      };
+      let speak: PreToolSpeak | null = null;
+      try {
+        speak = (await import(
+          new URL("../integrations/hooks/pre-tool-speak.mjs", import.meta.url).href
+        )) as PreToolSpeak;
+      } catch {
+        speak = null;
+      }
+      if (speak) {
+        const spoken = `${tool} ${JSON.stringify(args ?? {})}`.slice(0, 500);
+        const lens = speak.lensDecision(directory, tool, spoken);
+        if (lens) {
+          throw new Error(`DELEGATION GATE: ${lens.reason ?? "lens"}`);
+        }
+        const additional = speak.repertoireRoute(spoken)?.hookSpecificOutput?.additionalContext;
+        if (additional) {
+          logger.log(additional);
+        }
+      }
+
       if (isWriteEditOperation(tool)) {
         const _ProcessorManager = getProcessorManager();
         const _XrayStateManager = getXrayStateManager();

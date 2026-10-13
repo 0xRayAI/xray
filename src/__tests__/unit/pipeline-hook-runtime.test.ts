@@ -5,6 +5,7 @@ import * as path from 'path';
 import {
   runGrokPostprocessorLight,
   recordRoutingOutcome,
+  scheduleAutonomousReportingMarker,
 } from '../../integrations/hooks/pipeline-hook-runtime.mjs';
 
 describe('pipeline-hook-runtime', () => {
@@ -22,6 +23,12 @@ describe('pipeline-hook-runtime', () => {
   it('runGrokPostprocessorLight returns null when flag is off', () => {
     writeFeatures(tmp, { grok_postprocessor_light: false });
     expect(runGrokPostprocessorLight(tmp, { tool: 'Write', paths: ['a.ts'] })).toBeNull();
+  });
+
+  it('scheduleAutonomousReportingMarker does not create a marker when enabled is false', () => {
+    writeFeatures(tmp, { autonomous_reporting: { enabled: false, auto_schedule: true } });
+    scheduleAutonomousReportingMarker(tmp);
+    expect(fs.existsSync(path.join(tmp, 'reports', '.autonomous-reporting-scheduled.json'))).toBe(false);
   });
 
   it('runGrokPostprocessorLight writes marker when flag is on', () => {

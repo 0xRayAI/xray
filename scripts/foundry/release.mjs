@@ -191,6 +191,8 @@ async function main() {
       }
     }
     run(`git push origin v${version}`, "push tag");
+    say("Step 8: Gate D");
+    runMill("release-gate.mjs", ["--prove-published"], "gate D");
     return;
   }
 
@@ -281,6 +283,12 @@ async function main() {
     console.log(`  would: git tag -a v${newVersion}`);
   }
   run(`git push origin v${newVersion}`, "push tag");
+  say("Step 8: Gate D");
+  runMill("release-gate.mjs", ["--prove-published"], "gate D");
+  if (dryRun) {
+    say("Dry run did not prove Gate D.");
+    return;
+  }
 
   console.log("\n╔════════════════════════════════════════════════════════╗");
   console.log("║        ✅ Release Complete!                            ║");

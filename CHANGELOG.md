@@ -46,6 +46,15 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ### 🔄 Changes
 
+- A Cursor pre-tool error denies the tool unless that error is EACCES. A cloud wrapper that cannot write dest still allows the tool.
+- Hermes, OpenCode, OpenClaw, and Cursor run the lens and the repertoire route on the pre-tool allow path. The lens sees the tool path. A research call with no named plane stops. One named plane allows.
+- The shipped plant does not write the autonomous-reporting schedule or the post-tool light marker. Turn either switch on and the writer still runs. The inference cycle still starts from `inference:run`.
+- Consumer smoke inspects an empty machine home, so a Grok plugin on the real machine does not fail that seat.
+- OpenCode mill install copies the plugin and leaves leftover init.sh uncopied.
+- Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists. A local gate pass is not that proof.
+
+### 🔄 Changes
+
 ### 🐛 Bug Fixes
 - fix: stop the vendored complete-todo command from minting PASS (39c88c8fa)
 - fix: bind Confer receipts to a synthesis cycle (5134c5d05)
