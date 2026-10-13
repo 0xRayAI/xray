@@ -767,7 +767,64 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   collector.sig = sig; collector.lastWrite = Date.now();
   repoTimes(f);
   ingestSrc('github', f.events, headerOf(f));
+  routeSoon();
 }
+// ---- Server inbox routing: after each collector pass, feed/inbox_pass.py (same rules as the box pusher:
+// routing/inbox-roles.json) routes events not seen before into seat inboxes, then postSeatLines stores them and fires
+// the SEAT_WEBHOOKS wake. State (seen / sent ids, spool) lives on the volume under $MESH_DATA_DIR/route, so an event is
+// routed once across restarts; the very first pass seeds silently (history is never delivered). A line that was
+// stored but not yet marked sent (crash in between) is re-posted and dropped by postSeatLines' per-seat id check.
+// The python child gets no token or secret. SERVER_ROUTING=off turns this off.
+const ROUTE_DIR = path.join(DATA_DIR, 'route');
+const route = { busy: false, again: false, passes: 0, lines: 0, last: null };
+function routeScript() {
+  for (const f of [path.join(COLLECTOR_DIR, 'inbox_pass.py'), path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'inbox_pass.py')])
+    if (fs.existsSync(f)) return f;
+  return '';
+}
+function routePy(script, args) {
+  const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
+    TZ: process.env.TZ || 'America/Chicago', MESH_RUN: ROUTE_DIR, FEED: GH_FEED, LIVE_INBOX: path.join(ROUTE_DIR, 'spool'),
+    INBOX_STATE: path.join(ROUTE_DIR, 'inbox-state.json'), INBOX_CACHE: path.join(ROUTE_DIR, 'inbox-events.json'),
+    LIVE_ACTIVITY: path.join(ROUTE_DIR, 'activity.jsonl'), LIVE_BOARD: 'off', PYTHONDONTWRITEBYTECODE: '1' };
+  return new Promise(resolve => {
+    let out = '', err = '';
+    const c = spawn('python3', ['-B', script, ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    c.stdout.on('data', d => { out += d; }); c.stderr.on('data', d => { err += d; });
+    c.on('error', e => resolve({ code: -1, out: '', err: String(e.code) }));
+    c.on('close', code => resolve({ code, out: out.trim(), err: err.trim().split('\n').pop() || '' }));
+  });
+}
+async function routeOnce(script) {
+  fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true }); fs.mkdirSync(ROUTE_DIR, { recursive: true });
+  const p = await routePy(script, ['pass']);
+  if (p.code !== 0) { console.log('route: pass failed (' + p.code + ') ' + p.err.slice(0, 120)); return; }
+  const out = path.join(ROUTE_DIR, 'unsent.json');
+  for (let round = 0; round < 50; round++) {   // unsent hands out 500 lines at a time
+    const u = await routePy(script, ['unsent', out]);
+    if (u.code !== 0) { console.log('route: unsent failed (' + u.code + ')'); return; }
+    if (!(Number(u.out) > 0)) break;
+    let parsed; try { parsed = JSON.parse(fs.readFileSync(out, 'utf8')); } catch { return; }
+    const r = postSeatLines(parsed, null);   // stores, dedupes by id per seat, wakes; bad lines are logged and dropped
+    if (r.status !== 200 && r.status !== 400) return;
+    route.lines += r.added || 0;
+    const s = await routePy(script, ['sent', out]);
+    if (s.code !== 0) { console.log('route: sent failed (' + s.code + ')'); return; }
+    if (Number(u.out) < 500) break;
+  }
+  route.passes++; route.last = new Date().toISOString();
+  console.log(`route: pass ${p.out}`);
+}
+async function routePass() {
+  if (route.busy) { route.again = true; return; }
+  const script = routeScript();
+  if (!script) { console.log('route: inbox_pass.py missing; off'); return; }
+  route.busy = true;
+  try { do { route.again = false; await routeOnce(script); } while (route.again); }
+  catch (e) { console.log('route: ' + String(e.message).slice(0, 80)); }
+  finally { route.busy = false; }
+}
+function routeSoon() { if (process.env.SERVER_ROUTING !== 'off') routePass(); }
 function jiraScript() {
   const beside = path.join(COLLECTOR_DIR, 'jira_source.py');
   if (fs.existsSync(beside)) return beside;
