@@ -36,6 +36,8 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 | magnet | a per-seat key (`seat-keys/magnet.key`). `GET /inbox/magnet` = hangar / listing asks (`@magnet`); read with `tools/live-inbox magnet`. Key delivered 1:1 by Blaze, never in room/repo |
 | assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the Example MCP server (env `LIVE_KEY`) |
 
+Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox.md#seat-wake-urls-and-webhooks).
+
 ## Arch1 local inbox
 
 - **Key:** `~/.burst/seat-keys/arch1.key` (dir 700, file 600). Blaze delivers it 1:1, never in a room or repo.
