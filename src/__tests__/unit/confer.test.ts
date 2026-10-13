@@ -1,3 +1,4 @@
+import * as childProcess from 'node:child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -40,7 +41,12 @@ import { formatGovernanceVoteText, localConferVote } from '../../governance/loca
 import {
   conferVerdictFromModelVote,
   formatArchitectureAssessmentConferText,
+  renderArchitectureAssessment,
 } from '../../mcps/architect-tools.server.js';
+import { GovernanceServer } from '../../mcps/governance.server.js';
+import { XrayCodeReviewServer } from '../../mcps/knowledge-skills/code-review.server.js';
+import { XrayLibrarianServer } from '../../mcps/researcher.server.js';
+import { buildHostConferEvidence, InProcessConferHost, SessionConferHost } from '../../nucleus/confer-host.js';
 import type { ArchitectureAssessment } from '../../architect/architect-tools.js';
 import { TaskHandler } from '../../mcps/orchestrator/handlers/task-handler.js';
 import { conferDefaultForProfile, resolveRuntimeSuitProfile } from '../../nucleus/suit-temperament.js';
@@ -78,6 +84,199 @@ describe('confer quorum SSOT', () => {
     mockExecFileSync.mockReset();
     process.chdir(os.homedir());
     fs.rmSync(tmp, { recursive: true, force: true });
+  });
+
+  function saveConsultPlan(): void {
+    const plan = buildSynthesisCheckpointPlan('host port');
+    savePersistedLeadDevPlan(
+      { ...plan!, persistedAt: new Date().toISOString(), sessionId },
+      tmp,
+    );
+  }
+
+  it('a completed seat without a real PASS is asked again', async () => {
+    saveConsultPlan();
+    const plan = loadPersistedLeadDevPlan(tmp);
+    if (!plan) throw new Error('plan missing');
+    for (const phase of plan.phases) {
+      for (const todo of phase.todos) {
+        if (todo.id === 's.1') todo.status = 'completed';
+      }
+    }
+    savePersistedLeadDevPlan(plan, tmp);
+    fs.writeFileSync(
+      path.join(tmp, '.xray', 'state', 'synthesis-consult-s.1.json'),
+      JSON.stringify({
+        sessionId,
+        subagent: 'researcher',
+        verdict: 'CONDITIONAL',
+        topRisks: [],
+        hardeningNote: 'old sitting',
+        todoId: 's.1',
+        cycleId: plan.consultCycleId,
+      }),
+    );
+    const result = await runConferQuorum(tmp, sessionId, { host: new SessionConferHost() });
+    expect(result.status).toBe('pending');
+    expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'confer-ask-s.1.json'))).toBe(true);
+    const again = loadPersistedLeadDevPlan(tmp);
+    const seat = again?.phases.flatMap((phase) => phase.todos).find((todo) => todo.id === 's.1');
+    expect(seat?.status).toBe('pending');
+  });
+
+  it('a completed quorum from another session is asked again', async () => {
+    saveConsultPlan();
+    const plan = loadPersistedLeadDevPlan(tmp);
+    if (!plan) throw new Error('plan missing');
+    const seats = [
+      ['s.1', 'researcher'],
+      ['s.2', 'architect-tools'],
+      ['s.3', 'code-review'],
+    ] as const;
+    for (const phase of plan.phases) {
+      for (const todo of phase.todos) {
+        if (seats.some(([id]) => id === todo.id)) todo.status = 'completed';
+      }
+    }
+    savePersistedLeadDevPlan(plan, tmp);
+    for (const [id, subagent] of seats) {
+      fs.writeFileSync(
+        path.join(tmp, '.xray', 'state', `synthesis-consult-${id}.json`),
+        JSON.stringify({
+          sessionId: 'other-session',
+          subagent,
+          verdict: 'PASS',
+          topRisks: [],
+          hardeningNote: 'other sitting',
+          todoId: id,
+          cycleId: plan.consultCycleId,
+        }),
+      );
+    }
+    const result = await runConferQuorum(tmp, sessionId, { host: new SessionConferHost() });
+    expect(result.status).toBe('pending');
+    expect(fs.existsSync(path.join(tmp, '.xray', 'state', 'confer-ask-s.1.json'))).toBe(true);
+    const again = loadPersistedLeadDevPlan(tmp);
+    const open = again?.phases.flatMap((phase) => phase.todos).filter((todo) => todo.id.startsWith('s.'));
+    expect(open?.every((todo) => todo.status === 'pending')).toBe(true);
+  });
+
+  it('SessionConferHost writes asks and does not spawn a server', async () => {
+    saveConsultPlan();
+    const spawnSpy = vi.spyOn(childProcess, 'spawn');
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('hermes must not run');
+    });
+    const result = await runConferQuorum(tmp, sessionId, {
+      collocatedText: 'host evidence',
+      dueReason: 'ticket changed',
+      host: new SessionConferHost(),
+    });
+    expect(result.status).toBe('pending');
+    expect(spawnSpy).not.toHaveBeenCalled();
+    expect(mockExecFileSync).not.toHaveBeenCalled();
+    const plan = loadPersistedLeadDevPlan(tmp);
+    expect(plan && areSynthesisConsultTodosComplete(plan)).toBe(false);
+    for (const id of ['s.1', 's.2', 's.3']) {
+      const ask = JSON.parse(
+        fs.readFileSync(path.join(tmp, '.xray', 'state', `confer-ask-${id}.json`), 'utf8'),
+      ) as { server: string; sessionId: string };
+      expect(ask.server.startsWith('xray-')).toBe(true);
+      expect(ask.sessionId).toBe(sessionId);
+    }
+    spawnSpy.mockRestore();
+  });
+
+  it('InProcessConferHost PASS completes and FAIL or UNREVIEWED does not', async () => {
+    const pass = 'Verdict: PASS\nTop risks: none\nHardening: host';
+    saveConsultPlan();
+    const passed = await runConferQuorum(tmp, sessionId, {
+      host: new InProcessConferHost({ 's.1': pass, 's.2': pass, 's.3': pass }),
+    });
+    expect(passed.status).toBe('completed');
+    const done = loadPersistedLeadDevPlan(tmp);
+    expect(done && areSynthesisConsultTodosComplete(done)).toBe(true);
+
+    saveConsultPlan();
+    const failed = await runConferQuorum(tmp, sessionId, {
+      host: new InProcessConferHost({ 's.1': 'Verdict: FAIL\nTop risks: none\nHardening: stop' }),
+    });
+    expect(failed.status).toBe('partial');
+    expect(failed.agents[0]?.todoCompleted).toBe(false);
+    expect(failed.agents[0]?.verdict).toBe('FAIL');
+
+    saveConsultPlan();
+    const unreviewed = await runConferQuorum(tmp, sessionId, {
+      host: new InProcessConferHost({ 's.1': 'Verdict: UNREVIEWED\nTop risks: none\nHardening: wait' }),
+    });
+    expect(unreviewed.agents[0]?.todoCompleted).toBe(false);
+    expect(unreviewed.agents[0]?.verdict).toBe('UNREVIEWED');
+  });
+
+  it('a session id that does not match the plan does not complete the todo', async () => {
+    saveConsultPlan();
+    const pass = 'Verdict: PASS\nTop risks: none\nHardening: host';
+    const result = await runConferQuorum(tmp, 'other-session', {
+      host: new InProcessConferHost({ 's.1': pass }),
+    });
+    expect(result.agents[0]?.todoCompleted).toBe(false);
+  });
+
+  it('synthesis-confer evidence does not call hermes', async () => {
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('hermes must not run');
+    });
+    const researcher = await new XrayLibrarianServer().analyzeProposal({
+      proposalTitle: 'Flywheel',
+      proposalDescription: 'Stop before continue when the ticket changes.',
+      proposalType: 'synthesis-confer',
+      evidence: [],
+    });
+    const review = await new XrayCodeReviewServer().analyzeProposal({
+      proposalTitle: 'Flywheel',
+      proposalDescription: 'Stop before continue when the ticket changes.',
+      proposalType: 'synthesis-confer',
+      evidence: [],
+    });
+    const architect = await renderArchitectureAssessment({
+      projectRoot: tmp,
+      assessmentType: 'quick',
+      conferPrompt: 'Review the change',
+    });
+    expect(mockExecFileSync).not.toHaveBeenCalled();
+    const researcherText = researcher.content[0]?.text ?? '';
+    const reviewText = review.content[0]?.text ?? '';
+    expect(researcherText).toContain('Confer evidence — researcher');
+    expect(reviewText).toContain('Confer evidence — code-review');
+    expect(buildHostConferEvidence('researcher', 'notes')).toContain('Verdict: PASS | CONDITIONAL | FAIL');
+    expect(architect.content[0]?.text).toContain('Verdict: UNREVIEWED');
+  });
+
+  it('record_confer_receipt stores a host PASS and leaves FAIL open', async () => {
+    saveConsultPlan();
+    const server = new GovernanceServer();
+    const record = server.handlers.record_confer_receipt;
+    if (!record) throw new Error('record_confer_receipt missing');
+    const pass = await record({
+      todoId: 's.1',
+      subagent: 'researcher',
+      sessionId,
+      outputText: 'Verdict: PASS\nTop risks: none\nHardening: host',
+      projectRoot: tmp,
+    });
+    const passBody = JSON.parse(pass.content[0]?.text ?? '{}') as { todoCompleted?: boolean; verdict?: string };
+    expect(passBody.verdict).toBe('PASS');
+    expect(passBody.todoCompleted).toBe(true);
+    const fail = await record({
+      todoId: 's.2',
+      subagent: 'architect-tools',
+      sessionId,
+      outputText: 'Verdict: FAIL\nTop risks: none\nHardening: stop',
+      projectRoot: tmp,
+    });
+    const failBody = JSON.parse(fail.content[0]?.text ?? '{}') as { todoCompleted?: boolean; verdict?: string };
+    expect(failBody.verdict).toBe('FAIL');
+    expect(failBody.todoCompleted).toBe(false);
   });
 
   it('runConferQuorum completes all consult todos in fixture mode', async () => {
@@ -309,7 +508,7 @@ describe('confer quorum SSOT', () => {
   });
 
   it('routes the architect consult to the registered architect server', () => {
-    expect(conferAgentMcpTarget('architect-tools').server).toBe('architect');
+    expect(conferAgentMcpTarget('architect-tools').server).toBe('xray-architect-tools');
     expect(conferAgentMcpTarget('architect-tools').tool).toBe('architecture-assessment');
   });
 

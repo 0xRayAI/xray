@@ -38,7 +38,10 @@
     "plates": ["suit-wear"]
   },
   "governance": {
-    "files": ["src/governance/governance-service.ts"],
+    "files": [
+      "src/governance/governance-service.ts",
+      "src/governance/llm-governance-provider.ts"
+    ],
     "skills": ".agents/skills/governance/SKILL.md"
   },
   "memory-recall": {

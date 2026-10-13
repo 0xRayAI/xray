@@ -25,6 +25,15 @@ import {
 } from './synthesis-consult-receipt.js';
 import { formatGovernanceVoteText, localConferVote } from '../governance/local-confer.js';
 import { isSynthesisCheckpointDue } from './synthesis.js';
+import {
+  InProcessConferHost,
+  SessionConferHost,
+  type ConferHostPort,
+  type ConferHostSeat,
+} from './confer-host.js';
+
+export { InProcessConferHost, SessionConferHost };
+export type { ConferHostPort, ConferHostSeat };
 
 export const CONFER_AGENTS = [...MANDATORY_MAJOR_CONSULTS] as const;
 
@@ -54,7 +63,7 @@ export interface ConferAgentResult {
 }
 
 export interface ConferQuorumResult {
-  status: 'completed' | 'partial' | 'skipped' | 'failed';
+  status: 'completed' | 'partial' | 'skipped' | 'failed' | 'pending';
   agents: ConferAgentResult[];
   message: string;
 }
@@ -188,7 +197,7 @@ export function conferAgentMcpTarget(subagent: string): {
   switch (subagent) {
     case 'architect-tools':
       return {
-        server: 'architect',
+        server: 'xray-architect-tools',
         tool: 'architecture-assessment',
         args: (prompt, projectRoot) => ({
           projectRoot,
@@ -199,7 +208,7 @@ export function conferAgentMcpTarget(subagent: string): {
       };
     case 'researcher':
       return {
-        server: 'researcher',
+        server: 'xray-researcher',
         tool: 'analyze_proposal',
         args: (prompt) => ({
           proposalTitle: 'Synthesis confer — researcher',
@@ -211,7 +220,7 @@ export function conferAgentMcpTarget(subagent: string): {
     case 'code-review':
     default:
       return {
-        server: 'code-review',
+        server: 'xray-code-review',
         tool: 'analyze_proposal',
         args: (prompt) => ({
           proposalTitle: 'Synthesis confer — code-review',
@@ -223,29 +232,44 @@ export function conferAgentMcpTarget(subagent: string): {
   }
 }
 
-function extractMcpText(result: unknown): string {
-  const content = (result as { content?: Array<{ text?: string }> })?.content;
-  if (Array.isArray(content)) {
-    return content.map((c) => c.text ?? '').join('\n');
-  }
-  if (typeof result === 'string') return result;
-  try {
-    return JSON.stringify(result);
-  } catch {
-    return String(result);
-  }
+function conferHostSeat(
+  subagent: string,
+  prompt: string,
+  projectRoot: string,
+  sessionId: string,
+  todoId: string,
+  dueReason: string | null,
+): ConferHostSeat {
+  const target = conferAgentMcpTarget(subagent);
+  return {
+    todoId,
+    subagent,
+    server: target.server,
+    tool: target.tool,
+    args: target.args(prompt, projectRoot),
+    sessionId,
+    prompt,
+    dueReason,
+  };
 }
 
 export async function invokeConferAgent(
   subagent: string,
   prompt: string,
   projectRoot = process.cwd(),
+  host: ConferHostPort = new SessionConferHost(),
+  sessionId = '',
+  todoId = subagent,
+  dueReason: string | null = null,
 ): Promise<string> {
-  const { mcpClientManager } = await import('../mcps/mcp-client.js');
-  const target = conferAgentMcpTarget(subagent);
-  const args = target.args(prompt, projectRoot);
-  const result = await mcpClientManager.callServerTool(target.server, target.tool, args);
-  const text = extractMcpText(result);
+  const call = await host.call(
+    conferHostSeat(subagent, prompt, projectRoot, sessionId, todoId, dueReason),
+    projectRoot,
+  );
+  if (call.status === 'pending') {
+    throw new Error(`Confer ask pending for ${subagent} at ${call.askPath}`);
+  }
+  const text = call.text;
   if (!text.trim()) {
     throw new Error(`Empty confer response from ${subagent}`);
   }
@@ -327,6 +351,8 @@ export async function runConferQuorum(
     fixtureNoLlm?: boolean;
     /** Used only when fixture is true. Replaces the generated fixture text for every consult. */
     fixtureOutput?: string;
+    /** Live path. Default writes an ask for the wearing TUI and does not spawn a server. */
+    host?: ConferHostPort;
   } = {},
 ): Promise<ConferQuorumResult> {
   if (options.fixture && !conferFixtureAllowed()) {
@@ -355,7 +381,7 @@ export async function runConferQuorum(
     };
   }
 
-  if (areSynthesisConsultTodosComplete(plan) && consultReceiptsAreRealApproves(plan, projectRoot)) {
+  if (areSynthesisConsultTodosComplete(plan) && consultReceiptsAreRealApproves(plan, sessionId, projectRoot)) {
     return {
       status: 'completed',
       agents: [],
@@ -377,7 +403,12 @@ export async function runConferQuorum(
   const agents: ConferAgentResult[] = [];
 
   for (const todo of getSynthesisConsultTodos(plan)) {
-    if (todo.status === 'completed') continue;
+    if (todo.status === 'completed' && consultReceiptIsRealPass(todo.id, sessionId, plan, projectRoot)) {
+      continue;
+    }
+    if (todo.status === 'completed') {
+      updatePlanTodoStatus(todo.id, 'pending', projectRoot);
+    }
 
     try {
       let agentResult: ConferAgentResult;
@@ -406,12 +437,34 @@ export async function runConferQuorum(
           collocated,
           options.dueReason ?? null,
         );
-        const outputText = await invokeConferAgent(todo.subagent, prompt, projectRoot);
+        const host = options.host ?? new SessionConferHost();
+        const call = await host.call(
+          conferHostSeat(
+            todo.subagent,
+            prompt,
+            projectRoot,
+            sessionId,
+            todo.id,
+            options.dueReason ?? null,
+          ),
+          projectRoot,
+        );
+        if (call.status === 'pending') {
+          agents.push({
+            todoId: todo.id,
+            subagent: todo.subagent,
+            outputText: '',
+            receiptRecorded: false,
+            todoCompleted: false,
+            verdict: null,
+          });
+          continue;
+        }
         agentResult = applyConferConsultResult(
           todo.id,
           todo.subagent,
           sessionId,
-          outputText,
+          call.text,
           projectRoot,
         );
       }
@@ -450,12 +503,23 @@ export async function runConferQuorum(
     }
   }
 
+  if (agents.some((agent) => agent.verdict === null && !agent.receiptRecorded && !agent.error)) {
+    state.status = 'pending';
+    delete state.lastError;
+    saveConferCheckpoint(state, projectRoot);
+    return {
+      status: 'pending',
+      agents,
+      message: 'Confer asks written. The wearing TUI calls its MCP servers and records each verdict.',
+    };
+  }
+
   const refreshed = loadPersistedLeadDevPlan(projectRoot);
   const done =
     refreshed &&
     isSynthesisRealignmentPlan(refreshed) &&
     areSynthesisConsultTodosComplete(refreshed) &&
-    consultReceiptsAreRealApproves(refreshed, projectRoot);
+    consultReceiptsAreRealApproves(refreshed, sessionId, projectRoot);
 
   state.status = done ? 'completed' : 'failed';
   if (!done) state.lastError = 'Consult todos remain after confer loop';
@@ -470,17 +534,27 @@ export async function runConferQuorum(
   };
 }
 
+function consultReceiptIsRealPass(
+  todoId: string,
+  sessionId: string,
+  plan: PersistedLeadDevPlan,
+  projectRoot: string,
+): boolean {
+  const receipt = loadSynthesisConsultReceipt(todoId, projectRoot);
+  if (receipt?.verdict !== 'PASS') return false;
+  if (sessionId && receipt.sessionId !== sessionId) return false;
+  if (plan.consultCycleId && receipt.cycleId !== plan.consultCycleId) return false;
+  return true;
+}
+
 function consultReceiptsAreRealApproves(
   plan: PersistedLeadDevPlan,
+  sessionId: string,
   projectRoot: string,
 ): boolean {
   const todos = getSynthesisConsultTodos(plan);
   if (todos.length === 0) return false;
-  return todos.every((todo) => {
-    const receipt = loadSynthesisConsultReceipt(todo.id, projectRoot);
-    if (receipt?.verdict !== 'PASS') return false;
-    return !plan.consultCycleId || receipt.cycleId === plan.consultCycleId;
-  });
+  return todos.every((todo) => consultReceiptIsRealPass(todo.id, sessionId, plan, projectRoot));
 }
 
 const CONFER_AGENT_EMOJI: Record<string, string> = {
