@@ -101,7 +101,7 @@ A seat not in `SEAT_WEBHOOKS` gets no POST. It learns of work from the one-line 
 
 ### Ack route
 
-Reading never acks. Read with `GET /inbox/<seat>`, handle each line, then ack with `POST /inbox/<seat>/ack` and one of `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
+Reading never acks. Seats read with `live-inbox <seat>`, handle each line, then ack with `live-inbox <seat> --ack <id|all>`, never a hand-built curl (a wake routine runs only that tool, so it raises no approval card). Under the hood it calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack` with `{"id":"<id>"}`, `{"upto":"<id>"}` or `{"all":true}`. An unacked line stays open and is read again on the next wake or sweep.
 
 ### Reading the inbox after a wake
 
