@@ -5,28 +5,21 @@
  * Does not rely on sessionStart (unavailable on managed cloud).
  */
 
-import {
-  appendHookActivity,
-  checkCodexPatterns,
-  checkFullTestSuite,
-  cursorGateRoot,
-  cursorHeatRoots,
-  cursorSessionId,
-  cursorToolContext,
-  cursorWorkspaceRoot,
-  ensureCursorSessionBoot,
-  evaluatePreToolGate,
-  isShellTool,
-  isWriteTool,
-  loadDelegationGateFeatures,
-  loadFeatures,
-  readStdinJson,
-} from './cursor-hook-utils.js';
-import { lensDecision, repertoireRoute } from '../../hooks/pre-tool-speak.mjs';
+// Gate modules load inside main()'s try (dynamic import): a missing or broken module must deny, not crash
+// before the handler with no JSON (Cursor would then fail open). Nothing here may import them statically.
+let appendHookActivity = () => {};
+
+/** Deny JSON on stdout and exit 0. Used when the gate cannot run at all. */
+function denyHard(reason) {
+  try {
+    process.stdout.write(`${JSON.stringify({ permission: 'deny', user_message: reason, agent_message: reason })}\n`);
+  } finally {
+    process.exit(0);
+  }
+}
 
 export function cursorHookErrorPermission(err) {
-  const message = typeof err?.message === 'string' ? err.message : '';
-  if (err?.code === 'EACCES' || message.includes('EACCES')) return 'allow';
+  if (err?.code === 'EACCES') return 'allow';   // code only: a message mentioning EACCES is not a permission error
   return 'deny';
 }
 
@@ -41,21 +34,36 @@ function finish(root, permission, reason, hint, toolName, extra = {}) {
   }
   if (extra.hookSpecificOutput) out.hookSpecificOutput = extra.hookSpecificOutput;
   console.log(JSON.stringify(out));
-  appendHookActivity(root, 'cursor-pre-tool-use', permission, permission === 'deny' ? 'error' : 'info', {
-    tool: toolName,
-    reason: reason || hint || null,
-    gate: extra.gate || null,
-    livePath: true,
-  });
+  try {
+    appendHookActivity(root, 'cursor-pre-tool-use', permission, permission === 'deny' ? 'error' : 'info', {
+      tool: toolName,
+      reason: reason || hint || null,
+      gate: extra.gate || null,
+      livePath: true,
+    });
+  } catch { /* the verdict is already on stdout; activity logging must not change it */ }
   process.exit(0);
 }
 
 async function main() {
-  const fallbackRoot = cursorWorkspaceRoot();
+  let fallbackRoot = process.cwd();
   let toolName = 'unknown';
 
   try {
+    const u = await import('./cursor-hook-utils.js');
+    const { lensDecision, repertoireRoute } = await import('../../hooks/pre-tool-speak.mjs');
+    const {
+      checkCodexPatterns, checkFullTestSuite, cursorGateRoot, cursorHeatRoots, cursorSessionId, cursorToolContext,
+      cursorWorkspaceRoot, ensureCursorSessionBoot, evaluatePreToolGate, isShellTool, isWriteTool,
+      loadDelegationGateFeatures, loadFeatures, readStdinJson,
+    } = u;
+    appendHookActivity = u.appendHookActivity;
+    fallbackRoot = cursorWorkspaceRoot();
     const event = await readStdinJson();
+    // readStdinJson returns {} for empty or malformed stdin; Cursor always sends a JSON object, so deny those.
+    if (!event || typeof event !== 'object' || Array.isArray(event) || Object.keys(event).length === 0) {
+      finish(fallbackRoot, 'deny', 'preToolUse: empty or malformed hook input — denied', null, toolName, { gate: 'bad-input' });
+    }
     const eventRoot = cursorWorkspaceRoot(event);
     const sessionId = cursorSessionId(event);
     const heatRoots = cursorHeatRoots(event);
@@ -108,11 +116,13 @@ async function main() {
     finish(gateRoot, 'allow', null, null, toolName, { ...(route || {}) });
   } catch (err) {
     const failOpen = cursorHookErrorPermission(err) === 'allow';
-    appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {
-      tool: toolName,
-      error: err.message,
-      failOpen,
-    });
+    try {
+      appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {
+        tool: toolName,
+        error: err.message,
+        failOpen,
+      });
+    } catch { /* logging must not turn a deny into a crash */ }
     if (failOpen) {
       // Dest EACCES on a Cloud workspace wrapper must not deny every tool.
       finish(
@@ -136,4 +146,8 @@ async function main() {
 }
 
 const launchedAsCli = Boolean(process.argv[1] && process.argv[1].endsWith('pre-tool-use.js'));
-if (launchedAsCli) main();
+if (launchedAsCli) {
+  process.on('uncaughtException', (err) => denyHard(`preToolUse hook crashed — denied: ${err?.message || err}`));
+  process.on('unhandledRejection', (err) => denyHard(`preToolUse hook crashed — denied: ${err?.message || err}`));
+  main().catch((err) => denyHard(`preToolUse hook crashed — denied: ${err?.message || err}`));
+}
