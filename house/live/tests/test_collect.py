@@ -256,6 +256,30 @@ class HostModeBoard(unittest.TestCase):
                 "print(json.dumps([c['title'] for c in m['cards']]))")
         self.assertIn("fleet PR five", _sub(code))
 
+
+class GithubSourcedWidened(unittest.TestCase):
+    def test_author_only_and_github_star_sources_filtered(self):
+        code = ("ev = [{'from': 'Others', 'to': 'GitHub', 'author': 'stranger'},"
+                " {'from': 'GitHub', 'to': 'Others', 'src_file': 'github-deployments'},"
+                " {'from': 'Others', 'to': 'Builder', 'src_file': 'fleet/prompts'}]\n"
+                "print(len(c.fleet_only(ev)))")
+        self.assertEqual(_sub(code), "1")
+
+
+class AbsentBranchCommits(unittest.TestCase):
+    def test_poll_commits_404_marks_absent_and_skips(self):
+        code = ("import urllib.error\n"
+                "rc = c.RepoCollector('acme-org/app', Path(tempfile.mkdtemp()), FF(), lambda m: None)\n"
+                "calls = []\n"
+                "def paged(cl, path, params, key, stop=None, **k):\n"
+                "    calls.append(params['sha'])\n"
+                "    if params['sha'] == 'develop': raise urllib.error.HTTPError('u', 404, 'Not Found', {}, None)\n"
+                "    return iter(())\n"
+                "rc.paged = paged; rc._etag_new = None\n"
+                "rc.poll_commits(None); rc.poll_commits(None)\n"
+                "print(json.dumps(calls))")
+        self.assertEqual(json.loads(_sub(code)), ["develop", "main", "main"])
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -128,12 +128,12 @@ def open_numbers(c, repos, max_pages=20):
 def fleet_only(events: list) -> list:
     """Drop GitHub-sourced events that would show a login outside the fleet map.
     Local events (lab bugs, prompts) stay even when from or to is Others.
-    A GitHub-sourced event has src_file github-api or an actor. LIVE_SHOW_UNMAPPED=1 keeps everything."""
+    A GitHub-sourced event has a github* src_file, an actor or an author. LIVE_SHOW_UNMAPPED=1 keeps everything."""
     if SHOW_UNMAPPED:
         return events
     out = []
     for e in events:
-        github = e.get("src_file") == "github-api" or bool(e.get("actor"))
+        github = str(e.get("src_file") or "").startswith("github") or bool(e.get("actor")) or bool(e.get("author"))
         if github and ("Others" in (e.get("from"), e.get("to")) or "Others" in (e.get("hops") or [])):
             continue
         if github and e.get("external") == "upstream" and e.get("actor") and e.get("from") == "Upstream":   # not in XRAY_OURS
@@ -432,6 +432,7 @@ class RepoCollector:
                 ref = d["repository"].get("ref")
                 if not ref:   # branch absent in this repo (e.g. no develop): nothing to backfill
                     bf[k + ":done"] = True
+                    bf[f"absent:{b}"] = True
                     break
                 h = ref["target"]["history"]
                 bf[k + ":total"] = h["totalCount"]
@@ -684,13 +685,21 @@ class RepoCollector:
 
     def poll_commits(self, c):
         for b in MERGE_BASES:
+            if self.st["bf"].get(f"absent:{b}"):   # branch missing in this repo (e.g. no develop): no 404 every pass
+                continue
             known = self.st["branch_shas"].setdefault(b, {})
-            for cm in self.paged(c, f"/repos/{self.repo}/commits", {"sha": b}, f"commits:{b}",
-                                 stop=lambda x: x["sha"] in known):
-                d = cm["commit"]["committer"]["date"]
-                self.commit_event(cm["sha"], d, cm["commit"]["message"], (cm.get("author") or {}).get("login")
-                                  or (cm["commit"]["author"]["name"] if cm["commit"]["author"]["name"].endswith("[bot]") else None), b)
-                self.mark_ci(cm["sha"], d)
+            try:
+                for cm in self.paged(c, f"/repos/{self.repo}/commits", {"sha": b}, f"commits:{b}",
+                                     stop=lambda x: x["sha"] in known):
+                    d = cm["commit"]["committer"]["date"]
+                    self.commit_event(cm["sha"], d, cm["commit"]["message"], (cm.get("author") or {}).get("login")
+                                      or (cm["commit"]["author"]["name"] if cm["commit"]["author"]["name"].endswith("[bot]") else None), b)
+                    self.mark_ci(cm["sha"], d)
+            except urllib.error.HTTPError as e:
+                if e.code != 404:
+                    raise
+                self.st["bf"][f"absent:{b}"] = True
+                continue
             if self._etag_new:
                 self.st["etags"][f"commits:{b}"] = self._etag_new
 

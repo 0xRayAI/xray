@@ -105,7 +105,17 @@ const evHash = e => crypto.createHash('sha1').update(JSON.stringify(e)).digest('
 function headerOf(f) { const h = {}; for (const k of Object.keys(f)) if (k !== 'events' && k !== 'cursor') h[k] = f[k]; return h; }
 function dropId(id) { evs.delete(id); removed.push({ id, s: seq }); if (removed.length > MAX_REMOVED) floorSeq = removed.splice(0, removed.length - MAX_REMOVED).pop().s; }
 function upsert(e) { const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
-const shown = (n, e) => !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
+// Fleet-only (same rule as feed/live_collect.fleet_only): a GitHub-sourced event that shows a login outside the fleet
+// map is never served, whichever source sent it (box /ingest included). LIVE_SHOW_UNMAPPED=1 keeps them.
+const SHOW_UNMAPPED = process.env.LIVE_SHOW_UNMAPPED === '1';
+function unmapped(e) {
+  if (SHOW_UNMAPPED) return false;
+  const gh = String(e.src_file || '').startsWith('github') || !!e.actor || !!e.author;
+  if (!gh) return false;
+  if (e.from === 'Others' || e.to === 'Others' || (Array.isArray(e.hops) && e.hops.includes('Others'))) return true;
+  return e.external === 'upstream' && !!e.actor && e.from === 'Upstream';
+}
+const shown = (n, e) => !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
 function touch(id) {
   for (const n of SRC_PRIO) { const e = SRCS[n].evs.get(id); if (e && shown(n, e)) return upsert(e); }
   if (evs.has(id)) dropId(id);
