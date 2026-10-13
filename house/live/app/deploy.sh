@@ -21,6 +21,10 @@ DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 rm -rf "$DST/collector"; mkdir -p "$DST/collector/upstream"
 cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_board.py "$APP"/../feed/upstream.py "$APP"/../feed/jira_source.py "$DST/collector/"
 cp "$APP/../../live-mesh/fetch_feed.py" "$DST/collector/upstream/"   # house/live-mesh in this repo
+# server inbox routing (same rules as the box pusher): inbox_pass.py + routing/ beside it
+mkdir -p "$DST/collector/routing"
+cp "$APP"/../feed/inbox_pass.py "$DST/collector/"
+cp "$APP"/../feed/routing/inbox.py "$APP"/../feed/routing/board.py "$APP"/../feed/routing/inbox-roles.json "$DST/collector/routing/"
 # MESH_SEED_STORE=1 (one-time, first volume deploy): ship the box collector's store as collector/seed/ (the server
 # copies it onto the volume only where no file exists yet). Scanned for token / key patterns first.
 if [ "${MESH_SEED_STORE:-0}" = 1 ]; then

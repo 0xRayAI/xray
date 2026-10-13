@@ -21,6 +21,8 @@ A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST 
 
 **Protocol rule.** A handoff is two things: a packet on the seat's inbox (the record) plus a wake. Every handoff is `POST /inbox` plus a one-line `SendToAgent` to that seat that points at the packet. Never one without the other. The webhook never replaces the inbox line; the line is the record, the wake only says "look now".
 
+For a seat in `SEAT_WEBHOOKS`, the webhook is the wake: the server fires it on every stored line. The `SendToAgent` is the backup only, for a seat with no webhook or a wake that failed. You do not need both for a webhook seat.
+
 ### Grok Bot seats use webhooks
 
 Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (leave `SEAT_WEBHOOKS` empty), which left packets unread until someone opened the inbox.
@@ -32,7 +34,7 @@ Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (l
 
 D12 (seats never woken by an inbox packet) is closed under this path.
 
-**Known gap.** The server collector gathers GitHub events but does not route them into seat inboxes yet. Only the box pusher does that today, and it is paused. Until server-side routing lands (the next PR), collector events wake no one; packets posted with `POST /inbox` do.
+**Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
 ### Configure
 
