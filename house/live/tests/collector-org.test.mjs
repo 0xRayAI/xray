@@ -26,14 +26,14 @@ srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 after(() => { srv.kill(); gh.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
 const until = async re => { for (let i = 0; i < 80 && !re.test(logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(logs); };
 test('org repos unioned with COLLECTOR_REPOS at start; a repo new to the org is picked up on refresh', async () => {
-  assert.ok(await until(/collector: repos acme\/one acme\/secret other\/pinned\n/), logs);
+  assert.ok(await until(/collector: repos acme\/one private repo #\d+ other\/pinned\n/), logs);
   assert.equal(auth, 'Bearer read-tok-test');
   repos = ['acme/one', 'acme/new'];
-  assert.ok(await until(/collector: repos acme\/new acme\/one acme\/secret other\/pinned\n/), logs);
+  assert.ok(await until(/collector: repos acme\/new acme\/one private repo #\d+ other\/pinned\n/), logs);
   assert.ok(!logs.includes('read-tok-test'), 'token logged');
 });
 test('archived, 403 and 404 org repos are skipped; the server keeps serving', async () => {
-  assert.ok(await until(/collector: skip acme\/forbidden \(403\)/) && await until(/collector: skip acme\/gone \(404\)/), logs);
+  assert.ok(await until(/collector: skip private repo #\d+ \(403\)/) && await until(/collector: skip private repo #\d+ \(404\)/), logs);
   assert.ok(!/collector: repos .*acme\/(old|forbidden|gone)/.test(logs), logs);
   const h = await fetch(BASE + '/healthz'); assert.equal(h.status, 200);
   const j = await h.json(); assert.equal(j.repos_unreadable, 2, JSON.stringify(j));
@@ -121,4 +121,12 @@ test('N1: an event whose repo is the bare short name of a private repo is masked
   for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.events?.some(e => e.id === 'sh1')) break; await new Promise(r => setTimeout(r, 100)); }
   const e = f.events.find(x => x.id === 'sh1');
   assert.deepEqual([e.repo, e.number, e.title], ['private repo', 3, undefined]);
+});
+test('logs never name a private or unreadable repo (repos / skip lines); public names stay', async () => {
+  assert.ok(await until(/collector: repos .*\n/) && await until(/collector: skip .*\(404\)/), logs);
+  for (const name of ['acme/secret', 'acme/forbidden', 'acme/gone']) assert.ok(!logs.toLowerCase().includes(name), name + ' in logs:\n' + logs);
+  assert.ok(!/\b(secret|forbidden|gone)\b/i.test(logs.split('\n').filter(l => l.startsWith('collector:')).join('\n')), logs);
+  assert.match(logs, /collector: repos [^\n]*acme\/one/);
+  const tags = [...logs.matchAll(/private repo #(\d+)/g)].map(m => m[1]);
+  assert.ok(new Set(tags).size >= 3, tags.join(','));   // one stable number per hidden repo
 });
