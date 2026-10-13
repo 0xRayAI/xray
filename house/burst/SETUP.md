@@ -172,7 +172,7 @@ SETUP and DEPLOY agree on all of the following:
 - Start command: `node server.mjs`. One Node process serves the page and supervises the collector child.
 - Service health check: `GET /healthz`. The collector does not answer HTTP.
 - Root directory: the directory `house/live/app/deploy.sh` assembles. Not the repo root.
-- Watched repos: `COLLECTOR_REPOS`. App health probes: `COLLECTOR_HEALTH_URLS`. Unset means the collector probes no host.
+- Watched repos: `COLLECTOR_REPOS`, plus every non-archived repo in `COLLECTOR_ORG` (for example `0xRayAI`) that the token can read, when set. Repos that answer 403/404 are skipped. A private repo is still collected for inboxes and `/cards`, but the login-page feed shows it as `private repo` with no title, label or link. The org is re-listed hourly (`COLLECTOR_ORG_REFRESH_S`), and a new repo restarts the collector with it. Issues and PRs are both collected. `GITHUB_READ_TOKEN` must see the org's repos. `GET /healthz` shows the repo count and the oldest and newest collected time (no repo names). App health probes: `COLLECTOR_HEALTH_URLS`. Unset means the collector probes no host.
 - `railway.json` is still read until 2026-12-01. The replacement file is `house/live/app/.railway/railway.ts`. See DEPLOY.
 
 Deploy names (`LIVE_RAILWAY_PROJECT`, `LIVE_RAILWAY_SERVICE`, `MESH_APP_DEPLOY_DIR`) and the public overlay (`LIVE_PUBLIC_OVERLAY`) are in DEPLOY. Install blockers are in [house/live/docs/faq.md](../live/docs/faq.md).

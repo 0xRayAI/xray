@@ -90,7 +90,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** Backfill never finishes for a repo. The log says 404.
 - **Cause:** The fine-grained token does not include that repo.
-- **Fix:** Add the repo to the token, or remove it from `COLLECTOR_REPOS`. The token must cover every watched repo.
+- **Fix:** Add the repo to the token, or remove it from `COLLECTOR_REPOS`. The token must cover every watched repo, including every repo in `COLLECTOR_ORG` when that is set. Skipped repos show as `collector: skip org/repo (403)` in the logs.
 
 ### `railway up` warns that Config as Code is deprecated
 
