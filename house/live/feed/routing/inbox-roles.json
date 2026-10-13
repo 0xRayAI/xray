@@ -131,7 +131,8 @@
     "offsite-copier": {},
     "arch1": {
       "needles": [
-        "arch1",
+        "@arch1",
+        "arch1 deep-review",
         "deep-review",
         "deep review",
         "gate b"
