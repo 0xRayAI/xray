@@ -28,7 +28,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 ## 2. One owner per job
 
 - **mill** implements and opens the pull request.
-- **forge** keeps continuity and the gates. Forge does not implement. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and green CI, and only as the seat App **forge0x1** (app id 5143509). **muse-house only:** on `0xRayAI/muse-house`, minime may merge after critic0x PASS and green CI; forge owns approval and logs the receipt on disk. Critic never merges.
+- **forge** keeps continuity and the gates. Forge does not implement. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and gates A–D (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). **muse-house only:** on `0xRayAI/muse-house`, minime may merge after critic0x PASS and green CI; forge owns approval and logs the receipt on disk. Critic never merges.
 - Eng seats ship as **forge0x1**, not the personal login. If the open head is the wrong author, forge0x1 opens one replacement pull request, closes the old one with a pointer, and does not keep pushing that wrong-author head.
 - **critic** writes PASS or FAIL, cites the section, and never merges. Nobody writes their own proof.
 - **herald** posts only after Blaze's go, and only the words CoS handed over. Herald does not invent the post.
@@ -95,8 +95,8 @@ Allowed without asking:
 
 - Read a live site, repo, or dashboard that is in scope.
 - Push a branch and open a pull request. Do not commit straight to main.
-- Merge after a visible critic0x PASS and green CI, when section 3 allows it.
-- The lead or operator makes necessary small changes and merges after a Critic PASS without asking the human. The human sees only real decisions: money, credentials, deletes, publishing, production, and taste.
+- Merge after a visible critic0x PASS and all gates A–D: A CI green, B the packed tarball fresh-installs clean (git and non-git folder, temp home), C the docs match the code (stamp + `npm run release:docs-check`), D published and proven live (fresh install and upgrade, annotated tag pushed, GitHub Release so Latest flips), when section 3 allows it.
+- The lead or operator makes necessary small changes and merges after a Critic PASS and gates A–D without asking the human. The human sees only real decisions: money, credentials, deletes, publishing, production, and taste.
 - A lab check that does not spend and does not publish.
 
 Public words are friend-speak. Test them on a person before they go out.

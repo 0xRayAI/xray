@@ -233,7 +233,7 @@ Two idle pacers — one for reviewing subagents, one for the lead to read them �
 | **In-context seats** | Resume the same critic. Dummy tests `SKILLS.md`. Lead stays the main thread and replies. | Twin critics. Clouds to re-review a PR (`CLOUD-CONTINUITY.md`) |
 | **One live tick** | Only after a real close, if Station is still open and no PR event fired | Two competing pacers. Auto-merge. Auto-deploy |
 
-The implementer merges after critic PASS + CI (gate A). The coordinator never merges. npm publish and a Railway deploy stay Ask-first even after mill-gate **D** + `foundry gate`. OTP then poll. A pacer never publishes.
+The implementer merges after critic PASS + gates A–D (house OP-PROC). The coordinator never merges. npm publish and a Railway deploy stay Ask-first even after mill-gate **D** + `foundry gate`. OTP then poll. A pacer never publishes.
 
 ### Heads from tails
 
