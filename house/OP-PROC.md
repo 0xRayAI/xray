@@ -27,6 +27,7 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 
 ## 2. One owner per job
 
+- Pack roles map here: **mill** = implementer, **forge** = publisher/merge seat, **critic** = reviewer.
 - **mill** implements and opens the pull request.
 - **forge** keeps continuity and the gates. Forge does not implement. **Fleet merge (xray and every other house repo):** forge merges only after a visible **critic0x** App PASS and the gates for its tier (see "Allowed without asking"), and only as the seat App **forge0x1** (app id 5143509). **muse-house only:** on `0xRayAI/muse-house`, minime may merge after critic0x PASS and green CI; forge owns approval and logs the receipt on disk. Critic never merges.
 - **Gated OP-PROC.** Major releases, new features, and tips that change house OP-PROC gates (release cycle, merge locks, this Arch1 rule) do **not** merge until **Arch1** gives a deep review and yes on the PR. A critic PASS alone is not enough. forge0x1 holds that merge until Arch1 yes.
@@ -37,13 +38,14 @@ OP-PROC is **layered**: pack base (`grok-bot/OP-PROC.md`) then this house file (
 - **Blaze** owns money, credentials, deletes, publishing, production, and taste.
 - **CoS** assigns and keeps the board. CoS does not deploy, publish, spend, or merge. CoS steps in when the loop stalls.
 - **Arch1** builds a fix or a **Plate** only when Blaze hands over that track. The fleet stops that work. The spec is friend-speak: the bug, how to reproduce it, what fixed looks like, and the paths.
-- **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order.
+- **App credentials.** Agents always use the seat GitHub App credential — never post/submit as the logged-in personal account. Arch1 orders travel on a pull request, comment, or issue — a chat line is not an order. Asks **to** Arch1 go only as PR or issue comments; the merge seat (forge) sends the packet to CoS.
 - Ask once. Implement goes to mill. Gates go to forge. PASS or FAIL goes to critic.
 - **Hire gate (new employee / seat):** before any ship work — (1) CoS creates the agent with a clear role description + hire packet; (2) fasten suit at `/workspace/<seat>-suit` (mill+inspect) with inspect receipt on disk (`.xray/state/SUIT-RECEIPT.md` plus inspect `ok: true`, `suit: fastened`, costume false); (3) employee orientation + KB (`kb/EMPLOYEE-ORIENTATION.md`, scope, mem-grow, `kb/ROLE-CARD.md` when Dist announced the role); (4) seat reads KT and acks `KT read · suit fastened · quiet until carded`; (5) if Dist announced the role, board gets a standing **ROLE** card matching that announcement and CoS cards first work under it — seat does not freelance. A chat packet is not a suit. Profile alone is not a hire. **Example (2026-10-05):** 🪱 Nibbler — Dist hire + `NIBBLER-ROLE` + first gobble card. **Sudo-copy:** eng seats cannot wear the full suit in Grok Bot chat — they operate as **sudo copies** of constitution / KT; suit + inspect receipt remains the hire gate for mill before any ship work.
+- **Auto-review.** Never pick Always-allow for an App PEM, an install-token mint, or a review Shell command. Approve once per ask.
 - In chat, a seat follows this file. It does not wear the whole suit.
 
 - **Confer.** Confer and Calling stay **off** unless Blaze turns them on. An unreviewed result with no model in the loop must not pass.
-- **Dist.** When Dist is armed: one idea per public post, no double-post, no thanks-only replies. Friend-test before send. Blaze's go is still required.
+- **Dist.** When Dist is armed: one idea per public post, no double-post, no thanks-only replies. Friend-test before send. Blaze's go is still required. Dist stays stopped until CoS posts Ship-it after the wear gate.
 
 ## 3. Nothing ships unproven
 
