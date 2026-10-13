@@ -98,8 +98,8 @@ Allowed without asking:
 
 - Read a live site, repo, or dashboard that is in scope.
 - Push a branch and open a pull request. Do not commit straight to main.
-- Merge by tier, when section 3 allows it. Gates: A CI green, B the packed tarball fresh-installs clean (git and non-git folder, temp home), C the docs match the code (stamp + `npm run release:docs-check`), D published and proven live (fresh install and upgrade, annotated tag pushed, GitHub Release so Latest flips).
-  - **Floor:** gate A (CI green) and gate C (stamp + `npm run release:docs-check`) on every merge. B and D are set per PR by scope in the packet `gates:` field (implementer sets; critic may raise, never lower; locked once review starts). Core questions: works across all TUI environments (provisional, pending Blaze confirm: Cursor, Grok CLI, Claude Code, each git + non-git), docs updated throughout. Per-scope criteria: set per PR for now.
+- Merge by tier, when section 3 allows it. Gates: A CI green, B run and update the `.cjs`/`.mjs` files for every TUI environment, and the packed tarball fresh-installs clean (git and non-git folder, temp home), C the docs match the code (stamp + `npm run release:docs-check`), D published and proven live (fresh install and upgrade, annotated tag pushed, GitHub Release so Latest flips).
+  - **Floor:** gate A (CI green) and gate C (stamp + `npm run release:docs-check`) on every merge. B and D are set per PR by scope in the packet `gates:` field (implementer sets; critic may raise, never lower; locked once review starts). Core questions: works across all TUI environments (Cursor, Grok CLI, Hermes, OpenCode, OpenClaw), docs updated throughout. Per-scope criteria: set per PR for now.
   - Fix and small PRs: critic0x Light PASS + gates A–C (D n/a, nothing published).
   - Releases: critic0x Strict PASS + gates A–D; D is checked after publish as the wear gate.
   - Major releases, new features, and OP-PROC gate changes: all of the above plus Arch1's deep review and yes on the PR before forge merges.
