@@ -18,11 +18,14 @@ fold into "QA"; the instance (dev / labtest / prod) and the seat (qa-one / qa-tw
 A hop list that collapses to Example alone (a /health change) is shown as Railway -> Example.
 The page maps each name to a drawn node and skips any hop it cannot draw.
 """
-DEV, APP, GH, RW, CI = "dev.example.com", "app.example.com", "GitHub", "Railway", "CI"
+import live_site  # noqa: E402
+
+H = live_site.SITE["hosts"]
+DEV, APP, GH, RW, CI = H["dev"], H["prod"], "GitHub", "Railway", "CI"
 CI_KINDS = {"check_run", "check_suite", "workflow_run", "commit_status"}
 CRITIC_KINDS = {"critic_pass", "critic_fail", "critic_hold", "critic_recheck"}
 DEPLOY_KINDS = {"deploy", "deploy_fail", "deploy_pending"}
-USM = "Example"
+USM = live_site.SITE["node"]
 COLLAPSE = {DEV: USM, APP: USM, "labtest": USM, "QaOne": "QA", "QaTwo": "QA", CI: GH}
 TAG = {DEV: "dev", "labtest": "labtest", APP: "prod", "QaOne": "qa-one", "QaTwo": "qa-two"}
 
@@ -84,7 +87,7 @@ class Flow:
         if k.startswith("lab_retest_"):
             return ["Tester", GH]
         if k.startswith("health_"):
-            return [frm, "Example"]
+            return [frm, USM]
         if k in ("lab_run", "lab_calls"):
             return [frm, e.get("instance") or to, frm]   # tester -> instance (calls), instance -> tester (results)
         if k.startswith(("lab_", "board_", "cloud_", "prompt_")):   # cloud_*: <by> -> Cloud agents, finished: Cloud agents -> <by>

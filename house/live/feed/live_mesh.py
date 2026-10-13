@@ -24,7 +24,8 @@ import live_board  # noqa: E402
 import upstream  # noqa: E402
 
 ORG = "example-org"
-HEALTH_URLS = os.environ.get("LIVE_HEALTH_URLS", "https://dev.example.com/health https://app.example.com/health").split()
+import live_site  # noqa: E402
+HEALTH_URLS = os.environ.get("LIVE_HEALTH_URLS", " ".join(s["health"] for s in live_site.SITE["services"] if s.get("health"))).split()
 MERGE_QUEUE = Path(os.environ.get("LIVE_MERGE_QUEUE", "/srv/fleet-house/house/watchers/merge-queue.md"))
 QUEUE_RE = re.compile(r"^- \[(.)\] (\S+) #(\d+) ([0-9a-f]{7,40})\b")
 
@@ -32,7 +33,7 @@ for k in ff.AppToken.ENV:
     os.environ.pop(k, None)
 ff.AppToken.from_env = classmethod(lambda cls: None)
 ff.SEATS = list(live_fleet.BOARD_SEATS)
-ff.SERVICES = ["GitHub", "dev.example.com", "app.example.com"]
+ff.SERVICES = ["GitHub"] + [s["name"] for s in live_site.SITE["services"]]
 
 # LIVE_MODE: "all" (box, everything; the pre-split default), "github" (Railway collector: GitHub + /health +
 # fleet state and the board from those GitHub events; no box files) or "box" (slim box pusher: fleet files,
@@ -189,11 +190,11 @@ def build(args, gh):
            f"fleet {fleet_state['active']}/{fleet_state['total']} active")
     first = min((e["t_ct"] for e in uniq), default=None, key=lambda t: ts(t))
     return {
-        "title": "Example live mesh",
+        "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],
         "repo": args.repos[0], "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
         "notes": [
-            "Example fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "
+            f"{live_site.SITE['name']} fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "
             "reviews, reviewer verdicts (latest per PR), comment METADATA (no bodies), issues and issue events, "
             "commits on develop/main, tags, releases, check suites/runs, commit statuses (Railway = deploy*), "
             "workflow runs; plus lab retests and /health status-code changes.",

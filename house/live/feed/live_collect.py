@@ -10,20 +10,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import live_packet
+import live_site
 
 API = "https://api.github.com"
 REST_FLOOR = int(os.environ.get("LIVE_REST_FLOOR", "1500"))   # leave this much core budget for the fleet
 GQL_FLOOR = int(os.environ.get("LIVE_GQL_FLOOR", "1000"))
 BACKFILL_SECONDS = float(os.environ.get("LIVE_BACKFILL_SECONDS", "150"))   # per pass
-def _site_name() -> str:   # feed/site.json (shipped beside the collector by deploy.sh) names the site; no file = "Example"
-    try:
-        n = json.loads((Path(__file__).resolve().parent / "site.json").read_text()).get("name")
-        return n if isinstance(n, str) and n.strip() else "Example"
-    except (OSError, ValueError, AttributeError):
-        return "Example"
-
-
-BRAND = os.environ.get("LIVE_BRAND") or _site_name()   # display name the product names below are relabelled to
+BRAND = os.environ.get("LIVE_BRAND") or live_site.SITE["name"]   # display name the product names below are relabelled to
 BRAND_RE = re.compile(os.environ.get("LIVE_BRAND_RE", r"(?i)(?:acmeco|acme)(?![-/])"))   # repo names stay as identifiers
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")   # never ship addresses
 CRITIC = "reviewer-app[bot]"
@@ -281,7 +274,7 @@ class RepoCollector:
             if not login and isinstance(e.get("author"), str) and e.get("author"):
                 login = e.get("author")
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
-            if login and e.get("from") not in ("GitHub", "Example"):
+            if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
                 e["from"] = node(login)
             if login:
                 e["credit"] = credit(login)
@@ -311,7 +304,7 @@ class RepoCollector:
             self.ev.pop(eid, None)
             return
         if frm == to:
-            to = "GitHub" if frm != "GitHub" else "Example"
+            to = "GitHub" if frm != "GitHub" else live_site.SITE["node"]
         e = {"id": eid, "t_ct": iso_ct(t, self.CT) if (t.endswith("Z") or "+" in t[10:]) else t, "from": frm,
              "to": to, "kind": kind, "direction": "internal", "label": brand(label)[:54], "source": source,
              "src_file": "github-api", "repo": self.repo}
@@ -396,7 +389,7 @@ class RepoCollector:
         lab = (f"deploy{'' if state == 'success' else ' ' + state.upper()} · {self.short} {sha[:7]}" if railway
                else f"status {context} {state} · {sha[:7]}")
         self.put(f"{self.repo}:status:{sha}:{context}", t, "GitHub" if railway else node(creator),
-                 "Example" if railway else "GitHub", kind, lab, f"https://github.com/{self.repo}/commit/{sha}",
+                 live_site.SITE["node"] if railway else "GitHub", kind, lab, f"https://github.com/{self.repo}/commit/{sha}",
                  None, sha=sha, context=brand(context), state=state, creator=creator)
 
     def ci_rest(self, c, sha):
@@ -831,7 +824,7 @@ class RepoCollector:
                 if sha not in self.st["tag_time"]:
                     _, cm, _, _ = c.rest(f"/repos/{self.repo}/commits/{sha}")
                     self.st["tag_time"][sha] = cm["commit"]["committer"]["date"]
-                self.put(f"{self.repo}:tag:{tg['name']}", self.st["tag_time"][sha], "GitHub", "Example", "tag",
+                self.put(f"{self.repo}:tag:{tg['name']}", self.st["tag_time"][sha], "GitHub", live_site.SITE["node"], "tag",
                          f"tag {tg['name']} · {sha[:7]}", f"https://github.com/{self.repo}/releases/tag/{tg['name']}",
                          None, tag=brand(tg["name"]), sha=sha, time_basis="tagged commit date")
             if etag:

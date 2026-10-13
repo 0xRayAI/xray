@@ -11,6 +11,8 @@ DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
   cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
+  # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
+  if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi
   if [ -n "${LIVE_PUBLIC_OVERLAY:-}" ]; then
     [ -d "$LIVE_PUBLIC_OVERLAY" ] || { echo "LIVE_PUBLIC_OVERLAY is not a directory" >&2; exit 1; }
     cp -a "$LIVE_PUBLIC_OVERLAY"/. "$DST/public/"
@@ -19,7 +21,7 @@ DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 }
 # collector/ = the feed modules + house/live-mesh/fetch_feed.py from this repo (copied at deploy time, not committed)
 rm -rf "$DST/collector"; mkdir -p "$DST/collector/upstream"
-cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_board.py "$APP"/../feed/upstream.py "$APP"/../feed/jira_source.py "$DST/collector/"
+cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_site.py "$APP"/../feed/live_board.py "$APP"/../feed/upstream.py "$APP"/../feed/jira_source.py "$DST/collector/"
 cp "$APP/../../live-mesh/fetch_feed.py" "$DST/collector/upstream/"   # house/live-mesh in this repo
 # server inbox routing (same rules as the box pusher): inbox_pass.py + routing/ beside it
 mkdir -p "$DST/collector/routing"

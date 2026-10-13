@@ -61,7 +61,9 @@ PRIVATE_ART = "private/qa-artifacts"   # under WS; stat only, never read
 CHECK_BUSY = {"queued", "in_progress", "pending", "waiting", "requested", "running"}
 CHECK_FAIL = {"failure", "timed_out", "startup_failure", "action_required", "cancelled", "error", "fail"}
 CLOUD_RECENT_S = 30 * 60   # first read: lines newer than this are live work and are emitted; older ones seed silently
-RW_ENV = {"development": "dev.example.com", "labtest": "labtest", "production": "app.example.com"}
+import live_site  # noqa: E402
+_H = live_site.SITE["hosts"]
+RW_ENV = {"development": _H["dev"], "labtest": _H["labtest"], "production": _H["prod"]}
 RW_APPROVAL = {"WAITING", "NEEDS_APPROVAL"}   # awaiting approval (QUEUED is a normal queue state)
 # house files Coord writes: known names only become tags; anything else is "house/other" (names can be free text)
 HOUSE_TAGS = {"HOUSE": "HOUSE", "merge-queue": "merge-queue", "digest": "digest", "station": "station",
@@ -135,17 +137,17 @@ STATUS_RE = re.compile(r"(?im)^\W{0,4}status\W{0,6}(OPEN|FIXED|REOPENED|PARTLY|W
 PASS_RE, FAIL_RE = re.compile(r"\bPASS(?:ED)?\b"), re.compile(r"\bFAIL(?:ED)?\b")
 # call logs (curl -i dumps / "METHOD /path [code]" lines): only the status code class is counted
 STATUS_LINE_RE = re.compile(r"(?m)^HTTP/[0-9.]+ ([1-5])\d\d\b|\[([1-5])\d\d\]")
-HOSTS = (("app.example.com", re.compile(r"app\.live\.ai")),
-         ("dev.example.com", re.compile(r"dev\.live\.ai|live-lab")),
-         ("labtest", re.compile(r"localhost|127\.0\.0\.1|\blabtest\b")))
-INSTANCES = ("dev.example.com", "labtest", "app.example.com")
+HOSTS = ((_H["prod"], re.compile(r"app\.live\.ai")),
+         (_H["dev"], re.compile(r"dev\.live\.ai|live-lab")),
+         (_H["labtest"], re.compile(r"localhost|127\.0\.0\.1|\blabtest\b")))
+INSTANCES = (_H["dev"], _H["labtest"], _H["prod"])
 
 
-def instance_of(text, name="", default="dev.example.com"):
+def instance_of(text, name="", default=_H["dev"]):
     """Which Example instance a log talks to: file-name hint first, else the most-mentioned host (count only)."""
     n = name.lower()
     if "-prod" in n or n.startswith("prod"):
-        return "app.example.com"
+        return _H["prod"]
     if "labtest" in n:
         return "labtest"
     counts = {h: len(r.findall(text)) for h, r in HOSTS}
@@ -175,13 +177,13 @@ def bug_id(name):
     s = name[:-3]
     m = re.fullmatch(r"BUG-lab-(tester|qa-one|qa-two)-(\d{1,4}[a-z]?)", s)
     if m:
-        return f"{m[1]}-{m[2]}", SEAT_OF[m[1]], "dev.example.com"
+        return f"{m[1]}-{m[2]}", SEAT_OF[m[1]], _H["dev"]
     m = re.fullmatch(r"(?:BUG-)?PROD-(tester|qa-one|qa-two)-(\d{1,4})", s)
     if m:
-        return f"PROD-{m[1]}-{m[2]}", SEAT_OF[m[1]], "app.example.com"
+        return f"PROD-{m[1]}-{m[2]}", SEAT_OF[m[1]], _H["prod"]
     m = re.match(r"PROD-(\d{1,4})(?:-|$)", s)
     if m:
-        return f"PROD-{m[1]}", "Others", "app.example.com"
+        return f"PROD-{m[1]}", "Others", _H["prod"]
     return None
 
 
@@ -290,7 +292,7 @@ class Fleet:
                 rel = f"qa/{d.name}/{p.name}"
                 if self._changed(p, rel) or f"lab:issue:{m[1]}-{m[2]}" not in self.events:
                     iid = f"{m[1]}-{m[2]}"
-                    self._emit(f"lab:issue:{iid}", mt, seat, "dev.example.com", "lab_issue", f"issue drafted {iid}",
+                    self._emit(f"lab:issue:{iid}", mt, seat, _H["dev"], "lab_issue", f"issue drafted {iid}",
                                "qa/issues", bug_id=iid, seat=m[1])
 
     def _run(self, rid, p_or_mt, seat, host, tag, npass, nfail):
@@ -411,7 +413,7 @@ class Fleet:
                     old = self.cards.get(cid)
                     if old != st:
                         self.cards[cid] = st
-                        self._emit(f"board:card:{cid}:{st}", mt, "Coord", "Example", "board_card",
+                        self._emit(f"board:card:{cid}:{st}", mt, "Coord", live_site.SITE["node"], "board_card",
                                    f"card {cid} → {st}" if old else f"card {cid} {st}", "house/JIRA-BOARD-MAP",
                                    card_id=cid, card_status=st, prev_status=old)
         for name, tag in (("BOARD.md", "house/BOARD"), ("ATTENTION_STATE.md", "house/ATTENTION_STATE")):
@@ -436,11 +438,11 @@ class Fleet:
                 if old is None or old[0] != h:
                     st = "added" if old is None else "updated"
                     slug = key.split("#", 1)[1]
-                    self._emit(f"board:{key}:{h}", mt, "Coord", "Example", "board_status",
+                    self._emit(f"board:{key}:{h}", mt, "Coord", live_site.SITE["node"], "board_status",
                                f"{tag.split('/')[1]} {slug} {st}", tag, card_id=slug, card_status=st, status_word=word)
                 self.sections[key] = [h, word]
             for key in [k for k in self.sections if k.startswith(tag + "#") and k not in now]:
-                self._emit(f"board:{key}:removed:{int(mt)}", mt, "Coord", "Example", "board_status",
+                self._emit(f"board:{key}:removed:{int(mt)}", mt, "Coord", live_site.SITE["node"], "board_status",
                            f"{tag.split('/')[1]} {key.split('#', 1)[1]} removed", tag,
                            card_id=key.split("#", 1)[1], card_status="removed")
                 del self.sections[key]
@@ -579,7 +581,7 @@ class Fleet:
             elif card:
                 label = f"triager note {card}"
             key = hashlib.sha1(rel.encode()).hexdigest()[:10]
-            self._emit(f"coord:file:{key}:{int(mt)}", mt, "Coord", "Example", "cos_file", label, f"house/{tag}",
+            self._emit(f"coord:file:{key}:{int(mt)}", mt, "Coord", live_site.SITE["node"], "cos_file", label, f"house/{tag}",
                        card_id=card, **extra)
 
     def _scan_cos_git(self):
@@ -610,7 +612,7 @@ class Fleet:
             seen.append(sha[:12])
             tags = sorted({HOUSE_TAGS.get(Path(f).stem, Path(f).stem if Path(f).stem in
                            ("BOARD", "ATTENTION_STATE", "JIRA-BOARD-MAP") else "other") for f in lines[1:]})[:4]
-            self._emit(f"coord:git:{sha[:12]}", ct, "Coord", "Example", "cos_commit",
+            self._emit(f"coord:git:{sha[:12]}", ct, "Coord", live_site.SITE["node"], "cos_commit",
                        f"house commit {sha[:7]} · {', '.join(tags) or 'house'}", "house/git", sha=sha, files=tags,
                        time_basis="commit time")
         del seen[:-200]
