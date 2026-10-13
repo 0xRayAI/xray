@@ -701,7 +701,7 @@ async function readableRepos(list, tok) {
     if (!readable.has(full)) {
       const r = await fetch(`${GITHUB_API}/repos/${full}`, { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' },
         signal: AbortSignal.timeout(15000) }).catch(() => null);
-      if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); skipped.add(full); continue; }
+      if (!r || !r.ok) { skipped.add(full); console.log(`collector: skip ${repoTag(full)} (${r ? r.status : 'error'})`); continue; }
       skipped.delete(full);
       const d = await r.json().catch(() => ({}));
       if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateShort.add(full.toLowerCase().split('/').pop()); seq++; floorSeq = seq; fullDirty = true; }
@@ -712,17 +712,37 @@ async function readableRepos(list, tok) {
   return ok;
 }
 const readable = new Set(), privateRepos = new Set(), skipped = new Set();   // listed or pinned but unreadable (token scope)
+// Logs never name a repo that is not confirmed public (private or unreadable): it shows as 'private repo #n' (n is stable
+// for the process). Collector / route child output passes through redactRepos (full and short names).
+const repoNo = new Map();
+const hiddenRepo = full => privateRepos.has(String(full).toLowerCase()) || [...skipped].some(x => x.toLowerCase() === String(full).toLowerCase());
+function repoTag(full) {
+  if (!hiddenRepo(full)) return full;
+  const k = String(full).toLowerCase(); if (!repoNo.has(k)) repoNo.set(k, repoNo.size + 1);
+  return `private repo #${repoNo.get(k)}`;
+}
+function redactRepos(text) {
+  let t = String(text);
+  const hidden = [...new Set([...privateRepos, ...[...skipped].map(x => x.toLowerCase())])].sort((a, b) => b.length - a.length);
+  for (const full of hidden) {
+    const tag = repoTag(full), esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(esc(full), 'gi'), tag);
+    const short = full.split('/').pop();
+    if (short) t = t.replace(new RegExp(`(^|[^\\w./-])${esc(short)}(?![\\w-])`, 'gi'), (m, a) => a + tag);
+  }
+  return t;
+}
 async function collectorRepos(tok) {
   const org = (process.env.COLLECTOR_ORG || '').trim();
   if (!org) return COLLECTOR_REPOS;
   try { return (await readableRepos([...new Set([...COLLECTOR_REPOS, ...await orgRepos(org, tok)])], tok)).sort(); }
-  catch (e) { console.log('collector: ' + String(e.message).slice(0, 80) + '; keeping last repo list'); return collector.repos; }
+  catch (e) { console.log('collector: ' + redactRepos(String(e.message)).slice(0, 80) + '; keeping last repo list'); return collector.repos; }
 }
 async function refreshOrgRepos() {
   const next = await collectorRepos(process.env.GITHUB_READ_TOKEN || '');
   if (next.join(' ') === collector.repos.join(' ')) return;
   collector.repos = next;
-  console.log(`collector: repos ${next.join(' ')}`);
+  console.log(`collector: repos ${next.map(repoTag).join(' ')}`);
   if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
 }
 // Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
@@ -743,7 +763,7 @@ async function startCollector() {
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
   if (process.env.COLLECTOR_ORG && !collector.orgTimer) {
     collector.repos = await collectorRepos(tok);
-    console.log(`collector: repos ${collector.repos.join(' ')}`);
+    console.log(`collector: repos ${collector.repos.map(repoTag).join(' ')}`);
     collector.orgTimer = setInterval(() => refreshOrgRepos().catch(() => {}), Number(process.env.COLLECTOR_ORG_REFRESH_S || 3600) * 1000);
     collector.orgTimer.unref();
   }
@@ -766,7 +786,7 @@ async function startCollector() {
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
-    st.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { console.log('collector: ' + buf.slice(0, i).replaceAll(tok, '[redacted]').slice(0, 400)); buf = buf.slice(i + 1); } });
+    st.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { console.log('collector: ' + redactRepos(buf.slice(0, i).replaceAll(tok, '[redacted]')).slice(0, 400)); buf = buf.slice(i + 1); } });
   }
   child.on('error', e => console.log('collector: spawn failed (' + e.code + ')'));
   child.on('exit', (code, sig) => {
@@ -850,7 +870,7 @@ function routePy(script, args) {
 async function routeOnce(script) {
   fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true }); fs.mkdirSync(ROUTE_DIR, { recursive: true });
   const p = await routePy(script, ['pass']);
-  if (p.code !== 0) { console.log('route: pass failed (' + p.code + ') ' + p.err.slice(0, 120)); return; }
+  if (p.code !== 0) { console.log('route: pass failed (' + p.code + ') ' + redactRepos(p.err).slice(0, 120)); return; }
   const out = path.join(ROUTE_DIR, 'unsent.json');
   for (let round = 0; round < 50; round++) {   // unsent hands out 500 lines at a time
     const u = await routePy(script, ['unsent', out]);
@@ -873,7 +893,7 @@ async function routePass() {
   if (!script) { console.log('route: inbox_pass.py missing; off'); return; }
   route.busy = true;
   try { do { route.again = false; await routeOnce(script); } while (route.again); }
-  catch (e) { console.log('route: ' + String(e.message).slice(0, 80)); }
+  catch (e) { console.log('route: ' + redactRepos(String(e.message)).slice(0, 80)); }
   finally { route.busy = false; }
 }
 function routeSoon() { if (process.env.SERVER_ROUTING !== 'off') routePass(); }
