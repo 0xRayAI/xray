@@ -40,9 +40,9 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 
 - **Key:** `~/.burst/seat-keys/arch1.key` (dir 700, file 600). Blaze delivers it 1:1, never in a room or repo.
 - **Script:** `~/.burst/bin/live-inbox` (Python 3), fetched from raw `bifrost/main` `house/live/tools/live-inbox`.
-- **Env:** `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`.
+- **Env:** `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`. `LIVE_CURSORS` is required: the default (`/srv/live/run/fleet/cursors`) is not writable on the box or a Mac.
 - **Commands:** `live-inbox arch1` reads and never acks (`--peek` is the same); `live-inbox arch1 --ack <id>`; `live-inbox arch1 --ack all`.
-- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback.
+- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback.
 
 ## Assistant / emitter node
 The Example MCP server (example-org/mcp, env `LIVE_URL` + `LIVE_KEY`) posts one event per tool call and

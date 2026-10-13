@@ -2,9 +2,20 @@
 
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
 
+**Line fields** (`app/server.mjs` `INBOX_KEYS`; nothing else is accepted):
+
+| Field | Rule |
+|---|---|
+| `id`, `t_ct`, `seat`, `type`, `reason` | non-empty string; `seat` must be a seat id |
+| `repo`, `title`, `url` | string, may be empty |
+| `number` | integer (required) |
+| `sha` | string, optional |
+
+Any field name containing `body`, `text`, or `message` is refused (so is any unknown field). Put the ask in `title`.
+
 A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt.
+`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. The cursor dir defaults to `/srv/live/run/fleet/cursors`, which is not writable on the box or a Mac; set `LIVE_CURSORS` to a writable dir (e.g. `~/.burst/cursors`).
 
 ## Wake
 
