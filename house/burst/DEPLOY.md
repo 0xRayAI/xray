@@ -21,7 +21,7 @@ There is no separate page/store service. It is one Node process, `house/live/app
 | `GET /cards?seat=<seat>` | that seat's key (operator: any) | cards with packets and beats |
 | `GET /nudges?since=<id>` | operator key | nudges for delivery |
 | `POST /emit` | emitter key, write-only | external emitter events (tool calls); unknown fields get 422 |
-| `GET /healthz` | none | `ok` |
+| `GET /healthz` | none | JSON `{ok, collector, repos, oldest_collected, newest_collected}`: repo count and two times, no repo names |
 
 The GitHub collector (`house/live/feed/live_mesh.py`, which imports `house/live-mesh/fetch_feed.py`) is the
 second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live_mesh.py --out /data/feed/github-events.json --watch 45 --repos <org/repo ...>`.
@@ -65,7 +65,7 @@ Railway service (`server.mjs`):
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |
 | `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only |
 | `MESH_DATA_DIR` | optional | default `/data` |
-| `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; space-separated app `/health` URLs (unset means the collector probes no host); default 45 |
+| `COLLECTOR`, `COLLECTOR_REPOS`, `COLLECTOR_ORG`, `COLLECTOR_ORG_REFRESH_S`, `COLLECTOR_HEALTH_URLS`, `COLLECTOR_WATCH_S` | optional | `off`; `org/repo ...`; org whose repos are all watched (unioned with `COLLECTOR_REPOS`); org re-list seconds, default 3600; space-separated app `/health` URLs (unset means the collector probes no host); default 45 |
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |
 | `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S`, `HELD_MAX_S` | optional | 3600, 1800, 7200, 7200, 259200 |
 | `EMITTER_WORKING_S`, `BOX_STALE_S` | optional | 120, 180 |

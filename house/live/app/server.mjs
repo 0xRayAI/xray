@@ -605,19 +605,30 @@ setInterval(() => {
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
-    feedBody = Buffer.from(JSON.stringify({ ...header, cursor: cursor(), events: [...evs.values()].map(v => v.e) }));
+    feedBody = Buffer.from(JSON.stringify({ ...mask(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
     feedGz = zlib.gzipSync(feedBody, { level: 6 }); feedEtag = `"${cursor()}"`; fullDirty = false;
   }
   return { body: feedBody, gz: feedGz, etag: feedEtag };
 }
-function since(c) {  // null -> client must refetch the full feed
+// Private repos (D18): on the login-page feed an event or header object of a private repo keeps only its id, times, kind and
+// mesh hops; repo becomes 'private repo' and title / label / url / branch text are dropped.
+const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status']);
+function isPrivate(o) { return o && typeof o.repo === 'string' && privateRepos.has(o.repo.toLowerCase()); }
+function mask(v) {
+  if (!privateRepos.size || v === null || typeof v !== 'object') return v;
+  if (Array.isArray(v)) return v.map(mask);
+  if (isPrivate(v)) { const o = { repo: 'private repo', label: 'private repo' }; for (const k of PUBLIC_KEEP) if (k in v) o[k] = v[k]; return o; }
+  const o = {}; for (const k of Object.keys(v)) o[k] = mask(v[k]); return o;
+}
+function since(c, raw = false) {   // raw: unmasked (ingest-secret inbox routing only)
+  const mk = raw ? x => x : mask;  // null -> client must refetch the full feed
   const m = /^([A-Za-z0-9_-]+)\.(\d+)$/.exec(String(c || ''));
   if (!m || m[1] !== EPOCH) return null;
   const s = Number(m[2]);
   if (s > seq || s < floorSeq) return null;
   if (s === seq) return 'same';
-  const events = []; for (const v of evs.values()) if (v.s > s) events.push(v.e);
-  return { ...header, delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
+  const events = []; for (const v of evs.values()) if (v.s > s) events.push(mk(v.e));
+  return { ...mk(header), delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
 }
 
 // ---- GitHub collector (Railway): python child with ONLY the read-only token; writes a feed file on the volume ----
@@ -629,10 +640,61 @@ const JIRA_FEED = path.join(DATA_DIR, 'feed', 'jira-events.json');
 const jira = { pid: null, restarts: 0, lastWrite: 0, sig: '' };
 const COLLECTOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 const COLLECTOR_REPOS = (process.env.COLLECTOR_REPOS || 'example-org/app example-org/mcp').split(/\s+/).filter(Boolean);
-const collector = { pid: null, restarts: 0, lastExit: null, lastWrite: 0, sig: '' };
-function startCollector() {
+const collector = { pid: null, restarts: 0, lastExit: null, lastWrite: 0, sig: '', repos: COLLECTOR_REPOS, child: null };
+// COLLECTOR_ORG=org (D18): watch every repo the token can see in that org, unioned with COLLECTOR_REPOS; re-listed every
+// COLLECTOR_ORG_REFRESH_S (3600). A changed list restarts the collector child with the new repos. A failed listing keeps the last list.
+async function orgRepos(org, tok) {
+  const out = [];
+  for (let page = 1; page <= 20; page++) {
+    const r = await fetch(`${GITHUB_API}/orgs/${encodeURIComponent(org)}/repos?per_page=100&type=all&page=${page}`,
+      { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000) });
+    if (!r.ok) throw new Error('org list ' + r.status);
+    const rows = await r.json();
+    for (const x of rows) if (x && typeof x.full_name === 'string' && !x.archived) out.push(x.full_name);
+    if (rows.length < 100) break;
+  }
+  return out;
+}
+// Each repo is checked once with GET /repos/<full>: 403/404 is skipped (never handed to the collector); `private` is remembered
+// so the session-login page and feed mask that repo (inboxes and /cards keep the real names).
+async function readableRepos(list, tok) {
+  const ok = [];
+  for (const full of list) {
+    if (!readable.has(full)) {
+      const r = await fetch(`${GITHUB_API}/repos/${full}`, { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' },
+        signal: AbortSignal.timeout(15000) }).catch(() => null);
+      if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); continue; }
+      const d = await r.json().catch(() => ({}));
+      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateRepos.add(full.toLowerCase().split("/").pop()); seq++; floorSeq = seq; fullDirty = true; }
+      readable.add(full);
+    }
+    ok.push(full);
+  }
+  return ok;
+}
+const readable = new Set(), privateRepos = new Set();
+async function collectorRepos(tok) {
+  const org = (process.env.COLLECTOR_ORG || '').trim();
+  if (!org) return COLLECTOR_REPOS;
+  try { return (await readableRepos([...new Set([...COLLECTOR_REPOS, ...await orgRepos(org, tok)])], tok)).sort(); }
+  catch (e) { console.log('collector: ' + String(e.message).slice(0, 80) + '; keeping last repo list'); return collector.repos; }
+}
+async function refreshOrgRepos() {
+  const next = await collectorRepos(process.env.GITHUB_READ_TOKEN || '');
+  if (next.join(' ') === collector.repos.join(' ')) return;
+  collector.repos = next;
+  console.log(`collector: repos ${next.join(' ')}`);
+  if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
+}
+async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
+  if (process.env.COLLECTOR_ORG && !collector.orgTimer) {
+    collector.repos = await collectorRepos(tok);
+    console.log(`collector: repos ${collector.repos.join(' ')}`);
+    collector.orgTimer = setInterval(() => refreshOrgRepos().catch(() => {}), Number(process.env.COLLECTOR_ORG_REFRESH_S || 3600) * 1000);
+    collector.orgTimer.unref();
+  }
   if (!fs.existsSync(path.join(COLLECTOR_DIR, 'live_mesh.py'))) { console.log('collector: code missing; off'); return; }
   fs.mkdirSync(path.join(DATA_DIR, 'feed'), { recursive: true }); fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true });
   seedStore();
@@ -645,9 +707,9 @@ function startCollector() {
   for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
   const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
   const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
-    '--repos', ...COLLECTOR_REPOS, '--deploy-repo', '', '--health', healthArg];
+    '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  collector.pid = child.pid;
+  collector.pid = child.pid; collector.child = child;
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
@@ -655,7 +717,7 @@ function startCollector() {
   }
   child.on('error', e => console.log('collector: spawn failed (' + e.code + ')'));
   child.on('exit', (code, sig) => {
-    collector.pid = null; collector.lastExit = code ?? sig; collector.restarts++;
+    collector.pid = null; collector.child = null; collector.lastExit = code ?? sig; collector.restarts++;
     const wait = Math.min(300, 15 * 2 ** Math.min(collector.restarts - 1, 4)) * 1000;
     console.log(`collector: exited ${code ?? sig}; restart in ${wait / 1000}s`);
     if (!stopping) setTimeout(startCollector, wait).unref();
@@ -676,6 +738,25 @@ function seedStore() {
     console.log('collector: seeded ' + rel);
   }
 }
+// Per-repo collect times (D18), summarized on /healthz as a count and two times.
+const repoSeen = new Map();
+function repoTimes(f) {
+  const at = typeof f.generated_at === 'string' ? f.generated_at : new Date().toISOString();
+  const newest = new Map();
+  for (const e of f.events || []) {
+    const r = String(e && e.repo || '').toLowerCase(), t = String(e && e.t_ct || '');
+    if (r && t && Date.parse(t) > Date.parse(newest.get(r) || 0)) newest.set(r, t);
+  }
+  for (const full of collector.repos) {
+    const k = full.toLowerCase(), t = newest.get(k) || newest.get(k.split('/').pop()) || repoSeen.get(full)?.newest_event || null;
+    repoSeen.set(full, { last_collected: at, newest_event: t });
+  }
+}
+function healthBody() {   // public: a count and two times, no repo names
+  const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
+  return JSON.stringify({ ok: true, collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length,
+    oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null });
+}
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
   const sig = `${st.ino}:${st.size}:${st.mtimeMs}`;
@@ -683,6 +764,7 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
   collector.sig = sig; collector.lastWrite = Date.now();
+  repoTimes(f);
   ingestSrc('github', f.events, headerOf(f));
 }
 function jiraScript() {
@@ -1004,7 +1086,7 @@ async function handle(req, res) {
   const p = url.pathname;
   const m = req.method;
 
-  if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'text/plain; charset=utf-8', 'ok');
+  if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'application/json; charset=utf-8', healthBody());
   if (p === '/robots.txt' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'text/plain; charset=utf-8', 'User-agent: *\nDisallow: /\n');
 
   if (p === '/ingest' || p === '/ingest/delta') {
@@ -1084,7 +1166,7 @@ async function handle(req, res) {
     const h = req.headers.authorization || '';
     const tok = h.startsWith('Bearer ') ? h.slice(7).trim() : '';
     if (!tok || !safeEq(tok, INGEST_SECRET)) return json(req, res, 401, { error: 'unauthorized' });
-    const d = since(url.searchParams.get('since'));
+    const d = since(url.searchParams.get('since'), true);
     if (d === 'same') return json(req, res, 200, { cursor: cursor(), events: [] });
     if (d) return json(req, res, 200, { cursor: d.cursor, events: d.events });
     const all = [...evs.values()].map(v => v.e).filter(e => e.kind === 'pr_open' || e.kind === 'issue_open' || Date.now() - Date.parse(e.t_ct || '') < 3 * 86400000);   // card events always
@@ -1240,7 +1322,7 @@ for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true
 if (process.env.COLLECTOR !== 'off') {
   readCollectorFeed();            // warm start from the volume before the first pass
   setInterval(readCollectorFeed, 2000).unref();
-  startCollector();
+  startCollector().catch(e => console.log("collector: start failed " + String(e.message).slice(0, 80)));
 }
 readJiraFeed();
 setInterval(readJiraFeed, 2000).unref();
