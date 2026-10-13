@@ -101,6 +101,14 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, r.get("reason") or "routed")
             if line:
                 out.append(line)
+    ph = roles.get("pr_heads") or {}
+    if kind in (ph.get("kinds") or []) and event.get("number") is not None:
+        sha = str(event.get("sha") or event.get("head_sha") or (event.get("_inbox") or {}).get("sha") or "")[:12]
+        key = f"pr:{event.get('repo') or ''}#{event.get('number')}@{sha or event.get('id')}"   # one line per head, whatever the event count
+        for seat, reason in (ph.get("seats") or {}).items():
+            line = inbox._line(event, seat, reason, line_id=key)
+            if line:
+                out.append(line)
     me = actor_seat(event, roles)
     return [l for l in out if not me or l.get("seat") != me]   # a seat's own action never lands in its own inbox
 

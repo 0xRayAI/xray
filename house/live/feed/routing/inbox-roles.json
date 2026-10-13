@@ -211,6 +211,11 @@
       "reason": "hangar / listing ask for magnet"
     }
   },
+  "pr_heads": {
+    "kinds": ["pr_open", "pr_update"],
+    "seats": {"critic": "review ask: new PR or new head", "blinky": "heads-up: new PR or new head"}
+  },
+  "_note_pr_heads": "every PR open / new head on a watched repo, mention or not; one line per seat per repo#number@sha (inbox_pass.py)",
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); SEO seats have keys but no routes yet",
   "_note_builder_cloud": "builder-cloud gets every builder line (mirrored server-side in app/server.mjs) plus nudges to builder; no routes of its own"
 }

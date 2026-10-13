@@ -61,6 +61,19 @@ class FleetSeats(unittest.TestCase):
         self.assertEqual(seats("gate bypass for the deploy"), [])
         self.assertEqual(seats("Gate B run please"), ["arch1"])
 
+    def test_pr_open_and_new_head_reach_critic_and_blinky_without_mentions(self):
+        for kind in ("pr_open", "pr_update"):
+            self.assertLessEqual({"blinky", "critic"}, set(seats("xray #270 opened", kind=kind, sha="abc123def4567")), kind)
+        mine = seats("xray #270 opened", kind="pr_open", sha="abc123def4567", **{"from": "critic"})
+        self.assertIn("blinky", mine); self.assertNotIn("critic", mine)
+
+    def test_pr_head_lines_dedupe_by_repo_number_sha(self):
+        ev = lambda i, sha: {"kind": "pr_update", "label": "push", "repo": "example-org/x", "number": 270, "sha": sha,
+                             "t_ct": "2026-10-13T05:00:00-05:00", "id": i}
+        ids = lambda e: {l["id"] for l in inbox._direct(e, ROLES) if l["seat"] == "critic"}
+        self.assertEqual(ids(ev("a", "abc123def4567")), ids(ev("b", "abc123def4567")))
+        self.assertNotEqual(ids(ev("a", "abc123def4567")), ids(ev("c", "fff123def4567")))
+
 
 if __name__ == "__main__":
     unittest.main()
