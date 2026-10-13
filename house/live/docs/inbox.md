@@ -58,6 +58,8 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |
 | Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
+An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
+
 `seats` holds the kit's role rules (reviewer / builder / tester / operator / coord, read by `routing/inbox.py`); each names one of our seats in `"seat"` (or `"off"`, as reviewer is, since `pr_heads` covers it) and `feed/inbox_pass.py` rewrites every line to that seat. The kit defaults stay in `inbox.py`; this file is our install's config. Sample seats (reviewer, tester, qa, coord, operator, triager, growth, qa-one, qa-two, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier) are gone from the routes, the server's seat list and the seat key defaults. The server keeps the kit's `builder` / `builder-cloud` plumbing (installation-token auth, mirror), but nothing routes to it. Server nudges and silent-seat lines go to blinky (was coord), `/nudges` is forge's (was operator).
 
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):

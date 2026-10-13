@@ -22,3 +22,9 @@ class NonEmptyReadIsWork(unittest.TestCase):
         root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
         for f in ("house/live/docs/inbox.md", "house/live/SETUP.md", "grok-bot/OP-PROC.md", "house/OP-PROC.md"):
             self.assertIn("a non-empty read is the work", open(os.path.join(root, f)).read().lower(), f)
+class CommentNeedle(unittest.TestCase):
+    def test_comment_must_mention(self):
+        root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        for f in ("house/OP-PROC.md", "house/live/docs/inbox.md"):
+            t = open(os.path.join(root, f)).read()
+            for s in ("must @-mention the next seat", "never its body", '"may merge" are not a merge ask'): self.assertIn(s, t, f)
