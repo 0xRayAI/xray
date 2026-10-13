@@ -21,7 +21,7 @@
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
 | reviewer, tester, qa, coord, operator, growth, qa-one, qa-two, triager, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier | a per-seat key: `Authorization: Bearer <key>` |
 
-Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `/srv/live/run/secrets/seat-keys`; dir 0700, files 0600). The
+Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `~/.burst/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
 Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed/seat_keys.sh publish` (sets
 `SEAT_KEYS` on Railway) and deploy with `app/deploy.sh`. Seat list: `SEAT_KEYS_SEATS` or `SEATS_JSON`. Service and deploy dir: `LIVE_RAILWAY_SERVICE`, `MESH_APP_DEPLOY_DIR`.
@@ -44,7 +44,7 @@ Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox
 
 - **Key:** `~/.burst/seat-keys/arch1.key` (dir 700, file 600). Blaze delivers it 1:1, never in a room or repo.
 - **Script:** `~/.burst/bin/live-inbox` (Python 3), fetched from raw `bifrost/main` `house/live/tools/live-inbox`.
-- **Env:** `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`. `LIVE_CURSORS` is required: the default (`/srv/live/run/fleet/cursors`) is not writable on the box or a Mac.
+- **Env:** none needed. Defaults are `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`; set them only to override.
 - **Commands:** `live-inbox arch1` reads and never acks (`--peek` is the same); `live-inbox arch1 --ack <id>`; `live-inbox arch1 --ack all`.
 - **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback.
 
@@ -77,7 +77,7 @@ pointing to the live board. Re-enable local writing only for debugging with `LIV
 
 ## Box helpers (any box bot)
 - `tools/live-inbox <seat> [--peek]`: open inbox lines as JSON lines. A read never acks (`--peek` is the same as a plain read). `live-inbox <seat> --ack <id|all>` or `--pop <id|all>` is the receipt; the cursor still advances to the newest line seen. Cursor in
-  `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default, `/srv/live/run/fleet/cursors`, is not writable on the box or a Mac, so set `LIVE_CURSORS` to a writable folder (for example `~/.burst/cursors`) or every read fails.
+  `$LIVE_CURSORS/<seat>.txt` (advanced after a successful read). The default is `~/.burst/cursors` (override with `LIVE_CURSORS`).
 - `tools/live-cards <seat>`: the seat's cards as JSON lines (with nudge beats).
 Copies live in `tools/`. Builder (on its own machine) uses `tools/paste-block.sh` (`live_act`, `live_inbox`; token minted
 in-process by the builder-app wrapper's `mint_token.token()`, never printed).

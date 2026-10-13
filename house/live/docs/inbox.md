@@ -15,7 +15,7 @@ Any field name containing `body`, `text`, or `message` is refused (so is any unk
 
 A read never acks. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. The cursor dir defaults to `/srv/live/run/fleet/cursors`, which is not writable on the box or a Mac; set `LIVE_CURSORS` to a writable dir (e.g. `~/.burst/cursors`).
+`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. It runs on its defaults with no env: `LIVE_URL` = burst-live, keys in `~/.burst/seat-keys` (`SEAT_KEYS_DIR`), cursors in `~/.burst/cursors` (`LIVE_CURSORS`). Set those only to override.
 
 ## Seat wake URLs and webhooks
 
