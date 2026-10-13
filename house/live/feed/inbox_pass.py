@@ -86,6 +86,33 @@ def adapt(events):
 
 
 _direct_core = inbox._direct
+_line_core = inbox._line
+ROSTER = HERE / "fleet-roster.json"
+
+
+def our_seats():
+    """Our 9 seats (feed/fleet-roster.json "seats"); every routed line must land on one of them."""
+    return {str(s) for s in (_load(ROSTER, {}).get("seats") or []) if isinstance(s, str)}
+
+
+def role_seat(seat, roles=None):
+    """Kit role (reviewer / builder / tester / operator / coord) -> our seat via roles.seats[role].seat; None when "off"."""
+    rule = ((roles if roles is not None else _load(ROLES, {})).get("seats") or {}).get(seat)
+    if isinstance(rule, dict):
+        if rule.get("off"):
+            return None
+        if isinstance(rule.get("seat"), str):
+            return rule["seat"]
+    return seat
+
+
+def _line_ours(event, seat, reason, *a, **kw):
+    """Every inbox line (direct routes, ready, stall, watcher gaps) goes through here: kit roles become our seats."""
+    seat = role_seat(seat)
+    return _line_core(event, seat, reason, *a, **kw) if seat else None
+
+
+inbox._line = _line_ours
 NODES = HERE / "fleet-nodes.json"
 # #275 guardrails. Pulses (owner / seat-to-seat messages, turns, tasks, cloud agents) show on the board only: never
 # an inbox line, never a wake. Actionable kinds with no owner seat, or owned only by a seat with no webhook
@@ -177,6 +204,9 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, reason + merged)
             if line:
                 out.append(line)
+    ours = our_seats()
+    if ours:   # a line to a seat outside our 9 (unknown, sample, unkeyed) is read by nobody: drop it, fall back below
+        out = [l for l in out if l.get("seat") in ours]
     fb = roles.get("fallback") or {}
     if fb.get("seat") and kind in ACTIONABLE and all(l.get("seat") in (fb.get("from") or []) for l in out):
         line = inbox._line(event, fb["seat"], "no owner seat with a wake" if out else "unowned: coordinator routes")

@@ -201,8 +201,12 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // ---- Live board: the server is the source of truth for seat inboxes, cards and nudges ---------------------------------
 // Seat auth: Builder = its builder-app installation token (ghVerify, unchanged); every other seat = its own key, checked
 // against SEAT_KEYS (Railway variable, JSON seat -> sha256 hex of the key; the keys themselves live only on the box).
-const SEAT_IDS = ['builder', 'reviewer', 'tester', 'qa', 'coord', 'operator', 'growth', 'qa-one', 'qa-two', 'triager', 'seat-c',
-  'chatbot', 'seo-researcher', 'seo-writer', 'offsite-copier', 'builder-cloud', 'arch1',
+// Our 9 seats (feed/fleet-roster.json) plus the kit's builder / builder-cloud plumbing (installation-token auth, mirror);
+// no route writes to builder. The kit's sample seats (reviewer, tester, qa, coord, operator, triager, ...) are gone: their
+// jobs map to ours (coord -> blinky, operator / tester / qa -> forge, reviewer -> critic), see SEAT_ALIAS.
+const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
+const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
+const SEAT_IDS = ['builder', 'builder-cloud', 'arch1',
   'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
@@ -323,7 +327,7 @@ async function seatOf(req) {   // -> seat id | null; throws when GitHub can't ve
   return null;
 }
 const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[^a-z0-9 -]/g, ' ');
-  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (w === 'lab') return 'qa'; } return null; };
+  for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (SEAT_ALIAS[w]) return SEAT_ALIAS[w]; } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
 const NUDGE_L1_MS = (Number(process.env.NUDGE_L1_S) || 3600) * 1000, NUDGE_L2_MS = (Number(process.env.NUDGE_L2_S) || 1800) * 1000;
 const NUDGE_L3_MS = (Number(process.env.NUDGE_L3_S) > 0 ? Number(process.env.NUDGE_L3_S) : 7200) * 1000;
@@ -352,7 +356,7 @@ function lineDone(seat, l) {
   if (!c) return false;
   if (c.state === 'closed') return true;
   const lt = Date.parse(l.t_ct) || 0;
-  if (seat === 'reviewer' && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
+  if (seat === REVIEW && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
   return false;
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
@@ -489,7 +493,7 @@ function holdOwner(c) {
   if (owner && SEAT_IDS.includes(owner)) return owner;
   const by = seatIdOf(c.hold && c.hold.by);
   if (by && SEAT_IDS.includes(by)) return by;
-  return 'builder';
+  return COS;
 }
 // NUDGE: a live card with no beat for 60 min -> level 1 to the packet's next owner (else the card owner); still no
 // beat 30 min after that -> level 2 to Coord. Level 3 then repeats to that same owner every 2h until a beat lands.
@@ -527,14 +531,14 @@ function evalNudges(now = Date.now()) {
       title: String(c.title || '').slice(0, 120), url: String(c.url || '').slice(0, 300), stage: c.stage || '', level: lvl, seat, via, beat_t: c.last_beat_t }); changed = true;
       if (seat === 'builder') nudgeToCloud(nudges[nudges.length - 1]); };
     const to = seatIdOf(c.nudge_to), nx = to || seatIdOf((c.packet || {})['next owner']);
-    const tgt = nx || seatIdOf(c.owner) || 'coord', via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
+    const tgt = nx || seatIdOf(c.owner) || COS, via = to ? (c.nudge_via || 'retest owner') : nx ? 'next owner' : 'card owner';
     const l1s = nudges.filter(n => n.id === id(1) || n.id.startsWith(id(1) + ':'));
     let l1 = l1s[l1s.length - 1];
     if (!l1) { mk(1, tgt, via); l1 = has(1); }
     else if (!l1.closed_at && l1.seat !== tgt) {
       l1.closed_at = new Date(now).toISOString(); changed = true;
       if (!l1s.some(n => n.seat === tgt)) { mk(1, tgt, via, id(1) + ':' + tgt); l1 = nudges[nudges.length - 1]; } }
-    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, 'coord', 'escalation');
+    if (l1 && !has(2) && now - l1.t >= NUDGE_L2_MS) mk(2, COS, 'escalation');
     const l2 = has(2);
     if (l2 && !l2.closed_at) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
@@ -572,7 +576,7 @@ function evalSilent(fleet, now = Date.now()) {
     const nid = `silent:${id}:${last}`;
     if (nudges.some(n => n.id === nid)) continue;
     nudges.push({ id: nid, kind: 'silent', t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0,
-      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: 'coord', via: 'silent seat', about: id, beat_t: last });
+      title: `${name} silent 2h while owning live work`, url: '', stage: '', level: 2, seat: COS, via: 'silent seat', about: id, beat_t: last });
     changed = true;
   }
   if (changed) saveNudges();
@@ -1397,22 +1401,22 @@ async function handle(req, res) {
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
   }
-  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (Operator may read any seat); coord / operator see all.
-    // Public mode: no key needed, any ?seat= (default coord = all cards); a key that is sent still limits to its own seat.
+  if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
+    // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who && !PUBLIC) return json(req, res, 401, { error: 'unauthorized' });   // public mode: cards are readable without a key
-    const want = String(url.searchParams.get('seat') || who || 'coord').toLowerCase();
-    if (who && want !== who && who !== 'operator') return json(req, res, 403, { error: 'not your seat' });
-    const all = want === 'coord' || want === 'operator';
+    const want = String(url.searchParams.get('seat') || who || 'all').toLowerCase();
+    if (who && want !== who && who !== COS && who !== OPS) return json(req, res, 403, { error: 'not your seat' });
+    const all = want === 'all' || want === 'coord' || want === COS || want === OPS;
     const cs = CARD_SEAT[want] || want;
     return json(req, res, 200, { seat: want, cards: cardsView(bfCards.filter(c => all || cardSeats(c).includes(cs))) });
   }
-  if (p === '/nudges') {   // GET /nudges?since=<id>: Operator key only (the Operator routine delivers them)
+  if (p === '/nudges') {   // GET /nudges?since=<id>: forge's key only (forge delivers them; was the kit's Operator)
     if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
-    if (who !== 'operator') return json(req, res, 403, { error: 'operator only' });
+    if (who !== OPS) return json(req, res, 403, { error: 'forge only' });
     evalNudges();
     return json(req, res, 200, { nudges: linesAfter(nudges, url.searchParams.get('since')).slice(0, 500) });
   }

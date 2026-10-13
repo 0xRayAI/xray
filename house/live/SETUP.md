@@ -23,7 +23,7 @@ Logins map to seats in the committed `feed/fleet-nodes.json`, which beats the `L
 | Seat | Credential |
 |---|---|
 | builder | its builder-app installation token (`ghs_…`, verified with GitHub; unchanged) |
-| reviewer, tester, qa, coord, operator, growth, qa-one, qa-two, triager, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier | a per-seat key: `Authorization: Bearer <key>` |
+| forge, critic, mill, blinky, herald, nibbler, sound, magnet | a per-seat key: `Authorization: Bearer <key>`. Our 9 seats (with arch1 below); routes: [route table](docs/inbox.md#server-routing) |
 
 Keys live only on the box: `$SEAT_KEYS_DIR/<seat>.key` (default `~/.burst/seat-keys`; dir 0700, files 0600). The
 server holds only their SHA-256 hashes, in the Railway variable `SEAT_KEYS` (JSON `{seat: sha256hex}`).
@@ -62,9 +62,9 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 | Method + path | Auth | Returns |
 |---|---|---|
 | `GET /inbox/<seat>?since=<id>` | that seat | `{seat, lines}` after `<id>` (all when omitted / unknown) |
-| `GET /cards?seat=<seat>` | that seat, or operator | cards the seat owns or is next owner on (coord / operator: all), with nudge beats |
-| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for reviewer a verdict at head); `?all=1` = history |
-| `GET /nudges?since=<id>` | operator | `{nudges}` in creation order |
+| `GET /cards?seat=<seat>` | that seat, or blinky / forge | cards the seat owns or is next owner on (`all`, blinky or forge: all), with nudge beats |
+| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for critic a verdict at head); `?all=1` = history |
+| `GET /nudges?since=<id>` | forge | `{nudges}` in creation order |
 | `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id). A batch that stores nothing is 400 with `rejected` refs. `replace: true` clears only after a line validates |
 | `POST /ingest/source` | `X-Live-Ingest` | normalized source events (`{source, events}`). Unknown fields are refused |
 | `GET/POST /inbox/builder` | as before | kept for Builder's existing reader |
@@ -90,5 +90,5 @@ in-process by the builder-app wrapper's `mint_token.token()`, never printed).
 
 ## Silent seats
 A bot seat with no activity / prompt / beat for > 2 h (`SILENT_S`, default 7200) while it owns live work (owner, next
-owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and Coord gets one
+owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and blinky (CoS) gets one
 nudge (`kind: silent`, `about: <seat>`) per quiet stretch. Humans (Lead) are never flagged.

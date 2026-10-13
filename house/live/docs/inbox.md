@@ -43,9 +43,26 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 
 **Server routing.** After each collector pass the server runs `feed/inbox_pass.py` (the box pusher's rules, `feed/routing/inbox-roles.json`) on the collector's events, stores the new lines in the seat inboxes and fires the seat's webhook. Seen and sent ids live on the volume (`$MESH_DATA_DIR/route/`), so an event is routed once, also across restarts; the first pass on an empty volume seeds silently. `SERVER_ROUTING=off` turns it off. The box pusher is no longer needed for collector events; if it runs too, its lines carry the same ids and are not stored twice.
 
+**Route table (our 9 seats).** Every route in `feed/routing/inbox-roles.json` lands on one of our 9 seats (`feed/fleet-roster.json`: blinky, critic, forge, mill, arch1, herald, magnet, nibbler, sound); `tests/test_routing_ours.py` fails on any other name.
+
+| Event | Seat(s) | Rule |
+|---|---|---|
+| New issue (`issue_open`) | blinky | `extra_seats.blinky.kinds` |
+| Issue / PR / review comment | blinky; PR comments also the PR author's seat | `comment_watch` |
+| New PR, new head (push to a PR) | critic (re-Light ask) and blinky (heads-up) | `pr_heads`, one line per head |
+| Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
+| Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
+| Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
+| needs-decision / lead label or ask | blinky | `seats.coord.seat` |
+| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@arch1`) | that seat | `extra_seats.<seat>.needles` |
+| Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |
+| Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
+
+`seats` holds the kit's role rules (reviewer / builder / tester / operator / coord, read by `routing/inbox.py`); each names one of our seats in `"seat"` (or `"off"`, as reviewer is, since `pr_heads` covers it) and `feed/inbox_pass.py` rewrites every line to that seat. The kit defaults stay in `inbox.py`; this file is our install's config. Sample seats (reviewer, tester, qa, coord, operator, triager, growth, qa-one, qa-two, seat-c, chatbot, seo-researcher, seo-writer, offsite-copier) are gone from the routes, the server's seat list and the seat key defaults. The server keeps the kit's `builder` / `builder-cloud` plumbing (installation-token auth, mirror), but nothing routes to it. Server nudges and silent-seat lines go to blinky (was coord), `/nudges` is forge's (was operator).
+
 **Routing guardrails (#275).** Each has a test in `tests/test_fleet_seats.py` (`Guardrails275`):
 
-1. **Coordinator fallback.** If an actionable event has no owner seat, or only `arch1` / `arch1-cloud` own it (they have no webhook), blinky also gets a line. The seat and the list come from `fallback` in `inbox-roles.json`.
+1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seat and the list come from `fallback` in `inbox-roles.json`.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
 3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`).
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
@@ -57,7 +74,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 `SEAT_WEBHOOKS` (server env, `app/server.mjs` `loadSeatWebhooks`) is a JSON object keyed by seat id:
 
 ```json
-{"reviewer": {"url": "https://wake.example.com/hook", "key_env": "REVIEWER_WAKE_KEY"},
+{"critic": {"url": "https://wake.example.com/hook", "key_env": "CRITIC_WAKE_KEY"},
  "qa":       {"url": "https://example.com/qa-wake", "key_env": "QA_WAKE_KEY", "header": "X-Wake-Key"}}
 ```
 
@@ -82,7 +99,7 @@ Every inbox line newly stored for a configured seat queues a wake: lines from `P
 - Body (string fields truncated server-side; values come from the newest line in the batch, `ids` lists every line in it):
 
 ```json
-{"seat": "reviewer", "inbox_id": "<newest line id>", "ids": ["<id>", "<id>"],
+{"seat": "critic", "inbox_id": "<newest line id>", "ids": ["<id>", "<id>"],
  "type": "<line type>", "repo": "owner/repo", "number": 12, "title": "...", "url": "https://example.com/...", "reason": "..."}
 ```
 
@@ -131,7 +148,7 @@ tools/live-inbox <seat> --ack all       # receipt for everything open
 ```js
 import http from 'node:http';
 import crypto from 'node:crypto';
-const KEY = process.env.REVIEWER_WAKE_KEY;
+const KEY = process.env.CRITIC_WAKE_KEY;
 const ok = h => { const a = Buffer.from(h || ''), b = Buffer.from('Bearer ' + KEY); return a.length === b.length && crypto.timingSafeEqual(a, b); };
 http.createServer((req, res) => {
   if (req.method !== 'POST' || !ok(req.headers.authorization)) { res.writeHead(401); return res.end(); }
@@ -149,8 +166,8 @@ For your own receiver only (never a seat's Cursor webhook, and never from a wake
 
 ```sh
 curl -i -X POST https://wake.example.com/hook \
-  -H "Authorization: Bearer $REVIEWER_WAKE_KEY" -H 'Content-Type: application/json' -H 'User-Agent: bifrost-live' \
-  -d '{"seat":"reviewer","inbox_id":"test-1","ids":["test-1"],"type":"test","repo":"owner/repo","number":0,"title":"wake test","url":"","reason":"manual"}'
+  -H "Authorization: Bearer $CRITIC_WAKE_KEY" -H 'Content-Type: application/json' -H 'User-Agent: bifrost-live' \
+  -d '{"seat":"critic","inbox_id":"test-1","ids":["test-1"],"type":"test","repo":"owner/repo","number":0,"title":"wake test","url":"","reason":"manual"}'
 ```
 
 End to end: post a line for the seat with `POST /inbox` (ingest secret) and watch the server log for `wake: <seat> ok`.

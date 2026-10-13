@@ -173,6 +173,7 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 - Blaze: land the changes first, then one final test pass after they're live.
 - Production may run an older build than `main` after a rollback; the room says which deploy is live.
 - Critic owns validating the live board: the final pass checks the data each seat shows (step 6), not just the page title and `/healthz` (Blaze caught example names and every seat idle on 2026-10-13).
+- Verify routing with a real GitHub-created event (an issue, a PR, a push), not only wakes we send ourselves: issue #281 (11:22 CT) routed to the kit's sample seat `triager`, an inbox nobody reads, while our test wakes passed.
 - Closed in lap 2: `live-inbox` runs on its defaults (no hand-passed URL or folders; our box sets the folder variables, see `house/live/docs/inbox.md`), and `/cards` is readable without a key in public mode.
 
 ## Done when

@@ -52,7 +52,7 @@ test('public mode (LIVE_PUBLIC=1): no password needed, page + feed open, real re
   assert.ok(f.j.events.every(x => typeof x.credit === 'string' && x.credit), 'no blank credits');   // server fills any source's gaps   // a collector header saying Example never reaches the feed
   assert.ok([200, 204].includes((await fetch(s.base + '/favicon.ico')).status));   // public: no 401
   const c = await fetch(s.base + '/cards'); assert.equal(c.status, 200);
-  assert.deepEqual([(await c.json()).seat], ['coord']);
+  assert.deepEqual([(await c.json()).seat], ['all']);
   const cm = await fetch(s.base + '/cards?seat=mill'); assert.equal(cm.status, 200); assert.equal((await cm.json()).seat, 'mill');
 });
 
