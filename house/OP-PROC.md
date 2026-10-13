@@ -154,7 +154,7 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 3. **Push.** Forge opens one PR; late docs commits go into that same PR.
 4. **Merge.** Forge merges as soon as CI passes. No mid-run review hold; nits never block.
 5. **Deploy.** One deploy per lap. Broken production: roll back to the last good deploy first (by deployment id), then fix forward. After a rollback, say in the room which deploy is live.
-6. **Test.** Critic runs one final pass on the live build: a real wake round trip, an ack with no approval card, UI, history, docs. One result.
+6. **Test.** Critic runs one final pass on the live build: a real wake round trip (a well-formed inbox line, the seat's webhook answers 2xx, `wake: <seat> ok` in the log and the seat confirms its routine ran), an ack with no approval card, a seat-by-seat board-data check (each of the 9 seats: its chip, Lens node, active state and Board group match the feed and `/cards?seat=<seat>`), UI, history, docs. One result.
 7. **Room.** Only the merge-and-deploy receipt, the final result, or a blocker.
 8. **Log.** CoS logs refinements as they happen and folds them into one OP-PROC PR.
 

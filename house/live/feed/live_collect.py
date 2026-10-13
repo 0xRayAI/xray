@@ -93,7 +93,14 @@ def credit(login: str | None) -> str | None:
         return None
     if CLOUD_AGENT_RE.match(login):
         return "CloudAgents"
-    return NODE_LC.get(login.lower()) or "other"
+    n = NODE_LC.get(login.lower())
+    if n:
+        return CREDIT_ALIAS.get(n.lower(), n)
+    return "github" if login.lower().endswith("[bot]") else "other"   # unmapped bot / CI -> the github node
+
+
+CREDIT_ALIAS = {"ci": "github", "github": "github", "blaze0x1": "Blaze", "blaze": "Blaze", "lead": "Blaze"}
+LOGIN_KEYS = ("actor", "author", "sender", "triggering_actor", "merged_by", "user")
 
 
 def node(login: str | None) -> str:
@@ -285,8 +292,7 @@ class RepoCollector:
             # A later LIVE_NODE_MAP must relabel events already stored. Incremental polls only rewrite changed items.
             if login and e.get("from") not in ("GitHub", "Example", live_site.SITE["node"]):
                 e["from"] = node(login)
-            if login:
-                e["credit"] = e.get("seat_trailer") or credit(login)
+            pass
             if e.get("from") == "Others" and CLOUD_AGENT_RE.match(str(e.get("actor") or e.get("author") or "")):
                 e["from"] = "CloudAgents"   # cloud-agent writes stored before the Cloud agents node existed
             for k in ("label", "message"):
@@ -298,6 +304,11 @@ class RepoCollector:
         for k, v in (("etags", {}), ("cur", {}), ("prs", {}), ("ci", {}), ("reviewer", {}), ("bf", {}),
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
+        self._sha_who = {}
+        for e in self.ev.values():
+            self._index_sha(e)
+        for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
+            e["credit"] = self.credit_of(e)
 
     # ---------------------------------------------------------------- helpers
     def save(self):
@@ -322,10 +333,33 @@ class RepoCollector:
         for k, v in extra.items():
             if v is not None:
                 e[k] = v
-        who = e.get("seat_trailer") or credit(e.get("actor") or e.get("author"))
-        if who:
-            e["credit"] = who
+        self._index_sha(e)
+        e["credit"] = self.credit_of(e)
         self.ev[eid] = e
+
+    def _index_sha(self, e):   # sha -> (commit author login, Seat: trailer) for check / workflow / deploy fallbacks
+        sha = e.get("sha")
+        if isinstance(sha, str) and len(sha) >= 7 and (e.get("author") or e.get("seat_trailer")):
+            self._sha_who[sha[:7]] = (e.get("author"), e.get("seat_trailer"))
+
+    def credit_of(self, e) -> str:
+        """Seat credited for an event, never blank: Seat: trailer > actor / sender login > the PR's author >
+        the commit's author login > that commit's Seat: trailer > the github node (CI, bots, rails with no seat)."""
+        if e.get("seat_trailer"):
+            return e["seat_trailer"]
+        for k in LOGIN_KEYS:
+            v = e.get(k)
+            if isinstance(v, str) and v:
+                return credit(v)
+        n = e.get("number")
+        p = self.st.get("prs", {}).get(str(n)) if n is not None and hasattr(self, "st") else None
+        if p and p.get("author"):
+            return credit(p["author"])
+        sha = e.get("sha") or e.get("head_sha") or e.get("merge_sha")
+        if isinstance(sha, str) and sha[:7] in getattr(self, "_sha_who", {}):
+            login, trailer = self._sha_who[sha[:7]]
+            return trailer or credit(login) or "github"
+        return "github"
 
     def pr_node(self, n):
         p = self.st["prs"].get(str(n))

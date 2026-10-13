@@ -193,6 +193,7 @@ def build(args, gh):
         "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],
         "repo": args.repos[0], "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
+        "product_nodes": sorted({live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])}),
         "notes": [
             f"{live_site.SITE['name']} fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "
             "reviews, reviewer verdicts (latest per PR), comment METADATA (no bodies), issues and issue events, "

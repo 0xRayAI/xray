@@ -52,6 +52,39 @@ class Credit(unittest.TestCase):
             uc.NODE_LC.clear(); uc.NODE_LC.update(old)
 
 
+class CreditNeverBlank(unittest.TestCase):
+    def test_checks_workflows_deploys_commits_all_credited(self):
+        from zoneinfo import ZoneInfo
+        from unittest import mock
+        ff = type("FF", (), {"CT": ZoneInfo("America/Chicago")})
+        self.enterContext(mock.patch.object(uc, "SHOW_UNMAPPED", True))
+        self.enterContext(mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "htafolla": "Blaze", "blaze0x1": "Blaze",
+                                                      "critic0x[bot]": "critic", "github-actions[bot]": "CI"}))
+        with tempfile.TemporaryDirectory() as d:
+            col = uc.RepoCollector("acme/app", Path(d), ff, lambda *a: None)
+            col.st["prs"]["7"] = {"author": "critic0x[bot]"}
+            sha = "c" * 40
+            col.commit_event(sha, "2026-10-13T15:00:00Z", "feat\n\nSeat: mill", "forge0x1[bot]", "main")
+            col.commit_event("d" * 40, "2026-10-13T15:00:30Z", "chore", "htafolla", "main")
+            T = "2026-10-13T15:01:00Z"
+            col.put("chk", T, "GitHub", "GitHub", "check_run", "test ok", "u", None, sha=sha)          # commit author's trailer
+            col.put("wf", T, "CI", "GitHub", "workflow_run", "ci", "u", 7, sha="e" * 40)             # PR author
+            col.put("dep", T, "Railway", "GitHub", "deploy", "deploy ok", "u", None, sha="f" * 40)     # no seat -> github
+            col.put("bot", T, "GitHub", "GitHub", "check_run", "x", "u", None, actor="some-app[bot]")  # unmapped bot -> github
+            col.put("ci", T, "CI", "GitHub", "check_run", "x", "u", None, actor="github-actions[bot]")
+            got = {k: e["credit"] for k, e in col.ev.items() if ":" not in k}
+            self.assertEqual(got, {"chk": "mill", "wf": "critic", "dep": "github", "bot": "github", "ci": "github"})
+            self.assertEqual(col.ev[f"acme/app:commit:{'d' * 40}"]["credit"], "Blaze")
+            self.assertTrue(all(e.get("credit") for e in col.ev.values()))
+            col.save()
+            raw = json.loads(col.path.read_text())
+            for e in raw["events"].values():
+                e.pop("credit", None)                       # stored before credits existed
+            col.path.write_text(json.dumps(raw))
+            col2 = uc.RepoCollector("acme/app", Path(d), ff, lambda *a: None)
+            self.assertTrue(all(e.get("credit") for e in col2.ev.values()))
+
+
 class SeatTrailer(unittest.TestCase):
     def test_trailer_overrides_login_map(self):
         self.assertEqual(uc.seat_trailer("fix x\n\nbody\nSeat: mill\n"), "mill")

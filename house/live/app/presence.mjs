@@ -1,4 +1,6 @@
 // Seat presence folding (pure; imported by server.mjs and tests).
+import fs from 'node:fs';
+import path from 'node:path';
 const tsOf = s => { const t = Date.parse(s || ''); return Number.isFinite(t) ? t : 0; };
 
 function addDest(out, src, dst) {
@@ -64,4 +66,21 @@ export function foldSeatTouch(fleet, touch, now = Date.now()) {
   f.active = Object.values(f.seats).filter(v => v.active).length;
   f.total = Math.max(f.total || 0, Object.keys(f.seats).length);
   return f;
+}
+
+// Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
+// LIVE_FLEET_SEATS is set); fleet-nodes.json maps logins to seats. The committed map WINS over a LIVE_NODE_MAP service
+// variable for every login it names (a stale var mapped htafolla -> "Blaze0x1" on burst-live); the var only adds logins.
+export function fleetConfigOf(e, dir) {
+  const out = {}, roster = path.join(dir, 'fleet-roster.json');
+  if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
+  let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
+  let extra = {}; try {   // inline JSON or a path (as live_fleet accepts)
+    const raw = String(e.LIVE_NODE_MAP || '').trim();
+    extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
+  } catch {}
+  const lc = new Set(Object.keys(nodes).map(k => k.toLowerCase()));
+  const add = Object.fromEntries(Object.entries(extra || {}).filter(([k]) => !lc.has(k.toLowerCase())));
+  if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...add, ...nodes });
+  return out;
 }

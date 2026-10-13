@@ -8,7 +8,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat, foldSeatTouch } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
@@ -21,7 +21,8 @@ function siteConfig(env, dir) {
   const ev = String(env.LIVE_PUBLIC ?? '').trim().toLowerCase();
   const pub = ['1', 'true', 'yes', 'on'].includes(ev) ? true : ['0', 'false', 'no', 'off'].includes(ev) ? false : f.public === true;
   const name = String(env.LIVE_SITE_NAME || (typeof f.name === 'string' && f.name) || 'Bifrost').replace(/[<>&"']/g, '').slice(0, 60) || 'Bifrost';
-  return { public: pub, name };
+  const title = String(env.LIVE_SITE_TITLE || (typeof f.title === 'string' && f.title) || `${name} live mesh`).replace(/[<>&"']/g, '').slice(0, 80);
+  return { public: pub, name, title };
 }
 const SITE = siteConfig(process.env, path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector'));
 const PUBLIC = SITE.public;
@@ -99,7 +100,7 @@ if (STATIC.has('/index.html')) STATIC.set('/', STATIC.get('/index.html'));
 // Sources: "github" = the Railway collector child (read-only token, file on the volume), "box" = the box pusher
 // (POST /ingest, /ingest/delta; box-only signals). Same id in both -> the github copy wins. Each source has its own
 // ack cursor "<epoch>_<source>.<n>" so a collector write never invalidates the box pusher's delta base.
-const EMPTY_FEED = { title: `${SITE.name} live mesh`, generated_at: null, event_count: 0, events: [] };
+const EMPTY_FEED = { title: SITE.title, generated_at: null, event_count: 0, events: [] };
 const EPOCH = crypto.randomBytes(6).toString('base64url');
 const STARTED = Date.now();
 const MAX_REMOVED = 20000;
@@ -117,7 +118,18 @@ const srcCursor = n => `${EPOCH}_${n}.${SRCS[n].seq}`;
 const evHash = e => crypto.createHash('sha1').update(JSON.stringify(e)).digest('base64url');
 function headerOf(f) { const h = {}; for (const k of Object.keys(f)) if (k !== 'events' && k !== 'cursor') h[k] = f[k]; return h; }
 function dropId(id) { evs.delete(id); removed.push({ id, s: seq }); if (removed.length > MAX_REMOVED) floorSeq = removed.splice(0, removed.length - MAX_REMOVED).pop().s; }
-function upsert(e) { const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
+// Every served event carries a credit (never blank): the collector sets it from logins; anything else (box, Jira, health,
+// emitter, older collectors) is credited by its sender node: a roster seat, Blaze (Lead / Blaze0x1), else the github node.
+let rosterSeats = null;
+function creditOf(e) {
+  if (typeof e.credit === 'string' && e.credit) return e.credit;
+  if (!rosterSeats) { try { rosterSeats = new Set((JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector', 'fleet-roster.json'), 'utf8')).seats || []).map(x => String(x).toLowerCase())); } catch { rosterSeats = new Set(); } }
+  const f = String(e.from || '').toLowerCase();
+  if (f === 'coord') return 'blinky';
+  if (['lead', 'blaze', 'blaze0x1', 'htafolla'].includes(f)) return 'Blaze';
+  return rosterSeats.has(f) ? f : 'github';
+}
+function upsert(e) { if (!e.credit) e = { ...e, credit: creditOf(e) }; const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
 // Fleet-only (same rule as feed/live_collect.fleet_only): a GitHub-sourced event that shows a login outside the fleet
 // map is never served, whichever source sent it (box /ingest included). LIVE_SHOW_UNMAPPED=1 keeps them.
 const SHOW_UNMAPPED = process.env.LIVE_SHOW_UNMAPPED === '1';
@@ -612,6 +624,7 @@ function mergedHeader(now = Date.now()) {
   const h = { ...(b || {}), ...(g || {}) };
   if (!g && !b) Object.assign(h, headerOf(EMPTY_FEED));
   delete h.source; delete h.fleet;
+  h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends 'Example live mesh'
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
@@ -780,19 +793,8 @@ async function refreshOrgRepos() {
   console.log(`collector: repos ${next.map(repoTag).join(' ')}`);
   if (collector.child) { collector.restarts = 0; collector.child.kill('SIGTERM'); }   // exit handler restarts with the new list
 }
-// Committed fleet config shipped by deploy.sh beside the collector: fleet-roster.json is the counted seat list (unless
-// LIVE_FLEET_SEATS is set); fleet-nodes.json maps seat logins to seats, under any LIVE_NODE_MAP entries (the var wins).
-function fleetConfig(e, dir = COLLECTOR_DIR) {
-  const out = {}, roster = path.join(dir, 'fleet-roster.json');
-  if (e.LIVE_FLEET_SEATS == null && fs.existsSync(roster)) out.LIVE_FLEET_SEATS = roster;
-  let nodes = {}; try { nodes = JSON.parse(fs.readFileSync(path.join(dir, 'fleet-nodes.json'), 'utf8')); } catch {}
-  let extra = {}; try {   // the var wins, inline JSON or a path (as live_fleet accepts)
-    const raw = String(e.LIVE_NODE_MAP || '').trim();
-    extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
-  } catch {}
-  if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...nodes, ...extra });
-  return out;
-}
+// fleetConfig (presence.mjs): committed fleet-roster.json / fleet-nodes.json shipped beside the collector.
+const fleetConfig = (e, dir = COLLECTOR_DIR) => fleetConfigOf(e, dir);
 async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }

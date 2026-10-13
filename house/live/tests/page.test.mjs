@@ -55,14 +55,14 @@ test('board: every feed name maps to a drawn node; instances -> Example, QaOne/Q
   assert.equal(L.liveColor({ kind: 'merged' }), null);
 
   assert.equal(L.LABEL.Lead, 'Lead'); assert.equal(L.SUB.Lead, 'Architect'); assert.equal(L.botImage('Lead'), null);   // kit ships no avatar files, maps none
-  assert.equal(L.LABEL['mymuse.house'], 'Example'); assert.equal(L.LABEL.QA, 'QA');
+  assert.equal(L.LABEL['mymuse.house'], 'Product'); assert.equal(L.LABEL.QA, 'QA');
   for (const ed of L.EDGES) assert.ok(ed[0] in L.SATS && ed[1] in L.SATS, ed.join('-'));
   const names = ['Builder', 'Reviewer', 'reviewer', 'Tester', 'QaOne', 'QaTwo', 'QA', 'Operator', 'Coord', 'CI', 'Others',
     'GitHub', 'Railway', 'Example', 'lead-alt', 'Lead', 'dev.example.com', 'app.example.com', 'labtest', 'mystery',
     'lead-alt', 'lead-login'];
   const ev = names.map((n, i) => ({ id: 'e' + i, t_ct: '2026-10-08T13:00:00-05:00', kind: 'x', from: n, to: n, hops: [n, 'dev.example.com'] }));
   ev.push({ id: 'h', t_ct: '2026-10-08T13:00:00-05:00', kind: 'health_ok', from: 'app.example.com', to: 'Example' });
-  const out = L.applyFeed({ events: [] }, { events: ev }).state.events;
+  const out = L.applyFeed({ events: [] }, { product_nodes: ['Example', 'dev.example.com', 'app.example.com', 'labtest'], events: ev }).state.events;   // header from a template collector
   for (const e of out) {
     assert.ok(e.from in L.SATS && e.to in L.SATS, e.id + ' ' + e.from + '->' + e.to);
     if (e.hops) assert.ok(e.hops.every((k) => k in L.SATS), e.id);
@@ -77,7 +77,7 @@ test('board: every feed name maps to a drawn node; instances -> Example, QaOne/Q
     ['check_suite', 'GitHub', 'GitHub', ['GitHub'], null],
     ['cloud_reply', 'Operator', 'CloudAgents', ['Operator', 'CloudAgents'], ['Operator', 'CloudAgents']],
     ['cloud_finished', 'CloudAgents', 'Operator', ['CloudAgents', 'Operator'], ['CloudAgents', 'Operator']]];
-  const o2 = L.applyFeed({ events: [] }, { events: more.map((m, i) => ({ id: 'm' + i, t_ct: '2026-10-08T13:00:00-05:00', kind: m[0], from: m[1], to: m[2], hops: m[3] })) }).state.events;
+  const o2 = L.applyFeed({ events: [] }, { product_nodes: ['Example', 'dev.example.com', 'app.example.com', 'labtest'], events: more.map((m, i) => ({ id: 'm' + i, t_ct: '2026-10-08T13:00:00-05:00', kind: m[0], from: m[1], to: m[2], hops: m[3] })) }).state.events;
   more.forEach((m, i) => assert.deepEqual(o2[i].hops, m[4], m[0]));
   assert.deepEqual([o2[4].from, o2[4].to], ['GitHub', 'GitHub']);   // one-node check: drawn as a ring on GitHub
 });
@@ -288,7 +288,10 @@ test('our overlay: 9 seats on strip and Lens, no Lead / Others node, no Example 
   assert.equal(L.botImage('mill'), null);
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
     { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['GitHub', 'GitHub'], ['GitHub', 'mymuse.house'], ['forge', 'GitHub']]);
+  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['GitHub', 'mymuse.house'], ['forge', 'GitHub']]);
+  assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
+  for (const n of ['Blaze', 'Blaze0x1', 'htafolla', 'Lead']) assert.equal(L.liveNodeKey(n, null), 'Blaze', n);
+  assert.equal(L.botImage('arch1'), 'avatars/arch1.png');
   for (const x of Object.values(L.SATS)) assert.ok(x[0] >= 80 && x[0] <= 840, String(x));
   assert.match(L.SITE_FOOT, /Bifrost/);
 });
@@ -323,4 +326,13 @@ test('packets: longer flight, halo + path so a hop is visible seat to seat; one 
   assert.match(html, /var FLASH_MS = 2600/);
   assert.match(html, /arc\(q\[0\], q\[1\], 18, 0, 7\)/);
   assert.match(html, /var tagOn = !!ambient && !replay;/);
+});
+
+test('kit live-config carries no install brand (no Example / example.com); product names come from the feed header', () => {
+  for (const f of [path.join(APP, 'public', 'live-config.js'), path.join(APP, '..', 'feed', 'live-config.js')]) {
+    assert.doesNotMatch(fs.readFileSync(f, 'utf8'), /Example|example\.com/, f);
+  }
+  const L = loadCfg(false);
+  const out = L.applyFeed({}, { product_nodes: ['burst-live'], events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Railway', to: 'burst-live' }] }).state.events;
+  assert.equal(out[0].to, 'mymuse.house');
 });

@@ -95,6 +95,8 @@ Stored collector events are relabeled with the current `LIVE_NODE_MAP` when the 
 Box (feed pass, `feed/supervisor.sh`): `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID` (read-only
 mint only), `MESH_RUN`, `LIVE_HEALTH_URLS`, `LIVE_MERGE_QUEUE`, `LIVE_REST_FLOOR`, `LIVE_GQL_FLOOR`, `LIVE_BACKFILL_SECONDS`, `LIVE_RAILWAY_TARGETS` (optional deploy poller; JSON list, ids from your own Railway projects).
 Box pusher (`house/live/feed/push_to_host.sh`, not `house/burst/push.sh`): `LIVE_HOME` (default `/srv/live`), `MESH_RUN` (default `/srv/live/run`), `FEED` (default `$MESH_RUN/feed/live-events.json`), plus `MESH_URL` and `INGEST_SECRET` in `$MESH_RUN/.push-env` (mode 0600).
+`LIVE_NODE_MAP` (service var) only adds logins: the committed `feed/fleet-nodes.json` (shipped to `collector/`) wins for every login it names, so a stale var (it mapped htafolla to "Blaze0x1") can't override it. The server sets the feed `title` from `site.json` (`title`), whatever the collector or box header says.
+
 Seat helpers and emitter: `LIVE_URL`, `LIVE_KEY`, `SEAT_KEYS_DIR`.
 Seat keys (`feed/seat_keys.sh`): `SEAT_KEYS_SEATS` or `SEATS_JSON` for the seat list, `LIVE_RAILWAY_SERVICE`, `MESH_APP_DEPLOY_DIR`, `SEAT_KEYS_DIR`. Unset seats keep the example list. New keys are `<seat>.key`. A legacy bare `builder-cloud` file is still read.
 
