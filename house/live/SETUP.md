@@ -92,3 +92,7 @@ in-process by the builder-app wrapper's `mint_token.token()`, never printed).
 A bot seat with no activity / prompt / beat for > 2 h (`SILENT_S`, default 7200) while it owns live work (owner, next
 owner or retest owner of a live card, or an open nudge) shows amber `silent 2h` on its node and chip, and blinky (CoS) gets one
 nudge (`kind: silent`, `about: <seat>`) per quiet stretch. Humans (Lead) are never flagged.
+
+## Fleet setup
+
+Every file a new fleet edits to map its seats: [docs/fleet-setup.md](docs/fleet-setup.md).
