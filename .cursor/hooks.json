@@ -3,7 +3,8 @@
   "hooks": {
     "preToolUse": [
       {
-        "command": ".cursor/hooks/pre-tool-use.sh"
+        "command": ".cursor/hooks/pre-tool-use.sh",
+        "failClosed": true
       }
     ],
     "preCompact": [
@@ -18,12 +19,14 @@
     ],
     "beforeShellExecution": [
       {
-        "command": ".cursor/hooks/before-shell-execution.sh"
+        "command": ".cursor/hooks/before-shell-execution.sh",
+        "failClosed": true
       }
     ],
     "beforeReadFile": [
       {
-        "command": ".cursor/hooks/before-read-file.sh"
+        "command": ".cursor/hooks/before-read-file.sh",
+        "failClosed": true
       }
     ]
   }

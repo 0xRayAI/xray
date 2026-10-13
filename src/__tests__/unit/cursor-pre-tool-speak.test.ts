@@ -27,8 +27,8 @@ describe('cursorHookErrorPermission', () => {
     expect(cursorHookErrorPermission(new Error('disk full'))).toBe('deny');
   });
 
-  it('allows when the message contains EACCES', () => {
-    expect(cursorHookErrorPermission(new Error('open failed: EACCES'))).toBe('allow');
+  it('denies when only the message mentions EACCES (code check only)', () => {
+    expect(cursorHookErrorPermission(new Error('open failed: EACCES'))).toBe('deny');
   });
 });
 

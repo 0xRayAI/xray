@@ -1016,16 +1016,18 @@ const CURSOR_HOOK_EVENTS = [
   ["beforeReadFile", "before-read-file.sh"],
 ];
 
+const CURSOR_GATE_EVENTS = new Set(["preToolUse", "beforeShellExecution", "beforeReadFile"]);
+
 const CURSOR_WEAR_BACKUP = "hooks.json.xray-before";
 
 const CLOUD_SAFE_CURSOR_HOOKS = {
   version: 1,
   hooks: {
-    preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh" }],
+    preToolUse: [{ command: ".cursor/hooks/pre-tool-use.sh", failClosed: true }],
     preCompact: [{ command: ".cursor/hooks/pre-compact.sh" }],
     afterFileEdit: [{ command: ".cursor/hooks/after-file-edit.sh" }],
-    beforeShellExecution: [{ command: ".cursor/hooks/before-shell-execution.sh" }],
-    beforeReadFile: [{ command: ".cursor/hooks/before-read-file.sh" }],
+    beforeShellExecution: [{ command: ".cursor/hooks/before-shell-execution.sh", failClosed: true }],
+    beforeReadFile: [{ command: ".cursor/hooks/before-read-file.sh", failClosed: true }],
   },
 };
 
@@ -1071,6 +1073,9 @@ function mergeCloudSafeCursorHooks(existing) {
       !Array.isArray(current) || !current.some((h) => isRelativeCursorHookCommand(h && h.command));
     if (!current || leftover || missingRelative) {
       next.hooks[name] = entries;
+    } else if (entries[0].failClosed) {
+      // Gate events fail closed: our relative entry gets failClosed even on an existing hooks.json (re-wear upgrades it).
+      next.hooks[name] = current.map((h) => (h && isRelativeCursorHookCommand(h.command) ? { ...h, failClosed: true } : h));
     }
   }
   return next;
@@ -1279,7 +1284,10 @@ function installedHookCommand(fromDir, packageRoot, scriptName) {
 function installedCursorHookEntries(fromDir, packageRoot) {
   const hooks = {};
   for (const [event, script] of CURSOR_HOOK_EVENTS) {
-    hooks[event] = [{ command: installedHookCommand(fromDir, packageRoot, script) }];
+    const entry = { command: installedHookCommand(fromDir, packageRoot, script) };
+    // Gate events fail closed: Cursor denies when the hook crashes or prints no JSON.
+    if (CURSOR_GATE_EVENTS.has(event)) entry.failClosed = true;
+    hooks[event] = [entry];
   }
   return hooks;
 }
@@ -1610,8 +1618,10 @@ function ownedDeletionEdits(tokens, elements) {
   return edits;
 }
 
-function renderEventEntry(command) {
-  return `{ "command": ${JSON.stringify(command)} }`;
+function renderEventEntry(command, failClosed) {
+  return failClosed
+    ? `{ "command": ${JSON.stringify(command)}, "failClosed": true }`
+    : `{ "command": ${JSON.stringify(command)} }`;
 }
 
 function editJsoncHooks(text, xrayByEvent, targetDir) {
@@ -1627,7 +1637,7 @@ function editJsoncHooks(text, xrayByEvent, targetDir) {
   const hooksPair = root.pairs.find((pair) => pair.key === "hooks");
   if (!hooksPair) {
     const inner = Object.entries(xrayByEvent)
-      .map(([event, entries]) => `"${event}": [${renderEventEntry(entries[0].command)}]`)
+      .map(([event, entries]) => `"${event}": [${renderEventEntry(entries[0].command, entries[0].failClosed)}]`)
       .join(", ");
     const needsComma = root.pairs.length > 0;
     edits.push({
@@ -1642,9 +1652,10 @@ function editJsoncHooks(text, xrayByEvent, targetDir) {
   const missing = [];
   for (const [event, entries] of Object.entries(xrayByEvent)) {
     const command = entries[0].command;
+    const failClosed = entries[0].failClosed === true;
     const pair = hooksObj.pairs.find((item) => item.key === event);
     if (!pair) {
-      missing.push([event, command]);
+      missing.push([event, command, failClosed]);
       continue;
     }
     if (tokens[pair.valIdx].type !== "[") throw new Error(`${event} is not an array`);
@@ -1666,7 +1677,7 @@ function editJsoncHooks(text, xrayByEvent, targetDir) {
       edits.push({
         start: tokens[pair.valEnd].start,
         end: tokens[pair.valEnd].start,
-        insert: `${elements.length > 0 ? ", " : ""}${renderEventEntry(command)}`,
+        insert: `${elements.length > 0 ? ", " : ""}${renderEventEntry(command, failClosed)}`,
       });
       continue;
     }
@@ -1678,13 +1689,17 @@ function editJsoncHooks(text, xrayByEvent, targetDir) {
         insert: JSON.stringify(command),
       });
     }
+    if (failClosed && !objectPairs(tokens, first.el.startIdx).pairs.some((p) => p.key === "failClosed")) {
+      // Re-wear upgrades an older entry: gate events fail closed.
+      edits.push({ start: first.cmd.token.end, end: first.cmd.token.end, insert: ', "failClosed": true' });
+    }
     if (owned.length > 1) {
       edits.push(...ownedDeletionEdits(tokens, owned.slice(1).map((item) => item.el)));
     }
   }
   if (missing.length > 0) {
     const rendered = missing
-      .map(([event, command]) => `"${event}": [${renderEventEntry(command)}]`)
+      .map(([event, command, failClosed]) => `"${event}": [${renderEventEntry(command, failClosed)}]`)
       .join(", ");
     edits.push({
       start: tokens[hooksObj.closeIdx].start,
@@ -1778,20 +1793,21 @@ function mergeInstalledCursorHooks(existing, xrayByEvent) {
       continue;
     }
     const command = shipped[0].command;
+    const extra = shipped[0].failClosed ? { failClosed: true } : {};
     let replaced = false;
     const next = [];
     for (const entry of current) {
       const cmd = entry && typeof entry === "object" ? entry.command : "";
       if (isXrayHookCommand(cmd)) {
         if (!replaced) {
-          next.push({ ...entry, command });
+          next.push({ ...entry, command, ...extra });
           replaced = true;
         }
         continue;
       }
       next.push(entry);
     }
-    if (!replaced) next.push({ command });
+    if (!replaced) next.push({ command, ...extra });
     hooks[name] = next;
   }
   const doc = {};

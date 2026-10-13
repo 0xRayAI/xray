@@ -989,7 +989,7 @@ describe('Cursor cloud hooks adapter', () => {
     }
   });
 
-  it('xray-cloud-hook.sh logs invoke and fail-opens when mill JS is missing', () => {
+  it('xray-cloud-hook.sh logs invoke and fails closed when mill JS is missing', () => {
     const tmp = mkdtempSync(path.join(tmpdir(), 'xray-cloud-hook-miss-'));
     try {
       const runner = path.join(packageRoot, 'src/integrations/cursor/hooks/xray-cloud-hook.sh');
@@ -1001,7 +1001,7 @@ describe('Cursor cloud hooks adapter', () => {
         env: { ...process.env, PATH: process.env.PATH || '/usr/bin:/bin' },
       }).trim();
       const out = JSON.parse(stdout) as { permission: string };
-      expect(out.permission).toBe('allow');
+      expect(out.permission).toBe('deny');
       const log = readFileSync(path.join(tmp, '.xray', 'state', 'cursor-hook-invoke.log'), 'utf8');
       expect(log).toContain('event=preToolUse');
       expect(log).toContain('mill=MISSING');
