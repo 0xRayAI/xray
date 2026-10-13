@@ -2,8 +2,8 @@
 
 Bifrost: the live fleet page and the system behind it: a read-only GitHub activity feed, seat inboxes with ack, cards / packets /
 beats, nudges, a silent-seat check, parked state, a split card view with a stats strip, and a write-only endpoint for an
-external emitter (for example an MCP server reporting tool calls). The page is served password-gated from one Railway
-service. Seat names in this package are examples (Builder, Reviewer, Tester, QA, Operator, Coord, Lead); rename them in
+external emitter (for example an MCP server reporting tool calls). The page is served from one Railway service; our install runs public mode (no password, no masking), while other installs
+default to gated and masked. Seat names in this package are examples (Builder, Reviewer, Tester, QA, Operator, Coord, Lead); rename them in
 `feed/live_fleet.py`, `feed/routing/inbox-roles.json`, `feed/seat_keys.sh`, `app/public/live-config.js` and the `GH_SEATS`
 table in `app/server.mjs`.
 
