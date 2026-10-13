@@ -74,6 +74,24 @@ _DEFAULT_FOLD = {"QaOne": "QA", "QaTwo": "QA"}   # board seats: QA = QaOne + QA 
 _DEFAULT_BOARD_SEATS = ["Builder", "Builder-cloud", "Reviewer", "Tester", "QA", "Operator", "Coord"]
 
 
+NON_SEAT_NODES = {"CI", "GitHub", "Others", "CloudAgents", "Upstream"}
+
+
+def _node_map_seats():
+    """No LIVE_FLEET_SEATS: a fleet that maps its logins with LIVE_NODE_MAP counts those nodes as its seats.
+    Without this the Example seats are counted and a real fleet always shows 0/N active."""
+    raw = os.environ.get("LIVE_NODE_MAP", "").strip()
+    if not raw:
+        return []
+    try:
+        m = json.loads(Path(raw).read_text() if not raw.startswith("{") else raw)
+    except (OSError, ValueError):
+        return []
+    if not isinstance(m, dict):
+        return []
+    return sorted({v for v in m.values() if isinstance(v, str) and v and v not in NON_SEAT_NODES})
+
+
 def load_seat_config(raw=None):
     """LIVE_FLEET_SEATS: a JSON list of seat names, or {"seats":[...],"board":[...],"fold":{member:board}},
     or a path to that JSON. "board" is the counted header list. Unset or invalid keeps the Example list."""
@@ -81,6 +99,9 @@ def load_seat_config(raw=None):
         raw = os.environ.get("LIVE_FLEET_SEATS", "")
     text = str(raw).strip()
     if not text:
+        seats = _node_map_seats()
+        if seats:
+            return seats, {}, list(seats)
         return list(_DEFAULT_SEATS), dict(_DEFAULT_FOLD), list(_DEFAULT_BOARD_SEATS)
     try:
         data = json.loads(Path(text).read_text() if text[0] not in "{[" else text)

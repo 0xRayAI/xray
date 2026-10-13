@@ -269,7 +269,10 @@ def _write(feed, out):
     tmp = out.with_suffix(f".json.tmp.{os.getpid()}")
     tmp.write_text(json.dumps(feed, ensure_ascii=False, separators=(",", ":")) + "\n")
     os.replace(tmp, out)
-    if MODE == "github":                # Railway collector: the server reads this file; no append-only archive
+    if MODE == "github":                # Railway collector: the server reads this file; no append-only archive, but the
+        if new:                         # content hashes persist on the volume so "N new" counts only new or changed events
+            tmp = seen_path.with_suffix(f".tmp.{os.getpid()}")
+            tmp.write_text(json.dumps(sorted({k for _, k in new} | {h(e) for e in feed["events"]}))); os.replace(tmp, seen_path)
         return len(new)
     if new:
         with stream.open("a") as f:
