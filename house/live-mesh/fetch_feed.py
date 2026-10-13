@@ -1124,7 +1124,20 @@ def _scrub_private(feed: dict) -> None:
             event.pop("_inbox", None)
 
 
+def _keep_public(feed: dict, out: Path) -> None:
+    """Keep a previous public:true when this write omits the flag. Never invent true."""
+    if "public" in feed:
+        return
+    try:
+        old = json.loads(out.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError):
+        return
+    if isinstance(old, dict) and old.get("public") is True:
+        feed["public"] = True
+
+
 def write(feed: dict, out: Path) -> int:
+    _keep_public(feed, out)
     _keep_box_working(feed, out)
     feed["cursor"] = next_cursor(out)
     out.parent.mkdir(parents=True, exist_ok=True)

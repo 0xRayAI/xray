@@ -12,7 +12,7 @@ X is wake/chatter, not the sport. X events come from herald's JSONL ledger (`--x
 | `test_fetch_feed.py` | Unit tests (stdlib, mocked network, throwaway key): App token mint/re-mint, no fallback, `--watch` survives dropped connections. |
 | `test_live_page.mjs` | Node tests for the public live page logic (`docs-site/static/live/live.js`): merge/dedupe by id, rewind replay, Live vs rewound polling, ping mapping parity, API → raw → Pages fallback. |
 | `render_mesh.py` | Mesh renderer (Pillow + ffmpeg). Reads the feed; `--follow` re-renders on new events. |
-| `schema.json` | Kind / direction / node enums. Legacy kinds (`fix`, `probe`, `x_root`, `x_reply`) allowed on read. |
+| `schema.json` | Kind / direction / node enums. Legacy kinds (`fix`, `probe`, `x_root`, `x_reply`) allowed on read. Boolean `public` is required on write; missing means private. |
 | `sample/live-events.json` | Regenerated feed (GitHub + deploy + health + X from the live `x-ledger`). Basenames only. |
 | `x-ledger.example.jsonl` | Herald's ledger line format (illustrative). |
 | `light-notes.example.jsonl` | In-room critic Light format. |
@@ -151,7 +151,7 @@ python3 tripwire_push.py --dry-run --once
 
 Stop the tripwire with Ctrl-C or by killing that process. `fetch_feed.py` and `render_mesh.py` keep running.
 
-The push target is the `live-wire` branch, cut from `origin/main` plus `docs-site/static/live/live-events.json` and `mesh-live.mp4`. Deploy Docs builds `main` and `live-wire`. The script pushes `live-wire` only. The `github-pages` environment must allow `live-wire`.
+The push target is the `live-wire` branch, cut from `origin/main` plus `docs-site/static/live/live-events.json` and `mesh-live.mp4`. Deploy Docs builds `main` and `live-wire`. The script pushes remote `origin` and branch `live-wire` only. A feed that is missing, or whose `public` flag is not exactly true, stops the tripwire before `git ls-remote` or push (missing means private). The `github-pages` environment must allow `live-wire`.
 
 ## Honesty
 
