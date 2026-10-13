@@ -2,11 +2,13 @@ name: Hermes Plugin Tests
 
 on:
   push:
+    branches-ignore: [dev]   # dev runs only dev-lane.yml
     paths:
       - "src/integrations/hermes-agent/**"
       - "hooks/**"
       - "scripts/hooks/**"
   pull_request:
+    branches-ignore: [dev]
     paths:
       - "src/integrations/hermes-agent/**"
       - "hooks/**"

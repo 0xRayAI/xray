@@ -2,10 +2,12 @@ name: Processor Tests
 
 on:
   push:
+    branches-ignore: [dev]   # dev runs only dev-lane.yml
     paths:
       - "src/processors/**"
       - "tests/**"
   pull_request:
+    branches-ignore: [dev]
     paths:
       - "src/processors/**"
       - "tests/**"
