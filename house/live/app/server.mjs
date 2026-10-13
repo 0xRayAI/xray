@@ -1191,7 +1191,7 @@ function validFeed(f) {
 // One JSON line: {t_ct, kind, action, to?, agent?, tag?}. The seat comes from the key, never from the body.
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
   watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'] };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'agent', 'tag', 'seat']);   // seat: optional, must match the token
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat']);   // seat: optional, must match the token; from: prompt sender (#281)
 const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -1219,6 +1219,7 @@ function validActivity(d, now = Date.now()) {
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.tag != null && d.tag.length > 40) return 'tag too long';
   if (d.to != null && d.to.length > 40) return 'to too long';
+  if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
   return null;
 }
 function actRateOk(seat, now = Date.now()) {
@@ -1384,7 +1385,7 @@ async function handle(req, res) {
     if (!actRateOk(seat, now)) return json(req, res, 429, { error: 'rate limited (60/min)' }, { 'Retry-After': '60' });
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
-    for (const k of ['to', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
+    for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
     activity.push(line); if (activity.length > ACT_KEEP) activity.splice(0, activity.length - ACT_KEEP);
     appendArchive('activity', line);
     return json(req, res, 202, { ok: true });

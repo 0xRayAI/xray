@@ -16,6 +16,7 @@ LABQA, LABTEST, HOUSE = WS / "qa", WS / "labtest", WS / "fleet-house" / "house"
 OP_REPO = Path(os.environ.get("LIVE_OPERATOR_REPO", WS / "live-mesh-repo"))   # ops-app commits (git log only)
 CLOUD_SEATS = {"Builder", "Builder-cloud", "Reviewer", "Tester", "QA", "QaOne", "QaTwo", "Operator", "Coord", "Lead"}
 CLOUD_ACTIONS = {"launch", "reply", "finished", "cancel"}
+BC_ID = re.compile(r"\bbc-[A-Za-z0-9_-]{2,40}")
 CLOUD_AGENT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,40}")
 PROMPT_SEATS = {"operator": "Operator", "coordinator": "Coord", "coord": "Coord", "builder": "Builder", "builder-cloud": "Builder-cloud", "reviewer": "Reviewer",
                 "tester": "Tester", "lab qa": "QA", "qa": "QA", "qa-one": "QA", "qa two": "QA",
@@ -41,7 +42,9 @@ def seat_of(name):
 
 PROMPT_RECENT_S = 2 * 3600   # first read: lines newer than this are emitted; older ones seed silently
 WORKING_PROMPT_S = 30 * 60   # spinner: unanswered prompt within this window
-WORKING_CLOUD_S = 60 * 60    # spinner: open cloud agent within this window
+WORKING_CLOUD_S = int(os.environ.get("LIVE_CLOUD_IDLE_S") or 20 * 60)   # #281: one window, a running cloud agent keeps its
+# launching seat working until this long after the agent's last line (launch/reply or a GitHub event naming it);
+# finished/cancel ends it at once
 WORKING_CHECK_S = 30 * 60    # spinner: open PR with queued/in_progress/failing check
 WORKING_ACT_S = 30 * 60      # spinner: open turn/subagent/watcher from remote activity (start/tick, no end yet)
 ACT_SEATS = {"Builder", "Builder-cloud"}        # off-box seats that POST /activity (the server forces the seat from the key)
@@ -670,8 +673,11 @@ class Fleet:
         by = by if by in CLOUD_SEATS else (seat_of(by) or "Others")   # #275: fleet seats (forge, mill, ...) too
         repo = re.sub(r"[^A-Za-z0-9._-]", "", str(d.get("repo", "")).split("/")[-1])[:32] or "repo"
         tag = re.sub(r"\s+", " ", str(d.get("tag", ""))).strip()[:40] or "-"
-        self.cloud["agents"][agent] = [action, t]
-        self.cloud.setdefault("by", {})[agent] = by   # the launching seat counts as working while this agent runs
+        prev = self.cloud["agents"].get(agent)
+        if not prev or t >= prev[1]:        # out-of-order older line never reopens a finished agent
+            self.cloud["agents"][agent] = [action, t]
+        if action == "launch" or agent not in self.cloud.setdefault("by", {}):
+            self.cloud.setdefault("by", {})[agent] = by   # the launching seat stays credited for this agent   # the launching seat counts as working while this agent runs
         by_t = self.cloud.setdefault("by_t", {})
         by_t[by] = max(by_t.get(by, 0), t)   # a cloud line is activity from `by` (clears their prompt spinner)
         if first and now - t > CLOUD_RECENT_S:
@@ -741,7 +747,7 @@ class Fleet:
             pending[to] = max(pending.get(to, 0), t)
         if first and now - t > PROMPT_RECENT_S:
             return                           # history: seed silently
-        self._emit(f"prompt:{h}", t, frm, to, "prompt_message", "message", src,
+        self._emit(f"prompt:{h}", t, frm, to, "prompt_message", "message", src, actor=frm,   # #281: keep the sender
                    time_basis="t_ct from the prompts log")
 
     # ---- Off-box seats (Builder on its own machine): fleet/remote-activity.jsonl, written by the box pusher from the
@@ -836,7 +842,7 @@ class Fleet:
             st = A.setdefault("seat_t", {})
             st[seat] = max(st.get(seat, 0), t)
             if kind == "prompt" and action == "received":
-                self._prompt_line({"t_ct": d["t_ct"], "from": "Lead", "to": seat}, h, first, now, "remote/activity")
+                self._prompt_line({"t_ct": d["t_ct"], "from": d.get("from") or "Lead", "to": seat}, h, first, now, "remote/activity")
             elif kind == "prompt" and action == "sent":
                 self._prompt_line({"t_ct": d["t_ct"], "from": seat, "to": d.get("to")}, h, first, now, "remote/activity")
             elif kind == "cloud_agent":
@@ -1083,6 +1089,7 @@ class Fleet:
     def working_state(self, feed_events, now=None):
         """In-flight spinners (not counted in N of M): unanswered prompt, open cloud agent, or open PR check."""
         now = now or time.time()
+        self._cloud_from_github(feed_events)
         act = self._seat_activity(feed_events)
         working = {}
         for seat, pt in list(self.prompts.get("pending", {}).items()):
@@ -1126,6 +1133,22 @@ class Fleet:
             if actn in ("launch", "reply") and now - t <= WORKING_CLOUD_S and b in BOARD_SEATS and b not in working:
                 working[b] = {"via": "cloud", "since_ct": _ct(t, self.CT), "agent": agent}
         return working
+
+    def _cloud_from_github(self, feed_events):
+        """#281: a GitHub event that names a known cloud agent id (bc-..., e.g. a cursor/* branch or a cursor[bot]
+        comment label) counts as that agent's activity, so its launching seat keeps working. Ids/labels only."""
+        agents = self.cloud.get("agents", {})
+        if not agents:
+            return
+        for e in feed_events:
+            t = _ts(e.get("t_ct"))
+            if not t:
+                continue
+            hay = " ".join(str(e.get(k) or "") for k in ("id", "label", "note"))
+            for agent in BC_ID.findall(hay):
+                cur = agents.get(agent)
+                if cur and cur[0] in ("launch", "reply") and t > cur[1]:
+                    agents[agent] = ["reply", t]
 
     def fleet_state(self, feed_events, now=None):
         """Seat active = owned file, GitHub, or a message the seat sent, in the last 15 min. Working = spinner only."""
