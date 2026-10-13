@@ -119,9 +119,6 @@ class FleetRoster(unittest.TestCase):
         self.assertIn("fleet-roster.json", sh); self.assertIn("fleet-nodes.json", sh)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class Guardrails275(unittest.TestCase):
     """#275: pulses never route; unowned / arch1-only actionable events reach blinky; no self or double wakes."""
@@ -163,3 +160,30 @@ class Guardrails275(unittest.TestCase):
             self.assertIn("critic", self.routed(self.ev("issue_comment", "@critic re-Light")))
         finally:
             del os.environ["SEAT_WATCHERS"]
+
+    def test_empty_watcher_entry_skips_nothing(self):
+        for entry in ({}, {"repos": [], "kinds": []}):
+            os.environ["SEAT_WATCHERS"] = json.dumps({"critic": entry})
+            try:
+                self.assertIn("critic", self.routed(self.ev("pr_comment", "@critic re-Light")), entry)
+            finally:
+                del os.environ["SEAT_WATCHERS"]
+
+    def test_lead_prompt_is_a_pulse(self):
+        self.assertEqual(self.routed(self.ev("prompt_message", "@critic re-Light", **{"from": "Lead"})), [])
+
+    def test_bot_logins_cached_until_seat_bots_changes(self):
+        a = inbox_pass.bot_logins()
+        self.assertIs(a, inbox_pass.bot_logins())
+        os.environ["SEAT_BOTS"] = json.dumps({"mill": "mill-bot"})
+        try:
+            b = inbox_pass.bot_logins()
+            self.assertIsNot(a, b)
+            self.assertEqual(b.get("mill-bot"), "mill")
+        finally:
+            del os.environ["SEAT_BOTS"]
+        self.assertNotIn("mill-bot", inbox_pass.bot_logins())
+
+
+if __name__ == "__main__":
+    unittest.main()

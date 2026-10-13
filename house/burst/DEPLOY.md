@@ -12,7 +12,7 @@ There is no separate page/store service. It is one Node process, `house/live/app
 
 | Route | Auth | What |
 |---|---|---|
-| `GET /` and static page | `MESH_PASSWORD` login, cookie `mesh_session` (HMAC with `SESSION_SECRET`, 7 days) | `house/live/app/public/` |
+| `GET /` and static page | none in public mode; else `MESH_PASSWORD` login, cookie `mesh_session` (HMAC with `SESSION_SECRET`, 7 days) | `house/live/app/public/` |
 | `GET /live-events.json[?since=<cursor>]` | session cookie | full feed, or delta; `304` unchanged, `409`/reset means refetch full |
 | `POST /ingest`, `POST /ingest/delta` | `Authorization: Bearer $INGEST_SECRET` | box-side feed (gzip ok, 25 MB cap) |
 | `GET /ingest/events`, `GET /activity/pull`, `POST /inbox` | ingest secret | box pusher only |
@@ -59,7 +59,7 @@ Railway service (`server.mjs`):
 | Name | Need | Notes |
 |---|---|---|
 | `PORT` | set by Railway | default 8080 |
-| `MESH_PASSWORD` | required | page login |
+| `MESH_PASSWORD` | required in gated mode | page login; not needed in public mode (`feed/site.json` `"public": true`, or `LIVE_PUBLIC=1`) |
 | `SESSION_SECRET` | required, 32+ chars | cookie HMAC |
 | `INGEST_SECRET` | required, 32+ chars | box pusher |
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |

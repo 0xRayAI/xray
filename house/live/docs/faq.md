@@ -40,7 +40,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 ### Every login is Others, and the title stays Example
 
-- **Symptom:** Mapped seats never appear. The page title stays "Example live mesh".
+- **Symptom:** Mapped seats never appear. The page title stays generic instead of your site name (set `name` in `feed/site.json`).
 - **Cause:** The collector's environment is built from scratch, so `LIVE_NODE_MAP`, `LIVE_BRAND`, and `LIVE_BRAND_RE` set on the service never reach it.
 - **Fix:** Pass those three into the collector environment when they are set.
 

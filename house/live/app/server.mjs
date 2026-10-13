@@ -1,4 +1,4 @@
-// Example live mesh: password-gated static page + in-memory feed (push-only ingest; full or delta, delta polls).
+// Bifrost live mesh: password-gated (or public) static page + in-memory feed (push-only ingest; full or delta, delta polls).
 // Node 20, zero dependencies.
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -12,10 +12,23 @@ import { seatPresence, presentSeat } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
+// Site mode. Default (no config): GATED = password login + private repos masked on the page, feed and logs.
+// PUBLIC = no password, no masking: every repo name shows (build in public). Set by collector/site.json
+// ({"public": true, "name": "Bifrost"}, committed for our deploy and copied by deploy.sh) or LIVE_PUBLIC=1|0 (env wins).
+function siteConfig(env, dir) {
+  let f = {};
+  try { const j = JSON.parse(fs.readFileSync(path.join(dir, 'site.json'), 'utf8')); if (j && typeof j === 'object' && !Array.isArray(j)) f = j; } catch {}
+  const ev = String(env.LIVE_PUBLIC ?? '').trim().toLowerCase();
+  const pub = ['1', 'true', 'yes', 'on'].includes(ev) ? true : ['0', 'false', 'no', 'off'].includes(ev) ? false : f.public === true;
+  const name = String(env.LIVE_SITE_NAME || (typeof f.name === 'string' && f.name) || 'Bifrost').replace(/[<>&"']/g, '').slice(0, 60) || 'Bifrost';
+  return { public: pub, name };
+}
+const SITE = siteConfig(process.env, path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector'));
+const PUBLIC = SITE.public;
 const MESH_PASSWORD = process.env.MESH_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || '';
 const INGEST_SECRET = process.env.INGEST_SECRET || '';
-for (const [k, v, min] of [['MESH_PASSWORD', MESH_PASSWORD, 1], ['SESSION_SECRET', SESSION_SECRET, 32], ['INGEST_SECRET', INGEST_SECRET, 32]]) {
+for (const [k, v, min] of [...(PUBLIC ? [] : [['MESH_PASSWORD', MESH_PASSWORD, 1]]), ['SESSION_SECRET', SESSION_SECRET, 32], ['INGEST_SECRET', INGEST_SECRET, 32]]) {
   if (v.length < min) { console.error(`missing or too-short env ${k}; refusing to start`); process.exit(1); }
 }
 
@@ -86,7 +99,7 @@ if (STATIC.has('/index.html')) STATIC.set('/', STATIC.get('/index.html'));
 // Sources: "github" = the Railway collector child (read-only token, file on the volume), "box" = the box pusher
 // (POST /ingest, /ingest/delta; box-only signals). Same id in both -> the github copy wins. Each source has its own
 // ack cursor "<epoch>_<source>.<n>" so a collector write never invalidates the box pusher's delta base.
-const EMPTY_FEED = { title: 'Example live mesh', generated_at: null, event_count: 0, events: [] };
+const EMPTY_FEED = { title: `${SITE.name} live mesh`, generated_at: null, event_count: 0, events: [] };
 const EPOCH = crypto.randomBytes(6).toString('base64url');
 const STARTED = Date.now();
 const MAX_REMOVED = 20000;
@@ -194,6 +207,11 @@ const WAKE_DEBOUNCE_MS = envNonNeg('WAKE_DEBOUNCE_S', 60) * 1000;
 const WAKE_COALESCE_MS = envNonNeg('WAKE_COALESCE_MS', 50);
 const WAKE_RETRY_MS = envNonNeg('WAKE_RETRY_MS', 400);
 const WAKE_ATTEMPTS = 3;
+// Seats due at the same moment (a deploy, one event routed to 4 seats) send WAKE_STAGGER_MS apart, not all at once:
+// the seats' automations share one Cursor account.
+const WAKE_STAGGER_MS = envNonNeg('WAKE_STAGGER_MS', 1500);
+let wakeNextSlot = 0;
+function wakeSlot() { const now = Date.now(), at = Math.max(now, wakeNextSlot); wakeNextSlot = at + WAKE_STAGGER_MS; return at - now; }
 function loadSeatWebhooks() {
   const raw = process.env.SEAT_WEBHOOKS;
   if (!raw) return {};
@@ -229,7 +247,7 @@ function armWake(seat) {
   const st = wakeQ.get(seat);
   if (!st || st.timer || st.inflight || !st.pending.length) return;
   const remain = st.lastSent ? WAKE_DEBOUNCE_MS - (Date.now() - st.lastSent) : 0;
-  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, remain > 0 ? remain : WAKE_COALESCE_MS);
+  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, (remain > 0 ? remain : WAKE_COALESCE_MS) + wakeSlot());
   if (t.unref) t.unref();
   st.timer = t;
 }
@@ -247,17 +265,24 @@ async function deliverWake(cfg, body) {
   if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key' };
   const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bifrost-live' };
   if (cfg.bearer) headers.Authorization = 'Bearer ' + key; else headers[cfg.header] = key;
-  let error = 'network';
+  let error = 'network', detail = '';
   for (let i = 1; i <= WAKE_ATTEMPTS; i++) {
     try {
       const res = await fetch(cfg.url, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(8000) });
-      await res.arrayBuffer().catch(() => {});
+      const text = await res.text().catch(() => '');
       if (res.ok) return { ok: true, attempts: i };
       error = 'http_' + res.status;
+      detail = wakeDetail(text, key, cfg.url);
     } catch (e) { error = wakeErr(e); }
     if (i < WAKE_ATTEMPTS) await new Promise(r => { const t = setTimeout(r, WAKE_RETRY_MS * (2 ** (i - 1))); if (t.unref) t.unref(); });
   }
-  return { ok: false, attempts: WAKE_ATTEMPTS, error };
+  return { ok: false, attempts: WAKE_ATTEMPTS, error, detail };
+}
+// non-2xx response body for the log: one line, 160 chars, the key and the webhook url (with its automation id) removed
+function wakeDetail(text, key, url) {
+  let t = String(text || '').replace(/\s+/g, ' ').trim();
+  for (const x of [key, url, url.split('/').pop()]) if (x && x.length >= 6) t = t.split(x).join('[redacted]');
+  return t.replace(/(crsr|key|sk)[_-][A-Za-z0-9_-]{8,}/gi, '[redacted]').slice(0, 160);
 }
 async function flushWake(seat) {
   const st = wakeQ.get(seat), cfg = SEAT_WEBHOOKS[seat];
@@ -268,7 +293,7 @@ async function flushWake(seat) {
   catch { result = { ok: false, attempts: WAKE_ATTEMPTS, error: 'network' }; }
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
-  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}`);
+  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
   st.inflight = false; armWake(seat);
 }
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
@@ -707,7 +732,8 @@ async function readableRepos(list, tok) {
       if (!r || !r.ok) { skipped.add(full); console.log(`collector: skip ${repoTag(full)} (${r ? r.status : 'error'})`); continue; }
       skipped.delete(full);
       const d = await r.json().catch(() => ({}));
-      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateShort.add(full.toLowerCase().split('/').pop()); seq++; floorSeq = seq; fullDirty = true; }
+      if (d.private !== false && !PUBLIC) {   // public mode: nothing is masked, so nothing is remembered as private
+        privateRepos.add(full.toLowerCase()); privateShort.add(full.toLowerCase().split('/').pop()); seq++; floorSeq = seq; fullDirty = true; }
       readable.add(full);
     }
     ok.push(full);
@@ -718,7 +744,7 @@ const readable = new Set(), privateRepos = new Set(), skipped = new Set();   // 
 // Logs never name a repo that is not confirmed public (private or unreadable): it shows as 'private repo #n' (n is stable
 // for the process). Collector / route child output passes through redactRepos (full and short names).
 const repoNo = new Map();
-const hiddenRepo = full => privateRepos.has(String(full).toLowerCase()) || [...skipped].some(x => x.toLowerCase() === String(full).toLowerCase());
+const hiddenRepo = full => !PUBLIC && (privateRepos.has(String(full).toLowerCase()) || [...skipped].some(x => x.toLowerCase() === String(full).toLowerCase()));
 function repoTag(full) {
   if (!hiddenRepo(full)) return full;
   const k = String(full).toLowerCase(); if (!repoNo.has(k)) repoNo.set(k, repoNo.size + 1);
@@ -839,7 +865,7 @@ function wakeHealth() {   // seat -> ok | fail | no_key | idle (configured, noth
 }
 function healthBody() {   // public: counts, times, ages (s) and wake states; no repo names, urls or keys
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
-  return JSON.stringify({ ok: true, collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
+  return JSON.stringify({ ok: true, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: ageS(cardsAt), wakes: wakeHealth() });
 }
@@ -1148,6 +1174,7 @@ const sign = v => crypto.createHmac('sha256', SESSION_SECRET).update('mesh-sessi
 
 function makeSession() { const exp = String(Date.now() + SESSION_TTL_MS); return exp + '.' + sign(exp); }
 function validSession(req) {
+  if (PUBLIC) return true;   // public mode: no login, the page and feed are open
   const m = /(?:^|;\s*)mesh_session=([^;]+)/.exec(req.headers.cookie || '');
   if (!m) return false;
   const [exp, sig] = m[1].split('.');
@@ -1196,12 +1223,12 @@ const json = (req, res, status, obj, extra) => send(req, res, status, 'applicati
 
 function loginPage(msg = '') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>Example · live mesh</title>
+<meta name="robots" content="noindex,nofollow"><title>${SITE.name} · live mesh</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0f17;color:#dde3ee;font:15px system-ui,sans-serif}
 form{background:#141b27;padding:28px 30px;border-radius:12px;min-width:260px;box-shadow:0 8px 30px #0006}
 h1{font-size:17px;margin:0 0 18px;font-weight:600;letter-spacing:.02em}input{width:100%;box-sizing:border-box;padding:10px;border-radius:7px;border:1px solid #2c3850;background:#0b0f17;color:#dde3ee;font-size:15px}
 button{margin-top:12px;width:100%;padding:10px;border:0;border-radius:7px;background:#6e8cff;color:#fff;font-size:15px;cursor:pointer}.e{color:#ff8f8f;font-size:13px;margin:10px 0 0}</style></head>
-<body><form method="post" action="/login"><h1>Example · live mesh</h1>
+<body><form method="post" action="/login"><h1>${SITE.name} · live mesh</h1>
 <input type="password" name="password" placeholder="Password" autocomplete="current-password" autofocus required aria-label="Password">
 <button type="submit">Enter</button>${msg ? `<p class="e">${msg}</p>` : ''}</form></body></html>`;
 }
@@ -1410,6 +1437,7 @@ async function handle(req, res) {
   }
 
   if (p === '/login') {
+    if (PUBLIC) { req.resume(); return send(req, res, 303, 'text/plain', '', { Location: '/' }); }   // nothing to log in to
     if (m !== 'POST') return send(req, res, 303, 'text/plain', '', { Location: '/' });
     const ip = clientIp(req);
     if (recentFails(ip).length >= RL_MAX) { req.resume(); return send(req, res, 429, 'text/html; charset=utf-8', loginPage('Too many attempts. Try again later.'), { 'Retry-After': String(RL_WINDOW_MS / 1000) }); }
@@ -1460,7 +1488,7 @@ const server = http.createServer((req, res) => {
 });
 server.requestTimeout = 30000;
 server.headersTimeout = 15000;
-server.listen(PORT, () => console.log(`live mesh listening on :${PORT}`));
+server.listen(PORT, () => console.log(`live mesh listening on :${PORT} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`));
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
 // started last: the feed validators above are initialized by now
 if (process.env.COLLECTOR !== 'off') {

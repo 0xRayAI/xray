@@ -26,6 +26,9 @@ mkdir -p "$DST/collector/routing"
 cp "$APP"/../feed/inbox_pass.py "$DST/collector/"
 # fleet roster (counted seats) + seat login map: committed, so burst-live never depends on hand-set Railway vars
 cp "$APP"/../feed/fleet-roster.json "$APP"/../feed/fleet-nodes.json "$DST/collector/"
+# site mode (public = no password, no masking; we build in public) + display name: committed, never a hand-set var.
+# Another install deletes or edits feed/site.json (no file = gated + masked); LIVE_PUBLIC=1|0 on the service still wins.
+cp "$APP"/../feed/site.json "$DST/collector/"
 cp "$APP"/../feed/routing/inbox.py "$APP"/../feed/routing/board.py "$APP"/../feed/routing/inbox-roles.json "$DST/collector/routing/"
 # MESH_SEED_STORE=1 (one-time, first volume deploy): ship the box collector's store as collector/seed/ (the server
 # copies it onto the volume only where no file exists yet). Scanned for token / key patterns first.
