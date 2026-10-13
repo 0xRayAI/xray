@@ -145,6 +145,8 @@ Open Cards live in `WAVEBOARD.md`. What needs Blaze lives in `ATTENTION_STATE.md
 
 Watchers follow Beats on the repos named in `house/WATCHERS.md`. On new activity they create or bump a WAVEBOARD card (signal→ticket) with a Done·Verify·Next owner. GitHub signals: issue, pull request, review, checks, merge. X signals: mention or reply, only when Dist policy allows that class. Watcher ≠ implementer ≠ Dist — queue only; seats execute; watchers do not ship Dist or merge. Quiet when nothing changed. CoS owns the board digest. Forge owns the engineering cadence. A wake resumes the same seat and the same cloud id (`bc-…`).
 
+**Local watchers and the server collector.** The burst-live server collector is the only GitHub watcher (`COLLECTOR_ORG`). A local watcher only sends connector data the server can't see, X mentions first, to upstream inboxes through `/ingest`. It never watches GitHub a second time. Follow-up code, before any local watcher runs again: each watcher gets its own inbox-only key, which replaces the shared ingest secret (F5), and its events pass the same field allowlist and private-repo masking as server events. Until that code merges and the per-watcher keys are live, every local watcher stays paused.
+
 ## Done when
 
 A Card is done when its receipt is on the PR and its board card is closed.
