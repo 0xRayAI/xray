@@ -605,14 +605,17 @@ setInterval(() => {
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
-    feedBody = Buffer.from(JSON.stringify({ ...mask(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
+    feedBody = Buffer.from(JSON.stringify({ ...maskHeader(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
     feedGz = zlib.gzipSync(feedBody, { level: 6 }); feedEtag = `"${cursor()}"`; fullDirty = false;
   }
   return { body: feedBody, gz: feedGz, etag: feedEtag };
 }
 // Private repos (D18): on the login-page feed an event or header object of a private repo keeps only its id, times, kind and
-// mesh hops; repo becomes 'private repo' and title / label / url / branch text are dropped.
-const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status']);
+// mesh hops (plus number / sha so replay can link packets); repo becomes 'private repo' and title / label / url / branch
+// text are dropped. header.fleet and header.board are seat state, never masked (the live page needs seats' active).
+const PUBLIC_KEEP = new Set(['id', 't_ct', 'kind', 'from', 'to', 'hops', 'src_file', 'seat', 'state', 'status', 'number', 'sha', 'active']);
+const HEADER_RAW = ['fleet', 'board'];
+function maskHeader(h) { const o = mask(h); for (const k of HEADER_RAW) if (h && k in h) o[k] = h[k]; return o; }
 function isPrivate(o) { return o && typeof o.repo === 'string' && privateRepos.has(o.repo.toLowerCase()); }
 function mask(v) {
   if (!privateRepos.size || v === null || typeof v !== 'object') return v;
@@ -628,7 +631,7 @@ function since(c, raw = false) {   // raw: unmasked (ingest-secret inbox routing
   if (s > seq || s < floorSeq) return null;
   if (s === seq) return 'same';
   const events = []; for (const v of evs.values()) if (v.s > s) events.push(mk(v.e));
-  return { ...mk(header), delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
+  return { ...(raw ? header : maskHeader(header)), delta: true, cursor: cursor(), events, removed: removed.filter(r => r.s > s).map(r => r.id) };
 }
 
 // ---- GitHub collector (Railway): python child with ONLY the read-only token; writes a feed file on the volume ----
@@ -666,7 +669,7 @@ async function readableRepos(list, tok) {
       if (!r || !r.ok) { console.log(`collector: skip ${full} (${r ? r.status : 'error'})`); skipped.add(full); continue; }
       skipped.delete(full);
       const d = await r.json().catch(() => ({}));
-      if (d.private !== false) { privateRepos.add(full.toLowerCase()); privateRepos.add(full.toLowerCase().split("/").pop()); seq++; floorSeq = seq; fullDirty = true; }
+      if (d.private !== false) { privateRepos.add(full.toLowerCase()); seq++; floorSeq = seq; fullDirty = true; }
       readable.add(full);
     }
     ok.push(full);

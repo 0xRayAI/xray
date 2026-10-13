@@ -67,3 +67,25 @@ test('private repo: masked on the login-page feed (no name, no title), real for 
   const ie = await (await fetch(BASE + '/ingest/events', { headers: { Authorization: 'Bearer ' + ING } })).json();
   assert.equal(ie.events.find(e => e.id === 's1').repo, 'acme/secret');
 });
+test('private repo: header.fleet / header.board and seats active survive masking; masked events keep number and sha', async () => {
+  const now = new Date().toISOString();
+  const feed = { generated_at: now, events: [{ id: 's2', repo: 'acme/secret', number: 9, sha: 'abc1234', kind: 'pr_open', t_ct: now, title: 'Hidden', url: 'https://github.com/acme/secret/pull/9' }],
+    fleet: { window_min: 15, seats: { forge: { last_ct: now, via: 'github' } }, working: { forge: { via: 'github', repo: 'acme/secret', number: 9 } } },
+    board: { waves: [{ repo: 'acme/secret', number: 9, title: 'Wave' }] } };
+  fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
+  const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  const ck = String(lr.headers.get('set-cookie')).split(';')[0];
+  let f;
+  for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.events?.some(e => e.id === 's2')) break; await new Promise(r => setTimeout(r, 100)); }
+  const e = f.events.find(x => x.id === 's2');
+  assert.deepEqual([e.repo, e.number, e.sha, e.title, e.url], ['private repo', 9, 'abc1234', undefined, undefined]);
+  assert.equal(f.fleet.seats.forge.active, true, JSON.stringify(f.fleet));
+  // revert check: masking the header again turns these into 'private repo' and drops number / active
+  assert.equal(f.fleet.working.forge.repo, 'acme/secret');
+  assert.equal(f.fleet.working.forge.number, 9);
+  assert.ok(f.board, 'board dropped');
+  assert.ok(!JSON.stringify(f.board).includes('private repo'), JSON.stringify(f.board));
+  // delta keeps the header too
+  const d = await (await fetch(BASE + '/live-events.json?since=' + encodeURIComponent(f.cursor.replace(/\d+$/, n => String(Math.max(0, n - 1)))), { headers: { Cookie: ck } })).json();
+  if (d.delta) assert.equal(d.fleet.working.forge.repo, 'acme/secret');
+});
