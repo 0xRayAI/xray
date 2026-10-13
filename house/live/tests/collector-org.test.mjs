@@ -1,0 +1,67 @@
+// D18: COLLECTOR_ORG lists the org's repos (unioned with COLLECTOR_REPOS) at start and on each refresh; a new repo gets collected.
+import { test, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
+const APP = process.env.MESH_APP_DIR;
+let repos = ['acme/one'], auth = '';
+const MPW = 'x' + crypto.randomBytes(4).toString('hex'), ING = crypto.randomBytes(32).toString('hex');
+const gh = http.createServer((q, s) => {
+  auth = q.headers.authorization || '';
+  const deny = { '/repos/acme/forbidden': 403, '/repos/acme/gone': 404 }[q.url];
+  if (deny) { s.writeHead(deny); return s.end('{}'); }
+  if (q.url.startsWith('/repos/')) { s.writeHead(200); return s.end(JSON.stringify({ private: q.url === '/repos/acme/secret' })); }
+  if (!q.url.startsWith('/orgs/acme/repos')) { s.writeHead(404); return s.end('[]'); }
+  s.writeHead(200, { 'Content-Type': 'application/json' });
+  s.end(JSON.stringify([...repos.map(full_name => ({ full_name })), { full_name: 'acme/old', archived: true }, { full_name: 'acme/secret', private: true }, { full_name: 'acme/forbidden' }, { full_name: 'acme/gone' }]));
+});
+await new Promise(r => gh.listen(0, '127.0.0.1', r));
+const PORT = 23000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-org-')); let logs = '';
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH,
+  MESH_PASSWORD: MPW, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ING,
+  MESH_DATA_DIR: DATA, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, GITHUB_READ_TOKEN: 'read-tok-test', COLLECTOR_ORG: 'acme',
+  COLLECTOR_REPOS: 'other/pinned', COLLECTOR_ORG_REFRESH_S: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
+after(() => { srv.kill(); gh.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
+const until = async re => { for (let i = 0; i < 80 && !re.test(logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(logs); };
+test('org repos unioned with COLLECTOR_REPOS at start; a repo new to the org is picked up on refresh', async () => {
+  assert.ok(await until(/collector: repos acme\/one acme\/secret other\/pinned\n/), logs);
+  assert.equal(auth, 'Bearer read-tok-test');
+  repos = ['acme/one', 'acme/new'];
+  assert.ok(await until(/collector: repos acme\/new acme\/one acme\/secret other\/pinned\n/), logs);
+  assert.ok(!logs.includes('read-tok-test'), 'token logged');
+});
+test('archived, 403 and 404 org repos are skipped; the server keeps serving', async () => {
+  assert.ok(await until(/collector: skip acme\/forbidden \(403\)/) && await until(/collector: skip acme\/gone \(404\)/), logs);
+  assert.ok(!/collector: repos .*acme\/(old|forbidden|gone)/.test(logs), logs);
+  assert.equal((await fetch(BASE + '/healthz')).status, 200);
+});
+test('/healthz (no auth): repo count + oldest/newest collected time, no repo names', async () => {
+  const feed = { generated_at: '2026-10-13T07:00:00-05:00', events: [
+    { id: 'a', repo: 'acme/one', t_ct: '2026-10-13T06:50:00-05:00', label: 'secret-ish label' },
+    { id: 'b', repo: 'acme/one', t_ct: '2026-10-13T06:55:00-05:00', label: 'x' }] };
+  fs.mkdirSync(path.join(DATA, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
+  let h;
+  for (let i = 0; i < 60; i++) { h = await (await fetch(BASE + '/healthz')).json(); if (h.newest_collected) break; await new Promise(r => setTimeout(r, 100)); }
+  assert.equal(h.ok, true);
+  assert.deepEqual([h.repos, h.oldest_collected, h.newest_collected], [4, '2026-10-13T07:00:00-05:00', '2026-10-13T07:00:00-05:00']);
+  const raw = JSON.stringify(h); assert.ok(!raw.includes('acme') && !raw.includes('label') && !raw.includes('read-tok-test'));
+});
+test('private repo: masked on the login-page feed (no name, no title), real for inbox routing', async () => {
+  const feed = { generated_at: '2026-10-13T07:05:00-05:00', events: [
+    { id: 's1', repo: 'acme/secret', number: 7, kind: 'pr_open', t_ct: '2026-10-13T07:01:00-05:00', label: 'secret #7 opened · Top plan', title: 'Top plan', url: 'https://github.com/acme/secret/pull/7' },
+    { id: 'p1', repo: 'acme/one', number: 8, kind: 'pr_open', t_ct: '2026-10-13T07:02:00-05:00', label: 'one #8 opened · Fine', title: 'Fine' }] };
+  fs.writeFileSync(path.join(DATA, 'feed', 'github-events.json'), JSON.stringify(feed));
+  const lr = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + MPW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+  const ck = String(lr.headers.get('set-cookie')).split(';')[0];
+  let f;
+  for (let i = 0; i < 60; i++) { f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: ck } })).json(); if (f.events?.some(e => e.id === 's1')) break; await new Promise(r => setTimeout(r, 100)); }
+  const raw = JSON.stringify(f);
+  assert.ok(!/secret|Top plan/.test(raw), raw);
+  assert.equal(f.events.find(e => e.id === 's1').repo, 'private repo');
+  assert.equal(f.events.find(e => e.id === 'p1').title, 'Fine');
+  const ie = await (await fetch(BASE + '/ingest/events', { headers: { Authorization: 'Bearer ' + ING } })).json();
+  assert.equal(ie.events.find(e => e.id === 's1').repo, 'acme/secret');
+});
