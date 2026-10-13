@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Example FULL-HISTORY adapter around upstream 0xRayAI/xray house/live-mesh/fetch_feed.py (unmodified).
+"""Full-history adapter around upstream 0xRayAI/xray house/live-mesh/fetch_feed.py (unmodified).
 
 Imports fetch_feed and replaces build()/write() at runtime; reuses its merge()/ordering and --watch loop.
 GitHub data comes from live_collect.RepoCollector (full backfill, then incremental ETag polling; metadata
@@ -200,7 +200,7 @@ def build(args, gh):
             "commits on develop/main, tags, releases, check suites/runs, commit statuses (Railway = deploy*), "
             "workflow runs; plus lab retests and /health status-code changes.",
             f"Window: full history (first event {first}).",
-            "Read-only GitHub token. No bodies of any kind are stored. Titles/messages relabeled for Example branding.",
+            f"Read-only GitHub token. No bodies of any kind are stored. Titles/messages relabeled for {live_site.SITE['name']}.",
             "/health events carry only the HTTP status code and the check time.",
             "Lab and board events come from files the fleet writes on the box (ids, severity, status words, counts, "
             "times and a short source tag only). Fleet seats are active if an owned file changed or the seat acted "

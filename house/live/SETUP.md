@@ -40,7 +40,7 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 | nibbler | a per-seat key (`seat-keys/nibbler.key`). `GET /inbox/nibbler` = asks to `@nibbler`; read with `tools/live-inbox nibbler`. Key delivered 1:1 by Blaze, never in room/repo |
 | sound | a per-seat key (`seat-keys/sound.key`). `GET /inbox/sound` = asks to `@sound`; read with `tools/live-inbox sound`. Key delivered 1:1 by Blaze, never in room/repo |
 | magnet | a per-seat key (`seat-keys/magnet.key`). `GET /inbox/magnet` = hangar / listing asks (`@magnet`); read with `tools/live-inbox magnet`. Key delivered 1:1 by Blaze, never in room/repo |
-| assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the Example MCP server (env `LIVE_KEY`) |
+| assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the sample MCP server (env `LIVE_KEY`) |
 
 Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox.md#seat-wake-urls-and-webhooks).
 
@@ -50,10 +50,10 @@ Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox
 - **Script:** `~/.burst/bin/live-inbox` (Python 3), fetched from raw `bifrost/main` `house/live/tools/live-inbox`.
 - **Env:** none needed. Defaults are `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`; set them only to override.
 - **Commands:** `live-inbox arch1` reads and never acks (`--peek` is the same); `live-inbox arch1 --ack <id>`; `live-inbox arch1 --ack all`.
-- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback. Full setup, polling timer, ack and round-trip test: [docs/inbox.md](docs/inbox.md#arch1--cli-seats-grok-cli).
+- **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. No webhook yet, so Arch1 polls; PR comments are the fallback. Full setup, polling timer, ack and round-trip test: [docs/inbox.md](docs/inbox.md#arch1--cli-seats-grok-cli). Watcher `bin/live-inbox-watch` + launchd template `bin/com.burst.live-inbox-watch.plist`; install steps: [Install on Blaze's Mac](docs/inbox.md#arch1--cli-seats-grok-cli).
 
 ## Assistant / emitter node
-The Example MCP server (example-org/mcp, env `LIVE_URL` + `LIVE_KEY`) posts one event per tool call and
+The sample MCP server (example-org/mcp, env `LIVE_URL` + `LIVE_KEY`) posts one event per tool call and
 per OAuth sign-in to `POST /emit`: `{kind: tool|oauth, tool, t, ok, client: assistant|other, latency_ms}`. Any other field
 is refused (422), so no customer data (addresses, content, emails, user ids) can land here. The `Assistant / emitter` node is
 **working** until `EMITTER_WORKING_S` (default 120 s) after the last event, active for the fleet window, then idle.

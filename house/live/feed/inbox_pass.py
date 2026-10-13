@@ -1,4 +1,4 @@
-"""Seat inboxes for the Example fleet (port of example-org/xray PR #5, house/live/inbox.py + board.py).
+"""Seat inboxes for the fleet (port of example-org/xray PR #5, house/live/inbox.py + board.py).
 
 Run by the pusher every cycle (no secrets on argv; the ingest secret comes on stdin when posting):
   pull  EVENTS_JSON          -> merge a /ingest/events response (GitHub + box events the server holds) into the cache
@@ -54,7 +54,7 @@ def _t(e):
 
 
 def adapt(events):
-    """Example feed events -> the field names inbox.py routes on (hints only; the events themselves are unchanged)."""
+    """Feed events -> the field names inbox.py routes on (hints only; the events themselves are unchanged)."""
     by_sha = {}
     for e in events:
         if e.get("number") is not None and e.get("sha"):

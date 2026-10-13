@@ -1,4 +1,4 @@
-"""Site config (feed/site.json, shipped beside the collector by app/deploy.sh). No file = the Example template defaults,
+"""Site config (feed/site.json, shipped beside the collector by app/deploy.sh). No file = the template defaults,
 so other installs keep them. LIVE_SITE_JSON=<path> reads another file; LIVE_SITE_JSON= (empty) forces the defaults.
 Keys: public, name (brand), title (feed header), node (the product node every instance collapses into),
 hosts {dev, labtest, prod} (instance node names), services [{name, health}] (health URLs the collector polls)."""

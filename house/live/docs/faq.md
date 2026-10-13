@@ -38,7 +38,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 - **Cause:** The script replaces `public/` with the kit copy.
 - **Fix:** Point `LIVE_PUBLIC_OVERLAY` at a directory that holds your `live-config.js` and `avatars/`. The script copies it on last.
 
-### Every login is Others, and the title stays Example
+### Every login is Others, and the title stays the template default
 
 - **Symptom:** Mapped seats never appear. The page title stays generic instead of your site name (set `name` in `feed/site.json`).
 - **Cause:** The collector's environment is built from scratch, so `LIVE_NODE_MAP`, `LIVE_BRAND`, and `LIVE_BRAND_RE` set on the service never reach it.
@@ -48,7 +48,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** New events use the new seat. Events already in the store stay `Others`.
 - **Cause:** Incremental polls relabel an item only when that item changes.
-- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub` and `Example` stay as they are.
+- **Fix:** On load, set `from` from `node(actor)` or `node(author)` again. Do not delete the store. `from` values `GitHub` and the product node stay as they are.
 
 ### Unmapped logins publish their name and title
 

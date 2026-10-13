@@ -411,7 +411,7 @@ function postSeatLines(parsed, onlySeat) {
   for (const l of fresh) noteWake(l.seat, l);
   return { status: 200, added, rejected: refs };
 }
-// ---- Assistant / emitter: the Example MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
+// ---- Assistant / emitter: the sample MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
 // 'assistant' seat key, checked against SEAT_KEYS.assistant). Write-only and strict: tool name, time, ok, client class,
 // latency, kind; any other field (addresses, content, emails, user ids) is refused. Not a reading seat (no inbox/cards).
 const EMITTER_WORK_MS = (Number(process.env.EMITTER_WORKING_S) || 120) * 1000;   // a run of calls = working until 2 min after the last
@@ -624,7 +624,7 @@ function mergedHeader(now = Date.now()) {
   const h = { ...(b || {}), ...(g || {}) };
   if (!g && !b) Object.assign(h, headerOf(EMPTY_FEED));
   delete h.source; delete h.fleet;
-  h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends 'Example live mesh'
+  h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
@@ -1326,7 +1326,7 @@ async function handle(req, res) {
     return json(req, res, 202, { ok: true });
   }
 
-  if (p === '/emit') {   // write-only Assistant / emitter events from the Example MCP server; answers {ok} or an error, never data
+  if (p === '/emit') {   // write-only Assistant / emitter events from the sample MCP server; answers {ok} or an error, never data
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     const ip = clientIp(req), now = Date.now();
     const bad = (actFails.get(ip) || []).filter(t => now - t < RL_WINDOW_MS);

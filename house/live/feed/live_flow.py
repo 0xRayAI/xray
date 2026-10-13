@@ -7,15 +7,15 @@ CI:        GitHub -> PR author, or GitHub alone   (check runs/suites, workflow r
 Reviewer:    Reviewer -> GitHub -> PR author
 Deploy:    Railway -> host                       (SHA only on main -> app.example.com, else dev.example.com: heuristic,
                                                   Railway's status context does not name the host)
-Lab retest: Tester -> GitHub;  /health: host -> Example;  board: Coord -> Example
+Lab retest: Tester -> GitHub;  /health: host -> product node;  board: Coord -> product node
 Lab runs / calls: tester -> instance -> tester (dev.example.com, labtest, app.example.com);  bugs: tester -> instance
 Operator:  Railway deploys it triggers / approvals: Operator -> Railway -> host;  live-mesh commits: Operator -> GitHub
-Coord:       house files / house commits: Coord -> Example
+Coord:       house files / house commits: Coord -> product node
 Cloud agents: writes by cursoragent -> GitHub; cloud-agents.jsonl launch/reply -> Cloud agents, finished -> <by>
 Prompts: prompts.jsonl <from> -> <to> (label 'message'; never any text; any seat)
-Board view (apply): the three Example instances collapse into one "Example" node and QaOne / QA two
+Board view (apply): the three product instances collapse into one product node (site.json "node") and QaOne / QA two
 fold into "QA"; the instance (dev / labtest / prod) and the seat (qa-one / qa-two) become short label tags.
-A hop list that collapses to Example alone (a /health change) is shown as Railway -> Example.
+A hop list that collapses to the product node alone (a /health change) is shown as Railway -> product node.
 The page maps each name to a drawn node and skips any hop it cannot draw.
 """
 import live_site  # noqa: E402
@@ -107,7 +107,7 @@ class Flow:
                 if not h or h[-1] != x:
                     h.append(x)
             if h == [USM]:
-                h = [RW, USM]            # host-only flow (/health): Railway -> Example
+                h = [RW, USM]            # host-only flow (/health): Railway -> product node
             if h == [GH]:                # a check with no known author: a GitHub-only pulse
                 e["hops"], e["from"], e["to"] = h, GH, GH
             if len(h) >= 2:

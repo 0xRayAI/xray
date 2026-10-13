@@ -35,7 +35,7 @@ def mentions(body: str | None) -> list | None:
 SHA_RE = re.compile(r"@\s*`?([0-9a-f]{7,40})\b")
 NODE = {"builder-app[bot]": "Builder", "reviewer-app[bot]": "Reviewer", "reviewer-app": "Reviewer", "ops-app[bot]": "Operator",
         "lead-alt": "Lead", "lead-login": "Lead", "github-actions[bot]": "CI"}   # a person can have several logins
-# Per-fleet login -> node map, merged over the Example defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
+# Per-fleet login -> node map, merged over the template defaults: LIVE_NODE_MAP='{"forge0x1[bot]":"forge"}'
 # (JSON object, or a path to a JSON file). Keeps a fleet's seats out of the kit.
 def _node_map_env() -> dict:
     raw = os.environ.get("LIVE_NODE_MAP", "").strip()

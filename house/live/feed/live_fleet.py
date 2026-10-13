@@ -81,7 +81,7 @@ NON_SEAT_NODES = {"CI", "GitHub", "Others", "CloudAgents", "Upstream"}
 
 def _node_map_seats():
     """No LIVE_FLEET_SEATS: a fleet that maps its logins with LIVE_NODE_MAP counts those nodes as its seats.
-    Without this the Example seats are counted and a real fleet always shows 0/N active."""
+    Without this the template seats are counted and a real fleet always shows 0/N active."""
     raw = os.environ.get("LIVE_NODE_MAP", "").strip()
     if not raw:
         return []
@@ -96,7 +96,7 @@ def _node_map_seats():
 
 def load_seat_config(raw=None):
     """LIVE_FLEET_SEATS: a JSON list of seat names, or {"seats":[...],"board":[...],"fold":{member:board}},
-    or a path to that JSON. "board" is the counted header list. Unset or invalid keeps the Example list."""
+    or a path to that JSON. "board" is the counted header list. Unset or invalid keeps the template list."""
     if raw is None:
         raw = os.environ.get("LIVE_FLEET_SEATS", "")
     text = str(raw).strip()
@@ -144,7 +144,7 @@ INSTANCES = (_H["dev"], _H["labtest"], _H["prod"])
 
 
 def instance_of(text, name="", default=_H["dev"]):
-    """Which Example instance a log talks to: file-name hint first, else the most-mentioned host (count only)."""
+    """Which product instance a log talks to: file-name hint first, else the most-mentioned host (count only)."""
     n = name.lower()
     if "-prod" in n or n.startswith("prod"):
         return _H["prod"]
@@ -1132,12 +1132,13 @@ class Fleet:
         now = now or time.time()
         gh_last = {}
         for e in feed_events:
-            if e.get("src_file") == "github-api" and e.get("from") in SEATS:
+            who = e.get("credit") if e.get("credit") in SEATS else e.get("from")   # same credit as the feed (Seat: trailer > login)
+            if e.get("src_file") == "github-api" and who in SEATS:
                 try:
                     t = datetime.fromisoformat(e["t_ct"]).timestamp()
                 except (KeyError, ValueError):
                     continue
-                gh_last[e["from"]] = max(gh_last.get(e["from"], 0), t)
+                gh_last[who] = max(gh_last.get(who, 0), t)
         last_by = {}
         for s in SEATS:   # fold file owners into board seats: a board seat is active if any member is
             b = BOARD.get(s, s)

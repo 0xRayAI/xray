@@ -27,7 +27,7 @@ _DROP = (
 
 
 def script_path(env: dict | None = None) -> str:
-    """Explicit path, or the Example builder when that file is present. Off otherwise."""
+    """Explicit path, or the template builder when that file is present. Off otherwise."""
     env = os.environ if env is None else env
     raw = env.get("LIVE_BOARD")
     if raw is None:

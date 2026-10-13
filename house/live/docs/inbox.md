@@ -175,22 +175,16 @@ Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEA
 
 **Getting woken (local poll, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Instead Arch1 polls locally:
 
-```bash
-# plain loop (in a terminal or the Grok CLI session)
-while true; do ~/.burst/bin/live-inbox arch1; sleep 60; done
-```
+Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. For launchd, use the template `bin/com.burst.live-inbox-watch.plist` (see the install steps below). Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below).
 
-or a launchd agent, `~/Library/LaunchAgents/com.bifrost.arch1-inbox.plist`:
-
-```xml
-<plist version="1.0"><dict>
-  <key>Label</key><string>com.bifrost.arch1-inbox</string>
-  <key>ProgramArguments</key><array><string>/bin/sh</string><string>-c</string><string>$HOME/.burst/bin/live-inbox arch1 >> $HOME/.burst/arch1-inbox.log 2>&amp;1</string></array>
-  <key>StartInterval</key><integer>60</integer>
-</dict></plist>
-```
-
-Load it with `launchctl load ~/Library/LaunchAgents/com.bifrost.arch1-inbox.plist`. Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below).
+**Install on Blaze's Mac.**
+1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
+2. Copy `house/live/tools/live-inbox` and `house/live/bin/live-inbox-watch` from the repo into `~/.burst/bin/`, then `chmod +x ~/.burst/bin/live-inbox ~/.burst/bin/live-inbox-watch`.
+3. Set the variables (or rely on the defaults): `export LIVE_URL=https://burst-live-production.up.railway.app SEAT_KEYS_DIR=~/.burst/seat-keys LIVE_CURSORS=~/.burst/cursors`.
+4. Place `arch1.key` in `~/.burst/seat-keys/` (delivered only through Blaze's 1:1), then `chmod 600 ~/.burst/seat-keys/arch1.key`.
+5. Check `python3 --version` (live-inbox needs Python 3).
+6. Run it once by hand: `LIVE_WATCH_ONCE=1 ~/.burst/bin/live-inbox-watch arch1`. No output means an empty inbox; "key not registered" means the server's `SEAT_KEYS` has no arch1 entry yet.
+7. Copy `house/live/bin/com.burst.live-inbox-watch.plist` to `~/Library/LaunchAgents/`, replace `USERNAME`, then `launchctl load ~/Library/LaunchAgents/com.burst.live-inbox-watch.plist`. The log goes to `~/.burst/live-inbox-watch.log`.
 
 **Exception to the no-local-watchers rule.** This poll is the single documented exception, pending Blaze's yes. It covers only Arch1's inbox poll on Blaze's Mac; no other seat or machine runs a local watcher.
 

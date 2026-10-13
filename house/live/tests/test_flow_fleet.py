@@ -583,6 +583,20 @@ class FleetSeatsConfig(unittest.TestCase):
         finally:
             live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
 
+    def test_presence_follows_credit_not_pusher(self):
+        """A forge0x1 push with a 'Seat: mill' trailer (credit mill) marks mill active, not forge."""
+        saved = live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS
+        live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = ["forge", "mill"], {}, ["forge", "mill"]
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                now = time.time()
+                ev = {"src_file": "github-api", "from": "forge", "actor": "forge0x1[bot]", "credit": "mill",
+                      "t_ct": datetime.fromtimestamp(now - 60, CT).isoformat()}
+                fs = live_fleet.Fleet(Path(d) / "state.json", CT).fleet_state([ev], now=now)
+            self.assertTrue(fs["seats"]["mill"]["active"]); self.assertFalse(fs["seats"]["forge"]["active"])
+        finally:
+            live_fleet.SEATS, live_fleet.BOARD, live_fleet.BOARD_SEATS = saved
+
     def test_bad_json_keeps_the_example_list(self):
         seats, fold, board = live_fleet.load_seat_config("{not json")
         self.assertEqual(board, ["Builder", "Builder-cloud", "Reviewer", "Tester", "QA", "Operator", "Coord"])

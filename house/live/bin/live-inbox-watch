@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# live-inbox-watch [seat] [interval_s]: poll a seat's inbox for a CLI seat with no webhook (Arch1 on Blaze's Mac).
+# Runs `live-inbox <seat>` every interval (default arch1, 60s) and prints any open asks. Never acks: ack with
+# `live-inbox <seat> --ack <id|all>` after the PR receipt. Env (defaults): LIVE_URL, SEAT_KEYS_DIR=~/.burst/seat-keys,
+# LIVE_CURSORS=~/.burst/cursors, LIVE_INBOX=live-inbox beside this script. The key is never read or printed here.
+# The single documented exception to the no-local-watchers rule (Arch1's inbox poll only; pending Blaze's yes).
+set -u
+SEAT="${1:-arch1}"
+INTERVAL="${2:-60}"
+case "$INTERVAL" in ''|*[!0-9]*) echo "live-inbox-watch: interval must be whole seconds" >&2; exit 2 ;; esac
+export LIVE_URL="${LIVE_URL:-https://burst-live-production.up.railway.app}"
+export SEAT_KEYS_DIR="${SEAT_KEYS_DIR:-$HOME/.burst/seat-keys}"
+export LIVE_CURSORS="${LIVE_CURSORS:-$HOME/.burst/cursors}"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INBOX="${LIVE_INBOX:-$HERE/live-inbox}"
+[ -x "$INBOX" ] || INBOX="$(command -v live-inbox || true)"
+[ -n "$INBOX" ] || { echo "live-inbox-watch: live-inbox not found (put it beside this script or on PATH)" >&2; exit 2; }
+ONCE="${LIVE_WATCH_ONCE:-}"   # set to 1 to poll once and exit (launchd StartInterval, tests)
+backoff=0
+while :; do
+  out="$("$INBOX" "$SEAT" 2>&1)"; rc=$?
+  ts="$(date '+%Y-%m-%d %H:%M:%S %Z')"
+  if [ $rc -eq 0 ]; then
+    backoff=0
+    if [ -n "$out" ]; then n=$(printf '%s\n' "$out" | grep -c .); echo "[$ts] $SEAT: $n open ask(s)"; printf '%s\n' "$out"; fi
+  elif printf '%s' "$out" | grep -q 'HTTP 401'; then
+    backoff=$(( backoff ? backoff * 2 : INTERVAL * 5 )); [ $backoff -gt 3600 ] && backoff=3600
+    echo "[$ts] $SEAT: key not registered (401). The server has no SEAT_KEYS entry matching $SEAT.key; ask Blaze in his 1:1. Retrying in ${backoff}s." >&2
+  else
+    echo "[$ts] $SEAT: $(printf '%s' "$out" | head -1)" >&2
+  fi
+  [ -n "$ONCE" ] && exit $rc
+  sleep $(( backoff > INTERVAL ? backoff : INTERVAL ))
+done
