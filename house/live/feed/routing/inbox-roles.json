@@ -20,8 +20,7 @@
     "Operator": "operator",
     "Coord": "coord",
     "QA": "qa",
-    "QA": "qa",
-    "blinky": "coord",
+    "blinky": "blinky",
     "Growth": "growth",
     "QaOne": "qa-one",
     "Lab Tester: QaOne": "qa-one",
@@ -36,7 +35,16 @@
     "SEO Writer": "seo-writer",
     "Offsite Copier": "offsite-copier",
     "Builder-cloud": "builder-cloud",
-    "Arch1": "arch1"
+    "Arch1": "arch1",
+    "forge": "forge",
+    "critic": "critic",
+    "mill": "mill",
+    "Blinky": "blinky",
+    "herald": "herald",
+    "Nibbler": "nibbler",
+    "nibbler": "nibbler",
+    "sound": "sound",
+    "magnet": "magnet"
   },
   "seats": {
     "reviewer": {
@@ -138,6 +146,69 @@
         "gate b"
       ],
       "reason": "deep-review / Gate B ask for Arch1"
+    },
+    "forge": {
+      "merge_bases": [
+        "main",
+        "bifrost/main"
+      ],
+      "needles": [
+        "@forge",
+        "merge ask",
+        "deploy ask",
+        "run gate b"
+      ],
+      "reason": "merge / deploy / Gate B run ask, or merge into main or bifrost/main"
+    },
+    "critic": {
+      "kinds": [
+        "review_requested"
+      ],
+      "needles": [
+        "@critic",
+        "light ask",
+        "strict ask",
+        "re-light"
+      ],
+      "reason": "review request or Light / Strict / re-Light ask"
+    },
+    "mill": {
+      "needles": [
+        "@mill",
+        "implement ask",
+        "rebase ask"
+      ],
+      "reason": "implement / rebase ask for mill"
+    },
+    "blinky": {
+      "needles": [
+        "@blinky"
+      ],
+      "reason": "CoS / board ask for blinky"
+    },
+    "herald": {
+      "needles": [
+        "@herald"
+      ],
+      "reason": "Dist ask for herald"
+    },
+    "nibbler": {
+      "needles": [
+        "@nibbler"
+      ],
+      "reason": "ask for nibbler"
+    },
+    "sound": {
+      "needles": [
+        "@sound"
+      ],
+      "reason": "ask for sound"
+    },
+    "magnet": {
+      "needles": [
+        "@magnet"
+      ],
+      "reason": "hangar / listing ask for magnet"
     }
   },
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); SEO seats have keys but no routes yet",

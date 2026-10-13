@@ -26,6 +26,14 @@ Rotate: `feed/seat_keys.sh mint` (writes new keys, never prints them) then `feed
 
 | builder-cloud | a per-seat key (file `seat-keys/builder-cloud`, no `.key` suffix), seat display `Builder-cloud`: the cloud Builder. `POST /activity` (as `Builder-cloud`, own board node), `GET /inbox/builder-cloud` = every Builder line (merge-ready, Reviewer PASS) mirrored server-side + nudges to Builder (`type: nudge`), `GET /cards?seat=builder-cloud` = Builder's cards. Helper: `tools/builder-cloud-setup.sh` (key from env `LIVE_KEY`) |
 | arch1 | a per-seat key (`seat-keys/arch1.key`): the Arch1 deep-review seat. `GET /inbox/arch1` = deep-review asks and Gate B runs (routed by needles in `feed/routing/inbox-roles.json` extra_seats); read with `tools/live-inbox arch1`, ack with `--ack <id|all>`. Arch1 receives its key file from Blaze in a 1:1 chat, never in a room or repo |
+| forge | a per-seat key (`seat-keys/forge.key`). `GET /inbox/forge` = merge / deploy / Gate B run asks (`@forge`, `merge ask`, `deploy ask`, `run gate b`) and merges into main or bifrost/main; read with `tools/live-inbox forge`. Key delivered 1:1 by Blaze, never in room/repo |
+| critic | a per-seat key (`seat-keys/critic.key`). `GET /inbox/critic` = review requests and Light / Strict / re-Light asks (`@critic`, `light ask`, `strict ask`, `re-light`); read with `tools/live-inbox critic`. Key delivered 1:1 by Blaze, never in room/repo |
+| mill | a per-seat key (`seat-keys/mill.key`). `GET /inbox/mill` = implement / rebase asks (`@mill`, `implement ask`, `rebase ask`); read with `tools/live-inbox mill`. Key delivered 1:1 by Blaze, never in room/repo |
+| blinky | a per-seat key (`seat-keys/blinky.key`). `GET /inbox/blinky` = CoS / board asks (`@blinky`); read with `tools/live-inbox blinky`. Key delivered 1:1 by Blaze, never in room/repo |
+| herald | a per-seat key (`seat-keys/herald.key`). `GET /inbox/herald` = Dist asks (`@herald`); read with `tools/live-inbox herald`. Key delivered 1:1 by Blaze, never in room/repo |
+| nibbler | a per-seat key (`seat-keys/nibbler.key`). `GET /inbox/nibbler` = asks to `@nibbler`; read with `tools/live-inbox nibbler`. Key delivered 1:1 by Blaze, never in room/repo |
+| sound | a per-seat key (`seat-keys/sound.key`). `GET /inbox/sound` = asks to `@sound`; read with `tools/live-inbox sound`. Key delivered 1:1 by Blaze, never in room/repo |
+| magnet | a per-seat key (`seat-keys/magnet.key`). `GET /inbox/magnet` = hangar / listing asks (`@magnet`); read with `tools/live-inbox magnet`. Key delivered 1:1 by Blaze, never in room/repo |
 | assistant | a per-seat key, **write-only**: `POST /emit` only (no inbox / cards). Used by the Example MCP server (env `LIVE_KEY`) |
 
 ## Arch1 local inbox
