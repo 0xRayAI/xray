@@ -194,6 +194,11 @@ const WAKE_DEBOUNCE_MS = envNonNeg('WAKE_DEBOUNCE_S', 60) * 1000;
 const WAKE_COALESCE_MS = envNonNeg('WAKE_COALESCE_MS', 50);
 const WAKE_RETRY_MS = envNonNeg('WAKE_RETRY_MS', 400);
 const WAKE_ATTEMPTS = 3;
+// Seats due at the same moment (a deploy, one event routed to 4 seats) send WAKE_STAGGER_MS apart, not all at once:
+// the seats' automations share one Cursor account.
+const WAKE_STAGGER_MS = envNonNeg('WAKE_STAGGER_MS', 1500);
+let wakeNextSlot = 0;
+function wakeSlot() { const now = Date.now(), at = Math.max(now, wakeNextSlot); wakeNextSlot = at + WAKE_STAGGER_MS; return at - now; }
 function loadSeatWebhooks() {
   const raw = process.env.SEAT_WEBHOOKS;
   if (!raw) return {};
@@ -229,7 +234,7 @@ function armWake(seat) {
   const st = wakeQ.get(seat);
   if (!st || st.timer || st.inflight || !st.pending.length) return;
   const remain = st.lastSent ? WAKE_DEBOUNCE_MS - (Date.now() - st.lastSent) : 0;
-  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, remain > 0 ? remain : WAKE_COALESCE_MS);
+  const t = setTimeout(() => { st.timer = null; void flushWake(seat); }, (remain > 0 ? remain : WAKE_COALESCE_MS) + wakeSlot());
   if (t.unref) t.unref();
   st.timer = t;
 }
@@ -247,17 +252,24 @@ async function deliverWake(cfg, body) {
   if (typeof key !== 'string' || !key || /[\r\n]/.test(key)) return { ok: false, attempts: 0, error: 'no_key' };
   const headers = { 'Content-Type': 'application/json', 'User-Agent': 'bifrost-live' };
   if (cfg.bearer) headers.Authorization = 'Bearer ' + key; else headers[cfg.header] = key;
-  let error = 'network';
+  let error = 'network', detail = '';
   for (let i = 1; i <= WAKE_ATTEMPTS; i++) {
     try {
       const res = await fetch(cfg.url, { method: 'POST', headers, body, redirect: 'error', signal: AbortSignal.timeout(8000) });
-      await res.arrayBuffer().catch(() => {});
+      const text = await res.text().catch(() => '');
       if (res.ok) return { ok: true, attempts: i };
       error = 'http_' + res.status;
+      detail = wakeDetail(text, key, cfg.url);
     } catch (e) { error = wakeErr(e); }
     if (i < WAKE_ATTEMPTS) await new Promise(r => { const t = setTimeout(r, WAKE_RETRY_MS * (2 ** (i - 1))); if (t.unref) t.unref(); });
   }
-  return { ok: false, attempts: WAKE_ATTEMPTS, error };
+  return { ok: false, attempts: WAKE_ATTEMPTS, error, detail };
+}
+// non-2xx response body for the log: one line, 160 chars, the key and the webhook url (with its automation id) removed
+function wakeDetail(text, key, url) {
+  let t = String(text || '').replace(/\s+/g, ' ').trim();
+  for (const x of [key, url, url.split('/').pop()]) if (x && x.length >= 6) t = t.split(x).join('[redacted]');
+  return t.replace(/(crsr|key|sk)[_-][A-Za-z0-9_-]{8,}/gi, '[redacted]').slice(0, 160);
 }
 async function flushWake(seat) {
   const st = wakeQ.get(seat), cfg = SEAT_WEBHOOKS[seat];
@@ -268,7 +280,7 @@ async function flushWake(seat) {
   catch { result = { ok: false, attempts: WAKE_ATTEMPTS, error: 'network' }; }
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
-  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}`);
+  console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
   st.inflight = false; armWake(seat);
 }
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');

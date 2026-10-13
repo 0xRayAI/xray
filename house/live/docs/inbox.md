@@ -85,7 +85,8 @@ Any 2xx is success. The response body is ignored.
 
 - A quiet seat sends after `WAKE_COALESCE_MS` (default 50 ms), so a burst is one POST.
 - After a send, further lines wait until `WAKE_DEBOUNCE_S` (default 60 s) since the last send, then go out together in one POST.
-- 3 attempts per POST, backoff `WAKE_RETRY_MS` (default 400 ms) then double. After the third failure the batch is dropped (the lines stay in the inbox). The server logs `wake: <seat> ok|fail attempts=<n> [error]`; errors are `http_<status>`, `timeout`, a network code, or `no_key` (neither the `key_env` variable nor `WAKE_KEY_<SEAT>` is set; no request is sent).
+- Seats due at the same moment (a redeploy, one event routed to several seats) go out `WAKE_STAGGER_MS` apart (default 1500 ms), never all at once: the seats' automations share one Cursor account.
+- 3 attempts per POST, backoff `WAKE_RETRY_MS` (default 400 ms) then double. After the third failure the batch is dropped (the lines stay in the inbox). The server logs `wake: <seat> ok|fail attempts=<n> [error] [body="…"]`; on a non-2xx, `body` is the receiver's response (one line, 160 chars, the key and the webhook URL / automation id replaced by `[redacted]`). Errors are `http_<status>`, `timeout`, a network code, or `no_key` (neither the `key_env` variable nor `WAKE_KEY_<SEAT>` is set; no request is sent).
 - The inbox write never waits on the webhook, and a wake failure never fails the write.
 
 ### Verify on /healthz
@@ -104,15 +105,15 @@ Reading never acks. Read with `GET /inbox/<seat>`, handle each line, then ack wi
 
 ### Reading the inbox after a wake
 
-The wake carries no secrets and is not the record. On a wake, the seat reads its inbox with its own seat key and acks what it handled:
+The wake carries no secrets and is not the record. The wake routine runs the committed tool and nothing else: it never builds an inbox or ack request by hand with curl.
 
 ```sh
-curl -s -H "Authorization: Bearer $SEAT_KEY" https://board.example.com/inbox/reviewer
-curl -s -X POST -H "Authorization: Bearer $SEAT_KEY" -H 'Content-Type: application/json' \
-  -d '{"upto":"<inbox_id>"}' https://board.example.com/inbox/reviewer/ack
+tools/live-inbox <seat>                 # read open lines (never acks)
+tools/live-inbox <seat> --ack <id>      # receipt for one handled line
+tools/live-inbox <seat> --ack all       # receipt for everything open
 ```
 
-(or `tools/live-inbox <seat>` / `--ack`).
+`live-inbox` reads the seat key from its own key file and calls `GET /inbox/<seat>` and `POST /inbox/<seat>/ack`; the raw routes above are for reference only.
 
 ### Minimal receiver (Node)
 
@@ -133,7 +134,7 @@ http.createServer((req, res) => {
 
 ### Test with curl
 
-Send the same shape to your receiver by hand:
+For your own receiver only (never a seat's Cursor webhook, and never from a wake routine). Send the same shape to your receiver by hand:
 
 ```sh
 curl -i -X POST https://wake.example.com/hook \
