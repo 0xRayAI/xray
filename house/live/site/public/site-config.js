@@ -34,7 +34,7 @@
   NK.Bifrost = 'mymuse.house'; NK['burst-live'] = 'mymuse.house';
   L.FROM_FALLBACK = 'GitHub';
   L.REVIEW_SEAT = 'critic';
-  // avatars we ship in avatars/ (arch1 = minime0x); Blaze = github.com/htafolla.png;
+  // avatars we ship in avatars/ (arch1 = minime0x); Blaze = x.com/Blaze0x1 profile picture;
   // the rest use the drawn letter badge (no 404s).
   L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', herald: 'herald', arch1: 'arch1', Blaze: 'blaze' });
   L.SITE_FOOT = 'Bifrost · built in public';
