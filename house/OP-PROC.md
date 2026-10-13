@@ -160,6 +160,8 @@ Blaze, 10:36 CT: "this is new ship cadence. understand it document it. live it."
 
 **P1 path (needs Arch1's approval).** Broken production: roll back to the last good deploy first (by deployment id; it took ~20 s on 2026-10-13), then fix forward with only the fix. The fix goes to `dev` (quick checks only: `.github/workflows/dev-lane.yml` runs lint + `house/live/tests/run_tests.sh`). Forge deploys the tip before merging, with the rollback deployment id ready; forge merges `dev` → `main` when the full CI is green. Critic gives yes/no on the hotfix change only; the full final pass runs once after merge and deploy. The normal cadence resumes afterward. `main`'s CI is unchanged.
 
+**Approval blocks (2026-10-13).** Auto-review asks for approval on any `git push` to GitHub (block reason: "push commits to a GitHub repository … requires user approval"). A push to a PR branch never skips CI, because the push is what starts it. When a step the room runs is blocked, the seat that hit it posts the exact block reason in the room and retries the same command unchanged from its own 1:1, so Blaze gets one yes/no card. The only way to skip the card is a narrow allow rule that Blaze sets himself (for example, forge0x1 pushes to non-main branches in one repo). Never split, rename or rework a command to get past the check, and never always-allow PEM or token minting.
+
 **Drill refinements.**
 - Wakes ack only with `live-inbox <seat> --ack <id>`, never a hand-written POST (no approval card for a routine ack).
 - A wake change is tested against a real seat routine (2xx and the routine runs), not unit stubs alone. A wake test sends a well-formed inbox line; receipt = `200 added:1` + `wake: <seat> ok` + the seat confirms.
