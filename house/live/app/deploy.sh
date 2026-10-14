@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Deploy app/ to one Railway service. The only supported deploy: a Railway build straight from git has no
 # assembled collector/ and the Dockerfile refuses it (#292).
-# LIVE_RAILWAY_PROJECT (default live-board), LIVE_RAILWAY_SERVICE (default live-mesh),
+# LIVE_RAILWAY_PROJECT (default burst-live), LIVE_RAILWAY_SERVICE (default burst-live),
 # MESH_APP_DEPLOY_DIR (default /srv/live/deploy). LIVE_PUBLIC_OVERLAY, when set, is a directory
 # copied onto public/ after the kit files (live-config.js, avatars). Secret files in the deploy dir stay.
 set -euo pipefail
-PROJECT="${LIVE_RAILWAY_PROJECT:-live-board}"; SERVICE="${LIVE_RAILWAY_SERVICE:-live-mesh}"
+PROJECT="${LIVE_RAILWAY_PROJECT:-burst-live}"; SERVICE="${LIVE_RAILWAY_SERVICE:-burst-live}"
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
-[ -d "$DST" ] || { echo "deploy dir $DST missing (must be railway-linked to live-board)" >&2; exit 1; }
+[ -d "$DST" ] || { echo "deploy dir $DST missing (must be railway-linked to $PROJECT)" >&2; exit 1; }
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
   cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"

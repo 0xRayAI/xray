@@ -121,9 +121,11 @@
       "needles": [
         "@mill",
         "implement ask",
-        "rebase ask"
+        "rebase ask",
+        "dev ask",
+        "mill lap"
       ],
-      "reason": "implement / rebase ask for mill"
+      "reason": "implement / rebase / dev / lap ask for mill (Eng Dev)"
     },
     "blinky": {
       "kinds": [

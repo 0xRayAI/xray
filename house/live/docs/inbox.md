@@ -53,6 +53,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
+| Implement / rebase / dev ask, `mill lap` (Eng Dev) | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
 | `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@arch1`) | that seat | `extra_seats.<seat>.needles` |
 | Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |

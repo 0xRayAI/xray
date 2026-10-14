@@ -47,9 +47,9 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
 - Repo-root `railway.json` (`node mcp-server.mjs`) belongs to the xray MCP server, not to this. Do not deploy the
   live board from the repo root. Deploy with `house/live/app/deploy.sh`: it assembles a deploy dir (app files plus
   `collector/` = the `feed/live_*.py` modules and `house/live-mesh/fetch_feed.py`) and runs
-  `railway up --service <service> --detach` from that dir. If you deploy from GitHub instead, set the root directory to
-  a dir laid out the same way.
-- `deploy.sh` names: `LIVE_RAILWAY_PROJECT` (default `live-board`), `LIVE_RAILWAY_SERVICE` (default `live-mesh`), `MESH_APP_DEPLOY_DIR` (default `/srv/live/deploy`). These are the project, the service, and the railway-linked directory. They are not Railway variables on the service.
+  `railway up --service <service> --detach` from that dir. Deploy only via `deploy.sh`: a build from GitHub (any root
+  directory) has no assembled `collector/`, and the Dockerfile stops with "collector/ is not assembled" (#292).
+- `deploy.sh` names: `LIVE_RAILWAY_PROJECT` (default `burst-live`), `LIVE_RAILWAY_SERVICE` (default `burst-live`), `MESH_APP_DEPLOY_DIR` (default `/srv/live/deploy`). These are the project, the service, and the railway-linked directory. They are not Railway variables on the service.
 - `house/live/site/public/` (committed, ours) is copied over the kit `public/` first: our seats, Lens nodes, `avatars/` (blinky, critic, forge, herald from the repo; arch1 from minime0x; Blaze from his X profile @Blaze0x1; others drawn, see [board.md](../live/docs/board.md#avatars)) and `favicon.png` (served at `/favicon.ico`, open in public mode). Another install deletes `house/live/site/`.
 - `LIVE_PUBLIC_OVERLAY` is a directory on the machine that runs `deploy.sh`. After the kit `public/` is copied, that directory is copied on top, so a fleet's `live-config.js` and `avatars/` survive the next deploy. Unset means the kit page only.
 - `railway.json` (Config as Code) is still read until **2026-12-01**. The replacement is `house/live/app/.railway/railway.ts`: `start` `node server.mjs`, `healthcheck` `/healthz`, one replica. `deploy.sh` copies that directory into the deploy dir. Do not `railway config apply` while `railway.json` is still the service config. Before the cutoff, from the deploy dir: `railway config plan`, then `railway config apply`. Rename `service()` and `project()` in that file to match `LIVE_RAILWAY_SERVICE` and `LIVE_RAILWAY_PROJECT`. Put no secrets in the file.

@@ -26,7 +26,7 @@ Setup: [SETUP.md](SETUP.md). Operating rules: [PLAYBOOK.md](PLAYBOOK.md). Hostin
 
 | path | what |
 |---|---|
-| `app/` | Railway service `burst-live` (project `burst-live`; the kit default name is `live-mesh`): `server.mjs` (login, `/ingest` up to 25 MB, identity or gzip; serves `/live-events.json` with gzip + ETag), `public/` (page + avatars), `deploy.sh` |
+| `app/` | Railway service `burst-live` (project `burst-live`): `server.mjs` (login, `/ingest` up to 25 MB, identity or gzip; serves `/live-events.json` with gzip + ETag), `public/` (page + avatars), `deploy.sh` |
 | `feed/live_mesh.py` | adapter: imports upstream `fetch_feed.py` (unmodified), replaces `build()`/`write()`, reuses its merge/ordering and `--watch` loop |
 | `feed/live_collect.py` | GitHub collector: GraphQL backfill (history, PR commits/reviews/CI), REST + ETag incremental polling, rate-limit floors |
 | `feed/supervisor.sh` | mints the read-only token, runs the feed in a scrubbed env, re-mints every 50 min |
@@ -77,13 +77,13 @@ group so its `sleep` child releases the flock.
 ## Deploy
 
 ```bash
-LIVE_RAILWAY_PROJECT=burst-live LIVE_RAILWAY_SERVICE=burst-live app/deploy.sh   # copies app/ + assembles collector/, railway up --detach
+app/deploy.sh                                      # copies app/ + assembles collector/, railway up --service burst-live --detach
 railway deployment list --service burst-live       # expect SUCCESS
 ```
 
 **A deploy only works through `app/deploy.sh`.** A Railway build straight from git (any root directory) has no assembled `app/collector/` and the Dockerfile stops with "collector/ is not assembled" (#292). Since #286 the server also refuses to start in production without `APP_PUBLIC_ORIGIN` (the board's public https origin) set as a Railway variable on the service.
 
-Only the `burst-live` service of the `burst-live` project is deployed (`deploy.sh` defaults to the kit names `live-board` / `live-mesh`, so set both variables); no other Railway project is touched.
+Only the `burst-live` service of the `burst-live` project is deployed; no other Railway project is touched.
 
 ## Tests
 

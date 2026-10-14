@@ -84,6 +84,12 @@ class FleetSeats(unittest.TestCase):
         self.assertTrue(all("merged PR" in l["reason"] for l in lines), lines)
         self.assertEqual(seats("x review comment · xray #266", watch=True, kind="review_comment", to="critic"), ["blinky", "critic"])
 
+    def test_mill_targeted_events_land_in_mill_inbox(self):
+        for label, kind in [("@mill please take #287", "issue_comment"), ("implement ask · xray #290", "pr_comment"),
+                            ("dev ask: CI job for house/live", "issue_open"), ("mill lap 4 · xray #291", "issue_comment")]:
+            self.assertIn("mill", seats(label, kind=kind), label)
+        self.assertNotIn("mill", seats("unrelated comment", kind="issue_comment"))
+
     def test_issue_comment_reaches_issue_author_seat(self):
         self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", to="forge"), ["blinky", "forge"])
         lines = inbox._direct({"kind": "issue_comment", "label": "x comment · xray issue #9", "repo": "o/x", "number": 9,

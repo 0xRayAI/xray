@@ -4,10 +4,10 @@
 #   publish  set SEAT_KEYS (sha256 hashes only) on Railway
 # Seats: SEAT_KEYS_SEATS (space-separated tokens) or SEATS_JSON (a JSON list, or {"seats":[...]}
 # of strings or objects with id / plate.seat). Unset keeps the example seat list.
-# Service: LIVE_RAILWAY_SERVICE (default live-mesh). Deploy dir: MESH_APP_DEPLOY_DIR (default /srv/live/deploy).
+# Service: LIVE_RAILWAY_SERVICE (default burst-live). Deploy dir: MESH_APP_DEPLOY_DIR (default /srv/live/deploy).
 set -euo pipefail
 DIR=${SEAT_KEYS_DIR:-/srv/live/run/secrets/seat-keys}
-SERVICE=${LIVE_RAILWAY_SERVICE:-live-mesh}
+SERVICE=${LIVE_RAILWAY_SERVICE:-burst-live}
 DEPLOY=${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}
 DEFAULT_SEATS="assistant builder-cloud arch1 forge critic mill blinky herald nibbler sound magnet"   # our 9 + emitter + kit cloud builder
 
