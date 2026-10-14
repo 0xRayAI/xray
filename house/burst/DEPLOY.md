@@ -228,7 +228,7 @@ Install mismatches are listed as Symptom / Cause / Fix in [house/live/docs/faq.m
 ## 7. Key model per process
 
 - Server: no GitHub key. It holds sha256 hashes of seat keys (`SEAT_KEYS`), the three secrets above, and verifies
-  `POST /activity` installation tokens against GitHub (bot login and id pinned in `GH_SEATS`, every installation repo in
+  `POST /activity` installation tokens against GitHub (bot login and id pinned in `LIVE_GH_SEATS`, every installation repo in
   your org). It caches only by sha256 of the token.
 - Collector child: `GITHUB_READ_TOKEN` only, a fine-grained read-only token (no Checks permission; suites and runs come
   from Actions). No App keys on the host.
