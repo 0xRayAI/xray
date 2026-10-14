@@ -149,6 +149,13 @@ def token_check():
         raise SystemExit(EXIT_REMINT)
 
 
+def visible_feed_lists(services, product_nodes):
+    """burst-live is the board. The feed JSON does not list it as a service or a product node."""
+    def keep(name):
+        return name != "burst-live"
+    return [s for s in services if keep(s)], sorted(n for n in product_nodes if keep(n))
+
+
 def build(args, gh):
     ff._live_pass_t0 = time.time()
     token_check()
@@ -210,11 +217,15 @@ def build(args, gh):
            f"{time.time() - t0:.0f}s, backfill done {all(backfill_done.values())}, "
            f"fleet {fleet_state['active']}/{fleet_state['total']} active")
     first = min((e["t_ct"] for e in uniq), default=None, key=lambda t: ts(t))
+    services, product_nodes = visible_feed_lists(
+        ff.SERVICES,
+        [live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])],
+    )
     return {
         "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],
-        "repo": primary_repo(args.repos), "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
-        "product_nodes": sorted({live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])}),
+        "repo": primary_repo(args.repos), "repos": args.repos, "seats": ff.SEATS, "services": services,
+        "product_nodes": product_nodes,
         "notes": [
             f"{live_site.SITE['name']} fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "
             "reviews, reviewer verdicts (latest per PR), comment METADATA (no bodies), issues and issue events, "

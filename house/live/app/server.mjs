@@ -896,8 +896,9 @@ function mergeFleet(g, b, stale, now) {
   }
   const gc = g?.cloud || {}, bc = b?.cloud || {};
   const ghl = Math.max(tsOf(gc.github_last_ct), tsOf(bc.github_last_ct));
-  const open = stale ? [] : (bc.open_agents || []);
-  const cloud = { active: open.length > 0 || (!!ghl && now - ghl <= win), open_agents: open, github_last_ct: iso(ghl),
+  const boxOpen = stale ? [] : (bc.open_agents || []);
+  const open = [...new Set([...boxOpen, ...(gc.open_agents || [])])];
+  const cloud = { active: open.length > 0, open_agents: open, github_last_ct: iso(ghl),
                   last_ct: iso(Math.max(tsOf(gc.last_ct), tsOf(bc.last_ct))) , working: !!gc.working || (!stale && !!bc.working) };
   if (stale && ((bc.open_agents || []).length || bc.working)) cloud.box_stale = true;
   if (cloud.working) working.CloudAgents = g?.working?.CloudAgents || b?.working?.CloudAgents || { via: 'cloud' };
@@ -910,6 +911,8 @@ function mergedHeader(now = Date.now()) {
   const h = { ...(b || {}), ...(g || {}) };
   if (!g && !b) Object.assign(h, headerOf(EMPTY_FEED));
   delete h.source; delete h.fleet;
+  if (Array.isArray(h.product_nodes)) h.product_nodes = h.product_nodes.filter(n => n !== 'burst-live');
+  if (Array.isArray(h.services)) h.services = h.services.filter(n => n !== 'burst-live');
   h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
@@ -934,12 +937,14 @@ function mergedHeader(now = Date.now()) {
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
+  if (h.fleet) h.fleet = clearClosedWork(h.fleet);
+  if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
-  h.freshness = {
+  h.freshness = stampClockTree({
     github_latest_ct: githubDataAt ? new Date(githubDataAt).toISOString() : null,
     github_card_latest_ct: githubCardAt ? new Date(githubCardAt).toISOString() : null,
     cards_at: cardsAt ? new Date(cardsAt).toISOString() : null,
-  };
+  });
   h.queue = openQueue();
   return h;
 }
@@ -1091,7 +1096,10 @@ function buildLoginMap() {
   return map;
 }
 function loginMap() { if (!loginToSeat) loginToSeat = buildLoginMap(); return loginToSeat; }
-function githubWorkKind(kind) { return GH_WORK_KINDS.has(kind) || kind.startsWith('issue_'); }
+function githubWorkKind(kind) {
+  if (CLOSE_KINDS.has(kind)) return false;
+  return GH_WORK_KINDS.has(kind) || kind.startsWith('issue_');
+}
 function workOnOf(e) {
   const repo = typeof e.repo === 'string' ? e.repo : '';
   const n = Number(e.number);
@@ -1142,6 +1150,78 @@ function applyGithubWorking(fleet, now) {
   if (!fleet) f.total = Object.keys(f.seats).length;
   f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
   return f;
+}
+// #336: fleet.as_of and every *_ct on the fleet and freshness are America/Chicago, never a bare Z.
+function ctStamp(t) {
+  if (!t) return null;
+  const base = ctOffset(t);
+  if (typeof base !== 'string') return base;
+  const d = new Date(t);
+  if (isNaN(d) || base.includes('.')) return base;
+  const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+  return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
+}
+function stampClockTree(node) {
+  if (!node || typeof node !== 'object') return node;
+  if (Array.isArray(node)) return node.map(stampClockTree);
+  const out = {};
+  for (const [k, v] of Object.entries(node)) {
+    if ((k === 'as_of' || k.endsWith('_ct') || k === 'cards_at') && (typeof v === 'string' || typeof v === 'number')) out[k] = v ? ctStamp(v) : v;
+    else if (v && typeof v === 'object') out[k] = stampClockTree(v);
+    else out[k] = v;
+  }
+  return out;
+}
+function workTarget(on) {
+  const m = /([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)?)#([1-9]\d*)$/.exec(String(on || '').trim());
+  return m ? { repo: m[1], number: Number(m[2]) } : null;
+}
+function closedKeyNumber(k, n) {
+  const i = String(k).lastIndexOf('#');
+  return i >= 0 && Number(String(k).slice(i + 1)) === n;
+}
+function workOnClosed(on) {
+  const text = String(on || '').trim();
+  const key = workTarget(text);
+  const bare = /#([1-9]\d*)$/.exec(text);
+  const number = key ? key.number : bare ? Number(bare[1]) : 0;
+  if (!number) return false;
+  const repo = key ? key.repo.toLowerCase() : '';
+  if (repo && itemClosed(repo, number)) return true;
+  for (const [k, v] of closedItems()) {
+    if (!v || !v.closed || !closedKeyNumber(k, number)) continue;
+    if (!repo) return true;
+    const kr = k.slice(0, k.lastIndexOf('#'));
+    if (kr === repo || kr.endsWith('/' + repo) || repo.endsWith('/' + kr)) return true;
+  }
+  for (const c of bfCards) {
+    if (!c || String(c.state || '').toLowerCase() !== 'closed' || Number(c.number) !== number) continue;
+    if (!repo) return true;
+    const cr = String(c.repo || '').toLowerCase();
+    if (cr === repo || cr.endsWith('/' + repo) || repo.endsWith('/' + cr)) return true;
+  }
+  return false;
+}
+function clearClosedWork(fleet) {
+  if (!fleet) return fleet;
+  let changed = false;
+  const seats = { ...(fleet.seats || {}) };
+  const working = { ...(fleet.working || {}) };
+  for (const [name, seat] of Object.entries(seats)) {
+    if (!seat || !workOnClosed(seat.working_on)) continue;
+    const next = { ...seat };
+    delete next.working_on;
+    seats[name] = next;
+    changed = true;
+  }
+  for (const [name, row] of Object.entries(working)) {
+    if (!row || !workOnClosed(row.working_on)) continue;
+    const next = { ...row };
+    delete next.working_on;
+    working[name] = next;
+    changed = true;
+  }
+  return changed ? { ...fleet, seats, working } : fleet;
 }
 setInterval(() => governorRun(), GOV_MS).unref();
 header = mergedHeader();
@@ -1949,7 +2029,7 @@ function refreshWorking(now = Date.now()) {
   if (!header || !header.fleet) return;
   const before = JSON.stringify(header.fleet.working || {});
   const fleet = applyStoredActivity(header.fleet, now);
-  if (fleet) header.fleet = fleet;
+  if (fleet) header.fleet = stampClockTree(clearClosedWork(fleet));
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]

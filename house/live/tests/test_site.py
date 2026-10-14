@@ -24,6 +24,15 @@ class Site(unittest.TestCase):
         raw = (FEED / "site.json").read_text()
         self.assertNotIn("example.com", raw); self.assertNotIn("Example", raw)
 
+    def test_burst_live_is_absent_from_feed_lists(self):
+        sys.path.insert(0, str(FEED))
+        import live_mesh
+        services, nodes = live_mesh.visible_feed_lists(
+            ["GitHub", "burst-live"], ["Bifrost", "burst-live", "burst-live"])
+        self.assertEqual(services, ["GitHub"])
+        self.assertEqual(nodes, ["Bifrost"])
+        self.assertNotIn("burst-live", services + nodes)
+
     def test_other_installs_keep_example_defaults(self):
         title, brand, node, dev, app, prod, health = probe("")
         self.assertEqual((title, brand, node, dev, app, prod), ("Example live mesh", "Example", "Example", "dev.example.com", "app.example.com", "app.example.com"))
