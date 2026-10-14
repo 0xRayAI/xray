@@ -9,7 +9,7 @@ ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
 SEATS = ["arch1", "forge", "critic", "mill", "blinky", "herald", "nibbler", "sound", "magnet"]
 ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please", "mill": "@mill rebase ask #263",
         "blinky": "@blinky board update", "herald": "@herald Dist post", "nibbler": "@nibbler take a look",
-        "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch1 deep-review #262"}
+        "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch10x deep-review #262"}
 
 
 def seats(label, kind="issue_comment", watch=False, **kw):
@@ -43,8 +43,8 @@ class FleetSeats(unittest.TestCase):
 
     def test_aliases(self):
         for name, sid in {"forge": "forge", "critic": "critic", "mill": "mill", "blinky": "blinky", "herald": "herald",
-                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "Arch1": "arch1"}.items():
-            self.assertEqual(ROLES["aliases"].get(name), sid, name)
+                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "arch1": "arch1"}.items():
+            self.assertEqual(inbox_pass.aliases_of(ROLES).get(name), sid, name)
 
     # N3 (#262 handoff): critic's four checks; each fails if its fix is reverted.
     def test_n3_1_handle_whole_word(self):
@@ -61,7 +61,8 @@ class FleetSeats(unittest.TestCase):
 
     def test_n3_4_gate_b_whole_phrase(self):
         self.assertEqual(seats("gate bypass for the deploy"), [])
-        self.assertEqual(seats("Gate B run please"), ["arch1"])
+        self.assertEqual(seats("Gate B run please"), [])          # Arch1 is outside the fleet: bare keywords never reach him
+        self.assertEqual(seats("@arch10x Gate B run please"), ["arch1"])
 
     def test_pr_open_and_new_head_reach_critic_and_blinky_without_mentions(self):
         for kind in ("pr_open", "pr_update"):
@@ -83,6 +84,18 @@ class FleetSeats(unittest.TestCase):
                  "t_ct": "2026-10-13T05:00:00-05:00", "id": "c1", "to": "forge", "pr_merged": True}, ROLES)]
         self.assertTrue(all("merged PR" in l["reason"] for l in lines), lines)
         self.assertEqual(seats("x review comment · xray #266", watch=True, kind="review_comment", to="critic"), ["blinky", "critic"])
+
+    def test_mill_targeted_events_land_in_mill_inbox(self):
+        for label, kind in [("@mill please take #287", "issue_comment"), ("implement ask · xray #290", "pr_comment"),
+                            ("dev ask: CI job for house/live", "issue_open"), ("mill wave 4 · xray #291", "issue_comment")]:
+            self.assertIn("mill", seats(label, kind=kind), label)
+        self.assertNotIn("mill", seats("unrelated comment", kind="issue_comment"))
+
+    def test_issue_comment_reaches_issue_author_seat(self):
+        self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment", to="forge"), ["blinky", "forge"])
+        lines = inbox._direct({"kind": "issue_comment", "label": "x comment · xray issue #9", "repo": "o/x", "number": 9,
+                               "t_ct": "2026-10-13T05:00:00-05:00", "id": "c9", "to": "forge"}, ROLES)
+        self.assertIn("comment on your issue", [l["reason"] for l in lines if l["seat"] == "forge"])
 
     def test_issue_comment_reaches_blinky_and_body_mentions_route(self):
         self.assertEqual(seats("x comment · xray issue #9", watch=True, kind="issue_comment"), ["blinky"])
@@ -117,7 +130,7 @@ class FleetRoster(unittest.TestCase):
         self.assertNotIn("minime0x[bot]", nodes)   # workflow-run bot, not arch1: credits github unless a Seat: trailer says otherwise
 
     def test_deploy_ships_the_roster(self):
-        sh = (FEED.parent / "app" / "deploy.sh").read_text()
+        sh = (FEED.parent / "app" / "assemble-collector.sh").read_text()   # deploy.sh assembles through it (#292)
         self.assertIn("fleet-roster.json", sh); self.assertIn("fleet-nodes.json", sh)
 
 
@@ -141,11 +154,10 @@ class Guardrails275(unittest.TestCase):
     def test_push_and_ci_unowned_stay_quiet(self):
         self.assertEqual(self.routed(self.ev("ci_pass", "green")), [])
 
-    def test_arch1_only_also_reaches_coordinator(self):
-        roles = {k: v for k, v in ROLES.items() if k != "comment_watch"}   # so blinky can only come from the fallback
-        lines = inbox._direct(self.ev("issue_comment", "@arch1 deep-review"), roles)
-        self.assertEqual(sorted(l["seat"] for l in lines), ["arch1", "blinky"])
-        self.assertEqual([l["reason"] for l in lines if l["seat"] == "blinky"], ["no owner seat with a wake"])
+    def test_arch1_lines_are_not_copied_to_coordinator(self):
+        roles = {k: v for k, v in ROLES.items() if k != "comment_watch"}   # so blinky could only come from the fallback
+        lines = inbox._direct(self.ev("issue_comment", "@arch10x deep-review"), roles)
+        self.assertEqual(sorted(l["seat"] for l in lines), ["arch1"])
 
     def test_no_self_wake_by_bot_login(self):
         self.assertNotIn("forge", self.routed(self.ev("pr_comment", "@forge merge ask", actor="forge0x1[bot]")))

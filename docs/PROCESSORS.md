@@ -101,7 +101,7 @@ OpenCode plugin registers a **subset**: `preValidate`, `codexCompliance`, `versi
 | `regressionTesting` | 15 / 65 | Diff vs `.opencode/xray/test-count.json` baseline | `regression-testing-processor.ts` | boot | boot-registered |
 | `coverageAnalysis` | 45 / 70 | Coverage gaps for a file | `coverage-analysis-processor.ts` | boot + plugin post | boot-registered |
 | `commitBatcher` | 85 / 85 | Feeds file writes into `IntelligentCommitBatcher` | `commit-batcher-processor.ts` | boot | boot-registered |
-| `nudge` | 100 / 78 | Nudge watchdog on stuck think/fix loops | `nudge-processor.ts` | `nudge_watchdog` | boot-registered |
+| `nudge` | 100 / 78 | Nudge monitor on stuck think/fix loops | `nudge-processor.ts` | `nudge_monitor` | boot-registered |
 | `postProcessorChain` | — / 140 | Validates post chain ran in priority order | `postprocessor-chain-validator.ts` | boot | boot-registered |
 | `consoleLogGuardPost` | factory only | Same scan as `consoleLogGuard`, post context | `console-log-guard-processor.ts` | **not** in boot `PROCESSOR_DEFS` | factory only |
 

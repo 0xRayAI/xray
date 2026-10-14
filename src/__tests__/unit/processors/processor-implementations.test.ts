@@ -60,8 +60,9 @@ vi.mock("../../../core/config-paths.js", () => ({
   resolveStateFilePath: vi.fn().mockReturnValue("/tmp/state.json"),
 }));
 
-vi.mock("../../../monitoring/nudge-watchdog.js", () => ({
-  nudgeWatchdog: {
+vi.mock("../../../monitoring/nudge-monitor.js", () => ({
+  resolveNudgeConfig: vi.fn((f: Record<string, unknown> | undefined) => f?.nudge_monitor ?? f?.nudge_watchdog),
+  nudgeMonitor: {
     getStats: vi.fn().mockReturnValue({
       thinkTags: 0,
       codeChanges: 0,
@@ -1000,8 +1001,8 @@ describe("NudgeProcessor", () => {
   });
 
   it("should return {success, nudgeDetected: true, pattern, suggestion} when patterns active", async () => {
-    const { nudgeWatchdog } = await import("../../../monitoring/nudge-watchdog.js");
-    vi.mocked(nudgeWatchdog.getStats).mockReturnValueOnce({
+    const { nudgeMonitor } = await import("../../../monitoring/nudge-monitor.js");
+    vi.mocked(nudgeMonitor.getStats).mockReturnValueOnce({
       thinkTags: 5,
       codeChanges: 0,
       explanations: 0,
@@ -1019,7 +1020,7 @@ describe("NudgeProcessor", () => {
   });
 
   it("should record tool calls from toolInput", async () => {
-    const { recordToolCall } = await import("../../../monitoring/nudge-watchdog.js");
+    const { recordToolCall } = await import("../../../monitoring/nudge-monitor.js");
     await processor.execute({
       operation: "commit",
       toolInput: { tool: "edit", args: { filePath: "test.ts" } },
@@ -1028,7 +1029,7 @@ describe("NudgeProcessor", () => {
   });
 
   it("should record code changes for edit/write tools", async () => {
-    const { recordCodeChange } = await import("../../../monitoring/nudge-watchdog.js");
+    const { recordCodeChange } = await import("../../../monitoring/nudge-monitor.js");
     await processor.execute({ tool: "edit", operation: "edit" });
     expect(recordCodeChange).toHaveBeenCalled();
   });

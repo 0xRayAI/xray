@@ -4,7 +4,8 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
-const APP = process.env.MESH_APP_DIR;
+import { fileURLToPath } from 'node:url';
+const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-route-'));
 const wakes = [];
 const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d); q.on('end', () => { wakes.push({ path: q.url, auth: q.headers.authorization, body: JSON.parse(b) }); s.writeHead(200); s.end('{}'); }); });
@@ -91,6 +92,8 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   writeFeed([...old, ...fresh, next]);
   assert.ok(await until(() => /route: pass 1 \d+/.test(logs)), logs);
   assert.ok(inbox('forge').some(l => l.id === next.id) && !inbox('blinky').some(l => l.id === next.id));
+  // the wake for `next` is async: wait for it here, or it lands inside the next test's count (the old 1-in-6 flake)
+  assert.ok(await until(() => wakes.length === before + 1), JSON.stringify(wakes));
 });
 
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {

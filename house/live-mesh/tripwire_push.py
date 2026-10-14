@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Push changed live-mesh artifacts to the Pages replay branch.
 
+Superseded as the governor: the change-detecting loop now runs inside burst-live (house/live/app/governor.mjs).
+Kept for the Pages replay only.
+
 fetch_feed.py and render_mesh.py keep running on their own. This process does
 not poll GitHub and does not render. Every --interval seconds (default 300) it
 hashes the local feed. When the hash changes, it copies the files onto a branch

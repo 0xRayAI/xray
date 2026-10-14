@@ -12,7 +12,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** The container starts `node mcp-server.mjs`, or the live page is not the one in `house/live/app`.
 - **Cause:** The repo-root config belongs to the MCP server. The live board is not deployed from the repo root.
-- **Fix:** Run `house/live/app/deploy.sh`, or set the root directory to a directory laid out the same way as that script's deploy dir.
+- **Fix:** Deploy only via `house/live/app/deploy.sh` (it assembles `collector/` with `app/assemble-collector.sh`). A build from git without that step now stops with "collector/ is not assembled".
 
 ### `deploy.sh` stops on a missing lockfile
 
@@ -28,7 +28,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 ### `railway up` targets the wrong project or service
 
-- **Symptom:** The deploy lands on `live-board` / `live-mesh`, or the script says the deploy dir is not linked.
+- **Symptom:** The deploy lands on `burst-live` / `burst-live` (our names), or the script says the deploy dir is not linked.
 - **Cause:** Those names are the defaults. The overrides were not in the deploy guide.
 - **Fix:** Set `LIVE_RAILWAY_PROJECT`, `LIVE_RAILWAY_SERVICE`, and `MESH_APP_DEPLOY_DIR` to your own names before `deploy.sh`. `seat_keys.sh publish` uses the same service and deploy dir.
 
@@ -76,7 +76,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 ### `seat_keys.sh` mints the example seats on the example service
 
-- **Symptom:** Keys appear for seats this fleet does not have, and `railway variables` targets `live-mesh` in `/srv/live/deploy`.
+- **Symptom:** Keys appear for seats this fleet does not have, and `railway variables` targets `burst-live` in `/srv/live/deploy`.
 - **Cause:** The script had one seat list, one service, and one directory.
 - **Fix:** Set `SEAT_KEYS_SEATS` or `SEATS_JSON`, and `LIVE_RAILWAY_SERVICE` plus `MESH_APP_DEPLOY_DIR`.
 

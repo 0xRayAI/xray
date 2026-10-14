@@ -1,7 +1,19 @@
 # Live board setup
 
+## Routing is required
+
+Every seat needs a route: a seat no rule routes to gets no inbox lines, so its wake never fires. Before the first deploy, run `house/live/tools/bifrost-init` once. It asks for the seats and their wake URLs, writes `house/live/feed/routing/inbox-roles.json` and `feed/routing/seat-webhooks.json` (placeholders and env names only, never real URLs or keys), and fails if any seat has no route. Put the real URLs in the `SEAT_WEBHOOKS` host variable and each key in `WAKE_KEY_<SEAT>`. `bifrost-init --check` re-validates after hand edits; CI runs it via `house/live/tests/run_tests.sh`.
+
+**Bifrost does not work without routing.** No route means no inbox line, no wake, no nudge and no tripwire for that seat.
+
+**The routing map.** `inbox-roles.json` `routing` lists each seat once: its real GitHub login (App seats as their bot login, e.g. `forge0x1[bot]`, `arch10x[bot]`; people by handle; `null` when the seat has no GitHub login and is reached only in the inner loop) and its nicknames as `aliases` on the same entry. `bifrost-init --logins forge=forge0x1[bot],arch1=arch10x[bot]` writes it. `bifrost-init --check` asks the GitHub users API about every non-null login (optional `GITHUB_TOKEN`, never printed) and fails on a 404, naming the seat; a rate limit or network error is a warning. Check a login by hand with `curl https://api.github.com/users/<login>` before you add it, never from memory. Each route must @-mention the seat's login (`@forge0x1`), not only its nickname; `bifrost-init --check --table` fails a nickname-only route and prints seat, mention, login, OK.
+
+**Edited comments.** The collector re-reads a comment when its `updated_at` moves and keeps its id. A mention added on edit becomes one `comment_edit` line (`<comment id>:edit:<handle>`) for the newly mentioned seat only, once; seats already mentioned and comment watch get nothing new.
+
+**Login audit.** At startup and every `BIFROST_ROUTING_AUDIT_S` (default 3600) burst-live resolves every map login on GitHub with the existing `GITHUB_READ_TOKEN` (cached `BIFROST_LOGIN_TTL_S`, default 21600; on a rate limit it pauses until the reset and answers from cache). A login GitHub does not know is refused: `/routing` shows it `missing`, `/healthz` `routing` is `fail`, and the CoS gets a board nudge (`login not on GitHub`). No token or no answer is `unverified`, flagged, never refused. `GET /routing` serves the map read-only: look a login up there before you @-mention anyone, never from memory. After a deploy, `house/live/tools/bifrost-check --target <host>` fails any login that does not resolve (runbook: `grok-bot/runbooks/CRITIC.md`).
+
 ## Pieces
-- **Railway server** (`app/server.mjs`, service `live-mesh`): the page, the merged feed, and the **source of truth** for
+- **Railway server** (`app/server.mjs`, service `burst-live`): the page, the merged feed, and the **source of truth** for
   seat inboxes, cards and nudges (volume `/data/live/`: `inbox/<seat>.jsonl`, `cards.json`, `nudges.jsonl`).
 - **Host collector** (`LIVE_MODE=github`): builds the board from GitHub events so a host-only install has cards. The page uses that board when the box board is absent or older than `BOARD_BOX_STALE_S`.
 - **Box feed pass + pusher** (`feed/push_to_host.sh`, released with `feed/release.sh`): pushes box events
@@ -64,6 +76,7 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 | `GET /inbox/<seat>?since=<id>` | that seat | `{seat, lines}` after `<id>` (all when omitted / unknown) |
 | `GET /cards?seat=<seat>` | that seat, or blinky / forge | cards the seat owns or is next owner on (`all`, blinky or forge: all), with nudge beats |
 | `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for critic a verdict at head); `?all=1` = history |
+| `GET /routing` | any seat key or session (open in public mode) | `{ok, seats: [{seat, login, aliases, status}]}`: the routing map, read-only; status `ok`, `missing` (refused), `unverified`, `no_login`. Never keys or webhook URLs |
 | `GET /nudges?since=<id>` | forge | `{nudges}` in creation order |
 | `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id). A batch that stores nothing is 400 with `rejected` refs. `replace: true` clears only after a line validates |
 | `POST /ingest/source` | `X-Live-Ingest` | normalized source events (`{source, events}`). Unknown fields are refused |

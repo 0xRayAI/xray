@@ -290,7 +290,8 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
     def recent(t: str | None) -> bool:
         return bool(t) and datetime.fromisoformat(t.replace("Z", "+00:00")) >= since
 
-    if recent(pr["created_at"]):
+    opened = recent(pr["created_at"])
+    if opened:
         add(ev(f"{repo}#{n}:open", pr["created_at"], author, "GitHub", "pr_open",
                       f"{tag} opened · {title}", url, repo, n))
     # Pushes after open = fix / update volley.
@@ -305,6 +306,19 @@ def pr_events(gh: GitHub, repo: str, pr: dict, since: datetime) -> list[dict]:
             add(ev(f"{repo}#{n}:push:{c['sha'][:12]}", t, author, "GitHub", "pr_update",
                    f"{tag} update · {c['commit']['message'].splitlines()[0]}",
                    f"{url}/commits/{c['sha']}", repo, n), sha=c["sha"])
+    # #287: the commit list above is capped (oldest first) and dated by committer time, so a new head on a
+    # long or rebased PR can be missed. Queue one pr_update whenever head.sha differs from the last head seen;
+    # the id matches the per-commit one, so the stream dedupe keeps it to one line per head.
+    head_sha, key = head.get("sha"), f"{repo}#{n}"
+    if head_sha and HEADS.get(key) != head_sha:
+        shown = {e["id"] for e in out}
+        hid = f"{repo}#{n}:push:{head_sha[:12]}"
+        t = pr.get("updated_at") or ""
+        if hid not in shown and not (opened and len(commits) <= 1) and recent(t) and t > pr["created_at"]:
+            add(ev(hid, t, author, "GitHub", "pr_update", f"{tag} update · new head {head_sha[:7]}",
+                   f"{url}/commits/{head_sha}", repo, n), sha=head_sha)
+        HEADS[key] = head_sha
+        rep.add(head_sha)
     # Reviews: critic App reviews or any review whose body carries a Light verdict.
     for r in gh.pages(f"/repos/{repo}/pulls/{n}/reviews", limit=2):
         t = r.get("submitted_at")
@@ -688,6 +702,7 @@ PUSHED_HEADS: dict[str, set[str]] = {}  # repo -> heads already shown by push_ev
 
 # ---------------------------------------------------------------- pushes
 
+HEADS: dict[str, str] = {}  # "repo#n" -> last PR head.sha seen this process (#287)
 REPRESENTED: dict[str, set[str]] = {}  # repo -> commit SHAs already shown by pr_open/pr_update/merged
 PUSH_MSG: dict[tuple[str, str], str] = {}  # (repo, sha) -> first line of the commit message
 # The tripwire's replay branch never becomes a push event: its pushes come in as feed_push from

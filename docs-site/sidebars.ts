@@ -61,7 +61,7 @@ const sidebars: SidebarsConfig = {
         'plates/memory-recall',
         'plates/stamp-plate',
         'plates/house',
-        'plates/live-mesh',
+        'plates/bifrost',
         'plates/review',
         'plates/goggles',
         'plates/suit',

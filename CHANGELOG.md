@@ -12,6 +12,9 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 - **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
 - **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
 
+### Changed
+- **Nudge monitor rename.** `src/monitoring/nudge-watchdog.ts` is now `nudge-monitor.ts` (`NudgeMonitor`, `nudgeMonitor`, `getNudgeMonitor`) and the config key is `features.nudge_monitor`. The old key `features.nudge_watchdog` still works as a deprecated alias when `nudge_monitor` is unset (the new key wins if both are set) and logs a one-time deprecation warning.
+
 ### Fixed
 - **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
 - **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.

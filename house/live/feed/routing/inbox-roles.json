@@ -7,26 +7,70 @@
     "develop"
   ],
   "watcher_seats": [],
-  "aliases": {
-    "Arch1": "arch1",
-    "arch1": "arch1",
-    "forge": "forge",
-    "Forge": "forge",
-    "critic": "critic",
-    "Critic": "critic",
-    "mill": "mill",
-    "Mill": "mill",
-    "blinky": "blinky",
-    "Blinky": "blinky",
-    "herald": "herald",
-    "Herald": "herald",
-    "Nibbler": "nibbler",
-    "nibbler": "nibbler",
-    "sound": "sound",
-    "Sound": "sound",
-    "magnet": "magnet",
-    "Magnet": "magnet"
+  "routing": {
+    "blinky": {
+      "login": null,
+      "aliases": [
+        "Blinky",
+        "blinky"
+      ]
+    },
+    "critic": {
+      "login": "critic0x[bot]",
+      "aliases": [
+        "Critic",
+        "critic"
+      ]
+    },
+    "forge": {
+      "login": "forge0x1[bot]",
+      "aliases": [
+        "Forge",
+        "forge"
+      ]
+    },
+    "mill": {
+      "login": null,
+      "aliases": [
+        "Mill",
+        "mill"
+      ]
+    },
+    "herald": {
+      "login": "herald0x[bot]",
+      "aliases": [
+        "Herald",
+        "herald"
+      ]
+    },
+    "magnet": {
+      "login": null,
+      "aliases": [
+        "Magnet",
+        "magnet"
+      ]
+    },
+    "nibbler": {
+      "login": null,
+      "aliases": [
+        "Nibbler",
+        "nibbler"
+      ]
+    },
+    "sound": {
+      "login": null,
+      "aliases": [
+        "Sound",
+        "sound"
+      ]
+    },
+    "arch1": {
+      "login": "arch10x[bot]",
+      "aliases": [],
+      "outside": true
+    }
   },
+  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory. Logins verified against the GitHub users API on 2026-10-14: forge0x1[bot], critic0x[bot], herald0x[bot], arch10x[bot] exist; blinky has no App login found (null).",
   "seats": {
     "reviewer": {
       "off": true,
@@ -80,13 +124,9 @@
   "extra_seats": {
     "arch1": {
       "needles": [
-        "@arch1",
-        "arch1 deep-review",
-        "deep-review",
-        "deep review",
-        "gate b"
+        "@arch10x"
       ],
-      "reason": "deep-review / Gate B ask for Arch1"
+      "reason": "explicit @arch10x ask for Arch1 (outside the fleet)"
     },
     "forge": {
       "kinds": [
@@ -99,6 +139,7 @@
       ],
       "needles": [
         "@forge",
+        "@forge0x1",
         "merge ask",
         "deploy ask",
         "run gate b"
@@ -111,6 +152,7 @@
       ],
       "needles": [
         "@critic",
+        "@critic0x",
         "light ask",
         "strict ask",
         "re-light"
@@ -121,9 +163,11 @@
       "needles": [
         "@mill",
         "implement ask",
-        "rebase ask"
+        "rebase ask",
+        "dev ask",
+        "mill wave"
       ],
-      "reason": "implement / rebase ask for mill"
+      "reason": "implement / rebase / dev / wave ask for mill (Eng Dev)"
     },
     "blinky": {
       "kinds": [
@@ -136,7 +180,8 @@
     },
     "herald": {
       "needles": [
-        "@herald"
+        "@herald",
+        "@herald0x"
       ],
       "reason": "Dist ask for herald"
     },
@@ -173,12 +218,9 @@
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 9 seats (feed/fleet-roster.json)",
   "_note_builder_cloud": "builder / builder-cloud are kit plumbing in app/server.mjs (installation-token auth, mirror); no route writes to them",
   "fallback": {
-    "seat": "blinky",
-    "from": [
-      "arch1"
-    ]
+    "seat": "blinky"
   },
-  "_note_fallback": "#275 + lap 2: actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) or only to fallback.from (arch1, no webhook) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route.",
+  "_note_fallback": "Actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route. Arch1 is outside the fleet and reached only by an explicit @arch10x mention; his lines are never copied to blinky.",
   "comment_watch": {
     "kinds": [
       "pr_comment",
@@ -187,13 +229,14 @@
     ],
     "author_kinds": [
       "pr_comment",
-      "review_comment"
+      "review_comment",
+      "issue_comment"
     ],
     "author_reason": "comment on your PR",
     "seats": {
       "blinky": "comment watch (CoS)"
     }
   },
-  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR comments also to the PR author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
+  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR/issue comments also to the PR or issue author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
   "_note_seats": "seats: the kit's role rules (reviewer / builder / tester / operator / coord, read by routing/inbox.py), each mapped to one of our 9 by \"seat\" (or \"off\"); inbox_pass.py rewrites every line to that seat. Kit defaults stay in inbox.py."
 }

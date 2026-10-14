@@ -22,7 +22,7 @@ Prove the seat first: `npx @0xray/grok-bot doctor` (alias `ready`) from the agen
 | `ops/DOCTRINE-FEED-THE-BOTS.md` | Blaze doctrine: keep feeding receipts / op proc / real work |
 | `ops/DOCTRINE-MULTIVERSE.md` | Blaze line: we built a multiverse |
 | `ops/LEAD-CADENCE.md` | Lead syncopation — dummy SKILLS tests, same-sess wear, OTP+poll, branch/PR, loop until Station, workstreams not pacers, clean ticks every cycle |
-| `ops/dist/brand/LEXICON.md` | Short catalog of bot talk (plain vs shorthand, lanes H/B) |
+| `LEXICON.md` (pack root) | Short catalog of bot talk (plain vs shorthand, lanes H/B) |
 
 ## Dist (public posts)
 | Doc | Plain what |

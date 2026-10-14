@@ -1,5 +1,5 @@
 /**
- * Nudge Watchdog - Detects and breaks stuck AI patterns
+ * Nudge Monitor - Detects and breaks stuck AI patterns
  *
  * Monitors agent actions and detects common failure patterns:
  * - think-loop: AI keeps outputting thinking tags but no progress
@@ -8,7 +8,7 @@
  * - tool-loop: Same tool called with similar args repeatedly
  * - repair-failure: Processor indicates fix but error persists
  *
- * @module monitoring/nudge-watchdog
+ * @module monitoring/nudge-monitor
  */
 
 import { EventEmitter } from "events";
@@ -88,7 +88,37 @@ const NUDGE_MESSAGES: Record<NudgeType, NudgeAction> = {
   },
 };
 
-class NudgeWatchdog extends EventEmitter {
+/** Old config key from before the rename to nudge_monitor; still read as a deprecated alias. */
+export const LEGACY_NUDGE_CONFIG_KEY = "nudge_watchdog";
+let legacyKeyWarned = false;
+
+/**
+ * features.nudge_monitor, or the deprecated features.nudge_watchdog when nudge_monitor is unset (the new key wins
+ * when both are set). Using the old key logs a one-time deprecation warning.
+ */
+export function resolveNudgeConfig(
+  features: Record<string, unknown> | undefined | null,
+  warn: (message: string) => void = (m) => frameworkLogger.log("nudge-monitor", "deprecated-config-key", "warning", { message: m }),
+): Record<string, unknown> | undefined {
+  const current = features?.nudge_monitor as Record<string, unknown> | undefined;
+  if (current !== undefined && current !== null) return current;
+  const legacy = features?.[LEGACY_NUDGE_CONFIG_KEY] as Record<string, unknown> | undefined;
+  if (legacy !== undefined && legacy !== null) {
+    if (!legacyKeyWarned) {
+      legacyKeyWarned = true;
+      warn(`features.${LEGACY_NUDGE_CONFIG_KEY} is deprecated; rename it to features.nudge_monitor`);
+    }
+    return legacy;
+  }
+  return undefined;
+}
+
+/** Test hook: let the one-time deprecation warning fire again. */
+export function resetLegacyNudgeWarning(): void {
+  legacyKeyWarned = false;
+}
+
+class NudgeMonitor extends EventEmitter {
   private config: NudgeConfig;
   private patterns: Map<string, StuckPattern> = new Map();
   private lastNudgeTime = 0;
@@ -110,7 +140,7 @@ class NudgeWatchdog extends EventEmitter {
   private loadConfigFromFeatures(): void {
     try {
       const features = featuresConfigLoader.loadConfig() as unknown as Record<string, unknown>;
-      const nudgeConfig = features?.nudge_watchdog as NudgeConfig | undefined;
+      const nudgeConfig = resolveNudgeConfig(features) as NudgeConfig | undefined;
       if (nudgeConfig) {
         this.config = { ...this.config, ...nudgeConfig };
       }
@@ -123,11 +153,11 @@ class NudgeWatchdog extends EventEmitter {
     if (!this.config.enabled) {
       return;
     }
-    this.log("nudge-watchdog", "started", "info", { config: this.config });
+    this.log("nudge-monitor", "started", "info", { config: this.config });
   }
 
   stop(): void {
-    this.log("nudge-watchdog", "stopped", "info");
+    this.log("nudge-monitor", "stopped", "info");
   }
 
   recordThinkTag(): void {
@@ -315,7 +345,7 @@ class NudgeWatchdog extends EventEmitter {
 
     this.emit("nudge", action);
 
-    this.log("nudge-watchdog", "nudge-triggered", "warning", {
+    this.log("nudge-monitor", "nudge-triggered", "warning", {
       type: action.type,
       message: action.message,
       suggestion: action.suggestion,
@@ -407,36 +437,36 @@ class NudgeWatchdog extends EventEmitter {
   }
 }
 
-export const nudgeWatchdog = new NudgeWatchdog();
+export const nudgeMonitor = new NudgeMonitor();
 
 export function recordThinkTag(): void {
-  nudgeWatchdog.recordThinkTag();
+  nudgeMonitor.recordThinkTag();
 }
 
 export function recordCodeChange(): void {
-  nudgeWatchdog.recordCodeChange();
+  nudgeMonitor.recordCodeChange();
 }
 
 export function recordToolCall(tool: string, args: string): void {
-  nudgeWatchdog.recordToolCall(tool, args);
+  nudgeMonitor.recordToolCall(tool, args);
 }
 
 export function recordFixAttempt(filePath: string, error: string): void {
-  nudgeWatchdog.recordFixAttempt(filePath, error);
+  nudgeMonitor.recordFixAttempt(filePath, error);
 }
 
 export function recordExplanation(): void {
-  nudgeWatchdog.recordExplanation();
+  nudgeMonitor.recordExplanation();
 }
 
 export function getNudgeSuggestion(type: NudgeType, context?: Record<string, unknown>): string {
-  return nudgeWatchdog.getNudgeSuggestion(type, context);
+  return nudgeMonitor.getNudgeSuggestion(type, context);
 }
 
-export function getNudgeWatchdog(): NudgeWatchdog {
-  return nudgeWatchdog;
+export function getNudgeMonitor(): NudgeMonitor {
+  return nudgeMonitor;
 }
 
 export function recordProcessorFix(filePath: string, fixed: boolean, errorPersisted: boolean): void {
-  nudgeWatchdog.recordProcessorFix(filePath, fixed, errorPersisted);
+  nudgeMonitor.recordProcessorFix(filePath, fixed, errorPersisted);
 }

@@ -38,7 +38,7 @@ Read `house/` first. If a file is missing, use `templates/house/`.
 - [`dist/CHARTER.md`](dist/CHARTER.md) — Dist charter for @0xRayAI.
 - [`dist/MISS-DIST-LOCKED-OPENER-2026-09-20.md`](dist/MISS-DIST-LOCKED-OPENER-2026-09-20.md) — miss log: the "Locked:" opener.
 - [`dist/VOICE.md`](dist/VOICE.md) — Dist voice, 5 rules.
-- [`dist/brand/LEXICON.md`](dist/brand/LEXICON.md) — fleet lexicon in plain words.
+- [`LEXICON.md`](../LEXICON.md) — fleet lexicon in plain words.
 - [`dist/brand/MEDIA-LEAN.md`](dist/brand/MEDIA-LEAN.md) — Dist media: lean but engaging.
 - [`dist/brand/SEAT-STAMPS.md`](dist/brand/SEAT-STAMPS.md) — seat stamps (fleet voice marks).
 - [`dist/brand/STAMPS.md`](dist/brand/STAMPS.md) — Dist Unicode stamps (product lexicon).

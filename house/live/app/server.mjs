@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
+import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
+import { fingerprint, tripwire, createClock } from './governor.mjs';
+const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 
@@ -256,6 +259,19 @@ function loadSeatWebhooks() {
 }
 const SEAT_WEBHOOKS = loadSeatWebhooks();
 const wakeQ = new Map();
+const wakeOkAt = {};   // seat -> ISO of the last successful wake POST
+// Wake health on the board: each configured seat's last good wake; quiet = none within BIFROST_WAKE_QUIET_MINUTES
+// (default 240) of now (or of server start), even with no unacked line.
+const WAKE_QUIET_MS = (Number(process.env.BIFROST_WAKE_QUIET_MINUTES) > 0 ? Number(process.env.BIFROST_WAKE_QUIET_MINUTES) : 240) * 60000;
+const BOOT_AT = Date.now();
+function wakeBoard(now = Date.now()) {
+  const out = {};
+  for (const seat of Object.keys(SEAT_WEBHOOKS)) {
+    const last = wakeOkAt[seat] || null, t = last ? Date.parse(last) : BOOT_AT;
+    out[seat] = { last_ok: last, quiet: now - t > WAKE_QUIET_MS };
+  }
+  return out;
+}
 function noteWake(seat, line) {
   try {
     const cfg = SEAT_WEBHOOKS[seat];
@@ -318,7 +334,7 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) touchSeat(seat);
+  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; }
   st.inflight = false; armWake(seat);
 }
 // Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
@@ -373,6 +389,78 @@ function saveSeatInbox(s) {
   const cut = Date.now() - 7 * 86400000;
   seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n');
+}
+// Startup route check (same rules as tools/bifrost-init --check): a seat with no route, or a rule routing to a seat
+// outside the fleet, is logged loudly and shown on the board (header.routing, /healthz routing). Never a crash.
+const ROUTING = checkRoutesFromDir(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'),
+  process.env.BIFROST_ROSTER || path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'));
+if (!ROUTING.ok) console.log('ROUTING: FAIL ' + (ROUTING.error || '') + (ROUTING.unrouted.length ? ' no route for ' + ROUTING.unrouted.join(',') : '') + (ROUTING.unknown.length ? ' rules to seats outside the fleet: ' + ROUTING.unknown.join(',') : ''));
+// Routing map login audit (at startup and every BIFROST_ROUTING_AUDIT_S, default 3600): every login in the map is resolved
+// against GitHub with the existing read token (cached, rate-limit safe). A login GitHub does not know is refused: the
+// entry is served as refused at /routing, ROUTING.ok goes false, and the CoS gets a board nudge. Unverified (no token,
+// rate limit, network) is flagged, never refused.
+const ROUTING_DIR = process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing');
+const ROUTING_BASE_OK = ROUTING.ok;
+let ROUTING_MAP = readRoutingMap(ROUTING_DIR).map(e => ({ ...e, status: e.login ? 'unverified' : 'no_login' }));
+const loginResolver = createLoginResolver({ api: GITHUB_API, token: process.env.GITHUB_READ_TOKEN || '',
+  ttlMs: (Number(process.env.BIFROST_LOGIN_TTL_S) || 21600) * 1000 });
+ROUTING.logins = { refused: [], unverified: ROUTING_MAP.filter(e => e.login).map(e => e.seat), no_login: ROUTING_MAP.filter(e => !e.login).map(e => e.seat) };
+async function auditRouting() {
+  const a = await auditLogins(readRoutingMap(ROUTING_DIR), loginResolver.resolve);
+  ROUTING_MAP = a.entries;
+  ROUTING.logins = { refused: a.refused, unverified: a.unverified, no_login: a.no_login };
+  ROUTING.ok = ROUTING_BASE_OK && !a.refused.length;
+  if (a.refused.length) console.log('ROUTING: FAIL login not on GitHub for ' + a.refused.join(','));
+  console.log(`routing: logins ok ${a.entries.filter(e => e.status === 'ok').length} refused ${a.refused.length} unverified ${a.unverified.length}`);
+}
+setTimeout(() => auditRouting().catch(() => {}), 0).unref?.();
+setInterval(() => auditRouting().catch(() => {}), (Number(process.env.BIFROST_ROUTING_AUDIT_S) || 3600) * 1000).unref();
+// Line nudges (part of evalNudges, the one nudge path): an open (unacked, not done) inbox line older than NUDGE_LINE_S
+// (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
+// Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
+const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
+const cosSeat = () => (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;   // the CoS role (routing seats.coord)
+function nudgeLines(now) {
+  let changed = false;
+  const open = new Set();
+  for (const seat of SEAT_IDS) for (const l of openLines(seat)) {
+    const t = Date.parse(l.t_ct);
+    if (!Number.isFinite(t) || now - t < NUDGE_LINE_MS) continue;
+    const base = `nudge:line:${seat}:${l.id}`; open.add(base);
+    const mine = nudges.filter(n => n.kind === 'line' && n.line_key === base);
+    const last = mine[mine.length - 1];
+    if (mine.length >= 3 || (last && now - last.t < NUDGE_LINE_MS)) continue;
+    const lvl = mine.length + 1;
+    nudges.push({ id: `${base}:L${lvl}`, kind: 'line', line_key: base, t: now, t_ct: new Date(now).toISOString(), card: '', repo: l.repo || '',
+      number: Number.isInteger(l.number) ? l.number : 0, title: String(l.title || '').slice(0, 120), url: String(l.url || '').slice(0, 300),
+      stage: '', level: lvl, seat, via: 'unacked line', line: String(l.id).slice(0, 300), since: new Date(t).toISOString() });
+    noteWake(seat, { ...l, reason: (`nudge L${lvl}: ` + (l.reason || '')).slice(0, 300) });
+    const cos = cosSeat();
+    if (lvl === 3 && cos && cos !== seat) {   // L3 with no move: the CoS role gets it too, to reassign
+      nudges.push({ ...nudges[nudges.length - 1], id: `${base}:L3cos`, kind: 'reassign', seat: cos, about: seat, via: 'L3: reassign' });
+      noteWake(cos, { ...l, id: `${base}:L3cos`, seat: cos, reason: `L3 no move on ${seat}: reassign`.slice(0, 300) });
+    }
+    changed = true;
+  }
+  for (const n of nudges) if ((n.kind === 'line' || (n.kind === 'reassign' && n.line_key)) && !n.closed_at && !open.has(n.line_key)) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  return changed;
+}
+// Seat nudges (same path): a seat with no route (startup route check) and a configured seat whose wake went quiet
+// (no good wake within BIFROST_WAKE_QUIET_MINUTES) each hold one open nudge to the CoS on the board until fixed.
+function nudgeSeats(now) {
+  let changed = false;
+  const want = new Map();
+  for (const seat of ROUTING.unrouted) want.set(`nudge:unrouted:${seat}`, { seat, kind: 'unrouted', via: 'no route' });
+  for (const seat of ROUTING.logins?.refused || []) want.set(`nudge:login:${seat}`, { seat, kind: 'unrouted', via: 'login not on GitHub' });
+  const w = wakeBoard(now);
+  for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
+  for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
+    nudges.push({ id, kind: x.kind, t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
+      stage: '', level: 1, seat: cosSeat(), about: x.seat, via: x.via });
+    changed = true;
+  }
+  for (const n of nudges) if ((n.kind === 'unrouted' || n.kind === 'quiet') && !n.closed_at && !want.has(n.id)) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  return changed;
 }
 function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
 function inboxLineError(d) {
@@ -534,7 +622,7 @@ function holdOwner(c) {
 function evalNudges(now = Date.now()) {
   let changed = false; const byKey = new Map(bfCards.map(c => [c.key, c]));
   for (const n of nudges) {
-    if (n.closed_at || n.kind === 'silent') continue;
+    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind) || (n.kind === 'reassign' && n.line_key)) continue;
     const c = byKey.get(n.card);
     if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card })) {
       n.closed_at = new Date(now).toISOString(); changed = true; continue;
@@ -575,9 +663,16 @@ function evalNudges(now = Date.now()) {
     if (l2 && !l2.closed_at) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
       const prev = reps.length ? reps[reps.length - 1].t : l2.t;
-      if (now - prev >= NUDGE_L3_MS) mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
+      if (now - prev >= NUDGE_L3_MS) {
+        mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
+        const cos = cosSeat();   // L3 with no move: the CoS role also gets it, to reassign (once per card stretch)
+        const rid = `nudge:${c.key}:L3cos:${c.last_beat_t}`;
+        if (cos && cos !== tgt && !nudges.some(n => n.id === rid)) { mk(3, cos, 'L3: reassign', rid); nudges[nudges.length - 1].kind = 'reassign'; }
+      }
     }
   }
+  if (nudgeLines(now)) changed = true;
+  if (nudgeSeats(now)) changed = true;
   if (changed) saveNudges();
   return changed;
 }
@@ -663,6 +758,9 @@ function mergedHeader(now = Date.now()) {
   h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
+  h.wakes = wakeBoard(now);   // last successful wake per seat; quiet past BIFROST_WAKE_QUIET_MINUTES
+  h.routing = ROUTING;   // startup route check (bifrost-init rules)
+  h.clock = typeof clock === 'undefined' ? null : clock.run;   // timed run: deadlines per seat, cleared by a seat move
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
   h.notes = [...new Set([...(g?.notes || []), ...(b?.notes || [])])];
   h.sources = {
@@ -685,6 +783,50 @@ setInterval(() => {
   const h = mergedHeader();
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }
 }, 15000).unref();
+const GOV_MS = Math.max(200, (Number(process.env.BIFROST_TICK_S) > 0 ? Number(process.env.BIFROST_TICK_S) : 60) * 1000);
+// Governor: one tick. Nudges first (evalNudges: cards, unacked lines, unrouted and quiet seats); then the tripwire: when no
+// seat has moved anything (events, acks) for BIFROST_TRIPWIRE_MINUTES (default 30) and some seat has open work, the
+// clock starts a timed run (the same run the CoS starts by hand with POST /clock). A seat's move clears it.
+const TRIP_MS = (Number(process.env.BIFROST_TRIPWIRE_MINUTES) > 0 ? Number(process.env.BIFROST_TRIPWIRE_MINUTES) : 30) * 60000;
+const PER_SEAT_MS = (Number(process.env.BIFROST_RUN_SEAT_MINUTES) > 0 ? Number(process.env.BIFROST_RUN_SEAT_MINUTES) : 2) * 60000;
+const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEATS, else the coord (CoS) seat
+  const env = String(process.env.BIFROST_CLOCK_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  return env.length ? env : COORD_SEAT ? [COORD_SEAT] : [];
+})();
+const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS });
+const trip = tripwire();
+let governorChanges = 0;
+const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && openLines(s).length);
+function wakeRun(run) {
+  for (const [seat, by] of Object.entries(run.deadlines)) {
+    const n = openLines(seat).length;
+    const reason = run.reason === 'empty' ? `board empty, pull next work by ${by}`
+      : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
+    noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: run.reason === 'empty' ? 'board empty' : `timed run: ${n} open line(s)`, reason });
+  }
+  const cos = cosSeat();
+  if (run.reason !== 'empty' && cos && !(cos in run.deadlines)) {   // the CoS role owns the board: told about every stall run
+    noteWake(cos, { id: `clock:${run.started_at}:cos`, type: 'timed_run', title: 'board stalled',
+      reason: `board stalled: timed run on ${Object.keys(run.deadlines).join(', ')}, ends ${run.ends_at}` });
+  }
+  console.log(`clock: ${run.reason} run started, ${Object.keys(run.deadlines).length} seat(s), ends ${run.ends_at}`);
+}
+function moveFp() { return fingerprint([...evs.values()].map(v => v.e), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
+function governorRun(now = Date.now()) {
+  if (evalNudges(now)) { seq++; fullDirty = true; }
+  const w = wakeBoard(now);
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, openSeats: openSeats(), coord: COORD_SEAT });
+  if (r === 'stall' || r === 'empty') wakeRun(clock.run);
+  if (r === 'cleared') console.log('clock: cleared by a seat move');
+  const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
+    quiet: Object.keys(w).filter(k => w[k].quiet).sort(), clock: clock.run && clock.run.started_at });
+  if (trip(fp)) { governorChanges++; seq++; header = mergedHeader(); fullDirty = true; }
+}
+setInterval(() => governorRun(), GOV_MS).unref();
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
@@ -928,7 +1070,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
-    origin: ORIGIN || null, wakes: wakeHealth() });
+    origin: ORIGIN || null, wakes: wakeHealth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
@@ -1449,6 +1591,18 @@ async function handle(req, res) {
     const keep = new Set(openLines(who, all).map(l => l.id)); touchSeat(who);
     return json(req, res, 200, { seat: who, lines: base.filter(l => keep.has(l.id)).slice(0, 1000) });
   }
+  if (p === '/clock') {   // POST /clock: the CoS starts the same timed run the tripwire starts (BIFROST_CLOCK_SEATS keys only)
+    if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+    let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
+    req.resume();
+    if (!who) return json(req, res, 401, { error: 'unauthorized' });
+    if (!CLOCK_SEATS.includes(who)) return json(req, res, 403, { error: 'not a clock seat' });
+    const seats = openSeats();
+    if (!seats.length) return json(req, res, 200, { ok: true, started: false, reason: 'no open work' });
+    const run = clock.startByHand(Date.now(), seats, who); wakeRun(run); touchSeat(who);
+    seq++; header = mergedHeader(); fullDirty = true;
+    return json(req, res, 200, { ok: true, started: true, clock: run });
+  }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
   if (ackM) {   // POST /inbox/<seat>/ack {"id": "<line id>"} | {"upto": "<line id>"} | {"all": true}: that seat's key only
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
@@ -1461,6 +1615,12 @@ async function handle(req, res) {
     const n = ackLines(who, what); touchSeat(who);
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
+  }
+  if (p === '/routing') {   // GET /routing: the routing map, read-only (seat, login, aliases, status). No keys, no webhook URLs.
+    if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
+    let who = null; try { who = await seatOf(req); } catch { /* fall through to session / public */ }
+    if (!who && !PUBLIC && !validSession(req)) return json(req, res, 401, { error: 'unauthorized' });
+    return json(req, res, 200, { ok: ROUTING.ok, seats: ROUTING_MAP.map(e => ({ seat: e.seat, login: e.login, aliases: e.aliases, status: e.status })) });
   }
   if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
     // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.

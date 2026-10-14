@@ -31,6 +31,12 @@ Paste as **Allow automatically** rules:
 5. Create public gists for **non-secret** auxiliary files / tarballs only (no tokens)
 6. For 0xRayAI/0xray-moltbook only, merge to main after critic PASS is the deploy (Railway auto-deploys). No other repo.
 
+## Seat App credentials (#291)
+The old Always-allow ban on App PEM use, App token minting and App reviews is **revoked** (#291). A seat may Always-allow
+reading its own App PEM to mint a short-lived installation token, and posting App reviews as its App. Still in force:
+PEM text and tokens are never printed, logged, pasted or stored (mint in memory, use, drop); never mint for another
+seat's App; no personal-token fallback; rotating or revoking credentials stays Blaze only.
+
 ## Remove from current Always-allow
 These are live today and clash with capital law — **delete** them from Allow:
 
@@ -50,6 +56,7 @@ Auto Review is account-wide. Seat law still applies:
 | Railway deploy | forge | critic when Strict; **Ask first** card |
 | @0xRayAI Dist | herald | CoS EXECUTE packet + friend-test; Auto Review **Allow** |
 | Hangar / Blips pay | forge/magnet dogfood | **Ask first** — capital |
+| Seat App PEM use, App installation-token minting, App PR reviews | the seat that owns the App (forge0x1, critic0x) | Always-allow OK since #291; PEM text and tokens never printed or stored |
 | Credentials / token rotate | Blaze only | never Always-allow |
 
 ## Verify

@@ -137,3 +137,6 @@ playwright-report/
 tests/config/coverage/
 tests/config/test-results/
 house/live/**/__pycache__/
+# house/live/app/collector is assembled by assemble-collector.sh; only its README is committed (#292)
+house/live/app/collector/*
+!house/live/app/collector/README.md

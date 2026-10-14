@@ -213,7 +213,7 @@ describe('pipeline plates', () => {
     expect(goggles.body).not.toContain('one of four powers');
     const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
     expect(grokbot).not.toContain('Grok-Bot Kit');
-    const lexicon = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/LEXICON.md'), 'utf8');
+    const lexicon = readFileSync(join(process.cwd(), 'grok-bot/LEXICON.md'), 'utf8');
     expect(lexicon).not.toMatch(/Kind 0|Kind 1/);
     expect(lexicon).not.toContain('## Goggles (2026-09-29)');
     const stamps = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/STAMPS.md'), 'utf8');
@@ -221,7 +221,7 @@ describe('pipeline plates', () => {
     expect(stamps).not.toContain('**Host Pack**');
     const op = readFileSync(join(process.cwd(), 'grok-bot/OP-PROC.md'), 'utf8').split('\n');
     const opLines = op.at(-1) === '' ? op.length - 1 : op.length;
-    expect(opLines).toBeLessThanOrEqual(50);
+    expect(opLines).toBeLessThanOrEqual(75);   // cap raised by Blaze 2026-10-13
     const npmRow = op.find((line) => line.startsWith('| npm |')) ?? '';
     const opBody = op.filter((line) => !line.startsWith('| npm |')).join('\n');
     expect(npmRow).toMatch(/gate jargon \(Kind 0,/);

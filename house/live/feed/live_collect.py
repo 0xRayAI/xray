@@ -362,8 +362,17 @@ class RepoCollector:
         return "github"
 
     def pr_node(self, n):
+        # An author outside the fleet maps to "Others", and put() drops any event touching "Others": comments on
+        # such a PR reached no seat and no card. The PR side is a target, not a person to show, so it is GitHub.
         p = self.st["prs"].get(str(n))
-        return node(p["author"]) if p else "GitHub"
+        who = node(p["author"]) if p else "GitHub"
+        return "GitHub" if who == "Others" else who
+
+    def issue_node(self, n):
+        """The issue author's node, so an issue comment reaches the issue's seat (same Others rule as pr_node)."""
+        login = (self.st.get("issues") or {}).get(str(n))
+        who = node(login) if login else "GitHub"
+        return "GitHub" if who == "Others" else who
 
     def paged(self, c, path, params, key, stop=None, essential=True, max_pages=400):
         """Page 1 with ETag (key); then follow Link next until stop(item) is True. Yields items.
@@ -687,6 +696,8 @@ class RepoCollector:
             if "pull_request" in i:
                 continue
             n, login = i["number"], (i.get("user") or {}).get("login")
+            if login:
+                self.st.setdefault("issues", {})[str(n)] = login
             self.put(f"{self.repo}!{n}:open", i["created_at"], node(login), "GitHub", "issue_open",
                      f"{self.short} issue #{n} opened · {i['title']}", i["html_url"], n, actor=login,
                      mentions=mentions(i.get("body")), **card_fields(i))
@@ -712,7 +723,7 @@ class RepoCollector:
             body = cm.get("body") or ""
             hold = live_packet.parse_hold(body)
             k = "pr_comment" if is_pr else "issue_comment"
-            to = self.pr_node(n) if is_pr else "GitHub"
+            to = self.pr_node(n) if is_pr else self.issue_node(n)
             self.put(f"{self.repo}{'#' if is_pr else '!'}{n}:comment:{cm['id']}", cm["created_at"], node(login), to, k,
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only

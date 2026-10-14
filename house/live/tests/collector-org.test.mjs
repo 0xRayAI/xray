@@ -3,7 +3,8 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
-const APP = process.env.MESH_APP_DIR;
+import { fileURLToPath } from 'node:url';
+const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 let repos = ['acme/one'], auth = '';
 const MPW = 'x' + crypto.randomBytes(4).toString('hex'), ING = crypto.randomBytes(32).toString('hex');
 const gh = http.createServer((q, s) => {

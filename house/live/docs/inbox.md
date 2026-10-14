@@ -1,5 +1,11 @@
 # Inbox
 
+## Who fixes stopped work
+
+- **The CoS role owns the board.** That is the routing role `seats.coord` (a role, not a name).
+- **Nudge (a card or an inbox line stops moving).** The owning seat is woken and is responsible, escalating L1 to L3. At L3 with no move, the nudge also goes to the CoS role so it can reassign. One path: `evalNudges` in `app/server.mjs`.
+- **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline, and tells the CoS role. On an empty board, it wakes the CoS role to pull the next work. Once per window.
+
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
 
 **Line fields** (`app/server.mjs` `INBOX_KEYS`; nothing else is accepted):
@@ -48,14 +54,15 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Event | Seat(s) | Rule |
 |---|---|---|
 | New issue (`issue_open`) | blinky | `extra_seats.blinky.kinds` |
-| Issue / PR / review comment | blinky; PR comments also the PR author's seat | `comment_watch` |
+| Issue / PR / review comment (open, closed or merged) | blinky; also the PR or issue author's seat (comments on outside-author PRs are kept) | `comment_watch` |
 | New PR, new head (push to a PR) | critic (re-Light ask) and blinky (heads-up) | `pr_heads`, one line per head |
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
+| Implement / rebase / dev ask, `mill wave` (Eng Dev) | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
-| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@arch1`) | that seat | `extra_seats.<seat>.needles` |
-| Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |
+| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`) | that seat | `extra_seats.<seat>.needles` |
+| `@arch10x` (the only handle; `@arch1` is a different GitHub user and never routes): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
 | Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
 An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
@@ -193,7 +200,7 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 
 ## Arch1 / CLI seats (Grok CLI)
 
-Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`); actionable events owned only by arch1 also fall back to blinky (CoS), because nothing can push to it.
+Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`). Arch1 is outside the fleet: only an explicit @arch10x (or @arch1) mention routes to him, and his lines are never copied to blinky.
 
 **Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
 
@@ -225,10 +232,21 @@ The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delive
 3. Arch1 runs `live-inbox arch1 --ack <id>`.
 4. The board shows arch1's inbox read and ack (and arch1 goes active for 15 minutes). A 401 at step 2 means the key isn't registered in `SEAT_KEYS`.
 
-**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The lap 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
+**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The wave 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
 
 ## Presence
 
 `SEAT_PRESENCE` maps a seat whose activity also counts as another seat. A value is a seat name or an array of seat names. A top-level array of pairs is accepted. The default is `{"builder-cloud":"builder"}`. Blank JSON maps nothing. Invalid JSON keeps the default.
 
 Fleet seat mapping (inbox-roles.json, kit defaults, Seat: credit): [fleet-setup.md](fleet-setup.md).
+
+## Governor: tripwire + nudges
+
+Both run on one server tick (`BIFROST_TICK_S`, default 60).
+
+- **Tripwire (the trigger).** The governor loop runs inside the burst-live server (no local watcher; it replaces the old local `house/live-mesh/tripwire_push.py` loop from #227). When no seat has moved anything (events, acks) for `BIFROST_TRIPWIRE_MINUTES` (default 30) it trips on either condition: **stall** (open cards on the board) starts a timed run that wakes each seat with open work, each with its own deadline (`BIFROST_RUN_SEAT_MINUTES` apart, default 2); **empty** (no open cards) wakes the CoS seat (routing role `seats.coord`, not a name) with "board empty, pull next work". Seats answer by moving the work or posting their blocker in one line. The countdown shows on the board (`clock` in the header; the page's countdown line) until a seat moves something, which clears it. Each trigger fires at most once per window; it re-arms only after the board moves or another full window passes. The CoS starts the same run by hand with `POST /clock` (seat key; allowed seats `BIFROST_CLOCK_SEATS`, default the coord seat). The board snapshot is republished only on a real change (`/healthz` `governor_changes`).
+- **Nudges (`evalNudges` in `app/server.mjs`, the one nudge path).** Bifrost's only nudge path is `evalNudges`. `src/monitoring/nudge-monitor.ts` is a separate part of the main 0xray package (agent loop detection) and is not used by Bifrost. On the same tick, `evalNudges` handles:
+  - **Cards.** A card that stops moving nudges its owner: L1 after `NUDGE_L1_S`, L2 to the CoS after `NUDGE_L2_S`, L3 repeats every `NUDGE_L3_S` (default 7200). Parked cards are skipped. This part is unchanged.
+  - **Unacked lines.** An open inbox line (not acked, card not moved on) older than `NUDGE_LINE_S` (default 900) gets nudge L1 (kind `line`) and a re-wake of its seat with reason `nudge L1: …`. L2 and L3 follow one window apart, then it stops, so it never loops. An ack closes the nudges. `/healthz` `nudged_lines` counts the open ones.
+  - **Unrouted seats.** At startup the server runs the same rules as `tools/bifrost-init --check` on `collector/routing/inbox-roles.json` against `collector/fleet-roster.json`. A seat with no route, or a rule routing to a seat outside the fleet, logs `ROUTING: FAIL …` and shows as `routing` in the board header and `/healthz`. Each unrouted seat also holds an open nudge (kind `unrouted`) to the CoS. Production keeps running. `BIFROST_ROUTING_DIR` and `BIFROST_ROSTER` override the paths.
+  - **Quiet seats.** The board header `wakes` lists each seat with a webhook: `last_ok` (last successful wake POST) and `quiet` (no good wake within `BIFROST_WAKE_QUIET_MINUTES`, default 240, of now or server start), even with no open line. A quiet seat holds an open nudge (kind `quiet`) to the CoS until its next good wake.

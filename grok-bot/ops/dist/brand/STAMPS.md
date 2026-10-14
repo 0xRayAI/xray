@@ -40,7 +40,7 @@ Keep `≠` for **contrast** only (chat ≠ receipt · plants ≠ groups).
 - Don’t put `≠` between product and gloss (that reads as “not”)
 
 ## Ops words
-beat · wave · board · card · seat · station · receipt · cloud — see [LEXICON.md](./LEXICON.md).
+beat · wave · board · card · seat · station · receipt · cloud — see [LEXICON.md](../../../LEXICON.md).
 
 ## Seat stamps
 Fleet speaker marks (CoS, forge, …): see [`SEAT-STAMPS.md`](./SEAT-STAMPS.md). Not product SKUs. blinky = `🖲️`.
