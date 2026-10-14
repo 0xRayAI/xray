@@ -1,34 +1,33 @@
 /* Bifrost overlay (our install only; app/deploy.sh copies house/live/site/public/ over the kit public/).
-   Our 9 seats replace the kit's template roles, plus a Blaze node (the owner: htafolla / Blaze0x1); no Lead / Others
-   node (unknown senders go to GitHub's node). The product node is burst-live. Other installs have no house/live/site/ and keep the kit. */
+   The strip is blinky, critic, forge and mill. Arch1 stays on the canvas as an outside party.
+   herald, magnet, nibbler and sound are parked and are not drawn. Blaze is the owner node.
+   No Lead / Others node (unknown senders go to GitHub's node). The product node is burst-live. */
 (function (L) {
   'use strict';
   function reset(obj, next) { Object.keys(obj).forEach(function (k) { delete obj[k]; }); for (var k in next) obj[k] = next[k]; }
-  var SEATS = ['blinky', 'forge', 'mill', 'critic', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
-  var ROLE = { blinky: 'chief of staff', forge: 'eng primary', mill: 'implementer', critic: 'reviewer', herald: 'Dist as @0xRayAI',
-    magnet: 'directory listings + Hangar board', nibbler: 'feed scout', sound: 'sound engineer', arch1: 'architect' };
-  L.AGENTS.splice.apply(L.AGENTS, [0, L.AGENTS.length].concat(SEATS.map(function (s) { return [s, ROLE[s]]; })));
-  L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(SEATS));
-  // 920 x 400 canvas: seats on the top and bottom rows, rails + burst-live in the middle row (labels kept inside).
-  reset(L.SATS, { blinky: [90, 55], forge: [270, 55], mill: [450, 55], critic: [630, 55], arch1: [820, 55],
-    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], 'mymuse.house': [830, 200],
-    herald: [110, 335], magnet: [300, 335], nibbler: [490, 335], sound: [680, 335], Assistant: [840, 335] });
-  var C = { blinky: [88, 210, 180], forge: [255, 140, 70], mill: [190, 170, 120], critic: [255, 150, 90], herald: [240, 120, 190],
-    magnet: [130, 190, 255], nibbler: [140, 230, 200], sound: [170, 130, 255], arch1: [255, 120, 100],
+  var STRIP = ['blinky', 'critic', 'forge', 'mill'];
+  var ROLE = { blinky: 'chief of staff', critic: 'reviewer', forge: 'eng primary', mill: 'implementer', arch1: 'outside party' };
+  L.AGENTS.splice.apply(L.AGENTS, [0, L.AGENTS.length].concat(STRIP.map(function (s) { return [s, ROLE[s]]; })));
+  L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(STRIP));
+  // 920 x 400 canvas: the four seats plus Arch1 on the top row, rails in the middle.
+  reset(L.SATS, { blinky: [90, 55], critic: [250, 55], forge: [410, 55], mill: [570, 55], arch1: [820, 55],
+    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], 'mymuse.house': [830, 200], Assistant: [840, 335] });
+  var C = { blinky: [88, 210, 180], critic: [255, 150, 90], forge: [255, 140, 70], mill: [190, 170, 120], arch1: [255, 120, 100],
     GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], 'mymuse.house': [255, 200, 90], Assistant: [116, 170, 156] };
   reset(L.COLOR, C);
-  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', 'mymuse.house': 'burst-live', Assistant: 'Assistant' };
-  SEATS.forEach(function (s) { LAB[s] = s === 'arch1' ? 'Arch1' : s; });
+  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', 'mymuse.house': 'burst-live', Assistant: 'Assistant', arch1: 'Arch1' };
+  STRIP.forEach(function (s) { LAB[s] = s; });
   reset(L.LABEL, LAB);
-  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', 'mymuse.house': 'live board', Assistant: 'MCP calls' };
-  SEATS.forEach(function (s) { SUB[s] = ROLE[s]; });
+  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', 'mymuse.house': 'live board', Assistant: 'MCP calls', arch1: 'outside party' };
+  STRIP.forEach(function (s) { SUB[s] = ROLE[s]; });
   reset(L.SUB, SUB);
   reset(L.SQUARE, { GitHub: 1, Railway: 1 });
-  L.EDGES.splice.apply(L.EDGES, [0, L.EDGES.length].concat(SEATS.map(function (s) { return [s, 'GitHub']; }),
-    [['Blaze', 'GitHub'], ['GitHub', 'Railway'], ['Railway', 'mymuse.house'], ['blinky', 'mymuse.house'], ['Assistant', 'mymuse.house']]));
-  // feed names -> our nodes: each seat is its own node; Blaze / Lead / unknown senders / CI fold into GitHub
+  L.EDGES.splice.apply(L.EDGES, [0, L.EDGES.length].concat(STRIP.map(function (s) { return [s, 'GitHub']; }),
+    [['arch1', 'GitHub'], ['Blaze', 'GitHub'], ['GitHub', 'Railway'], ['Railway', 'mymuse.house'], ['blinky', 'mymuse.house'], ['Assistant', 'mymuse.house']]));
+  // feed names -> our nodes: each drawn seat is its own node; Blaze / Lead / unknown senders / CI fold into GitHub
   var NK = L.NODE_KEY;
-  SEATS.forEach(function (s) { NK[s] = s; });
+  STRIP.forEach(function (s) { NK[s] = s; });
+  NK.arch1 = 'arch1';
   NK.Coord = 'blinky'; NK.Blaze = 'Blaze'; NK.Blaze0x1 = 'Blaze'; NK.htafolla = 'Blaze'; NK.Lead = 'Blaze'; NK['lead-alt'] = 'Blaze'; NK['lead-login'] = 'Blaze';
   NK.Others = 'GitHub'; NK.other = 'GitHub'; NK.CI = 'GitHub'; NK.CloudAgents = 'GitHub'; NK['Cloud agents'] = 'GitHub';
   NK.Bifrost = 'mymuse.house'; NK['burst-live'] = 'mymuse.house';
@@ -36,6 +35,6 @@
   L.REVIEW_SEAT = 'critic';
   // avatars we ship in avatars/ (arch1 = minime0x); Blaze = x.com/Blaze0x1 profile picture;
   // the rest use the drawn letter badge (no 404s).
-  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', herald: 'herald', arch1: 'arch1', Blaze: 'blaze' });
+  L.setAvatars({ blinky: 'blinky', critic: 'critic', forge: 'forge', arch1: 'arch1', Blaze: 'blaze' });
   L.SITE_FOOT = 'Bifrost · built in public';
 })(window.LiveMesh);

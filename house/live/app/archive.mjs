@@ -168,6 +168,16 @@ function loadCardCache() {
   return rows;
 }
 
+function cardStamp(row) {
+  const direct = row && (row.updated_ct || row.t_ct);
+  if (typeof direct === 'string' && Number.isFinite(Date.parse(direct))) return direct;
+  const beat = Number(row && row.last_beat_t);
+  if (Number.isFinite(beat) && beat > 0) return new Date(beat).toISOString();
+  const closed = Number(row && row.closed_t);
+  if (Number.isFinite(closed) && closed > 0) return new Date(closed).toISOString();
+  return '';
+}
+
 /** Latest version of each card. Rows with no key are ignored. Nothing is deleted. */
 export function cardHistory() {
   const grouped = new Map();
@@ -177,19 +187,20 @@ export function cardHistory() {
   }
   const cards = [];
   for (const [key, arr] of grouped) {
-    arr.sort((a, b) => (Date.parse(a.updated_ct || a.t_ct) || 0) - (Date.parse(b.updated_ct || b.t_ct) || 0));
-    const first = arr[0], last = arr[arr.length - 1];
+    arr.sort((a, b) => (Date.parse(cardStamp(a)) || 0) - (Date.parse(cardStamp(b)) || 0));
+    const last = arr[arr.length - 1];
     const opened = arr.map(row => row.t_ct).filter(s => Number.isFinite(Date.parse(s))).sort()[0] || '';
     const owner = [...arr].reverse().map(row => (typeof row.owner === 'string' ? row.owner : '')).find(Boolean) || '';
     const closed = last.state === 'closed';
+    const stamp = cardStamp(last);
     cards.push({
       id: key, owner, state: typeof last.state === 'string' ? last.state : '',
-      opened_ct: opened, closed_ct: closed ? (last.updated_ct || last.t_ct || '') : '',
+      opened_ct: opened, closed_ct: closed ? stamp : '',
       title: typeof last.title === 'string' ? last.title : '',
       url: typeof last.url === 'string' ? last.url : '',
       repo: typeof last.repo === 'string' ? last.repo : '',
       number: Number.isInteger(last.number) ? last.number : 0,
-      updated_ct: last.updated_ct || last.t_ct || '',
+      updated_ct: stamp,
     });
   }
   const owners = [...new Set(cards.map(c => c.owner).filter(Boolean))].sort();

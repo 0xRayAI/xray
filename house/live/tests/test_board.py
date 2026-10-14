@@ -176,6 +176,59 @@ class Model(unittest.TestCase):
         self.assertEqual((c["stage"], c["state"]), ("done", "closed"))
         self.assertNotIn("nudge_to", c)
 
+    def test_mill_owns_a_card_forge_opened(self):
+        import live_collect as uc
+        self.assertEqual(uc.commit_login({"author": {"name": "mill", "user": None}}), "mill")
+        self.assertEqual(uc.rest_author_login({"author": None, "commit": {"author": {"name": "mill"}}}), "mill")
+        self.assertEqual((uc.node("mill"), uc.credit("mill")), ("mill", "mill"))
+        self.assertIsNone(uc.commit_login({"author": {"name": "Someone", "user": None}}))
+        issue = self.ev(294, "issue_open", 5000, title="board", **{"from": "forge"})
+        alone = {c["number"]: c for c in self.w.model([issue])["cards"] if not c.get("pinned")}
+        self.assertEqual(alone[294]["owner"], "forge")
+        commit = dict(self.ev(303, "pr_commit", 800, message="land the wave #294"), **{"from": "mill", "credit": "mill", "author": "mill"})
+        later = self.ev(294, "issue_comment", 100, **{"from": "forge"})
+        cards = {c["number"]: c for c in self.w.model([
+            issue, self.ev(303, "pr_open", 2000, title="pr", **{"from": "forge"}), commit, later,
+        ])["cards"] if not c.get("pinned")}
+        self.assertEqual(cards[294]["owner"], "mill")
+        self.assertEqual(cards[303]["owner"], "mill")
+
+    def test_shipped_closes_list_closes_those_cards_and_refs_stay_open(self):
+        import live_collect as uc
+        body = "Closes #287 #288 #289 #290 #291 #294 #295 #296 #297 #298 #299 #300\n\nRefs #292 #301 #302"
+        fixes = uc.card_fields({"number": 303, "title": "ship", "state": "closed", "labels": [], "body": body})["fixes"]
+        self.assertEqual(fixes, [287, 288, 289, 290, 291, 294, 295, 296, 297, 298, 299, 300])
+        self.assertEqual(uc.card_fields({"number": 21, "body": "Fixes #20, supersedes #19; see #21"})["fixes"], [19, 20])
+        class FF:
+            CT = CT
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=False):
+                if str(path).endswith("/commits") or str(path).endswith("/reviews"):
+                    return 200, [], None, None
+                return 200, [{
+                    "number": 303, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
+                    "created_at": "2026-10-14T12:00:00Z", "html_url": f"https://github.com/{R}/pull/303",
+                    "title": "ship", "head": {"sha": "abc"}, "base": {"ref": "main"}, "state": "closed",
+                    "merged_at": "2026-10-14T16:00:00Z", "draft": False, "body": body, "labels": [],
+                }], "etag", None
+        rc = uc.RepoCollector(R, self.root, FF(), lambda *a: None)
+        rc.st["cur"]["pulls"] = "2026-10-14T18:00:00Z"
+        rc.st["bf"]["prs:done"] = True
+        rc.st["etags"]["pulls"] = "old"
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            rc.poll_pulls(C())
+        self.assertEqual(rc.ev[f"{R}#303:open"]["fixes"], fixes)
+        self.assertIn("303", rc.st["enrich"])
+        self.assertTrue(rc.st["bf"].get("author:seat"))
+        issues = [self.ev(n, "issue_open", 9000, title=f"i{n}", pr_state="open", **{"from": "forge"}) for n in (294, 300, 301, 302)]
+        pr = self.ev(303, "pr_open", 4000, title="ship", pr_state="closed", fixes=fixes, **{"from": "forge"})
+        cards = {c["number"]: c for c in self.w.model(issues + [pr, self.ev(303, "merged", 1000)])["cards"] if not c.get("pinned")}
+        self.assertEqual(cards[294]["state"], "closed")
+        self.assertEqual(cards[300]["state"], "closed")
+        self.assertEqual(cards[301]["state"], "live")
+        self.assertEqual(cards[302]["state"], "live")
+
     def test_collector_flags(self):
         import re, live_collect as uc
         self.assertEqual(uc.card_fields({"number": 21, "body": "Fixes #20, supersedes #19; see #21"})["fixes"], [19, 20])

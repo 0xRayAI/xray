@@ -156,6 +156,13 @@ class Health(unittest.TestCase):
             srv.shutdown()
 
 
+class HeaderRepo(unittest.TestCase):
+    def test_header_repo_is_xray_not_the_first_org_repo(self):
+        import live_mesh as um
+        self.assertEqual(um.primary_repo(["0xRayAI/0xray-moltbook", "0xRayAI/repertoire", "0xRayAI/xray"]), "0xRayAI/xray")
+        self.assertEqual(um.primary_repo(["0xRayAI/0xray-moltbook"]), "0xRayAI/0xray-moltbook")
+
+
 class Stream(unittest.TestCase):
     def test_jsonl_appends_only_new_or_changed(self):
         import live_mesh as um

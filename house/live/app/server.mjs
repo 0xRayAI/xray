@@ -8,7 +8,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk, readSeatTouch, writeSeatTouch } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock } from './governor.mjs';
@@ -337,13 +337,17 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; }
+  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk(); }
   st.inflight = false; armWake(seat);
 }
 // Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
-// In memory: after a restart a seat is active again on its next wake, read or ack.
+// Persisted on the volume so a restart keeps the last ack (mill's today) and the last good wake.
 const seatTouch = {};
-const touchSeat = (seat, t = Date.now()) => { if (seat) seatTouch[seat] = Math.max(seatTouch[seat] || 0, t); };
+const touchSeat = (seat, t = Date.now()) => {
+  if (!seat) return;
+  seatTouch[seat] = Math.max(seatTouch[seat] || 0, t);
+  persistTouch();
+};
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const bearerOf = req => { const h = req.headers.authorization || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; };
 async function seatOf(req) {   // -> seat id | null; throws when GitHub can't verify an installation token (caller: 503)
@@ -356,6 +360,16 @@ async function seatOf(req) {   // -> seat id | null; throws when GitHub can't ve
 const seatIdOf = name => { const t = String(name || '').toLowerCase().replace(/[^a-z0-9 -]/g, ' ');
   for (const w of t.split(/\s+/)) { if (SEAT_IDS.includes(w) || w === 'lead') return w; if (SEAT_ALIAS[w]) return SEAT_ALIAS[w]; } return null; };
 const STATE_DIR = path.join(process.env.MESH_DATA_DIR || '/data', 'live');
+function persistWakeOk() {
+  try { writeWakeOk(path.join(STATE_DIR, 'wake-ok.json'), wakeOkAt); }
+  catch (e) { console.log('wake: save failed ' + (e && e.code || 'write')); }
+}
+function persistTouch() {
+  try { writeSeatTouch(path.join(STATE_DIR, 'seat-touch.json'), seatTouch); }
+  catch (e) { console.log('touch: save failed ' + (e && e.code || 'write')); }
+}
+Object.assign(wakeOkAt, readWakeOk(path.join(STATE_DIR, 'wake-ok.json')));
+Object.assign(seatTouch, readSeatTouch(path.join(STATE_DIR, 'seat-touch.json')));
 const NUDGE_L1_MS = (Number(process.env.NUDGE_L1_S) || 3600) * 1000, NUDGE_L2_MS = (Number(process.env.NUDGE_L2_S) || 1800) * 1000;
 const NUDGE_L3_MS = (Number(process.env.NUDGE_L3_S) > 0 ? Number(process.env.NUDGE_L3_S) : 7200) * 1000;
 const HELD_MAX_MS = (Number(process.env.HELD_MAX_S) > 0 ? Number(process.env.HELD_MAX_S) : 72 * 3600) * 1000;
@@ -647,8 +661,11 @@ function publishBoard(updatedCt) {
   for (const c of bfCards) {
     if (!c || c.kind === 'source') continue;
     const beat = Number(c.last_beat_t);
-    const updated = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : (typeof c.updated_ct === 'string' ? c.updated_ct : '');
-    appendArchive('cards', { ...c, t_ct: updated || c.t_ct || stamp, updated_ct: updated });
+    const fromBeat = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : '';
+    const fromCard = typeof c.updated_ct === 'string' && c.updated_ct ? c.updated_ct : '';
+    const fromT = typeof c.t_ct === 'string' && c.t_ct ? c.t_ct : '';
+    const updated = fromBeat || fromCard || fromT || stamp;
+    appendArchive('cards', { ...c, t_ct: updated, updated_ct: updated });
   }
   recomputeGithubDataAt();
 }
@@ -837,11 +854,24 @@ function mergedHeader(now = Date.now()) {
   h.queue = openQueue();
   return h;
 }
-function openQueue() {
+const PARKED_QUEUE = new Set(['herald', 'magnet', 'nibbler', 'sound']);
+function chicagoDay(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+}
+// Parked seats stay in the inbox file and off the open queue. arch10x lines from a previous Chicago day do too.
+function queueStale(line, now) {
+  const blob = `${line && line.title || ''} ${line && line.id || ''}`;
+  if (!/arch10x/i.test(blob)) return false;
+  const t = Date.parse(line && line.t_ct || '');
+  if (!Number.isFinite(t)) return true;
+  return chicagoDay(t) < chicagoDay(now);
+}
+function openQueue(now = Date.now()) {
   const lines = [];
   for (const seat of SEAT_IDS) {
+    if (PARKED_QUEUE.has(seat)) continue;
     for (const l of openLines(seat)) {
-      if (!l || l.id == null) continue;
+      if (!l || l.id == null || queueStale(l, now)) continue;
       lines.push({
         id: String(l.id).slice(0, 120), seat,
         title: String(l.title || '').slice(0, 120),
@@ -1186,6 +1216,13 @@ function eventOnOpenCard(e, open) {
   const n = Number(e.number);
   return e.number != null && e.number !== '' && Number.isInteger(n) && n > 0 && open.keys.has(repo + '#' + n);
 }
+// A merge moves the card clock even after the card is closed. CI still does not.
+function mergedMovesClock(e) {
+  if (!e || e.kind !== 'merged') return false;
+  const repo = typeof e.repo === 'string' ? e.repo.trim() : '';
+  const n = Number(e.number);
+  return !!repo && e.number != null && e.number !== '' && Number.isInteger(n) && n > 0;
+}
 function recomputeGithubDataAt() {
   const open = openCardIndex();
   let best = 0, card = 0;
@@ -1193,7 +1230,7 @@ function recomputeGithubDataAt() {
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (!Number.isFinite(t) || t <= 0) continue;
     if (t > best) best = t;
-    if (t > card && eventMovesCard(e) && eventOnOpenCard(e, open)) card = t;
+    if (t > card && eventMovesCard(e) && (eventOnOpenCard(e, open) || mergedMovesClock(e))) card = t;
   }
   githubDataAt = best;
   githubCardAt = card;

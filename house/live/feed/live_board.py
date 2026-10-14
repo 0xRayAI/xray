@@ -105,6 +105,48 @@ def _events(extra):
     return sorted(live_collect.fleet_only(list(ev.values())), key=_t)
 
 
+_CLAIM = {"mill", "blinky", "critic", "arch1"}
+_REPLACE_OWNER = {"forge", "github", "-", ""}
+_MENTION = re.compile(r"#(\d{1,6})\b")
+
+
+def _claim_seat(e):
+    """A non-forge seat named by the trailer, the credit, or the sender. Forge does not take a card back."""
+    for key in ("seat_trailer", "credit", "from"):
+        v = str(e.get(key) or "").strip().lower()
+        if v in _CLAIM:
+            return v
+    return None
+
+
+def _apply_owner(cards, key, seat):
+    c = cards.get(key) if key else None
+    if not c or not seat:
+        return
+    cur = str(c.get("owner") or "").strip().lower()
+    if cur in _REPLACE_OWNER:
+        c["owner"] = seat
+
+
+def _claim_owners(cards, evs, sha_num):
+    for e in evs:
+        seat = _claim_seat(e)
+        if not seat:
+            continue
+        _apply_owner(cards, _key(e, sha_num), seat)
+        repo = str(e.get("repo") or "").lower()
+        try:
+            own = int(e["number"]) if e.get("number") is not None else None
+        except (TypeError, ValueError):
+            own = None
+        blob = " ".join(str(e.get(x) or "") for x in ("message", "label"))
+        for raw in _MENTION.findall(blob):
+            n = int(raw)
+            if own is not None and n == own:
+                continue
+            _apply_owner(cards, f"{repo}#{n}", seat)
+
+
 def _key(e, sha_num):
     repo = e.get("repo")
     if not repo:
@@ -162,6 +204,7 @@ def model(extra_events=None, now=None):
                     "labels": [live_packet.clean(x)[:30] for x in (e.get("labels") or [])][:6],
                     "packet": pk, "_closed": e.get("pr_state") == "closed", "_closed_t": _t({"t_ct": e.get("closed_at")}) if e.get("closed_at") else 0,
                     "_draft": bool(e.get("draft")), "_beats": [], "_stop": False, "_known": "pr_state" in e}
+    _claim_owners(cards, evs, sha_num)             # mill (trailer, credit, or git name) takes a card forge opened
     merged_keys = {_key(e, sha_num) for e in evs if e.get("kind") == "merged"}
     fixed_by = {}                                          # card key -> "#P" when a merged PR says it fixes / supersedes it
     for e in evs:

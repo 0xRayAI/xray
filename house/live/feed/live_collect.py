@@ -79,6 +79,10 @@ def brand(s: str | None) -> str:
 SEAT_TRAILER_RE = re.compile(r"(?im)^Seat:\s*([a-z0-9-]{2,16})\s*$")
 
 
+# Git author names that are seats. A mapped login still wins; forge0x1[bot] stays forge.
+SEAT_GIT_NAMES = frozenset({"blinky", "critic", "forge", "mill", "arch1", "herald", "magnet", "nibbler", "sound"})
+
+
 def seat_trailer(msg: str | None) -> str | None:
     """`Seat: <seat>` trailer in a commit message (last one wins); it overrides the login map for credit."""
     found = SEAT_TRAILER_RE.findall(msg or "")
@@ -87,16 +91,21 @@ def seat_trailer(msg: str | None) -> str | None:
 
 def credit(login: str | None) -> str | None:
     """Seat an event is credited to: the login -> seat map (fleet-nodes.json via LIVE_NODE_MAP, over NODE), else
+    a git author whose name is a seat (mill commits as name "mill" with no GitHub login), else
     "other" for any unknown login. None when there is no login (GitHub-originated). forge0x1[bot] commits cannot be
-    told apart from mill's work (mill commits through forge's identity), so they credit forge."""
+    told apart from mill's work (mill commits through forge's identity), so they credit forge unless the git name
+    or a Seat: trailer says mill."""
     if not login:
         return None
     if CLOUD_AGENT_RE.match(login):
         return "CloudAgents"
-    n = NODE_LC.get(login.lower())
+    low = login.lower()
+    n = NODE_LC.get(low)
     if n:
         return CREDIT_ALIAS.get(n.lower(), n)
-    return "github" if login.lower().endswith("[bot]") else "other"   # unmapped bot / CI -> the github node
+    if low in SEAT_GIT_NAMES:
+        return low
+    return "github" if low.endswith("[bot]") else "other"   # unmapped bot / CI -> the github node
 
 
 CREDIT_ALIAS = {"ci": "github", "github": "github", "blaze0x1": "Blaze", "blaze": "Blaze", "lead": "Blaze"}
@@ -104,10 +113,17 @@ LOGIN_KEYS = ("actor", "author", "sender", "triggering_actor", "merged_by", "use
 
 
 def node(login: str | None) -> str:
-    """Mesh node for an actor. Unknown actors (e.g. Tester's new App) are kept as 'Others' + actor=login."""
+    """Mesh node for an actor. Unknown actors (e.g. Tester's new App) are kept as 'Others' + actor=login.
+    A git author whose name is a seat (no User login) is that seat, not Others."""
     if login and CLOUD_AGENT_RE.match(login):
         return "CloudAgents"
-    return NODE_LC.get((login or "").lower(), "Others" if login else "GitHub")
+    low = (login or "").lower()
+    mapped = NODE_LC.get(low)
+    if mapped:
+        return mapped
+    if low in SEAT_GIT_NAMES:
+        return low
+    return "Others" if login else "GitHub"
 
 
 def gql_login(actor) -> str | None:
@@ -121,11 +137,52 @@ def commit_login(cm) -> str | None:
     a = cm.get("author") or {}
     if (a.get("user") or {}).get("login"):
         return a["user"]["login"]
-    name = a.get("name") or ""
-    return name if name.endswith("[bot]") else None   # bot authors have no User; their git name is the login
+    name = (a.get("name") or "").strip()
+    if name.endswith("[bot]"):
+        return name   # bot authors have no User; their git name is the login
+    return name.lower() if name.lower() in SEAT_GIT_NAMES else None
 
 
-FIXES_RE = re.compile(r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?|supersede[sd]?|replace[sd]?)\s*:?\s+#(\d{1,6})\b", re.I)
+def rest_author_login(cm) -> str | None:
+    """REST pull commit: author.login when GitHub has one, else the git author name when it is a seat."""
+    login = (cm.get("author") or {}).get("login")
+    if login:
+        return login
+    git = ((cm.get("commit") or {}).get("author") or {})
+    return commit_login({"author": {"name": git.get("name") or "", "user": None}})
+
+
+_CLOSE_WORD = re.compile(r"\b(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?|supersede[sd]?|replace[sd]?)\b", re.I)
+_CLOSE_NUM = re.compile(r"#(\d{1,6})\b")
+_CLOSE_SEP = re.compile(r"(?:,|\band\b)?\s+", re.I)
+
+
+def closing_numbers(body, own=None):
+    """Every #number after fix/close/resolve/supersede/replace, including a run (#294 #295).
+    Refs does not close. Own number is dropped. Sorted, capped so a long trailer cannot flood the card."""
+    text = body or ""
+    found = set()
+    try:
+        own_n = int(own) if own is not None else None
+    except (TypeError, ValueError):
+        own_n = None
+    for m in _CLOSE_WORD.finditer(text):
+        i = m.end()
+        while i < len(text) and text[i] in " \t:":
+            i += 1
+        while i < len(text):
+            nm = _CLOSE_NUM.match(text, i)
+            if not nm:
+                break
+            n = int(nm.group(1))
+            if n != own_n:
+                found.add(n)
+            i = nm.end()
+            sep = _CLOSE_SEP.match(text, i)
+            if not sep or sep.end() == i or not _CLOSE_NUM.match(text, sep.end()):
+                break
+            i = sep.end()
+    return sorted(found)[:16] or None
 PARKED_COMMENT_RE = re.compile(r"^\s*parked:", re.I)   # Coord rule: a comment starting 'Parked:' parks the card
 RESOLVED_RE = re.compile(r"\b(resolved|superseded|fixed (?:in|by) #\d+|nothing (?:on #\d+ )?(?:is )?(?:waiting|left|pending)|"
                          r"no (?:further )?action (?:needed|required)|can be closed)\b", re.I)
@@ -137,7 +194,7 @@ def card_fields(x) -> dict:
     return {"title": brand(x.get("title") or "")[:120], "pr_state": x.get("state"), "closed_at": x.get("closed_at"),
             "labels": [lb.get("name") for lb in (x.get("labels") or []) if isinstance(lb, dict) and lb.get("name")][:8],
             "packet": live_packet.parse(x.get("body")) or None,
-            "fixes": sorted({int(m) for m in FIXES_RE.findall(x.get("body") or "")} - {x.get("number")})[:10] or None}
+            "fixes": closing_numbers(x.get("body"), x.get("number"))}
 
 
 def open_numbers(c, repos, max_pages=20):
@@ -577,6 +634,17 @@ class RepoCollector:
         if not getattr(c, "token", None):
             return
         cur = self.st["cur"].get("pulls")
+        author_seat = False
+        # One-time: a collector that already walked pulls stored one # from each Closes line and never
+        # saw a git author named mill. Rewind three days, drop the etag, and enrich those pulls again.
+        if cur and not self.st["bf"].get("author:seat"):
+            back = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            cur = min(cur, back)
+            self.st["etags"].pop("pulls", None)
+            self.st["bf"]["author:seat"] = True
+            author_seat = True
+        elif not self.st["bf"].get("author:seat"):
+            self.st["bf"]["author:seat"] = True
         newest = cur
         for p in self.paged(c, f"/repos/{self.repo}/pulls", {"state": "all", "sort": "updated", "direction": "desc"},
                             "pulls", stop=lambda p: cur is not None and p["updated_at"] <= cur):
@@ -592,7 +660,7 @@ class RepoCollector:
                 self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(login), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, base=p["base"]["ref"],
                          merge_sha=p.get("merge_commit_sha"), actor=login)
-            if self.st["bf"].get("prs:done") and prev.get("updated_at") != p["updated_at"]:
+            if author_seat or (self.st["bf"].get("prs:done") and prev.get("updated_at") != p["updated_at"]):
                 self.st.setdefault("enrich", {})[str(n)] = True
             if newest is None or p["updated_at"] > newest:
                 newest = p["updated_at"]
@@ -608,7 +676,7 @@ class RepoCollector:
                                   r.get("html_url"))
             for cm in self._all(c, f"/repos/{self.repo}/pulls/{n}/commits"):
                 d = cm["commit"]["committer"]["date"]
-                self.pr_commit_event(int(n), cm["sha"], d, cm["commit"]["message"], (cm.get("author") or {}).get("login"))
+                self.pr_commit_event(int(n), cm["sha"], d, cm["commit"]["message"], rest_author_login(cm))
                 self.mark_ci(cm["sha"], d, pr=int(n))
             self.st["enrich"].pop(n, None)
 

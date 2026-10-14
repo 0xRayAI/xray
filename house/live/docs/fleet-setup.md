@@ -31,7 +31,7 @@ Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this fi
 
 ## fleet-roster.json
 
-`feed/fleet-roster.json`: `seats` (who gets an inbox / key) and `board` (board columns). Ours: the 9 seats above. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
+`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, mill). `outside` is Arch1. `parked` (herald, magnet, nibbler, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
 
 ## site.json
 
