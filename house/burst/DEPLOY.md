@@ -64,6 +64,9 @@ Mount one volume at `MESH_DATA_DIR` (`/data`). A few gigabytes is enough to star
 2. Mint seat keys with `house/live/feed/seat_keys.sh mint`. Publish only the hashes: `seat_keys.sh publish` sets `SEAT_KEYS`. The key files stay off the host (mode 0600). A seat sends `Authorization: Bearer <its key>` to `GET /inbox/<seat>`, `POST /inbox/<seat>/ack`, and `GET /cards?seat=<seat>`.
 3. For each seat that should be woken, add one entry to `SEAT_WEBHOOKS`: `{"<seat>": {"url": "<wake url>", "key_env": "WAKE_KEY_<SEAT>"}}`. Put the wake secret in `WAKE_KEY_<SEAT>` (or in the variable named by `key_env`). The JSON holds the env name, not the secret.
 4. A seat with no webhook still works. It polls `GET /inbox/<seat>` and acks with `POST /inbox/<seat>/ack` and `{"id": "<line id>"}`.
+5. `POST /activity` uses the same `SEAT_KEYS` hash. The seat posts only as itself. `SEAT_DISPLAY_NAMES`, `WORK_HUMAN_TO`, `WORK_HUMAN_LANE`, and `SEAT_AGENT_MAP` are optional and hold no secrets. See `house/live/env.example`. Packet phases are sent, delivered, woken, acked, and overdue. GitHub comments, reviews, PR open/push, and issue events mark the mapped actor working on `repo#number` for `LIVE_TURN_OPEN_MIN` minutes. `working` is written by `applyStoredActivity`, `applyTrackWorking`, and `applyGithubWorking`.
+6. `CURSOR_WEBHOOK_SECRET` (32 characters or more) signs `POST /cursor/webhook`. Shorter, or unset, the launch does not register a webhook. The chain is `house/live/docs/work-tracking.md`, the same shape as `house/live/docs/activity-upload.md`.
+7. `HUMAN_ALIASES`, `LIVE_SEAT_IDS`, and `LIVE_WINDOW_MIN` are optional. Empty `HUMAN_ALIASES` credits a non-roster sender to `github`. burst-live sets `HUMAN_ALIASES=htafolla=Blaze,lead=Blaze`.
 
 ### 5. What green means
 
@@ -115,9 +118,9 @@ There is no separate page/store service. It is one Node process, `house/live/app
 | `GET /live-events.json[?since=<cursor>]` | session cookie | full feed, or delta; `304` unchanged, `409`/reset means refetch full |
 | `POST /ingest`, `POST /ingest/delta` | `Authorization: Bearer $INGEST_SECRET` | box-side feed (gzip ok, 25 MB cap) |
 | `GET /ingest/events`, `GET /activity/pull`, `POST /inbox` | ingest secret | box pusher only |
-| `POST /activity` | the seat's own GitHub App installation token, verified against GitHub | activity lines from off-box seats |
+| `POST /activity` | that seat's `SEAT_KEYS` entry (Builder: its GitHub App installation token) | activity lines. A cross-seat `seat` is `403` `seat mismatch` |
 | `GET /inbox/<seat>[?since=<id>]`, `POST /inbox/<seat>/ack` | that seat's key | seat inbox, ack by id, upto or all |
-| `GET /cards?seat=<seat>` | that seat's key (operator: any) | cards with packets and beats |
+| `GET /cards?seat=<seat>` | that seat's key (operator: every seat) | cards with packets and beats |
 | `GET /nudges?since=<id>` | operator key | nudges for delivery |
 | `POST /emit` | emitter key, write-only | external emitter events (tool calls); unknown fields get 422 |
 | `GET /healthz` | none | JSON `{ok, feed_quiet, cards_behind, data_age, card_age, box_age, collector_age, board, origin, collector, repos}`. `ok` is false on `feed_quiet` or `cards_behind`. `data_age` and `box_age` are informational. HTTP 503 when `ok` is false. No repo names |
@@ -171,6 +174,15 @@ Railway service (`server.mjs`):
 | `DATA_STALE_S` | optional | default 21600. Reported as `data_stale_s`. Does not change `ok` |
 | `RAILWAY_TOKEN` | optional | read-only token. The collector polls deploys over HTTPS when it is set. Unset leaves the poll off. An account or team token is sent as `Authorization: Bearer`; a project token is retried as `Project-Access-Token` (#327) |
 | `LIVE_GH_SEATS` | required for seat traffic | JSON list of `{seat, bot, botId, org}`: each seat's GitHub App bot login, its numeric user id (`api.github.com/users/<app>%5Bbot%5D`), and the org it is installed on. `POST /activity` accepts only these installation tokens. Unset keeps the kit example, so every real seat gets 401 |
+| `HUMAN_ALIASES` | optional | comma list `alias=Label`. Default empty, so a sender that is not a roster seat credits `github`. burst-live sets `htafolla=Blaze,lead=Blaze` (GitHub login `htafolla`, box node `lead`). Leave `blaze0x1` unset |
+| `LIVE_SEAT_IDS` | optional | comma list that replaces the default seat ids. `builder` and `builder-cloud` stay. Unset keeps arch1, forge, critic, mill, blinky, herald, nibbler, sound, magnet |
+| `LIVE_WINDOW_MIN` | optional | minutes a seat stays active after its last line. Default 15, clamped from 1 to 1440 |
+| `CURSOR_WEBHOOK_SECRET` | optional | HMAC key for `POST /cursor/webhook` (`X-Webhook-Signature: sha256=<hex>`). Under 32 characters, or unset, the launch leaves the webhook unregistered. See `house/live/docs/work-tracking.md` |
+| `SEAT_DISPLAY_NAMES` | optional | JSON seat id to lane label. The Work panel reads `fleet.seat_display` |
+| `WORK_HUMAN_TO` | optional | inbox `to` that parks a blocker on the human lane |
+| `WORK_HUMAN_LANE` | optional | label of that lane |
+| `SEAT_AGENT_MAP` | optional | JSON agent id or `id*` prefix to seat |
+| `LIVE_TURN_OPEN_MIN` | optional | open turn, and a mapped GitHub comment, review, PR, or issue, stay working this many minutes. Default 20 |
 | `RAILWAY_PROJECTS` | optional | JSON list of `{project, projectId, service, environments}`. No default project |
 | `ARCH1_LAUNCH_ENABLED` | optional | `1` launches a cloud agent for a real arch1 packet. Default off |
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |
@@ -251,3 +263,7 @@ nothing is stored, a read that does not ack (`--ack` / `--pop` is the receipt), 
 issues), ghost-card reconcile, holds from a Jira status, a GitHub label, or a `Held:` comment, `NO_NUDGE_REPOS`,
 one pinned upstream repo plus `XRAY_OURS`, `SEAT_PRESENCE` (a string or an array of seats), and inbox webhooks.
 A merge closes the card. A failed retest after merge needs a new issue.
+
+## Box activity uploader (optional)
+
+If seats on one box share an uploader instead of holding their own `/activity` keys, run `house/live/tools/push_activity.sh` there with `LIVE_URL`, `LIVE_INGEST_SECRET` and `ACTIVITY_FILE` (loop, or `ONCE=1` from cron). It posts to `/activity/ingest`. Details and when to pick it: [`house/live/docs/activity-upload.md`](../live/docs/activity-upload.md). The work-track rules, including `CURSOR_WEBHOOK_SECRET`, are [`house/live/docs/work-tracking.md`](../live/docs/work-tracking.md).

@@ -10,7 +10,8 @@ SCRIPT = ROOT / "feed" / "push_to_host.sh"
 
 def feed(n, ids=None, gen="g"):
     ids = ids if ids is not None else [f"e{i}" for i in range(3)]
-    return {"n": n, "generated_at": gen, "events": [{"id": i, "t_ct": "2026-10-09T08:00:00-05:00", "kind": "commit"} for i in ids]}
+    # `commit` is not board traffic (#337). The delta fixture uses a kind the feed still serves.
+    return {"n": n, "generated_at": gen, "events": [{"id": i, "t_ct": "2026-10-09T08:00:00-05:00", "kind": "pr_comment"} for i in ids]}
 
 
 class Ingest(http.server.BaseHTTPRequestHandler):
@@ -164,7 +165,7 @@ class RealServerTest(Base):
         self.run_pusher(1.2, ONCE="1")
         st, full = self.get(); c0 = full["cursor"]
         self.assertEqual(sorted(e["id"] for e in full["events"]), ["a", "b", "c"])
-        self.write({**feed(1, ["a", "c", "d"], gen="g1"), "events": [{"id": i, "t_ct": "2026-10-09T08:00:00-05:00", "kind": "commit",
+        self.write({**feed(1, ["a", "c", "d"], gen="g1"), "events": [{"id": i, "t_ct": "2026-10-09T08:00:00-05:00", "kind": "pr_comment",
                     **({"status": "x"} if i == "c" else {})} for i in ["a", "c", "d"]]})
         self.run_pusher(1.2, ONCE="1")
         log = (self.d / "push.log").read_text()

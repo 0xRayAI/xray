@@ -50,7 +50,7 @@ class EverySeatIsOurs(unittest.TestCase):
 
     def test_server_and_key_defaults_name_no_sample_seat(self):
         src = (FEED.parent / "app" / "server.mjs").read_text()
-        ids = src[src.index("const SEAT_IDS = ["):].split("];", 1)[0]
+        ids = src[src.index("const SEAT_IDS = "):].split("];\n", 1)[0]   # env override (LIVE_SEAT_IDS) or the default list
         keys = [l for l in (FEED / "seat_keys.sh").read_text().splitlines() if l.startswith("DEFAULT_SEATS=")][0]
         for sample in ("reviewer", "tester", "'qa'", "coord", "operator", "triager", "growth", "seat-c", "chatbot", "seo-", "qa-one"):
             self.assertNotIn(sample, ids); self.assertNotIn(sample.strip("'"), keys.split("#")[0])
