@@ -77,9 +77,11 @@ group so its `sleep` child releases the flock.
 ## Deploy
 
 ```bash
-app/deploy.sh                                      # copies app/ into the railway-linked dir, railway up --service live-mesh --detach
+app/deploy.sh                                      # copies app/ + assembles collector/ (app/assemble-collector.sh), railway up --service live-mesh --detach
 railway deployment list --service live-mesh        # expect SUCCESS
 ```
+
+**Deploy only via `app/deploy.sh`.** A Railway build straight from git (any root directory) has no assembled `app/collector/` and the Dockerfile stops with "collector/ is not assembled" (#292).
 
 Only the `live-mesh` service of the `live-board` project is deployed; no other Railway project is touched.
 

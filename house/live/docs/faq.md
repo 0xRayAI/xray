@@ -12,7 +12,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** The container starts `node mcp-server.mjs`, or the live page is not the one in `house/live/app`.
 - **Cause:** The repo-root config belongs to the MCP server. The live board is not deployed from the repo root.
-- **Fix:** Run `house/live/app/deploy.sh`, or set the root directory to a directory laid out the same way as that script's deploy dir.
+- **Fix:** Deploy only via `house/live/app/deploy.sh` (it assembles `collector/` with `app/assemble-collector.sh`). A build from git without that step now stops with "collector/ is not assembled".
 
 ### `deploy.sh` stops on a missing lockfile
 

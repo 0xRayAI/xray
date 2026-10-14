@@ -82,5 +82,5 @@ test('our deploy: committed feed/site.json is public + Bifrost, and deploy.sh sh
   assert.ok(await s.until(/listening on/), s.logs);
   const f = await feedOf(s); assert.equal(f.j.title, 'Bifrost live fleet');
   assert.deepEqual([site.public, site.name], [true, 'Bifrost']);
-  assert.match(fs.readFileSync(path.join(APP, 'deploy.sh'), 'utf8'), /feed\/site\.json "\$DST\/collector\/"/);
+  assert.match(fs.readFileSync(path.join(APP, 'assemble-collector.sh'), 'utf8'), /site\.json "\$C\/"/);   // deploy.sh -> assemble-collector.sh (#292)
 });

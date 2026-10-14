@@ -117,7 +117,7 @@ class FleetRoster(unittest.TestCase):
         self.assertNotIn("minime0x[bot]", nodes)   # workflow-run bot, not arch1: credits github unless a Seat: trailer says otherwise
 
     def test_deploy_ships_the_roster(self):
-        sh = (FEED.parent / "app" / "deploy.sh").read_text()
+        sh = (FEED.parent / "app" / "assemble-collector.sh").read_text()   # deploy.sh assembles through it (#292)
         self.assertIn("fleet-roster.json", sh); self.assertIn("fleet-nodes.json", sh)
 
 

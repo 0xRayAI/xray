@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Deploy app/ to one Railway service.
+# Deploy app/ to one Railway service. The only supported deploy: a Railway build straight from git has no
+# assembled collector/ and the Dockerfile refuses it (#292).
 # LIVE_RAILWAY_PROJECT (default live-board), LIVE_RAILWAY_SERVICE (default live-mesh),
 # MESH_APP_DEPLOY_DIR (default /srv/live/deploy). LIVE_PUBLIC_OVERLAY, when set, is a directory
 # copied onto public/ after the kit files (live-config.js, avatars). Secret files in the deploy dir stay.
@@ -19,19 +20,8 @@ DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
   fi
   if [ -d "$APP/.railway" ]; then rm -rf "$DST/.railway"; cp -a "$APP/.railway" "$DST/.railway"; fi
 }
-# collector/ = the feed modules + house/live-mesh/fetch_feed.py from this repo (copied at deploy time, not committed)
-rm -rf "$DST/collector"; mkdir -p "$DST/collector/upstream"
-cp "$APP"/../feed/live_mesh.py "$APP"/../feed/live_collect.py "$APP"/../feed/live_flow.py "$APP"/../feed/live_fleet.py "$APP"/../feed/live_packet.py "$APP"/../feed/live_site.py "$APP"/../feed/live_board.py "$APP"/../feed/upstream.py "$APP"/../feed/jira_source.py "$DST/collector/"
-cp "$APP/../../live-mesh/fetch_feed.py" "$DST/collector/upstream/"   # house/live-mesh in this repo
-# server inbox routing (same rules as the box pusher): inbox_pass.py + routing/ beside it
-mkdir -p "$DST/collector/routing"
-cp "$APP"/../feed/inbox_pass.py "$DST/collector/"
-# fleet roster (counted seats) + seat login map: committed, so burst-live never depends on hand-set Railway vars
-cp "$APP"/../feed/fleet-roster.json "$APP"/../feed/fleet-nodes.json "$DST/collector/"
-# site mode (public = no password, no masking; we build in public) + display name: committed, never a hand-set var.
-# Another install deletes or edits feed/site.json (no file = gated + masked); LIVE_PUBLIC=1|0 on the service still wins.
-cp "$APP"/../feed/site.json "$DST/collector/"
-cp "$APP"/../feed/routing/inbox.py "$APP"/../feed/routing/board.py "$APP"/../feed/routing/inbox-roles.json "$DST/collector/routing/"
+# collector/ = the feed modules + house/live-mesh/fetch_feed.py, assembled at deploy time (only its README is committed)
+"$APP/assemble-collector.sh" "$DST"
 # MESH_SEED_STORE=1 (one-time, first volume deploy): ship the box collector's store as collector/seed/ (the server
 # copies it onto the volume only where no file exists yet). Scanned for token / key patterns first.
 if [ "${MESH_SEED_STORE:-0}" = 1 ]; then
