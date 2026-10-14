@@ -1596,14 +1596,21 @@ function rememberActivity(line) {
 }
 // Server-recorded seat activity (hotfix): a delivered wake opens the seat's turn and an inbox ack closes it, so every
 // seat shows working from wake until ack without needing its own GitHub App token. Same line shape as POST /activity.
+// Seat activity becomes a live board event (seat to seat traffic), not just a fleet flag (hotfix: board was GitHub-only).
+function activityEvent(line) {
+  const to = line.to || (line.kind === 'turn' ? 'bifrost' : (line.agent ? 'cloud' : 'bifrost'));
+  upsert({ id: `act:${line.id}`, t_ct: line.t_ct, from: line.seat, to, kind: `seat_${line.kind}`, direction: 'internal',
+    label: `${line.seat} ${line.kind} ${line.action}${line.tag ? ' · ' + line.tag : ''}`, src_file: 'activity', repo: null });
+}
 function serverActivity(seat, kind, action, tag) {
   if (!seat) return;
   actSeq++;
   const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: new Date().toISOString(), kind, action, tag, by: 'server' };
-  rememberActivity(line); appendArchive('activity', line);
+  rememberActivity(line); appendArchive('activity', line); activityEvent(line);
   seq++; header = mergedHeader(); fullDirty = true;
 }
 loadActivity();
+for (const l of activity.slice(-500)) if (Date.now() - Date.parse(l.t_ct || '') < 86400000) activityEvent(l);
 activityReady = true;
 header = mergedHeader(); fullDirty = true;
 function applyStoredActivity(fleet, now) {
@@ -1852,6 +1859,7 @@ async function handle(req, res) {
     for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
     rememberActivity(line);
     appendArchive('activity', line);
+    activityEvent(line);
     seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 202, { ok: true });
   }
