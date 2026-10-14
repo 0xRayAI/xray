@@ -3,7 +3,7 @@
  * Tools: look, status_lens. Same organ as the CLI.
  */
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -22,7 +22,9 @@ const CARD_PLANES = [
   'orchestration',
   'processor',
   'reporting',
+  'stamp-plate',
 ];
+const CARD_OUTERS = ['digest', 'triage'];
 const SCOPES = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
 const LOOK_SCHEMA = {
@@ -152,6 +154,15 @@ function checkArgs(args) {
   if (args.plane != null && !CARD_PLANES.includes(args.plane)) {
     return deny('invalid_args', 'plane is a card plane.');
   }
+  if (args.kind == null && args.outer == null && args.plane == null) {
+    return deny('invalid_args', 'Name a kind, one outer, or one plane.');
+  }
+  if (args.kind != null && args.outer != null) {
+    return deny('invalid_args', 'Send kind or outer, not both.');
+  }
+  if (args.plane != null && args.outer != null && !CARD_OUTERS.includes(args.outer)) {
+    return deny('invalid_args', 'plane goes with digest or triage only.');
+  }
   return null;
 }
 
@@ -161,7 +172,7 @@ function publicCard(view) {
     if (Array.isArray(view.empty) && view.empty.length) notes.push(`Empty: ${view.empty.join(', ')}`);
     if (view.exam) notes.push(view.exam);
   }
-  const skills = view.skills ? basename(String(view.skills)) : '';
+  const skills = view.skills ? String(view.skills) : '';
   const cascade = view.cascade
     ? {
       plane: view.cascade.plane,
@@ -227,7 +238,8 @@ export async function answerLook(raw, root) {
   const here = projectRoot(root);
   if (pureKind0(args)) {
     api.maintainLens(here);
-    const line = api.actualityLine();
+    const line = api.actualityLine() || cardDrift(api, here);
+    if (line) writeLens(here, line);
     if (!line) return quiet('kind0');
     return { ok: true, quiet: false, mode: 'kind0', content: line };
   }
@@ -267,6 +279,29 @@ export async function answerLook(raw, root) {
     outer: args.outer ?? null,
     scope: args.scope || null,
   };
+}
+
+/** Same check triage runs: the first card whose files are not there. */
+function cardDrift(api, here) {
+  for (const plane of CARD_PLANES) {
+    let cards;
+    try {
+      cards = api.lookCards(['triage', plane], here);
+    } catch {
+      continue;
+    }
+    for (const card of Array.isArray(cards) ? cards : []) {
+      const note = typeof card.exam === 'string' ? card.exam : '';
+      if (note.startsWith('Drift:')) return `Actuality. ${plane}: ${note}`;
+    }
+  }
+  return '';
+}
+
+function writeLens(here, line) {
+  const file = join(here, '.xray', 'state', 'LENS.md');
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${line}\n`);
 }
 
 function lensBody(root) {
