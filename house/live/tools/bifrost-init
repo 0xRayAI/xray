@@ -74,6 +74,24 @@ def mention_audit(roles: dict, seats, logins: dict) -> list[tuple[str, str, str,
     return rows
 
 
+def outside_keyword_routes(roles: dict) -> list[str]:
+    """Outside-fleet seats (routing map "outside": true) must be reached only by an explicit @login: no bare keyword
+    needle, no kinds / merge_bases rule, and never a fallback copy. -> 'seat: why' per violation."""
+    bad = []
+    for seat, e in (roles.get("routing") or {}).items():
+        if not (isinstance(e, dict) and e.get("outside")):
+            continue
+        rule = (roles.get("extra_seats") or {}).get(seat) or {}
+        bare = [n for n in rule.get("needles") or [] if not str(n).startswith("@")]
+        if bare:
+            bad.append(f"{seat}: bare keyword(s) {', '.join(bare)}")
+        if rule.get("kinds") or rule.get("merge_bases"):
+            bad.append(f"{seat}: kinds/merge_bases rule")
+        if seat in ((roles.get("fallback") or {}).get("from") or []):
+            bad.append(f"{seat}: fallback copies its lines")
+    return bad
+
+
 def routed_seats(roles: dict) -> set[str]:
     """Seats some rule can write a line to."""
     out = set()
@@ -199,12 +217,15 @@ def main(argv=None) -> int:
         nick = [r[0] for r in rows if not r[3]]
         if nick:
             print(f"bifrost init: FAIL, nickname-only route (no @login mention) for: {', '.join(nick)}", file=sys.stderr)
+        outside = outside_keyword_routes(roles)
+        if outside:
+            print("bifrost init: FAIL, outside-fleet seat routed without an explicit @login: " + "; ".join(outside), file=sys.stderr)
         if a.table:
             targets = role_targets(roles)
             print("seat | mention | login | OK")
             for s, m, l, ok in rows:
                 print(f"{s} | {m} | {l} | {'OK' if ok else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
-        if miss or ghost or nick:
+        if miss or ghost or nick or outside:
             return 1
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0

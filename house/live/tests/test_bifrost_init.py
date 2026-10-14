@@ -126,3 +126,34 @@ class RoutingMap(unittest.TestCase):
         for seat, e in roles["routing"].items():
             for a in e["aliases"]:
                 self.assertEqual(owner.setdefault(a.lower(), seat), seat, a)   # a nickname belongs to one seat
+
+
+class OutsideFleet(unittest.TestCase):
+    """Arch1 is outside the fleet: reached only by an explicit @arch10x, never by bare keywords or a fallback copy."""
+    def test_audit_flags_bare_keywords_for_an_outside_seat(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "inbox-roles.json").write_text(json.dumps({"routing": {"arch1": {"login": "arch10x", "aliases": ["arch1"], "outside": True}},
+                "extra_seats": {"arch1": {"needles": ["@arch10x", "gate b"]}}, "fallback": {"seat": "arch1", "from": ["arch1"]}}))
+            r = run("--check", "--seats", "arch1", "--routing-dir", d, "--nodes", str(Path(d) / "none.json"))
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("arch1: bare keyword(s) gate b", r.stderr)
+            self.assertIn("arch1: fallback copies its lines", r.stderr)
+
+    def _seats(self, ev):
+        sys.path.insert(0, str(TOOL.parent.parent / "feed"))
+        import inbox_pass
+        roles = json.loads((TOOL.parent.parent / "feed" / "routing" / "inbox-roles.json").read_text())
+        return [(l.get("seat"), l.get("reason")) for l in inbox_pass._direct_all(ev, roles) if l]
+
+    def test_gate_b_without_at_reaches_neither_arch1_nor_blinky(self):
+        ev = {"kind": "pr_comment", "label": "Gate B run please, deep review", "repo": "example-org/x", "number": 3,
+              "t_ct": "2026-10-14T06:00:00-05:00", "id": "c-gateb"}
+        got = self._seats(ev)
+        self.assertNotIn("arch1", {s for s, _ in got})
+        self.assertEqual([r for s, r in got if s == "blinky"], ["comment watch (CoS)"])   # only the every-comment watch, no fallback copy
+
+    def test_at_arch10x_reaches_arch1_only(self):
+        base = {"kind": "pr_comment", "label": "please look", "repo": "example-org/x", "number": 3, "t_ct": "2026-10-14T06:00:00-05:00"}
+        plain = self._seats(dict(base, id="c-plain"))
+        got = self._seats(dict(base, id="c-at", mentions=["arch10x"]))
+        self.assertEqual(sorted(set(got) - set(plain)), [("arch1", "explicit @arch10x ask for Arch1 (outside the fleet)")])

@@ -69,7 +69,8 @@
       "aliases": [
         "Arch1",
         "arch1"
-      ]
+      ],
+      "outside": true
     }
   },
   "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory.",
@@ -126,14 +127,10 @@
   "extra_seats": {
     "arch1": {
       "needles": [
-        "@arch1",
         "@arch10x",
-        "arch1 deep-review",
-        "deep-review",
-        "deep review",
-        "gate b"
+        "@arch1"
       ],
-      "reason": "deep-review / Gate B ask for Arch1"
+      "reason": "explicit @arch10x ask for Arch1 (outside the fleet)"
     },
     "forge": {
       "kinds": [
@@ -226,12 +223,9 @@
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 9 seats (feed/fleet-roster.json)",
   "_note_builder_cloud": "builder / builder-cloud are kit plumbing in app/server.mjs (installation-token auth, mirror); no route writes to them",
   "fallback": {
-    "seat": "blinky",
-    "from": [
-      "arch1"
-    ]
+    "seat": "blinky"
   },
-  "_note_fallback": "#275 + lap 2: actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) or only to fallback.from (arch1, no webhook) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route.",
+  "_note_fallback": "Actionable events whose lines all go to a seat outside our 9 (unknown, sample, unkeyed) also go to blinky (CoS). Lines to seats outside our 9 are dropped. Pulses never route. Arch1 is outside the fleet and reached only by an explicit @arch10x mention; his lines are never copied to blinky.",
   "comment_watch": {
     "kinds": [
       "pr_comment",

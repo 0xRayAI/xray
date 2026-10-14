@@ -61,7 +61,8 @@ class FleetSeats(unittest.TestCase):
 
     def test_n3_4_gate_b_whole_phrase(self):
         self.assertEqual(seats("gate bypass for the deploy"), [])
-        self.assertEqual(seats("Gate B run please"), ["arch1"])
+        self.assertEqual(seats("Gate B run please"), [])          # Arch1 is outside the fleet: bare keywords never reach him
+        self.assertEqual(seats("@arch10x Gate B run please"), ["arch1"])
 
     def test_pr_open_and_new_head_reach_critic_and_blinky_without_mentions(self):
         for kind in ("pr_open", "pr_update"):
@@ -153,11 +154,10 @@ class Guardrails275(unittest.TestCase):
     def test_push_and_ci_unowned_stay_quiet(self):
         self.assertEqual(self.routed(self.ev("ci_pass", "green")), [])
 
-    def test_arch1_only_also_reaches_coordinator(self):
-        roles = {k: v for k, v in ROLES.items() if k != "comment_watch"}   # so blinky can only come from the fallback
-        lines = inbox._direct(self.ev("issue_comment", "@arch1 deep-review"), roles)
-        self.assertEqual(sorted(l["seat"] for l in lines), ["arch1", "blinky"])
-        self.assertEqual([l["reason"] for l in lines if l["seat"] == "blinky"], ["no owner seat with a wake"])
+    def test_arch1_lines_are_not_copied_to_coordinator(self):
+        roles = {k: v for k, v in ROLES.items() if k != "comment_watch"}   # so blinky could only come from the fallback
+        lines = inbox._direct(self.ev("issue_comment", "@arch10x deep-review"), roles)
+        self.assertEqual(sorted(l["seat"] for l in lines), ["arch1"])
 
     def test_no_self_wake_by_bot_login(self):
         self.assertNotIn("forge", self.routed(self.ev("pr_comment", "@forge merge ask", actor="forge0x1[bot]")))

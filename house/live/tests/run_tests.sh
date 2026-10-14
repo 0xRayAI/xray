@@ -10,6 +10,7 @@ python3 -B tools/bifrost-init --check   # every roster seat has a route; no rule
 python3 -B tools/bifrost-check --dry-run --only routing,deliver-sim,edit-sim,tripwire,names   # post-deploy rules that need no live write (critic runbook)
 R=$(LIVE_SITE_JSON= LIVE_BRAND=Example PYTHONDONTWRITEBYTECODE=1 python3 -B tests/route.py "$PWD/feed")
 echo "$R"
-printf '%s\n' "$R" | grep -qx "Arch1: deep review ask on #262 -> \['arch1', 'blinky'\]"
-printf '%s\n' "$R" | grep -qx "Gate B run please -> \['arch1', 'blinky'\]"
+printf '%s\n' "$R" | grep -qx "Arch1: deep review ask on #262 -> \['blinky'\]"   # bare keywords never reach Arch1 (outside the fleet)
+printf '%s\n' "$R" | grep -qx "Gate B run please -> \['blinky'\]"
+printf '%s\n' "$R" | grep -qx "@arch10x Gate B run please -> \['arch1', 'blinky'\]"   # blinky = comment watch only
 printf '%s\n' "$R" | grep -qx "unrelated comment -> \['blinky'\]"
