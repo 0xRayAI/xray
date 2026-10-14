@@ -461,10 +461,22 @@ def deliver(new_events: list[dict], all_events: list[dict] | None = None, direct
         now = now.replace(tzinfo=timezone.utc)
     directory = directory or inbox_dir()
     all_events = list(all_events if all_events is not None else new_events)
+    try:
+        import deploy_status
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        import deploy_status
+    hold_ids = set(deploy_status.classify(all_events, now)["holds"])
+    op_rules = (roles.get("seats") or {}).get("operator") or {}
+    op_seat = op_rules.get("seat") if isinstance(op_rules, dict) and isinstance(op_rules.get("seat"), str) else "operator"
     routed: list[dict] = []
     for event in new_events or []:
         if isinstance(event, dict):
-            routed.extend(_direct(event, roles))
+            lines = _direct(event, roles)
+            # A non-hold pending is not work. Drop it for the operator role (kit name or the mapped seat).
+            if str(event.get("kind") or "") == "deploy_pending" and event.get("id") not in hold_ids:
+                lines = [line for line in lines if line.get("seat") not in ("operator", op_seat)]
+            routed.extend(lines)
     routed.extend(_ready_lines(all_events, roles))
     routed.extend(_stall_lines(all_events, roles, now))
     if activity is None:
