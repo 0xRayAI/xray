@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+"""bifrost check: the post-deploy test any Bifrost fleet runs (the critic runbook: grok-bot/ops/runbooks/CRITIC.md).
+
+Prints PASS / FAIL / SKIP per rule with the pack OP-PROC line it checks; exits 1 on any FAIL.
+
+Offline rules (always run, no writes):
+  routing      every seat routed; every route @-mentions the seat's real GitHub login (bifrost init --check)
+  deliver-sim  for each seat, an issue and an @-comment naming it route to that seat's inbox (the kit's own router)
+  tripwire     an empty board and a stalled board each fire the timed run once per window (the kit's governor.mjs)
+  nudge        a stuck line nudges L1 -> L3, then wakes the coordinator once (the kit's server, local, fake seats)
+  names        docs and plates carry none of the stale phrases in tools/bifrost-stale.json
+
+Live rules (need --repo and --target; skipped with --dry-run, which prints what they would do):
+  deliver      for each seat, post a real issue and an @-comment on --repo; both lines land in the seat's inbox on --target
+  resolve      every login in the routing map resolves on GitHub, as the deployed server reports at --target/routing
+  ack          ack one of those lines with the seat key, non-interactive; the call must return without any prompt
+
+  bifrost-check --dry-run
+  bifrost-check --repo org/sandbox --target https://<host> [--seats a,b] [--wait 240] [--keep]
+Live writes go only to --repo (use a sandbox repo) and --target. gh must be signed in as the checking seat's App;
+seat keys are read from SEAT_KEYS_DIR (~/.burst/seat-keys/<seat>.key) and never printed.
+"""
+import argparse, importlib.machinery, importlib.util, json, os, re, subprocess, sys, time, urllib.request, uuid
+from pathlib import Path
+
+LIVE = Path(__file__).resolve().parent.parent
+FEED = LIVE / "feed"
+PACK = LIVE.parent.parent / "grok-bot" / "OP-PROC.md"
+ANCHORS = {"routing": "- **Routing.**", "deliver": "- **Two loops.**", "deliver-sim": "- **Two loops.**", "ack": "- **Ack.**", "resolve": "- **Routing.**",
+           "tripwire": "- **Tripwire.**", "nudge": "- **Nudge.**", "names": "- **Names.**"}
+
+
+def load_init():
+    loader = importlib.machinery.SourceFileLoader("bifrost_init", str(LIVE / "tools" / "bifrost-init"))
+    spec = importlib.util.spec_from_loader("bifrost_init", loader)
+    mod = importlib.util.module_from_spec(spec); loader.exec_module(mod)
+    return mod
+
+
+def opproc_line(rule, pack=PACK):
+    try:
+        for i, line in enumerate(pack.read_text().splitlines(), 1):
+            if line.startswith(ANCHORS[rule]):
+                return f"grok-bot/{pack.name}:{i}"
+    except OSError:
+        pass
+    return f"grok-bot/{pack.name}:?"
+
+
+class Report:
+    def __init__(self):
+        self.rows = []
+
+    def add(self, rule, status, detail=""):
+        self.rows.append((rule, status, detail))
+        print(f"{status:4} {rule:11} [{opproc_line(rule)}] {detail}".rstrip(), flush=True)
+
+    @property
+    def failed(self):
+        return any(s == "FAIL" for _, s, _ in self.rows)
+
+
+def check_routing(rep, roles, seats, logins, init):
+    miss, ghost = init.unrouted(roles, seats), init.unknown_targets(roles, seats)
+    rows = init.mention_audit(roles, seats, logins)
+    nick = [r[0] for r in rows if not r[3]]
+    bad = ([f"unrouted {','.join(miss)}"] if miss else []) + ([f"unknown {','.join(ghost)}"] if ghost else []) + \
+          ([f"nickname-only {','.join(nick)}"] if nick else [])
+    rep.add("routing", "FAIL" if bad else "PASS", "; ".join(bad) or f"{len(seats)} seats, mentions match logins")
+    return rows
+
+
+def mention_for(seat, roles, logins):
+    """The handle a real comment uses: the seat's GitHub login when it has one, else its @seat needle."""
+    have = logins.get(seat) or []
+    return have[0] if have else seat
+
+
+def check_deliver_sim(rep, roles, seats, logins):
+    sys.path.insert(0, str(FEED))
+    import inbox_pass
+    miss = []
+    for s in seats:
+        m = mention_for(s, roles, logins)
+        for kind in ("issue_open", "issue_comment"):
+            ev = {"kind": kind, "label": f"bifrost check @{m}", "mentions": [m], "repo": "example-org/check", "number": 1,
+                  "t_ct": "2026-01-01T00:00:00-06:00", "id": f"sim-{s}-{kind}"}
+            got = {l.get("seat") for l in inbox_pass._direct_all(ev, roles) if l}
+            if s not in got:
+                miss.append(f"{s}/{kind}")
+    rep.add("deliver-sim", "FAIL" if miss else "PASS", ("not routed: " + ", ".join(miss)) if miss else f"{len(seats)} seats x issue+comment")
+
+
+TRIP_JS = r"""
+import { createClock } from %s;
+const W = 1000, c = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
+const out = { empty: [], stall: [] };
+c.observe('a', 0, { openCards: 0, coord: 'coord' });
+for (let t = 100; t < 1900; t += 100) { const r = c.observe('a', t, { openCards: 0, coord: 'coord' }); if (r) out.empty.push(r); }
+const s = createClock({ tripMs: W, perSeatMs: 10, now: 0 });
+s.observe('b', 0, { openCards: 2, openSeats: ['x'], coord: 'coord' });
+for (let t = 100; t < 1900; t += 100) { const r = s.observe('b', t, { openCards: 2, openSeats: ['x'], coord: 'coord' }); if (r) out.stall.push(r); }
+out.stallSeats = Object.keys(s.run?.deadlines || {});
+console.log(JSON.stringify(out));
+"""
+
+
+def check_tripwire(rep):
+    js = TRIP_JS % json.dumps((LIVE / "app" / "governor.mjs").as_uri())
+    r = subprocess.run(["node", "--input-type=module", "-e", js], capture_output=True, text=True, timeout=60)
+    if r.returncode:
+        return rep.add("tripwire", "FAIL", "governor did not run: " + r.stderr.strip()[-200:])
+    o = json.loads(r.stdout)
+    ok = o["empty"] == ["empty"] and o["stall"] == ["stall"] and o["stallSeats"] == ["x"]
+    rep.add("tripwire", "PASS" if ok else "FAIL", f"empty fired {len(o['empty'])}x, stall fired {len(o['stall'])}x in one window")
+
+
+def check_nudge(rep):
+    test = LIVE / "tests" / "nudge-escalation.test.mjs"
+    r = subprocess.run(["node", "--test", str(test)], capture_output=True, text=True, timeout=180,
+                       env={**os.environ, "MESH_APP_DIR": str(LIVE / "app")})
+    rep.add("nudge", "PASS" if r.returncode == 0 else "FAIL",
+            "L1->L3 then coordinator woken once" if r.returncode == 0 else r.stdout.strip()[-300:])
+
+
+def check_names(rep, stale_file):
+    cfg = json.loads(Path(stale_file).read_text())
+    phrases = [p.casefold() for p in cfg.get("phrases") or []]
+    hits = []
+    for rel in cfg.get("paths") or []:
+        p = (Path(stale_file).parent.parent / rel).resolve()
+        files = [p] if p.is_file() else sorted(p.rglob("*.md")) if p.is_dir() else []
+        for f in files:
+            for i, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                low = line.casefold()
+                hits += [f"{f.name}:{i} '{ph}'" for ph in phrases if ph in low]
+    rep.add("names", "FAIL" if hits else "PASS", ("stale: " + "; ".join(hits[:8])) if hits else f"{len(phrases)} phrases, none found")
+
+
+def gh(*args):
+    r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+    if r.returncode:
+        raise RuntimeError(f"gh {args[0]} {args[1]}: {r.stderr.strip()[:200]}")
+    return r.stdout.strip()
+
+
+def seat_call(target, seat, method, path, body=None):
+    kf = Path(os.environ.get("SEAT_KEYS_DIR", "~/.burst/seat-keys")).expanduser() / f"{seat}.key"
+    if not kf.is_file():
+        raise RuntimeError(f"no seat key for {seat}")
+    req = urllib.request.Request(target.rstrip("/") + path, method=method, data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Authorization": "Bearer " + kf.read_text().strip(), "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode() or "{}")
+
+
+def check_resolve(rep, a):
+    if not a.target:
+        return rep.add("resolve", "SKIP", "needs --target")
+    req = urllib.request.Request(a.target.rstrip("/") + "/routing")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            body = json.loads(r.read().decode())
+    except Exception as e:   # noqa: BLE001
+        return rep.add("resolve", "FAIL", f"GET /routing failed: {type(e).__name__}")
+    bad = [f"{e['seat']}=@{e['login']} {e['status']}" for e in body.get("seats") or [] if e.get("login") and e.get("status") != "ok"]
+    rep.add("resolve", "FAIL" if bad else "PASS", ("does not resolve: " + "; ".join(bad)) if bad else
+            f"{sum(1 for e in body.get('seats') or [] if e.get('login'))} logins resolve on GitHub")
+
+
+def check_live(rep, a, roles, seats, logins, dry):
+    if dry or not (a.repo and a.target):
+        why = "dry-run" if dry else "needs --repo and --target"
+        for s in seats:
+            print(f"     would: post issue + @{mention_for(s, roles, logins)} comment on {a.repo or '<repo>'}, "
+                  f"poll {a.target or '<target>'}/inbox/{s} for both lines")
+        rep.add("deliver", "SKIP", why)
+        rep.add("ack", "SKIP", why)
+        return
+    nonce, posted, missing = uuid.uuid4().hex[:8], {}, []
+    for s in seats:
+        m = mention_for(s, roles, logins)
+        url = gh("issue", "create", "--repo", a.repo, "--title", f"bifrost check {nonce} {s}", "--body", f"bifrost check for @{m}")
+        num = int(url.rstrip("/").rsplit("/", 1)[-1])
+        gh("issue", "comment", str(num), "--repo", a.repo, "--body", f"@{m} bifrost check comment")
+        posted[s] = num
+    deadline, found = time.time() + a.wait, {}
+    while time.time() < deadline and len(found) < len(seats):
+        for s, num in posted.items():
+            if s in found:
+                continue
+            try:
+                lines = seat_call(a.target, s, "GET", f"/inbox/{s}").get("lines") or []
+            except Exception as e:   # noqa: BLE001 - reported per seat below
+                lines = []
+            mine = [l for l in lines if l.get("number") == num and a.repo.casefold() in str(l.get("repo", "")).casefold()]
+            kinds = {str(l.get("type") or l.get("kind") or "") for l in mine}
+            if any(k.startswith("issue") and "comment" not in k for k in kinds) and any("comment" in k for k in kinds):
+                found[s] = mine
+        time.sleep(15)
+    missing = [f"{s}#{posted[s]}" for s in seats if s not in found]
+    rep.add("deliver", "FAIL" if missing else "PASS", ("no issue+comment line for " + ", ".join(missing)) if missing else f"{len(seats)} seats on {a.repo}")
+    if found:
+        s, lines = next(iter(found.items()))
+        t0 = time.time()
+        try:
+            r = seat_call(a.target, s, "POST", f"/inbox/{s}/ack", {"id": lines[0]["id"]})
+            ok = bool(r.get("ok", True)) and time.time() - t0 < 20
+            rep.add("ack", "PASS" if ok else "FAIL", f"{s} acked {lines[0]['id']} non-interactive in {time.time() - t0:.1f}s; "
+                    "the running seat confirms no approval card appeared")
+        except Exception as e:   # noqa: BLE001
+            rep.add("ack", "FAIL", f"ack failed: {type(e).__name__}")
+    else:
+        rep.add("ack", "FAIL", "no delivered line to ack")
+    if not a.keep:
+        for num in posted.values():
+            try:
+                gh("issue", "close", str(num), "--repo", a.repo, "--reason", "not planned")
+            except RuntimeError:
+                pass
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="bifrost check")
+    ap.add_argument("--repo", help="owner/name the live steps post the test issues on (a sandbox repo)")
+    ap.add_argument("--target", help="Bifrost server URL whose inboxes are checked")
+    ap.add_argument("--seats", help="comma-separated seats (default: fleet-roster.json)")
+    ap.add_argument("--routing-dir", default=str(FEED / "routing"))
+    ap.add_argument("--nodes", default=str(FEED / "fleet-nodes.json"))
+    ap.add_argument("--stale", default=str(LIVE / "tools" / "bifrost-stale.json"))
+    ap.add_argument("--wait", type=int, default=240, help="seconds to wait for the collector to route the live posts")
+    ap.add_argument("--keep", action="store_true", help="leave the test issues open")
+    ap.add_argument("--dry-run", action="store_true", help="no live writes; print what the live steps would do")
+    ap.add_argument("--only", help="comma-separated rule names to run")
+    a = ap.parse_args(argv)
+    init = load_init()
+    roles = json.loads((Path(a.routing_dir) / "inbox-roles.json").read_text())
+    seats = init.parse_seats(a.seats) if a.seats else init.default_seats(roles)
+    logins = init.seat_logins(roles, Path(a.nodes))
+    only = set(a.only.split(",")) if a.only else None
+    want = lambda r: only is None or r in only
+    rep = Report()
+    if want("routing"): check_routing(rep, roles, seats, logins, init)
+    if want("deliver-sim"): check_deliver_sim(rep, roles, seats, logins)
+    if want("tripwire"): check_tripwire(rep)
+    if want("nudge"): check_nudge(rep)
+    if want("names"): check_names(rep, a.stale)
+    if want("resolve"): check_resolve(rep, a)
+    if want("deliver") or want("ack"): check_live(rep, a, roles, seats, logins, a.dry_run)
+    print("bifrost check: " + ("FAIL" if rep.failed else "PASS"))
+    return 1 if rep.failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
