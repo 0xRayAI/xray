@@ -281,11 +281,13 @@ function loadCfg(withSite) {
   if (withSite) new Function('window', fs.readFileSync(path.join(APP, '..', 'site', 'public', 'site-config.js'), 'utf8'))({ LiveMesh: L });
   return L;
 }
-test('our overlay: 9 seats on strip and Lens, no Lead / Others node, no Example label, avatars only for shipped files', () => {
+test('our overlay: strip is blinky, critic, forge, mill; Arch1 is outside; parked seats are not drawn', () => {
   const L = loadCfg(true);
-  const ours = ['blinky', 'forge', 'mill', 'critic', 'herald', 'magnet', 'nibbler', 'sound', 'arch1'];
-  assert.deepEqual(L.SEAT_NAMES, ours); assert.deepEqual(L.AGENTS.map(a => a[0]), ours);
-  for (const s of ours) assert.ok(s in L.SATS, s);
+  const strip = ['blinky', 'critic', 'forge', 'mill'];
+  assert.deepEqual(L.SEAT_NAMES, strip); assert.deepEqual(L.AGENTS.map(a => a[0]), strip);
+  for (const s of strip) assert.ok(s in L.SATS, s);
+  assert.equal(L.SUB.arch1, 'outside party'); assert.equal(L.LABEL.arch1, 'Arch1'); assert.ok('arch1' in L.SATS);
+  for (const parked of ['herald', 'magnet', 'nibbler', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
   assert.ok(!JSON.stringify([L.LABEL, L.SUB]).includes('Example'));
   assert.equal(L.LABEL['mymuse.house'], 'burst-live');
@@ -311,6 +313,13 @@ test('Lens label stays inside the canvas', () => {
   const L = loadCfg(false);
   assert.equal(L.labelX(860, 150, 920), 920 - 75 - 2); assert.equal(L.labelX(30, 100, 920), 52); assert.equal(L.labelX(400, 100, 920), 400);
   assert.match(html, /var lx = L\.labelX\(x, w, W\);/);
+});
+test('board manual uses beat and wave, never lap', () => {
+  const doc = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'board.md'), 'utf8');
+  assert.match(doc, /## Page behaviour \(wave\)/);
+  assert.match(doc, /Wave fix:/);
+  assert.match(doc, /\*\*Beats\*\*/);
+  assert.doesNotMatch(doc, /\blap\b/i);
 });
 test('header active count and chips read one source (seatState over L.SEAT_NAMES)', () => {
   assert.match(html, /var seatNames = L\.SEAT_NAMES;/);

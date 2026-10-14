@@ -27,11 +27,11 @@ Seats (ours): blinky, critic, forge, mill, herald, magnet, nibbler, sound, arch1
 
 `feed/fleet-nodes.json` maps a GitHub login to the seat credited for its events (ours: `forge0x1[bot]` -> forge, `critic0x[bot]` -> critic, `htafolla` / `Blaze0x1` -> Blaze, `github-actions[bot]` -> CI, ...). A commit's `Seat:` trailer credits that seat even when the author login is shared.
 
-Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events.
+Precedence (`feed/live_collect.py`): `LIVE_NODE_MAP` env (JSON, set from this file) merges **over** the template `NODE` defaults; logins in neither are dropped, not published as Others. Kit default: no file, template `NODE` only. A later `LIVE_NODE_MAP` relabels stored events. A commit with no GitHub User whose git author name is a seat name (`SEAT_GIT_NAMES`) credits that seat; a GitHub login that merely equals a seat name (e.g. `arch1`, `blinky`) is a stranger and stays Others.
 
 ## fleet-roster.json
 
-`feed/fleet-roster.json`: `seats` (who gets an inbox / key) and `board` (board columns). Ours: the 9 seats above. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
+`feed/fleet-roster.json`: `seats` (who gets an inbox / key; the 9 above, including parked and Arch1) and `board` (the counted strip: blinky, critic, forge, mill). `outside` is Arch1. `parked` (herald, magnet, nibbler, sound) is not drawn. Kit default: no roster; the server uses `LIVE_FLEET_SEATS`, else the nodes in `LIVE_NODE_MAP` (`feed/live_fleet.py`).
 
 ## site.json
 

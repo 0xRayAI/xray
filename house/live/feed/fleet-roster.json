@@ -1,2 +1,6 @@
-{"seats": ["blinky", "critic", "forge", "mill", "herald", "magnet", "nibbler", "sound", "arch1"],
- "board": ["blinky", "critic", "forge", "mill", "herald", "magnet", "nibbler", "sound", "arch1"]}
+{
+  "seats": ["blinky", "critic", "forge", "mill", "herald", "magnet", "nibbler", "sound", "arch1"],
+  "board": ["blinky", "critic", "forge", "mill"],
+  "outside": ["arch1"],
+  "parked": ["herald", "magnet", "nibbler", "sound"]
+}

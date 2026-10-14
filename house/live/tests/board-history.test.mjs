@@ -58,6 +58,16 @@ test('card history keeps a later state and drops a row with no key', () => {
   fs.rmSync(data, { recursive: true, force: true });
 });
 
+test('an older card row with no updated_ct fills it from last_beat_t', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-stamp-'));
+  initArchive(data);
+  const beat = Date.parse('2026-10-12T18:00:00Z');
+  assert.equal(appendArchive('cards', { key: 'example/repo#9', state: 'live', stage: 'review', owner: 'mill', title: 'Old row', repo: 'example/repo', number: 9, last_beat_t: beat }), true);
+  const aged = cardHistory();
+  assert.equal(aged.cards.find(c => c.id === 'example/repo#9').updated_ct, new Date(beat).toISOString());
+  fs.rmSync(data, { recursive: true, force: true });
+});
+
 function start(data, extra) {
   const port = 22000 + Math.floor(Math.random() * 20000);
   const ingest = crypto.randomBytes(32).toString('hex');
@@ -132,6 +142,128 @@ test('a CI push after a merge does not move the card clock; the queue does not d
     assert.ok(fs.readFileSync(file, 'utf8').includes('line-1'));
     const cards = await (await fetch(srv.base + '/history/cards', { headers: { Cookie: cookie } })).json();
     assert.ok(cards.cards.some(c => c.id === 'example/repo#7' && c.state === 'live' && !c.closed_ct));
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a merge on a closed card advances the card clock; a later check does not', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-clock-'));
+  const openAt = '2026-10-14T07:24:57-05:00';
+  const mergedAt = '2026-10-14T12:42:25-05:00';
+  const ciAt = '2026-10-14T12:47:15-05:00';
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: ciAt,
+    board: { cards: [
+      { key: 'example/repo#310', repo: 'example/repo', number: 310, kind: 'issue', state: 'live', title: 'Open', owner: 'critic', stage: 'open' },
+      { key: 'example/repo#317', repo: 'example/repo', number: 317, kind: 'pr', state: 'closed', title: 'Merged', owner: 'forge', stage: 'done' },
+    ] },
+    events: [
+      { id: 'open-310', t_ct: openAt, kind: 'issue_open', repo: 'example/repo', number: 310, from: 'critic' },
+      { id: 'merge-317', t_ct: mergedAt, kind: 'merged', repo: 'example/repo', number: 317, from: 'forge' },
+      { id: 'ci-317', t_ct: ciAt, kind: 'check_run', conclusion: 'success', repo: 'example/repo', number: 317, from: 'GitHub' },
+    ],
+  }));
+  const srv = start(data, { SERVER_ROUTING: 'off' });
+  try {
+    await ready(srv.base, srv.logs);
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const live = await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json();
+    assert.equal(Date.parse(live.freshness.github_latest_ct), Date.parse(ciAt));
+    assert.equal(Date.parse(live.freshness.github_card_latest_ct), Date.parse(mergedAt));
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a saved wake is last_ok after restart; a seat that never woke stays null', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-wake-'));
+  const iso = '2026-10-14T17:40:00.000Z';
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'wake-ok.json'), JSON.stringify({ forge: iso, mill: iso }));
+  const srv = start(data, {
+    COLLECTOR: 'off', SERVER_ROUTING: 'off',
+    SEAT_WEBHOOKS: JSON.stringify({
+      forge: { url: 'http://127.0.0.1:9/forge' },
+      mill: { url: 'http://127.0.0.1:9/mill' },
+      critic: { url: 'http://127.0.0.1:9/critic' },
+    }),
+  });
+  try {
+    await ready(srv.base, srv.logs);
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const w = (await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json()).wakes;
+    assert.equal(w.forge.last_ok, iso);
+    assert.equal(w.mill.last_ok, iso);
+    assert.equal(w.critic.last_ok, null);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('the open queue hides parked seats and arch10x lines from a previous Chicago day', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-queue-'));
+  const now = Date.now();
+  const day = ms => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+  let old = now - 26 * 3600 * 1000;
+  if (day(old) >= day(now)) old = now - 48 * 3600 * 1000;
+  const srv = start(data, { COLLECTOR: 'off', SERVER_ROUTING: 'off' });
+  try {
+    await ready(srv.base, srv.logs);
+    const lines = [
+      { id: 'parked-herald', t_ct: new Date(now).toISOString(), seat: 'herald', type: 'issue', repo: 'example/repo', number: 1, title: 'verify herald', url: 'https://github.com/example/repo/issues/1', reason: 'parked' },
+      { id: 'arch-old', t_ct: new Date(old).toISOString(), seat: 'mill', type: 'issue_comment', repo: 'example/repo', number: 269, title: 'arch10x[bot] comment on 269', url: 'https://github.com/example/repo/issues/269', reason: 'comment' },
+      { id: 'arch-today', t_ct: new Date(now - 60000).toISOString(), seat: 'mill', type: 'issue_comment', repo: 'example/repo', number: 310, title: 'arch10x[bot] comment today', url: 'https://github.com/example/repo/issues/310', reason: 'comment' },
+      { id: 'forge-live', t_ct: new Date(now - 30000).toISOString(), seat: 'forge', type: 'pr', repo: 'example/repo', number: 9, title: 'Needs a look', url: 'https://github.com/example/repo/pull/9', reason: 'review' },
+    ];
+    const posted = await fetch(srv.base + '/inbox', { method: 'POST', headers: { 'X-Live-Ingest': srv.ingest, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines }) });
+    assert.equal(posted.status, 200, await posted.text());
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const queue = (await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json()).queue;
+    const ids = queue.map(l => l.id);
+    assert.ok(ids.includes('arch-today'));
+    assert.ok(ids.includes('forge-live'));
+    assert.ok(!ids.includes('parked-herald'));
+    assert.ok(!ids.includes('arch-old'));
+    assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'herald.jsonl'), 'utf8').includes('parked-herald'));
+    assert.ok(fs.readFileSync(path.join(data, 'live', 'inbox', 'mill.jsonl'), 'utf8').includes('arch-old'));
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a persisted mill ack today marks mill active over a 10/13 github last_ct', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-mill-'));
+  const touch = Date.now();
+  const tCt = new Date(touch).toISOString();
+  const day = tCt.slice(0, 10);
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'archive', day), { recursive: true });
+  fs.writeFileSync(path.join(data, 'archive', day, 'acks.jsonl'), JSON.stringify({ id: 'mill:line-1', seat: 'mill', line: 'line-1', t_ct: tCt }) + '\n');
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    event_count: 1,
+    fleet: { window_min: 15, total: 4, active: 0, seats: { mill: { active: false, last_ct: '2026-10-13T14:32:10-05:00', via: 'github' } } },
+    board: { cards: [] },
+    events: [{ id: 'e1', t_ct: new Date().toISOString(), kind: 'issue_open', repo: 'example/repo', number: 1, from: 'forge' }],
+  }));
+  const srv = start(data, { SERVER_ROUTING: 'off' });
+  try {
+    await ready(srv.base, srv.logs);
+    const login = await fetch(srv.base + '/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'password=' + encodeURIComponent(srv.password) });
+    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    const mill = (await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json()).fleet.seats.mill;
+    assert.equal(mill.active, true);
+    assert.equal(mill.via, 'inbox');
+    assert.equal(Date.parse(mill.last_ct), touch);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });

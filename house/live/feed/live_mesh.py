@@ -24,6 +24,15 @@ import live_board  # noqa: E402
 import upstream  # noqa: E402
 import deploy_status  # noqa: E402
 
+def primary_repo(repos):
+    """Header repo is the one named xray. Org-list order is not the product (0xray-moltbook sorts first)."""
+    names = [str(r).strip() for r in (repos or []) if str(r).strip()]
+    for name in names:
+        if name.rsplit("/", 1)[-1].lower() == "xray":
+            return name
+    return names[0] if names else ""
+
+
 ORG = "example-org"
 import live_site  # noqa: E402
 HEALTH_URLS = os.environ.get("LIVE_HEALTH_URLS", " ".join(s["health"] for s in live_site.SITE["services"] if s.get("health"))).split()
@@ -204,7 +213,7 @@ def build(args, gh):
     return {
         "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],
-        "repo": args.repos[0], "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
+        "repo": primary_repo(args.repos), "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
         "product_nodes": sorted({live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])}),
         "notes": [
             f"{live_site.SITE['name']} fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "

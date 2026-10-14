@@ -50,7 +50,7 @@ Activity details (#281): a prompt line keeps its sender as `actor` (off-box seat
 
 Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are real events on a card, and they reset its idle clock. **Pulses** are liveness signals only. **Packets** are tracked asks in an inbox, and **acks** close them. **Nudges** are packets the server creates after 60 min with no beat. **Wakes** are content-free webhook doorbells that follow packets. **Seat status** is the working or idle light.
 
-## Page behaviour (lap2)
+## Page behaviour (wave)
 
 - The header "N of M bots active" counts the strip's seats with the same seat state the chips show (working > live > active > idle), so the two always agree. Server-side, a wake that lands, an inbox read or an ack also makes a seat active.
 - Board grouping: each card sits under its seat (next owner, else owner). A card in review also shows as waiting under the review seat (`L.REVIEW_SEAT`; ours is critic), so the reviewer's group shows its queue, not only its done cards.
@@ -93,13 +93,13 @@ A seat shows ACTIVE when, within the fleet window (15 min), any of these happene
 - it read its inbox (`live-inbox <seat>`);
 - it acked a line (`live-inbox <seat> --ack <id>`).
 
-The wake / read / ack times are kept in server memory (`app/presence.mjs` `foldSeatTouch`), so after a restart they rebuild on each seat's next wake, read or ack.
+The last good wake lives in `wake-ok.json` on the volume. An ack is an append-only archive row (`acks.jsonl`, with `t_ct`). Startup reads those rows and `foldSeatTouch` applies them, so a restart keeps the last ack.
 
-**Known gap.** Work a seat does on its own computer (a desktop turn with no wake, read or ack) does not report yet, so the seat can look idle while busy. Lap 3 fix: `live-inbox` sends a heartbeat on every wake and every task start.
+**Known gap.** Work a seat does on its own computer (a desktop turn with no wake, read or ack) does not report yet, so the seat can look idle while busy. Wave fix: `live-inbox` sends a heartbeat on every wake and every task start.
 
 ## Freshness
 
-The light at the top uses two times from the feed `freshness` object. `github_latest_ct` is the newest GitHub event of any kind. `github_card_latest_ct` is the newest non-CI event that moves a card and lands on an open card (`repo#number`). CI (`check_run`, `workflow_run`, `ci_pass`, `ci_fail`) does not move the light, including a check that runs after a merge. A comment, a check that is still running, or an ordinary label does not turn the light. `/healthz` `data_age` is seconds since `github_latest_ct` and does not gate `ok`. Completed CI counts toward `cards_behind` only when its number or head sha matches an open card. A main-branch run with no matching PR or head does not.
+The light at the top uses two times from the feed `freshness` object. `github_latest_ct` is the newest GitHub event of any kind. `github_card_latest_ct` is the newest non-CI event that moves an open card, or a merge. A merge still advances the clock after that card has closed. CI (`check_run`, `workflow_run`, `ci_pass`, `ci_fail`) does not move the light, including a check that runs after a merge. A comment, a check that is still running, or an ordinary label does not turn the light. `/healthz` `data_age` is seconds since `github_latest_ct` and does not gate `ok`. Completed CI counts toward `cards_behind` only when its number or head sha matches an open card. A main-branch run with no matching PR or head does not.
 
 Until the first card write the light says "Cards still building".
 

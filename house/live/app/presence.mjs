@@ -51,6 +51,29 @@ export function presentSeat(seats, name, presence = seatPresence()) {
 // wake that landed (2xx), an inbox read or an ack. touch = {seatId: ms}. Pure: returns a new fleet view.
 // A seat already on the fleet (matched by lower-cased name) gets active/last_ct/via='inbox' if this is newer;
 // a touched seat not on it yet is added. fleet.active is recounted.
+export function readWakeOk(file) {
+  try {
+    const o = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (!o || typeof o !== 'object' || Array.isArray(o)) return {};
+    const out = {};
+    for (const [k, v] of Object.entries(o)) {
+      if (typeof v === 'string' && Number.isFinite(Date.parse(v))) out[String(k).toLowerCase()] = v;
+    }
+    return out;
+  } catch { return {}; }
+}
+
+export function writeWakeOk(file, map) {
+  const out = {};
+  for (const [k, v] of Object.entries(map || {})) {
+    if (typeof v === 'string' && Number.isFinite(Date.parse(v))) out[k] = v;
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(out));
+  fs.renameSync(tmp, file);
+}
+
 export function foldSeatTouch(fleet, touch, now = Date.now()) {
   const ids = Object.entries(touch || {}).filter(([, t]) => Number.isFinite(t) && t > 0);
   if (!ids.length) return fleet;
