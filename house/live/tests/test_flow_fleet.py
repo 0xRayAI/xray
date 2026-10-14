@@ -218,6 +218,18 @@ class OperatorCosTest(unittest.TestCase):
             self.assertEqual(sorted(e["id"] for e in ev), [
                 "op:rw:ffff6666:BUILDING", "op:rw:ffff6666:DEPLOYING", "op:rw:ffff6666:SUCCESS"])
 
+    def test_first_seen_failed_or_skipped_emits_terminal_only(self):
+        for st in ("FAILED", "SKIPPED"):
+            with tempfile.TemporaryDirectory() as d:
+                feed = Path(d)
+                (feed / "railway-deploys.json").write_text(json.dumps({"polled_at": "2026-10-14T18:05:00+00:00", "deploys": [
+                    {"id": "abcd7777", "project": "burst-live", "service": "burst-live", "env": "production",
+                     "status": st, "created": "2026-10-14T18:00:00Z", "cli": False, "sha": "abc123"}]}))
+                f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+                ev = [e for e in f.scan_host() if e.get("kind") == "op_deploy"]
+                self.assertEqual([e["status"] for e in ev], [st])
+                self.assertNotIn("DEPLOYING", [e["status"] for e in ev])
+
 
 class CloudAgentsTest(unittest.TestCase):
     def test_tail_seed_fields_and_state(self):
