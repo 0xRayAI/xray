@@ -1,7 +1,7 @@
 # Live board setup
 
 ## Pieces
-- **Railway server** (`app/server.mjs`, service `live-mesh`): the page, the merged feed, and the **source of truth** for
+- **Railway server** (`app/server.mjs`, service `burst-live` for us; kit default `live-mesh`): the page, the merged feed, and the **source of truth** for
   seat inboxes, cards and nudges (volume `/data/live/`: `inbox/<seat>.jsonl`, `cards.json`, `nudges.jsonl`).
 - **Host collector** (`LIVE_MODE=github`): builds the board from GitHub events so a host-only install has cards. The page uses that board when the box board is absent or older than `BOARD_BOX_STALE_S`.
 - **Box feed pass + pusher** (`feed/push_to_host.sh`, released with `feed/release.sh`): pushes box events

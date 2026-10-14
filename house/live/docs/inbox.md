@@ -48,7 +48,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Event | Seat(s) | Rule |
 |---|---|---|
 | New issue (`issue_open`) | blinky | `extra_seats.blinky.kinds` |
-| Issue / PR / review comment | blinky; PR comments also the PR author's seat | `comment_watch` |
+| Issue / PR / review comment (open, closed or merged) | blinky; also the PR or issue author's seat (comments on outside-author PRs are kept) | `comment_watch` |
 | New PR, new head (push to a PR) | critic (re-Light ask) and blinky (heads-up) | `pr_heads`, one line per head |
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
