@@ -46,7 +46,7 @@ First match wins, login lowercased:
 
 | Writer | Reads | Sets working when |
 |---|---|---|
-| `applyStoredActivity` | `activity.jsonl` (`POST /activity`, `POST /activity/ingest`, wake/ack) | an open turn, subagent, or watcher. A turn expires after `LIVE_TURN_OPEN_MIN` if no `end` arrives |
+| `applyStoredActivity` | `activity.jsonl` (`POST /activity`, `POST /activity/ingest`, wake/ack) | an open turn, subagent, or watcher. A turn `end` or ack clears `fleet.working` for that seat. A tick does not reopen it. An open turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes) |
 | `applyTrackWorking` | inboxes, `acks.json`, `wakes.jsonl`, `agents.jsonl` | a packet is woken and not acked, or a cloud agent is still running. Chip: `working on <title>` |
 | `applyGithubWorking` | feed events whose actor maps to a seat | a PR or issue comment, review, PR opened or pushed, or issue event inside the same window. Chip: `repo#number` |
 
