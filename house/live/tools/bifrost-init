@@ -10,6 +10,11 @@ Railway variable (and WAKE_KEY_<SEAT>) on the host yourself.
   bifrost-init                                  interactive
   bifrost-init --seats forge,critic,mill --yes  non-interactive
   bifrost-init --check [--seats a,b]            validate only (seats default: fleet-roster.json, else extra_seats)
+  bifrost-init --check --table                  also print the mention audit: seat, mention, login, OK
+
+Mention audit: a seat with a GitHub login in feed/fleet-nodes.json (login -> seat) must have an @<login> needle on its
+route, not only its nickname (@arch1 alone never matches a real @arch10x comment). A nickname-only route fails.
+Init adds the @<login> needle for every seat that has a login.
 """
 import argparse
 import json
@@ -20,6 +25,34 @@ from pathlib import Path
 FEED = Path(__file__).resolve().parent.parent / "feed"
 SEAT_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
 PLACEHOLDER = "<set the real URL in the SEAT_WEBHOOKS host variable>"
+
+
+def logins_by_seat(nodes_path: Path) -> dict[str, list[str]]:
+    """seat -> its real GitHub logins ('[bot]' dropped), from fleet-nodes.json (login -> seat)."""
+    try:
+        nodes = json.loads(nodes_path.read_text())
+    except (OSError, ValueError):
+        return {}
+    out: dict[str, list[str]] = {}
+    for login, seat in nodes.items():
+        if isinstance(seat, str) and isinstance(login, str):
+            out.setdefault(seat.lower(), []).append(re.sub(r"\[bot\]$", "", login).lower())
+    return out
+
+
+def route_mentions(roles: dict, seat: str) -> list[str]:
+    rule = (roles.get("extra_seats") or {}).get(seat) or {}
+    return [n.lower() for n in rule.get("needles") or [] if isinstance(n, str) and n.startswith("@")]
+
+
+def mention_audit(roles: dict, seats, logins: dict) -> list[tuple[str, str, str, bool]]:
+    """(seat, mentions, login, ok) per seat. ok = no known login, or one @login is on the route."""
+    rows = []
+    for s in seats:
+        ments, have = route_mentions(roles, s), logins.get(s) or []
+        ok = not have or any(f"@{l}" in ments for l in have)
+        rows.append((s, ",".join(ments) or "-", ",".join(have) or "-", ok))
+    return rows
 
 
 def routed_seats(roles: dict) -> set[str]:
@@ -67,8 +100,8 @@ def unrouted(roles: dict, seats) -> list[str]:
     return sorted(s for s in seats if s not in have)
 
 
-def add_seats(roles: dict, seats) -> dict:
-    """Give every seat at least an @mention route; keep any rule already there."""
+def add_seats(roles: dict, seats, logins: dict | None = None) -> dict:
+    """Give every seat an @mention route (@seat, plus @login when the seat has a GitHub login); keep existing rules."""
     extra = roles.setdefault("extra_seats", {})
     aliases = roles.setdefault("aliases", {})
     for s in seats:
@@ -76,6 +109,9 @@ def add_seats(roles: dict, seats) -> dict:
         needles = rule.setdefault("needles", [])
         if f"@{s}" not in needles:
             needles.insert(0, f"@{s}")
+        for login in (logins or {}).get(s, [])[:1]:
+            if f"@{login}" not in needles:
+                needles.insert(1, f"@{login}")
         rule.setdefault("reason", f"ask for {s}")
         aliases.setdefault(s, s)
         aliases.setdefault(s.capitalize(), s)
@@ -115,11 +151,13 @@ def main(argv=None) -> int:
     ap.add_argument("--routing-dir", default=str(FEED / "routing"))
     ap.add_argument("--check", action="store_true", help="validate the routing file only; write nothing")
     ap.add_argument("--table", action="store_true", help="with --check: print seat -> rules")
+    ap.add_argument("--nodes", default=str(FEED / "fleet-nodes.json"), help="login -> seat map (mention audit)")
     ap.add_argument("--yes", action="store_true", help="no prompts")
     a = ap.parse_args(argv)
     rdir = Path(a.routing_dir)
     roles_path = rdir / "inbox-roles.json"
     roles = json.loads(roles_path.read_text()) if roles_path.exists() else {}
+    logins = logins_by_seat(Path(a.nodes))
 
     if a.check:
         seats = parse_seats(a.seats) if a.seats else default_seats(roles)
@@ -128,12 +166,17 @@ def main(argv=None) -> int:
             print(f"bifrost init: FAIL, no route for seat(s): {', '.join(miss)}. Run bifrost init to add them.", file=sys.stderr)
         if ghost:
             print(f"bifrost init: FAIL, rules route to seat(s) not in the fleet: {', '.join(ghost)}", file=sys.stderr)
-        if miss or ghost:
-            return 1
+        rows = mention_audit(roles, seats, logins)
+        nick = [r[0] for r in rows if not r[3]]
+        if nick:
+            print(f"bifrost init: FAIL, nickname-only route (no @login mention) for: {', '.join(nick)}", file=sys.stderr)
         if a.table:
             targets = role_targets(roles)
-            for s in seats:
-                print(f"{s}: {', '.join(sorted(targets.get(s, ())))}")
+            print("seat | mention | login | OK")
+            for s, m, l, ok in rows:
+                print(f"{s} | {m} | {l} | {'OK' if ok else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
+        if miss or ghost or nick:
+            return 1
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0
 
@@ -158,8 +201,8 @@ def main(argv=None) -> int:
                 sys.exit(f"bifrost init: {s}: wake URL must start with http(s)://")
             wake[s] = bool(ans)
 
-    add_seats(roles, seats)
-    miss = unrouted(roles, seats) + unknown_targets(roles, seats)
+    add_seats(roles, seats, logins)
+    miss = unrouted(roles, seats) + unknown_targets(roles, seats) + [r[0] for r in mention_audit(roles, seats, logins) if not r[3]]
     if miss:   # cannot happen after add_seats unless a rule was hand-broken; fail loudly anyway
         print(f"bifrost init: FAIL, unrouted or unknown seat(s): {', '.join(miss)}", file=sys.stderr)
         return 1

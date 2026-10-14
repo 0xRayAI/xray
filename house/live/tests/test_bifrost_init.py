@@ -51,7 +51,7 @@ class BifrostInit(unittest.TestCase):
             (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"forge": {"kinds": ["ci_fail"], "needles": ["merge ask"]}}}))
             self.assertEqual(run("--seats", "forge", "--routing-dir", d, "--yes").returncode, 0)
             f = json.loads((Path(d) / "inbox-roles.json").read_text())["extra_seats"]["forge"]
-            self.assertEqual((f["kinds"], f["needles"]), (["ci_fail"], ["@forge", "merge ask"]))
+            self.assertEqual((f["kinds"], f["needles"]), (["ci_fail"], ["@forge", "@forge0x1", "merge ask"]))
 
     def test_bad_seat_name_rejected(self):
         with tempfile.TemporaryDirectory() as d:
@@ -63,3 +63,43 @@ class BifrostInit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MentionAudit(unittest.TestCase):
+    """Every route's mention matches the seat's real GitHub login (fleet-nodes.json), not only its nickname."""
+    def _fleet(self, d, needles):
+        (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"arch1": {"needles": needles}}}))
+        (Path(d) / "nodes.json").write_text(json.dumps({"arch10x[bot]": "arch1"}))
+
+    def test_nickname_only_route_fails(self):
+        with tempfile.TemporaryDirectory() as d:
+            self._fleet(d, ["@arch1"])
+            r = run("--check", "--seats", "arch1", "--routing-dir", d, "--nodes", str(Path(d) / "nodes.json"))
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("nickname-only route (no @login mention) for: arch1", r.stderr)
+
+    def test_login_route_passes_and_table_prints(self):
+        with tempfile.TemporaryDirectory() as d:
+            self._fleet(d, ["@arch1", "@arch10x"])
+            r = run("--check", "--table", "--seats", "arch1", "--routing-dir", d, "--nodes", str(Path(d) / "nodes.json"))
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("arch1 | @arch1,@arch10x | arch10x | OK", r.stdout)
+
+    def test_init_adds_the_login_mention(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "nodes.json").write_text(json.dumps({"alpha0x[bot]": "alpha"}))
+            r = run("--seats", "alpha,beta", "--routing-dir", d, "--nodes", str(Path(d) / "nodes.json"), "--yes")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            roles = json.loads((Path(d) / "inbox-roles.json").read_text())
+            self.assertEqual(roles["extra_seats"]["alpha"]["needles"][:2], ["@alpha", "@alpha0x"])
+
+    def test_committed_routing_reaches_arch1_on_arch10x(self):
+        sys.path.insert(0, str(TOOL.parent.parent / "feed"))
+        import inbox_pass
+        roles = json.loads((TOOL.parent.parent / "feed" / "routing" / "inbox-roles.json").read_text())
+        self.assertIn("@arch1", roles["extra_seats"]["arch1"]["needles"])
+        ev = {"kind": "issue_comment", "label": "please look", "mentions": ["arch10x[bot]"], "repo": "example-org/x",
+              "number": 7, "t_ct": "2026-10-14T06:00:00-05:00", "id": "c-arch10x"}
+        self.assertIn("arch1", {l.get("seat") for l in inbox_pass._direct_all(ev, roles) if l})
+        ev2 = dict(ev, mentions=["arch10x"], id="c-arch10x-2")
+        self.assertIn("arch1", {l.get("seat") for l in inbox_pass._direct_all(ev2, roles) if l})

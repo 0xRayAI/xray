@@ -81,6 +81,7 @@
     "arch1": {
       "needles": [
         "@arch1",
+        "@arch10x",
         "arch1 deep-review",
         "deep-review",
         "deep review",
@@ -99,6 +100,7 @@
       ],
       "needles": [
         "@forge",
+        "@forge0x1",
         "merge ask",
         "deploy ask",
         "run gate b"
@@ -111,6 +113,7 @@
       ],
       "needles": [
         "@critic",
+        "@critic0x",
         "light ask",
         "strict ask",
         "re-light"
@@ -132,13 +135,15 @@
         "issue_open"
       ],
       "needles": [
-        "@blinky"
+        "@blinky",
+        "@blinky0x1"
       ],
       "reason": "new issue or CoS / board ask for blinky"
     },
     "herald": {
       "needles": [
-        "@herald"
+        "@herald",
+        "@herald0x1"
       ],
       "reason": "Dist ask for herald"
     },
