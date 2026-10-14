@@ -15,16 +15,16 @@ const hooks = Object.fromEntries(['forge', 'critic', 'mill', 'blinky'].map(s => 
 delete hooks.mill.key_env;   // #275: mill uses the per-seat WAKE_KEY_MILL
 let srv = null, logs = '', srvPort = 0;
 function start() {
-  const PORT = 24000 + Math.floor(Math.random() * 1000); srvPort = PORT;
+  srvPort = 0;   // #304: port 0, the real port comes from the listening line
   logs = '';
-  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH,
+  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH,
     MESH_PASSWORD: 'x' + crypto.randomBytes(4).toString('hex'), SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
     INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA, SEAT_WEBHOOKS: JSON.stringify(hooks),
     K_FORGE: 'kf', WAKE_KEY_MILL: 'km', WAKE_KEY_FORGE: 'ignored', K_BLINKY: 'kb', WAKE_DEBOUNCE_S: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
-  srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
+  srv.stdout.on('data', d => { logs += d; const m = /listening on :(\d+)/.exec(logs); if (m) srvPort = Number(m[1]); }); srv.stderr.on('data', d => logs += d);
 }
 async function stop() { if (!srv) return; const p = new Promise(r => srv.once('exit', r)); srv.kill(); await p; srv = null; }
-after(async () => { await stop(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
+after(async () => { await stop(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const count = re => (logs.match(new RegExp(re.source, 'g')) || []).length;
 const until = async (fn, n = 100) => { for (let i = 0; i < n && !fn(); i++) await sleep(100); return fn(); };

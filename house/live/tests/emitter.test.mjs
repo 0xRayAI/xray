@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Assistant / emitter node: POST /emit (assistant seat key, strict fields) -> fleet.working.Assistant, idle after EMITTER_WORKING_S.
 // Run: node --test tests/emitter.test.mjs
 import { test, before, after } from 'node:test';
@@ -9,20 +10,21 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
-const PORT = 19000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 const GKEY = 'assistant-key-' + crypto.randomBytes(8).toString('hex'), CKEY = 'reviewer-key-' + crypto.randomBytes(8).toString('hex');
 const PW = crypto.randomBytes(8).toString('hex'), H = k => crypto.createHash('sha256').update(k).digest('hex');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-emitter-'));
 let srv, cookie;
 before(async () => {
-  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), MESH_PASSWORD: PW, PATH: process.env.PATH,
+  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW, PATH: process.env.PATH,
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
-    COLLECTOR: 'off', EMITTER_WORKING_S: '2', SEAT_KEYS: JSON.stringify({ assistant: H(GKEY), reviewer: H(CKEY) }) }, stdio: 'ignore' });
+    COLLECTOR: 'off', EMITTER_WORKING_S: '2', SEAT_KEYS: JSON.stringify({ assistant: H(GKEY), reviewer: H(CKEY) }) }, stdio: ['ignore', 'pipe', 'ignore'] });
+  PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const r = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + PW, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
   cookie = r.headers.get('set-cookie').split(';')[0];
 });
-after(() => { srv.kill(); fs.rmSync(DATA, { recursive: true, force: true }); });
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const dot = (body, key = GKEY) => fetch(BASE + '/emit', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body),
   headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' } });
 const ev = (o = {}) => ({ kind: 'tool', tool: 'send_letter', t: new Date().toISOString(), ok: true, client: 'assistant', latency_ms: 812, ...o });

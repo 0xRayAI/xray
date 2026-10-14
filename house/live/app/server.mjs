@@ -16,7 +16,7 @@ const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.me
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 
-const PORT = Number(process.env.PORT) || 8080;
+const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
 // Site mode. Default (no config): GATED = password login + private repos masked on the page, feed and logs.
 // PUBLIC = no password, no masking: every repo name shows (build in public). Set by collector/site.json
 // ({"public": true, "name": "Bifrost"}, committed for our deploy and copied by deploy.sh) or LIVE_PUBLIC=1|0 (env wins).
@@ -375,7 +375,28 @@ function ackLines(seat, what) {
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
   bfWrite('acks.json', JSON.stringify(inboxAcks)); return n;
 }
+// Closed items (nudge skips them): the latest close / merge vs reopen event per repo#number, from the merged feed. A line
+// or card on a closed or merged PR / issue is done even when the board no longer carries its card.
+const CLOSE_KINDS = new Set(['merged', 'pr_close', 'issue_close', 'pr_closed', 'issue_closed', 'closed']);
+const REOPEN_KINDS = new Set(['reopen', 'pr_reopen', 'issue_reopen', 'reopened']);
+let closedSeq = -1, closedMap = new Map();
+function closedItems() {
+  if (closedSeq === seq) return closedMap;
+  const m = new Map();
+  for (const { e } of evs.values()) {
+    if (!e || e.number == null || !(CLOSE_KINDS.has(e.kind) || REOPEN_KINDS.has(e.kind))) continue;
+    const k = `${String(e.repo || '').toLowerCase()}#${Number(e.number)}`, t = Date.parse(e.t_ct) || 0, prev = m.get(k);
+    if (!prev || t >= prev.t) m.set(k, { t, closed: CLOSE_KINDS.has(e.kind) });
+  }
+  closedSeq = seq; closedMap = m; return m;
+}
+function itemClosed(repo, number) {
+  if (number == null || !repo) return false;
+  const v = closedItems().get(`${String(repo).toLowerCase()}#${Number(number)}`);
+  return !!(v && v.closed);
+}
 function lineDone(seat, l) {
+  if (itemClosed(l.repo, l.number)) return true;
   const c = bfCards.find(x => x.repo && String(x.repo).toLowerCase() === String(l.repo || '').toLowerCase() && Number(x.number) === Number(l.number));
   if (!c) return false;
   if (c.state === 'closed') return true;
@@ -624,7 +645,7 @@ function evalNudges(now = Date.now()) {
   for (const n of nudges) {
     if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind) || (n.kind === 'reassign' && n.line_key)) continue;
     const c = byKey.get(n.card);
-    if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card })) {
+    if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card }) || itemClosed(n.repo, n.number)) {
       n.closed_at = new Date(now).toISOString(); changed = true; continue;
     }
     if (n.kind === 'held') {
@@ -634,7 +655,7 @@ function evalNudges(now = Date.now()) {
     if (!c || c.state !== 'live' || c.waiting || c.last_beat_t !== n.beat_t) { n.closed_at = new Date(now).toISOString(); changed = true; }
   }
   for (const c of bfCards) {
-    if (cardNoNudge(c)) continue;
+    if (cardNoNudge(c) || itemClosed(c.repo, c.number)) continue;   // closed / merged PRs and issues are never nudged
     if (c.state === 'held' && !c.pinned && c.last_beat_t && now - c.last_beat_t >= HELD_MAX_MS) {
       const nid = `nudge:${c.key}:held:${c.last_beat_t}`;
       if (!nudges.some(n => n.id === nid)) {
@@ -1737,7 +1758,7 @@ function githubFeedEvents() {
   }
 }
 backfillArchive({ inboxes: seatInbox, extraInbox: inboxLines, nudges, acks: inboxAcks, cards: bfCards, events: githubFeedEvents() });
-server.listen(PORT, () => console.log(`live mesh listening on :${PORT} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`));
+server.listen(PORT, () => console.log(`live mesh listening on :${server.address().port} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`));
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
 // started last: the feed validators above are initialized by now
 if (process.env.COLLECTOR !== 'off') {

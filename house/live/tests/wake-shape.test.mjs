@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Wake POST shape is pinned to what #273 (8f5143a7) sent and Cursor accepted; a non-2xx body is logged (key + url redacted);
 // seats due together are staggered (WAKE_STAGGER_MS) instead of firing at once.
 import { test, after } from 'node:test';
@@ -15,15 +16,16 @@ const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d)
 await new Promise(r => sink.listen(0, '127.0.0.1', r));
 const W = `http://127.0.0.1:${sink.address().port}`;
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-wake-'));
-const PORT = 25000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`, ING = crypto.randomBytes(32).toString('hex');
+let PORT = 0, BASE = '', ING = crypto.randomBytes(32).toString('hex');
 const hooks = { forge: { url: `${W}/forge/${AUTO}`, key_env: 'FORGE_WAKE_KEY' }, critic: { url: `${W}/critic/${AUTO}`, key_env: 'CRITIC_WAKE_KEY' } };
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH, COLLECTOR: 'off',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off',
   MESH_PASSWORD: 'x1', SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ING, MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify(hooks), FORGE_WAKE_KEY: KEY, CRITIC_WAKE_KEY: KEY, WAKE_KEY_FORGE: 'not-this-one',
-  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '300' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '4000' }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
+PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
 const until = async fn => { for (let i = 0; i < 80 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 
@@ -48,5 +50,6 @@ test('a non-2xx wake logs the response body, with the key and the automation id 
 
 test('two seats due at once are staggered, not fired together', () => {
   const f = got.find(g => g.path.startsWith('/forge')), c = got.find(g => g.path.startsWith('/critic'));
-  assert.ok(Math.abs(c.at - f.at) >= 200, `${c.at - f.at}ms ${logs}`);
+  assert.ok(Math.abs(c.at - f.at) >= 1000,   // wide margin: arrival times drift under a loaded box (#304 parallel runs)
+    `${c.at - f.at}ms ${logs}`);
 });

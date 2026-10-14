@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Builder-cloud seat: own key; POST /activity (seat Builder-cloud), its own inbox mirrors every builder line (merge-ready,
 // Reviewer PASS) plus nudges to builder; /cards?seat=builder-cloud = Builder's cards. Run: node --test tests/builder-cloud.test.mjs
 import { test, before, after } from 'node:test';
@@ -9,18 +10,19 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
-const PORT = 20000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 const AKEY = 'builder-cloud-' + crypto.randomBytes(8).toString('hex'), CKEY = 'reviewer-' + crypto.randomBytes(8).toString('hex');
 const INGEST = crypto.randomBytes(32).toString('hex'), PW = crypto.randomBytes(8).toString('hex'), H = k => crypto.createHash('sha256').update(k).digest('hex');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-a1c-'));
 let srv;
 before(async () => {
-  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), MESH_PASSWORD: PW, PATH: process.env.PATH,
+  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW, PATH: process.env.PATH,
     SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, MESH_DATA_DIR: DATA, COLLECTOR: 'off', GITHUB_API_URL: 'http://127.0.0.1:1',
-    SEAT_KEYS: JSON.stringify({ 'builder-cloud': H(AKEY), critic: H(CKEY) }) }, stdio: 'ignore' });
+    SEAT_KEYS: JSON.stringify({ 'builder-cloud': H(AKEY), critic: H(CKEY) }) }, stdio: ['ignore', 'pipe', 'ignore'] });
+  PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
 });
-after(() => { srv.kill(); fs.rmSync(DATA, { recursive: true, force: true }); });
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const A = k => ({ Authorization: 'Bearer ' + k });
 const act = (body, key = AKEY) => fetch(BASE + '/activity', { method: 'POST', body: JSON.stringify(body), headers: { ...A(key), 'Content-Type': 'application/json' } });
 const line = o => ({ t_ct: new Date(Date.now() - 5 * 3600000).toISOString().slice(0, 19) + '-05:00', kind: 'turn', action: 'start', tag: 't1', ...o });

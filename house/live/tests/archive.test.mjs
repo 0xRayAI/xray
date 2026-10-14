@@ -39,15 +39,14 @@ test('project strips body; truncated last line is skipped; a bad calendar date i
   assert.equal(validArchiveDate('2024-02-29'), true);
   assert.equal(validArchiveDate('2026-1-01'), false);
   assert.equal(validArchiveDate('2026-10-13'), true);
-  fs.rmSync(data, { recursive: true, force: true });
+  fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
 });
 
 function start(data, extra = {}) {
-  const port = 21000 + Math.floor(Math.random() * 20000);
   const ingest = extra.INGEST_SECRET || crypto.randomBytes(32).toString('hex');
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
-      PORT: String(port),
+      PORT: '0',   // #304: the OS picks the port; read it from the listening line
       MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: ingest,
@@ -60,15 +59,16 @@ function start(data, extra = {}) {
   let logs = '';
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
-  const base = `http://127.0.0.1:${port}`;
+  const baseOf = () => { const m = /listening on :(\d+)/.exec(logs); return m ? `http://127.0.0.1:${m[1]}` : null; };
   const ready = (async () => {
-    for (let i = 0; i < 50; i++) {
-      try { if ((await fetch(base + '/healthz')).ok) return; } catch { /* not up */ }
+    for (let i = 0; i < 300; i++) {
+      const base = baseOf();
+      try { if (base && (await fetch(base + '/healthz')).ok) return; } catch { /* not up */ }
       await new Promise(r => setTimeout(r, 100));
     }
     throw new Error('healthz did not come up\n' + logs);
   })();
-  return { child, base, ready, ingest, logs: () => logs };
+  return { child, get base() { return baseOf(); }, ready, ingest, logs: () => logs };
 }
 
 async function stop(child) {
@@ -104,7 +104,7 @@ test('unset ARCHIVE_KEY still boots and /archive is 401', async () => {
     assert.equal(arch.status, 401);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
@@ -183,7 +183,7 @@ test('401 without the key; 400 for a bad date or kind; archive survives restart;
     assert.ok(fs.existsSync(path.join(data, 'archive', '.backfill-done')));
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
