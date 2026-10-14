@@ -103,3 +103,26 @@ class MentionAudit(unittest.TestCase):
         self.assertIn("arch1", {l.get("seat") for l in inbox_pass._direct_all(ev, roles) if l})
         ev2 = dict(ev, mentions=["arch10x"], id="c-arch10x-2")
         self.assertIn("arch1", {l.get("seat") for l in inbox_pass._direct_all(ev2, roles) if l})
+
+
+class RoutingMap(unittest.TestCase):
+    def test_init_writes_the_map_entry_with_login_and_aliases(self):
+        with tempfile.TemporaryDirectory() as d:
+            r = run("--seats", "forge,arch1", "--logins", "forge=forge0x1[bot],arch1=arch10x", "--routing-dir", d,
+                    "--nodes", str(Path(d) / "none.json"), "--yes")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            roles = json.loads((Path(d) / "inbox-roles.json").read_text())
+            self.assertEqual(roles["routing"]["forge"], {"login": "forge0x1[bot]", "aliases": ["forge", "Forge"]})
+            self.assertEqual(roles["routing"]["arch1"]["login"], "arch10x")
+            self.assertIn("@forge0x1", roles["extra_seats"]["forge"]["needles"])
+            self.assertIn("@arch10x", roles["extra_seats"]["arch1"]["needles"])
+
+    def test_committed_map_lists_each_seat_once(self):
+        roles = json.loads((TOOL.parent.parent / "feed" / "routing" / "inbox-roles.json").read_text())
+        self.assertNotIn("aliases", roles)   # nicknames live on the map entry, not in a second list
+        self.assertEqual(roles["routing"]["arch1"]["login"], "arch10x")
+        self.assertEqual(roles["routing"]["forge"]["login"], "forge0x1[bot]")
+        owner = {}
+        for seat, e in roles["routing"].items():
+            for a in e["aliases"]:
+                self.assertEqual(owner.setdefault(a.lower(), seat), seat, a)   # a nickname belongs to one seat

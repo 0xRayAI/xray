@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
-import { checkRoutesFromDir } from './routes.mjs';
+import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock } from './governor.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
@@ -395,6 +395,26 @@ function saveSeatInbox(s) {
 const ROUTING = checkRoutesFromDir(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'),
   process.env.BIFROST_ROSTER || path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'));
 if (!ROUTING.ok) console.log('ROUTING: FAIL ' + (ROUTING.error || '') + (ROUTING.unrouted.length ? ' no route for ' + ROUTING.unrouted.join(',') : '') + (ROUTING.unknown.length ? ' rules to seats outside the fleet: ' + ROUTING.unknown.join(',') : ''));
+// Routing map login audit (at startup and every BIFROST_ROUTING_AUDIT_S, default 3600): every login in the map is resolved
+// against GitHub with the existing read token (cached, rate-limit safe). A login GitHub does not know is refused: the
+// entry is served as refused at /routing, ROUTING.ok goes false, and the CoS gets a board nudge. Unverified (no token,
+// rate limit, network) is flagged, never refused.
+const ROUTING_DIR = process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing');
+const ROUTING_BASE_OK = ROUTING.ok;
+let ROUTING_MAP = readRoutingMap(ROUTING_DIR).map(e => ({ ...e, status: e.login ? 'unverified' : 'no_login' }));
+const loginResolver = createLoginResolver({ api: GITHUB_API, token: process.env.GITHUB_READ_TOKEN || '',
+  ttlMs: (Number(process.env.BIFROST_LOGIN_TTL_S) || 21600) * 1000 });
+ROUTING.logins = { refused: [], unverified: ROUTING_MAP.filter(e => e.login).map(e => e.seat), no_login: ROUTING_MAP.filter(e => !e.login).map(e => e.seat) };
+async function auditRouting() {
+  const a = await auditLogins(readRoutingMap(ROUTING_DIR), loginResolver.resolve);
+  ROUTING_MAP = a.entries;
+  ROUTING.logins = { refused: a.refused, unverified: a.unverified, no_login: a.no_login };
+  ROUTING.ok = ROUTING_BASE_OK && !a.refused.length;
+  if (a.refused.length) console.log('ROUTING: FAIL login not on GitHub for ' + a.refused.join(','));
+  console.log(`routing: logins ok ${a.entries.filter(e => e.status === 'ok').length} refused ${a.refused.length} unverified ${a.unverified.length}`);
+}
+setTimeout(() => auditRouting().catch(() => {}), 0).unref?.();
+setInterval(() => auditRouting().catch(() => {}), (Number(process.env.BIFROST_ROUTING_AUDIT_S) || 3600) * 1000).unref();
 // Line nudges (part of evalNudges, the one nudge path): an open (unacked, not done) inbox line older than NUDGE_LINE_S
 // (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
 // Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
@@ -431,6 +451,7 @@ function nudgeSeats(now) {
   let changed = false;
   const want = new Map();
   for (const seat of ROUTING.unrouted) want.set(`nudge:unrouted:${seat}`, { seat, kind: 'unrouted', via: 'no route' });
+  for (const seat of ROUTING.logins?.refused || []) want.set(`nudge:login:${seat}`, { seat, kind: 'unrouted', via: 'login not on GitHub' });
   const w = wakeBoard(now);
   for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
   for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
@@ -1594,6 +1615,12 @@ async function handle(req, res) {
     const n = ackLines(who, what); touchSeat(who);
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
+  }
+  if (p === '/routing') {   // GET /routing: the routing map, read-only (seat, login, aliases, status). No keys, no webhook URLs.
+    if (m !== 'GET') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'GET' });
+    let who = null; try { who = await seatOf(req); } catch { /* fall through to session / public */ }
+    if (!who && !PUBLIC && !validSession(req)) return json(req, res, 401, { error: 'unauthorized' });
+    return json(req, res, 200, { ok: ROUTING.ok, seats: ROUTING_MAP.map(e => ({ seat: e.seat, login: e.login, aliases: e.aliases, status: e.status })) });
   }
   if (p === '/cards') {   // GET /cards?seat=<seat>: that seat's key (CoS blinky and forge may read any seat); ?seat=all (or blinky / forge) sees all.
     // Public mode: no key needed, any ?seat= (default all cards); a key that is sent still limits to its own seat.

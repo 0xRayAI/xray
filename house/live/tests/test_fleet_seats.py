@@ -44,7 +44,7 @@ class FleetSeats(unittest.TestCase):
     def test_aliases(self):
         for name, sid in {"forge": "forge", "critic": "critic", "mill": "mill", "blinky": "blinky", "herald": "herald",
                           "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "Arch1": "arch1"}.items():
-            self.assertEqual(ROLES["aliases"].get(name), sid, name)
+            self.assertEqual(inbox_pass.aliases_of(ROLES).get(name), sid, name)
 
     # N3 (#262 handoff): critic's four checks; each fails if its fix is reverted.
     def test_n3_1_handle_whole_word(self):

@@ -7,26 +7,72 @@
     "develop"
   ],
   "watcher_seats": [],
-  "aliases": {
-    "Arch1": "arch1",
-    "arch1": "arch1",
-    "forge": "forge",
-    "Forge": "forge",
-    "critic": "critic",
-    "Critic": "critic",
-    "mill": "mill",
-    "Mill": "mill",
-    "blinky": "blinky",
-    "Blinky": "blinky",
-    "herald": "herald",
-    "Herald": "herald",
-    "Nibbler": "nibbler",
-    "nibbler": "nibbler",
-    "sound": "sound",
-    "Sound": "sound",
-    "magnet": "magnet",
-    "Magnet": "magnet"
+  "routing": {
+    "blinky": {
+      "login": "blinky0x1[bot]",
+      "aliases": [
+        "Blinky",
+        "blinky"
+      ]
+    },
+    "critic": {
+      "login": "critic0x[bot]",
+      "aliases": [
+        "Critic",
+        "critic"
+      ]
+    },
+    "forge": {
+      "login": "forge0x1[bot]",
+      "aliases": [
+        "Forge",
+        "forge"
+      ]
+    },
+    "mill": {
+      "login": null,
+      "aliases": [
+        "Mill",
+        "mill"
+      ]
+    },
+    "herald": {
+      "login": "herald0x1[bot]",
+      "aliases": [
+        "Herald",
+        "herald"
+      ]
+    },
+    "magnet": {
+      "login": null,
+      "aliases": [
+        "Magnet",
+        "magnet"
+      ]
+    },
+    "nibbler": {
+      "login": null,
+      "aliases": [
+        "Nibbler",
+        "nibbler"
+      ]
+    },
+    "sound": {
+      "login": null,
+      "aliases": [
+        "Sound",
+        "sound"
+      ]
+    },
+    "arch1": {
+      "login": "arch10x",
+      "aliases": [
+        "Arch1",
+        "arch1"
+      ]
+    }
   },
+  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory.",
   "seats": {
     "reviewer": {
       "off": true,

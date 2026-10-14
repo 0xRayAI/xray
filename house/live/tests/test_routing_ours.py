@@ -37,7 +37,7 @@ class EverySeatIsOurs(unittest.TestCase):
         refs = [("mirror_seat", ROLES["mirror_seat"]), ("fallback.seat", ROLES["fallback"]["seat"])]
         refs += [("watcher_seats", s) for s in ROLES.get("watcher_seats") or []]
         refs += [("fallback.from", s) for s in ROLES["fallback"].get("from") or []]
-        refs += [("aliases." + k, v) for k, v in ROLES["aliases"].items()]
+        refs += [("aliases." + k, v) for k, v in inbox_pass.aliases_of(ROLES).items()]
         refs += [("extra_seats", k) for k in ROLES["extra_seats"]]
         refs += [("pr_heads", k) for k in ROLES["pr_heads"]["seats"]]
         refs += [("comment_watch", k) for k in ROLES["comment_watch"]["seats"]]

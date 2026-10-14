@@ -14,7 +14,8 @@ Railway variable (and WAKE_KEY_<SEAT>) on the host yourself.
 
 Mention audit: a seat with a GitHub login in feed/fleet-nodes.json (login -> seat) must have an @<login> needle on its
 route, not only its nickname (@arch1 alone never matches a real @arch10x comment). A nickname-only route fails.
-Init adds the @<login> needle for every seat that has a login.
+Init writes the routing map (inbox-roles.json "routing": seat -> {login, aliases}; --logins seat=login,...) and adds the
+@<login> needle for every seat that has a login. The routing map wins over fleet-nodes.json.
 """
 import argparse
 import json
@@ -37,6 +38,24 @@ def logins_by_seat(nodes_path: Path) -> dict[str, list[str]]:
     for login, seat in nodes.items():
         if isinstance(seat, str) and isinstance(login, str):
             out.setdefault(seat.lower(), []).append(re.sub(r"\[bot\]$", "", login).lower())
+    return out
+
+
+def map_logins(roles: dict) -> dict[str, list[str]]:
+    """seat -> [login] from the routing map (inbox-roles.json "routing"), '[bot]' dropped; {} when there is no map."""
+    out = {}
+    for seat, e in (roles.get("routing") or {}).items():
+        if isinstance(e, dict) and e.get("login"):
+            out[seat.lower()] = [re.sub(r"\[bot\]$", "", str(e["login"])).lower()]
+    return out
+
+
+def seat_logins(roles: dict, nodes_path: Path) -> dict[str, list[str]]:
+    """The routing map wins; fleet-nodes.json (login -> seat) fills seats the map does not name."""
+    out = logins_by_seat(nodes_path)
+    names = {s.lower() for s in (roles.get("routing") or {})}
+    out = {s: v for s, v in out.items() if s not in names}
+    out.update(map_logins(roles))
     return out
 
 
@@ -100,10 +119,10 @@ def unrouted(roles: dict, seats) -> list[str]:
     return sorted(s for s in seats if s not in have)
 
 
-def add_seats(roles: dict, seats, logins: dict | None = None) -> dict:
-    """Give every seat an @mention route (@seat, plus @login when the seat has a GitHub login); keep existing rules."""
+def add_seats(roles: dict, seats, logins: dict | None = None, raw_logins: dict | None = None) -> dict:
+    """Write the routing map entry (login + aliases) and an @mention route (@seat, plus @login) for every seat; keep existing rules."""
     extra = roles.setdefault("extra_seats", {})
-    aliases = roles.setdefault("aliases", {})
+    rmap = roles.setdefault("routing", {})
     for s in seats:
         rule = extra.setdefault(s, {})
         needles = rule.setdefault("needles", [])
@@ -113,8 +132,14 @@ def add_seats(roles: dict, seats, logins: dict | None = None) -> dict:
             if f"@{login}" not in needles:
                 needles.insert(1, f"@{login}")
         rule.setdefault("reason", f"ask for {s}")
-        aliases.setdefault(s, s)
-        aliases.setdefault(s.capitalize(), s)
+        ent = rmap.setdefault(s, {"login": None, "aliases": []})
+        if (raw_logins or {}).get(s):
+            ent["login"] = raw_logins[s]
+        elif ent.get("login") is None and (logins or {}).get(s):
+            ent["login"] = logins[s][0]
+        for al in (s, s.capitalize()):
+            if al not in ent["aliases"]:
+                ent["aliases"].append(al)
     return roles
 
 
@@ -152,12 +177,16 @@ def main(argv=None) -> int:
     ap.add_argument("--check", action="store_true", help="validate the routing file only; write nothing")
     ap.add_argument("--table", action="store_true", help="with --check: print seat -> rules")
     ap.add_argument("--nodes", default=str(FEED / "fleet-nodes.json"), help="login -> seat map (mention audit)")
+    ap.add_argument("--logins", default="", help="seat=login,... real GitHub logins (App seats as name[bot]) for the routing map")
     ap.add_argument("--yes", action="store_true", help="no prompts")
     a = ap.parse_args(argv)
     rdir = Path(a.routing_dir)
     roles_path = rdir / "inbox-roles.json"
     roles = json.loads(roles_path.read_text()) if roles_path.exists() else {}
-    logins = logins_by_seat(Path(a.nodes))
+    raw_logins = dict(x.split("=", 1) for x in a.logins.split(",") if "=" in x)
+    raw_logins = {k.strip().lower(): v.strip() for k, v in raw_logins.items() if v.strip()}
+    logins = seat_logins(roles, Path(a.nodes))
+    logins.update({k: [re.sub(r"\[bot\]$", "", v).lower()] for k, v in raw_logins.items()})
 
     if a.check:
         seats = parse_seats(a.seats) if a.seats else default_seats(roles)
@@ -201,7 +230,7 @@ def main(argv=None) -> int:
                 sys.exit(f"bifrost init: {s}: wake URL must start with http(s)://")
             wake[s] = bool(ans)
 
-    add_seats(roles, seats, logins)
+    add_seats(roles, seats, logins, raw_logins)
     miss = unrouted(roles, seats) + unknown_targets(roles, seats) + [r[0] for r in mention_audit(roles, seats, logins) if not r[3]]
     if miss:   # cannot happen after add_seats unless a rule was hand-broken; fail loudly anyway
         print(f"bifrost init: FAIL, unrouted or unknown seat(s): {', '.join(miss)}", file=sys.stderr)

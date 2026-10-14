@@ -223,8 +223,21 @@ def _direct_all(event, roles):
     return [l for l in out if (not me or l.get("seat") != me) and not watched_by_seat(l.get("seat"), event)]   # no self-wakes, no double wakes
 
 
+def aliases_of(roles):
+    """name -> seat from the routing map (each seat's aliases and its login, '[bot]' dropped); legacy roles.aliases still read."""
+    out = dict(roles.get("aliases") or {})
+    for seat, e in (roles.get("routing") or {}).items():
+        if not isinstance(e, dict):
+            continue
+        for n in e.get("aliases") or []:
+            out.setdefault(str(n), seat)
+        if e.get("login"):
+            out.setdefault(str(e["login"]).removesuffix("[bot]"), seat)
+    return out
+
+
 def alias_seat(name, roles):
-    aliases = roles.get("aliases") or {}
+    aliases = aliases_of(roles)
     v = str(name or "")
     for n in (v, v.removesuffix("[bot]")):
         if n in aliases:
@@ -233,8 +246,8 @@ def alias_seat(name, roles):
 
 
 def actor_seat(event, roles):
-    """Seat id of who did this (roles.aliases maps display names / node names to seat ids), or None."""
-    aliases = roles.get("aliases") or {}
+    """Seat id of who did this (the routing map's aliases + logins map names to seat ids), or None."""
+    aliases = aliases_of(roles)
     for key in ("from", "actor"):
         v = str(event.get(key) or "")
         for name in (v, v.removesuffix("[bot]")):
