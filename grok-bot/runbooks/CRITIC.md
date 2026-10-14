@@ -36,3 +36,5 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 - A board-cards / board-owner FAIL marked *known* is today's per-agent board layout; it clears with the next-wave card restructure.
 
 A FAIL goes back on the wave with its OP-PROC line.
+
+**Two hats:** a review rule the critic applies (or a check it runs by hand) is written into this runbook, OP-PROC or the lexicon, and becomes a `bifrost check` rule when it can; a chat-only rule counts as missing.

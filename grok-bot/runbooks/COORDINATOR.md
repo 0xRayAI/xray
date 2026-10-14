@@ -9,6 +9,7 @@ Rules: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Tripwire**, **Nudge**). L
 5. Outside parties are reached only by an @-mention of their real login from `/routing`.
 6. The room gets receipts and blockers only.
 7. Any rule that fails `bifrost check` becomes a card for the next wave.
-8. Keep burn low: nothing polls except tripwire and nudge, and the room goes quiet at 75% weekly burn.
+8. **Two hats:** a board, routing or escalation rule stated in the room is written into the lexicon, OP-PROC or this runbook as a card on the next wave; a chat-only rule counts as missing.
+9. Keep burn low: nothing polls except tripwire and nudge, and the room goes quiet at 75% weekly burn.
 
 Note: seats take cards straight from the board; the coordinator comes in only through tripwire and nudge.

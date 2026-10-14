@@ -9,7 +9,8 @@ Rules: pack [OP-PROC](../OP-PROC.md) (Seat identity, Branch + PR always). After 
 5. Deploy once with `house/live/app/deploy.sh`, with `APP_PUBLIC_ORIGIN` set. Note the last good deployment first as the rollback target.
 6. Check health. If production breaks, roll back first and diagnose second.
 7. Post one receipt to the room with the PR, merge SHA, deployment ID and health result. Then the reviewer runs `bifrost check` live, and any failing rule becomes a card.
-8. Merges, deploys and outside writes go out from the ship seat's 1:1, never a group room.
+8. **Two hats:** a merge, deploy or receipt rule the ship seat follows or hears is written into this runbook, OP-PROC or the lexicon on the next wave; a chat-only rule counts as missing.
+9. Merges, deploys and outside writes go out from the ship seat's 1:1, never a group room.
 
 The ship seat also takes dev cards when the implementer is full; the reviewer still reviews its heads.
 

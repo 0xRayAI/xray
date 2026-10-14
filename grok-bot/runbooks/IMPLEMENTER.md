@@ -22,7 +22,10 @@ Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Bran
 - When a wave changes behavior a plate describes (`docs-site/docs/plates/*.md`, `house/live/docs/*.md`), update the plate text and its stamp in the same wave.
 - Run `bifrost check --only names` so no stale name survives.
 
-## 5. Sha handoff
+## 5. Write it down (**two hats**)
+- Every wave includes the write-up for any rule it relies on or that was stated during it: a lexicon row, an OP-PROC line or a runbook step, in the same branch. A rule that only exists in chat counts as missing.
+
+## 6. Sha handoff
 Hand the shipping seat one packet (inbox line + DM pointing at it):
 - branch and head sha, base sha;
 - the commit list: `git log --oneline origin/main..HEAD`;
