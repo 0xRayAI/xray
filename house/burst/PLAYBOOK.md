@@ -47,7 +47,7 @@ timeline, not in the pill.
 | Supervisor | `house/burst/supervise.py` | restarts when the feed exits; re-mint at 50 min of wall time | process start, exit 75 | no tokens in logs | `BURST_TOKEN_MINTED` from `date +%s` |
 | Watchdog | the same restart loop | about 60s | start the feed again if it died | none | `run()` until the stop file exists |
 | Delta pusher | `house/burst/push.sh` + `push-delta.mjs` | one post while the lock is held, then sleep 2s | one delta to the ingest | local activity lines already written | secret is the `X-Burst-Ingest` header; a 409 posts once more |
-| Pages tripwire | `house/live-mesh/tripwire_push.py` | 300s | `feed_push` when the public snapshot changes | existing feed | unchanged |
+| Pages tripwire (Pages replay only; the governor runs in burst-live) | `house/live-mesh/tripwire_push.py` | 300s | `feed_push` when the public snapshot changes | existing feed | unchanged |
 | Seat inbox | `house/burst/inbox.py` inside the feed pass | every pass, one line per new event id | `fleet/inbox/<seat>.jsonl` | id, time, seat, type, repo, number, sha, title, url, reason. No bodies | read the inbox first and keep a cursor. See "Seat inboxes" |
 
 ### Lab-run working (live rule)

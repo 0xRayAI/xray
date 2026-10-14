@@ -122,6 +122,8 @@ Order: `(UTC instant of t_ct, kind_rank, id)`. Same id from two sources: API / d
 
 ## Pages replay (tripwire)
 
+> **Superseded as the governor.** The change-detecting governor loop now runs inside the burst-live server (`house/live/app/governor.mjs`, see [inbox.md, Governor (tripwire) + watchdog](../live/docs/inbox.md#governor-tripwire--watchdog)). This script is kept only for the GitHub Pages replay (`live-wire` branch); nothing else needs it.
+
 GitHub Pages serves one snapshot, not a socket. The public page lags the box by about **5 minutes** (this interval plus the Pages build).
 
 | | |

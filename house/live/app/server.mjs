@@ -11,6 +11,7 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir } from './routes.mjs';
+import { fingerprint, tripwire } from './governor.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -740,7 +741,17 @@ setInterval(() => {
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }
 }, 15000).unref();
 const GOV_MS = Math.max(200, (Number(process.env.BIFROST_STALL_CHECK_S) > 0 ? Number(process.env.BIFROST_STALL_CHECK_S) : 60) * 1000);
-setInterval(() => { if (governorTick()) { seq++; header = mergedHeader(); fullDirty = true; } }, GOV_MS).unref();
+// Governor (tripwire) + watchdog: one tick. The watchdog pieces (stalled lines + bounded re-wakes, routing, quiet seats)
+// run first; the board snapshot is republished only when the tripwire fingerprint really changed.
+const trip = tripwire();
+let governorChanges = 0;
+setInterval(() => {
+  governorTick();
+  const w = wakeBoard();
+  const fp = fingerprint([...evs.values()].map(v => v.e), { stalled: stalledNow.map(x => [x.seat, x.id, x.rewakes]), routing: ROUTING.ok,
+    quiet: Object.keys(w).filter(k => w[k].quiet).sort() });
+  if (trip(fp)) { governorChanges++; seq++; header = mergedHeader(); fullDirty = true; }
+}, GOV_MS).unref();
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
@@ -984,7 +995,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
-    origin: ORIGIN || null, wakes: wakeHealth(), stalled: stalledNow.length, routing: ROUTING.ok ? 'ok' : 'fail' });
+    origin: ORIGIN || null, wakes: wakeHealth(), stalled: stalledNow.length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }

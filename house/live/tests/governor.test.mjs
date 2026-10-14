@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import http from 'node:http'; import crypto from 'node:crypto'; import path from 'node:path'; import fs from 'node:fs'; import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { checkRoutes } from '../app/routes.mjs';
+import { fingerprint, tripwire, realEvents } from '../app/governor.mjs';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const got = [];
 const sink = http.createServer((q, s) => { let b = ''; q.on('data', d => b += d); q.on('end', () => { got.push({ path: q.url, body: b, at: Date.now() }); s.writeHead(200); s.end('{}'); }); });
@@ -70,4 +71,23 @@ test('board shows each seat\'s last good wake and flags a quiet seat', async () 
 test('checkRoutes: our rules (same as bifrost-init) on a clean config', () => {
   assert.deepEqual(checkRoutes({ extra_seats: { a: { needles: ['@a'] } }, fallback: { seat: 'b' } }, ['a', 'b']), { ok: true, unrouted: [], unknown: [] });
   assert.deepEqual(checkRoutes({ seats: { builder: { seat: 'ghost' } }, extra_seats: { a: { needles: ['@a'] } } }, ['a']).unknown, ['ghost']);
+});
+
+test('tripwire: fires only on a real change; feed_push and generated_at never trip it', () => {
+  const a = [{ id: 'e1', kind: 'pr_open', t_ct: 't1' }];
+  const t = tripwire();
+  assert.equal(t(fingerprint(a)), true);
+  assert.equal(t(fingerprint(a)), false);
+  assert.equal(t(fingerprint([...a, { id: 'p1', kind: 'feed_push', t_ct: 't2' }])), false, 'own feed_push: no self-loop');
+  assert.equal(t(fingerprint(a.map(e => ({ ...e, generated_at: 'later' })))), false);
+  assert.equal(t(fingerprint(a, { stalled: [['forge', 'x', 1]] })), true, 'watchdog state is part of the fingerprint');
+  assert.equal(t(fingerprint([...a, { id: 'e2', kind: 'merged', t_ct: 't3' }], { stalled: [['forge', 'x', 1]] })), true);
+  assert.equal(realEvents([{ kind: 'feed_push' }, { kind: 'merged' }]).length, 1);
+});
+
+test('server governor tick republishes only on change (governor_changes stays put when idle)', async () => {
+  const h1 = JSON.parse(await (await fetch(BASE + '/healthz')).text()).governor_changes;
+  assert.ok(h1 >= 1);
+  await new Promise(r => setTimeout(r, 1200));   // six idle ticks
+  assert.equal(JSON.parse(await (await fetch(BASE + '/healthz')).text()).governor_changes, h1);
 });

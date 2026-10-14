@@ -234,7 +234,9 @@ The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delive
 
 Fleet seat mapping (inbox-roles.json, kit defaults, Seat: credit): [fleet-setup.md](fleet-setup.md).
 
-## Governor (stall watchdog, route check, wake health)
+## Governor (tripwire) + watchdog
+
+- **Tripwire.** The governor loop runs inside the burst-live server (no local watcher), ported from `house/live-mesh/tripwire_push.py` (#227). Every `BIFROST_STALL_CHECK_S` it runs the watchdog pieces below, then hashes the real events (a `feed_push` record or a `generated_at` bump never counts) plus the watchdog state. It republishes the board snapshot only when that hash changed. `/healthz` `governor_changes` counts the real changes.
 
 - **Stalled lines.** An open inbox line (not acked, card not moved on) older than `BIFROST_STALL_MINUTES` (default 15) is flagged in the board header (`stalled`: seat, id, repo, number, since, rewakes) and counted in `/healthz` (`stalled`). The server re-fires that seat's wake webhook with reason `stalled: <reason>`, at most once per threshold window per line and at most `BIFROST_STALL_MAX_REWAKES` times (default 3), so it never loops. An ack clears the flag. `BIFROST_STALL_CHECK_S` (default 60) sets how often it checks. State is in memory, so a restart can re-wake a stalled line once.
 - **Route check at startup.** The server runs the same rules as `tools/bifrost-init --check` on `collector/routing/inbox-roles.json` against `collector/fleet-roster.json`. A seat with no route, or a rule routing to a seat outside the fleet, logs `ROUTING: FAIL …` and shows in the board header (`routing`) and `/healthz` (`routing: fail`). Production keeps running. `BIFROST_ROUTING_DIR` and `BIFROST_ROSTER` override the paths.
