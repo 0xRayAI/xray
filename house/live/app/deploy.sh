@@ -8,7 +8,11 @@ set -euo pipefail
 PROJECT="${LIVE_RAILWAY_PROJECT:-burst-live}"; SERVICE="${LIVE_RAILWAY_SERVICE:-burst-live}"
 APP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
-[ -d "$DST" ] || { echo "deploy dir $DST missing (must be railway-linked to $PROJECT)" >&2; exit 1; }
+ENVN="${LIVE_RAILWAY_ENVIRONMENT:-production}"
+if [ ! -d "$DST" ]; then   # fresh machine: create and link the deploy dir instead of stopping
+  mkdir -p "$DST" && (cd "$DST" && railway link --project "$PROJECT" --service "$SERVICE" --environment "$ENVN" >/dev/null) \
+    || { echo "deploy dir $DST missing and railway link failed (log in with the railway CLI first)" >&2; exit 1; }
+fi
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
   cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
