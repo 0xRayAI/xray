@@ -8,7 +8,7 @@ import net from 'node:net';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk, readSeatTouch, writeSeatTouch } from './presence.mjs';
+import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf, readWakeOk, writeWakeOk } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock } from './governor.mjs';
@@ -340,14 +340,10 @@ async function flushWake(seat) {
   if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk(); }
   st.inflight = false; armWake(seat);
 }
-// Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
-// Persisted on the volume so a restart keeps the last ack (mill's today) and the last good wake.
+// Last time this process saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
+// Acks survive a restart as append-only archive rows and are folded in at startup.
 const seatTouch = {};
-const touchSeat = (seat, t = Date.now()) => {
-  if (!seat) return;
-  seatTouch[seat] = Math.max(seatTouch[seat] || 0, t);
-  persistTouch();
-};
+const touchSeat = (seat, t = Date.now()) => { if (seat) seatTouch[seat] = Math.max(seatTouch[seat] || 0, t); };
 const sha256hex = s => crypto.createHash('sha256').update(String(s)).digest('hex');
 const bearerOf = req => { const h = req.headers.authorization || ''; return h.startsWith('Bearer ') ? h.slice(7).trim() : ''; };
 async function seatOf(req) {   // -> seat id | null; throws when GitHub can't verify an installation token (caller: 503)
@@ -364,12 +360,7 @@ function persistWakeOk() {
   try { writeWakeOk(path.join(STATE_DIR, 'wake-ok.json'), wakeOkAt); }
   catch (e) { console.log('wake: save failed ' + (e && e.code || 'write')); }
 }
-function persistTouch() {
-  try { writeSeatTouch(path.join(STATE_DIR, 'seat-touch.json'), seatTouch); }
-  catch (e) { console.log('touch: save failed ' + (e && e.code || 'write')); }
-}
 Object.assign(wakeOkAt, readWakeOk(path.join(STATE_DIR, 'wake-ok.json')));
-Object.assign(seatTouch, readSeatTouch(path.join(STATE_DIR, 'seat-touch.json')));
 const NUDGE_L1_MS = (Number(process.env.NUDGE_L1_S) || 3600) * 1000, NUDGE_L2_MS = (Number(process.env.NUDGE_L2_S) || 1800) * 1000;
 const NUDGE_L3_MS = (Number(process.env.NUDGE_L3_S) > 0 ? Number(process.env.NUDGE_L3_S) : 7200) * 1000;
 const HELD_MAX_MS = (Number(process.env.HELD_MAX_S) > 0 ? Number(process.env.HELD_MAX_S) : 72 * 3600) * 1000;
@@ -619,6 +610,17 @@ const arch1Launch = createArch1Launch({
 });
 try { nudges = fs.readFileSync(path.join(STATE_DIR, 'nudges.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 initArchive(process.env.MESH_DATA_DIR || '/data');
+function seedTouchFromAcks() {
+  for (const day of archiveDays()) {
+    for (const row of readArchive(day, 'acks').lines) {
+      const seat = String(row && row.seat || '').toLowerCase();
+      const t = Date.parse(row && row.t_ct || '');
+      if (!seat || !Number.isFinite(t) || t <= 0) continue;
+      seatTouch[seat] = Math.max(seatTouch[seat] || 0, t);
+    }
+  }
+}
+seedTouchFromAcks();
 const saveNudges = () => {
   for (const n of nudges) {
     appendArchive('nudges', n);
@@ -661,11 +663,8 @@ function publishBoard(updatedCt) {
   for (const c of bfCards) {
     if (!c || c.kind === 'source') continue;
     const beat = Number(c.last_beat_t);
-    const fromBeat = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : '';
-    const fromCard = typeof c.updated_ct === 'string' && c.updated_ct ? c.updated_ct : '';
-    const fromT = typeof c.t_ct === 'string' && c.t_ct ? c.t_ct : '';
-    const updated = fromBeat || fromCard || fromT || stamp;
-    appendArchive('cards', { ...c, t_ct: updated, updated_ct: updated });
+    const updated = Number.isFinite(beat) && beat > 0 ? new Date(beat).toISOString() : (typeof c.updated_ct === 'string' ? c.updated_ct : '');
+    appendArchive('cards', { ...c, t_ct: updated || c.t_ct || stamp, updated_ct: updated });
   }
   recomputeGithubDataAt();
 }

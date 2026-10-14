@@ -93,7 +93,7 @@ A seat shows ACTIVE when, within the fleet window (15 min), any of these happene
 - it read its inbox (`live-inbox <seat>`);
 - it acked a line (`live-inbox <seat> --ack <id>`).
 
-The wake / read / ack times are stored on the volume (`wake-ok.json`, `seat-touch.json`) and folded in by `foldSeatTouch`, so a restart keeps the last good wake and the last ack.
+The last good wake lives in `wake-ok.json` on the volume. An ack is an append-only archive row (`acks.jsonl`, with `t_ct`). Startup reads those rows and `foldSeatTouch` applies them, so a restart keeps the last ack.
 
 **Known gap.** Work a seat does on its own computer (a desktop turn with no wake, read or ack) does not report yet, so the seat can look idle while busy. Wave fix: `live-inbox` sends a heartbeat on every wake and every task start.
 

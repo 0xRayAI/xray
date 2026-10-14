@@ -243,9 +243,11 @@ test('the open queue hides parked seats and arch10x lines from a previous Chicag
 test('a persisted mill ack today marks mill active over a 10/13 github last_ct', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-mill-'));
   const touch = Date.now();
+  const tCt = new Date(touch).toISOString();
+  const day = tCt.slice(0, 10);
   fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
-  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
-  fs.writeFileSync(path.join(data, 'live', 'seat-touch.json'), JSON.stringify({ mill: touch }));
+  fs.mkdirSync(path.join(data, 'archive', day), { recursive: true });
+  fs.writeFileSync(path.join(data, 'archive', day, 'acks.jsonl'), JSON.stringify({ id: 'mill:line-1', seat: 'mill', line: 'line-1', t_ct: tCt }) + '\n');
   fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
     generated_at: new Date().toISOString(),
     event_count: 1,

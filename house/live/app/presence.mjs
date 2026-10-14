@@ -74,28 +74,6 @@ export function writeWakeOk(file, map) {
   fs.renameSync(tmp, file);
 }
 
-export function readSeatTouch(file) {
-  try {
-    const o = JSON.parse(fs.readFileSync(file, 'utf8'));
-    if (!o || typeof o !== 'object' || Array.isArray(o)) return {};
-    const out = {};
-    for (const [k, v] of Object.entries(o)) {
-      const t = typeof v === 'number' ? v : Date.parse(v);
-      if (Number.isFinite(t) && t > 0) out[String(k).toLowerCase()] = t;
-    }
-    return out;
-  } catch { return {}; }
-}
-
-export function writeSeatTouch(file, map) {
-  const out = {};
-  for (const [k, v] of Object.entries(map || {})) if (Number.isFinite(v) && v > 0) out[k] = v;
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = file + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(out));
-  fs.renameSync(tmp, file);
-}
-
 export function foldSeatTouch(fleet, touch, now = Date.now()) {
   const ids = Object.entries(touch || {}).filter(([, t]) => Number.isFinite(t) && t > 0);
   if (!ids.length) return fleet;
