@@ -31,6 +31,20 @@ class Watch(unittest.TestCase):
         r, _ = self.run_with("echo 'live-inbox: HTTP 401 {\"error\":\"unauthorized\"}' >&2; exit 1")
         self.assertNotEqual(r.returncode, 0); self.assertIn("key not registered", r.stderr)
 
+    def test_delta_prints_same_set_once(self):
+        import os, subprocess, tempfile
+        with tempfile.TemporaryDirectory() as d:
+            fake = Path(d) / "live-inbox"
+            fake.write_text("#!/usr/bin/env bash\necho '{\"id\":\"wake-test-1\"}'\n")
+            fake.chmod(0o755)
+            env = {"PATH": os.environ["PATH"], "HOME": d, "LIVE_INBOX": str(fake),
+                   "LIVE_WATCH_DELTA": "1", "LIVE_WATCH_MAX": "2"}
+            r = subprocess.run(["bash", str(W), "arch1", "0"], env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(r.stdout.count("open ask"), 1)
+        self.assertIn("wake-test-1", r.stdout)
+        self.assertNotIn("--ack", r.stdout)
+
 
 class MethodologyNote(unittest.TestCase):
     def test_no_template_brand_in_notes(self):

@@ -195,9 +195,9 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 
 Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`); actionable events owned only by arch1 also fall back to blinky (CoS), because nothing can push to it.
 
-**Getting woken (local poll, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Instead Arch1 polls locally:
+**Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
 
-Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. For launchd, use the template `bin/com.burst.live-inbox-watch.plist` (see the install steps below). Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The watcher never acks and never starts the work; the Grok turn that sees the lines does.
+Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1`, `60`). It runs `live-inbox <seat>` in a loop, prints any open asks with a timestamp, and **never acks**. On a 401 it prints "key not registered" and backs off (5x the interval, doubling, up to an hour); it never reads or prints the key. Set `LIVE_WATCH_DELTA=1` under the host monitor so the same open set prints once, not on every poll. Arch1 also checks whenever Blaze tells it to. `live-inbox arch1` reads and never acks (`--peek` is the same), so repeated polls are harmless; ack only after the receipt (below). The script never acks and never starts the work. The Grok turn that sees the printed line does.
 
 **Install on Blaze's Mac.**
 1. `mkdir -p ~/.burst/{bin,seat-keys,cursors} && chmod 700 ~/.burst/seat-keys`
@@ -206,7 +206,7 @@ Use the watcher script `bin/live-inbox-watch [seat] [interval]` (defaults `arch1
 4. Place `arch1.key` in `~/.burst/seat-keys/` (delivered only through Blaze's 1:1), then `chmod 600 ~/.burst/seat-keys/arch1.key`.
 5. Check `python3 --version` (live-inbox needs Python 3).
 6. Run it once by hand: `LIVE_WATCH_ONCE=1 ~/.burst/bin/live-inbox-watch arch1`. No output means an empty inbox; "key not registered" means the server's `SEAT_KEYS` has no arch1 entry yet.
-7. Copy `house/live/bin/com.burst.live-inbox-watch.plist` to `~/Library/LaunchAgents/`, replace `USERNAME`, then `launchctl load ~/Library/LaunchAgents/com.burst.live-inbox-watch.plist`. The log goes to `~/.burst/live-inbox-watch.log`. The watcher is the wake only; tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
+7. Run `LIVE_WATCH_DELTA=1 ~/.burst/bin/live-inbox-watch arch1 60` as the host's internal monitor, not as a launchd job. Each stdout line is a session event. An empty inbox prints nothing. The plist `bin/com.burst.live-inbox-watch.plist` writes `~/.burst/live-inbox-watch.log` and nothing in the Grok session reads that file, so loading it does not open the chat. Tool-call hooks (the suit) are a separate install: [fleet-setup.md, Suit and hooks](fleet-setup.md#suit-and-hooks).
 
 **Exception to the no-local-watchers rule.** This poll is an approved exception, approved by Blaze on 2026-10-13 at 11:52 CT. The approval covers Arch1's inbox poll on Blaze's Mac.
 
