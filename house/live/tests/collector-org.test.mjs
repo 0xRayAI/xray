@@ -26,7 +26,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { POR
   COLLECTOR_REPOS: 'other/pinned', COLLECTOR_ORG_REFRESH_S: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
-after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); gh.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); gh.close(); for (let i = 0; i < 20; i++) { try { fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); break; } catch (e) { if (e.code !== 'ENOTEMPTY' && e.code !== 'EBUSY') throw e; await new Promise(r => setTimeout(r, 200)); } } });
 const until = async re => { for (let i = 0; i < 80 && !re.test(logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(logs); };
 test('org repos unioned with COLLECTOR_REPOS at start; a repo new to the org is picked up on refresh', async () => {
   assert.ok(await until(/collector: repos acme\/one private repo #\d+ other\/pinned\n/), logs);
