@@ -61,6 +61,7 @@ vi.mock("../../../core/config-paths.js", () => ({
 }));
 
 vi.mock("../../../monitoring/nudge-monitor.js", () => ({
+  resolveNudgeConfig: vi.fn((f: Record<string, unknown> | undefined) => f?.nudge_monitor ?? f?.nudge_watchdog),
   nudgeMonitor: {
     getStats: vi.fn().mockReturnValue({
       thinkTags: 0,

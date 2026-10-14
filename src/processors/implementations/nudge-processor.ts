@@ -12,6 +12,7 @@ import { ProcessorContext, ProcessorResult } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import {
   nudgeMonitor,
+  resolveNudgeConfig,
   recordThinkTag,
   recordCodeChange,
   recordToolCall,
@@ -44,7 +45,7 @@ export class NudgeProcessor extends PostProcessor {
   private loadConfig(): void {
     try {
       const features = featuresConfigLoader.loadConfig() as unknown as Record<string, unknown>;
-      const nudgeConfig = features?.nudge_monitor as Record<string, unknown> | undefined;
+      const nudgeConfig = resolveNudgeConfig(features);
       if (nudgeConfig) {
         this.nudgeEnabled = nudgeConfig.enabled !== false;
       }

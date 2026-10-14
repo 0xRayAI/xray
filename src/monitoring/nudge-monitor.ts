@@ -88,6 +88,36 @@ const NUDGE_MESSAGES: Record<NudgeType, NudgeAction> = {
   },
 };
 
+/** Old config key from before the rename to nudge_monitor; still read as a deprecated alias. */
+export const LEGACY_NUDGE_CONFIG_KEY = "nudge_watchdog";
+let legacyKeyWarned = false;
+
+/**
+ * features.nudge_monitor, or the deprecated features.nudge_watchdog when nudge_monitor is unset (the new key wins
+ * when both are set). Using the old key logs a one-time deprecation warning.
+ */
+export function resolveNudgeConfig(
+  features: Record<string, unknown> | undefined | null,
+  warn: (message: string) => void = (m) => frameworkLogger.log("nudge-monitor", "deprecated-config-key", "warning", { message: m }),
+): Record<string, unknown> | undefined {
+  const current = features?.nudge_monitor as Record<string, unknown> | undefined;
+  if (current !== undefined && current !== null) return current;
+  const legacy = features?.[LEGACY_NUDGE_CONFIG_KEY] as Record<string, unknown> | undefined;
+  if (legacy !== undefined && legacy !== null) {
+    if (!legacyKeyWarned) {
+      legacyKeyWarned = true;
+      warn(`features.${LEGACY_NUDGE_CONFIG_KEY} is deprecated; rename it to features.nudge_monitor`);
+    }
+    return legacy;
+  }
+  return undefined;
+}
+
+/** Test hook: let the one-time deprecation warning fire again. */
+export function resetLegacyNudgeWarning(): void {
+  legacyKeyWarned = false;
+}
+
 class NudgeMonitor extends EventEmitter {
   private config: NudgeConfig;
   private patterns: Map<string, StuckPattern> = new Map();
@@ -110,7 +140,7 @@ class NudgeMonitor extends EventEmitter {
   private loadConfigFromFeatures(): void {
     try {
       const features = featuresConfigLoader.loadConfig() as unknown as Record<string, unknown>;
-      const nudgeConfig = features?.nudge_monitor as NudgeConfig | undefined;
+      const nudgeConfig = resolveNudgeConfig(features) as NudgeConfig | undefined;
       if (nudgeConfig) {
         this.config = { ...this.config, ...nudgeConfig };
       }

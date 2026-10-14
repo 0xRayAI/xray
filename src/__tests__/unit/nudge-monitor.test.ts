@@ -3,7 +3,7 @@
  *
  */
 
-import { describe, test, expect } from "vitest";
+import { describe, test, it, expect, vi } from "vitest";
 import {
   recordThinkTag,
   recordCodeChange,
@@ -144,5 +144,25 @@ describe("Nudge Monitor functionality", () => {
     expect(stats.thinkTags).toBe(0);
     expect(stats.codeChanges).toBe(0);
     expect(stats.explanations).toBe(0);
+  });
+});
+describe("nudge config key alias (nudge_watchdog -> nudge_monitor)", () => {
+  it("reads the old key when the new one is unset, warning once", async () => {
+    const { resolveNudgeConfig, resetLegacyNudgeWarning } = await import("../../monitoring/nudge-monitor.js");
+    resetLegacyNudgeWarning();
+    const warn = vi.fn();
+    expect(resolveNudgeConfig({ nudge_watchdog: { enabled: false } }, warn)).toEqual({ enabled: false });
+    expect(resolveNudgeConfig({ nudge_watchdog: { enabled: true } }, warn)).toEqual({ enabled: true });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toMatch(/nudge_watchdog is deprecated.*nudge_monitor/);
+  });
+
+  it("the new key wins when both are set, with no warning", async () => {
+    const { resolveNudgeConfig, resetLegacyNudgeWarning } = await import("../../monitoring/nudge-monitor.js");
+    resetLegacyNudgeWarning();
+    const warn = vi.fn();
+    expect(resolveNudgeConfig({ nudge_monitor: { enabled: true }, nudge_watchdog: { enabled: false } }, warn)).toEqual({ enabled: true });
+    expect(resolveNudgeConfig({}, warn)).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
   });
 });
