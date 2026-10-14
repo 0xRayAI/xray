@@ -1639,7 +1639,7 @@ function applyStoredActivity(fleet, now) {
     const t = Date.parse(line.t_ct);
     if (!Number.isFinite(t) || t > now + 300000) continue;
     newest.set(seat, Math.max(newest.get(seat) || 0, t));
-    const ident = String(line.agent || line.tag || '-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || '-';
+    const ident = String(line.agent || (line.kind === 'turn' ? '-' : line.tag) || '-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || '-';
     const key = seat + ':' + line.kind + ':' + ident;
     if (line.kind === 'turn' || line.kind === 'subagent' || line.kind === 'watcher') {
       if (line.action === 'end') { if (t >= (open.get(key) || 0)) open.delete(key); }
@@ -1655,7 +1655,7 @@ function applyStoredActivity(fleet, now) {
     f.seats[seat] = { ...src, active: !!last && now - last <= win, last_ct: iso(last), via: t > prev ? 'activity' : (src.via ?? null), working: !!src.working };
   }
   for (const [key, t] of open) {
-    if (now - t > 60 * 60 * 1000) continue;
+    if (now - t > (key.split(':')[1] === 'turn' ? TURN_OPEN_MS : 60 * 60 * 1000)) continue;   // a missed ack can't pin a seat as working
     const seat = key.split(':')[0];
     if (!f.working[seat]) f.working[seat] = { via: key.split(':')[1] || 'activity', since_ct: iso(t) };
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
@@ -1664,6 +1664,7 @@ function applyStoredActivity(fleet, now) {
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
 }
+const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
 const actHits = new Map();   // seat -> [timestamps]
 function validActivity(d, now = Date.now()) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'not an object';
