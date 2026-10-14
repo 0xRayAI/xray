@@ -11,6 +11,8 @@ import hashlib, json, os, re, subprocess, time
 from datetime import datetime
 from pathlib import Path
 
+import deploy_status
+
 WS = Path(os.environ.get("LIVE_FLEET_ROOT", "/srv"))
 LABQA, LABTEST, HOUSE = WS / "qa", WS / "labtest", WS / "fleet-house" / "house"
 OP_REPO = Path(os.environ.get("LIVE_OPERATOR_REPO", WS / "live-mesh-repo"))   # ops-app commits (git log only)
@@ -760,7 +762,8 @@ class Fleet:
     # ---- Box-local seats (e.g. Operator background work): fleet/activity.jsonl {t_ct, seat, kind, action, tag}.
     # Only those five fields are read; a seat is working while a start has no later end, for up to 60 min.
     def scan_local_activity(self, now=None):
-        f = self.path.parent.parent / "fleet" / "activity.jsonl"
+        env_path = os.environ.get("LIVE_ACTIVITY", "").strip()
+        f = Path(env_path) if env_path else self.path.parent.parent / "fleet" / "activity.jsonl"
         if not f.is_file():
             return
         A, now = self.local_act, now or time.time()
@@ -1020,6 +1023,7 @@ class Fleet:
         """Seat working from GitHub already in the feed: open PR they authored whose newest check is
         queued/in_progress/failing and newer than the last merge, within 30 min. No extra API calls."""
         prs, sha_pr, checks = {}, {}, {}
+        hold_ids = set(deploy_status.classify(feed_events, now)["holds"])
         for e in feed_events:
             kind = e.get("kind")
             t = _ts(e.get("t_ct"))
@@ -1058,8 +1062,13 @@ class Fleet:
                     conc = (e.get("conclusion") or e.get("state") or "").lower()
                 if not sha:
                     continue
-                busy = st in CHECK_BUSY or conc in CHECK_BUSY or kind == "deploy_pending"
-                fail = conc in CHECK_FAIL or kind in ("deploy_fail", "critic_fail")
+                if kind == "deploy_pending":
+                    # Only a fresh tip pending is a hold. Stuck and superseded pendings are not.
+                    busy = e.get("id") in hold_ids
+                    fail = False
+                else:
+                    busy = st in CHECK_BUSY or conc in CHECK_BUSY
+                    fail = conc in CHECK_FAIL or kind in ("deploy_fail", "critic_fail")
                 if not (busy or fail):
                     continue
                 prev = checks.get(sha) or checks.get(sha[:7])
@@ -1201,6 +1210,20 @@ class Fleet:
                 f()
             except (OSError, ValueError) as ex:
                 print(f"[fleet] {f.__name__}: {type(ex).__name__}", flush=True)
+        self._persist()
+        return list(self.events.values())
+
+    def scan_host(self):
+        """GitHub-mode collector: the deploy file and the volume activity log. No box trees."""
+        for f in (self._scan_railway, self.scan_local_activity):
+            try:
+                f()
+            except (OSError, ValueError) as ex:
+                print(f"[fleet] {f.__name__}: {type(ex).__name__}", flush=True)
+        self._persist()
+        return list(self.events.values())
+
+    def _persist(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(f".tmp.{os.getpid()}")
         tmp.write_text(json.dumps({"files": self.files, "bugs": self.bugs, "cards": self.cards,
@@ -1209,4 +1232,3 @@ class Fleet:
                                    "seat_mtime": self.seat_mtime, "cloud": self.cloud,
                                    "prompts": self.prompts, "activity": self.activity, "local_act": self.local_act, "work": self.work}))
         os.replace(tmp, self.path)
-        return list(self.events.values())

@@ -22,6 +22,7 @@ import live_flow  # noqa: E402
 import live_fleet  # noqa: E402
 import live_board  # noqa: E402
 import upstream  # noqa: E402
+import deploy_status  # noqa: E402
 
 ORG = "example-org"
 import live_site  # noqa: E402
@@ -168,6 +169,17 @@ def build(args, gh):
     fleet = FLEET.get("f") or FLEET.setdefault("f", live_fleet.Fleet(out_dir / "fleet-state.json", ff.CT))
     if MODE != "github":
         events.extend(fleet.scan())     # lab bugs/runs + board cards from local files (no API, no LLM)
+    else:
+        # Deploy list from RAILWAY_TOKEN (env only). No box CLI, no lab trees, no house checkout.
+        try:
+            import host_poll
+            host_poll.poll()
+        except Exception as ex:  # noqa: BLE001 (a poll miss must not stop the feed write)
+            ff.log(f"railway poll skipped ({type(ex).__name__})")
+        try:
+            events.extend(fleet.scan_host())
+        except Exception as ex:  # noqa: BLE001
+            ff.log(f"host scan skipped ({type(ex).__name__})")
     uniq = ff.merge([dict(e) for e in events])
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
     uniq = uc.fleet_only(uniq)   # unmapped logins never reach fleet state, board, packets or the feed
@@ -209,6 +221,7 @@ def build(args, gh):
         "backfill_complete": all(backfill_done.values()),
         "source": MODE,
         "fleet": fleet_state,
+        "stale_status": len(deploy_status.classify(uniq)["stale"]),
         **({"board": wave} if wave else {}),
         "generated_at": datetime.now(ff.CT).isoformat(),
         "kinds": sorted({e["kind"] for e in uniq}),

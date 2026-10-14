@@ -33,7 +33,7 @@ test('assemble-collector.sh output passes the guard and holds every shipped file
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'collector-asm-'));
   execFileSync(path.join(APP, 'assemble-collector.sh'), [dir]);
   const c = path.join(dir, 'collector');
-  for (const f of ['upstream/fetch_feed.py', 'live_mesh.py', 'inbox_pass.py', 'fleet-roster.json', 'fleet-nodes.json',
+  for (const f of ['upstream/fetch_feed.py', 'live_mesh.py', 'inbox_pass.py', 'deploy_status.py', 'host_poll.py', 'fleet-roster.json', 'fleet-nodes.json',
     'site.json', 'routing/inbox.py', 'routing/board.py', 'routing/inbox-roles.json', 'README.md']) {
     assert.ok(fs.existsSync(path.join(c, f)), f);
   }
