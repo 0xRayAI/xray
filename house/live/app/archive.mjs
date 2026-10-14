@@ -72,38 +72,48 @@ function logRead(e) {
   if (e && e.code !== 'ENOENT') console.log('archive: read failed ' + e.code);
 }
 
-function loadSeen() {
-  let days;
-  try { days = fs.readdirSync(root); }
+// #290: startup reads only the newest WARM_DAYS day dirs; any other day's ids load lazily on its first append.
+const WARM_DAYS = Math.max(1, Number(process.env.MESH_ARCHIVE_WARM_DAYS) || 2);
+const loadedDays = new Set();
+
+function loadDay(day) {
+  if (loadedDays.has(day)) return;
+  loadedDays.add(day);
+  const dir = path.join(root, day);
+  let names;
+  try { names = fs.readdirSync(dir); }
   catch (e) { logRead(e); return; }
-  for (const day of days) {
-    if (!validArchiveDate(day)) continue;
-    const dir = path.join(root, day);
-    let names;
-    try { names = fs.readdirSync(dir); }
+  for (const name of names) {
+    if (!name.endsWith('.jsonl')) continue;
+    const kind = name.slice(0, -6);
+    if (!KINDS.includes(kind)) continue;
+    let text;
+    try { text = fs.readFileSync(path.join(dir, name), 'utf8'); }
     catch (e) { logRead(e); continue; }
-    for (const name of names) {
-      if (!name.endsWith('.jsonl')) continue;
-      const kind = name.slice(0, -6);
-      if (!KINDS.includes(kind)) continue;
-      let text;
-      try { text = fs.readFileSync(path.join(dir, name), 'utf8'); }
-      catch (e) { logRead(e); continue; }
-      for (const line of text.split('\n')) {
-        if (!line) continue;
-        try {
-          const row = JSON.parse(line);
-          const id = kind === 'inbox' ? recordId(kind, row) : row && row.id;
-          if (row && row.id && id) seen.add(kind + '\0' + id);
-        } catch { /* truncated or corrupt line */ }
-      }
+    for (const line of text.split('\n')) {
+      if (!line) continue;
+      try {
+        const row = JSON.parse(line);
+        const id = kind === 'inbox' ? recordId(kind, row) : row && row.id;
+        if (row && row.id && id) seen.add(kind + '\0' + id);
+      } catch { /* truncated or corrupt line */ }
     }
   }
 }
 
+function loadSeen() {
+  let days;
+  try { days = fs.readdirSync(root); }
+  catch (e) { logRead(e); return; }
+  for (const day of days.filter(validArchiveDate).sort().slice(-WARM_DAYS)) loadDay(day);
+}
+
+export function loadedArchiveDays() { return [...loadedDays].sort(); }
+
 export function initArchive(dataDir) {
   root = path.join(dataDir || process.env.MESH_DATA_DIR || '/data', 'archive');
   seen.clear();
+  loadedDays.clear();
   loadSeen();
   return root;
 }
@@ -113,9 +123,10 @@ export function appendArchive(kind, row) {
   const id = recordId(kind, row);
   if (!id) return false;
   const key = kind + '\0' + id;
+  const day = new Date(timeMs(row)).toISOString().slice(0, 10);
+  loadDay(day);
   if (seen.has(key)) return false;
   const rec = project(kind, row);
-  const day = new Date(timeMs(row)).toISOString().slice(0, 10);
   const file = path.join(root, day, kind + '.jsonl');
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });

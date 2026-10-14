@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initArchive, readArchive, project, validArchiveDate, appendArchive } from '../app/archive.mjs';
+import { initArchive, readArchive, project, validArchiveDate, appendArchive, loadedArchiveDays } from '../app/archive.mjs';
 
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
@@ -198,4 +198,18 @@ test('one inbox line id on two seats (builder + builder-cloud) archives both; a 
   assert.equal(appendArchive('inbox', { ...line, seat: 'builder-cloud' }), false);
   const seats = readArchive('2026-10-13', 'inbox').lines.map(r => r.seat).sort();
   assert.deepEqual(seats, ['builder', 'builder-cloud']);
+});
+
+test('#290 startup loads only the newest days; an older day loads on first append and still dedupes', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-arch-warm-'));
+  const days = ['2026-09-01', '2026-10-01', '2026-10-12', '2026-10-13'];
+  for (const d of days) {
+    fs.mkdirSync(path.join(data, 'archive', d), { recursive: true });
+    fs.writeFileSync(path.join(data, 'archive', d, 'events.jsonl'), JSON.stringify({ id: 'old-' + d, t_ct: d + 'T12:00:00Z' }) + '\n');
+  }
+  initArchive(data);
+  assert.deepEqual(loadedArchiveDays(), ['2026-10-12', '2026-10-13']);
+  assert.equal(appendArchive('events', { id: 'old-2026-09-01', t_ct: '2026-09-01T12:00:00Z' }), false);
+  assert.deepEqual(loadedArchiveDays(), ['2026-09-01', '2026-10-12', '2026-10-13']);
+  assert.equal(readArchive('2026-09-01', 'events').lines.length, 1);
 });
