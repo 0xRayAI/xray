@@ -17,11 +17,11 @@ The ship seat also takes dev cards when the implementer is full; the reviewer st
 
 ## Hotfix
 
-For a broken production change. Term: [lexicon](../LEXICON.md) (**hotfix**). A hotfix has NO critic review before merge.
+For a broken production change (the **hotfix bypass**). Term: [lexicon](../LEXICON.md) (**hotfix**). Forge owns the whole path: no CI wait, no critic review before merge, no rollback.
 
-1. Implementer pushes the smallest fix on its own branch, with a regression test that fails without the fix and passes with it; the ship seat opens it as its own PR, one fix per PR.
-2. Forge merges as soon as CI is green, with no critic review first. Green CI is the normal PR CI: tests, stamp and docs check. Green CI with no new test does not count; forge does not merge it.
-3. Forge deploys once with `house/live/app/deploy.sh`.
+1. Forge writes the smallest fix on its own branch, with a regression test that fails without the fix and passes with it, and runs the tests locally.
+2. Forge opens it as its own PR and merges as forge0x1 at once, without waiting on CI.
+3. Forge deploys once with `house/live/app/deploy.sh` (merging to main does not deploy).
 4. Critic does one live pass on production (`bifrost check` live). If that live pass fails, the next fix is another hotfix.
 5. The room gets the receipt only: PR, merge SHA, deployment ID and the live-pass result.
 6. The usual review process follows afterward on the merged change.
