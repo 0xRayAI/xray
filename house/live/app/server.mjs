@@ -738,25 +738,14 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
-function cardStampMs(updatedCt) {
-  if (typeof updatedCt === 'number' && Number.isFinite(updatedCt) && updatedCt > 0) return updatedCt;
-  const t = Date.parse(String(updatedCt ?? ''));
-  return Number.isFinite(t) && t > 0 ? t : 0;
-}
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const sig = JSON.stringify(merged);
-  const stampMs = cardStampMs(updatedCt);
-  const same = sig === boardSig;
-  // Same cards and the same collector stamp: the 15s header refresh must not move the clock.
-  if (same && !(stampMs > cardsAt)) return;
+  if (sig === boardSig) return;
   boardSig = sig;
-  bfCards = merged;
-  const moved = stampMs > cardsAt;
-  cardsAt = moved ? stampMs : Date.now();
-  const stamp = moved ? updatedCt : new Date(cardsAt).toISOString();
+  bfCards = merged; cardsAt = Date.now();
+  const stamp = updatedCt || new Date().toISOString();
   bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
-  if (same) return;   // clock-only tick: keep the archive from growing on an unchanged card list
   for (const c of bfCards) {
     if (!c || c.kind === 'source') continue;
     const beat = Number(c.last_beat_t);
@@ -769,8 +758,7 @@ function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
   const sliced = wb.cards.slice(0, 200);
   const sig = JSON.stringify(sliced);
-  const stampMs = cardStampMs(wb.updated_ct);
-  if (sig === waveSig && !(stampMs > cardsAt)) return;
+  if (sig === waveSig) return;
   waveSig = sig;
   waveCards = sliced;
   publishBoard(wb.updated_ct);
@@ -1620,12 +1608,9 @@ function cardsBehindData(now) {
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (Number.isFinite(t) && t > latest) latest = t;
   }
-  const boardLag = !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
-  // Card clock (newest event that moves an open card) lags ingest (newest event of any kind).
-  const ingest = githubDataAt || 0;
-  const cardClock = githubCardAt || 0;
-  const clockLag = !!(ingest && cardClock && ingest - cardClock > CARD_BEHIND_S * 1000);
-  return boardLag || clockLag;
+  // Board clock versus the newest card-worthy event. A newer CI check is not a stall:
+  // CI and pr_commit do not make cards, so raw ingest is not the comparison.
+  return !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
 }
 function unreadableRepos() {
   const fromFeed = SRCS.github.header && SRCS.github.header.repos_unreadable;

@@ -208,28 +208,47 @@ test('fleet.cloud.active is false when open_agents is empty and true when one is
   }
 });
 
-test('two collector ticks with the same cards advance cards_at', async () => {
+test('a CI event leaves cards_behind false and a card-worthy event advances cards_at', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-clock-'));
-  const card = { key: '0xRayAI/xray#6', repo: '0xRayAI/xray', number: 6, title: 'clock', state: 'live', stage: 'review', kind: 'pr', owner: 'forge' };
-  const t0 = '2026-10-14T16:00:00-05:00';
-  const t1 = '2026-10-14T16:00:30-05:00';
-  const feed = stamp => ({
-    generated_at: stamp,
-    fleet: { window_min: 15, seats: {}, cloud: { open_agents: [], active: false } },
-    events: [{ id: 'e6', t_ct: stamp, kind: 'pr_comment', repo: '0xRayAI/xray', number: 6, from: 'forge', actor: 'forge0x1[bot]', label: 'note' }],
-    board: { updated_ct: stamp, cards: [card] },
+  const card = { key: '0xRayAI/xray#6', repo: '0xRayAI/xray', number: 6, title: 'clock', state: 'live', stage: 'review', kind: 'pr', owner: 'forge', head: '1111111111111111111111111111111111111111' };
+  const opened = new Date(Date.now() - 21 * 60 * 1000).toISOString();
+  const ci = new Date(Date.now() - 60 * 1000).toISOString();
+  const fleet = { window_min: 15, seats: {}, cloud: { open_agents: [], active: false } };
+  writeFeed(data, {
+    generated_at: ci,
+    fleet,
+    events: [
+      { id: 'open6', t_ct: opened, kind: 'pr_open', repo: '0xRayAI/xray', number: 6, from: 'forge', actor: 'forge0x1[bot]' },
+      { id: 'ci-mill', t_ct: ci, kind: 'check_run', conclusion: 'success', repo: '0xRayAI/xray', sha: '635859a88e187554848815811b0b21f63e7a8081', label: 'mill-ci-report' },
+    ],
+    board: { updated_ct: new Date().toISOString(), cards: [card] },
   });
-  writeFeed(data, feed(t0));
   const srv = await boot(data);
   try {
+    let health = null;
     let first = null;
     for (let i = 0; i < 40; i++) {
+      health = await (await fetch(srv.base + '/healthz')).json();
       const live = await (await fetch(srv.base + '/live-events.json')).json();
-      if (live.freshness && live.freshness.cards_at) { first = live.freshness.cards_at; break; }
+      if (typeof health.data_age === 'number' && live.freshness && live.freshness.cards_at) {
+        first = live.freshness.cards_at;
+        break;
+      }
       await new Promise(r => setTimeout(r, 50));
     }
-    assert.equal(Date.parse(first), Date.parse(t0), srv.logs());
-    writeFeed(data, feed(t1));
+    assert.equal(health.cards_behind, false, JSON.stringify(health) + srv.logs());
+    const worthy = new Date().toISOString();
+    const openedCard = { key: '0xRayAI/xray#8', repo: '0xRayAI/xray', number: 8, title: 'opened', state: 'live', stage: 'review', kind: 'pr', owner: 'forge' };
+    writeFeed(data, {
+      generated_at: worthy,
+      fleet,
+      events: [
+        { id: 'open6', t_ct: opened, kind: 'pr_open', repo: '0xRayAI/xray', number: 6, from: 'forge', actor: 'forge0x1[bot]' },
+        { id: 'ci-mill', t_ct: ci, kind: 'check_run', conclusion: 'success', repo: '0xRayAI/xray', sha: '635859a88e187554848815811b0b21f63e7a8081', label: 'mill-ci-report' },
+        { id: 'open8', t_ct: worthy, kind: 'pr_open', repo: '0xRayAI/xray', number: 8, from: 'forge', actor: 'forge0x1[bot]' },
+      ],
+      board: { updated_ct: worthy, cards: [card, openedCard] },
+    });
     let second = null;
     for (let i = 0; i < 30; i++) {
       const live = await (await fetch(srv.base + '/live-events.json')).json();
@@ -237,7 +256,7 @@ test('two collector ticks with the same cards advance cards_at', async () => {
       if (at && Date.parse(at) > Date.parse(first)) { second = at; break; }
       await new Promise(r => setTimeout(r, 200));
     }
-    assert.equal(Date.parse(second), Date.parse(t1), srv.logs() + ' first=' + first + ' second=' + second);
+    assert.ok(Date.parse(second) > Date.parse(first), srv.logs() + ' first=' + first + ' second=' + second);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
