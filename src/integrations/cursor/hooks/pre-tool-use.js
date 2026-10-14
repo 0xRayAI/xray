@@ -23,6 +23,23 @@ export function cursorHookErrorPermission(err) {
   return 'deny';
 }
 
+// Bootstrap: a fresh checkout has no build yet, so gate modules can be missing.
+// Only the exact build commands may run then, so the hook cannot block the build that creates it.
+const BOOTSTRAP_CMDS = new Set(['npm ci', 'npm run build', 'npm ci && npm run build', 'npm install && npm run build']);
+export function cursorBootstrapPermission(err, event) {
+  if (err?.code !== 'ERR_MODULE_NOT_FOUND') return 'deny';
+  const cmd = String(event?.tool_input?.command ?? event?.command ?? '').trim().replace(/\s+/g, ' ');
+  return BOOTSTRAP_CMDS.has(cmd) ? 'allow' : 'deny';
+}
+
+async function readRawEvent() {
+  try {
+    let raw = '';
+    for await (const c of process.stdin) raw += c;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
 function finish(root, permission, reason, hint, toolName, extra = {}) {
   const out = { permission };
   if (reason) {
@@ -115,6 +132,10 @@ async function main() {
 
     finish(gateRoot, 'allow', null, null, toolName, { ...(route || {}) });
   } catch (err) {
+    if (err?.code === 'ERR_MODULE_NOT_FOUND' && cursorBootstrapPermission(err, await readRawEvent()) === 'allow') {
+      console.log(JSON.stringify({ permission: 'allow', user_message: 'preToolUse: build not present — bootstrap build allowed' }));
+      process.exit(0);
+    }
     const failOpen = cursorHookErrorPermission(err) === 'allow';
     try {
       appendHookActivity(fallbackRoot, 'cursor-pre-tool-use', 'hook-error', 'error', {

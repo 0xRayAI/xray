@@ -152,3 +152,16 @@ describe('installed hooks.json sets failClosed on gate events', () => {
     for (const ev of GATES) expect(h[ev][0].failClosed).toBe(true);
   });
 });
+
+describe('bootstrap build on a fresh checkout (gate module missing)', () => {
+  const sh = (command: string) => JSON.stringify({ tool_name: 'Shell', tool_input: { command } });
+  it('allows the exact build command so the hook cannot block its own build', () => {
+    expect(runWithUtils(null, sh('npm ci && npm run build')).out?.permission).toBe('allow');
+    expect(runWithUtils(null, sh('npm run build')).out?.permission).toBe('allow');
+  });
+  it('still denies any other command while the gate is missing', () => {
+    expect(runWithUtils(null, sh('git push origin main')).out?.permission).toBe('deny');
+    expect(runWithUtils(null, sh('npm run build; rm -rf /')).out?.permission).toBe('deny');
+    expect(runWithUtils(null).out?.permission).toBe('deny');
+  });
+});
