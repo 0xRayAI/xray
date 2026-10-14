@@ -1,7 +1,7 @@
-import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { lookCards } from '../../integrations/hooks/goggles-pipeline.mjs';
@@ -56,14 +56,14 @@ describe('goggles MCP', () => {
     const root = tempRoot();
     const drawn = JSON.parse(readFileSync(bareMap(root), 'utf8'));
     const planes = join(root, 'holed-planes.json');
-    writeFileSync(planes, `${JSON.stringify({ ...drawn, boot: { files: ['src/core/not-there.ts'] } })}\n`);
+    writeFileSync(planes, `${JSON.stringify({ ...drawn, boot: { files: ['dist/core/not-there.js'] } })}\n`);
     process.env.GOGGLES_PLANES_PATH = planes;
     try {
       const { payload, isError } = await dispatchTool('look', { kind: '0' }, root);
       expect(isError).toBe(false);
       expect(payload.quiet).toBe(false);
       expect(payload.mode).toBe('kind0');
-      expect(payload.content).toBe('Actuality. boot: Drift: src/core/not-there.ts is not there');
+      expect(payload.content).toBe('Actuality. boot: Drift: dist/core/not-there.js is not there');
       expect(readFileSync(join(root, '.xray', 'state', 'LENS.md'), 'utf8').trim()).toBe(payload.content);
       const status = await dispatchTool('status_lens', {}, root);
       expect(status.payload.kind0).toBe('drift');
@@ -71,6 +71,29 @@ describe('goggles MCP', () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it('a packed install gives a quiet kind 0', async () => {
+    const repo = fileURLToPath(new URL('../../../', import.meta.url));
+    const listed = JSON.parse(execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: repo, encoding: 'utf8' }));
+    const packed = tempRoot();
+    const suit = tempRoot();
+    try {
+      for (const { path } of listed[0].files) {
+        const dest = join(packed, path);
+        mkdirSync(dirname(dest), { recursive: true });
+        copyFileSync(join(repo, path), dest);
+      }
+      symlinkSync(join(repo, 'node_modules'), join(packed, 'node_modules'));
+      expect(existsSync(join(packed, 'grok-bot'))).toBe(false);
+      process.env.GOGGLES_ORGAN_PATH = join(packed, 'dist/integrations/hooks/goggles-pipeline.mjs');
+      const { payload, isError } = await dispatchTool('look', { kind: '0' }, suit);
+      expect(isError).toBe(false);
+      expect(payload).toMatchObject({ ok: true, quiet: true, mode: 'kind0', content: '' });
+    } finally {
+      rmSync(packed, { recursive: true, force: true });
+      rmSync(suit, { recursive: true, force: true });
+    }
+  }, 60000);
 
   it('an empty look is refused, not quiet', async () => {
     const { payload, isError } = await dispatchTool('look', {}, tempRoot());
@@ -94,6 +117,12 @@ describe('goggles MCP', () => {
     const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'routing' }, tempRoot());
     expect(isError).toBe(false);
     expect(payload.content.skills).toBe('.agents/skills/routing/SKILL.md');
+  });
+
+  it('card planes come from the organ list', async () => {
+    const { payload, isError } = await dispatchTool('look', { outer: 'digest', plane: 'lens-gate' }, tempRoot());
+    expect(isError).toBe(false);
+    expect(payload.content.plane).toBe('lens-gate');
   });
 
   it('stamp-plate is a selectable card plane', async () => {
