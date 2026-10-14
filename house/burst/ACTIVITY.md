@@ -4,4 +4,4 @@
 
 `acceptLine` appends a passing object with `by` and `seq`.
 
-`verifyInstallationToken` checks a seat's GitHub App installation token before that line is stored. The shape is `^ghs_[A-Za-z0-9._-]{20,1024}$`. The cache key is sha256 of the token. There is no static activity key.
+`verifyInstallationToken` checks a seat's GitHub App installation token before that line is stored. The shape is `^ghs_[A-Za-z0-9._-]{20,1024}$`. The cache key is sha256 of the token. There is no static activity key. The accepted seat Apps come from `LIVE_GH_SEATS` ([DEPLOY.md](DEPLOY.md)); a token from an App not listed there gets 401.
