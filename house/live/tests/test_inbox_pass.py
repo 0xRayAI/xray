@@ -53,6 +53,34 @@ class InboxPass(unittest.TestCase):
             self.run_pass(env, "sent", str(run / "a.json"))
             self.assertEqual(self.run_pass(env, "unsent", str(run / "a.json")), "0")
 
+    def test_mention_added_on_edit_routes_once(self):
+        """An edited comment keeps its id (the collector re-reads it on updated_at); a newly added @mention still routes."""
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": "1", "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.run_pass(env, "pass")
+            cm = {"id": f"{R}!7:comment:55", "t_ct": ct(60), "kind": "issue_comment", "repo": R, "number": "7", "from": "blinky",
+                  "label": "blinky comment · app issue #7", "source": "https://github.com/x/7", "mentions": ["forge0x1"]}
+            feed.write_text(json.dumps({"events": [seed, cm]}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            self.assertEqual([l["id"] for l in rd("forge")], [cm["id"]])
+            self.assertEqual(rd("arch1"), [])
+            before = {s: len(rd(s)) for s in ("blinky", "critic", "mill")}
+            feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["forge0x1", "arch10x"])]}))   # edit adds @arch10x
+            self.assertEqual(self.run_pass(env, "pass").split()[0], "1")
+            self.assertEqual([l["id"] for l in rd("arch1")], [f"{cm['id']}:edit:arch10x"])
+            self.assertEqual(len(rd("forge")), 1)                                   # forge was already mentioned: no second line
+            self.assertEqual({s: len(rd(s)) for s in before}, before)              # no comment-watch duplicate
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")                     # same edit again: nothing
+            feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["arch10x"])]}))   # a mention removed: nothing
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+
 
 if __name__ == "__main__":
     unittest.main()

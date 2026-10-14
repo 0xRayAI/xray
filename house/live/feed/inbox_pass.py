@@ -307,6 +307,31 @@ def cmd_pass(now=None):
     if bad:
         print(f"inbox_pass: {bad} event(s) with missing/bad t_ct marked seen, not delivered", file=sys.stderr)
     new = [e for e in new if _t(e) >= floor]   # history (pre-seed or late backfill) is marked seen, never delivered
+    # Edited comments (#300 follow-up): the collector re-reads a comment when updated_at moves and puts it again under the
+    # same id, so `seen` alone would drop a mention added on edit. Remember each comment's @handles; a handle added later
+    # becomes one comment_edit event (id <comment id>:edit:<handles>) that only mention needles route: one line per newly
+    # mentioned seat, never again for the same handle. A comment first noticed by this code (no record) is only recorded.
+    ments = st.get("ments") or {}
+    edits = []
+    for e in new:
+        if "comment" in str(e.get("kind") or "") and isinstance(e.get("mentions"), list):
+            ments[e["id"]] = sorted({str(m).casefold() for m in e["mentions"]})
+    new_ids = {e["id"] for e in new}
+    for k in ids:
+        e = ev[k]
+        if k in new_ids or "comment" not in str(e.get("kind") or "") or not isinstance(e.get("mentions"), list):
+            continue
+        cur = sorted({str(m).casefold() for m in e["mentions"]})
+        if k not in ments:
+            ments[k] = cur
+            continue
+        added = [m for m in cur if m not in ments[k]]
+        ments[k] = sorted(set(ments[k]) | set(cur))
+        if added and not first:
+            edits.append({**e, "id": f"{k}:edit:{'+'.join(added)}", "kind": "comment_edit", "mentions": added,
+                          "t_ct": datetime.fromtimestamp(now, timezone.utc).isoformat(), "edited_from": k})
+    ments = {k: v for k, v in ments.items() if k in seen or k in ev}
+    new = new + edits
     if not first and new:
         acts = []
         if ACTIVITY.is_file():
@@ -320,7 +345,7 @@ def cmd_pass(now=None):
                                 now=datetime.fromtimestamp(now, timezone.utc), activity=acts)
         lines = sum(written.values())
         inbox.maybe_board(len(new), log=lambda m: print(m, file=sys.stderr))
-    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or []})
+    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments})
     ring()
     _save(CACHE, c)
     print(f"{0 if first else len(new)} {lines}")

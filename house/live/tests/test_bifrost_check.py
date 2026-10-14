@@ -18,10 +18,11 @@ def fleet(d, needles=("@arch1", "@arch10x")):
 class Offline(unittest.TestCase):
     def test_dry_run_passes_and_skips_live(self):
         with tempfile.TemporaryDirectory() as d:
-            r = run(*fleet(d), "--dry-run", "--only", "routing,deliver-sim,tripwire,deliver,ack")
+            r = run(*fleet(d), "--dry-run", "--only", "routing,deliver-sim,edit-sim,tripwire,deliver,ack")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertRegex(r.stdout, r"PASS routing +\[grok-bot/OP-PROC\.md:\d+\]")
             self.assertIn("PASS tripwire", r.stdout)
+            self.assertIn("PASS edit-sim", r.stdout)
             self.assertIn("would: post issue + @arch10x comment on <repo>", r.stdout)
             self.assertIn("SKIP deliver", r.stdout)
 
@@ -56,7 +57,8 @@ class Live(unittest.TestCase):
             def do_GET(self):
                 reads.append((self.path, self.headers.get("Authorization")))
                 self._send({"lines": [{"id": "l1", "type": "issue_open", "repo": "org/sandbox", "number": 5},
-                                      {"id": "l2", "type": "issue_comment", "repo": "org/sandbox", "number": 5}]})
+                                      {"id": "l2", "type": "issue_comment", "repo": "org/sandbox", "number": 5},
+                                      {"id": "l2:edit:arch10x", "type": "comment_edit", "repo": "org/sandbox", "number": 5}]})
             def do_POST(self):
                 acks.append((self.path, json.loads(self.rfile.read(int(self.headers["Content-Length"])))))
                 self._send({"ok": True})
@@ -68,7 +70,7 @@ class Live(unittest.TestCase):
             bind.mkdir(); keys.mkdir()
             (keys / "arch1.key").write_text("seat-secret\n")
             log = Path(d) / "gh.log"
-            (bind / "gh").write_text(f"#!/bin/sh\necho \"$@\" >> {log}\n[ \"$2\" = create ] && echo https://github.com/org/sandbox/issues/5\nexit 0\n")
+            (bind / "gh").write_text(f"#!/bin/sh\necho \"$@\" >> {log}\n[ \"$2\" = create ] && echo https://github.com/org/sandbox/issues/5\n[ \"$2\" = comment ] && echo https://github.com/org/sandbox/issues/5#issuecomment-77\nexit 0\n")
             (bind / "gh").chmod(0o755)
             r = run(*fleet(d), "--only", "deliver,ack", "--repo", "org/sandbox", "--target", f"http://127.0.0.1:{srv.server_port}",
                     "--wait", "5", env={"PATH": f"{bind}:{os.environ['PATH']}", "SEAT_KEYS_DIR": str(keys)})
@@ -80,6 +82,8 @@ class Live(unittest.TestCase):
             calls = log.read_text()
             self.assertIn("issue create --repo org/sandbox", calls)
             self.assertIn("issue comment 5 --repo org/sandbox --body @arch10x", calls)
+            self.assertIn("api -X PATCH repos/org/sandbox/issues/comments/77 -f body=bifrost check edit @arch10x", calls)
+            self.assertIn("PASS edit", r.stdout)
             self.assertIn("issue close 5 --repo org/sandbox", calls)
             self.assertEqual(acks, [("/inbox/arch1/ack", {"id": "l1"})])
             self.assertEqual(reads[0], ("/inbox/arch1", "Bearer seat-secret"))

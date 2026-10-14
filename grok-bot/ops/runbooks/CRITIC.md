@@ -8,6 +8,8 @@ The output goes on the PR as the live-pass comment.
 |---|---|---|
 | routing | every seat routed; every route @-mentions the seat's real GitHub login (`fleet-nodes.json`), no nickname-only route | **Routing** |
 | deliver-sim | an issue and an @-comment naming each seat route to that seat (the kit's router) | **Two loops** |
+| edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | **Two loops** |
+| edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | **Two loops** |
 | deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | **Two loops** |
 | resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | **Routing** |
 | ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | **Ack** |

@@ -8,6 +8,8 @@ Every seat needs a route: a seat no rule routes to gets no inbox lines, so its w
 
 **The routing map.** `inbox-roles.json` `routing` lists each seat once: its real GitHub login (App seats as their bot login, e.g. `forge0x1[bot]`; people by handle, e.g. `arch10x`; `null` when the seat has no GitHub login and is reached only in the inner loop) and its nicknames as `aliases` on the same entry. `bifrost-init --logins forge=forge0x1[bot],arch1=arch10x` writes it. Each route must @-mention the seat's login (`@forge0x1`), not only its nickname; `bifrost-init --check --table` fails a nickname-only route and prints seat, mention, login, OK.
 
+**Edited comments.** The collector re-reads a comment when its `updated_at` moves and keeps its id. A mention added on edit becomes one `comment_edit` line (`<comment id>:edit:<handle>`) for the newly mentioned seat only, once; seats already mentioned and comment watch get nothing new.
+
 **Login audit.** At startup and every `BIFROST_ROUTING_AUDIT_S` (default 3600) burst-live resolves every map login on GitHub with the existing `GITHUB_READ_TOKEN` (cached `BIFROST_LOGIN_TTL_S`, default 21600; on a rate limit it pauses until the reset and answers from cache). A login GitHub does not know is refused: `/routing` shows it `missing`, `/healthz` `routing` is `fail`, and the CoS gets a board nudge (`login not on GitHub`). No token or no answer is `unverified`, flagged, never refused. `GET /routing` serves the map read-only: look a login up there before you @-mention anyone, never from memory. After a deploy, `house/live/tools/bifrost-check --target <host>` fails any login that does not resolve (runbook: `grok-bot/ops/runbooks/CRITIC.md`).
 
 ## Pieces
