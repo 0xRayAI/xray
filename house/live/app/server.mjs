@@ -12,6 +12,7 @@ import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './prese
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock } from './governor.mjs';
+import { createArch1Launch } from './arch1-launch.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -38,6 +39,7 @@ for (const [k, v, min] of [...(PUBLIC ? [] : [['MESH_PASSWORD', MESH_PASSWORD, 1
   if (v.length < min) { console.error(`missing or too-short env ${k}; refusing to start`); process.exit(1); }
 }
 const ORIGIN = pinnedOrigin(process.env);
+// Reported ages. They do not gate /healthz (feed_quiet and cards_behind do).
 const CARD_STALE_S = Number(process.env.CARD_STALE_S) > 0 ? Number(process.env.CARD_STALE_S) : 600;
 const DATA_STALE_S = Number(process.env.DATA_STALE_S) > 0 ? Number(process.env.DATA_STALE_S) : 21600;
 
@@ -118,6 +120,7 @@ let seq = 0, header = {}, floorSeq = 0;
 const evs = new Map();          // id -> { e, h, s }  (merged view)
 const removed = [];             // [{ id, s }] (ids dropped from the merged view)
 let fullDirty = true, feedBody, feedGz, feedEtag;
+let activityReady = false;   // activity.jsonl loads later; mergedHeader runs before that
 const SRC_PRIO = ['github', 'box'];
 const SRCS = Object.fromEntries(SRC_PRIO.map(n => [n, { evs: new Map(), header: null, seq: 0, at: 0 }]));
 let ghRetest = new Set();       // "repo#n" with a GitHub lab retest: the box's merge-queue.md copy is then hidden
@@ -534,7 +537,7 @@ function postSeatLines(parsed, onlySeat) {
     const stored = { ...l, seat: s }; arr.push(stored); touched.add(s); added++; fresh.push(stored);
     if (s === 'builder') { const c = seatInbox['builder-cloud']; if (!c.some(x => x.id === l.id)) { const copy = { ...l, seat: 'builder-cloud' }; c.push(copy); touched.add('builder-cloud'); fresh.push(copy); } } }
   for (const s of touched) saveSeatInbox(s);
-  for (const l of fresh) noteWake(l.seat, l);
+  for (const l of fresh) { noteWake(l.seat, l); void arch1Launch.consider(l); }
   return { status: 200, added, rejected: refs };
 }
 // ---- Assistant / emitter: the sample MCP server posts one event per tool call / OAuth sign-in (POST /emit, Bearer = the
@@ -579,6 +582,27 @@ try {
   if (Number.isFinite(t) && t > 0) cardsAt = t;
   else if (bfCards.length) cardsAt = fs.statSync(cardsPath).mtimeMs;
 } catch { /* missing file stays cardsAt 0 */ }
+function recordArch1Beat(_beat, line) {
+  if (line && line.id && seatInbox.arch1 && !seatInbox.arch1.some(x => x.id === line.id)) {
+    seatInbox.arch1.push(line);
+    saveSeatInbox('arch1');
+    appendArchive('inbox', line);
+    noteWake('arch1', line);
+  }
+  seq++; header = mergedHeader(); fullDirty = true;
+}
+const arch1Launch = createArch1Launch({
+  env: process.env, dataDir: STATE_DIR, onBeat: recordArch1Beat,
+  ownsCard: line => {
+    const repo = String(line && line.repo || '').toLowerCase();
+    const num = Number(line && line.number);
+    if (!repo || !Number.isInteger(num)) return false;
+    const card = bfCards.find(c => c && String(c.repo || '').toLowerCase() === repo && Number(c.number) === num);
+    if (!card) return false;
+    const id = seatIdOf(card.owner);
+    return id === 'arch1' || id === 'lead';
+  },
+});
 try { nudges = fs.readFileSync(path.join(STATE_DIR, 'nudges.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 initArchive(process.env.MESH_DATA_DIR || '/data');
 const saveNudges = () => {
@@ -804,6 +828,7 @@ function mergedHeader(now = Date.now()) {
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;
   const tf = foldSeatTouch(h.fleet, seatTouch, now); if (tf) h.fleet = tf;   // wake / read / ack activity
+  const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // POST /activity lines on the volume, no box roundtrip
   h.freshness = {
     github_latest_ct: githubDataAt ? new Date(githubDataAt).toISOString() : null,
     github_card_latest_ct: githubCardAt ? new Date(githubCardAt).toISOString() : null,
@@ -1039,7 +1064,14 @@ async function startCollector() {
   const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
     TZ: 'America/Chicago', PYTHONDONTWRITEBYTECODE: '1', LIVE_MODE: 'github', LIVE_NO_CHECKS: '1', GH_TOKEN: tok,
     LIVE_MESH_SRC: path.join(COLLECTOR_DIR, 'upstream'),
-    LIVE_HEALTH_URLS: (process.env.COLLECTOR_HEALTH_URLS || '').trim() };
+    LIVE_HEALTH_URLS: (process.env.COLLECTOR_HEALTH_URLS || '').trim(),
+    MESH_RUN: DATA_DIR,
+    LIVE_ACTIVITY: path.join(STATE_DIR, 'activity.jsonl'),
+    LIVE_RAILWAY_FILE: path.join(DATA_DIR, 'feed', 'railway-deploys.json') };
+  const railTok = process.env.RAILWAY_TOKEN || '';
+  if (railTok) env.RAILWAY_TOKEN = railTok;   // deploy poll. Never written into the image.
+  if (process.env.RAILWAY_PROJECTS) env.RAILWAY_PROJECTS = process.env.RAILWAY_PROJECTS;
+  if (process.env.RAILWAY_POLL_S) env.RAILWAY_POLL_S = process.env.RAILWAY_POLL_S;
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
   for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
@@ -1052,7 +1084,7 @@ async function startCollector() {
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
-    st.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { console.log('collector: ' + redactRepos(buf.slice(0, i).replaceAll(tok, '[redacted]')).slice(0, 400)); buf = buf.slice(i + 1); } });
+    st.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { let line = buf.slice(0, i).replaceAll(tok, '[redacted]'); if (railTok) line = line.replaceAll(railTok, '[redacted]'); console.log('collector: ' + redactRepos(line).slice(0, 400)); buf = buf.slice(i + 1); } });
   }
   child.on('error', e => console.log('collector: spawn failed (' + e.code + ')'));
   child.on('exit', (code, sig) => {
@@ -1105,6 +1137,34 @@ function eventMovesCard(e) {
   if (k.includes('blocker')) return true;
   return false;
 }
+function hexSha(v) {
+  return String(v || '').toLowerCase().replace(/[^0-9a-f]/g, '').slice(0, 40);
+}
+function shaPrefixHit(a, b) {
+  return !!(a && b && a.length >= 7 && b.length >= 7 && (a.startsWith(b) || b.startsWith(a)));
+}
+// Completed CI counts for health only when its number or sha matches an open card.
+// The freshness light still ignores CI (eventMovesCard).
+function completedCiOnOpenCard(e) {
+  const repo = String(e.repo || '').toLowerCase();
+  const rawNum = e.number;
+  const num = rawNum == null || rawNum === '' ? null : Number(rawNum);
+  const hasNum = Number.isInteger(num);
+  const sha = hexSha(e.sha || e.head_sha);
+  for (const c of bfCards) {
+    if (!c || String(c.state || '').toLowerCase() === 'closed') continue;
+    if (String(c.repo || '').toLowerCase() !== repo) continue;
+    if (hasNum && Number.isInteger(Number(c.number)) && Number(c.number) === num) return true;
+    if (shaPrefixHit(sha, hexSha(c.head))) return true;
+  }
+  return false;
+}
+function healthMovesCard(e) {
+  if (!e || typeof e !== 'object') return false;
+  const k = typeof e.kind === 'string' ? e.kind : '';
+  if ((k === 'check_run' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail') && (e.conclusion || k.startsWith('ci_'))) return completedCiOnOpenCard(e);
+  return eventMovesCard(e);
+}
 function openCardIndex() {
   const keys = new Set();
   for (const c of bfCards) {
@@ -1151,14 +1211,58 @@ function wakeHealth() {   // seat -> ok | fail | no_key | idle (configured, noth
   }
   return out;
 }
+function collectorWatched() {
+  if (process.env.COLLECTOR === 'off') return false;
+  if (process.env.GITHUB_READ_TOKEN) return true;
+  const limit = Number(process.env.COLLECTOR_STALE_S);
+  return Number.isFinite(limit) && limit >= 0;
+}
+function collectorPassAt() {
+  return collector.lastWrite || 0;
+}
+function feedQuiet(now = Date.now()) {
+  if (!collectorWatched()) return false;
+  const at = collectorPassAt();
+  if (!at) return false;
+  const limit = Number(process.env.COLLECTOR_STALE_S);
+  const ms = (Number.isFinite(limit) && limit >= 0 ? limit : 180) * 1000;
+  return now - at > ms;
+}
+const CARD_BEHIND_S = (() => {
+  const n = Number(process.env.CARD_BEHIND_S);
+  return Number.isFinite(n) && n >= 0 ? n : 180;
+})();
+function cardsBehindData(now) {
+  if (!cardsAt) return false;
+  let latest = 0;
+  for (const e of SRCS.github.evs.values()) {
+    if (!healthMovesCard(e)) continue;
+    const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
+    if (Number.isFinite(t) && t > latest) latest = t;
+  }
+  if (!latest) return false;
+  return (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000;
+}
 function healthBody() {   // public: counts, times, ages (s) and wake states; no repo names, urls or keys
+  const now = Date.now();
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
   const cardAge = ageS(cardsAt), dataAge = ageS(githubDataAt);
-  const ok = !((typeof cardAge === 'number' && cardAge > CARD_STALE_S) || (typeof dataAge === 'number' && dataAge > DATA_STALE_S));
-  return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
+  const passAt = collectorPassAt();
+  const warming = collectorWatched() && !passAt;
+  const quiet = feedQuiet(now);
+  const behind = !warming && cardsBehindData(now);
+  // feed_quiet (collector file mtime) and cards lagging open-card data are the gates.
+  // data_age and box_age are reported and do not change ok.
+  const ok = !quiet && !behind;
+  const staleStatus = Number(SRCS.github.header && SRCS.github.header.stale_status) || 0;
+  const body = { ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
-    box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
-    origin: ORIGIN || null, wakes: wakeHealth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges });
+    feed_quiet: quiet, box_age: ageS(SRCS.box.at), box_informational: true, collector_age: ageS(passAt), card_age: cardAge, data_age: dataAge,
+    card_stale_s: CARD_STALE_S, data_stale_s: DATA_STALE_S, board: boardWord(),
+    cards_behind: behind, stale_status: staleStatus,
+    origin: ORIGIN || null, wakes: wakeHealth(), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
+  if (warming) body.status = 'warming';
+  return body;
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
@@ -1166,7 +1270,7 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   if (sig === collector.sig) return;
   let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
-  collector.sig = sig; collector.lastWrite = Date.now();
+  collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
   repoTimes(f);
   ingestSrc('github', f.events, headerOf(f));
   routeSoon();
@@ -1188,7 +1292,7 @@ function routePy(script, args) {
   const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
     TZ: process.env.TZ || 'America/Chicago', MESH_RUN: ROUTE_DIR, FEED: GH_FEED, LIVE_INBOX: path.join(ROUTE_DIR, 'spool'),
     INBOX_STATE: path.join(ROUTE_DIR, 'inbox-state.json'), INBOX_CACHE: path.join(ROUTE_DIR, 'inbox-events.json'),
-    LIVE_ACTIVITY: path.join(ROUTE_DIR, 'activity.jsonl'), LIVE_BOARD: 'off', PYTHONDONTWRITEBYTECODE: '1' };
+    LIVE_ACTIVITY: path.join(STATE_DIR, 'activity.jsonl'), LIVE_BOARD: 'off', PYTHONDONTWRITEBYTECODE: '1' };
   for (const k of ['SEAT_BOTS', 'SEAT_WATCHERS']) if (process.env[k]) env[k] = process.env[k];   // routing config only, no secrets
   return new Promise(resolve => {
     let out = '', err = '';
@@ -1427,7 +1531,68 @@ const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
 const ACT_RATE = 60, ACT_RATE_MS = 60000, ACT_KEEP = 5000, ACT_MAX_BODY = 1024;
 const ACT_EPOCH = crypto.randomBytes(6).toString('base64url');
+const ACT_FILE = path.join(STATE_DIR, 'activity.jsonl');   // append-only on the volume. The memory window is the tail.
 const activity = []; let actSeq = 0;
+function loadActivity() {
+  let rows = [];
+  try {
+    rows = fs.readFileSync(ACT_FILE, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch {}
+  for (const line of rows.slice(-ACT_KEEP)) {
+    if (!line || typeof line !== 'object') continue;
+    activity.push(line);
+    if (typeof line.seq === 'number' && line.seq > actSeq) actSeq = line.seq;
+  }
+}
+function rememberActivity(line) {
+  activity.push(line);
+  if (activity.length > ACT_KEEP) activity.splice(0, activity.length - ACT_KEEP);
+  try {
+    fs.mkdirSync(path.dirname(ACT_FILE), { recursive: true });
+    fs.appendFileSync(ACT_FILE, JSON.stringify(line) + '\n');
+  } catch (e) { console.log('activity: append failed ' + ((e && e.code) || 'write')); }
+}
+loadActivity();
+activityReady = true;
+header = mergedHeader(); fullDirty = true;
+function applyStoredActivity(fleet, now) {
+  if (!activityReady || !activity.length) return fleet;
+  const f = fleet || { as_of: iso(now), window_min: 15, seats: {}, working: {}, active: 0, total: 0 };
+  const win = (f.window_min || 15) * 60000;
+  const open = new Map();
+  const newest = new Map();
+  for (const line of activity) {
+    if (!line || typeof line.seat !== 'string') continue;
+    const seat = line.seat.toLowerCase();
+    if (!SEAT_IDS.includes(seat)) continue;
+    const t = Date.parse(line.t_ct);
+    if (!Number.isFinite(t) || t > now + 300000) continue;
+    newest.set(seat, Math.max(newest.get(seat) || 0, t));
+    const ident = String(line.agent || line.tag || '-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || '-';
+    const key = seat + ':' + line.kind + ':' + ident;
+    if (line.kind === 'turn' || line.kind === 'subagent' || line.kind === 'watcher') {
+      if (line.action === 'end') { if (t >= (open.get(key) || 0)) open.delete(key); }
+      else open.set(key, Math.max(open.get(key) || 0, t));
+    }
+  }
+  f.seats = { ...(f.seats || {}) };
+  f.working = { ...(f.working || {}) };
+  for (const [seat, t] of newest) {
+    const prev = tsOf(f.seats[seat]?.last_ct);
+    const last = Math.max(prev, t);
+    const src = f.seats[seat] || {};
+    f.seats[seat] = { ...src, active: !!last && now - last <= win, last_ct: iso(last), via: t > prev ? 'activity' : (src.via ?? null), working: !!src.working };
+  }
+  for (const [key, t] of open) {
+    if (now - t > 60 * 60 * 1000) continue;
+    const seat = key.split(':')[0];
+    if (!f.working[seat]) f.working[seat] = { via: key.split(':')[1] || 'activity', since_ct: iso(t) };
+    const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
+    f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
+  }
+  f.active = Object.values(f.seats).filter(v => v.active).length;
+  return f;
+}
 const actHits = new Map();   // seat -> [timestamps]
 function validActivity(d, now = Date.now()) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'not an object';
@@ -1549,7 +1714,17 @@ async function handle(req, res) {
   const p = url.pathname;
   const m = req.method;
 
-  if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'application/json; charset=utf-8', healthBody());
+  if (p === '/cursor/webhook' && m === 'POST') {
+    let raw;
+    try { raw = await readBody(req, 65536); }
+    catch (e) { return json(req, res, e && e.code === 413 ? 413 : 400, { error: e && e.code === 413 ? 'too large' : 'bad request' }); }
+    const result = arch1Launch.handleWebhook(raw, req.headers);
+    return json(req, res, result.status, result.body);
+  }
+  if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) {
+    const body = healthBody();
+    return send(req, res, body.ok ? 200 : 503, 'application/json; charset=utf-8', JSON.stringify(body));
+  }
   if (p === '/archive' && m === 'GET') {
     const key = String(process.env.ARCHIVE_KEY || '');
     const tok = bearerOf(req);
@@ -1624,8 +1799,9 @@ async function handle(req, res) {
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
     for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
-    activity.push(line); if (activity.length > ACT_KEEP) activity.splice(0, activity.length - ACT_KEEP);
+    rememberActivity(line);
     appendArchive('activity', line);
+    seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 202, { ok: true });
   }
 
