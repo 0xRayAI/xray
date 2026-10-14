@@ -505,3 +505,22 @@ class Mentions(unittest.TestCase):
         self.assertEqual(lc.mentions("hi @Forge and @critic0x[bot], not `@mill` or a@b.com"), ["critic0x[bot]", "forge"])
         self.assertIsNone(lc.mentions(None))
 
+
+
+class SeatNameNotLogin(unittest.TestCase):
+    """B1 (#326): a GitHub login that equals a seat name is a stranger; only a no-User git name maps to the seat."""
+
+    def test_stranger_logins_stay_other(self):
+        import live_collect as lc
+        for login in ("arch1", "blinky", "Mill", "herald"):
+            if login.lower() in lc.NODE_LC:
+                continue
+            self.assertEqual(lc.credit(login), "other")
+            self.assertEqual(lc.node(login), "Others")
+
+    def test_git_name_without_user_is_the_seat(self):
+        import live_collect as lc
+        login = lc.commit_login({"author": {"name": "blinky", "user": None}})
+        self.assertEqual(lc.credit(login), "blinky")
+        self.assertEqual(lc.node(login), "blinky")
+        self.assertEqual(lc.commit_login({"author": {"name": "x", "user": {"login": "blinky"}}}), "blinky")

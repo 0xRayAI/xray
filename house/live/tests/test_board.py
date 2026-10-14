@@ -178,9 +178,9 @@ class Model(unittest.TestCase):
 
     def test_mill_owns_a_card_forge_opened(self):
         import live_collect as uc
-        self.assertEqual(uc.commit_login({"author": {"name": "mill", "user": None}}), "mill")
-        self.assertEqual(uc.rest_author_login({"author": None, "commit": {"author": {"name": "mill"}}}), "mill")
-        self.assertEqual((uc.node("mill"), uc.credit("mill")), ("mill", "mill"))
+        self.assertEqual(uc.commit_login({"author": {"name": "mill", "user": None}}), "git:mill")
+        self.assertEqual(uc.rest_author_login({"author": None, "commit": {"author": {"name": "mill"}}}), "git:mill")
+        self.assertEqual((uc.node("git:mill"), uc.credit("git:mill")), ("mill", "mill"))
         self.assertIsNone(uc.commit_login({"author": {"name": "Someone", "user": None}}))
         issue = self.ev(294, "issue_open", 5000, title="board", **{"from": "forge"})
         alone = {c["number"]: c for c in self.w.model([issue])["cards"] if not c.get("pinned")}

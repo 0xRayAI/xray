@@ -103,8 +103,8 @@ def credit(login: str | None) -> str | None:
     n = NODE_LC.get(low)
     if n:
         return CREDIT_ALIAS.get(n.lower(), n)
-    if low in SEAT_GIT_NAMES:
-        return low
+    if low.startswith("git:") and low[4:] in SEAT_GIT_NAMES:   # only commit_login's no-User git-name path
+        return low[4:]
     return "github" if low.endswith("[bot]") else "other"   # unmapped bot / CI -> the github node
 
 
@@ -121,8 +121,8 @@ def node(login: str | None) -> str:
     mapped = NODE_LC.get(low)
     if mapped:
         return mapped
-    if low in SEAT_GIT_NAMES:
-        return low
+    if low.startswith("git:") and low[4:] in SEAT_GIT_NAMES:   # a GitHub login is never a seat by name
+        return low[4:]
     return "Others" if login else "GitHub"
 
 
@@ -140,7 +140,7 @@ def commit_login(cm) -> str | None:
     name = (a.get("name") or "").strip()
     if name.endswith("[bot]"):
         return name   # bot authors have no User; their git name is the login
-    return name.lower() if name.lower() in SEAT_GIT_NAMES else None
+    return "git:" + name.lower() if name.lower() in SEAT_GIT_NAMES else None   # ":" never occurs in a GitHub login
 
 
 def rest_author_login(cm) -> str | None:
