@@ -1,3 +1,4 @@
+const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
 // Bifrost live mesh: password-gated (or public) static page + in-memory feed (push-only ingest; full or delta, delta polls).
 // Node 20, zero dependencies.
 import http from 'node:http';
@@ -1664,7 +1665,6 @@ function applyStoredActivity(fleet, now) {
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
 }
-const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
 const actHits = new Map();   // seat -> [timestamps]
 function validActivity(d, now = Date.now()) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'not an object';
