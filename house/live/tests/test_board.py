@@ -47,6 +47,23 @@ class Model(unittest.TestCase):
             kw.setdefault("pr_state", "open")
         return {"id": f"{R}#{n}:{kind}:{ago}", "t_ct": ct(ago), "kind": kind, "repo": R, "number": n, "from": "Builder", "source": f"https://github.com/{R}/pull/{n}", **kw}
 
+    def test_new_pr_and_issue_are_board_items(self):
+        evs = [self.ev(40, "pr_open", 60, title="new pr"), self.ev(41, "issue_open", 60, title="new issue", pr_state="open")]
+        keys = {c["key"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertEqual({keys[f"{R.lower()}#40"]["kind"], keys[f"{R.lower()}#41"]["kind"]}, {"pr", "issue"})
+        self.assertTrue(all(c["state"] == "live" for c in keys.values()))
+
+    def test_comment_on_merged_or_closed_card_is_a_beat_and_keeps_it_on_the_board(self):
+        evs = [self.ev(42, "pr_open", 200000, title="old merged"), self.ev(42, "merged", 190000),
+               self.ev(42, "review_comment", 3600, **{"from": "Reviewer"}),
+               self.ev(43, "pr_open", 200000, title="old closed", pr_state="closed"), self.ev(43, "pr_close", 190000),
+               self.ev(43, "pr_comment", 3600, **{"from": "Reviewer"})]
+        cards = {c["number"]: c for c in self.w.model(evs)["cards"] if c.get("repo") == R}
+        self.assertEqual(set(cards), {42, 43}, "late comments keep closed cards visible")
+        self.assertIn("comment after merge", [b["what"] for b in cards[42]["beats"]])
+        self.assertIn("comment after close", [b["what"] for b in cards[43]["beats"]])
+        self.assertEqual({cards[42]["state"], cards[43]["state"]}, {"closed"})
+
     def test_cards_stages_packets_stall_md(self):
         sha = "abcdef1234567"
         evs = [self.ev(1, "pr_open", 5000, title="fix a", packet={"goal": "g", "acceptance": "tests", "next owner": "Reviewer"}),
@@ -82,7 +99,8 @@ class Model(unittest.TestCase):
                dict(self.ev(8, "pr_comment", 600), **{"from": "Operator"}),          # e.g. ops-app's nudge comment
                dict(self.ev(8, "pr_comment", 300), **{"from": "Builder"})]
         c = [c for c in self.w.model(evs)["cards"] if c.get("number") == 8][0]
-        self.assertEqual([b["what"] for b in c["beats"]], ["opened", "merged", "owner comment"])
+        # any comment after the merge is now a beat too (Bifrost: comments on merged PRs reach the board)
+        self.assertEqual([b["what"] for b in c["beats"]], ["opened", "merged", "comment after merge", "owner comment"])
 
     def merged_card(self, n=20, *more):
         return [self.ev(n, "pr_open", 9000, title="m"), self.ev(n, "merged", 8000), *more]

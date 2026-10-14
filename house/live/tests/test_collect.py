@@ -328,6 +328,28 @@ class GithubSourcedWidened(unittest.TestCase):
         self.assertEqual(_sub(code), "1")
 
 
+class CommentsReachSeats(unittest.TestCase):
+    """Bifrost: a comment on a PR or issue whose author is outside the fleet used to be dropped (to == Others);
+    issue comments now carry the issue author's node so they reach that seat."""
+    CODE = ("rc = c.RepoCollector('acme-org/app', Path(tempfile.mkdtemp()), FF(), lambda m: None)\n"
+            "rc.st['prs']['5'] = {'author': 'stranger', 'merged_at': '2026-10-12T09:00:00Z', 'state': 'closed'}\n"
+            "rc.st.setdefault('issues', {}).update({'6': 'builder-app[bot]', '7': 'stranger'})\n"
+            "rows = [{'id': 1, 'issue_url': 'u/issues/5', 'html_url': 'https://github.com/acme-org/app/pull/5#c1',"
+            " 'user': {'login': 'builder-app[bot]'}, 'body': 'late note', 'created_at': '2026-10-12T15:00:00Z', 'updated_at': '2026-10-12T15:00:00Z'},"
+            " {'id': 2, 'issue_url': 'u/issues/6', 'html_url': 'https://github.com/acme-org/app/issues/6#c2',"
+            " 'user': {'login': 'builder-app[bot]'}, 'body': 'x', 'created_at': '2026-10-12T15:01:00Z', 'updated_at': '2026-10-12T15:01:00Z'}]\n"
+            "rc.paged = lambda cl, path, params, key, stop=None, **k: iter(rows if path.endswith('/issues/comments') else [])\n"
+            "rc._etag_new = None; rc.st['bf']['comments:critic3'] = True\n"
+            "rc.poll_comments(None)\n"
+            "print(json.dumps([sorted([e['kind'], e['to'], bool(e.get('pr_merged'))] for e in rc.ev.values() if 'comment' in e['kind']),"
+            " rc.issue_node(6), rc.issue_node(7)]))")
+
+    def test_outside_author_pr_comment_kept_and_issue_comment_targets_author(self):
+        got = json.loads(_sub(self.CODE))
+        # the self-comment on #6 goes to GitHub (put: from == to); issue_node still names the author's seat
+        self.assertEqual(got, [[["issue_comment", "GitHub", False], ["pr_comment", "GitHub", True]], "Builder", "GitHub"])
+
+
 class AbsentBranchCommits(unittest.TestCase):
     def test_poll_commits_404_marks_absent_and_skips(self):
         code = ("import urllib.error\n"

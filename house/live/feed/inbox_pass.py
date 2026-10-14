@@ -197,7 +197,8 @@ def _direct_all(event, roles):
         author = alias_seat(event.get("to"), roles) if kind in (cw.get("author_kinds") or []) else None
         merged = " (merged PR)" if event.get("pr_merged") else ""
         if author:
-            line = inbox._line(event, author, (cw.get("author_reason") or "comment on your PR") + merged)
+            why = "comment on your issue" if kind == "issue_comment" else (cw.get("author_reason") or "comment on your PR")
+            line = inbox._line(event, author, why + merged)
             if line:
                 out.append(line)
         for seat, reason in (cw.get("seats") or {}).items():

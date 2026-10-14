@@ -187,13 +187,14 @@
     ],
     "author_kinds": [
       "pr_comment",
-      "review_comment"
+      "review_comment",
+      "issue_comment"
     ],
     "author_reason": "comment on your PR",
     "seats": {
       "blinky": "comment watch (CoS)"
     }
   },
-  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR comments also to the PR author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
+  "_note_comment_watch": "Every PR/issue comment (incl. merged PRs) routes to blinky, and PR/issue comments also to the PR or issue author's seat (aliases on the author node), mention or not. @-mentions come from the collector's mentions[] (handles only, never bodies).",
   "_note_seats": "seats: the kit's role rules (reviewer / builder / tester / operator / coord, read by routing/inbox.py), each mapped to one of our 9 by \"seat\" (or \"off\"); inbox_pass.py rewrites every line to that seat. Kit defaults stay in inbox.py."
 }

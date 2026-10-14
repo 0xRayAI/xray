@@ -171,12 +171,12 @@ def model(extra_events=None, now=None):
     for e in evs:                                          # beats, in time order; a closed card stops collecting
         k = _key(e, sha_num)
         c = cards.get(k) if k else None
-        if not c or c["_stop"]:
-            continue
+        if not c or (c["_stop"] and e.get("kind") not in ("pr_comment", "issue_comment", "pr_review", "review_comment")):
+            continue                                       # a stopped (closed) card still takes comments
         if e.get("kind") in ("issue_close", "pr_close"):
             c["_closed"], c["_closed_t"] = True, _t(e)
         w = beat_of(e)
-        is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review")
+        is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review", "review_comment")
         if is_comment and e.get("parked"):                 # Coord rule: a 'Parked:' comment parks the card (no nudges)
             c["_parked_c"] = True
             c["_hold"] = None
@@ -198,7 +198,10 @@ def model(extra_events=None, now=None):
             w = "owner: resolved" if e.get("resolved") else "owner comment"   # the owning seat's own note is a beat
             if e.get("resolved"):
                 c["_resolved"] = "owner says resolved"
-        if w and c.get("_merged_t") and not w.startswith(("retest", "owner")):
+        if not w and is_comment and (c["_closed"] or c.get("_merged_t")):
+            # a comment on a merged or closed card is a beat: the card stays on the board (24 h from the comment)
+            w = "comment after merge" if c.get("_merged_t") else "comment after close"
+        if w and c.get("_merged_t") and not w.startswith(("retest", "owner", "comment")):
             continue                                       # after the merge only merge-queue.md ticks move the card
         if not w:
             if c["_closed"] and not c.get("_merged_t") and c["_closed_t"] and _t(e) >= c["_closed_t"]:
@@ -249,6 +252,8 @@ def model(extra_events=None, now=None):
             closed = True
             stage = "done"
             closed_t = closed_t or (last["t"] / 1000 if last else now)
+        if closed and last and last["what"].startswith(("comment", "owner")):
+            closed_t = max(closed_t or 0, last["t"] / 1000)   # a late comment keeps the closed card visible
         if closed and closed_t and now - closed_t > CLOSED_KEEP_S:
             continue                                       # closed cards drop off after 24 h
         quiet = bool(last) and now - last["t"] / 1000 > 86400
