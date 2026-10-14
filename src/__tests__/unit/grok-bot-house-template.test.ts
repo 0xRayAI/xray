@@ -87,6 +87,7 @@ describe('grok-bot house template — USMail docs', () => {
         'HOUSE.md',
         'ROLE-MAP.md',
         'WAVEBOARD.md',
+        'fleet/WAKE-ROUTINE.md',
         'fleet/activity.jsonl',
         'fleet/prompts.jsonl',
         'watchers/issue-sweep-last.txt',
