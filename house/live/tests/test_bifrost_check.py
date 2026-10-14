@@ -147,7 +147,7 @@ class Live(unittest.TestCase):
             (bind / "gh").write_text(f"#!/bin/sh\necho \"$@\" >> {log}\n[ \"$2\" = create ] && echo https://github.com/org/sandbox/issues/5\n[ \"$2\" = comment ] && echo https://github.com/org/sandbox/issues/5#issuecomment-77\nexit 0\n")
             (bind / "gh").chmod(0o755)
             r = run(*fleet(d), "--only", "deliver,ack,addressed", "--repo", "org/sandbox", "--target", f"http://127.0.0.1:{srv.server_port}",
-                    "--wait", "5", env={"PATH": f"{bind}:{os.environ['PATH']}", "SEAT_KEYS_DIR": str(keys)})
+                    "--wait", "5", "--edit-delay", "0", env={"PATH": f"{bind}:{os.environ['PATH']}", "SEAT_KEYS_DIR": str(keys)})
             srv.shutdown()
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("PASS deliver", r.stdout)
@@ -187,6 +187,129 @@ class Live(unittest.TestCase):
             self.assertEqual(r.returncode, 0)
             self.assertIn("SKIP deliver", r.stdout)
             self.assertIn("needs --repo and --target", r.stdout)
+
+
+def users_api(ok_logins):
+    """Fake GitHub users API: 200 for ok_logins, 404 for anything else."""
+    import urllib.parse
+    class H(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a): pass
+        def do_GET(self):
+            name = urllib.parse.unquote(self.path.rsplit("/", 1)[-1])
+            self.send_response(200 if name in ok_logins else 404); self.end_headers(); self.wfile.write(b"{}")
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+class Nodes(unittest.TestCase):
+    """#305: every fleet-nodes.json login resolves on GitHub, like the routing logins."""
+    def test_fake_name_fails_committed_nodes_pass(self):
+        committed = json.loads((TOOL.parent.parent / "feed" / "fleet-nodes.json").read_text())
+        srv = users_api(set(committed))
+        api = {"BIFROST_GITHUB_API": f"http://127.0.0.1:{srv.server_port}"}
+        try:
+            good = run("--only", "nodes", env=api)
+            with tempfile.TemporaryDirectory() as d:
+                (Path(d) / "nodes.json").write_text(json.dumps({**committed, "nobody0x9[bot]": "ghost"}))
+                bad = run("--only", "nodes", "--nodes", str(Path(d) / "nodes.json"), env=api)
+        finally:
+            srv.shutdown()
+        self.assertEqual(good.returncode, 0, good.stdout)
+        self.assertIn("PASS nodes", good.stdout)
+        self.assertEqual(bad.returncode, 1, bad.stdout)
+        self.assertIn("login 404 on GitHub: nobody0x9[bot]", bad.stdout)
+
+    def test_dead_names_are_gone(self):
+        nodes = json.loads((TOOL.parent.parent / "feed" / "fleet-nodes.json").read_text())
+        for dead in ("blinky0x1[bot]", "herald0x1[bot]", "0xray-critic[bot]"):
+            self.assertNotIn(dead, nodes)
+        self.assertEqual(nodes.get("critic0x1[bot]"), "critic")
+
+
+def fake_gh(d):
+    """A gh on PATH that logs each call with a timestamp and whether GH_TOKEN was set (never its value)."""
+    bind = Path(d) / "bin"; bind.mkdir()
+    log = Path(d) / "gh.log"
+    (bind / "gh").write_text(f"#!/bin/sh\necho \"$(date +%s.%N) tok=${{GH_TOKEN:+set}} $@\" >> {log}\n"
+                             "[ \"$2\" = create ] && echo https://github.com/org/sandbox/issues/5\n"
+                             "[ \"$2\" = comment ] && echo https://github.com/org/sandbox/issues/5#issuecomment-77\nexit 0\n")
+    (bind / "gh").chmod(0o755)
+    return bind, log
+
+
+def inbox_server():
+    class H(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a): pass
+        def _send(self, obj):
+            b = json.dumps(obj).encode(); self.send_response(200); self.end_headers(); self.wfile.write(b)
+        def do_GET(self):
+            self._send({"lines": [{"id": "l1", "type": "issue_open", "repo": "org/sandbox", "number": 5},
+                                  {"id": "l2", "type": "issue_comment", "repo": "org/sandbox", "number": 5},
+                                  {"id": "l2:edit:arch10x", "type": "comment_edit", "repo": "org/sandbox", "number": 5}]})
+        def do_POST(self):
+            self.rfile.read(int(self.headers["Content-Length"])); self._send({"ok": True})
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+class Wave5(unittest.TestCase):
+    """#310: (a) edit waits a collector poll, (b) the checking seat's own delivery, (c) --seats scopes routing."""
+    def _live(self, d, *extra, env=None):
+        bind, log = fake_gh(d)
+        keys = Path(d) / "keys"; keys.mkdir(); (keys / "arch1.key").write_text("seat-secret\n")
+        srv = inbox_server()
+        try:
+            r = run(*fleet(d), "--only", "deliver,ack,addressed", "--repo", "org/sandbox", "--target", f"http://127.0.0.1:{srv.server_port}",
+                    "--wait", "5", *extra, env={"PATH": f"{bind}:{os.environ['PATH']}", "SEAT_KEYS_DIR": str(keys), **(env or {})})
+        finally:
+            srv.shutdown()
+        return r, [l.split(" ", 2) for l in log.read_text().splitlines()] if log.exists() else []
+
+    def test_a_edit_waits_for_a_collector_poll(self):
+        with tempfile.TemporaryDirectory() as d:
+            r, calls = self._live(d, env={"COLLECTOR_WATCH_S": "-3"})   # default delay = poll + 5 = 2 s
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("waiting 2.0s", r.stdout)
+        plain = next(float(t) for t, _, c in calls if "mention added on edit" in c)
+        edit = next(float(t) for t, _, c in calls if c.startswith("api -X PATCH"))
+        self.assertGreaterEqual(edit - plain, 1.9)
+
+    def test_a_default_edit_delay_is_poll_plus_5(self):
+        src = TOOL.read_text()
+        self.assertIn("a.edit_delay = collector_poll_s() + 5", src)
+        self.assertIn('os.environ.get("COLLECTOR_WATCH_S") or 45', src)
+
+    def test_b_self_delivery_skips_without_an_alternate_poster(self):
+        with tempfile.TemporaryDirectory() as d:
+            r, calls = self._live(d, "--self-seat", "arch1", "--edit-delay", "0")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("SKIP deliver", r.stdout)
+        self.assertIn("self-delivery SKIP: arch1", r.stdout)
+        self.assertNotIn("FAIL", r.stdout)
+        self.assertEqual(calls, [])
+
+    def test_b_self_delivery_posts_via_the_alternate_seat(self):
+        with tempfile.TemporaryDirectory() as d:
+            r, calls = self._live(d, "--self-seat", "arch1", "--alt-token-env", "ALT_SEAT_TOKEN", "--edit-delay", "0",
+                                  env={"ALT_SEAT_TOKEN": "alt-secret", "GH_TOKEN": ""})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("PASS deliver", r.stdout)
+        self.assertNotIn("alt-secret", r.stdout + r.stderr)
+        posts = [c for _, tok, c in calls if not c.startswith("issue close")]
+        self.assertTrue(posts and all(tok == "tok=set" for _, tok, c in calls if not c.startswith("issue close")), calls)
+
+    def test_c_seats_scopes_the_routing_rule(self):
+        with tempfile.TemporaryDirectory() as d:
+            args = fleet(d)
+            (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"arch1": {"needles": ["@arch10x"]},
+                                                                                "forge": {"needles": ["@forge0x1"]}}}))
+            scoped = run(*args, "--only", "routing", "--no-resolve")
+        self.assertEqual(scoped.returncode, 0, scoped.stdout)
+        self.assertIn("PASS routing", scoped.stdout)
+        self.assertIn("scoped by --seats", scoped.stdout)
+        self.assertNotIn("unknown", scoped.stdout)
 
 
 if __name__ == "__main__":

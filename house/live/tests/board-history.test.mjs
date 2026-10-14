@@ -123,7 +123,7 @@ test('a CI push after a merge does not move the card clock; the queue does not d
     const live = await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json();
     assert.equal(Date.parse(live.freshness.github_latest_ct), Date.parse(mergeCi));
     assert.equal(Date.parse(live.freshness.github_card_latest_ct), Date.parse(mergedAt));
-    const line = { id: 'line-1', t_ct: new Date().toISOString(), seat: 'forge', type: 'pr', repo: 'example/repo', number: 7, title: 'Needs a look', url: 'https://github.com/example/repo/pull/7', reason: 'review' };
+    const line = { id: 'line-1', t_ct: new Date().toISOString(), seat: 'forge', type: 'pr', repo: 'example/repo', number: 9, title: 'Needs a look', url: 'https://github.com/example/repo/pull/9', reason: 'review' };
     const posted = await fetch(srv.base + '/inbox', { method: 'POST', headers: { 'X-Live-Ingest': srv.ingest, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [line] }) });
     assert.equal(posted.status, 200, await posted.text());
     const again = await (await fetch(srv.base + '/live-events.json', { headers: { Cookie: cookie } })).json();

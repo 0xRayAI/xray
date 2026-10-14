@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Routing map: every login resolves against GitHub (mocked), cached and rate-limit safe; an unknown login is refused and
 // flagged on the board; GET /routing serves logins + aliases only (no keys, no webhook URLs).
 import { test, after } from 'node:test';
@@ -47,15 +48,16 @@ fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({
     critic: { login: 'nobody-here', aliases: ['critic'] }, mill: { login: null, aliases: ['mill'] } },
   seats: { coord: { seat: 'forge' } }, extra_seats: { forge: { needles: ['@forge'] }, arch1: { needles: ['@arch10x'] }, critic: { needles: ['@critic'] }, mill: { needles: ['@mill'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'arch1', 'critic', 'mill'] }));
-const PORT = 28000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, GITHUB_READ_TOKEN: 'read-tok-xyz', BIFROST_ROUTING_DIR: ROUTE,
   BIFROST_ROSTER: path.join(ROUTE, 'roster.json'), SEAT_WEBHOOKS: JSON.stringify({ forge: { url: 'http://127.0.0.1:9/hook-secret' } }) },
   stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); gh.close(); fs.rmSync(ROUTE, { recursive: true, force: true }); fs.rmSync(DATA, { recursive: true, force: true }); });
+PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); gh.close(); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const until = async fn => { for (let i = 0; i < 100; i++) { try { const v = await fn(); if (v) return v; } catch {} await new Promise(r => setTimeout(r, 100)); } return null; };
 
 test('GET /routing: logins + aliases + status only; unknown login refused and flagged on the board', async () => {

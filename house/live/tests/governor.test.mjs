@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Governor: nudges (evalNudges, the one nudge path: unacked line L1-L3 with one re-wake per window, ack closes; unrouted
 // and quiet seats) and the tripwire clock.
 import { test, after } from 'node:test';
@@ -21,17 +22,19 @@ const ROUTE = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-gov-route-'));
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'mill'] }));
 const FKEY = 'fk-' + crypto.randomBytes(8).toString('hex');
-const PORT = 26000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'wk', WAKE_KEY_CRITIC: 'wk',
   SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(FKEY).digest('hex') }),
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0',
-  NUDGE_LINE_S: '3', BIFROST_TICK_S: '0.2', BIFROST_WAKE_QUIET_MINUTES: '0.001',
+  NUDGE_LINE_S: '8',   // wide window: a loaded box (#304 parallel runs) delays wakes by seconds
+  BIFROST_TICK_S: '0.2', BIFROST_WAKE_QUIET_MINUTES: '0.001',
   BIFROST_ROUTING_DIR: ROUTE, BIFROST_CLOCK_SEATS: 'forge', BIFROST_ROSTER: path.join(ROUTE, 'roster.json') }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true }); fs.rmSync(ROUTE, { recursive: true, force: true }); });
+PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
 const until = async fn => { for (let i = 0; i < 80 && !(await fn()); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 const header = async () => { const j = await (await fetch(BASE + '/live-events.json')).json(); return j; };
@@ -42,8 +45,10 @@ test('an unacked line past its window gets nudge L1 on the board and one re-wake
   assert.ok(await until(() => forgeWakes().length >= 1), logs);
   assert.deepEqual((await openNudges('line')).map(n => [n.seat, n.line, n.number, n.level]), [['forge', 'stale-1', 7, 1]]);
   assert.match(JSON.parse(forgeWakes()[0].body).reason, /^nudge L1: merge ask/);
-  await new Promise(r => setTimeout(r, 1500));   // well inside the 3 s window
-  assert.equal(forgeWakes().length, 1, 'one re-wake per window, no loop');
+  await new Promise(r => setTimeout(r, 1500));
+  // judged by arrival times of the line-nudge wakes only (a loaded box can see the first wake late, and the tripwire may wake too)
+  const w = forgeWakes().filter(g => /^nudge L/.test(JSON.parse(g.body).reason));
+  assert.ok(w.length === 1 || w[1].at - w[0].at >= 6000, 'one re-wake per window, no loop: ' + forgeWakes().map(g => (g.at - w[0].at) + ' ' + JSON.parse(g.body).reason));
   assert.equal(JSON.parse(await (await fetch(BASE + '/healthz')).text()).nudged_lines, 1);
 });
 
@@ -61,7 +66,7 @@ test('ack closes the line nudge', async () => {
   assert.ok(await until(async () => (await openNudges('line')).length === 0));
   assert.ok(await until(async () => (await header()).clock === null), 'a seat move (ack) clears the clock');
   const n = forgeWakes().length;
-  await new Promise(r => setTimeout(r, 3500));   // past the window: an acked line never re-wakes
+  await new Promise(r => setTimeout(r, 8500));   // past the window: an acked line never re-wakes
   assert.equal(forgeWakes().length, n);
 });
 

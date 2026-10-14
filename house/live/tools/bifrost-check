@@ -9,6 +9,7 @@ Offline rules (always run, no writes):
   edit-sim     a comment edited to add an @-mention routes one line to the newly mentioned seat, once (inbox_pass)
   tripwire     an empty board and a stalled board each fire the timed run once per window (the kit's governor.mjs)
   nudge        a stuck line nudges L1 -> L3, then wakes the coordinator once (the kit's server, local, fake seats)
+  nodes        every fleet-nodes.json bot login resolves on GitHub (404 fails; same lookup as routing)
   lexicon      every bolded term in the pack OP-PROC and runbooks is defined in grok-bot/LEXICON.md
   names        docs and plates carry none of the stale phrases in tools/bifrost-stale.json
 
@@ -33,7 +34,7 @@ from pathlib import Path
 LIVE = Path(__file__).resolve().parent.parent
 FEED = LIVE / "feed"
 PACK = LIVE.parent.parent / "grok-bot" / "OP-PROC.md"
-ANCHORS = {"routing": "- **Routing.**", "deliver": "- **Two loops.**", "deliver-sim": "- **Two loops.**", "edit-sim": "- **Two loops.**", "edit": "- **Two loops.**", "ack": "- **Ack.**", "resolve": "- **Routing.**", "board-page": "- **Card:**", "board-cards": "- **Card:**",
+ANCHORS = {"routing": "- **Routing.**", "deliver": "- **Two loops.**", "deliver-sim": "- **Two loops.**", "edit-sim": "- **Two loops.**", "edit": "- **Two loops.**", "ack": "- **Ack.**", "resolve": "- **Routing.**", "nodes": "- **Routing.**", "board-page": "- **Card:**", "board-cards": "- **Card:**",
            "board-owner": "- **Card:**", "addressed": "- **Two loops.**",
            "tripwire": "- **Tripwire.**", "nudge": "- **Nudge.**", "names": "- **Names.**", "lexicon": "~Every term here is defined in the [lexicon]"}
 
@@ -69,16 +70,33 @@ class Report:
         return any(s == "FAIL" for _, s, _ in self.rows)
 
 
-def check_routing(rep, roles, seats, logins, init, nodes=None, resolve=True):
-    miss, ghost = init.unrouted(roles, seats), init.unknown_targets(roles, seats)
+def check_routing(rep, roles, seats, logins, init, nodes=None, resolve=True, scoped=False):
+    miss = init.unrouted(roles, seats)
+    # --seats scopes the rule to those seats: a route to a roster seat outside the scope is not "unknown" (#310c)
+    ghost = init.unknown_targets(roles, set(seats) | set(init.default_seats(roles))) if scoped else init.unknown_targets(roles, seats)
     resolved = init.resolve_logins(roles, seats, Path(nodes)) if resolve and nodes else {}
     gone = [f"{s}={l}" for s, (l, st) in resolved.items() if st == "missing"]
     rows = init.mention_audit(roles, seats, logins)
     nick = [r[0] for r in rows if not r[3]]
     bad = ([f"unrouted {','.join(miss)}"] if miss else []) + ([f"unknown {','.join(ghost)}"] if ghost else []) + \
           ([f"nickname-only {','.join(nick)}"] if nick else []) + ([f"login 404 on GitHub: {', '.join(gone)}"] if gone else [])
-    rep.add("routing", "FAIL" if bad else "PASS", "; ".join(bad) or f"{len(seats)} seats, mentions match logins")
+    rep.add("routing", "FAIL" if bad else "PASS", "; ".join(bad) or f"{len(seats)} seats" + (" (scoped by --seats)" if scoped else "") + ", mentions match logins")
     return rows
+
+
+def check_nodes(rep, nodes, init, resolve=True):
+    """#305: every login in fleet-nodes.json resolves on GitHub, the same lookup the routing rule uses."""
+    try:
+        # bot logins only: the seats' App identities, as in routing. Human entries also carry display aliases (Blaze0x1).
+        names = [n for n in json.loads(Path(nodes).read_text()) if n.endswith("[bot]")]
+    except (OSError, ValueError) as e:
+        return rep.add("nodes", "FAIL", f"fleet-nodes not readable: {type(e).__name__}")
+    if not resolve:
+        return rep.add("nodes", "SKIP", "--no-resolve")
+    st = {n: init.gh_user_status(n) for n in names}
+    gone, unk = [n for n in names if st[n] == "missing"], [n for n in names if st[n] == "unverified"]
+    rep.add("nodes", "FAIL" if gone else "PASS", (f"login 404 on GitHub: {', '.join(gone)}" if gone else f"{len(names)} fleet-nodes bot logins resolve")
+            + (f"; unverified (rate limit or network): {', '.join(unk)}" if unk else ""))
 
 
 def mention_for(seat, roles, logins):
@@ -201,8 +219,17 @@ def check_names(rep, stale_file):
     rep.add("names", "FAIL" if hits else "PASS", ("stale: " + "; ".join(hits[:8])) if hits else f"{len(phrases)} phrases, none found")
 
 
-def gh(*args):
-    r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
+def collector_poll_s():
+    """The collector's poll interval: COLLECTOR_WATCH_S (server default 45)."""
+    try:
+        return float(os.environ.get("COLLECTOR_WATCH_S") or 45)
+    except ValueError:
+        return 45.0
+
+
+def gh(*args, env=None):
+    r = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL,
+                       env={**os.environ, **env} if env else None)
     if r.returncode:
         raise RuntimeError(f"gh {args[0]} {args[1]}: {r.stderr.strip()[:200]}")
     return r.stdout.strip()
@@ -326,17 +353,34 @@ def check_live(rep, a, roles, seats, logins, dry):
         rep.add("addressed", "SKIP", why)
         rep.add("ack", "SKIP", why)
         return
-    nonce, posted, missing = uuid.uuid4().hex[:8], {}, []
+    nonce, posted, missing, edits, selfskip = uuid.uuid4().hex[:8], {}, [], [], []
+    alt = os.environ.get(a.alt_token_env, "").strip() if a.alt_token_env else ""
     for s in seats:
+        # #310b: a seat never gets a line for its own post. When the checking seat is the target, post as the
+        # alternate seat (its token in --alt-token-env, never printed) or mark this seat SKIP instead of FAIL.
+        env = None
+        if a.self_seat and s == a.self_seat:
+            if not alt:
+                selfskip.append(s)
+                print(f"     {s}: checking seat is the delivery target; no --alt-token-env poster, SKIP")
+                continue
+            env = {"GH_TOKEN": alt}
         m = mention_for(s, roles, logins)
-        url = gh("issue", "create", "--repo", a.repo, "--title", f"bifrost check {nonce} {s}", "--body", f"bifrost check for @{m}")
+        url = gh("issue", "create", "--repo", a.repo, "--title", f"bifrost check {nonce} {s}", "--body", f"bifrost check for @{m}", env=env)
         num = int(url.rstrip("/").rsplit("/", 1)[-1])
-        gh("issue", "comment", str(num), "--repo", a.repo, "--body", f"@{m} bifrost check comment")
-        plain = gh("issue", "comment", str(num), "--repo", a.repo, "--body", "bifrost check comment, mention added on edit")
+        gh("issue", "comment", str(num), "--repo", a.repo, "--body", f"@{m} bifrost check comment", env=env)
+        plain = gh("issue", "comment", str(num), "--repo", a.repo, "--body", "bifrost check comment, mention added on edit", env=env)
         cid = plain.rsplit("issuecomment-", 1)[-1] if "issuecomment-" in plain else ""
         if cid.isdigit():
-            gh("api", "-X", "PATCH", f"repos/{a.repo}/issues/comments/{cid}", "-f", f"body=bifrost check edit @{m}")
+            edits.append((cid, m, env))
         posted[s] = num
+    if edits:
+        # #310a: let the collector see the plain comment first (one poll), else the first sighting already carries the mention
+        print(f"     waiting {a.edit_delay}s (collector poll + 5) before editing", flush=True)
+        time.sleep(a.edit_delay)
+        for cid, m, env in edits:
+            gh("api", "-X", "PATCH", f"repos/{a.repo}/issues/comments/{cid}", "-f", f"body=bifrost check edit @{m}", env=env)
+    seats = [x for x in seats if x not in selfskip]
     deadline, found = time.time() + a.wait, {}
     while time.time() < deadline and len(found) < len(seats):
         for s, num in posted.items():
@@ -366,7 +410,9 @@ def check_live(rep, a, roles, seats, logins, dry):
                   and any(l.get("number") == num and a.repo.casefold() in str(l.get("repo", "")).casefold() for l in lines)]
     rep.add("addressed", "FAIL" if stray else "PASS", ("reached an unaddressed seat: " + ", ".join(stray[:8])) if stray else "no stray lines")
     rep.add("edit", "SKIP" if not posted else ("FAIL" if missing else "PASS"), "edit line checked with deliver")
-    rep.add("deliver", "FAIL" if missing else "PASS", ("no issue+comment+edit line for " + ", ".join(missing)) if missing else f"{len(seats)} seats on {a.repo}")
+    note = f"; self-delivery SKIP: {', '.join(selfskip)}" if selfskip else ""
+    rep.add("deliver", "FAIL" if missing else ("SKIP" if not posted else "PASS"),
+            (("no issue+comment+edit line for " + ", ".join(missing)) if missing else f"{len(seats)} seats on {a.repo}") + note)
     if found:
         s, lines = next(iter(found.items()))
         t0 = time.time()
@@ -377,6 +423,8 @@ def check_live(rep, a, roles, seats, logins, dry):
                     "the running seat confirms no approval card appeared")
         except Exception as e:   # noqa: BLE001
             rep.add("ack", "FAIL", f"ack failed: {type(e).__name__}")
+    elif not posted:
+        rep.add("ack", "SKIP", "nothing posted (self-delivery SKIP)")
     else:
         rep.add("ack", "FAIL", "no delivered line to ack")
     if not a.keep:
@@ -398,10 +446,16 @@ def main(argv=None):
     ap.add_argument("--pack", default=str(PACK.parent), help="pack dir holding OP-PROC.md, LEXICON.md, runbooks/")
     ap.add_argument("--no-resolve", action="store_true", help="skip the GitHub users API lookup in the routing rule")
     ap.add_argument("--wait", type=int, default=240, help="seconds to wait for the collector to route the live posts")
+    ap.add_argument("--edit-delay", type=float, default=None,
+                    help="seconds between the plain comment and its edit (default: collector poll COLLECTOR_WATCH_S + 5 = 50)")
+    ap.add_argument("--self-seat", default=os.environ.get("BIFROST_SEAT"), help="the seat running the check (default $BIFROST_SEAT)")
+    ap.add_argument("--alt-token-env", help="env var holding another seat's token to post the checking seat's own delivery")
     ap.add_argument("--keep", action="store_true", help="leave the test issues open")
     ap.add_argument("--dry-run", action="store_true", help="no live writes; print what the live steps would do")
     ap.add_argument("--only", help="comma-separated rule names to run")
     a = ap.parse_args(argv)
+    if a.edit_delay is None:
+        a.edit_delay = collector_poll_s() + 5
     init = load_init()
     roles = json.loads((Path(a.routing_dir) / "inbox-roles.json").read_text())
     seats = init.parse_seats(a.seats) if a.seats else init.default_seats(roles)
@@ -409,7 +463,8 @@ def main(argv=None):
     only = set(a.only.split(",")) if a.only else None
     want = lambda r: only is None or r in only
     rep = Report()
-    if want("routing"): check_routing(rep, roles, seats, logins, init, a.nodes, not a.no_resolve)
+    if want("routing"): check_routing(rep, roles, seats, logins, init, a.nodes, not a.no_resolve, scoped=bool(a.seats))
+    if want("nodes"): check_nodes(rep, a.nodes, init, not a.no_resolve)
     if want("deliver-sim"): check_deliver_sim(rep, roles, seats, logins)
     if want("edit-sim"): check_edit_sim(rep, seats, roles, logins)
     if want("tripwire"): check_tripwire(rep)

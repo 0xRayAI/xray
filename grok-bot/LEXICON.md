@@ -38,7 +38,8 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **board** | Where open work is visible (`WAVEBOARD`). Cards grouped by stage |
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
-| **station** | CoS primary work deck — durable intent, live track, next beat (survives compact) |
+| **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read on wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
+| **notes** | "Notes are the body the station card cannot hold." `.xray/state/NOTES.md`: "The seat writes it before the compact." PreCompact `stampNotesPickup` "updates only that line and leaves the body alone." "Do not commit this file." No secrets, only env var names. (plate: `docs-site/docs/plates/notes-page.md`) |
 | **receipt** | Proof a card closed (critic PASS, `npm view`, Dist URL). Chat LGTM ≠ receipt |
 | **cloud** | Heavy repo surgeon (`bc-…`). Cuts metal; seats run the company |
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |
@@ -170,3 +171,6 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **allowed** | Workstream | In `house/`: actions a seat may take without asking. |
 | **ask first** | Workstream | In `house/`: actions that need the human owner's yes first. |
 | **all three** | Workstream | New cloud agent only when every one of the three conditions holds: the context agent has 2+ jobs queued, the job touches different files, and it can be briefed from docs alone. |
+| **hotfix** | Workstream | A broken production change ships right away on its own PR, with NO critic review before merge, and adds a regression test that fails without the fix and passes with it (green CI = tests, stamp, docs check; no new test, no merge). Then forge merges on green CI and deploys once, then critic does one live pass on production. If that pass fails, the next fix is another hotfix. The usual review process follows afterward. [Steps](runbooks/SHIP.md#hotfix). |
+| **two hats** | Workstream | Every seat does the work and makes it repeatable: it writes the rule into the lexicon, OP-PROC or a runbook. A rule that only exists in chat counts as missing. |
+| **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
