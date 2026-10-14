@@ -12,3 +12,14 @@ Rules: pack [OP-PROC](../OP-PROC.md) (Seat identity, Branch + PR always). After 
 8. Merges, deploys and outside writes go out from the ship seat's 1:1, never a group room.
 
 The ship seat also takes dev cards when the implementer is full; the reviewer still reviews its heads.
+
+## Hotfix
+
+For a broken production change. Term: [lexicon](../LEXICON.md) (**hotfix**). A hotfix has NO critic review before merge.
+
+1. Implementer pushes the smallest fix on its own branch, with a regression test that fails without the fix and passes with it; the ship seat opens it as its own PR, one fix per PR.
+2. Forge merges as soon as CI is green, with no critic review first. Green CI is the normal PR CI: tests, stamp and docs check. Green CI with no new test does not count; forge does not merge it.
+3. Forge deploys once with `house/live/app/deploy.sh`.
+4. Critic does one live pass on production (`bifrost check` live). If that live pass fails, the next fix is another hotfix.
+5. The room gets the receipt only: PR, merge SHA, deployment ID and the live-pass result.
+6. The usual review process follows afterward on the merged change.

@@ -170,3 +170,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **allowed** | Workstream | In `house/`: actions a seat may take without asking. |
 | **ask first** | Workstream | In `house/`: actions that need the human owner's yes first. |
 | **all three** | Workstream | New cloud agent only when every one of the three conditions holds: the context agent has 2+ jobs queued, the job touches different files, and it can be briefed from docs alone. |
+| **hotfix** | Workstream | A broken production change ships right away on its own PR, with NO critic review before merge, and adds a regression test that fails without the fix and passes with it (green CI = tests, stamp, docs check; no new test, no merge). Then forge merges on green CI and deploys once, then critic does one live pass on production. If that pass fails, the next fix is another hotfix. The usual review process follows afterward. [Steps](runbooks/SHIP.md#hotfix). |
