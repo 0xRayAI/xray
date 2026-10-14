@@ -266,7 +266,7 @@ class FleetOnly(unittest.TestCase):
 
     def test_feed_pass_filters_before_board(self):
         src = (FEED_DIR / "live_mesh.py").read_text()
-        self.assertLess(src.index("uc.fleet_only(uniq)"), src.index("live_board.run(uniq"))
+        self.assertLess(src.index("uc.fleet_only(uniq)"), src.index("board_wave(uniq"))
 
 
 class DeployKit(unittest.TestCase):

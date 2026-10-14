@@ -465,10 +465,22 @@ class Fleet:
         self._source("op-git", self._scan_op_git)
         self._source("op-runjson", self._scan_runjson)
 
+    def _deploy_rank(self, st):
+        if st == "BUILDING":
+            return 1
+        if st == "DEPLOYING":
+            return 2
+        if st in RW_APPROVAL or st in ("INITIALIZING", "QUEUED"):
+            return 0
+        return 3
+
     def _scan_railway(self):
         # Re-read every pass. A same-second rewrite can keep mtime and size (SUCCESS and CRASHED
         # are the same length), and a GitHub-triggered deploy is often first seen as INITIALIZING
         # with no commit, then later CRASHED with one. Status changes emit; an unchanged status does not.
+        # A poll that first sees SUCCESS still emits BUILDING and
+        # DEPLOYING: those phases already happened, and a 45s pass often misses them.
+        # Only SUCCESS backfills. FAILED, SKIPPED, CRASHED and the rest may never have built or deployed, so they emit the terminal line only.
         f = self.path.parent / "railway-deploys.json"
         if not f.is_file():
             return
@@ -486,15 +498,22 @@ class Fleet:
             old = self.rw.get(did)
             if old == st:
                 continue
+            rank = self._deploy_rank(st)
+            old_rank = self._deploy_rank(old) if old else -1
             self.rw[did] = st
             svc, env = str(x.get("service", ""))[:24], str(x.get("env", ""))[:12]
             inst = RW_ENV.get(env) if svc != "live-mesh" else None
-            word = "approval" if st in RW_APPROVAL else "deploy"
             sha = str(x.get("sha") or "")[:40] or None
-            self._emit(f"op:rw:{did}:{st}", created if old is None else polled, "Operator", inst or "Railway",
-                       "op_deploy", f"{word} {svc} · {env} · {st}", "railway/deployments", deploy_id=did,
-                       service=svc, env=env, status=st, instance=inst, sha=sha,
-                       time_basis="railway createdAt / poll time")
+            steps = [step for step, r in (("BUILDING", 1), ("DEPLOYING", 2)) if old_rank < r <= rank and step != st
+                     and st == "SUCCESS"]
+            steps.append(st)
+            for step in steps:
+                when = created if step != st or old is None else polled
+                word = "approval" if step in RW_APPROVAL else "deploy"
+                self._emit(f"op:rw:{did}:{step}", when, "Operator", inst or "Railway",
+                           "op_deploy", f"{word} {svc} · {env} · {step}", "railway/deployments", deploy_id=did,
+                           service=svc, env=env, status=step, instance=inst, sha=sha,
+                           time_basis="railway createdAt / poll time")
 
     def _scan_op_git(self):
         head = OP_REPO / ".git" / "logs" / "HEAD"
@@ -969,7 +988,7 @@ class Fleet:
         return out
 
     def cloud_state(self, feed_events, now=None):
-        """Active = a launch/reply with no later finished/cancel for that agent, or cursoragent on GitHub < 15 min."""
+        """Active only while a launch/reply has no later finished/cancel. An empty open_agents list is inactive."""
         now = now or time.time()
         open_ = sorted(a for a, (act, _) in self.cloud.get("agents", {}).items() if act in ("launch", "reply"))
         gh = 0
@@ -977,7 +996,7 @@ class Fleet:
             if e.get("src_file") == "github-api" and e.get("from") == "CloudAgents":
                 gh = max(gh, _ts(e.get("t_ct")) or 0)
         last = max([gh] + [t for _, t in self.cloud.get("agents", {}).values()])
-        return {"active": bool(open_) or bool(gh and now - gh <= ACTIVE_MIN * 60), "open_agents": open_[:20],
+        return {"active": bool(open_), "open_agents": open_[:20],
                 "github_last_ct": _ct(gh, self.CT) if gh else None, "last_ct": _ct(last, self.CT) if last else None}
 
     def _seat_activity(self, feed_events):

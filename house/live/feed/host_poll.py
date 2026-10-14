@@ -48,11 +48,13 @@ def out_path():
 
 
 def _poll_s():
+    # A deploy crosses BUILDING and DEPLOYING in well under three minutes. The old 180s gap
+    # wrote only the terminal status. Each collector pass (about 45s) must refresh the file.
     try:
-        n = int(os.environ.get("RAILWAY_POLL_S") or "180")
+        n = int(os.environ.get("RAILWAY_POLL_S") or "15")
     except ValueError:
-        n = 180
-    return n if n > 0 else 180
+        n = 15
+    return n if n > 0 else 15
 
 
 def load_targets():

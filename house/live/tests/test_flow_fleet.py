@@ -205,6 +205,31 @@ class OperatorCosTest(unittest.TestCase):
             rw.write_text(json.dumps({"polled_at": "2026-10-14T18:03:00+00:00", "deploys": [dep("eeee5555", "FAILED", False, "fff999")]}))
             self.assertIn("op:rw:eeee5555:FAILED", ids())
 
+    def test_terminal_only_deploy_still_emits_building_and_deploying(self):
+        with tempfile.TemporaryDirectory() as d:
+            feed = Path(d)
+            rw = feed / "railway-deploys.json"
+            rw.write_text(json.dumps({"polled_at": "2026-10-14T18:05:00+00:00", "deploys": [
+                {"id": "ffff6666", "project": "burst-live", "service": "burst-live", "env": "production",
+                 "status": "SUCCESS", "created": "2026-10-14T18:00:00Z", "cli": False, "sha": "abc123"}]}))
+            f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+            ev = [e for e in f.scan_host() if e.get("kind") == "op_deploy"]
+            self.assertEqual(sorted(e["status"] for e in ev), ["BUILDING", "DEPLOYING", "SUCCESS"])
+            self.assertEqual(sorted(e["id"] for e in ev), [
+                "op:rw:ffff6666:BUILDING", "op:rw:ffff6666:DEPLOYING", "op:rw:ffff6666:SUCCESS"])
+
+    def test_first_seen_failed_or_skipped_emits_terminal_only(self):
+        for st in ("FAILED", "SKIPPED", "CRASHED"):
+            with tempfile.TemporaryDirectory() as d:
+                feed = Path(d)
+                (feed / "railway-deploys.json").write_text(json.dumps({"polled_at": "2026-10-14T18:05:00+00:00", "deploys": [
+                    {"id": "abcd7777", "project": "burst-live", "service": "burst-live", "env": "production",
+                     "status": st, "created": "2026-10-14T18:00:00Z", "cli": False, "sha": "abc123"}]}))
+                f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+                ev = [e for e in f.scan_host() if e.get("kind") == "op_deploy"]
+                self.assertEqual([e["status"] for e in ev], [st])
+                self.assertNotIn("DEPLOYING", [e["status"] for e in ev])
+
 
 class CloudAgentsTest(unittest.TestCase):
     def test_tail_seed_fields_and_state(self):
@@ -235,9 +260,23 @@ class CloudAgentsTest(unittest.TestCase):
             self.assertEqual(sorted((e["from"], e["to"]) for e in ev), [("CloudAgents", "Operator")] * 2)
             self.assertFalse(f.cloud_state([], now)["active"])
             gh = [{"src_file": "github-api", "from": "CloudAgents", "t_ct": iso(now - 120)}]
-            self.assertTrue(f.cloud_state(gh, now)["active"])                 # cursoragent on GitHub < 15 min
+            self.assertEqual(f.cloud_state(gh, now)["open_agents"], [])
+            self.assertFalse(f.cloud_state(gh, now)["active"])
             self.assertNotIn("CloudAgents", f.fleet_state(gh, now)["seats"])     # not one of the counted bots
-            self.assertTrue(f.fleet_state(gh, now)["cloud"]["active"])
+            self.assertFalse(f.fleet_state(gh, now)["cloud"]["active"])
+
+    def test_cloud_inactive_when_open_agents_empty(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "feed").mkdir()
+            live_fleet.WS, live_fleet.OP_REPO = root, root / "none"
+            live_fleet.HOUSE, live_fleet.LABTEST, live_fleet.LABQA = root / "h", root / "l", root / "q"
+            f = live_fleet.Fleet(root / "feed" / "fleet-state.json", CT)
+            now = time.time()
+            iso = datetime.fromtimestamp(now - 30, CT).isoformat()
+            cs = f.cloud_state([{"src_file": "github-api", "from": "CloudAgents", "t_ct": iso}], now)
+            self.assertEqual(cs["open_agents"], [])
+            self.assertFalse(cs["active"])
 
 
 class PromptsTest(unittest.TestCase):

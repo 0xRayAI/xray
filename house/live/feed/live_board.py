@@ -516,5 +516,5 @@ def run(extra_events=None, write=True):
             write_md(m)
         return m
     except Exception as ex:  # the feed must keep writing
-        print(f"[board] {type(ex).__name__}: {ex}", flush=True)
+        print(f"[board] cards: step failed ({type(ex).__name__}: {ex})", flush=True)
         return None
