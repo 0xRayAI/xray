@@ -157,7 +157,9 @@ function unmapped(e) {
   if (e.from === 'Others' || e.to === 'Others' || (Array.isArray(e.hops) && e.hops.includes('Others'))) return true;
   return e.external === 'upstream' && !!e.actor && e.from === 'Upstream';
 }
-const shown = (n, e) => !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
+// CI is not work: check runs, suites and workflow runs never draw as board traffic (cards still read them from the source).
+const CI_KINDS = new Set(['check_run', 'check_suite', 'workflow_run', 'ci_pass', 'ci_fail']);
+const shown = (n, e) => !CI_KINDS.has(e.kind) && !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
 function touch(id) {
   for (const n of SRC_PRIO) { const e = SRCS[n].evs.get(id); if (e && shown(n, e)) return upsert(e); }
   if (evs.has(id)) dropId(id);
