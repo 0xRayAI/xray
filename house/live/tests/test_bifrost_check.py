@@ -45,6 +45,37 @@ class Offline(unittest.TestCase):
             self.assertIn("a.md:2", r.stdout)
 
 
+class Board(unittest.TestCase):
+    def test_board_findings(self):
+        import importlib.machinery, importlib.util
+        ld = importlib.machinery.SourceFileLoader("bc", str(TOOL)); m = importlib.util.module_from_spec(importlib.util.spec_from_loader("bc", ld)); ld.exec_module(m)
+        cards = [{"repo": "o/r", "number": 1, "owner": "forge"}, {"repo": "o/r", "number": 1, "owner": "forge"},
+                 {"repo": "o/r", "number": 2, "owner": "Somebody"}]
+        missing, dupes, bad = m.board_findings(cards, [("o/r", 1), ("o/r", 2), ("o/r", 3)], {"forge", "arch1"})
+        self.assertEqual((missing, dupes), (["o/r#3"], ["o/r#1 x2"]))
+        self.assertEqual(bad, ["o/r#2 owner='Somebody'"])
+
+    def test_board_page_and_owner_live(self):
+        class H(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a): pass
+            def do_GET(self):
+                if self.path.startswith("/cards"):
+                    b = json.dumps({"cards": [{"repo": "o/r", "number": 1, "owner": "arch1"}]}).encode()
+                elif self.path == "/healthz":
+                    self.send_response(500); self.end_headers(); return
+                else:
+                    b = b"<html></html>"
+                self.send_response(200); self.end_headers(); self.wfile.write(b)
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        with tempfile.TemporaryDirectory() as d:
+            r = run(*fleet(d), "--only", "board-page,board-owner", "--target", f"http://127.0.0.1:{srv.server_port}")
+        srv.shutdown()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("FAIL board-page", r.stdout); self.assertIn("/healthz 500", r.stdout)
+        self.assertIn("PASS board-owner", r.stdout)
+
+
 class Live(unittest.TestCase):
     """Fake gh on PATH + a fake Bifrost server: posts go to --repo, inbox reads/acks go to --target with the seat key."""
     def test_deliver_and_ack(self):
@@ -72,7 +103,7 @@ class Live(unittest.TestCase):
             log = Path(d) / "gh.log"
             (bind / "gh").write_text(f"#!/bin/sh\necho \"$@\" >> {log}\n[ \"$2\" = create ] && echo https://github.com/org/sandbox/issues/5\n[ \"$2\" = comment ] && echo https://github.com/org/sandbox/issues/5#issuecomment-77\nexit 0\n")
             (bind / "gh").chmod(0o755)
-            r = run(*fleet(d), "--only", "deliver,ack", "--repo", "org/sandbox", "--target", f"http://127.0.0.1:{srv.server_port}",
+            r = run(*fleet(d), "--only", "deliver,ack,addressed", "--repo", "org/sandbox", "--target", f"http://127.0.0.1:{srv.server_port}",
                     "--wait", "5", env={"PATH": f"{bind}:{os.environ['PATH']}", "SEAT_KEYS_DIR": str(keys)})
             srv.shutdown()
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -84,6 +115,7 @@ class Live(unittest.TestCase):
             self.assertIn("issue comment 5 --repo org/sandbox --body @arch10x", calls)
             self.assertIn("api -X PATCH repos/org/sandbox/issues/comments/77 -f body=bifrost check edit @arch10x", calls)
             self.assertIn("PASS edit", r.stdout)
+            self.assertIn("PASS addressed", r.stdout)
             self.assertIn("issue close 5 --repo org/sandbox", calls)
             self.assertEqual(acks, [("/inbox/arch1/ack", {"id": "l1"})])
             self.assertEqual(reads[0], ("/inbox/arch1", "Bearer seat-secret"))

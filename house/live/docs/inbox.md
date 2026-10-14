@@ -200,7 +200,7 @@ Receipt: `200` with `added: 1`, then `wake: <seat> ok` in the server log, then t
 
 ## Arch1 / CLI seats (Grok CLI)
 
-Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`); actionable events owned only by arch1 also fall back to blinky (CoS), because nothing can push to it.
+Arch1 runs in Grok CLI on Blaze's Mac. Grok CLI has no webhook receiver, so `SEAT_WEBHOOKS` has no URL for arch1 and the seat **polls** its inbox instead. Arch1 is a known inbox seat on the server (`SEAT_IDS` in `app/server.mjs`, `feed/seat_keys.sh` defaults, `feed/routing/inbox-roles.json`). Arch1 is outside the fleet: only an explicit @arch10x (or @arch1) mention routes to him, and his lines are never copied to blinky.
 
 **Getting woken (host monitor, every ~60s).** The Mac has no public URL, so a webhook would need a tunnel; we use no tunnel and no webhook. Arch1 polls locally, and the Grok session hears a line only when the host's internal monitor is running the script. A launchd job is not that path.
 
