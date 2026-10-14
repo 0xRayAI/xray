@@ -41,7 +41,7 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 1. Before passing any routing-map change, look up every login through the GitHub users API (`curl https://api.github.com/users/<login>`). A 404 is a FAIL; #303 once passed with three fake logins.
 2. The live pass needs a real issue and PR created on GitHub that land in the right seat's inbox. Test wakes alone don't count.
 3. When a PR adds a rule that overlaps an existing one, name the pair in the review (it feeds the next **boil-up**).
-4. Check the PR body's `Plates read:` field: it names the stamped plates for the area the PR touches. Empty or missing is a FAIL.
+4. Read the PR body's `Plates read:` field and note any gap (a plate for the touched area that is not listed) in the review. Not a gate: an empty field alone never fails a PR, there is no CI check, and critic blocks only if the diff contradicts a stamped plate.
 5. `bifrost check` waits one collector poll before editing (`--edit-delay`, default poll + 5 s = 50 s), so call an edit line missing only after that poll.
 
 A FAIL goes back on the wave with its OP-PROC line.
