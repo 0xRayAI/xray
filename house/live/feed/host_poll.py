@@ -78,17 +78,22 @@ def load_targets():
     return list(TARGETS)
 
 
+def _post(body, auth):
+    req = urllib.request.Request(API, data=body, method="POST", headers={
+        "Content-Type": "application/json", "User-Agent": "bifrost-live-feed", **auth})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode())
+
+
 def _gql(token, query, variables, fetch=None):
     body = json.dumps({"query": query, "variables": variables}).encode()
     if fetch is not None:
         return fetch(API, body, token)
-    req = urllib.request.Request(API, data=body, method="POST", headers={
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token,
-        "User-Agent": "bifrost-live-feed",
-    })
-    with urllib.request.urlopen(req, timeout=20) as r:
-        return json.loads(r.read().decode())
+    # Account/team tokens use Bearer; project tokens need Project-Access-Token (Bearer gets "Not Authorized").
+    out = _post(body, {"Authorization": "Bearer " + token})
+    if (out or {}).get("errors"):
+        out = _post(body, {"Project-Access-Token": token})
+    return out
 
 
 def _rows_from(payload, pname, service, envs):
