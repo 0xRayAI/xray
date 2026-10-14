@@ -133,10 +133,27 @@ jobs:
       - name: Mill Docusaurus build
         run: node scripts/foundry/docs-build.mjs
 
+  house-live:
+    name: house/live tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: house/live tests
+        run: bash house/live/tests/run_tests.sh
+      - name: house/live-mesh tests
+        run: cd house/live-mesh && python3 -m unittest -q test_fetch_feed test_tripwire_push
+
   ci-summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [quality, mill, build, test, smoke, docs-build]
+    needs: [quality, mill, build, test, smoke, docs-build, house-live]
     if: always()
     steps:
       - name: Check required jobs
@@ -147,12 +164,14 @@ jobs:
           echo "Tests: ${{ needs.test.result }}"
           echo "Smoke: ${{ needs.smoke.result }}"
           echo "Docs: ${{ needs.docs-build.result }}"
+          echo "house/live: ${{ needs.house-live.result }}"
           if [ "${{ needs.quality.result }}" != "success" ] || \
              [ "${{ needs.mill.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.test.result }}" != "success" ] || \
              [ "${{ needs.smoke.result }}" != "success" ] || \
-             [ "${{ needs.docs-build.result }}" != "success" ]; then
+             [ "${{ needs.docs-build.result }}" != "success" ] || \
+             [ "${{ needs.house-live.result }}" != "success" ]; then
             echo "One or more required mill CI jobs failed"
             exit 1
           fi
