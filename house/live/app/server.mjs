@@ -738,14 +738,25 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
+function cardStampMs(updatedCt) {
+  if (typeof updatedCt === 'number' && Number.isFinite(updatedCt) && updatedCt > 0) return updatedCt;
+  const t = Date.parse(String(updatedCt ?? ''));
+  return Number.isFinite(t) && t > 0 ? t : 0;
+}
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const sig = JSON.stringify(merged);
-  if (sig === boardSig) return;
+  const stampMs = cardStampMs(updatedCt);
+  const same = sig === boardSig;
+  // Same cards and the same collector stamp: the 15s header refresh must not move the clock.
+  if (same && !(stampMs > cardsAt)) return;
   boardSig = sig;
-  bfCards = merged; cardsAt = Date.now();
-  const stamp = updatedCt || new Date().toISOString();
+  bfCards = merged;
+  const moved = stampMs > cardsAt;
+  cardsAt = moved ? stampMs : Date.now();
+  const stamp = moved ? updatedCt : new Date(cardsAt).toISOString();
   bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
+  if (same) return;   // clock-only tick: keep the archive from growing on an unchanged card list
   for (const c of bfCards) {
     if (!c || c.kind === 'source') continue;
     const beat = Number(c.last_beat_t);
@@ -758,7 +769,8 @@ function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
   const sliced = wb.cards.slice(0, 200);
   const sig = JSON.stringify(sliced);
-  if (sig === waveSig) return;
+  const stampMs = cardStampMs(wb.updated_ct);
+  if (sig === waveSig && !(stampMs > cardsAt)) return;
   waveSig = sig;
   waveCards = sliced;
   publishBoard(wb.updated_ct);
@@ -928,7 +940,13 @@ function mergedHeader(now = Date.now()) {
   // board: the box pass board while the box pushed within BOARD_BOX_STALE_S (default 900 s), else the host collector's
   const boxBoardLive = !!b?.board && SRCS.box.at > 0 && now - SRCS.box.at <= BOARD_BOX_STALE_MS;
   const bd = boxBoardLive ? b.board : (g?.board || b?.board);
-  if (bd) { setCards(bd); evalNudges(now); h.board = { ...bd, cards: cardsView(), source: 'server' }; }
+  if (bd) {
+    try {
+      setCards(bd);
+      evalNudges(now);
+      h.board = { ...bd, cards: cardsView(), source: 'server' };
+    } catch (e) { console.log('cards: step failed ' + ((e && e.message) || 'error')); }
+  }
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;

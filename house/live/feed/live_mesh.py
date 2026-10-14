@@ -156,6 +156,18 @@ def visible_feed_lists(services, product_nodes):
     return [s for s in services if keep(s)], sorted(n for n in product_nodes if keep(n))
 
 
+def board_wave(events, write):
+    """One card pass. A miss is logged and the rest of the feed still writes."""
+    try:
+        wave = live_board.run(events, write=write)
+    except Exception as ex:  # noqa: BLE001 — a card miss must not stop the feed write
+        ff.log(f"cards: step failed ({type(ex).__name__}: {ex})")
+        return None
+    if wave is None:
+        ff.log("cards: step failed (no board)")
+    return wave
+
+
 def build(args, gh):
     ff._live_pass_t0 = time.time()
     token_check()
@@ -200,7 +212,7 @@ def build(args, gh):
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
     uniq = uc.fleet_only(uniq)   # unmapped logins never reach fleet state, board, packets or the feed
     fleet_state = fleet.fleet_state(uniq)
-    wave = live_board.run(uniq, write=MODE != "github")   # host mode: model only, never local board files; cards / packets / beats from the same (fleet-only) events; host mode too
+    wave = board_wave(uniq, MODE != "github")   # host mode: model only, never local board files; cards / packets / beats from the same (fleet-only) events; host mode too
     if wave is not None and MODE != "box" and token:
         repos = sorted({str(e.get("repo")).lower() for e in uniq if e.get("repo")})
         try:

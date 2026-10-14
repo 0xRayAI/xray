@@ -66,5 +66,39 @@ class GithubModeDedupe(unittest.TestCase):
         self.assertEqual(json.loads(r.stdout.strip().splitlines()[-1]), [5, 0, 1, False])
 
 
+STEP = r'''
+import io, json, sys
+from unittest import mock
+sys.path.insert(0, %r)
+import live_board, live_mesh
+out = io.StringIO()
+with mock.patch.object(live_board, "model", side_effect=RuntimeError("boom")), mock.patch("sys.stdout", out):
+    missed = live_board.run([])
+logged = []
+with mock.patch.object(live_mesh.live_board, "run", return_value=None), mock.patch.object(live_mesh.ff, "log", side_effect=logged.append):
+    empty = live_mesh.board_wave([], False)
+raised = []
+with mock.patch.object(live_mesh.live_board, "run", side_effect=RuntimeError("boom")), mock.patch.object(live_mesh.ff, "log", side_effect=raised.append):
+    blown = live_mesh.board_wave([], False)
+print(json.dumps({
+    "missed": missed is None,
+    "run_log": "cards: step failed" in out.getvalue() and "RuntimeError" in out.getvalue(),
+    "feed_log": empty is None and bool(logged) and "cards: step failed" in logged[0],
+    "raise_log": blown is None and bool(raised) and "RuntimeError" in raised[0],
+}))
+''' % FEED
+
+
+class CardStepLog(unittest.TestCase):
+    def test_card_step_failure_is_logged(self):
+        r = subprocess.run([sys.executable, "-B", "-c", STEP], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr[-1500:])
+        got = json.loads(r.stdout.strip().splitlines()[-1])
+        self.assertTrue(got["missed"])
+        self.assertTrue(got["run_log"])
+        self.assertTrue(got["feed_log"])
+        self.assertTrue(got["raise_log"])
+
+
 if __name__ == "__main__":
     unittest.main()
