@@ -48,7 +48,14 @@ def _node_map_env() -> dict:
     return {str(k): v for k, v in m.items() if isinstance(v, str) and v} if isinstance(m, dict) else {}
 
 
-NODE.update(_node_map_env())
+def _human_aliases() -> dict:
+    """HUMAN_ALIASES is a comma or space list of human GitHub logins. Each one is the owner node (Blaze)."""
+    raw = os.environ.get("HUMAN_ALIASES", "")
+    return {p: "Blaze" for p in re.split(r"[\s,]+", raw.strip()) if p}
+
+
+NODE.update(_human_aliases())
+NODE.update(_node_map_env())   # an explicit LIVE_NODE_MAP login wins over HUMAN_ALIASES
 NODE_LC = {k.lower(): v for k, v in NODE.items()}   # logins are case-insensitive (lead-alt / lead-alt)
 ALIAS = {"lead-alt": "Lead", "lead-login": "Lead"}   # stored node names from before the fold
 # Cursor cloud agents (cursoragent, cursor-agent, ...); Bugbot (cursor[bot]) is NOT one of them
@@ -362,6 +369,8 @@ class RepoCollector:
                      ("branch_shas", {}), ("tag_time", {}), ("gaps", {})):
             self.st.setdefault(k, v)
         self._sha_who = {}
+        self.unreadable = None
+        self._denied = None
         for e in self.ev.values():
             self._index_sha(e)
         for e in self.ev.values():   # every stored event gets a credit (never blank), also ones from before the map
@@ -995,8 +1004,18 @@ class RepoCollector:
                 break
             self.ci_rest(c, sha)
 
+    def note_denied(self, err, name=""):
+        """403/404 on a per-repo read. A missing branch (commits 404) and the deployments-permission
+        probe are not this: those are optional resources, and the probe already records a gap."""
+        if name in ("deployments",):
+            return
+        code = getattr(err, "code", None)
+        if code in (403, 404):
+            self._denied = int(code)
+
     # ---------------------------------------------------------------- one pass
     def run(self, c, deadline):
+        self._denied = None
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues), ("issue events", self.poll_issue_events),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
                  ("runs", self.poll_runs)] + ([("jobs", self.poll_jobs)] if NO_CHECKS else []) + [
@@ -1008,12 +1027,14 @@ class RepoCollector:
             except RateLow as e:
                 self.log(f"{self.short}: {name} deferred ({e})")
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError) as e:
+                self.note_denied(e, name)
                 self.log(f"{self.short}: {name} failed ({type(e).__name__}: {str(e)[:80]}); keeping stored events")
         try:
             done = self.backfill(c, deadline)
         except (RateLow, RuntimeError, urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, KeyError,
                 TypeError) as e:
             done = False
+            self.note_denied(e, "backfill")
             self.log(f"{self.short}: backfill paused ({type(e).__name__}: {str(e)[:100]})")
         if done:
             for name, fn in (("commits", self.poll_commits), ("pr enrich", self.enrich_prs),
@@ -1023,6 +1044,8 @@ class RepoCollector:
                 except RateLow as e:
                     self.log(f"{self.short}: {name} deferred ({e})")
                 except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError) as e:
+                    self.note_denied(e, name)
                     self.log(f"{self.short}: {name} failed ({type(e).__name__}: {str(e)[:80]})")
+        self.unreadable = self.repo if self._denied else None
         self.save()
         return done

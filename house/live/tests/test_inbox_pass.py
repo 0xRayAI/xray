@@ -81,6 +81,30 @@ class InboxPass(unittest.TestCase):
             feed.write_text(json.dumps({"events": [seed, dict(cm, mentions=["arch10x"])]}))   # a mention removed: nothing
             self.assertEqual(self.run_pass(env, "pass"), "0 0")
 
+    def test_pr_open_mention_and_terminal_op_deploy_wake_mill_and_forge(self):
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d); (run / "feed").mkdir(); (run / "fleet").mkdir()
+            env = dict(os.environ, MESH_RUN=str(run), LIVE_BOARD="off")
+            R = "example-org/app"
+            feed = run / "feed" / "live-events.json"
+            seed = {"id": f"{R}#1:open", "t_ct": ct(900), "kind": "pr_open", "repo": R, "number": 1, "label": "old", "source": "https://github.com/x"}
+            feed.write_text(json.dumps({"events": [seed]}))
+            self.assertEqual(self.run_pass(env, "pass"), "0 0")
+            fresh = [seed,
+                     {"id": f"{R}#9:open", "t_ct": ct(30), "kind": "pr_open", "repo": R, "number": 9, "from": "critic",
+                      "label": "pr 9", "source": "https://github.com/x/9", "mentions": ["mill"]},
+                     {"id": "op:rw:abcd1234:BUILDING", "t_ct": ct(20), "kind": "op_deploy", "status": "BUILDING", "from": "Operator",
+                      "repo": R, "number": 0, "label": "deploy building", "service": "burst-live"},
+                     {"id": "op:rw:abcd1234:SUCCESS", "t_ct": ct(10), "kind": "op_deploy", "status": "SUCCESS", "from": "Operator",
+                      "repo": R, "number": 0, "label": "deploy success", "service": "burst-live"}]
+            feed.write_text(json.dumps({"events": fresh}))
+            self.run_pass(env, "pass")
+            box = run / "feed" / "inbox-spool"
+            rd = lambda s: [json.loads(x) for x in (box / f"{s}.jsonl").read_text().splitlines()] if (box / f"{s}.jsonl").exists() else []
+            self.assertTrue(any("9" in str(l.get("number")) or "#9" in str(l.get("id")) for l in rd("mill")))
+            self.assertTrue(any(l.get("id") == "op:rw:abcd1234:SUCCESS" for l in rd("forge")))
+            self.assertFalse(any(l.get("id") == "op:rw:abcd1234:BUILDING" for l in rd("forge")))
+
 
 if __name__ == "__main__":
     unittest.main()

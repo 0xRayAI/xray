@@ -73,13 +73,13 @@ class HostPoll(unittest.TestCase):
                 self.assertEqual(n, 1)
                 blob = (Path(d) / "feed" / "railway-deploys.json").read_text()
                 self.assertNotIn(token, blob)
-                self.assertNotIn("deadbeef", blob)
                 self.assertNotIn("do not keep", blob)
                 row = json.loads(blob)["deploys"][0]
                 self.assertEqual(row["id"], "abcdef12")
                 self.assertEqual(row["cli"], False)
+                self.assertEqual(row["sha"], "deadbeefcafe")
                 self.assertEqual(row["service"], "burst-live")
-                self.assertEqual(set(row), {"id", "project", "service", "env", "status", "created", "cli"})
+                self.assertEqual(set(row), {"id", "project", "service", "env", "status", "created", "cli", "sha"})
                 self.assertEqual(host_poll.poll(fetch=fetch, now=now), 0)
                 self.assertEqual(len(calls), 1)
             finally:

@@ -296,8 +296,12 @@ test('our overlay: strip is blinky, critic, forge, mill; Arch1 is outside; parke
   for (const k of L.BOT_IMAGES) assert.ok(fs.existsSync(path.join(APP, '..', 'site', 'public', L.botImage(k))), k);
   assert.equal(L.botImage('mill'), null);
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
-    { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub']]);  // Others -> Bifrost: the board is not a node
+    { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' },
+    { id: 4, t_ct: '2026-10-13T10:03:00-05:00', kind: 'seat_turn', from: 'forge', to: 'Bifrost', hops: ['forge', 'Bifrost'] },
+    { id: 5, t_ct: '2026-10-13T10:04:00-05:00', kind: 'op_deploy', from: 'Operator', to: 'Bifrost', hops: ['Operator', 'Railway', 'Bifrost'] }] }).state.events;
+  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub'], ['forge', 'forge'], ['GitHub', 'Railway']]);
+  assert.ok(!ev[2].hops || ev[2].hops.length < 2);   // one hop is a self-pulse; the kit draws a ring
+  assert.deepEqual(ev[3].hops, ['GitHub', 'Railway']);
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
   for (const n of ['Blaze', 'Blaze0x1', 'htafolla', 'Lead']) assert.equal(L.liveNodeKey(n, null), 'Blaze', n);
   assert.equal(L.botImage('arch1'), 'avatars/arch1.png');

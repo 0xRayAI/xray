@@ -33,9 +33,9 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 
 | Term | Plain gloss |
 |------|-------------|
-| **beat** | One real event on a card: pull request opened or pushed, review verdict, CI result, merge, merge-queue tick, owner message, or blocker. A watcher run whose start and end fall in the same second is not a beat |
+| **beat** | One real event on a card: pull request opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher run whose start and end fall in the same second is not a beat |
 | **wave** | Stretch of beats toward one outcome (ship, dist week, proof) |
-| **board** | Where open work is visible (`WAVEBOARD`). Cards grouped by stage |
+| **board** | Where open work is visible (`WAVEBOARD`). Cards grouped by stage. burst-live is this board, never a node on it |
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read on wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
@@ -134,12 +134,12 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 |------|--------|-------|
 | **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). |
 | **packet** | Workstream | That card's seven fields. Cap 200 characters. Allowlisted links. Amber `no packet` badge when acceptance or next owner is missing. |
-| **beat** | Workstream | One real event: opened or pushed, review verdict, CI, merge, merge-queue tick, owner message, or blocker. A watcher whose start and end fall in the same second is never a beat. |
+| **beat** | Workstream | One real event: opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher whose start and end fall in the same second is never a beat. |
 
 ## Lexicon add (2026-10-14 — bifrost)
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **Bifrost** | Workstream | The fleet's live board and router (burst-live): turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
+| **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
 | **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. |
 | **nudge** | Workstream | A stuck card or unacked line pings its owner L1, L2, L3; at L3 the coordinator is woken once to reassign or split it. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
