@@ -6,7 +6,7 @@ The chain, end to end:
 2. **Box upload.** Seats that share one box write locally and one process posts `POST /activity/ingest` with `X-Live-Ingest`. That secret may write for every fleet seat. It is the exception to the per-seat pin. Same checks, same `activity.jsonl`. Chain: [`activity-upload.md`](activity-upload.md).
 3. **Packets.** An inbox line is a tracked packet when `type` or `kind` is `dispatch`, `ready`, `packet`, `critic_fail`, or `needs_human`, or it is a blocker (`needs_human`, or `to` = `WORK_HUMAN_TO`). A line that only names `from` is not a packet. Phases: `sent`, `delivered`, `woken`, `acked`. Unacked past `NUDGE_L1_S` is `overdue`. A blocker sits on the `WORK_HUMAN_LANE` lane.
 4. **Cursor webhook.** Cursor posts agent status to `POST /cursor/webhook`. The server checks `X-Webhook-Signature` (`sha256=` plus HMAC-SHA256 of the raw body, key `CURSOR_WEBHOOK_SECRET`) with the existing Arch1 verifier. Status 200 appends one row to `agents.jsonl`. The seat comes from the payload, the launch file, or `SEAT_AGENT_MAP` (exact id or `id*` prefix).
-5. **GitHub actor.** A PR or issue comment, a review, a PR opened or pushed, or an issue event does not name a seat. The actor login maps to one, and that seat shows working on `repo#number` for the same window as an open turn.
+5. **GitHub actor.** A PR or issue comment, a review, a PR opened or pushed, or an issue event does not name a seat. The actor login maps to one, and that seat shows working on `repo#number` for the same window as an open turn. A close or a merge of that item clears `working_on` on the seat and in `fleet.working`. The seat can stay working.
 6. **Display.** `applyStoredActivity`, `applyTrackWorking`, and `applyGithubWorking` set `fleet.working`. A later writer fills `working_on` only when it is still empty. The page Work panel reads `header.track`. The chip reads `fleet.seat_display` (`SEAT_DISPLAY_NAMES`), not a hardcoded label.
 
 ## Config (env only)
@@ -40,7 +40,7 @@ First match wins, login lowercased:
 3. `LIVE_GH_SEATS` `bot` login
 4. `git:<seat>` from `SEAT_GIT_NAMES` (a commit with no GitHub user). A bare login that equals a seat name is not a seat
 
-`critic0x[bot]` is critic. `forge0x1[bot]` is forge. If the actor does not map, a `bc-` id in the actor, label, branch, ref, head, or title maps through `SEAT_AGENT_MAP`. The actor seat wins when both are present. The mark expires after `LIVE_TURN_OPEN_MIN` minutes. `working_on` is `repo#number`.
+`critic0x[bot]` is critic. `forge0x1[bot]` is forge. If the actor does not map, a `bc-` id in the actor, label, branch, ref, head, or title maps through `SEAT_AGENT_MAP`. The actor seat wins when both are present. The mark expires after `LIVE_TURN_OPEN_MIN` minutes. `working_on` is `repo#number`. A close or a merge of that item clears the chip on the seat and in `fleet.working`. The seat can stay working.
 
 ## What makes a seat working
 

@@ -117,7 +117,7 @@ Locked 2026-09-14 with Blaze — categorized.
 
 | Term | Bucket | Plain |
 |------|--------|-------|
-| **working** | Workstream | A seat is working while any of three writers says so: an open turn (`applyStoredActivity`, expires after `LIVE_TURN_OPEN_MIN`), a woken unacked packet or a running agent (`applyTrackWorking`, chip `working_on`), or a GitHub comment, review, PR open/push, or issue event whose actor maps to that seat (`applyGithubWorking`, same expiry, `working_on` is `repo#number`). |
+| **working** | Workstream | A seat is working while one of three writers says so: an open turn (`applyStoredActivity`, expires after `LIVE_TURN_OPEN_MIN`), a woken unacked packet or a running agent (`applyTrackWorking`, chip `working_on`), or a GitHub comment, review, PR open/push, or issue event whose actor maps to that seat (`applyGithubWorking`, same expiry, `working_on` is `repo#number`). A close or a merge of that item clears `working_on` on the seat and in `fleet.working`. The seat can stay working. |
 | **packet phase** | Workstream | `sent`, then `delivered`, then `woken`, then `acked`. Unacked past `NUDGE_L1_S` is `overdue`. Only kinds `dispatch`, `ready`, `packet`, `critic_fail`, `needs_human`, or a human-lane blocker, are packets. |
 | **seat mismatch** | Workstream | `POST /activity` with another seat's name. `403` `{"error":"seat mismatch"}`. The key in `SEAT_KEYS` is the seat. |
 
@@ -179,9 +179,7 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **allowed** | Workstream | In `house/`: actions a seat may take without asking. |
 | **ask first** | Workstream | In `house/`: actions that need the human owner's yes first. |
 | **all three** | Workstream | New cloud agent only when every one of the three conditions holds: the context agent has 2+ jobs queued, the job touches different files, and it can be briefed from docs alone. |
-| **hotfix** | Workstream | The hotfix bypass. A broken production change ships right away on its own PR with a regression test that fails without the fix and passes with it. Forge writes the fix, tests locally, merges and deploys once: no CI wait, no critic review before merge, no rollback. Then critic does one live pass on production. If that pass fails, the next fix is another hotfix. The usual review process follows afterward. [Steps](runbooks/SHIP.md#hotfix). |
+| **hotfix**, **hotfix bypass** | Workstream | The hotfix bypass. A broken production change ships right away on its own PR with a regression test that fails without the fix and passes with it. Forge writes the fix, tests locally, merges and deploys once: no CI wait, no critic review before merge, no rollback. Then critic does one live pass on production. If that pass fails, the next fix is another hotfix. The usual review process follows afterward. [Steps](runbooks/SHIP.md#hotfix). |
 | **two hats** | Workstream | Every seat does the work and makes it repeatable: it writes the rule into the lexicon, OP-PROC or a runbook. A rule that only exists in chat counts as missing. |
 | **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
 | **activity key** | Workstream | The per-seat `SEAT_KEYS` hash on `POST /activity`. The seat posts only as itself. A cross-seat `seat` is `403` seat mismatch. |
-| **working** | Workstream | The seat light while an open turn, a woken packet, a running agent, or a mapped GitHub comment, review, PR, or issue is inside `LIVE_TURN_OPEN_MIN`. The chip is `working_on`. |
-| **hotfix bypass** | Workstream | Forge ships a broken production change at once: a regression test, local tests, one merge, one deploy. No CI wait and no critic review before merge. Critic does one live pass after. |

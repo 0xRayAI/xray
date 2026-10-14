@@ -177,8 +177,15 @@ def check_nudge(rep):
 
 
 def lexicon_terms(text):
-    """Defined terms: the bolded first cell of each lexicon table row, lowercased."""
-    return {m.strip().casefold() for m in re.findall(r"^\|\s*\*\*(.+?)\*\*\s*\|", text, re.M)}
+    """Defined terms: every bolded name in the first cell of a lexicon table row, lowercased."""
+    out = set()
+    for row in re.findall(r"^\|(.+)$", text, re.M):
+        cell = row.split("|", 1)[0]
+        for term in re.findall(r"\*\*(.+?)\*\*", cell):
+            name = term.strip().casefold()
+            if name:
+                out.add(name)
+    return out
 
 
 def undefined_terms(docs, defined):
