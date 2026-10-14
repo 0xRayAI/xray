@@ -23,7 +23,7 @@ function resolveGate() {
   ].filter(Boolean);
   const found = candidates.find((p) => existsSync(p));
   if (!found) {
-    throw new Error('delegation-gate.js missing — build 0xray or npm install 0xray');
+    throw Object.assign(new Error('delegation-gate.js missing — build 0xray or npm install 0xray'), { code: 'ERR_MODULE_NOT_FOUND' });
   }
   return require(found);
 }
