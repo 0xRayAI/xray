@@ -250,3 +250,7 @@ nothing is stored, a read that does not ack (`--ack` / `--pop` is the receipt), 
 issues), ghost-card reconcile, holds from a Jira status, a GitHub label, or a `Held:` comment, `NO_NUDGE_REPOS`,
 one pinned upstream repo plus `XRAY_OURS`, `SEAT_PRESENCE` (a string or an array of seats), and inbox webhooks.
 A merge closes the card. A failed retest after merge needs a new issue.
+
+## Box activity uploader (optional)
+
+If seats on one box share an uploader instead of holding their own `/activity` keys, run `house/live/tools/push_activity.sh` there with `LIVE_URL`, `LIVE_INGEST_SECRET` and `ACTIVITY_FILE` (loop, or `ONCE=1` from cron). It posts to `/activity/ingest`. Details and when to pick it: [`house/live/docs/activity-upload.md`](../live/docs/activity-upload.md).

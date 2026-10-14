@@ -74,6 +74,10 @@ setsid feed/push_to_host.sh < /dev/null >/dev/null 2>&1 &                       
 Stop the supervisor with `kill -TERM <supervisor pid>` (its trap stops the feed child). Stop the pusher by process
 group so its `sleep` child releases the flock.
 
+## Box activity upload
+
+Human and seat messages written on a box (`tools/live-act-append.sh` into `$ACTIVITY_FILE`) reach the board via `tools/push_activity.sh` -> `POST /activity/ingest` (`X-Live-Ingest`). Env only, append-only, cursor-based. When to use it versus seats posting to `/activity` with their own keys: [`docs/activity-upload.md`](docs/activity-upload.md).
+
 ## Deploy
 
 ```bash

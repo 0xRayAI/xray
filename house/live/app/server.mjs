@@ -122,6 +122,7 @@ const evs = new Map();          // id -> { e, h, s }  (merged view)
 const removed = [];             // [{ id, s }] (ids dropped from the merged view)
 let fullDirty = true, feedBody, feedGz, feedEtag;
 let activityReady = false;   // activity.jsonl loads later; mergedHeader runs before that
+const WINDOW_MIN = Math.max(1, Math.min(1440, Number(process.env.LIVE_WINDOW_MIN) || 15));   // seat 'active' window (minutes)
 const SRC_PRIO = ['github', 'box'];
 const SRCS = Object.fromEntries(SRC_PRIO.map(n => [n, { evs: new Map(), header: null, seq: 0, at: 0 }]));
 let ghRetest = new Set();       // "repo#n" with a GitHub lab retest: the box's merge-queue.md copy is then hidden
@@ -131,14 +132,17 @@ const evHash = e => crypto.createHash('sha1').update(JSON.stringify(e)).digest('
 function headerOf(f) { const h = {}; for (const k of Object.keys(f)) if (k !== 'events' && k !== 'cursor') h[k] = f[k]; return h; }
 function dropId(id) { evs.delete(id); removed.push({ id, s: seq }); if (removed.length > MAX_REMOVED) floorSeq = removed.splice(0, removed.length - MAX_REMOVED).pop().s; }
 // Every served event carries a credit (never blank): the collector sets it from logins; anything else (box, Jira, health,
-// emitter, older collectors) is credited by its sender node: a roster seat, Blaze (Lead / Blaze0x1), else the github node.
+// emitter, older collectors) is credited by its sender node: a roster seat, a human alias (HUMAN_ALIASES), else the github node.
+// HUMAN_ALIASES: comma list of alias=Label (e.g. "lead=Lead,lead-login=Lead"); default empty, so no human names live in code.
+const HUMAN_ALIASES = Object.fromEntries(String(process.env.HUMAN_ALIASES || '').split(',').map(x => x.split('=').map(y => y.trim()))
+  .filter(([a, l]) => a && l).map(([a, l]) => [a.toLowerCase(), l]));
 let rosterSeats = null;
 function creditOf(e) {
   if (typeof e.credit === 'string' && e.credit) return e.credit;
   if (!rosterSeats) { try { rosterSeats = new Set((JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector', 'fleet-roster.json'), 'utf8')).seats || []).map(x => String(x).toLowerCase())); } catch { rosterSeats = new Set(); } }
   const f = String(e.from || '').toLowerCase();
   if (f === 'coord') return 'blinky';
-  if (['lead', 'blaze', 'blaze0x1', 'htafolla'].includes(f)) return 'Blaze';
+  if (HUMAN_ALIASES[f]) return HUMAN_ALIASES[f];
   return rosterSeats.has(f) ? f : 'github';
 }
 function upsert(e) { if (!e.credit) e = { ...e, credit: creditOf(e) }; const h = evHash(e), cur = evs.get(e.id); if (!cur || cur.h !== h) evs.set(e.id, { e, h, s: seq }); }
@@ -227,8 +231,10 @@ function postInbox({ secret, headerSecret, body, lines }) {
 // jobs map to ours (coord -> blinky, operator / tester / qa -> forge, reviewer -> critic), see SEAT_ALIAS.
 const COS = 'blinky', OPS = 'forge', REVIEW = 'critic';
 const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, tester: OPS, qa: OPS, lab: OPS, reviewer: REVIEW, triager: COS };
-const SEAT_IDS = ['builder', 'builder-cloud', 'arch1',
-  'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+// LIVE_SEAT_IDS (comma list) replaces the fleet's seat ids; builder / builder-cloud are kit plumbing and always kept.
+const SEAT_IDS = process.env.LIVE_SEAT_IDS
+  ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
+  : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
@@ -590,8 +596,8 @@ function validDot(d, now = Date.now()) {
 }
 function dotsFleet(fleet, now = Date.now()) {   // Assistant node state, merged into the fleet view
   if (!emitter.last) return fleet;
-  const f = fleet || { as_of: iso(now), window_min: 15, seats: {}, working: {}, active: 0, total: 0 };
-  const win = (f.window_min || 15) * 60000, last = emitter.recent[emitter.recent.length - 1] || {};
+  const f = fleet || { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
+  const win = (f.window_min || WINDOW_MIN) * 60000, last = emitter.recent[emitter.recent.length - 1] || {};
   const working = now - emitter.last <= EMITTER_WORK_MS;
   f.seats = { ...(f.seats || {}), Assistant: { active: now - emitter.last <= win, last_ct: iso(emitter.last), via: 'emitter', working, ...(working ? { working_via: 'emitter' } : {}) } };
   f.working = { ...(f.working || {}) }; delete f.working.Assistant;
@@ -774,7 +780,7 @@ function evalSilent(fleet, now = Date.now()) {
       nudges.some(n => !n.closed_at && n.kind !== 'silent' && n.seat === id);
     const folded = presentSeat(fleet.seats, name, presence);
     let last = folded.last;
-    if (last > tsOf(o.last_ct)) { o.last_ct = iso(last); o.via = 'presence'; o.active = now - last <= (fleet.window_min || 15) * 60000; }
+    if (last > tsOf(o.last_ct)) { o.last_ct = iso(last); o.via = 'presence'; o.active = now - last <= (fleet.window_min || WINDOW_MIN) * 60000; }
     if (folded.working && !o.working) { o.working = true; o.working_via = 'presence'; }
     if (folded.working) continue;
     if (owns && (!last || now - last > SILENT_MS)) { o.silent = true; o.silent_since = iso(last || null); silentIds.set(id, { name, last }); }
@@ -807,7 +813,7 @@ const iso = t => (t ? new Date(t).toISOString() : null);
 // silent box ages out on its own; box-only state is kept but flagged box_stale (not hidden) once the box is silent.
 function mergeFleet(g, b, stale, now) {
   if (!g && !b) return undefined;
-  const win = ((g || b).window_min || 15) * 60000;
+  const win = ((g || b).window_min || WINDOW_MIN) * 60000;
   const names = [...new Set([...Object.keys(g?.seats || {}), ...Object.keys(b?.seats || {})])];
   const seats = {}, working = {};
   for (const s of names) {
@@ -886,7 +892,7 @@ function applyTrackWorking(fleet, track, now) {
   const workingItems = (track && track.items || []).filter(item => item.working && item.seat_name);
   if (!workingItems.length) return fleet;
   const f = fleet ? { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } }
-    : { as_of: iso(now), window_min: 15, seats: {}, working: {}, active: 0, total: 0 };
+    : { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
   for (const item of workingItems) {
     const name = canonSeatToken(item.seat_name) || item.seat_name;   // fleet seats are keyed by seat id
     const via = item.kind === 'agent' ? 'cloud' : 'wake';
@@ -1638,8 +1644,8 @@ function loadPersistedWakes() {   // last wake per seat survives a restart (wake
 header = mergedHeader(); fullDirty = true;
 function applyStoredActivity(fleet, now) {
   if (!activityReady || !activity.length) return fleet;
-  const f = fleet || { as_of: iso(now), window_min: 15, seats: {}, working: {}, active: 0, total: 0 };
-  const win = (f.window_min || 15) * 60000;
+  const f = fleet || { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
+  const win = (f.window_min || WINDOW_MIN) * 60000;
   const open = new Map();
   const newest = new Map();
   for (const line of activity) {
@@ -1904,6 +1910,31 @@ async function handle(req, res) {
     appendArchive('activity', line);
     seq++; header = mergedHeader(); fullDirty = true;
     return json(req, res, 202, { ok: true });
+  }
+
+  if (p === '/activity/ingest') {   // box uploader (X-Live-Ingest = ingest secret): a JSONL batch of activity lines for any fleet seat
+    if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+    const hs = req.headers['x-live-ingest'];
+    if (typeof hs !== 'string' || !hs || !safeEq(hs, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
+    let body;
+    try { body = await readBody(req, 256 << 10); } catch (e) { return json(req, res, e.code === 413 ? 413 : 400, { error: e.code === 413 ? 'too large' : 'bad request' }); }
+    const now = Date.now(), rejected = []; let added = 0;
+    body.toString('utf8').split('\n').forEach((raw, i) => {
+      if (!raw.trim()) return;
+      let d; try { d = JSON.parse(raw); } catch { rejected.push({ n: i + 1, error: 'invalid json' }); return; }
+      const id = d && typeof d.seat === 'string' ? canonSeatToken(d.seat) : '';
+      if (!id || !SEAT_IDS.includes(id)) { rejected.push({ n: i + 1, error: 'unknown seat' }); return; }
+      const why = validActivity(d, now);
+      if (why) { rejected.push({ n: i + 1, error: why }); return; }
+      const seat = displaySeat(id) || id;
+      if (!actRateOk(seat, now)) { rejected.push({ n: i + 1, error: 'rate limited' }); return; }
+      actSeq++;
+      const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
+      for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
+      rememberActivity(line); appendArchive('activity', line); added++;
+    });
+    if (added) { seq++; header = mergedHeader(); fullDirty = true; }
+    return json(req, res, 200, { ok: true, added, rejected: rejected.slice(0, 50) });
   }
 
   if (p === '/emit') {   // write-only Assistant / emitter events from the sample MCP server; answers {ok} or an error, never data
