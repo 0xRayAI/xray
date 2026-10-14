@@ -37,7 +37,7 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 - A board-cards / board-owner FAIL marked *known* is today's per-agent board layout; it clears with the next-wave card restructure.
 
 ## Review steps
-0. On wake, confirm you wear the latest 0xray suit (re-wear via forge if behind), then read the station it installs (`.xray/state/STATION.md`); update it at the end of each wave. It holds never keys, tokens or PEM text, only where a secret lives (its env var name). A station holding a key, token or PEM text is a FAIL.
+0. Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name). A STATION.md or NOTES.md holding a key, token or PEM text is a FAIL.
 1. Before passing any routing-map change, look up every login through the GitHub users API (`curl https://api.github.com/users/<login>`). A 404 is a FAIL; #303 once passed with three fake logins.
 2. The live pass needs a real issue and PR created on GitHub that land in the right seat's inbox. Test wakes alone don't count.
 3. When a PR adds a rule that overlaps an existing one, name the pair in the review (it feeds the next **boil-up**).

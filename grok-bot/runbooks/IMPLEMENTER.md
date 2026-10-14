@@ -4,7 +4,7 @@ Written by mill (implementer seat). Any fleet's implementer follows it; nothing 
 Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
 
 ## 0. Station
-- On wake, confirm you wear the latest 0xray suit (re-wear via forge if behind), then read the station it installs (`.xray/state/STATION.md`); update it at the end of each wave. It holds never keys, tokens or PEM text, only where a secret lives (its env var name).
+- Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name).
 
 ## 1. One branch per wave
 - One wave = one branch = one PR. Code, docs, plates and nits for the wave all fold into it; no side PRs.
