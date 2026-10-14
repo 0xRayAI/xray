@@ -399,6 +399,7 @@ if (!ROUTING.ok) console.log('ROUTING: FAIL ' + (ROUTING.error || '') + (ROUTING
 // (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
 // Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
 const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
+const cosSeat = () => (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS;   // the CoS role (routing seats.coord)
 function nudgeLines(now) {
   let changed = false;
   const open = new Set();
@@ -414,9 +415,14 @@ function nudgeLines(now) {
       number: Number.isInteger(l.number) ? l.number : 0, title: String(l.title || '').slice(0, 120), url: String(l.url || '').slice(0, 300),
       stage: '', level: lvl, seat, via: 'unacked line', line: String(l.id).slice(0, 300), since: new Date(t).toISOString() });
     noteWake(seat, { ...l, reason: (`nudge L${lvl}: ` + (l.reason || '')).slice(0, 300) });
+    const cos = cosSeat();
+    if (lvl === 3 && cos && cos !== seat) {   // L3 with no move: the CoS role gets it too, to reassign
+      nudges.push({ ...nudges[nudges.length - 1], id: `${base}:L3cos`, kind: 'reassign', seat: cos, about: seat, via: 'L3: reassign' });
+      noteWake(cos, { ...l, id: `${base}:L3cos`, seat: cos, reason: `L3 no move on ${seat}: reassign`.slice(0, 300) });
+    }
     changed = true;
   }
-  for (const n of nudges) if (n.kind === 'line' && !n.closed_at && !open.has(n.line_key)) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  for (const n of nudges) if ((n.kind === 'line' || (n.kind === 'reassign' && n.line_key)) && !n.closed_at && !open.has(n.line_key)) { n.closed_at = new Date(now).toISOString(); changed = true; }
   return changed;
 }
 // Seat nudges (same path): a seat with no route (startup route check) and a configured seat whose wake went quiet
@@ -429,7 +435,7 @@ function nudgeSeats(now) {
   for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
   for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
     nudges.push({ id, kind: x.kind, t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
-      stage: '', level: 1, seat: (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS, about: x.seat, via: x.via });
+      stage: '', level: 1, seat: cosSeat(), about: x.seat, via: x.via });
     changed = true;
   }
   for (const n of nudges) if ((n.kind === 'unrouted' || n.kind === 'quiet') && !n.closed_at && !want.has(n.id)) { n.closed_at = new Date(now).toISOString(); changed = true; }
@@ -595,7 +601,7 @@ function holdOwner(c) {
 function evalNudges(now = Date.now()) {
   let changed = false; const byKey = new Map(bfCards.map(c => [c.key, c]));
   for (const n of nudges) {
-    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind)) continue;
+    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind) || (n.kind === 'reassign' && n.line_key)) continue;
     const c = byKey.get(n.card);
     if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card })) {
       n.closed_at = new Date(now).toISOString(); changed = true; continue;
@@ -636,7 +642,12 @@ function evalNudges(now = Date.now()) {
     if (l2 && !l2.closed_at) {
       const reps = nudges.filter(n => n.card === c.key && n.level === 3 && n.beat_t === c.last_beat_t && !n.closed_at);
       const prev = reps.length ? reps[reps.length - 1].t : l2.t;
-      if (now - prev >= NUDGE_L3_MS) mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
+      if (now - prev >= NUDGE_L3_MS) {
+        mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
+        const cos = cosSeat();   // L3 with no move: the CoS role also gets it, to reassign (once per card stretch)
+        const rid = `nudge:${c.key}:L3cos:${c.last_beat_t}`;
+        if (cos && cos !== tgt && !nudges.some(n => n.id === rid)) { mk(3, cos, 'L3: reassign', rid); nudges[nudges.length - 1].kind = 'reassign'; }
+      }
     }
   }
   if (nudgeLines(now)) changed = true;
@@ -775,6 +786,11 @@ function wakeRun(run) {
     const reason = run.reason === 'empty' ? `board empty, pull next work by ${by}`
       : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
     noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: run.reason === 'empty' ? 'board empty' : `timed run: ${n} open line(s)`, reason });
+  }
+  const cos = cosSeat();
+  if (run.reason !== 'empty' && cos && !(cos in run.deadlines)) {   // the CoS role owns the board: told about every stall run
+    noteWake(cos, { id: `clock:${run.started_at}:cos`, type: 'timed_run', title: 'board stalled',
+      reason: `board stalled: timed run on ${Object.keys(run.deadlines).join(', ')}, ends ${run.ends_at}` });
   }
   console.log(`clock: ${run.reason} run started, ${Object.keys(run.deadlines).length} seat(s), ends ${run.ends_at}`);
 }

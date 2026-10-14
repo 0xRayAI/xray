@@ -1,5 +1,11 @@
 # Inbox
 
+## Who fixes stopped work
+
+- **The CoS role owns the board.** That is the routing role `seats.coord` (a role, not a name).
+- **Nudge (a card or an inbox line stops moving).** The owning seat is woken and is responsible, escalating L1 to L3. At L3 with no move, the nudge also goes to the CoS role so it can reassign. One path: `evalNudges` in `app/server.mjs`.
+- **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline, and tells the CoS role. On an empty board, it wakes the CoS role to pull the next work. Once per window.
+
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
 
 **Line fields** (`app/server.mjs` `INBOX_KEYS`; nothing else is accepted):

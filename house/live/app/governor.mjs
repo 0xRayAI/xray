@@ -1,6 +1,6 @@
 // Governor (tripwire), ported from house/live-mesh/tripwire_push.py (#227) into the server: one tick hashes what
 // matters and acts only on a real change. The fingerprint is the real events (a feed_push record never trips it, so
-// no self-loop; a generated_at bump never trips it) plus the watchdog state (stalled lines, routing, quiet seats).
+// no self-loop; a generated_at bump never trips it) plus the open nudges (evalNudges) and routing state.
 import crypto from 'node:crypto';
 
 export function realEvents(events) {
