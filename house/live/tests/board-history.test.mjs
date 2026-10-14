@@ -89,7 +89,10 @@ function start(data, extra) {
 
 async function ready(base, logs) {
   for (let i = 0; i < 50; i++) {
-    try { if ((await fetch(base + '/healthz')).ok) return; } catch { /* not up */ }
+    try {
+      const res = await fetch(base + '/healthz');
+      if (res.status === 200 || res.status === 503) return;
+    } catch { /* not up */ }
     await new Promise(r => setTimeout(r, 80));
   }
   throw new Error('healthz did not come up\n' + logs());

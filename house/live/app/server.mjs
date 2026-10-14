@@ -1533,7 +1533,7 @@ function unreadableRepos() {
   const fromFeed = SRCS.github.header && SRCS.github.header.repos_unreadable;
   const names = new Set(skipped);
   if (Array.isArray(fromFeed)) for (const r of fromFeed) if (typeof r === 'string' && r) names.add(r);
-  return [...names].sort((a, b) => a.localeCompare(b));
+  return [...names].map(repoTag).sort((a, b) => a.localeCompare(b));
 }
 function healthBody() {   // public: counts, times, ages (s) and wake states; no urls or keys. Unreadable repos are listed.
   const now = Date.now();
