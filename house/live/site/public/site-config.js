@@ -1,7 +1,7 @@
 /* Bifrost overlay (our install only; app/deploy.sh copies house/live/site/public/ over the kit public/).
    The strip is blinky, critic, forge and mill. Arch1 stays on the canvas as an outside party.
    herald, magnet, nibbler and sound are parked and are not drawn. Blaze is the owner node.
-   No Lead / Others node (unknown senders go to GitHub's node). The product node is burst-live. */
+   No Lead / Others node (unknown senders go to GitHub's node). No product node: burst-live IS the Bifrost board, never a node on it (Blaze 2026-10-14). */
 (function (L) {
   'use strict';
   function reset(obj, next) { Object.keys(obj).forEach(function (k) { delete obj[k]; }); for (var k in next) obj[k] = next[k]; }
@@ -11,26 +11,36 @@
   L.SEAT_NAMES.splice.apply(L.SEAT_NAMES, [0, L.SEAT_NAMES.length].concat(STRIP));
   // 920 x 400 canvas: the four seats plus Arch1 on the top row, rails in the middle.
   reset(L.SATS, { blinky: [90, 55], critic: [250, 55], forge: [410, 55], mill: [570, 55], arch1: [820, 55],
-    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], 'mymuse.house': [830, 200], Assistant: [840, 335] });
+    GitHub: [110, 200], Blaze: [300, 200], Railway: [690, 200], Assistant: [840, 335] });
   var C = { blinky: [88, 210, 180], critic: [255, 150, 90], forge: [255, 140, 70], mill: [190, 170, 120], arch1: [255, 120, 100],
-    GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], 'mymuse.house': [255, 200, 90], Assistant: [116, 170, 156] };
+    GitHub: [200, 210, 230], Blaze: [255, 120, 60], Railway: [170, 130, 255], Assistant: [116, 170, 156] };
   reset(L.COLOR, C);
-  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', 'mymuse.house': 'burst-live', Assistant: 'Assistant', arch1: 'Arch1' };
+  var LAB = { Blaze: 'Blaze', GitHub: 'GitHub', Railway: 'Railway', Assistant: 'Assistant', arch1: 'Arch1' };
   STRIP.forEach(function (s) { LAB[s] = s; });
   reset(L.LABEL, LAB);
-  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', 'mymuse.house': 'live board', Assistant: 'MCP calls', arch1: 'outside party' };
+  var SUB = { Blaze: 'owner', GitHub: 'PRs · commits · checks', Railway: 'deploys', Assistant: 'MCP calls', arch1: 'outside party' };
   STRIP.forEach(function (s) { SUB[s] = ROLE[s]; });
   reset(L.SUB, SUB);
   reset(L.SQUARE, { GitHub: 1, Railway: 1 });
   L.EDGES.splice.apply(L.EDGES, [0, L.EDGES.length].concat(STRIP.map(function (s) { return [s, 'GitHub']; }),
-    [['arch1', 'GitHub'], ['Blaze', 'GitHub'], ['GitHub', 'Railway'], ['Railway', 'mymuse.house'], ['blinky', 'mymuse.house'], ['Assistant', 'mymuse.house']]));
+    [['arch1', 'GitHub'], ['Blaze', 'GitHub'], ['GitHub', 'Railway']]));
   // feed names -> our nodes: each drawn seat is its own node; Blaze / Lead / unknown senders / CI fold into GitHub
   var NK = L.NODE_KEY;
   STRIP.forEach(function (s) { NK[s] = s; });
   NK.arch1 = 'arch1';
   NK.Coord = 'blinky'; NK.Blaze = 'Blaze'; NK.Blaze0x1 = 'Blaze'; NK.htafolla = 'Blaze'; NK.Lead = 'Blaze'; NK['lead-alt'] = 'Blaze'; NK['lead-login'] = 'Blaze';
   NK.Others = 'GitHub'; NK.other = 'GitHub'; NK.CI = 'GitHub'; NK.CloudAgents = 'GitHub'; NK['Cloud agents'] = 'GitHub';
-  NK.Bifrost = 'mymuse.house'; NK['burst-live'] = 'mymuse.house';
+  // burst-live IS the board: no node for it. Events to/from the board (its own deploys, /health, turn lines) are
+  // dropped before the kit maps them, so nothing falls back to GitHub; hops through it are skipped.
+  var BOARD = { Bifrost: 1, 'burst-live': 1, 'mymuse.house': 1 };
+  delete NK.Bifrost; delete NK['burst-live'];
+  var kitApply = L.applyFeed;
+  L.applyFeed = function (state, feed, nowMs) {
+    if (feed && Array.isArray(feed.product_nodes)) feed.product_nodes.forEach(function (n) { BOARD[n] = 1; });
+    if (feed && Array.isArray(feed.events)) feed = Object.assign({}, feed, { product_nodes: [],
+      events: feed.events.filter(function (e) { return !BOARD[e.from] && !BOARD[e.to]; }) });
+    return kitApply(state, feed, nowMs);
+  };
   L.FROM_FALLBACK = 'GitHub';
   L.REVIEW_SEAT = 'critic';
   // avatars we ship in avatars/ (arch1 = minime0x); Blaze = x.com/Blaze0x1 profile picture;

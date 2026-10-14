@@ -290,13 +290,14 @@ test('our overlay: strip is blinky, critic, forge, mill; Arch1 is outside; parke
   for (const parked of ['herald', 'magnet', 'nibbler', 'sound']) assert.ok(!(parked in L.SATS), parked);
   for (const k of ['Lead', 'X', 'Builder', 'Reviewer', 'Operator', 'Tester', 'QA']) assert.ok(!(k in L.SATS), k);
   assert.ok(!JSON.stringify([L.LABEL, L.SUB]).includes('Example'));
-  assert.equal(L.LABEL['mymuse.house'], 'burst-live');
+  for (const k of ['mymuse.house', 'burst-live', 'Bifrost']) assert.ok(!(k in L.SATS) && !(k in L.LABEL), k);  // the board is not a node
+  assert.ok(!JSON.stringify(L.LABEL).includes('burst-live'));
   for (const e of L.EDGES) assert.ok(e[0] in L.SATS && e[1] in L.SATS, String(e));
   for (const k of L.BOT_IMAGES) assert.ok(fs.existsSync(path.join(APP, '..', 'site', 'public', L.botImage(k))), k);
   assert.equal(L.botImage('mill'), null);
   const ev = L.applyFeed({}, { events: [{ id: 1, t_ct: '2026-10-13T10:00:00-05:00', from: 'Blaze', to: 'GitHub' },
     { id: 2, t_ct: '2026-10-13T10:01:00-05:00', from: 'Others', to: 'Bifrost' }, { id: 3, t_ct: '2026-10-13T10:02:00-05:00', from: 'forge', to: 'GitHub' }] }).state.events;
-  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['GitHub', 'mymuse.house'], ['forge', 'GitHub']]);
+  assert.deepEqual(ev.map(e => [e.from, e.to]), [['Blaze', 'GitHub'], ['forge', 'GitHub']]);  // Others -> Bifrost: the board is not a node
   assert.ok('Blaze' in L.SATS); assert.equal(L.LABEL.Blaze, 'Blaze');
   for (const n of ['Blaze', 'Blaze0x1', 'htafolla', 'Lead']) assert.equal(L.liveNodeKey(n, null), 'Blaze', n);
   assert.equal(L.botImage('arch1'), 'avatars/arch1.png');
