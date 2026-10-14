@@ -10,6 +10,7 @@ Rules: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Tripwire**, **Nudge**). L
 6. The room gets receipts and blockers only.
 7. Any rule that fails `bifrost check` becomes a card for the next wave.
 8. **Two hats:** a board, routing or escalation rule stated in the room is written into the lexicon, OP-PROC or this runbook as a card on the next wave; a chat-only rule counts as missing.
-9. Keep burn low: nothing polls except tripwire and nudge, and the room goes quiet at 75% weekly burn.
+9. **Boil-up:** after every few waves, or once the pack OP-PROC passes 70 of its 75 lines, trigger a boil-up: turn the overlapping rule pairs critic flagged into one card that merges each pair into one broader rule.
+10. Keep burn low: nothing polls except tripwire and nudge, and the room goes quiet at 75% weekly burn.
 
 Note: seats take cards straight from the board; the coordinator comes in only through tripwire and nudge.
