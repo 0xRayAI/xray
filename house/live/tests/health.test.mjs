@@ -1,4 +1,5 @@
-// Health body: building / empty / live, stale card_age and data_age, HTTP stays 200.
+// Health body: building / empty / live. feed_quiet and cards_behind gate ok.
+// data_age and box_age are reported and do not change ok.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -84,7 +85,7 @@ test('building when no cards; empty when a board was built with zero cards', asy
   }
 });
 
-test('stale card_age sets ok false and keeps HTTP 200', async () => {
+test('stale card_age stays informational and keeps HTTP 200', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-health-'));
   fs.mkdirSync(path.join(data, 'live'), { recursive: true });
   fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
@@ -98,17 +99,20 @@ test('stale card_age sets ok false and keeps HTTP 200', async () => {
     assert.equal(res.status, 200);
     assert.equal(res.ok, true);
     const body = await res.json();
-    assert.equal(body.ok, false);
+    assert.equal(body.ok, true);
+    assert.equal(body.feed_quiet, false);
     assert.equal(body.board, 'live');
     assert.ok(body.card_age > 600);
     assert.equal(body.data_age, null);
+    assert.equal(body.box_informational, true);
+    assert.equal(body.arch1_launch.enabled, false);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
-test('stale data_age sets ok false while collector_age stays small; a full replace clears it', async () => {
+test('stale data_age stays informational while collector_age stays small; a full replace clears it', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-health-'));
   const feed = path.join(data, 'feed', 'github-events.json');
   fs.mkdirSync(path.dirname(feed), { recursive: true });
@@ -129,7 +133,8 @@ test('stale data_age sets ok false while collector_age stays small; a full repla
     }
     assert.equal(res.status, 200);
     assert.equal(res.ok, true);
-    assert.equal(body.ok, false);
+    assert.equal(body.ok, true);
+    assert.equal(body.feed_quiet, false);
     assert.ok(body.data_age > 21600);
     assert.ok(typeof body.collector_age === 'number' && body.collector_age < 30);
     fs.writeFileSync(feed, JSON.stringify({ generated_at: new Date().toISOString(), events: [] }));
@@ -141,6 +146,7 @@ test('stale data_age sets ok false while collector_age stays small; a full repla
     }
     assert.equal(cleared.data_age, null);
     assert.equal(cleared.ok, true);
+    assert.equal(cleared.feed_quiet, false);
     assert.ok(cleared.collector_age < 30);
   } finally {
     await stop(srv.child);
