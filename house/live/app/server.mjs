@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
+import { checkRoutesFromDir } from './routes.mjs';
+const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
 
@@ -256,6 +258,19 @@ function loadSeatWebhooks() {
 }
 const SEAT_WEBHOOKS = loadSeatWebhooks();
 const wakeQ = new Map();
+const wakeOkAt = {};   // seat -> ISO of the last successful wake POST
+// Wake health on the board: each configured seat's last good wake; quiet = none within BIFROST_WAKE_QUIET_MINUTES
+// (default 240) of now (or of server start), even with no unacked line.
+const WAKE_QUIET_MS = (Number(process.env.BIFROST_WAKE_QUIET_MINUTES) > 0 ? Number(process.env.BIFROST_WAKE_QUIET_MINUTES) : 240) * 60000;
+const BOOT_AT = Date.now();
+function wakeBoard(now = Date.now()) {
+  const out = {};
+  for (const seat of Object.keys(SEAT_WEBHOOKS)) {
+    const last = wakeOkAt[seat] || null, t = last ? Date.parse(last) : BOOT_AT;
+    out[seat] = { last_ok: last, quiet: now - t > WAKE_QUIET_MS };
+  }
+  return out;
+}
 function noteWake(seat, line) {
   try {
     const cfg = SEAT_WEBHOOKS[seat];
@@ -318,7 +333,7 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) touchSeat(seat);
+  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; }
   st.inflight = false; armWake(seat);
 }
 // Last time the server saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
@@ -373,6 +388,42 @@ function saveSeatInbox(s) {
   const cut = Date.now() - 7 * 86400000;
   seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n');
+}
+// Governor (stall watchdog): an open (unacked, not done) inbox line older than BIFROST_STALL_MINUTES (default 15) is
+// flagged stalled (header.stalled, /healthz stalled count) and re-fires that seat's wake: at most once per threshold
+// window per line and at most BIFROST_STALL_MAX_REWAKES (default 3) times, so it never loops. An ack (or the card moving
+// on) drops the line from openLines, which clears the flag. State is in memory: a restart may re-wake a stalled line once.
+// Startup route check (same rules as tools/bifrost-init --check): a seat with no route, or a rule routing to a seat
+// outside the fleet, is logged loudly and shown on the board (header.routing, /healthz routing). Never a crash.
+const ROUTING = checkRoutesFromDir(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'),
+  process.env.BIFROST_ROSTER || path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'));
+if (!ROUTING.ok) console.log('ROUTING: FAIL ' + (ROUTING.error || '') + (ROUTING.unrouted.length ? ' no route for ' + ROUTING.unrouted.join(',') : '') + (ROUTING.unknown.length ? ' rules to seats outside the fleet: ' + ROUTING.unknown.join(',') : ''));
+const STALL_MS = Math.max(0.001, Number(process.env.BIFROST_STALL_MINUTES) > 0 ? Number(process.env.BIFROST_STALL_MINUTES) : 15) * 60000;
+const STALL_MAX = Number.isInteger(Number(process.env.BIFROST_STALL_MAX_REWAKES)) && Number(process.env.BIFROST_STALL_MAX_REWAKES) >= 0 ? Number(process.env.BIFROST_STALL_MAX_REWAKES) : 3;
+const stallState = new Map();   // seat \0 line id -> { since, last, n }
+let stalledNow = [];
+function governorTick(now = Date.now()) {
+  const keep = new Set(), out = [];
+  for (const seat of SEAT_IDS) {
+    for (const l of openLines(seat)) {
+      const t = Date.parse(l.t_ct);
+      if (!Number.isFinite(t) || now - t < STALL_MS) continue;
+      const k = seat + '\0' + l.id; keep.add(k);
+      let st = stallState.get(k);
+      if (!st) { st = { since: now, last: 0, n: 0 }; stallState.set(k, st); }
+      if (SEAT_WEBHOOKS[seat] && st.n < STALL_MAX && now - st.last >= STALL_MS) {
+        st.last = now; st.n++;
+        noteWake(seat, { ...l, reason: ('stalled: ' + (l.reason || '')).slice(0, 300) });
+        console.log(`governor: re-wake ${seat} (${st.n}/${STALL_MAX})`);
+      }
+      out.push({ seat, id: String(l.id).slice(0, 300), repo: l.repo || '', number: Number.isInteger(l.number) ? l.number : 0,
+        since: new Date(t).toISOString(), rewakes: st.n });
+    }
+  }
+  for (const k of stallState.keys()) if (!keep.has(k)) stallState.delete(k);   // acked / done: cleared
+  const changed = JSON.stringify(out) !== JSON.stringify(stalledNow);
+  stalledNow = out;
+  return changed;
 }
 function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
 function inboxLineError(d) {
@@ -663,6 +714,9 @@ function mergedHeader(now = Date.now()) {
   h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
+  h.wakes = wakeBoard(now);   // last successful wake per seat; quiet past BIFROST_WAKE_QUIET_MINUTES
+  h.routing = ROUTING;   // startup route check (bifrost-init rules)
+  h.stalled = stalledNow;   // governor: open inbox lines past BIFROST_STALL_MINUTES
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
   h.notes = [...new Set([...(g?.notes || []), ...(b?.notes || [])])];
   h.sources = {
@@ -685,6 +739,8 @@ setInterval(() => {
   const h = mergedHeader();
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }
 }, 15000).unref();
+const GOV_MS = Math.max(200, (Number(process.env.BIFROST_STALL_CHECK_S) > 0 ? Number(process.env.BIFROST_STALL_CHECK_S) : 60) * 1000);
+setInterval(() => { if (governorTick()) { seq++; header = mergedHeader(); fullDirty = true; } }, GOV_MS).unref();
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
@@ -928,7 +984,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
-    origin: ORIGIN || null, wakes: wakeHealth() });
+    origin: ORIGIN || null, wakes: wakeHealth(), stalled: stalledNow.length, routing: ROUTING.ok ? 'ok' : 'fail' });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }

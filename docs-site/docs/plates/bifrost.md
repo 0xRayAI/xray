@@ -37,6 +37,8 @@ Bifrost is an autonomous AI fleet management system. Every PR, issue and comment
 └────────────────────────────────────────────────────────────┘
 ```
 
+A governor watches the fleet: an inbox line left unacked past `BIFROST_STALL_MINUTES` is flagged stalled and re-wakes its seat once per window (never a loop, an ack clears it); the server checks at startup that every seat has a route; and the board shows each seat's last good wake and flags a quiet one.
+
 Code lives under `house/live/` (collector, board, inbox routing, server) and `house/live-mesh/` (`fetch_feed.py`). Deploy only via `house/live/app/deploy.sh`: it assembles `collector/`, and a build straight from git stops with "collector/ is not assembled". The plate that belongs here is house.
 
 stamped · 0xray 4.0.43

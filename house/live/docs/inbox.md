@@ -233,3 +233,9 @@ The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delive
 `SEAT_PRESENCE` maps a seat whose activity also counts as another seat. A value is a seat name or an array of seat names. A top-level array of pairs is accepted. The default is `{"builder-cloud":"builder"}`. Blank JSON maps nothing. Invalid JSON keeps the default.
 
 Fleet seat mapping (inbox-roles.json, kit defaults, Seat: credit): [fleet-setup.md](fleet-setup.md).
+
+## Governor (stall watchdog, route check, wake health)
+
+- **Stalled lines.** An open inbox line (not acked, card not moved on) older than `BIFROST_STALL_MINUTES` (default 15) is flagged in the board header (`stalled`: seat, id, repo, number, since, rewakes) and counted in `/healthz` (`stalled`). The server re-fires that seat's wake webhook with reason `stalled: <reason>`, at most once per threshold window per line and at most `BIFROST_STALL_MAX_REWAKES` times (default 3), so it never loops. An ack clears the flag. `BIFROST_STALL_CHECK_S` (default 60) sets how often it checks. State is in memory, so a restart can re-wake a stalled line once.
+- **Route check at startup.** The server runs the same rules as `tools/bifrost-init --check` on `collector/routing/inbox-roles.json` against `collector/fleet-roster.json`. A seat with no route, or a rule routing to a seat outside the fleet, logs `ROUTING: FAIL …` and shows in the board header (`routing`) and `/healthz` (`routing: fail`). Production keeps running. `BIFROST_ROUTING_DIR` and `BIFROST_ROSTER` override the paths.
+- **Wake health.** The board header `wakes` lists each seat with a webhook: `last_ok` (last successful wake POST) and `quiet` (no good wake within `BIFROST_WAKE_QUIET_MINUTES`, default 240, of now or server start), even when the seat has no open line.
