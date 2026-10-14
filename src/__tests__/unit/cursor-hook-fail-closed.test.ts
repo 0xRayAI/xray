@@ -165,3 +165,18 @@ describe('bootstrap build on a fresh checkout (gate module missing)', () => {
     expect(runWithUtils(null).out?.permission).toBe('deny');
   });
 });
+
+describe('bootstrap build when utils load but the built gate is missing (cloud checkout)', () => {
+  const sh = (command: string) => JSON.stringify({ tool_name: 'Shell', tool_input: { command } });
+  const MISSING_GATE = `throw Object.assign(new Error('delegation-gate.js missing'), { code: 'ERR_MODULE_NOT_FOUND' });\n`;
+  it('allows the exact build command', () => {
+    expect(runWithUtils(MISSING_GATE, sh('npm ci && npm run build')).out?.permission).toBe('allow');
+  });
+  it('denies everything else', () => {
+    expect(runWithUtils(MISSING_GATE, sh('git push')).out?.permission).toBe('deny');
+  });
+  it('the runtime loader tags its missing-gate error with ERR_MODULE_NOT_FOUND', () => {
+    const src = readFileSync(path.join(repoRoot, 'src/integrations/hooks/delegation-gate-runtime.mjs'), 'utf8');
+    expect(src).toMatch(/delegation-gate\.js missing[\s\S]{0,120}code: 'ERR_MODULE_NOT_FOUND'/);
+  });
+});
