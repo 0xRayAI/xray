@@ -159,7 +159,10 @@ function unmapped(e) {
 }
 // CI is not work: check runs, suites and workflow runs never draw as board traffic (cards still read them from the source).
 const CI_KINDS = new Set(['check_run', 'check_suite', 'workflow_run', 'ci_pass', 'ci_fail']);
-const shown = (n, e) => !CI_KINDS.has(e.kind) && !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
+// Board traffic is packets only (Blaze 10/14): a handoff between parties. State-only kinds stay on cards, never as bursts.
+const NOT_TRAFFIC = new Set(['commit', 'pr_edit', 'issue_edit', 'pr_review_requested', 'pr_activity', 'issue_activity']);
+const isTraffic = e => !CI_KINDS.has(e.kind) && !NOT_TRAFFIC.has(e.kind) && !(e.kind === 'deploy' && e.state && !/^(success|failure|failed|error|crashed)$/i.test(e.state));
+const shown = (n, e) => isTraffic(e) && !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
 function touch(id) {
   for (const n of SRC_PRIO) { const e = SRCS[n].evs.get(id); if (e && shown(n, e)) return upsert(e); }
   if (evs.has(id)) dropId(id);
