@@ -11,7 +11,7 @@ The output goes on the PR as the live-pass comment.
 | edit-sim | a comment edited to add an @-mention routes exactly one line to the newly mentioned seat | **Two loops** |
 | edit (live) | a real comment edited to add the seat's @-mention lands as one `…:edit:<handle>` line | **Two loops** |
 | deliver (live) | a real issue and @-comment per seat, posted on `--repo`, land in that seat's inbox on `--target` | **Two loops** |
-| nodes | every `fleet-nodes.json` login resolves on GitHub (users API); a 404 fails | **Routing** |
+| nodes | every `fleet-nodes.json` bot login resolves on GitHub (users API); a 404 fails | **Routing** |
 | resolve (live) | every routing-map login resolves on GitHub, as `--target`'s `GET /routing` reports | **Routing** |
 | board-page (live) | the board page and `/healthz` answer 200, no server error | **Card** |
 | board-cards (live) | every open issue/PR on `--repo` is exactly one card: none missing, none duplicated | **Card** |

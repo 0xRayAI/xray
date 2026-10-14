@@ -9,7 +9,7 @@ Offline rules (always run, no writes):
   edit-sim     a comment edited to add an @-mention routes one line to the newly mentioned seat, once (inbox_pass)
   tripwire     an empty board and a stalled board each fire the timed run once per window (the kit's governor.mjs)
   nudge        a stuck line nudges L1 -> L3, then wakes the coordinator once (the kit's server, local, fake seats)
-  nodes        every fleet-nodes.json login resolves on GitHub (404 fails; same lookup as routing)
+  nodes        every fleet-nodes.json bot login resolves on GitHub (404 fails; same lookup as routing)
   lexicon      every bolded term in the pack OP-PROC and runbooks is defined in grok-bot/LEXICON.md
   names        docs and plates carry none of the stale phrases in tools/bifrost-stale.json
 
@@ -87,14 +87,15 @@ def check_routing(rep, roles, seats, logins, init, nodes=None, resolve=True, sco
 def check_nodes(rep, nodes, init, resolve=True):
     """#305: every login in fleet-nodes.json resolves on GitHub, the same lookup the routing rule uses."""
     try:
-        names = list(json.loads(Path(nodes).read_text()))
+        # bot logins only: the seats' App identities, as in routing. Human entries also carry display aliases (Blaze0x1).
+        names = [n for n in json.loads(Path(nodes).read_text()) if n.endswith("[bot]")]
     except (OSError, ValueError) as e:
         return rep.add("nodes", "FAIL", f"fleet-nodes not readable: {type(e).__name__}")
     if not resolve:
         return rep.add("nodes", "SKIP", "--no-resolve")
     st = {n: init.gh_user_status(n) for n in names}
     gone, unk = [n for n in names if st[n] == "missing"], [n for n in names if st[n] == "unverified"]
-    rep.add("nodes", "FAIL" if gone else "PASS", (f"login 404 on GitHub: {', '.join(gone)}" if gone else f"{len(names)} fleet-nodes logins resolve")
+    rep.add("nodes", "FAIL" if gone else "PASS", (f"login 404 on GitHub: {', '.join(gone)}" if gone else f"{len(names)} fleet-nodes bot logins resolve")
             + (f"; unverified (rate limit or network): {', '.join(unk)}" if unk else ""))
 
 
