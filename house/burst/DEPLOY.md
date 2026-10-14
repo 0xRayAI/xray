@@ -1,5 +1,100 @@
 # Deploy: the live board on Railway
 
+## Quickstart
+
+Follow these in order. Hostnames and seat names below are examples. Put real URLs and keys only in environment variables.
+
+### 1. What runs where
+
+The server process owns the board. Start `node server.mjs` from the assembled `house/live/app` directory (Node 20, plus Python 3 on the same machine for the collector child). It serves the page, `/healthz`, cards, inboxes, and acks.
+
+When `GITHUB_READ_TOKEN` is set and `COLLECTOR` is not `off`, the server starts `live_mesh.py` as a child. The child writes `$MESH_DATA_DIR/feed/github-events.json`. The server reads that file, keeps the cards and packets, routes new lines into seat inboxes, and fires seat webhooks. That is the whole loop. A box is not required.
+
+The box is optional. Use it for signals that exist only on another machine. It pushes with `POST /ingest`. A box board is shown while that push is newer than `BOARD_BOX_STALE_S` (default 900 seconds). After that, the collector's board is the board. Set `COLLECTOR=off` only when you want the server to run with no child at all.
+
+### 2. Environment
+
+Required to boot (gated mode):
+
+| Name | Value |
+|---|---|
+| `MESH_PASSWORD` | page login. Omit only when the site is public (`LIVE_PUBLIC=1` or `site.json` `"public": true`) |
+| `SESSION_SECRET` | 32 characters or more |
+| `INGEST_SECRET` | 32 characters or more. Required even when no box runs |
+
+Required before the board is alive:
+
+| Name | Value |
+|---|---|
+| `GITHUB_READ_TOKEN` | fine-grained read-only token. Without it the server still boots and `/healthz` `board` stays `building` |
+| `SEAT_KEYS` | JSON `{seat: sha256hex}`. Without it a seat cannot read its inbox or ack |
+| `APP_PUBLIC_ORIGIN` | https origin. Required when `NODE_ENV=production`. `http://127.0.0.1` is allowed for a local run |
+
+Optional, leave unset on a first boot:
+
+| Name | Effect when unset |
+|---|---|
+| `MESH_DATA_DIR` | `/data` |
+| `COLLECTOR` | child starts when the read token is set |
+| `COLLECTOR_REPOS` | the example repo list in the collector |
+| `COLLECTOR_STALE_S` | 180. Older collector file sets `feed_quiet` |
+| `CARD_BEHIND_S` | 180. Open-card data ahead of the cards by more than this sets `cards_behind` |
+| `SEAT_WEBHOOKS` | no wake POST. Seats still read and ack their inboxes |
+| `RAILWAY_TOKEN` | no deploy poll |
+| `ARCH1_LAUNCH_ENABLED` | off. Set to `1` to launch a cloud agent for a real arch1 packet |
+| `ARCHIVE_KEY` | `GET /archive` answers 401 |
+
+The full name list is in section 4.
+
+### 3. Volume
+
+Mount one volume at `MESH_DATA_DIR` (`/data`). A few gigabytes is enough to start. Do not delete these directories across deploys:
+
+| Path | What |
+|---|---|
+| `feed/` | collector output and its store |
+| `live/` | inboxes, acks, cards, nudges, and append-only `activity.jsonl` |
+| `archive/` | append-only daily history. Never prune it |
+| `route/` | ids already routed, so a line is delivered once |
+| `home/` | the collector child's home directory |
+
+### 4. Seat keys and webhooks
+
+1. Run `house/live/tools/bifrost-init` once so every seat has a route. `python3 house/live/tools/bifrost-init --check` fails when a seat has none. CI runs that check.
+2. Mint seat keys with `house/live/feed/seat_keys.sh mint`. Publish only the hashes: `seat_keys.sh publish` sets `SEAT_KEYS`. The key files stay off the host (mode 0600). A seat sends `Authorization: Bearer <its key>` to `GET /inbox/<seat>`, `POST /inbox/<seat>/ack`, and `GET /cards?seat=<seat>`.
+3. For each seat that should be woken, add one entry to `SEAT_WEBHOOKS`: `{"<seat>": {"url": "<wake url>", "key_env": "WAKE_KEY_<SEAT>"}}`. Put the wake secret in `WAKE_KEY_<SEAT>` (or in the variable named by `key_env`). The JSON holds the env name, not the secret.
+4. A seat with no webhook still works. It polls `GET /inbox/<seat>` and acks with `POST /inbox/<seat>/ack` and `{"id": "<line id>"}`.
+
+### 5. What green means
+
+`GET /healthz` needs no auth.
+
+Green is HTTP 200 and `"ok": true`. That requires both `feed_quiet: false` and `cards_behind: false`.
+
+| Field | Green |
+|---|---|
+| `ok` | `true` |
+| `feed_quiet` | `false`. The collector file is newer than `COLLECTOR_STALE_S`, or the collector is not watched |
+| `cards_behind` | `false`. The board is caught up with card-moving events. Completed CI counts only when its number or head matches an open card |
+| `board` | `live` once cards exist. `empty` means a board was built with zero cards. `building` means no board has been read yet |
+| `wakes.<seat>` | `ok` after a wake returned 2xx. `idle` means the key is set and nothing has been sent yet. `no_key` means that seat has no wake secret. `fail` means the last wake did not return 2xx |
+| `collector_age` | small once a feed file has been read. `null` before the first file |
+| `data_age`, `box_age`, `card_age` | reported only. They do not change `ok`. `box_informational` is `true` |
+
+HTTP 503 and `"ok": false` means fix `feed_quiet` or `cards_behind`. A quiet night with old GitHub events stays up. `status: "warming"` means the collector is watched and has not written a file yet; that response is still HTTP 200.
+
+`arch1_launch.enabled` is `false` unless `ARCH1_LAUNCH_ENABLED=1`.
+
+### 6. One command on this machine
+
+From the repo root, with Node 20 and Python 3:
+
+```bash
+bash house/live/tools/local-smoke.sh
+```
+
+That boots the server on a free port, writes one collector feed, and checks four things: a card is on `GET /cards`, the card carries its packet, a new comment wakes the seat, and `POST /inbox/<seat>/ack` clears that line. It uses no token, no network, and no host. The same check is `house/live/tests/flow-smoke.test.mjs`, which `house/live/tests/run_tests.sh` runs.
+
 ## Routing is required
 
 Every seat needs a route: a seat no rule routes to gets no inbox lines, so its wake never fires. Before the first deploy, run `house/live/tools/bifrost-init` once. It asks for the seats and their wake URLs, writes `house/live/feed/routing/inbox-roles.json` and `feed/routing/seat-webhooks.json` (placeholders and env names only, never real URLs or keys), and fails if any seat has no route. Put the real URLs in the `SEAT_WEBHOOKS` host variable and each key in `WAKE_KEY_<SEAT>`. `bifrost-init --check` re-validates after hand edits; CI runs it via `house/live/tests/run_tests.sh`.
