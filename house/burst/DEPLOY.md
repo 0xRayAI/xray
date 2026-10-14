@@ -1,5 +1,9 @@
 # Deploy: the live board on Railway
 
+## Routing is required
+
+Every seat needs a route: a seat no rule routes to gets no inbox lines, so its wake never fires. Before the first deploy, run `house/live/tools/bifrost-init` once. It asks for the seats and their wake URLs, writes `house/live/feed/routing/inbox-roles.json` and `feed/routing/seat-webhooks.json` (placeholders and env names only, never real URLs or keys), and fails if any seat has no route. Put the real URLs in the `SEAT_WEBHOOKS` host variable and each key in `WAKE_KEY_<SEAT>`. `bifrost-init --check` re-validates after hand edits; CI runs it via `house/live/tests/run_tests.sh`.
+
 This answers the hosting questions on #248 from the setup running today. Hostnames, project names, seat names
 and repos are examples. No values are secret here; set real values as Railway variables.
 

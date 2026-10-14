@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""bifrost init: first-run routing setup for any Bifrost fleet (#294).
+
+Asks for the fleet's seats and each seat's wake URL, then writes
+  feed/routing/inbox-roles.json      every seat gets a route (@seat mention at least; existing rules are kept)
+  feed/routing/seat-webhooks.json    the SEAT_WEBHOOKS shape with placeholders only
+and fails when any seat has no route. Real wake URLs and keys never land in the repo: set the SEAT_WEBHOOKS
+Railway variable (and WAKE_KEY_<SEAT>) on the host yourself.
+
+  bifrost-init                                  interactive
+  bifrost-init --seats forge,critic,mill --yes  non-interactive
+  bifrost-init --check [--seats a,b]            validate only (seats default: fleet-roster.json, else extra_seats)
+"""
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+FEED = Path(__file__).resolve().parent.parent / "feed"
+SEAT_RE = re.compile(r"^[a-z][a-z0-9-]{0,31}$")
+PLACEHOLDER = "<set the real URL in the SEAT_WEBHOOKS host variable>"
+
+
+def routed_seats(roles: dict) -> set[str]:
+    """Seats some rule can write a line to."""
+    out = set()
+    for rule in (roles.get("seats") or {}).values():
+        if isinstance(rule, dict) and not rule.get("off") and rule.get("seat"):
+            out.add(str(rule["seat"]).lower())
+    for seat, rule in (roles.get("extra_seats") or {}).items():
+        if isinstance(rule, dict) and any(rule.get(k) for k in ("kinds", "needles", "merge_bases")):
+            out.add(seat.lower())
+    for key in ("pr_heads", "comment_watch"):
+        out.update(s.lower() for s in ((roles.get(key) or {}).get("seats") or {}))
+    fb = (roles.get("fallback") or {}).get("seat")
+    if fb:
+        out.add(str(fb).lower())
+    return out
+
+
+def unrouted(roles: dict, seats) -> list[str]:
+    have = routed_seats(roles)
+    return sorted(s for s in seats if s not in have)
+
+
+def add_seats(roles: dict, seats) -> dict:
+    """Give every seat at least an @mention route; keep any rule already there."""
+    extra = roles.setdefault("extra_seats", {})
+    aliases = roles.setdefault("aliases", {})
+    for s in seats:
+        rule = extra.setdefault(s, {})
+        needles = rule.setdefault("needles", [])
+        if f"@{s}" not in needles:
+            needles.insert(0, f"@{s}")
+        rule.setdefault("reason", f"ask for {s}")
+        aliases.setdefault(s, s)
+        aliases.setdefault(s.capitalize(), s)
+    return roles
+
+
+def webhooks(seats, wake: dict) -> dict:
+    """SEAT_WEBHOOKS template: placeholders and env names only."""
+    return {s: {"url": PLACEHOLDER, "key_env": "WAKE_KEY_" + s.upper().replace("-", "_")}
+            for s in seats if wake.get(s)}
+
+
+def default_seats(roles: dict) -> list[str]:
+    roster = FEED / "fleet-roster.json"
+    try:
+        data = json.loads(roster.read_text())
+        seats = data.get("seats") if isinstance(data, dict) else data
+        if isinstance(seats, list) and seats:
+            return [str(s.get("id") if isinstance(s, dict) else s).lower() for s in seats]
+    except (OSError, ValueError):
+        pass
+    return sorted((roles.get("extra_seats") or {}).keys())
+
+
+def parse_seats(text: str) -> list[str]:
+    seats = [s.strip().lower() for s in text.replace(" ", ",").split(",") if s.strip()]
+    bad = [s for s in seats if not SEAT_RE.match(s)]
+    if bad:
+        sys.exit(f"bifrost init: bad seat name(s): {', '.join(bad)} (lowercase letters, digits, '-')")
+    return list(dict.fromkeys(seats))
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(prog="bifrost init")
+    ap.add_argument("--seats", help="comma-separated seat ids")
+    ap.add_argument("--no-wake", default="", help="comma-separated seats with no wake URL (they poll)")
+    ap.add_argument("--routing-dir", default=str(FEED / "routing"))
+    ap.add_argument("--check", action="store_true", help="validate the routing file only; write nothing")
+    ap.add_argument("--yes", action="store_true", help="no prompts")
+    a = ap.parse_args(argv)
+    rdir = Path(a.routing_dir)
+    roles_path = rdir / "inbox-roles.json"
+    roles = json.loads(roles_path.read_text()) if roles_path.exists() else {}
+
+    if a.check:
+        seats = parse_seats(a.seats) if a.seats else default_seats(roles)
+        miss = unrouted(roles, seats)
+        if miss:
+            print(f"bifrost init: FAIL, no route for seat(s): {', '.join(miss)}. Run bifrost init to add them.", file=sys.stderr)
+            return 1
+        print(f"bifrost init: routing OK for {len(seats)} seat(s)")
+        return 0
+
+    if a.seats:
+        seats = parse_seats(a.seats)
+    elif a.yes:
+        sys.exit("bifrost init: --yes needs --seats")
+    else:
+        seats = parse_seats(input("Seats (comma-separated ids, e.g. forge,critic,mill): "))
+    if not seats:
+        sys.exit("bifrost init: no seats given")
+    no_wake = set(parse_seats(a.no_wake)) if a.no_wake else set()
+    wake = {}
+    for s in seats:
+        if s in no_wake:
+            wake[s] = False
+        elif a.yes or a.seats:
+            wake[s] = True
+        else:
+            ans = input(f"Wake URL for {s} (stays out of the repo; blank = polls, no webhook): ").strip()
+            if ans and not re.match(r"^https?://", ans):
+                sys.exit(f"bifrost init: {s}: wake URL must start with http(s)://")
+            wake[s] = bool(ans)
+
+    add_seats(roles, seats)
+    miss = unrouted(roles, seats)
+    if miss:   # cannot happen after add_seats unless a rule was hand-broken; fail loudly anyway
+        print(f"bifrost init: FAIL, no route for seat(s): {', '.join(miss)}", file=sys.stderr)
+        return 1
+    rdir.mkdir(parents=True, exist_ok=True)
+    roles_path.write_text(json.dumps(roles, indent=2, ensure_ascii=False) + "\n")
+    (rdir / "seat-webhooks.json").write_text(json.dumps(webhooks(seats, wake), indent=2) + "\n")
+    print(f"bifrost init: wrote {roles_path} and {rdir / 'seat-webhooks.json'} for {len(seats)} seat(s)")
+    print("Next: set SEAT_WEBHOOKS on the host (same shape, real URLs) and WAKE_KEY_<SEAT> for each woken seat.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
