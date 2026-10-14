@@ -304,6 +304,7 @@ class PushEventTests(unittest.TestCase):
         ff.TIP_EVENTS.clear()
         ff.PUSHED_HEADS.clear()
         ff.PUSH_MSG.clear()
+        ff.HEADS.clear()
 
     def test_push_maps_seat_and_labels(self):
         gh = self.FakeGH([
@@ -344,6 +345,27 @@ class PushEventTests(unittest.TestCase):
         gh.get.return_value = {"check_runs": []}
         ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
         self.assertEqual(ff.REPRESENTED["0xRayAI/xray"], {"1" * 40, "2" * 40, "3" * 40})
+
+    def test_new_head_on_long_pr_queues_one_update(self):
+        """#287: >3 commits (head outside the capped list), old committer dates (rebase) -> still one pr_update per head."""
+        ff.HEADS.clear()
+        old = [{"sha": c * 40, "commit": {"committer": {"date": "2026-10-01T10:00:00Z"}, "message": c}} for c in "123"]
+        pr = {"number": 286, "title": "t", "html_url": "u", "user": {"login": "forge0x1[bot]"},
+              "head": {"ref": "mill/x", "sha": "6" * 40}, "created_at": "2026-10-01T09:00:00Z",
+              "updated_at": "2026-10-06T11:00:00Z"}
+        gh = mock.Mock()
+        gh.pages.side_effect = lambda path, *a, **k: iter(old if path.endswith("/commits") else [])
+        gh.get.return_value = {"check_runs": []}
+        out = ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
+        ups = [e for e in out if e["kind"] == "pr_update"]
+        self.assertEqual([e["id"] for e in ups], ["0xRayAI/xray#286:push:" + "6" * 12])
+        self.assertEqual(ups[0]["_inbox"]["sha"], "6" * 40)
+        self.assertIn("6" * 40, ff.REPRESENTED["0xRayAI/xray"])
+        again = ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
+        self.assertFalse([e for e in again if e["kind"] == "pr_update"], "same head is not queued twice")
+        pr["head"]["sha"], pr["updated_at"] = "7" * 40, "2026-10-06T12:00:00Z"
+        out = ff.pr_events(gh, "0xRayAI/xray", pr, self.SINCE)
+        self.assertEqual([e["id"] for e in out if e["kind"] == "pr_update"], ["0xRayAI/xray#286:push:" + "7" * 12])
 
     def test_pr_body_packet_rides_the_existing_pull_without_another_read(self):
         pr = {"number": 8, "title": "gate", "html_url": "https://github.com/org/repo/pull/8",
