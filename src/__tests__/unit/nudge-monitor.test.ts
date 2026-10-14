@@ -1,5 +1,5 @@
 /**
- * Nudge Watchdog Unit Tests
+ * Nudge Monitor Unit Tests
  *
  */
 
@@ -11,16 +11,16 @@ import {
   recordFixAttempt,
   recordExplanation,
   getNudgeSuggestion,
-  getNudgeWatchdog,
+  getNudgeMonitor,
   recordProcessorFix,
-} from "../../monitoring/nudge-watchdog.js";
+} from "../../monitoring/nudge-monitor.js";
 import {
   NudgeProcessor,
   nudgeProcessor,
   executeNudgeProcessor,
 } from "../../processors/implementations/nudge-processor.js";
 
-describe("NudgeWatchdog exports", () => {
+describe("NudgeMonitor exports", () => {
   test("should export helper functions", () => {
     expect(typeof recordThinkTag).toBe("function");
     expect(typeof recordCodeChange).toBe("function");
@@ -28,15 +28,15 @@ describe("NudgeWatchdog exports", () => {
     expect(typeof recordFixAttempt).toBe("function");
     expect(typeof recordExplanation).toBe("function");
     expect(typeof getNudgeSuggestion).toBe("function");
-    expect(typeof getNudgeWatchdog).toBe("function");
+    expect(typeof getNudgeMonitor).toBe("function");
     expect(typeof recordProcessorFix).toBe("function");
   });
 
-  test("should export nudgeWatchdog singleton", () => {
-    const watchdog = getNudgeWatchdog();
-    expect(watchdog).toBeDefined();
-    expect(typeof watchdog.getStats).toBe("function");
-    expect(typeof watchdog.reset).toBe("function");
+  test("should export nudgeMonitor singleton", () => {
+    const monitor = getNudgeMonitor();
+    expect(monitor).toBeDefined();
+    expect(typeof monitor.getStats).toBe("function");
+    expect(typeof monitor.reset).toBe("function");
   });
 
   test("should return nudge suggestions", () => {
@@ -73,25 +73,25 @@ describe("Nudge Processor exports", () => {
   });
 });
 
-describe("Nudge Watchdog functionality", () => {
+describe("Nudge Monitor functionality", () => {
   test("should track think tags", () => {
-    const initialStats = getNudgeWatchdog().getStats();
+    const initialStats = getNudgeMonitor().getStats();
     const initialThinkTags = initialStats.thinkTags;
 
     recordThinkTag();
     recordThinkTag();
 
-    const newStats = getNudgeWatchdog().getStats();
+    const newStats = getNudgeMonitor().getStats();
     expect(newStats.thinkTags).toBeGreaterThanOrEqual(initialThinkTags + 2);
   });
 
   test("should track code changes", () => {
-    const initialStats = getNudgeWatchdog().getStats();
+    const initialStats = getNudgeMonitor().getStats();
     const initialCodeChanges = initialStats.codeChanges;
 
     recordCodeChange();
 
-    const newStats = getNudgeWatchdog().getStats();
+    const newStats = getNudgeMonitor().getStats();
     expect(newStats.codeChanges).toBeGreaterThanOrEqual(initialCodeChanges + 1);
   });
 
@@ -99,7 +99,7 @@ describe("Nudge Watchdog functionality", () => {
     recordToolCall("read", '{"filePath":"test.ts"}');
     recordToolCall("edit", '{"filePath":"test.ts"}');
 
-    const stats = getNudgeWatchdog().getStats();
+    const stats = getNudgeMonitor().getStats();
     expect(stats).toBeDefined();
     expect(typeof stats.thinkTags).toBe("number");
     expect(typeof stats.codeChanges).toBe("number");
@@ -109,13 +109,13 @@ describe("Nudge Watchdog functionality", () => {
   });
 
   test("should track explanations", () => {
-    const initialStats = getNudgeWatchdog().getStats();
+    const initialStats = getNudgeMonitor().getStats();
     const initialExplanations = initialStats.explanations;
 
     recordExplanation();
     recordExplanation();
 
-    const newStats = getNudgeWatchdog().getStats();
+    const newStats = getNudgeMonitor().getStats();
     expect(newStats.explanations).toBeGreaterThanOrEqual(initialExplanations + 2);
   });
 
@@ -123,13 +123,13 @@ describe("Nudge Watchdog functionality", () => {
     recordFixAttempt("test.ts", "Syntax error");
     recordFixAttempt("test.ts", "Syntax error");
 
-    const stats = getNudgeWatchdog().getStats();
+    const stats = getNudgeMonitor().getStats();
     expect(stats).toBeDefined();
   });
 
   test("should record processor fix", () => {
     recordProcessorFix("test.ts", true, true);
-    const stats = getNudgeWatchdog().getStats();
+    const stats = getNudgeMonitor().getStats();
     expect(stats).toBeDefined();
   });
 
@@ -138,9 +138,9 @@ describe("Nudge Watchdog functionality", () => {
     recordCodeChange();
     recordExplanation();
 
-    getNudgeWatchdog().reset();
+    getNudgeMonitor().reset();
 
-    const stats = getNudgeWatchdog().getStats();
+    const stats = getNudgeMonitor().getStats();
     expect(stats.thinkTags).toBe(0);
     expect(stats.codeChanges).toBe(0);
     expect(stats.explanations).toBe(0);

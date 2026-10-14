@@ -1,5 +1,5 @@
 /**
- * Nudge Processor - Integrates Nudge Watchdog with processor system
+ * Nudge Processor - Integrates Nudge Monitor with processor system
  *
  * Post-processor that monitors agent actions and triggers nudges
  * when stuck patterns are detected.
@@ -11,7 +11,7 @@ import { PostProcessor } from "../processor-interfaces.js";
 import { ProcessorContext, ProcessorResult } from "../processor-types.js";
 import { frameworkLogger } from "../../core/framework-logger.js";
 import {
-  nudgeWatchdog,
+  nudgeMonitor,
   recordThinkTag,
   recordCodeChange,
   recordToolCall,
@@ -19,7 +19,7 @@ import {
   recordExplanation,
   NudgeType,
   getNudgeSuggestion,
-} from "../../monitoring/nudge-watchdog.js";
+} from "../../monitoring/nudge-monitor.js";
 import { featuresConfigLoader } from "../../core/features-config.js";
 
 interface NudgeStats {
@@ -44,7 +44,7 @@ export class NudgeProcessor extends PostProcessor {
   private loadConfig(): void {
     try {
       const features = featuresConfigLoader.loadConfig() as unknown as Record<string, unknown>;
-      const nudgeConfig = features?.nudge_watchdog as Record<string, unknown> | undefined;
+      const nudgeConfig = features?.nudge_monitor as Record<string, unknown> | undefined;
       if (nudgeConfig) {
         this.nudgeEnabled = nudgeConfig.enabled !== false;
       }
@@ -104,7 +104,7 @@ export class NudgeProcessor extends PostProcessor {
       }
     }
 
-    const stats = nudgeWatchdog.getStats();
+    const stats = nudgeMonitor.getStats();
 
     if (stats.activePatterns > 0) {
       const nudge = this.detectMostUrgentNudge(stats);

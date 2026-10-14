@@ -41,7 +41,7 @@ How the fleet speaks. Not products. Add rows as we invent them.
 
 | Name | Plain | SSOT |
 |------|-------|------|
-| **LEXICON** | Products · workstream · practices | `ops/dist/brand/LEXICON.md` |
+| **LEXICON** | Products · workstream · practices | `LEXICON.md` (pack root) |
 | **Op proc** | Operating procedures (how we run) | `ops/OPS-CATALOG.md` entry point |
 
 ## Do not confuse

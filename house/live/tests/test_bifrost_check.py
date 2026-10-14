@@ -45,6 +45,28 @@ class Offline(unittest.TestCase):
             self.assertIn("a.md:2", r.stdout)
 
 
+class Lexicon(unittest.TestCase):
+    def test_undefined_bold_term_fails_and_defined_passes(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d); (p / "runbooks").mkdir()
+            (p / "LEXICON.md").write_text("| Term | Bucket | Plain |\n|---|---|---|\n| **wave** | Workstream | x |\n| **seat** | Workstream | y |\n")
+            (p / "OP-PROC.md").write_text("Every term here is defined in the [lexicon](LEXICON.md).\n- **Wave.** one. **Seats** move.\n")
+            (p / "runbooks" / "A.md").write_text("**Volley:** ping-pong\n")
+            r = run("--only", "lexicon", "--pack", d)
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertIn("FAIL lexicon", r.stdout)
+            self.assertIn("volley (runbooks/A.md)", r.stdout)
+            self.assertNotIn("wave (", r.stdout); self.assertNotIn("seats (", r.stdout)   # case, punctuation and plural ignored
+            (p / "LEXICON.md").write_text((p / "LEXICON.md").read_text() + "| **volley** | Workstream | z |\n")
+            r = run("--only", "lexicon", "--pack", d)
+            self.assertEqual(r.returncode, 0, r.stdout)
+            self.assertRegex(r.stdout, r"PASS lexicon +\[grok-bot/OP-PROC\.md:")
+
+    def test_committed_pack_passes(self):
+        r = run("--only", "lexicon")
+        self.assertEqual(r.returncode, 0, r.stdout)
+
+
 class Board(unittest.TestCase):
     def test_board_findings(self):
         import importlib.machinery, importlib.util

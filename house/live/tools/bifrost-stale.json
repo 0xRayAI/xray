@@ -1,6 +1,6 @@
 {
   "_note": "bifrost check greps these paths for these stale phrases (case-insensitive). Add a phrase when a name or rule is replaced.",
-  "paths": ["../OP-PROC.md", "../../grok-bot/OP-PROC.md", "../../grok-bot/ops/runbooks", "README.md", "SETUP.md", "docs", "../../docs-site/docs/plates"],
+  "paths": ["../OP-PROC.md", "../../grok-bot/OP-PROC.md", "../../grok-bot/runbooks", "README.md", "SETUP.md", "docs", "../../docs-site/docs/plates"],
   "phrases": [
     "files them into Arch1's Bifrost inbox",
     "filed to its Bifrost inbox",

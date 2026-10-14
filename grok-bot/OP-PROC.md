@@ -1,6 +1,6 @@
 # Operating procedure
 
-How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`. Name your seats anything. [Example house (names are illustrative)](templates/house/EXAMPLE.md).
+How the roles work. Read this first. Who you are, where you post, and which repos you may push live in `house/`. If that folder is missing, start from `templates/house/`. Name your seats anything. [Example house (names are illustrative)](templates/house/EXAMPLE.md). Every term here is defined in the [lexicon](LEXICON.md); if they disagree, the lexicon wins.
 
 - **Two loops.** All work lives in GitHub: one issue or PR per task, on its own branch and worktree, never on main. Anyone outside the fleet, such as Arch1, another fleet or a maintainer, is reached only by issue, PR or comment, @-mentioning who acts next. That is the outer loop, and it is what becomes cards, nudges and tripwire. Inside the fleet, seats wake each other with direct messages, and each message points to that issue, PR or packet. A direct message with no GitHub record is not work. To reach someone outside the fleet, @-mention them in an issue, PR or comment. The collector turns that comment into their inbox line, which is what wakes them, so never post to their inbox separately. The mention must be their real GitHub login: before @-mentioning anyone, look up their login at the Bifrost server's `GET /routing`, never from memory (`bifrost init --check` fails a nickname-only route).
 - **Coordinator never:** deploy, publish a package, change production, launch a cloud agent, post in public, spend, or merge. A seat never merges code it wrote: the implementer writes code and opens PRs; the publisher keeps continuity, gates and the merge chain.
@@ -14,7 +14,7 @@ How the roles work. Read this first. Who you are, where you post, and which repo
 - **Tripwire.** When nothing has moved for the trip window, the tripwire starts the timed run once per window: an empty board wakes the coordinator to pull the next work; a stalled board wakes each seat with open work.
 - **Nudge.** An open card or unacked line nudges its owner L1, L2, L3; at L3 with no move the coordinator is woken once to reassign. The owner fixes its own card; the coordinator owns the board.
 - **Names.** Docs and plates use the current seat, login and tool names. `bifrost check` greps them for the stale ones.
-- **Runbooks.** Each seat's how-to lives in the pack, not in a seat's memory: [implementer](ops/runbooks/IMPLEMENTER.md), [coordinator](ops/runbooks/COORDINATOR.md), [ship](ops/runbooks/SHIP.md), [critic (`bifrost check`)](ops/runbooks/CRITIC.md).
+- **Runbooks.** Each seat's how-to lives in the pack, not in a seat's memory: [implementer](runbooks/IMPLEMENTER.md), [coordinator](runbooks/COORDINATOR.md), [ship](runbooks/SHIP.md), [critic (`bifrost check`)](runbooks/CRITIC.md).
 
 Packet template:
 

@@ -1,12 +1,12 @@
-# Implementer runbook (one lap)
+# Implementer runbook (one wave)
 
 Written by mill (implementer seat). Any fleet's implementer follows it; nothing here lives only in a seat's memory.
-Rules it serves: pack [OP-PROC](../../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
+Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
 
-## 1. One branch per lap
-- One lap = one branch = one PR. Code, docs, plates and nits for the lap all fold into it; no side PRs.
+## 1. One branch per wave
+- One wave = one branch = one PR. Code, docs, plates and nits for the wave all fold into it; no side PRs.
 - Branch from fresh `origin/main` in its own worktree: `git fetch origin && git worktree add ../<seat>-lapN -b <seat>/<topic>-lapN origin/main`.
-- Every item on the lap points at its GitHub issue or PR comment. Work with no GitHub record is not work.
+- Every item on the wave points at its GitHub issue or PR comment. Work with no GitHub record is not work.
 
 ## 2. Local commits only; the shipping seat pushes
 - Commit as the implementer's local identity (ours: `mill <mill@local>`): `git -c user.name=mill -c user.email=mill@local commit`.
@@ -15,11 +15,11 @@ Rules it serves: pack [OP-PROC](../../OP-PROC.md) (**Two loops**, **Routing**, B
 
 ## 3. Tests plus docs check
 - Full suite: `house/live/tests/run_tests.sh` (Python, node, `bifrost init --check`, `bifrost check --dry-run`).
-- Docs: `npm run release:docs-check` from the repo root (hard gate when the lap touches release docs).
+- Docs: `npm run release:docs-check` from the repo root (hard gate when the wave touches release docs).
 - A flaky test is rerun alone several times (`node --test <file>` x5); fix it if the flake is real, never retry-until-green.
 
 ## 4. Restamp plates
-- When a lap changes behavior a plate describes (`docs-site/docs/plates/*.md`, `house/live/docs/*.md`), update the plate text and its stamp in the same lap.
+- When a wave changes behavior a plate describes (`docs-site/docs/plates/*.md`, `house/live/docs/*.md`), update the plate text and its stamp in the same wave.
 - Run `bifrost check --only names` so no stale name survives.
 
 ## 5. Sha handoff

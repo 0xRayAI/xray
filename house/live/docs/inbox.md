@@ -59,10 +59,10 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Review requested; Light / Strict / re-Light ask | critic | `extra_seats.critic` |
 | Deploy / deploy fail / Railway hold, CI failure (`ci_fail`), lab or Railway asks | forge | `seats.operator.seat` + `extra_seats.forge.kinds` |
 | Merge to develop, main or bifrost/main; PR ready to merge | forge | `seats.tester.seat`, `extra_seats.forge`, `seats.builder.seat` |
-| Implement / rebase / dev ask, `mill lap` (Eng Dev) | mill | `extra_seats.mill.needles` |
+| Implement / rebase / dev ask, `mill wave` (Eng Dev) | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
-| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`, `@arch1`) | that seat | `extra_seats.<seat>.needles` |
-| Deep-review / Gate B ask | arch1, plus blinky (arch1 has no webhook) | `extra_seats.arch1` + fallback |
+| `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`) | that seat | `extra_seats.<seat>.needles` |
+| `@arch10x` (alias `@arch1`): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
 | Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
 An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.
@@ -232,7 +232,7 @@ The key file is `arch1.key` in `SEAT_KEYS_DIR` (dir 700, file 600). Blaze delive
 3. Arch1 runs `live-inbox arch1 --ack <id>`.
 4. The board shows arch1's inbox read and ack (and arch1 goes active for 15 minutes). A 401 at step 2 means the key isn't registered in `SEAT_KEYS`.
 
-**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The lap 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
+**Heartbeat gap.** Like box seats, Arch1's local work in Grok CLI doesn't reach the board; it shows active only on GitHub activity, a read or an ack. The wave 3 heartbeat (`live-inbox` reporting on every wake and task start) covers CLI seats too.
 
 ## Presence
 
@@ -245,7 +245,7 @@ Fleet seat mapping (inbox-roles.json, kit defaults, Seat: credit): [fleet-setup.
 Both run on one server tick (`BIFROST_TICK_S`, default 60).
 
 - **Tripwire (the trigger).** The governor loop runs inside the burst-live server (no local watcher; it replaces the old local `house/live-mesh/tripwire_push.py` loop from #227). When no seat has moved anything (events, acks) for `BIFROST_TRIPWIRE_MINUTES` (default 30) it trips on either condition: **stall** (open cards on the board) starts a timed run that wakes each seat with open work, each with its own deadline (`BIFROST_RUN_SEAT_MINUTES` apart, default 2); **empty** (no open cards) wakes the CoS seat (routing role `seats.coord`, not a name) with "board empty, pull next work". Seats answer by moving the work or posting their blocker in one line. The countdown shows on the board (`clock` in the header; the page's countdown line) until a seat moves something, which clears it. Each trigger fires at most once per window; it re-arms only after the board moves or another full window passes. The CoS starts the same run by hand with `POST /clock` (seat key; allowed seats `BIFROST_CLOCK_SEATS`, default the coord seat). The board snapshot is republished only on a real change (`/healthz` `governor_changes`).
-- **Nudges (`evalNudges` in `app/server.mjs`, the one nudge path).** Bifrost's only nudge path is `evalNudges`. `src/monitoring/nudge-watchdog.ts` is a separate part of the main 0xray package (agent loop detection) and is not used by Bifrost. On the same tick, `evalNudges` handles:
+- **Nudges (`evalNudges` in `app/server.mjs`, the one nudge path).** Bifrost's only nudge path is `evalNudges`. `src/monitoring/nudge-monitor.ts` is a separate part of the main 0xray package (agent loop detection) and is not used by Bifrost. On the same tick, `evalNudges` handles:
   - **Cards.** A card that stops moving nudges its owner: L1 after `NUDGE_L1_S`, L2 to the CoS after `NUDGE_L2_S`, L3 repeats every `NUDGE_L3_S` (default 7200). Parked cards are skipped. This part is unchanged.
   - **Unacked lines.** An open inbox line (not acked, card not moved on) older than `NUDGE_LINE_S` (default 900) gets nudge L1 (kind `line`) and a re-wake of its seat with reason `nudge L1: …`. L2 and L3 follow one window apart, then it stops, so it never loops. An ack closes the nudges. `/healthz` `nudged_lines` counts the open ones.
   - **Unrouted seats.** At startup the server runs the same rules as `tools/bifrost-init --check` on `collector/routing/inbox-roles.json` against `collector/fleet-roster.json`. A seat with no route, or a rule routing to a seat outside the fleet, logs `ROUTING: FAIL …` and shows as `routing` in the board header and `/healthz`. Each unrouted seat also holds an open nudge (kind `unrouted`) to the CoS. Production keeps running. `BIFROST_ROUTING_DIR` and `BIFROST_ROSTER` override the paths.

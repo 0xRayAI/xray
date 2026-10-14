@@ -213,7 +213,7 @@ describe('pipeline plates', () => {
     expect(goggles.body).not.toContain('one of four powers');
     const grokbot = readFileSync(join(process.cwd(), 'docs-site/docs/plates/grokbot.md'), 'utf8');
     expect(grokbot).not.toContain('Grok-Bot Kit');
-    const lexicon = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/LEXICON.md'), 'utf8');
+    const lexicon = readFileSync(join(process.cwd(), 'grok-bot/LEXICON.md'), 'utf8');
     expect(lexicon).not.toMatch(/Kind 0|Kind 1/);
     expect(lexicon).not.toContain('## Goggles (2026-09-29)');
     const stamps = readFileSync(join(process.cwd(), 'grok-bot/ops/dist/brand/STAMPS.md'), 'utf8');

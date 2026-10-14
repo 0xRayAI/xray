@@ -87,7 +87,7 @@ class FleetSeats(unittest.TestCase):
 
     def test_mill_targeted_events_land_in_mill_inbox(self):
         for label, kind in [("@mill please take #287", "issue_comment"), ("implement ask · xray #290", "pr_comment"),
-                            ("dev ask: CI job for house/live", "issue_open"), ("mill lap 4 · xray #291", "issue_comment")]:
+                            ("dev ask: CI job for house/live", "issue_open"), ("mill wave 4 · xray #291", "issue_comment")]:
             self.assertIn("mill", seats(label, kind=kind), label)
         self.assertNotIn("mill", seats("unrelated comment", kind="issue_comment"))
 

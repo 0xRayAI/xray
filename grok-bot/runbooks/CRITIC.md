@@ -1,7 +1,7 @@
 # Critic runbook: `bifrost check`
 
 The reviewer's live pass is one command any fleet runs after it deploys: `house/live/tools/bifrost-check`.
-It prints `PASS` / `FAIL` / `SKIP` per rule with the pack [OP-PROC](../../OP-PROC.md) line it checks, and exits non-zero on any FAIL.
+It prints `PASS` / `FAIL` / `SKIP` per rule with the pack [OP-PROC](../OP-PROC.md) line it checks, and exits non-zero on any FAIL.
 The output goes on the PR as the live-pass comment.
 
 | Rule | What it proves | OP-PROC |
@@ -19,6 +19,7 @@ The output goes on the PR as the live-pass comment.
 | ack (live) | one delivered line acks with the seat key, non-interactively; the running seat confirms no approval card | **Ack** |
 | tripwire | an empty board and a stalled board each start the timed run once per window (`governor.mjs`) | **Tripwire** |
 | nudge | a stuck line nudges its owner L1 -> L3, then wakes the coordinator once (kit server, local fake seats) | **Nudge** |
+| lexicon | every bolded term in the pack OP-PROC and runbooks has a row in `grok-bot/LEXICON.md` | OP-PROC line 3 |
 | names | docs and plates hold none of the stale phrases in `tools/bifrost-stale.json` | **Names** |
 
 ## Run
@@ -32,6 +33,6 @@ house/live/tools/bifrost-check --repo <org>/<sandbox> --target https://<bifrost-
 - Tripwire and nudge run against the deployed commit's own code locally; emptying or stalling the production board is not done by the script.
 
 - Seats with no GitHub login (`login: null`) are never posted as `@seat` (that handle belongs to someone else on GitHub); they are inner-loop only.
-- A board-cards / board-owner FAIL marked *known* is today's per-agent board layout; it clears with the next-lap card restructure.
+- A board-cards / board-owner FAIL marked *known* is today's per-agent board layout; it clears with the next-wave card restructure.
 
-A FAIL goes back on the lap with its OP-PROC line.
+A FAIL goes back on the wave with its OP-PROC line.

@@ -169,9 +169,9 @@
         "implement ask",
         "rebase ask",
         "dev ask",
-        "mill lap"
+        "mill wave"
       ],
-      "reason": "implement / rebase / dev / lap ask for mill (Eng Dev)"
+      "reason": "implement / rebase / dev / wave ask for mill (Eng Dev)"
     },
     "blinky": {
       "kinds": [
