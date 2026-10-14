@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 const FIELD_ORDER = ['plate', 'entry', 'exit', 'files', 'skills', 'setup', 'teardown', 'worn'];
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORN_PLANES = ['dichotomy', 'syncopate', 'synthesis', 'digest', 'triage', 'loop'];
-const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files', 'grok-compact', 'payload-heat', 'station-heat', 'pickup-stamp', 'cursor-compact', 'work-fresh', 'kept-line', 'lens-gate', 'pre-tool', 'lens-page', 'centrifuge'];
+export const CARD_PLANES = ['ground', 'routing', 'house', 'boot', 'governance', 'memory-recall', 'orchestration', 'processor', 'reporting', 'stamp-plate', 'record-map', 'write-home', 'activity-log', 'session-capture', 'suit-wear', 'suit-organs', 'station-card', 'notes-page', 'reflection-page', 'site-manual', 'package-face', 'suit-settings', 'trail-state', 'inference-files', 'grok-compact', 'payload-heat', 'station-heat', 'pickup-stamp', 'cursor-compact', 'work-fresh', 'kept-line', 'lens-gate', 'pre-tool', 'lens-page', 'centrifuge'];
 const CARD_FLAVORS = ['digest', 'triage'];
 const SCOPE_ZOOM = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
@@ -1063,6 +1063,51 @@ export function growPlane(id, platesDir, root) {
   saveViews(root, views);
   const base = assemblePlane(id, platesDir);
   return { ...base, ...grown };
+}
+
+/** Paths the package ships: package.json files, plus what npm always packs. */
+function shippedSet(root) {
+  try {
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    if (!Array.isArray(pkg.files)) return null;
+    return pkg.files
+      .map(String)
+      .filter((entry) => entry && !entry.startsWith('!'))
+      .map((entry) => entry.replace(/\/+$/, ''))
+      .concat(['package.json', 'README.md', 'LICENSE']);
+  } catch {
+    return null;
+  }
+}
+
+function ships(shipped, rel) {
+  if (!shipped) return true;
+  const path = String(rel || '').replace(/\/+$/, '');
+  if (!path) return false;
+  return shipped.some((entry) => path === entry || path.startsWith(`${entry}/`) || entry.startsWith(`${path}/`));
+}
+
+/**
+ * Kind 0 card sweep: triage's file check on every card plane, limited to
+ * paths the package ships, so a packed install and the repo read the same.
+ * Returns the first drift line, or '' when every card holds.
+ */
+export function shippedDrift(projectRoot) {
+  const platesDir = findPlatesDir(HERE);
+  const root = sourceRoot(platesDir);
+  const shipped = shippedSet(root);
+  for (const id of CARD_PLANES) {
+    const plane = growPlane(id, platesDir, projectRoot || stateRoot());
+    const kept = {
+      ...plane,
+      files: (Array.isArray(plane.files) ? plane.files : []).filter((rel) => ships(shipped, rel)),
+      skills: ships(shipped, plane.skills) ? plane.skills : '',
+      worn: ships(shipped, plane.worn) ? plane.worn : '',
+    };
+    const exam = examinePlane(kept, root);
+    if (exam.kind === 'drift') return `Actuality. ${id}: ${exam.text}`;
+  }
+  return '';
 }
 
 function repoRootFrom(platesDir) {

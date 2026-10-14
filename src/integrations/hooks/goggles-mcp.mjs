@@ -3,7 +3,7 @@
  * Tools: look, status_lens. Same organ as the CLI.
  */
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -12,17 +12,9 @@ import * as bundled from './goggles-pipeline.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const SERVER_NAME = 'goggles';
-const CARD_PLANES = [
-  'ground',
-  'routing',
-  'house',
-  'boot',
-  'governance',
-  'memory-recall',
-  'orchestration',
-  'processor',
-  'reporting',
-];
+/** Card planes come from the organ, not a hand-kept copy. */
+const CARD_PLANES = Array.isArray(bundled.CARD_PLANES) ? bundled.CARD_PLANES : [];
+const CARD_OUTERS = ['digest', 'triage'];
 const SCOPES = ['ecosystem', 'part', 'one flow', 'one artifact'];
 
 const LOOK_SCHEMA = {
@@ -31,7 +23,7 @@ const LOOK_SCHEMA = {
   properties: {
     kind: {
       type: 'string',
-      description: 'Optional. Use "0" or "actuality" for the lens. Omit when naming an outer.',
+      description: 'Use "0" or "actuality" for the lens. Send kind, outer, or plane: an empty look is refused. Never with outer: kind and outer together is refused.',
       enum: ['0', 'actuality'],
     },
     outer: {
@@ -46,7 +38,7 @@ const LOOK_SCHEMA = {
     },
     plane: {
       type: 'string',
-      description: 'Card plane for digest or triage only. Not the lens.',
+      description: 'Card plane for digest or triage only. Not the lens. A plane with any other outer is refused.',
       enum: CARD_PLANES,
     },
   },
@@ -55,7 +47,7 @@ const LOOK_SCHEMA = {
 export const TOOLS = [
   {
     name: 'look',
-    description: 'Kind 0 is quiet on a match. It checks the six outer names. One outer is a reading. digest and triage return a card.',
+    description: 'Kind 0 is quiet on a match. It checks the six outer names, then sweeps every card plane for missing shipped files and names the first drift. One outer is a reading. digest and triage return a card. Refused: an empty look; kind with outer; a plane with an outer other than digest or triage.',
     inputSchema: LOOK_SCHEMA,
   },
   {
@@ -152,6 +144,15 @@ function checkArgs(args) {
   if (args.plane != null && !CARD_PLANES.includes(args.plane)) {
     return deny('invalid_args', 'plane is a card plane.');
   }
+  if (args.kind == null && args.outer == null && args.plane == null) {
+    return deny('invalid_args', 'Name a kind, one outer, or one plane.');
+  }
+  if (args.kind != null && args.outer != null) {
+    return deny('invalid_args', 'Send kind or outer, not both.');
+  }
+  if (args.plane != null && args.outer != null && !CARD_OUTERS.includes(args.outer)) {
+    return deny('invalid_args', 'plane goes with digest or triage only.');
+  }
   return null;
 }
 
@@ -161,7 +162,7 @@ function publicCard(view) {
     if (Array.isArray(view.empty) && view.empty.length) notes.push(`Empty: ${view.empty.join(', ')}`);
     if (view.exam) notes.push(view.exam);
   }
-  const skills = view.skills ? basename(String(view.skills)) : '';
+  const skills = view.skills ? String(view.skills) : '';
   const cascade = view.cascade
     ? {
       plane: view.cascade.plane,
@@ -227,7 +228,8 @@ export async function answerLook(raw, root) {
   const here = projectRoot(root);
   if (pureKind0(args)) {
     api.maintainLens(here);
-    const line = api.actualityLine();
+    const line = api.actualityLine() || cardDrift(api, here);
+    if (line) writeLens(api, here, line);
     if (!line) return quiet('kind0');
     return { ok: true, quiet: false, mode: 'kind0', content: line };
   }
@@ -267,6 +269,22 @@ export async function answerLook(raw, root) {
     outer: args.outer ?? null,
     scope: args.scope || null,
   };
+}
+
+/** Kind 0 card sweep: triage's file check on every card plane, shipped paths only. */
+function cardDrift(api, here) {
+  if (typeof api.shippedDrift !== 'function') return '';
+  try {
+    return api.shippedDrift(here);
+  } catch {
+    return '';
+  }
+}
+
+function writeLens(api, here, line) {
+  const file = api.lensPath(here);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${line}\n`);
 }
 
 function lensBody(root) {
