@@ -343,7 +343,7 @@ async function flushWake(seat) {
   st.status = { ok: !!result.ok, attempts: result.attempts, at: new Date().toISOString() };
   if (!result.ok) st.status.error = result.error || 'network';
   console.log(`wake: ${seat} ${result.ok ? 'ok' : 'fail'} attempts=${result.attempts}${result.ok ? '' : ' ' + st.status.error}${result.detail ? ' body=' + JSON.stringify(result.detail) : ''}`);
-  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk(); }
+  if (result.ok) { touchSeat(seat); wakeOkAt[seat] = st.status.at; persistWakeOk(); serverActivity(seat, 'turn', 'start', 'wake'); }
   st.inflight = false; armWake(seat);
 }
 // Last time this process saw each seat act through its inbox (wake 2xx, inbox read, ack); counts toward fleet "active".
@@ -1594,6 +1594,15 @@ function rememberActivity(line) {
     fs.appendFileSync(ACT_FILE, JSON.stringify(line) + '\n');
   } catch (e) { console.log('activity: append failed ' + ((e && e.code) || 'write')); }
 }
+// Server-recorded seat activity (hotfix): a delivered wake opens the seat's turn and an inbox ack closes it, so every
+// seat shows working from wake until ack without needing its own GitHub App token. Same line shape as POST /activity.
+function serverActivity(seat, kind, action, tag) {
+  if (!seat) return;
+  actSeq++;
+  const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: new Date().toISOString(), kind, action, tag, by: 'server' };
+  rememberActivity(line); appendArchive('activity', line);
+  seq++; header = mergedHeader(); fullDirty = true;
+}
 loadActivity();
 activityReady = true;
 header = mergedHeader(); fullDirty = true;
@@ -1927,7 +1936,7 @@ async function handle(req, res) {
     let d; try { d = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
     const what = d && d.all === true ? 'all' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
     if (!what) return json(req, res, 400, { error: 'id or all required' });
-    const n = ackLines(who, what); touchSeat(who);
+    const n = ackLines(who, what); touchSeat(who); if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     return json(req, res, 200, { ok: true, acked: n, open: openLines(who, false).length });
   }
