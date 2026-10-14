@@ -227,6 +227,7 @@ def build(args, gh):
             "times and a short source tag only). Fleet seats are active if an owned file changed or the seat acted "
             "on GitHub in the last 15 min.",
         ] + [f"Gap: {g}" for g in gaps],
+        "repos_unreadable": sorted(col.repo for col in COLLECTORS.values() if getattr(col, "unreadable", None)),
         "backfill_complete": all(backfill_done.values()),
         "source": MODE,
         "fleet": fleet_state,

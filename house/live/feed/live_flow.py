@@ -111,6 +111,9 @@ class Flow:
             if h == [GH]:                # a check with no known author: a GitHub-only pulse
                 e["hops"], e["from"], e["to"] = h, GH, GH
             if len(h) >= 2:
+                prior = e.get("to")
+                if isinstance(prior, str) and prior not in ("GitHub", "Railway", "Bifrost", "CI", "Others", "burst-live", "mymuse.house"):
+                    e.setdefault("author_seat", prior)   # hop rewrite must not drop the PR author
                 e["hops"] = h
                 # round trips (tester -> instance -> tester) keep to = the instance; hops carry the return pulse
                 e["from"], e["to"] = h[0], (h[1] if len(h) == 3 and h[0] == h[-1] else h[-1])

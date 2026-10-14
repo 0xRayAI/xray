@@ -34,11 +34,33 @@
   // dropped before the kit maps them, so nothing falls back to GitHub; hops through it are skipped.
   var BOARD = { Bifrost: 1, 'burst-live': 1, 'mymuse.house': 1 };
   delete NK.Bifrost; delete NK['burst-live'];
+  var DEPLOY = { deploy: 1, deploy_fail: 1, deploy_pending: 1, op_deploy: 1 };
+  function boardEnd(n) { return !!BOARD[n]; }
+  function retarget(e) {
+    var hops = (e.hops && e.hops.length) ? e.hops.slice() : [e.from, e.to];
+    var touches = boardEnd(e.from) || boardEnd(e.to) || hops.some(boardEnd);
+    if (!touches) return e;
+    var kind = String(e.kind || '');
+    if (kind.indexOf('seat_') === 0) {
+      var seat = boardEnd(e.from) ? e.to : e.from;
+      if (!seat || boardEnd(seat)) return null;
+      return Object.assign({}, e, { from: seat, to: seat, hops: [seat] });
+    }
+    if (DEPLOY[kind]) {
+      var rail = hops.filter(function (h) { return h && !boardEnd(h); }).map(function (h) { return h === 'Operator' ? 'GitHub' : h; });
+      if (rail.indexOf('GitHub') < 0) rail.unshift('GitHub');
+      if (rail.indexOf('Railway') < 0) rail.push('Railway');
+      var clean = [];
+      rail.forEach(function (h) { if (clean[clean.length - 1] !== h) clean.push(h); });
+      return Object.assign({}, e, { from: clean[0], to: clean[clean.length - 1], hops: clean });
+    }
+    return null;
+  }
   var kitApply = L.applyFeed;
   L.applyFeed = function (state, feed, nowMs) {
     if (feed && Array.isArray(feed.product_nodes)) feed.product_nodes.forEach(function (n) { BOARD[n] = 1; });
     if (feed && Array.isArray(feed.events)) feed = Object.assign({}, feed, { product_nodes: [],
-      events: feed.events.filter(function (e) { return !BOARD[e.from] && !BOARD[e.to]; }) });
+      events: feed.events.map(retarget).filter(Boolean) });
     return kitApply(state, feed, nowMs);
   };
   L.FROM_FALLBACK = 'GitHub';

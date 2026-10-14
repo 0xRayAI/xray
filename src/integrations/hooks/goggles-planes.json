@@ -7,6 +7,7 @@
     "files": [
       "src",
       "grok-bot/OP-PROC.md",
+      "grok-bot/LEXICON.md",
       "src/opencode/agents",
       "AGENTS.md",
       "src/integrations",
@@ -197,7 +198,7 @@
     "plates": ["station-card", "work-fresh"]
   },
   "lens-gate": {
-    "files": ["src/integrations/hooks/goggles-pipeline.mjs"],
+    "files": ["src/integrations/hooks/goggles-pipeline.mjs", "src/__tests__/unit/goggles-pipeline.test.ts"],
     "mark": "export function lensBeforeResearch",
     "skills": ".agents/skills/lens-gate/SKILL.md",
     "plates": ["pre-tool"]

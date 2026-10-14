@@ -177,8 +177,12 @@ def _direct_all(event, roles):
         if not isinstance(r, dict) or not r:
             continue
         hit = kind in (r.get("kinds") or [])
+        if hit and kind == "op_deploy":
+            hit = str(event.get("status") or "").upper() in ("SUCCESS", "CRASHED", "FAILED", "FAILURE", "ERROR", "REMOVED")
         hit = hit or (kind == "merged" and str(event.get("base") or "").casefold() in [b.casefold() for b in r.get("merge_bases") or []])
         hit = hit or (kind.startswith("issue") or "comment" in kind) and any(inbox._has(hay, n) for n in r.get("needles") or [])
+        mention_hay = " ".join("@" + m for m in tagged)
+        hit = hit or bool(mention_hay) and any(inbox._has(mention_hay, n) for n in r.get("needles") or [])
         if hit:
             line = inbox._line(event, seat, r.get("reason") or "routed")
             if line:
@@ -194,7 +198,7 @@ def _direct_all(event, roles):
     cw = roles.get("comment_watch") or {}
     if kind in (cw.get("kinds") or []) and event.get("number") is not None:
         # every comment on a PR (open, closed or merged) reaches the PR author's seat and the watch seats, mention or not
-        author = alias_seat(event.get("to"), roles) if kind in (cw.get("author_kinds") or []) else None
+        author = alias_seat(event.get("author_seat") or event.get("to"), roles) if kind in (cw.get("author_kinds") or []) else None
         merged = " (merged PR)" if event.get("pr_merged") else ""
         if author:
             why = "comment on your issue" if kind == "issue_comment" else (cw.get("author_reason") or "comment on your PR")
@@ -294,8 +298,19 @@ def cmd_pass(now=None):
         del ev[k]
     st = _load(STATE, {})
     seen = st.get("seen") or {}
+    sig = st.get("sig") if isinstance(st.get("sig"), dict) else {}
     ids = sorted(ev, key=lambda k: _t(ev[k]))
-    new = [ev[k] for k in ids if k not in seen]
+    new, changed = [], []
+    for k in ids:
+        e = ev[k]
+        kind = str(e.get("kind") or "")
+        prev = sig.get(k)
+        if k not in seen:
+            new.append(e)
+        elif prev and prev != kind:   # same id, new kind (pending status later failed): route the update
+            changed.append(e)
+        if kind:
+            sig[k] = kind
     first = not st.get("seeded")
     seeded_at = now if first else float(st.get("seeded_at") or 0)
     floor = max(seeded_at - SEED_GRACE_S, now - ROUTE_MAX_AGE_S)
@@ -308,6 +323,7 @@ def cmd_pass(now=None):
     if bad:
         print(f"inbox_pass: {bad} event(s) with missing/bad t_ct marked seen, not delivered", file=sys.stderr)
     new = [e for e in new if _t(e) >= floor]   # history (pre-seed or late backfill) is marked seen, never delivered
+    changed = [e for e in changed if _t(e)]   # a kind change is live even when the original t_ct is old
     # Edited comments (#300 follow-up): the collector re-reads a comment when updated_at moves and puts it again under the
     # same id, so `seen` alone would drop a mention added on edit. Remember each comment's @handles; a handle added later
     # becomes one comment_edit event (id <comment id>:edit:<handles>) that only mention needles route: one line per newly
@@ -332,7 +348,7 @@ def cmd_pass(now=None):
             edits.append({**e, "id": f"{k}:edit:{'+'.join(added)}", "kind": "comment_edit", "mentions": added,
                           "t_ct": datetime.fromtimestamp(now, timezone.utc).isoformat(), "edited_from": k})
     ments = {k: v for k, v in ments.items() if k in seen or k in ev}
-    new = new + edits
+    new = new + edits + changed
     if not first and new:
         acts = []
         if ACTIVITY.is_file():
@@ -346,7 +362,8 @@ def cmd_pass(now=None):
                                 now=datetime.fromtimestamp(now, timezone.utc), activity=acts)
         lines = sum(written.values())
         inbox.maybe_board(len(new), log=lambda m: print(m, file=sys.stderr))
-    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments})
+    sig = {k: v for k, v in sig.items() if k in seen or k in ev}
+    _save(STATE, {"seeded": True, "seeded_at": seeded_at, "seen": seen, "sent": st.get("sent") or [], "ments": ments, "sig": sig})
     ring()
     _save(CACHE, c)
     print(f"{0 if first else len(new)} {lines}")

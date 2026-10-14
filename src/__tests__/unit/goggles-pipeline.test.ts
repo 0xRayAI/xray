@@ -57,7 +57,7 @@ describe('goggles plate', () => {
       'Plate:',
       'Entry:',
       'Exit:',
-      'Files: src, grok-bot/OP-PROC.md, src/opencode/agents, AGENTS.md, src/integrations, package.json, scripts/foundry',
+      'Files: src, grok-bot/OP-PROC.md, grok-bot/LEXICON.md, src/opencode/agents, AGENTS.md, src/integrations, package.json, scripts/foundry',
       'Skills: SKILLS.md',
       'Setup:',
       'Teardown:',
@@ -388,6 +388,7 @@ describe('goggles plate', () => {
     expect(card.files).toEqual([
       'src',
       'grok-bot/OP-PROC.md',
+      'grok-bot/LEXICON.md',
       'src/opencode/agents',
       'AGENTS.md',
       'src/integrations',

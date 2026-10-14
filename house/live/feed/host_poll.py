@@ -7,8 +7,9 @@ Two ways in, same sanitized file:
   - Box watchdog: `railway deployment list --json` only (fixed argv: never approve, redeploy, up or
     variables), using the box CLI login, and only when RAILWAY_TOKEN is unset.
 
-The file keeps a short deployment id, project/service/environment names, status, created time and
-whether it came from a CLI upload (no commit hash). No commit messages, authors, URLs, logs, or tokens.
+The file keeps a short deployment id, project/service/environment names, status, created time,
+a short commit sha (commitHash, no message), and whether it came from a CLI upload.
+No commit messages, authors, URLs, logs, or tokens.
 """
 import json, os, subprocess, sys, time, urllib.request
 from datetime import datetime, timezone
@@ -112,6 +113,7 @@ def _rows_from(payload, pname, service, envs):
             meta = d.get("meta") if isinstance(d.get("meta"), dict) else {}
             rows.append({"id": str(d.get("id") or "")[:8], "project": pname, "service": service, "env": env[:12],
                          "status": str(d.get("status") or "")[:20], "created": d.get("createdAt"),
+                         "sha": str(meta.get("commitHash") or "")[:40],
                          "cli": not bool(meta.get("commitHash"))})
     return rows
 
@@ -181,6 +183,7 @@ def main():
                     meta = d.get("meta") or {}
                     out.append({"id": str(d.get("id", ""))[:8], "project": pname, "service": service, "env": env,
                                 "status": str(d.get("status", ""))[:20], "created": d.get("createdAt"),
+                                "sha": str(meta.get("commitHash") or "")[:40],
                                 "cli": not meta.get("commitHash")})
             except Exception as ex:   # noqa: BLE001 (one target failing must not stop the others)
                 errors.append(f"{service}/{env}: {type(ex).__name__}")

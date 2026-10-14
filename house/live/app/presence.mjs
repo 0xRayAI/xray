@@ -102,8 +102,13 @@ export function fleetConfigOf(e, dir) {
     const raw = String(e.LIVE_NODE_MAP || '').trim();
     extra = raw ? JSON.parse(raw.startsWith('{') ? raw : fs.readFileSync(raw, 'utf8')) : {};
   } catch {}
+  const humans = {};
+  for (const part of String(e.HUMAN_ALIASES || '').split(/[\s,]+/)) {
+    const login = part.trim();
+    if (login) humans[login] = 'Blaze';
+  }
   const lc = new Set(Object.keys(nodes).map(k => k.toLowerCase()));
-  const add = Object.fromEntries(Object.entries(extra || {}).filter(([k]) => !lc.has(k.toLowerCase())));
+  const add = Object.fromEntries(Object.entries({ ...humans, ...(extra || {}) }).filter(([k]) => !lc.has(k.toLowerCase())));
   if (Object.keys(nodes).length) out.LIVE_NODE_MAP = JSON.stringify({ ...add, ...nodes });
   return out;
 }

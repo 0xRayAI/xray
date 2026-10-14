@@ -466,18 +466,21 @@ class Fleet:
         self._source("op-runjson", self._scan_runjson)
 
     def _scan_railway(self):
+        # Re-read every pass. A same-second rewrite can keep mtime and size (SUCCESS and CRASHED
+        # are the same length), and a GitHub-triggered deploy is often first seen as INITIALIZING
+        # with no commit, then later CRASHED with one. Status changes emit; an unchanged status does not.
         f = self.path.parent / "railway-deploys.json"
-        if not f.is_file() or not self._changed(f, "feed/railway-deploys.json"):
+        if not f.is_file():
             return
         try:
             d = json.loads(f.read_text())
-        except ValueError:
+        except (ValueError, OSError):
             return
         polled = _ts(d.get("polled_at")) or f.stat().st_mtime
         for x in d.get("deploys", []):
             did, st = str(x.get("id", ""))[:8], str(x.get("status", ""))[:20]
-            if not did or not (x.get("cli") or st in RW_APPROVAL):
-                continue                     # GitHub-triggered deploys arrive via commit statuses already
+            if not did:
+                continue
             created = _ts(x.get("created")) or polled
             self._touch("Operator", created)
             old = self.rw.get(did)
@@ -487,9 +490,11 @@ class Fleet:
             svc, env = str(x.get("service", ""))[:24], str(x.get("env", ""))[:12]
             inst = RW_ENV.get(env) if svc != "live-mesh" else None
             word = "approval" if st in RW_APPROVAL else "deploy"
+            sha = str(x.get("sha") or "")[:40] or None
             self._emit(f"op:rw:{did}:{st}", created if old is None else polled, "Operator", inst or "Railway",
                        "op_deploy", f"{word} {svc} · {env} · {st}", "railway/deployments", deploy_id=did,
-                       service=svc, env=env, status=st, instance=inst, time_basis="railway createdAt / poll time")
+                       service=svc, env=env, status=st, instance=inst, sha=sha,
+                       time_basis="railway createdAt / poll time")
 
     def _scan_op_git(self):
         head = OP_REPO / ".git" / "logs" / "HEAD"

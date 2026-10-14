@@ -166,9 +166,35 @@ function unmapped(e) {
 // CI is not work: check runs, suites and workflow runs never draw as board traffic (cards still read them from the source).
 const CI_KINDS = new Set(['check_run', 'check_suite', 'workflow_run', 'ci_pass', 'ci_fail']);
 // Board traffic is packets only (Blaze 10/14): a handoff between parties. State-only kinds stay on cards, never as bursts.
-const NOT_TRAFFIC = new Set(['commit', 'pr_edit', 'issue_edit', 'pr_review_requested', 'pr_activity', 'issue_activity']);
+// #337 packets: seat turns, merges, reviews, PRs opened, comments, issues, finished/failed deploys.
+// Not packets: commits (including pr_commit, the push stream), edits, review requests, referenced
+// activity, draft toggles, commit statuses, unfinished deploys. pr_force_push and pr_ready stay
+// (a force-push and ready-for-review are handoffs). CI stays off the board.
+const NOT_TRAFFIC = new Set(['commit', 'pr_commit', 'pr_edit', 'issue_edit', 'pr_review_requested', 'pr_review_request_removed', 'pr_activity', 'issue_activity', 'pr_draft', 'commit_status', 'deploy_pending']);
 const isTraffic = e => !CI_KINDS.has(e.kind) && !NOT_TRAFFIC.has(e.kind) && !(e.kind === 'deploy' && e.state && !/^(success|failure|failed|error|crashed)$/i.test(e.state));
-const shown = (n, e) => isTraffic(e) && !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
+// GitHub deployment statuses (src github-api) duplicate the Railway poll. op_deploy is the deploy
+// source. A github-api deploy/deploy_fail stays only when the poll has no row for that deploy
+// (no matching sha or service), and an old unmatched status is history once any poll row exists.
+function ghDeployCovered(e) {
+  if (!e || (e.kind !== 'deploy' && e.kind !== 'deploy_fail')) return false;
+  if (String(e.src_file || '') !== 'github-api') return false;
+  const sha = String(e.sha || '').toLowerCase();
+  const ctx = (String(e.context || '') + ' ' + String(e.label || '')).toLowerCase();
+  let poll = false;
+  for (const v of evs.values()) {
+    const o = v.e;
+    if (!o || o.kind !== 'op_deploy') continue;
+    poll = true;
+    const os = String(o.sha || '').toLowerCase();
+    if (sha && os && (sha.startsWith(os) || os.startsWith(sha))) return true;
+    const svc = String(o.service || '').toLowerCase();
+    if (svc && ctx.includes(svc)) return true;
+  }
+  if (!poll) return false;
+  const t = Date.parse(e.t_ct || '');
+  return !(Number.isFinite(t) && Date.now() - t <= 6 * 3600000);
+}
+const shown = (n, e) => isTraffic(e) && !ghDeployCovered(e) && !unmapped(e) && !(n === 'box' && e.src_file === 'merge-queue.md' && ghRetest.has(`${e.repo}#${e.number}`));
 function touch(id) {
   for (const n of SRC_PRIO) { const e = SRCS[n].evs.get(id); if (e && shown(n, e)) return upsert(e); }
   if (evs.has(id)) dropId(id);
@@ -186,6 +212,9 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
     }
   }
   for (const id of changed) touch(id);
+  if (events.some(e => e && e.kind === 'op_deploy')) {
+    for (const n of SRC_PRIO) for (const [id, e] of SRCS[n].evs) if (e && (e.kind === 'deploy' || e.kind === 'deploy_fail') && e.src_file === 'github-api') touch(id);
+  }
   for (const e of events) appendArchive('events', e);
   if (n === 'github') recomputeGithubDataAt();
   header = mergedHeader(); fullDirty = true;
@@ -193,7 +222,7 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
 const ingestFull = f => ingestSrc('box', f.events, headerOf(f));
 const ingestDelta = d => ingestSrc('box', d.upsert, headerOf(d.header), d.remove);
 // pusher-auth readback (ingest responses only): which seats the merged board shows working, no event data
-const fleetBrief = () => { const f = header.fleet || {}; return { box_stale: !!f.box_stale, cloud_working: !!f.cloud?.working, working: Object.keys(f.working || {}).sort() }; };
+const fleetBrief = () => { refreshWorking(); const f = header.fleet || {}; return { box_stale: !!f.box_stale, cloud_working: !!f.cloud?.working, working: Object.keys(f.working || {}).sort() }; };
 // ---- builder inbox mirror (port of example-org/xray PR #5 house/live/activity.mjs): lines persist on the volume
 const INBOX_KEYS = new Set(['id', 't_ct', 'seat', 'type', 'repo', 'number', 'sha', 'title', 'url', 'reason', 'from', 'to', 'kind', 'flag']);
 const INBOX_BANNED = /body|text|message/i;   // tested against field NAMES only; values (e.g. type "prompt_message") are fine
@@ -247,6 +276,11 @@ const SEAT_ALIAS = { coord: COS, coordinator: COS, cos: COS, operator: OPS, test
 const SEAT_IDS = process.env.LIVE_SEAT_IDS
   ? [...new Set(['builder', 'builder-cloud', ...process.env.LIVE_SEAT_IDS.split(',').map(x => x.trim().toLowerCase()).filter(x => /^[a-z0-9][a-z0-9_-]{0,31}$/.test(x))])]
   : ['builder', 'builder-cloud', 'arch1', 'forge', 'critic', 'mill', 'blinky', 'herald', 'nibbler', 'sound', 'magnet'];
+function canonSeat(name) {
+  const id = String(name || '').toLowerCase();
+  if (SEAT_IDS.includes(id)) return id;
+  return SEAT_ALIAS[id] || id;
+}
 // Builder-cloud: the cloud Builder seat (own key). It reads Builder's work: every builder inbox line is mirrored into its inbox,
 // nudges to builder land in its inbox as type 'nudge', and /cards?seat=builder-cloud shows Builder's cards.
 const SEAT_DISPLAY = { 'builder-cloud': 'Builder-cloud' };
@@ -282,7 +316,7 @@ function loadSeatWebhooks() {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
   const out = {};
   for (const [seat, cfg] of Object.entries(parsed)) {
-    const id = String(seat || '').toLowerCase();
+    const id = canonSeat(seat);
     if (!SEAT_IDS.includes(id) || !cfg || typeof cfg !== 'object' || Array.isArray(cfg)) continue;
     const seatKeyEnv = 'WAKE_KEY_' + id.toUpperCase().replace(/-/g, '_');
     const url = typeof cfg.url === 'string' ? cfg.url : '', keyEnv = typeof cfg.key_env === 'string' ? cfg.key_env : seatKeyEnv;
@@ -304,19 +338,21 @@ function wakeBoard(now = Date.now()) {
   const out = {};
   for (const seat of Object.keys(SEAT_WEBHOOKS)) {
     const last = wakeOkAt[seat] || null, t = last ? Date.parse(last) : BOOT_AT;
-    out[seat] = { last_ok: last, quiet: now - t > WAKE_QUIET_MS };
+    const st = wakeQ.get(seat)?.status;
+    out[seat] = { last_ok: last, last_err: st && !st.ok ? (st.error || 'fail') : null, quiet: now - t > WAKE_QUIET_MS };
   }
   return out;
 }
 function noteWake(seat, line) {
   try {
-    const cfg = SEAT_WEBHOOKS[seat];
+    const id = canonSeat(seat);
+    const cfg = SEAT_WEBHOOKS[id];
     if (!cfg || !line) return;
-    let st = wakeQ.get(seat);
-    if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(seat, st); }
+    let st = wakeQ.get(id);
+    if (!st) { st = { lastSent: 0, pending: [], timer: null, inflight: false, status: null }; wakeQ.set(id, st); }
     st.pending.push({ id: String(line.id || '').slice(0, 300), type: String(line.type || '').slice(0, 64), repo: String(line.repo || '').slice(0, 200),
       number: Number.isInteger(line.number) ? line.number : 0, title: String(line.title || '').slice(0, 200), url: String(line.url || '').slice(0, 500), reason: String(line.reason || '').slice(0, 300) });
-    armWake(seat);
+    armWake(id);
   } catch { /* keep the inbox write */ }
 }
 function armWake(seat) {
@@ -535,7 +571,7 @@ function nudgeSeats(now) {
   for (const n of nudges) if ((n.kind === 'unrouted' || n.kind === 'quiet') && !n.closed_at && !want.has(n.id)) { n.closed_at = new Date(now).toISOString(); changed = true; }
   return changed;
 }
-function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
+function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(canonSeat(d.seat))) return false; return validInboxLine({ ...d, seat: 'builder' }); }
 function inboxLineError(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'line must be an object';
   const keys = Object.keys(d);
@@ -544,7 +580,7 @@ function inboxLineError(d) {
   const parts = [];
   if (banned.length) parts.push('field names must not include body, text, or message: ' + banned.join(', '));
   if (unknown.length) parts.push('unknown fields: ' + unknown.join(', '));
-  const seat = typeof d.seat === 'string' ? d.seat.toLowerCase() : '';
+  const seat = typeof d.seat === 'string' ? canonSeat(d.seat) : '';
   if (!SEAT_IDS.includes(seat)) parts.push('seat must be a seat id');
   if (typeof d.id !== 'string' || !d.id) parts.push('id required');
   if (typeof d.t_ct !== 'string' || !d.t_ct) parts.push('t_ct required');
@@ -566,7 +602,7 @@ function rejectedRef(l, i) {
 function postSeatLines(parsed, onlySeat) {
   const incoming = parsed && Array.isArray(parsed.lines) ? parsed.lines : null;
   if (!incoming || incoming.length > 5000) return { status: 400, error: 'lines required' };
-  if (onlySeat && incoming.some(l => !l || String(l.seat || '').toLowerCase() !== onlySeat)) return { status: 403, error: 'inbox is not exposed' };
+  if (onlySeat && incoming.some(l => !l || canonSeat(l.seat) !== onlySeat)) return { status: 403, error: 'inbox is not exposed' };
   const rejected = []; const good = [];
   for (let i = 0; i < incoming.length; i++) {
     const l = incoming[i];
@@ -586,7 +622,7 @@ function postSeatLines(parsed, onlySeat) {
     touched.add(onlySeat);
   }
   for (const l of good) {
-    const s = l.seat.toLowerCase(), arr = seatInbox[s]; if (arr.some(x => x.id === l.id)) continue;
+    const s = canonSeat(l.seat), arr = seatInbox[s]; if (!arr || arr.some(x => x.id === l.id)) continue;
     const stored = { ...l, seat: s };
     for (const k of ['from', 'to', 'kind', 'flag']) if (typeof stored[k] === 'string') stored[k] = stored[k].toLowerCase();
     arr.push(stored); touched.add(s); added++; fresh.push(stored);
@@ -1110,6 +1146,7 @@ function applyGithubWorking(fleet, now) {
 setInterval(() => governorRun(), GOV_MS).unref();
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
+  refreshWorking();
   if (fullDirty) {
     feedBody = Buffer.from(JSON.stringify({ ...maskHeader(header), cursor: cursor(), events: [...evs.values()].map(v => mask(v.e)) }));
     feedGz = zlib.gzipSync(feedBody, { level: 6 }); feedEtag = `"${cursor()}"`; fullDirty = false;
@@ -1254,6 +1291,12 @@ async function refreshOrgRepos() {
 }
 // fleetConfig (presence.mjs): committed fleet-roster.json / fleet-nodes.json shipped beside the collector.
 const fleetConfig = (e, dir = COLLECTOR_DIR) => fleetConfigOf(e, dir);
+function collectorScript() {
+  const beside = path.join(COLLECTOR_DIR, 'live_mesh.py');
+  if (fs.existsSync(beside)) return beside;
+  const feed = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'live_mesh.py');
+  return fs.existsSync(feed) ? feed : '';
+}
 async function startCollector() {
   const tok = process.env.GITHUB_READ_TOKEN || '';
   if (!tok || process.env.COLLECTOR === 'off') { console.log('collector: off (no GITHUB_READ_TOKEN or COLLECTOR=off)'); return; }
@@ -1263,7 +1306,8 @@ async function startCollector() {
     collector.orgTimer = setInterval(() => refreshOrgRepos().catch(() => {}), Number(process.env.COLLECTOR_ORG_REFRESH_S || 3600) * 1000);
     collector.orgTimer.unref();
   }
-  if (!fs.existsSync(path.join(COLLECTOR_DIR, 'live_mesh.py'))) { console.log('collector: code missing; off'); return; }
+  const script = collectorScript();
+  if (!script) { console.log('collector: code missing; off'); return; }
   fs.mkdirSync(path.join(DATA_DIR, 'feed'), { recursive: true }); fs.mkdirSync(path.join(DATA_DIR, 'home'), { recursive: true });
   seedStore();
   const env = { PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin', HOME: path.join(DATA_DIR, 'home'), LANG: 'C.UTF-8',
@@ -1279,13 +1323,13 @@ async function startCollector() {
   if (process.env.RAILWAY_POLL_S) env.RAILWAY_POLL_S = process.env.RAILWAY_POLL_S;
   if (process.env.GITHUB_HOLD_LABEL) env.GITHUB_HOLD_LABEL = process.env.GITHUB_HOLD_LABEL;
   if (process.env.NO_NUDGE_REPOS != null) env.NO_NUDGE_REPOS = process.env.NO_NUDGE_REPOS;
-  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS']) if (process.env[k] != null) env[k] = process.env[k];
+  for (const k of ['UPSTREAM_REPO', 'UPSTREAM_PINNED', 'UPSTREAM_REPOS', 'XRAY_REPO', 'XRAY_OURS', 'SEAT_PRESENCE', 'LIVE_NODE_MAP', 'LIVE_BRAND', 'LIVE_BRAND_RE', 'LIVE_SHOW_UNMAPPED', 'LIVE_FLEET_SEATS', 'HUMAN_ALIASES', 'LIVE_CLOUD_IDLE_S']) if (process.env[k] != null) env[k] = process.env[k];
   Object.assign(env, fleetConfig(process.env));
   const healthArg = env.LIVE_HEALTH_URLS.split(/\s+/).filter(Boolean)[0] || '';
-  const args = ['-B', '-u', path.join(COLLECTOR_DIR, 'live_mesh.py'), '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
+  const args = ['-B', '-u', script, '--out', GH_FEED, '--watch', process.env.COLLECTOR_WATCH_S || '45',
     '--repos', ...collector.repos, '--deploy-repo', '', '--health', healthArg];
   const child = spawn('python3', args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
-  collector.pid = child.pid; collector.child = child;
+  collector.pid = child.pid; collector.child = child; collector.startedAt = Date.now(); collector.watchKilled = false;
   console.log(`collector: started pid ${child.pid}`);
   for (const st of [child.stdout, child.stderr]) {
     let buf = '';
@@ -1440,22 +1484,58 @@ function feedQuiet(now = Date.now()) {
   const ms = (Number.isFinite(limit) && limit >= 0 ? limit : 180) * 1000;
   return now - at > ms;
 }
+function watchLimitMs() {
+  const interval = (Number(process.env.COLLECTOR_WATCH_S) || 45) * 1000;
+  const n = Number(process.env.COLLECTOR_WATCHDOG_N);
+  const mult = Number.isFinite(n) && n > 0 ? n : 3;
+  return interval * mult;
+}
+function feedStalled(now = Date.now()) {
+  if (process.env.COLLECTOR === 'off' || !process.env.GITHUB_READ_TOKEN) return false;
+  if (!collector.child && !collector.watchKilled) return false;
+  const tick = collector.lastWrite || collector.startedAt || 0;
+  if (!tick) return false;
+  return now - tick > watchLimitMs();
+}
+function feedHealthLine(why) {
+  upsert({ id: 'health:feed-loop', t_ct: new Date().toISOString(), from: 'watchdog', to: 'GitHub', kind: 'health_fail',
+    label: String(why).slice(0, 80), src_file: 'watchdog', direction: 'internal' });
+  seq++; header = mergedHeader(); fullDirty = true;
+  console.log('collector: ' + why);
+}
+function watchFeed() {
+  if (!feedStalled() || collector.watchKilled || !collector.child) return;
+  collector.watchKilled = true;
+  const tick = collector.lastWrite || collector.startedAt || Date.now();
+  const age = Math.round((Date.now() - tick) / 1000);
+  feedHealthLine(`feed loop stalled ${age}s; restarting`);
+  try { collector.child.kill('SIGTERM'); } catch { /* exit handler restarts the loop */ }
+}
 const CARD_BEHIND_S = (() => {
   const n = Number(process.env.CARD_BEHIND_S);
   return Number.isFinite(n) && n >= 0 ? n : 180;
 })();
 function cardsBehindData(now) {
-  if (!cardsAt) return false;
   let latest = 0;
   for (const e of SRCS.github.evs.values()) {
     if (!healthMovesCard(e)) continue;
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (Number.isFinite(t) && t > latest) latest = t;
   }
-  if (!latest) return false;
-  return (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000;
+  const boardLag = !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
+  // Card clock (newest event that moves an open card) lags ingest (newest event of any kind).
+  const ingest = githubDataAt || 0;
+  const cardClock = githubCardAt || 0;
+  const clockLag = !!(ingest && cardClock && ingest - cardClock > CARD_BEHIND_S * 1000);
+  return boardLag || clockLag;
 }
-function healthBody() {   // public: counts, times, ages (s) and wake states; no repo names, urls or keys
+function unreadableRepos() {
+  const fromFeed = SRCS.github.header && SRCS.github.header.repos_unreadable;
+  const names = new Set(skipped);
+  if (Array.isArray(fromFeed)) for (const r of fromFeed) if (typeof r === 'string' && r) names.add(r);
+  return [...names].map(repoTag).sort((a, b) => a.localeCompare(b));
+}
+function healthBody() {   // public: counts, times, ages (s) and wake states; no urls or keys. Unreadable repos are listed.
   const now = Date.now();
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
   const cardAge = ageS(cardsAt), dataAge = ageS(githubDataAt);
@@ -1463,15 +1543,18 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   const warming = collectorWatched() && !passAt;
   const quiet = feedQuiet(now);
   const behind = !warming && cardsBehindData(now);
+  const stalled = feedStalled(now);
   // feed_quiet (collector file mtime) and cards lagging open-card data are the gates.
   // data_age and box_age are reported and do not change ok.
   const ok = !quiet && !behind;
   const staleStatus = Number(SRCS.github.header && SRCS.github.header.stale_status) || 0;
-  const body = { ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
+  const unread = unreadableRepos();
+  const body = { ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: unread.length, unreadable_repos: unread,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     feed_quiet: quiet, box_age: ageS(SRCS.box.at), box_informational: true, collector_age: ageS(passAt), card_age: cardAge, data_age: dataAge,
     card_stale_s: CARD_STALE_S, data_stale_s: DATA_STALE_S, board: boardWord(),
     cards_behind: behind, stale_status: staleStatus,
+    last_tick: passAt ? new Date(passAt).toISOString() : null, stalled,
     origin: ORIGIN || null, wakes: wakeHealth(), arch1_launch: arch1Launch.health(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges };
   if (warming) body.status = 'warming';
   return body;
@@ -1483,6 +1566,8 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
   let f; try { f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8')); } catch { return; }   // mid-replace: next tick
   if (!validFeed(f)) { collector.sig = sig; console.log('collector: feed file invalid; ignored'); return; }
   collector.sig = sig; collector.lastWrite = st.mtimeMs;   // quiet file: age is the file's age, including across a redeploy
+  collector.watchKilled = false;
+  if (evs.has('health:feed-loop')) { evs.delete('health:feed-loop'); fullDirty = true; }
   repoTimes(f);
   ingestSrc('github', f.events, headerOf(f));
   routeSoon();
@@ -1736,7 +1821,8 @@ function validFeed(f) {
 // ---- activity (write-only from off-box seats; the box pusher pulls it with the ingest secret) ----
 // One JSON line: {t_ct, kind, action, to?, agent?, tag?}. The seat comes from the key, never from the body.
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
-  watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'] };
+  watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'],
+  agent: ['launch', 'reply', 'finish', 'cancel'] };
 const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat']);   // seat: optional, must match the token; from: prompt sender (#281)
 const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
@@ -1833,15 +1919,38 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || {};
     f.seats[seat] = { ...src, active: !!last && now - last <= win, last_ct: iso(last), via: t > prev ? 'activity' : (src.via ?? null), working: !!src.working };
   }
+  const fresh = new Set();
   for (const [key, t] of open) {
-    if (now - t > (key.split(':')[1] === 'turn' ? TURN_OPEN_MS : 60 * 60 * 1000)) continue;   // a missed ack can't pin a seat as working
+    const kind = key.split(':')[1];
+    if (now - t > (kind === 'turn' ? TURN_OPEN_MS : 60 * 60 * 1000)) continue;   // a missed ack can't pin a seat as working
     const seat = key.split(':')[0];
-    if (!f.working[seat]) f.working[seat] = { via: key.split(':')[1] || 'activity', since_ct: iso(t) };
+    fresh.add(seat);
+    if (!f.working[seat]) f.working[seat] = { via: kind || 'activity', since_ct: iso(t) };
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
+  // Read time, not only boot: an open turn older than TURN_OPEN_MS leaves working, including a
+  // collector fleet flag that was copied from that turn. A newer open subagent/watcher keeps it.
+  for (const [key, t] of open) {
+    if (key.split(':')[1] !== 'turn' || now - t <= TURN_OPEN_MS) continue;
+    const seat = key.split(':')[0];
+    if (fresh.has(seat)) continue;
+    delete f.working[seat];
+    if (f.seats[seat]) {
+      const src = { ...f.seats[seat], working: false };
+      delete src.working_via;
+      f.seats[seat] = src;
+    }
+  }
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
+}
+function refreshWorking(now = Date.now()) {
+  if (!header || !header.fleet) return;
+  const before = JSON.stringify(header.fleet.working || {});
+  const fleet = applyStoredActivity(header.fleet, now);
+  if (fleet) header.fleet = fleet;
+  if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]
 function validActivity(d, now = Date.now()) {
@@ -1860,7 +1969,7 @@ function validActivity(d, now = Date.now()) {
   if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d{1,6})?)?([+-]\d\d:\d\d|Z)$/.test(d.t_ct || '')) return 'bad t_ct';
   const t = Date.parse(d.t_ct);
   if (isNaN(t) || t > now + 5 * 60000 || t < now - 24 * 3600000) return 't_ct out of range';
-  if (d.kind === 'cloud_agent' && !ACT_AGENT.test(d.agent || '')) return 'cloud_agent needs agent id';
+  if ((d.kind === 'cloud_agent' || d.kind === 'agent') && !ACT_AGENT.test(d.agent || '')) return 'agent id required';
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.tag != null && d.tag.length > 40) return 'tag too long';
   if (d.to != null && d.to.length > 40) return 'to too long';
@@ -2313,6 +2422,8 @@ for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true
 if (process.env.COLLECTOR !== 'off') {
   readCollectorFeed();            // warm start from the volume before the first pass
   setInterval(readCollectorFeed, 2000).unref();
+  const watchEvery = Math.min(5000, Math.max(500, (Number(process.env.COLLECTOR_WATCH_S) || 45) * 1000));
+  setInterval(watchFeed, watchEvery).unref();   // hung feed loop: N x COLLECTOR_WATCH_S, then restart
   startCollector().catch(e => console.log("collector: start failed " + String(e.message).slice(0, 80)));
 }
 readJiraFeed();

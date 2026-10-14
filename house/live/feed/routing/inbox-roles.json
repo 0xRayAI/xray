@@ -131,7 +131,8 @@
     "forge": {
       "kinds": [
         "ci_fail",
-        "deploy_fail"
+        "deploy_fail",
+        "op_deploy"
       ],
       "merge_bases": [
         "main",
@@ -144,7 +145,7 @@
         "deploy ask",
         "run gate b"
       ],
-      "reason": "CI / deploy failure, merge / deploy / Gate B run ask, or merge into main or bifrost/main"
+      "reason": "CI / deploy failure, merge / deploy / Gate B run ask, or merge into main or bifrost/main; terminal railway deploy (op_deploy)"
     },
     "critic": {
       "kinds": [

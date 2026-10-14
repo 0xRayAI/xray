@@ -170,7 +170,7 @@ class OperatorCosTest(unittest.TestCase):
             got = sorted((e["kind"], e["label"]) for e in ev)
             self.assertIn(("op_deploy", "deploy app-project · production · REMOVED"), got)
             self.assertIn(("op_deploy", "deploy app-project · production · BUILDING"), got)
-            self.assertNotIn("cccc3333", json.dumps(ev))                      # GitHub-triggered: not the Operator's
+            self.assertIn("cccc3333", json.dumps(ev))                         # GitHub-triggered still records each status
             self.assertEqual(sum(k == "op_commit" for k, _ in got), 1)
             self.assertIn(("cos_file", "merge-queue · 1 pass / 1 fail / 0 open"), got)
             self.assertIn(("cos_file", "triager note POS-77"), got)
@@ -186,6 +186,24 @@ class OperatorCosTest(unittest.TestCase):
             self.assertEqual(len(f.scan()), n)                                  # no change -> nothing new
             f2 = live_fleet.Fleet(feed / "fleet-state.json", CT); f2.scan()   # restart, no change:
             self.assertTrue(f2.fleet_state([], now=time.time())["seats"]["Operator"]["active"])   # still active
+
+    def test_scan_host_emits_every_status_including_a_first_seen_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            feed = Path(d)
+            rw = feed / "railway-deploys.json"
+            dep = lambda i, st, cli, sha="": {"id": i, "project": "burst-live", "service": "burst-live", "env": "production",
+                                              "status": st, "created": "2026-10-14T18:00:00Z", "cli": cli, "sha": sha}
+            f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+            rw.write_text(json.dumps({"polled_at": "2026-10-14T18:01:00+00:00", "deploys": [dep("dddd4444", "INITIALIZING", True)]}))
+            ids = lambda: [e["id"] for e in f.scan_host() if e["kind"] == "op_deploy"]
+            self.assertIn("op:rw:dddd4444:INITIALIZING", ids())
+            for st, cli in (("BUILDING", False), ("DEPLOYING", False), ("CRASHED", False)):
+                rw.write_text(json.dumps({"polled_at": "2026-10-14T18:02:00+00:00", "deploys": [dep("dddd4444", st, cli, "abc123")]}))
+                self.assertIn(f"op:rw:dddd4444:{st}", ids(), st)
+            crashed = [e for e in f.events.values() if e["id"] == "op:rw:dddd4444:CRASHED"][0]
+            self.assertEqual(crashed["sha"], "abc123")
+            rw.write_text(json.dumps({"polled_at": "2026-10-14T18:03:00+00:00", "deploys": [dep("eeee5555", "FAILED", False, "fff999")]}))
+            self.assertIn("op:rw:eeee5555:FAILED", ids())
 
 
 class CloudAgentsTest(unittest.TestCase):

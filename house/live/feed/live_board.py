@@ -70,6 +70,17 @@ def beat_of(e):
         return "CI " + (e.get("conclusion") or k[3:])
     if k == "merged":
         return "merged"
+    if k == "deploy":
+        return "ship"
+    if k == "deploy_fail":
+        return "ship fail"
+    if k == "op_deploy":
+        st = str(e.get("status") or "").upper()
+        if st == "SUCCESS":
+            return "ship"
+        if st in ("CRASHED", "FAILED", "FAILURE", "ERROR", "REMOVED"):
+            return "ship fail"
+        return None
     if k.startswith("lab_retest_"):
         return "retest " + k.rsplit("_", 1)[1].upper()
     if k.startswith("prompt") and str(e.get("from")) == "Lead":

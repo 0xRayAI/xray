@@ -278,6 +278,20 @@ class CollectorCapture(unittest.TestCase):
         self.assertNotIn("secret", json.dumps(f))
 
 
+class ShipBeats(unittest.TestCase):
+    def test_deploy_is_a_ship_beat_and_ci_stays(self):
+        import live_board as w
+        self.assertEqual(w.beat_of({"kind": "deploy"}), "ship")
+        self.assertEqual(w.beat_of({"kind": "deploy_fail"}), "ship fail")
+        self.assertEqual(w.beat_of({"kind": "op_deploy", "status": "SUCCESS"}), "ship")
+        self.assertEqual(w.beat_of({"kind": "op_deploy", "status": "CRASHED"}), "ship fail")
+        self.assertEqual(w.beat_of({"kind": "op_deploy", "status": "FAILED"}), "ship fail")
+        self.assertIsNone(w.beat_of({"kind": "op_deploy", "status": "BUILDING"}))
+        self.assertIsNone(w.beat_of({"kind": "op_deploy", "status": "DEPLOYING"}))
+        self.assertEqual(w.beat_of({"kind": "ci_fail", "conclusion": "failure"}), "CI failure")
+        self.assertEqual(w.beat_of({"kind": "check_run", "conclusion": "success"}), "CI success")
+
+
 class Stats(unittest.TestCase):
     def test_counts_24h_and_open(self):
         import live_board as w

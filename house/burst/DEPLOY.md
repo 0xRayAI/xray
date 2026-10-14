@@ -78,7 +78,7 @@ Green is HTTP 200 and `"ok": true`. That requires both `feed_quiet: false` and `
 |---|---|
 | `ok` | `true` |
 | `feed_quiet` | `false`. The collector file is newer than `COLLECTOR_STALE_S`, or the collector is not watched |
-| `cards_behind` | `false`. The board is caught up with card-moving events. Completed CI counts only when its number or head matches an open card |
+| `cards_behind` | `false`. The board file is caught up, and the card clock is within `CARD_BEHIND_S` of ingest. Completed CI counts for the board-file lag only when its number or head matches an open card |
 | `board` | `live` once cards exist. `empty` means a board was built with zero cards. `building` means no board has been read yet |
 | `wakes.<seat>` | `ok` after a wake returned 2xx. `idle` means the key is set and nothing has been sent yet. `no_key` means that seat has no wake secret. `fail` means the last wake did not return 2xx |
 | `collector_age` | small once a feed file has been read. `null` before the first file |
@@ -100,7 +100,7 @@ That boots the server on a free port, writes one collector feed, and checks four
 
 ## Routing is required
 
-Every seat needs a route: a seat no rule routes to gets no inbox lines, so its wake never fires. Before the first deploy, run `house/live/tools/bifrost-init` once. It asks for the seats and their wake URLs, writes `house/live/feed/routing/inbox-roles.json` and `feed/routing/seat-webhooks.json` (placeholders and env names only, never real URLs or keys), and fails if any seat has no route. Put the real URLs in the `SEAT_WEBHOOKS` host variable and each key in `WAKE_KEY_<SEAT>`. `bifrost-init --check` re-validates after hand edits; CI runs it via `house/live/tests/run_tests.sh`.
+Every seat needs a route: a seat no rule routes to gets no inbox lines, so its wake never fires. Before the first deploy, run `house/live/tools/bifrost-init` once. It asks for the seats and their wake URLs, writes `house/live/feed/routing/inbox-roles.json` and `feed/routing/seat-webhooks.json` (placeholders and env names only, never real URLs or keys), and fails if a seat has no route. Put the real URLs in the `SEAT_WEBHOOKS` host variable and each key in `WAKE_KEY_<SEAT>`. `bifrost-init --check` re-validates after hand edits; CI runs it via `house/live/tests/run_tests.sh`.
 
 This answers the hosting questions on #248 from the setup running today. Hostnames, project names, seat names
 and repos are examples. No values are secret here; set real values as Railway variables.
@@ -123,7 +123,7 @@ There is no separate page/store service. It is one Node process, `house/live/app
 | `GET /cards?seat=<seat>` | that seat's key (operator: every seat) | cards with packets and beats |
 | `GET /nudges?since=<id>` | operator key | nudges for delivery |
 | `POST /emit` | emitter key, write-only | external emitter events (tool calls); unknown fields get 422 |
-| `GET /healthz` | none | JSON `{ok, feed_quiet, cards_behind, data_age, card_age, box_age, collector_age, board, origin, collector, repos}`. `ok` is false on `feed_quiet` or `cards_behind`. `data_age` and `box_age` are informational. HTTP 503 when `ok` is false. No repo names |
+| `GET /healthz` | none | JSON `{ok, feed_quiet, cards_behind, data_age, card_age, box_age, collector_age, board, origin, collector, repos}`. `ok` is false on `feed_quiet` or `cards_behind`. `data_age` and `box_age` are informational. HTTP 503 when `ok` is false. Unreadable repos are listed |
 | `GET /archive?date=YYYY-MM-DD&kind=` | `Authorization: Bearer $ARCHIVE_KEY` | one UTC day of append-only JSONL (`events`, `cards`, `inbox`, `nudges`, `acks`, `activity`). Missing or wrong key is 401. Bad date or kind is 400 |
 
 The GitHub collector (`house/live/feed/live_mesh.py`, which imports `house/live-mesh/fetch_feed.py`) is the
@@ -149,7 +149,7 @@ second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live
 - Repo-root `railway.json` (`node mcp-server.mjs`) belongs to the xray MCP server, not to this. Do not deploy the
   live board from the repo root. Deploy with `house/live/app/deploy.sh`: it assembles a deploy dir (app files plus
   `collector/` = the `feed/live_*.py` modules and `house/live-mesh/fetch_feed.py`) and runs
-  `railway up --service <service> --detach` from that dir. Deploy only via `deploy.sh`: a build from GitHub (any root
+  `railway up --service <service> --detach` from that dir. Deploy only via `deploy.sh`: a build from GitHub (a root
   directory) has no assembled `collector/`, and the Dockerfile stops with "collector/ is not assembled" (#292).
 - `deploy.sh` names: `LIVE_RAILWAY_PROJECT` (default `burst-live`), `LIVE_RAILWAY_SERVICE` (default `burst-live`), `LIVE_RAILWAY_ENVIRONMENT` (default `production`), `MESH_APP_DEPLOY_DIR` (default `/srv/live/deploy`; created and `railway link`ed on first run if missing, which needs a logged-in railway CLI). A merge to main does not deploy; run `deploy.sh` once after merging. These are the project, the service, and the railway-linked directory. They are not Railway variables on the service.
 - `house/live/site/public/` (committed, ours) is copied over the kit `public/` first: our seats, Lens nodes, `avatars/` (blinky, critic, forge, herald from the repo; arch1 from minime0x; Blaze from his X profile @Blaze0x1; others drawn, see [board.md](../live/docs/board.md#avatars)) and `favicon.png` (served at `/favicon.ico`, open in public mode). Another install deletes `house/live/site/`.
@@ -169,7 +169,12 @@ Railway service (`server.mjs`):
 | `APP_PUBLIC_ORIGIN` | required when `NODE_ENV=production` | https origin pinned on `/healthz` (`LIVE_URL` is the fallback). http is only for localhost or 127.0.0.1. An invalid value refuses to start |
 | `ARCHIVE_KEY` | optional | bearer for `GET /archive`. Unset still boots; the route answers 401 |
 | `COLLECTOR_STALE_S` | optional | default 180. Collector feed file older than this sets `feed_quiet` and `ok` false (HTTP 503) |
-| `CARD_BEHIND_S` | optional | default 180. Card-moving data newer than the board by more than this sets `cards_behind` and `ok` false |
+| `CARD_BEHIND_S` | optional | default 180. `cards_behind` (and `ok` false) when the board file lags card-moving data by more than this, or when the card clock lags ingest by more than this |
+| `LIVE_RAILWAY_TARGETS` | set on deploy | JSON `[[project_name, project_id, service, [envs]]]`. Project burst-live, service burst-live, environment production: `[["burst-live","<Railway project id for burst-live>","burst-live",["production"]]]`. Use the Railway project id |
+| `LIVE_CLOUD_IDLE_S` | set on deploy | `1200` (20 minutes). A cloud agent stays working this long after its last line |
+| `HUMAN_ALIASES` | set on deploy | `htafolla`. Comma or space separated human GitHub logins. Each maps to Blaze |
+| `UPSTREAM_REPO` | leave for Blaze | one public repo for the upstream watcher. Leave unset until Blaze names it. Also listed below |
+| `COLLECTOR_WATCHDOG_N` | optional | default 3. Restart the feed loop after N missed `COLLECTOR_WATCH_S` ticks. In-process; no second Railway service |
 | `CARD_STALE_S` | optional | default 600. Reported as `card_stale_s`. Does not change `ok` |
 | `DATA_STALE_S` | optional | default 21600. Reported as `data_stale_s`. Does not change `ok` |
 | `RAILWAY_TOKEN` | optional | read-only token. The collector polls deploys over HTTPS when it is set. Unset leaves the poll off. An account or team token is sent as `Authorization: Bearer`; a project token is retried as `Project-Access-Token` (#327) |
@@ -192,7 +197,7 @@ Railway service (`server.mjs`):
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |
 | `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S`, `HELD_MAX_S` | optional | 3600, 1800, 7200, 7200, 259200 |
 | `EMITTER_WORKING_S`, `BOX_STALE_S` | optional | 120, 180 |
-| `BOARD_BOX_STALE_S` | optional | 900. The box pass board is shown while the box pushed within this many seconds; after that the host collector's board is used |
+| `BOARD_BOX_STALE_S` | optional | 900. The box pass board is shown while the box pushed within this count of seconds; after that the host collector's board is used |
 | `GITHUB_HOLD_LABEL` | optional | label that holds a card; default `on-hold` |
 | `NO_NUDGE_REPOS` | optional | comma list of `owner/name` or `owner/*`; unset means every repo can be nudged |
 | `SEAT_PRESENCE` | optional | JSON `{source seat: dest seat or [dest, ...]}`; default `{"builder-cloud":"builder"}` |
@@ -200,7 +205,7 @@ Railway service (`server.mjs`):
 | `WAKE_DEBOUNCE_S`, `WAKE_COALESCE_MS`, `WAKE_RETRY_MS` | optional | 60, 50, 400 |
 | `JIRA_SITE`, `JIRA_EMAIL`, `JIRA_API_TOKEN`, `JIRA_PROJECTS` | optional | all four turn the Jira pull child on; the token stays in that child |
 | `JIRA_HOLD_STATUS`, `JIRA_EXCLUDE`, `JIRA_SOURCE`, `SOURCE_ALLOWLIST` | optional | hold status default `On Hold`; `off` disables the pull; allowlist for other sources |
-| `UPSTREAM_REPO` or `XRAY_REPO` | optional | one public repo to watch; unset means the upstream watcher is off |
+| `UPSTREAM_REPO` or `XRAY_REPO` | leave for Blaze | one public repo to watch. Leave unset until Blaze names it; unset means the upstream watcher is off |
 | `UPSTREAM_PINNED`, `XRAY_OURS` | optional | `owner/name#N` list; logins that count as this fleet. Both unset means nothing is tracked |
 
 One Node process (`server.mjs`) serves the page and supervises the collector child. There is no second page service.
@@ -208,7 +213,7 @@ The board is the `board` object on the feed header, built by `feed/live_board.py
 
 Collector child: its env is built from scratch by the server and holds only `GH_TOKEN` (= `GITHUB_READ_TOKEN`), `HOME`,
 `PATH`, `TZ`, `LIVE_MODE=github`, `LIVE_NO_CHECKS=1`, `LIVE_HEALTH_URLS` (from `COLLECTOR_HEALTH_URLS`, empty when unset), `LIVE_MESH_SRC`, and, only when you set them,
-`GITHUB_HOLD_LABEL`, `NO_NUDGE_REPOS`, `UPSTREAM_REPO`, `UPSTREAM_PINNED`, `XRAY_REPO`, `XRAY_OURS`, `SEAT_PRESENCE`, `LIVE_NODE_MAP`, `LIVE_BRAND`, `LIVE_BRAND_RE`, `LIVE_SHOW_UNMAPPED`, `LIVE_FLEET_SEATS`.
+`GITHUB_HOLD_LABEL`, `NO_NUDGE_REPOS`, `UPSTREAM_REPO`, `UPSTREAM_PINNED`, `XRAY_REPO`, `XRAY_OURS`, `SEAT_PRESENCE`, `LIVE_NODE_MAP`, `LIVE_BRAND`, `LIVE_BRAND_RE`, `LIVE_SHOW_UNMAPPED`, `LIVE_FLEET_SEATS`, `HUMAN_ALIASES`, `LIVE_CLOUD_IDLE_S`.
 It never sees the password, session secret, ingest secret, seat hashes, or the Jira token.
 The child `--health` argument is the first URL in `COLLECTOR_HEALTH_URLS`, or empty. There is no example host.
 
@@ -233,7 +238,7 @@ One volume on the service, mounted at `/data`. A 5 GB volume is enough to start.
 `healthcheckPath: /healthz` in `railway.json`, and `healthcheck: "/healthz"` in `house/live/app/.railway/railway.ts`. `server.mjs` answers `GET /healthz` on `$PORT`. The collector does not
 answer HTTP. The `/health` URLs in `COLLECTOR_HEALTH_URLS` are your app's endpoints, polled for status code only. Unset means no probe. `railway.json` stops being read on 2026-12-01; switch to the `.railway/railway.ts` file before that date (section 3).
 
-`/healthz` fields: `data_age` (seconds since the newest GitHub event `t_ct`; null if there is none), `card_age` (seconds since the board last changed; null while `cardsAt` is 0), `box_age`, `collector_age` (collector feed file mtime), `feed_quiet`, `cards_behind`, `board` (`building`, `empty`, or `live`), and `origin` (the pinned `APP_PUBLIC_ORIGIN`, or null). `ok` is false when the collector feed file is quiet (`feed_quiet`) or when card-moving events, including completed CI that matches an open card's number or head, outrun the board (`cards_behind`). `data_age` and `box_age` are informational. HTTP is 503 when `ok` is false and 200 otherwise, so a quiet night does not restart the service.
+`/healthz` fields: `data_age` (seconds since the newest GitHub event `t_ct`; null if there is none), `card_age` (seconds since the board last changed; null while `cardsAt` is 0), `box_age`, `collector_age` (collector feed file mtime), `feed_quiet`, `cards_behind`, `last_tick` (collector feed mtime, or null), `stalled` (feed loop older than `COLLECTOR_WATCHDOG_N` times `COLLECTOR_WATCH_S`), `repos_unreadable` (count) and `unreadable_repos` (names), `board` (`building`, `empty`, or `live`), and `origin` (the pinned `APP_PUBLIC_ORIGIN`, or null). `ok` is false when the collector feed file is quiet (`feed_quiet`) or when cards are behind (`cards_behind`: the board file lags card-moving data, or the card clock lags ingest, by more than `CARD_BEHIND_S`). `data_age` and `box_age` are informational. HTTP is 503 when `ok` is false and 200 otherwise, so a quiet night does not restart the service. A 403 or 404 on a per-repo collector read, including workflow runs, adds that repo to `unreadable_repos`. The in-process watchdog restarts a hung feed loop. There is no second service.
 
 Install mismatches are listed as Symptom / Cause / Fix in [house/live/docs/faq.md](../live/docs/faq.md).
 
@@ -245,13 +250,13 @@ Install mismatches are listed as Symptom / Cause / Fix in [house/live/docs/faq.m
 - Collector child: `GITHUB_READ_TOKEN` only, a fine-grained read-only token (no Checks permission; suites and runs come
   from Actions). No App keys on the host.
 - Box feed pass: App keys (`GITHUB_APP_*`) for a read-only installation token minted every 50 minutes. The mint
-  refuses any non-read permission. The box runs in "box" mode (no GitHub calls) when the host collector is on.
+  refuses a non-read permission. The box runs in "box" mode (no GitHub calls) when the host collector is on.
 - Seats: each seat gets one random key (`feed/seat_keys.sh mint`, files 0600, never printed). Only the hash goes to Railway.
   An off-box builder seat uses its own App installation token instead.
 
 ## 8. Region, plan and cost
 
-- Region: one replica in a region close to the seats. Any region works.
+- Region: one replica in a region close to the seats. Each region works.
 - Plan: a Hobby-tier workspace is enough for one small always-on service and a 5 GB volume.
 - Cost: roughly $5 to $10 a month (one small Node process plus a Python child, low egress, and the volume at about
   $0.25/GB-month). Check your own Usage page; we did not export an invoice figure.
