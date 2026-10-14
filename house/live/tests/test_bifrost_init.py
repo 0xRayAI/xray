@@ -38,6 +38,14 @@ class BifrostInit(unittest.TestCase):
             self.assertEqual(r.returncode, 1)
             self.assertIn("no route for seat(s): mill", r.stderr)
 
+    def test_check_fails_on_rule_to_seat_outside_fleet(self):
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"forge": {"needles": ["@forge"]}},
+                                                                   "seats": {"builder": {"seat": "ghost"}}}))
+            r = run("--check", "--seats", "forge", "--routing-dir", d)
+            self.assertEqual(r.returncode, 1)
+            self.assertIn("not in the fleet: ghost", r.stderr)
+
     def test_existing_rules_kept(self):
         with tempfile.TemporaryDirectory() as d:
             (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"forge": {"kinds": ["ci_fail"], "needles": ["merge ask"]}}}))

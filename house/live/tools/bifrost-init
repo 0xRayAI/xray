@@ -39,6 +39,29 @@ def routed_seats(roles: dict) -> set[str]:
     return out
 
 
+def role_targets(roles: dict) -> dict[str, set[str]]:
+    """Every seat a rule names -> the rules naming it (kit roles, extra_seats, pr_heads, comment_watch, fallback)."""
+    out: dict[str, set[str]] = {}
+    for role, rule in (roles.get("seats") or {}).items():
+        if isinstance(rule, dict) and not rule.get("off") and rule.get("seat"):
+            out.setdefault(str(rule["seat"]).lower(), set()).add(f"seats.{role}")
+    for seat, rule in (roles.get("extra_seats") or {}).items():
+        if isinstance(rule, dict) and any(rule.get(k) for k in ("kinds", "needles", "merge_bases")):
+            out.setdefault(seat.lower(), set()).add("extra_seats")
+    for key in ("pr_heads", "comment_watch"):
+        for seat in (roles.get(key) or {}).get("seats") or {}:
+            out.setdefault(seat.lower(), set()).add(key)
+    for seat in [(roles.get("fallback") or {}).get("seat")] + list((roles.get("fallback") or {}).get("from") or []):
+        if seat:
+            out.setdefault(str(seat).lower(), set()).add("fallback")
+    return out
+
+
+def unknown_targets(roles: dict, seats) -> list[str]:
+    """Rules pointing at a seat that is not in the fleet (a line nobody reads)."""
+    return sorted(set(role_targets(roles)) - set(seats))
+
+
 def unrouted(roles: dict, seats) -> list[str]:
     have = routed_seats(roles)
     return sorted(s for s in seats if s not in have)
@@ -91,6 +114,7 @@ def main(argv=None) -> int:
     ap.add_argument("--no-wake", default="", help="comma-separated seats with no wake URL (they poll)")
     ap.add_argument("--routing-dir", default=str(FEED / "routing"))
     ap.add_argument("--check", action="store_true", help="validate the routing file only; write nothing")
+    ap.add_argument("--table", action="store_true", help="with --check: print seat -> rules")
     ap.add_argument("--yes", action="store_true", help="no prompts")
     a = ap.parse_args(argv)
     rdir = Path(a.routing_dir)
@@ -99,10 +123,17 @@ def main(argv=None) -> int:
 
     if a.check:
         seats = parse_seats(a.seats) if a.seats else default_seats(roles)
-        miss = unrouted(roles, seats)
+        miss, ghost = unrouted(roles, seats), unknown_targets(roles, seats)
         if miss:
             print(f"bifrost init: FAIL, no route for seat(s): {', '.join(miss)}. Run bifrost init to add them.", file=sys.stderr)
+        if ghost:
+            print(f"bifrost init: FAIL, rules route to seat(s) not in the fleet: {', '.join(ghost)}", file=sys.stderr)
+        if miss or ghost:
             return 1
+        if a.table:
+            targets = role_targets(roles)
+            for s in seats:
+                print(f"{s}: {', '.join(sorted(targets.get(s, ())))}")
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0
 
@@ -128,9 +159,9 @@ def main(argv=None) -> int:
             wake[s] = bool(ans)
 
     add_seats(roles, seats)
-    miss = unrouted(roles, seats)
+    miss = unrouted(roles, seats) + unknown_targets(roles, seats)
     if miss:   # cannot happen after add_seats unless a rule was hand-broken; fail loudly anyway
-        print(f"bifrost init: FAIL, no route for seat(s): {', '.join(miss)}", file=sys.stderr)
+        print(f"bifrost init: FAIL, unrouted or unknown seat(s): {', '.join(miss)}", file=sys.stderr)
         return 1
     rdir.mkdir(parents=True, exist_ok=True)
     roles_path.write_text(json.dumps(roles, indent=2, ensure_ascii=False) + "\n")
