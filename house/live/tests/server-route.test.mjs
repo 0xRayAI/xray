@@ -92,6 +92,8 @@ test('same events again, and after a restart: nothing routed twice, no second wa
   writeFeed([...old, ...fresh, next]);
   assert.ok(await until(() => /route: pass 1 \d+/.test(logs)), logs);
   assert.ok(inbox('forge').some(l => l.id === next.id) && !inbox('blinky').some(l => l.id === next.id));
+  // the wake for `next` is async: wait for it here, or it lands inside the next test's count (the old 1-in-6 flake)
+  assert.ok(await until(() => wakes.length === before + 1), JSON.stringify(wakes));
 });
 
 test('a stored-but-unmarked line (crash between store and sent) is not stored or woken twice', async () => {
