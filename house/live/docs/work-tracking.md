@@ -51,3 +51,5 @@ First match wins, login lowercased:
 | `applyGithubWorking` | feed events whose actor maps to a seat | a PR or issue comment, review, PR opened or pushed, or issue event inside the same window. Chip: `repo#number` |
 
 `POST /activity/ingest` does not set `fleet.working` itself. It appends the same activity lines writer 1 already reads.
+
+Served clocks (`fleet.as_of`, seat and cloud `last_ct`, `working` `since_ct`, freshness `github_latest_ct`, `github_card_latest_ct`, and `cards_at`) are America/Chicago with the offset and milliseconds, and do not end in `Z`. `fleet.cloud.active` is true only while `open_agents` is non-empty. A recent GitHub cloud line does not keep it active. `RAILWAY_POLL_S` defaults to 15. A poll that first sees SUCCESS backfills BUILDING and DEPLOYING. A first-seen FAILED or SKIPPED emits the terminal line only.
