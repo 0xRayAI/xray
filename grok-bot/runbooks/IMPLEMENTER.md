@@ -6,6 +6,9 @@ Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Bran
 ## 0. Station
 - Wear the latest 0xray suit (re-wear via forge if behind). On wake read `.xray/state/STATION.md` (the ticket the station module writes; never hand-edit it), then `.xray/state/NOTES.md`, and resume. Write NOTES.md before a compact (the PreCompact hook only stamps its pickup line); never commit it. Neither file holds secrets: never keys, tokens or PEM text, only where a secret lives (its env var name).
 
+## 0b. Read the plates first
+- Before coding, read the stamped 0xray plates (`docs-site/docs/plates/*.md`) for the area you touch, and list them in the PR body's `Plates read:` field ([PR template](../../.github/pull_request_template.md)).
+
 ## 1. One branch per wave
 - One wave = one branch = one PR. Code, docs, plates and nits for the wave all fold into it; no side PRs.
 - Branch from fresh `origin/main` in its own worktree: `git fetch origin && git worktree add ../<seat>-lapN -b <seat>/<topic>-lapN origin/main`.
