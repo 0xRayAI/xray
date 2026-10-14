@@ -89,6 +89,30 @@ class HostPoll(unittest.TestCase):
                     else:
                         os.environ[k] = v
 
+    def test_project_token_falls_back_to_project_header(self):
+        import io
+        from unittest import mock
+        seen = []
+
+        class R(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def urlopen(req, timeout=None):
+            hdr = {k.lower(): v for k, v in req.header_items()}
+            seen.append("project" if "project-access-token" in hdr else "bearer")
+            if "project-access-token" in hdr:
+                return R(json.dumps({"data": {"project": {"name": "x"}}}).encode())
+            return R(json.dumps({"errors": [{"message": "Not Authorized"}], "data": None}).encode())
+
+        with mock.patch.object(host_poll.urllib.request, "urlopen", urlopen):
+            out = host_poll._gql("tok", "q", {})
+        self.assertEqual(seen, ["bearer", "project"])
+        self.assertEqual(out["data"]["project"]["name"], "x")
+
 
 if __name__ == "__main__":
     unittest.main()
