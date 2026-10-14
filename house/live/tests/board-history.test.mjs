@@ -55,6 +55,12 @@ test('card history keeps a later state and drops a row with no key', () => {
   assert.equal(by['example/repo#2'].state, 'parked');
   assert.equal(by['example/repo#2'].closed_ct, '');
   assert.ok(hist.cards.every(c => c.id));
+  fs.rmSync(data, { recursive: true, force: true });
+});
+
+test('an older card row with no updated_ct fills it from last_beat_t', () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'board-stamp-'));
+  initArchive(data);
   const beat = Date.parse('2026-10-12T18:00:00Z');
   assert.equal(appendArchive('cards', { key: 'example/repo#9', state: 'live', stage: 'review', owner: 'mill', title: 'Old row', repo: 'example/repo', number: 9, last_beat_t: beat }), true);
   const aged = cardHistory();
