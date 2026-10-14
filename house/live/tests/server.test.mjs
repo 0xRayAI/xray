@@ -227,6 +227,36 @@ test('activity: optional seat must match the token seat (case-insensitive) else 
   assert.deepEqual(lines.map(l => l.tag), ['seat-ok', 'seat-ok2']);
   assert.ok(lines.every(l => l.seat === 'Builder'));
 });
+test('activity: a seat key posts only as its own seat', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-act-seat-'));
+  const ingest = crypto.randomBytes(32).toString('hex');
+  const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest, GITHUB_API_URL: 'http://127.0.0.1:9', PATH: process.env.PATH,
+    MESH_DATA_DIR: data, COLLECTOR: 'off',
+    SEAT_KEYS: JSON.stringify({ critic: crypto.createHash('sha256').update(CKEY).digest('hex'), forge: crypto.createHash('sha256').update(OKEY).digest('hex') }) }, stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    const base = `http://127.0.0.1:${await listenPort(child)}`;
+    const post = (body, key) => fetch(base + '/activity', { method: 'POST', headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const line = (tag, seat) => ({ t_ct: new Date().toISOString(), kind: 'turn', action: 'start', tag, ...(seat ? { seat } : {}) });
+    assert.equal((await post(line('op-own', 'forge'), OKEY)).status, 202);
+    assert.equal((await post(line('op-upper', 'Forge'), OKEY)).status, 202);
+    assert.equal((await post(line('op-alias', 'operator'), OKEY)).status, 202);   // SEAT_ALIAS operator -> forge
+    assert.equal((await post(line('op-omit'), OKEY)).status, 202);
+    const cross = await post(line('op-cross', 'critic'), OKEY);
+    assert.equal(cross.status, 403); assert.deepEqual(await cross.json(), { error: 'seat mismatch' });
+    const back = await post(line('cr-cross', 'forge'), CKEY);
+    assert.equal(back.status, 403); assert.deepEqual(await back.json(), { error: 'seat mismatch' });
+    assert.equal((await post(line('cr-own', 'critic'), CKEY)).status, 202);
+    assert.equal((await post(line('nope'), 'not-a-seat-key')).status, 401);
+    const pulled = await (await fetch(base + '/activity/pull', { headers: { Authorization: 'Bearer ' + ingest } })).json();
+    assert.deepEqual(pulled.lines.map(l => [l.seat, l.tag]), [
+      ['forge', 'op-own'], ['forge', 'op-upper'], ['forge', 'op-alias'], ['forge', 'op-omit'], ['critic', 'cr-own'],
+    ]);
+  } finally {
+    child.kill();
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
 test('activity: 60/min per seat', async () => {
   let codes = [];
   for (let i = 0; i < 62; i++) codes.push((await act({ t_ct: nowCt(), kind: 'watcher', action: 'tick' })).status);
