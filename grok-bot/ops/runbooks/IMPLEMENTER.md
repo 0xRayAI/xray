@@ -1,0 +1,31 @@
+# Implementer runbook (one lap)
+
+Written by mill (implementer seat). Any fleet's implementer follows it; nothing here lives only in a seat's memory.
+Rules it serves: pack [OP-PROC](../../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
+
+## 1. One branch per lap
+- One lap = one branch = one PR. Code, docs, plates and nits for the lap all fold into it; no side PRs.
+- Branch from fresh `origin/main` in its own worktree: `git fetch origin && git worktree add ../<seat>-lapN -b <seat>/<topic>-lapN origin/main`.
+- Every item on the lap points at its GitHub issue or PR comment. Work with no GitHub record is not work.
+
+## 2. Local commits only; the shipping seat pushes
+- Commit as the implementer's local identity (ours: `mill <mill@local>`): `git -c user.name=mill -c user.email=mill@local commit`.
+- Never push, never open the PR, never comment as a personal login. The shipping seat (publisher) pushes as its App.
+- One commit per coherent change, message `<area>: <what changed and why>`. Never commit secrets, wake URLs or keys.
+
+## 3. Tests plus docs check
+- Full suite: `house/live/tests/run_tests.sh` (Python, node, `bifrost init --check`, `bifrost check --dry-run`).
+- Docs: `npm run release:docs-check` from the repo root (hard gate when the lap touches release docs).
+- A flaky test is rerun alone several times (`node --test <file>` x5); fix it if the flake is real, never retry-until-green.
+
+## 4. Restamp plates
+- When a lap changes behavior a plate describes (`docs-site/docs/plates/*.md`, `house/live/docs/*.md`), update the plate text and its stamp in the same lap.
+- Run `bifrost check --only names` so no stale name survives.
+
+## 5. Sha handoff
+Hand the shipping seat one packet (inbox line + DM pointing at it):
+- branch and head sha, base sha;
+- the commit list: `git log --oneline origin/main..HEAD`;
+- test results (counts, exit codes) and the routing audit table (`bifrost-init --check --table`);
+- the PR body: summary, the issues it closes, the `## Packet` block (goal, constraints, path, acceptance, gates, evidence, next owner, escalate), and any @-mention an outsider needs (real login, e.g. `@arch10x`).
+Then stay quiet until the reviewer's PASS/FAIL or the shipping seat's ask.
