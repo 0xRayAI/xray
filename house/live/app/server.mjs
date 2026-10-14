@@ -934,11 +934,13 @@ function mergedHeader(now = Date.now()) {
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
+  if (h.fleet) h.fleet = clearClosedWork(h.fleet);
+  if (h.fleet) h.fleet = stampFleetTimes(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   h.freshness = {
-    github_latest_ct: githubDataAt ? new Date(githubDataAt).toISOString() : null,
-    github_card_latest_ct: githubCardAt ? new Date(githubCardAt).toISOString() : null,
-    cards_at: cardsAt ? new Date(cardsAt).toISOString() : null,
+    github_latest_ct: githubDataAt ? ctStamp(githubDataAt) : null,
+    github_card_latest_ct: githubCardAt ? ctStamp(githubCardAt) : null,
+    cards_at: cardsAt ? ctStamp(cardsAt) : null,
   };
   h.queue = openQueue();
   return h;
@@ -1142,6 +1144,73 @@ function applyGithubWorking(fleet, now) {
   if (!fleet) f.total = Object.keys(f.seats).length;
   f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
   return f;
+}
+// #336: fleet last_ct and freshness *_ct are America/Chicago with its offset, never a bare Z.
+function ctStamp(t) {
+  if (!t) return null;
+  const base = ctOffset(t);
+  if (typeof base !== 'string') return base;
+  const d = new Date(t);
+  if (isNaN(d) || base.includes('.')) return base;
+  const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+  return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
+}
+function stampFleetTimes(fleet) {
+  if (!fleet || typeof fleet !== 'object') return fleet;
+  const seats = {};
+  for (const [name, seat] of Object.entries(fleet.seats || {})) {
+    if (!seat || typeof seat !== 'object' || !seat.last_ct) seats[name] = seat;
+    else seats[name] = { ...seat, last_ct: ctStamp(seat.last_ct) };
+  }
+  let cloud = fleet.cloud;
+  if (cloud && typeof cloud === 'object') {
+    cloud = { ...cloud };
+    if (cloud.last_ct) cloud.last_ct = ctStamp(cloud.last_ct);
+    if (cloud.github_last_ct) cloud.github_last_ct = ctStamp(cloud.github_last_ct);
+  }
+  return { ...fleet, seats, cloud };
+}
+function workTarget(on) {
+  const m = /([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)?)#([1-9]\d*)$/.exec(String(on || '').trim());
+  return m ? { repo: m[1], number: Number(m[2]) } : null;
+}
+function workOnClosed(on) {
+  const key = workTarget(on);
+  if (!key) return false;
+  if (itemClosed(key.repo, key.number)) return true;
+  const repo = key.repo.toLowerCase();
+  const want = repo + '#' + key.number;
+  for (const [k, v] of closedItems()) {
+    if (v && v.closed && (k === want || k.endsWith('/' + want))) return true;
+  }
+  for (const c of bfCards) {
+    if (!c || String(c.state || '').toLowerCase() !== 'closed') continue;
+    if (Number(c.number) !== key.number) continue;
+    const cr = String(c.repo || '').toLowerCase();
+    if (cr === repo || cr.endsWith('/' + repo) || repo.endsWith('/' + cr)) return true;
+  }
+  return false;
+}
+function clearClosedWork(fleet) {
+  if (!fleet) return fleet;
+  let changed = false;
+  const seats = { ...(fleet.seats || {}) };
+  const working = { ...(fleet.working || {}) };
+  for (const [name, seat] of Object.entries(seats)) {
+    if (!seat || !workOnClosed(seat.working_on)) continue;
+    const next = { ...seat };
+    delete next.working_on;
+    seats[name] = next;
+    changed = true;
+  }
+  for (const [name, row] of Object.entries(working)) {
+    if (!row || !workOnClosed(row.working_on)) continue;
+    const next = { ...row };
+    delete next.working_on;
+    working[name] = next;
+    changed = true;
+  }
+  return changed ? { ...fleet, seats, working } : fleet;
 }
 setInterval(() => governorRun(), GOV_MS).unref();
 header = mergedHeader();
@@ -1949,7 +2018,7 @@ function refreshWorking(now = Date.now()) {
   if (!header || !header.fleet) return;
   const before = JSON.stringify(header.fleet.working || {});
   const fleet = applyStoredActivity(header.fleet, now);
-  if (fleet) header.fleet = fleet;
+  if (fleet) header.fleet = stampFleetTimes(clearClosedWork(fleet));
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]
