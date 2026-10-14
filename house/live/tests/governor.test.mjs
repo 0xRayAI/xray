@@ -1,4 +1,5 @@
-// Governor: stall watchdog (flag + one re-wake per window, ack clears), startup route check, wake health on the board.
+// Governor: nudges (evalNudges, the one nudge path: unacked line L1-L3 with one re-wake per window, ack closes; unrouted
+// and quiet seats) and the tripwire clock.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -27,23 +28,23 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { POR
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'wk', WAKE_KEY_CRITIC: 'wk',
   SEAT_KEYS: JSON.stringify({ forge: crypto.createHash('sha256').update(FKEY).digest('hex') }),
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0',
-  BIFROST_STALL_MINUTES: '0.05', BIFROST_STALL_CHECK_S: '0.2', BIFROST_WAKE_QUIET_MINUTES: '0.001',
+  NUDGE_LINE_S: '3', BIFROST_TICK_S: '0.2', BIFROST_WAKE_QUIET_MINUTES: '0.001',
   BIFROST_ROUTING_DIR: ROUTE, BIFROST_CLOCK_SEATS: 'forge', BIFROST_ROSTER: path.join(ROUTE, 'roster.json') }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
 after(() => { srv.kill(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true }); fs.rmSync(ROUTE, { recursive: true, force: true }); });
 for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
 const until = async fn => { for (let i = 0; i < 80 && !(await fn()); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 const header = async () => { const j = await (await fetch(BASE + '/live-events.json')).json(); return j; };
+const openNudges = async kind => (await (await fetch(BASE + '/nudges', { headers: { Authorization: 'Bearer ' + FKEY } })).json()).nudges.filter(n => n.kind === kind && !n.closed_at);
 const forgeWakes = () => got.filter(g => g.path === '/forge');
 
-test('a stalled line is flagged on the board and re-wakes its seat once per window', async () => {
+test('an unacked line past its window gets nudge L1 on the board and one re-wake per window', async () => {
   assert.ok(await until(() => forgeWakes().length >= 1), logs);
-  const h = await header();
-  assert.deepEqual(h.stalled.map(x => [x.seat, x.id, x.number]), [['forge', 'stale-1', 7]]);
-  assert.match(JSON.parse(forgeWakes()[0].body).reason, /^stalled: merge ask/);
+  assert.deepEqual((await openNudges('line')).map(n => [n.seat, n.line, n.number, n.level]), [['forge', 'stale-1', 7, 1]]);
+  assert.match(JSON.parse(forgeWakes()[0].body).reason, /^nudge L1: merge ask/);
   await new Promise(r => setTimeout(r, 1500));   // well inside the 3 s window
   assert.equal(forgeWakes().length, 1, 'one re-wake per window, no loop');
-  assert.equal(JSON.parse(await (await fetch(BASE + '/healthz')).text()).stalled, 1);
+  assert.equal(JSON.parse(await (await fetch(BASE + '/healthz')).text()).nudged_lines, 1);
 });
 
 test('the CoS path starts the same timed run by hand: wake with a deadline, countdown on the board', async () => {
@@ -54,10 +55,10 @@ test('the CoS path starts the same timed run by hand: wake with a deadline, coun
   assert.equal((await header()).clock.reason, 'cos');
 });
 
-test('ack clears the stall flag', async () => {
+test('ack closes the line nudge', async () => {
   const r = await fetch(BASE + '/inbox/forge/ack', { method: 'POST', headers: { Authorization: 'Bearer ' + FKEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'stale-1' }) });
   assert.equal(r.status, 200);
-  assert.ok(await until(async () => (await header()).stalled.length === 0));
+  assert.ok(await until(async () => (await openNudges('line')).length === 0));
   assert.ok(await until(async () => (await header()).clock === null), 'a seat move (ack) clears the clock');
   const n = forgeWakes().length;
   await new Promise(r => setTimeout(r, 3500));   // past the window: an acked line never re-wakes
@@ -69,12 +70,14 @@ test('startup route check flags the unrouted seat loudly without crashing', asyn
   const h = await header();
   assert.deepEqual([h.routing.ok, h.routing.unrouted], [false, ['mill']]);
   assert.equal(JSON.parse(await (await fetch(BASE + '/healthz')).text()).routing, 'fail');
+  assert.ok(await until(async () => (await openNudges('unrouted')).some(n => n.about === 'mill')), 'unrouted seat is a nudge on the board');
 });
 
-test('board shows each seat\'s last good wake and flags a quiet seat', async () => {
+test('board shows each seat\'s last good wake; a quiet seat gets a nudge', async () => {
   const w = (await header()).wakes;
   assert.ok(w.forge.last_ok && !Number.isNaN(Date.parse(w.forge.last_ok)));
   assert.deepEqual([w.critic.last_ok, w.critic.quiet], [null, true]);   // never woke within the window, no open line needed
+  assert.ok(await until(async () => (await openNudges('quiet')).some(n => n.about === 'critic')), 'quiet seat is a nudge on the board');
 });
 
 test('checkRoutes: our rules (same as bifrost-init) on a clean config', () => {
@@ -89,8 +92,8 @@ test('tripwire: fires only on a real change; feed_push and generated_at never tr
   assert.equal(t(fingerprint(a)), false);
   assert.equal(t(fingerprint([...a, { id: 'p1', kind: 'feed_push', t_ct: 't2' }])), false, 'own feed_push: no self-loop');
   assert.equal(t(fingerprint(a.map(e => ({ ...e, generated_at: 'later' })))), false);
-  assert.equal(t(fingerprint(a, { stalled: [['forge', 'x', 1]] })), true, 'watchdog state is part of the fingerprint');
-  assert.equal(t(fingerprint([...a, { id: 'e2', kind: 'merged', t_ct: 't3' }], { stalled: [['forge', 'x', 1]] })), true);
+  assert.equal(t(fingerprint(a, { nudges: ['nudge:line:forge:x:L1'] })), true, 'nudge state is part of the fingerprint');
+  assert.equal(t(fingerprint([...a, { id: 'e2', kind: 'merged', t_ct: 't3' }], { nudges: ['nudge:line:forge:x:L1'] })), true);
   assert.equal(realEvents([{ kind: 'feed_push' }, { kind: 'merged' }]).length, 1);
 });
 

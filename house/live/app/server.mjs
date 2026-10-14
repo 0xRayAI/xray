@@ -390,40 +390,49 @@ function saveSeatInbox(s) {
   seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n');
 }
-// Governor (stall watchdog): an open (unacked, not done) inbox line older than BIFROST_STALL_MINUTES (default 15) is
-// flagged stalled (header.stalled, /healthz stalled count) and re-fires that seat's wake: at most once per threshold
-// window per line and at most BIFROST_STALL_MAX_REWAKES (default 3) times, so it never loops. An ack (or the card moving
-// on) drops the line from openLines, which clears the flag. State is in memory: a restart may re-wake a stalled line once.
 // Startup route check (same rules as tools/bifrost-init --check): a seat with no route, or a rule routing to a seat
 // outside the fleet, is logged loudly and shown on the board (header.routing, /healthz routing). Never a crash.
 const ROUTING = checkRoutesFromDir(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'),
   process.env.BIFROST_ROSTER || path.join(COLLECTOR_DIR_EARLY(), 'fleet-roster.json'));
 if (!ROUTING.ok) console.log('ROUTING: FAIL ' + (ROUTING.error || '') + (ROUTING.unrouted.length ? ' no route for ' + ROUTING.unrouted.join(',') : '') + (ROUTING.unknown.length ? ' rules to seats outside the fleet: ' + ROUTING.unknown.join(',') : ''));
-const STALL_MS = Math.max(0.001, Number(process.env.BIFROST_STALL_MINUTES) > 0 ? Number(process.env.BIFROST_STALL_MINUTES) : 15) * 60000;
-const STALL_MAX = Number.isInteger(Number(process.env.BIFROST_STALL_MAX_REWAKES)) && Number(process.env.BIFROST_STALL_MAX_REWAKES) >= 0 ? Number(process.env.BIFROST_STALL_MAX_REWAKES) : 3;
-const stallState = new Map();   // seat \0 line id -> { since, last, n }
-let stalledNow = [];
-function governorTick(now = Date.now()) {
-  const keep = new Set(), out = [];
-  for (const seat of SEAT_IDS) {
-    for (const l of openLines(seat)) {
-      const t = Date.parse(l.t_ct);
-      if (!Number.isFinite(t) || now - t < STALL_MS) continue;
-      const k = seat + '\0' + l.id; keep.add(k);
-      let st = stallState.get(k);
-      if (!st) { st = { since: now, last: 0, n: 0 }; stallState.set(k, st); }
-      if (SEAT_WEBHOOKS[seat] && st.n < STALL_MAX && now - st.last >= STALL_MS) {
-        st.last = now; st.n++;
-        noteWake(seat, { ...l, reason: ('stalled: ' + (l.reason || '')).slice(0, 300) });
-        console.log(`governor: re-wake ${seat} (${st.n}/${STALL_MAX})`);
-      }
-      out.push({ seat, id: String(l.id).slice(0, 300), repo: l.repo || '', number: Number.isInteger(l.number) ? l.number : 0,
-        since: new Date(t).toISOString(), rewakes: st.n });
-    }
+// Line nudges (part of evalNudges, the one nudge path): an open (unacked, not done) inbox line older than NUDGE_LINE_S
+// (default 900) gets nudge L1 and a re-wake of its seat; L2 and L3 follow one window apart, then it stops (never loops).
+// Each is a nudge record (kind 'line') on the board. An ack (or the card moving on) closes them.
+const NUDGE_LINE_MS = Math.max(1, Number(process.env.NUDGE_LINE_S) > 0 ? Number(process.env.NUDGE_LINE_S) : 900) * 1000;
+function nudgeLines(now) {
+  let changed = false;
+  const open = new Set();
+  for (const seat of SEAT_IDS) for (const l of openLines(seat)) {
+    const t = Date.parse(l.t_ct);
+    if (!Number.isFinite(t) || now - t < NUDGE_LINE_MS) continue;
+    const base = `nudge:line:${seat}:${l.id}`; open.add(base);
+    const mine = nudges.filter(n => n.kind === 'line' && n.line_key === base);
+    const last = mine[mine.length - 1];
+    if (mine.length >= 3 || (last && now - last.t < NUDGE_LINE_MS)) continue;
+    const lvl = mine.length + 1;
+    nudges.push({ id: `${base}:L${lvl}`, kind: 'line', line_key: base, t: now, t_ct: new Date(now).toISOString(), card: '', repo: l.repo || '',
+      number: Number.isInteger(l.number) ? l.number : 0, title: String(l.title || '').slice(0, 120), url: String(l.url || '').slice(0, 300),
+      stage: '', level: lvl, seat, via: 'unacked line', line: String(l.id).slice(0, 300), since: new Date(t).toISOString() });
+    noteWake(seat, { ...l, reason: (`nudge L${lvl}: ` + (l.reason || '')).slice(0, 300) });
+    changed = true;
   }
-  for (const k of stallState.keys()) if (!keep.has(k)) stallState.delete(k);   // acked / done: cleared
-  const changed = JSON.stringify(out) !== JSON.stringify(stalledNow);
-  stalledNow = out;
+  for (const n of nudges) if (n.kind === 'line' && !n.closed_at && !open.has(n.line_key)) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  return changed;
+}
+// Seat nudges (same path): a seat with no route (startup route check) and a configured seat whose wake went quiet
+// (no good wake within BIFROST_WAKE_QUIET_MINUTES) each hold one open nudge to the CoS on the board until fixed.
+function nudgeSeats(now) {
+  let changed = false;
+  const want = new Map();
+  for (const seat of ROUTING.unrouted) want.set(`nudge:unrouted:${seat}`, { seat, kind: 'unrouted', via: 'no route' });
+  const w = wakeBoard(now);
+  for (const [seat, v] of Object.entries(w)) if (v.quiet) want.set(`nudge:quiet:${seat}:${v.last_ok || 'boot'}`, { seat, kind: 'quiet', via: 'wake quiet' });
+  for (const [id, x] of want) if (!nudges.some(n => n.id === id)) {
+    nudges.push({ id, kind: x.kind, t: now, t_ct: new Date(now).toISOString(), card: '', repo: '', number: 0, title: `${x.seat}: ${x.via}`, url: '',
+      stage: '', level: 1, seat: (typeof COORD_SEAT !== 'undefined' && COORD_SEAT) || COS, about: x.seat, via: x.via });
+    changed = true;
+  }
+  for (const n of nudges) if ((n.kind === 'unrouted' || n.kind === 'quiet') && !n.closed_at && !want.has(n.id)) { n.closed_at = new Date(now).toISOString(); changed = true; }
   return changed;
 }
 function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
@@ -586,7 +595,7 @@ function holdOwner(c) {
 function evalNudges(now = Date.now()) {
   let changed = false; const byKey = new Map(bfCards.map(c => [c.key, c]));
   for (const n of nudges) {
-    if (n.closed_at || n.kind === 'silent') continue;
+    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind)) continue;
     const c = byKey.get(n.card);
     if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card })) {
       n.closed_at = new Date(now).toISOString(); changed = true; continue;
@@ -630,6 +639,8 @@ function evalNudges(now = Date.now()) {
       if (now - prev >= NUDGE_L3_MS) mk(3, tgt, 'repeat', `nudge:${c.key}:L3:${c.last_beat_t}:${reps.length + 1}`);
     }
   }
+  if (nudgeLines(now)) changed = true;
+  if (nudgeSeats(now)) changed = true;
   if (changed) saveNudges();
   return changed;
 }
@@ -718,7 +729,6 @@ function mergedHeader(now = Date.now()) {
   h.wakes = wakeBoard(now);   // last successful wake per seat; quiet past BIFROST_WAKE_QUIET_MINUTES
   h.routing = ROUTING;   // startup route check (bifrost-init rules)
   h.clock = typeof clock === 'undefined' ? null : clock.run;   // timed run: deadlines per seat, cleared by a seat move
-  h.stalled = stalledNow;   // governor: open inbox lines past BIFROST_STALL_MINUTES
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
   h.notes = [...new Set([...(g?.notes || []), ...(b?.notes || [])])];
   h.sources = {
@@ -741,8 +751,8 @@ setInterval(() => {
   const h = mergedHeader();
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }
 }, 15000).unref();
-const GOV_MS = Math.max(200, (Number(process.env.BIFROST_STALL_CHECK_S) > 0 ? Number(process.env.BIFROST_STALL_CHECK_S) : 60) * 1000);
-// Governor: one tick. Watchdog first (stalled lines + bounded re-wakes, routing, quiet seats); then the tripwire: when no
+const GOV_MS = Math.max(200, (Number(process.env.BIFROST_TICK_S) > 0 ? Number(process.env.BIFROST_TICK_S) : 60) * 1000);
+// Governor: one tick. Nudges first (evalNudges: cards, unacked lines, unrouted and quiet seats); then the tripwire: when no
 // seat has moved anything (events, acks) for BIFROST_TRIPWIRE_MINUTES (default 30) and some seat has open work, the
 // clock starts a timed run (the same run the CoS starts by hand with POST /clock). A seat's move clears it.
 const TRIP_MS = (Number(process.env.BIFROST_TRIPWIRE_MINUTES) > 0 ? Number(process.env.BIFROST_TRIPWIRE_MINUTES) : 30) * 60000;
@@ -770,12 +780,12 @@ function wakeRun(run) {
 }
 function moveFp() { return fingerprint([...evs.values()].map(v => v.e), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
 function governorRun(now = Date.now()) {
-  governorTick(now);
+  if (evalNudges(now)) { seq++; fullDirty = true; }
   const w = wakeBoard(now);
   const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, openSeats: openSeats(), coord: COORD_SEAT });
   if (r === 'stall' || r === 'empty') wakeRun(clock.run);
   if (r === 'cleared') console.log('clock: cleared by a seat move');
-  const fp = fingerprint([...evs.values()].map(v => v.e), { stalled: stalledNow.map(x => [x.seat, x.id, x.rewakes]), routing: ROUTING.ok,
+  const fp = fingerprint([...evs.values()].map(v => v.e), { nudges: nudges.filter(n => !n.closed_at).map(n => n.id), routing: ROUTING.ok,
     quiet: Object.keys(w).filter(k => w[k].quiet).sort(), clock: clock.run && clock.run.started_at });
   if (trip(fp)) { governorChanges++; seq++; header = mergedHeader(); fullDirty = true; }
 }
@@ -1023,7 +1033,7 @@ function healthBody() {   // public: counts, times, ages (s) and wake states; no
   return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
     box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
-    origin: ORIGIN || null, wakes: wakeHealth(), stalled: stalledNow.length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges });
+    origin: ORIGIN || null, wakes: wakeHealth(), nudged_lines: nudges.filter(n => n.kind === 'line' && !n.closed_at).length, routing: ROUTING.ok ? 'ok' : 'fail', governor_changes: governorChanges });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
