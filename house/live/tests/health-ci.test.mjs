@@ -1,4 +1,4 @@
-// /healthz: completed CI counts for cards_behind only when it matches an open card.
+// /healthz: CI and pr_commit never set cards_behind. A card-worthy event still does.
 // A quiet collector file is feed_quiet. data_age stays informational.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -108,24 +108,43 @@ test('main CI with no open card match stays up', async () => {
   }
 });
 
-test('completed CI on an open card head or number puts cards behind', async () => {
+test('completed CI or pr_commit on an open card does not put cards behind', async () => {
   for (const event of [
     { id: 'ci-head', kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'deadbee0123456789abcdef' },
     { id: 'ci-num', kind: 'ci_pass', conclusion: 'success', repo: 'example/repo', number: 7 },
+    { id: 'push', kind: 'pr_commit', repo: 'example/repo', number: 7, sha: 'deadbee0123456789abcdef' },
   ]) {
     const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-ci-'));
     lay(data, { cards: [card()], events: [{ ...event, t_ct: new Date(Date.now() - 5000).toISOString() }] });
     const srv = start(data);
     try {
       const { res, body } = await bodyOf(srv);
-      assert.equal(res.status, 503, event.id);
-      assert.equal(body.ok, false, event.id);
-      assert.equal(body.cards_behind, true, event.id);
+      assert.equal(res.status, 200, event.id);
+      assert.equal(body.ok, true, event.id);
+      assert.equal(body.cards_behind, false, event.id);
       assert.equal(body.feed_quiet, false, event.id);
     } finally {
       await stop(srv.child);
       fs.rmSync(data, { recursive: true, force: true });
     }
+  }
+});
+
+test('a card-worthy event newer than the board puts cards behind', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-ci-'));
+  lay(data, {
+    cards: [card()],
+    events: [{ id: 'open-7', t_ct: new Date(Date.now() - 5000).toISOString(), kind: 'pr_open', repo: 'example/repo', number: 7 }],
+  });
+  const srv = start(data);
+  try {
+    const { res, body } = await bodyOf(srv);
+    assert.equal(res.status, 503);
+    assert.equal(body.ok, false);
+    assert.equal(body.cards_behind, true);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
   }
 });
 

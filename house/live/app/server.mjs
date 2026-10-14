@@ -1,4 +1,6 @@
 const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
+// Seats whose turn ended, or whose open turn is older than TURN_OPEN_MS. Later writers must not light them again.
+let turnRelease = new Set();
 // Bifrost live mesh: password-gated (or public) static page + in-memory feed (push-only ingest; full or delta, delta polls).
 // Node 20, zero dependencies.
 import http from 'node:http';
@@ -944,6 +946,7 @@ function mergedHeader(now = Date.now()) {
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
+  if (h.fleet) h.fleet = applyTurnRelease(h.fleet);   // a turn end or a 20-minute expiry wins over collector, track, and GitHub
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   h.freshness = stampClockTree({
@@ -1463,42 +1466,14 @@ function eventMovesCard(e) {
   if (!e || typeof e !== 'object') return false;
   const k = typeof e.kind === 'string' ? e.kind : '';
   if (/watcher|turn|subagent/.test(k)) return false;
-  if (k === 'check_run' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail') return false;
-  if (k === 'pr_open' || k === 'issue_open' || k === 'pr_commit' || k === 'pr_force_push' || k === 'pr_update' || k === 'merged') return true;
+  if (k === 'check_run' || k === 'check_suite' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail' || k === 'pr_commit') return false;
+  if (k === 'pr_open' || k === 'issue_open' || k === 'pr_force_push' || k === 'pr_update' || k === 'merged') return true;
   if (k.startsWith('critic_')) return true;
   if (k.startsWith('lab_retest_')) return true;
   if (k.startsWith('prompt') && e.from === 'Lead') return true;
   if ((k === 'issue_labeled' || k === 'pr_labeled') && /block/i.test(String(e.detail || ''))) return true;
   if (k.includes('blocker')) return true;
   return false;
-}
-function hexSha(v) {
-  return String(v || '').toLowerCase().replace(/[^0-9a-f]/g, '').slice(0, 40);
-}
-function shaPrefixHit(a, b) {
-  return !!(a && b && a.length >= 7 && b.length >= 7 && (a.startsWith(b) || b.startsWith(a)));
-}
-// Completed CI counts for health only when its number or sha matches an open card.
-// The freshness light still ignores CI (eventMovesCard).
-function completedCiOnOpenCard(e) {
-  const repo = String(e.repo || '').toLowerCase();
-  const rawNum = e.number;
-  const num = rawNum == null || rawNum === '' ? null : Number(rawNum);
-  const hasNum = Number.isInteger(num);
-  const sha = hexSha(e.sha || e.head_sha);
-  for (const c of bfCards) {
-    if (!c || String(c.state || '').toLowerCase() === 'closed') continue;
-    if (String(c.repo || '').toLowerCase() !== repo) continue;
-    if (hasNum && Number.isInteger(Number(c.number)) && Number(c.number) === num) return true;
-    if (shaPrefixHit(sha, hexSha(c.head))) return true;
-  }
-  return false;
-}
-function healthMovesCard(e) {
-  if (!e || typeof e !== 'object') return false;
-  const k = typeof e.kind === 'string' ? e.kind : '';
-  if ((k === 'check_run' || k === 'workflow_run' || k === 'ci_pass' || k === 'ci_fail') && (e.conclusion || k.startsWith('ci_'))) return completedCiOnOpenCard(e);
-  return eventMovesCard(e);
 }
 function openCardIndex() {
   const keys = new Set();
@@ -1602,15 +1577,18 @@ const CARD_BEHIND_S = (() => {
   return Number.isFinite(n) && n >= 0 ? n : 180;
 })();
 function cardsBehindData(now) {
-  let latest = 0;
+  let worthy = 0;
   for (const e of SRCS.github.evs.values()) {
-    if (!healthMovesCard(e)) continue;
+    if (!eventMovesCard(e)) continue;
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
-    if (Number.isFinite(t) && t > latest) latest = t;
+    if (Number.isFinite(t) && t > worthy) worthy = t;
   }
-  // Board clock versus the newest card-worthy event. A newer CI check is not a stall:
-  // CI and pr_commit do not make cards, so raw ingest is not the comparison.
-  return !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
+  const boardLag = !!(cardsAt && worthy && (now - cardsAt) > (now - worthy) + CARD_BEHIND_S * 1000);
+  // Card clock versus the newest card-worthy event. github_latest_ct still stores raw ingest.
+  // CI and pr_commit are on neither side of this gate, so a gap between those two clocks is not a stall.
+  const cardClock = githubCardAt || 0;
+  const clockLag = !!(worthy && cardClock && (worthy - cardClock) > CARD_BEHIND_S * 1000);
+  return boardLag || clockLag;
 }
 function unreadableRepos() {
   const fromFeed = SRCS.github.header && SRCS.github.header.repos_unreadable;
@@ -1974,11 +1952,36 @@ function loadPersistedWakes() {   // last wake per seat survives a restart (wake
   }
 }
 header = mergedHeader(); fullDirty = true;
+function clearSeatWork(f, seat) {
+  if (!f || !seat) return;
+  if (f.working) delete f.working[seat];
+  const row = f.seats && f.seats[seat];
+  if (!row) return;
+  const src = { ...row, working: false };
+  delete src.working_via;
+  delete src.working_on;
+  f.seats[seat] = src;
+}
+function turnHeld(open, seat, now) {
+  for (const [key, t] of open) {
+    if (key.split(':')[0] !== seat) continue;
+    const kind = key.split(':')[1];
+    if (now - t <= (kind === 'turn' ? TURN_OPEN_MS : 60 * 60 * 1000)) return true;
+  }
+  return false;
+}
+function applyTurnRelease(fleet) {
+  if (!fleet || !turnRelease.size) return fleet;
+  const f = { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } };
+  for (const seat of turnRelease) clearSeatWork(f, seat);
+  return f;
+}
 function applyStoredActivity(fleet, now) {
-  if (!activityReady || !activity.length) return fleet;
+  if (!activityReady || !activity.length) { turnRelease = new Set(); return fleet; }
   const f = fleet || { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
   const win = (f.window_min || WINDOW_MIN) * 60000;
   const open = new Map();
+  const ended = new Map();
   const newest = new Map();
   for (const line of activity) {
     if (!line || typeof line.seat !== 'string') continue;
@@ -1990,8 +1993,12 @@ function applyStoredActivity(fleet, now) {
     const ident = String(line.agent || (line.kind === 'turn' ? '-' : line.tag) || '-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || '-';
     const key = seat + ':' + line.kind + ':' + ident;
     if (line.kind === 'turn' || line.kind === 'subagent' || line.kind === 'watcher') {
-      if (line.action === 'end') { if (t >= (open.get(key) || 0)) open.delete(key); }
-      else open.set(key, Math.max(open.get(key) || 0, t));
+      if (line.action === 'end') {
+        if (t >= (open.get(key) || 0)) open.delete(key);
+        if (line.kind === 'turn') ended.set(seat, Math.max(ended.get(seat) || 0, t));
+      } else if (line.action === 'tick') {
+        if (open.has(key)) open.set(key, Math.max(open.get(key), t));   // a tick does not reopen a turn an end already closed
+      } else open.set(key, Math.max(open.get(key) || 0, t));
     }
   }
   f.seats = { ...(f.seats || {}) };
@@ -2012,19 +2019,18 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
-  // Read time, not only boot: an open turn older than TURN_OPEN_MS leaves working, including a
-  // collector fleet flag that was copied from that turn. A newer open subagent/watcher keeps it.
+  // Read time: an ended turn, and an open turn older than TURN_OPEN_MS, leave fleet.working.
+  // A copied collector flag is cleared too. A newer open subagent or watcher keeps the seat.
+  const release = new Set();
+  for (const seat of ended.keys()) if (!turnHeld(open, seat, now)) release.add(seat);
   for (const [key, t] of open) {
     if (key.split(':')[1] !== 'turn' || now - t <= TURN_OPEN_MS) continue;
     const seat = key.split(':')[0];
-    if (fresh.has(seat)) continue;
-    delete f.working[seat];
-    if (f.seats[seat]) {
-      const src = { ...f.seats[seat], working: false };
-      delete src.working_via;
-      f.seats[seat] = src;
-    }
+    if (fresh.has(seat) || turnHeld(open, seat, now)) continue;
+    release.add(seat);
   }
+  for (const seat of release) clearSeatWork(f, seat);
+  turnRelease = release;
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
 }

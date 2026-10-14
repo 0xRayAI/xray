@@ -478,8 +478,9 @@ class Fleet:
         # Re-read every pass. A same-second rewrite can keep mtime and size (SUCCESS and CRASHED
         # are the same length), and a GitHub-triggered deploy is often first seen as INITIALIZING
         # with no commit, then later CRASHED with one. Status changes emit; an unchanged status does not.
-        # A poll that first sees SUCCESS (or another terminal status) still emits BUILDING and
+        # A poll that first sees SUCCESS still emits BUILDING and
         # DEPLOYING: those phases already happened, and a 45s pass often misses them.
+        # Only SUCCESS backfills. FAILED, SKIPPED, CRASHED and the rest may never have built or deployed, so they emit the terminal line only.
         f = self.path.parent / "railway-deploys.json"
         if not f.is_file():
             return
@@ -503,7 +504,8 @@ class Fleet:
             svc, env = str(x.get("service", ""))[:24], str(x.get("env", ""))[:12]
             inst = RW_ENV.get(env) if svc != "live-mesh" else None
             sha = str(x.get("sha") or "")[:40] or None
-            steps = [step for step, r in (("BUILDING", 1), ("DEPLOYING", 2)) if old_rank < r <= rank and step != st]
+            steps = [step for step, r in (("BUILDING", 1), ("DEPLOYING", 2)) if old_rank < r <= rank and step != st
+                     and st == "SUCCESS"]
             steps.append(st)
             for step in steps:
                 when = created if step != st or old is None else polled
