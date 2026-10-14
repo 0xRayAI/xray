@@ -16,7 +16,7 @@ Seats (ours): blinky, critic, forge, mill, herald, magnet, nibbler, sound, arch1
 | `watcher_seats` | `[]` (Arch1's `live-inbox-watch` is an approved exception, run on Arch1's box, not a watcher seat here) | `[]` |
 | `seats` roles | reviewer, builder, tester, operator, coord, each with `"seat"` or `"off"` | `{}` |
 | `mentions` (`aliases`) | handle -> seat for our 9 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
-| `fallback` | `{"seat": "blinky", "from": ["arch1"]}`: lines to seats outside our 9 are dropped and the event goes to blinky | none |
+| `fallback` | `{"seat": "blinky"}`: lines to seats outside our 9 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
 | `pr_heads`, `comment_watch` | critic + blinky per PR head; every comment -> blinky (+ PR author's seat) | none |
 
 ## routing/inbox.py kit defaults

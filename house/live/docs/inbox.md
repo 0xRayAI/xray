@@ -62,7 +62,7 @@ D12 (seats never woken by an inbox packet) is closed under this path.
 | Implement / rebase / dev ask, `mill wave` (Eng Dev) | mill | `extra_seats.mill.needles` |
 | needs-decision / lead label or ask | blinky | `seats.coord.seat` |
 | `@seat` mention (`@forge`, `@critic`, `@mill`, `@blinky`, `@herald`, `@nibbler`, `@sound`, `@magnet`) | that seat | `extra_seats.<seat>.needles` |
-| `@arch10x` (alias `@arch1`): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
+| `@arch10x` (the only handle; `@arch1` is a different GitHub user and never routes): Arch1 is outside the fleet, reached only by this explicit mention; bare deep-review / Gate B words never route to him and nothing is copied to blinky | arch1 | `extra_seats.arch1.needles` |
 | Anything actionable routed to a seat outside our 9, or to no seat | blinky | `fallback` |
 
 An order or yes in a comment must @-mention the next seat, because the inbox reads only a comment's label and @handles, never its body; the words "may merge" are not a merge ask.

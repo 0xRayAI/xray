@@ -69,12 +69,14 @@ class Report:
         return any(s == "FAIL" for _, s, _ in self.rows)
 
 
-def check_routing(rep, roles, seats, logins, init):
+def check_routing(rep, roles, seats, logins, init, nodes=None, resolve=True):
     miss, ghost = init.unrouted(roles, seats), init.unknown_targets(roles, seats)
+    resolved = init.resolve_logins(roles, seats, Path(nodes)) if resolve and nodes else {}
+    gone = [f"{s}={l}" for s, (l, st) in resolved.items() if st == "missing"]
     rows = init.mention_audit(roles, seats, logins)
     nick = [r[0] for r in rows if not r[3]]
     bad = ([f"unrouted {','.join(miss)}"] if miss else []) + ([f"unknown {','.join(ghost)}"] if ghost else []) + \
-          ([f"nickname-only {','.join(nick)}"] if nick else [])
+          ([f"nickname-only {','.join(nick)}"] if nick else []) + ([f"login 404 on GitHub: {', '.join(gone)}"] if gone else [])
     rep.add("routing", "FAIL" if bad else "PASS", "; ".join(bad) or f"{len(seats)} seats, mentions match logins")
     return rows
 
@@ -394,6 +396,7 @@ def main(argv=None):
     ap.add_argument("--nodes", default=str(FEED / "fleet-nodes.json"))
     ap.add_argument("--stale", default=str(LIVE / "tools" / "bifrost-stale.json"))
     ap.add_argument("--pack", default=str(PACK.parent), help="pack dir holding OP-PROC.md, LEXICON.md, runbooks/")
+    ap.add_argument("--no-resolve", action="store_true", help="skip the GitHub users API lookup in the routing rule")
     ap.add_argument("--wait", type=int, default=240, help="seconds to wait for the collector to route the live posts")
     ap.add_argument("--keep", action="store_true", help="leave the test issues open")
     ap.add_argument("--dry-run", action="store_true", help="no live writes; print what the live steps would do")
@@ -406,7 +409,7 @@ def main(argv=None):
     only = set(a.only.split(",")) if a.only else None
     want = lambda r: only is None or r in only
     rep = Report()
-    if want("routing"): check_routing(rep, roles, seats, logins, init)
+    if want("routing"): check_routing(rep, roles, seats, logins, init, a.nodes, not a.no_resolve)
     if want("deliver-sim"): check_deliver_sim(rep, roles, seats, logins)
     if want("edit-sim"): check_edit_sim(rep, seats, roles, logins)
     if want("tripwire"): check_tripwire(rep)

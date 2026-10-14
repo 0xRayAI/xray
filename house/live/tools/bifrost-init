@@ -13,12 +13,13 @@ Railway variable (and WAKE_KEY_<SEAT>) on the host yourself.
   bifrost-init --check --table                  also print the mention audit: seat, mention, login, OK
 
 Mention audit: a seat with a GitHub login in feed/fleet-nodes.json (login -> seat) must have an @<login> needle on its
-route, not only its nickname (@arch1 alone never matches a real @arch10x comment). A nickname-only route fails.
+route, not only its nickname (@arch1 is someone else's account and never matches a real @arch10x comment). A nickname-only route fails.
 Init writes the routing map (inbox-roles.json "routing": seat -> {login, aliases}; --logins seat=login,...) and adds the
 @<login> needle for every seat that has a login. The routing map wins over fleet-nodes.json.
 """
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -57,6 +58,50 @@ def seat_logins(roles: dict, nodes_path: Path) -> dict[str, list[str]]:
     out = {s: v for s, v in out.items() if s not in names}
     out.update(map_logins(roles))
     return out
+
+
+GITHUB_API = os.environ.get("BIFROST_GITHUB_API", "https://api.github.com").rstrip("/")
+
+
+def gh_user_status(login: str, opener=None) -> str:
+    """'ok' (200), 'missing' (404) or 'unverified' (rate limit, network). GITHUB_TOKEN is sent if set, never printed."""
+    import urllib.error, urllib.parse, urllib.request
+    req = urllib.request.Request(f"{GITHUB_API}/users/{urllib.parse.quote(login, safe='')}",
+                                 headers={"Accept": "application/vnd.github+json", "User-Agent": "bifrost-init"})
+    tok = os.environ.get("GITHUB_TOKEN", "").strip()
+    if tok:
+        req.add_header("Authorization", f"Bearer {tok}")
+    try:
+        with (opener or urllib.request.urlopen)(req, timeout=15) as r:
+            return "ok" if r.status == 200 else "unverified"
+    except urllib.error.HTTPError as e:
+        return "missing" if e.code == 404 else "unverified"
+    except Exception:   # noqa: BLE001 - network: never fail the check on it
+        return "unverified"
+
+
+def full_logins(roles: dict, nodes_path: Path) -> dict[str, str]:
+    """seat -> full GitHub login (App seats keep '[bot]'): the routing map wins, fleet-nodes.json fills the rest."""
+    out = {}
+    try:
+        for login, seat in json.loads(nodes_path.read_text()).items():
+            if isinstance(seat, str):
+                out.setdefault(seat.lower(), login)
+    except (OSError, ValueError):
+        pass
+    for seat, e in (roles.get("routing") or {}).items():
+        if isinstance(e, dict):
+            if e.get("login"):
+                out[seat.lower()] = str(e["login"])
+            else:
+                out.pop(seat.lower(), None)
+    return out
+
+
+def resolve_logins(roles: dict, seats, nodes_path: Path, status=gh_user_status) -> dict[str, tuple[str, str]]:
+    """seat -> (login, 'ok' | 'missing' | 'unverified') for every seat with a non-null login."""
+    full = full_logins(roles, nodes_path)
+    return {s: (full[s], status(full[s])) for s in seats if full.get(s)}
 
 
 def route_mentions(roles: dict, seat: str) -> list[str]:
@@ -196,6 +241,7 @@ def main(argv=None) -> int:
     ap.add_argument("--table", action="store_true", help="with --check: print seat -> rules")
     ap.add_argument("--nodes", default=str(FEED / "fleet-nodes.json"), help="login -> seat map (mention audit)")
     ap.add_argument("--logins", default="", help="seat=login,... real GitHub logins (App seats as name[bot]) for the routing map")
+    ap.add_argument("--no-resolve", action="store_true", help="with --check: skip the GitHub users API lookup")
     ap.add_argument("--yes", action="store_true", help="no prompts")
     a = ap.parse_args(argv)
     rdir = Path(a.routing_dir)
@@ -217,15 +263,23 @@ def main(argv=None) -> int:
         nick = [r[0] for r in rows if not r[3]]
         if nick:
             print(f"bifrost init: FAIL, nickname-only route (no @login mention) for: {', '.join(nick)}", file=sys.stderr)
+        resolved = {} if a.no_resolve else resolve_logins(roles, seats, Path(a.nodes))
+        gone = [f"{s} ({l})" for s, (l, st) in resolved.items() if st == "missing"]
+        if gone:
+            print(f"bifrost init: FAIL, login not found on GitHub (404) for: {', '.join(gone)}", file=sys.stderr)
+        unv = [s for s, (_, st) in resolved.items() if st == "unverified"]
+        if unv:
+            print(f"bifrost init: WARN, could not verify login (rate limit or network) for: {', '.join(unv)}", file=sys.stderr)
         outside = outside_keyword_routes(roles)
         if outside:
             print("bifrost init: FAIL, outside-fleet seat routed without an explicit @login: " + "; ".join(outside), file=sys.stderr)
         if a.table:
             targets = role_targets(roles)
-            print("seat | mention | login | OK")
+            print("seat | mention | login | api | OK")
             for s, m, l, ok in rows:
-                print(f"{s} | {m} | {l} | {'OK' if ok else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
-        if miss or ghost or nick or outside:
+                api = resolved.get(s, ("", "-" if not a.no_resolve else "skipped"))[1]
+                print(f"{s} | {m} | {l} | {api} | {'OK' if ok and api != 'missing' else 'FAIL'}  ({', '.join(sorted(targets.get(s, ())))})")
+        if miss or ghost or nick or outside or gone:
             return 1
         print(f"bifrost init: routing OK for {len(seats)} seat(s)")
         return 0

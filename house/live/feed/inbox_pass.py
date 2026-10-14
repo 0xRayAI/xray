@@ -229,6 +229,7 @@ def aliases_of(roles):
     for seat, e in (roles.get("routing") or {}).items():
         if not isinstance(e, dict):
             continue
+        out.setdefault(seat, seat)   # the seat id is its own name (not a mention alias)
         for n in e.get("aliases") or []:
             out.setdefault(str(n), seat)
         if e.get("login"):

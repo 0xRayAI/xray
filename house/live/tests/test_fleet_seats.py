@@ -9,7 +9,7 @@ ROLES = json.loads((FEED / "routing" / "inbox-roles.json").read_text())
 SEATS = ["arch1", "forge", "critic", "mill", "blinky", "herald", "nibbler", "sound", "magnet"]
 ASKS = {"forge": "@forge merge ask #262", "critic": "@critic re-Light please", "mill": "@mill rebase ask #263",
         "blinky": "@blinky board update", "herald": "@herald Dist post", "nibbler": "@nibbler take a look",
-        "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch1 deep-review #262"}
+        "sound": "@sound check this", "magnet": "@magnet hangar listing", "arch1": "@arch10x deep-review #262"}
 
 
 def seats(label, kind="issue_comment", watch=False, **kw):
@@ -43,7 +43,7 @@ class FleetSeats(unittest.TestCase):
 
     def test_aliases(self):
         for name, sid in {"forge": "forge", "critic": "critic", "mill": "mill", "blinky": "blinky", "herald": "herald",
-                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "Arch1": "arch1"}.items():
+                          "Nibbler": "nibbler", "sound": "sound", "magnet": "magnet", "arch1": "arch1"}.items():
             self.assertEqual(inbox_pass.aliases_of(ROLES).get(name), sid, name)
 
     # N3 (#262 handoff): critic's four checks; each fails if its fix is reverted.

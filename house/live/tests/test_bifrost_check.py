@@ -6,10 +6,10 @@ TOOL = Path(__file__).resolve().parent.parent / "tools" / "bifrost-check"
 
 
 def run(*args, env=None):
-    return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True, env={**os.environ, **(env or {})}, timeout=240)
+    return subprocess.run([sys.executable, str(TOOL), *args], capture_output=True, text=True, env={**os.environ, "BIFROST_GITHUB_API": "http://127.0.0.1:9", **(env or {})}, timeout=240)
 
 
-def fleet(d, needles=("@arch1", "@arch10x")):
+def fleet(d, needles=("@arch10x",)):
     (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"arch1": {"needles": list(needles)}}}))
     (Path(d) / "nodes.json").write_text(json.dumps({"arch10x[bot]": "arch1"}))
     return ["--seats", "arch1", "--routing-dir", d, "--nodes", str(Path(d) / "nodes.json")]
@@ -28,7 +28,7 @@ class Offline(unittest.TestCase):
 
     def test_nickname_only_route_fails_nonzero(self):
         with tempfile.TemporaryDirectory() as d:
-            r = run(*fleet(d, ["@arch1"]), "--only", "routing,deliver-sim")
+            r = run(*fleet(d, ["@arch"]), "--only", "routing,deliver-sim")
             self.assertEqual(r.returncode, 1)
             self.assertIn("FAIL routing", r.stdout)
             self.assertIn("nickname-only arch1", r.stdout)
@@ -43,6 +43,27 @@ class Offline(unittest.TestCase):
             r = run(*fleet(d), "--only", "names", "--stale", str(Path(d) / "tools" / "stale.json"))
             self.assertEqual(r.returncode, 1)
             self.assertIn("a.md:2", r.stdout)
+
+
+class Resolve(unittest.TestCase):
+    """The routing rule asks the GitHub users API about every non-null login (mocked: 200 / 404)."""
+    def test_404_login_fails_routing_and_names_the_seat(self):
+        class H(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a): pass
+            def do_GET(self):
+                self.send_response(200 if self.path == "/users/arch10x%5Bbot%5D" else 404); self.end_headers(); self.wfile.write(b"{}")
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        api = {"BIFROST_GITHUB_API": f"http://127.0.0.1:{srv.server_port}"}
+        with tempfile.TemporaryDirectory() as d:
+            ok = run(*fleet(d), "--only", "routing", env=api)
+            (Path(d) / "nodes.json").write_text(json.dumps({"arch10xx[bot]": "arch1"}))
+            (Path(d) / "inbox-roles.json").write_text(json.dumps({"extra_seats": {"arch1": {"needles": ["@arch10xx"]}}}))
+            bad = run("--seats", "arch1", "--routing-dir", d, "--nodes", str(Path(d) / "nodes.json"), "--only", "routing", env=api)
+        srv.shutdown()
+        self.assertEqual(ok.returncode, 0, ok.stdout)
+        self.assertEqual(bad.returncode, 1, bad.stdout)
+        self.assertIn("login 404 on GitHub: arch1=arch10xx[bot]", bad.stdout)
 
 
 class Lexicon(unittest.TestCase):

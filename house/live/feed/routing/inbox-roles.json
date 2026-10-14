@@ -9,7 +9,7 @@
   "watcher_seats": [],
   "routing": {
     "blinky": {
-      "login": "blinky0x1[bot]",
+      "login": null,
       "aliases": [
         "Blinky",
         "blinky"
@@ -37,7 +37,7 @@
       ]
     },
     "herald": {
-      "login": "herald0x1[bot]",
+      "login": "herald0x[bot]",
       "aliases": [
         "Herald",
         "herald"
@@ -65,15 +65,12 @@
       ]
     },
     "arch1": {
-      "login": "arch10x",
-      "aliases": [
-        "Arch1",
-        "arch1"
-      ],
+      "login": "arch10x[bot]",
+      "aliases": [],
       "outside": true
     }
   },
-  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory.",
+  "_note_routing": "The routing map: each seat once, with its real GitHub login (App seats as their bot login, people by handle; null = no GitHub login, reached in the inner loop only) and its nicknames as aliases. burst-live resolves every login against GitHub at startup and on each audit, refuses an unresolved entry and flags it on the board; GET /routing serves it read-only. Look a login up there before you @-mention anyone, never from memory. Logins verified against the GitHub users API on 2026-10-14: forge0x1[bot], critic0x[bot], herald0x[bot], arch10x[bot] exist; blinky has no App login found (null).",
   "seats": {
     "reviewer": {
       "off": true,
@@ -127,8 +124,7 @@
   "extra_seats": {
     "arch1": {
       "needles": [
-        "@arch10x",
-        "@arch1"
+        "@arch10x"
       ],
       "reason": "explicit @arch10x ask for Arch1 (outside the fleet)"
     },
@@ -178,15 +174,14 @@
         "issue_open"
       ],
       "needles": [
-        "@blinky",
-        "@blinky0x1"
+        "@blinky"
       ],
       "reason": "new issue or CoS / board ask for blinky"
     },
     "herald": {
       "needles": [
         "@herald",
-        "@herald0x1"
+        "@herald0x"
       ],
       "reason": "Dist ask for herald"
     },
