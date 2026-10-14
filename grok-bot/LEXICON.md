@@ -38,7 +38,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **board** | Where open work is visible (`WAVEBOARD`). Cards grouped by stage |
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
-| **station** | CoS primary work deck — durable intent, live track, next beat (survives compact) |
+| **station** | CoS primary work deck — durable intent, live track, next beat (survives compact). Per seat: the `.xray/state/STATION.md` the latest 0xray suit wear installs ([ops/STATION.md](ops/STATION.md#seat-station)); read on wake after confirming the latest suit, updated each wave; never keys, tokens or PEM text, only where a secret lives (its env var name). |
 | **receipt** | Proof a card closed (critic PASS, `npm view`, Dist URL). Chat LGTM ≠ receipt |
 | **cloud** | Heavy repo surgeon (`bc-…`). Cuts metal; seats run the company |
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |

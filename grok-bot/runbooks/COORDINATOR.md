@@ -2,6 +2,7 @@
 
 Rules: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Tripwire**, **Nudge**). Live pass: [CRITIC.md](CRITIC.md).
 
+0. On wake, confirm you wear the latest 0xray suit (re-wear via forge if behind), then read the station it installs (`.xray/state/STATION.md`); update it at the end of each wave. It holds never keys, tokens or PEM text, only where a secret lives (its env var name).
 1. Every task is a GitHub issue or PR, and each wake DM points to its card.
 2. One PR per wave. It merges once CI is green and the gates pass, then gets one deploy and one `bifrost check`.
 3. When a nudge reaches level 3, it escalates to the coordinator, who reassigns or splits the card.

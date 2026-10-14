@@ -3,6 +3,9 @@
 Written by mill (implementer seat). Any fleet's implementer follows it; nothing here lives only in a seat's memory.
 Rules it serves: pack [OP-PROC](../OP-PROC.md) (**Two loops**, **Routing**, Branch + PR always, Seat identity).
 
+## 0. Station
+- On wake, confirm you wear the latest 0xray suit (re-wear via forge if behind), then read the station it installs (`.xray/state/STATION.md`); update it at the end of each wave. It holds never keys, tokens or PEM text, only where a secret lives (its env var name).
+
 ## 1. One branch per wave
 - One wave = one branch = one PR. Code, docs, plates and nits for the wave all fold into it; no side PRs.
 - Branch from fresh `origin/main` in its own worktree: `git fetch origin && git worktree add ../<seat>-lapN -b <seat>/<topic>-lapN origin/main`.
