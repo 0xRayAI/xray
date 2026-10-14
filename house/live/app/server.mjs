@@ -49,7 +49,13 @@ const DATA_STALE_S = Number(process.env.DATA_STALE_S) > 0 ? Number(process.env.D
 // org. Verdicts are cached in memory by sha256(token) only; the token itself is never stored or logged.
 // Installation-token auth ONLY (the static ACTIVITY_KEY_<SEAT> fallback was removed Oct 9). The token can read nothing here.
 const GITHUB_API = process.env.GITHUB_API_URL || 'https://api.github.com';   // overridable for tests only
-const GH_SEATS = [{ seat: 'Builder', bot: 'builder-app[bot]', botId: 100000002, org: 'example-org' }];
+const GH_SEATS_DEFAULT = [{ seat: 'Builder', bot: 'builder-app[bot]', botId: 100000002, org: 'example-org' }];
+// LIVE_GH_SEATS: JSON [{seat, bot, botId, org}] naming each fleet's seat Apps. Unset or invalid keeps the kit example.
+function ghSeatsFrom(raw) {
+  try { const a = JSON.parse(raw || ''); if (Array.isArray(a) && a.length && a.every(x => x && typeof x.seat === 'string' && typeof x.bot === 'string' && Number.isInteger(x.botId) && typeof x.org === 'string')) return a; } catch {}
+  return GH_SEATS_DEFAULT;
+}
+const GH_SEATS = ghSeatsFrom(process.env.LIVE_GH_SEATS);
 const GH_OK_MS = 10 * 60000, GH_BAD_MS = 10 * 60000, GH_CACHE_MAX = 2000;
 const ghCache = new Map();     // sha256(token) hex -> { seat | null, exp } or { pending: Promise }
 async function ghVerify(tok) {   // -> seat, null (rejected), or throws (GitHub unreachable: caller answers 503)
