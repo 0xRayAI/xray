@@ -14,13 +14,13 @@ const gh = http.createServer((q, s) => {
 });
 await new Promise(r => gh.listen(0, '127.0.0.1', r));
 const kids = [], dirs = [];
-after(() => { for (const k of kids) k.kill(); gh.close(); for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
+after(() => { for (const k of kids) k.kill(); gh.close(); for (const d of dirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 function boot(extra) {
-  const port = 24000 + Math.floor(Math.random() * 1000), data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-pub-')); dirs.push(data);
-  const env = { PORT: String(port), PATH: process.env.PATH, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-pub-')); dirs.push(data);
+  const env = { PORT: '0', PATH: process.env.PATH, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
     MESH_DATA_DIR: data, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, GITHUB_READ_TOKEN: 'read-tok-test', COLLECTOR_ORG: 'acme', ...extra };
   const p = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env, stdio: ['ignore', 'pipe', 'pipe'] }); kids.push(p);
-  const s = { base: `http://127.0.0.1:${port}`, data, logs: '' };
+  const s = { data, logs: '', get base() { const m = /listening on :(\d+)/.exec(this.logs); return `http://127.0.0.1:${m ? m[1] : 1}`; } };
   p.stdout.on('data', d => s.logs += d); p.stderr.on('data', d => s.logs += d);
   s.until = async re => { for (let i = 0; i < 80 && !re.test(s.logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(s.logs); };
   return s;
@@ -36,6 +36,7 @@ async function feedOf(s, headers = {}) {
 
 test('public mode (LIVE_PUBLIC=1): no password needed, page + feed open, real repo names in feed and logs', async () => {
   const s = boot({ LIVE_PUBLIC: '1' });   // no MESH_PASSWORD at all
+  assert.ok(await s.until(/listening on :\d+/), s.logs);   // #304: port 0, read the real port
   assert.ok(await s.until(/listening on :\d+ \(public: no password, no masking\)/), s.logs);
   assert.ok(await s.until(/collector: repos acme\/one acme\/secret /), s.logs);
   assert.ok(await s.until(/collector: skip acme\/forbidden \(403\)/), s.logs);
@@ -61,6 +62,7 @@ test('gated mode (default): missing MESH_PASSWORD refuses to start; with it, log
   assert.equal(r.status, 1); assert.match(r.stderr, /MESH_PASSWORD/);
   const pw = 'x' + crypto.randomBytes(4).toString('hex');
   const s = boot({ MESH_PASSWORD: pw, LIVE_PUBLIC: '0' });
+  assert.ok(await s.until(/listening on :\d+/), s.logs);   // #304: port 0, read the real port
   assert.ok(await s.until(/collector: repos acme\/one private repo #\d+ /), s.logs);
   assert.ok(await s.until(/collector: skip private repo #\d+ \(403\)/), s.logs);
   const page = await fetch(s.base + '/'); assert.equal(page.status, 401);
@@ -79,6 +81,7 @@ test('our deploy: committed feed/site.json is public + Bifrost, and deploy.sh sh
   const site = JSON.parse(fs.readFileSync(path.join(LIVE, 'feed', 'site.json'), 'utf8'));
   assert.equal(site.title, 'Bifrost live fleet');
   const s = boot({ LIVE_PUBLIC: '1', LIVE_SITE_TITLE: site.title });   // same value the deployed collector/site.json gives
+  assert.ok(await s.until(/listening on :\d+/), s.logs);   // #304: port 0, read the real port
   assert.ok(await s.until(/listening on/), s.logs);
   const f = await feedOf(s); assert.equal(f.j.title, 'Bifrost live fleet');
   assert.deepEqual([site.public, site.name], [true, 'Bifrost']);

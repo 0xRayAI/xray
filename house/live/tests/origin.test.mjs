@@ -14,10 +14,9 @@ const src = fs.readFileSync(path.join(APP, 'server.mjs'), 'utf8');
 
 function spawnServer(extra) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-origin-'));
-  const port = 22000 + Math.floor(Math.random() * 20000);
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
-      PORT: String(port),
+      PORT: '0',   // #304: the OS picks the port; read it from the listening line
       MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
@@ -31,10 +30,11 @@ function spawnServer(extra) {
   let logs = '';
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
-  return { child, port, data, logs: () => logs };
+  return { child, get port() { const m = /listening on :(\d+)/.exec(logs); return m ? Number(m[1]) : 0; }, data, logs: () => logs };
 }
 
-function exited(child, ms = 4000) {
+// wide timeout: a loaded box (#304 parallel runs) is slow to start node
+function exited(child, ms = 20000) {
   return new Promise(resolve => {
     const t = setTimeout(() => resolve('timeout'), ms);
     child.once('exit', code => { clearTimeout(t); resolve(code); });
@@ -60,7 +60,7 @@ test('production without an origin exits 1', async () => {
     assert.equal(await exited(srv.child), 1, srv.logs());
   } finally {
     await stop(srv.child);
-    fs.rmSync(srv.data, { recursive: true, force: true });
+    fs.rmSync(srv.data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
@@ -71,7 +71,7 @@ test('http://evil.com and a credentialed https origin exit 1', async () => {
       assert.equal(await exited(srv.child), 1, origin + '\n' + srv.logs());
     } finally {
       await stop(srv.child);
-      fs.rmSync(srv.data, { recursive: true, force: true });
+      fs.rmSync(srv.data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
     }
   }
 });
@@ -91,10 +91,10 @@ function getHealth(port, headers, setHost = true) {
 test('healthz returns the pinned origin and ignores Host and X-Forwarded-Host', async () => {
   const srv = spawnServer({ APP_PUBLIC_ORIGIN: 'https://board.example' });
   try {
-    for (let i = 0; i < 50; i++) {
-      try { if ((await fetch(`http://127.0.0.1:${srv.port}/healthz`)).ok) break; } catch { /* not up */ }
+    for (let i = 0; i < 300; i++) {
+      try { if (srv.port && (await fetch(`http://127.0.0.1:${srv.port}/healthz`)).ok) break; } catch { /* not up */ }
       await new Promise(r => setTimeout(r, 100));
-      if (i === 49) throw new Error(srv.logs());
+      if (i === 299) throw new Error(srv.logs());
     }
     const hostile = await getHealth(srv.port, { Host: 'evil.com', 'X-Forwarded-Host': 'evil.com' });
     assert.equal(hostile.status, 200);
@@ -107,6 +107,6 @@ test('healthz returns the pinned origin and ignores Host and X-Forwarded-Host', 
     assert.ok(!bare.body.includes('evil.com'));
   } finally {
     await stop(srv.child);
-    fs.rmSync(srv.data, { recursive: true, force: true });
+    fs.rmSync(srv.data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });

@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Node tests for app/server.mjs (throwaway secrets, local port). Run: node --test tests/server.test.mjs
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
-const PORT = 18000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 const CKEY = 'reviewer-key-' + crypto.randomBytes(8).toString('hex'), OKEY = 'operator-key-' + crypto.randomBytes(8).toString('hex');
 const INGEST = crypto.randomBytes(32).toString('hex'), PW = crypto.randomBytes(8).toString('hex');
 const AKEY = crypto.randomBytes(32).toString('hex');   // the retired static key: still set in env, must be ignored
@@ -37,14 +38,15 @@ before(async () => {
     res.writeHead(404); res.end('{}');
   });
   await new Promise(r => gh.listen(0, '127.0.0.1', r));
-  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), MESH_PASSWORD: PW,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, ACTIVITY_KEY_Builder: AKEY, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, PATH: process.env.PATH, MESH_DATA_DIR: DATA, BOX_STALE_S: '4', NUDGE_L2_S: '1', SEAT_KEYS: JSON.stringify({ critic: crypto.createHash('sha256').update(CKEY).digest('hex'), forge: crypto.createHash('sha256').update(OKEY).digest('hex') }) }, stdio: 'ignore' });
+  srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: PW,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: INGEST, ACTIVITY_KEY_Builder: AKEY, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, PATH: process.env.PATH, MESH_DATA_DIR: DATA, BOX_STALE_S: '4', NUDGE_L2_S: '1', SEAT_KEYS: JSON.stringify({ critic: crypto.createHash('sha256').update(CKEY).digest('hex'), forge: crypto.createHash('sha256').update(OKEY).digest('hex') }) }, stdio: ['ignore', 'pipe', 'ignore'] });
+  PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(BASE + '/healthz')).ok) break; } catch {} await new Promise(r => setTimeout(r, 100)); }
   const r = await fetch(BASE + '/login', { method: 'POST', body: 'password=' + PW, redirect: 'manual',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
   cookie = r.headers.get('set-cookie').split(';')[0];
 });
-after(() => { srv.kill(); gh.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); gh.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const feed = n => JSON.stringify({ title: 't', event_count: n, generated_at: new Date().toISOString(),
   events: Array.from({ length: n }, (_, i) => ({ id: 'e' + i, t_ct: '2026-10-08T10:00:00-05:00', kind: 'commit', label: 'x'.repeat(200) })) });
 const ingest = (body, headers = {}) => fetch(BASE + '/ingest', { method: 'POST', body,

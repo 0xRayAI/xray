@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // /ingest runs the same fleet-only rule as the collector: GitHub-sourced events showing an unmapped login are not served.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,15 +11,16 @@ import os from 'node:os';
 const APP = process.env.MESH_APP_DIR || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function start(extra = {}) {
-  const port = 20000 + Math.floor(Math.random() * 1000), base = `http://127.0.0.1:${port}`;
+  let port = 0, base = '';
   const ingest = crypto.randomBytes(32).toString('hex'), pw = crypto.randomBytes(8).toString('hex');
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-ingest-'));
-  const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(port), MESH_PASSWORD: pw,
-    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest, PATH: process.env.PATH, MESH_DATA_DIR: data, ...extra }, stdio: 'ignore' });
+  const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', MESH_PASSWORD: pw,
+    SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ingest, PATH: process.env.PATH, MESH_DATA_DIR: data, ...extra }, stdio: ['ignore', 'pipe', 'ignore'] });
+  port = await listenPort(srv); base = `http://127.0.0.1:${port}`;   // #304: port 0, read the assigned port
   for (let i = 0; i < 50; i++) { try { if ((await fetch(base + '/healthz')).ok) break; } catch {} await sleep(100); }
   const r = await fetch(base + '/login', { method: 'POST', body: 'password=' + pw, redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
   const cookie = r.headers.get('set-cookie').split(';')[0];
-  return { base, ingest, cookie, stop: () => { srv.kill(); fs.rmSync(data, { recursive: true, force: true }); } };
+  return { base, ingest, cookie, stop: () => { srv.kill(); fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); } };
 }
 const t = new Date().toISOString();
 const E = (id, x) => ({ id, t_ct: t, kind: 'pr_comment', label: 'l', to: 'GitHub', ...x });

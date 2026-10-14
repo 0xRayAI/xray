@@ -29,7 +29,7 @@ const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { POR
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', NUDGE_LINE_S: '1', BIFROST_TICK_S: '0.2', BIFROST_TRIPWIRE_MINUTES: '60',
   BIFROST_ROUTING_DIR: ROUTE, BIFROST_ROSTER: path.join(ROUTE, 'roster.json') }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10 }); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10 }); });
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const until = async fn => { for (let i = 0; i < 100 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 
 test('a merged PR and a closed issue get no nudge; an open PR still does', async () => {

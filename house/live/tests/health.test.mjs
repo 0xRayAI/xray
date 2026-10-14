@@ -11,10 +11,9 @@ import { fileURLToPath } from 'node:url';
 const APP = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'app');
 
 function start(data, extra = {}) {
-  const port = 20000 + Math.floor(Math.random() * 20000);
   const child = spawn(process.execPath, [path.join(APP, 'server.mjs')], {
     env: {
-      PORT: String(port),
+      PORT: '0',   // #304: the OS picks the port; read it from the listening line
       MESH_PASSWORD: 'pw-' + crypto.randomBytes(4).toString('hex'),
       SESSION_SECRET: crypto.randomBytes(32).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
@@ -28,15 +27,16 @@ function start(data, extra = {}) {
   let logs = '';
   child.stdout.on('data', d => { logs += d; });
   child.stderr.on('data', d => { logs += d; });
-  const base = `http://127.0.0.1:${port}`;
+  const baseOf = () => { const m = /listening on :(\d+)/.exec(logs); return m ? `http://127.0.0.1:${m[1]}` : null; };
   const ready = (async () => {
-    for (let i = 0; i < 50; i++) {
-      try { if ((await fetch(base + '/healthz')).ok) return; } catch { /* not up */ }
+    for (let i = 0; i < 300; i++) {
+      const base = baseOf();
+      try { if (base && (await fetch(base + '/healthz')).ok) return; } catch { /* not up */ }
       await new Promise(r => setTimeout(r, 100));
     }
     throw new Error('healthz did not come up\n' + logs);
   })();
-  return { child, base, ready, logs: () => logs };
+  return { child, get base() { return baseOf(); }, ready, logs: () => logs };
 }
 
 async function stop(child) {
@@ -62,7 +62,7 @@ test('building when no cards; empty when a board was built with zero cards', asy
     assert.equal(body.origin, null);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 
   const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-health-'));
@@ -80,7 +80,7 @@ test('building when no cards; empty when a board was built with zero cards', asy
     assert.ok(body.card_age < 600);
   } finally {
     await stop(empty.child);
-    fs.rmSync(emptyDir, { recursive: true, force: true });
+    fs.rmSync(emptyDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
@@ -104,7 +104,7 @@ test('stale card_age sets ok false and keeps HTTP 200', async () => {
     assert.equal(body.data_age, null);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });
 
@@ -144,6 +144,6 @@ test('stale data_age sets ok false while collector_age stays small; a full repla
     assert.ok(cleared.collector_age < 30);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
   }
 });

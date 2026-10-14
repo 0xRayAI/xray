@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // D18: COLLECTOR_ORG lists the org's repos (unioned with COLLECTOR_REPOS) at start and on each refresh; a new repo gets collected.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -17,14 +18,15 @@ const gh = http.createServer((q, s) => {
   s.end(JSON.stringify([...repos.map(full_name => ({ full_name })), { full_name: 'acme/old', archived: true }, { full_name: 'acme/secret', private: true }, { full_name: 'acme/forbidden' }, { full_name: 'acme/gone' }]));
 });
 await new Promise(r => gh.listen(0, '127.0.0.1', r));
-const PORT = 23000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-org-')); let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH,
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH,
   MESH_PASSWORD: MPW, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: ING,
   MESH_DATA_DIR: DATA, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, GITHUB_READ_TOKEN: 'read-tok-test', COLLECTOR_ORG: 'acme',
   COLLECTOR_REPOS: 'other/pinned', COLLECTOR_ORG_REFRESH_S: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); gh.close(); fs.rmSync(DATA, { recursive: true, force: true }); });
+PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); gh.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const until = async re => { for (let i = 0; i < 80 && !re.test(logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(logs); };
 test('org repos unioned with COLLECTOR_REPOS at start; a repo new to the org is picked up on refresh', async () => {
   assert.ok(await until(/collector: repos acme\/one private repo #\d+ other\/pinned\n/), logs);

@@ -1,3 +1,4 @@
+import { listenPort } from './free-port.mjs';
 // Nudge ownership: the owning seat is woken L1 -> L3; at L3 with no move the CoS role (routing seats.coord, not a
 // name) is woken too, to reassign. A stalled-board timed run also tells the CoS role.
 import { test, after } from 'node:test';
@@ -16,15 +17,16 @@ fs.writeFileSync(path.join(DATA, 'live', 'inbox', 'forge.jsonl'), JSON.stringify
   seat: 'forge', type: 'pr_comment', repo: 'example-org/x', number: 9, title: 't', url: 'https://github.com/example-org/x/pull/9', reason: 'ask' }) + '\n');
 fs.writeFileSync(path.join(ROUTE, 'inbox-roles.json'), JSON.stringify({ seats: { coord: { seat: 'critic' } }, extra_seats: { forge: { needles: ['@forge'] } } }));
 fs.writeFileSync(path.join(ROUTE, 'roster.json'), JSON.stringify({ seats: ['forge', 'critic'] }));
-const PORT = 27000 + Math.floor(Math.random() * 1000), BASE = `http://127.0.0.1:${PORT}`;
+let PORT = 0, BASE = '';
 let logs = '';
-const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: String(PORT), PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
+const srv = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env: { PORT: '0', PATH: process.env.PATH, COLLECTOR: 'off', LIVE_PUBLIC: '1',
   SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'), MESH_DATA_DIR: DATA,
   SEAT_WEBHOOKS: JSON.stringify({ forge: { url: `${W}/forge` }, critic: { url: `${W}/critic` } }), WAKE_KEY_FORGE: 'k', WAKE_KEY_CRITIC: 'k',
   WAKE_RETRY_MS: '10', WAKE_STAGGER_MS: '0', WAKE_DEBOUNCE_S: '0', NUDGE_LINE_S: '1', BIFROST_TICK_S: '0.2',
   BIFROST_TRIPWIRE_MINUTES: '0.1', BIFROST_ROUTING_DIR: ROUTE, BIFROST_ROSTER: path.join(ROUTE, 'roster.json') }, stdio: ['ignore', 'pipe', 'pipe'] });
 srv.stdout.on('data', d => logs += d); srv.stderr.on('data', d => logs += d);
-after(() => { srv.kill(); sink.close(); fs.rmSync(DATA, { recursive: true, force: true }); fs.rmSync(ROUTE, { recursive: true, force: true }); });
+PORT = await listenPort(srv); BASE = `http://127.0.0.1:${PORT}`;   // #304: port 0, read the assigned port
+after(async () => { srv.kill(); await new Promise(r => srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)); sink.close(); fs.rmSync(DATA, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); fs.rmSync(ROUTE, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
 const until = async fn => { for (let i = 0; i < 150 && !fn(); i++) await new Promise(r => setTimeout(r, 100)); return fn(); };
 
 test('owner is nudged L1 -> L3, then the CoS role is woken to reassign (once)', async () => {
