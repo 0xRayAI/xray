@@ -785,7 +785,9 @@
     $('pill').classList.toggle('replay', !!replay);
     $('pill').classList.toggle('behind', !!behind);
     $('fleet').textContent = L.fleetLine(hot);
-    $('blackout').textContent = L.blackoutLine(now);
+    var clk = window.LIVE_CLOCK;   // governor timed run (header.clock): countdown until a seat moves
+    $('blackout').textContent = clk ? L.clockLine(clk, now) : L.blackoutLine(now);
+    $('blackout').parentNode.hidden = !clk;
     $('play').innerHTML = L.isPlaying(state.live, playing) ? '&#10074;&#10074; Pause' : '&#9654; Play';
     var seatNames = L.SEAT_NAMES;   // the strip's seats: header count and chips read the same seatState
     var bots = seatNames.filter(function (k) { return seatState(k, hot) !== 'idle'; }).length;
@@ -862,6 +864,7 @@
       if (!r.feed) return;
       var out = L.applyFeed(state, r.feed, Date.now());
       state = out.state;
+      window.LIVE_CLOCK = r.feed.clock || null;
       if (r.feed.board && Array.isArray(r.feed.board.cards)) { var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats); if (ws !== wb.stamp) { wb.cards = wb.allCards = r.feed.board.cards; wb.stamp = ws; wb.key = ''; } }
       var isNew = {}; out.added.forEach(function (id) { isNew[id] = 1; });
       var fresh = first ? state.events.slice(-6) : state.events.filter(function (e) { return isNew[e.id]; });

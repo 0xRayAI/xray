@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
 import { checkRoutesFromDir } from './routes.mjs';
-import { fingerprint, tripwire } from './governor.mjs';
+import { fingerprint, tripwire, createClock } from './governor.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -717,6 +717,7 @@ function mergedHeader(now = Date.now()) {
   h.event_count = evs.size;
   h.wakes = wakeBoard(now);   // last successful wake per seat; quiet past BIFROST_WAKE_QUIET_MINUTES
   h.routing = ROUTING;   // startup route check (bifrost-init rules)
+  h.clock = typeof clock === 'undefined' ? null : clock.run;   // timed run: deadlines per seat, cleared by a seat move
   h.stalled = stalledNow;   // governor: open inbox lines past BIFROST_STALL_MINUTES
   h.kinds = [...new Set([...(g?.kinds || []), ...(b?.kinds || [])])].sort();
   h.notes = [...new Set([...(g?.notes || []), ...(b?.notes || [])])];
@@ -741,17 +742,44 @@ setInterval(() => {
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }
 }, 15000).unref();
 const GOV_MS = Math.max(200, (Number(process.env.BIFROST_STALL_CHECK_S) > 0 ? Number(process.env.BIFROST_STALL_CHECK_S) : 60) * 1000);
-// Governor (tripwire) + watchdog: one tick. The watchdog pieces (stalled lines + bounded re-wakes, routing, quiet seats)
-// run first; the board snapshot is republished only when the tripwire fingerprint really changed.
+// Governor: one tick. Watchdog first (stalled lines + bounded re-wakes, routing, quiet seats); then the tripwire: when no
+// seat has moved anything (events, acks) for BIFROST_TRIPWIRE_MINUTES (default 30) and some seat has open work, the
+// clock starts a timed run (the same run the CoS starts by hand with POST /clock). A seat's move clears it.
+const TRIP_MS = (Number(process.env.BIFROST_TRIPWIRE_MINUTES) > 0 ? Number(process.env.BIFROST_TRIPWIRE_MINUTES) : 30) * 60000;
+const PER_SEAT_MS = (Number(process.env.BIFROST_RUN_SEAT_MINUTES) > 0 ? Number(process.env.BIFROST_RUN_SEAT_MINUTES) : 2) * 60000;
+const COORD_SEAT = (() => {   // the CoS role (routing seats.coord.seat): pulls the next work on an empty board
+  try { const r = JSON.parse(fs.readFileSync(path.join(process.env.BIFROST_ROUTING_DIR || path.join(COLLECTOR_DIR_EARLY(), 'routing'), 'inbox-roles.json'), 'utf8'));
+    const c = r?.seats?.coord; return c && !c.off && c.seat ? String(c.seat).toLowerCase() : null; } catch { return null; }
+})();
+const CLOCK_SEATS = (() => {   // who may start a run by hand: BIFROST_CLOCK_SEATS, else the coord (CoS) seat
+  const env = String(process.env.BIFROST_CLOCK_SEATS || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  return env.length ? env : COORD_SEAT ? [COORD_SEAT] : [];
+})();
+const clock = createClock({ tripMs: TRIP_MS, perSeatMs: PER_SEAT_MS });
 const trip = tripwire();
 let governorChanges = 0;
-setInterval(() => {
-  governorTick();
-  const w = wakeBoard();
+const openSeats = () => SEAT_IDS.filter(s => s !== 'builder' && s !== 'builder-cloud' && openLines(s).length);
+function wakeRun(run) {
+  for (const [seat, by] of Object.entries(run.deadlines)) {
+    const n = openLines(seat).length;
+    const reason = run.reason === 'empty' ? `board empty, pull next work by ${by}`
+      : `timed run (${run.reason}): move your open work or post your blocker in one line by ${by}`;
+    noteWake(seat, { id: `clock:${run.started_at}:${seat}`, type: 'timed_run', title: run.reason === 'empty' ? 'board empty' : `timed run: ${n} open line(s)`, reason });
+  }
+  console.log(`clock: ${run.reason} run started, ${Object.keys(run.deadlines).length} seat(s), ends ${run.ends_at}`);
+}
+function moveFp() { return fingerprint([...evs.values()].map(v => v.e), { acks: Object.values(inboxAcks).reduce((n, a) => n + (a ? a.length : 0), 0) }); }
+function governorRun(now = Date.now()) {
+  governorTick(now);
+  const w = wakeBoard(now);
+  const r = clock.observe(moveFp(), now, { openCards: bfCards.filter(c => c.state === 'live').length, openSeats: openSeats(), coord: COORD_SEAT });
+  if (r === 'stall' || r === 'empty') wakeRun(clock.run);
+  if (r === 'cleared') console.log('clock: cleared by a seat move');
   const fp = fingerprint([...evs.values()].map(v => v.e), { stalled: stalledNow.map(x => [x.seat, x.id, x.rewakes]), routing: ROUTING.ok,
-    quiet: Object.keys(w).filter(k => w[k].quiet).sort() });
+    quiet: Object.keys(w).filter(k => w[k].quiet).sort(), clock: clock.run && clock.run.started_at });
   if (trip(fp)) { governorChanges++; seq++; header = mergedHeader(); fullDirty = true; }
-}, GOV_MS).unref();
+}
+setInterval(() => governorRun(), GOV_MS).unref();
 header = mergedHeader();
 function full() {   // built lazily: only the first full GET after a change pays for stringify + gzip
   if (fullDirty) {
@@ -1515,6 +1543,18 @@ async function handle(req, res) {
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
     const keep = new Set(openLines(who, all).map(l => l.id)); touchSeat(who);
     return json(req, res, 200, { seat: who, lines: base.filter(l => keep.has(l.id)).slice(0, 1000) });
+  }
+  if (p === '/clock') {   // POST /clock: the CoS starts the same timed run the tripwire starts (BIFROST_CLOCK_SEATS keys only)
+    if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
+    let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
+    req.resume();
+    if (!who) return json(req, res, 401, { error: 'unauthorized' });
+    if (!CLOCK_SEATS.includes(who)) return json(req, res, 403, { error: 'not a clock seat' });
+    const seats = openSeats();
+    if (!seats.length) return json(req, res, 200, { ok: true, started: false, reason: 'no open work' });
+    const run = clock.startByHand(Date.now(), seats, who); wakeRun(run); touchSeat(who);
+    seq++; header = mergedHeader(); fullDirty = true;
+    return json(req, res, 200, { ok: true, started: true, clock: run });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
   if (ackM) {   // POST /inbox/<seat>/ack {"id": "<line id>"} | {"upto": "<line id>"} | {"all": true}: that seat's key only

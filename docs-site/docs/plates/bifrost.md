@@ -37,7 +37,7 @@ Bifrost is an autonomous AI fleet management system. Every PR, issue and comment
 └────────────────────────────────────────────────────────────┘
 ```
 
-The governor (tripwire) runs inside the server, ported from the old local `tripwire_push.py`: one tick hashes the real events and the watchdog state and republishes the board only on a real change. On the same tick the watchdog runs: an inbox line left unacked past `BIFROST_STALL_MINUTES` is flagged stalled and re-wakes its seat once per window (never a loop, an ack clears it); the server checks at startup that every seat has a route; and the board shows each seat's last good wake and flags a quiet one.
+The governor runs inside the server. Its tripwire is the trigger: when nothing on the board moves for a set window, it starts the clock. On a stalled board, every seat with open work is woken with a deadline. On an empty board, the CoS seat is woken to pull the next work. The countdown shows on the board until a seat moves something, and the CoS can start the same timed run by hand. On the same tick the watchdog flags stalled lines (one bounded re-wake per window, an ack clears it), seats with no route, and seats whose wake has gone quiet.
 
 Code lives under `house/live/` (collector, board, inbox routing, server) and `house/live-mesh/` (`fetch_feed.py`). Deploy only via `house/live/app/deploy.sh`: it assembles `collector/`, and a build straight from git stops with "collector/ is not assembled". The plate that belongs here is house.
 

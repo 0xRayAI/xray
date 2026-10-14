@@ -85,6 +85,12 @@
     var left = Date.parse(BLACKOUT_UNTIL) - nowMs;
     return left > 0 ? 'BLACKOUT until Sun Oct 11, 9:08 AM CT \u00b7 ' + countdown(left) : 'Blackout lifted';
   }
+  /* Timed run (governor clock): same countdown as the blackout line. */
+  function clockLine(clock, nowMs) {
+    if (!clock || !clock.ends_at) return '';
+    var left = Date.parse(clock.ends_at) - nowMs, what = clock.reason === 'empty' ? 'BOARD EMPTY \u00b7 pull next work' : 'TIMED RUN (' + clock.reason + ')';
+    return what + ' \u00b7 ' + (left > 0 ? countdown(left) : 'overdue');
+  }
   /* Fleet line from the same seat status as the strip (activeSeats). */
   function fleetLine(hot) {
     var live = SEAT_NAMES.filter(function (k) { return own(hot, k); }).length;
@@ -360,6 +366,6 @@
     ENTRY_MS: ENTRY_MS, PULSE_MS: PULSE_MS, MARK: MARK, markCells: markCells,
     isPlaying: isPlaying, sliderAction: sliderAction, edgeTraffic: edgeTraffic, orbitStep: orbitStep,
     GLYPH: GLYPH, MARK_PATH: MARK_PATH, activeSeats: activeSeats, recentItems: recentItems, BOT_IMAGES: BOT_IMAGES, BLACKOUT_UNTIL: BLACKOUT_UNTIL,
-    countdown: countdown, blackoutLine: blackoutLine, fleetLine: fleetLine, wireGlow: wireGlow
+    countdown: countdown, blackoutLine: blackoutLine, clockLine: clockLine, fleetLine: fleetLine, wireGlow: wireGlow
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
