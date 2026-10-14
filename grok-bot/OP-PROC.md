@@ -43,6 +43,7 @@ One line, when the job is short: `goal: … · constraints: … · path: … · 
 | Fold watch | When an awaited PR is folded or gets a new tip, the watcher posts it to the room at once. |
 | Stuck tools | If Shell or tools break, reboot the seat computer first, then re-probe. |
 | Briefing | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. |
+| Room vs 1:1 writes | No outside writes or deploys (issues, pushes, comments, merges, Railway) from a group room. From a seat's own 1:1 they proceed once the gates pass (critic PASS, CI green, Arch1 yes where required), without asking Blaze. The Always-allow ban on App PEM, token minting and App review is revoked; PEM text and tokens are still never printed or stored. |
 | Board before building | Check the board before building. Write forward to the board and memory. |
 | Answer the owner | Answer from live GitHub and the board. Routines stay quiet on closed beats. A failing routine never blocks a reply. |
 | Speak up | On ownership, a blocker, live proof, or a money or credential change. |
