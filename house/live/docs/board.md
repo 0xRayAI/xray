@@ -69,7 +69,7 @@ Each event's `credit` is set by the collector (`feed/live_collect.py` `credit_of
 5. that commit's `Seat:` trailer;
 6. `github` (CI, unmapped `[bot]` logins, Railway / rails with no seat).
 
-A login maps to a seat through the committed `feed/fleet-nodes.json` (shipped to `collector/` by `app/deploy.sh`). It wins over the `LIVE_NODE_MAP` service variable, which can only add logins the file doesn't name. An unmapped person credits `other`. `htafolla`, `Blaze0x1` and `Lead` credit **Blaze**, who has a node on the Lens and a group on the Board. Events from other sources (box, Jira, health, emitter) are credited by the server from their sender node: a roster seat, Blaze, else `github`.
+A login maps to a seat through the committed `feed/fleet-nodes.json` (shipped to `collector/` by `app/deploy.sh`). It wins over the `LIVE_NODE_MAP` service variable, which can only add logins the file doesn't name. An unmapped person credits `other`. `htafolla` credits **Blaze** on that map. Events from other sources (box, Jira, health, emitter) are credited by the server from their sender node: a roster seat, then `HUMAN_ALIASES` (`alias=Label`, default empty), else `github`. Empty `HUMAN_ALIASES` sends the lead's events to `github`. burst-live sets `HUMAN_ALIASES=htafolla=Blaze,lead=Blaze` (`htafolla` is the human's GitHub login; `lead` is the box sender node). `blaze0x1` is not a GitHub user and is not in that list.
 
 ## Avatars
 
@@ -83,9 +83,23 @@ Our pictures live in `house/live/site/public/avatars/` (copied over the kit page
 
 Every other seat (mill, magnet, nibbler, sound) shows the drawn letter badge; there is no 404. To add one: commit a square PNG as `site/public/avatars/<seat>.png`, add `<seat>: '<seat>'` to `L.setAvatars` in `site/public/site-config.js`, and deploy. The kit maps no avatars.
 
+## What makes a seat working
+
+Three writers set `fleet.working` and the seat's working light. They stack. A later writer fills `working_on` only when it is still empty. The full chain, including `CURSOR_WEBHOOK_SECRET`, is [work-tracking.md](work-tracking.md).
+
+1. `applyStoredActivity` reads `activity.jsonl`. Lines arrive from `POST /activity`, from `POST /activity/ingest`, and from the server's own wake/ack lines. An open turn, subagent, or watcher is working. A turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes, `TURN_OPEN_MS`) when the ack never arrives. An `end` closes it at once.
+2. `applyTrackWorking` reads the work track. A packet that is woken and not yet acked, or a cloud agent that is still running, sets the seat working. The chip text is `working_on` (`working on <title>` for a packet). A Cursor status webhook appends `agents.jsonl` only after `CURSOR_WEBHOOK_SECRET` verifies `POST /cursor/webhook`.
+3. `applyGithubWorking` reads GitHub events already in the feed. A PR or issue comment, a review, a PR opened or pushed, or an issue event whose actor login maps to a seat marks that seat working for the same `TURN_OPEN_MS` window. `working_on` is `repo#number`. Logins come from `feed/routing/inbox-roles.json` (`routing.<seat>.login`), `feed/fleet-nodes.json` and `LIVE_NODE_MAP`, `LIVE_GH_SEATS` (the App's `bot` login), and `SEAT_GIT_NAMES` only as `git:<seat>` (a commit with no GitHub user). A cloud agent with no seat login maps through `SEAT_AGENT_MAP` (exact id or `id*` prefix) or a `bc-` id in the branch, ref, or comment. `critic0x[bot]` is critic. `forge0x1[bot]` is forge.
+
+The board page has a Work panel (`header.track`) grouped by lane. Packet phases are `sent`, `delivered`, `woken`, `acked`. Past `NUDGE_L1_S` with no ack, the packet is `overdue`. A blocker (`type` / `kind` / `flag` `needs_human`, or `to` = `WORK_HUMAN_TO`) sits in the `WORK_HUMAN_LANE` lane until it is acked or the card closes. `SEAT_DISPLAY_NAMES` (JSON seat id to label) renames lanes and the chip lookup. The page reads that map from `fleet.seat_display`. It does not hardcode a seat's display name.
+
+`POST /activity` takes each seat's own `SEAT_KEYS` hash (Builder still uses its GitHub App token). The stored seat is the key's seat. A body `seat` that is not that seat, an alias of it, or its display name is `403` `{"error":"seat mismatch"}`.
+
+`POST /activity/ingest` is the exception to that pin. The box uploader sends `X-Live-Ingest` (the ingest secret) and may write a line for every fleet seat. Those lines land in the same `activity.jsonl`, so writer 1 lights the seat. The secret stays on that box. The chain is [activity-upload.md](activity-upload.md).
+
 ## What makes a seat active
 
-A seat shows ACTIVE when, within the fleet window (15 min), any of these happened:
+A seat shows ACTIVE when, within the fleet window (`LIVE_WINDOW_MIN`, default 15), one of these happened:
 
 - a GitHub event by one of its logins (via the credit map above);
 - an owned box file changed or an activity line (turn, task, watcher) was logged (see Seat activity above);

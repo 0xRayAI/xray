@@ -27,14 +27,15 @@ const A = k => ({ Authorization: 'Bearer ' + k });
 const act = (body, key = AKEY) => fetch(BASE + '/activity', { method: 'POST', body: JSON.stringify(body), headers: { ...A(key), 'Content-Type': 'application/json' } });
 const line = o => ({ t_ct: new Date(Date.now() - 5 * 3600000).toISOString().slice(0, 19) + '-05:00', kind: 'turn', action: 'start', tag: 't1', ...o });
 
-test('activity: builder-cloud key posts as Builder-cloud; other seat keys / wrong seat / no key refused', async () => {
+test('activity: builder-cloud key posts as Builder-cloud; a cross-seat post or unknown key is refused', async () => {
   assert.equal((await act(line({ seat: 'Builder-cloud' }))).status, 202);
   assert.equal((await act(line({}))).status, 202);
   assert.equal((await act(line({ seat: 'Builder' }))).status, 403);
-  assert.equal((await act(line({}), CKEY)).status, 401);
+  assert.equal((await act(line({ seat: 'Builder-cloud' }), CKEY)).status, 403);
+  assert.equal((await act(line({ seat: 'critic' }), CKEY)).status, 202);
   assert.equal((await act(line({}), 'nope')).status, 401);
   const r = await (await fetch(BASE + '/activity/pull', { headers: A(INGEST) })).json();
-  assert.deepEqual(r.lines.map(l => l.seat), ['Builder-cloud', 'Builder-cloud']);
+  assert.deepEqual(r.lines.map(l => l.seat), ['Builder-cloud', 'Builder-cloud', 'critic']);
 });
 
 test('inbox: builder lines (ready / reviewer pass) mirror to builder-cloud; only its own key reads it', async () => {

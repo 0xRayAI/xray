@@ -118,6 +118,11 @@
     #cardRecent, #queueBox, #cardHist { margin-top: 8px; border-top: 1px solid #111a2a; padding-top: 6px; }
     #cardRecentList, #queueList, #cardHistList { list-style: none; margin: 4px 0 0; padding: 0; }
     #cardRecentList li, #queueList li, #cardHistList li { padding: 3px 0; border-top: 1px solid #111a2a; font-size: 12px; }
+    #trackList { list-style: none; margin: 4px 0 0; padding: 0; max-height: 280px; overflow-y: auto; }
+    #trackList li { display: grid; grid-template-columns: 18ch 1fr 1.4fr; gap: 8px; padding: 3px 0; border-top: 1px solid #111a2a; font-size: 12px; }
+    #trackList li.lane { display: block; color: #c5d0e4; border-top: 0; padding-top: 8px; }
+    #trackList .who { color: var(--dim); }
+    #trackList a { color: inherit; }
     #cardHistAll, #historyDay { font: inherit; font-size: 11px; }
     .seat.silent .st, .silent .st { color: #fbbf24; }
     .ambient-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #a99bff; cursor: pointer; }
@@ -177,6 +182,10 @@
     </div>
     <div id="cardHist" hidden>
       <ul id="cardHistList"></ul>
+    </div>
+    <div id="trackBox" aria-label="Work">
+      <div class="lens-head"><b id="trackLabel">Work</b></div>
+      <ul id="trackList"></ul>
     </div>
     <div id="queueBox" aria-label="Open queue">
       <div class="lens-head"><b id="queueLabel">Queue · waiting for a reply</b></div>
@@ -336,6 +345,12 @@
     var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
     if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.working);
     return !!(f && ((f.working && f.working[name]) || (f.seats && f.seats[name] && f.seats[name].working)));
+  }
+  function fleetWorkingOn(k) {   // 'working on <packet>' from the server's work tracking, else ''
+    var f = window.LIVE_FLEET, names = (f && f.seat_display) || {};
+    var name = Object.prototype.hasOwnProperty.call(names, k) ? names[k] : k;
+    var seat = f && f.seats && (f.seats[k] || f.seats[name] || f.seats[String(name).toLowerCase()]);
+    return seat && typeof seat.working_on === 'string' ? seat.working_on : '';
   }
   // Live queue: new ids wait here until the view is live, then flash in time order (late ones tagged)
   var LATE_MS = 2 * 60 * 1000, CATCHUP_MS = 30 * 60 * 1000, BATCH_MS = 9000;
@@ -754,8 +769,44 @@
   }
 
   var lastText = 0, lastLogKey = '';
+  var trackState = { track: null, stamp: '' };
+  function renderTrack() {
+    var ul = $('trackList'); if (!ul) return;
+    var track = trackState.track || { items: [] };
+    var stamp = JSON.stringify(track);
+    if (stamp === trackState.stamp && ul.childNodes.length) return;
+    trackState.stamp = stamp;
+    ul.textContent = '';
+    var items = track.items || [];
+    if (!items.length) { ul.appendChild(wbEl('li', '', 'No tracked work')); return; }
+    var lanes = {}, order = [];
+    items.forEach(function (it) {
+      var names = it.lanes && it.lanes.length ? it.lanes : [it.lane || ''];
+      names.forEach(function (name) {
+        if (!lanes[name]) { lanes[name] = []; order.push(name); }
+        lanes[name].push(it);
+      });
+    });
+    order.forEach(function (name) {
+      ul.appendChild(wbEl('li', 'lane', name));
+      lanes[name].forEach(function (it) {
+        var li = wbEl('li');
+        li.appendChild(wbEl('span', 'who', name));
+        li.appendChild(wbEl('span', '', it.label || ''));
+        if (it.url && /^https?:\/\//.test(it.url)) {
+          var a = document.createElement('a');
+          a.href = it.url; a.rel = 'noopener'; a.textContent = it.title || it.url;
+          li.appendChild(a);
+        } else {
+          li.appendChild(wbEl('span', '', it.title || ''));
+        }
+        ul.appendChild(li);
+      });
+    });
+  }
   function updateText(nowWall, hot) {
     renderWave();
+    renderTrack();
     flashes.forEach(function (f) { if (!f.landed && nowWall - f.start >= (f.dur || FLASH_MS)) { f.landed = 1; waveGlow(f.e); } });
     var shown = L.countUpTo(state.events, state.t);
     var cur = shown ? state.events[shown - 1] : null;
@@ -768,6 +819,8 @@
       s.dot.style.background = on ? rgb(c) : '#283246';
       s.dot.style.boxShadow = on ? '0 0 0 2px #04060c, 0 0 0 4px ' + rgb(c) : 'none';
       s.st.textContent = s.role + ' · ' + v.word;   // WORKING > LIVE > ACTIVE > IDLE (one state)
+      var won = fleetWorkingOn(a[0]);
+      if (won.indexOf('working on ') === 0) s.st.textContent += ' · ' + won;
       var sil = !v.blink && fleetSilent(a[0]); if (sil) s.st.textContent += ' · silent 2h';
       s.el.classList.toggle('silent', sil); if (sil) s.dot.style.background = '#f59e0b';
       var spinning = v.blink;
@@ -1019,6 +1072,7 @@
       var out = L.applyFeed(state, r.feed, Date.now());
       state = out.state;
       window.LIVE_CLOCK = r.feed.clock || null;
+      if (r.feed.track) { trackState.track = r.feed.track; trackState.stamp = ''; }
       if (r.feed.board && Array.isArray(r.feed.board.cards)) { var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats); if (ws !== wb.stamp) { wb.cards = wb.allCards = r.feed.board.cards; wb.stamp = ws; wb.key = ''; } }
       var isNew = {}; out.added.forEach(function (id) { isNew[id] = 1; });
       var fresh = first ? state.events.slice(-6) : state.events.filter(function (e) { return isNew[e.id]; });

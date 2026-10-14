@@ -16,8 +16,15 @@
 | `repo`, `title`, `url` | string, may be empty |
 | `number` | integer (required) |
 | `sha` | string, optional |
+| `from` | optional seat id (alias or display name accepted). The sender |
+| `to` | optional seat id, or `WORK_HUMAN_TO` (default `human`) |
+| `kind`, `flag` | optional short token (`[a-z0-9_-]{1,40}`) |
 
 Any field name containing `body`, `text`, or `message` is refused (so is any unknown field). Put the ask in `title`.
+
+A line is a tracked packet only when `type` or `kind` is `dispatch`, `ready`, `packet`, `critic_fail`, or `needs_human`, or it is a blocker (`needs_human`, or `to` = `WORK_HUMAN_TO`). A line that merely names `from` is not a packet. Phases: `sent` (the line exists), `delivered` (it is in the inbox), `woken` (the wake returned 2xx), `acked` (the seat acked it). Unacked past `NUDGE_L1_S` is `overdue`. The last wake per seat is restored from `wakes.jsonl` on boot (`loadPersistedWakes`), not kept only in memory.
+
+`POST /activity` is per seat. Every seat except Builder sends `Authorization: Bearer <its key>`. The server checks the sha256 against that seat's `SEAT_KEYS` entry and stores the line as that seat. Posting with another seat's name in `seat` returns `403` `{"error":"seat mismatch"}`. An unknown key is `401`. `POST /activity/ingest` is the box-uploader exception: `X-Live-Ingest` may write for every fleet seat, and those lines use the same store. See [work-tracking.md](work-tracking.md) and [activity-upload.md](activity-upload.md).
 
 A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
