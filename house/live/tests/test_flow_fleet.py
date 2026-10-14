@@ -483,9 +483,10 @@ class RemoteActivityTest(unittest.TestCase):
             self.assertEqual([(e["from"], e["to"]) for e in ev], [("Builder", "Reviewer")])
             self.assertEqual(f.fleet_state([], now)["working"]["Builder"]["via"], "subagent")
             # stale open items stop spinning after 30 min
-            # #275: Builder's own open cloud agent keeps it working after the activity window, until the cloud window ends
-            self.assertEqual(f.fleet_state([], now + 31 * 60)["seats"]["Builder"]["working_via"], "cloud")
-            self.assertFalse(f.fleet_state([], now + 61 * 60)["seats"]["Builder"]["working"])
+            # #281: one cloud window: the launcher stays working until 20 min after the agent's last line, then idles
+            # (the open subagent's 30 min window outlasts it here, so both are past at +31 min)
+            self.assertEqual(live_fleet.WORKING_CLOUD_S, 20 * 60)
+            self.assertFalse(f.fleet_state([], now + 31 * 60)["seats"]["Builder"]["working"])
 
 
 class LabWorkTest(unittest.TestCase):

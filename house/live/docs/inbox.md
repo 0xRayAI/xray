@@ -113,13 +113,14 @@ Any 2xx is success. The response body is ignored.
 - After a send, further lines wait until `WAKE_DEBOUNCE_S` (default 60 s) since the last send, then go out together in one POST.
 - Seats due at the same moment (a redeploy, one event routed to several seats) go out `WAKE_STAGGER_MS` apart (default 1500 ms), never all at once: the seats' automations share one Cursor account.
 - 3 attempts per POST, backoff `WAKE_RETRY_MS` (default 400 ms) then double. After the third failure the batch is dropped (the lines stay in the inbox). The server logs `wake: <seat> ok|fail attempts=<n> [error] [body="…"]`; on a non-2xx, `body` is the receiver's response (one line, 160 chars, the key and the webhook URL / automation id replaced by `[redacted]`). Errors are `http_<status>`, `timeout`, a network code, or `no_key` (neither the `key_env` variable nor `WAKE_KEY_<SEAT>` is set; no request is sent).
+- A stuck `http_400` with `Automation run rate limit exceeded` in `body` clears when the seat pauses and resumes its existing wake routine. Do not recreate the routine (the webhook URL and key stay the same).
 - The inbox write never waits on the webhook, and a wake failure never fails the write.
 
 ### Verify on /healthz
 
 `GET /healthz` (no auth) has `wakes`: `{seat: "ok" | "fail" | "no_key" | "idle"}` for each configured seat. `idle` means a key is set but nothing has been sent since the server started. It shows no URL or key. To verify, POST one ack-only packet per seat, check that each seat shows `ok`, and check that each ack comes back.
 
-`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (last collector feed write) and `card_age` (last board card change). If `box_age` keeps growing, the box status reporter has stalled, so restart it.
+`/healthz` also has liveness ages in seconds, `null` if never: `box_age` (last box status push), `collector_age` (last collector feed write), `card_age` (last board card change), and `data_age` (newest GitHub event `t_ct`, not the collector write). `board` is `building` (no board yet), `empty` (a board with zero cards), or `live`. `origin` is the pinned public origin, or null. `ok` is false when a numeric `card_age` exceeds `CARD_STALE_S` (default 600) or a numeric `data_age` exceeds `DATA_STALE_S` (default 21600). The HTTP status stays 200. If `box_age` keeps growing, the box status reporter has stalled, so restart it.
 
 ### No webhook set (fallback)
 
@@ -132,6 +133,8 @@ Reading never acks, but a non-empty read is the work. Seats read with `live-inbo
 ### Key folder on our box
 
 `live-inbox` defaults to `~/.burst` (`~/.burst/seat-keys`, `~/.burst/cursors`) and the burst-live URL. On our box the seats keep their keys elsewhere and set the folder variables in their wake routine: `SEAT_KEYS_DIR` (key files, `<seat>.key`) and `LIVE_CURSORS` (read positions), both under `/home/box/burst-run`. `LIVE_URL` overrides the server. Never put a key's value in a routine, room or repo; the routine names the folder only.
+
+**Tool path.** Run the committed tool from the seat's repo checkout, e.g. `/workspace/scratch/<clone>/house/live/tools/live-inbox`, never a copy under `/tmp` (it does not survive a restart). The routine sets `SEAT_KEYS_DIR`, `LIVE_CURSORS` and `LIVE_URL`. A wake only counts once the routine reads and acks with no approval card.
 
 ### Reading the inbox after a wake
 

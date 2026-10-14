@@ -21,7 +21,8 @@ There is no separate page/store service. It is one Node process, `house/live/app
 | `GET /cards?seat=<seat>` | that seat's key (operator: any) | cards with packets and beats |
 | `GET /nudges?since=<id>` | operator key | nudges for delivery |
 | `POST /emit` | emitter key, write-only | external emitter events (tool calls); unknown fields get 422 |
-| `GET /healthz` | none | JSON `{ok, collector, repos, oldest_collected, newest_collected}`: repo count and two times, no repo names |
+| `GET /healthz` | none | JSON `{ok, data_age, card_age, board, origin, collector, repos, oldest_collected, newest_collected}`. `ok` is false when `card_age` or `data_age` is past its threshold. HTTP status stays 200. No repo names |
+| `GET /archive?date=YYYY-MM-DD&kind=` | `Authorization: Bearer $ARCHIVE_KEY` | one UTC day of append-only JSONL (`events`, `cards`, `inbox`, `nudges`, `acks`, `activity`). Missing or wrong key is 401. Bad date or kind is 400 |
 
 The GitHub collector (`house/live/feed/live_mesh.py`, which imports `house/live-mesh/fetch_feed.py`) is the
 second process. `server.mjs` spawns it as a child: `python3 -B -u collector/live_mesh.py --out /data/feed/github-events.json --watch 45 --repos <org/repo ...>`.
@@ -63,6 +64,10 @@ Railway service (`server.mjs`):
 | `MESH_PASSWORD` | required in gated mode | page login; not needed in public mode (`feed/site.json` `"public": true`, or `LIVE_PUBLIC=1`) |
 | `SESSION_SECRET` | required, 32+ chars | cookie HMAC |
 | `INGEST_SECRET` | required, 32+ chars | box pusher |
+| `APP_PUBLIC_ORIGIN` | required when `NODE_ENV=production` | https origin pinned on `/healthz` (`LIVE_URL` is the fallback). http is only for localhost or 127.0.0.1. An invalid value refuses to start |
+| `ARCHIVE_KEY` | optional | bearer for `GET /archive`. Unset still boots; the route answers 401 |
+| `CARD_STALE_S` | optional | default 600. A numeric `card_age` above this sets `ok` false |
+| `DATA_STALE_S` | optional | default 21600. A numeric `data_age` above this sets `ok` false |
 | `SEAT_KEYS` | required for inboxes | JSON `{seat: sha256hex}`; hashes only, from `feed/seat_keys.sh publish` |
 | `GITHUB_READ_TOKEN` | for the collector | fine-grained, read-only. Today it covers public repos only: private-repo reads (including CI/check reads) return 403 and the collector logs `skip ... (403)`. Widening the token's repo scope needs Blaze's GO |
 | `MESH_DATA_DIR` | optional | default `/data` |
@@ -103,12 +108,15 @@ Seat keys (`feed/seat_keys.sh`): `SEAT_KEYS_SEATS` or `SEATS_JSON` for the seat 
 ## 5. Volume
 
 One volume on the service, mounted at `/data`. A 5 GB volume is enough to start. Layout: `/data/feed/`
-(collector output, store, and `jira-events.json` when Jira is on), `/data/live/` (inboxes, acks, cards, nudges), `/data/home/` (child HOME).
+(collector output, store, and `jira-events.json` when Jira is on), `/data/live/` (inboxes, acks, cards, nudges), `/data/archive/`
+(append-only daily JSONL, never pruned), `/data/home/` (child HOME).
 
 ## 6. Healthcheck
 
 `healthcheckPath: /healthz` in `railway.json`, and `healthcheck: "/healthz"` in `house/live/app/.railway/railway.ts`. `server.mjs` answers `GET /healthz` on `$PORT`. The collector does not
 answer HTTP. The `/health` URLs in `COLLECTOR_HEALTH_URLS` are your app's endpoints, polled for status code only. Unset means no probe. `railway.json` stops being read on 2026-12-01; switch to the `.railway/railway.ts` file before that date (section 3).
+
+`/healthz` fields: `data_age` (seconds since the newest GitHub event `t_ct`; null if there is none), `card_age` (seconds since the board last changed; null while `cardsAt` is 0), `board` (`building`, `empty`, or `live`), and `origin` (the pinned `APP_PUBLIC_ORIGIN`, or null). `ok` goes false when a numeric `card_age` exceeds `CARD_STALE_S` (default 600) or a numeric `data_age` exceeds `DATA_STALE_S` (default 21600). Null ages do not flip `ok`. The HTTP status stays 200 so the platform healthcheck keeps passing.
 
 Install mismatches are listed as Symptom / Cause / Fix in [house/live/docs/faq.md](../live/docs/faq.md).
 

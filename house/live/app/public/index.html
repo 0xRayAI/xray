@@ -531,7 +531,10 @@
         buckets.done.sort(byBeat).forEach(function (c) { du.appendChild(card(c)); }); body.appendChild(du);
       }
     });
-    $('waveCount').textContent = wb.cards.length ? live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') : 'no cards';
+    var waveHead = $('waveCount');
+    if (!wb.stamp) waveHead.textContent = 'building';
+    else if (!wb.cards.length) waveHead.textContent = 'empty';
+    else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '');
   }
   $('waveBody').addEventListener('click', function (ev) {
     var li = ev.target.closest('.wcard'); if (!li) return;
@@ -771,7 +774,8 @@
     $('pill').textContent = (function () {
       if (replay) return 'REPLAY';
       if (!state.live) return 'REWOUND';
-      var age = state.generatedAt ? (now - state.generatedAt) / 1000 : 1e9;
+      if (!state.generatedAt) return 'building';
+      var age = (now - state.generatedAt) / 1000;
       if (age <= 90) return 'LIVE';
       var m = Math.max(1, Math.round(age / 60));
       return 'behind ' + m + ' min';

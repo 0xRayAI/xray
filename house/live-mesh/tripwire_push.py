@@ -38,6 +38,8 @@ from zoneinfo import ZoneInfo
 
 CT = ZoneInfo("America/Chicago")
 DEFAULT_BRANCH = "live-wire"
+ALLOWED_REMOTES = {"origin"}
+ALLOWED_BRANCHES = {"live-wire"}
 DEST = {
     "feed": "docs-site/static/live/live-events.json",
     "mesh": "docs-site/static/live/mesh-live.mp4",
@@ -117,12 +119,33 @@ def needs_publish(
     return True
 
 
+def check_remote(name: str) -> str:
+    if name not in ALLOWED_REMOTES:
+        raise SystemExit(f"refusing remote {name}")
+    return name
+
+
 def check_branch(name: str) -> str:
     if name in {"main", "master"} or name.startswith("main/") or name.startswith("master/"):
         raise SystemExit("refusing to push main from the tripwire; Pages replay branch is live-wire")
-    if not BRANCH_RE.match(name):
-        raise SystemExit(f"unsafe branch name: {name}")
+    if name not in ALLOWED_BRANCHES:
+        raise SystemExit(f"refusing branch {name}")
     return name
+
+
+def feed_is_public(path: Path) -> bool:
+    """True only for a JSON object whose public flag is exactly True. Missing means private."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError):
+        return False
+    return isinstance(data, dict) and data.get("public") is True
+
+
+def require_public_feed(path: Path) -> None:
+    """Stop before git ls-remote or push when the feed is missing or not public."""
+    if not feed_is_public(path):
+        raise SystemExit("feed is not public; refusing to push")
 
 
 def run(args: list[str], cwd: Path, *, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -141,6 +164,8 @@ def repo_root(start: Path) -> Path:
 
 
 def remote_head(repo: Path, branch: str) -> str | None:
+    check_remote("origin")
+    check_branch(branch)
     proc = run(["git", "ls-remote", "--heads", "origin", branch], repo, check=False)
     if proc.returncode != 0:
         err = scrub(proc.stderr.decode("utf-8", "replace")).strip()
@@ -170,6 +195,8 @@ def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
 
 
 def fetch_refs(repo: Path, branch: str, branch_sha: str | None) -> None:
+    check_remote("origin")
+    check_branch(branch)
     run(["git", "fetch", "--quiet", "origin", "main"], repo)
     if branch_sha:
         run(
@@ -210,6 +237,8 @@ def record_push(ledger: Path, event: dict) -> None:
 def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: str | None,
             event: dict | None = None) -> bool:
     """Returns True when a snapshot commit was pushed (a real push)."""
+    check_remote("origin")
+    check_branch(branch)
     work = Path(tempfile.mkdtemp(prefix="xray-live-wire-"))
     added = False
     try:
@@ -286,6 +315,9 @@ def publish(repo: Path, branch: str, local_paths: dict[str, Path], branch_sha: s
 
 def tick(repo: Path, branch: str, feed: Path, mesh: Path, *, dry_run: bool,
          seat: str = "mill", ledger: Path | None = None) -> None:
+    require_public_feed(feed)
+    check_remote("origin")
+    check_branch(branch)
     local_paths = {"feed": feed, "mesh": mesh}
     local = {key: fingerprint_file(path) for key, path in local_paths.items()}
     if not any(fp is not None for fp in local.values()):
@@ -339,8 +371,12 @@ def main(argv: list[str] | None = None) -> int:
     branch = check_branch(args.branch)
     if args.interval < 1:
         raise SystemExit("--interval must be >= 1")
+    if args.feed.is_absolute():
+        require_public_feed(args.feed)
     repo = repo_root(Path(__file__).resolve().parent)
     feed = args.feed if args.feed.is_absolute() else repo / args.feed
+    if not args.feed.is_absolute():
+        require_public_feed(feed)
     mesh = args.mesh if args.mesh.is_absolute() else repo / args.mesh
     log(f"tripwire every {args.interval}s; branch {branch}; stop with Ctrl-C")
     log("site lag is about 5 min (this interval plus the Pages build)")

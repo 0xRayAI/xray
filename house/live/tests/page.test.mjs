@@ -117,6 +117,12 @@ test('LIVE pill is honest about generated_at age', () => {
   assert.match(html, /behind ' \+ m \+ ' min/);
   assert.match(html, /\.pill\.behind/);
   assert.match(html, /\(now - state\.generatedAt\) > 90000/);
+  assert.match(html, /if \(!state\.generatedAt\) return 'building'/);
+});
+
+test('wave header says building with no stamp and empty when the board has zero cards', () => {
+  assert.match(html, /if \(!wb\.stamp\) waveHead\.textContent = 'building'/);
+  assert.match(html, /else if \(!wb\.cards\.length\) waveHead\.textContent = 'empty'/);
 });
 
 

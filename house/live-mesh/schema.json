@@ -4,8 +4,9 @@
   "title": "ping-pong live mesh feed",
   "description": "Ordered event stream for the ping-pong mesh. Written by fetch_feed.py; read by render_mesh.py.",
   "type": "object",
-  "required": ["title", "seats", "services", "event_count", "events"],
+  "required": ["title", "seats", "services", "event_count", "events", "public"],
   "properties": {
+    "public": {"type": "boolean", "description": "Missing means private."},
     "title": {"type": "string"},
     "sources": {"type": "array", "items": {"type": "string"}},
     "repo": {"type": "string"},

@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { seatPresence, presentSeat, foldSeatTouch, fleetConfigOf } from './presence.mjs';
 import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateItem, workEventToItem, cardNoNudge, workItemNewer } from './source.mjs';
+import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS } from './archive.mjs';
+import { pinnedOrigin } from './origin.mjs';
 
 const PORT = Number(process.env.PORT) || 8080;
 // Site mode. Default (no config): GATED = password login + private repos masked on the page, feed and logs.
@@ -32,6 +34,9 @@ const INGEST_SECRET = process.env.INGEST_SECRET || '';
 for (const [k, v, min] of [...(PUBLIC ? [] : [['MESH_PASSWORD', MESH_PASSWORD, 1]]), ['SESSION_SECRET', SESSION_SECRET, 32], ['INGEST_SECRET', INGEST_SECRET, 32]]) {
   if (v.length < min) { console.error(`missing or too-short env ${k}; refusing to start`); process.exit(1); }
 }
+const ORIGIN = pinnedOrigin(process.env);
+const CARD_STALE_S = Number(process.env.CARD_STALE_S) > 0 ? Number(process.env.CARD_STALE_S) : 600;
+const DATA_STALE_S = Number(process.env.DATA_STALE_S) > 0 ? Number(process.env.DATA_STALE_S) : 21600;
 
 // POST /activity auth. Primary: the seat's OWN GitHub App installation token (Builder = app builder-app on org example-org),
 // verified against GitHub per token: GraphQL viewer must be the app's bot user (login + pinned id; a PAT or user
@@ -158,6 +163,8 @@ function ingestSrc(n, events, hdr, remove = null) {   // remove === null -> full
     }
   }
   for (const id of changed) touch(id);
+  for (const e of events) appendArchive('events', e);
+  if (n === 'github') recomputeGithubDataAt();
   header = mergedHeader(); fullDirty = true;
 }
 const ingestFull = f => ingestSrc('box', f.events, headerOf(f));
@@ -171,6 +178,7 @@ const INBOX_FILE = path.join(process.env.MESH_DATA_DIR || '/data', 'inbox', 'bui
 let inboxLines = [];
 try { inboxLines = fs.readFileSync(INBOX_FILE, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
 function saveInbox() {
+  for (const l of inboxLines) appendArchive('inbox', { ...l, seat: l.seat ?? 'builder' });
   const cut = Date.now() - 7 * 86400000;
   inboxLines = inboxLines.filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
   try { fs.mkdirSync(path.dirname(INBOX_FILE), { recursive: true }); fs.writeFileSync(INBOX_FILE + '.tmp', inboxLines.map(l => JSON.stringify(l)).join('\n') + '\n'); fs.renameSync(INBOX_FILE + '.tmp', INBOX_FILE); } catch (e) { console.log('inbox: save failed ' + e.code); }
@@ -347,7 +355,7 @@ function ackLines(seat, what) {
   const ids = what === 'all' ? arr.map(l => l.id) : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
-  for (const id of ids) if (!have.has(id)) { have.add(id); n++; }
+  for (const id of ids) if (!have.has(id)) { have.add(id); n++; appendArchive('acks', { seat, line: id, t_ct: new Date().toISOString() }); }
   const live = new Set(arr.map(l => l.id)); inboxAcks[seat] = [...have].filter(id => live.has(id)).slice(-6000);
   bfWrite('acks.json', JSON.stringify(inboxAcks)); return n;
 }
@@ -360,7 +368,12 @@ function lineDone(seat, l) {
   return false;
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
-function saveSeatInbox(s) { const cut = Date.now() - 7 * 86400000; seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000); bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n'); }
+function saveSeatInbox(s) {
+  for (const l of seatInbox[s]) appendArchive('inbox', { ...l, seat: l.seat ?? s });
+  const cut = Date.now() - 7 * 86400000;
+  seatInbox[s] = seatInbox[s].filter(l => !(Date.parse(l.t_ct) < cut)).slice(-5000);
+  bfWrite('inbox/' + s + '.jsonl', seatInbox[s].map(l => JSON.stringify(l)).join('\n') + '\n');
+}
 function validSeatLine(d) { if (!d || typeof d.seat !== 'string' || !SEAT_IDS.includes(d.seat.toLowerCase())) return false; return validInboxLine({ ...d, seat: 'builder' }); }
 function inboxLineError(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return 'line must be an object';
@@ -444,9 +457,27 @@ function dotsFleet(fleet, now = Date.now()) {   // Assistant node state, merged 
 }
 // cards: the collector waveboard, plus one card per accepted source item. A collector pass replaces only the wave cards.
 let waveCards = []; let bfCards = []; let nudges = []; let waveSig = ''; let boardSig = '';
-try { bfCards = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'cards.json'), 'utf8')).cards || []; waveCards = bfCards.slice(); } catch {}
+let cardsAt = 0;
+try {
+  const cardsPath = path.join(STATE_DIR, 'cards.json');
+  const parsed = JSON.parse(fs.readFileSync(cardsPath, 'utf8'));
+  bfCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+  waveCards = bfCards.slice();
+  const u = parsed.updated_ct;
+  const t = typeof u === 'number' ? u : Date.parse(String(u ?? ''));
+  if (Number.isFinite(t) && t > 0) cardsAt = t;
+  else if (bfCards.length) cardsAt = fs.statSync(cardsPath).mtimeMs;
+} catch { /* missing file stays cardsAt 0 */ }
 try { nudges = fs.readFileSync(path.join(STATE_DIR, 'nudges.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean); } catch {}
-const saveNudges = () => { nudges = nudges.slice(-3000); bfWrite('nudges.jsonl', nudges.map(n => JSON.stringify(n)).join('\n') + '\n'); };
+initArchive(process.env.MESH_DATA_DIR || '/data');
+const saveNudges = () => {
+  for (const n of nudges) {
+    appendArchive('nudges', n);
+    if (n && n.closed_at) appendArchive('nudges', { ...n, id: `${n.id}#closed`, t_ct: n.closed_at });
+  }
+  nudges = nudges.slice(-3000);
+  bfWrite('nudges.jsonl', nudges.map(n => JSON.stringify(n)).join('\n') + '\n');
+};
 const parsedAllow = parseAllowlist(process.env.SOURCE_ALLOWLIST, '');
 if (parsedAllow.badJson) console.log('source: SOURCE_ALLOWLIST is not json');
 const SOURCE_ALLOW = parsedAllow.allow;
@@ -470,14 +501,15 @@ function itemsFromWork() {
   }
   return [...latest.values()];
 }
-let cardsAt = 0;
 function publishBoard(updatedCt) {
   const merged = mergeCards(waveCards, sourceCardsFrom(itemsFromWork(), { seats: SEAT_IDS }));
   const sig = JSON.stringify(merged);
   if (sig === boardSig) return;
   boardSig = sig;
   bfCards = merged; cardsAt = Date.now();
-  bfWrite('cards.json', JSON.stringify({ updated_ct: updatedCt || new Date().toISOString(), cards: bfCards }));
+  const stamp = updatedCt || new Date().toISOString();
+  bfWrite('cards.json', JSON.stringify({ updated_ct: stamp, cards: bfCards }));
+  for (const c of bfCards) appendArchive('cards', c && c.t_ct ? c : { ...c, t_ct: stamp });
 }
 function setCards(wb) {
   if (!wb || !Array.isArray(wb.cards)) return;
@@ -867,6 +899,20 @@ function repoTimes(f) {
   }
 }
 const ageS = t => (t > 0 ? Math.max(0, Math.round((Date.now() - t) / 1000)) : null);
+let githubDataAt = 0;
+function recomputeGithubDataAt() {
+  let best = 0;
+  for (const e of SRCS.github.evs.values()) {
+    const t = Date.parse(e && e.t_ct);
+    if (Number.isFinite(t) && t > best) best = t;
+  }
+  githubDataAt = best;
+}
+function boardWord() {
+  if (cardsAt === 0) return 'building';
+  if (!bfCards.length) return 'empty';
+  return 'live';
+}
 function wakeHealth() {   // seat -> ok | fail | no_key | idle (configured, nothing sent yet); never a url or key
   const out = {};
   for (const [seat, cfg] of Object.entries(SEAT_WEBHOOKS)) {
@@ -877,9 +923,12 @@ function wakeHealth() {   // seat -> ok | fail | no_key | idle (configured, noth
 }
 function healthBody() {   // public: counts, times, ages (s) and wake states; no repo names, urls or keys
   const at = collector.repos.map(r => repoSeen.get(r)?.last_collected).filter(Boolean).sort((a, b) => Date.parse(a) - Date.parse(b));
-  return JSON.stringify({ ok: true, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
+  const cardAge = ageS(cardsAt), dataAge = ageS(githubDataAt);
+  const ok = !((typeof cardAge === 'number' && cardAge > CARD_STALE_S) || (typeof dataAge === 'number' && dataAge > DATA_STALE_S));
+  return JSON.stringify({ ok, mode: PUBLIC ? 'public' : 'gated', collector: collector.pid ? 'running' : 'stopped', repos: collector.repos.length, repos_unreadable: skipped.size,
     oldest_collected: at.length === collector.repos.length ? at[0] || null : null, newest_collected: at.at(-1) || null,
-    box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: ageS(cardsAt), wakes: wakeHealth() });
+    box_age: ageS(SRCS.box.at), collector_age: ageS(collector.lastWrite), card_age: cardAge, data_age: dataAge, board: boardWord(),
+    origin: ORIGIN || null, wakes: wakeHealth() });
 }
 function readCollectorFeed() {   // every 2 s: ingest the collector's file when it changed (atomic rename by the writer)
   let st; try { st = fs.statSync(GH_FEED); } catch { return; }
@@ -1142,7 +1191,7 @@ function validFeed(f) {
 // One JSON line: {t_ct, kind, action, to?, agent?, tag?}. The seat comes from the key, never from the body.
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
   watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'] };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'agent', 'tag', 'seat']);   // seat: optional, must match the token
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat']);   // seat: optional, must match the token; from: prompt sender (#281)
 const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -1170,6 +1219,7 @@ function validActivity(d, now = Date.now()) {
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.tag != null && d.tag.length > 40) return 'tag too long';
   if (d.to != null && d.to.length > 40) return 'to too long';
+  if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
   return null;
 }
 function actRateOk(seat, now = Date.now()) {
@@ -1270,6 +1320,16 @@ async function handle(req, res) {
   const m = req.method;
 
   if (p === '/healthz' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'application/json; charset=utf-8', healthBody());
+  if (p === '/archive' && m === 'GET') {
+    const key = String(process.env.ARCHIVE_KEY || '');
+    const tok = bearerOf(req);
+    if (!key || !tok) return json(req, res, 401, { error: 'unauthorized' });
+    if (!safeEq(tok, key)) return json(req, res, 401, { error: 'unauthorized' });
+    const date = url.searchParams.get('date') || '';
+    const kind = url.searchParams.get('kind') || '';
+    if (!validArchiveDate(date) || !ARCHIVE_KINDS.includes(kind)) return json(req, res, 400, { error: 'bad date or kind' });
+    return json(req, res, 200, { date, kind, lines: readArchive(date, kind).lines });
+  }
   if (p === '/robots.txt' && (m === 'GET' || m === 'HEAD')) return send(req, res, 200, 'text/plain; charset=utf-8', 'User-agent: *\nDisallow: /\n');
 
   if (p === '/ingest' || p === '/ingest/delta') {
@@ -1325,8 +1385,9 @@ async function handle(req, res) {
     if (!actRateOk(seat, now)) return json(req, res, 429, { error: 'rate limited (60/min)' }, { 'Retry-After': '60' });
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
-    for (const k of ['to', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
+    for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
     activity.push(line); if (activity.length > ACT_KEEP) activity.splice(0, activity.length - ACT_KEEP);
+    appendArchive('activity', line);
     return json(req, res, 202, { ok: true });
   }
 
@@ -1500,11 +1561,22 @@ async function handle(req, res) {
   return send(req, res, 404, 'text/plain; charset=utf-8', 'not found');
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer({ requireHostHeader: false }, (req, res) => {
   handle(req, res).catch(() => { if (!res.headersSent) send(req, res, 500, 'text/plain', 'error'); else res.destroy(); });
 });
+server.requireHostHeader = false;
 server.requestTimeout = 30000;
 server.headersTimeout = 15000;
+function githubFeedEvents() {
+  try {
+    const f = JSON.parse(fs.readFileSync(GH_FEED, 'utf8'));
+    return f && Array.isArray(f.events) ? f.events : [];
+  } catch (e) {
+    if (e && e.code !== 'ENOENT') console.log('archive: github feed ' + (e.code || 'read'));
+    return [];
+  }
+}
+backfillArchive({ inboxes: seatInbox, extraInbox: inboxLines, nudges, acks: inboxAcks, cards: bfCards, events: githubFeedEvents() });
 server.listen(PORT, () => console.log(`live mesh listening on :${PORT} (${PUBLIC ? 'public: no password, no masking' : 'gated'})`));
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => { stopping = true; server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); });
 // started last: the feed validators above are initialized by now

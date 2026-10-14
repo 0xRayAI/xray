@@ -1,5 +1,6 @@
 {
   "title": "muse / 0xRay ping-pong live events",
+  "public": true,
   "sources": [
     "https://github.com/0xRayAI/muse-house",
     "https://github.com/0xRayAI/xray",

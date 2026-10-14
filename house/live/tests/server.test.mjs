@@ -175,6 +175,8 @@ test('activity: Builder installation token only, seat forced, strict fields, pul
   await bad({ t_ct: nowCt(), kind: 'chat', action: 'start' }, /bad kind/);
   await bad({ t_ct: nowCt(), kind: 'turn', action: 'launch' }, /bad action/);
   await bad({ t_ct: nowCt(), kind: 'cloud_agent', action: 'launch' }, /agent id/);
+  await bad({ t_ct: nowCt(), kind: 'turn', action: 'start', from: 'Lead' }, /from is only for prompt/);   // #281
+  await bad({ t_ct: nowCt(), kind: 'prompt', action: 'received', from: 'x'.repeat(41) }, /from is only for prompt/);
   await bad({ t_ct: '2020-01-01T00:00:00-05:00', kind: 'turn', action: 'start' }, /range/);
   await bad({ t_ct: 'yesterday', kind: 'turn', action: 'start' }, /t_ct/);
   assert.equal((await act(JSON.stringify({ t_ct: nowCt(), kind: 'turn', action: 'end' }) + '\n' + '{}')).status, 422);

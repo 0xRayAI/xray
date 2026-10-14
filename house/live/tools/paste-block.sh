@@ -3,7 +3,8 @@
 # the same mint_token.token() the ~/.config/live-github-app/bin/gh wrapper uses (the seat's own App id and installation,
 # its cache), sent only in the Authorization header, and never printed. (`gh auth token` is refused by
 # the wrapper by design, so it is not used.)
-#   live_act start|end turn|subagent|watcher <tag>   -> POST /activity   (202 = recorded)
+#   live_act start|tick|end turn|subagent|watcher <tag>, received|sent prompt <seat>, launch|reply|finished cloud_agent <bc-id>
+#                                                    -> POST /activity   (202 = recorded)
 #   live_inbox                                       -> GET /inbox/builder?since=<cursor>, JSON lines on stdout;
 #                                                          cursor kept in ~/.live/builder.cursor
 export LIVE_URL="https://live.example.com"
@@ -28,11 +29,16 @@ def call(method, path, body=None):
         return 0, f"unreachable: {e}"
 cmd = sys.argv[1]
 if cmd == "act":
-    action, kind, tag = (sys.argv[2:5] + ["", "", ""])[:3]
-    if kind not in ("turn", "subagent", "watcher") or action not in ("start", "end") or not re.fullmatch(r"[A-Za-z0-9 ._:@#+/-]{1,40}", tag):
-        sys.exit("usage: live_act start|end turn|subagent|watcher <tag: 1-40 chars of A-Za-z0-9 ._:@#+/->")
+    action, kind, arg = (sys.argv[2:5] + ["", "", ""])[:3]
+    ACTS = {"turn": ("start", "tick", "end"), "subagent": ("start", "tick", "end"), "watcher": ("start", "tick", "end"),
+            "prompt": ("received", "sent"), "cloud_agent": ("launch", "reply", "finished", "cancel")}   # #281
+    if action not in ACTS.get(kind, ()) or not re.fullmatch(r"[A-Za-z0-9 ._:@#+/-]{1,40}", arg) or \
+            (kind == "cloud_agent" and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{2,40}", arg)):
+        sys.exit("usage: live_act start|tick|end turn|subagent|watcher <tag> | received|sent prompt <from|to seat>"
+                 " | launch|reply|finished|cancel cloud_agent <agent id>")
+    extra = {"prompt": {"received": "from", "sent": "to"}.get(action), "cloud_agent": "agent"}.get(kind, "tag")
     t_ct = datetime.datetime.now().astimezone().isoformat(timespec="seconds")   # e.g. 2026-10-09T14:50:00-05:00
-    line = json.dumps({"t_ct": t_ct, "kind": kind, "action": action, "tag": tag, "seat": "Builder"})
+    line = json.dumps({"t_ct": t_ct, "kind": kind, "action": action, extra: arg, "seat": "Builder"})
     code, out = call("POST", "/activity", line.encode())
     print(code, out)
     sys.exit(0 if code == 202 else 1)

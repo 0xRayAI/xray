@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -97,6 +98,14 @@ class DecisionTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             tw.check_branch("main")
 
+    def test_allowlist_is_origin_and_live_wire_only(self) -> None:
+        self.assertEqual(tw.check_remote("origin"), "origin")
+        self.assertEqual(tw.check_branch("live-wire"), "live-wire")
+        with self.assertRaises(SystemExit):
+            tw.check_remote("upstream")
+        with self.assertRaises(SystemExit):
+            tw.check_branch("feature")
+
 
 
 class NoLoopTests(unittest.TestCase):
@@ -135,6 +144,75 @@ class NoLoopTests(unittest.TestCase):
         f = _fp([{"id": "a", "kind": "merged"}], "t")
         self.assertFalse(tw.needs_publish({"feed": f, "mesh": None}, {"feed": f, "mesh": None},
                                           {"feed": None, "mesh": None}, branch_exists=True, main_incorporated=True))
+
+
+class PublicFeedTests(unittest.TestCase):
+    def test_public_predicate(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "live-events.json"
+            self.assertFalse(tw.feed_is_public(path))
+            path.write_text("[]", encoding="utf-8")
+            self.assertFalse(tw.feed_is_public(path))
+            path.write_text('{"events": []}', encoding="utf-8")
+            self.assertFalse(tw.feed_is_public(path))
+            path.write_text('{"public": false}', encoding="utf-8")
+            self.assertFalse(tw.feed_is_public(path))
+            path.write_text('{"public": "true"}', encoding="utf-8")
+            self.assertFalse(tw.feed_is_public(path))
+            path.write_text('{"public": true}', encoding="utf-8")
+            self.assertTrue(tw.feed_is_public(path))
+
+    def test_private_feed_exits_before_git(self) -> None:
+        calls = []
+        orig = tw.run
+
+        def boom(*args, **kwargs):
+            calls.append(args)
+            raise AssertionError("git was called")
+
+        tw.run = boom
+        try:
+            with tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                missing = root / "missing.json"
+                private = root / "live-events.json"
+                private.write_text('{"public": false, "events": []}', encoding="utf-8")
+                absent = root / "absent.json"
+                absent.write_text('{"events": []}', encoding="utf-8")
+                for feed in (missing, private, absent):
+                    with self.assertRaises(SystemExit):
+                        tw.tick(root, "live-wire", feed, root / "mesh.mp4", dry_run=True)
+        finally:
+            tw.run = orig
+        self.assertEqual(calls, [])
+
+    def test_write_preserves_public_true(self) -> None:
+        import os
+        from unittest import mock
+        import fetch_feed as ff
+        event = {
+            "id": "a", "t_ct": "2026-10-13T12:00:00Z", "from": "mill", "to": "GitHub",
+            "kind": "push", "direction": "internal", "label": "x", "source": "s", "src_file": "f",
+        }
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            out = root / "live-events.json"
+            env = {
+                "BURST_INBOX": str(root / "inbox"),
+                "BURST_WAVEBOARD": "off",
+                "BURST_ACTIVITY": str(root / "absent.jsonl"),
+            }
+            with mock.patch.dict(os.environ, env, clear=False):
+                ff.write({"events": [event]}, out)
+                stored = json.loads(out.read_text(encoding="utf-8"))
+                self.assertIsNot(stored.get("public"), True)
+                out.write_text(json.dumps({"public": True, "events": [event]}), encoding="utf-8")
+                ff.write({"events": [dict(event, id="b")]}, out)
+                kept = json.loads(out.read_text(encoding="utf-8"))
+                self.assertIs(kept.get("public"), True)
+                ff.write({"public": False, "events": [dict(event, id="c")]}, out)
+                explicit = json.loads(out.read_text(encoding="utf-8"))
+                self.assertIs(explicit.get("public"), False)
 
 
 if __name__ == "__main__":

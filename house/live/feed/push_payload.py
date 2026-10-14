@@ -76,7 +76,7 @@ def act_line(d):
     if d.get("action") not in ACT_KINDS[d["kind"]] or not ACT_T.fullmatch(str(d.get("t_ct", ""))):
         return None
     out = {"t_ct": d["t_ct"], "seat": d["seat"], "kind": d["kind"], "action": d["action"]}
-    for k in ("to", "agent", "tag"):
+    for k in ("to", "from", "agent", "tag"):   # from: prompt sender (#281)
         v = d.get(k)
         if v is None:
             continue
@@ -85,6 +85,8 @@ def act_line(d):
         if k == "agent" and not ACT_AGENT.fullmatch(v):
             return None
         out[k] = v
+    if "from" in out and d["kind"] != "prompt":
+        return None
     if d["kind"] == "cloud_agent" and "agent" not in out:
         return None
     return out

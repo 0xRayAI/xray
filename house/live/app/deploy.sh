@@ -9,7 +9,7 @@ APP="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 DST="${MESH_APP_DEPLOY_DIR:-/srv/live/deploy}"
 [ -d "$DST" ] || { echo "deploy dir $DST missing (must be railway-linked to live-board)" >&2; exit 1; }
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
-  cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
+  cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
   # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
   if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi
