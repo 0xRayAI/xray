@@ -219,7 +219,7 @@ class OperatorCosTest(unittest.TestCase):
                 "op:rw:ffff6666:BUILDING", "op:rw:ffff6666:DEPLOYING", "op:rw:ffff6666:SUCCESS"])
 
     def test_first_seen_failed_or_skipped_emits_terminal_only(self):
-        for st in ("FAILED", "SKIPPED"):
+        for st in ("FAILED", "SKIPPED", "CRASHED"):
             with tempfile.TemporaryDirectory() as d:
                 feed = Path(d)
                 (feed / "railway-deploys.json").write_text(json.dumps({"polled_at": "2026-10-14T18:05:00+00:00", "deploys": [
