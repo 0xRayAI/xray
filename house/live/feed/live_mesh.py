@@ -149,6 +149,25 @@ def token_check():
         raise SystemExit(EXIT_REMINT)
 
 
+def visible_feed_lists(services, product_nodes):
+    """burst-live is the board. The feed JSON does not list it as a service or a product node."""
+    def keep(name):
+        return name != "burst-live"
+    return [s for s in services if keep(s)], sorted(n for n in product_nodes if keep(n))
+
+
+def board_wave(events, write):
+    """One card pass. A miss is logged and the rest of the feed still writes."""
+    try:
+        wave = live_board.run(events, write=write)
+    except Exception as ex:  # noqa: BLE001 — a card miss must not stop the feed write
+        ff.log(f"cards: step failed ({type(ex).__name__}: {ex})")
+        return None
+    if wave is None:
+        ff.log("cards: step failed (no board)")
+    return wave
+
+
 def build(args, gh):
     ff._live_pass_t0 = time.time()
     token_check()
@@ -193,7 +212,7 @@ def build(args, gh):
     live_flow.Flow(COLLECTORS, uc.node).apply(uniq)   # hop list per event (real flow direction)
     uniq = uc.fleet_only(uniq)   # unmapped logins never reach fleet state, board, packets or the feed
     fleet_state = fleet.fleet_state(uniq)
-    wave = live_board.run(uniq, write=MODE != "github")   # host mode: model only, never local board files; cards / packets / beats from the same (fleet-only) events; host mode too
+    wave = board_wave(uniq, MODE != "github")   # host mode: model only, never local board files; cards / packets / beats from the same (fleet-only) events; host mode too
     if wave is not None and MODE != "box" and token:
         repos = sorted({str(e.get("repo")).lower() for e in uniq if e.get("repo")})
         try:
@@ -210,11 +229,15 @@ def build(args, gh):
            f"{time.time() - t0:.0f}s, backfill done {all(backfill_done.values())}, "
            f"fleet {fleet_state['active']}/{fleet_state['total']} active")
     first = min((e["t_ct"] for e in uniq), default=None, key=lambda t: ts(t))
+    services, product_nodes = visible_feed_lists(
+        ff.SERVICES,
+        [live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])],
+    )
     return {
         "title": live_site.SITE["title"],
         "sources": [f"https://github.com/{r}" for r in args.repos] + HEALTH_URLS + [MERGE_QUEUE.name],
-        "repo": primary_repo(args.repos), "repos": args.repos, "seats": ff.SEATS, "services": ff.SERVICES,
-        "product_nodes": sorted({live_site.SITE["node"], *live_site.SITE["hosts"].values(), *(x["name"] for x in live_site.SITE["services"])}),
+        "repo": primary_repo(args.repos), "repos": args.repos, "seats": ff.SEATS, "services": services,
+        "product_nodes": product_nodes,
         "notes": [
             f"{live_site.SITE['name']} fleet, full GitHub history (backfilled from repo creation, then incremental): PRs, PR pushes, "
             "reviews, reviewer verdicts (latest per PR), comment METADATA (no bodies), issues and issue events, "

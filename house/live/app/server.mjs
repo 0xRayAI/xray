@@ -896,8 +896,9 @@ function mergeFleet(g, b, stale, now) {
   }
   const gc = g?.cloud || {}, bc = b?.cloud || {};
   const ghl = Math.max(tsOf(gc.github_last_ct), tsOf(bc.github_last_ct));
-  const open = stale ? [] : (bc.open_agents || []);
-  const cloud = { active: open.length > 0 || (!!ghl && now - ghl <= win), open_agents: open, github_last_ct: iso(ghl),
+  const boxOpen = stale ? [] : (bc.open_agents || []);
+  const open = [...new Set([...boxOpen, ...(gc.open_agents || [])])];
+  const cloud = { active: open.length > 0, open_agents: open, github_last_ct: iso(ghl),
                   last_ct: iso(Math.max(tsOf(gc.last_ct), tsOf(bc.last_ct))) , working: !!gc.working || (!stale && !!bc.working) };
   if (stale && ((bc.open_agents || []).length || bc.working)) cloud.box_stale = true;
   if (cloud.working) working.CloudAgents = g?.working?.CloudAgents || b?.working?.CloudAgents || { via: 'cloud' };
@@ -910,6 +911,8 @@ function mergedHeader(now = Date.now()) {
   const h = { ...(b || {}), ...(g || {}) };
   if (!g && !b) Object.assign(h, headerOf(EMPTY_FEED));
   delete h.source; delete h.fleet;
+  if (Array.isArray(h.product_nodes)) h.product_nodes = h.product_nodes.filter(n => n !== 'burst-live');
+  if (Array.isArray(h.services)) h.services = h.services.filter(n => n !== 'burst-live');
   h.title = SITE.title;   // the server's site.json wins: a box pusher or an older collector still sends the template title
   h.generated_at = g?.generated_at || b?.generated_at || null;   // LIVE pill: the Railway collector once it runs
   h.event_count = evs.size;
@@ -925,7 +928,13 @@ function mergedHeader(now = Date.now()) {
   // board: the box pass board while the box pushed within BOARD_BOX_STALE_S (default 900 s), else the host collector's
   const boxBoardLive = !!b?.board && SRCS.box.at > 0 && now - SRCS.box.at <= BOARD_BOX_STALE_MS;
   const bd = boxBoardLive ? b.board : (g?.board || b?.board);
-  if (bd) { setCards(bd); evalNudges(now); h.board = { ...bd, cards: cardsView(), source: 'server' }; }
+  if (bd) {
+    try {
+      setCards(bd);
+      evalNudges(now);
+      h.board = { ...bd, cards: cardsView(), source: 'server' };
+    } catch (e) { console.log('cards: step failed ' + ((e && e.message) || 'error')); }
+  }
   const fleet = mergeFleet(g?.fleet, b?.fleet, stale, now);
   if (fleet) { if (b && !stale) evalSilent(fleet, now); h.fleet = fleet; }   // only with a fresh box view (no restart flaps)
   const df = dotsFleet(h.fleet, now); if (df) h.fleet = df;
@@ -935,13 +944,13 @@ function mergedHeader(now = Date.now()) {
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
-  if (h.fleet) h.fleet = stampFleetTimes(h.fleet);
+  if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
-  h.freshness = {
-    github_latest_ct: githubDataAt ? ctStamp(githubDataAt) : null,
-    github_card_latest_ct: githubCardAt ? ctStamp(githubCardAt) : null,
-    cards_at: cardsAt ? ctStamp(cardsAt) : null,
-  };
+  h.freshness = stampClockTree({
+    github_latest_ct: githubDataAt ? new Date(githubDataAt).toISOString() : null,
+    github_card_latest_ct: githubCardAt ? new Date(githubCardAt).toISOString() : null,
+    cards_at: cardsAt ? new Date(cardsAt).toISOString() : null,
+  });
   h.queue = openQueue();
   return h;
 }
@@ -1093,7 +1102,10 @@ function buildLoginMap() {
   return map;
 }
 function loginMap() { if (!loginToSeat) loginToSeat = buildLoginMap(); return loginToSeat; }
-function githubWorkKind(kind) { return GH_WORK_KINDS.has(kind) || kind.startsWith('issue_'); }
+function githubWorkKind(kind) {
+  if (CLOSE_KINDS.has(kind)) return false;
+  return GH_WORK_KINDS.has(kind) || kind.startsWith('issue_');
+}
 function workOnOf(e) {
   const repo = typeof e.repo === 'string' ? e.repo : '';
   const n = Number(e.number);
@@ -1145,7 +1157,7 @@ function applyGithubWorking(fleet, now) {
   f.active = Object.values(f.seats).filter(v => v.active && !v.external).length;
   return f;
 }
-// #336: fleet last_ct and freshness *_ct are America/Chicago with its offset, never a bare Z.
+// #336: fleet.as_of and every *_ct on the fleet and freshness are America/Chicago, never a bare Z.
 function ctStamp(t) {
   if (!t) return null;
   const base = ctOffset(t);
@@ -1155,37 +1167,42 @@ function ctStamp(t) {
   const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
   return base.replace(/([+-]\d{2}:\d{2})$/, '.' + ms + '$1');
 }
-function stampFleetTimes(fleet) {
-  if (!fleet || typeof fleet !== 'object') return fleet;
-  const seats = {};
-  for (const [name, seat] of Object.entries(fleet.seats || {})) {
-    if (!seat || typeof seat !== 'object' || !seat.last_ct) seats[name] = seat;
-    else seats[name] = { ...seat, last_ct: ctStamp(seat.last_ct) };
+function stampClockTree(node) {
+  if (!node || typeof node !== 'object') return node;
+  if (Array.isArray(node)) return node.map(stampClockTree);
+  const out = {};
+  for (const [k, v] of Object.entries(node)) {
+    if ((k === 'as_of' || k.endsWith('_ct') || k === 'cards_at') && (typeof v === 'string' || typeof v === 'number')) out[k] = v ? ctStamp(v) : v;
+    else if (v && typeof v === 'object') out[k] = stampClockTree(v);
+    else out[k] = v;
   }
-  let cloud = fleet.cloud;
-  if (cloud && typeof cloud === 'object') {
-    cloud = { ...cloud };
-    if (cloud.last_ct) cloud.last_ct = ctStamp(cloud.last_ct);
-    if (cloud.github_last_ct) cloud.github_last_ct = ctStamp(cloud.github_last_ct);
-  }
-  return { ...fleet, seats, cloud };
+  return out;
 }
 function workTarget(on) {
   const m = /([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)?)#([1-9]\d*)$/.exec(String(on || '').trim());
   return m ? { repo: m[1], number: Number(m[2]) } : null;
 }
+function closedKeyNumber(k, n) {
+  const i = String(k).lastIndexOf('#');
+  return i >= 0 && Number(String(k).slice(i + 1)) === n;
+}
 function workOnClosed(on) {
-  const key = workTarget(on);
-  if (!key) return false;
-  if (itemClosed(key.repo, key.number)) return true;
-  const repo = key.repo.toLowerCase();
-  const want = repo + '#' + key.number;
+  const text = String(on || '').trim();
+  const key = workTarget(text);
+  const bare = /#([1-9]\d*)$/.exec(text);
+  const number = key ? key.number : bare ? Number(bare[1]) : 0;
+  if (!number) return false;
+  const repo = key ? key.repo.toLowerCase() : '';
+  if (repo && itemClosed(repo, number)) return true;
   for (const [k, v] of closedItems()) {
-    if (v && v.closed && (k === want || k.endsWith('/' + want))) return true;
+    if (!v || !v.closed || !closedKeyNumber(k, number)) continue;
+    if (!repo) return true;
+    const kr = k.slice(0, k.lastIndexOf('#'));
+    if (kr === repo || kr.endsWith('/' + repo) || repo.endsWith('/' + kr)) return true;
   }
   for (const c of bfCards) {
-    if (!c || String(c.state || '').toLowerCase() !== 'closed') continue;
-    if (Number(c.number) !== key.number) continue;
+    if (!c || String(c.state || '').toLowerCase() !== 'closed' || Number(c.number) !== number) continue;
+    if (!repo) return true;
     const cr = String(c.repo || '').toLowerCase();
     if (cr === repo || cr.endsWith('/' + repo) || repo.endsWith('/' + cr)) return true;
   }
@@ -1591,12 +1608,9 @@ function cardsBehindData(now) {
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (Number.isFinite(t) && t > latest) latest = t;
   }
-  const boardLag = !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
-  // Card clock (newest event that moves an open card) lags ingest (newest event of any kind).
-  const ingest = githubDataAt || 0;
-  const cardClock = githubCardAt || 0;
-  const clockLag = !!(ingest && cardClock && ingest - cardClock > CARD_BEHIND_S * 1000);
-  return boardLag || clockLag;
+  // Board clock versus the newest card-worthy event. A newer CI check is not a stall:
+  // CI and pr_commit do not make cards, so raw ingest is not the comparison.
+  return !!(cardsAt && latest && (now - cardsAt) > (now - latest) + CARD_BEHIND_S * 1000);
 }
 function unreadableRepos() {
   const fromFeed = SRCS.github.header && SRCS.github.header.repos_unreadable;
@@ -2018,7 +2032,7 @@ function refreshWorking(now = Date.now()) {
   if (!header || !header.fleet) return;
   const before = JSON.stringify(header.fleet.working || {});
   const fleet = applyStoredActivity(header.fleet, now);
-  if (fleet) header.fleet = stampFleetTimes(clearClosedWork(fleet));
+  if (fleet) header.fleet = stampClockTree(clearClosedWork(fleet));
   if (JSON.stringify((header.fleet && header.fleet.working) || {}) !== before) { seq++; fullDirty = true; }
 }
 const actHits = new Map();   // seat -> [timestamps]

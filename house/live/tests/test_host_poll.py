@@ -27,6 +27,14 @@ class HostPoll(unittest.TestCase):
         self.assertIn("host_poll.poll()", mesh)
         self.assertNotRegex(rail, r"https://github.com/(?!0xRayAI/)")
 
+    def test_default_poll_is_fast_enough_to_see_transitions(self):
+        saved = os.environ.pop("RAILWAY_POLL_S", None)
+        try:
+            self.assertLessEqual(host_poll._poll_s(), 30)
+        finally:
+            if saved is not None:
+                os.environ["RAILWAY_POLL_S"] = saved
+
     def test_unset_token_does_not_call_out(self):
         saved = os.environ.pop("RAILWAY_TOKEN", None)
         try:

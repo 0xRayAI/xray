@@ -1,4 +1,4 @@
-// cards_behind when the card clock lags ingest, even if the board file was just rewritten.
+// cards_behind follows card-worthy events. A newer CI check is not a stall.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -39,13 +39,13 @@ function lay(agoCard, agoIngest) {
     generated_at: new Date().toISOString(),
     events: [
       { id: 'open', t_ct: new Date(Date.now() - agoCard).toISOString(), kind: 'pr_open', repo: 'acme/one', number: 4 },
-      { id: 'ingest', t_ct: new Date(Date.now() - agoIngest).toISOString(), kind: 'commit', repo: 'acme/one' },
+      { id: 'ingest', t_ct: new Date(Date.now() - agoIngest).toISOString(), kind: 'check_run', conclusion: 'success', repo: 'acme/one', sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
     ],
   }));
   return data;
 }
 
-test('card clock 21 min behind a fresh ingest sets cards_behind', async () => {
+test('a CI check 19 min after the card event leaves cards_behind false', async () => {
   const data = lay(21 * 60 * 1000, 2 * 60 * 1000);
   const srv = start(data);
   try {
@@ -59,8 +59,8 @@ test('card clock 21 min behind a fresh ingest sets cards_behind', async () => {
       }
       await new Promise(r => setTimeout(r, 100));
     }
-    assert.equal(body.cards_behind, true, JSON.stringify(body));
-    assert.equal(res.status, 503);
+    assert.equal(body.cards_behind, false, JSON.stringify(body));
+    assert.equal(res.status, 200);
   } finally {
     const done = new Promise(r => srv.child.once('exit', r));
     srv.child.kill();
