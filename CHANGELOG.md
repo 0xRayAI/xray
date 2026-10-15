@@ -18,6 +18,7 @@ The board seats see is the collector board. `house/live/feed/live_mesh.py` runs 
 - Handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> --sha <head>`. `--sha` is 7 to 64 hex digits. The command posts one inbox packet and prints the 1:1 line. A room post does not clear a missing packet.
 - Railway deploy polls stamp BUILDING, then DEPLOYING, then the terminal status. A poll that first sees SUCCESS backfills the stages it missed.
 - Deploy goes through `house/live/app/deploy.sh`, which assembles `collector/`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`.
+- A cloud agent is a board row (`cloud_agents`, also `board.cloud_agents` when a card board is present). Each row has `bcId`, owning seat, linked card, `pr` when the webhook sent one, state `running`, `finished`, or `failed`, and `updated_ct`. `POST /cursor/webhook` appends `agents.jsonl` after the signature check. `POST /activity` with kind `cloud_agent` or `agent` and action `launch`, `reply`, `finished`, or `cancel` is the other feed. Webhook `ERROR`, `FAILED`, `TIMED_OUT`, and `CANCELLED` are `failed`. The newest line sets the state. (#367)
 
 ### Nudge
 
