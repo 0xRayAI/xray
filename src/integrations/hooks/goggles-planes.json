@@ -46,7 +46,7 @@
     "skills": ".agents/skills/governance/SKILL.md"
   },
   "memory-recall": {
-    "files": ["src/integrations/hooks/plates.cjs"],
+    "files": ["src/integrations/hooks/plates.cjs", "src/__tests__/unit/plates.test.ts"],
     "skills": ".agents/skills/memory-recall/SKILL.md",
     "plates": ["record-map"]
   },
@@ -95,7 +95,7 @@
     "plates": ["write-home", "inference-files", "suit-organs"]
   },
   "suit-wear": {
-    "files": ["src/core/features-config.ts"],
+    "files": ["src/core/features-config.ts", "scripts/node/install-bridges.cjs", "scripts/node/setup.cjs", "src/integrations/cursor/hooks/xray-cloud-hook.sh"],
     "mark": "log_path",
     "skills": ".agents/skills/suit-wear/SKILL.md",
     "plates": ["suit-settings", "write-home", "package-face"]
@@ -125,13 +125,13 @@
     "plates": ["record-map"]
   },
   "site-manual": {
-    "files": ["docs-site/docs/introduction.md"],
+    "files": ["docs-site/docs/introduction.md", "docs-site/docs/index.md", "docs-site/docs/full-reference.md", "docs-site/docs/guides/features-since-3.1.md"],
     "mark": "survives the context window",
     "skills": ".agents/skills/site-manual/SKILL.md",
     "plates": ["record-map"]
   },
   "package-face": {
-    "files": ["package.json", "grok-bot/README.md", "grok-bot/llms.txt", "grok-bot/CHANGELOG.md"],
+    "files": ["package.json", "grok-bot/README.md", "grok-bot/llms.txt", "grok-bot/CHANGELOG.md", "src/cli/index.ts", "src/cli/commands/plugin-commands.ts", "src/__tests__/unit/plugin-commands.test.ts"],
     "mark": "\"name\": \"0xray\"",
     "skills": ".agents/skills/package-face/SKILL.md",
     "plates": ["record-map", "suit-wear"]
