@@ -28,7 +28,6 @@
     .seat .dot.blink { animation: live-blink 1.1s ease-in-out infinite; }
     @keyframes live-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
     @media (prefers-reduced-motion: reduce) { .seat .dot.blink { animation: none; } }
-    .seat.stale { opacity: 0.55; border-style: dashed; }
     #mesh { opacity: 0; transition: opacity 1.2s ease-out; }
     #mesh.in { opacity: 1; }
     @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -336,11 +335,6 @@
   // the one seat state for chip + node; views recorded for tests/debug (window.LIVE_SEAT_VIEWS)
   var chipView = {}, nodeView = {}; window.LIVE_SEAT_VIEWS = { chip: chipView, node: nodeView };
   function seatState(k, hot) { return L.seatState(fleetWorking(k), !!(hot && hot[k]), fleetActive(k)); }
-  function fleetStale(k) {   // seat state that came from the box while the box is not reporting
-    var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
-    if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.box_stale);
-    return !!(f && f.seats && f.seats[name] && f.seats[name].box_stale);
-  }
   function fleetWorking(k) {   // in-flight spinner; not counted in N of M
     var f = window.LIVE_FLEET, name = k === 'blinky' ? 'Coord' : k;
     if (k === 'CloudAgents') return !!(f && f.cloud && f.cloud.working);
@@ -830,9 +824,6 @@
       s.dot.classList.toggle('blink', spinning);
       if (spinning) s.dot.style.background = rgb(c);
       if (spinning) s.el.setAttribute('aria-label', a[0] + ' working'); else s.el.removeAttribute('aria-label');
-      var stale = fleetStale(a[0]);   // box-sourced state while the box is silent: shown dimmed, not hidden
-      s.el.classList.toggle('stale', stale);
-      if (stale) s.el.title = 'box signals stale (box not reporting); GitHub signals still live'; else s.el.removeAttribute('title');
     });
     var logKey = shown + ':' + state.events.length;
     if (logKey !== lastLogKey) { lastLogKey = logKey; renderLog(shown); }

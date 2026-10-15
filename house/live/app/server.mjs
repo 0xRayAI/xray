@@ -1,4 +1,5 @@
 const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
+const PROMPT_WORK_MS = 10 * 60000;   // a prompt pulse: the seat stays working this long, and Blaze is the sender
 // Seat -> end time (ms), or 0 for an open turn past TURN_OPEN_MS (full clear).
 // An ended turn clears older marks. A newer mark counts only while fresh. A running cloud agent stays.
 let turnRelease = new Map();
@@ -878,7 +879,7 @@ const boxStale = (now = Date.now()) => now - (SRCS.box.at || STARTED) > BOX_STAL
 const tsOf = s => { const t = Date.parse(s || ''); return Number.isFinite(t) ? t : 0; };
 const iso = t => (t ? new Date(t).toISOString() : null);
 // Fleet = GitHub-derived (Railway) + box-derived seat state. "active" is recomputed against the server clock, so a
-// silent box ages out on its own; box-only state is kept but flagged box_stale (not hidden) once the box is silent.
+// silent box ages out on its own. Box-only working drops. That silence is not a board error.
 function mergeFleet(g, b, stale, now) {
   if (!g && !b) return undefined;
   const win = ((g || b).window_min || WINDOW_MIN) * 60000;
@@ -888,12 +889,9 @@ function mergeFleet(g, b, stale, now) {
     const gs = g?.seats?.[s], bs = b?.seats?.[s], gl = tsOf(gs?.last_ct), bl = tsOf(bs?.last_ct);
     const src = bl > gl ? bs : gs, last = Math.max(gl, bl);
     const o = { active: !!last && now - last <= win, last_ct: src?.last_ct ?? null, via: src?.via ?? null, working: false };
-    if (stale && bs && bl > gl) o.box_stale = true;
     let w = g?.working?.[s] || null;
     const bw = b?.working?.[s];
-    if (!w && bw && !(bw.via === 'prompt' && gl > tsOf(bw.since_ct))) {   // a prompt is answered once the seat acts on GitHub
-      if (stale) { o.box_stale = true; o.working_stale = true; } else w = bw;
-    }
+    if (!w && bw && !stale && !(bw.via === 'prompt' && gl > tsOf(bw.since_ct))) w = bw;   // a prompt is answered once the seat acts on GitHub
     if (w) { o.working = true; o.working_via = w.via; working[s] = w; }
     seats[s] = o;
   }
@@ -903,10 +901,9 @@ function mergeFleet(g, b, stale, now) {
   const open = [...new Set([...boxOpen, ...(gc.open_agents || [])])];
   const cloud = { active: open.length > 0, open_agents: open, github_last_ct: iso(ghl),
                   last_ct: iso(Math.max(tsOf(gc.last_ct), tsOf(bc.last_ct))) , working: !!gc.working || (!stale && !!bc.working) };
-  if (stale && ((bc.open_agents || []).length || bc.working)) cloud.box_stale = true;
   if (cloud.working) working.CloudAgents = g?.working?.CloudAgents || b?.working?.CloudAgents || { via: 'cloud' };
   return { as_of: iso(now), window_min: win / 60000, seats, active: Object.values(seats).filter(v => v.active).length,
-           total: Math.max(names.length, g?.total || 0, b?.total || 0), cloud, working, box_stale: stale,
+           total: Math.max(names.length, g?.total || 0, b?.total || 0), cloud, working, box_stale: false,
            missing_activity: [...new Set([...(b?.missing_activity || []), ...(g?.missing_activity || [])])].sort() };   // feed only
 }
 function mergedHeader(now = Date.now()) {
@@ -1900,7 +1897,7 @@ function validFeed(f) {
 const ACT_KINDS = { prompt: ['received', 'sent'], turn: ['start', 'end', 'tick'], subagent: ['start', 'end', 'tick'],
   watcher: ['start', 'end', 'tick'], cloud_agent: ['launch', 'reply', 'finished', 'cancel'],
   agent: ['launch', 'reply', 'finish', 'cancel'] };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat']);   // seat: optional, must match the token; from: prompt sender (#281)
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room']);   // seat: optional, must match the token; from: prompt sender (#281); room: optional short name
 const ACT_BANNED = /body|text|message/i;          // no free text of any kind, as a key or inside a value
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -1938,10 +1935,18 @@ function ctOffset(t) {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}${off < 0 ? '-' : '+'}${String(a / 60 | 0).padStart(2, '0')}:${String(a % 60).padStart(2, '0')}`;
 }
 // Seat activity becomes a live board event (seat to seat traffic), not just a fleet flag (hotfix: board was GitHub-only).
+function promptSender(line) {
+  const raw = String(line.from || '').trim();
+  if (!raw || /^blaze$/i.test(raw)) return 'Blaze';
+  return raw;
+}
 function activityEvent(line) {
-  const to = line.to || (line.agent ? 'cloud' : 'Bifrost');
-  upsert({ id: `act:${line.id}`, t_ct: ctOffset(line.t_ct), from: line.seat, to, kind: `seat_${line.kind}`, direction: 'internal',
-    label: `${line.seat} ${line.kind} ${line.action}${line.tag ? ' · ' + line.tag : ''}`, src_file: 'activity', repo: null });
+  const prompt = line.kind === 'prompt';
+  const from = prompt ? promptSender(line) : line.seat;
+  const to = prompt ? (line.to || line.seat) : (line.to || (line.agent ? 'cloud' : 'Bifrost'));
+  const extra = prompt ? (line.room ? ' · ' + line.room : '') : (line.tag ? ' · ' + line.tag : '');
+  upsert({ id: `act:${line.id}`, t_ct: ctOffset(line.t_ct), from, to, kind: `seat_${line.kind}`, direction: 'internal',
+    label: `${prompt ? from : line.seat} ${line.kind} ${line.action}${extra}`, src_file: 'activity', repo: null });
 }
 function serverActivity(seat, kind, action, tag) {
   if (!seat) return;
@@ -1994,6 +1999,7 @@ function markTime(row) {
 // endAt 0 is an open turn past the window, not an end.
 function spareTurnMark(row, endAt, now = Date.now()) {
   if (row && row.via === 'cloud') return true;
+  if (row && row.via === 'prompt') { const at = markTime(row); return !!at && now - at <= PROMPT_WORK_MS; }
   if (!endAt || !row) return false;
   const at = markTime(row);
   if (!at) return true;
@@ -2022,6 +2028,7 @@ function applyStoredActivity(fleet, now) {
   const open = new Map();
   const ended = new Map();
   const newest = new Map();
+  const prompted = new Map();
   for (const line of activity) {
     if (!line || typeof line.seat !== 'string') continue;
     const seat = line.seat.toLowerCase();
@@ -2031,6 +2038,9 @@ function applyStoredActivity(fleet, now) {
     newest.set(seat, Math.max(newest.get(seat) || 0, t));
     const ident = String(line.agent || (line.kind === 'turn' ? '-' : line.tag) || '-').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40) || '-';
     const key = seat + ':' + line.kind + ':' + ident;
+    if (line.kind === 'prompt' && (line.action === 'sent' || line.action === 'received')) {
+      if (now - t <= PROMPT_WORK_MS) prompted.set(seat, Math.max(prompted.get(seat) || 0, t));
+    }
     if (line.kind === 'turn' || line.kind === 'subagent' || line.kind === 'watcher') {
       if (line.action === 'end') {
         if (t >= (open.get(key) || 0)) open.delete(key);
@@ -2078,6 +2088,24 @@ function applyStoredActivity(fleet, now) {
     clearSeatWork(f, seat);
   }
   turnRelease = release;
+  for (const seat of Object.keys(f.working)) {
+    const row = f.working[seat];
+    if (!row || row.via !== 'prompt') continue;
+    const t = prompted.get(seat) || 0;
+    if (t && now - t <= PROMPT_WORK_MS) continue;
+    delete f.working[seat];
+    if (f.seats[seat] && f.seats[seat].working_via === 'prompt') {
+      const src = { ...f.seats[seat], working: false };
+      delete src.working_via;
+      f.seats[seat] = src;
+    }
+  }
+  for (const [seat, t] of prompted) {
+    if (now - t > PROMPT_WORK_MS) continue;
+    f.working[seat] = { via: 'prompt', since_ct: iso(t) };
+    const src = f.seats[seat] || { active: true, last_ct: iso(t), via: 'activity', working: false };
+    f.seats[seat] = { ...src, working: true, working_via: 'prompt' };
+  }
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
 }
@@ -2108,6 +2136,7 @@ function validActivity(d, now = Date.now()) {
   if ((d.kind === 'cloud_agent' || d.kind === 'agent') && !ACT_AGENT.test(d.agent || '')) return 'agent id required';
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
   if (d.tag != null && d.tag.length > 40) return 'tag too long';
+  if (d.room != null && (d.kind !== 'prompt' || d.room.length > 40)) return 'room is only for prompt (<= 40 chars)';
   if (d.to != null && d.to.length > 40) return 'to too long';
   if (d.from != null && (d.kind !== 'prompt' || d.from.length > 40)) return 'from is only for prompt (<= 40 chars)';
   return null;
@@ -2313,7 +2342,7 @@ async function handle(req, res) {
     if (!actRateOk(seat, now)) return json(req, res, 429, { error: 'rate limited (60/min)' }, { 'Retry-After': '60' });
     actSeq++;
     const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action };
-    for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
+    for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
     rememberActivity(line);
     appendArchive('activity', line);
     activityEvent(line);
@@ -2339,7 +2368,7 @@ async function handle(req, res) {
       if (!actRateOk(seat, now)) { rejected.push({ n: i + 1, error: 'rate limited' }); return; }
       actSeq++;
       const line = { id: `${ACT_EPOCH}.${actSeq}`, seq: actSeq, seat, t_ct: d.t_ct, kind: d.kind, action: d.action, via: 'ingest' };
-      for (const k of ['to', 'from', 'agent', 'tag']) if (d[k] != null) line[k] = d[k];
+      for (const k of ['to', 'from', 'agent', 'tag', 'room']) if (d[k] != null) line[k] = d[k];
       rememberActivity(line); appendArchive('activity', line); added++;
     });
     if (added) { seq++; header = mergedHeader(); fullDirty = true; }
