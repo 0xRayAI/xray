@@ -15,9 +15,8 @@ Every seat needs a route: a seat no rule routes to gets no inbox lines, so its w
 ## Pieces
 - **Railway server** (`app/server.mjs`, service `burst-live`): the page, the merged feed, and the **source of truth** for
   seat inboxes, cards and nudges (volume `/data/live/`: `inbox/<seat>.jsonl`, `cards.json`, `nudges.jsonl`).
-- **Host collector** (`LIVE_MODE=github`): builds the board from GitHub events so a host-only install has cards. The page uses that board when the box board is absent or older than `BOARD_BOX_STALE_S`.
-- **Box feed pass + pusher** (`feed/push_to_host.sh`, released with `feed/release.sh`): pushes box events
-  (`POST /ingest[/delta]`). A box `board` wins while the box pushed within `BOARD_BOX_STALE_S` (default 900 s). Env: `LIVE_HOME`, `MESH_RUN`, `FEED`.
+- **Host collector** (`LIVE_MODE=github`): `feed/live_mesh.py` runs `live_collect.py` and `live_board.py` every 45 seconds (`LIVE_WATCH_S`). That collector board is the board. An empty box board does not replace it.
+- **Box feed pass:** `feed/push_to_host.sh` is retired for the board and for seat activity. Do not start it. `house/burst/push.sh` posts burst deltas and is not the live board.
   Locally it keeps only a ring buffer (`$MESH_RUN/feed/inbox-spool/<seat>.jsonl`, 300 lines a seat)
   for when the server can't be reached.
 
@@ -78,7 +77,7 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 | `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for critic a verdict at head); `?all=1` = history |
 | `GET /routing` | any seat key or session (open in public mode) | `{ok, seats: [{seat, login, aliases, status}]}`: the routing map, read-only; status `ok`, `missing` (refused), `unverified`, `no_login`. Never keys or webhook URLs |
 | `GET /nudges?since=<id>` | forge | `{nudges}` in creation order |
-| `POST /inbox` | `X-Live-Ingest` (box pusher) | stores seat lines (deduped by id). A batch that stores nothing is 400 with `rejected` refs. `replace: true` clears only after a line validates |
+| `POST /inbox` | ingest secret, or that seat's key for its own handoff packet | stores seat lines (deduped by id). A seat key may post at most 8 lines, each `type` `packet`, kind `ready`, `critic_fail`, `live_pass`, `merge`, or `ci_fail`, id `handoff:<repo>#<n>:<kind>:<sha>`. A non-packet line is 403 `not your handoff`. A batch that stores nothing is 400 with `rejected` refs. `replace: true` is the ingest secret only |
 | `POST /ingest/source` | `X-Live-Ingest` | normalized source events (`{source, events}`). Unknown fields are refused |
 | `GET/POST /inbox/builder` | as before | kept for Builder's existing reader |
 

@@ -2,6 +2,27 @@
 
 A card is one GitHub issue or pull request. A beat is a real event on it. A packet is the structured fields (goal, constraints, path, acceptance, evidence, next owner, escalate).
 
+The board seats see is the collector board. `feed/live_mesh.py` runs `feed/live_collect.py` and `feed/live_board.py` every 45 seconds (`LIVE_WATCH_S`, default 45). An empty box board does not replace those cards.
+
+## Event to card
+
+| Collector event | On the card |
+|---|---|
+| `pr_open`, `pr_ready` | Beat `opened`. The card is live. |
+| `pr_draft` | The card parks at once. |
+| `review` `APPROVED`, or `critic_pass` | Beat `Reviewer PASS`. |
+| `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FAIL`. Stage moves to fix. |
+| `pr_commit`, `pr_force_push`, `pr_update` | Beat `pushed`. A new head after a FAIL is a new review. A new head after red CI closes the `ci_fail` handoff. |
+| `ci_pass`, `ci_fail` | CI stays on the card for that PR number. It is not board traffic. |
+| `merged` | Beat `merged`. Credit is `merged_by`, not the author. The author's seat gets an info line. |
+| `pr_close` | The card closes. The author's seat gets an info line. The handoff obligation closes. |
+| `pr_reopen`, `issue_reopen` | Clears closed and stop. The card is live again. |
+| A fleet seat's comment | A comment beat. The author's seat is not the only one that counts. |
+| No beat for 72 hours on an open PR | The card parks. |
+| Handoff packet missing for `NUDGE_L1_S` | Flag `handoff missing`. The seat that owes the handoff is nudged. L3 also goes to the CoS role. A room post does not clear it. |
+
+Stage order is `open` > `review` > `fix` > `merge` > `retest` > `done`. State is `live`, `parked`, or `closed`. PASS at the current head plus green CI moves the card to merge.
+
 ## Close
 
 A merge, an issue close, or a pull request close sets the card to done and closed and clears its nudge. It does not stay live waiting for a retest tick. A failed retest after merge needs a new issue.

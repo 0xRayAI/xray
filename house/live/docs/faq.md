@@ -66,7 +66,7 @@ Generic install mismatches. No project ids, no secret values. The agreed host se
 
 - **Symptom:** The page, the collector, and the pusher are up. The board says "no cards".
 - **Cause:** The host child is `LIVE_MODE=github` and used to skip `live_board`. A host-only install has no box board to fall back on.
-- **Fix:** The host builds a board from GitHub events, so a host-only install has cards. A box board wins while the box pushed within `BOARD_BOX_STALE_S` (default 900 s). After that, the server uses the host board.
+- **Fix:** The host collector (`live_mesh.py`, `live_collect.py`, `live_board.py`, every 45 seconds) builds the board. An empty box board does not replace those cards.
 
 ### The header says 0 of 7 bots active
 

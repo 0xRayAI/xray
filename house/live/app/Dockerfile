@@ -4,7 +4,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends python3 tzdata ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY package.json server.mjs presence.mjs source.mjs archive.mjs origin.mjs routes.mjs governor.mjs arch1-launch.mjs worktrack.mjs ./
+COPY package.json server.mjs presence.mjs source.mjs archive.mjs origin.mjs routes.mjs governor.mjs arch1-launch.mjs worktrack.mjs handoff.mjs ./
 COPY public ./public
 COPY collector ./collector
 # collector/ is assembled by deploy.sh (assemble-collector.sh); only its README is in git (#292)

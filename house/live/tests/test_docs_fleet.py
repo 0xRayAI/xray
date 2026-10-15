@@ -22,6 +22,31 @@ class NonEmptyReadIsWork(unittest.TestCase):
         root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
         for f in ("house/live/docs/inbox.md", "house/live/SETUP.md", "grok-bot/OP-PROC.md", "house/OP-PROC.md"):
             self.assertIn("a non-empty read is the work", open(os.path.join(root, f)).read().lower(), f)
+class HandoffDocs(unittest.TestCase):
+    def test_stale_board_source_is_gone_and_handoff_is_written_down(self):
+        root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        def text(rel):
+            return open(os.path.join(root, rel)).read()
+        setup, faq, deploy = text("house/live/SETUP.md"), text("house/live/docs/faq.md"), text("house/burst/DEPLOY.md")
+        inbox, board = text("house/live/docs/inbox.md"), text("house/live/docs/board.md")
+        op, lex = text("grok-bot/OP-PROC.md"), text("grok-bot/LEXICON.md")
+        mesh = text("house/live/feed/live_mesh.py")
+        for name, body in (("setup", setup), ("faq", faq), ("deploy", deploy), ("mesh", mesh)):
+            self.assertNotIn("BOARD_BOX_STALE", body, name)
+            self.assertNotIn("box board wins", body.lower(), name)
+        self.assertNotIn("box pusher only", deploy.lower())
+        self.assertIn("--handoff", inbox)
+        self.assertIn("handoff missing", inbox)
+        self.assertIn("not your handoff", setup)
+        for body in (inbox, op, lex, board):
+            self.assertIn("handoff missing", body)
+        self.assertIn("**room post**", lex)
+        self.assertIn("live_pass", op)
+        self.assertIn("ci_fail", op)
+        self.assertIn("Reviewer PASS", board)
+        self.assertIn("pr_draft", board)
+        self.assertIn("72 hours", board)
+        self.assertIn("fleet seat", op.lower())
 class CommentNeedle(unittest.TestCase):
     def test_comment_must_mention(self):
         root = os.path.join(os.path.dirname(__file__), "..", "..", "..")

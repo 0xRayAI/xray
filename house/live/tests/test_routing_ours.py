@@ -40,6 +40,7 @@ class EverySeatIsOurs(unittest.TestCase):
         refs += [("aliases." + k, v) for k, v in inbox_pass.aliases_of(ROLES).items()]
         refs += [("extra_seats", k) for k in ROLES["extra_seats"]]
         refs += [("pr_heads", k) for k in ROLES["pr_heads"]["seats"]]
+        refs += [("handoffs.reviewer", ROLES["handoffs"]["reviewer"]), ("handoffs.merger", ROLES["handoffs"]["merger"])]
         refs += [("comment_watch", k) for k in ROLES["comment_watch"]["seats"]]
         self.assertEqual(set(ROLES["seats"]), KIT_ROLES)   # role rules keyed by kit role, each mapped to one of ours or off
         for role, rule in ROLES["seats"].items():

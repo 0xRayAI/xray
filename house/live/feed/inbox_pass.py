@@ -209,6 +209,13 @@ def _direct_all(event, roles):
             line = inbox._line(event, seat, reason + merged)
             if line:
                 out.append(line)
+    if kind in ("merged", "pr_close") and event.get("number") is not None:
+        author = author_seat(event, roles)
+        if author:
+            why = "your PR merged" if kind == "merged" else "your PR closed"
+            line = inbox._line(event, author, why, line_id=f"{event.get('id')}:info", line_type="info")
+            if line:
+                out.append(line)
     ours = our_seats()
     if ours:   # a line to a seat outside our 9 (unknown, sample, unkeyed) is read by nobody: drop it, fall back below
         out = [l for l in out if l.get("seat") in ours]
@@ -224,7 +231,17 @@ def _direct_all(event, roles):
         if k not in seen:
             seen.add(k); uniq.append(l)
     out = uniq
-    return [l for l in out if (not me or l.get("seat") != me) and not watched_by_seat(l.get("seat"), event)]   # no self-wakes, no double wakes
+    kept = []
+    for l in out:
+        if watched_by_seat(l.get("seat"), event):
+            continue
+        if l.get("type") == "info":
+            kept.append(l)   # merged / pr_close tell the author even when they did it
+            continue
+        if me and l.get("seat") == me:
+            continue
+        kept.append(l)
+    return kept
 
 
 def aliases_of(roles):
@@ -248,6 +265,35 @@ def alias_seat(name, roles):
         if n in aliases:
             return aliases[n]
     return None
+
+
+def login_seat(login, roles):
+    """Seat for an exact GitHub login: routing.*.login, fleet-nodes.json, then SEAT_BOTS. Aliases are not logins."""
+    key = str(login or "").strip().casefold()
+    if not key:
+        return None
+    for seat, entry in (roles.get("routing") or {}).items():
+        if isinstance(entry, dict) and str(entry.get("login") or "").casefold() == key:
+            return seat
+    nodes = _load(NODES, {})
+    if isinstance(nodes, dict):
+        for name, seat in nodes.items():
+            if isinstance(seat, str) and str(name).casefold() == key:
+                return str(seat).lower()
+    for seat, value in _env_json("SEAT_BOTS").items():
+        listed = [value] if isinstance(value, str) else value if isinstance(value, list) else []
+        for item in listed:
+            if isinstance(item, str) and item.casefold() == key:
+                return str(seat).lower()
+    return None
+
+
+def author_seat(event, roles):
+    """Seat of the PR author (event author login), or None when the login is not one of ours."""
+    raw = event.get("author")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return login_seat(raw, roles)
 
 
 def actor_seat(event, roles):

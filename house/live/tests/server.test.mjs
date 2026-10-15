@@ -397,23 +397,24 @@ test('collector health arg is COLLECTOR_HEALTH_URLS, with no example host', () =
   assert.match(src, /LIVE_FLEET_SEATS/);
 });
 
-test('fresh box board wins over a newer host board', async () => {
+test('collector board wins over a fresh box board', async () => {
   const now = Date.now();
   const box = { key: 'example-org/app#7001', kind: 'pr', repo: 'example-org/app', number: 7001, title: 'box card', url: '', owner: 'Builder', stage: 'review', state: 'live', packet: {}, beats: [], last_beat_t: now };
   const host = { key: 'example-org/app#7002', kind: 'pr', repo: 'example-org/app', number: 7002, title: 'host card', url: '', owner: 'Builder', stage: 'review', state: 'live', packet: {}, beats: [], last_beat_t: now };
   assert.equal((await ingest(JSON.stringify({ title: 't', event_count: 0, generated_at: new Date(now).toISOString(), events: [], board: { cards: [box] } }))).status, 200);
   const gfile = path.join(DATA, 'feed', 'github-events.json');
-  const ghFeed = { title: 't', generated_at: new Date(now + 5000).toISOString(), event_count: 0, events: [], board: { updated_ct: 't', cards: [host] } };
+  const hostAt = new Date(now + 5000).toISOString();
+  const ghFeed = { title: 't', generated_at: hostAt, event_count: 0, events: [], board: { updated_ct: 't', cards: [host] } };
   fs.mkdirSync(path.dirname(gfile), { recursive: true });
   fs.writeFileSync(gfile + '.tmp', JSON.stringify(ghFeed));
   fs.renameSync(gfile + '.tmp', gfile);
   let f;
   for (let i = 0; i < 40; i++) {
     f = await (await fetch(BASE + '/live-events.json', { headers: { Cookie: cookie } })).json();
-    if (f.sources && f.sources.github) break;
+    if (f.sources && f.sources.github && f.sources.github.generated_at === hostAt) break;
     await new Promise(r => setTimeout(r, 200));
   }
-  assert.ok(f.sources && f.sources.github);
-  assert.ok(f.board.cards.some(c => c.number === 7001));
-  assert.equal(f.board.cards.some(c => c.number === 7002), false);
+  assert.equal(f.sources && f.sources.github && f.sources.github.generated_at, hostAt);
+  assert.ok(f.board.cards.some(c => c.number === 7002));
+  assert.equal(f.board.cards.some(c => c.number === 7001), false);
 });

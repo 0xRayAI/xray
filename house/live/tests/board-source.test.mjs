@@ -1,6 +1,6 @@
 import { listenPort } from './free-port.mjs';
-// Board source choice (app/server.mjs): the box pass board wins while the box pushed within BOARD_BOX_STALE_S,
-// even if the host collector's feed is newer; once the box is stale the host collector's board is used.
+// Board source choice (app/server.mjs): the Railway collector's board wins over a box push.
+// An empty box board never overrides real collector cards.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -44,13 +44,13 @@ async function titles(hostAt) {   // wait until the server has read the host fee
   }
   throw new Error('host feed never read');
 }
-test('fresh box board wins even when the host feed is newer; a stale box falls back to the host board', async () => {
-  const r = await fetch(BASE + '/ingest', { method: 'POST', headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title: 't', generated_at: new Date().toISOString(), events: [], board: { cards: [card(1, 'box card')] } }) });
-  assert.equal(r.status, 200);
-  let t = await titles(writeHost(2));            // host feed generated later than the box feed
-  assert.ok(t.includes('box card') && !t.includes('host card'), JSON.stringify(t));
-  await sleep(6300);                              // box silent past BOARD_BOX_STALE_S=6 (wide: a loaded box can take seconds to read the host feed)
+test('collector board wins over a fresh box board, and an empty box board does not wipe it', async () => {
+  const ingest = (board) => fetch(BASE + '/ingest', { method: 'POST', headers: { Authorization: 'Bearer ' + INGEST, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: 't', generated_at: new Date().toISOString(), events: [], board }) });
+  assert.equal((await ingest({ cards: [card(1, 'box card')] })).status, 200);
+  let t = await titles(writeHost(2));
+  assert.ok(t.includes('host card') && !t.includes('box card'), JSON.stringify(t));
+  assert.equal((await ingest({ cards: [] })).status, 200);
   t = await titles(writeHost(3));
   assert.ok(t.includes('host card') && !t.includes('box card'), JSON.stringify(t));
 });
