@@ -113,7 +113,7 @@ The last good wake lives in `wake-ok.json` on the volume. An ack is an append-on
 
 ## Deploy stages
 
-The Railway poll runs every `RAILWAY_POLL_S` seconds (default 15). A deploy emits BUILDING, DEPLOYING and its terminal status. A poll that first sees SUCCESS backfills the BUILDING and DEPLOYING it missed. Any other terminal status (FAILED, SKIPPED, CRASHED) never gets invented phases: it emits only the phases actually observed plus the terminal line.
+The Railway poll runs every `RAILWAY_POLL_S` seconds (default 15). A deploy emits BUILDING, DEPLOYING and its terminal status. A poll that first sees SUCCESS backfills the BUILDING and DEPLOYING it missed. Any other terminal status (FAILED, SKIPPED, CRASHED) never gets invented phases: it emits only the phases actually observed plus the terminal line. Stamps are in order: BUILDING <= DEPLOYING <= the terminal status. A backfilled or late-seen phase is raised to the latest phase time already stored for that deploy, including after a collector restart, so DEPLOYING never sits before BUILDING.
 
 ## Freshness
 

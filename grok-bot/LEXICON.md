@@ -135,6 +135,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 | **card** | Workstream | One GitHub issue or pull request (`repo#number`). Title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`). |
 | **packet** | Workstream | That card's seven fields. Cap 200 characters. Allowlisted links. Amber `no packet` badge when acceptance or next owner is missing. |
 | **beat** | Workstream | One real event: opened or pushed, review verdict, merge, merge-queue tick, owner message, blocker, or a finished deploy (deploy, deploy_fail). CI stays on the card and is not board traffic. A watcher whose start and end fall in the same second is never a beat. |
+| **deploy stages** | Workstream | The board's phases for one Railway deploy: BUILDING, DEPLOYING, then a terminal status. Stamps are in order (BUILDING <= DEPLOYING <= terminal). Only SUCCESS backfills missed phases; FAILED, SKIPPED and CRASHED show only what was seen. [Board](../house/live/docs/board.md#deploy-stages). |
 
 ## Lexicon add (2026-10-14 — bifrost)
 | Term | Bucket | Plain |
