@@ -4,7 +4,7 @@ sidebar_label: Overview
 
 # 0xRay Documentation
 
-**4.0** — a suit that survives the context window
+**4.1** — a suit that survives the context window
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Constitution always on. Temperament by host. Four floors. Repertoire for the laws. Station is the wake ticket.
 

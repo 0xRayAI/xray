@@ -75,7 +75,7 @@ Canonical path: `reconcile-version --apply` → `version-manager --artifacts-onl
 - `sync-versions.mjs`, `release.js` — deleted
 - `publish.yml` — extra GHA door; docs mill runs before PUT
 
-**Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.0** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
+**Live vs archive docs:** Docusaurus `docs-site/docs/` is live; `docs-site/docs/archive/**` is excluded from the build. Kernel headers are era (`**4.1** — a suit that survives the context window`). Patch lives in CHANGELOG + `package.json`.
 
 ### 2. Consumer mint / four-floor wear
 

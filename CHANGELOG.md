@@ -6,7 +6,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
-Work on main after 4.0.42, including #355 through #366. The [4.0.43] notes below are the earlier confer and hook cut.
+Groundwork before the 4.1.0 publish. The notes under [4.1.0] are the cut. npm latest is still 4.0.42.
+
+## [4.1.0] - 2026-10-15
+
+Work on main after 4.0.42. The [4.0.43] section below is the earlier confer and hook cut. 4.0.43 was stamped and not published.
 
 ### Bifrost board
 
@@ -43,7 +47,6 @@ The board seats see is the collector board. `house/live/feed/live_mesh.py` runs 
 ### Nudge monitor
 
 `src/monitoring/nudge-monitor.ts` exports `getNudgeMonitor()`. The config key is `features.nudge_monitor`. `features.nudge_watchdog` still applies when `nudge_monitor` is unset, and that read logs a one-time deprecation warning.
-
 
 ## [4.0.43] - 2026-10-12
 

@@ -1,8 +1,8 @@
 # xray Agents
 
-Quick reference for the 0xRay suit (**4.0**).
+Quick reference for the 0xRay suit (**4.1**).
 
-**4.0** — a suit that survives the context window.
+**4.1** — a suit that survives the context window.
 
 Confer votes. Burst runs the swarm.
 

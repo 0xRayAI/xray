@@ -40,4 +40,4 @@ Give your bots a house: shared rules, one board for the work, and memory that st
 
 The fleet's board, seat inboxes and wake webhooks run on [Bifrost](./bifrost.md), an autonomous AI fleet management system.
 
-stamped · 0xray 4.0.43 · @0xray/grok-bot 0.1.8
+stamped · 0xray 4.1.0 · @0xray/grok-bot 0.1.8

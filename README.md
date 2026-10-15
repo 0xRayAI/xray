@@ -2,7 +2,7 @@
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](docs-site/static/img/readme-hero.jpg)
 
-**4.0** — a suit that survives the context window
+**4.1** — a suit that survives the context window
 
 Confer votes. Burst runs the swarm.
 
@@ -59,7 +59,8 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. The Bifrost board is the collector board, and a cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. |
+| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. Goggles reads one named plane. |
+| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |
 | **4.0.40** | Live mesh runs the full loop: feed watch, render, direction, deploy, health, and the ledger both ways. |

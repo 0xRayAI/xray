@@ -45,4 +45,4 @@ A cloud agent is its own board row (`cloud_agents`, also copied onto `board.clou
 
 Code lives under `house/live/` (collector, board, inbox routing, server). `house/live/feed/live_mesh.py` runs the collector and the board. `house/live-mesh/fetch_feed.py` is the upstream feed the deploy assembles. Deploy only via `house/live/app/deploy.sh`. A Railway build straight from git stops in the Dockerfile with `ERROR: collector/ is not assembled`. The plate that belongs here is house.
 
-stamped · 0xray 4.0.43
+stamped · 0xray 4.1.0
