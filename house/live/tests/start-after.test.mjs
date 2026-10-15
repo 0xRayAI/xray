@@ -55,6 +55,15 @@ async function stop(srv) {
   srv.kill();
   await new Promise((r) => (srv.exitCode != null || srv.signalCode ? r() : srv.once('exit', r)));
 }
+function isoIn(days) {
+  const d = new Date(Date.now() + days * 86400000);
+  const p = (n) => String(n).padStart(2, '0');
+  const offMin = -d.getTimezoneOffset();
+  const sign = offMin >= 0 ? '+' : '-';
+  const abs = Math.abs(offMin);
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${sign}${p(Math.trunc(abs / 60))}:${p(abs % 60)}`;
+}
+
 const card = (n, extra = {}) => ({
   key: `${R}#${n}`, kind: 'pr', repo: R, number: n, title: `card ${n}`, url: `https://github.com/${R}/pull/${n}`,
   owner: 'critic', stage: 'review', state: 'live', packet: { 'next owner': 'critic' }, packet_ok: true, missing: [],
@@ -76,20 +85,27 @@ test('a future start_after parks the card with no nudge, survives restart, then 
   const openNudge = async (n) => (await (await fetch(base + '/nudges', { headers: forge })).json()).nudges.filter((x) => x.number === n && !x.closed_at);
   const lines = async () => (await (await fetch(base + '/inbox/critic', { headers: critic })).json()).lines;
 
-  const onCard = '2030-06-01T09:30-05:00';
+  const onCard = isoIn(12);
   assert.equal((await ingest([card(5, { start_after: onCard })])).status, 200);
   let c5 = await one(5);
   assert.equal(c5.state, 'parked');
   assert.equal(c5.start_after, onCard);
   assert.equal((await openNudge(5)).length, 0);
   assert.equal((await lines()).filter((l) => l.type === 'start_after').length, 0);
+  const fleetDate = isoIn(4);
+  const asForge = await fetch(base + '/cards/start-after', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + FKEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo: R, number: 5, start_after: fleetDate }),
+  });
+  assert.equal(asForge.status, 200);
+  assert.equal((await one(5)).start_after, fleetDate);
 
   assert.equal((await ingest([card(4)])).status, 200);
   let c = await one(4);
   assert.equal(c.state, 'live');
   assert.equal((await openNudge(4)).length, 1);
 
-  const future = '2026-10-18T08:00-05:00';
+  const future = isoIn(3);
   const post = await fetch(base + '/cards/start-after', {
     method: 'POST', headers: critic, body: JSON.stringify({ repo: R, number: 4, start_after: future }),
   });
@@ -97,6 +113,9 @@ test('a future start_after parks the card with no nudge, survives restart, then 
   assert.equal((await fetch(base + '/cards/start-after', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 401);
   assert.equal((await fetch(base + '/cards/start-after', {
     method: 'POST', headers: critic, body: JSON.stringify({ repo: R, number: 4, start_after: 'tomorrow' }),
+  })).status, 400);
+  assert.equal((await fetch(base + '/cards/start-after', {
+    method: 'POST', headers: critic, body: JSON.stringify({ repo: R, number: 4, start_after: isoIn(40) }),
   })).status, 400);
   c = await one(4);
   assert.equal(c.state, 'parked');

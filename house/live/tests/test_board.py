@@ -143,7 +143,7 @@ class Model(unittest.TestCase):
         self.assertIsNone(uc.comment_start_after("Start after: tomorrow"))
         self.assertIsNone(uc.comment_start_after("see note\nStart after: 2030-01-02T08:00-06:00"))
         base = [self.ev(44, "pr_open", 9000, title="dated"), self.ev(44, "pr_commit", 8000)]
-        future = "2030-01-02T08:00-06:00"
+        future = datetime.fromtimestamp(time.time() + 2 * 86400, CT).isoformat(timespec="minutes")
         dated = dict(self.ev(44, "pr_comment", 100), start_after=future)
         c = self.card(base + [dated], 44)
         self.assertEqual((c["state"], c["stall"], c["start_after"]), ("parked", False, future))
@@ -156,6 +156,25 @@ class Model(unittest.TestCase):
         self.assertEqual((c["start_after"], c["state"]), (past, "live"))
         closed = self.card(self.merged_card(45, dict(self.ev(45, "pr_comment", 300), start_after=future)), 45)
         self.assertEqual(closed["state"], "closed")
+
+    def test_stranger_start_after_is_ignored_and_the_horizon_is_capped(self):
+        base = [self.ev(46, "pr_open", 9000, title="gate"), self.ev(46, "pr_commit", 8000)]
+        soon = datetime.fromtimestamp(time.time() + 2 * 86400, CT).isoformat(timespec="minutes")
+        stranger = dict(self.ev(46, "pr_comment", 100), **{"from": "Others", "start_after": soon})
+        c = self.card(base + [stranger], 46)
+        self.assertNotIn("start_after", c)
+        self.assertEqual(c["state"], "live")
+        far = "2030-01-02T08:00-06:00"
+        owner_far = dict(self.ev(46, "pr_comment", 90), start_after=far)
+        c = self.card(base + [owner_far], 46)
+        self.assertNotIn("start_after", c)
+        self.assertEqual(c["state"], "live")
+        fleet = dict(self.ev(46, "pr_comment", 80), **{"from": "forge", "start_after": soon})
+        c = self.card(base + [fleet], 46)
+        self.assertEqual((c["start_after"], c["state"]), (soon, "parked"))
+        own = dict(self.ev(46, "pr_comment", 70), start_after=soon)
+        c = self.card(base + [own, stranger], 46)
+        self.assertEqual((c["start_after"], c["state"]), (soon, "parked"))
 
     def test_parked_comment_parks_until_a_newer_beat(self):
         import live_collect as uc

@@ -13,7 +13,7 @@ Seats (ours): blinky, critic, forge, mill, herald, magnet, nibbler, sound, arch1
 | `routes` (`seats` role rules) | reviewer off (pr_heads covers it); builder / tester / operator -> forge; coord -> blinky | role rules write to the sample roles (`builder`, `reviewer`, ...) |
 | `extra_seats` | one block per seat: kinds / merge_bases / needles -> that seat (`inbox_pass.py`) | none |
 | `mirror_seat` | `forge` | `builder` (`MIRROR_SEAT` in inbox.py) |
-| `watcher_seats` | `[]` (Arch1's `live-inbox-watch` is an approved exception, run on Arch1's box, not a watcher seat here) | `[]` |
+| `watcher_seats` | `[]` (Arch1's `inbox-watch.sh` is an approved exception, run on Arch1's box, not a watcher seat here) | `[]` |
 | `seats` roles | reviewer, builder, tester, operator, coord, each with `"seat"` or `"off"` | `{}` |
 | `mentions` (`aliases`) | handle -> seat for our 9 (`Arch1` -> `arch1`, ...); @-mentions come from the collector's `mentions[]`, handles only | none |
 | `fallback` | `{"seat": "blinky"}`: lines to seats outside our 9 are dropped and the event goes to blinky (Arch1's lines are never copied) | none |
@@ -104,4 +104,4 @@ Checks:
 
 ### Inbox watcher
 
-`bin/live-inbox-watch` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. The host monitor is what delivers those lines into the Grok session. The launchd log is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).
+`tools/inbox-watch.sh` polls Arch1's inbox and never acks; install steps in [inbox.md](inbox.md). A non-empty read is the work: the Grok turn that sees the lines handles them, posts the receipt, then acks. The host monitor is what delivers those lines into the Grok session. The launchd log is not a wake. It is an approved exception to the no-local-watchers rule, not the only one. Hooks above are a separate install: see [Suit and hooks](#suit-and-hooks).

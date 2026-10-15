@@ -168,6 +168,26 @@ def _claim_owners(cards, evs, sha_num):
 _FLEET_FROM = None
 
 
+START_AFTER_CAP_S = 30 * 86400   # a Start after: date further out than this is ignored
+
+
+def keep_start_after(raw, who, owner, now):
+    """A start_after sticks only from the card owner or a fleet seat, and only inside the cap."""
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    sender = str(who or "")
+    if sender != str(owner or "") and not fleet_from(sender):
+        return None
+    text = raw.strip()[:40]
+    try:
+        when = datetime.fromisoformat(text).timestamp()
+    except ValueError:
+        return None
+    if when > now + START_AFTER_CAP_S:
+        return None
+    return text
+
+
 def fleet_from(name):
     """True when `from` is a fleet seat or a node mapped to one. Others, GitHub, and CI are not."""
     global _FLEET_FROM
@@ -272,9 +292,9 @@ def model(extra_events=None, now=None):
         reopen = kind.endswith("_reopen")
         if not c or (c["_stop"] and not reopen and kind not in ("pr_comment", "issue_comment", "pr_review", "review_comment")):
             continue                                       # a stopped (closed) card still takes comments and a reopen
-        sa = e.get("start_after")
-        if isinstance(sa, str) and sa.strip():
-            c["start_after"] = sa.strip()[:40]
+        kept = keep_start_after(e.get("start_after"), e.get("from"), c.get("owner"), now)
+        if kept:
+            c["start_after"] = kept
         if reopen:
             c["_closed"], c["_closed_t"], c["_stop"] = False, 0, False
         if kind == "pr_draft":

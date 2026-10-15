@@ -454,6 +454,7 @@ if (!seatInbox.builder.length && inboxLines.length) seatInbox.builder = inboxLin
 if (!seatInbox['builder-cloud'].length && seatInbox.builder.length) seatInbox['builder-cloud'] = seatInbox.builder.map(l => ({ ...l, seat: 'builder-cloud' }));
 function bfWrite(rel, text) { try { const f = path.join(STATE_DIR, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f + '.tmp', text); fs.renameSync(f + '.tmp', f); } catch (e) { console.log('live: save failed ' + e.code); } }
 const START_AFTER_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?[+-]\d{2}:\d{2}$/;
+const START_AFTER_MAX_MS = 30 * 86400 * 1000;   // same horizon the board uses for a Start after: comment
 function loadStartAfter() {
   const bag = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
   try {
@@ -472,6 +473,17 @@ function parseStartAfter(iso) {
   const t = Date.parse(s);
   return Number.isFinite(t) ? { iso: s, t } : null;
 }
+function startWithinCap(when, now = Date.now()) {
+  return !!(when && when.t <= now + START_AFTER_MAX_MS);
+}
+function maySetStartAfter(who, card) {
+  if (!who) return false;
+  if (card) {
+    const owner = seatIdOf(card.owner) || String(card.owner || '').trim().toLowerCase();
+    if (owner && owner === who) return true;
+  }
+  return SEAT_IDS.includes(who);
+}
 function startKeyOf(c) {
   if (!c) return '';
   if (typeof c.key === 'string' && c.key) return c.key.toLowerCase();
@@ -479,14 +491,14 @@ function startKeyOf(c) {
   const n = Number(c.number);
   return repo && Number.isInteger(n) ? repo + '#' + n : '';
 }
-function cardStart(c) {
+function cardStart(c, now = Date.now()) {
   const key = startKeyOf(c);
   const ov = key && startAfter.overrides[key];
-  if (ov && typeof ov.start_after === 'string') return parseStartAfter(ov.start_after);
-  return parseStartAfter(c && c.start_after);
+  const when = ov && typeof ov.start_after === 'string' ? parseStartAfter(ov.start_after) : parseStartAfter(c && c.start_after);
+  return startWithinCap(when, now) ? when : null;
 }
 function startIsFuture(c, now) {
-  const when = cardStart(c);
+  const when = cardStart(c, now);
   return !!(when && when.t > now);
 }
 function scheduledCards(now = Date.now()) {
@@ -838,7 +850,7 @@ function applyStartAfter(now = Date.now()) {
       changed = true;
     }
     const when = parseStartAfter(c.start_after);
-    if (!when || c.state === 'closed') {
+    if (!when || !startWithinCap(when, now) || c.state === 'closed') {
       if (c.state === 'closed' && startAfter.parked[key]) { delete startAfter.parked[key]; changed = true; }
       continue;
     }
@@ -2684,7 +2696,7 @@ async function handle(req, res) {
     if (!who && !PUBLIC && !validSession(req)) return json(req, res, 401, { error: 'unauthorized' });
     return json(req, res, 200, { ok: ROUTING.ok, seats: ROUTING_MAP.map(e => ({ seat: e.seat, login: e.login, aliases: e.aliases, status: e.status })) });
   }
-  if (p === '/cards/start-after') {   // POST {repo, number, start_after}: a seat key sets the date. It wins over the collector field while stored.
+  if (p === '/cards/start-after') {   // POST {repo, number, start_after}: owner or a fleet seat, inside 30 days. Wins over the collector field while stored.
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
@@ -2695,7 +2707,10 @@ async function handle(req, res) {
     if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) || !Number.isInteger(number) || number < 1 || number > 9999999 || !when) {
       return json(req, res, 400, { error: 'repo, number, and start_after (ISO with offset) required' });
     }
+    if (!startWithinCap(when)) return json(req, res, 400, { error: 'start_after is more than 30 days out' });
     const key = repo.toLowerCase() + '#' + number;
+    const held = bfCards.find(c => c && (startKeyOf(c) === key || (String(c.repo || '').toLowerCase() === repo.toLowerCase() && Number(c.number) === number)));
+    if (!maySetStartAfter(who, held)) return json(req, res, 403, { error: 'start_after is owner or fleet only' });
     startAfter.overrides[key] = { start_after: when.iso, by: who, set_at: new Date().toISOString() };
     saveStartAfter();
     const now = Date.now();
