@@ -230,6 +230,35 @@ class OperatorCosTest(unittest.TestCase):
                 self.assertEqual([e["status"] for e in ev], [st])
                 self.assertNotIn("DEPLOYING", [e["status"] for e in ev])
 
+    def test_success_backfill_stays_at_or_after_a_later_building(self):
+        # Live 61bb4928: INITIALIZING, BUILDING on a later poll, then SUCCESS.
+        # The missed DEPLOYING used createdAt and landed before BUILDING.
+        with tempfile.TemporaryDirectory() as d:
+            feed = Path(d)
+            rw = feed / "railway-deploys.json"
+            created = "2026-10-14T20:33:49Z"
+
+            def write(st, polled):
+                rw.write_text(json.dumps({"polled_at": polled, "deploys": [{
+                    "id": "61bb4928", "project": "burst-live", "service": "burst-live", "env": "production",
+                    "status": st, "created": created, "cli": False, "sha": "abc123"}]}))
+
+            f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+            write("INITIALIZING", "2026-10-14T20:33:49+00:00")
+            f.scan_host()
+            write("BUILDING", "2026-10-14T20:37:07+00:00")
+            f.scan_host()
+            f = live_fleet.Fleet(feed / "fleet-state.json", CT)
+            write("SUCCESS", "2026-10-14T20:41:12+00:00")
+            ev = {e["status"]: e for e in f.scan_host() if e.get("kind") == "op_deploy"}
+            order = ["INITIALIZING", "BUILDING", "DEPLOYING", "SUCCESS"]
+            self.assertEqual(list(ev), order)
+            times = [_ts(ev[s]["t_ct"]) for s in order]
+            self.assertEqual(times, sorted(times))
+            self.assertLess(times[0], times[1])
+            self.assertGreaterEqual(times[2], times[1])
+            self.assertGreaterEqual(times[3], times[2])
+
 
 class CloudAgentsTest(unittest.TestCase):
     def test_tail_seed_fields_and_state(self):
