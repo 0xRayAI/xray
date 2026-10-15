@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>]
+live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> [--sha <head>]
 
 Read: OPEN lines from the Bifrost server inbox for <seat>, one JSON object per line on stdout. The server hides lines the
 seat acked and lines whose card moved past the seat's step (closed card; for reviewer, a Reviewer verdict at the card's head).
@@ -9,16 +10,21 @@ The local cursor still advances to the newest line seen.
 --turn start|end posts {kind:turn, action, t_ct, tag?} to POST /activity.
 --prompt posts {t_ct, seat, kind:prompt, action:sent, from, to:seat, room?} to POST /activity. from defaults to blaze.
 t_ct is America/Chicago with its offset. Both posts use the seat key. The key is never printed. There is no local file.
+Handoff: POST one packet to /inbox for <to> and print the one-line 1:1 message the seat sends. The same pull request,
+kind and head post the same line id. --sha may be omitted or be a short head of 7 or more hex digits. A room post is not this command.
 Defaults (no env needed): LIVE_URL=https://burst-live-production.up.railway.app, key
 ~/.burst/seat-keys/<seat>.key (SEAT_KEYS_DIR, never printed), cursor ~/.burst/cursors/<seat>.txt (LIVE_CURSORS)."""
 import json, os, re, sys, urllib.error, urllib.parse, urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 URL = os.environ.get("LIVE_URL", "https://burst-live-production.up.railway.app").rstrip("/")
 KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "~/.burst/seat-keys")).expanduser()
 CUR = Path(os.environ.get("LIVE_CURSORS", "~/.burst/cursors")).expanduser()
-USAGE = "usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>]"
+KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
+USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | "
+         "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] | "
+         "live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <" + "|".join(KINDS) + "> [--sha <head>]")
 TAG = re.compile(r"[A-Za-z0-9 ._:@#+/-]{1,40}")
 argv = sys.argv[1:]
 
@@ -40,8 +46,13 @@ for flag in ("--ack", "--pop"):
         i = argv.index(flag)
         if i + 1 >= len(argv):
             sys.exit(USAGE)
-        ack = argv[i + 1]; del argv[i:i + 2]
+        ack = argv[i + 1]
+        del argv[i:i + 2]
         break
+handoff_to = take("--handoff")
+pr_raw = take("--pr")
+kind = take("--kind")
+sha = take("--sha")
 turn = take("--turn")
 tag = take("--tag")
 frm = take("--from")
@@ -49,14 +60,20 @@ room = take("--room")
 prompt = "--prompt" in argv
 if prompt:
     argv.remove("--prompt")
+peek = "--peek" in argv
+if peek:
+    argv.remove("--peek")
+if any(a.startswith("--") for a in argv):
+    sys.exit(USAGE)
 args = [a for a in argv if not a.startswith("--")]
 if len(args) != 1 or not re.fullmatch(r"[a-z0-9-]{2,16}", args[0]):
     sys.exit(USAGE)
 if tag is not None and turn is None:
     sys.exit(USAGE)
-if turn is not None and (ack is not None or prompt or turn not in ("start", "end")):
+busy = ack is not None or prompt or handoff_to is not None
+if turn is not None and (busy or turn not in ("start", "end")):
     sys.exit(USAGE)
-if prompt and ack is not None:
+if prompt and (ack is not None or handoff_to is not None):
     sys.exit(USAGE)
 if (frm is not None or room is not None) and not prompt:
     sys.exit(USAGE)
@@ -68,6 +85,21 @@ if frm is not None and not TAG.fullmatch(frm):
     sys.exit("from must be a short plain id")
 if room is not None and not TAG.fullmatch(room):
     sys.exit("room must be a short plain id")
+if peek and busy:
+    sys.exit(USAGE)
+if sha is not None and handoff_to is None:
+    sys.exit(USAGE)
+if (handoff_to is None) != (pr_raw is None or kind is None) or (ack is not None and handoff_to is not None):
+    sys.exit(USAGE)
+if handoff_to is not None:
+    if not re.fullmatch(r"[a-z0-9-]{2,16}", handoff_to) or kind not in KINDS:
+        sys.exit(USAGE)
+    if sha is not None and not re.fullmatch(r"[0-9a-fA-F]{7,64}", sha):
+        sys.exit(USAGE)
+    m = re.fullmatch(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9]\d{0,6})", pr_raw)
+    if not m:
+        sys.exit(USAGE)
+    repo, number = m.group(1), int(m.group(2))
 seat = args[0]
 kf = KEYS / f"{seat}.key"
 if not kf.is_file():
@@ -91,6 +123,19 @@ def ct_now():
     return datetime.now(ZoneInfo("America/Chicago")).isoformat(timespec="seconds")
 
 
+if handoff_to is not None:
+    head = (sha or "").lower()
+    line_id = f"handoff:{repo.lower()}#{number}:{kind}:{head}"
+    url = f"https://github.com/{repo}/pull/{number}"
+    line = {"id": line_id, "t_ct": datetime.now(timezone.utc).isoformat(),
+            "seat": handoff_to, "from": seat, "to": handoff_to, "type": "packet", "kind": kind,
+            "repo": repo, "number": number, "title": f"handoff {kind}", "url": url, "reason": f"handoff {kind}"}
+    if sha:
+        line["sha"] = sha.lower()
+    call("POST", "/inbox", {"lines": [line]})
+    head_note = f" @{sha[:7].lower()}" if sha else ""
+    print(f"SendToAgent {handoff_to}: handoff {kind} {repo}#{number}{head_note} {url}")
+    sys.exit(0)
 if prompt:
     body = {"t_ct": ct_now(), "seat": seat, "kind": "prompt", "action": "sent", "from": frm, "to": seat}
     if room is not None:

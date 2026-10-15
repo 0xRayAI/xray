@@ -543,7 +543,10 @@ class CardLifecycle(unittest.TestCase):
     def test_critic_logins_come_from_the_critic_seat(self):
         self.assertIn("critic0x[bot]", uc.CRITIC_LOGINS)
         self.assertIn("critic0x1[bot]", uc.CRITIC_LOGINS)
-        self.assertIn("critic0x", uc.CRITIC_LOGINS)
+        self.assertNotIn("critic0x", uc.CRITIC_LOGINS)
+        self.assertNotIn("critic0x1", uc.CRITIC_LOGINS)
+        self.assertIn("reviewer-app[bot]", uc.CRITIC_LOGINS)
+        self.assertNotIn("reviewer-app", uc.CRITIC_LOGINS)
         col = _collector()
         body = "**Reviewer: PASS: ready** @ abcdef1\n"
         cm = {"id": 9, "created_at": "2026-10-14T12:00:00Z", "updated_at": "2026-10-14T12:00:00Z",

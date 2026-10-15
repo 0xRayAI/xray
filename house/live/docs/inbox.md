@@ -3,7 +3,7 @@
 ## Who fixes stopped work
 
 - **The CoS role owns the board.** That is the routing role `seats.coord` (a role, not a name).
-- **Nudge (a card or an inbox line stops moving).** The owning seat is woken and is responsible, escalating L1 to L3. At L3 with no move, the nudge also goes to the CoS role so it can reassign. One path: `evalNudges` in `app/server.mjs`.
+- **Nudge (a card or an inbox line stops moving).** The owning seat is woken and is responsible, escalating L1 to L3. At L3 with no move, the nudge also goes to the CoS role so it can reassign. One path: `evalNudges` in `app/server.mjs`. A missed handoff is the same ladder: the card is flagged `handoff missing`, the seat that owes the packet is nudged, and at L3 the CoS role is nudged too. A room post does not clear it.
 - **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline, and tells the CoS role. On an empty board, it wakes the CoS role to pull the next work. Once per window.
 
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.
@@ -22,19 +22,19 @@
 
 Any field name containing `body`, `text`, or `message` is refused (so is any unknown field). Put the ask in `title`.
 
-A line is a tracked packet only when `type` or `kind` is `dispatch`, `ready`, `packet`, `critic_fail`, or `needs_human`, or it is a blocker (`needs_human`, or `to` = `WORK_HUMAN_TO`). A line that merely names `from` is not a packet. Phases: `sent` (the line exists), `delivered` (it is in the inbox), `woken` (the wake returned 2xx), `acked` (the seat acked it). Unacked past `NUDGE_L1_S` is `overdue`. The last wake per seat is restored from `wakes.jsonl` on boot (`loadPersistedWakes`), not kept only in memory.
+A line is a tracked packet only when `type` or `kind` is `dispatch`, `ready`, `packet`, `critic_fail`, or `needs_human`, or it is a blocker (`needs_human`, or `to` = `WORK_HUMAN_TO`). Handoff kinds on a `type` `packet` line are `ready`, `critic_fail`, `live_pass`, `merge`, and `ci_fail`. A line that merely names `from` is not a packet. Phases: `sent` (the line exists), `delivered` (it is in the inbox), `woken` (the wake returned 2xx), `acked` (the seat acked it). Unacked past `NUDGE_L1_S` is `overdue`. The last wake per seat is restored from `wakes.jsonl` on boot (`loadPersistedWakes`), not kept only in memory. A merge or a close also stores an `info` line for the author's seat (`your PR merged` / `your PR closed`), including when that seat did the action.
 
 `POST /activity` is per seat. Every seat except Builder sends `Authorization: Bearer <its key>`. The server checks the sha256 against that seat's `SEAT_KEYS` entry and stores the line as that seat. Posting with another seat's name in `seat` returns `403` `{"error":"seat mismatch"}`. An unknown key is `401`. `POST /activity/ingest` is the box-uploader exception: `X-Live-Ingest` may write for every fleet seat, and those lines use the same store. See [work-tracking.md](work-tracking.md) and [activity-upload.md](activity-upload.md).
 
 A read never acks. A non-empty read is the work: handle the line, post the receipt, then ack that id. Printing the title and going back to the chat is a miss. `GET /inbox/<seat>` returns open lines. The receipt is `POST /inbox/<seat>/ack` with `{id}`, `{upto}`, or `{all: true}`.
 
-`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. It runs on its defaults with no env: `LIVE_URL` = burst-live, keys in `~/.burst/seat-keys` (`SEAT_KEYS_DIR`), cursors in `~/.burst/cursors` (`LIVE_CURSORS`). Set those only to override.
+`tools/live-inbox <seat>` prints open lines and advances the local cursor to the newest line seen. It does not ack. `--peek` means the same as a plain read. `--ack <id|all>` and `--pop <id|all>` are the receipt. A handoff is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> [--sha <head>]`. It posts one inbox packet and prints the 1:1 line. `--sha` may be omitted or be a short head of 7 or more hex digits. It runs on its defaults with no env: `LIVE_URL` = burst-live, keys in `~/.burst/seat-keys` (`SEAT_KEYS_DIR`), cursors in `~/.burst/cursors` (`LIVE_CURSORS`). Set those only to override.
 
 ## Seat wake URLs and webhooks
 
-**Protocol rule.** A handoff is two things: a packet on the seat's inbox (the record) plus a wake. Every handoff is `POST /inbox` plus a one-line `SendToAgent` to that seat that points at the packet. Never one without the other. The webhook never replaces the inbox line; the line is the record, the wake only says "look now".
+**Protocol rule.** Seats do the handoff. The rule is [Handoff = packet + wake](../../../grok-bot/OP-PROC.md) and the lexicon rows **handoff = packet + wake** and **room post**. The command is `live-inbox <seat> --handoff <to> --pr <owner/repo#n> --kind <ready|critic_fail|live_pass|merge|ci_fail> [--sha <head>]`. It posts the inbox packet and prints the 1:1 line the seat sends. A room post does not discharge the handoff. If that packet is not in the routed seat's inbox within `NUDGE_L1_S`, Bifrost flags the card `handoff missing` and nudges the seat that owes it. The server does not post the packet.
 
-For a seat in `SEAT_WEBHOOKS`, the webhook is the wake: the server fires it on every stored line. The `SendToAgent` is the backup only, for a seat with no webhook or a wake that failed. You do not need both for a webhook seat.
+A webhook on a stored line is the doorbell after the packet exists. It is not a substitute for the 1:1, and it is not the handoff by itself.
 
 ### Grok Bot seats use webhooks
 
@@ -82,7 +82,7 @@ An order or yes in a comment must @-mention the next seat, because the inbox rea
 
 1. **Coordinator fallback.** If an actionable event has no owner seat, only seats outside our 9 (unknown, sample, unkeyed; those lines are dropped), or only `arch1` (no webhook), blinky also gets a line. The seated turn that reads it drains it that turn. The seat and the list come from `fallback` in `inbox-roles.json`.
 2. **Actionable kinds only.** The fallback covers new PRs and issues, reviews, review requests, comments, @-mentions, nudges and packets. An unowned push or CI status never creates a line. The existing `pr_heads` route still sends critic and blinky one line per new PR head, because that line is critic's re-Light ask.
-3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`).
+3. **No self-wakes.** A seat's own action never lands in its own inbox. The actor is matched by board alias, by bot login in `feed/fleet-nodes.json`, or by `SEAT_BOTS` (env, `{"seat": "login"}` or `{"seat": ["login", ...]}`). The exception is the merge and close info line: that line is still stored for the author's seat when that seat did the merge or the close.
 4. **No double wakes.** `SEAT_WATCHERS` (env, `{"seat": {"repos": ["owner/repo" | "*"], "kinds": ["pr_comment" | "*"]}}`) lists the repos and kinds a seat already watches itself. The server skips those for that seat.
 5. **Idempotent.** Each event id is routed once, also across restarts (see above).
 6. **Pulses never route.** Prompt pulses (owner to seat, seat to seat) and turn, task (`subagent`), watcher and cloud-agent lines never become inbox lines or wakes. They show on the board only. The watcher log is not a wake either, so a seat cannot wait for one.

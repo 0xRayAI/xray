@@ -123,6 +123,37 @@ test('a FAIL owes the reviewer one critic_fail packet to the author', () => {
   assert.equal(missingHandoffs({ events, lines: [packet(ob)], roles: ROLES, loginToSeat: LOGINS, now: t0 + 1000 + L1, l1ms: L1 }).length, 0);
 });
 
+test('a short sha and a missing sha both cover the open handoff', () => {
+  const t0 = 1_700_000_000_000;
+  const sha = 'ab'.repeat(20);
+  const events = [opened(17, t0, sha)];
+  const ob = one(events, [], t0 + L1);
+  const short = packet(ob, { sha: sha.slice(0, 7) });
+  assert.equal(packetCovers([short], ob), true);
+  const missing = packet(ob, { sha: undefined });
+  delete missing.sha;
+  assert.equal(packetCovers([missing], ob), true);
+  assert.equal(packetCovers([packet(ob, { sha: sha.slice(0, 6) })], ob), false);
+  assert.equal(missingHandoffs({ events, lines: [short], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
+  assert.equal(missingHandoffs({ events, lines: [missing], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
+});
+
+test('close, draft, and a new head after red CI drop the open handoff', () => {
+  const t0 = 1_700_000_000_000;
+  const sha = '3'.repeat(40);
+  const next = '4'.repeat(40);
+  const openedEvents = [opened(18, t0, sha)];
+  assert.equal(missingHandoffs({ events: [...openedEvents, ev('pr_close', 18, t0 + 1000)], lines: [], roles: ROLES, loginToSeat: LOGINS, now: t0 + 1000 + L1, l1ms: L1 }).length, 0);
+  assert.equal(missingHandoffs({ events: [...openedEvents, ev('pr_draft', 18, t0 + 1000)], lines: [], roles: ROLES, loginToSeat: LOGINS, now: t0 + 1000 + L1, l1ms: L1 }).length, 0);
+  const red = [
+    opened(19, t0, sha),
+    ev('ci_fail', 19, t0 + 1000, { sha }),
+    ev('pr_commit', 19, t0 + 2000, { sha: next }),
+    ev('ci_pass', 19, t0 + 3000, { sha: next }),
+  ];
+  assert.equal(missingHandoffs({ events: red, lines: [], roles: ROLES, loginToSeat: LOGINS, now: t0 + 3000 + L1, l1ms: L1 }).length, 0);
+});
+
 test('a CI failure owes the merger one ci_fail packet to the author', () => {
   const t0 = 1_700_000_000_000;
   const sha = '2'.repeat(40);
@@ -189,6 +220,8 @@ test('the server flags a missed handoff and does not post the packet', async () 
     await new Promise(r => setTimeout(r, 1200));
     const escalated = await (await fetch(base + '/nudges', { headers: { Authorization: 'Bearer ' + forgeKey } })).json();
     assert.ok(escalated.nudges.some(n => n.kind === 'reassign' && n.seat === 'blinky' && String(n.id).includes(':handoff:') && !n.closed_at));
+    const bad = await fetch(base + '/inbox', { method: 'POST', headers: { Authorization: 'Bearer ' + forgeKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [{ id: 'not-a-packet', t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', type: 'info', kind: 'ready', repo: '0xRayAI/xray', number: 70, title: 'no', url: '', reason: 'no' }] }) });
+    assert.equal(bad.status, 403);
     const before = await (await fetch(base + '/inbox/critic', { headers: { Authorization: 'Bearer ' + criticKey } })).json();
     assert.equal((before.lines || []).some(l => l.type === 'packet'), false);
     const line = { id: `handoff:0xrayai/xray#70:ready:${sha}`, t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', to: 'critic', type: 'packet', kind: 'ready', repo: '0xRayAI/xray', number: 70, sha, title: 'handoff ready', url: 'https://github.com/0xRayAI/xray/pull/70', reason: 'handoff ready' };

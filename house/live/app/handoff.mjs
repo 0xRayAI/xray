@@ -146,14 +146,23 @@ function walk(events, map) {
       passAt = '';
       ci = '';
       current = make('ready', head, when);
+    } else if (kind === 'pr_close' || kind === 'pr_draft') {
+      current = null;
+      sawFail = false;
+      passAt = '';
+      ci = '';
     } else if (HEAD_KINDS.has(kind) && sha && sha !== head) {
       const afterFail = sawFail;
+      const afterRed = ci === 'red' || (current && current.kind === 'ci_fail');
       head = sha;
       ci = '';
       passAt = '';
       if (afterFail || (current && current.kind === 'ready')) {
         sawFail = false;
         current = make('ready', head, when);
+      } else if (afterRed) {
+        sawFail = false;
+        current = null;
       }
     } else if (isFail(event)) {
       if (sha) head = sha;
@@ -189,6 +198,17 @@ function isPacket(line, kind) {
   return type === 'packet' || type === kind;
 }
 
+function shaCovers(lineSha, headSha) {
+  const head = lower(headSha);
+  const got = lower(lineSha);
+  if (!head) return false;
+  if (!got) return true;
+  if (got === head) return true;
+  const short = got.length <= head.length ? got : head;
+  const long = got.length <= head.length ? head : got;
+  return short.length >= 7 && long.startsWith(short);
+}
+
 export function packetCovers(lines, obligation) {
   if (!obligation || !obligation.to || !obligation.sha) return false;
   for (const line of lines || []) {
@@ -198,7 +218,7 @@ export function packetCovers(lines, obligation) {
     if (dest !== obligation.to) continue;
     if (numberOf(line) !== obligation.number) continue;
     if (repoOf(line) !== obligation.repo) continue;
-    if (shaOf(line) !== obligation.sha) continue;
+    if (!shaCovers(line.sha, obligation.sha)) continue;
     return true;
   }
   return false;

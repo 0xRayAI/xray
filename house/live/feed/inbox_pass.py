@@ -267,12 +267,33 @@ def alias_seat(name, roles):
     return None
 
 
+def login_seat(login, roles):
+    """Seat for an exact GitHub login: routing.*.login, fleet-nodes.json, then SEAT_BOTS. Aliases are not logins."""
+    key = str(login or "").strip().casefold()
+    if not key:
+        return None
+    for seat, entry in (roles.get("routing") or {}).items():
+        if isinstance(entry, dict) and str(entry.get("login") or "").casefold() == key:
+            return seat
+    nodes = _load(NODES, {})
+    if isinstance(nodes, dict):
+        for name, seat in nodes.items():
+            if isinstance(seat, str) and str(name).casefold() == key:
+                return str(seat).lower()
+    for seat, value in _env_json("SEAT_BOTS").items():
+        listed = [value] if isinstance(value, str) else value if isinstance(value, list) else []
+        for item in listed:
+            if isinstance(item, str) and item.casefold() == key:
+                return str(seat).lower()
+    return None
+
+
 def author_seat(event, roles):
     """Seat of the PR author (event author login), or None when the login is not one of ours."""
     raw = event.get("author")
     if not isinstance(raw, str) or not raw.strip():
         return None
-    return alias_seat(raw, roles) or bot_logins().get(raw.removesuffix("[bot]").casefold())
+    return login_seat(raw, roles)
 
 
 def actor_seat(event, roles):

@@ -2479,7 +2479,7 @@ async function handle(req, res) {
     return json(req, res, 200, { cursor: cursor(), reset: true, events: all });
   }
 
-  if (p === '/inbox' && m === 'POST') {   // ingest secret posts lines. A seat key posts only a handoff whose from is that seat.
+  if (p === '/inbox' && m === 'POST') {   // ingest secret posts lines. A seat key posts a small batch of its own handoff packets.
     const hs = req.headers['x-live-ingest'];
     let sender = null;
     if (typeof hs === 'string' && hs && safeEq(hs, INGEST_SECRET)) sender = 'ingest';
@@ -2488,7 +2488,20 @@ async function handle(req, res) {
     let parsed; try { parsed = JSON.parse((await readBody(req, 4 << 20)).toString('utf8')); } catch { return json(req, res, 400, { error: 'not json' }); }
     if (sender !== 'ingest') {
       const lines = parsed && Array.isArray(parsed.lines) ? parsed.lines : [];
-      if (!lines.length || lines.some(l => !l || canonSeat(l.from) !== sender)) return json(req, res, 403, { error: 'not your handoff' });
+      const handoffId = /^handoff:([a-z0-9_.-]+\/[a-z0-9_.-]+)#([1-9]\d{0,6}):(ready|critic_fail|live_pass|merge|ci_fail):([0-9a-f]{7,64})?$/;
+      const ownHandoff = (line) => {
+        if (!line || typeof line !== 'object' || Array.isArray(line)) return false;
+        if (canonSeat(line.from) !== sender || line.type !== 'packet') return false;
+        const id = typeof line.id === 'string' ? line.id : '';
+        const hit = handoffId.exec(id);
+        if (!hit || hit[3] !== line.kind) return false;
+        if (hit[1] !== String(line.repo || '').toLowerCase() || Number(hit[2]) !== Number(line.number)) return false;
+        const idSha = hit[4] || '';
+        const lineSha = typeof line.sha === 'string' ? line.sha.trim().toLowerCase() : '';
+        return idSha === lineSha;
+      };
+      if (parsed && parsed.replace === true) return json(req, res, 403, { error: 'not your handoff' });
+      if (!lines.length || lines.length > 8 || lines.some(line => !ownHandoff(line))) return json(req, res, 403, { error: 'not your handoff' });
     }
     const r = postSeatLines(parsed, null);
     if (r.status === 200) { seq++; header = mergedHeader(); fullDirty = true; }

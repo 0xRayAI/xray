@@ -10,7 +10,7 @@ The server process owns the board. Start `node server.mjs` from the assembled `h
 
 When `GITHUB_READ_TOKEN` is set and `COLLECTOR` is not `off`, the server starts `live_mesh.py` as a child. The child writes `$MESH_DATA_DIR/feed/github-events.json`. The server reads that file, keeps the cards and packets, routes new lines into seat inboxes, and fires seat webhooks. That is the whole loop. A box is not required.
 
-The box is optional. Use it for signals that exist only on another machine. It pushes with `POST /ingest`. A box board is shown while that push is newer than `BOARD_BOX_STALE_S` (default 900 seconds). After that, the collector's board is the board. Set `COLLECTOR=off` only when you want the server to run with no child at all.
+The box is optional. Use it for signals that exist only on another machine. It pushes those with `POST /ingest`. GitHub cards are the collector file. An empty box board does not replace them. `house/live/feed/push_to_host.sh` is retired for that board and for seat activity. Set `COLLECTOR=off` only when you want the server to run with no child at all.
 
 ### 2. Environment
 
@@ -117,7 +117,8 @@ There is no separate page/store service. It is one Node process, `house/live/app
 | `GET /` and static page | none in public mode; else `MESH_PASSWORD` login, cookie `mesh_session` (HMAC with `SESSION_SECRET`, 7 days) | `house/live/app/public/` |
 | `GET /live-events.json[?since=<cursor>]` | session cookie | full feed, or delta; `304` unchanged, `409`/reset means refetch full |
 | `POST /ingest`, `POST /ingest/delta` | `Authorization: Bearer $INGEST_SECRET` | box-side feed (gzip ok, 25 MB cap) |
-| `GET /ingest/events`, `GET /activity/pull`, `POST /inbox` | ingest secret | box pusher only |
+| `GET /ingest/events`, `GET /activity/pull` | ingest secret | box signals |
+| `POST /inbox` | ingest secret, or that seat's key | ingest posts lines. A seat key posts only its own handoff packet (`type` `packet`, id `handoff:<repo>#<n>:<kind>:<sha>`). A non-packet line is 403 |
 | `POST /activity` | that seat's `SEAT_KEYS` entry (Builder: its GitHub App installation token) | activity lines. A cross-seat `seat` is `403` `seat mismatch` |
 | `GET /inbox/<seat>[?since=<id>]`, `POST /inbox/<seat>/ack` | that seat's key | seat inbox, ack by id, upto or all |
 | `GET /cards?seat=<seat>` | that seat's key (operator: every seat) | cards with packets and beats |
@@ -197,7 +198,6 @@ Railway service (`server.mjs`):
 | `LIVE_FLEET_SEATS` | optional | JSON list of seat names, or `{"seats","board","fold"}`, or a path to that JSON. Unset keeps the example seat list. Passed to the collector. The header "N of M bots active" counts `board` (or the list). |
 | `NUDGE_L1_S`, `NUDGE_L2_S`, `NUDGE_L3_S`, `SILENT_S`, `HELD_MAX_S` | optional | 3600, 1800, 7200, 7200, 259200 |
 | `EMITTER_WORKING_S`, `BOX_STALE_S` | optional | 120, 180 |
-| `BOARD_BOX_STALE_S` | optional | 900. The box pass board is shown while the box pushed within this count of seconds; after that the host collector's board is used |
 | `GITHUB_HOLD_LABEL` | optional | label that holds a card; default `on-hold` |
 | `NO_NUDGE_REPOS` | optional | comma list of `owner/name` or `owner/*`; unset means every repo can be nudged |
 | `SEAT_PRESENCE` | optional | JSON `{source seat: dest seat or [dest, ...]}`; default `{"builder-cloud":"builder"}` |
@@ -209,7 +209,7 @@ Railway service (`server.mjs`):
 | `UPSTREAM_PINNED`, `XRAY_OURS` | optional | `owner/name#N` list; logins that count as this fleet. Both unset means nothing is tracked |
 
 One Node process (`server.mjs`) serves the page and supervises the collector child. There is no second page service.
-The board is the `board` object on the feed header, built by `feed/live_board.py` in the feed pass (the host collector builds it too, so a host-only install has a board). A box pass board wins while the box pushed within `BOARD_BOX_STALE_S` (default 900 s); after that the host board is used.
+The board seats see is the collector board: the `board` object `feed/live_board.py` writes on the collector feed. An empty box board does not replace those cards.
 
 Collector child: its env is built from scratch by the server and holds only `GH_TOKEN` (= `GITHUB_READ_TOKEN`), `HOME`,
 `PATH`, `TZ`, `LIVE_MODE=github`, `LIVE_NO_CHECKS=1`, `LIVE_HEALTH_URLS` (from `COLLECTOR_HEALTH_URLS`, empty when unset), `LIVE_MESH_SRC`, and, only when you set them,

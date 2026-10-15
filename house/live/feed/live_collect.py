@@ -23,8 +23,8 @@ CRITIC = "reviewer-app[bot]"
 
 
 def critic_logins() -> set[str]:
-    """Logins mapped to the critic seat in fleet-nodes.json (critic0x, critic0x1), plus the template Reviewer app."""
-    found = {CRITIC, "reviewer-app"}
+    """Exact critic logins from fleet-nodes.json, plus the template Reviewer app. Bare names are not added."""
+    found = {CRITIC}
     path = Path(__file__).resolve().parent / "fleet-nodes.json"
     try:
         raw = json.loads(path.read_text())
@@ -36,12 +36,8 @@ def critic_logins() -> set[str]:
         if str(seat).strip().lower() != "critic":
             continue
         name = str(login).strip()
-        if not name:
-            continue
-        found.add(name)
-        bare = name.removesuffix("[bot]")
-        if bare:
-            found.add(bare)
+        if name:
+            found.add(name)
     return found
 
 

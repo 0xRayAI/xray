@@ -218,9 +218,26 @@ class Guardrails275(unittest.TestCase):
         info = [l for l in merged if l["type"] == "info" and l["seat"] == "forge"]
         self.assertEqual([l["reason"] for l in info], ["your PR merged"])
         closed = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 12,
-                                "t_ct": "2026-10-13T05:00:00-05:00", "id": "c1", "author": "mill", "from": "critic"}, ROLES)
+                                "t_ct": "2026-10-13T05:00:00-05:00", "id": "c1", "author": "herald0x[bot]", "from": "critic"}, ROLES)
         info = [(l["seat"], l["reason"]) for l in closed if l["type"] == "info"]
-        self.assertEqual(info, [("mill", "your PR closed")])
+        self.assertEqual(info, [("herald", "your PR closed")])
+
+    def test_alias_and_bare_critic_logins_are_not_author_seats(self):
+        for login in ("herald", "mill", "magnet", "nibbler", "sound", "arch1", "blinky", "forge", "critic0x", "critic0x1"):
+            closed = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 13,
+                                    "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-" + login, "author": login, "from": "critic"}, ROLES)
+            info = [l for l in closed if l.get("type") == "info"]
+            self.assertEqual(info, [], login)
+        os.environ["SEAT_BOTS"] = json.dumps({"mill": "mill0x[bot]"})
+        try:
+            hit = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 14,
+                                 "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-mill-bot", "author": "mill0x[bot]", "from": "critic"}, ROLES)
+            self.assertEqual([(l["seat"], l["reason"]) for l in hit if l.get("type") == "info"], [("mill", "your PR closed")])
+            bare = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 15,
+                                  "t_ct": "2026-10-13T05:00:00-05:00", "id": "c-mill-bare", "author": "mill", "from": "critic"}, ROLES)
+            self.assertEqual([l for l in bare if l.get("type") == "info"], [])
+        finally:
+            del os.environ["SEAT_BOTS"]
 
 
 if __name__ == "__main__":
