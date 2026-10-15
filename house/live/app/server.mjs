@@ -1732,6 +1732,8 @@ function readCollectorFeed() {   // every 2 s: ingest the collector's file when 
 // The python child gets no token or secret. SERVER_ROUTING=off turns this off.
 const ROUTE_DIR = path.join(DATA_DIR, 'route');
 const route = { busy: false, again: false, passes: 0, lines: 0, last: null };
+const routeKids = new Set();
+process.on('exit', () => { for (const k of routeKids) { try { k.kill('SIGTERM'); } catch { /* already gone */ } } });
 function routeScript() {
   for (const f of [path.join(COLLECTOR_DIR, 'inbox_pass.py'), path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'feed', 'inbox_pass.py')])
     if (fs.existsSync(f)) return f;
@@ -1746,9 +1748,11 @@ function routePy(script, args) {
   return new Promise(resolve => {
     let out = '', err = '';
     const c = spawn('python3', ['-B', script, ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+    routeKids.add(c);
+    const finish = (code, errText) => { routeKids.delete(c); resolve({ code, out: out.trim(), err: errText }); };
     c.stdout.on('data', d => { out += d; }); c.stderr.on('data', d => { err += d; });
-    c.on('error', e => resolve({ code: -1, out: '', err: String(e.code) }));
-    c.on('close', code => resolve({ code, out: out.trim(), err: err.trim().split('\n').pop() || '' }));
+    c.on('error', e => finish(-1, String(e.code)));
+    c.on('close', code => finish(code, err.trim().split('\n').pop() || ''));
   });
 }
 async function routeOnce(script) {
