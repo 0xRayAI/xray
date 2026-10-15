@@ -123,7 +123,7 @@ test('a FAIL owes the reviewer one critic_fail packet to the author', () => {
   assert.equal(missingHandoffs({ events, lines: [packet(ob)], roles: ROLES, loginToSeat: LOGINS, now: t0 + 1000 + L1, l1ms: L1 }).length, 0);
 });
 
-test('a short sha and a missing sha both cover the open handoff', () => {
+test('a short sha covers the open handoff and a missing sha does not', () => {
   const t0 = 1_700_000_000_000;
   const sha = 'ab'.repeat(20);
   const events = [opened(17, t0, sha)];
@@ -132,10 +132,10 @@ test('a short sha and a missing sha both cover the open handoff', () => {
   assert.equal(packetCovers([short], ob), true);
   const missing = packet(ob, { sha: undefined });
   delete missing.sha;
-  assert.equal(packetCovers([missing], ob), true);
+  assert.equal(packetCovers([missing], ob), false);
   assert.equal(packetCovers([packet(ob, { sha: sha.slice(0, 6) })], ob), false);
   assert.equal(missingHandoffs({ events, lines: [short], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
-  assert.equal(missingHandoffs({ events, lines: [missing], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
+  assert.equal(missingHandoffs({ events, lines: [missing], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 1);
 });
 
 test('close, draft, and a new head after red CI drop the open handoff', () => {
@@ -183,7 +183,7 @@ test('the server flags a missed handoff and does not post the packet', async () 
     env: {
       PORT: '0', MESH_PASSWORD: pw, SESSION_SECRET: crypto.randomBytes(16).toString('hex'),
       INGEST_SECRET: crypto.randomBytes(16).toString('hex'), PATH: process.env.PATH, MESH_DATA_DIR: data,
-      SERVER_ROUTING: 'off', NUDGE_L1_S: '1', NUDGE_L3_S: '1',
+      SERVER_ROUTING: 'off', NUDGE_L1_S: '1', NUDGE_L2_S: '1', NUDGE_L3_S: '1',
       GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`,
       SEAT_KEYS: JSON.stringify(keys),
     },
@@ -217,6 +217,11 @@ test('the server flags a missed handoff and does not post the packet', async () 
     }
     const cardNow = (body.board.cards || []).find(c => c.number === 70);
     assert.ok(cardNow.flags.includes('handoff missing'));
+    await new Promise(r => setTimeout(r, 1200));
+    const l2body = await (await fetch(base + '/nudges', { headers: { Authorization: 'Bearer ' + forgeKey } })).json();
+    const l2 = (l2body.nudges || []).find(n => n.kind === 'handoff' && n.level === 2 && !n.closed_at);
+    assert.ok(l2, 'L2 handoff nudge to the owing seat');
+    assert.equal(l2.seat, 'forge');
     await new Promise(r => setTimeout(r, 1200));
     const escalated = await (await fetch(base + '/nudges', { headers: { Authorization: 'Bearer ' + forgeKey } })).json();
     assert.ok(escalated.nudges.some(n => n.kind === 'reassign' && n.seat === 'blinky' && String(n.id).includes(':handoff:') && !n.closed_at));
