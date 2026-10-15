@@ -36,6 +36,38 @@ async function stop(child) {
   await done;
 }
 
+async function fleetOf(srv, ready) {
+  let fleet = null;
+  for (let i = 0; i < 40; i++) {
+    const base = srv.baseOf();
+    if (base) {
+      const live = await (await fetch(base + '/live-events.json')).json();
+      if (live.fleet && live.fleet.seats && ready(live)) {
+        fleet = live.fleet;
+        break;
+      }
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return fleet;
+}
+
+function lay(data, { activity, events, working, seats }) {
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'activity.jsonl'), activity.map(l => JSON.stringify(l)).join('\n') + '\n');
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    fleet: {
+      window_min: 15,
+      seats,
+      working,
+      cloud: { open_agents: [], active: false },
+    },
+    events,
+  }));
+}
+
 function line(seat, action, at) {
   return { id: seat + '.' + action, seq: 1, seat, t_ct: new Date(at).toISOString(), kind: 'turn', action };
 }
@@ -96,6 +128,60 @@ test('an ended turn clears working after the GitHub mark expires', async () => {
     assert.equal(fleet.working.critic, undefined, JSON.stringify(fleet.working));
     assert.equal(fleet.seats.critic.working, false);
     assert.equal(fleet.seats.critic.active, false);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a fresh mark newer than the end stays working', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-fresh-'));
+  const now = Date.now();
+  const opened = now - 4 * 60 * 1000;
+  const end = now - 60 * 1000;
+  const mark = now - 10 * 1000;
+  lay(data, {
+    activity: [line('forge', 'start', opened), line('forge', 'end', end)],
+    seats: { forge: { active: true, last_ct: new Date(mark).toISOString(), via: 'github', working: true } },
+    working: { forge: { via: 'github', since_ct: new Date(mark).toISOString(), working_on: 'example/repo#7' } },
+    events: [
+      { id: 'gh-after', t_ct: new Date(mark).toISOString(), kind: 'pr_review', repo: 'example/repo', number: 7, actor: 'forge0x1[bot]' },
+    ],
+  });
+  const srv = start(data);
+  try {
+    const fleet = await fleetOf(srv, live => live.event_count > 0 && live.fleet.seats.forge);
+    assert.ok(fleet, srv.logs());
+    assert.ok(fleet.working.forge, JSON.stringify(fleet.working));
+    assert.equal(fleet.working.forge.via, 'github');
+    assert.equal(fleet.seats.forge.working, true);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a cloud agent survives a turn end', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-cloud-'));
+  const now = Date.now();
+  lay(data, {
+    activity: [line('forge', 'start', now - 4 * 60 * 1000), line('forge', 'end', now - 60 * 1000)],
+    seats: {},
+    working: {},
+    events: [
+      { id: 'ci', t_ct: new Date(now - 30 * 1000).toISOString(), kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+    ],
+  });
+  fs.writeFileSync(path.join(data, 'live', 'agents.jsonl'), JSON.stringify({
+    event_id: 'ag-1', agent: 'bc-forge0001', status: 'running', rank: 2, seat: 'forge',
+    t_ct: new Date(now - 3 * 60 * 1000).toISOString(), title: 'ship',
+  }) + '\n');
+  const srv = start(data);
+  try {
+    const fleet = await fleetOf(srv, live => live.fleet.seats.forge && live.fleet.working && live.fleet.working.forge);
+    assert.ok(fleet, srv.logs());
+    assert.equal(fleet.working.forge.via, 'cloud');
+    assert.equal(fleet.seats.forge.working, true);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
