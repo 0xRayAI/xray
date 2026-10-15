@@ -90,6 +90,28 @@ Seats post those turn and prompt lines with their seat key. A seat counts as wor
 
 Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it; that seat stays working until 20 min (`LIVE_CLOUD_IDLE_S`) after the agent's last line or a GitHub event naming its `bc-…` id, and `finished` / `cancel` ends it. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
 
+## Cloud agents on the board
+
+A cloud agent is its own row on the board, in the `cloud agents` group, not only a working chip. The header field is `cloud_agents` (also copied onto `board.cloud_agents` when a card board is present). Each row has:
+
+| Field | Meaning |
+|---|---|
+| `bcId` | Agent id (`bc-…` or the same id the webhook stored) |
+| `seat` | Owning seat. The Cursor webhook seat, else the activity key's seat, else the ARCH1 launch seat |
+| `card` | Linked card `owner/repo#number`, from a GitHub PR url, an activity `tag` of that shape, or the ARCH1 launch card |
+| `pr` | `https://github.com/…/pull/n` when the webhook sent one |
+| `state` | `running`, `finished`, or `failed` |
+| `updated_ct` | Last update time |
+
+`running` is a launch, a reply, or a webhook status of created, running, or PR opened. `finished` is a finish. `failed` is a cancel or a webhook status of ERROR, FAILED, TIMED_OUT, or CANCELLED. The newest line sets the state. An earlier seat, card, or PR stays when a later line omits it.
+
+Two feeds, the same ones seats already write:
+
+1. `POST /cursor/webhook` appends `agents.jsonl` after the signature check.
+2. `POST /activity` with `kind` `cloud_agent` or `agent` and `action` `launch`, `reply`, `finished`, or `cancel`. `tag` may be `owner/repo#number`. This is the same line a `fleet/cloud-agents.jsonl` row carries (`t_ct`, `by`, `action`, `agent`, `tag`).
+
+An ARCH1 launch file row with an `agentId` fills the seat and card when the log has not named them yet. A running row shows a spinner. Open the row for the five fields. A `pr` url is a GitHub link.
+
 Vocabulary: **cards** are the work items (one per PR or issue). **Beats** are real events on a card, and they reset its idle clock. **Pulses** are liveness signals only. **Packets** are tracked asks in an inbox, and **acks** close them. **Nudges** are packets the server creates after 60 min with no beat. **Wakes** are content-free webhook doorbells that follow packets. **Seat status** is the working or idle light.
 
 ## Page behaviour (wave)
