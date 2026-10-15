@@ -226,6 +226,15 @@ def closing_numbers(body, own=None):
             i = sep.end()
     return sorted(found)[:16] or None
 PARKED_COMMENT_RE = re.compile(r"^\s*parked:", re.I)   # Coord rule: a comment starting 'Parked:' parks the card
+START_AFTER_RE = re.compile(
+    r"^\s*start after:\s*(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?[+-]\d{2}:\d{2})\s*$", re.I)
+
+
+def comment_start_after(body):
+    """First line `Start after: <ISO with offset>` -> that timestamp. Anything else is ignored."""
+    first = next((ln for ln in str(body or "").replace("\r\n", "\n").splitlines() if ln.strip()), "")
+    m = START_AFTER_RE.match(first)
+    return m.group(1) if m else None
 RESOLVED_RE = re.compile(r"\b(resolved|superseded|fixed (?:in|by) #\d+|nothing (?:on #\d+ )?(?:is )?(?:waiting|left|pending)|"
                          r"no (?:further )?action (?:needed|required)|can be closed)\b", re.I)
 
@@ -674,6 +683,54 @@ class RepoCollector:
         p = self.st["prs"].get(str(n))
         return True if p and p.get("merged_at") else None
 
+    def _stamp_merger(self, n, login):
+        """Remember who merged #n and write it onto the stored merged event. The author is not a merger."""
+        if not isinstance(login, str) or not login.strip():
+            return
+        login = login.strip()
+        self.st.setdefault("mergers", {})[str(n)] = login
+        self.st.setdefault("need_merger", {}).pop(str(n), None)
+        e = self.ev.get(f"{self.repo}#{int(n)}:merged")
+        if not e:
+            return
+        e["merged_by"] = login
+        e["actor"] = login
+        who = node(login)
+        if who != "Others":
+            e["from"] = who
+        e["credit"] = self.credit_of(e)
+
+    def queue_merger_backfill(self):
+        """Once: every stored merge that has no merged_by is fetched on a later pass."""
+        if self.st.setdefault("bf", {}).get("merged_by"):
+            return
+        need = self.st.setdefault("need_merger", {})
+        for e in self.ev.values():
+            if e.get("kind") == "merged" and not e.get("merged_by") and e.get("number") is not None:
+                need[str(e["number"])] = 1
+        self.st["bf"]["merged_by"] = True
+
+    def backfill_mergers(self, c, limit=20):
+        """GET /pulls/{n} once per number. A list payload often omits merged_by; the pull payload has it."""
+        if not getattr(c, "token", None):
+            return
+        self.queue_merger_backfill()
+        tried = self.st.setdefault("merger_tried", {})
+        need = self.st.setdefault("need_merger", {})
+        todo = [n for n in list(need) if str(n) not in tried][:limit]
+        for n in todo:
+            tried[str(n)] = True
+            try:
+                _st, data, _, _ = c.rest(f"/repos/{self.repo}/pulls/{n}", {}, essential=False)
+            except RateLow:
+                tried.pop(str(n), None)
+                raise
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError, KeyError, TypeError):
+                continue
+            login = ((data or {}).get("merged_by") or {}).get("login") if isinstance(data, dict) else None
+            if login:
+                self._stamp_merger(int(n), login)
+
     def poll_pulls(self, c):
         if not getattr(c, "token", None):
             return
@@ -694,18 +751,27 @@ class RepoCollector:
                             "pulls", stop=lambda p: cur is not None and p["updated_at"] <= cur):
             n, login = p["number"], p["user"]["login"]
             prev = self.st["prs"].get(str(n), {})
-            self.st["prs"][str(n)] = {"author": login, "updated_at": p["updated_at"], "head": p["head"]["sha"],
+            prev_head = prev.get("head")
+            head = (p.get("head") or {}).get("sha")
+            self.st["prs"][str(n)] = {"author": login, "updated_at": p["updated_at"], "head": head,
                                       "merged_at": p.get("merged_at"), "state": p["state"], "base": p["base"]["ref"]}
             url = p["html_url"]
             self.put(f"{self.repo}#{n}:open", p["created_at"], node(login), "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login,
-                     sha=(p.get("head") or {}).get("sha"), author=login,
+                     sha=head, author=login,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
-                merger = ((p.get("merged_by") or {}).get("login")) or login
-                self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger), "GitHub", "merged",
-                         f"merged {self.short} #{n} → {p['base']['ref']}", url, n, base=p["base"]["ref"],
-                         merge_sha=p.get("merge_commit_sha"), actor=merger, author=login, merged_by=merger)
+                merger = ((p.get("merged_by") or {}).get("login")) or self.st.get("mergers", {}).get(str(n))
+                extra = {"base": p["base"]["ref"], "merge_sha": p.get("merge_commit_sha"),
+                         "actor": merger or login, "author": login}
+                if merger:
+                    extra["merged_by"] = merger
+                else:
+                    self.st.setdefault("need_merger", {})[str(n)] = 1
+                self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger or login), "GitHub", "merged",
+                         f"merged {self.short} #{n} → {p['base']['ref']}", url, n, **extra)
+            if prev_head and head and prev_head != head:
+                self.pr_commit_event(n, head, p["updated_at"], p.get("title") or "", login)
             if author_seat or (self.st["bf"].get("prs:done") and prev.get("updated_at") != p["updated_at"]):
                 self.st.setdefault("enrich", {})[str(n)] = True
             if newest is None or p["updated_at"] > newest:
@@ -767,6 +833,8 @@ class RepoCollector:
                     self.put(eid, e["created_at"], frm, "GitHub", "issue_close", f"closed {tag} ({sr or 'closed'})",
                              url, n, actor=actor, state_reason=sr)
             elif ev == "merged":
+                if actor:
+                    self._stamp_merger(n, actor)
                 continue
             elif ev in ("ready_for_review", "convert_to_draft") and is_pr:
                 k = "pr_ready" if ev == "ready_for_review" else "pr_draft"
@@ -848,6 +916,7 @@ class RepoCollector:
                      f"{login or '?'} comment · {self.short} {'#' if is_pr else 'issue #'}{n}", cm["html_url"], n,
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
                      parked=True if PARKED_COMMENT_RE.match(body) else None,
+                     start_after=comment_start_after(body),
                      hold=hold, mentions=mentions(body), pr_merged=self.pr_merged(n) if is_pr else None)
             if is_pr:
                 self.st.setdefault("enrich", {})[str(n)] = True   # a comment is a reason to re-read reviews
@@ -1116,6 +1185,7 @@ class RepoCollector:
     def run(self, c, deadline):
         self._denied = None
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues), ("issue events", self.poll_issue_events),
+                 ("merger backfill", self.backfill_mergers),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
                  ("pushes", self.poll_pushes),
                  ("runs", self.poll_runs)] + ([("jobs", self.poll_jobs)] if NO_CHECKS else []) + [

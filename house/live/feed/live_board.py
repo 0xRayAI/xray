@@ -222,6 +222,19 @@ def pinned():
     return out[:12]
 
 
+def _keep_push(beats, limit):
+    """Keep the newest pushed beat when the window would drop it. Order stays by time."""
+    window = beats[-limit:]
+    if len(beats) <= limit:
+        return window
+    latest = next((b for b in reversed(beats) if b.get("what") == "pushed"), None)
+    if not latest or any(b.get("id") == latest.get("id") for b in window):
+        return window
+    window = [latest, *window[1:]]
+    window.sort(key=lambda b: b.get("t") or 0)
+    return window
+
+
 def model(extra_events=None, now=None):
     now = now or time.time()
     evs = _events(extra_events)
@@ -259,6 +272,9 @@ def model(extra_events=None, now=None):
         reopen = kind.endswith("_reopen")
         if not c or (c["_stop"] and not reopen and kind not in ("pr_comment", "issue_comment", "pr_review", "review_comment")):
             continue                                       # a stopped (closed) card still takes comments and a reopen
+        sa = e.get("start_after")
+        if isinstance(sa, str) and sa.strip():
+            c["start_after"] = sa.strip()[:40]
         if reopen:
             c["_closed"], c["_closed_t"], c["_stop"] = False, 0, False
         if kind == "pr_draft":
@@ -315,6 +331,9 @@ def model(extra_events=None, now=None):
         c["_beats"].append(b)
         if w == "merged":
             c["_merged_t"] = _t(e)
+            mb = e.get("merged_by")
+            if isinstance(mb, str) and mb.strip():
+                c["merged_by"] = mb.strip()[:80]
     out = []
     for c in cards.values():
         beats = c.pop("_beats")
@@ -357,6 +376,14 @@ def model(extra_events=None, now=None):
         quiet = bool(last) and now - last["t"] / 1000 > 86400
         pr_quiet = c["kind"] == "pr" and bool(last) and now - last["t"] / 1000 > PR_PARK_S
         parked = (not closed) and (c.pop("_parked_c", False) or c.pop("_draft_park", False) or pr_quiet or (c["kind"] == "issue" and quiet) or any(PARKED.search(x) for x in c["labels"]) or (c.pop("_draft") and (not last or now - last["t"] / 1000 > 7 * 86400)))
+        sa = c.get("start_after")
+        if isinstance(sa, str) and not closed:
+            try:
+                when = datetime.fromisoformat(sa).timestamp()
+            except ValueError:
+                when = 0
+            if when > now:
+                parked = True
         c.pop("_draft", None); c.pop("_parked_c", None); c.pop("_draft_park", None)
         c.pop("_stop", None); c.pop("_merged_t", None)
         state = "closed" if closed else "parked" if parked else "live"
@@ -406,8 +433,9 @@ def model(extra_events=None, now=None):
         missing = [f for f in ("acceptance", "next owner") if not pk.get(f)]
         if resolved:
             c["resolved"] = resolved
+        shown = _keep_push(beats, 5)
         c.update(stage=stage, state=state, packet=pk, packet_ok=not missing, missing=missing,
-                 beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in beats[-5:]],
+                 beats=[{k: v for k, v in b.items() if not k.startswith("_")} for b in shown],
                  last_beat_t=int(last_t * 1000), stall=stall, closed_t=int(closed_t * 1000) if closed else 0)
         out.append(c)
     # only cards with recent life make the board: live/parked with a beat in 14 days, or closed in the last 24 h
@@ -537,6 +565,7 @@ def write_md(m, now=None, force=False):
             L.append(f"- [{c['repo'].split('/')[-1]} #{c['number']}]({c['url']}) {c['title']} · owner {c['owner']}"
                      + (f" · last beat {last['what']} {_ct(last['t'] / 1000)}" if last else "")
                      + (f" · next {c['packet'].get('next owner')}" if c['packet'].get('next owner') else "")
+                     + (f" · start after {c['start_after']}" if c.get("start_after") else "")
                      + (" · **" + ", ".join(flags) + "**" if flags else ""))
         L.append("")
     closed = [c for c in m["cards"] if c["state"] == "closed"]
