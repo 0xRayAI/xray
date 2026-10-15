@@ -732,8 +732,8 @@ class Fleet:
                    src, agent=agent, by=by, action=action, repo_short=repo, cloud_tag=tag,
                    time_basis="t_ct from the cloud-agents log")
 
-    # ---- Lead -> bot messages: fleet/prompts.jsonl, tailed by byte offset, deduped by line hash.
-    # Only t_ct, from and to are used; message text and any other field are never read into the feed.
+    # ---- Lead -> bot messages: an old collector still tails fleet/prompts.jsonl by byte offset, deduped by line hash.
+    # Seats post with live-inbox --prompt. Only t_ct, from and to are used; message text is never read into the feed.
     def scan_prompts(self):
         f = self.path.parent.parent / "fleet" / "prompts.jsonl"
         if not f.is_file():
@@ -797,8 +797,8 @@ class Fleet:
 
     # ---- Off-box seats (Builder on its own machine): fleet/remote-activity.jsonl, written by the box pusher from the
     # mesh app's write-only POST /activity. Only t_ct, seat, kind, action, to, agent, tag are used.
-    #   prompt received        -> Lead -> seat message (seat working until it acts again), like prompts.jsonl
-    #   prompt sent (to=X)     -> seat -> X message (X working until it acts), like prompts.jsonl
+    #   prompt received        -> Lead -> seat message (seat working until it acts again), same pulse as live-inbox --prompt
+    #   prompt sent (to=X)     -> seat -> X message (X working until it acts), same pulse as live-inbox --prompt
     #   cloud_agent            -> exactly a cloud-agents.jsonl line with by = seat
     #   turn/subagent/watcher  -> start/tick opens, end closes; seat working while any is open (30 min max)
     # Every line marks the seat active.

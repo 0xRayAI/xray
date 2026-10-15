@@ -29,7 +29,7 @@
     "plates": ["orchestration", "processor"]
   },
   "house": {
-    "files": ["grok-bot/lib/seat-doctor.cjs"],
+    "files": ["grok-bot/lib/seat-doctor.cjs", "grok-bot/templates/house/fleet/WAKE-ROUTINE.md", "grok-bot/templates/house/HOUSE.md", "src/__tests__/unit/grok-bot-house-template.test.ts", "src/__tests__/unit/grok-bot-house-migrate.test.ts"],
     "skills": ".agents/skills/house/SKILL.md",
     "plates": ["suit-wear"]
   },
@@ -131,7 +131,7 @@
     "plates": ["record-map"]
   },
   "package-face": {
-    "files": ["package.json"],
+    "files": ["package.json", "grok-bot/README.md", "grok-bot/llms.txt", "grok-bot/CHANGELOG.md"],
     "mark": "\"name\": \"0xray\"",
     "skills": ".agents/skills/package-face/SKILL.md",
     "plates": ["record-map", "suit-wear"]

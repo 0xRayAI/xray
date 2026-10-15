@@ -13,7 +13,7 @@ export const ACT_KINDS = {
   retest: ['start', 'end', 'pass', 'fail'],
   deploy: ['start', 'end', 'pass', 'fail', 'cancel'],
 };
-const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'agent', 'tag', 'seat']);
+const ACT_FIELDS = new Set(['t_ct', 'kind', 'action', 'to', 'from', 'agent', 'tag', 'seat', 'room']);
 const ACT_BANNED = /body|text|message/i;
 const ACT_VALUE = /^[A-Za-z0-9 ._:@#+\/-]{1,80}$/;
 const ACT_AGENT = /^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$/;
@@ -30,6 +30,7 @@ export function validActivity(d, now = Date.now()) {
     if (typeof v !== 'string') return 'fields must be short plain strings';
     if (k === 'tag' && v.length > 80) return 'tag too long';
     if (k === 'to' && v.length > 40) return 'to too long';
+    if ((k === 'room' || k === 'from') && v.length > 40) return k + ' is only for prompt (<= 40 chars)';
     if (!ACT_VALUE.test(v)) return 'fields must be short plain strings';
     if (ACT_BANNED.test(v)) return 'free text is not accepted';
   }
@@ -41,6 +42,8 @@ export function validActivity(d, now = Date.now()) {
   if (d.seat != null && !ACT_SEAT.test(d.seat)) return 'bad seat';
   if (d.kind === 'cloud_agent' && !ACT_AGENT.test(d.agent || '')) return 'cloud_agent needs agent id';
   if (d.agent != null && !ACT_AGENT.test(d.agent)) return 'bad agent id';
+  if (d.room != null && d.kind !== 'prompt') return 'room is only for prompt (<= 40 chars)';
+  if (d.from != null && d.kind !== 'prompt') return 'from is only for prompt (<= 40 chars)';
   return null;
 }
 

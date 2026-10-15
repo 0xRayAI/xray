@@ -16,7 +16,7 @@ Board: `house/WAVEBOARD.md` and `house/ATTENTION_STATE.md` (your project house, 
 | `house/watchers/issue-sweep-last.txt` | Issue-sweep cursor (one UTC time) |
 | `house/watchers/waveboard-static.md` | Hand-kept board sections, merged by heading |
 | `house/fleet/activity.jsonl` | Live-mesh activity (`BURST_ACTIVITY`) |
-| `house/fleet/prompts.jsonl` | Prompt pulses (`BURST_PROMPTS`) |
+| owner prompt | `live-inbox <seat> --prompt` posts to `/activity` |
 Complete setup path for **Grok Bot agents** on the 0xRay mill.
 
 Agents: read `llms.txt` → `AGENTS.md` → run skills in `SKILLS.md` (**one suit per key agent**).  

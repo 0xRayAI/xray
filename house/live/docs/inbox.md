@@ -41,6 +41,8 @@ For a seat in `SEAT_WEBHOOKS`, the webhook is the wake: the server fires it on e
 Grok Bot seats **do** use webhooks. This reverses the earlier reading of #265 (leave `SEAT_WEBHOOKS` empty), which left packets unread until someone opened the inbox.
 
 - Each seat creates a webhook-triggered inbox wake routine from the pack template [`grok-bot/templates/house/fleet/WAKE-ROUTINE.md`](../../../grok-bot/templates/house/fleet/WAKE-ROUTINE.md). The routine reads the seat's inbox, handles open lines, and acks them (see [Ack route](#ack-route)).
+- Standard wake, every seat: [`WAKE-ROUTINE.md`](../../../grok-bot/templates/house/fleet/WAKE-ROUTINE.md) — on an owner message, `--prompt` then turn start; turn end on every exit.
+- Seat activity does not use the box pusher. `house/live/feed/push_to_host.sh` and its watchdog are retired for seat activity: `live-inbox --prompt` and `live-inbox --turn` post to `/activity` with the seat's own key. The board does not need the box to be live, and a silent box is not an error.
 - burst-live's `SEAT_WEBHOOKS` points at those routines, one entry per seat, and each key lives in its own variable: `WAKE_KEY_<SEAT>` (for example `WAKE_KEY_MILL`), or the variable named by `key_env`.
 - When a bot creates its wake routine, it sends the owner the webhook URL, key and header links in the owner's 1:1 chat, so the owner can copy and paste them into the server config. Bots can't read those values themselves. The URL, key and header never go in a room (group chat), a repo, a PR or a log.
 - Blinky's (CoS) scheduled sweep is only a backstop: it catches wakes that were dropped and packets the server writes on its own.

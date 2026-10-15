@@ -30,6 +30,18 @@ test('a cloud agent line needs an agent id', () => {
   }, now), 'cloud_agent needs agent id');
 });
 
+test('room is optional on a prompt and refused elsewhere', () => {
+  const prompt = {
+    t_ct: '2026-10-09T09:00:00-05:00', seat: 'builder', kind: 'prompt', action: 'sent',
+    from: 'blaze', to: 'builder', room: 'ops',
+  };
+  assert.equal(validActivity(prompt, now), null);
+  assert.equal(validActivity({ ...prompt, room: 'r'.repeat(41) }, now), 'room is only for prompt (<= 40 chars)');
+  assert.equal(validActivity({
+    t_ct: '2026-10-09T09:00:00-05:00', seat: 'builder', kind: 'turn', action: 'start', room: 'ops',
+  }, now), 'room is only for prompt (<= 40 chars)');
+});
+
 test('a tag of 80 characters is stored and 81 is refused', () => {
   const tag = 'a'.repeat(80);
   assert.equal(validActivity({

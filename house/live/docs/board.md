@@ -36,15 +36,15 @@ Each feed pass asks GitHub which issue and pull request numbers are still open. 
 
 ## Seat activity (#275)
 
-Every seat must log these lines, or it goes dark on the board even while it's busy. The box status reporter pushes these files to the server. The server never reads chats.
+Turns and owner messages are posted by the seat, with its own key, to `POST /activity` (`live-inbox <seat> --turn` and `live-inbox <seat> --prompt`). The box pusher (`house/live/feed/push_to_host.sh`) and the watchdog that starts it are retired for seat activity. Box liveness is not required. A silent box drops box-only signals and is not a board error. The server never reads chats.
 
-| What | Where (box, under the run dir) | Line |
+| What | Where | Line |
 |---|---|---|
-| Turn start / end, background task start / end (desktop runs too), watcher start / stop | `fleet/activity.jsonl` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
-| Owner → seat message, seat → seat or room message (a pulse) | `fleet/prompts.jsonl` | `{"t_ct","from","to"}` only. Never the text, never a secret |
+| Turn start / end, background task start / end (desktop runs too), watcher start / stop | `POST /activity` | `{"t_ct","seat","kind":"turn"\|"subagent"\|"watcher","action":"start"\|"end","tag"?}` |
+| Owner → seat message, a 1:1 or a room (a pulse) | `POST /activity` via `live-inbox <seat> --prompt --from blaze` (add `--room <name>` in a room) | `{"t_ct","seat","kind":"prompt","action":"sent","from","to","room"?}`. Never the text, never a secret. The seat stays working for 10 minutes. `from: blaze` credits **Blaze** |
 | Cloud agent launch / finish | `fleet/cloud-agents.jsonl` | `{"t_ct","by","action":"launch"\|"reply"\|"finished"\|"cancel","agent"}` |
 
-Seats off the box (for example Arch1) POST the same shapes to `/activity` with their seat key (`kind: prompt|turn|subagent|watcher|cloud_agent`). A seat counts as working while it has an open turn or task, or one of its cloud agents is running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
+Seats post those turn and prompt lines with their seat key. A seat counts as working while a prompt pulse from the last 10 minutes is open, while it has an open turn or task, or while one of its cloud agents is running. Pulses never become inbox lines or wakes (see [inbox.md](inbox.md), routing guardrails).
 
 Activity details (#281): a prompt line keeps its sender as `actor` (off-box seats send `from` on `prompt received`). A cloud agent credits the seat that launched it; that seat stays working until 20 min (`LIVE_CLOUD_IDLE_S`) after the agent's last line or a GitHub event naming its `bc-…` id, and `finished` / `cancel` ends it. `live_act` in `paste-block.sh` and `builder-cloud-setup.sh` emits turns, prompts and cloud agents; `tools/live-act-hook.example.sh` wires turn start/end and prompts into an agent hook. Rate limits are the platform's job. Full spec: [`house/burst/ACTIVITY.md`](../../burst/ACTIVITY.md) and [`activity.schema.json`](../../burst/activity.schema.json).
 
@@ -87,7 +87,7 @@ Every other seat (mill, magnet, nibbler, sound) shows the drawn letter badge; th
 
 Three writers set `fleet.working` and the seat's working light. They stack. A later writer fills `working_on` only when it is still empty. The full chain, including `CURSOR_WEBHOOK_SECRET`, is [work-tracking.md](work-tracking.md).
 
-1. `applyStoredActivity` reads `activity.jsonl`. Lines arrive from `POST /activity`, from `POST /activity/ingest`, and from the server's own wake/ack lines. An open turn, subagent, or watcher is working. A turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes, `TURN_OPEN_MS`) when the ack never arrives. An `end` or an ack closes it at once and drops that seat from `fleet.working`. The turn end still clears after `TURN_OPEN_MS`. The drop clears a mark at or before the end. A mark newer than the end stays only while it is inside `TURN_OPEN_MS`, then it expires. A mark with no time stays. So does a running cloud agent. Newer GitHub marks expire at 20 minutes. A later tick does not open the turn again. An open turn older than that window drops the seat, and still spares a running cloud agent.
+1. `applyStoredActivity` reads `activity.jsonl`. Lines arrive from `POST /activity` (the seat's own key: `live-inbox --turn` and `live-inbox --prompt`) and from the server's own wake/ack lines. An open turn, subagent, or watcher is working. A prompt pulse (`kind: prompt`) keeps that seat working for 10 minutes, and the board credits the sender (`from: blaze` is **Blaze**). A turn expires after `LIVE_TURN_OPEN_MIN` (default 20 minutes, `TURN_OPEN_MS`) when the ack never arrives. An `end` or an ack closes the turn at once. A prompt still inside its 10 minutes stays. The turn end still clears after `TURN_OPEN_MS`. The drop clears a mark at or before the end. A mark newer than the end stays only while it is inside `TURN_OPEN_MS`, then it expires. A mark with no time stays. So does a running cloud agent. Newer GitHub marks expire at 20 minutes. A later tick does not open the turn again. An open turn older than that window drops the seat, and still spares a running cloud agent and a fresh prompt pulse.
 2. `applyTrackWorking` reads the work track. A packet that is woken and not yet acked, or a cloud agent that is still running, sets the seat working. The chip text is `working_on` (`working on <title>` for a packet). A Cursor status webhook appends `agents.jsonl` only after `CURSOR_WEBHOOK_SECRET` verifies `POST /cursor/webhook`.
 3. `applyGithubWorking` reads GitHub events already in the feed. A PR or issue comment, a review, a PR opened or pushed, or an issue event whose actor login maps to a seat marks that seat working for the same `TURN_OPEN_MS` window. `working_on` is `repo#number`. Logins come from `feed/routing/inbox-roles.json` (`routing.<seat>.login`), `feed/fleet-nodes.json` and `LIVE_NODE_MAP`, `LIVE_GH_SEATS` (the App's `bot` login), and `SEAT_GIT_NAMES` only as `git:<seat>` (a commit with no GitHub user). A cloud agent with no seat login maps through `SEAT_AGENT_MAP` (exact id or `id*` prefix) or a `bc-` id in the branch, ref, or comment. `critic0x[bot]` is critic. `forge0x1[bot]` is forge. A close or a merge of the PR or issue named in `working_on` clears that chip on the seat and in `fleet.working`. The seat can stay working. `fleet.cloud.active` is true only while `open_agents` is non-empty; a recent GitHub cloud clock alone does not keep it active.
 
@@ -95,7 +95,7 @@ The board page has a Work panel (`header.track`) grouped by lane. Packet phases 
 
 `POST /activity` takes each seat's own `SEAT_KEYS` hash (Builder still uses its GitHub App token). The stored seat is the key's seat. A body `seat` that is not that seat, an alias of it, or its display name is `403` `{"error":"seat mismatch"}`.
 
-`POST /activity/ingest` is the exception to that pin. The box uploader sends `X-Live-Ingest` (the ingest secret) and may write a line for every fleet seat. Those lines land in the same `activity.jsonl`, so writer 1 lights the seat. The secret stays on that box. The chain is [activity-upload.md](activity-upload.md).
+`POST /activity/ingest` remains for a box uploader that holds the ingest secret. Seats do not use it. Seat activity is the seat's own key on `POST /activity`. The chain for the uploader, which seats no longer need, is [activity-upload.md](activity-upload.md).
 
 ## What makes a seat active
 

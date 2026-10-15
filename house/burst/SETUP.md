@@ -46,7 +46,7 @@ Files in this tree:
 | [inbox.schema.json](inbox.schema.json) | One routed line in `fleet/inbox/<seat>.jsonl` |
 | [card.schema.json](card.schema.json) | One waveboard card: title, url, owner, stage, state, packet, beats |
 | [inbox-roles.json](inbox-roles.json) | Which events each seat's inbox receives |
-| [prompts.schema.json](prompts.schema.json) | `prompts.jsonl` line |
+| [prompts.schema.json](prompts.schema.json) | prompt line posted by `live-inbox <seat> --prompt` |
 | [cloud-agent.schema.json](cloud-agent.schema.json) | `cloud-agents.jsonl` line |
 | [plate.schema.json](plate.schema.json) | Identity stamp |
 | [seats.example.json](seats.example.json) | Sample seats config |
@@ -326,7 +326,7 @@ House rule: every seat logs background work. Append one line to `fleet/activity.
 
 `seat` is optional on the post. When the body includes it, it must match the token's seat, case-insensitive. Any other seat is **403** `seat mismatch`. The stored line's `seat` is the token's seat.
 
-The line is `t_ct` (ISO-8601 with a numeric offset), `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters), plus `seat` on the file. Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. A `SENT` line in `prompts.jsonl` also keeps that seat working for 10 minutes. Display names resolve through `aliases` in the seats config (`Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos`). The feed lists `fleet.missing_activity`: seats pulsed in the last 60 minutes with no activity line in that window. The page does not read that list. The light is not in N of M. The shape is [activity.schema.json](activity.schema.json).
+The line is `t_ct` (ISO-8601 with a numeric offset), `kind` (`subagent`, `turn`, or `watcher`), `action` (`start` or `end`), and `tag` (at most 80 characters), plus `seat` on the file. Names and times only. A seat is working while a start has no later end for the same seat, kind, and tag, for at most 60 minutes. `live-inbox <seat> --prompt` also keeps that seat working for 10 minutes. A pulse still inside those 10 minutes survives a turn end. Display names resolve through `aliases` in the seats config (`Chief of Staff` → `CoS`, `Lab Tester: Chaos` → `Chaos`). The feed lists `fleet.missing_activity`: seats pulsed in the last 60 minutes with no activity line in that window. The page does not read that list. The light is not in N of M. The shape is [activity.schema.json](activity.schema.json).
 
 Off-box seats POST with their own App token. One post at the start of a turn, a subagent, or a watcher that found work, and one post at the matching end. Do not post a watcher line on a tick that found no live work. A lone open start still expires after 60 minutes.
 
@@ -342,7 +342,7 @@ A 204 means the line was stored. The response has no event list.
 
 ### What not to log
 
-Leave these out of `prompts.jsonl`, `cloud-agents.jsonl`, the activity body, and the working store:
+Leave these out of a `live-inbox <seat> --prompt` post, `cloud-agents.jsonl`, the activity body, and the working store:
 
 - prompt bodies, review bodies, commit messages
 - command lines and environment
@@ -362,6 +362,8 @@ The contract is [activity.schema.json](activity.schema.json). [prompts.schema.js
 | `kind` | `prompt`, `turn`, `subagent`, `watcher`, `cloud_agent`, `lab_run`, `review`, `retest`, `deploy` |
 | `action` | From the table below |
 | `to` | Optional. At most 40 characters. A seat name or other short id |
+| `from` | Optional. Prompt only. At most 40 characters. `blaze` credits Blaze |
+| `room` | Optional. Prompt only. At most 40 characters. A short room name |
 | `agent` | Required for `cloud_agent`. Short id |
 | `tag` | Optional. At most 80 characters. An issue key, PR number, or other id |
 
@@ -381,19 +383,19 @@ No other fields. No free text.
 
 The `examples` array in `activity.schema.json` is the accepted shape. Turn, subagent, and watcher include a start and the matching end. Older stored lines may still use `received`, `sent`, or `tick`. New lines use the table.
 
-`prompts.jsonl` is prompt lines. `cloud-agents.jsonl` is cloud-agent lines, each with `agent`. One JSON object per line.
+`live-inbox <seat> --prompt` posts a prompt line. `cloud-agents.jsonl` is cloud-agent lines, each with `agent`. One JSON object per line.
 
 ### Prompt lines
 
-`prompts.jsonl` lives at `fleet/prompts.jsonl` next to `fleet/activity.jsonl`. Set `BURST_PROMPTS` to move it. Write one line when a seat gets a prompt:
+A seat posts an owner prompt with `live-inbox <seat> --prompt`. Add `--room <name>` when the message was in a room. That posts one line to `/activity` with the seat's own key:
 
 ```json
-{"t_ct":"2026-10-09T08:59:30-05:00","seat":"builder","kind":"prompt","action":"sent"}
+{"t_ct":"2026-10-09T08:59:30-05:00","seat":"builder","kind":"prompt","action":"sent","from":"blaze","to":"builder","room":"ops"}
 ```
 
-`seat` is the seat that got the prompt: a seat id, or a display name that resolves through `aliases`. `kind` is `prompt`. `action` is `sent`. That pulse keeps the seat working for 10 minutes and counts for `fleet.missing_activity`. `start` and `end` lines with a `tag` are also valid, but only `sent` pulses. Never write the prompt text. The shape is [prompts.schema.json](prompts.schema.json).
+`from: blaze` credits Blaze. `room` is optional and at most 40 characters. `action` `sent` keeps the seat working for 10 minutes, and a pulse still inside those 10 minutes survives a turn end. Never send the prompt text. The shape is [prompts.schema.json](prompts.schema.json).
 
-Older houses wrote `{"t_ct":"…","from":"Lead","to":"Operator"}`. The collector still reads that shape as a `sent` pulse for the `to` seat, so an old file keeps working. Write new lines in the format above. `POST /activity` takes only the new format.
+An old collector still reads `fleet/prompts.jsonl` (`BURST_PROMPTS`), including a legacy `{"t_ct":"…","from":"Lead","to":"Operator"}` line as a `sent` pulse for the `to` seat. Seats do not write that file.
 
 ## 9. Roles and the stamped plate
 
@@ -442,7 +444,7 @@ Work top to bottom. Stop at the first failure.
 | Commits show a human name | `use-repo` did not run, or `bin/` is after another `gh` on `PATH` |
 | Activity 401 `not a seat installation` | Bot login or bot id in the seats config does not match the token's viewer |
 | Activity 403 `seat mismatch` | The body's `seat` does not match the token's seat. Drop `seat` or send the token's seat. A static key is not accepted |
-| A seat that just sent a prompt looks idle | `fleet/prompts.jsonl` (or `BURST_PROMPTS`) needs `action` `sent` (or a legacy `{from,to}` line) and a seat the aliases table knows. The light lasts 10 minutes. Fixes log item 13 |
+| A seat that just sent a prompt looks idle | `live-inbox <seat> --prompt` posts `action` `sent` to `/activity` with the seat key. The light lasts 10 minutes. Fixes log item 13 |
 | `fleet.missing_activity` names a seat | That seat pulsed in the last 60 minutes and wrote no `activity.jsonl` line in that window |
 | A seat with no live work stays working | The watcher wrote a start on an idle tick. It must look first and write nothing, except one watcher `end` when the last watcher line is an open start. A lone open start expires after 60 minutes. Fixes log item 14 |
 
