@@ -1,0 +1,38 @@
+{
+ "title": "BIFROST",
+ "sub": "HOW A WAVE MOVES",
+ "footer": "CARD > WAKE > BEAT > HANDOFF = ONE WAVE",
+ "_note": "6 steps in snake order (row1 L>R, row2 R>L). Each: [HEADING, line1, line2]. Icons are fixed per slot: card, bolt, chevrons, bomb, packet, cloud.",
+ "steps": [
+  [
+   "CARD",
+   "Every PR, issue or comment",
+   "becomes a card"
+  ],
+  [
+   "WAKE",
+   "A webhook wakes the bot",
+   "that owns it"
+  ],
+  [
+   "NUDGE",
+   "No beat in an hour?",
+   "Nudge, then CoS"
+  ],
+  [
+   "TRIPWIRE",
+   "Board quiet 30 min?",
+   "The fleet gets pinged"
+  ],
+  [
+   "HANDOFF",
+   "One packet to the next",
+   "bot, tied to the commit"
+  ],
+  [
+   "CLOUD AGENT",
+   "Its own row on the board:",
+   "running, finished, failed"
+  ]
+ ]
+}
