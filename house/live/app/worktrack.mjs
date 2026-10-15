@@ -93,6 +93,7 @@ function statusOf(raw) {
     case 'COMPLETE':
     case 'COMPLETED':
     case 'DONE':
+      return 'finished';
     case 'ERROR':
     case 'TIMED_OUT':
     case 'TIMEOUT':
@@ -100,7 +101,7 @@ function statusOf(raw) {
     case 'CANCELLED':
     case 'CANCELED':
     case 'FAILED':
-      return 'finished';
+      return 'failed';
     case '':
       return '';
     default:
@@ -113,7 +114,8 @@ export function rankOf(status) {
     case 'created': return 1;
     case 'running': return 2;
     case 'pr_opened': return 3;
-    case 'finished': return 4;
+    case 'finished':
+    case 'failed': return 4;
     default: {
       /** @type {never} */
       const unexpected = status;
@@ -129,7 +131,7 @@ export function classifyCursor(parsed) {
   let status = statusOf(raw);
   if (!status && pr) status = 'pr_opened';
   if (!status) return null;
-  return { status, rank: rankOf(status), pr, closed: status === 'finished' };
+  return { status, rank: rankOf(status), pr, closed: status === 'finished' || status === 'failed' };
 }
 
 function agentOf(parsed) {
@@ -366,6 +368,104 @@ function packetItem(line, { acked, woken, closed, now, windowMs }) {
   };
 }
 
+const AGENT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,79}$/;
+const CARD_REF = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#\d{1,8}$/;
+const PR_URL = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\/pull\/(\d{1,8})(?:\/|\?|#|$)/;
+
+export function cardRefOf(value) {
+  const raw = String(value || '').trim();
+  if (CARD_REF.test(raw)) return raw;
+  const match = PR_URL.exec(raw);
+  return match ? `${match[1]}/${match[2]}#${Number(match[3])}` : '';
+}
+
+function boardStateOfStatus(status) {
+  if (status === 'failed') return 'failed';
+  if (status === 'finished') return 'finished';
+  if (status === 'running' || status === 'created' || status === 'pr_opened') return 'running';
+  return '';
+}
+
+function boardStateOfAction(action) {
+  switch (String(action || '').toLowerCase()) {
+    case 'cancel': return 'failed';
+    case 'finished':
+    case 'finish': return 'finished';
+    case 'launch':
+    case 'reply': return 'running';
+    default: return '';
+  }
+}
+
+function safePr(value) {
+  const raw = String(value || '').trim();
+  if (CARD_REF.test(raw)) return raw;
+  if (PR_URL.test(raw)) return raw.slice(0, 300);
+  return '';
+}
+
+/** One board row per cloud agent. Latest line wins the state; an earlier seat, card, or PR stays. */
+export function boardCloudAgents({ agents = [], activity = [], links = [] } = {}) {
+  const events = [];
+  for (const row of agents || []) {
+    if (!row || typeof row !== 'object') continue;
+    const state = boardStateOfStatus(row.status);
+    if (!state) continue;
+    events.push({
+      bcId: row.agent,
+      seat: row.seat && row.seat !== UNASSIGNED ? row.seat : '',
+      pr: typeof row.pr === 'string' ? row.pr : '',
+      card: '',
+      state,
+      updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
+    });
+  }
+  for (const row of activity || []) {
+    if (!row || typeof row !== 'object') continue;
+    if (row.kind !== 'cloud_agent' && row.kind !== 'agent') continue;
+    const state = boardStateOfAction(row.action);
+    if (!state) continue;
+    const tag = typeof row.tag === 'string' ? row.tag : '';
+    events.push({
+      bcId: row.agent,
+      seat: row.seat || row.by || '',
+      pr: '',
+      card: CARD_REF.test(tag) ? tag : '',
+      state,
+      updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
+    });
+  }
+  events.sort((a, b) => (Date.parse(a.updated_ct) || 0) - (Date.parse(b.updated_ct) || 0));
+  const by = new Map();
+  for (const ev of events) {
+    const id = String(ev.bcId || '').trim();
+    if (!AGENT_ID.test(id)) continue;
+    const prev = by.get(id);
+    const pr = safePr(ev.pr) || (prev && prev.pr) || '';
+    const card = (CARD_REF.test(ev.card) ? ev.card : '') || cardRefOf(pr) || (prev && prev.card) || '';
+    const seat = canonSeatToken(ev.seat) || (prev && prev.seat) || '';
+    by.set(id, { bcId: id, seat, card, pr, state: ev.state, updated_ct: ev.updated_ct || (prev && prev.updated_ct) || '' });
+  }
+  for (const link of links || []) {
+    if (!link || typeof link !== 'object') continue;
+    const id = String(link.bcId || link.agent || '').trim();
+    if (!AGENT_ID.test(id)) continue;
+    const seat = canonSeatToken(link.seat) || '';
+    const card = CARD_REF.test(String(link.card || '')) ? String(link.card) : cardRefOf(link.card) || cardRefOf(link.pr);
+    const pr = safePr(link.pr);
+    const prev = by.get(id);
+    if (!prev) {
+      const state = link.state === 'failed' || link.state === 'finished' || link.state === 'running' ? link.state : 'running';
+      by.set(id, { bcId: id, seat, card, pr, state, updated_ct: typeof link.updated_ct === 'string' ? link.updated_ct : '' });
+      continue;
+    }
+    if (!prev.seat && seat) prev.seat = seat;
+    if (!prev.card && card) prev.card = card;
+    if (!prev.pr && pr) prev.pr = pr;
+  }
+  return [...by.values()].sort((a, b) => (Date.parse(b.updated_ct) || 0) - (Date.parse(a.updated_ct) || 0) || a.bcId.localeCompare(b.bcId));
+}
+
 function agentItems(agents) {
   const byAgent = new Map();
   for (const row of agents || []) {
@@ -384,21 +484,26 @@ function agentItems(agents) {
   }
   const items = [];
   for (const row of byAgent.values()) {
-    const closed = Number(row.rank) >= 4 || row.status === 'finished';
+    const failed = row.status === 'failed';
+    const closed = failed || Number(row.rank) >= 4 || row.status === 'finished';
     const seat = row.seat && row.seat !== UNASSIGNED ? canonSeatToken(row.seat) : '';
     const lane = seat ? displaySeat(seat) : UNASSIGNED;
     const title = textOf(row.title, 120) || row.agent;
     const pr = typeof row.pr === 'string' ? row.pr : '';
+    const state = failed ? 'failed' : closed ? 'finished' : 'running';
     items.push({
       id: 'agent:' + row.agent,
       kind: 'agent',
-      phase: closed ? 'closed' : row.status,
-      steps: [closed ? 'closed' : row.status],
-      label: closed ? 'closed' : 'working',
-      labels: closed ? ['closed'] : ['working'],
+      phase: failed ? 'failed' : closed ? 'closed' : row.status,
+      steps: [state],
+      label: failed ? 'failed' : closed ? 'closed' : 'working',
+      labels: [failed ? 'failed' : closed ? 'closed' : 'working'],
       title,
       url: pr,
       pr,
+      card: cardRefOf(pr),
+      bcId: row.agent,
+      state,
       seats: seat ? [seat] : [],
       lane,
       lanes: [lane],
@@ -408,8 +513,9 @@ function agentItems(agents) {
       closed,
       seat_name: !closed && seat ? displaySeat(seat) : '',
       t_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
+      updated_ct: typeof row.t_ct === 'string' ? row.t_ct : '',
       agent: row.agent,
-      status: closed ? 'finished' : row.status,
+      status: state === 'running' ? row.status : state,
     });
   }
   return items;

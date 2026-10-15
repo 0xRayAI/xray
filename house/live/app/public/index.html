@@ -105,6 +105,9 @@
     .wdetail dt { color: #8fa3c6; } .wdetail dd { margin: 0; color: #d6def0; overflow-wrap: anywhere; }
     .wbeats { list-style: none; margin: 4px 0 0; padding: 0; color: #a7b0c4; font-family: ui-monospace, monospace; font-size: 11px; }
     .wbeats li:last-child { color: #e6ecff; }
+    .wcard.cloud.failed { outline: 1px solid #7f1d1d; }
+    .wcard.cloud.finished { opacity: .72; }
+    .wbadge.cloud { border-color: #38bdf8; color: #bae6fd; }
     .wcard.glow { animation: wglow 2.6s ease-out; }
     @keyframes wglow { 0% { box-shadow: 0 0 0 2px #ffd166, 0 0 18px #ffd16699; } 100% { box-shadow: none; } }
     @media (prefers-reduced-motion: reduce) { .wcard.glow { animation: none; outline: 2px solid #ffd166; } }
@@ -414,7 +417,7 @@
   }
   // 🌊 Board panel: cards / packets / beats from the feed header (feed.board, built by the feed pass from the
   // same events; read-only). Grouped by stage; click a card for its packet and last 5 beats; a related live beat glows it.
-  var wb = { cards: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {} };
+  var wb = { cards: [], cloudAgents: [], stamp: '', key: '', open: {}, byKey: {}, glows: 0, kidsOpen: {}, pinsOpen: false, issuesOpen: {}, doneOpen: {} };
   window.LIVE_WAVE = wb;
   var WB_PACKET = ['goal', 'constraints', 'path', 'acceptance', 'evidence', 'next owner', 'escalate'];
   var WB_BEAT_KINDS = /^(pr_open|issue_open|pr_commit|pr_force_push|pr_update|critic_|merged|lab_retest_|check_run|workflow_run|ci_)/;
@@ -515,6 +518,35 @@
       ul.appendChild(kh);
       var ku = wbEl('ul', open ? 'wkids' : 'wkids collapsed'); ks.sort(byBeat).forEach(function (k) { ku.appendChild(card(k)); }); ul.appendChild(ku);
     }
+    var clouds = wb.cloudAgents || [];
+    if (clouds.length) {
+      body.appendChild(wbEl('div', 'wgroup', 'cloud agents (' + clouds.length + ')'));
+      var cu = wbEl('ul', 'wcards cloud');
+      clouds.forEach(function (a) {
+        var li = wbEl('li', 'wcard cloud ' + (a.state || 'running') + (wb.open[a.bcId] ? ' open' : ''));
+        li.dataset.key = a.bcId || '';
+        var top = wbEl('div', 'wtop');
+        if (a.state === 'running') { var spin = wbEl('span', 'wspin'); spin.setAttribute('aria-label', 'running'); top.appendChild(spin); }
+        var it = wbEl('span', 'witem', a.bcId || ''); it.title = (a.bcId || '') + (a.card ? ' ' + a.card : '');
+        top.appendChild(it);
+        top.appendChild(wbEl('span', 'wage', wbAge(Date.parse(a.updated_ct) || 0)));
+        li.appendChild(top);
+        var meta = wbEl('div', 'wmeta');
+        meta.appendChild(wbEl('span', '', (a['seat'] || 'unassigned') + ' · ' + (a.state || 'running')));
+        if (a.card) meta.appendChild(wbEl('span', 'wbadge cloud', a.card));
+        li.appendChild(meta);
+        var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
+        [['bcId', a.bcId || '—'], ['owning seat', a['seat'] || '—'], ['linked card', a.card || '—'], ['state', a.state || '—'], ['last update', a.updated_ct || '—']].forEach(function (pair) {
+          dl.appendChild(wbEl('dt', '', pair[0])); dl.appendChild(wbEl('dd', '', pair[1]));
+        });
+        det.appendChild(dl);
+        var u = wbSafeUrl(a.pr);
+        if (u) { var link = wbEl('a', '', 'open on GitHub'); link.href = u; link.target = '_blank'; link.rel = 'noopener'; link.addEventListener('click', function (ev) { ev.stopPropagation(); }); det.appendChild(link); }
+        li.appendChild(det);
+        cu.appendChild(li);
+      });
+      body.appendChild(cu);
+    }
     if (inWork.length) {
       body.appendChild(wbEl('div', 'wgroup', 'in work (' + inWork.length + ')'));
       var wu = wbEl('ul', 'wcards'); inWork.forEach(function (c) { if (!LK.child[c.key]) put(wu, c); }); body.appendChild(wu);
@@ -563,9 +595,12 @@
       }
     });
     var waveHead = $('waveCount');
+    var cloudN = (wb.cloudAgents || []).length;
+    var cloudBit = cloudN ? ' · ' + cloudN + ' cloud' : '';
     if (!wb.stamp) waveHead.textContent = 'building';
-    else if (!wb.cards.length) waveHead.textContent = 'empty';
-    else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '');
+    else if (!wb.cards.length && !cloudN) waveHead.textContent = 'empty';
+    else if (!wb.cards.length) waveHead.textContent = cloudN + ' cloud';
+    else waveHead.textContent = live + ' live' + (held ? ' · ' + held + ' held' : '') + (stalls ? ' · ' + stalls + ' stalled' : '') + cloudBit;
   }
   $('waveBody').addEventListener('click', function (ev) {
     var li = ev.target.closest('.wcard'); if (!li) return;
@@ -1066,7 +1101,15 @@
       state = out.state;
       window.LIVE_CLOCK = r.feed.clock || null;
       if (r.feed.track) { trackState.track = r.feed.track; trackState.stamp = ''; }
-      if (r.feed.board && Array.isArray(r.feed.board.cards)) { var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats); if (ws !== wb.stamp) { wb.cards = wb.allCards = r.feed.board.cards; wb.stamp = ws; wb.key = ''; } }
+      var clouds = Array.isArray(r.feed.cloud_agents) ? r.feed.cloud_agents : [];
+      if (r.feed.board && Array.isArray(r.feed.board.cards)) {
+        var ws = JSON.stringify(r.feed.board.cards); wb.stats = r.feed.board.stats || null; ws += JSON.stringify(wb.stats) + JSON.stringify(clouds);
+        if (ws !== wb.stamp) { wb.cards = wb.allCards = r.feed.board.cards; wb.cloudAgents = clouds; wb.stamp = ws; wb.key = ''; }
+      } else if (JSON.stringify(clouds) !== JSON.stringify(wb.cloudAgents)) {
+        wb.cloudAgents = clouds;
+        if (!wb.stamp) wb.stamp = 'cloud:' + JSON.stringify(clouds);
+        wb.key = '';
+      }
       var isNew = {}; out.added.forEach(function (id) { isNew[id] = 1; });
       var fresh = first ? state.events.slice(-6) : state.events.filter(function (e) { return isNew[e.id]; });
       if (first && !reduced && startReplay()) fresh = [];   // live replaces the first-load flashes

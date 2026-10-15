@@ -18,7 +18,7 @@ import { parseAllowlist, mergeCards, sourceCardsFrom, projectAllowed, validateIt
 import { checkRoutesFromDir, readRoutingMap, createLoginResolver, auditLogins } from './routes.mjs';
 import { fingerprint, tripwire, createClock } from './governor.mjs';
 import { createArch1Launch, ARCH1_CANON } from './arch1-launch.mjs';
-import { configureWorkTrack, acceptCursorWebhook, appendWake, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
+import { configureWorkTrack, acceptCursorWebhook, appendWake, boardCloudAgents, canonSeatToken, deriveTrackFromDir, displaySeat, loadSeatAgentMap, readJsonl, readWakeRows, seatForAgentId, toToken } from './worktrack.mjs';
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
@@ -1145,6 +1145,8 @@ function mergedHeader(now = Date.now()) {
   const tf = foldSeatTouch(h.fleet, seatTouch, now); if (tf) h.fleet = tf;   // wake / read / ack activity
   const af = applyStoredActivity(h.fleet, now); if (af) h.fleet = af;   // open turns and tasks (activity.jsonl)
   h.track = trackView(now);   // Cursor agents, packets, wakes and blockers rebuilt from the volume
+  h.cloud_agents = cloudAgentBoard();   // first-class board rows: bcId, seat, card, state, last update
+  if (h.board) h.board.cloud_agents = h.cloud_agents;
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
@@ -1170,6 +1172,40 @@ function closedCardKeys() {
 function trackView(now) {
   try { return deriveTrackFromDir(STATE_DIR, now, NUDGE_L1_MS, closedCardKeys()); }
   catch (e) { console.log('track: ' + ((e && e.message) || 'read failed')); return { items: [], overdue: [], lanes: [] }; }
+}
+function activityCloudRows() {
+  try {
+    if (Array.isArray(activity)) return activity;
+  } catch { /* the activity tail is declared later; the file is the same log */ }
+  return readJsonl(path.join(STATE_DIR, 'activity.jsonl'));
+}
+function arch1CloudLinks() {
+  const links = [];
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(STATE_DIR, 'arch1-launch.json'), 'utf8'));
+    const cards = parsed && parsed.cards && typeof parsed.cards === 'object' ? parsed.cards : {};
+    for (const [card, row] of Object.entries(cards)) {
+      if (!row || typeof row.agentId !== 'string' || !row.agentId) continue;
+      const state = row.status === 'finished' ? 'finished' : row.status === 'error' ? 'failed' : 'running';
+      links.push({
+        bcId: row.agentId,
+        card,
+        seat: ARCH1_CANON,
+        state,
+        updated_ct: Number(row.at) ? new Date(Number(row.at)).toISOString() : '',
+      });
+    }
+  } catch { /* no launch file */ }
+  return links;
+}
+function cloudAgentBoard() {
+  try {
+    return boardCloudAgents({
+      agents: readJsonl(path.join(STATE_DIR, 'agents.jsonl')),
+      activity: activityCloudRows(),
+      links: arch1CloudLinks(),
+    });
+  } catch (e) { console.log('cloud agents: ' + ((e && e.message) || 'read failed')); return []; }
 }
 function applyTrackWorking(fleet, track, now) {
   const workingItems = (track && track.items || []).filter(item => item.working && item.seat_name);
@@ -1219,7 +1255,8 @@ function openQueue(now = Date.now()) {
 }
 // active windows and box staleness move with the clock: re-merge every 15 s, publish only on a real change
 const fleetSig = h => JSON.stringify([h.fleet && { ...h.fleet, as_of: 0 }, h.sources?.box?.stale, nudges.length, nudges.filter(n => n.closed_at).length,
-  (h.track?.items || []).map(i => i.id + ':' + i.label + ':' + i.lane + ':' + (i.overdue ? 1 : 0))]);
+  (h.track?.items || []).map(i => i.id + ':' + i.label + ':' + i.lane + ':' + (i.overdue ? 1 : 0)),
+  (h.cloud_agents || []).map(a => a.bcId + ':' + a.state + ':' + a.updated_ct + ':' + a.card)]);
 function publishHeader(now = Date.now()) {   // re-merge after a wake or a webhook; publish only on a real change
   const h = mergedHeader(now);
   if (fleetSig(h) !== fleetSig(header)) { seq++; header = h; fullDirty = true; }

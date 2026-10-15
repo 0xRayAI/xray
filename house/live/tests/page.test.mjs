@@ -122,7 +122,8 @@ test('LIVE pill is honest about generated_at age', () => {
 
 test('wave header says building with no stamp and empty when the board has zero cards', () => {
   assert.match(html, /if \(!wb\.stamp\) waveHead\.textContent = 'building'/);
-  assert.match(html, /else if \(!wb\.cards\.length\) waveHead\.textContent = 'empty'/);
+  assert.match(html, /else if \(!wb\.cards\.length && !cloudN\) waveHead\.textContent = 'empty'/);
+  assert.match(html, /else if \(!wb\.cards\.length\) waveHead\.textContent = cloudN \+ ' cloud'/);
 });
 
 
