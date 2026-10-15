@@ -1,6 +1,6 @@
 const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
 // Seat -> end time (ms), or 0 for an open turn past TURN_OPEN_MS (full clear).
-// An end inside the window clears older marks only. A running cloud agent stays.
+// An ended turn clears older marks. A newer mark counts only while fresh. A running cloud agent stays.
 let turnRelease = new Map();
 // Bifrost live mesh: password-gated (or public) static page + in-memory feed (push-only ingest; full or delta, delta polls).
 // Node 20, zero dependencies.
@@ -947,7 +947,7 @@ function mergedHeader(now = Date.now()) {
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
-  if (h.fleet) h.fleet = applyTurnRelease(h.fleet);   // an end inside the window clears older marks; a running cloud agent stays
+  if (h.fleet) h.fleet = applyTurnRelease(h.fleet, now);   // an ended turn clears older marks; a fresh later mark and a running cloud agent stay
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   h.freshness = stampClockTree({
@@ -1989,27 +1989,28 @@ function turnHeld(open, seat, now) {
 function markTime(row) {
   return tsOf(row && (row.since_ct || row.t_ct));
 }
-// An end drops a mark only when that mark has a time at or before the end.
-// A running cloud agent stays. A mark with no time stays. A newer mark stays.
+// An end drops a mark at or before that end. A newer mark stays only while it is
+// inside TURN_OPEN_MS. A running cloud agent stays. A mark with no time stays.
 // endAt 0 is an open turn past the window, not an end.
-function spareTurnMark(row, endAt) {
+function spareTurnMark(row, endAt, now = Date.now()) {
   if (row && row.via === 'cloud') return true;
   if (!endAt || !row) return false;
   const at = markTime(row);
   if (!at) return true;
-  return at > endAt;
+  if (!(at > endAt)) return false;
+  return now - at <= TURN_OPEN_MS;
 }
-function spareEndedSeat(seat, row, endAt) {
-  if (spareTurnMark(row, endAt)) return true;
+function spareEndedSeat(seat, row, endAt, now = Date.now()) {
+  if (spareTurnMark(row, endAt, now)) return true;
   if (!endAt) return false;
   const gh = ghWork.get(seat);
-  return !!(gh && gh.at > endAt);
+  return !!(gh && gh.at > endAt && now - gh.at <= TURN_OPEN_MS);
 }
-function applyTurnRelease(fleet) {
+function applyTurnRelease(fleet, now = Date.now()) {
   if (!fleet || !turnRelease.size) return fleet;
   const f = { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } };
   for (const [seat, endAt] of turnRelease) {
-    if (spareEndedSeat(seat, f.working[seat], endAt)) continue;
+    if (spareEndedSeat(seat, f.working[seat], endAt, now)) continue;
     clearSeatWork(f, seat);
   }
   return f;
@@ -2057,12 +2058,12 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
-  // An end inside TURN_OPEN_MS clears a mark only when its time is at or before that end.
-  // A newer mark stays, and so does a running cloud agent. A newer GitHub event is applied after this.
+  // An ended turn clears a mark at or before that end, including after TURN_OPEN_MS.
+  // A newer mark stays only while it is fresh. A running cloud agent stays.
+  // GitHub re-applies after this and expires on the same clock.
   // An open turn older than the window clears the seat. A newer open subagent or watcher keeps it.
   const release = new Map();
   for (const [seat, t] of ended) {
-    if (now - t > TURN_OPEN_MS) continue;
     if (turnHeld(open, seat, now)) continue;
     release.set(seat, t);
   }
@@ -2073,7 +2074,7 @@ function applyStoredActivity(fleet, now) {
     if (!release.has(seat)) release.set(seat, 0);
   }
   for (const [seat, endAt] of release) {
-    if (spareTurnMark(f.working[seat], endAt)) continue;
+    if (spareTurnMark(f.working[seat], endAt, now)) continue;
     clearSeatWork(f, seat);
   }
   turnRelease = release;
