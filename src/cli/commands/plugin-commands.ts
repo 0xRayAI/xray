@@ -264,7 +264,9 @@ export function parseYaml(content: string): YamlMap {
     if (!trimmed || trimmed.startsWith("#")) continue;
     const indent = line.search(/\S/);
 
-    while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+    while (stack.length > 1) {
+      const top = stack[stack.length - 1];
+      if (!top || indent > top.indent) break;
       stack.pop();
     }
 
