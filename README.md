@@ -4,11 +4,11 @@
 
 **4.1** — a suit that survives the context window
 
-Confer votes. Burst runs the swarm.
+Bifrost is the live board. Goggles reads one named plane.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws.
 
-Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
+Bifrost turns each pull request, issue, and comment into one card and a line in the right seat's inbox, then wakes that seat. Confer still completes only on a real yes. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
 
 The product is the **skeleton you wear**.
 
@@ -265,7 +265,7 @@ npm run release:npm # gate + prepare + npm publish --access public
 
 ## Release
 
-The **4.0** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
+The **4.1** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
 
 ```bash
 npm run release:gate
