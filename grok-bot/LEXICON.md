@@ -39,7 +39,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **card** | One GitHub issue or pull request (`repo#number`): title, url, owner seat, stage (`open` > `review` > `fix` > `merge` > `retest` > `done`), state (`live`, `parked`, or `closed`) |
 | **seat** | Named bot role (CoS, forge, critic, herald, magnet…) |
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read on wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
-| **notes** | "Notes are the body the station card cannot hold." `.xray/state/NOTES.md`: "The seat writes it before the compact." PreCompact `stampNotesPickup` "updates only that line and leaves the body alone." "Do not commit this file." No secrets, only env var names. (plate: `docs-site/docs/plates/notes-page.md`) |
+| **notes** | "Notes are the body the station card cannot hold." `.xray/state/NOTES.md`: the seat writes the body after every beat, with evidence; there is no pre-compact signal. A compaction is a wake: read station, then notes. Where a PreCompact hook exists, `stampNotesPickup` "updates only that line and leaves the body alone." "Do not commit this file." No secrets, only env var names. (plate: `docs-site/docs/plates/notes-page.md`) |
 | **receipt** | Proof a card closed (critic PASS, `npm view`, Dist URL). Chat LGTM ≠ receipt |
 | **cloud** | Heavy repo surgeon (`bc-…`). Cuts metal; seats run the company |
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |
