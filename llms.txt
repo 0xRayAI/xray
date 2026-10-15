@@ -62,6 +62,10 @@ Not an 8th `xray-*` server. **Repertoire is preferred** — vendored 0.2.9 ships
 - **Hangar** — plants factory shops on the four floors. Coexists with mill plant via shop plant allowlist.
 - **42 YML / 45 SKILL.md** — exo catalog in this repo. Not default consumer wear.
 
+## Live board (Bifrost)
+
+The board seats see is the collector board. `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`, and exits 2 when one is missing. The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: turn start on every turn, turn end on every exit. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. Plate: `docs-site/docs/plates/bifrost.md`. Lexicon: `grok-bot/LEXICON.md`, including **button up**.
+
 ## Docs
 
 - [README.md](README.md) — exo landing

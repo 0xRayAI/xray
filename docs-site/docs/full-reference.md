@@ -91,16 +91,25 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 | Command | Description |
 |---------|-------------|
-| `install` | Install & configure (auto-detects opencode, Grok, Hermes, git) |
-| `setup` | Re-run full configuration if needed |
-| `init` | Alias for install |
-| `status` | Show framework health and configuration |
-| `health` / `check` | Run health checks on all subsystems |
-| `validate` | Verify installation is complete |
-| `report` | Generate activity and health reports |
-| `fix` | Auto-repair common issues |
-| `doctor` | Diagnose issues (read-only) |
-| `debug` | Print all framework paths |
+| `install` | Install xray framework in the current project |
+| `setup` | Set up `.mcp.json` and the OpenCode, Grok, Hermes, and OpenClaw bridges |
+| `init` | Initialize xray configuration in the current project |
+| `wear` | Wear the 0xray suit in this git checkout |
+| `unwear` | Remove the 0xray suit and restore the pre-wear hooks file |
+| `look` | Kind 0 is quiet on a match. One outer is a reading. digest and triage return a card |
+| `goggles` | Same organ as `look` |
+| `confer` | Turn confer on or off in `.xray/features.json`. A missing key stays off until this runs |
+| `status` | Show comprehensive xray framework status |
+| `monitor` | Current picture of the worn suit (activity, inference state, repertoire, version) |
+| `validate` | Validate consumer wear (pack paths, Cursor hooks, mill plant) |
+| `health` | Check framework health and system status. Alias: `check` |
+| `pulse` | Print one line: worn CLI, repertoire, inference age, activity, lens, plant |
+| `report` | Generate framework activity and health reports |
+| `fix` | Run the postinstall setup for common framework issues |
+| `doctor` | Diagnose framework issues (does not fix them) |
+| `debug` | Print package root and current directory |
+| `capabilities` | Show framework capabilities. Alias: `caps` |
+| `archive-logs` | Archive log files without framework boot (for git hooks) |
 
 ### Skills
 
@@ -123,10 +132,10 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 | `mcp researcher` | Codebase exploration |
 | `mcp code-review` | Code review deliberation |
 | `mcp architect-tools` | Architecture decisions |
-| `mcp:list` | Browse available community MCP servers |
-| `mcp:status` | Show installed MCP servers |
-| `mcp:install <name>` | Install an MCP server from the registry |
-| `mcp:remove <name>` | Remove an installed MCP server |
+| `mcp-list` | List available community MCP servers. Alias: `mcp:list` |
+| `mcp-status` | Show installed MCP servers. Alias: `mcp:status` |
+| `mcp-install <name>` | Install an MCP server from the registry. Alias: `mcp:install` |
+| `mcp-remove <name>` | Remove an installed MCP server. Alias: `mcp:remove` |
 
 ### Platform Integration
 
@@ -141,11 +150,12 @@ Routes tasks to the right agents based on complexity (simple tasks go to a singl
 
 | Command | Description |
 |---------|-------------|
-| `plugin list` | List all installed plugins |
-| `plugin install <name>` | Install a new plugin |
-| `plugin enable <name>` | Enable a disabled plugin |
-| `plugin disable <name>` | Disable a plugin without uninstalling |
-| `plugin uninstall <name>` | Remove a plugin completely |
+| `plugin list` | List installed plugins |
+| `plugin install <name>` | Install a plugin from npm, a local path, or `examples/plugins/<name>` |
+| `plugin enable <name>` | Enable a plugin |
+| `plugin disable <name>` | Disable a plugin |
+| `plugin status <name>` | Show plugin details |
+| `plugin uninstall <name>` | Remove a plugin |
 
 ### Inference & Self-Improvement
 

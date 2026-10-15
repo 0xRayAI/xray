@@ -232,7 +232,14 @@ Full skill mapping: [SKILLS.md](SKILLS.md).
 | Station vs Repertoire 0.1 | `docs-site/docs/guides/station-vs-repertoire.md` |
 | AsideContext | `docs-site/docs/guides/aside-context.md` |
 | Consumer migration | `docs-site/docs/guides/consumer-migration.md` |
+| Bifrost board | `docs-site/docs/plates/bifrost.md` |
+| Seat wake | `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` |
+| Fleet lexicon | `grok-bot/LEXICON.md` |
 | Docusaurus site | https://0xrayai.github.io/xray/ |
+
+## Live board
+
+The board seats see is the collector board (`house/live/feed/live_mesh.py`). The seat wake is `grok-bot/templates/house/fleet/WAKE-ROUTINE.md`: `live-inbox <seat> --turn start` on every turn, and `--turn end` on every exit. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. A missing or empty one exits 2 and names it. A stuck card sends L1 to the next owner or the card owner, and L2 to the CoS role. An unacked line and a missing handoff stay on that seat through L3, and the CoS role is woken at L3.
 
 ## Release artifacts
 

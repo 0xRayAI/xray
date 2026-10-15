@@ -142,7 +142,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 |------|--------|-------|
 | **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
 | **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. |
-| **nudge** | Workstream | A stuck card or unacked line: L1 goes to the owning seat. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
+| **nudge** | Workstream | A live card with no beat: L1 goes to the next owner, or else the card owner. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat, and the CoS role is woken at L3. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
 | **volley** | Workstream | Packet ping-pong between seats inside a wave: ask, answer, fix, re-check. |
