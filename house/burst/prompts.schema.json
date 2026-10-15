@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "house/burst/prompts.schema.json",
-  "title": "Burst prompts.jsonl line",
-  "description": "One JSON object per line in prompts.jsonl (default fleet/prompts.jsonl, env BURST_PROMPTS). Same fields as activity.schema.json with kind prompt. A pulse is action sent: the seat stays working for 10 minutes. No prompt body, no message text. The collector also reads legacy {t_ct, from, to} lines; see $defs.legacyPrompt.",
+  "title": "Burst prompt line",
+  "description": "The line live-inbox <seat> --prompt posts to /activity. Same fields as activity.schema.json with kind prompt. room is optional, prompt only, at most 40 characters. A pulse is action sent: the seat stays working for 10 minutes. No prompt body, no message text. An old collector still reads fleet/prompts.jsonl (env BURST_PROMPTS). Seats do not write that file. The collector also reads legacy {t_ct, from, to} lines; see $defs.legacyPrompt.",
   "type": "object",
   "additionalProperties": false,
   "required": ["t_ct", "seat", "kind", "action"],
@@ -20,6 +20,18 @@
     "kind": { "const": "prompt" },
     "action": { "enum": ["start", "end", "sent"] },
     "to": { "type": "string", "maxLength": 40, "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$" },
+    "from": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$",
+      "description": "prompt only: who sent it. from blaze credits Blaze. Never the text."
+    },
+    "room": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$",
+      "description": "prompt only: a short room name, at most 40 characters."
+    },
     "agent": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$" },
     "tag": { "type": "string", "maxLength": 80, "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,80}$" }
   },
@@ -40,7 +52,7 @@
     }
   },
   "examples": [
-    { "t_ct": "2026-10-09T08:59:30-05:00", "seat": "builder", "kind": "prompt", "action": "sent" },
+    { "t_ct": "2026-10-09T08:59:30-05:00", "seat": "builder", "kind": "prompt", "action": "sent", "from": "blaze", "to": "builder", "room": "ops" },
     { "t_ct": "2026-10-09T09:00:00-05:00", "seat": "builder", "kind": "prompt", "action": "start", "tag": "issue-1" },
     { "t_ct": "2026-10-09T09:04:55-05:00", "seat": "builder", "kind": "prompt", "action": "end", "tag": "issue-1" }
   ]

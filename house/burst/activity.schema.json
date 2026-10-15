@@ -35,6 +35,12 @@
       "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$",
       "description": "prompt only: the seat that sent the prompt (#281). Never the text."
     },
+    "room": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[A-Za-z0-9 ._:@#+/\\-]{1,40}$",
+      "description": "prompt only: a short room name, at most 40 characters. Never the message text."
+    },
     "agent": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{2,40}$"
@@ -49,6 +55,10 @@
     {
       "if": { "properties": { "kind": { "const": "prompt" } }, "required": ["kind"] },
       "then": { "properties": { "action": { "enum": ["start", "end"] } } }
+    },
+    {
+      "if": { "not": { "properties": { "kind": { "const": "prompt" } }, "required": ["kind"] } },
+      "then": { "properties": { "room": false, "from": false } }
     },
     {
       "if": { "properties": { "kind": { "const": "turn" } }, "required": ["kind"] },
@@ -111,7 +121,7 @@
     }
   },
   "examples": [
-    { "t_ct": "2026-10-09T09:00:00-05:00", "seat": "builder", "kind": "prompt", "action": "start", "tag": "issue-1" },
+    { "t_ct": "2026-10-09T09:00:00-05:00", "seat": "builder", "kind": "prompt", "action": "start", "tag": "issue-1", "room": "ops" },
     { "t_ct": "2026-10-09T09:00:01-05:00", "seat": "builder", "kind": "turn", "action": "start", "tag": "issue-1" },
     { "t_ct": "2026-10-09T09:00:02-05:00", "seat": "builder", "kind": "turn", "action": "end", "tag": "issue-1" },
     { "t_ct": "2026-10-09T09:01:00-05:00", "seat": "builder", "kind": "subagent", "action": "start", "to": "gate", "tag": "computerUse" },

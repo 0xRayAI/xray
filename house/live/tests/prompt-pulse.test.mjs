@@ -76,6 +76,10 @@ test('a prompt pulse keeps the seat working for 10 minutes and credits Blaze', a
     assert.equal(pulses.length, 2);
     assert.ok(pulses.every(e => e.from === 'Blaze' && e.to === 'forge'));
     assert.ok(pulses.some(e => String(e.label).includes('ops')));
+    const turned = await post(base, { t_ct: stamp(0), seat: 'forge', kind: 'turn', action: 'start', room: 'ops' });
+    assert.equal(turned.status, 422);
+    const longRoom = await post(base, { t_ct: stamp(0), seat: 'forge', kind: 'prompt', action: 'sent', from: 'blaze', to: 'forge', room: 'r'.repeat(41) });
+    assert.equal(longRoom.status, 422);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
