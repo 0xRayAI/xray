@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const src = fs.readFileSync(new URL('../app/server.mjs', import.meta.url), 'utf8');
 test('activity lines are upserted as seat events', () => {
-  assert.match(src, /function activityEvent\(line(?:, opts)?\)/);
+  assert.match(src, /function activityEvent\(line, opts\)/);
   assert.match(src, /appendArchive\('activity', line\);\n    activityEvent\(line\);/);
-  assert.match(src, /appendArchive\('activity', line\); activityEvent\(line(?:, opts)?\);/);
+  assert.match(src, /appendArchive\('activity', line\); activityEvent\(line, opts\);/);
 });
