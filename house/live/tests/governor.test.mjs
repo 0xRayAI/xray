@@ -57,7 +57,9 @@ test('the CoS path starts the same timed run by hand: wake with a deadline, coun
   const j = await r.json();
   assert.deepEqual([r.status, j.started, Object.keys(j.clock.deadlines)], [200, true, ['forge']]);
   assert.ok(await until(() => forgeWakes().some(g => /timed run \(cos\).*blocker in one line by/.test(JSON.parse(g.body).reason))));
-  assert.equal((await header()).clock.reason, 'cos');
+  await new Promise(r => setTimeout(r, 400));
+  const clock = (await header()).clock;
+  assert.equal(clock && clock.reason, 'cos');
 });
 
 test('ack closes the line nudge', async () => {
@@ -121,6 +123,14 @@ test('clock: a frozen board with open cards trips, wakes seats with open work wi
   assert.equal(c.run, null);
   assert.equal(c.observe('b', W + 3000, board), null, 'no re-trip right after a move');
   assert.equal(c.observe('b', 2 * W + 2000, board), 'stall', 're-arms after the board stalls again');
+});
+
+test('clock: a card waiting on start_after does not pull an empty board', () => {
+  const W = 60000, c = createClock({ tripMs: W, perSeatMs: 120000, now: 0 });
+  const waiting = { openCards: 0, openSeats: [], coord: 'cos-seat', scheduled: 1 };
+  c.observe('x', 0, waiting);
+  assert.equal(c.observe('x', W, waiting), null);
+  assert.equal(c.run, null);
 });
 
 test('clock: an empty board wakes the coord (CoS) role once per window; re-arms after the window passes', () => {

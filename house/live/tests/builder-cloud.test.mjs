@@ -129,3 +129,36 @@ test('nudge retarget: an open L1 to the old owner closes and a new L1 goes to th
   await push(card({ nudge_to: 'builder', nudge_via: 'merge (Reviewer PASS at head)', packet: { 'next owner': 'Builder' } }));   // stable: no third
   assert.equal((await (await fetch(BASE + '/cards?seat=builder-cloud', { headers: A(AKEY) })).json()).cards.find(x => x.number === 5).beats.filter(b => b.nudge).length, 2);
 });
+
+test('a push beat stays when nudges fill the window', async () => {
+  const now = Date.now(), R = 'example-org/push', q = now - 61 * 60000;
+  const beats = [
+    { t: q - 5000, what: 'pushed', url: '', id: 'push-1', sha: 'abc1234' },
+    { t: q - 4000, what: 'Reviewer FAIL', url: '', id: 'r1' },
+    { t: q - 3000, what: 'CI failure', url: '', id: 'c1' },
+    { t: q - 2000, what: 'CI failure', url: '', id: 'c2' },
+    { t: q - 1000, what: 'CI success', url: '', id: 'c3' },
+    { t: q, what: 'Reviewer PASS', url: '', id: 'r2' },
+  ];
+  const card = { key: R + '#358', kind: 'pr', repo: R, number: 358, title: 'push', url: '', owner: 'Builder', stage: 'review', state: 'live', packet: { 'next owner': 'Builder' }, beats, last_beat_t: q, stall: true };
+  const push = await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 0, generated_at: new Date().toISOString(), events: [], board: { updated_ct: 'x', cards: [card] } }), headers: { ...A(INGEST), 'Content-Type': 'application/json' } });
+  assert.equal(push.status, 200);
+  const got = (await (await fetch(BASE + '/cards?seat=builder-cloud', { headers: A(AKEY) })).json()).cards.find(c => c.number === 358);
+  assert.ok(got.beats.some(b => b.what === 'pushed' && b.id === 'push-1'));
+});
+
+test('a comment on a merged PR stays on a plain inbox read until acked', async () => {
+  const id = '0xRayAI/xray#355:comment:6188449005';
+  const R = '0xRayAI/xray';
+  const row = { id, t_ct: new Date().toISOString(), seat: 'critic', type: 'pr_comment', repo: R, number: 355, title: 'note', url: 'https://github.com/0xRayAI/xray/pull/355#issuecomment-6188449005', reason: 'comment on your PR (merged PR)' };
+  assert.equal((await fetch(BASE + '/inbox', { method: 'POST', body: JSON.stringify({ lines: [row] }), headers: { 'X-Live-Ingest': INGEST, 'Content-Type': 'application/json' } })).status, 200);
+  const card = { key: R.toLowerCase() + '#355', kind: 'pr', repo: R, number: 355, title: 'merged', url: '', owner: 'forge', stage: 'done', state: 'closed', packet: {}, beats: [{ t: Date.now(), what: 'merged', id: 'm355', url: '' }], last_beat_t: Date.now() };
+  const merged = { id: R + '#355:merged', t_ct: new Date().toISOString(), kind: 'merged', repo: R, number: 355 };
+  assert.equal((await fetch(BASE + '/ingest', { method: 'POST', body: JSON.stringify({ title: 't', event_count: 1, generated_at: new Date().toISOString(), events: [merged], board: { updated_ct: 'x', cards: [card] } }), headers: { ...A(INGEST), 'Content-Type': 'application/json' } })).status, 200);
+  const open = async () => (await (await fetch(BASE + '/inbox/critic', { headers: A(CKEY) })).json()).lines.map(l => l.id);
+  assert.ok((await open()).includes(id));
+  assert.equal((await fetch(BASE + '/inbox/critic/ack', { method: 'POST', body: JSON.stringify({ id }), headers: { ...A(CKEY), 'Content-Type': 'application/json' } })).status, 200);
+  assert.equal((await open()).includes(id), false);
+  const all = (await (await fetch(BASE + '/inbox/critic?all=1', { headers: A(CKEY) })).json()).lines.map(l => l.id);
+  assert.ok(all.includes(id));
+});

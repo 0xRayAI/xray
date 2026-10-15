@@ -137,6 +137,45 @@ class Model(unittest.TestCase):
         own = [self.ev(23, "pr_open", 9000, title="u"), dict(self.ev(23, "pr_comment", 300), resolved=True)]
         self.assertEqual((self.card(own, 23)["stage"], self.card(own, 23)["state"]), ("done", "closed"))
 
+    def test_start_after_parks_until_that_time_and_a_later_comment_keeps_it(self):
+        import live_collect as uc
+        self.assertEqual(uc.comment_start_after("Start after: 2030-01-02T08:00-06:00\nmore"), "2030-01-02T08:00-06:00")
+        self.assertIsNone(uc.comment_start_after("Start after: tomorrow"))
+        self.assertIsNone(uc.comment_start_after("see note\nStart after: 2030-01-02T08:00-06:00"))
+        base = [self.ev(44, "pr_open", 9000, title="dated"), self.ev(44, "pr_commit", 8000)]
+        future = datetime.fromtimestamp(time.time() + 2 * 86400, CT).isoformat(timespec="minutes")
+        dated = dict(self.ev(44, "pr_comment", 100), start_after=future)
+        c = self.card(base + [dated], 44)
+        self.assertEqual((c["state"], c["stall"], c["start_after"]), ("parked", False, future))
+        later = dict(self.ev(44, "pr_comment", 50), **{"from": "Builder"})
+        c = self.card(base + [dated, later], 44)
+        self.assertEqual((c["start_after"], c["state"]), (future, "parked"))
+        past = "2020-01-02T08:00-06:00"
+        old = dict(self.ev(44, "pr_comment", 90), start_after=past)
+        c = self.card(base + [old], 44)
+        self.assertEqual((c["start_after"], c["state"]), (past, "live"))
+        closed = self.card(self.merged_card(45, dict(self.ev(45, "pr_comment", 300), start_after=future)), 45)
+        self.assertEqual(closed["state"], "closed")
+
+    def test_stranger_start_after_is_ignored_and_the_horizon_is_capped(self):
+        base = [self.ev(46, "pr_open", 9000, title="gate"), self.ev(46, "pr_commit", 8000)]
+        soon = datetime.fromtimestamp(time.time() + 2 * 86400, CT).isoformat(timespec="minutes")
+        stranger = dict(self.ev(46, "pr_comment", 100), **{"from": "Others", "start_after": soon})
+        c = self.card(base + [stranger], 46)
+        self.assertNotIn("start_after", c)
+        self.assertEqual(c["state"], "live")
+        far = "2030-01-02T08:00-06:00"
+        owner_far = dict(self.ev(46, "pr_comment", 90), start_after=far)
+        c = self.card(base + [owner_far], 46)
+        self.assertNotIn("start_after", c)
+        self.assertEqual(c["state"], "live")
+        fleet = dict(self.ev(46, "pr_comment", 80), **{"from": "forge", "start_after": soon})
+        c = self.card(base + [fleet], 46)
+        self.assertEqual((c["start_after"], c["state"]), (soon, "parked"))
+        own = dict(self.ev(46, "pr_comment", 70), start_after=soon)
+        c = self.card(base + [own, stranger], 46)
+        self.assertEqual((c["start_after"], c["state"]), (soon, "parked"))
+
     def test_parked_comment_parks_until_a_newer_beat(self):
         import live_collect as uc
         for body in ("Parked: waiting on Lead", "  parked: x", "PARKED: y"):
@@ -275,6 +314,24 @@ class Model(unittest.TestCase):
         self.assertEqual(bad["stage"], "fix")
         self.assertIn("Reviewer FAIL", [b["what"] for b in bad["beats"]])
         self.assertIsNone(self.w.beat_of({"kind": "review", "state": "COMMENTED"}))
+
+    def test_a_push_stays_on_the_card_and_merged_by_is_the_merger(self):
+        self.assertEqual(self.w.beat_of({"kind": "pr_commit"}), "pushed")
+        self.assertEqual(self.w.beat_of({"kind": "pr_force_push"}), "pushed")
+        self.assertEqual(self.w.beat_of({"kind": "pr_update"}), "pushed")
+        evs = [self.ev(70, "pr_open", 9000, title="push")]
+        evs.append(self.ev(70, "pr_commit", 8000, sha="abc1234abcdef"))
+        evs.append(self.ev(70, "review", 7000, state="APPROVED", sha="abc1234"))
+        evs.append(self.ev(70, "ci_fail", 6000, conclusion="failure"))
+        evs.append(self.ev(70, "ci_fail", 5000, conclusion="failure"))
+        evs.append(self.ev(70, "ci_pass", 4000, conclusion="success"))
+        evs.append(self.ev(70, "merged", 3000, merged_by="critic0x[bot]"))
+        c = self.card(evs, 70)
+        self.assertIn("pushed", [b["what"] for b in c["beats"]])
+        self.assertLessEqual(len(c["beats"]), 5)
+        self.assertEqual(c["merged_by"], "critic0x[bot]")
+        bare = self.card([self.ev(71, "pr_open", 9000, title="m"), self.ev(71, "merged", 1000)], 71)
+        self.assertNotIn("merged_by", bare)
 
     def test_reopen_clears_closed_and_stop(self):
         evs = [self.ev(62, "pr_open", 5000, title="back"), self.ev(62, "pr_close", 4000),

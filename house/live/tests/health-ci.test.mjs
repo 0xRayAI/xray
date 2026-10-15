@@ -47,6 +47,10 @@ async function stop(child) {
   await done;
 }
 
+function drop(dir) {
+  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+}
+
 function card(over = {}) {
   return {
     key: 'example/repo#7', repo: 'example/repo', number: 7, kind: 'pr', state: 'live',
@@ -104,7 +108,7 @@ test('main CI with no open card match stays up', async () => {
     assert.equal(body.box_informational, true);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    drop(data);
   }
 });
 
@@ -125,7 +129,7 @@ test('completed CI or pr_commit on an open card does not put cards behind', asyn
       assert.equal(body.feed_quiet, false, event.id);
     } finally {
       await stop(srv.child);
-      fs.rmSync(data, { recursive: true, force: true });
+      drop(data);
     }
   }
 });
@@ -144,7 +148,7 @@ test('a card-worthy event newer than the board puts cards behind', async () => {
     assert.equal(body.cards_behind, true);
   } finally {
     await stop(srv.child);
-    fs.rmSync(data, { recursive: true, force: true });
+    drop(data);
   }
 });
 
@@ -165,7 +169,7 @@ test('CI on a closed card and an unfinished check do not put cards behind', asyn
       assert.equal(body.cards_behind, false, row.events[0].id);
     } finally {
       await stop(srv.child);
-      fs.rmSync(data, { recursive: true, force: true });
+      drop(data);
     }
   }
 });
@@ -188,7 +192,7 @@ test('a quiet collector file fails health; a missing file is only warming', asyn
     assert.ok(body.collector_age >= 1);
   } finally {
     await stop(quiet.child);
-    fs.rmSync(quietDir, { recursive: true, force: true });
+    drop(quietDir);
   }
 
   const warmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-warm-'));
@@ -204,6 +208,6 @@ test('a quiet collector file fails health; a missing file is only warming', asyn
     assert.equal(body.collector_age, null);
   } finally {
     await stop(warm.child);
-    fs.rmSync(warmDir, { recursive: true, force: true });
+    drop(warmDir);
   }
 });

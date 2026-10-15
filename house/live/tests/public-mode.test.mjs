@@ -14,7 +14,15 @@ const gh = http.createServer((q, s) => {
 });
 await new Promise(r => gh.listen(0, '127.0.0.1', r));
 const kids = [], dirs = [];
-after(() => { for (const k of kids) k.kill(); gh.close(); for (const d of dirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
+after(async () => {
+  await Promise.all(kids.map(k => new Promise(r => {
+    if (k.exitCode != null || k.signalCode != null) return r();
+    k.once('exit', r);
+    k.kill();
+  })));
+  gh.close();
+  for (const d of dirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+});
 function boot(extra) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-pub-')); dirs.push(data);
   const env = { PORT: '0', PATH: process.env.PATH, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'),

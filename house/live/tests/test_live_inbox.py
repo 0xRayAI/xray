@@ -66,12 +66,11 @@ class HandoffCommand(unittest.TestCase):
             self.assertEqual(line["sha"], sha)
             self.assertEqual(len(Inbox.posts[0]["body"]["lines"]), 1)
 
-    def test_missing_sha_posts_an_id_with_an_empty_head(self):
+    def test_missing_sha_is_refused(self):
+        before = len(Inbox.posts)
         r = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#21", "--kind", "ready")
-        self.assertEqual(r.returncode, 0, r.stderr)
-        line = Inbox.posts[-1]["body"]["lines"][0]
-        self.assertEqual(line["id"], "handoff:0xrayai/xray#21:ready:")
-        self.assertNotIn("sha", line)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(len(Inbox.posts), before)
         short = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#22", "--kind", "ready", "--sha", "abc1234")
         self.assertEqual(short.returncode, 0, short.stderr)
         posted = Inbox.posts[-1]["body"]["lines"][0]
@@ -88,6 +87,19 @@ class HandoffCommand(unittest.TestCase):
         self.assertNotEqual(ids[0], ids[2])
         self.assertEqual(b.stdout, a.stdout)
         self.assertNotEqual(c.stdout, a.stdout)
+
+    def test_start_after_posts_the_card_date(self):
+        r = self.run_handoff("--card", "acme/app#9", "--start-after", "2026-10-18T08:00-05:00")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("start after 2026-10-18T08:00-05:00 acme/app#9", r.stdout)
+        self.assertNotIn("seat-key-forge", r.stdout + r.stderr)
+        self.assertEqual(len(Inbox.posts), 1)
+        self.assertEqual(Inbox.posts[0]["path"], "/cards/start-after")
+        self.assertEqual(Inbox.posts[0]["auth"], "Bearer seat-key-forge")
+        self.assertEqual(Inbox.posts[0]["body"], {"repo": "acme/app", "number": 9, "start_after": "2026-10-18T08:00-05:00"})
+        bad = self.run_handoff("--card", "acme/app#9", "--start-after", "tomorrow")
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertEqual(len(Inbox.posts), 1)
 
     def test_bad_kind_posts_nothing(self):
         r = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#1", "--kind", "room")

@@ -485,11 +485,13 @@
       if (c.pinned) meta.appendChild(wbEl('span', 'wbadge pin', 'pinned'));
       else if (c.packet_ok === false) meta.appendChild(wbEl('span', 'wbadge', 'needs a brief'));
       if (c.state === 'held') meta.appendChild(wbEl('span', 'wbadge held', 'On hold'));
+      if (c.start_after) meta.appendChild(wbEl('span', 'wbadge', 'start after ' + c.start_after));
       if (c.stall) meta.appendChild(wbEl('span', 'wbadge stall', 'quiet 60 min+'));
       li.appendChild(meta);
       var det = wbEl('div', 'wdetail'), dl = wbEl('dl');
       WB_PACKET.forEach(function (f) { var v = (c.packet || {})[f]; if (!v && !(f === 'acceptance' || f === 'next owner')) return;
         dl.appendChild(wbEl('dt', '', f)); dl.appendChild(wbEl('dd', '', v || '— missing —')); });
+      if (c.start_after) { dl.appendChild(wbEl('dt', '', 'start after')); dl.appendChild(wbEl('dd', '', c.start_after)); }
       if (c.hold && (c.hold.by || c.hold.reason || c.hold.until)) {
         dl.appendChild(wbEl('dt', '', 'held by')); dl.appendChild(wbEl('dd', '', c.hold.by || '—'));
         dl.appendChild(wbEl('dt', '', 'reason')); dl.appendChild(wbEl('dd', '', c.hold.reason || '—'));

@@ -46,12 +46,13 @@ export function createClock({ tripMs, perSeatMs, now = Date.now() }) {
       }
       const armed = lastTrip === null || t - lastTrip >= tripMs;
       if (!armed || t - lastMove < tripMs) return null;
-      const { openCards = 0, openSeats = [], coord = null } = board || {};
+      const { openCards = 0, openSeats = [], coord = null, scheduled = 0 } = board || {};
       if (openCards > 0) {
         const seats = openSeats.length ? openSeats : [coord];
         if (!seats.filter(Boolean).length) return null;
         start(t, seats, 'stall'); return 'stall';
       }
+      if (scheduled > 0) return null;   // a card waiting on start_after is not an empty board
       if (!coord) return null;
       start(t, [coord], 'empty'); return 'empty';
     },

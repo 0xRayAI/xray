@@ -94,7 +94,13 @@ async function boot(extra = {}, prep) {
     await new Promise(r => setTimeout(r, 40));
   }
   if (!up) { child.kill(); cursor.close(); throw new Error('server did not boot: ' + logs.join('').slice(0, 400)); }
-  const stop = () => { child.kill(); cursor.close(); fs.rmSync(data, { recursive: true, force: true }); };
+  const stop = async () => {
+    const gone = new Promise(r => { if (child.exitCode != null || child.signalCode) r(); else child.once('exit', r); });
+    child.kill();
+    cursor.close();
+    await gone;
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  };
   return { base, calls, data, ingest, seatKey, pw, logs, stop, child };
 }
 
@@ -170,7 +176,7 @@ test('the disabled switch does not call Cursor, and /healthz hides the secrets',
       assert.deepEqual(Object.keys(body.arch1_launch).sort(), ['cap', 'day', 'enabled', 'seat', 'used']);
       assertNoSecrets(hz);
       assertNoSecrets(ctx.logs.join(''));
-    } finally { ctx.stop(); }
+    } finally { await ctx.stop(); }
   }
 });
 
@@ -202,7 +208,7 @@ test('a nudge does not launch; a real packet does, once, and the prompt is clean
     assert.equal(stored.length, 1);
     assert.equal(stored[0].seat, 'arch1');
     assertNoSecrets(ctx.logs.join(''));
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 test('one live agent per card: the next real packet is a follow-up', async () => {
@@ -219,7 +225,7 @@ test('one live agent per card: the next real packet is a follow-up', async () =>
     await waitCalls(ctx, 3);
     assert.equal(ctx.calls[2].url, '/v0/agents');
     assert.notEqual(ctx.calls[2].id, ctx.calls[0].id);
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 test('a packet during the cooldown is sent when the cooldown ends, and other cards stay free', async () => {
@@ -238,7 +244,7 @@ test('a packet during the cooldown is sent when the cooldown ends, and other car
     assert.equal(followups.length, 1);
     assert.equal(followups[0].url, '/v0/agents/' + ctx.calls[0].id + '/followup');
     assert.match(followups[0].body.prompt.text, /Line id: c2/);
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 function boardCard(number, owner) {
@@ -278,7 +284,7 @@ test('daily cap counts follow-ups and writes one visible beat', async () => {
     assert.equal(hz.arch1_launch.cap, 2);
     assertNoSecrets(JSON.stringify(hz));
     assertNoSecrets(ctx.logs.join(''));
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 test('webhook signature: bad is 401, FINISHED and ERROR beat once, other statuses do not', async () => {
@@ -323,7 +329,7 @@ test('webhook signature: bad is 401, FINISHED and ERROR beat once, other statuse
     await waitCalls(ctx, 2);
     assert.equal(ctx.calls[1].url, '/v0/agents');
     assertNoSecrets(ctx.logs.join(''));
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 test('startup copy of arch1 history does not launch and keeps the inbox file', async () => {
@@ -348,7 +354,7 @@ test('startup copy of arch1 history does not launch and keeps the inbox file', a
     const after = fs.readFileSync(file, 'utf8');
     assert.ok(after.startsWith(raw));
     assert.ok(after.includes('after-boot'));
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 test('a Critic FAIL launches only when the board card is ARCH1-owned', async () => {
@@ -373,7 +379,7 @@ test('a Critic FAIL launches only when the board card is ARCH1-owned', async () 
     await settle(400);
     assert.equal(ctx.calls.length, 1);
     assert.equal((await inbox(ctx)).lines.filter(l => l.reason === 'ARCH1 launch cap reached').length, 1);
-  } finally { ctx.stop(); }
+  } finally { await ctx.stop(); }
 });
 
 function launchEnv(dir, extra = {}) {

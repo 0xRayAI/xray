@@ -583,6 +583,101 @@ class CardLifecycle(unittest.TestCase):
         self.assertEqual(merged["actor"], "critic0x[bot]")
         self.assertEqual(merged["from"], "critic")
         self.assertEqual(merged["author"], "forge0x1[bot]")
+        self.assertEqual(merged["merged_by"], "critic0x[bot]")
+
+    def _pull(self, **over):
+        p = {"number": 8, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
+             "created_at": "2026-10-14T12:00:00Z", "html_url": "https://github.com/example-org/app/pull/8",
+             "title": "land", "head": {"sha": "a" * 40}, "base": {"ref": "main"}, "state": "closed",
+             "merged_at": "2026-10-14T16:00:00Z", "merge_commit_sha": "deadbee", "draft": False, "body": "", "labels": []}
+        p.update(over)
+        return p
+
+    def test_list_payload_without_merged_by_does_not_credit_the_author(self):
+        col = _collector("example-org/app")
+        pulls = [self._pull()]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, pulls, "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "critic0x[bot]": "critic"}):
+            col.poll_pulls(C())
+        merged = col.ev["example-org/app#8:merged"]
+        self.assertNotIn("merged_by", merged)
+        self.assertEqual(merged["author"], "forge0x1[bot]")
+        self.assertEqual(merged["actor"], "forge0x1[bot]")
+        self.assertIn("8", col.st["need_merger"])
+
+    def test_issue_event_stamps_merged_by_and_a_later_poll_keeps_it(self):
+        col = _collector("example-org/app")
+        pulls = [self._pull()]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, pulls, "etag", None
+
+        ev = {"id": 9, "event": "merged", "created_at": "2026-10-14T16:00:01Z", "actor": {"login": "critic0x[bot]"},
+              "issue": {"number": 8, "pull_request": {}, "html_url": "https://github.com/example-org/app/pull/8"}}
+
+        class Events:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [ev], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "critic0x[bot]": "critic"}):
+            col.poll_pulls(C())
+            col.poll_issue_events(Events())
+            merged = col.ev["example-org/app#8:merged"]
+            self.assertEqual(merged["merged_by"], "critic0x[bot]")
+            self.assertEqual(merged["actor"], "critic0x[bot]")
+            self.assertEqual(merged["from"], "critic")
+            pulls[0] = self._pull(updated_at="2026-10-14T18:00:00Z")
+            col.poll_pulls(C())
+        self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "critic0x[bot]")
+
+    def test_pull_api_backfill_stamps_merged_by_and_a_later_poll_keeps_it(self):
+        col = _collector("example-org/app")
+        pulls = [self._pull()]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/pulls/8"):
+                    return 200, {"number": 8, "merged_by": {"login": "critic0x[bot]"}}, None, None
+                return 200, pulls, "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "critic0x[bot]": "critic"}):
+            col.poll_pulls(C())
+            self.assertNotIn("merged_by", col.ev["example-org/app#8:merged"])
+            col.backfill_mergers(C())
+            self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "critic0x[bot]")
+            pulls[0] = self._pull(updated_at="2026-10-14T18:00:00Z")
+            col.poll_pulls(C())
+        self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "critic0x[bot]")
+        col.backfill_mergers(C())
+        self.assertEqual(col.st["merger_tried"].get("8"), True)
+
+    def test_head_change_emits_pr_commit(self):
+        col = _collector("example-org/app")
+        first = "a" * 40
+        second = "b" * 40
+        pulls = [self._pull(merged_at=None, state="open", head={"sha": first})]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, pulls, "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_pulls(C())
+            self.assertFalse([e for e in col.ev.values() if e["kind"] == "pr_commit"])
+            pulls[0] = self._pull(merged_at=None, state="open", head={"sha": second}, updated_at="2026-10-14T18:00:00Z", title="land")
+            col.poll_pulls(C())
+        hit = col.ev[f"example-org/app#8:commit:{second}"]
+        self.assertEqual(hit["kind"], "pr_commit")
+        self.assertEqual(hit["sha"], second)
 
     def test_workflow_run_emits_ci_fail_with_the_pr_number(self):
         col = _collector()
@@ -651,3 +746,24 @@ class CardLifecycle(unittest.TestCase):
         col.st["prs"]["9"] = {"author": "forge0x1[bot]"}
         col.poll_comments(Comments())
         self.assertIn("9", col.st["enrich"])
+
+    def test_start_after_comment_lands_on_the_event(self):
+        self.assertEqual(uc.comment_start_after("Start after: 2026-10-18T08:00-05:00\n"), "2026-10-18T08:00-05:00")
+        self.assertIsNone(uc.comment_start_after("Start after: tomorrow"))
+        self.assertIsNone(uc.comment_start_after("note\nStart after: 2026-10-18T08:00-05:00"))
+        col = _collector()
+        cm = {"id": 8, "created_at": "2026-10-14T12:10:00Z", "updated_at": "2026-10-14T12:10:00Z",
+              "html_url": "https://github.com/acme/app/pull/9#issuecomment-8",
+              "issue_url": "https://api.github.com/repos/acme/app/issues/9",
+              "user": {"login": "forge0x1[bot]"}, "body": "Start after: 2026-10-18T08:00-05:00\nthanks"}
+
+        class C:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [cm], "etag", None
+
+        col.st["bf"]["comments:critic3"] = True
+        col.st["prs"]["9"] = {"author": "forge0x1[bot]"}
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_comments(C())
+        ev = next(e for e in col.ev.values() if e.get("kind") == "pr_comment")
+        self.assertEqual(ev.get("start_after"), "2026-10-18T08:00-05:00")
