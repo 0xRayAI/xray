@@ -1,4 +1,4 @@
-// Hotfix: the server records a delivered wake as turn start and an inbox ack as turn end for that seat.
+// Hotfix: the server records a delivered wake as turn start and an inbox ack as turn end for that seat. (CI re-run after merge.)
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
