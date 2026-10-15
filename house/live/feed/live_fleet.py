@@ -474,6 +474,19 @@ class Fleet:
             return 0
         return 3
 
+    def _phase_floor(self, did):
+        """Latest stamp already recorded for this deploy, or None."""
+        floor, prefix = None, f"op:rw:{did}:"
+        for eid, ev in self.events.items():
+            if not eid.startswith(prefix):
+                continue
+            t = _ts(ev.get("t_ct"))
+            if t is None:
+                continue
+            if floor is None or t > floor:
+                floor = t
+        return floor
+
     def _scan_railway(self):
         # Re-read every pass. A same-second rewrite can keep mtime and size (SUCCESS and CRASHED
         # are the same length), and a GitHub-triggered deploy is often first seen as INITIALIZING
@@ -507,8 +520,14 @@ class Fleet:
             steps = [step for step, r in (("BUILDING", 1), ("DEPLOYING", 2)) if old_rank < r <= rank and step != st
                      and st == "SUCCESS"]
             steps.append(st)
+            # Backfill uses createdAt. Raise that stamp to the latest phase already
+            # recorded so it cannot sit earlier than the one before it.
+            floor = self._phase_floor(did)
             for step in steps:
                 when = created if step != st or old is None else polled
+                if floor is not None and when < floor:
+                    when = floor
+                floor = when
                 word = "approval" if step in RW_APPROVAL else "deploy"
                 self._emit(f"op:rw:{did}:{step}", when, "Operator", inst or "Railway",
                            "op_deploy", f"{word} {svc} · {env} · {step}", "railway/deployments", deploy_id=did,
