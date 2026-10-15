@@ -659,6 +659,36 @@ class CardLifecycle(unittest.TestCase):
         col.backfill_mergers(C())
         self.assertEqual(col.st["merger_tried"].get("8"), True)
 
+    def test_pull_get_replaces_author_merged_by_after_backfill_done(self):
+        """Author != merger. A finished backfill that left the author in merged_by is corrected by GET /pulls/:n."""
+        col = _collector("example-org/app")
+        col.st["bf"]["merged_by"] = True
+        col.ev["example-org/app#8:merged"] = {
+            "id": "example-org/app#8:merged", "kind": "merged", "number": 8,
+            "author": "htafolla", "actor": "htafolla", "merged_by": "htafolla", "from": "Blaze",
+        }
+        pulls = [self._pull(user={"login": "htafolla"})]
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                if str(path).endswith("/pulls/8"):
+                    return 200, {"number": 8, "merged_by": {"login": "forge0x1[bot]"},
+                                 "user": {"login": "htafolla"}}, None, None
+                return 200, pulls, "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge", "htafolla": "Blaze"}):
+            col.backfill_mergers(C())
+            merged = col.ev["example-org/app#8:merged"]
+            self.assertEqual(merged["merged_by"], "forge0x1[bot]")
+            self.assertEqual(merged["author"], "htafolla")
+            self.assertEqual(merged["actor"], "forge0x1[bot]")
+            self.assertNotEqual(merged["merged_by"], merged["author"])
+            pulls[0] = self._pull(user={"login": "htafolla"}, updated_at="2026-10-14T18:00:00Z")
+            col.poll_pulls(C())
+        self.assertEqual(col.ev["example-org/app#8:merged"]["merged_by"], "forge0x1[bot]")
+        self.assertNotEqual(col.ev["example-org/app#8:merged"]["merged_by"], "htafolla")
+
     def test_head_change_emits_pr_commit(self):
         col = _collector("example-org/app")
         first = "a" * 40

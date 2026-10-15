@@ -142,7 +142,7 @@ Don't confuse: watcher ≠ Dist; workstream ≠ product; workstream ≠ planes.
 |------|--------|-------|
 | **Bifrost** | Workstream | The fleet's live board and router (burst-live). burst-live is the board, never a node on it. Turns every issue, PR and comment into a card and an inbox line, then wakes the seat. |
 | **tripwire** | Workstream | Fires when nothing has moved for a window: a stalled board wakes each card owner with a deadline; an empty board wakes the coordinator to pull the next issue. At most once per window. |
-| **nudge** | Workstream | A stuck card or unacked line pings its owner L1, L2, L3; at L3 the coordinator is woken once to reassign or split it. |
+| **nudge** | Workstream | A stuck card or unacked line: L1 goes to the owning seat. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. A stranger's `Start after:` comment is ignored. A time more than 30 days out is ignored. `merged_by` is the merger, never the author. |
 | **routing** | Workstream | Which seat gets which line. The routing map lists each seat once with its real GitHub login and nicknames; served read-only at `/routing`. Look a login up there before any @-mention. |
 | **two loops** | Workstream | Outer loop: GitHub issues, PRs and @-comments (the record). Inner loop: seat DMs, each pointing at one of them (the wake). |
 | **volley** | Workstream | Packet ping-pong between seats inside a wave: ask, answer, fix, re-check. |
@@ -185,3 +185,4 @@ Every bolded term in the pack OP-PROC and runbooks is defined here (`bifrost che
 | **two hats** | Workstream | Every seat does the work and makes it repeatable: it writes the rule into the lexicon, OP-PROC or a runbook. A rule that only exists in chat counts as missing. |
 | **boil-up** | Workstream | A periodic correlate-and-sync pass over OP-PROC (a rules engine for bots): similar, compounding rules merge into one broader rule. CoS triggers it every few waves or past 70 of 75 lines. |
 | **activity key** | Workstream | The per-seat `SEAT_KEYS` hash on `POST /activity`. The seat posts only as itself. A cross-seat `seat` is `403` seat mismatch. |
+| **button up** | Practices | When weekly burn hits the hold line, every seat stops new work, runs no local builds, tests, or deploys on its own computer, pauses its Bifrost inbox wake until the reset, leaves only cloud agents for anything essential, and reports and acks in the room. |

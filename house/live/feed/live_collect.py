@@ -700,18 +700,35 @@ class RepoCollector:
             e["from"] = who
         e["credit"] = self.credit_of(e)
 
+    def _needs_pull_merger(self, e):
+        """A merge still needs GET /pulls/:n when merged_by is missing or is only the PR author."""
+        if e.get("kind") != "merged" or e.get("number") is None:
+            return False
+        mb = e.get("merged_by")
+        if not isinstance(mb, str) or not mb.strip():
+            return True
+        author = e.get("author")
+        return isinstance(author, str) and mb.strip() == author.strip()
+
     def queue_merger_backfill(self):
-        """Once: every stored merge that has no merged_by is fetched on a later pass."""
-        if self.st.setdefault("bf", {}).get("merged_by"):
+        """Once: every stored merge with no merger, or with the author in that field, is fetched.
+
+        The first backfill flag stays set after a pass that left the author in merged_by.
+        merged_by_pull runs the correction."""
+        if self.st.setdefault("bf", {}).get("merged_by_pull"):
             return
         need = self.st.setdefault("need_merger", {})
+        tried = self.st.setdefault("merger_tried", {})
         for e in self.ev.values():
-            if e.get("kind") == "merged" and not e.get("merged_by") and e.get("number") is not None:
-                need[str(e["number"])] = 1
-        self.st["bf"]["merged_by"] = True
+            if not self._needs_pull_merger(e):
+                continue
+            key = str(e["number"])
+            need[key] = 1
+            tried.pop(key, None)
+        self.st["bf"]["merged_by_pull"] = True
 
     def backfill_mergers(self, c, limit=20):
-        """GET /pulls/{n} once per number. A list payload often omits merged_by; the pull payload has it."""
+        """GET /pulls/{n} and stamp merged_by.login. The author is never the stamp. A list payload often omits it."""
         if not getattr(c, "token", None):
             return
         self.queue_merger_backfill()
@@ -761,7 +778,13 @@ class RepoCollector:
                      sha=head, author=login,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
-                merger = ((p.get("merged_by") or {}).get("login")) or self.st.get("mergers", {}).get(str(n))
+                listed = p.get("merged_by") if isinstance(p.get("merged_by"), dict) else None
+                listed_login = (listed or {}).get("login")
+                listed_login = listed_login.strip() if isinstance(listed_login, str) and listed_login.strip() else None
+                stored = (self.st.get("mergers") or {}).get(str(n))
+                stored = stored.strip() if isinstance(stored, str) and stored.strip() else None
+                # List pulls omit merged_by. A stored login that is only the author is not the merger.
+                merger = listed_login or (None if stored == login else stored)
                 extra = {"base": p["base"]["ref"], "merge_sha": p.get("merge_commit_sha"),
                          "actor": merger or login, "author": login}
                 if merger:
