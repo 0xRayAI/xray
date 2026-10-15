@@ -1,6 +1,7 @@
 const TURN_OPEN_MS = (Number(process.env.LIVE_TURN_OPEN_MIN) || 20) * 60000;
-// Seats whose turn ended, or whose open turn is older than TURN_OPEN_MS. Later writers must not light them again.
-let turnRelease = new Set();
+// Seat -> end time (ms), or 0 for an open turn past TURN_OPEN_MS (full clear).
+// An end inside the window clears older marks only. A running cloud agent stays.
+let turnRelease = new Map();
 // Bifrost live mesh: password-gated (or public) static page + in-memory feed (push-only ingest; full or delta, delta polls).
 // Node 20, zero dependencies.
 import http from 'node:http';
@@ -946,7 +947,7 @@ function mergedHeader(now = Date.now()) {
   const wf = applyTrackWorking(h.fleet, h.track, now); if (wf) h.fleet = wf;   // woken packet or running agent
   const gf = applyGithubWorking(h.fleet, now); if (gf) h.fleet = gf;   // GitHub actor on a PR or issue
   if (h.fleet) h.fleet = clearClosedWork(h.fleet);
-  if (h.fleet) h.fleet = applyTurnRelease(h.fleet);   // a turn end or a 20-minute expiry wins over collector, track, and GitHub
+  if (h.fleet) h.fleet = applyTurnRelease(h.fleet);   // an end inside the window clears older marks; a running cloud agent stays
   if (h.fleet) h.fleet = stampClockTree(h.fleet);
   if (h.fleet) h.fleet.seat_display = { ...SEAT_DISPLAY, ...jsonEnvObj('SEAT_DISPLAY_NAMES') };
   h.freshness = stampClockTree({
@@ -1503,6 +1504,9 @@ function mergedMovesClock(e) {
   const n = Number(e.number);
   return !!repo && e.number != null && e.number !== '' && Number.isInteger(n) && n > 0;
 }
+function onCardClock(e, open) {
+  return eventMovesCard(e) && (eventOnOpenCard(e, open) || mergedMovesClock(e));
+}
 function recomputeGithubDataAt() {
   const open = openCardIndex();
   let best = 0, card = 0;
@@ -1510,7 +1514,7 @@ function recomputeGithubDataAt() {
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (!Number.isFinite(t) || t <= 0) continue;
     if (t > best) best = t;
-    if (t > card && eventMovesCard(e) && (eventOnOpenCard(e, open) || mergedMovesClock(e))) card = t;
+    if (t > card && onCardClock(e, open)) card = t;
   }
   githubDataAt = best;
   githubCardAt = card;
@@ -1576,16 +1580,23 @@ const CARD_BEHIND_S = (() => {
   const n = Number(process.env.CARD_BEHIND_S);
   return Number.isFinite(n) && n >= 0 ? n : 180;
 })();
+// Same predicate as the card clock (open card or a merge). A pr_open the board has not carded still counts.
+// CI and pr_commit never count. A card-worthy event on a closed card does not.
+function lagWorthy(e, open) {
+  if (!eventMovesCard(e)) return false;
+  if (e.kind === 'pr_open') return true;
+  return onCardClock(e, open);
+}
 function cardsBehindData(now) {
+  const open = openCardIndex();
   let worthy = 0;
   for (const e of SRCS.github.evs.values()) {
-    if (!eventMovesCard(e)) continue;
+    if (!lagWorthy(e, open)) continue;
     const t = Date.parse(e && typeof e.t_ct === 'string' ? e.t_ct : '');
     if (Number.isFinite(t) && t > worthy) worthy = t;
   }
   const boardLag = !!(cardsAt && worthy && (now - cardsAt) > (now - worthy) + CARD_BEHIND_S * 1000);
-  // Card clock versus the newest card-worthy event. github_latest_ct still stores raw ingest.
-  // CI and pr_commit are on neither side of this gate, so a gap between those two clocks is not a stall.
+  // Card clock versus that same predicate. github_latest_ct still stores raw ingest.
   const cardClock = githubCardAt || 0;
   const clockLag = !!(worthy && cardClock && (worthy - cardClock) > CARD_BEHIND_S * 1000);
   return boardLag || clockLag;
@@ -1970,14 +1981,23 @@ function turnHeld(open, seat, now) {
   }
   return false;
 }
+function spareTurnMark(row, endAt) {
+  if (!row) return false;
+  if (row.via === 'cloud') return true;
+  if (!endAt) return false;
+  return tsOf(row.since_ct || row.t_ct) > endAt;
+}
 function applyTurnRelease(fleet) {
   if (!fleet || !turnRelease.size) return fleet;
   const f = { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } };
-  for (const seat of turnRelease) clearSeatWork(f, seat);
+  for (const [seat, endAt] of turnRelease) {
+    if (spareTurnMark(f.working[seat], endAt)) continue;
+    clearSeatWork(f, seat);
+  }
   return f;
 }
 function applyStoredActivity(fleet, now) {
-  if (!activityReady || !activity.length) { turnRelease = new Set(); return fleet; }
+  if (!activityReady || !activity.length) { turnRelease = new Map(); return fleet; }
   const f = fleet || { as_of: iso(now), window_min: WINDOW_MIN, seats: {}, working: {}, active: 0, total: 0 };
   const win = (f.window_min || WINDOW_MIN) * 60000;
   const open = new Map();
@@ -2019,17 +2039,25 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
-  // Read time: an ended turn, and an open turn older than TURN_OPEN_MS, leave fleet.working.
-  // A copied collector flag is cleared too. A newer open subagent or watcher keeps the seat.
-  const release = new Set();
-  for (const seat of ended.keys()) if (!turnHeld(open, seat, now)) release.add(seat);
+  // An end inside TURN_OPEN_MS clears marks that are not newer than that end.
+  // A running cloud agent stays. An open turn older than the window clears the seat.
+  // A newer open subagent or watcher keeps the seat.
+  const release = new Map();
+  for (const [seat, t] of ended) {
+    if (now - t > TURN_OPEN_MS) continue;
+    if (turnHeld(open, seat, now)) continue;
+    release.set(seat, t);
+  }
   for (const [key, t] of open) {
     if (key.split(':')[1] !== 'turn' || now - t <= TURN_OPEN_MS) continue;
     const seat = key.split(':')[0];
     if (fresh.has(seat) || turnHeld(open, seat, now)) continue;
-    release.add(seat);
+    if (!release.has(seat)) release.set(seat, 0);
   }
-  for (const seat of release) clearSeatWork(f, seat);
+  for (const [seat, endAt] of release) {
+    if (spareTurnMark(f.working[seat], endAt)) continue;
+    clearSeatWork(f, seat);
+  }
   turnRelease = release;
   f.active = Object.values(f.seats).filter(v => v.active).length;
   return f;
