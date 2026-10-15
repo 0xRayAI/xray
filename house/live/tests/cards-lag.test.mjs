@@ -263,7 +263,7 @@ test('a pr_open on a closed card stays HTTP 200', async () => {
   }
 });
 
-test('card clock within the threshold stays caught up', async () => {
+test('card clock inside the lag window stays caught up', async () => {
   const data = lay(4 * 60 * 1000, 2 * 60 * 1000);
   const srv = start(data);
   try {
