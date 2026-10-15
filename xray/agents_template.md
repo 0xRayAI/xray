@@ -1,6 +1,6 @@
 # 0xRay AI Agents
 
-Quick reference for the 0xRay suit (**4.0** — 7 consumer MCP servers). 0xRay is a three-subsystem autonomous engine. The suit is the wear.
+Quick reference for the 0xRay suit (**4.1** — 7 consumer MCP servers). 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 
 ## Available MCP Servers
 

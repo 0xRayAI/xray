@@ -6,7 +6,11 @@ The format is based on [Conventional Commits](https://www.conventionalcommits.or
 
 ## [Unreleased]
 
-Work on main after 4.0.42, including #355 through #366. The [4.0.43] notes below are the earlier confer and hook cut.
+Groundwork before the 4.1.0 publish. The notes under [4.1.0] are the cut. npm latest is still 4.0.42.
+
+## [4.1.0] - 2026-10-15
+
+Work on main after 4.0.42. The [4.0.43] section below is the earlier confer and hook cut. 4.0.43 was stamped and not published.
 
 ### Bifrost board
 
@@ -42,8 +46,7 @@ The board seats see is the collector board. `house/live/feed/live_mesh.py` runs 
 
 ### Nudge monitor
 
-`src/monitoring/nudge-monitor.ts` exports `getNudgeMonitor()`. The config key is `features.nudge_monitor`. `features.nudge_watchdog` still applies when `nudge_monitor` is unset, and that read logs a one-time deprecation warning.
-
+`src/monitoring/nudge-watchdog.ts` is now `nudge-monitor.ts` (`NudgeMonitor`, `nudgeMonitor`, `getNudgeMonitor`) and the config key is `features.nudge_monitor`. The old key `features.nudge_watchdog` still works as a deprecated alias when `nudge_monitor` is unset (the new key wins if both are set) and logs a one-time deprecation warning. (#303)
 
 ## [4.0.43] - 2026-10-12
 
@@ -63,7 +66,7 @@ The board seats see is the collector board. `house/live/feed/live_mesh.py` runs 
 - fix: treat ambiguous Confer text as UNREVIEWED (06acc24f1)
 - fix: complete Confer only on a real approve (8776562d7)
 - fix: parse only the first Confer DECISION token (c06747d95)
-- fix: keep Confer off unless it is explicitly enabled (8cd356c24)
+- fix: keep Confer off unless it is explicitly enabled (8cd356c24). These confer fixes, and the no-LLM confer test below, are ancestors of the v4.0.42 tag. The new work in this stamp is the Cursor fail-closed cut (#255).
 
 ### 🧪 Tests
 - test: lock no-LLM confer votes out of a PASS merge (e30628fef)
@@ -80,6 +83,47 @@ Confer votes. Burst runs the swarm.
 - Wear pins Grok at the installed CLI. Hermes codex-check catches a console call. OpenClaw stays on the installed plugin. Cursor hooks stay on a git checkout.
 - Burst runs the swarm live. The board keeps an honest LIVE pill and one seat state. The box posts one delta while `push.sh` holds the lock, retries once on 409, and keeps the ingest secret in the header.
 - A SENT prompt holds that seat working for 10 minutes. A posted seat must match the installation token. Legacy prompt lines are still read from `fleet/prompts.jsonl`. Seats post a prompt with `live-inbox <seat> --prompt`.
+
+
+### Notes above this cut in the published package
+
+These notes were `[Unreleased]` in the 4.0.42 package. #368 removed them from `main`. They are not new in 4.1. `[4.0.22]` through `[4.0.41]` keep the short commit lines. This is the prose.
+
+### Features
+- **Goggles.** Proposed plates for goggles, suit, kits, host pack, and glossary. Goggles views one plane. Recall opens a plate when speech names that plate. Plates only. Not a new skill.
+- **Plates.** Pipeline schematics live in `docs-site/docs/plates/` (routing, governance, boot, orchestration, processor, reporting, memory-recall). Station keeps one pointer line. Pre-compact and the `MEMORY_ROUTING` inject carry that one schematic. A lesson is an episode. A plate is the machine. Not a new skill.
+- **Vendored Repertoire 0.2.8.** `vendor/@0xray/repertoire` is that package. Lesson lines and retained ids stay at 20. Speech that names nothing mints a learned signal, and only those mints evict past 24. Not a new skill.
+- **Feat rebase.** When the mandated work turns into mantra, or the job has split across planes that no longer share one present, stop and answer the original message again from this seat. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Project dest grows the name `feat-rebase` from the stack overlay. Not a new skill.
+
+### Fixed
+- **Lesson caps and speech mint.** `LESSON_LINE_CAP` is 20. `RETAINED_LESSON_ID_CAP` is 20 in insertion order. Speech that names no stored signal mints one `proposed` signal tagged `learned`. `LEARNED_SIGNAL_CAP` is 24 and evicts only those mints. Factory signals stay. Not a new skill.
+- **External grade writes the line.** `governExternalProposals` grades the signals a proposal already named, the same way the local cycle does. Needs-revision and a governance error still do not write. The vendored organ puts a missing lesson ledger back when dest still has its lines, so an aged task id does not step the average again. Not a new skill.
+- **A governed proposal teaches.** A route lookup does not write a lesson. When a vote finishes, the cycle grades the signals that proposal's sessions already named. A session that names a stored signal is graded even when that name appears once. Landed approaches and no wrong turn clear the solid band. A wrong turn stays below the cutoff. Earlier rejects of other codify proposals do not pull that grade down. Approve steps those signals up by a tenth. Reject steps them down by a tenth. Needs-revision, an abstain, a governance error, and a proposal whose sessions named nothing do not write. Proposal ids stay on the signal and the sessions not yet graded, so a later cycle does not teach those sessions again. A new session is a new id. Those ids remain after the history window of 50 fills, including with empty cycles. A proposal that carries an empty name list does not fall through to matching its text. A grade that passes appends one line — the task, the decision, and the approaches, solutions, or wrong turn from the sessions that named the law — on that signal and beside the average. The same task does not append again. The route for a law above 0.55 includes the law text and those lines, and Station's lessons section is refreshed from dest. Not a new skill.
+- **Dynamo client on a required external call.** `govern_proposals` with external governance required starts `InferenceGovernanceIntegration` even when `inference_governance.enabled` is false. Boot still skips that client while the flag is off, and the inference cycle still uses the local matrix unless the flag is on or `XRAY_FORCE_MCP_GOVERNANCE=true`. An unreadable MCP payload is stored as the error text, not an abstain at 0.5. The MCP wait matches the governance budget (90s). Not a new skill.
+- **Subsystem pass.** A session file with no `metrics.commits` is not a session, and a captured pattern with no `evidence` array is empty evidence, so the inference cycle no longer dies before it writes state. `scoreAndRoute` loads the memory organ on the first call with a synchronous require, before any dynamic import of that module. A cached null provider does not block that load, and a late null load does not replace an organ already in hand. Not a new skill.
+- **Local governance pass.** When `inference_governance.enabled` is false, the inference cycle scores each proposal with the local decision matrix. That miss is not stored as a reject at confidence 0, and Dynamo is not called. The governance MCP path stays in place when the flag is on. Not a new skill.
+- **Learned conviction.** A floor observation count does not change a route. Feedback moves conviction by a tenth, and a failure can leave 0.55. Retrieval hits a local clause of four definition content words. Two definition words are not a hit. The same words scattered through a long diary are not a hit. x402 prose alone is not a hit. `learned-conviction.json` beside dest restores the average when a wake flattens it to 0.55 and does not store the observation count. The vendored organ dist matches that behavior. Not a new skill.
+- **Seeded conviction.** Load writes `learned-conviction.json` for dest averages already above 0.55, including historical averages with no evidence count. Evidence is the existing positive count, otherwise 1. Floor averages, including float dust at 0.55, stay out of the file. A later load restores those averages after a flatten. The vendored organ dist matches that behavior. Not a new skill.
+- **Lock matches the cut.** `package-lock.json` root version and `packages[""].version` follow `package.json` on stamp. The 4.0.22 release left the lock at 4.0.21. Not a new skill.
+- **Bumper writes the lock.** `reconcile --apply` updates `package.json` and the lock version fields together. `reconcile --check` (the docs mill in CI) fails when they differ. Not a new skill.
+- **Cursor gate root.** The suit mill already has synthesis off. Cursor tools follow that mill when it is in the heat set, so a sibling repo's leftover synthesis checkpoint does not deny the host. Not a new skill.
+- **Engine cadence.** Change the engine, ship it local (build and install the tree; a live cut stays live), test, review the diff, monitor dest and Station, then ship the PR. Missing moral fusion is not an isotopic reject; vote confidence is a clamped weighted mean; thinDispatch strategy follows the adjusted level; an empty inference cycle saves state and later getInstance options apply. On `LEAD-CADENCE.md`, the orchestrator skill, and the ship-ready mill gate. Not a new skill.
+- **Operating planes.** Code, OP-PROC, model, suit, mill, host, and test/ship. Test then ship is the hero; ship without that proof is the catastrophe. Project long-term memory refreshes a changed stack definition and keeps observation stats. Heat writes the matched names onto Station. Name `operating-planes` on the stack overlay. Not a new skill.
+- **Wake cascade.** Chat is not the brain. A cascade that must survive compaction is the repertoire name `wake-cascade` on the stack overlay, with the same text in NOTES for the second Read. A reflection is not this capture. Not a new skill.
+- **Hero invariants.** Capture priority is an invariant you would otherwise re-read the source to relearn. Names: `heat-is-not-conviction`, `inference-cycle-invariant`, `governance-vote-invariant`, `thin-dispatch-invariant`. Heat touches last_seen and does not append a confidence sample. Heat touches last_seen when the diary contains that signal's name or a local clause of four definition content words; two definition words are not a hit; the same words scattered through a long diary are not a hit; a weak session score is not lifted to 0.55 and a sample below 0.55 is not recorded. Constructing the organ does not append workspace samples. Repertoire `mergeStackOverlay` refreshes a changed stack definition and keeps observation stats. Not a new skill.
+- **Stamper strip set.** Once a version is live, the stamper strips every present-tense patch pin from shipped guides and shipped OP-PROC, or reconcile advances the next cut. The stamper does not edit Station, NOTES, dest, or node_modules. It does not publish. The release docs check uses that same strip set, including `grok-bot/skills/ship-ready-mill-gate/SKILL.md`. Proposal text stays a keyword map over session problem strings, and `generateProposals` also emits recurring-pattern titles. Not a new skill.
+- **Heat + capture leftover** — module-missing resume is `Repertoire: module unresolved`, not “memory_routing stays off”. Session capture writes `matched_primitives` from existing dest laws in git. Grow receipt is post-prune dest count + heated length. Leftover `provider: null` still migrates old tarballs; explicit opt-out stays `enabled: false` + `provider: repertoire`. Does not republish.
+
+### 📚 Documentation
+- **Cold brief.** A new critic or any new subagent that does not already have this thread gets the latest commit SHA on the branch under review (fetch it) and the Station card. If the branch moves, send the new SHA before they verdict. On `LEAD-CADENCE.md` + ship-ready mill gate + orchestrator cadence. Not a new skill.
+- **Jargon is not the job.** Review and cadence ask whether the change works. Do not spend the loop reciting dest names, mill liturgy, or host mantras. On `LEAD-CADENCE.md` + ship-ready mill gate + orchestrator cadence. Not a new Codex term.
+- **Leftover after #102** — `station-vs-repertoire.md` opt-out ASCII no longer teaches package-absence (`no @0xray/repertoire` / `memory_routing stays off`). Explicit opt-out is `enabled: false` + `provider: repertoire`. Dead integrate note is history. Compact seed drops leftover “optional MCP”. `validate-release-docs` now gates that guide. Does not republish.
+- **Leftover after #101** — stamp `package-lock.json` and `.xray/features.json` to the live package version. Rewire `updateFeaturesJsonVersion` so both features files stamp together. Guides that still called Repertoire optional now say preferred + explicit opt-out; Station is the compact ticket.
+
+### 🧹 Cleanup
+- Drop unused `src/mcps/shared/security-scanner.ts` and its unused validator twin. Live scanner stays `src/security/`.
+- Archive root `integrations/` costume SKILL dump → `docs/archive/integrations-costume/`. Live wear is `src/integrations`.
+- Archive root `commands/` stale copy → `docs/archive/commands-copy/`. Live wear is `src/opencode/commands`.
 
 ---
 

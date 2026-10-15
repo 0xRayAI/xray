@@ -50,4 +50,4 @@ A proposal is deliberated inside the suit, filtered by Dynamo Solar, then merged
 └────────────────────────────────────────────────────────────┘
 ```
 
-stamped · 0xray 4.0.43
+stamped · 0xray 4.1.0

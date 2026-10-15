@@ -1,6 +1,6 @@
 # Agents
 
-**4.0** — a suit that survives the context window
+**4.1** — a suit that survives the context window
 
 These are organs. The product is the suit. 0xRay is a three-subsystem autonomous engine. The suit is the wear.
 

@@ -1,6 +1,6 @@
 # Getting Started with 0xRay
 
-**4.0** — a suit that survives the context window
+**4.1** — a suit that survives the context window
 Confer votes. Burst runs the swarm.
 
 

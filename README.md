@@ -2,13 +2,13 @@
 
 ![0xRay — A Power Suit for AI Agents. survive compaction. build foundries. monitor the swarm.](docs-site/static/img/readme-hero.jpg)
 
-**4.0** — a suit that survives the context window
+**4.1** — a suit that survives the context window
 
-Confer votes. Burst runs the swarm.
+Bifrost is the live board. Goggles reads one named plane.
 
 0xRay is a three-subsystem autonomous engine. The suit is the wear. Inference remembers. External Governance judges. The Autonomous Engine runs the work. The host you already run wears it: Grok, OpenCode, Hermes, OpenClaw, or Cursor. Memory, judgement, and payments come on with the suit. When the window closes, the next session wakes with the job, the page, and the laws.
 
-Confer votes: the agents on a decision vote, and only a real yes carries the work. Burst runs the swarm, so the agents are in the work as it happens. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
+Bifrost turns each pull request, issue, and comment into one card and a line in the right seat's inbox, then wakes that seat. Confer still completes only on a real yes. A foundry is built from mills and hangars. The mill builds and ships. The hangar is the shop.
 
 The product is the **skeleton you wear**.
 
@@ -59,7 +59,8 @@ Docs: [guides/autonomy-command](docs-site/docs/guides/autonomy-command.md) · Sk
 
 | Version | Highlights |
 |---------|------------|
-| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. The Bifrost board is the collector board, and a cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. |
+| **4.1.0** | Bifrost is the collector board. A cloud agent is a board row. A stuck card's L2 nudge goes to the CoS role. `live-inbox` requires `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS`. Goggles reads one named plane. |
+| **4.0.43** | Confer completes only on a real PASS. Cursor gate events fail closed, except EACCES when a cloud wrapper cannot write dest. Gate C cannot be skipped. |
 | **4.0.42** | Confer votes. Burst runs the swarm. |
 | **4.0.41** | Wake cascade stays on the station module. A fresh wear fastens mill and inspect. Goggles records the worn package path. The live page plays the mesh in the browser. |
 | **4.0.40** | Live mesh runs the full loop: feed watch, render, direction, deploy, health, and the ledger both ways. |
@@ -264,7 +265,7 @@ npm run release:npm # gate + prepare + npm publish --access public
 
 ## Release
 
-The **4.0** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
+The **4.1** line is on npm. Do **not** run `release:major` to ship a 4.x fix (that becomes 5.0.0). Do **not** put a `scripts.publish` lifecycle that re-runs the gate after the registry PUT. Patch number lives in `package.json` + CHANGELOG.
 
 ```bash
 npm run release:gate

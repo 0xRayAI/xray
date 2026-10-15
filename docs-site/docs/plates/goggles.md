@@ -30,4 +30,4 @@ The refusals read: `Name a kind, one outer, or one plane.` · `Send kind or oute
 
 A checkout named `0xray` records `scripts/mjs/run-goggles-mcp.mjs`. Any other project records `node_modules/0xray/scripts/mjs/run-goggles-mcp.mjs`.
 
-stamped · 0xray 4.0.43
+stamped · 0xray 4.1.0

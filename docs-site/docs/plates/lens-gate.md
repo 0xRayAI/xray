@@ -34,4 +34,4 @@ lensBeforeResearch in src/integrations/hooks/goggles-pipeline.mjs returns null w
 
 Only the lens check spans planes. It reads, it does not search, so this gate does not stop it. Every other look and every search names one plane.
 
-stamped · 0xray 4.0.43
+stamped · 0xray 4.1.0

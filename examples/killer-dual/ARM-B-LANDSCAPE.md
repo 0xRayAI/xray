@@ -6,7 +6,7 @@ Model lock (Cursor Cloud `run-info`): `originalModelName: cursor-grok-4.6-high` 
 
 ## 0xRayAI/xray (home)
 
-Power plant. Era **4.0** — mill + inspect fasten a suit; exo wears constitution / 7 MCP / temperament. Nested mill: `scripts/foundry/` (`@0xray/foundry@0.1.10`). Consumer default is mill+inspect, not 45/42 costume. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) is first-class beside mill.
+Power plant. Era **4.1** — mill + inspect fasten a suit; exo wears constitution / 7 MCP / temperament. Nested mill: `scripts/foundry/` (`@0xray/foundry@0.1.10`). Consumer default is mill+inspect, not 45/42 costume. Factory shop plant (`shop-extract`, `shop-witness`, `shop-pin`) is first-class beside mill.
 
 Live on `main` at research: `6fd253d80` (HOST-FIRE #4 preCompact diag). Recent mill of the exo is **hook/preCompact theater** (PRs #45–#53). Open PRs at research: **none**.
 
