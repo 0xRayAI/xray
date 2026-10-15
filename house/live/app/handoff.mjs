@@ -201,8 +201,7 @@ function isPacket(line, kind) {
 function shaCovers(lineSha, headSha) {
   const head = lower(headSha);
   const got = lower(lineSha);
-  if (!head) return false;
-  if (!got) return true;
+  if (!head || !got) return false;
   if (got === head) return true;
   const short = got.length <= head.length ? got : head;
   const long = got.length <= head.length ? head : got;

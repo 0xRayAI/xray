@@ -2488,7 +2488,7 @@ async function handle(req, res) {
     let parsed; try { parsed = JSON.parse((await readBody(req, 4 << 20)).toString('utf8')); } catch { return json(req, res, 400, { error: 'not json' }); }
     if (sender !== 'ingest') {
       const lines = parsed && Array.isArray(parsed.lines) ? parsed.lines : [];
-      const handoffId = /^handoff:([a-z0-9_.-]+\/[a-z0-9_.-]+)#([1-9]\d{0,6}):(ready|critic_fail|live_pass|merge|ci_fail):([0-9a-f]{7,64})?$/;
+      const handoffId = /^handoff:([a-z0-9_.-]+\/[a-z0-9_.-]+)#([1-9]\d{0,6}):(ready|critic_fail|live_pass|merge|ci_fail):([0-9a-f]{7,64})$/;
       const ownHandoff = (line) => {
         if (!line || typeof line !== 'object' || Array.isArray(line)) return false;
         if (canonSeat(line.from) !== sender || line.type !== 'packet') return false;

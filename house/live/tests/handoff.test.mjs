@@ -123,7 +123,7 @@ test('a FAIL owes the reviewer one critic_fail packet to the author', () => {
   assert.equal(missingHandoffs({ events, lines: [packet(ob)], roles: ROLES, loginToSeat: LOGINS, now: t0 + 1000 + L1, l1ms: L1 }).length, 0);
 });
 
-test('a short sha and a missing sha both cover the open handoff', () => {
+test('a short sha covers the open handoff and a missing sha does not', () => {
   const t0 = 1_700_000_000_000;
   const sha = 'ab'.repeat(20);
   const events = [opened(17, t0, sha)];
@@ -132,10 +132,38 @@ test('a short sha and a missing sha both cover the open handoff', () => {
   assert.equal(packetCovers([short], ob), true);
   const missing = packet(ob, { sha: undefined });
   delete missing.sha;
-  assert.equal(packetCovers([missing], ob), true);
+  assert.equal(packetCovers([missing], ob), false);
   assert.equal(packetCovers([packet(ob, { sha: sha.slice(0, 6) })], ob), false);
   assert.equal(missingHandoffs({ events, lines: [short], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
-  assert.equal(missingHandoffs({ events, lines: [missing], roles: ROLES, loginToSeat: LOGINS, now: t0 + L1, l1ms: L1 }).length, 0);
+  assert.equal(one(events, [missing], t0 + L1).kind, 'ready');
+});
+
+test('a wave-1 packet does not cover the next FAIL on a new head', () => {
+  const t0 = 1_700_000_000_000;
+  const shaA = 'a'.repeat(40);
+  const shaB = 'b'.repeat(40);
+  const events = [
+    opened(30, t0, shaA),
+    ev('review', 30, t0 + 1000, { state: 'CHANGES_REQUESTED', sha: shaA }),
+    ev('pr_commit', 30, t0 + 2000, { sha: shaB }),
+    ev('review', 30, t0 + 3000, { state: 'CHANGES_REQUESTED', sha: shaB }),
+  ];
+  const now = t0 + 3000 + L1;
+  const opts = { roles: ROLES, loginToSeat: LOGINS, now, l1ms: L1 };
+  const bare = { type: 'packet', kind: 'critic_fail', seat: 'forge', to: 'forge', from: 'mill', repo: REPO, number: 30 };
+  const named = { ...bare, sha: shaA };
+  for (const lines of [[bare], [named]]) {
+    const due = missingHandoffs({ events, lines, ...opts });
+    assert.equal(due.length, 1);
+    assert.equal(due[0].kind, 'critic_fail');
+    assert.equal(due[0].sha, shaB);
+  }
+  const covered = missingHandoffs({
+    events,
+    lines: [packet({ kind: 'critic_fail', to: 'forge', owes: 'mill', repo: REPO, number: 30, sha: shaB })],
+    ...opts,
+  });
+  assert.equal(covered.length, 0);
 });
 
 test('close, draft, and a new head after red CI drop the open handoff', () => {
@@ -222,6 +250,9 @@ test('the server flags a missed handoff and does not post the packet', async () 
     assert.ok(escalated.nudges.some(n => n.kind === 'reassign' && n.seat === 'blinky' && String(n.id).includes(':handoff:') && !n.closed_at));
     const bad = await fetch(base + '/inbox', { method: 'POST', headers: { Authorization: 'Bearer ' + forgeKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [{ id: 'not-a-packet', t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', type: 'info', kind: 'ready', repo: '0xRayAI/xray', number: 70, title: 'no', url: '', reason: 'no' }] }) });
     assert.equal(bad.status, 403);
+    const shaLess = { id: 'handoff:0xrayai/xray#70:ready:', t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', to: 'critic', type: 'packet', kind: 'ready', repo: '0xRayAI/xray', number: 70, title: 'handoff ready', url: 'https://github.com/0xRayAI/xray/pull/70', reason: 'handoff ready' };
+    const noSha = await fetch(base + '/inbox', { method: 'POST', headers: { Authorization: 'Bearer ' + forgeKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: [shaLess] }) });
+    assert.equal(noSha.status, 403);
     const before = await (await fetch(base + '/inbox/critic', { headers: { Authorization: 'Bearer ' + criticKey } })).json();
     assert.equal((before.lines || []).some(l => l.type === 'packet'), false);
     const line = { id: `handoff:0xrayai/xray#70:ready:${sha}`, t_ct: new Date().toISOString(), seat: 'critic', from: 'forge', to: 'critic', type: 'packet', kind: 'ready', repo: '0xRayAI/xray', number: 70, sha, title: 'handoff ready', url: 'https://github.com/0xRayAI/xray/pull/70', reason: 'handoff ready' };

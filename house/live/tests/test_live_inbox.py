@@ -66,12 +66,13 @@ class HandoffCommand(unittest.TestCase):
             self.assertEqual(line["sha"], sha)
             self.assertEqual(len(Inbox.posts[0]["body"]["lines"]), 1)
 
-    def test_missing_sha_posts_an_id_with_an_empty_head(self):
+    def test_missing_sha_posts_nothing(self):
         r = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#21", "--kind", "ready")
-        self.assertEqual(r.returncode, 0, r.stderr)
-        line = Inbox.posts[-1]["body"]["lines"][0]
-        self.assertEqual(line["id"], "handoff:0xrayai/xray#21:ready:")
-        self.assertNotIn("sha", line)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(Inbox.posts, [])
+        six = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#21", "--kind", "ready", "--sha", "abc123")
+        self.assertNotEqual(six.returncode, 0)
+        self.assertEqual(Inbox.posts, [])
         short = self.run_handoff("--handoff", "critic", "--pr", "0xRayAI/xray#22", "--kind", "ready", "--sha", "abc1234")
         self.assertEqual(short.returncode, 0, short.stderr)
         posted = Inbox.posts[-1]["body"]["lines"][0]

@@ -23,6 +23,7 @@ function start(data, extra = {}) {
       COLLECTOR: 'on',
       ...extra,
     },
+    detached: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let logs = '';
@@ -41,9 +42,13 @@ function start(data, extra = {}) {
 }
 
 async function stop(child) {
-  if (!child || child.exitCode != null) return;
+  if (!child || child.exitCode != null || child.signalCode != null) return;
   const done = new Promise(r => child.once('exit', r));
-  child.kill();
+  try {
+    process.kill(-child.pid, 'SIGTERM');
+  } catch {
+    child.kill('SIGTERM');
+  }
   await done;
 }
 

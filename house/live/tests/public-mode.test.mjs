@@ -14,12 +14,21 @@ const gh = http.createServer((q, s) => {
 });
 await new Promise(r => gh.listen(0, '127.0.0.1', r));
 const kids = [], dirs = [];
-after(() => { for (const k of kids) k.kill(); gh.close(); for (const d of dirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); });
+after(async () => {
+  await Promise.all(kids.map(k => new Promise(resolve => {
+    if (k.exitCode != null || k.signalCode != null) return resolve();
+    k.once('exit', () => resolve());
+    try { process.kill(-k.pid, 'SIGTERM'); }
+    catch { k.kill('SIGTERM'); }
+  })));
+  await new Promise(r => gh.close(r));
+  for (const d of dirs) fs.rmSync(d, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+});
 function boot(extra) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-pub-')); dirs.push(data);
   const env = { PORT: '0', PATH: process.env.PATH, SESSION_SECRET: crypto.randomBytes(32).toString('hex'), INGEST_SECRET: crypto.randomBytes(32).toString('hex'),
     MESH_DATA_DIR: data, GITHUB_API_URL: `http://127.0.0.1:${gh.address().port}`, GITHUB_READ_TOKEN: 'read-tok-test', COLLECTOR_ORG: 'acme', ...extra };
-  const p = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env, stdio: ['ignore', 'pipe', 'pipe'] }); kids.push(p);
+  const p = spawn(process.execPath, [path.join(APP, 'server.mjs')], { env, detached: true, stdio: ['ignore', 'pipe', 'pipe'] }); kids.push(p);
   const s = { data, logs: '', get base() { const m = /listening on :(\d+)/.exec(this.logs); return `http://127.0.0.1:${m ? m[1] : 1}`; } };
   p.stdout.on('data', d => s.logs += d); p.stderr.on('data', d => s.logs += d);
   s.until = async re => { for (let i = 0; i < 80 && !re.test(s.logs); i++) await new Promise(r => setTimeout(r, 100)); return re.test(s.logs); };
