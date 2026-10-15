@@ -199,3 +199,46 @@ test('a GitHub event newer than the turn end keeps the seat working', async () =
     fs.rmSync(data, { recursive: true, force: true });
   }
 });
+
+test('a turn end clears a mark at the end time and keeps a later mark and a mark with no time', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-bound-'));
+  const endMs = Date.now() - 60 * 1000;
+  const endIso = new Date(endMs).toISOString();
+  const laterIso = new Date(endMs + 1000).toISOString();
+  const ended = (seat, tag) => ({ id: seat + '.end.bound', seq: 1, seat, t_ct: endIso, kind: 'turn', action: 'end', ...(tag ? { tag } : {}) });
+  lay(data, {
+    working: {
+      forge: { via: 'feed', since_ct: endIso },
+      herald: { via: 'feed', since_ct: laterIso },
+      critic: { via: 'feed' },
+    },
+    activity: [
+      line('forge', 'start', 4 * 60 * 1000),
+      ended('forge'),
+      line('herald', 'start', 4 * 60 * 1000),
+      ended('herald'),
+      line('critic', 'start', 4 * 60 * 1000),
+      ended('critic', 'ack'),
+    ],
+    events: [
+      { id: 'c-forge', t_ct: endIso, kind: 'pr_review', repo: 'example/repo', number: 7, actor: 'forge0x1[bot]' },
+      { id: 'c-herald', t_ct: laterIso, kind: 'pr_comment', repo: 'example/repo', number: 8, actor: 'herald0x[bot]' },
+    ],
+  });
+  const srv = start(data);
+  try {
+    const fleet = await fleetOf(srv);
+    assert.ok(fleet, srv.logs());
+    assert.equal(fleet.working.forge, undefined, JSON.stringify(fleet.working));
+    assert.equal(fleet.seats.forge.working, false);
+    assert.ok(fleet.working.herald, JSON.stringify(fleet.working));
+    assert.equal(fleet.seats.herald.working, true);
+    assert.ok(fleet.working.critic, JSON.stringify(fleet.working));
+    assert.equal(fleet.working.critic.via, 'feed');
+    assert.equal(fleet.working.critic.since_ct, undefined);
+    assert.equal(fleet.seats.critic.working, true);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
