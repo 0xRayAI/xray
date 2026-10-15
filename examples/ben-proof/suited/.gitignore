@@ -71,6 +71,7 @@ Thumbs.db
 organ-app/laws/
 
 # --- 0xray suit (postinstall) ---
+.xray/state/cursor-hook-wear/
 .grok/
 .mcp.json
 opencode.json

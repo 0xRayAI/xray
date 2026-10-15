@@ -30,7 +30,18 @@ export function fastenInstalledCursorHooks(root = consumerRoot) {
   if (!existsSync(bridges)) return null;
   const mod = require(bridges);
   if (typeof mod.wearCursorHooks !== 'function') return null;
-  return mod.wearCursorHooks(root, packageRoot);
+  // Current wearCursorHooks also installs the consumer suit and prints
+  // symlink lines on stdout. This bench only fastens Cursor hooks, and
+  // the wear command must keep JSON on stdout.
+  const previousLog = console.log;
+  console.log = (...args) => {
+    process.stderr.write(`${args.map((part) => String(part)).join(' ')}\n`);
+  };
+  try {
+    return mod.wearCursorHooks(root, packageRoot, () => {}, { suit: false });
+  } finally {
+    console.log = previousLog;
+  }
 }
 
 export function runWear(task, options = {}) {
