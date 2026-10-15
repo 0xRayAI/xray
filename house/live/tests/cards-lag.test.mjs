@@ -157,6 +157,48 @@ test('a card-worthy event ahead of the card clock is a stall', async () => {
   }
 });
 
+test('a card-worthy event on a closed card stays HTTP 200', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-lag-closed-'));
+  const cardAt = new Date(Date.now() - 400 * 1000).toISOString();
+  const closedAt = new Date(Date.now() - 100 * 1000).toISOString();
+  fs.mkdirSync(path.join(data, 'live'), { recursive: true });
+  fs.mkdirSync(path.join(data, 'feed'), { recursive: true });
+  fs.writeFileSync(path.join(data, 'live', 'cards.json'), JSON.stringify({
+    updated_ct: new Date().toISOString(),
+    cards: [
+      { key: 'acme/one#4', repo: 'acme/one', number: 4, state: 'live', title: 't', stage: 'review', kind: 'pr' },
+      { key: 'acme/one#7', repo: 'acme/one', number: 7, state: 'closed', title: 'done', stage: 'done', kind: 'pr' },
+    ],
+  }));
+  fs.writeFileSync(path.join(data, 'feed', 'github-events.json'), JSON.stringify({
+    generated_at: closedAt,
+    events: [
+      { id: 'open-4', t_ct: cardAt, kind: 'pr_open', repo: 'acme/one', number: 4 },
+      { id: 'upd-7', t_ct: closedAt, kind: 'pr_update', repo: 'acme/one', number: 7 },
+    ],
+  }));
+  const srv = start(data);
+  try {
+    let health, res;
+    for (let i = 0; i < 40; i++) {
+      const base = srv.baseOf();
+      if (base) {
+        res = await fetch(base + '/healthz');
+        health = await res.json();
+        if (typeof health.data_age === 'number') break;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    assert.equal(health.cards_behind, false, JSON.stringify(health));
+    assert.equal(res.status, 200);
+  } finally {
+    const done = new Promise(r => srv.child.once('exit', r));
+    srv.child.kill();
+    await done;
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
 test('card clock within the threshold stays caught up', async () => {
   const data = lay(4 * 60 * 1000, 2 * 60 * 1000);
   const srv = start(data);

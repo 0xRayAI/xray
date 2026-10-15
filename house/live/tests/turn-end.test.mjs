@@ -68,13 +68,13 @@ async function fleetOf(srv) {
 
 test('a turn end or ack clears fleet.working, and a later tick does not reopen it', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-'));
-  const recent = 30 * 1000;
+  const older = 90 * 1000;
   lay(data, {
     working: {
-      forge: { via: 'feed', since_ct: new Date(Date.now() - recent).toISOString() },
-      critic: { via: 'feed', since_ct: new Date(Date.now() - recent).toISOString() },
-      blinky: { via: 'feed', since_ct: new Date(Date.now() - recent).toISOString() },
-      herald: { via: 'feed', since_ct: new Date(Date.now() - recent).toISOString() },
+      forge: { via: 'feed', since_ct: new Date(Date.now() - older).toISOString() },
+      critic: { via: 'feed', since_ct: new Date(Date.now() - older).toISOString() },
+      blinky: { via: 'feed', since_ct: new Date(Date.now() - older).toISOString() },
+      herald: { via: 'feed', since_ct: new Date(Date.now() - older).toISOString() },
     },
     activity: [
       line('forge', 'start', 3 * 60 * 1000),
@@ -88,9 +88,9 @@ test('a turn end or ack clears fleet.working, and a later tick does not reopen i
       line('herald', 'start', 60 * 1000),
     ],
     events: [
-      { id: 'c-forge', t_ct: new Date(Date.now() - recent).toISOString(), kind: 'pr_comment', repo: 'example/repo', number: 7, actor: 'forge0x1[bot]' },
-      { id: 'c-critic', t_ct: new Date(Date.now() - recent).toISOString(), kind: 'pr_comment', repo: 'example/repo', number: 8, actor: 'critic0x[bot]' },
-      { id: 'c-blinky', t_ct: new Date(Date.now() - recent).toISOString(), kind: 'issue_comment', repo: 'example/repo', number: 9, actor: 'blinky' },
+      { id: 'c-forge', t_ct: new Date(Date.now() - older).toISOString(), kind: 'pr_comment', repo: 'example/repo', number: 7, actor: 'forge0x1[bot]' },
+      { id: 'c-critic', t_ct: new Date(Date.now() - older).toISOString(), kind: 'pr_comment', repo: 'example/repo', number: 8, actor: 'critic0x[bot]' },
+      { id: 'c-blinky', t_ct: new Date(Date.now() - older).toISOString(), kind: 'issue_comment', repo: 'example/repo', number: 9, actor: 'blinky' },
     ],
   });
   const srv = start(data);
@@ -135,6 +135,65 @@ test('an open turn expires after 20 minutes and a younger one stays', async () =
     assert.equal(fleet.seats.forge.working, false);
     assert.ok(fleet.working.critic, JSON.stringify(fleet.working));
     assert.equal(fleet.seats.critic.working, true);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a running cloud agent stays working after the turn end', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-agent-'));
+  lay(data, {
+    working: {},
+    activity: [
+      line('forge', 'start', 4 * 60 * 1000),
+      line('forge', 'end', 60 * 1000),
+    ],
+    events: [
+      { id: 'ci', t_ct: new Date(Date.now() - 30 * 1000).toISOString(), kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+    ],
+  });
+  fs.writeFileSync(path.join(data, 'live', 'agents.jsonl'), JSON.stringify({
+    event_id: 'ag-1', agent: 'bc-forge0001', status: 'running', rank: 2, seat: 'forge',
+    t_ct: new Date(Date.now() - 3 * 60 * 1000).toISOString(), title: 'ship',
+  }) + '\n');
+  const srv = start(data);
+  try {
+    const fleet = await fleetOf(srv);
+    assert.ok(fleet, srv.logs());
+    assert.ok(fleet.working.forge, JSON.stringify(fleet.working));
+    assert.equal(fleet.working.forge.via, 'cloud');
+    assert.equal(fleet.seats.forge.working, true);
+  } finally {
+    await stop(srv.child);
+    fs.rmSync(data, { recursive: true, force: true });
+  }
+});
+
+test('a GitHub event newer than the turn end keeps the seat working', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-gh-'));
+  lay(data, {
+    working: {},
+    activity: [
+      line('forge', 'start', 4 * 60 * 1000),
+      line('forge', 'end', 60 * 1000),
+      line('critic', 'start', 4 * 60 * 1000),
+      line('critic', 'end', 60 * 1000, 'ack'),
+    ],
+    events: [
+      { id: 'c-forge', t_ct: new Date(Date.now() - 10 * 1000).toISOString(), kind: 'pr_review', repo: 'example/repo', number: 7, actor: 'forge0x1[bot]' },
+      { id: 'c-critic', t_ct: new Date(Date.now() - 90 * 1000).toISOString(), kind: 'pr_comment', repo: 'example/repo', number: 8, actor: 'critic0x[bot]' },
+    ],
+  });
+  const srv = start(data);
+  try {
+    const fleet = await fleetOf(srv);
+    assert.ok(fleet, srv.logs());
+    assert.ok(fleet.working.forge, JSON.stringify(fleet.working));
+    assert.equal(fleet.working.forge.via, 'github');
+    assert.equal(fleet.seats.forge.working, true);
+    assert.equal(fleet.working.critic, undefined, JSON.stringify(fleet.working));
+    assert.equal(fleet.seats.critic.working, false);
   } finally {
     await stop(srv.child);
     fs.rmSync(data, { recursive: true, force: true });
