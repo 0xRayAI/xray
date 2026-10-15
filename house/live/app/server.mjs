@@ -1981,17 +1981,30 @@ function turnHeld(open, seat, now) {
   }
   return false;
 }
+function markTime(row) {
+  return tsOf(row && (row.since_ct || row.t_ct));
+}
+// An end drops a mark only when that mark has a time at or before the end.
+// A running cloud agent stays. A mark with no time stays. A newer mark stays.
+// endAt 0 is an open turn past the window, not an end.
 function spareTurnMark(row, endAt) {
-  if (!row) return false;
-  if (row.via === 'cloud') return true;
+  if (row && row.via === 'cloud') return true;
+  if (!endAt || !row) return false;
+  const at = markTime(row);
+  if (!at) return true;
+  return at > endAt;
+}
+function spareEndedSeat(seat, row, endAt) {
+  if (spareTurnMark(row, endAt)) return true;
   if (!endAt) return false;
-  return tsOf(row.since_ct || row.t_ct) > endAt;
+  const gh = ghWork.get(seat);
+  return !!(gh && gh.at > endAt);
 }
 function applyTurnRelease(fleet) {
   if (!fleet || !turnRelease.size) return fleet;
   const f = { ...fleet, seats: { ...(fleet.seats || {}) }, working: { ...(fleet.working || {}) } };
   for (const [seat, endAt] of turnRelease) {
-    if (spareTurnMark(f.working[seat], endAt)) continue;
+    if (spareEndedSeat(seat, f.working[seat], endAt)) continue;
     clearSeatWork(f, seat);
   }
   return f;
@@ -2039,9 +2052,9 @@ function applyStoredActivity(fleet, now) {
     const src = f.seats[seat] || { active: false, last_ct: iso(t), via: 'activity' };
     f.seats[seat] = { ...src, working: true, working_via: src.working_via || 'activity' };
   }
-  // An end inside TURN_OPEN_MS clears marks that are not newer than that end.
-  // A running cloud agent stays. An open turn older than the window clears the seat.
-  // A newer open subagent or watcher keeps the seat.
+  // An end inside TURN_OPEN_MS clears a mark only when its time is at or before that end.
+  // A newer mark stays, and so does a running cloud agent. A newer GitHub event is applied after this.
+  // An open turn older than the window clears the seat. A newer open subagent or watcher keeps it.
   const release = new Map();
   for (const [seat, t] of ended) {
     if (now - t > TURN_OPEN_MS) continue;
