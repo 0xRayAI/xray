@@ -74,7 +74,7 @@ is refused (422), so no customer data (addresses, content, emails, user ids) can
 |---|---|---|
 | `GET /inbox/<seat>?since=<id>` | that seat | `{seat, lines}` after `<id>` (all when omitted / unknown) |
 | `GET /cards?seat=<seat>` | that seat, or blinky / forge | cards the seat owns or is next owner on (`all`, blinky or forge: all), with nudge beats |
-| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns OPEN lines only (not acked, card not past the seat's step: closed, or for critic a verdict at head); `?all=1` = history |
+| `POST /inbox/<seat>/ack` | that seat | `{id}` / `{upto}` / `{all: true}`: hides those lines for the seat. `GET /inbox/<seat>` returns unacked lines. A closed or merged card does not hide them. For critic, a verdict at the head of a live card does. `?all=1` = history |
 | `GET /routing` | any seat key or session (open in public mode) | `{ok, seats: [{seat, login, aliases, status}]}`: the routing map, read-only; status `ok`, `missing` (refused), `unverified`, `no_login`. Never keys or webhook URLs |
 | `GET /nudges?since=<id>` | forge | `{nudges}` in creation order |
 | `POST /inbox` | ingest secret, or that seat's key for its own handoff packet | stores seat lines (deduped by id). A seat key may post at most 8 lines, each `type` `packet`, kind `ready`, `critic_fail`, `live_pass`, `merge`, or `ci_fail`, id `handoff:<repo>#<n>:<kind>:<sha>`. A non-packet line is 403 `not your handoff`. A batch that stores nothing is 400 with `rejected` refs. `replace: true` is the ingest secret only |

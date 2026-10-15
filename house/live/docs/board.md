@@ -12,16 +12,24 @@ The board seats see is the collector board. `feed/live_mesh.py` runs `feed/live_
 | `pr_draft` | The card parks at once. |
 | `review` `APPROVED`, or `critic_pass` | Beat `Reviewer PASS`. |
 | `review` `CHANGES_REQUESTED`, or `critic_fail` | Beat `Reviewer FAIL`. Stage moves to fix. |
-| `pr_commit`, `pr_force_push`, `pr_update` | Beat `pushed`. A new head after a FAIL is a new review. A new head after red CI closes the `ci_fail` handoff. |
+| `pr_commit`, `pr_force_push`, `pr_update` | Beat `pushed`. A head change emits `pr_commit`. The newest push stays on the card when later beats fill the window. A new head after a FAIL is a new review. A new head after red CI closes the `ci_fail` handoff. |
 | `ci_pass`, `ci_fail` | CI stays on the card for that PR number. It is not board traffic. |
-| `merged` | Beat `merged`. Credit is `merged_by`, not the author. The author's seat gets an info line. |
+| `merged` | Beat `merged`. The card field `merged_by` is the merger, never the author. The author's seat gets an info line. |
 | `pr_close` | The card closes. The author's seat gets an info line. The handoff obligation closes. |
 | `pr_reopen`, `issue_reopen` | Clears closed and stop. The card is live again. |
 | A fleet seat's comment | A comment beat. The author's seat is not the only one that counts. |
 | No beat for 72 hours on an open PR | The card parks. |
-| Handoff packet missing for `NUDGE_L1_S` | Flag `handoff missing`. The seat that owes the handoff is nudged. L3 also goes to the CoS role. A room post does not clear it. |
+| Handoff packet missing for `NUDGE_L1_S` | Flag `handoff missing`. The owing seat is nudged L1, then L2 after `NUDGE_L2_S`, then L3 after `NUDGE_L3_S`. At L3 the CoS role is woken once to reassign. A room post does not clear it. |
 
 Stage order is `open` > `review` > `fix` > `merge` > `retest` > `done`. State is `live`, `parked`, or `closed`. PASS at the current head plus green CI moves the card to merge.
+
+## Nudge ladder
+
+An open card nudges its owner L1 after `NUDGE_L1_S` (default 3600), L2 after `NUDGE_L2_S` (default 1800), and L3 after `NUDGE_L3_S` (default 7200). At L3 the CoS role is woken once to reassign.
+
+A missed handoff uses that ladder. L1 goes to the owing seat. L2 goes to that same seat. L3 repeats to that seat, and the CoS role is woken once to reassign.
+
+An unacked inbox line uses the same L1, L2, L3 spacing (`NUDGE_LINE_S`, default 900) and wakes the CoS role at L3. A line on a closed or merged item stays on a plain inbox read and is not nudged.
 
 ## Close
 
@@ -42,6 +50,17 @@ A card is held when any of these is true:
 A held card stays visible, is not a stall, and gets no level 1, 2, or 3 nudge. If it stays held with no beat past `HELD_MAX_S` (default 72 hours), the owner gets one nudge.
 
 A `Parked:` comment still parks the card and wins over a hold.
+
+## Date on a card
+
+A card may carry `start_after`, an ISO time with a numeric offset. Use Chicago time (`America/Chicago`, `-05:00` or `-06:00`), for example `2026-10-18T08:00-05:00`.
+
+Set it in either of these ways:
+
+- `live-inbox <seat> --card owner/repo#n --start-after 2026-10-18T08:00-05:00`
+- a GitHub issue or pull request comment whose first line is `Start after: 2026-10-18T08:00-05:00`
+
+The command is stored on the server and wins over the comment while that store exists. The board shows the date on the card. Until that time the card stays parked: no nudge, no tripwire, and it does not count as an empty board. At that time the server wakes the owning seat through the normal inbox wake (a webhook for mill, critic, forge, and blinky; an inbox line for a polled seat). No seat routine is required. The date and the wake mark are in `start-after.json`, so a restart still honors them and does not send the wake twice.
 
 ## No nudge
 
