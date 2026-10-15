@@ -1477,9 +1477,10 @@ function eventMovesCard(e) {
   return false;
 }
 function openCardIndex() {
-  const keys = new Set();
+  const keys = new Set(), closed = new Set();
   for (const c of bfCards) {
-    if (!c || typeof c !== 'object' || c.kind === 'source' || c.state === 'closed') continue;
+    if (!c || typeof c !== 'object' || c.kind === 'source') continue;
+    const isClosed = c.state === 'closed';
     let repo = typeof c.repo === 'string' ? c.repo.trim().toLowerCase() : '';
     let n = Number(c.number);
     if (!(repo && Number.isInteger(n) && n > 0) && typeof c.key === 'string') {
@@ -1487,9 +1488,9 @@ function openCardIndex() {
       if (m) { repo = m[1]; n = Number(m[2]); }
     }
     if (!(repo && Number.isInteger(n) && n > 0)) continue;
-    keys.add(repo + '#' + n);
+    (isClosed ? closed : keys).add(repo + '#' + n);
   }
-  return { keys };
+  return { keys, closed };
 }
 function eventOnOpenCard(e, open) {
   const repo = e && typeof e.repo === 'string' ? e.repo.trim().toLowerCase() : '';
@@ -1580,11 +1581,15 @@ const CARD_BEHIND_S = (() => {
   const n = Number(process.env.CARD_BEHIND_S);
   return Number.isFinite(n) && n >= 0 ? n : 180;
 })();
-// Same predicate as the card clock (open card or a merge). A pr_open the board has not carded still counts.
-// CI and pr_commit never count. A card-worthy event on a closed card does not.
+// Same predicate as the card clock (open card or a merge). A pr_open the board has not carded yet still counts;
+// a pr_open on a card that is already closed does not. CI and pr_commit never count.
 function lagWorthy(e, open) {
   if (!eventMovesCard(e)) return false;
-  if (e.kind === 'pr_open') return true;
+  if (e.kind === 'pr_open') {
+    const repo = typeof e.repo === 'string' ? e.repo.trim().toLowerCase() : '';
+    const key = repo + '#' + Number(e.number);
+    return !(open.closed && open.closed.has(key)) && !(repo && itemClosed(repo, Number(e.number)));
+  }
   return onCardClock(e, open);
 }
 function cardsBehindData(now) {
