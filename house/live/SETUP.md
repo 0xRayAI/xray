@@ -59,7 +59,7 @@ Seat inbox wakes (`SEAT_WEBHOOKS`): see [Seat wake URLs and webhooks](docs/inbox
 
 - **Key:** `~/.burst/seat-keys/arch1.key` (dir 700, file 600). Blaze delivers it 1:1, never in a room or repo.
 - **Script:** `~/.burst/bin/live-inbox` (Python 3), fetched from raw `bifrost/main` `house/live/tools/live-inbox`.
-- **Env:** none needed. Defaults are `LIVE_URL=https://burst-live-production.up.railway.app`, `SEAT_KEYS_DIR=~/.burst/seat-keys`, `LIVE_CURSORS=~/.burst/cursors`; set them only to override.
+- **Env:** required. `live-inbox` never guesses: a missing `LIVE_URL`, `SEAT_KEYS_DIR` or `LIVE_CURSORS` exits 2 and names it. Run the export line in `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` first (defaults `https://burst-live-production.up.railway.app`, `~/.burst/seat-keys`, `~/.burst/cursors`, and `~/.burst/bin` on `PATH`).
 - **Commands:** `live-inbox arch1` reads and never acks (`--peek` is the same); `live-inbox arch1 --ack <id>`; `live-inbox arch1 --ack all`.
 - **Flow:** forge posts a Gate B / deep-review ask via `POST /inbox` (fields: [docs/inbox.md](docs/inbox.md); no `body`/`text`/`message`, the ask goes in `title`) → Arch1 reads it, runs it locally in Grok CLI on Blaze's machine, posts the receipt on the PR (envs, exit codes, tarball sha), then acks. If `live-inbox arch1` prints lines, those lines are the current job: a non-empty read is the work. The 60-second script never acks and never starts the work; the Grok turn that sees the lines does. No webhook yet, so Arch1 polls; PR comments are the fallback. The host's internal monitor runs `tools/inbox-watch.sh`, so a printed line is the session event. A launchd log is not a wake. Full setup, polling timer, ack and round-trip test: [docs/inbox.md](docs/inbox.md#arch1--cli-seats-grok-cli).
 

@@ -41,7 +41,7 @@ Ops nouns — clocks, tickets, roles, decks. Not products.
 | **station** | "The station card is the one-line ticket at .xray/state/STATION.md." "The station module writes this card." Intent (≤240 chars) and the next cut; heat stamps `Cascade:` and `Sleeve:`. Never hand-edited; read on wake. "The long body belongs in notes." No secrets, only env var names. (plates: `docs-site/docs/plates/station-card.md`, guide `docs-site/docs/guides/station-vs-repertoire.md`) |
 | **notes** | "Notes are the body the station card cannot hold." `.xray/state/NOTES.md`: the seat writes the body after every beat, with evidence; there is no pre-compact signal. A compaction is a wake: read station, then notes. Where a PreCompact hook exists, `stampNotesPickup` "updates only that line and leaves the body alone." "Do not commit this file." No secrets, only env var names. (plate: `docs-site/docs/plates/notes-page.md`) |
 | **receipt** | Proof a card closed (critic PASS, `npm view`, Dist URL). Chat LGTM ≠ receipt |
-| **cloud** | Heavy repo surgeon (`bc-…`). Cuts metal; seats run the company |
+| **cloud** | Deep-work agent (`bc-…`): code, long reviews, live passes. One per card, resumed; wears the suit first. Seats post verdicts and acks |
 | **dist** | public distribution **lane** (@0xRayAI) — a workstream, not a product SKU |
 | **group / room** | Shared chat bus (ops / eng / dist). Not Station, not memory |
 | **capital** | Blaze-only gate: spend, credentials, destructive |

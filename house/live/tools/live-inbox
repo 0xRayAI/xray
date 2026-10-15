@@ -16,15 +16,19 @@ kind and head post the same line id. --sha is required and is a head of 7 to 64 
 Date: POST /cards/start-after. --start-after is an ISO time with a numeric offset (Chicago, -05:00 or -06:00). The card
 stays parked until that time, then the server wakes the owning seat. A GitHub comment whose first line is
 `Start after: <ISO>` sets the same field; the command wins while it is stored.
-Defaults (no env needed): LIVE_URL=https://burst-live-production.up.railway.app, key
-~/.burst/seat-keys/<seat>.key (SEAT_KEYS_DIR, never printed), cursor ~/.burst/cursors/<seat>.txt (LIVE_CURSORS)."""
+Env (required, never guessed): LIVE_URL, SEAT_KEYS_DIR (key <seat>.key, never printed), LIVE_CURSORS (cursor <seat>.txt).
+A missing or empty one exits 2 and names it. WAKE-ROUTINE.md ships the export line with the defaults."""
 import json, os, re, sys, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
-URL = os.environ.get("LIVE_URL", "https://burst-live-production.up.railway.app").rstrip("/")
-KEYS = Path(os.environ.get("SEAT_KEYS_DIR", "~/.burst/seat-keys")).expanduser()
-CUR = Path(os.environ.get("LIVE_CURSORS", "~/.burst/cursors")).expanduser()
+MISSING = [k for k in ("LIVE_URL", "SEAT_KEYS_DIR", "LIVE_CURSORS") if not os.environ.get(k, "").strip()]
+if MISSING:
+    print("live-inbox: missing env " + ", ".join(MISSING) + " (run the export line in WAKE-ROUTINE.md first)", file=sys.stderr)
+    sys.exit(2)
+URL = os.environ["LIVE_URL"].rstrip("/")
+KEYS = Path(os.environ["SEAT_KEYS_DIR"]).expanduser()
+CUR = Path(os.environ["LIVE_CURSORS"]).expanduser()
 KINDS = ("ready", "critic_fail", "live_pass", "merge", "ci_fail")
 USAGE = ("usage: live-inbox <seat> [--peek] | live-inbox <seat> --ack <id|all> | live-inbox <seat> --pop <id|all> | "
          "live-inbox <seat> --turn start|end [--tag <tag>] | live-inbox <seat> --prompt [--from <name>] [--room <name>] | "
