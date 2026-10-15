@@ -33,6 +33,7 @@ STATIC = Path(os.environ.get("LIVE_BOARD_STATIC", HOUSE / "watchers" / "board-st
 STAGES = ("open", "review", "fix", "merge", "retest", "done")
 STALL_S = 60 * 60
 CLOSED_KEEP_S = 24 * 3600
+PR_PARK_S = 72 * 3600   # a live PR with no beat for 72 h parks
 MD_EVERY_S = 60
 MAX_CARDS = 40
 # parked: a parked/blocked/waiting label, a draft PR quiet for 7 days, or an issue quiet for 24 h (backlog, no stall).
@@ -59,8 +60,14 @@ def beat_of(e):
         if e.get("idle") or e.get("dur_s") == 0 or (e.get("start_ct") and e.get("start_ct") == e.get("end_ct")):
             return None                                   # idle watcher run: never a beat
         return None                                       # watcher runs are not card work
-    if k in ("pr_open", "issue_open"):
+    if k in ("pr_open", "issue_open", "pr_ready"):
         return "opened"
+    if k == "review":
+        st = str(e.get("state") or "").upper()
+        if st == "APPROVED":
+            return "Reviewer PASS"
+        if st == "CHANGES_REQUESTED":
+            return "Reviewer FAIL"
     if k in ("pr_commit", "pr_force_push", "pr_update"):
         return "pushed"
     if k.startswith("critic_"):
@@ -158,6 +165,29 @@ def _claim_owners(cards, evs, sha_num):
             _apply_owner(cards, f"{repo}#{n}", seat)
 
 
+_FLEET_FROM = None
+
+
+def fleet_from(name):
+    """True when `from` is a fleet seat or a node mapped to one. Others, GitHub, and CI are not."""
+    global _FLEET_FROM
+    if _FLEET_FROM is None:
+        names = set()
+        try:
+            roster = json.loads((Path(__file__).resolve().parent / "fleet-roster.json").read_text())
+            names.update(str(s).lower() for s in roster.get("seats") or [])
+        except (OSError, ValueError):
+            pass
+        try:
+            import live_collect
+            names.update(str(v).lower() for v in live_collect.NODE.values())
+        except (OSError, ValueError, ImportError):
+            pass
+        names -= {"ci", "github", "others", ""}
+        _FLEET_FROM = names
+    return str(name or "").strip().lower() in _FLEET_FROM
+
+
 def _key(e, sha_num):
     repo = e.get("repo")
     if not repo:
@@ -225,9 +255,17 @@ def model(extra_events=None, now=None):
     for e in evs:                                          # beats, in time order; a closed card stops collecting
         k = _key(e, sha_num)
         c = cards.get(k) if k else None
-        if not c or (c["_stop"] and e.get("kind") not in ("pr_comment", "issue_comment", "pr_review", "review_comment")):
-            continue                                       # a stopped (closed) card still takes comments
-        if e.get("kind") in ("issue_close", "pr_close"):
+        kind = str(e.get("kind") or "")
+        reopen = kind.endswith("_reopen")
+        if not c or (c["_stop"] and not reopen and kind not in ("pr_comment", "issue_comment", "pr_review", "review_comment")):
+            continue                                       # a stopped (closed) card still takes comments and a reopen
+        if reopen:
+            c["_closed"], c["_closed_t"], c["_stop"] = False, 0, False
+        if kind == "pr_draft":
+            c["_draft_park"] = True
+        elif kind == "pr_ready":
+            c["_draft_park"] = False
+        if kind in ("issue_close", "pr_close"):
             c["_closed"], c["_closed_t"] = True, _t(e)
         w = beat_of(e)
         is_comment = e.get("kind") in ("pr_comment", "issue_comment", "pr_review", "review_comment")
@@ -248,10 +286,16 @@ def model(extra_events=None, now=None):
             c["_parked_c"] = False                         # a newer beat or a non-'Parked:' comment unparks it
             if c.get("_hold") and str(e.get("from") or "") == str(c.get("owner") or ""):
                 c["_hold"] = None
-        if not w and e.get("kind") in ("pr_comment", "issue_comment", "pr_review") and str(e.get("from")) == c["owner"]:
-            w = "owner: resolved" if e.get("resolved") else "owner comment"   # the owning seat's own note is a beat
-            if e.get("resolved"):
-                c["_resolved"] = "owner says resolved"
+        if not w and kind in ("pr_comment", "issue_comment", "pr_review"):
+            who = str(e.get("from") or "")
+            # the owner, or any other fleet seat. a stranger (Others) is not a beat.
+            if who == c["owner"] or (fleet_from(who) and not (c["_closed"] or c.get("_merged_t"))):
+                if who == c["owner"]:
+                    w = "owner: resolved" if e.get("resolved") else "owner comment"
+                    if e.get("resolved"):
+                        c["_resolved"] = "owner says resolved"
+                else:
+                    w = "comment"
         if not w and is_comment and (c["_closed"] or c.get("_merged_t")):
             # a comment on a merged or closed card is a beat: the card stays on the board (24 h from the comment)
             w = "comment after merge" if c.get("_merged_t") else "comment after close"
@@ -311,8 +355,9 @@ def model(extra_events=None, now=None):
         if closed and closed_t and now - closed_t > CLOSED_KEEP_S:
             continue                                       # closed cards drop off after 24 h
         quiet = bool(last) and now - last["t"] / 1000 > 86400
-        parked = (not closed) and (c.pop("_parked_c", False) or (c["kind"] == "issue" and quiet) or any(PARKED.search(x) for x in c["labels"]) or (c.pop("_draft") and (not last or now - last["t"] / 1000 > 7 * 86400)))
-        c.pop("_draft", None); c.pop("_parked_c", None)
+        pr_quiet = c["kind"] == "pr" and bool(last) and now - last["t"] / 1000 > PR_PARK_S
+        parked = (not closed) and (c.pop("_parked_c", False) or c.pop("_draft_park", False) or pr_quiet or (c["kind"] == "issue" and quiet) or any(PARKED.search(x) for x in c["labels"]) or (c.pop("_draft") and (not last or now - last["t"] / 1000 > 7 * 86400)))
+        c.pop("_draft", None); c.pop("_parked_c", None); c.pop("_draft_park", None)
         c.pop("_stop", None); c.pop("_merged_t", None)
         state = "closed" if closed else "parked" if parked else "live"
         pk = dict(c["packet"])

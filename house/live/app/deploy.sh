@@ -14,7 +14,7 @@ if [ ! -d "$DST" ]; then   # fresh machine: create and link the deploy dir inste
     || { echo "deploy dir $DST missing and railway link failed (log in with the railway CLI first)" >&2; exit 1; }
 fi
 [ "$(cd "$DST" && pwd -P)" = "$APP" ] || {
-  cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
+  cp "$APP"/server.mjs "$APP"/presence.mjs "$APP"/source.mjs "$APP"/archive.mjs "$APP"/origin.mjs "$APP"/routes.mjs "$APP"/governor.mjs "$APP"/arch1-launch.mjs "$APP"/worktrack.mjs "$APP"/handoff.mjs "$APP"/package.json "$APP"/railway.json "$APP"/.railwayignore "$APP"/Dockerfile "$DST"/
   rm -rf "$DST/public.new"; cp -r "$APP/public" "$DST/public.new"; rm -rf "$DST/public"; mv "$DST/public.new" "$DST/public"
   # our install's committed page overlay (seats, nodes, avatars, favicon); another install has no house/live/site/
   if [ -d "$APP/../site/public" ]; then cp -a "$APP/../site/public"/. "$DST/public/"; fi

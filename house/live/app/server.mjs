@@ -21,6 +21,7 @@ import { configureWorkTrack, acceptCursorWebhook, appendWake, canonSeatToken, de
 const COLLECTOR_DIR_EARLY = () => path.join(path.dirname(fileURLToPath(import.meta.url)), 'collector');
 import { initArchive, appendArchive, backfillArchive, readArchive, validArchiveDate, KINDS as ARCHIVE_KINDS, cardHistory, archiveDays } from './archive.mjs';
 import { pinnedOrigin } from './origin.mjs';
+import { missingHandoffs } from './handoff.mjs';
 
 const PORT = process.env.PORT === '0' ? 0 : (Number(process.env.PORT) || 8080);   // PORT=0: the OS picks a free port (tests); the log line names it
 // Site mode. Default (no config): GATED = password login + private repos masked on the page, feed and logs.
@@ -126,7 +127,6 @@ const EPOCH = crypto.randomBytes(6).toString('base64url');
 const STARTED = Date.now();
 const MAX_REMOVED = 20000;
 const BOX_STALE_MS = (Number(process.env.BOX_STALE_S) || 180) * 1000;
-const BOARD_BOX_STALE_MS = (Number(process.env.BOARD_BOX_STALE_S) || 900) * 1000;   // box board wins while this fresh   // box pushes every ~45 s while alive
 let seq = 0, header = {}, floorSeq = 0;
 const evs = new Map();          // id -> { e, h, s }  (merged view)
 const removed = [];             // [{ id, s }] (ids dropped from the merged view)
@@ -780,7 +780,7 @@ function holdOwner(c) {
 function evalNudges(now = Date.now()) {
   let changed = false; const byKey = new Map(bfCards.map(c => [c.key, c]));
   for (const n of nudges) {
-    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet'].includes(n.kind) || (n.kind === 'reassign' && n.line_key)) continue;
+    if (n.closed_at || ['silent', 'line', 'unrouted', 'quiet', 'handoff'].includes(n.kind) || (n.kind === 'reassign' && (n.line_key || String(n.id || '').includes(':handoff:')))) continue;
     const c = byKey.get(n.card);
     if (cardNoNudge(c) || cardNoNudge({ repo: n.repo, key: n.card }) || itemClosed(n.repo, n.number)) {
       n.closed_at = new Date(now).toISOString(); changed = true; continue;
@@ -831,7 +831,76 @@ function evalNudges(now = Date.now()) {
   }
   if (nudgeLines(now)) changed = true;
   if (nudgeSeats(now)) changed = true;
+  if (evalHandoffs(now)) changed = true;
   if (changed) saveNudges();
+  return changed;
+}
+// A handoff event with no /inbox packet to the routed next seat within NUDGE_L1_S is `handoff missing`.
+// The nudge goes to the seat that owes it (author, reviewer, or merger from inbox-roles.json). L3 also
+// goes to the CoS role. Room posts are not lines here, so they never clear the miss. This does not post a packet.
+let handoffRolesCache = null;
+function handoffConfig() {
+  if (handoffRolesCache) return handoffRolesCache;
+  const appDir = path.dirname(fileURLToPath(import.meta.url));
+  const dir = process.env.BIFROST_ROUTING_DIR || path.join(appDir, 'collector', 'routing');
+  for (const file of [path.join(dir, 'inbox-roles.json'), path.join(appDir, '..', 'feed', 'routing', 'inbox-roles.json')]) {
+    const parsed = readJson(file);
+    if (parsed && parsed.handoffs) { handoffRolesCache = parsed; return parsed; }
+  }
+  handoffRolesCache = {};
+  return handoffRolesCache;
+}
+function feedEvents() {
+  const out = [];
+  for (const row of evs.values()) if (row && row.e) out.push(row.e);
+  return out;
+}
+function inboxPackets() {
+  const out = [];
+  for (const lines of Object.values(seatInbox)) if (Array.isArray(lines)) out.push(...lines);
+  return out;
+}
+function evalHandoffs(now) {
+  let changed = false;
+  const due = missingHandoffs({ events: feedEvents(), lines: inboxPackets(), roles: handoffConfig(), loginToSeat: loginMap(), now, l1ms: NUDGE_L1_MS });
+  const open = new Set();
+  for (const ob of due) {
+    if (!SEAT_IDS.includes(ob.owes)) continue;
+    const base = `nudge:handoff:${ob.key}:${ob.kind}:${ob.sha}`;
+    open.add(base);
+    if (!nudges.some(n => n.id === base)) {
+      nudges.push({ id: base, kind: 'handoff', t: now, t_ct: new Date(now).toISOString(), card: ob.key, repo: ob.repo, number: ob.number,
+        title: `handoff missing ${ob.kind}`.slice(0, 120), url: '', stage: '', level: 1, seat: ob.owes, via: 'handoff missing', beat_t: ob.since, sha: ob.sha, flag: 'handoff missing' });
+      changed = true;
+      noteWake(ob.owes, { id: base, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `handoff missing ${ob.kind}`, sha: ob.sha });
+    }
+    const l1 = nudges.find(n => n.id === base && !n.closed_at);
+    if (l1 && now - l1.t >= NUDGE_L3_MS) {
+      const reps = nudges.filter(n => n.kind === 'handoff' && n.level === 3 && n.card === ob.key && n.sha === ob.sha && !n.closed_at);
+      const prev = reps.length ? reps[reps.length - 1].t : l1.t;
+      if (now - prev >= NUDGE_L3_MS) {
+        const id = `${base}:L3:${reps.length + 1}`;
+        if (!nudges.some(n => n.id === id)) {
+          nudges.push({ ...l1, id, t: now, t_ct: new Date(now).toISOString(), level: 3, via: 'repeat' });
+          changed = true;
+        }
+      }
+      const cos = cosSeat();
+      const cosId = `${base}:L3cos`;
+      if (cos && cos !== ob.owes && !nudges.some(n => n.id === cosId)) {
+        nudges.push({ ...l1, id: cosId, kind: 'reassign', t: now, t_ct: new Date(now).toISOString(), level: 3, seat: cos, via: 'L3: reassign', about: ob.owes });
+        changed = true;
+        noteWake(cos, { id: cosId, type: 'nudge', repo: ob.repo, number: ob.number, title: 'handoff missing', reason: `L3 handoff missing on ${ob.owes}` });
+      }
+    }
+  }
+  for (const n of nudges) {
+    if (n.closed_at) continue;
+    const handoff = n.kind === 'handoff' || (n.kind === 'reassign' && String(n.id || '').includes(':handoff:'));
+    if (!handoff) continue;
+    const base = String(n.id).replace(/:L3cos$/, '').replace(/:L3:\d+$/, '');
+    if (!open.has(base)) { n.closed_at = new Date(now).toISOString(); changed = true; }
+  }
   return changed;
 }
 // SILENT SEAT: no activity / prompt / beat line for > 2 h (merged fleet last_ct) while the seat owns live work (a live
@@ -869,9 +938,19 @@ function evalSilent(fleet, now = Date.now()) {
 }
 function cardsView(list = bfCards) {   // cards with their nudges as distinct nudge beats
   const by = new Map(); for (const n of nudges) { if (!by.has(n.card)) by.set(n.card, []); by.get(n.card).push(n); }
-  return list.map(c => { const ns = (by.get(c.key) || []).filter(n => n.beat_t === c.last_beat_t); if (!ns.length) return c;
-    const beats = [...(c.beats || []), ...ns.map(n => ({ t: n.t, what: `nudge L${n.level} → ${n.seat}`, nudge: true, level: n.level, seat: n.seat }))].sort((a, b) => a.t - b.t).slice(-6);
-    return { ...c, beats, nudge: Math.max(...ns.map(n => n.level)), nudge_open: ns.some(n => !n.closed_at) }; });
+  const missing = new Set(nudges.filter(n => n.kind === 'handoff' && !n.closed_at).map(n => n.card));
+  return list.map(c => {
+    const ns = (by.get(c.key) || []).filter(n => n.kind === 'handoff' || n.beat_t === c.last_beat_t);
+    let card = c;
+    if (ns.length) {
+      const beats = [...(c.beats || []), ...ns.map(n => ({ t: n.t, what: n.kind === 'handoff' ? 'handoff missing' : `nudge L${n.level} → ${n.seat}`, nudge: true, level: n.level, seat: n.seat }))].sort((a, b) => a.t - b.t).slice(-6);
+      card = { ...c, beats, nudge: Math.max(...ns.map(n => n.level)), nudge_open: ns.some(n => !n.closed_at) };
+    }
+    if (!missing.has(c.key)) return card;
+    const flags = Array.isArray(card.flags) ? card.flags.filter(f => f !== 'handoff missing') : [];
+    flags.push('handoff missing');
+    return { ...card, flags, handoff: 'missing' };
+  });
 }
 const cardSeats = c => [seatIdOf(c.owner), seatIdOf((c.packet || {})['next owner']), seatIdOf(c.nudge_to)].filter(Boolean);
 const boxStale = (now = Date.now()) => now - (SRCS.box.at || STARTED) > BOX_STALE_MS;
@@ -928,9 +1007,8 @@ function mergedHeader(now = Date.now()) {
     github: g ? { generated_at: g.generated_at ?? null, received_at: iso(SRCS.github.at) } : null,
     box: b ? { generated_at: b.generated_at ?? null, received_at: iso(SRCS.box.at), stale } : null,
   };
-  // board: the box pass board while the box pushed within BOARD_BOX_STALE_S (default 900 s), else the host collector's
-  const boxBoardLive = !!b?.board && SRCS.box.at > 0 && now - SRCS.box.at <= BOARD_BOX_STALE_MS;
-  const bd = boxBoardLive ? b.board : (g?.board || b?.board);
+  // board: the Railway collector's board. An empty box board never overrides real cards.
+  const bd = g?.board || b?.board;
   if (bd) {
     try {
       setCards(bd);
@@ -2372,10 +2450,17 @@ async function handle(req, res) {
     return json(req, res, 200, { cursor: cursor(), reset: true, events: all });
   }
 
-  if (p === '/inbox' && m === 'POST') {   // box pusher (X-Live-Ingest = ingest secret): seat inbox lines for any seat
+  if (p === '/inbox' && m === 'POST') {   // ingest secret posts lines. A seat key posts only a handoff whose from is that seat.
     const hs = req.headers['x-live-ingest'];
-    if (typeof hs !== 'string' || !hs || !safeEq(hs, INGEST_SECRET)) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
+    let sender = null;
+    if (typeof hs === 'string' && hs && safeEq(hs, INGEST_SECRET)) sender = 'ingest';
+    else { try { sender = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); } }
+    if (!sender) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
     let parsed; try { parsed = JSON.parse((await readBody(req, 4 << 20)).toString('utf8')); } catch { return json(req, res, 400, { error: 'not json' }); }
+    if (sender !== 'ingest') {
+      const lines = parsed && Array.isArray(parsed.lines) ? parsed.lines : [];
+      if (!lines.length || lines.some(l => !l || canonSeat(l.from) !== sender)) return json(req, res, 403, { error: 'not your handoff' });
+    }
     const r = postSeatLines(parsed, null);
     if (r.status === 200) { seq++; header = mergedHeader(); fullDirty = true; }
     return json(req, res, r.status, r.status === 200 ? { ok: true, added: r.added, rejected: r.rejected } : { error: r.error, ...(r.rejected ? { rejected: r.rejected } : {}) });

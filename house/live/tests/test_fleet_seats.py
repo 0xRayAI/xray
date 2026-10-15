@@ -200,6 +200,28 @@ class Guardrails275(unittest.TestCase):
             del os.environ["SEAT_BOTS"]
         self.assertNotIn("mill-bot", inbox_pass.bot_logins())
 
+    def test_pr_commit_and_force_push_rewake_one_line_per_head(self):
+        self.assertLessEqual({"blinky", "critic"}, set(seats("push", kind="pr_commit", sha="abc123def4567")))
+        self.assertLessEqual({"blinky", "critic"}, set(seats("force", kind="pr_force_push", sha="fff123def4567")))
+        ev = lambda i, sha, kind: {"kind": kind, "label": "push", "repo": "example-org/x", "number": 270, "sha": sha,
+                                   "t_ct": "2026-10-13T05:00:00-05:00", "id": i}
+        ids = lambda e: {l["id"] for l in inbox._direct(e, ROLES) if l and l["seat"] == "critic"}
+        self.assertTrue(ids(ev("a", "abc123def4567", "pr_commit")))
+        self.assertEqual(ids(ev("a", "abc123def4567", "pr_commit")), ids(ev("b", "abc123def4567", "pr_commit")))
+        self.assertNotEqual(ids(ev("a", "abc123def4567", "pr_commit")), ids(ev("c", "fff123def4567", "pr_commit")))
+        self.assertEqual(ids(ev("a", "abc123def4567", "pr_commit")), ids(ev("d", "abc123def4567", "pr_force_push")))
+
+    def test_merged_and_close_send_an_info_line_to_the_author(self):
+        merged = inbox._direct({"kind": "merged", "label": "merged", "repo": "example-org/x", "number": 11,
+                                "t_ct": "2026-10-13T05:00:00-05:00", "id": "m1", "author": "forge0x1[bot]",
+                                "base": "feature/x", "from": "critic"}, ROLES)
+        info = [l for l in merged if l["type"] == "info" and l["seat"] == "forge"]
+        self.assertEqual([l["reason"] for l in info], ["your PR merged"])
+        closed = inbox._direct({"kind": "pr_close", "label": "closed", "repo": "example-org/x", "number": 12,
+                                "t_ct": "2026-10-13T05:00:00-05:00", "id": "c1", "author": "mill", "from": "critic"}, ROLES)
+        info = [(l["seat"], l["reason"]) for l in closed if l["type"] == "info"]
+        self.assertEqual(info, [("mill", "your PR closed")])
+
 
 if __name__ == "__main__":
     unittest.main()

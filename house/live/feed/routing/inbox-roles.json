@@ -208,7 +208,9 @@
   "pr_heads": {
     "kinds": [
       "pr_open",
-      "pr_update"
+      "pr_update",
+      "pr_commit",
+      "pr_force_push"
     ],
     "seats": {
       "critic": "review ask: new PR or new head",
@@ -216,6 +218,18 @@
     }
   },
   "_note_pr_heads": "every PR open / new head on a watched repo, mention or not; one line per seat per repo#number@sha (inbox_pass.py)",
+  "handoffs": {
+    "reviewer": "critic",
+    "merger": "forge",
+    "kinds": {
+      "ready": { "to": "reviewer", "owes": "author" },
+      "critic_fail": { "to": "author", "owes": "reviewer" },
+      "merge": { "to": "merger", "owes": "author" },
+      "live_pass": { "to": "reviewer", "owes": "merger" },
+      "ci_fail": { "to": "author", "owes": "merger" }
+    }
+  },
+  "_note_handoffs": "Who the packet goes to, and who owes sending it, for live-inbox --handoff. reviewer and merger name seats in this file. author is the PR author's seat. The server never posts the packet. A room post does not clear a missed handoff.",
   "_note_extra_seats": "extra_seats are routed by feed/inbox_pass.py (kinds / merge_bases / needles); every key is one of our 9 seats (feed/fleet-roster.json)",
   "_note_builder_cloud": "builder / builder-cloud are kit plumbing in app/server.mjs (installation-token auth, mirror); no route writes to them",
   "fallback": {

@@ -265,6 +265,49 @@ class Model(unittest.TestCase):
         evs = [self.ev(5, "pr_open", 200000, title="old"), self.ev(5, "merged", 190000), self.ev(5, "lab_retest_pass", 180000)]
         self.assertEqual([c for c in self.w.model(evs)["cards"] if not c.get("pinned")], [])
 
+    def test_review_approved_or_changes_requested_is_a_reviewer_beat(self):
+        ok = self.card([self.ev(60, "pr_open", 4000, title="r"), self.ev(60, "review", 3000, state="APPROVED"),
+                        self.ev(60, "ci_pass", 2000, conclusion="success")], 60)
+        self.assertEqual(ok["stage"], "merge")
+        self.assertEqual(ok["reviewer"]["verdict"], "PASS")
+        self.assertEqual([b["what"] for b in ok["beats"] if b["what"].startswith("Reviewer")], ["Reviewer PASS"])
+        bad = self.card([self.ev(61, "pr_open", 4000, title="r"), self.ev(61, "review", 3000, state="CHANGES_REQUESTED")], 61)
+        self.assertEqual(bad["stage"], "fix")
+        self.assertIn("Reviewer FAIL", [b["what"] for b in bad["beats"]])
+        self.assertIsNone(self.w.beat_of({"kind": "review", "state": "COMMENTED"}))
+
+    def test_reopen_clears_closed_and_stop(self):
+        evs = [self.ev(62, "pr_open", 5000, title="back"), self.ev(62, "pr_close", 4000),
+               self.ev(62, "pr_reopen", 3000), self.ev(62, "pr_commit", 2000, sha="abc1234")]
+        c = self.card(evs, 62)
+        self.assertEqual(c["state"], "live")
+        self.assertIn("pushed", [b["what"] for b in c["beats"]])
+        issue = [self.ev(63, "issue_open", 5000, title="i", pr_state="open"), self.ev(63, "issue_close", 4000),
+                 self.ev(63, "issue_reopen", 1000)]
+        self.assertEqual(self.card(issue, 63)["state"], "live")
+
+    def test_fleet_seat_comment_is_a_beat_stranger_is_not(self):
+        base = [self.ev(64, "pr_open", 4000, title="talk")]
+        fleet = self.card(base + [dict(self.ev(64, "pr_comment", 1000), **{"from": "critic"})], 64)
+        self.assertIn("comment", [b["what"] for b in fleet["beats"]])
+        stranger = self.card(base + [dict(self.ev(64, "pr_comment", 1000), **{"from": "Others"})], 64)
+        self.assertNotIn("comment", [b["what"] for b in stranger["beats"]])
+
+    def test_pr_ready_opens_and_pr_draft_parks_immediately(self):
+        ready = self.card([self.ev(65, "pr_open", 8000, title="d", draft=True), self.ev(65, "pr_draft", 7000),
+                           self.ev(65, "pr_ready", 100)], 65)
+        self.assertEqual(ready["state"], "live")
+        self.assertIn("opened", [b["what"] for b in ready["beats"]])
+        parked = self.card([self.ev(66, "pr_open", 4000, title="d"), self.ev(66, "pr_commit", 100),
+                            self.ev(66, "pr_draft", 50)], 66)
+        self.assertEqual(parked["state"], "parked")
+
+    def test_live_pr_parks_after_72h_with_no_beat(self):
+        stale = self.card([self.ev(67, "pr_open", 73 * 3600, title="quiet")], 67)
+        self.assertEqual(stale["state"], "parked")
+        fresh = self.card([self.ev(68, "pr_open", 3600, title="fresh")], 68)
+        self.assertEqual(fresh["state"], "live")
+
 
 if __name__ == "__main__":
     unittest.main()

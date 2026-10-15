@@ -1,5 +1,6 @@
 """Unit tests for the Example adapter (stdlib, no network). Run: python3 -m unittest -v tests/test_collect.py"""
 import json, os, subprocess, sys, tempfile, threading, time, unittest, http.server
+from unittest import mock
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
 FEED_DIR = Path(os.environ.get("MESH_FEED_DIR", HERE.parent / "feed"))
@@ -310,10 +311,11 @@ class BoardCacheFleetOnly(unittest.TestCase):
 
 class HostModeBoard(unittest.TestCase):
     """Host-only installs (LIVE_MODE=github, no box pass) still get a board from the GitHub events they collect."""
-    def test_server_prefers_box_board(self):
+    def test_server_prefers_collector_board(self):
         src = (HERE.parent / "app" / "server.mjs").read_text()
-        self.assertIn("BOARD_BOX_STALE_MS", src)
-        self.assertNotIn("fresh(g) > fresh(b)", src)
+        self.assertIn("g?.board || b?.board", src)
+        self.assertNotIn("boxBoardLive", src)
+        self.assertNotIn("BOARD_BOX_STALE_MS", src)
 
     def test_board_from_github_events(self):
         code = ("import os; os.environ['INBOX_CACHE'] = str(Path(tempfile.mkdtemp()) / 'none.json')\n"
@@ -524,3 +526,125 @@ class SeatNameNotLogin(unittest.TestCase):
         self.assertEqual(lc.credit(login), "blinky")
         self.assertEqual(lc.node(login), "blinky")
         self.assertEqual(lc.commit_login({"author": {"name": "x", "user": {"login": "blinky"}}}), "blinky")
+
+
+def _collector(repo="acme/app"):
+    from zoneinfo import ZoneInfo
+    ff = type("FF", (), {"CT": ZoneInfo("America/Chicago")})
+    d = tempfile.TemporaryDirectory()
+    col = uc.RepoCollector(repo, Path(d.name), ff, lambda *a: None)
+    col._tmp = d
+    return col
+
+
+class CardLifecycle(unittest.TestCase):
+    """Each case fails if its collector fix is reverted."""
+
+    def test_critic_logins_come_from_the_critic_seat(self):
+        self.assertIn("critic0x[bot]", uc.CRITIC_LOGINS)
+        self.assertIn("critic0x1[bot]", uc.CRITIC_LOGINS)
+        self.assertIn("critic0x", uc.CRITIC_LOGINS)
+        col = _collector()
+        body = "**Reviewer: PASS: ready** @ abcdef1\n"
+        cm = {"id": 9, "created_at": "2026-10-14T12:00:00Z", "updated_at": "2026-10-14T12:00:00Z",
+              "html_url": "https://github.com/acme/app/pull/4", "issue_url": "https://api.github.com/repos/acme/app/issues/4",
+              "user": {"login": "critic0x[bot]"}, "body": body}
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [cm], "etag", None
+
+        col.st["bf"]["comments:critic3"] = True
+        col.st["prs"]["4"] = {"author": "forge0x1[bot]"}
+        col.poll_comments(C())
+        kinds = {e["kind"] for e in col.ev.values()}
+        self.assertIn("critic_pass", kinds)
+
+    def test_merged_credits_merged_by_not_the_author(self):
+        col = _collector("example-org/app")
+        pull = {"number": 8, "user": {"login": "forge0x1[bot]"}, "updated_at": "2026-10-14T17:00:00Z",
+                "created_at": "2026-10-14T12:00:00Z", "html_url": "https://github.com/example-org/app/pull/8",
+                "title": "land", "head": {"sha": "abc"}, "base": {"ref": "main"}, "state": "closed",
+                "merged_at": "2026-10-14T16:00:00Z", "merged_by": {"login": "critic0x[bot]"},
+                "merge_commit_sha": "deadbee", "draft": False, "body": "", "labels": []}
+
+        class C:
+            token = "t"
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [pull], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"critic0x[bot]": "critic", "forge0x1[bot]": "forge"}):
+            col.poll_pulls(C())
+        merged = col.ev["example-org/app#8:merged"]
+        self.assertEqual(merged["actor"], "critic0x[bot]")
+        self.assertEqual(merged["from"], "critic")
+        self.assertEqual(merged["author"], "forge0x1[bot]")
+
+    def test_workflow_run_emits_ci_fail_with_the_pr_number(self):
+        col = _collector()
+        run = {"id": 9, "name": "ci", "head_branch": "feat", "status": "completed", "conclusion": "failure",
+               "html_url": "https://github.com/acme/app/actions/runs/9", "created_at": "2026-10-14T12:00:00Z",
+               "updated_at": "2026-10-14T12:05:00Z", "event": "pull_request", "head_sha": "a" * 40,
+               "run_number": 1, "actor": {"login": "github-actions[bot]"}, "pull_requests": [{"number": 42}]}
+
+        class C:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, {"workflow_runs": [run]}, "etag", None
+
+        col.poll_runs(C())
+        ci = [e for e in col.ev.values() if e["kind"] == "ci_fail"]
+        self.assertEqual(len(ci), 1)
+        self.assertEqual(ci[0]["number"], 42)
+        self.assertEqual(ci[0]["conclusion"], "failure")
+        run["conclusion"] = "success"
+        run["id"] = 10
+        col.poll_runs(C())
+        self.assertTrue(any(e["kind"] == "ci_pass" and e["number"] == 42 for e in col.ev.values()))
+
+    def test_push_event_on_a_branch_with_no_pr_is_seen(self):
+        col = _collector()
+        col.st["prs"]["3"] = {"head": "b" * 40, "author": "forge0x1[bot]"}
+        bare = {"id": "11", "type": "PushEvent", "created_at": "2026-10-14T15:00:00Z", "actor": {"login": "forge0x1[bot]"},
+                "payload": {"ref": "refs/heads/feat", "head": "c" * 40, "commits": [{"sha": "c" * 40, "message": "wip"}]}}
+        on_pr = {"id": "12", "type": "PushEvent", "created_at": "2026-10-14T15:01:00Z", "actor": {"login": "forge0x1[bot]"},
+                 "payload": {"ref": "refs/heads/pr", "head": "b" * 40, "commits": [{"sha": "b" * 40, "message": "on pr"}]}}
+
+        class C:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [bare, on_pr], "etag", None
+
+        with mock.patch.dict(uc.NODE_LC, {"forge0x1[bot]": "forge"}):
+            col.poll_pushes(C())
+        pushes = [e for e in col.ev.values() if e["kind"] == "push"]
+        self.assertEqual(len(pushes), 1)
+        self.assertEqual(pushes[0]["sha"], "c" * 40)
+        self.assertEqual(pushes[0]["branch"], "feat")
+
+    def test_review_request_and_comment_mark_a_review_reread(self):
+        col = _collector()
+        ev = {"id": 5, "event": "review_requested", "created_at": "2026-10-14T12:00:00Z",
+              "actor": {"login": "forge0x1[bot]"},
+              "issue": {"number": 9, "pull_request": {}, "html_url": "https://github.com/acme/app/pull/9"},
+              "requested_reviewer": {"login": "critic0x[bot]"}}
+
+        class Events:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [ev], "etag", None
+
+        col.poll_issue_events(Events())
+        self.assertIn("9", col.st["enrich"])
+        col.st["enrich"].pop("9", None)
+        cm = {"id": 3, "created_at": "2026-10-14T12:10:00Z", "updated_at": "2026-10-14T12:10:00Z",
+              "html_url": "https://github.com/acme/app/pull/9#issuecomment-3",
+              "issue_url": "https://api.github.com/repos/acme/app/issues/9",
+              "user": {"login": "forge0x1[bot]"}, "body": "looks fine"}
+
+        class Comments:
+            def rest(self, path, params=None, etag=None, essential=True):
+                return 200, [cm], "etag", None
+
+        col.st["bf"]["comments:critic3"] = True
+        col.st["prs"]["9"] = {"author": "forge0x1[bot]"}
+        col.poll_comments(Comments())
+        self.assertIn("9", col.st["enrich"])

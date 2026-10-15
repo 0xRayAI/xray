@@ -20,7 +20,46 @@ BRAND = os.environ.get("LIVE_BRAND") or live_site.SITE["name"]   # display name 
 BRAND_RE = re.compile(os.environ.get("LIVE_BRAND_RE", r"(?i)(?:acmeco|acme)(?![-/])"))   # repo names stay as identifiers
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")   # never ship addresses
 CRITIC = "reviewer-app[bot]"
-CRITIC_LOGINS = {CRITIC, "reviewer-app"}   # any Reviewer seat identity
+
+
+def critic_logins() -> set[str]:
+    """Logins mapped to the critic seat in fleet-nodes.json (critic0x, critic0x1), plus the template Reviewer app."""
+    found = {CRITIC, "reviewer-app"}
+    path = Path(__file__).resolve().parent / "fleet-nodes.json"
+    try:
+        raw = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return found
+    if not isinstance(raw, dict):
+        return found
+    for login, seat in raw.items():
+        if str(seat).strip().lower() != "critic":
+            continue
+        name = str(login).strip()
+        if not name:
+            continue
+        found.add(name)
+        bare = name.removesuffix("[bot]")
+        if bare:
+            found.add(bare)
+    return found
+
+
+CRITIC_LOGINS = critic_logins()   # critic verdict comments become critic_* beats
+CI_FAIL = {"failure", "timed_out", "cancelled", "startup_failure", "action_required"}
+PUSH_SKIP_BRANCHES = {"live-wire"}
+
+
+def ci_result_kind(conclusion, status) -> str | None:
+    """A completed workflow run is ci_pass or ci_fail. Anything still running is neither."""
+    if status != "completed":
+        return None
+    word = str(conclusion or "").lower()
+    if word == "success":
+        return "ci_pass"
+    if word in CI_FAIL:
+        return "ci_fail"
+    return None
 CRITIC_RE = re.compile(r"^\*\*Reviewer(?:: (PASS|FAIL|HOLD)\b| re-check:\s*(?:\**\s*)?(PASS|FAIL)?\b)")
 MENTION_RE = re.compile(r"(?<![\w`/.])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?)(?![\w-])")
 
@@ -632,7 +671,7 @@ class RepoCollector:
             return
         self.put(f"{self.repo}#{n}:review:{rid}", t, node(login), self.pr_node(n), "review",
                  f"{login or '?'} {state.lower()} · {self.short} #{n}", url or f"https://github.com/{self.repo}/pull/{n}",
-                 n, state=state, actor=login)
+                 n, state=state, actor=login, sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
 
     # ---------------------------------------------------------------- incremental (REST)
     def pr_merged(self, n):
@@ -664,11 +703,13 @@ class RepoCollector:
             url = p["html_url"]
             self.put(f"{self.repo}#{n}:open", p["created_at"], node(login), "GitHub", "pr_open",
                      f"{self.short} #{n} opened · {p['title']}", url, n, base=p["base"]["ref"], actor=login,
+                     sha=(p.get("head") or {}).get("sha"), author=login,
                      draft=p.get("draft"), mentions=mentions(p.get("body")), **card_fields(p))
             if p.get("merged_at"):
-                self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(login), "GitHub", "merged",
+                merger = ((p.get("merged_by") or {}).get("login")) or login
+                self.put(f"{self.repo}#{n}:merged", p["merged_at"], node(merger), "GitHub", "merged",
                          f"merged {self.short} #{n} → {p['base']['ref']}", url, n, base=p["base"]["ref"],
-                         merge_sha=p.get("merge_commit_sha"), actor=login)
+                         merge_sha=p.get("merge_commit_sha"), actor=merger, author=login, merged_by=merger)
             if author_seat or (self.st["bf"].get("prs:done") and prev.get("updated_at") != p["updated_at"]):
                 self.st.setdefault("enrich", {})[str(n)] = True
             if newest is None or p["updated_at"] > newest:
@@ -722,7 +763,9 @@ class RepoCollector:
                     if pr.get("merged_at") and abs(datetime.fromisoformat(pr["merged_at"].replace("Z", "+00:00")).timestamp()
                                                    - datetime.fromisoformat(e["created_at"].replace("Z", "+00:00")).timestamp()) < 30:
                         continue   # the merge itself (emitted as 'merged')
-                    self.put(eid, e["created_at"], frm, "GitHub", "pr_close", f"closed {tag} unmerged", url, n, actor=actor)
+                    author = (self.st["prs"].get(str(n)) or {}).get("author")
+                    self.put(eid, e["created_at"], frm, "GitHub", "pr_close", f"closed {tag} unmerged", url, n,
+                             actor=actor, author=author)
                 else:
                     sr = e.get("state_reason") or iss.get("state_reason")
                     self.put(eid, e["created_at"], frm, "GitHub", "issue_close", f"closed {tag} ({sr or 'closed'})",
@@ -732,19 +775,23 @@ class RepoCollector:
             elif ev in ("ready_for_review", "convert_to_draft") and is_pr:
                 k = "pr_ready" if ev == "ready_for_review" else "pr_draft"
                 self.put(eid, e["created_at"], frm, "GitHub", k,
-                         f"{tag} {'ready for review' if k == 'pr_ready' else 'converted to draft'}", url, n, actor=actor)
+                         f"{tag} {'ready for review' if k == 'pr_ready' else 'converted to draft'}", url, n, actor=actor,
+                         sha=(self.st.get("prs") or {}).get(str(n), {}).get("head"))
             elif ev in ("review_requested", "review_request_removed") and is_pr:
                 who = (e.get("requested_reviewer") or {}).get("login") or (e.get("requested_team") or {}).get("name")
                 k = "pr_review_requested" if ev == "review_requested" else "pr_review_request_removed"
                 self.put(eid, e["created_at"], frm, node(who) if who else "GitHub", k,
                          f"{tag} review {'requested' if k.endswith('requested') else 'request removed'}: {who}",
                          url, n, actor=actor, reviewer=who)
+                if ev == "review_requested":
+                    self.st.setdefault("enrich", {})[str(n)] = True   # re-read reviews on the next enrich pass
             elif ev == "base_ref_changed" and is_pr:
                 self.put(eid, e["created_at"], frm, "GitHub", "pr_edit", f"{tag} base changed", url, n, actor=actor,
                          change="base")
             elif ev == "head_ref_force_pushed" and is_pr:
+                head = (self.st["prs"].get(str(n)) or {}).get("head")
                 self.put(eid, e["created_at"], frm, "GitHub", "pr_force_push", f"{tag} force-pushed", url, n,
-                         actor=actor)
+                         actor=actor, sha=head)
             elif ev in self.ISSUE_EVENT_KIND:
                 k = self.ISSUE_EVENT_KIND[ev]
                 detail = {"labeled": (e.get("label") or {}).get("name"), "unlabeled": (e.get("label") or {}).get("name"),
@@ -806,6 +853,8 @@ class RepoCollector:
                      actor=login, resolved=True if RESOLVED_RE.search(body) else None,   # flags only
                      parked=True if PARKED_COMMENT_RE.match(body) else None,
                      hold=hold, mentions=mentions(body), pr_merged=self.pr_merged(n) if is_pr else None)
+            if is_pr:
+                self.st.setdefault("enrich", {})[str(n)] = True   # a comment is a reason to re-read reviews
             if is_pr and login in CRITIC_LOGINS:   # verdict word + SHA only; the body is discarded here
                 body = (cm.get("body") or "").lstrip()
                 m = CRITIC_RE.match(body)
@@ -846,6 +895,50 @@ class RepoCollector:
         if self._etag_new:
             self.st["etags"]["rcomments"] = self._etag_new
 
+    def poll_pushes(self, c):
+        """Repo /events PushEvent poll: a push on a branch with no PR (fetch_feed.push_events).
+
+        Heads already stored as a commit, a PR head, or an earlier push are skipped, so a merge
+        or a PR update is not counted twice. live-wire stays on the tripwire ledger."""
+        cur = self.st["cur"].get("pushes")
+        newest = cur
+        known = set()
+        for e in self.ev.values():
+            sha = e.get("sha") or e.get("head_sha")
+            if isinstance(sha, str) and e.get("kind") in ("commit", "pr_commit", "push", "merged"):
+                known.add(sha)
+        for pr in (self.st.get("prs") or {}).values():
+            head = pr.get("head") if isinstance(pr, dict) else None
+            if isinstance(head, str) and head:
+                known.add(head)
+        for e in self.paged(c, f"/repos/{self.repo}/events", {}, "pushes",
+                            stop=lambda ev: cur is not None and str(ev.get("created_at") or "") <= cur):
+            t = e.get("created_at")
+            if t and (newest is None or t > newest):
+                newest = t
+            if e.get("type") != "PushEvent":
+                continue
+            p = e.get("payload") or {}
+            ref = p.get("ref") or ""
+            branch = ref[len("refs/heads/"):] if ref.startswith("refs/heads/") else ""
+            head = p.get("head") or ""
+            if not branch or branch in PUSH_SKIP_BRANCHES or not head or not t or head in known:
+                continue
+            login = (e.get("actor") or {}).get("login")
+            commits = p.get("commits") or []
+            msg = next((cmt.get("message") for cmt in commits if cmt.get("sha") == head), None)
+            if msg is None and commits:
+                msg = commits[-1].get("message")
+            msg = ((msg or "").splitlines() or [""])[0][:72]
+            self.put(f"{self.repo}:push:{e['id']}", t, node(login), "GitHub", "push",
+                     f"pushed {self.short} {branch} · {brand(msg)}",
+                     f"https://github.com/{self.repo}/commit/{head}", None,
+                     sha=head, branch=branch, author=login, message=brand(msg) if msg else None)
+            known.add(head)
+        self.st["cur"]["pushes"] = newest
+        if self._etag_new:
+            self.st["etags"]["pushes"] = self._etag_new
+
     def poll_commits(self, c):
         for b in MERGE_BASES:
             if self.st["bf"].get(f"absent:{b}"):   # branch missing in this repo (e.g. no develop): no 404 every pass
@@ -883,6 +976,16 @@ class RepoCollector:
                          r["html_url"], None, name=brand(r["name"]), event=r["event"], branch=r.get("head_branch"),
                          status=r["status"], conclusion=r.get("conclusion"), run_number=r.get("run_number"),
                          head_sha=r.get("head_sha"), updated=r.get("updated_at"), actor=(r.get("actor") or {}).get("login"))
+                prs = r.get("pull_requests") or []
+                first = prs[0] if prs and isinstance(prs[0], dict) else None
+                num = first.get("number") if first else None
+                ck = ci_result_kind(r.get("conclusion"), r.get("status"))
+                if ck and num is not None:
+                    self.put(f"{self.repo}#{int(num)}:ci:{r['id']}",
+                             r.get("updated_at") or r.get("run_started_at") or r["created_at"], "CI", "GitHub", ck,
+                             f"{'CI pass' if ck == 'ci_pass' else 'CI fail'} {brand(r['name'])} · {self.short} #{num}",
+                             r["html_url"], int(num), conclusion=r.get("conclusion"), head_sha=r.get("head_sha"),
+                             name=brand(r["name"]))
                 if NO_CHECKS and r.get("check_suite_id"):
                     self.suite_from_run(r)
                 recent = r.get("head_sha") and time.time() - datetime.fromisoformat(
@@ -1018,6 +1121,7 @@ class RepoCollector:
         self._denied = None
         steps = [("pulls", self.poll_pulls), ("issues", self.poll_issues), ("issue events", self.poll_issue_events),
                  ("comments", self.poll_comments), ("review comments", self.poll_review_comments),
+                 ("pushes", self.poll_pushes),
                  ("runs", self.poll_runs)] + ([("jobs", self.poll_jobs)] if NO_CHECKS else []) + [
                  ("tags/releases", self.poll_tags_releases),
                  ("deployments", self.poll_deployments)]
