@@ -8,7 +8,7 @@
     "test": "node test/roundtrip.mjs"
   },
   "dependencies": {
-    "@0xray/repertoire": "^0.2.8",
-    "0xray": "file:../../../0xray-4.0.27.tgz"
+    "@0xray/repertoire": "file:../../../vendor/@0xray/repertoire",
+    "0xray": "file:../../.."
   }
 }

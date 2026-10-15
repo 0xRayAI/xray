@@ -2,13 +2,18 @@
 
 Complete reference of capabilities through **0xRay 4.0**. 0xRay is a three-subsystem autonomous engine. The suit is the wear. Patch notes live here; kernel headers stay era `4.0`. 3.x development tags (3.1–3.5.x) remain below as history.
 
-## 4.0.43 — real confer PASS, hooks fail closed
+## 4.0.43 — confer PASS, hooks fail closed, Bifrost board
 
-Confer completes only on a real PASS. Cursor gate events fail closed.
+Confer completes only on a real PASS. Cursor gate events fail closed. The Bifrost board is the collector board.
 
 - **Confer.** It stays off unless it is explicitly enabled. Only a real approve completes it, ambiguous text counts as UNREVIEWED, and receipts are bound to one synthesis cycle. The vendored complete-todo command cannot mint a PASS.
 - **Hooks.** Cursor gate events (preToolUse, beforeShellExecution, beforeReadFile) fail closed: a crashed gate, bad input, or a missing node or hook file denies the tool. The one exception is EACCES when a cloud wrapper cannot write dest, which still allows it. Hermes, OpenCode, OpenClaw and Cursor run the lens and the repertoire route on the pre-tool allow path.
 - **Release.** Gate C cannot be skipped. Gate D is proven only when npm lists the version, the annotated tag points at that commit, and the GitHub Release page exists.
+- **Board.** `house/live/feed/live_mesh.py` runs the collector and the board every `LIVE_WATCH_S` seconds (default 45). Reviews, merges, pushes, and CI land on the card. CI is not board traffic. `merged_by` is the GitHub merger, filled from `GET /pulls/:n` when the list payload omits it or only has the author. A cloud agent is a board row (`cloud_agents`): `bcId`, owning seat, linked card, and state `running`, `finished`, or `failed`.
+- **Nudge.** `evalNudges` sends a stuck card's L1 to the next owner or the card owner, L2 to the CoS role, and L3 back to the L1 seat, with the CoS role woken once to reassign. An unacked inbox line and a missing handoff stay on that seat for L1, L2, and L3. The CoS role is woken at L3 on those two ladders.
+- **Wake.** `grok-bot/templates/house/fleet/WAKE-ROUTINE.md` posts `live-inbox <seat> --turn start` on every turn and `--turn end` on every exit. Compaction is a wake. Notes are appended after every beat. One cloud agent per card.
+- **live-inbox.** `LIVE_URL`, `SEAT_KEYS_DIR`, and `LIVE_CURSORS` are required. A missing or empty one exits 2 and names it. The tool does not guess. Handoff requires `--sha` (7 to 64 hex digits).
+- **Lexicon.** `grok-bot/LEXICON.md` adds the handoff `--sha` row and the practice **button up**.
 
 ## 4.0.42 — confer, the worn suit, Burst
 

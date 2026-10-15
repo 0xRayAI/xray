@@ -3,7 +3,7 @@
 ## Who fixes stopped work
 
 - **The CoS role owns the board.** That is the routing role `seats.coord` (a role, not a name).
-- **Nudge (a card or an inbox line stops moving).** L1 goes to the owning seat. L2 goes to the CoS role. L3 repeats to the L1 seat, and the CoS role is woken once to reassign. One path: `evalNudges` in `app/server.mjs`. A missed handoff is a separate ladder: the card is flagged `handoff missing`, the seat that owes the packet is nudged L1, then L2, then L3, and at L3 the CoS role is nudged too. A room post does not clear it.
+- **Nudge.** One path: `evalNudges` in `app/server.mjs`. A live card with no beat sends L1 to the next owner, or else the card owner, then L2 to the CoS role, then L3 repeats to the L1 seat and the CoS role is woken once to reassign. An unacked inbox line steps L1, L2, and L3 on that same seat, and the CoS role is woken at L3. A missed handoff is a separate ladder: the card is flagged `handoff missing`, the owing seat is nudged L1, then L2, then L3, and at L3 the CoS role is woken once. A room post does not clear it.
 - **Tripwire (the whole board stops moving).** On a stalled board, the timed run wakes every seat with open work, each with a deadline, and tells the CoS role. On an empty board, it wakes the CoS role to pull the next work. Once per window.
 
 `POST /inbox` and `POST /inbox/builder` take `{lines, replace?}`. Each line is checked before anything is cleared. `replace: true` on the builder route clears that seat only after a line validates. A batch that stores nothing returns 400 and names the rejected refs (`id`, or `#` plus the index when the line has no id). A bad line in a mixed batch is skipped; the good lines are stored.

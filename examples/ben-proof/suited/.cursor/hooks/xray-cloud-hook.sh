@@ -110,7 +110,15 @@ if [ -n "$MILL" ]; then
 fi
 
 if [ -z "$NODE_BIN" ] || [ -z "$MILL" ] || [ ! -f "${MILL}/${REL}" ]; then
-  printf '{"permission":"allow","user_message":"xray-cloud-hook: mill missing — fail open"}\n'
+  # Gate events fail closed: no node or no hook file means the gate cannot run, so the tool is denied.
+  case "$EVENT" in
+    preToolUse|beforeShellExecution|beforeReadFile)
+      printf '{"permission":"deny","user_message":"xray-cloud-hook: node or hook file missing — denied (fail closed)","agent_message":"xray-cloud-hook: node or hook file missing — denied (fail closed)"}\n'
+      ;;
+    *)
+      printf '{"permission":"allow","user_message":"xray-cloud-hook: node or hook file missing — %s skipped"}\n' "$EVENT"
+      ;;
+  esac
   exit 0
 fi
 

@@ -33,7 +33,7 @@ Later, after the cut:
 npm run recall -- "compaction memory bench suited arm"
 ```
 
-The copied `suited/package.json` records what the last proof used: `0xray` 4.0.26 and `@0xray/repertoire` 0.2.8. A rerun should install those pinned versions before `npm run wear`.
+The recorded proof used `0xray` 4.0.26 and `@0xray/repertoire` 0.2.8. A rerun from this checkout runs `npm install` in `suited/` first. That links this repo and the vendored repertoire, then `npm run wear` and `npm run recall` use the current dist.
 
 ### Dummy (plain app)
 
@@ -43,7 +43,7 @@ From `dummy/`:
 npm run intake
 ```
 
-`npm run intake` is the only writer. `npm run recall` is read-only and must not mint.
+`npm run intake` is the only writer. `npm run recall` is read-only and must not mint. `npm run smoke` reads `data/lessons.jsonl`, so run intake first.
 
 The last run's plain app did not remember the word in the chat. The word was still in `data/lessons.jsonl`, and a later read printed that file. A file read is not memory.
 
