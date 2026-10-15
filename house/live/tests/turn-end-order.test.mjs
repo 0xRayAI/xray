@@ -164,23 +164,22 @@ test('a fresh mark newer than the end stays working', async () => {
 test('a cloud agent survives a turn end', async () => {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'mesh-end-cloud-'));
   const now = Date.now();
+  const cloudAt = now - 30 * 60 * 1000;
+  const end = now - 23 * 60 * 1000;
   lay(data, {
-    activity: [line('forge', 'start', now - 4 * 60 * 1000), line('forge', 'end', now - 60 * 1000)],
-    seats: {},
-    working: {},
+    activity: [line('forge', 'start', now - 31 * 60 * 1000), line('forge', 'end', end)],
+    seats: { forge: { active: false, last_ct: new Date(end).toISOString(), via: 'cloud', working: true } },
+    working: { forge: { via: 'cloud', since_ct: new Date(cloudAt).toISOString() } },
     events: [
-      { id: 'ci', t_ct: new Date(now - 30 * 1000).toISOString(), kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
+      { id: 'ci', t_ct: new Date(end).toISOString(), kind: 'check_run', conclusion: 'success', repo: 'example/repo', sha: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' },
     ],
   });
-  fs.writeFileSync(path.join(data, 'live', 'agents.jsonl'), JSON.stringify({
-    event_id: 'ag-1', agent: 'bc-forge0001', status: 'running', rank: 2, seat: 'forge',
-    t_ct: new Date(now - 3 * 60 * 1000).toISOString(), title: 'ship',
-  }) + '\n');
   const srv = start(data);
   try {
     const fleet = await fleetOf(srv, live => live.fleet.seats.forge && live.fleet.working && live.fleet.working.forge);
     assert.ok(fleet, srv.logs());
     assert.equal(fleet.working.forge.via, 'cloud');
+    assert.equal(Date.parse(fleet.working.forge.since_ct), cloudAt);
     assert.equal(fleet.seats.forge.working, true);
   } finally {
     await stop(srv.child);
