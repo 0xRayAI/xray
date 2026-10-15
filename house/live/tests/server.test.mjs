@@ -140,13 +140,18 @@ test('two sources: collector file + box push merge by id; box base survives coll
   // the collector write did not invalidate the box pusher's delta base
   const r = await delta({ base: a0, header: { ...box, events: undefined }, upsert: [ev('box2')], remove: [] });
   assert.equal(r.status, 200);
-  // box goes silent (BOX_STALE_S=4 here): its seat state stays, flagged stale; its spinner and open agents stop
+  // box goes silent (BOX_STALE_S=4 here): box-only spinner and open agents stop; the board does not raise an error
   await new Promise(r => setTimeout(r, 4500 + 15500));
   const g = await (await get()).json();
-  assert.equal(g.fleet.box_stale, true); assert.equal(g.sources.box.stale, true);
-  assert.equal(g.fleet.seats.Tester.box_stale, true); assert.equal(g.fleet.seats.Tester.working, false);
-  assert.equal(g.fleet.seats.Tester.working_stale, true); assert.equal(g.fleet.seats.Tester.active, true);
-  assert.equal(g.fleet.seats.Builder.working, true); assert.equal(g.fleet.cloud.active, false); assert.equal(g.fleet.cloud.box_stale, true);
+  assert.equal(g.fleet.box_stale, false);
+  assert.equal(g.sources.box.stale, true);
+  assert.equal(g.fleet.seats.Tester.box_stale, undefined);
+  assert.equal(g.fleet.seats.Tester.working, false);
+  assert.equal(g.fleet.seats.Tester.working_stale, undefined);
+  assert.equal(g.fleet.seats.Tester.active, true);
+  assert.equal(g.fleet.seats.Builder.working, true);
+  assert.equal(g.fleet.cloud.active, false);
+  assert.equal(g.fleet.cloud.box_stale, undefined);
   assert.ok(g.events.some(e => e.id === 'boxonly'));                                   // box events are kept, not hidden
 });
 

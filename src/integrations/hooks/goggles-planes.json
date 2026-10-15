@@ -29,7 +29,7 @@
     "plates": ["orchestration", "processor"]
   },
   "house": {
-    "files": ["grok-bot/lib/seat-doctor.cjs"],
+    "files": ["grok-bot/lib/seat-doctor.cjs", "grok-bot/templates/house/fleet/WAKE-ROUTINE.md"],
     "skills": ".agents/skills/house/SKILL.md",
     "plates": ["suit-wear"]
   },
