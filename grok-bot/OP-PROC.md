@@ -54,7 +54,7 @@ One line, when the job is short: `goal: … · constraints: … · path: … · 
 | Briefing | Send the commit ID plus the card, resend if the branch moves, and the assigner checks the result. |
 | Room vs 1:1 writes | No outside writes or deploys (issues, pushes, comments, merges, Railway) from a group room. From a seat's own 1:1 they proceed once the gates pass (critic PASS, CI green, Arch1 yes where required), without asking Blaze. The Always-allow ban on App PEM, token minting and App review is revoked; PEM text and tokens are still never printed or stored. |
 | Board before building | Check the board before building. Write forward to the board and memory. |
-| Deploy stages in order | The board stamps a deploy's phases in order: BUILDING <= DEPLOYING <= terminal. Only SUCCESS backfills missed phases. [Board](../house/live/docs/board.md#deploy-stages). |
+| Deploy stages in order | The board stamps a deploy's phases in order: BUILDING <= DEPLOYING <= terminal. Only SUCCESS backfills missed phases. |
 | Answer the owner | Answer from live GitHub and the board. Routines stay quiet on closed beats. A failing routine never blocks a reply. |
 | Speak up | On ownership, a blocker, live proof, or a money or credential change. |
 | Ask-first also covers | Sends to outside agent networks, public gists holding secrets, token rotation, billing, taste calls. |
