@@ -513,7 +513,9 @@ const ackedSet = s => new Set(inboxAcks[s] || []);
 function ackLines(seat, what) {
   const arr = seatInbox[seat] || [], have = new Set(inboxAcks[seat] || []); let n = 0;
   const at = typeof what === 'object' && what ? arr.findIndex(l => l.id === what.upto) : -1;
-  const ids = what === 'all' ? arr.map(l => l.id) : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
+  const ids = what === 'all' ? arr.map(l => l.id)
+    : what === 'stale' ? arr.filter(settledLine).map(l => l.id)
+    : typeof what === 'object' && what ? (at < 0 ? null : arr.slice(0, at + 1).map(l => l.id))
     : arr.some(l => l.id === what) ? [what] : null;
   if (!ids) return -1;
   for (const id of ids) if (!have.has(id)) { have.add(id); n++; appendArchive('acks', { seat, line: id, t_ct: new Date().toISOString() }); }
@@ -550,6 +552,15 @@ function lineDone(seat, l) {
   const lt = Date.parse(l.t_ct) || 0;
   if (seat === REVIEW && c.reviewer && c.reviewer.at_head && Number(c.reviewer.t) >= lt) return true;   // verdict at head = Reviewer's step done
   return false;
+}
+// A settled line still shows on a plain read. --ack stale is the explicit receipt for it: merged, closed, or no longer on the board.
+function settledLine(l) {
+  const number = Number(l && l.number);
+  if (!l || !l.repo || !Number.isInteger(number) || number < 1) return false;
+  if (itemClosed(l.repo, number)) return true;
+  const c = lineCard(l);
+  if (!c) return true;
+  return c.state === 'closed' || c.stage === 'done';
 }
 function openLines(seat, all) { const acked = ackedSet(seat); return all ? seatInbox[seat].slice() : seatInbox[seat].filter(l => !acked.has(l.id) && !lineDone(seat, l)); }
 function saveSeatInbox(s) {
@@ -2696,10 +2707,11 @@ async function handle(req, res) {
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) return json(req, res, 401, { error: 'unauthorized' });
     if (!SEAT_IDS.includes(inboxM[1]) || who !== inboxM[1]) return json(req, res, 403, { error: 'inbox is not exposed' });
-    const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1';
+    const since = url.searchParams.get('since'), all = url.searchParams.get('all') === '1', stale = url.searchParams.get('stale') === '1';
     const base = since && seatInbox[who].some(l => l.id === since) ? linesAfter(seatInbox[who], since) : seatInbox[who];
-    const keep = new Set(openLines(who, all).map(l => l.id)); touchSeat(who);
-    return json(req, res, 200, { seat: who, lines: base.filter(l => keep.has(l.id)).slice(0, 1000) });
+    const keep = new Set(openLines(who, stale ? false : all).map(l => l.id)); touchSeat(who);
+    const lines = base.filter(l => keep.has(l.id) && (!stale || settledLine(l)));
+    return json(req, res, 200, { seat: who, lines: lines.slice(0, 1000) });
   }
   if (p === '/clock') {   // POST /clock: the CoS starts the same timed run the tripwire starts (BIFROST_CLOCK_SEATS keys only)
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
@@ -2714,14 +2726,14 @@ async function handle(req, res) {
     return json(req, res, 200, { ok: true, started: true, clock: run });
   }
   const ackM = /^\/inbox\/([a-z0-9-]{2,16})\/ack$/.exec(p);
-  if (ackM) {   // POST /inbox/<seat>/ack {"id": "<line id>"} | {"upto": "<line id>"} | {"all": true}: that seat's key only
+  if (ackM) {   // POST /inbox/<seat>/ack {"id"} | {"upto"} | {"stale": true} | {"all": true}: that seat's key only. stale acks merged, closed, and off-board lines.
     if (m !== 'POST') return json(req, res, 405, { error: 'method not allowed' }, { Allow: 'POST' });
     let who; try { who = await seatOf(req); } catch { return json(req, res, 503, { error: 'could not verify token, retry' }, { 'Retry-After': '30' }); }
     if (!who) { req.resume(); return json(req, res, 401, { error: 'unauthorized' }); }
     if (!SEAT_IDS.includes(ackM[1]) || who !== ackM[1]) { req.resume(); return json(req, res, 403, { error: 'not your inbox' }); }
     let d; try { d = JSON.parse((await readBody(req, 4096)).toString('utf8')); } catch { return json(req, res, 400, { error: 'invalid json' }); }
-    const what = d && d.all === true ? 'all' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
-    if (!what) return json(req, res, 400, { error: 'id or all required' });
+    const what = d && d.all === true ? 'all' : d && d.stale === true ? 'stale' : d && typeof d.id === 'string' && d.id.length <= 300 ? d.id : d && typeof d.upto === 'string' && d.upto.length <= 300 ? { upto: d.upto } : null;
+    if (!what) return json(req, res, 400, { error: 'id, upto, stale, or all required' });
     const n = ackLines(who, what); touchSeat(who); if (n) serverActivity(who, 'turn', 'end', 'ack');
     if (n < 0) return json(req, res, 404, { error: 'no such line' });
     if (n > 0) publishHeader();   // work tracking moves the packet to acked
